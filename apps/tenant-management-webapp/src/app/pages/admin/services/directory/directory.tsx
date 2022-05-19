@@ -4,7 +4,12 @@ import { Tab, Tabs } from '@components/Tabs';
 import { DirectoryOverview } from './overview';
 import SupportLinks from '@components/SupportLinks';
 import { DirectoryService } from './services';
+import { useSelector } from 'react-redux';
+import { RootState } from '@store/index';
+
 export const Directory: FunctionComponent = () => {
+  const tenantName = useSelector((state: RootState) => state.tenant?.name);
+  const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
   return (
     <Page>
       <Main>
@@ -26,7 +31,15 @@ export const Directory: FunctionComponent = () => {
         <a
           rel="noopener noreferrer"
           target="_blank"
-          href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/tenant-management-api"
+          href={`${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Directory service`}
+        >
+          Read the API docs
+        </a>
+        <br />
+        <a
+          rel="noopener noreferrer"
+          target="_blank"
+          href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/directory-service"
         >
           See the code
         </a>

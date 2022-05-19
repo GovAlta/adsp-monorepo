@@ -1,20 +1,23 @@
 import React, { useEffect } from 'react';
-import { AddFileType } from './fileTypeNew';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { FetchRealmRoles } from '@store/tenant/actions';
-import { RootState } from '@store/index';
+import { GoAButton } from '@abgov/react-components';
 
 interface FileOverviewProps {
-  onSwitch: () => void;
+  setActiveEdit: (boolean) => void;
+  setActiveIndex: (index: number) => void;
 }
 
-const FileOverview = ({ onSwitch }: FileOverviewProps): JSX.Element => {
+const FileOverview = ({ setActiveEdit, setActiveIndex }: FileOverviewProps): JSX.Element => {
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(FetchRealmRoles());
   }, []);
 
-  const realmRoles = useSelector((state: RootState) => state.tenant.realmRoles);
+  useEffect(() => {
+    setActiveEdit(false);
+    setActiveIndex(0);
+  }, []);
 
   return (
     <div>
@@ -29,7 +32,14 @@ const FileOverview = ({ onSwitch }: FileOverviewProps): JSX.Element => {
         files.
       </div>
       <br />
-      <div>{realmRoles && <AddFileType roles={realmRoles} onSwitch={onSwitch} />}</div>
+      <GoAButton
+        data-testid="add-file-type-btn"
+        onClick={() => {
+          setActiveEdit(true);
+        }}
+      >
+        Add file type
+      </GoAButton>
     </div>
   );
 };

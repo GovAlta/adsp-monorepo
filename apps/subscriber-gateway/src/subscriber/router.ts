@@ -121,6 +121,29 @@ export function getSubscriber(tokenProvider: TokenProvider, directory: ServiceDi
   };
 }
 
+export function getSubscriptionChannels(tokenProvider: TokenProvider, directory: ServiceDirectory): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const { subscriber, type } = req.params;
+
+      const notificationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:notification-service`);
+      const token = await tokenProvider.getAccessToken();
+
+      const subscribersUrl = new URL(
+        `/subscription/v1/subscribers/${subscriber}/${type}/:type/channels`,
+        notificationServiceUrl
+      );
+
+      const { data } = await axios.get(subscribersUrl.href, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      res.send(data);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function unsubscribe(tokenProvider: TokenProvider, directory: ServiceDirectory): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -170,6 +193,7 @@ export const createSubscriberRouter = ({
 
   router.get('/get-subscriber/:subscriberId', getSubscriber(tokenProvider, directory));
   router.delete('/types/:type/subscriptions/:id', unsubscribe(tokenProvider, directory));
+  router.get('/subscribers/:subscriber/types/:type/channels', getSubscriptionChannels(tokenProvider, directory));
 
   return router;
 };

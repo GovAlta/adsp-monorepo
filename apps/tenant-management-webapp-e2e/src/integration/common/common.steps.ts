@@ -109,7 +109,7 @@ Then('the user views delete {string} confirmation modal for {string}', function 
 });
 
 When('the user clicks Delete button in delete confirmation modal', function () {
-  commonObj.deleteConfirmationModalDeleteBtn().click();
+  commonObj.deleteConfirmationModalDeleteBtn().scrollIntoView().should('be.visible').click();
 });
 
 When('the user waits {string} seconds', function (seconds) {

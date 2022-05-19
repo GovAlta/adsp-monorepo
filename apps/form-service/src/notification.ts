@@ -48,6 +48,8 @@ class NotificationServiceImpl implements NotificationService {
         ...LOG_CONTEXT,
         tenant: tenantId?.toString(),
       });
+
+      return null;
     }
   }
 
@@ -80,20 +82,22 @@ class NotificationServiceImpl implements NotificationService {
 
   async unsubscribe(tenantId: AdspId, urn: AdspId): Promise<boolean> {
     try {
+      let deleted = false;
       const subscriber = await this.getSubscriber(tenantId, urn);
+      if (subscriber) {
+        const apiUrl = await this.directory.getServiceUrl(this.notificationApiId);
+        const subscriptionUrl = new URL(
+          `v1/types/form-status-updates/subscriptions/${subscriber.id}?tenantId=${tenantId}`,
+          apiUrl
+        );
 
-      const apiUrl = await this.directory.getServiceUrl(this.notificationApiId);
-      const subscriptionUrl = new URL(
-        `v1/types/form-status-updates/subscriptions/${subscriber.id}?tenantId=${tenantId}`,
-        apiUrl
-      );
-
-      const token = await this.tokenProvider.getAccessToken();
-      const { data } = await axios.delete<{ deleted: boolean }>(subscriptionUrl.href, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      return data.deleted;
+        const token = await this.tokenProvider.getAccessToken();
+        const { data } = await axios.delete<{ deleted: boolean }>(subscriptionUrl.href, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        deleted = data.deleted;
+      }
+      return deleted;
     } catch (err) {
       this.logger.warn(`Error encountered unsubscribing for subscriber ${urn}. ${err}`, {
         ...LOG_CONTEXT,
@@ -164,7 +168,7 @@ class NotificationServiceImpl implements NotificationService {
           tenant: tenantId?.toString(),
         }
       );
-      throw err;
+      return false;
     }
   }
 }

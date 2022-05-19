@@ -30,7 +30,7 @@ export const createEmailProvider = ({
   return {
     send: async (notification) => {
       await transport.sendMail({
-        from: 'noreply@gov.ab.ca',
+        from: { name: 'Government of Alberta', address: 'noreply@gov.ab.ca' },
         to: notification.to,
         subject: notification.message.subject,
         html: notification.message.body,

@@ -173,16 +173,16 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   }, [dispatch]);
 
   useEffect(() => {
-    if (notification?.notificationTypes !== undefined) {
-      dispatch(FetchCoreNotificationTypesService());
-    }
+    dispatch(FetchCoreNotificationTypesService());
   }, [notification?.notificationTypes]);
 
-  function reset() {
+  function reset(closeEventModal?: boolean) {
     setShowTemplateForm(false);
     setEventTemplateFormState(addNewEventTemplateContent);
     setEditType(false);
-    setEditEvent(null);
+    if (closeEventModal) {
+      setEditEvent(null);
+    }
     setSelectedType(emptyNotificationType);
     setErrors({});
   }
@@ -280,9 +280,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     }
   };
 
-  const saveAndReset = () => {
+  const saveAndReset = (closeEventModal?: boolean) => {
     saveOrAddEventTemplate();
-    reset();
+    reset(closeEventModal);
   };
 
   const editEventTemplateContent = {
@@ -314,14 +314,12 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     <NotificationStyles>
       <div>
         <p>
-          Notification types represent a bundled set of notifications that can be subscribed to and provides the access
-          roles for that set. For example, a ‘Application Progress’ type could include notifications for submission of
-          the application, processing started, and application processed.
+          Notification types represent a bundled set of notifications that can be subscribed to. For example, an
+          ‘Application Progress’ type could include notifications for submission of the application, processing started,
+          and application processed.
         </p>
         <p>
-          A subscriber has a subscription to the set and cannot subscribe to the individual notifications in the set.
-          Notification types are configured in the configuration service under the platform:notification-service
-          namespace and name.
+          A subscriber has a subscription to the whole set and cannot subscribe to individual notifications in the set.
         </p>
       </div>
       <Buttons>
@@ -679,12 +677,15 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           type.subscriberRoles = type.subscriberRoles || [];
           type.events = type.events || [];
           type.publicSubscribe = type.publicSubscribe || false;
+
+          if (!type.channels.includes('email')) {
+            // Must include email as first channel
+            type.channels = ['email', ...type.channels];
+          }
           const isDuplicatedName =
             notification.notificationTypes &&
             isDuplicatedNotificationName(coreNotification, notification.notificationTypes, selectedType, type.name);
-          if (type.channels.length === 0) {
-            setErrors({ channels: 'Please select at least one channel.' });
-          } else if (isDuplicatedName) {
+          if (isDuplicatedName) {
             setErrors({ name: 'Duplicated name of notification type.' });
           } else {
             dispatch(UpdateNotificationTypeService(type));
@@ -707,10 +708,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           setShowTemplateForm(true);
         }}
         onCancel={() => {
-          reset();
+          reset(true);
         }}
         onClickedOutside={() => {
-          reset();
+          reset(true);
         }}
       />
 
@@ -753,11 +754,14 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 setBody(value);
               }}
               setPreview={(channel) => {
-                if (templates) {
+                if (templates && templates[channel]) {
                   setBodyPreview(
                     generateMessage(getTemplateBody(templates[channel]?.body, channel, htmlPayload), htmlPayload)
                   );
                   setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
+                } else {
+                  setBodyPreview('');
+                  setSubjectPreview('');
                 }
                 setCurrentChannel(channel);
               }}
@@ -769,7 +773,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 setTemplates(JSON.parse(JSON.stringify(savedTemplates)));
                 reset();
               }}
-              saveAndReset={() => saveAndReset()}
+              saveAndReset={saveAndReset}
               validateEventTemplateFields={() => validateEventTemplateFields()}
               eventSuggestion={getEventSuggestion()}
               savedTemplates={savedTemplates}

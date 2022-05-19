@@ -122,11 +122,14 @@ Feature: Service status
     And the user selects "Published" filter by status radio button
     Then the user "views" the "Published" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     # Unpublish the notice
+    # Because notices page refreshs every 30 seconds and our unpublish/delete step randomly fails, add steps to go off and back to the notices page so that the unpublish/delete step is done before the next refresh
+    When the user selects "Overview" tab for "Status"
+    And the user selects "Notices" tab for "Status"
     When the user clicks "unpublish" menu for the "Published" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     And the user selects "Draft" filter by status radio button
     Then the user "views" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     # Delete the notice
-    When the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
+    And the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
     Then the user views delete "notice" confirmation modal for "<Description2>"
     When the user clicks Delete button in delete confirmation modal
     And the user selects "Active" filter by status radio button
@@ -154,7 +157,7 @@ Feature: Service status
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" "Autotest-addApp Edited" in the application list
 
-  @TEST_CS-996 @regression
+  @TEST_CS-996 @REQ_CS-962 @regression
   Scenario: As a tenant admin, I can trigger application status change event and see the event in the event log
     # Create an application for testing application status chagne events
     Given a tenant admin user is on status applications page
@@ -195,3 +198,23 @@ Feature: Service status
     Then the user views delete "application" confirmation modal for "autotest-status-change-event"
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" "autotest-status-change-event" in the application list
+
+  @TEST_CS-1282 @REQ_CS-905 @regression
+  Scenario: As an interested stakeholder, I can verify status notifications for a tenant, so that I know about service availability.
+    Given a tenant admin user is on notification subscriptions page
+    When the user types "auto.test@abc.com" in Search subscriber email field
+    And the user clicks Search button on notifications page
+    Then the user "views" the subscription of "autotest-DO-NOT-DELETE", "auto.test@abc.com" under "Application status update"
+    Given a tenant admin user is on status applications page
+    Then the user "views" "autotest-DO-NOT-DELETE" in the application list
+    And the user views current status for "autotest-DO-NOT-DELETE"
+    When the user clicks Change status button for "autotest-DO-NOT-DELETE"
+    And the user changes status to the first unused status
+    When the user clicks Save button in Manual status change modal
+    Then the user views the status of "autotest-DO-NOT-DELETE" changed to the first unused status
+    When the user waits "20" seconds
+    And the user selects the "Event log" menu item
+    Then the "Event log" landing page is displayed
+    When the user searches with "notification-service:notification-sent", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
+    Then the user views the events matching the search filter of "notification-service:notification-sent"
+    And the user views the event details of "autotest-DO-NOT-DELETE" application status changed from "{original status}" to "{new status}" for subscriber of "auto.test@abc.com"

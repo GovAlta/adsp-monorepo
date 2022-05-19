@@ -103,10 +103,16 @@ describe('TaskEntity', () => {
         name: 'test',
       });
 
-      const result = await entity.update(user, { name: 'test-2', description: 'testing 123', context: { a: 'a' } });
+      const result = await entity.update(user, {
+        name: 'test-2',
+        description: 'testing 123',
+        context: { a: 'a' },
+        data: { b: 12 },
+      });
       expect(result.name).toBe('test-2');
       expect(result.description).toBe('testing 123');
       expect(result.context.a).toBe('a');
+      expect(result.data.b).toBe(12);
     });
 
     it('can update for admin', async () => {

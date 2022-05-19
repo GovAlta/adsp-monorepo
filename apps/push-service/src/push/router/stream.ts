@@ -43,7 +43,7 @@ export const getStream = async (
   try {
     const user = req.user as User;
 
-    const tenantId = (tenant && (await tenantService.getTenantByName(tenant.replace('-', ' '))))?.id || user?.tenantId;
+    const tenantId = (tenant && (await tenantService.getTenantByName(tenant.replace(/-/g, ' '))))?.id || user?.tenantId;
     if (!tenantId) {
       throw new InvalidOperationError('No tenant specified for request.');
     }

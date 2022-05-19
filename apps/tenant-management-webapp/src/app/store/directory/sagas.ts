@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { put, select, call } from 'redux-saga/effects';
 import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
@@ -14,18 +15,19 @@ import {
   fetchEntryDetailSuccess,
   FetchEntryDetailByURNsAction,
 } from './actions';
-import { DirectoryApi } from './api';
+
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator, UpdateElementIndicator } from '@store/session/actions';
 import { adspId } from '@lib/adspId';
 import { Service } from './models';
+import { toKebabName } from '@lib/kebabName';
 
 export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
   const core = 'platform';
   const state: RootState = yield select();
-  const token = state.session.credentials.token;
-  const api = new DirectoryApi(state.config.tenantApi, token);
-  const tenantName: string = yield select((state: RootState) => state.tenant.name);
+  const token: string = state.session.credentials.token;
+  const tenantName: string = state.tenant.name;
+  const directoryBaseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
 
   yield put(
     UpdateIndicator({
@@ -33,50 +35,69 @@ export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
       message: 'Loading...',
     })
   );
+  if (directoryBaseUrl && token) {
+    try {
+      const { data: coreDirectory } = yield call(
+        axios.get,
+        `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(core)}/entries`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
-  try {
-    let tenantDirectory = [];
-    const coreDirectory = yield call([api, api.fetchDirectoryTenant], core);
+      if (tenantName.toLowerCase() !== core) {
+        const { data: tenantDirectory } = yield call(
+          axios.get,
+          `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}/entries`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
-    if (tenantName.toLowerCase() !== core) {
-      tenantDirectory = yield call([api, api.fetchDirectoryTenant], tenantName);
+        yield put(fetchDirectorySuccess({ directory: [...tenantDirectory, ...coreDirectory] }));
+      } else {
+        yield put(fetchDirectorySuccess({ directory: coreDirectory }));
+      }
 
-      yield put(fetchDirectorySuccess({ directory: [...tenantDirectory, ...coreDirectory] }));
-    } else {
-      yield put(fetchDirectorySuccess({ directory: coreDirectory }));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    } catch (e) {
+      yield put(ErrorNotification({ message: 'Failed to fetch directory service' }));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
     }
-
-    yield put(
-      UpdateIndicator({
-        show: false,
-      })
-    );
-  } catch (e) {
-    yield put(ErrorNotification({ message: 'Failed to fetch directory service' }));
-    yield put(
-      UpdateIndicator({
-        show: false,
-      })
-    );
   }
 }
 
 export function* createEntryDirectory(action: CreateEntryAction): SagaIterator {
   const state: RootState = yield select();
   const token = state.session.credentials.token;
-  const api = new DirectoryApi(state.config.tenantApi, token);
-
+  const directoryBaseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
+  const tenantName: string = state.tenant.name;
   try {
     const sendEntry = {} as Service;
 
-    sendEntry['service'] = action.data.api ? `${action.data.service}:${action.data.api}` : action.data.service;
-    sendEntry['url'] = action.data.url;
-    sendEntry['namespace'] = action.data.namespace;
+    sendEntry.service = action.data.api ? `${action.data.service}:${action.data.api}` : action.data.service;
+    sendEntry.url = action.data.url;
+    sendEntry.namespace = action.data.namespace;
 
-    const result = yield call([api, api.createEntry], sendEntry);
+    const { data } = yield call(
+      axios.post,
+      `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}`,
+      { ...sendEntry },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
-    if (result) {
-      action.data['_id'] = result._id;
+    if (data) {
+      action.data['_id'] = data._id;
       yield put(createEntrySuccess(action.data));
     }
   } catch (err) {
@@ -91,17 +112,25 @@ export function* createEntryDirectory(action: CreateEntryAction): SagaIterator {
 export function* updateEntryDirectory(action: UpdateEntryAction): SagaIterator {
   const state: RootState = yield select();
   const token = state.session.credentials.token;
-  const api = new DirectoryApi(state.config.tenantApi, token);
+  const directoryBaseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
+  const tenantName: string = state.tenant.name;
 
   try {
     const sendEntry = {} as Service;
 
-    sendEntry['service'] = action.data.api ? `${action.data.service}:${action.data.api}` : action.data.service;
-    sendEntry['url'] = action.data.url;
-    sendEntry['namespace'] = action.data.namespace;
-    sendEntry['_id'] = action.data._id;
-    const result = yield call([api, api.updateEntry], sendEntry);
-    if (result) {
+    sendEntry.service = action.data.api ? `${action.data.service}:${action.data.api}` : action.data.service;
+    sendEntry.url = action.data.url;
+    sendEntry.namespace = action.data.namespace;
+    sendEntry._id = action.data._id;
+    const { data } = yield call(
+      axios.put,
+      `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}`,
+      { ...sendEntry },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    if (data === 'Created') {
       yield put(updateEntrySuccess(action.data));
     }
   } catch (err) {
@@ -112,14 +141,21 @@ export function* updateEntryDirectory(action: UpdateEntryAction): SagaIterator {
 export function* deleteEntryDirectory(action: DeleteEntryAction): SagaIterator {
   const state: RootState = yield select();
   const token = state.session.credentials.token;
-  const api = new DirectoryApi(state.config.tenantApi, token);
-  const sendEntry = {} as Service;
+  const directoryBaseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
+  const tenantName: string = state.tenant.name;
 
-  sendEntry['service'] = action.data.api ? `${action.data.service}:${action.data.api}` : action.data.service;
-  sendEntry['namespace'] = action.data.namespace;
+  const service = action.data.api ? `${action.data.service}:${action.data.api}` : action.data.service;
+
   try {
-    const result = yield call([api, api.deleteEntry], sendEntry);
-    if (result) {
+    const { data } = yield call(
+      axios.delete,
+      `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}/services/${service}`,
+
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    if (data === 'OK') {
       yield put(deleteEntrySuccess(action.data));
     }
   } catch (err) {
@@ -130,7 +166,8 @@ export function* deleteEntryDirectory(action: DeleteEntryAction): SagaIterator {
 export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator {
   const state: RootState = yield select();
   const token = state.session.credentials.token;
-  const api = new DirectoryApi(state.config.tenantApi, token);
+  const directoryBaseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
+
   yield put(
     UpdateElementIndicator({
       show: true,
@@ -138,12 +175,20 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
   );
 
   try {
-    const result = yield call([api, api.fetchEntryDetail], action.data);
-    if (result) {
+    const { data } = yield call(
+      axios.get,
+      `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(action.data.namespace)}/services/${
+        action.data.service
+      }`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    if (data) {
       const service = action.data;
       service.loaded = true;
-      if (result.metadata) {
-        service.metadata = result.metadata;
+      if (data.metadata) {
+        service.metadata = data.metadata;
       } else {
         service.metadata = null;
       }
@@ -166,7 +211,8 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
 export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction): SagaIterator {
   const state: RootState = yield select();
   const token = state.session.credentials.token;
-  const api = new DirectoryApi(state.config.tenantApi, token);
+  const directoryBaseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
+  const tenantName: string = state.tenant.name;
   const directoryUpdateList = state.directory.directory;
 
   try {
@@ -182,7 +228,14 @@ export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction
           const existed = directoryUpdateList.find((x) => x.service === _service?.service);
           if (!(existed && existed.metadata)) {
             // fetch metadata from remote only when it does not exist
-            const result = yield call([api, api.fetchEntryDetail], _service);
+            const { data: result } = yield call(
+              axios.get,
+              `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}/services/${_service.service}`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+
             _service.metadata = result?.metadata ? { ...result?.metadata } : null;
             yield put(fetchEntryDetailSuccess(_service));
           }

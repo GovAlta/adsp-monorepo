@@ -56,7 +56,7 @@ components:
                 items:
                   $ref: "#/components/schemas/Link"
 
-"/api/directory/v2/namespaces/{namespace}":
+"/api/directory/v2/namespaces/{namespace}/entries":
   get:
     tags:
       - Directory service

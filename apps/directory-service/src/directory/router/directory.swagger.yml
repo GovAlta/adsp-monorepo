@@ -1,0 +1,167 @@
+components:
+  schemas:
+    DirectoryEntry:
+      title: Directory entry
+      type: object
+      properties:
+        urn:
+          type: string
+          description: ADSP urn of the service or API.
+        url:
+          type: string
+          description: Url of the service or API.
+        service:
+          type: string
+          description: Name of the service.
+        api:
+          type: string
+          description: Name of the API.
+        namespace:
+          type: string
+          description: Namespace of the directory entry.
+    Link:
+      type: object
+      properties:
+        href:
+          type: string
+        title:
+          type: string
+    ServiceMetadata:
+      title: Service metadata
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        _links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+            api:
+              oneOf:
+                - $ref: '#/components/schemas/Link'
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/Link'
+            doc:
+              $ref: '#/components/schemas/Link'
+            health:
+              $ref: '#/components/schemas/Link'
+          additionalProperties:
+            oneOf:
+              - $ref: '#/components/schemas/Link'
+              - type: array
+                items:
+                  $ref: '#/components/schemas/Link'
+
+'/directory/v2/namespaces/{namespace}/entries':
+  get:
+    tags:
+      - Directory service
+    description: Fetch the directory entries by namespace
+    parameters:
+      - name: namespace
+        description: namespace of the directory entry
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/DirectoryEntry'
+  put:
+    tags:
+      - Directory service
+    description: Update the directory entires
+    parameters:
+      - name: namespace
+        description: namespace of the directory entry
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              url:
+                type: string
+              service:
+                type: string
+              api:
+                type: string
+    responses:
+      201:
+        description: Directory entry is successfully updated
+      400:
+        description: Bad request
+      401:
+        description: Unauthorized
+
+'/directory/v2/namespaces/{namespace}/services/{service}':
+  get:
+    tags:
+      - Directory service
+    parameters:
+      - name: namespace
+        description: namespace of the directory entry
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service
+        description: service of the directory entry
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Return service metadata
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                _id:
+                  type: string
+                service:
+                  type: string
+                host:
+                  type: string
+                metadata:
+                  $ref: '#/components/schemas/ServiceMetadata'
+      401:
+        description: Unauthorized
+
+  delete:
+    tags:
+      - Directory service
+    parameters:
+      - name: namespace
+        description: namespace of the directory entry
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service
+        description: service of the directory entry
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Directory entry is deleted
+      401:
+        description: Unauthorized

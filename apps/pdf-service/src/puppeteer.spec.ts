@@ -1,15 +1,14 @@
 import { createPdfService } from './puppeteer';
 
 describe('puppeteer', () => {
-  it('can create pdf service', () => {
-    const service = createPdfService();
+  it('can create pdf service', async () => {
+    const service = await createPdfService();
     expect(service).toBeTruthy();
   });
 
   describe('PuppeteerPdfService', () => {
-    const service = createPdfService();
-
     it('can generate pdf', async () => {
+      const service = await createPdfService();
       const result = await service.generatePdf(`<!doctype html>
       <html lang=en>
       <head>

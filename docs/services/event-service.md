@@ -53,7 +53,7 @@ Event definitions are configured using the [configuration service](configuration
   }
 
   await fetch(
-    `${configurationServiceUrl}/configuration/v1/configuration/platform/event-service`,
+    `${configurationServiceUrl}/configuration/v2/configuration/platform/event-service`,
     {
       method: 'PATCH',
       headers: {

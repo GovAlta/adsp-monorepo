@@ -59,7 +59,7 @@ Updates are applied to the latest revision of configuration.
   }
 
   await fetch(
-    `${configurationServiceUrl}/configuration/v1/configuration/${namespace}/${name}`,
+    `${configurationServiceUrl}/configuration/v2/configuration/${namespace}/${name}`,
     {
       method: 'PATCH',
       headers: {
@@ -79,7 +79,7 @@ Create a revision to snapshot the latest configuration. The snapshot cannot be m
   const name = 'formula-values';
 
   await fetch(
-    `${configurationServiceUrl}/configuration/v1/configuration/${namespace}/${name}`,
+    `${configurationServiceUrl}/configuration/v2/configuration/${namespace}/${name}`,
     {
       method: 'POST',
       headers: {

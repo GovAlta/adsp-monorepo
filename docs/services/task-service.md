@@ -54,7 +54,7 @@ Queues are configured using the [configuration service](configuration-service.md
   }
 
   await fetch(
-    `${configurationServiceUrl}/configuration/v1/configuration/platform/task-service`,
+    `${configurationServiceUrl}/configuration/v2/configuration/platform/task-service`,
     {
       method: 'PATCH',
       headers: {

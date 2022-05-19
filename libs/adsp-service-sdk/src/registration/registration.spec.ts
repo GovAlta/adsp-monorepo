@@ -160,4 +160,26 @@ describe('ServiceRegistrar', () => {
     expect(axiosMock.patch.mock.calls[0][0]).toContain('file-service');
     expect(axiosMock.patch.mock.calls[0][1].update).toHaveProperty('service-files');
   });
+
+  it('can register additional', async () => {
+    const registrar = new ServiceRegistrarImpl(logger, directoryMock, tokenProviderMock);
+
+    axiosMock.patch.mockResolvedValue({ data: {} });
+    const configuration = {};
+    await registrar.register({
+      serviceId: adspId`urn:ads:platform:test-service`,
+      displayName: 'Test service',
+      description: 'This is a test service.',
+      serviceConfigurations: [
+        {
+          serviceId: adspId`urn:ads:platform:test-service`,
+          configuration,
+        },
+      ],
+    });
+
+    expect(axiosMock.patch).toHaveBeenCalledTimes(1);
+    expect(axiosMock.patch.mock.calls[0][0]).toContain('test-service');
+    expect(axiosMock.patch.mock.calls[0][1].update).toBe(configuration);
+  });
 });

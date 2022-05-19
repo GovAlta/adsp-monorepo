@@ -47,7 +47,7 @@ File types are configured using the [configuration service](configuration-servic
   }
 
   await fetch(
-    `${configurationServiceUrl}/configuration/v1/configuration/platform/file-service`,
+    `${configurationServiceUrl}/configuration/v2/configuration/platform/file-service`,
     {
       method: 'PATCH',
       headers: {

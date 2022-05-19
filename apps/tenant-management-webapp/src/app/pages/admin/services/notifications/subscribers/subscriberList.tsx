@@ -12,6 +12,7 @@ import { renderNoItem } from '@components/NoItem';
 import { GoAIconButton } from '@abgov/react-components/experimental';
 import { DeleteModal } from '@components/DeleteModal';
 import type { SubscriberSearchCriteria } from '@store/subscription/models';
+import { phoneWrapper } from '@lib/wrappers';
 
 interface ActionComponentProps {
   subscriber: Subscriber;
@@ -19,14 +20,6 @@ interface ActionComponentProps {
   openDeleteModalFunction?: (subscriber: Subscriber) => void;
   hideUserActions?: boolean;
 }
-
-const phoneWrapper = (phoneNumber) => {
-  if (phoneNumber) {
-    return (
-      '1 (' + phoneNumber.substring(0, 3) + ') ' + phoneNumber.substring(3, 6) + '-' + phoneNumber.substring(6, 10)
-    );
-  }
-};
 
 const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
   subscriber,
@@ -57,9 +50,7 @@ const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
       <tr key={subscriber.id}>
         <td>{characterLimit(subscriber?.addressAs, 30)}</td>
         <td>{characterLimit(email, 30)}</td>
-        <td>
-          <span style={{ whiteSpace: 'nowrap' }}>{phoneWrapper(sms)}</span>
-        </td>
+        <td className="no-wrap">{phoneWrapper(sms)}</td>
         {!hideUserActions ? (
           <td>
             <RowFlex>
@@ -168,25 +159,27 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
       {subscribers && subscribers.length === 0 && renderNoItem('subscriber')}
       {subscribers && subscribers.length > 0 && (
         <DataTable>
-          <thead>
-            <tr>
-              <th>Address as</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th style={{ width: '0' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {subscribers.map((subscriber) => (
-              <SubscriberListItem
-                openModalFunction={openModalFunction}
-                subscriber={subscriber}
-                openDeleteModalFunction={openDeleteModalFunction}
-                key={subscriber.id}
-                hideUserActions={false}
-              />
-            ))}
-          </tbody>
+          <DataTableStyle>
+            <thead>
+              <tr>
+                <th>Address as</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th className="action">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {subscribers.map((subscriber) => (
+                <SubscriberListItem
+                  openModalFunction={openModalFunction}
+                  subscriber={subscriber}
+                  openDeleteModalFunction={openDeleteModalFunction}
+                  key={subscriber.id}
+                  hideUserActions={false}
+                />
+              ))}
+            </tbody>
+          </DataTableStyle>
         </DataTable>
       )}
       <SubscriberModalForm
@@ -245,5 +238,16 @@ const RowFlex = styled.div`
   flex-direction: row;
   & > :not([data-account-link]):first-child {
     visibility: hidden;
+  }
+`;
+
+const DataTableStyle = styled.div`
+  .action {
+    width: 0;
+    text-align-last: right;
+  }
+
+  .no-wrap {
+    white-space: nowrap;
   }
 `;

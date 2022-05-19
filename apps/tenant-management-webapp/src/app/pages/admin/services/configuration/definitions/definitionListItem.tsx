@@ -1,19 +1,32 @@
-import React, { FunctionComponent, useMemo, useState, useEffect } from 'react';
+import React, { FunctionComponent, useState } from 'react';
 import { IconDiv, EntryDetail } from '../styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
+import { ConfigDefinition, ConfigurationSchema } from '@store/configuration/model';
 
 interface serviceItemProps {
-  configSchema: string;
+  configSchema: ConfigurationSchema;
   configName: string;
+  tenantName: string;
+  nameSpace: string;
+  isTenantSpecificConfig?: boolean;
+  onEdit: (definition: ConfigDefinition) => void;
+  onDelete: (definitionName: string) => void;
 }
 
-export const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ configSchema, configName }) => {
+export const ConfigurationDefinitionItemComponent: FunctionComponent<serviceItemProps> = ({
+  configSchema,
+  configName,
+  onEdit,
+  onDelete,
+  tenantName,
+  nameSpace,
+  isTenantSpecificConfig,
+}) => {
   const [showSchema, setShowSchema] = useState(false);
-  console.log('configName', configName);
   return (
     <>
       <tr>
-        <td data-testid="config-name">{configName}</td>
+        <td data-testid="configuration-name">{configName}</td>
         <td>
           <IconDiv>
             <GoAContextMenu>
@@ -23,6 +36,28 @@ export const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ conf
                 testId="configuration-toggle-details-visibility"
               />
             </GoAContextMenu>
+            {tenantName !== 'Platform' || isTenantSpecificConfig ? (
+              <>
+                <GoAContextMenuIcon
+                  type="create"
+                  onClick={() =>
+                    onEdit({
+                      namespace: nameSpace,
+                      name: configName,
+                      payloadSchema: { ...configSchema },
+                    })
+                  }
+                  testId="edit-details"
+                />
+                <GoAContextMenuIcon
+                  type="trash"
+                  onClick={() => onDelete(`${nameSpace}:${configName}`)}
+                  testId="delete-config"
+                />
+              </>
+            ) : (
+              ''
+            )}
           </IconDiv>
         </td>
       </tr>
@@ -34,7 +69,7 @@ export const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ conf
               padding: '0px',
             }}
           >
-            <EntryDetail data-testid="configuration-details">{configSchema}</EntryDetail>
+            <EntryDetail data-testid="configuration-details">{JSON.stringify(configSchema, null, 2)}</EntryDetail>
           </td>
         </tr>
       )}

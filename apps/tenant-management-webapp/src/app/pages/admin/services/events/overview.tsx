@@ -2,19 +2,22 @@ import React, { FunctionComponent, useState, useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components';
 import { RootState } from '@store/index';
 import { EventDefinition, defaultEventDefinition } from '@store/event/models';
+import { getEventDefinitions } from '@store/event/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import { EventDefinitionModalForm } from './edit';
 import { EventMetrics } from './metrics';
 import { fetchEventMetrics } from '@store/event/actions';
 
 interface OverviewProps {
-  updateActiveIndex: (index: number) => void;
+  setActiveEdit: (boolean) => void;
+  setActiveIndex: (index: number) => void;
 }
 
-export const EventsOverview: FunctionComponent<OverviewProps> = ({ updateActiveIndex }) => {
+export const EventsOverview: FunctionComponent<OverviewProps> = (props) => {
   const definitions = useSelector((state: RootState) => state.event.definitions);
   const [coreNamespaces, setCoreNamespaces] = useState<string[]>([]);
   const [openAddDefinition, setOpenAddDefinition] = useState(false);
+  const { setActiveEdit, setActiveIndex } = props;
 
   useEffect(() => {
     const namespaces = Object.values(definitions)
@@ -26,6 +29,20 @@ export const EventsOverview: FunctionComponent<OverviewProps> = ({ updateActiveI
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(fetchEventMetrics());
+  }, []);
+
+  useEffect(() => {
+    setActiveEdit(false);
+    setActiveIndex(0);
+  }, []);
+
+  // set index to 0(overview tab) when switching back to it
+  useEffect(() => {
+    setActiveIndex(0);
+  }, []);
+
+  useEffect(() => {
+    dispatch(getEventDefinitions());
   }, []);
 
   function reset() {
@@ -50,7 +67,7 @@ export const EventsOverview: FunctionComponent<OverviewProps> = ({ updateActiveI
         <GoAButton
           data-testid="add-definition"
           onClick={() => {
-            setOpenAddDefinition(true);
+            setActiveEdit(true);
           }}
         >
           Add definition
@@ -66,7 +83,7 @@ export const EventsOverview: FunctionComponent<OverviewProps> = ({ updateActiveI
           isEdit={false}
           initialValue={defaultEventDefinition}
           onSave={() => {
-            updateActiveIndex(1);
+            setActiveIndex(1);
           }}
         />
       )}

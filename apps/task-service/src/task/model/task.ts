@@ -13,6 +13,7 @@ interface NewTask {
   description?: string;
   definition?: { namespace: string; name: string };
   recordId?: string;
+  data?: Record<string, unknown>;
   priority?: TaskPriority;
 }
 
@@ -26,6 +27,7 @@ export class TaskEntity implements Task {
   description: string;
   priority: TaskPriority;
   recordId: string;
+  data: Record<string, unknown>;
   status: TaskStatus;
   createdOn: Date;
   startedOn: Date;
@@ -50,6 +52,7 @@ export class TaskEntity implements Task {
     this.name = task.name;
     this.description = task.description;
     this.recordId = task.recordId;
+    this.data = task.data || {};
 
     const record = task as Task;
     if (record.id) {
@@ -79,6 +82,10 @@ export class TaskEntity implements Task {
 
     if (update.context) {
       this.context = update.context;
+    }
+
+    if (update.data) {
+      this.data = update.data;
     }
 
     return this.repository.save(this);

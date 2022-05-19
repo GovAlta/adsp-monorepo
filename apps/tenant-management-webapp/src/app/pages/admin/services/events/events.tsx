@@ -6,11 +6,17 @@ import React, { FunctionComponent, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { EventDefinitions } from './definitions';
 import { EventsOverview } from './overview';
+import { EventStreams } from './stream';
 
 export const Events: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
   const [activeIndex, setActiveIndex] = useState<number>(0);
+  const [activateEditState, setActivateEditState] = useState<boolean>(false);
+  const activateEdit = (edit: boolean) => {
+    setActiveIndex(1);
+    setActivateEditState(edit);
+  };
 
   return (
     <Page>
@@ -19,13 +25,18 @@ export const Events: FunctionComponent = () => {
         <Tabs activeIndex={activeIndex} data-testid="events-tabs">
           <Tab label="Overview" data-testid="events-overview-tab">
             <EventsOverview
-              updateActiveIndex={(index: number) => {
+              setActiveIndex={(index: number) => {
                 setActiveIndex(index);
               }}
+              setActiveEdit={activateEdit}
             />
           </Tab>
           <Tab label="Definitions" data-testid="events-definitions-tab">
-            <EventDefinitions />
+            <EventDefinitions activeEdit={activateEditState} />
+          </Tab>
+
+          <Tab label="Streams" data-testid="events-streams-tab">
+            <EventStreams />
           </Tab>
         </Tabs>
       </Main>
@@ -35,7 +46,7 @@ export const Events: FunctionComponent = () => {
           <a
             rel="noopener noreferrer"
             target="_blank"
-            href={`${docBaseUrl}/${tenantName}?urls.primaryName=Event service`}
+            href={`${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Event service`}
           >
             Read the API docs
           </a>

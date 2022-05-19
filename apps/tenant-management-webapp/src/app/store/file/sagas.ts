@@ -1,4 +1,4 @@
-import { put, select, call, takeEvery } from 'redux-saga/effects';
+import { put, select, call, all, takeEvery } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { SagaIterator } from '@redux-saga/core';
 import FormData from 'form-data';
@@ -53,6 +53,12 @@ export function* uploadFile(file) {
 }
 
 export function* fetchFiles(): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading...',
+    })
+  );
   const state = yield select();
   try {
     const token = state.session?.credentials?.token;
@@ -60,8 +66,18 @@ export function* fetchFiles(): SagaIterator {
 
     const files = yield call([api, api.fetchFiles]);
     yield put(FetchFilesSuccessService({ data: files.results }));
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
   }
 }
 
@@ -109,16 +125,19 @@ export function* fetchFileTypes(): SagaIterator {
 
   if (configBaseUrl && token) {
     try {
-      const { data: configuration } = yield call(
-        axios.get,
-        `${configBaseUrl}/configuration/v2/configuration/platform/file-service/latest`,
-        {
+      const { tenant, core } = yield all({
+        tenant: call(axios.get, `${configBaseUrl}/configuration/v2/configuration/platform/file-service/latest`, {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        }),
+        core: call(axios.get, `${configBaseUrl}/configuration/v2/configuration/platform/file-service?core`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      });
+      const fileTypeInfo = Object.entries(tenant?.data).map(([_k, type]) => type as FileTypeItem);
+      const coreFileTypeInfo = Object.entries(core?.data?.latest?.configuration).map(
+        ([_k, type]) => type as FileTypeItem
       );
-      const fileTypeInfo = Object.entries(configuration).map(([_k, type]) => type as FileTypeItem);
-
-      yield put(FetchFileTypeSucceededService({ data: fileTypeInfo }));
+      yield put(FetchFileTypeSucceededService({ tenant: fileTypeInfo, core: coreFileTypeInfo }));
 
       const fileTypes = yield select((state: RootState) => state.fileService.fileTypes);
 

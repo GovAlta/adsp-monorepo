@@ -3,14 +3,18 @@ import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton } from '@abgov/react-components';
 import { EventDefinitionsList } from './definitionsList';
 import { EventDefinitionModalForm } from './edit';
-import { deleteEventDefinition, getEventDefinitions } from '@store/event/actions';
+import { deleteEventDefinition } from '@store/event/actions';
 import { defaultEventDefinition, EventDefinition } from '@store/event/models';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { PageIndicator } from '@components/Indicator';
 import { DeleteModal } from '@components/DeleteModal';
 
-export const EventDefinitions: FunctionComponent = () => {
+interface ParentCompProps {
+  activeEdit?: boolean;
+}
+
+export const EventDefinitions: FunctionComponent<ParentCompProps> = ({ activeEdit }) => {
   const [editDefinition, setEditDefinition] = useState(false);
   const [selectedDefinition, setSelectedDefinition] = useState<EventDefinition>(defaultEventDefinition);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -32,14 +36,19 @@ export const EventDefinitions: FunctionComponent = () => {
   useEffect(() => {}, [indicator]);
 
   const dispatch = useDispatch();
-  useEffect(() => {
-    dispatch(getEventDefinitions());
-  }, []);
 
   function reset() {
     setEditDefinition(false);
     setSelectedDefinition(defaultEventDefinition);
   }
+
+  useEffect(() => {
+    if (activeEdit) {
+      setSelectedDefinition(defaultEventDefinition);
+      setIsEdit(false);
+      setEditDefinition(true);
+    }
+  }, [activeEdit]);
 
   return (
     <>

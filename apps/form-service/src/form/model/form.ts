@@ -1,7 +1,6 @@
 import { AdspId, assertAdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import * as hasha from 'hasha';
-import { v4 as uuidv4 } from 'uuid';
 import { FormDefinitionEntity } from '../model';
 import { FormRepository } from '../repository';
 import { FormServiceRoles } from '../roles';
@@ -12,6 +11,7 @@ import { FileService } from '../../file';
 export class FormEntity implements Form {
   tenantId: AdspId;
   id: string;
+  formDraftUrl: string;
   created: Date;
   createdBy: { id: string; name: string };
   locked: Date;
@@ -25,18 +25,17 @@ export class FormEntity implements Form {
     user: User,
     repository: FormRepository,
     definition: FormDefinitionEntity,
-    notificationService: NotificationService,
-    applicantInfo: Omit<Subscriber, 'urn'>
+    id: string,
+    formDraftUrl: string,
+    applicant: Subscriber
   ): Promise<FormEntity> {
     if (!definition.canApply(user)) {
       throw new UnauthorizedUserError('create form', user);
     }
 
-    const id = uuidv4();
-    const applicant = await notificationService.subscribe(definition.tenantId, id, applicantInfo);
-
     const form = new FormEntity(repository, definition, applicant, {
       id,
+      formDraftUrl,
       created: new Date(),
       createdBy: { id: user.id, name: user.name },
       locked: null,
@@ -59,6 +58,7 @@ export class FormEntity implements Form {
   ) {
     this.tenantId = definition.tenantId;
     this.id = form.id;
+    this.formDraftUrl = form.formDraftUrl;
     this.created = form.created;
     this.createdBy = form.createdBy;
     this.locked = form.locked;
@@ -70,7 +70,7 @@ export class FormEntity implements Form {
   }
 
   canAssess(user: User): boolean {
-    return isAllowedUser(user, this.tenantId, this.definition.assessorRoles);
+    return isAllowedUser(user, this.tenantId, [...this.definition.assessorRoles, FormServiceRoles.Admin]);
   }
 
   private async access(_user: User): Promise<FormEntity> {
@@ -87,7 +87,9 @@ export class FormEntity implements Form {
       throw new UnauthorizedUserError('send code', user);
     }
 
-    await notificationService.sendCode(this.tenantId, this.applicant);
+    if (this.applicant) {
+      await notificationService.sendCode(this.tenantId, this.applicant);
+    }
 
     return this;
   }
@@ -103,7 +105,7 @@ export class FormEntity implements Form {
     }
 
     // Provided code needs to be valid.
-    const verified = await notificationService.verifyCode(this.tenantId, this.applicant, code);
+    const verified = this.applicant && (await notificationService.verifyCode(this.tenantId, this.applicant, code));
     if (!verified) {
       throw new UnauthorizedError('Provided code could not be verified.');
     }
@@ -211,7 +213,9 @@ export class FormEntity implements Form {
       await fileService.delete(this.tenantId, file);
     }
 
-    await notificationService.unsubscribe(this.tenantId, this.applicant.urn);
+    if (this.applicant) {
+      await notificationService.unsubscribe(this.tenantId, this.applicant.urn);
+    }
 
     const deleted = this.repository.delete(this);
     return deleted;

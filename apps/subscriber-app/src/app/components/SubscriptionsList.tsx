@@ -1,26 +1,113 @@
 import { GoAButton } from '@abgov/react-components';
-import { GoAIcon } from '@abgov/react-components/experimental';
-import { Subscription } from '@store/subscription/models';
+import { Subscription, Subscriber, Channel, Channels } from '@store/subscription/models';
 import React from 'react';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { useSelector } from 'react-redux';
+import { ReactComponent as Mail } from '@assets/icons/mail.svg';
+import { ReactComponent as Slack } from '@assets/icons/slack.svg';
+import { ReactComponent as Chat } from '@assets/icons/chat.svg';
+import { ReactComponent as Checkmark } from '@assets/icons/checkmark.svg';
 
 interface SubscriptionsListProps {
-  subscriptions: Subscription[];
+  subscriber: Subscriber;
   onUnsubscribe: (typeId: string) => void;
 }
 
+const ChannelIcons = {
+  email: <Mail data-testid="mail-icon" style={{ color: '#666666' }} />,
+  sms: <Chat data-testid="sms-icon" style={{ color: '#666666' }} />,
+  bot: <Slack data-testid="bot-icon" style={{ color: '#666666' }} />,
+};
+
+const AvailableChannelsContainer = styled.div`
+  flex-wrap: wrap;
+  align-items: center;
+  display: flex;
+  position: relative;
+  .icon-0 {
+    position: absolute;
+    left: calc(50% - 50px);
+    top: -12px;
+  }
+  .icon-checked-0 {
+    position: absolute;
+    left: calc(50% - 35px);
+    top: -22px;
+  }
+  .icon-1 {
+    position: absolute;
+    left: calc(50% - 6px);
+    top: -12px;
+  }
+  .icon-checked-1 {
+    position: absolute;
+    left: calc(50% + 9px);
+    top: -22px;
+  }
+
+  .icon-2 {
+    position: absolute;
+    left: calc(50% + 36px);
+    top: -12px;
+  }
+
+  .icon-checked-2 {
+    position: absolute;
+    left: calc(50% + 51px);
+    top: -22px;
+  }
+`;
+
+interface AvailableChannelsProps {
+  channels: Channel[];
+  effectiveChannel: Channel | undefined;
+}
+
+const AvailableChannels = ({ channels, effectiveChannel }: AvailableChannelsProps): JSX.Element => {
+  const channelOrder = Object.keys(Channels) as Channel[];
+
+  if (channels) {
+    return (
+      <AvailableChannelsContainer>
+        {channelOrder.map((chn, index) => {
+          if (channels.includes(chn)) {
+            if (chn === effectiveChannel) {
+              return (
+                <div>
+                  <div className={`icon-${index}`}>{ChannelIcons[chn]}</div>
+                  <div className={`icon-checked-${index}`}>
+                    <Checkmark />
+                  </div>
+                </div>
+              );
+            }
+            return <div className={`icon-${index}`}>{ChannelIcons[chn]}</div>;
+          } else {
+            return <div />;
+          }
+        })}
+      </AvailableChannelsContainer>
+    );
+  }
+
+  return <div />;
+};
+
 const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
+  const subscriptions = props.subscriber.subscriptions;
+  const effectiveChannel = props.subscriber?.channels[0];
+
   return (
     <>
-      {props.subscriptions.map((subscription: Subscription) => {
+      {subscriptions.map((subscription: Subscription) => {
+        const typeChannels = subscription.type.channels;
         return (
           <tr key={`${subscription.typeId}`}>
             <td data-testid="subscription-name">{subscription.type.name}</td>
-            <IconsCell>
-              <GoAIcon data-testid="mail-icon" size="medium" type="mail" />
-            </IconsCell>
+            <td>
+              <AvailableChannels channels={typeChannels} effectiveChannel={effectiveChannel?.channel as Channel} />
+            </td>
             <ButtonsCell>
               {subscription.type?.manageSubscribe ? (
                 <GoAButton
@@ -62,11 +149,4 @@ export default SubscriptionsList;
 
 const ButtonsCell = styled.td`
   text-align: right;
-`;
-
-const IconsCell = styled.td`
-  display: flex;
-  justify-content: space-around;
-  width: 100%;
-  margin-top: 0.4rem;
 `;

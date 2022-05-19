@@ -113,10 +113,7 @@ export const patchConfigurationRevision =
           if (!request.update) {
             throw new InvalidOperationError(`Update request must include 'update' property.`);
           }
-          update = {
-            ...(entity.latest?.configuration || {}),
-            ...request.update,
-          };
+          update = entity.mergeUpdate(request.update);
           updateData = request.update;
           break;
         case OPERATION_DELETE:

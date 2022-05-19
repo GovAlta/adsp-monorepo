@@ -468,6 +468,7 @@ When(
           fileServiceObj.fileTypeEditButton(rowNumber).click();
           break;
         case 'Delete':
+          cy.wait(1000); // Wait to avoid no modal showing up for delete button clicking
           fileServiceObj.fileTypeDeleteButton(rowNumber).click();
           break;
         default:
@@ -478,12 +479,15 @@ When(
 );
 
 Then('the user views Delete file type modal for {string}', function (fileTypeName) {
+  cy.wait(1000); // Wait for modal
+  fileServiceObj.fileTypeDeleteModal().should('be.visible');
   fileServiceObj.fileTypeDeleteModalTitle().invoke('text').should('contains', 'Delete file type');
   fileServiceObj.fileTypeDeleteModalContent().invoke('text').should('contains', fileTypeName);
 });
 
 When('the user clicks Delete button on file type modal', function () {
-  fileServiceObj.fileTypeDeleteModalDeleteButton().click();
+  fileServiceObj.fileTypeDeleteModal().should('be.visible');
+  fileServiceObj.fileTypeDeleteModalDeleteButton().scrollIntoView().click();
   cy.wait(2000); //Wait the file type list to refresh
 });
 

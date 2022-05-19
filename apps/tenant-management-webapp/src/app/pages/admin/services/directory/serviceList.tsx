@@ -8,13 +8,22 @@ import { Service } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchEntryDetail } from '@store/directory/actions';
 import DataTable from '@components/DataTable';
+
 interface serviceItemProps {
   service: Service;
+  directory?: Service[];
   onEdit: (service: Service) => void;
   onDelete: (service: Service) => void;
+  onQuickAdd: (service: Service) => void;
 }
 
-const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, onEdit, onDelete }) => {
+const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({
+  service,
+  directory,
+  onEdit,
+  onDelete,
+  onQuickAdd,
+}) => {
   const [showDetails, setShowDetails] = useState(false);
   const dispatch = useDispatch();
   const setDetails = (service: Service) => {
@@ -26,6 +35,21 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
   const elementIndicator = useSelector((state: RootState) => {
     return state?.session?.elementIndicator;
   });
+
+  const quickAdd = (service) => {
+    const shortCutService = {} as Service;
+    shortCutService['namespace'] = service.namespace;
+    shortCutService['service'] = service.service;
+    shortCutService['url'] = service.metadata._links.api.href;
+    shortCutService['api'] = service.metadata._links.api.href.split('/').slice(-1)[0];
+    onQuickAdd(shortCutService);
+  };
+  const hasApi = (service) => {
+    const filteredDirectory = directory.filter((dir) => dir.service === service.service);
+    const api = service.metadata._links.api.href.split('/').slice(-1)[0];
+
+    return filteredDirectory.length < 2 || !filteredDirectory.find((dir) => dir.api === api);
+  };
 
   const renderNoItem = () => {
     return (
@@ -52,6 +76,13 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({ service, on
         <td>
           <IconDiv>
             <GoAContextMenu>
+              {!service.isCore && service.metadata?._links?.api && !service.api && hasApi(service) && (
+                <GoAContextMenuIcon
+                  type="add"
+                  onClick={() => quickAdd(service)}
+                  testId="directory-toggle-details-visibility"
+                />
+              )}
               {!service.api && (
                 <GoAContextMenuIcon
                   type={showDetails ? 'eye-off' : 'eye'}
@@ -114,6 +145,7 @@ interface serviceTableProps {
   isCore: boolean;
   onEdit: (service: Service) => void;
   onDelete: (service: Service) => void;
+  onQuickAdd: (service: Service) => void;
 }
 
 export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({
@@ -122,6 +154,7 @@ export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({
   isCore,
   onEdit,
   onDelete,
+  onQuickAdd,
 }) => {
   const memoizedDirectory = useMemo(() => {
     return [...directory].sort((a, b) => (a.service < b.service ? -1 : 1));
@@ -147,11 +180,21 @@ export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({
           {isCore
             ? memoizedDirectory
                 .filter((dir) => dir.namespace === namespace)
-                .map((dir: Service) => <ServiceItemComponent service={dir} onEdit={onEdit} onDelete={onDelete} />)
+                .map((dir: Service) => (
+                  <ServiceItemComponent service={dir} onEdit={onEdit} onDelete={onDelete} onQuickAdd={onQuickAdd} />
+                ))
             : directory
                 .filter((dir) => dir.namespace === namespace)
                 .sort((a, b) => (a.service < b.service ? -1 : 1))
-                .map((dir: Service) => <ServiceItemComponent service={dir} onEdit={onEdit} onDelete={onDelete} />)}
+                .map((dir: Service) => (
+                  <ServiceItemComponent
+                    service={dir}
+                    directory={directory.filter((dir) => dir.namespace === namespace)}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onQuickAdd={onQuickAdd}
+                  />
+                ))}
         </tbody>
       </DataTable>
       <br />

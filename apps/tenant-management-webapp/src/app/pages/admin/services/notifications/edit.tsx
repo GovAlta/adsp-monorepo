@@ -153,9 +153,12 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                       <div style={{ paddingRight: '20px' }}>
                         <GoACheckbox
                           name={channel.value}
-                          checked={type.channels?.map((value) => value).includes(channel.value)}
+                          checked={
+                            type.channels?.map((value) => value).includes(channel.value) || channel.value === 'email'
+                          }
+                          disabled={channel.value === 'email'}
                           onChange={() => {
-                            const channels = type.channels || [];
+                            const channels = type.channels || ['email'];
                             const checked = channels.findIndex((ch) => ch === channel.value);
                             if (checked === -1) {
                               channels.push(channel.value);
@@ -202,7 +205,15 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton data-testid="form-cancel" buttonType="secondary" type="button" onClick={onCancel}>
+          <GoAButton
+            data-testid="form-cancel"
+            buttonType="secondary"
+            type="button"
+            onClick={() => {
+              setType(initialValue);
+              onCancel();
+            }}
+          >
             Cancel
           </GoAButton>
           <GoAButton

@@ -12,12 +12,22 @@ export interface SubscriptionCriteria {
     [key: string]: unknown;
   };
 }
+
+export type Channel = 'sms' | 'email' | 'bot';
+
+export const Channels = Object.freeze({
+  email: 'email',
+  sms: 'sms',
+  bot: 'bot',
+});
+
 export interface SubscriptionType {
   description: string;
   id: string;
   name: string;
   manageSubscribe: boolean;
   canSubscribe: boolean;
+  channels: Channel[];
 }
 export interface SubscriberChannel {
   address: string;

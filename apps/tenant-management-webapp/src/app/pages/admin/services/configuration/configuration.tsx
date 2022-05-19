@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useEffect, useState } from 'react';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { ConfigurationOverview } from './overview';
@@ -10,17 +10,30 @@ import { RootState } from '@store/index';
 export const Configuration: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const [activateEditState, setActivateEditState] = useState<boolean>(false);
+
+  const activateEdit = (edit: boolean) => {
+    setActiveIndex(1);
+    setActivateEditState(edit);
+  };
+
+  useEffect(() => {
+    if (activeIndex !== null) {
+      setActiveIndex(null);
+    }
+  }, [activeIndex]);
 
   return (
     <Page>
       <Main>
         <h1 data-testid="configuration-title">Configuration service</h1>
-        <Tabs activeIndex={0}>
+        <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
-            <ConfigurationOverview />
+            <ConfigurationOverview setActiveEdit={activateEdit} setActiveIndex={setActiveIndex} />
           </Tab>
           <Tab label="Definitions">
-            <ConfigurationDefinitions />
+            <ConfigurationDefinitions activeEdit={activateEditState} />
           </Tab>
         </Tabs>
       </Main>
@@ -30,7 +43,9 @@ export const Configuration: FunctionComponent = () => {
           <a
             rel="noopener noreferrer"
             target="_blank"
-            href={`${docBaseUrl}/${tenantName}?urls.primaryName=Configuration service`}
+            href={`${docBaseUrl}/${tenantName
+              ?.toLowerCase()
+              .replace(/ /g, '-')}?urls.primaryName=Configuration service`}
           >
             Read the API docs
           </a>

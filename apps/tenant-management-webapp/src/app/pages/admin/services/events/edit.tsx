@@ -4,6 +4,8 @@ import type { EventDefinition } from '@store/event/models';
 import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import { wordCheck, characterCheck, validationPattern, checkInput, isNotEmptyCheck } from '@lib/checkInput';
+import { reactInputHandlerFactory } from '@lib/reactInputHandlerFactory';
 import { updateEventDefinition } from '@store/event/actions';
 import { useDispatch } from 'react-redux';
 
@@ -28,6 +30,14 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
 
+  const hasFormErrors = () => {
+    return Object.keys(errors).length !== 0;
+  };
+  const forbiddenWords = coreNamespaces.concat('platform');
+  const checkForConflicts = wordCheck(forbiddenWords);
+  const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
+  const errorHandler = reactInputHandlerFactory(errors, setErrors);
+
   return (
     <GoAModal testId="definition-form" isOpen={open}>
       <GoAModalTitle testId="definition-form-title">{isEdit ? 'Edit definition' : 'Add definition'}</GoAModalTitle>
@@ -42,7 +52,14 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               disabled={isEdit}
               data-testid="form-namespace"
               aria-label="nameSpace"
-              onChange={(e) => setDefinition({ ...definition, namespace: e.target.value })}
+              onChange={(e) => {
+                checkInput(
+                  e.target.value,
+                  [checkForConflicts, checkForBadChars, isNotEmptyCheck('namespace')],
+                  errorHandler('namespace')
+                );
+                setDefinition({ ...definition, namespace: e.target.value });
+              }}
             />
           </GoAFormItem>
           <GoAFormItem error={errors?.['name']}>
@@ -54,7 +71,10 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               disabled={isEdit}
               data-testid="form-name"
               aria-label="name"
-              onChange={(e) => setDefinition({ ...definition, name: e.target.value })}
+              onChange={(e) => {
+                checkInput(e.target.value, [checkForBadChars, isNotEmptyCheck('name')], errorHandler('name'));
+                setDefinition({ ...definition, name: e.target.value });
+              }}
             />
           </GoAFormItem>
           <GoAFormItem>
@@ -93,25 +113,11 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
           Cancel
         </GoAButton>
         <GoAButton
-          disabled={!definition.namespace || !definition.name}
+          disabled={!definition.namespace || !definition.name || hasFormErrors()}
           buttonType="primary"
           data-testid="form-save"
           type="submit"
           onClick={(e) => {
-            if (definition.namespace.includes(':')) {
-              setErrors({ ...errors, namespace: 'Must not contain `:` character' });
-              return;
-            }
-            if (definition.name.includes(':')) {
-              setErrors({ ...errors, name: 'Must not contain `:` character' });
-              return;
-            }
-
-            if (coreNamespaces.includes(definition.namespace.toLowerCase())) {
-              setErrors({ ...errors, namespace: 'Cannot add definitions to core namespaces' });
-              return;
-            }
-
             dispatch(updateEventDefinition(definition));
             if (onSave) {
               onSave();

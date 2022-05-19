@@ -102,7 +102,7 @@ describe('NotificationTypes Page', () => {
     const phone = queryByTestId('phone');
     expect(email.textContent).toContain('jonathan.weyermandn@gov.ab.ca');
     expect(supportInstructions.textContent).toContain('Lorem ipsum dolor');
-    expect(phone.textContent).toContain('1 (780) 123-4567');
+    expect(phone.textContent).toContain('Phone number780 123 4567');
   });
 
   it('has a functioning edit button', () => {
