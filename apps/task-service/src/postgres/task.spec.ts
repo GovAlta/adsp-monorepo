@@ -16,7 +16,7 @@ describe('PostgresTaskRepository', () => {
     workerRoles: ['test-worker'],
     assignerRoles: ['test-assigner'],
   });
-  const repository = new PostgresTaskRepository((knexMock as unknown) as Knex);
+  const repository = new PostgresTaskRepository(knexMock as unknown as Knex);
   const queues = { 'test-service:test': queue };
   const task: TaskRecord = {
     tenant: tenantId.toString(),
@@ -27,6 +27,7 @@ describe('PostgresTaskRepository', () => {
     definitionNamespace: null,
     definitionName: null,
     context: {},
+    data: {},
     name: 'test-1',
     description: 'Do some test stuff',
     status: TaskStatus.InProgress,
@@ -47,7 +48,7 @@ describe('PostgresTaskRepository', () => {
   });
 
   it('can be created', () => {
-    const result = new PostgresTaskRepository((knexMock as unknown) as Knex);
+    const result = new PostgresTaskRepository(knexMock as unknown as Knex);
     expect(result).toBeTruthy();
   });
 
@@ -277,7 +278,7 @@ describe('PostgresTaskRepository', () => {
         },
       ]);
 
-      const repo = new PostgresTaskRepository((knex as unknown) as Knex);
+      const repo = new PostgresTaskRepository(knex as unknown as Knex);
       const result = await repo.save(
         new TaskEntity(repository, queue, { tenantId, name: 'test-2', description: 'test-2' })
       );
@@ -325,7 +326,7 @@ describe('PostgresTaskRepository', () => {
         },
       ]);
 
-      const repo = new PostgresTaskRepository((knex as unknown) as Knex);
+      const repo = new PostgresTaskRepository(knex as unknown as Knex);
       const result = await repo.save(
         new TaskEntity(repository, queue, {
           tenantId,

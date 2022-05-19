@@ -44,6 +44,7 @@ export interface Task {
   priority: TaskPriority;
   status: TaskStatus;
   recordId?: string;
+  data?: Record<string, unknown>;
   createdOn: Date;
   startedOn: Date;
   endedOn: Date;
