@@ -2,7 +2,21 @@ import axios from 'axios';
 import type { Logger } from 'winston';
 import { AdspId, assertAdspId } from '../utils';
 
+/**
+ * Interface to the token provider for retrieving a service account access token.
+ *
+ * @export
+ * @interface TokenProvider
+ */
 export interface TokenProvider {
+  /**
+   * Retrieves an access token using the service's client credentials.
+   *
+   * The access token is cached and token request is made on cache miss or if the token is near expiry.
+   *
+   * @returns {Promise<string>}
+   * @memberof TokenProvider
+   */
   getAccessToken(): Promise<string>;
 }
 
