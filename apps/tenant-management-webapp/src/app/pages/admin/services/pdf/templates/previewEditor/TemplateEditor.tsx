@@ -101,8 +101,10 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               </GoARadio>
             ))}
           </GoARadioGroup>
-
-          <h3 data-testid="modal-title">{`${mainTitle} template`}</h3>
+          <h3 className="reduce-margin" data-testid="modal-title">
+            {`${template?.name}`}
+            <p>{`${mainTitle} template`}</p>
+          </h3>
 
           <>
             <GoAFormItem error={errors['body'] ?? ''} helpText={''}>

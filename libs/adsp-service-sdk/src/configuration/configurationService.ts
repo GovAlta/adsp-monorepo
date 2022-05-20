@@ -6,8 +6,25 @@ import { ServiceDirectory } from '../directory';
 import { adspId, AdspId, assertAdspId } from '../utils';
 import type { CombineConfiguration, ConfigurationConverter } from './configuration';
 
+/**
+ * Interface to configuration service for retrieval of service configuration.
+ *
+ * @export
+ * @interface ConfigurationService
+ */
 export interface ConfigurationService {
-  getConfiguration<C, R = [C, C]>(serviceId: AdspId, token: string, tenantId: AdspId): Promise<R>;
+  /**
+   * Retrieves configuration for a service.
+   *
+   * @template C Type of the configuration.
+   * @template R Type of the combined tenant and core configuration.
+   * @param {AdspId} serviceId
+   * @param {string} token
+   * @param {AdspId} tenantId
+   * @returns {Promise<R>}
+   * @memberof ConfigurationService
+   */
+  getConfiguration<C, R = [C, C]>(serviceId: AdspId, token: string, tenantId?: AdspId): Promise<R>;
 }
 
 export class ConfigurationServiceImpl implements ConfigurationService {

@@ -15,7 +15,7 @@ export const PdfOverview: FunctionComponent<PdfOverviewProps> = ({ updateActiveI
     updateActiveIndex(0);
     setOpenAddTemplate(false);
     dispatch(fetchPdfMetrics());
-  });
+  }, []);
   return (
     <div>
       <section>

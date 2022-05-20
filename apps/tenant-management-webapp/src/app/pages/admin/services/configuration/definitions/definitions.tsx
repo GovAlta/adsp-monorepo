@@ -90,7 +90,7 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
               }}
               isTenantSpecificConfig={true}
               tenantName={tenantName}
-              definitions={tenantConfigDefinitions}
+              definitions={tenantConfigDefinitions.configuration}
             />
           </>
         )}
@@ -100,7 +100,10 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
         {!indicator.show && !coreConfigDefinitions && renderNoItem('configuration')}
         {!indicator.show && coreConfigDefinitions && (
           <>
-            <ConfigurationDefinitionsTableComponent tenantName={coreTenant} definitions={coreConfigDefinitions} />
+            <ConfigurationDefinitionsTableComponent
+              tenantName={coreTenant}
+              definitions={coreConfigDefinitions.configuration}
+            />
           </>
         )}
       </div>

@@ -39,6 +39,20 @@ export default function (state: Session = SESSION_INIT, action: ActionType): Ses
     case 'session/logout':
       return SESSION_INIT;
 
+    case 'session/loading/state': {
+      const index = state.loadingStates.findIndex((state) => {
+        return state.name === action.payload.name;
+      });
+
+      if (index === -1) {
+        state.loadingStates.push(action.payload);
+      } else {
+        state.loadingStates[index] = action.payload;
+      }
+      state.loadingStates = [...state.loadingStates];
+      return state;
+    }
+
     default:
       return state;
   }
