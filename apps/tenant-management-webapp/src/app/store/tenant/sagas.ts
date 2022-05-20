@@ -33,6 +33,7 @@ import {
   SessionLoginSuccess,
   SessionLoginSuccessAction,
   SESSION_LOGIN_SUCCESS,
+  UpdateIndicator,
 } from '@store/session/actions';
 import { TenantApi } from './api';
 import { TENANT_INIT } from './models';
@@ -192,11 +193,27 @@ export function* tenantLogout(): SagaIterator {
 export function* fetchRealmRoles(): SagaIterator {
   try {
     const state: RootState = yield select();
+    yield put(
+      UpdateIndicator({
+        show: true,
+        message: 'Loading...',
+      })
+    );
     const token = state?.session?.credentials?.token;
     const api = new TenantApi(state.config.tenantApi, token);
     const roles = yield call([api, api.fetchRealmRoles]);
     yield put(FetchRealmRolesSuccess(roles));
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
   } catch (e) {
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
     yield put(ErrorNotification({ message: `Failed to fetch realm roles: ${e.message}` }));
   }
 }
