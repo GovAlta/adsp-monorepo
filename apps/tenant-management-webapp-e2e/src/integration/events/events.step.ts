@@ -165,11 +165,11 @@ Then('the user views Core streams section', function () {
   eventsObj.coreStreamsSectionTitle().should('exist');
 });
 
-When('the user clicks eye icon of {string}', function (streamName) {
+When('the user clicks eye icon of {string} under Core streams', function (streamName) {
   eventsObj.streamToggleButton(streamName).click();
 });
 
-Then('the user views the details of {string}', function (streamName) {
+Then('the user views the details of {string} under Core streams', function (streamName) {
   eventsObj
     .streamDetails(streamName)
     .invoke('text')
