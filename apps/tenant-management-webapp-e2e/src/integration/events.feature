@@ -101,5 +101,5 @@ Feature: Events
     When the user selects the "Event" menu item
     And the user selects "Streams" tab for "Event"
     Then the user views Core streams section
-    When the user clicks eye icon of "PDF generation updates"
-    Then the user views the details of "PDF generation updates"
+    When the user clicks eye icon of "PDF generation updates" under Core streams
+    Then the user views the details of "PDF generation updates" under Core streams
