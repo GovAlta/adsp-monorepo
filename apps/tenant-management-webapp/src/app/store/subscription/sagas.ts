@@ -37,12 +37,12 @@ import {
   DELETE_SUBSCRIPTION,
   DeleteSubscriptionSuccess,
 } from './actions';
-import { Subscriber, SubscriptionWrapper } from './models';
+import { Subscriber, SubscriptionWrapper, Events } from './models';
 import { RootState } from '../index';
 import axios from 'axios';
 import { Api } from './api';
 import { KeycloakApi } from '@store/access/api';
-import { UpdateIndicator } from '@store/session/actions';
+import { UpdateIndicator, UpdateLoadingState } from '@store/session/actions';
 import { fetchCoreNotificationTypes, fetchNotificationTypes } from '@store/notification/sagas';
 import { NotificationItem } from '@store/notification/models';
 import { ErrorNotification, SuccessNotification } from '@store/notifications/actions';
@@ -173,6 +173,14 @@ function* getAllTypeSubscriptions(action: GetAllTypeSubscriptionsAction): SagaIt
         message: 'Loading...',
       })
     );
+
+    yield put(
+      UpdateLoadingState({
+        name: Events.search,
+        state: 'start',
+      })
+    );
+
     yield call(fetchCoreNotificationTypes);
     yield call(fetchNotificationTypes);
 
@@ -189,10 +197,24 @@ function* getAllTypeSubscriptions(action: GetAllTypeSubscriptionsAction): SagaIt
         show: false,
       })
     );
+
+    yield put(
+      UpdateLoadingState({
+        name: Events.search,
+        state: 'completed',
+      })
+    );
   } catch (err) {
     yield put(
       UpdateIndicator({
         show: false,
+      })
+    );
+
+    yield put(
+      UpdateLoadingState({
+        name: Events.search,
+        state: 'error',
       })
     );
   }

@@ -5,7 +5,21 @@ import { ServiceDirectory } from '../directory';
 import { AdspId, adspId } from '../utils';
 import type { DomainEvent, DomainEventDefinition } from './event';
 
+/**
+ * Interface to the event service for sending domain events.
+ *
+ * @export
+ * @interface EventService
+ */
 export interface EventService {
+  /**
+   * Sends a domain event of the service.
+   *
+   * Domain event sent uses the service name as its namespace.
+   *
+   * @param {DomainEvent} event
+   * @memberof EventService
+   */
   send(event: DomainEvent): void;
 }
 

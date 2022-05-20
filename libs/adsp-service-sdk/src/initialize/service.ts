@@ -6,11 +6,20 @@ import { LogOptions, PlatformCapabilities, PlatformOptions } from './types';
 
 type Options = Omit<PlatformOptions, 'ignoreServiceAud' | 'roles'>;
 type Capabilities = Omit<PlatformCapabilities, 'tenantService' | 'tenantHandler' | 'clearCached'> & {
+  /**
+   *
+   * Clear cached: Function to clear the cached configuration.
+   *
+   * Configuration is cached with a TTL to mitigate stale cache issues. If the service
+   * has a mechanism to detect configuration updates, such as a websocket connection,
+   * use this function to invalidate the cache.
+   */
   clearCached: (serviceId: AdspId) => void;
 };
 
 /**
  * initializeService
+ *
  * Initializes ADSP SDK capabilities for a tenant specific service.
  * @export
  * @param {Options} options
