@@ -160,3 +160,18 @@ Then('the user only views show button for event definitions of {string}', functi
     });
   }
 });
+
+Then('the user views Core streams section', function () {
+  eventsObj.coreStreamsSectionTitle().should('exist');
+});
+
+When('the user clicks eye icon of {string} under Core streams', function (streamName) {
+  eventsObj.streamToggleButton(streamName).click();
+});
+
+Then('the user views the details of {string} under Core streams', function (streamName) {
+  eventsObj
+    .streamDetails(streamName)
+    .invoke('text')
+    .should('contain', '"name": "' + streamName + '"');
+});
