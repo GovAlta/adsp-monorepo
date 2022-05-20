@@ -10,5 +10,6 @@ export type { FileType } from './file';
 export type { EventCriteria, StreamEvent, Stream } from './push';
 export { Channel } from './notification';
 export type { Template, NotificationType, NotificationTypeEvent } from './notification';
+export type { ValueDefinition } from './value';
 export type { ServiceRegistration, ServiceRole } from './registration';
 export { initializePlatform, initializeService } from './initialize';

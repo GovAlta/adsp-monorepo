@@ -56,6 +56,7 @@ const initializeApp = async () => {
                   type: 'object',
                   properties: {
                     name: { type: 'string' },
+                    displayName: { type: 'string' },
                     description: { type: 'string' },
                     jsonSchema: { type: 'object' },
                   },

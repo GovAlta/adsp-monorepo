@@ -11,7 +11,20 @@ interface DirectoryEntry {
   url: string;
 }
 
+/**
+ * Service directory interface that provides lookup of service URLs.
+ *
+ * @export
+ * @interface ServiceDirectory
+ */
 export interface ServiceDirectory {
+  /**
+   * Function to retrieve the URL of a service based on its ADSP URN.
+   *
+   * @param {AdspId} serviceId
+   * @returns {Promise<URL>}
+   * @memberof ServiceDirectory
+   */
   getServiceUrl(serviceId: AdspId): Promise<URL>;
   getResourceUrl(resourceId: AdspId): Promise<URL>;
 }
