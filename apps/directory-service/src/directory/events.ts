@@ -2,7 +2,7 @@ import type { DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-servi
 
 export const EntryUpdatedDefinition: DomainEventDefinition = {
   name: 'entry-updated',
-  description: 'Signalled when an entry is updated.',
+  description: 'Signalled when a directory entry is updated.',
   payloadSchema: {
     type: 'object',
     properties: {
@@ -32,13 +32,13 @@ export const EntryUpdatedDefinition: DomainEventDefinition = {
         },
       },
     },
-    required: ['namespace', 'service', 'createdBy'],
+    required: ['namespace', 'service', 'updatedBy'],
   },
 };
 
 export const EntryDeletedDefinition: DomainEventDefinition = {
   name: 'entry-deleted',
-  description: 'Signalled when an entry is deleted.',
+  description: 'Signalled when a directory entry is deleted.',
   payloadSchema: {
     type: 'object',
     properties: {
@@ -62,7 +62,7 @@ export const EntryDeletedDefinition: DomainEventDefinition = {
         },
       },
     },
-    required: ['namespace', 'service', 'createdBy'],
+    required: ['namespace', 'service', 'deletedBy'],
   },
 };
 

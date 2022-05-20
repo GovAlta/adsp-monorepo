@@ -31,20 +31,12 @@ export function* fetchConfigurationDefinitions(action: FetchConfigurationDefinit
   if (configBaseUrl && token) {
     try {
       const { tenant, core } = yield all({
-        tenant: call(
-          axios.get,
-          `${configBaseUrl}/configuration/v2/configuration/platform/configuration-service/latest`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        ),
-        core: call(
-          axios.get,
-          `${configBaseUrl}/configuration/v2/configuration/platform/configuration-service/latest?core`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        ),
+        tenant: call(axios.get, `${configBaseUrl}/configuration/v2/configuration/platform/configuration-service`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        core: call(axios.get, `${configBaseUrl}/configuration/v2/configuration/platform/configuration-service?core`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       });
       yield put(
         getConfigurationDefinitionsSuccess({
@@ -89,7 +81,7 @@ export function* updateConfigurationDefinition({
       yield put(
         updateConfigurationDefinitionSuccess(
           {
-            ...latest.configuration,
+            ...latest,
           },
           isAddedFromOverviewPage
         )
@@ -117,7 +109,7 @@ export function* deleteConfigurationDefinition({ definitionName }: DeleteConfigu
         }
       );
 
-      yield put(deleteConfigurationDefinitionSuccess({ ...latest.configuration }));
+      yield put(deleteConfigurationDefinitionSuccess({ ...latest }));
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));
     }

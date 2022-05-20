@@ -110,5 +110,13 @@ class FileServicePage {
   fileTypeDeleteModalOkayBtn() {
     return cy.get('[data-testid="file-type-delete-modal-cancel-btn"]');
   }
+
+  coreFileTypesTitle() {
+    return cy.xpath('//*[text()="Core file types"]');
+  }
+
+  coreFileTypesTable() {
+    return cy.xpath('//*[text()="Core file types"]/parent::*//*[@data-testid="file-types-table"]//tbody');
+  }
 }
 export default FileServicePage;
