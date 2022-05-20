@@ -122,13 +122,13 @@ Feature: Service status
     And the user selects "Published" filter by status radio button
     Then the user "views" the "Published" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     # Unpublish the notice
+    # Because notices page refreshs every 30 seconds and our unpublish/delete step randomly fails, add steps to go off and back to the notices page so that the unpublish/delete step is done before the next refresh
+    When the user selects "Overview" tab for "Status"
+    And the user selects "Notices" tab for "Status"
     When the user clicks "unpublish" menu for the "Published" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     And the user selects "Draft" filter by status radio button
     Then the user "views" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     # Delete the notice
-    # Due to notices page refreshs every 30 seconds and our delete step randomly fails at notice deletion, add steps to go off and back to the notices page so that the deletion is done before the next refresh
-    When the user selects "Overview" tab for "Status"
-    And the user selects "Notices" tab for "Status"
     And the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", " <Start Time 2>", "<End Date 2>", "<End Time 2>"
     Then the user views delete "notice" confirmation modal for "<Description2>"
     When the user clicks Delete button in delete confirmation modal

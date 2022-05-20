@@ -41,7 +41,7 @@ const initializeApp = async (): Promise<express.Application> => {
   }
 
   const templateService = createTemplateService();
-  const pdfService = createPdfService();
+  const pdfService = await createPdfService();
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
@@ -69,7 +69,13 @@ const initializeApp = async (): Promise<express.Application> => {
           }),
           {}
         ),
-      roles: [ServiceRoles.PdfGenerator],
+      roles: [
+        {
+          role: ServiceRoles.PdfGenerator,
+          description: 'Generator role that allows generation of PDFs.',
+          inTenantAdmin: true,
+        },
+      ],
       events: [PdfGenerationQueuedDefinition, PdfGeneratedDefinition, PdfGenerationFailedDefinition],
       eventStreams: [PdfGenerationUpdatesStream],
       fileTypes: [GeneratedPdfType],

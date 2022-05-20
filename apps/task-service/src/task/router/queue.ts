@@ -247,6 +247,7 @@ export function createQueueRouter({
           name: { optional: true, isLength: { options: { min: 1, max: 50 } } },
           description: { optional: true, isString: true },
           context: { optional: true, isObject: true },
+          data: { optional: true, isObject: true },
         },
         ['body']
       )
