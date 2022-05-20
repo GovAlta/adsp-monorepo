@@ -14,7 +14,7 @@ Feature: Directory-service
       | file-service   | env{fileApi} |
 
   @TEST_CS-1294 @REQ_CS-1095, @regression
-  Scenario:As a tenant admin, I can add/edit/delete directory entries in a tenant namespace
+  Scenario: As a tenant admin, I can add/edit/delete directory entries in a tenant namespace
     Given a tenant admin user is on directory entry page
     # Add a service entry
     When the user clicks Add entry button
@@ -47,3 +47,4 @@ Feature: Directory-service
     Then the user views Delete entry modal for "autotest-addentry"
     When the user clicks Delete button
     Then the user should not view the entry of "autotest-addentry", "https://myServiceEntry-2.ca"
+

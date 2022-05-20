@@ -94,6 +94,7 @@ Then('the user views the entry of {string}, {string}, {string}', function (direc
     .siblings()
     .contains(url);
 });
+
 Then('the user should not view the entry of {string}, {string}', function (servicename, url) {
   directoryObj.directoryTable().contains('td[data-testid="service"]', servicename).should('not.exist');
   directoryObj.directoryTable().contains('td[data-testid="url"]', url).should('not.exist');
@@ -114,6 +115,7 @@ Then('the user views the error message {string} for {string} field', function (e
       expect(field).to.be.oneOf(['Service', 'Api', 'Url']);
   }
 });
+
 When('the user clicks Edit icon of {string}, {string} on entries page', function (serviceName, url) {
   directoryObj.entryEditIcon(serviceName, url).click();
 });
