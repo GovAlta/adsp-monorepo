@@ -91,4 +91,9 @@ export interface SubscriptionSearchCriteria {
   name?: string;
   next?: string;
   sms?: string;
+  event?: string;
 }
+
+export const Events = {
+  search: 'subscription.search.event',
+};

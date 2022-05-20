@@ -24,6 +24,7 @@ export interface Session {
   credentials?: Credentials;
   indicator?: Indicator;
   elementIndicator?: ElementIndicator;
+  loadingStates?: LoadingStates;
 }
 
 export interface Credentials {
@@ -33,9 +34,19 @@ export interface Credentials {
   refreshTokenExp?: number;
 }
 
+export type LoadingStateType = 'start' | 'completed' | 'error';
+
+export interface LoadingState {
+  name: string;
+  state?: LoadingStateType;
+}
+
+export type LoadingStates = Array<LoadingState>;
+
 export const SESSION_INIT: Session = {
   indicator: {
     show: false,
     message: '',
   },
+  loadingStates: [],
 };
