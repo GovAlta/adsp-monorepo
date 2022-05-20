@@ -153,10 +153,10 @@
       }
       .goa-footer-event {
         background-color: #f1f1f1;
-        padding-top: 2.5rem;
+      {{! padding-top: 2.5rem;
         padding-left: 3rem;
         padding-right: 2rem;
-        padding-bottom: 3rem;
+        padding-bottom: 3rem; }}
       }
       .goa-footer-event .link {
         padding-left: 4.5rem;
@@ -193,58 +193,92 @@
   </head>
   <body>
     <header>
-      <div class='goa-header-event-template'>
-        <div class='goa-logo'>
+      <table width='640' border='0' cellpadding='10' cellspacing='0' style="width: 100% !important;margin: 0 !important; padding-left:14px; padding-right:14px;" role='presentation'>
+        <tr><td>
           <img
             alt='Government of Alberta'
             src='https://file-service.adsp.alberta.ca/file/v1/files/4b95b597-395f-4f4a-90ba-1d6cf2be0756/download?embed=true'
           />
-        </div>
-      </div>
-      <div id='goa-callout-custom'>
-        <div class='title'>
-          {{#if tenant.name}}
-            {{tenant.name}}
-          {{else}}
-            Alberta Digital Service Platform
-          {{/if}}
-        </div>
-      </div>
-    </header>
-    <div class='email-content'>
-      {{content}}
-    </div>
-    <footer>
-      <div class='goa-footer-event'>
-        <div class='container'>
-          <div class='link'>
-            <span>
-              Please do not reply to this email.
-              {{#if managementUrl}}
-                Manage your subscription
-                {{!-- <a href="{{managementUrl}}" target='_blank' rel='noopener noreferrer'>
-                  here
-                </a> --}}
-                .
+        </td>
+        </tr>
+      </table>
+      <table width='640' border='0' cellpadding='10' cellspacing='0' style="width: 100% !important;margin: 0 !important; padding-left:14px; padding-right:14px;background-color: #0081a2 !important;color: #ffffff;" role='presentation'>
+        <tr>
+          <td>
+            <div style="font-size: 24px;font-weight: 700;text-align: left;letter-spacing: 0em;padding-top:12px;padding-bottom:12px;">
+              {{#if tenant.name}}
+                {{tenant.name}}
+              {{else}}
+                Alberta Digital Service Platform
               {{/if}}
-            </span>
-            <br />
-          </div>
-          <div class='logo'>
-            <img
-              alt='Government of Alberta'
-              src='https://file-service.adsp.alberta.ca/file/v1/files/4b95b597-395f-4f4a-90ba-1d6cf2be0756/download?embed=true'
-            />
-          </div>
-        </div>
-        <div class='footer-disclaimer footer-link-border'>
-          This email was sent from the Government of Alberta and any files transmitted with it are confidential and
-          intended solely for the use of the individual For entity to whom they are addressed. If you have received this
-          email in error please notify the system manager. This message contains confidential information and is intended
-          only for the individual named. If you are not the named addressee you should not disseminate, distribute or copy
-          this e-mail.
-        </div>
-      </div>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </header>
+    <table width='640' border='0' cellpadding='10' cellspacing='0' style="width: 100% !important;margin: 0 !important; padding-left:14px; padding-right:14px;" role='presentation'>
+      <tr>
+        <td>
+          {{content}}
+        </td>
+      </tr>
+    </table>
+    <footer>
+      <div style="background-color:#f1f1f1;">
+        <table width='640' border='0' cellpadding='10' cellspacing='0' style="width: 100% !important;margin: 0 !important; padding-left:14px; padding-right:14px;" role='presentation'>
+          <tr>
+            <td>
+              <table width='480' border='0' cellpadding='0' align="left">
+                <tr>
+                  <td>
+                    <div class='link'>
+                      <span>
+                        Please do not reply to this email.
+                        {{#if managementUrl}}
+                          Manage your subscription
+                          <a href="{{managementUrl}}" target='_blank' rel='noopener noreferrer'>
+                            here
+                          </a>
+                          .
+                        {{/if}}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              <table width='140' border='0'>
+                <tr>
+                  <td style="text-align:right">
+                    <div class='logo'>
+                      <img
+                        alt='Government of Alberta'
+                        src='https://file-service.adsp.alberta.ca/file/v1/files/4b95b597-395f-4f4a-90ba-1d6cf2be0756/download?embed=true'
+                      />
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+        <table width='640' border='0' cellpadding='0' cellspacing='0' style="width: 100% !important;margin: 0 !important;" role='presentation'>
+          <div style="border-top: 1px solid #dcdcdc;"></div>
+        </table>
+
+        <table width='640' border='0' cellpadding='10' cellspacing='0' style="width: 100% !important;margin: 0 !important; padding-left:14px; padding-right:14px;padding-bottom:14px;" role='presentation'>
+          <tr>
+            <td>
+              <div style="color: #666666;">
+              This email was sent from the Government of Alberta and any files transmitted with it are confidential and
+              intended solely for the use of the individual For entity to whom they are addressed. If you have received this
+              email in error please notify the system manager. This message contains confidential information and is intended
+              only for the individual named. If you are not the named addressee you should not disseminate, distribute or copy
+              this e-mail.
+              </div>
+            </td>
+          </tr>
+        </table>
+      <div>
     </footer>
   </body>
 </html>

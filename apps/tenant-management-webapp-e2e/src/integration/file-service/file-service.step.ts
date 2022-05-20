@@ -562,3 +562,11 @@ When('the user clicks Okay button', function () {
   fileServiceObj.fileTypeDeleteModalOkayBtn().click();
   cy.wait(1000);
 });
+
+Then('the user views the core file types with no actions', function () {
+  // Verify the core file types title exists
+  fileServiceObj.coreFileTypesTitle().should('exist');
+
+  // Verify at least one core file type
+  fileServiceObj.coreFileTypesTable().find('tr').its('length').should('be.gte', 1);
+});
