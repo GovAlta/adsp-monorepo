@@ -183,7 +183,7 @@ export const AddEditStream = ({
             type="submit"
             disabled={!stream.name || hasFormErrors()}
             onClick={(e) => {
-              if (checkInput(stream.id, [isDuplicateStreamId(stream.id)], errorHandler('name'))) {
+              if (!isEdit && checkInput(stream.id, [isDuplicateStreamId(stream.id)], errorHandler('name'))) {
                 e.stopPropagation();
                 return;
               }
