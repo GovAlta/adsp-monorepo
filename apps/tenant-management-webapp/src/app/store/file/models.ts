@@ -41,14 +41,21 @@ export interface RequestBodySchema {
   };
 }
 
+export interface FileMetrics {
+  filesUploaded?: number;
+  fileLifetime?: number;
+}
+
 export interface FileService {
   fileList: Array<FileItem>;
   fileTypes: Array<FileTypeItem>;
   coreFileTypes: Array<FileTypeItem>;
+  metrics: FileMetrics;
 }
 
 export const FILE_INIT: FileService = {
   fileList: null,
   fileTypes: null,
   coreFileTypes: null,
+  metrics: {},
 };
