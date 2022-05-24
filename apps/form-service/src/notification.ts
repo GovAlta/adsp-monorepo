@@ -1,4 +1,5 @@
 import { adspId, AdspId, Channel, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
+import { InvalidOperationError } from '@core-services/core-common';
 import axios from 'axios';
 import { Logger } from 'winston';
 
@@ -103,20 +104,26 @@ class NotificationServiceImpl implements NotificationService {
         ...LOG_CONTEXT,
         tenant: tenantId?.toString(),
       });
+
+      return false;
     }
   }
 
   async sendCode(tenantId: AdspId, subscriber: Subscriber): Promise<void> {
     try {
       const subscriberUrl = await this.directory.getResourceUrl(subscriber.urn);
+      const [channel] = subscriber?.channels || [];
+      if (!channel) {
+        throw new InvalidOperationError('Subscriber has no channels for code.');
+      }
 
       const token = await this.tokenProvider.getAccessToken();
       const { data } = await axios.post<{ sent: boolean }>(
         `${subscriberUrl.href}?tenantId=${tenantId}`,
         {
           operation: 'send-code',
-          channel: Channel.email,
-          address: subscriber.channels[0].address,
+          channel: channel.channel,
+          address: channel.address,
           reason: 'Enter this code to access your draft form.',
         },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -124,7 +131,7 @@ class NotificationServiceImpl implements NotificationService {
 
       if (data.sent) {
         this.logger.info(
-          `Sent code to subscriber ${subscriber.addressAs} (User ID: ${subscriber.userId}) at ${subscriber.channels[0].address}`,
+          `Sent code to subscriber ${subscriber.addressAs} (User ID: ${subscriber.userId}) at ${channel.address}`,
           {
             ...LOG_CONTEXT,
             tenant: tenantId?.toString(),
@@ -146,14 +153,18 @@ class NotificationServiceImpl implements NotificationService {
   async verifyCode(tenantId: AdspId, subscriber: Subscriber, code: string): Promise<boolean> {
     try {
       const subscriberUrl = await this.directory.getResourceUrl(subscriber.urn);
+      const [channel] = subscriber?.channels || [];
+      if (!channel) {
+        throw new InvalidOperationError('Subscriber has no channels for code.');
+      }
 
       const token = await this.tokenProvider.getAccessToken();
       const { data } = await axios.post<{ verified: boolean }>(
         `${subscriberUrl.href}?tenantId=${tenantId}`,
         {
           operation: 'check-code',
-          channel: Channel.email,
-          address: subscriber.channels[0].address,
+          channel: channel.channel,
+          address: channel.address,
           code,
         },
         { headers: { Authorization: `Bearer ${token}` } }
