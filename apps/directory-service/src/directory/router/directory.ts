@@ -151,7 +151,10 @@ export const updateService =
         await directoryRepository.update(directory);
         const serviceEvent = isExist.service.split(':').length === 0 ? isExist.service : isExist.service.split(':')[0];
         const eventApi = isExist.service.split(':').length === 0 ? '' : isExist.service.split(':')[1];
-        logger.info(`Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}) `);
+
+        logger.info(
+          `Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}) user tenant id : ${user.tenantId} `
+        );
         eventService.send(
           entryUpdated(user, namespace, serviceEvent, eventApi, url, {
             data: isExist,
@@ -193,7 +196,9 @@ export const deleteService =
       await directoryRepository.update(directory);
       const serviceEvent = isExist.service.split(':').length === 0 ? isExist.service : isExist.service.split(':')[0];
       const eventApi = isExist.service.split(':').length === 0 ? '' : isExist.service.split(':')[1];
-      logger.info(`Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}) `);
+      logger.info(
+        `Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}), user tenant id : ${user.tenantId} `
+      );
       eventService.send(entryDeleted(user, namespace, serviceEvent, eventApi, isExist.host));
       return res.sendStatus(HttpStatusCodes.OK);
     } catch (err) {

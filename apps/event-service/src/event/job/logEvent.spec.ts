@@ -127,51 +127,6 @@ describe('createLogEventJob', () => {
       });
     });
 
-    it('can skip compute interval duration metric with previous occurrence event', (done) => {
-      const job = createLogEventJob({
-        serviceId,
-        logger,
-        tokenProvider,
-        configurationService: configurationService as unknown as ConfigurationService,
-        valueServiceUrl: new URL('http://totally-real-value-service'),
-      });
-
-      configurationService.getConfiguration.mockResolvedValueOnce([
-        {
-          test: {
-            definitions: {
-              'test-started': {
-                interval: {
-                  metric: 'test',
-                  namespace: 'test',
-                  name: 'test-prepared',
-                },
-              },
-            },
-          },
-        },
-      ]);
-
-      const start = new Date(event.timestamp.getTime() - 30000);
-      axiosMock.get.mockResolvedValueOnce({
-        data: { 'event-service': { event: [{ timestamp: start.toISOString() }] } },
-      });
-      // Previous occurrence result.
-      axiosMock.get.mockResolvedValueOnce({
-        data: { page: { size: 1 } },
-      });
-      axiosMock.post.mockResolvedValueOnce({});
-      job(event, (err) => {
-        expect(axiosMock.post).toHaveBeenCalledTimes(1);
-        expect(axios.post).toHaveBeenLastCalledWith(
-          expect.any(String),
-          expect.objectContaining({ metrics: expect.not.objectContaining({ 'test:duration': 30 }) }),
-          expect.any(Object)
-        );
-        done(err);
-      });
-    });
-
     it('can skip duration metric for no event definition', (done) => {
       const job = createLogEventJob({
         serviceId,
