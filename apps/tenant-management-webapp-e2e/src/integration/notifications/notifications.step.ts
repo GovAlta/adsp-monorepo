@@ -573,7 +573,7 @@ When('the user clicks Delete button on Delete subscriber modal', function () {
 });
 
 When('the user clicks edit button for contact information', function () {
-  notificationsObj.contactInformationEdit().click({ force: true });
+  notificationsObj.contactInformationEdit().click();
 });
 
 Then('the user views Edit contact information modal', function () {
@@ -658,10 +658,6 @@ Then(
   }
 );
 
-When('the user modifies the name to {string}', function (name) {
-  notificationsObj.notificationTypeModalNameField().clear().type(name);
-});
-
 When('the user modifies the name to {string} and email to {string}', function (name, editEmail) {
   notificationsObj.notificationTypeModalNameField().clear().type(name);
   notificationsObj.editContactModalEmail().clear().type(editEmail);
@@ -671,6 +667,11 @@ When('the user clicks Edit button of {string} and {string} on subscribers page',
   notificationsObj.subscriberEditIcon(addressAs, email).click();
 });
 
-When('the user modifies the email to {string}', function (editEmail) {
-  notificationsObj.editContactModalEmail().clear().type(editEmail);
+Then('the user views Edit contact subscriber modal', function () {
+  notificationsObj.contactInformationEdit().click();
+});
+
+Then('the user clicks Save button in Edit contact subscriber modal', function () {
+  notificationsObj.editContactModalSaveBtn().click();
+  cy.wait(2000);
 });
