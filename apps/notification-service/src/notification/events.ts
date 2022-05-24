@@ -2,8 +2,9 @@ import { AdspId, DomainEvent, DomainEventDefinition } from '@abgov/adsp-service-
 import { DomainEvent as ProcessedEvent } from '@core-services/core-common';
 import type { Notification, NotificationType } from './types';
 
+const NOTIFICATION_GENERATED = 'notifications-generated';
 export const NotificationsGeneratedDefinition: DomainEventDefinition = {
-  name: 'notifications-generated',
+  name: NOTIFICATION_GENERATED,
   description: 'Signalled when notifications are generated for an event',
   payloadSchema: {
     type: 'object',
@@ -70,6 +71,11 @@ export const NotificationSentDefinition: DomainEventDefinition = {
       },
     },
   },
+  interval: {
+    namespace: 'notification-service',
+    name: NOTIFICATION_GENERATED,
+    metric: ['notification-service', 'notification-send'],
+  },
 };
 
 export const NotificationSendFailedDefinition: DomainEventDefinition = {
@@ -111,6 +117,11 @@ export const NotificationSendFailedDefinition: DomainEventDefinition = {
       },
       error: { type: 'string' },
     },
+  },
+  interval: {
+    namespace: 'notification-service',
+    name: NOTIFICATION_GENERATED,
+    metric: ['notification-service', 'notification-send-failed'],
   },
 };
 
