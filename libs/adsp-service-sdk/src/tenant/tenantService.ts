@@ -23,6 +23,12 @@ interface TenantsResponse {
   results: TenantResponse[];
 }
 
+/**
+ * Interface to tenant service for retrieve tenant information.
+ *
+ * @export
+ * @interface TenantService
+ */
 export interface TenantService {
   getTenants(): Promise<Tenant[]>;
   getTenant(tenantId: AdspId): Promise<Tenant>;

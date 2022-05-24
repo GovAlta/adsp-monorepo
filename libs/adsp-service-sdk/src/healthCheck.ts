@@ -12,6 +12,15 @@ interface HealthCheckResult {
   event?: boolean;
 }
 
+/**
+ * Performs a health check against platform services.
+ *
+ * Note that the health check will attempt connections to platform services that are used based on the
+ * parameters provided to SDK initialization.
+ *
+ * @export
+ * @interface PlatformHealthCheck
+ */
 export interface PlatformHealthCheck {
   (): Promise<HealthCheckResult>;
 }

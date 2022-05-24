@@ -10,16 +10,21 @@ export class AjvValueValidationService extends AjvValidationService {
       valid: true,
       modifying: true,
       type: ['integer', 'number'],
-      compile: (schema): ValidateFunction => (data, _dataPath, _parentData, _parentDataProperty, rootData) => {
-        const name = `${schema}`;
-        if (name && typeof data === 'number') {
-          rootData[ValueDefinitionEntity.METRICS_KEY] = {
-            ...(rootData[ValueDefinitionEntity.METRICS_KEY] || {}),
-            [name]: data,
-          };
-        }
-        return true;
-      },
+      compile:
+        (schema): ValidateFunction =>
+        (data, _dataPath, _parentData, _parentDataProperty, rootData) => {
+          const name = Array.isArray(schema)
+            ? schema.map((element) => rootData[element] || element).join(':')
+            : `${schema}`;
+
+          if (name && typeof data === 'number') {
+            rootData[ValueDefinitionEntity.METRICS_KEY] = {
+              ...rootData[ValueDefinitionEntity.METRICS_KEY],
+              [name]: data,
+            };
+          }
+          return true;
+        },
     });
   }
 }

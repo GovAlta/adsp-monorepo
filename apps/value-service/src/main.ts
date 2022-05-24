@@ -6,7 +6,14 @@ import * as cors from 'cors';
 import { assertAuthenticatedHandler, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { logger } from './logger';
-import { applyValuesMiddleware, Namespace, NamespaceEntity, ServiceUserRoles, ValueWrittenDefinition } from './values';
+import {
+  applyValuesMiddleware,
+  configurationSchema,
+  Namespace,
+  NamespaceEntity,
+  ServiceUserRoles,
+  ValueWrittenDefinition,
+} from './values';
 import { createRepositories } from './timescale';
 import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import { AjvValueValidationService } from './ajv';
@@ -44,29 +51,7 @@ const initializeApp = async () => {
             description: 'Writer role for writing new values.',
           },
         ],
-        configurationSchema: {
-          type: 'object',
-          additionalProperties: {
-            type: 'object',
-            properties: {
-              name: { type: 'string' },
-              definitions: {
-                type: 'object',
-                additionalProperties: {
-                  type: 'object',
-                  properties: {
-                    name: { type: 'string' },
-                    description: { type: 'string' },
-                    jsonSchema: { type: 'object' },
-                  },
-                  required: ['name', 'description', 'jsonSchema'],
-                  additionalProperties: false,
-                },
-              },
-            },
-            required: ['name', 'definitions'],
-          },
-        },
+        configurationSchema,
         events: [ValueWrittenDefinition],
         clientSecret: environment.CLIENT_SECRET,
         directoryUrl: new URL(environment.DIRECTORY_URL),

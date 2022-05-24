@@ -26,8 +26,8 @@ export default function (
     case FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION:
       return {
         ...state,
-        coreConfigDefinitions: action.payload.core,
-        tenantConfigDefinitions: action.payload.tenant,
+        coreConfigDefinitions: action.payload.core.latest,
+        tenantConfigDefinitions: action.payload.tenant.latest,
         isAddedFromOverviewPage: false,
       };
     case UPDATE_CONFIGURATION__DEFINITION_SUCCESS_ACTION:

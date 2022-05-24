@@ -126,7 +126,8 @@
       #goa-callout-custom {
         background-color: #0081a2 !important;
         color: #ffffff;
-        padding-left: 7.5rem;
+        padding-left: 2.5rem;
+        padding-right: 2.5rem;
         padding-top: 1.5rem;
         padding-bottom: 1.5rem;
       }
@@ -140,12 +141,12 @@
       .goa-footer-event {
         background-color: #f1f1f1;
         padding-top: 2.5rem;
-        padding-left: 3rem;
         padding-right: 2rem;
         padding-bottom: 3rem;
       }
       .goa-footer-event .link {
-        padding-left: 4.5rem;
+        padding-left: 2.5rem;
+        padding-right: 2.5rem;
         padding-bottom: 1.5rem;
       }
       .footer-link-border {
@@ -156,28 +157,40 @@
         padding-right: 6.75rem;
       }
       .goa-footer-event .footer-disclaimer {
-        margin-left: 4.5rem;
-        margin-right: 5.5rem;
+        padding-left: 2.5rem;
+        padding-right: 2.5rem;
         color: #666666;
         padding-top: 1.75rem;
         font-size: 14px;
         text-align: justify;
       }
       .container {
-        display: flex;
         padding-bottom: 2rem;
       }
       .email-content {
-        padding: 3rem 7.5rem;
+        padding-left: 2.5rem;
+        padding-right: 2.5rem;
         background-color: white;
       }
       .goa-logo {
         padding-left: 1.25rem;
         padding-top: 0.625rem;
       }
+    @media screen and (max-width: 640px) {
+        .full-width {
+          display: block !important;
+        }
+        .log-mobile {
+          padding-left: 2.5rem !important;
+        }
+
+        .unset-min-width {
+          min-width: unset !important;
+        }
+    }
     </style>
   </head>
-  <body>
+  <body style='max-width: 960px;'>
     <header>
       <div class='goa-header-event-template'>
         <div class='goa-logo'>
@@ -189,28 +202,37 @@
       </div>
       <div id='goa-callout-custom'>
         <div class='title'>
-          {{#if tenant.name}}{{tenant.name}}{{else}}Alberta Digital Service Platform{{/if}}
+          {{#if tenant.name}}
+            {{tenant.name}}
+          {{else}}
+            Alberta Digital Service Platform
+          {{/if}}
         </div>
       </div>
     </header>
-    <div class="email-content">
+    <div class='email-content'>
       {{content}}
     </div>
     <footer>
       <div class='goa-footer-event'>
-        <div class='container'>
-          <div class='link'>
-            <span>
-              Please do not reply to this email.{{#if managementUrl}} Manage your subscription <a href="{{ managementUrl }}" target="_blank" rel="noopener noreferrer">here</a>.{{/if}}
-            </span>
-            <br />
-          </div>
-          <div class='logo'>
-            <img
-              alt='Government of Alberta'
-              src='https://file-service.adsp.alberta.ca/file/v1/files/4b95b597-395f-4f4a-90ba-1d6cf2be0756/download?embed=true'
-            />
-          </div>
+        <div class='link full-width unset-min-width' style='display:inline-block; min-width: 450px;'>
+          <span>
+            Please do not reply to this email.
+            {{#if managementUrl}}
+              Manage your subscription
+              <a href="{{managementUrl}}" target='_blank' rel='noopener noreferrer'>
+                here
+              </a>
+              .
+            {{/if}}
+          </span>
+          <br />
+        </div>
+        <div class='logo log-mobile full-width' style='display:inline-block; max-width: 200;'>
+          <img
+            alt='Government of Alberta'
+            src='https://file-service.adsp.alberta.ca/file/v1/files/4b95b597-395f-4f4a-90ba-1d6cf2be0756/download?embed=true'
+          />
         </div>
         <div class='footer-disclaimer footer-link-border'>
           This email was sent from the Government of Alberta and any files transmitted with it are confidential and

@@ -34,8 +34,43 @@ export const TableWrapper = styled.div`
   }
 `;
 
+export const IconDiv = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+`;
+export const TableDiv = styled.div`
+  #stream-service-actions {
+    white-space: nowrap;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    text-align: right;
+  }
+`;
+export const StreamModalStyles = styled.div`
+  ul {
+    margin-left: 0;
+  }
+
+  li {
+    border: 1px solid #f1f1f1;
+  }
+
+  .messages {
+    margin-top: 0;
+  }
+
+  h3 {
+    margin-bottom: 0;
+  }
+`;
+
 export const NoPaddingTd = styled.td`
   padding: 0px !important;
+`;
+
+export const IdField = styled.div`
+  min-height: 1.6rem;
 `;
 
 export const Details = styled.div`
@@ -56,16 +91,4 @@ export const EntryDetail = styled.div`
   line-height: 16px;
   text-align: left;
   padding: 1rem;
-`;
-
-// TODO: use GoABadge after we update the ui-component version
-export const Badge = styled.div`
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-regular);
-  line-height: var(--lh-base);
-  background-color: var(--color-gray-100);
-  color: var(--color-tealblue-900);
-  padding-left: 0.4rem;
-  padding-right: 0.4rem !important;
-  display: inline-block;
 `;
