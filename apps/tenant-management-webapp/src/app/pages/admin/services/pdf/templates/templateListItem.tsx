@@ -15,7 +15,7 @@ export const PdfTemplateItem: FunctionComponent<PdfTemplateItemProps> = ({ pdfTe
       <tr>
         <td data-testid="pdf-templates-name">{pdfTemplate.name}</td>
         <td data-testid="pdf-templates-template-id">{pdfTemplate.id}</td>
-        <td data-testid="pdf-templates-description" className="anywhere-overflow-wrap">
+        <td data-testid="pdf-templates-description">
           <OverflowWrap>{pdfTemplate.description}</OverflowWrap>
         </td>
         <td data-testid="pdf-templates-action">
