@@ -78,5 +78,11 @@ class DirectoryServicePage {
   deleteModalBtn() {
     return cy.get('[data-testid="delete-confirm"]');
   }
+
+  entryDirectoryService(servicename, url) {
+    return cy.xpath(
+      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${servicename}")]/following-sibling::*[contains(text(), "${url}")]/parent::*`
+    );
+  }
 }
 export default DirectoryServicePage;

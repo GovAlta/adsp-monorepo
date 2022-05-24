@@ -95,9 +95,17 @@ Then('the user views the entry of {string}, {string}, {string}', function (direc
     .contains(url);
 });
 
-Then('the user should not view the entry of {string}, {string}', function (servicename, url) {
-  directoryObj.directoryTable().contains('td[data-testid="service"]', servicename).should('not.exist');
-  directoryObj.directoryTable().contains('td[data-testid="url"]', url).should('not.exist');
+Then('the user {string} the entry of {string}, {string}', function (viewOrNot, servicename, url) {
+  switch (viewOrNot) {
+    case 'views':
+      directoryObj.entryDirectoryService(servicename, url).should('exist');
+      break;
+    case 'should not view':
+      directoryObj.entryDirectoryService(servicename, url).should('not.exist');
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
 });
 
 Then('the user views the error message {string} for {string} field', function (errorMsg, field) {
