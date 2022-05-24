@@ -1,4 +1,4 @@
-import { FileItem, FileTypeItem } from './models';
+import { FileItem, FileMetrics, FileTypeItem } from './models';
 
 export const UPLOAD_FILE = 'tenant/file-service/upload';
 export const UPLOAD_FILE_SUCCESSES = 'tenant/file-service/upload/success';
@@ -31,6 +31,9 @@ export const UPDATE_FILE_TYPE_SUCCEEDED = 'file-service/fileType/update/success'
 export const FETCH_FILE_TYPE_HAS_FILE = 'file-service/docs/fetch/file/filetype';
 export const FETCH_FILE_TYPE_HAS_FILE_SUCCEEDED = 'file-service/docs/fetch/file/filetype/succeeded';
 
+export const FETCH_FILE_METRICS = 'file-service/metrics/fetch';
+export const FETCH_FILE_METRICS_SUCCEEDED = 'file-service//metrics/fetch/success';
+
 // =============
 // Actions Types
 // =============
@@ -57,7 +60,9 @@ export type ActionTypes =
   | DeleteFileTypeAction
   | CreateFileTypeAction
   | FetchFileTypeHasFileAction
-  | FetchFileTypeHasFileSucceededAction;
+  | FetchFileTypeHasFileSucceededAction
+  | FetchFileMetricsAction
+  | FetchFileMetricsSucceededAction;
 
 // | SetupFileAction;
 export interface UploadFileAction {
@@ -170,6 +175,15 @@ interface FetchFileTypeHasFileSucceededAction {
     hasFile: boolean;
     fileTypeId: string;
   };
+}
+
+export interface FetchFileMetricsAction {
+  type: typeof FETCH_FILE_METRICS;
+}
+
+export interface FetchFileMetricsSucceededAction {
+  type: typeof FETCH_FILE_METRICS_SUCCEEDED;
+  metrics: FileMetrics;
 }
 
 // ==============
@@ -313,4 +327,13 @@ export const FetchFileTypeHasFileSucceededService = (
     hasFile: existed,
     fileTypeId: fileTypeId,
   },
+});
+
+export const FetchFileMetrics = (): FetchFileMetricsAction => ({
+  type: FETCH_FILE_METRICS,
+});
+
+export const FetchFileMetricsSucceeded = (metrics: FileMetrics): FetchFileMetricsSucceededAction => ({
+  type: FETCH_FILE_METRICS_SUCCEEDED,
+  metrics,
 });
