@@ -127,6 +127,7 @@
         background-color: #0081a2 !important;
         color: #ffffff;
         padding-left: 2.5rem;
+        padding-right: 2.5rem;
         padding-top: 1.5rem;
         padding-bottom: 1.5rem;
       }
@@ -145,6 +146,7 @@
       }
       .goa-footer-event .link {
         padding-left: 2.5rem;
+        padding-right: 2.5rem;
         padding-bottom: 1.5rem;
       }
       .footer-link-border {
@@ -155,7 +157,8 @@
         padding-right: 6.75rem;
       }
       .goa-footer-event .footer-disclaimer {
-        margin-left: 2.5rem;
+        padding-left: 2.5rem;
+        padding-right: 2.5rem;
         color: #666666;
         padding-top: 1.75rem;
         font-size: 14px;
@@ -166,6 +169,7 @@
       }
       .email-content {
         padding-left: 2.5rem;
+        padding-right: 2.5rem;
         background-color: white;
       }
       .goa-logo {
@@ -179,10 +183,14 @@
         .log-mobile {
           padding-left: 2.5rem !important;
         }
+
+        .unset-min-width {
+          min-width: unset !important;
+        }
     }
     </style>
   </head>
-  <body>
+  <body style='max-width: 960px;'>
     <header>
       <div class='goa-header-event-template'>
         <div class='goa-logo'>
@@ -207,7 +215,7 @@
     </div>
     <footer>
       <div class='goa-footer-event'>
-        <div class='link full-width' style='display:inline-block; min-width: 450px;'>
+        <div class='link full-width unset-min-width' style='display:inline-block; min-width: 450px;'>
           <span>
             Please do not reply to this email.
             {{#if managementUrl}}
