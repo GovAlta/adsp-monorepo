@@ -9,7 +9,7 @@ import {
   createValidationHandler,
   UnauthorizedError,
 } from '@core-services/core-common';
-import { TenantService, toKebabName, EventService, AdspId } from '@abgov/adsp-service-sdk';
+import { TenantService, toKebabName, EventService } from '@abgov/adsp-service-sdk';
 
 import * as passport from 'passport';
 import { ServiceRoles } from '../roles';
@@ -24,7 +24,6 @@ const TIME_OUT = 10000;
 
 const passportMiddleware = passport.authenticate(['core', 'tenant'], { session: false });
 interface DirectoryRouterProps {
-  serviceId: AdspId;
   logger?: Logger;
   directoryRepository: DirectoryRepository;
   tenantService: TenantService;
@@ -134,12 +133,7 @@ export const addServiceByNamespace =
   };
 
 export const updateService =
-  (
-    directoryRepository: DirectoryRepository,
-    eventService: EventService,
-    logger: Logger,
-    serviceId: AdspId
-  ): RequestHandler =>
+  (directoryRepository: DirectoryRepository, eventService: EventService, logger: Logger): RequestHandler =>
   async (req, res, _next) => {
     const { namespace } = req.params;
     const user = req.user;
@@ -158,9 +152,11 @@ export const updateService =
         const serviceEvent = isExist.service.split(':').length === 0 ? isExist.service : isExist.service.split(':')[0];
         const eventApi = isExist.service.split(':').length === 0 ? '' : isExist.service.split(':')[1];
 
-        logger.info(`Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}) `);
+        logger.info(
+          `Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}) user tenant id : ${user.tenantId} `
+        );
         eventService.send(
-          entryUpdated(user, serviceId, namespace, serviceEvent, eventApi, url, {
+          entryUpdated(user, namespace, serviceEvent, eventApi, url, {
             data: isExist,
           })
         );
@@ -177,12 +173,7 @@ export const updateService =
   };
 
 export const deleteService =
-  (
-    directoryRepository: DirectoryRepository,
-    eventService: EventService,
-    logger: Logger,
-    serviceId: AdspId
-  ): RequestHandler =>
+  (directoryRepository: DirectoryRepository, eventService: EventService, logger: Logger): RequestHandler =>
   async (req, res, _next) => {
     const { namespace, service } = req.params;
     const user = req.user;
@@ -205,8 +196,10 @@ export const deleteService =
       await directoryRepository.update(directory);
       const serviceEvent = isExist.service.split(':').length === 0 ? isExist.service : isExist.service.split(':')[0];
       const eventApi = isExist.service.split(':').length === 0 ? '' : isExist.service.split(':')[1];
-      logger.info(`Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}) `);
-      eventService.send(entryDeleted(user, serviceId, namespace, serviceEvent, eventApi, isExist.host));
+      logger.info(
+        `Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}), user tenant id : ${user.tenantId} `
+      );
+      eventService.send(entryDeleted(user, namespace, serviceEvent, eventApi, isExist.host));
       return res.sendStatus(HttpStatusCodes.OK);
     } catch (err) {
       logger.error(`Failed deleting directory for namespace: ${namespace} with error ${err.message}`);
@@ -265,7 +258,6 @@ export const getMetadataByService =
   };
 
 export const createDirectoryRouter = ({
-  serviceId,
   logger,
   directoryRepository,
   tenantService,
@@ -311,7 +303,7 @@ export const createDirectoryRouter = ({
   directoryRouter.put(
     '/namespaces/:namespace',
     [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
-    updateService(directoryRepository, eventService, logger, serviceId)
+    updateService(directoryRepository, eventService, logger)
   );
 
   /**
@@ -320,7 +312,7 @@ export const createDirectoryRouter = ({
   directoryRouter.delete(
     '/namespaces/:namespace/services/:service',
     [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
-    deleteService(directoryRepository, eventService, logger, serviceId)
+    deleteService(directoryRepository, eventService, logger)
   );
 
   /**
