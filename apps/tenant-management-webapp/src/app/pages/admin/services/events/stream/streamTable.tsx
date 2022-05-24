@@ -1,38 +1,28 @@
 import DataTable from '@components/DataTable';
-import React, { useState } from 'react';
+import React from 'react';
 import { Streams } from '@store/stream/models';
-import { TableWrapper, EntryDetail, NoPaddingTd } from './styleComponents';
-import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
-import { Badge } from './styleComponents';
-import { adspId } from '@lib/adspId';
+import { TableWrapper } from './styleComponents';
 import { renderNoItem } from '@components/NoItem';
-
+import { StreamTableItem } from './streamTableItem';
 interface StreamTableProps {
   streams: Streams;
-  isCore: boolean;
   namespace: string;
+  isTenantSpecificStream: boolean;
+  onDelete?: (streamId: string) => void;
+  onEdit?: (streamId: string) => void;
 }
 
-interface SubscriberRolesProps {
-  roles: string[];
-}
-
-const SubscriberRoles = ({ roles }: SubscriberRolesProps): JSX.Element => {
-  return (
-    <td>
-      {roles.map((role): JSX.Element => {
-        return <Badge>{adspId`${role}`.toStringWithOutPrefix()}</Badge>;
-      })}
-    </td>
-  );
-};
-
-export const StreamTable = ({ streams, namespace }: StreamTableProps): JSX.Element => {
-  const [showId, setShowId] = useState<string>(null);
+export const StreamTable = ({
+  onDelete,
+  onEdit,
+  streams,
+  namespace,
+  isTenantSpecificStream,
+}: StreamTableProps): JSX.Element => {
   const hasContent = Object.entries(streams).length > 0;
   return (
     <TableWrapper key={`${namespace}-stream-table`}>
-      <DataTable data-testid={`${namespace}-stream-table`}>
+      <DataTable key={`${namespace}-stream-table`} data-testid={`${namespace}-stream-table`}>
         <thead data-testid="stream-table-header">
           <tr>
             <th id="stream-service-name" data-testid="stream-table-header-name">
@@ -53,34 +43,13 @@ export const StreamTable = ({ streams, namespace }: StreamTableProps): JSX.Eleme
           {hasContent &&
             Object.entries(streams).map(([id, stream]) => {
               return (
-                <>
-                  <tr>
-                    <td data-testid={`stream-name-${id}`}>{stream.name}</td>
-                    <SubscriberRoles roles={stream.subscriberRoles} />
-                    <td>
-                      <GoAContextMenu>
-                        <GoAContextMenuIcon
-                          type={showId === id ? 'eye-off' : 'eye'}
-                          onClick={() => {
-                            if (showId) {
-                              setShowId(null);
-                            } else {
-                              setShowId(id);
-                            }
-                          }}
-                          testId="toggle-event-visibility"
-                        />
-                      </GoAContextMenu>
-                    </td>
-                  </tr>
-                  {showId === id && (
-                    <tr>
-                      <NoPaddingTd colSpan={3}>
-                        <EntryDetail data-testid={`details-${id}`}>{JSON.stringify(stream, null, 2)}</EntryDetail>
-                      </NoPaddingTd>
-                    </tr>
-                  )}
-                </>
+                <StreamTableItem
+                  onDelete={onDelete}
+                  onEdit={onEdit}
+                  isTenantSpecificStream={isTenantSpecificStream}
+                  key={id}
+                  stream={stream}
+                />
               );
             })}
           {!hasContent && (
