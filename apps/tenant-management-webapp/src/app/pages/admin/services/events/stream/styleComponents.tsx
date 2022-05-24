@@ -39,7 +39,14 @@ export const IconDiv = styled.div`
   flex-direction: row;
   justify-content: flex-end;
 `;
-
+export const TableDiv = styled.div`
+  #stream-service-actions {
+    white-space: nowrap;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    text-align: right;
+  }
+`;
 export const StreamModalStyles = styled.div`
   ul {
     margin-left: 0;
