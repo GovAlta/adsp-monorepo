@@ -1,6 +1,6 @@
 export interface ValueDefinition {
+  id: string;
   name: string;
   description: string;
-  type: string;
   jsonSchema: Record<string, unknown>;
 }

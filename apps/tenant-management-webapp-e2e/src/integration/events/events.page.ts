@@ -116,6 +116,22 @@ class eventsPage {
       `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td[@data-testid="description"]/following-sibling::td//*[@data-testid="delete-details"]`
     );
   }
+
+  coreStreamsSectionTitle() {
+    return cy.xpath('//*[text()="Core streams"]');
+  }
+
+  streamToggleButton(streamName) {
+    return cy.xpath(
+      `//*[@data-testid="Platform-stream-table"]//tbody/tr/td[text()="${streamName}"]/following-sibling::td//button[@data-testid="toggle-event-visibility"]`
+    );
+  }
+
+  streamDetails(streamName) {
+    return cy.xpath(
+      `//*[@data-testid="Platform-stream-table"]//tbody/tr/td[text()="${streamName}"]/parent::*/following-sibling::tr//*[contains(@data-testid, "details")]`
+    );
+  }
 }
 
 export default eventsPage;

@@ -1,13 +1,13 @@
 export interface ConfigurationDefinition {
-  configurationSchema: Record<string, unknown>;
+  configurationSchema: Record<string, SchemaType>;
 }
 export interface ConfigurationDefinitionTypes {
-  core: Record<string, unknown>;
-  tenant: Record<string, unknown>;
+  core: ServiceSchemas;
+  tenant: ServiceSchemas;
 }
 export interface ConfigurationState {
-  coreConfigDefinitions: Record<string, unknown>;
-  tenantConfigDefinitions: Record<string, unknown>;
+  coreConfigDefinitions: ServiceSchemas;
+  tenantConfigDefinitions: ServiceSchemas;
   isAddedFromOverviewPage: boolean;
 }
 
@@ -33,3 +33,25 @@ export const defaultConfigDefinition: ConfigDefinition = {
     additionalProperties: true,
   },
 };
+
+// Type is unknown because its up to another application to define.
+// However, its useful to know that such-and-such an object is the
+// actual configuration schema we are looking for.
+export type SchemaType = unknown;
+export type Service = string; // a service is identified by "<namespace>:<name>"
+
+export interface ServiceSchemas {
+  configuration: Record<Service, SchemaType>;
+  revision: number;
+}
+
+export interface ServiceConfigurations {
+  namespace: string;
+  name: string;
+  latest: ServiceSchemas;
+}
+
+export interface ServiceConfigurationTypes {
+  core: ServiceConfigurations;
+  tenant: ServiceConfigurations;
+}

@@ -8,6 +8,7 @@ import { CheckSubscriberRoles } from './checkSubscriberRoles';
 import { DeleteModal } from '@components/DeleteModal';
 import { PageIndicator } from '@components/Indicator';
 import { RootState } from '@store/index';
+import { Events } from '@store/subscription/models';
 
 export const Subscriptions: FunctionComponent = () => {
   const criteriaInit = {
@@ -15,14 +16,27 @@ export const Subscriptions: FunctionComponent = () => {
     name: '',
   };
   const dispatch = useDispatch();
+
+  const indicator = useSelector((state: RootState) => {
+    return state.session.indicator;
+  });
+
+  const loadingState = useSelector((state: RootState) => {
+    return state.session.loadingStates.find((state) => state.name === Events.search);
+  });
+
   const [selectedSubscription, setSelectedSubscription] = useState<Subscriber>(null);
   const [selectedType, setSelectedType] = useState<string>(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   const [criteriaState, setCriteriaState] = useState<SubscriptionSearchCriteria>(criteriaInit);
   useEffect(() => {
-    dispatch(GetAllTypeSubscriptions({}));
+    if (criteriaState.email === '' && criteriaState.name === '') {
+      dispatch(GetAllTypeSubscriptions({}));
+    }
   }, []);
+  //eslint-disable-next-line
+  useEffect(() => {}, [loadingState]);
 
   const searchFn = ({ email, name, sms }: SubscriberSearchCriteria) => {
     dispatch(GetAllTypeSubscriptions({ email, name, sms }));
@@ -32,10 +46,6 @@ export const Subscriptions: FunctionComponent = () => {
     dispatch(GetAllTypeSubscriptions({}));
     setCriteriaState(criteriaInit);
   };
-
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
 
   const emailIndex = selectedSubscription?.channels?.findIndex((channel) => channel.channel === 'email');
 
@@ -49,16 +59,17 @@ export const Subscriptions: FunctionComponent = () => {
       />
       {indicator.show && <PageIndicator />}
 
-      {indicator.show === false && (
-        <SubscriptionList
-          onDelete={(sub: Subscriber, type: string) => {
-            setSelectedSubscription(sub);
-            setShowDeleteConfirmation(true);
-            setSelectedType(type);
-          }}
-          searchCriteria={criteriaState}
-        />
-      )}
+      {(indicator.show === false && loadingState === undefined) ||
+        (loadingState.state === 'completed' && (
+          <SubscriptionList
+            onDelete={(sub: Subscriber, type: string) => {
+              setSelectedSubscription(sub);
+              setShowDeleteConfirmation(true);
+              setSelectedType(type);
+            }}
+            searchCriteria={criteriaState}
+          />
+        ))}
 
       {/* Delete confirmation */}
       {showDeleteConfirmation && (

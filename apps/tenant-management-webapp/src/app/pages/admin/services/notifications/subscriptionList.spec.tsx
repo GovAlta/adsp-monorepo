@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import '@testing-library/jest-dom';
 import { render } from '@testing-library/react';
-
+import { Events } from '@store/subscription/models';
 import { Subscriptions } from './subscriptions';
 
 describe('NotificationTypes Page', () => {
@@ -17,6 +17,12 @@ describe('NotificationTypes Page', () => {
       indicator: {
         show: false,
       },
+      loadingStates: [
+        {
+          name: Events.search,
+          state: 'completed',
+        },
+      ],
     },
     tenant: {
       realmRoles: ['uma_auth'],

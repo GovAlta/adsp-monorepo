@@ -15,7 +15,9 @@ export const PdfTemplateItem: FunctionComponent<PdfTemplateItemProps> = ({ pdfTe
       <tr>
         <td data-testid="pdf-templates-name">{pdfTemplate.name}</td>
         <td data-testid="pdf-templates-template-id">{pdfTemplate.id}</td>
-        <td data-testid="pdf-templates-description">{pdfTemplate.description}</td>
+        <td data-testid="pdf-templates-description">
+          <OverflowWrap>{pdfTemplate.description}</OverflowWrap>
+        </td>
         <td data-testid="pdf-templates-action">
           <Edit>
             <div className="flexRow">
@@ -47,4 +49,8 @@ const Edit = styled.div`
   }
 
   display: flex;
+`;
+
+const OverflowWrap = styled.div`
+  overflow-wrap: anywhere;
 `;

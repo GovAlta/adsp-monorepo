@@ -72,7 +72,7 @@ const initializeApp = async (): Promise<express.Application> => {
   passport.deserializeUser(function (user, done) {
     done(null, user as User);
   });
-  applyDirectoryV2Middleware(app, { ...repositories, logger, tenantService, eventService });
+  applyDirectoryV2Middleware(app, { ...repositories, serviceId, logger, tenantService, eventService });
   app.use(passport.initialize());
   app.use('/directory', passport.authenticate(['core', 'tenant'], { session: false }));
 

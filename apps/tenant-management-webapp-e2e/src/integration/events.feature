@@ -94,3 +94,12 @@ Feature: Events
     Then the user "views" the definition details of "application-unhealthy" under "status-service"
     When the user clicks "show" details button for the definition of "application-healthy" under "status-service"
     Then the user "views" the definition details of "application-healthy" under "status-service"
+
+  @TEST_CS-1430 @REQ_CS-1203 @regression
+  Scenario: As a tenant admin, I can view stream configuration for events, so that I know they are available via push service
+    Given a tenant admin user is on tenant admin page
+    When the user selects the "Event" menu item
+    And the user selects "Streams" tab for "Event"
+    Then the user views Core streams section
+    When the user clicks eye icon of "PDF generation updates" under Core streams
+    Then the user views the details of "PDF generation updates" under Core streams

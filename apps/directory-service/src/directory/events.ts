@@ -1,8 +1,8 @@
-import type { DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
+import type { AdspId, DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
 
 export const EntryUpdatedDefinition: DomainEventDefinition = {
   name: 'entry-updated',
-  description: 'Signalled when an entry is updated.',
+  description: 'Signalled when a directory entry is updated.',
   payloadSchema: {
     type: 'object',
     properties: {
@@ -32,13 +32,13 @@ export const EntryUpdatedDefinition: DomainEventDefinition = {
         },
       },
     },
-    required: ['namespace', 'service', 'createdBy'],
+    required: ['namespace', 'service', 'updatedBy'],
   },
 };
 
 export const EntryDeletedDefinition: DomainEventDefinition = {
   name: 'entry-deleted',
-  description: 'Signalled when an entry is deleted.',
+  description: 'Signalled when a directory entry is deleted.',
   payloadSchema: {
     type: 'object',
     properties: {
@@ -62,12 +62,13 @@ export const EntryDeletedDefinition: DomainEventDefinition = {
         },
       },
     },
-    required: ['namespace', 'service', 'createdBy'],
+    required: ['namespace', 'service', 'deletedBy'],
   },
 };
 
 export const entryUpdated = (
   updatedBy: User,
+  tenantId: AdspId,
   namespace: string,
   service: string,
   api: string,
@@ -76,7 +77,8 @@ export const entryUpdated = (
 ): DomainEvent => ({
   name: 'entry-updated',
   timestamp: new Date(),
-  correlationId: `${namespace}:${name}`,
+  tenantId,
+  correlationId: `${namespace}:${service}`,
   context: {
     namespace,
   },
@@ -95,6 +97,7 @@ export const entryUpdated = (
 
 export const entryDeleted = (
   deletedBy: User,
+  tenantId: AdspId,
   namespace: string,
   service: string,
   api: string,
@@ -102,7 +105,8 @@ export const entryDeleted = (
 ): DomainEvent => ({
   name: 'entry-deleted',
   timestamp: new Date(),
-  correlationId: `${namespace}:${name}`,
+  tenantId,
+  correlationId: `${namespace}:${service}`,
   context: {
     namespace,
   },

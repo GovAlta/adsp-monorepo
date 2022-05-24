@@ -1,4 +1,4 @@
-import { ConfigDefinition, ConfigurationDefinitionTypes } from './model';
+import { ServiceConfigurationTypes, ConfigDefinition, ServiceSchemas } from './model';
 
 export const DELETE_CONFIGURATION_ACTION = 'configuration/DELETE_CONFIGURATION_ACTION';
 export const DELETE_CONFIGURATION_ACTION_SUCCESS = 'configuration/DELETE_CONFIGURATION_ACTION_SUCCESS';
@@ -17,7 +17,7 @@ export interface DeleteConfigurationDefinitionAction {
 
 export interface DeleteConfigurationDefinitionSuccessAction {
   type: typeof DELETE_CONFIGURATION_ACTION_SUCCESS;
-  payload: Record<string, unknown>;
+  payload: ServiceSchemas;
 }
 export interface FetchConfigurationDefinitionsAction {
   type: typeof FETCH_CONFIGURATION_DEFINITIONS_ACTION;
@@ -25,7 +25,7 @@ export interface FetchConfigurationDefinitionsAction {
 
 export interface FetchConfigurationDefinitionsSuccessAction {
   type: typeof FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION;
-  payload: ConfigurationDefinitionTypes;
+  payload: ServiceConfigurationTypes;
 }
 
 export interface UpdateConfigurationDefinitionAction {
@@ -36,7 +36,7 @@ export interface UpdateConfigurationDefinitionAction {
 
 export interface UpdateConfigurationDefinitionSuccessAction {
   type: typeof UPDATE_CONFIGURATION__DEFINITION_SUCCESS_ACTION;
-  payload: Record<string, unknown>;
+  payload: ServiceSchemas;
   isAddedFromOverviewPage: boolean;
 }
 
@@ -54,7 +54,7 @@ export const deleteConfigurationDefinition = (definitionName: string): DeleteCon
 });
 
 export const deleteConfigurationDefinitionSuccess = (
-  definition: Record<string, unknown>
+  definition: ServiceSchemas
 ): DeleteConfigurationDefinitionSuccessAction => ({
   type: DELETE_CONFIGURATION_ACTION_SUCCESS,
   payload: definition,
@@ -69,7 +69,7 @@ export const updateConfigurationDefinition = (
   isAddedFromOverviewPage,
 });
 export const updateConfigurationDefinitionSuccess = (
-  definition: Record<string, unknown>,
+  definition: ServiceSchemas,
   isAddedFromOverviewPage: boolean
 ): UpdateConfigurationDefinitionSuccessAction => ({
   type: UPDATE_CONFIGURATION__DEFINITION_SUCCESS_ACTION,
@@ -81,7 +81,7 @@ export const getConfigurationDefinitions = (): FetchConfigurationDefinitionsActi
 });
 
 export const getConfigurationDefinitionsSuccess = (
-  results: ConfigurationDefinitionTypes
+  results: ServiceConfigurationTypes
 ): FetchConfigurationDefinitionsSuccessAction => ({
   type: FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION,
   payload: results,
