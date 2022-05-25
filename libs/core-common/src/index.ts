@@ -9,3 +9,4 @@ export * from './event';
 export * from './amqp';
 export * from './work';
 export * from './jsonSchema';
+export * from './metrics';
