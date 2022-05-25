@@ -1,15 +1,10 @@
-import { AdspId, adspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import { Request, RequestHandler, Response } from 'express';
 import * as responseTime from 'response-time';
 import { Logger } from 'winston';
-
-interface MetricsHandlerProps {
-  serviceId: AdspId;
-  logger: Logger;
-  tokenProvider: TokenProvider;
-  directory: ServiceDirectory;
-}
+import { TokenProvider } from '../access';
+import { ServiceDirectory } from '../directory';
+import { adspId, AdspId } from '../utils';
 
 interface ServiceMetrics {
   tenantId: AdspId;
@@ -42,7 +37,11 @@ export async function writeMetrics(
       },
     };
     const token = await tokenProvider.getAccessToken();
-    await axios.post(valueUrl, valueWrite, { headers: { Authorization: `Bearer ${token}` }, timeout: 2000 });
+    await axios.post(valueUrl, valueWrite, {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { tenantId: tenantId.toString() },
+      timeout: 2000,
+    });
     logger.debug(
       `Wrote service metric to value service for ${valueWrite.correlationId} with response time ${responseTime} ms.`,
       {
@@ -58,12 +57,12 @@ export async function writeMetrics(
   }
 }
 
-export async function createMetricsHandler({
-  serviceId,
-  logger,
-  tokenProvider,
-  directory,
-}: MetricsHandlerProps): Promise<RequestHandler> {
+export async function createMetricsHandler(
+  serviceId: AdspId,
+  logger: Logger,
+  tokenProvider: TokenProvider,
+  directory: ServiceDirectory
+): Promise<RequestHandler> {
   const valueServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:value-service:v1`);
   const valueUrl = new URL(`v1/${serviceId.service}/values/service-metrics`, valueServiceUrl);
   return responseTime((req: Request, _res: Response, time) => {

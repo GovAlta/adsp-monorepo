@@ -4,6 +4,7 @@ import { createConfigurationHandler, createConfigurationService } from '../confi
 import { createDirectory } from '../directory';
 import { createEventService } from '../event';
 import { createHealthCheck } from '../healthCheck';
+import { createMetricsHandler } from '../metrics';
 import { createServiceRegistrar } from '../registration';
 import { createTenantHandler, createTenantService } from '../tenant';
 import { AdspId, assertAdspId, createLogger } from '../utils';
@@ -95,6 +96,8 @@ export async function initializePlatform(
     event: !!service?.eventService || !registration.events || !registration.events.length,
   });
 
+  const metricsHandler = await createMetricsHandler(serviceId, logger, tokenProvider, directory);
+
   return {
     tokenProvider,
     coreStrategy,
@@ -107,5 +110,6 @@ export async function initializePlatform(
     directory,
     healthCheck,
     clearCached,
+    metricsHandler,
   };
 }

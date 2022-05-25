@@ -1,6 +1,6 @@
-import { adspId } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import { Logger } from 'winston';
+import { adspId } from '../utils';
 import { createMetricsHandler, writeMetrics } from './handler';
 
 jest.mock('axios');
@@ -28,12 +28,7 @@ describe('handler', () => {
 
   describe('createMetricsHandler', () => {
     it('can create handler', () => {
-      const handler = createMetricsHandler({
-        serviceId,
-        logger: loggerMock,
-        tokenProvider: tokenProviderMock,
-        directory: directoryMock,
-      });
+      const handler = createMetricsHandler(serviceId, loggerMock, tokenProviderMock, directoryMock);
       expect(handler).toBeTruthy();
     });
   });
