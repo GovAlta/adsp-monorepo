@@ -73,7 +73,7 @@ class ServiceDocsImpl {
     if (tenant) {
       const namespace = toKebabName(tenant);
 
-      const tenantDirectoryUrl = new URL(`api/directory/v2/namespaces/${namespace}/entries`, directoryServiceUrl);
+      const tenantDirectoryUrl = new URL(`directory/v2/namespaces/${namespace}/entries`, directoryServiceUrl);
 
       const { data } = await axios.get<Array<Directory>>(tenantDirectoryUrl.href);
       for (const entry of data) {
@@ -82,7 +82,7 @@ class ServiceDocsImpl {
         if (id.type === 'service') {
           try {
             const serviceDirectoryUrl = new URL(
-              `api/directory/v2/namespaces/${namespace}/services/${id.service}`,
+              `directory/v2/namespaces/${namespace}/services/${id.service}`,
               directoryServiceUrl.href
             );
             const { metadata } = (await axios.get<DirectoryServiceResponse>(serviceDirectoryUrl.href)).data;

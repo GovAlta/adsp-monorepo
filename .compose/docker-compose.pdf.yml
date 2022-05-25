@@ -12,7 +12,7 @@ services:
       - 3345
     environment:
       - KEYCLOAK_ROOT_URL=http://keycloak:8080
-      - DIRECTORY_URL=http://tenant-management-api:3333
+      - DIRECTORY_URL=http://directory-service:3331
       - CLIENT_ID=urn:ads:platform:pdf-service
       - CLIENT_SECRET=2b8c914a-ccd5-4585-a69d-7b2c5378ecf9
       - PORT=3345
