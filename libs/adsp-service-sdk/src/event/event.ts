@@ -45,12 +45,15 @@ export interface IntervalDefinition {
    */
   name: string;
   /**
+   * Context properties to match on events.
    *
+   * Interval events are matched using their correlation ID. If this property is set, the specified context
+   * values are also used for the match. Use this when the correlation ID is not unique to an interval.
    *
-   * @type {(string[])}
+   * @type {(string | string[])}
    * @memberof IntervalDefinition
    */
-  context?: string[];
+  context?: string | string[];
 }
 
 export interface DomainEventDefinition {
