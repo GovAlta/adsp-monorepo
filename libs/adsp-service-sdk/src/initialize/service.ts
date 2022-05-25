@@ -37,6 +37,7 @@ export async function initializeService(options: Options, logOptions: Logger | L
     tenantStrategy,
     healthCheck,
     clearCached,
+    metricsHandler,
   } = await initializePlatform({ ...options }, logOptions);
 
   // In the case of a tenant service, it will only have access to one tenant (its own).
@@ -57,6 +58,7 @@ export async function initializeService(options: Options, logOptions: Logger | L
     coreStrategy,
     tenantStrategy,
     healthCheck,
+    metricsHandler,
     clearCached: (serviceId) => clearCached(tenant?.id, serviceId),
   };
 }
