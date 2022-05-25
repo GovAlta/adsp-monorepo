@@ -38,13 +38,14 @@ async function calculateIntervalMetric(
         tenantId: tenantId.toString(),
       });
 
-      const { namespace: intervalNamespace, name: intervalName, metric: metricValue } = interval;
+      const { namespace: intervalNamespace, name: intervalName, metric: metricValue, context: contextKeys } = interval;
       const metricNameElements = Array.isArray(metricValue) ? metricValue : [metricValue];
 
       const eventContext = contextValue || {};
       const context = {
         namespace: intervalNamespace,
         name: intervalName,
+        ...contextKeys?.reduce((values, key) => ({ ...values, key: eventContext[key] }), {}),
       };
 
       // Read the start of the interval from the event log.
