@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { GoAButton } from '@abgov/react-components';
 import { FileMetrics } from './metrics';
+import { FetchFileMetrics } from '@store/file/actions';
 
 interface FileOverviewProps {
   setActiveEdit: (boolean) => void;
@@ -13,6 +14,7 @@ const FileOverview = ({ setActiveEdit, setActiveIndex }: FileOverviewProps): JSX
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(FetchRealmRoles());
+    dispatch(FetchFileMetrics());
   }, []);
 
   useEffect(() => {
