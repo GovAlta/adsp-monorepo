@@ -25,8 +25,8 @@ describe('createLogEventJob', () => {
 
   beforeEach(() => {
     configurationService.getConfiguration.mockClear();
-    axiosMock.get.mockClear();
-    axiosMock.post.mockClear();
+    axiosMock.get.mockReset();
+    axiosMock.post.mockReset();
   });
 
   it('can create job', () => {
@@ -112,9 +112,6 @@ describe('createLogEventJob', () => {
       axiosMock.get.mockResolvedValueOnce({
         data: { 'event-service': { event: [{ timestamp: start.toISOString() }] } },
       });
-      axiosMock.get.mockResolvedValueOnce({
-        data: { page: { size: 0 } },
-      });
       axiosMock.post.mockResolvedValueOnce({});
       job(event, (err) => {
         expect(axiosMock.get).toHaveBeenCalledWith(
@@ -159,9 +156,6 @@ describe('createLogEventJob', () => {
       axiosMock.get.mockResolvedValueOnce({
         data: { 'event-service': { event: [{ timestamp: start.toISOString() }] } },
       });
-      axiosMock.get.mockResolvedValueOnce({
-        data: { page: { size: 0 } },
-      });
       axiosMock.post.mockResolvedValueOnce({});
       job(event, (err) => {
         expect(axiosMock.get).toHaveBeenCalledWith(
@@ -205,9 +199,6 @@ describe('createLogEventJob', () => {
       const start = new Date(event.timestamp.getTime() - 30000);
       axiosMock.get.mockResolvedValueOnce({
         data: { 'event-service': { event: [{ timestamp: start.toISOString() }] } },
-      });
-      axiosMock.get.mockResolvedValueOnce({
-        data: { page: { size: 0 } },
       });
       axiosMock.post.mockResolvedValueOnce({});
       job(event, (err) => {
