@@ -183,7 +183,7 @@ export interface FetchFileMetricsAction {
 
 export interface FetchFileMetricsSucceededAction {
   type: typeof FETCH_FILE_METRICS_SUCCEEDED;
-  metrics: FileMetrics;
+  payload: FileMetrics;
 }
 
 // ==============
@@ -335,5 +335,5 @@ export const FetchFileMetrics = (): FetchFileMetricsAction => ({
 
 export const FetchFileMetricsSucceeded = (metrics: FileMetrics): FetchFileMetricsSucceededAction => ({
   type: FETCH_FILE_METRICS_SUCCEEDED,
-  metrics,
+  payload: metrics,
 });
