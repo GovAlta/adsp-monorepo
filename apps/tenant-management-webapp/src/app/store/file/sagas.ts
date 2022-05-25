@@ -298,8 +298,8 @@ export function* fetchFileMetrics(): SagaIterator {
       const lifetimeMetric = 'file-service:file-lifetime:duration';
       yield put(
         FetchFileMetricsSucceeded({
-          filesUploaded: parseInt(metrics[uploadedMetric]?.values[0]?.sum || '0'),
-          fileLifetime: moment.duration(parseInt(metrics[lifetimeMetric]?.values[0]?.avg || '0'), 'seconds').days(),
+          filesUploaded: parseInt(metrics[uploadedMetric]?.values[0]?.sum || '0', 10),
+          fileLifetime: moment.duration(parseInt(metrics[lifetimeMetric]?.values[0]?.avg || '0', 10), 'seconds').asDays(),
         })
       );
     } catch (e) {
