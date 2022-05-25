@@ -44,7 +44,7 @@ export class ValueDefinitionEntity implements ValueDefinition {
     // Note: This is part of the custom schema handling that copies from a value object into a metrics property.
     if (metrics) {
       valueRecord.metrics = {
-        ...(value.metrics || {}),
+        ...value.metrics,
         ...metrics,
       };
       delete value.value[ValueDefinitionEntity.METRICS_KEY];

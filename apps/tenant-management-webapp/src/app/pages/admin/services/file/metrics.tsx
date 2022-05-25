@@ -11,20 +11,19 @@ const Title = styled.div`
   align-items: baseline;
 `;
 
-export const NotificationMetrics: FunctionComponent = () => {
-  const metrics = useSelector((state: RootState) => state.notification.metrics);
+export const FileMetrics: FunctionComponent = () => {
+  const metrics = useSelector((state: RootState) => state.fileService.metrics);
 
   return (
     <section>
       <Title>
-        <h2>Notification information</h2>
+        <h2>File information</h2>
         <p>for week of {moment().format('MMMM Do')}</p>
       </Title>
       <Metrics
         metrics={[
-          { id: 'notifications-sent', name: 'Sent notifications', value: metrics.notificationsSent },
-          { id: 'notifications-failed', name: 'Failed notifications', value: metrics.notificationsFailed },
-          { id: 'notifications-avg-send-duration', name: 'Average time to send (secs)', value: metrics.sendDuration },
+          { id: 'file-uploaded', name: 'Files uploaded', value: metrics.filesUploaded },
+          { id: 'file-lifetime-duration', name: 'Average lifetime (days)', value: metrics.fileLifetime },
         ]}
       />
     </section>

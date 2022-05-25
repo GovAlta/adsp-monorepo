@@ -32,7 +32,7 @@ export function createLockJob({ logger, repository, eventService }: LockJobProps
           eventService.send(formLocked(jobUser, result));
         }
 
-        after = page.after;
+        after = page.next;
       } while (after);
 
       logger.info(`Completed form lock job and locked ${numberLocked} forms.`);

@@ -76,6 +76,7 @@ export const entryUpdated = (
 ): DomainEvent => ({
   name: 'entry-updated',
   timestamp: new Date(),
+  tenantId: updatedBy.tenantId,
   correlationId: `${namespace}:${service}`,
   context: {
     namespace,
@@ -102,6 +103,7 @@ export const entryDeleted = (
 ): DomainEvent => ({
   name: 'entry-deleted',
   timestamp: new Date(),
+  tenantId: deletedBy.tenantId,
   correlationId: `${namespace}:${service}`,
   context: {
     namespace,
