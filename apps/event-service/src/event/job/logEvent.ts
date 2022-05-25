@@ -42,10 +42,15 @@ async function calculateIntervalMetric(
       const metricNameElements = Array.isArray(metricValue) ? metricValue : [metricValue];
 
       const eventContext = contextValue || {};
+      const contextCriteria = (typeof contextKeys === 'string' ? [contextKeys] : contextKeys || []).reduce(
+        (values, key) => ({ ...values, [key]: eventContext[key] }),
+        {}
+      );
+
       const context = {
+        ...contextCriteria,
         namespace: intervalNamespace,
         name: intervalName,
-        ...contextKeys?.reduce((values, key) => ({ ...values, key: eventContext[key] }), {}),
       };
 
       // Read the start of the interval from the event log.
