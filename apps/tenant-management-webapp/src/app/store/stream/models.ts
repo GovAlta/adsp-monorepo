@@ -9,8 +9,17 @@ export interface Stream {
   events: Event[];
   publicSubscribe: boolean;
   subscriberRoles: string[];
+  description: string;
 }
 
+export const initialStream: Stream = {
+  id: '',
+  name: '',
+  events: [],
+  description: '',
+  publicSubscribe: false,
+  subscriberRoles: [],
+};
 export interface StreamStatus {
   core: Streams;
   tenant: Streams;
@@ -22,3 +31,10 @@ export const InitialStreams: StreamStatus = {
   core: {},
   tenant: {},
 };
+
+export interface SubscriberRolesOptions {
+  value: string;
+  label: string;
+  key: string;
+  dataTestId: string;
+}

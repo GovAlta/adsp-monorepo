@@ -5,8 +5,16 @@ export interface PdfTemplate {
   template: string;
   useWrapper: boolean;
 }
+
+export interface PdfMetrics {
+  pdfGenerated?: number;
+  pdfFailed?: number;
+  generationDuration?: number;
+}
+
 export interface PdfState {
   pdfTemplates: Record<string, PdfTemplate>;
+  metrics: PdfMetrics;
 }
 
 export const defaultPdfTemplate: PdfTemplate = {

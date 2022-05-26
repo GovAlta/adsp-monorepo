@@ -18,6 +18,10 @@ export const TemplateEditorContainer = styled.div`
     overflow: auto;
   }
 
+  .reduce-margin {
+    margin-top: 5px;
+  }
+
   @media (min-width: 1279px) {
     .mobile {
       display: none;

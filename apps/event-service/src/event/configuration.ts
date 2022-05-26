@@ -20,6 +20,16 @@ export const configurationSchema = {
                 metric: {
                   oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }],
                 },
+                context: {
+                  oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }],
+                },
+              },
+              required: ['namespace', 'name', 'metric'],
+            },
+            log: {
+              type: 'object',
+              properties: {
+                skip: { type: 'boolean' },
               },
             },
           },

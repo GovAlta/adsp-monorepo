@@ -16,46 +16,174 @@ export interface LogOptions {
 }
 
 export interface PlatformOptions extends ServiceRegistration {
-  /** Realm: Tenant realm of the service. */
+  /**
+   * Realm: Tenant realm of the service.
+   *
+   * The realm determines OIDC provider the service will use to verify and request access tokens.
+   *
+   * @type {string}
+   * @memberof PlatformOptions
+   */
   realm: string;
-  /** Client Secret: Client secret of the service. */
+  /**
+   * Client secret: Client secret of the service.
+   *
+   * This credential is used to retrieve access tokens for the service account of this service.
+   *
+   * @type {string}
+   * @memberof PlatformOptions
+   */
   clientSecret: string;
-  /** Directory URL: URL to the Directory of Services. */
+  /**
+   * Directory URL: URL to the Directory of Services.
+   *
+   * The directory is used to look up other service and API URLs.
+   *
+   * @type {URL}
+   * @memberof PlatformOptions
+   */
   directoryUrl: URL;
-  /** Access Service URL: URL to the Access Service. */
+  /**
+   * Access service URL: URL to the Access Service.
+   *
+   * @type {URL}
+   * @memberof PlatformOptions
+   */
   accessServiceUrl: URL;
-  /** Ignore Service Aud: Skip verification of Service ID in token audience. */
+  /**
+   * Ignore service audience: Skip verification of Service ID in token audience.
+   *
+   * This is generally not necessary. In most cases, use an audience mapper to include the required
+   * audience in the access token.
+   *
+   * @type {boolean}
+   * @memberof PlatformOptions
+   */
   ignoreServiceAud?: boolean;
-  /** Configuration Converter: Converter function for configuration; converted value is cached. */
+  /**
+   * Configuration converter: Converter function for configuration; converted value is cached.
+   *
+   * @type {ConfigurationConverter}
+   * @memberof PlatformOptions
+   */
   configurationConverter?: ConfigurationConverter;
-  /** Combine Configuration: Combine function for merging tenant and core configuration. */
+  /**
+   * Combine configuration: Combine function for merging tenant and core configuration.
+   *
+   * Configuration can be stored in both a tenant specific context and a core (cross-tenant) context.
+   * Provide a function to merge configuration retrieved in the two contexts. For example, tenant
+   * configuration could override parts of the core configuration for the effective configuration.
+   *
+   * @type {CombineConfiguration}
+   * @memberof PlatformOptions
+   */
   combineConfiguration?: CombineConfiguration;
 }
 
 export interface PlatformServices {
-  /** ServiceDirectory: Directory of services. */
+  /**
+   * Directory: Directory of services.
+   *
+   * @type {ServiceDirectory}
+   * @memberof PlatformServices
+   */
   directory: ServiceDirectory;
-  /** TenantService: Service for accessing tenant information. */
+  /**
+   * Tenant service: Service for accessing tenant information.
+   *
+   * @type {TenantService}
+   * @memberof PlatformServices
+   */
   tenantService: TenantService;
-  /** ConfigurationService: Service for accessing tenant specific configuration. */
+  /**
+   * Configuration service: Service for accessing configuration.
+   *
+   * @type {ConfigurationService}
+   * @memberof PlatformServices
+   */
   configurationService: ConfigurationService;
-  /** EventService: Service for emitting domain events. */
+  /**
+   * Event service: Service for emitting domain events.
+   *
+   * @type {EventService}
+   * @memberof PlatformServices
+   */
   eventService: EventService;
 }
 
 export interface PlatformCapabilities extends PlatformServices {
-  /** TokenProvider: Provides service account access token. */
+  /**
+   * Token provider: Provides service account access token.
+   *
+   * @type {TokenProvider}
+   * @memberof PlatformCapabilities
+   */
   tokenProvider: TokenProvider;
-  /** CoreStrategy: PassportJS strategy for core access tokens. */
+  /**
+   * Core strategy: PassportJS strategy for core access tokens.
+   *
+   * Use this strategy to validate access tokens issued by the core realm (cross tenant).
+   *
+   * @type {Strategy}
+   * @memberof PlatformCapabilities
+   */
   coreStrategy: Strategy;
-  /** TenantStrategy: PassportJS strategy for tenant access tokens. */
+  /**
+   * Tenant strategy: PassportJS strategy for tenant access tokens.
+   *
+   * Use this strategy to validate access tokens issued by tenant realms.
+   *
+   * @type {Strategy}
+   * @memberof PlatformCapabilities
+   */
   tenantStrategy: Strategy;
-  /** TenantHandler: Express request handler that sets req.tenant. */
+  /**
+   * Tenant handler: Express middleware that sets req.tenant.
+   *
+   * @type {RequestHandler}
+   * @memberof PlatformCapabilities
+   */
   tenantHandler: RequestHandler;
-  /** ConfigurationHandler: Express request handler that sets req.configuration. */
+  /**
+   * Configuration handler: Express middleware that sets req.configuration.
+   *
+   * @type {RequestHandler}
+   * @memberof PlatformCapabilities
+   */
   configurationHandler: RequestHandler;
-  /** HealthCheck: Function to retrieve platform health. */
+  /**
+   * Health check: Function to retrieve platform health.
+   *
+   * @type {PlatformHealthCheck}
+   * @memberof PlatformCapabilities
+   */
   healthCheck: PlatformHealthCheck;
-  /** Clear Cached Configuration: Function to clear the cached configuration. */
+  /**
+   * Clear cached: Function to clear the cached configuration.
+   *
+   * Configuration is cached with a TTL to mitigate stale cache issues. If the service
+   * has a mechanism to detect configuration updates, such as a websocket connection,
+   * use this function to invalidate the cache.
+   *
+   * @memberof PlatformCapabilities
+   */
   clearCached: (tenantId: AdspId, serviceId: AdspId) => void;
+  /**
+   * Metrics handler: Request handler that write micro-benches of request times to
+   * value service.
+   *
+   * Note that metrics are only written if req.tenant is set by the tenantHandler before
+   * response headers are written.
+   *
+   * @type {RequestHandler}
+   * @memberof PlatformCapabilities
+   */
+  metricsHandler: RequestHandler;
+  /**
+   * Logger used by SDK components.
+   *
+   * @type {Logger}
+   * @memberof PlatformCapabilities
+   */
+  logger: Logger;
 }

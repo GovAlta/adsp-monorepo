@@ -24,6 +24,7 @@ export const NotificationMetrics: FunctionComponent = () => {
         metrics={[
           { id: 'notifications-sent', name: 'Sent notifications', value: metrics.notificationsSent },
           { id: 'notifications-failed', name: 'Failed notifications', value: metrics.notificationsFailed },
+          { id: 'notifications-avg-send-duration', name: 'Average time to send (secs)', value: metrics.sendDuration },
         ]}
       />
     </section>
