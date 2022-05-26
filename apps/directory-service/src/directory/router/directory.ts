@@ -94,9 +94,10 @@ export const createNameSpace =
     }
   };
 export const addServiceByNamespace =
-  (directoryRepository: DirectoryRepository, logger: Logger): RequestHandler =>
+  (directoryRepository: DirectoryRepository, eventService: EventService, logger: Logger): RequestHandler =>
   async (req, res, _next) => {
     const { namespace } = req.params;
+    const user = req.user;
     try {
       const { service, url } = req.body;
       const result = await directoryRepository.getDirectories(namespace);
@@ -123,7 +124,9 @@ export const addServiceByNamespace =
         await directoryRepository.update(directory);
         const resultInDB = await directoryRepository.getDirectories(namespace);
         const serviceInDB = resultInDB.services;
-
+        const serviceEvent = service.split(':').length === 0 ? service : service.split(':')[0];
+        const eventApi = service.split(':').length === 0 ? '' : service.split(':')[1];
+        eventService.send(entryUpdated(user, namespace, serviceEvent, eventApi, url));
         return res.status(HttpStatusCodes.CREATED).json(serviceInDB.find((x) => x.service === service));
       }
     } catch (err) {
@@ -155,11 +158,7 @@ export const updateService =
         logger.info(
           `Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}) user tenant id : ${user.tenantId} `
         );
-        eventService.send(
-          entryUpdated(user, namespace, serviceEvent, eventApi, url, {
-            data: isExist,
-          })
-        );
+        eventService.send(entryUpdated(user, namespace, serviceEvent, eventApi, url));
 
         return res.sendStatus(HttpStatusCodes.CREATED);
       } else {
@@ -295,7 +294,7 @@ export const createDirectoryRouter = ({
   directoryRouter.post(
     '/namespaces/:namespace',
     [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
-    addServiceByNamespace(directoryRepository, logger)
+    addServiceByNamespace(directoryRepository, eventService, logger)
   );
   /**
    * modify one services for the namespace
