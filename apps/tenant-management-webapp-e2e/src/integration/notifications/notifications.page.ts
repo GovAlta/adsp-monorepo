@@ -355,5 +355,9 @@ class NotificationsPage {
       `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[@data-testid="icon-create"]`
     );
   }
+
+  editSubscriberModal() {
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]');
+  }
 }
 export default NotificationsPage;
