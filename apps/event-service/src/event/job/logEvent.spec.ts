@@ -85,6 +85,36 @@ describe('createLogEventJob', () => {
       });
     });
 
+    it('can skip event based on definition', (done) => {
+      const job = createLogEventJob({
+        serviceId,
+        logger,
+        tokenProvider,
+        configurationService: configurationService as unknown as ConfigurationService,
+        valueServiceUrl: new URL('http://totally-real-value-service'),
+      });
+
+      configurationService.getConfiguration.mockResolvedValueOnce({
+        test: {
+          definitions: {
+            'test-started': {
+              log: { skip: true },
+            },
+          },
+        },
+      });
+
+      const start = new Date(event.timestamp.getTime() - 30000);
+      axiosMock.get.mockResolvedValueOnce({
+        data: { 'event-service': { event: [{ timestamp: start.toISOString() }] } },
+      });
+      axiosMock.post.mockResolvedValueOnce({});
+      job(event, (err) => {
+        expect(axiosMock.post).not.toHaveBeenCalled();
+        done(err);
+      });
+    });
+
     it('can compute interval duration metric', (done) => {
       const job = createLogEventJob({
         serviceId,

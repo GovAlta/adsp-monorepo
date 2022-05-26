@@ -5,21 +5,24 @@ import { Logger } from 'winston';
 import { TokenProvider } from '../access';
 import { ServiceDirectory } from '../directory';
 import { adspId, AdspId } from '../utils';
+import { RequestBenchmark, REQ_BENCHMARK } from './types';
 
 interface ServiceMetrics {
   tenantId: AdspId;
   method: string;
   path: string;
   responseTime: number;
+  benchmark: RequestBenchmark;
 }
 
 export async function writeMetrics(
   logger: Logger,
   tokenProvider: TokenProvider,
   valueUrl: string,
-  { tenantId, method, path, responseTime }: ServiceMetrics
+  { tenantId, method, path, responseTime, benchmark }: ServiceMetrics
 ): Promise<void> {
   try {
+    const metrics = benchmark?.metrics || {};
     const valueWrite = {
       timestamp: new Date(),
       correlationId: `${method}:${path}`,
@@ -28,8 +31,18 @@ export async function writeMetrics(
         method,
         path,
       },
-      value: { responseTime },
+      value: {
+        ...metrics,
+        responseTime,
+      },
       metrics: {
+        ...Object.entries(metrics).reduce(
+          (values, [name, value]) => ({
+            ...values,
+            [`${method}:${path}:${name}`]: value,
+          }),
+          {}
+        ),
         [`total:count`]: 1,
         [`${method}:${path}:count`]: 1,
         [`total:response-time`]: responseTime,
@@ -65,7 +78,7 @@ export async function createMetricsHandler(
 ): Promise<RequestHandler> {
   const valueServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:value-service:v1`);
   const valueUrl = new URL(`v1/${serviceId.service}/values/service-metrics`, valueServiceUrl);
-  return responseTime((req: Request, _res: Response, time) => {
+  const responseTimeHandler = responseTime((req: Request, _res: Response, time) => {
     // Write if there is a tenant context to the request.
     if (req.tenant?.id) {
       writeMetrics(logger, tokenProvider, valueUrl.href, {
@@ -73,7 +86,13 @@ export async function createMetricsHandler(
         method: req.method,
         path: req.baseUrl + req.url,
         responseTime: time,
+        benchmark: req[REQ_BENCHMARK],
       });
     }
   });
+
+  return function (req, res, next) {
+    req[REQ_BENCHMARK] = { timings: {}, metrics: {} } as RequestBenchmark;
+    responseTimeHandler(req, res, next);
+  };
 }
