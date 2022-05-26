@@ -101,7 +101,7 @@ export const createLogEventJob =
 
       // Skip logging for events based on definition; skipping value service as transition
       if (namespace === 'value-service' || definition?.log?.skip) {
-        logger.debug(`Skipping logging for event ${definition.namespace}:${definition.name}.`, {
+        logger.debug(`Skipping logging for event ${namespace}:${name}.`, {
           context: 'EventLog',
           tenantId,
         });

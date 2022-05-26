@@ -179,4 +179,11 @@ export interface PlatformCapabilities extends PlatformServices {
    * @memberof PlatformCapabilities
    */
   metricsHandler: RequestHandler;
+  /**
+   * Logger used by SDK components.
+   *
+   * @type {Logger}
+   * @memberof PlatformCapabilities
+   */
+  logger: Logger;
 }
