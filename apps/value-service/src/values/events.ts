@@ -18,6 +18,9 @@ export const ValueWrittenDefinition: DomainEventDefinition = {
       value: {},
     },
   },
+  log: {
+    skip: true
+  }
 };
 
 export function valueWritten(

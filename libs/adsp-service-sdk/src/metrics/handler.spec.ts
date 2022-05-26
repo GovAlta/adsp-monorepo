@@ -45,6 +45,12 @@ describe('handler', () => {
         method: 'GET',
         path: '/abc/123',
         responseTime: 300,
+        benchmark: {
+          timings: {},
+          metrics: {
+            'metric-a': 123,
+          },
+        },
       });
 
       expect(axiosMock.post).toHaveBeenCalledWith(
@@ -60,6 +66,7 @@ describe('handler', () => {
             'GET:/abc/123:response-time': 300,
             'total:count': 1,
             'total:response-time': 300,
+            'GET:/abc/123:metric-a': 123,
           }),
         }),
         expect.any(Object)
@@ -73,6 +80,10 @@ describe('handler', () => {
         method: 'GET',
         path: '/abc/123',
         responseTime: 300,
+        benchmark: {
+          timings: {},
+          metrics: {},
+        },
       });
 
       expect(axiosMock.post).toHaveBeenCalled();

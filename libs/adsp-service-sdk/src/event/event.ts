@@ -56,9 +56,26 @@ export interface IntervalDefinition {
   context?: string | string[];
 }
 
+/**
+ * Interface to configuration for the event log.
+ *
+ * @export
+ * @interface EventLogConfiguration
+ */
+export interface EventLogConfiguration {
+  /**
+   * Flag indicating if event logging should be skipped.
+   *
+   * @type {boolean}
+   * @memberof EventLogConfiguration
+   */
+  skip: boolean;
+}
+
 export interface DomainEventDefinition {
   name: string;
   description: string;
   payloadSchema: Record<string, unknown>;
   interval?: IntervalDefinition;
+  log?: EventLogConfiguration;
 }

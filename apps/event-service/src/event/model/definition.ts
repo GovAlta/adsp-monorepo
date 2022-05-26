@@ -1,4 +1,4 @@
-import { IntervalDefinition } from '@abgov/adsp-service-sdk';
+import { EventLogConfiguration, IntervalDefinition } from '@abgov/adsp-service-sdk';
 import type { DomainEvent } from '@core-services/core-common';
 import type { EventDefinition } from '../types';
 import { NamespaceEntity } from './namespace';
@@ -9,6 +9,7 @@ export class EventDefinitionEntity implements EventDefinition {
   public description: string;
   public payloadSchema: Record<string, unknown>;
   public interval: IntervalDefinition;
+  public log?: EventLogConfiguration;
 
   constructor(namespace: NamespaceEntity, definition: EventDefinition) {
     this.namespace = namespace;
@@ -16,6 +17,7 @@ export class EventDefinitionEntity implements EventDefinition {
     this.description = definition.description;
     this.payloadSchema = definition.payloadSchema || {};
     this.interval = definition.interval;
+    this.log = definition.log;
   }
 
   validate(event: DomainEvent): void {

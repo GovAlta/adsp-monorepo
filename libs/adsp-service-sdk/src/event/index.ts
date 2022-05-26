@@ -5,7 +5,7 @@ import { AdspId } from '../utils';
 import { DomainEventDefinition } from './event';
 import { EventServiceImpl } from './eventService';
 
-export type { DomainEvent, DomainEventDefinition, IntervalDefinition } from './event';
+export type { DomainEvent, DomainEventDefinition, EventLogConfiguration, IntervalDefinition } from './event';
 export type { EventService } from './eventService';
 
 interface EventServiceOptions {
