@@ -35,7 +35,7 @@ export const StreamTableItem = ({
   return (
     <>
       <tr>
-        <td data-testid={`stream-name-${stream?.id}`}>{stream?.name}</td>
+        <td data-testid={`stream-name`}>{stream?.name}</td>
         <SubscriberRoles roles={stream?.subscriberRoles} />
         <td>
           <IconDiv>
@@ -43,24 +43,24 @@ export const StreamTableItem = ({
               <GoAContextMenuIcon
                 type={showStream ? 'eye-off' : 'eye'}
                 onClick={() => setShowStream(!showStream)}
-                testId={`toggle-event-visibility-${stream?.id}`}
+                testId={`toggle-stream-visibility`}
               />
+              {isTenantSpecificStream ? (
+                <>
+                  <GoAContextMenuIcon type="create" onClick={() => onEdit(stream.id)} testId="edit-stream" />
+                  <GoAContextMenuIcon type="trash" onClick={() => onDelete(stream.id)} testId="delete-stream" />
+                </>
+              ) : (
+                ''
+              )}
             </GoAContextMenu>
-            {isTenantSpecificStream ? (
-              <>
-                <GoAContextMenuIcon type="create" onClick={() => onEdit(stream.id)} testId="edit-details" />
-                <GoAContextMenuIcon type="trash" onClick={() => onDelete(stream.id)} testId="delete-config" />
-              </>
-            ) : (
-              ''
-            )}
           </IconDiv>
         </td>
       </tr>
       {showStream && (
         <tr>
           <NoPaddingTd colSpan={3}>
-            <EntryDetail data-testid={`stream-details-${stream?.id}`}>{JSON.stringify(stream, null, 2)}</EntryDetail>
+            <EntryDetail data-testid={`stream-details`}>{JSON.stringify(stream, null, 2)}</EntryDetail>
           </NoPaddingTd>
         </tr>
       )}
