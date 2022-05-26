@@ -25,7 +25,7 @@ Then('the user views the service entry of {string} and {string}', function (dire
   directoryObj.directoryTable().contains('td[data-testid="service"]', directoryName).siblings().contains(url);
 });
 
-Given('a tenant admin user is on directory entry page', function () {
+Given('a tenant admin user is on directory entries page', function () {
   commonlib.tenantAdminDirectURLLogin(
     Cypress.config().baseUrl,
     Cypress.env('realm'),
@@ -67,7 +67,7 @@ When('the user enters {string} in Service, {string} in API, {string} in URL', fu
   directoryObj.entryModalUrlField().clear().type(url);
 });
 
-When('the user edits URL field {string}', function (url) {
+When('the user modifies URL field {string}', function (url) {
   directoryObj.entryModalUrlField().clear().type(url);
 });
 
@@ -98,10 +98,10 @@ Then('the user views the entry of {string}, {string}, {string}', function (direc
 Then('the user {string} the entry of {string}, {string}', function (viewOrNot, servicename, url) {
   switch (viewOrNot) {
     case 'views':
-      directoryObj.entryDirectoryService(servicename, url).should('exist');
+      directoryObj.directoryEntryWithNameUrl(servicename, url).should('exist');
       break;
     case 'should not view':
-      directoryObj.entryDirectoryService(servicename, url).should('not.exist');
+      directoryObj.directoryEntryWithNameUrl(servicename, url).should('not.exist');
       break;
     default:
       expect(viewOrNot).to.be.oneOf(['views', 'should not view']);

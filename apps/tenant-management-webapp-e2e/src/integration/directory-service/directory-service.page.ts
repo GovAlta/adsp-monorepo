@@ -79,7 +79,7 @@ class DirectoryServicePage {
     return cy.get('[data-testid="delete-confirm"]');
   }
 
-  entryDirectoryService(servicename, url) {
+  directoryEntryWithNameUrl(servicename, url) {
     return cy.xpath(
       `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${servicename}")]/following-sibling::*[contains(text(), "${url}")]/parent::*`
     );

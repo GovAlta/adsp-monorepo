@@ -15,7 +15,7 @@ Feature: Directory-service
 
   @TEST_CS-1294 @REQ_CS-1095, @regression
   Scenario: As a tenant admin, I can add/edit/delete directory entries in a tenant namespace
-    Given a tenant admin user is on directory entry page
+    Given a tenant admin user is on directory entries page
     # Add a service entry
     When the user clicks Add entry button
     Then the user views Add entry modal
@@ -39,9 +39,8 @@ Feature: Directory-service
     # Edit a service entry, only url is editable
     When the user clicks Edit icon of "autotest-addentry", "https://myServiceEntry.com" on entries page
     Then the user views Edit entry modal
-    When the user edits URL field "https://myServiceEntry-2.ca"
+    When the user modifies URL field "https://myServiceEntry-2.ca"
     And the user clicks Save button
-    # Then the user views the entry of "autotest-addentry", "https://myServiceEntry-2.ca"
     Then the user "views" the entry of "autotest-addentry", "https://myServiceEntry-2.ca"
     # Delete a service entry
     When the user clicks Delete icon of "autotest-addentry", "https://myServiceEntry-2.ca" on entries page
