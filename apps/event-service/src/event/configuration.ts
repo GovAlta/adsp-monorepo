@@ -26,6 +26,12 @@ export const configurationSchema = {
               },
               required: ['namespace', 'name', 'metric'],
             },
+            log: {
+              type: 'object',
+              properties: {
+                skip: { type: 'boolean' },
+              },
+            },
           },
           required: ['name', 'description', 'payloadSchema'],
           additionalProperties: false,
