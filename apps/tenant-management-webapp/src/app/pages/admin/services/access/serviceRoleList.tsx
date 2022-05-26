@@ -15,7 +15,7 @@ export const ServiceRoleList = ({ roles }: ServiceRoleListProps): JSX.Element =>
           <tr>
             <th>Name</th>
             <th>Description</th>
-            <th>Part of tenant-admin composite</th>
+            <th>Tenant-admin composite</th>
           </tr>
         </thead>
         <tbody>
