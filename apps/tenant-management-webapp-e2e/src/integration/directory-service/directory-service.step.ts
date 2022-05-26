@@ -49,12 +49,12 @@ Then('the user views Edit entry modal', function () {
   directoryObj.addEntryModalTitle().invoke('text').should('eq', 'Edit entry');
 });
 
-Then('the user views Delete entry modal for {string}', function (serviceName) {
+Then('the user views Delete entry modal for {string}', function (entryName) {
   directoryObj.addEntryModalTitle().invoke('text').should('eq', 'Delete entry');
   directoryObj
     .deleteModalContent()
     .invoke('text')
-    .should('eq', 'Delete ' + serviceName + '?');
+    .should('eq', 'Delete ' + entryName + '?');
 });
 
 When('the user enters {string} in Service, {string} in API, {string} in URL', function (service, api, url) {
