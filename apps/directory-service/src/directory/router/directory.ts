@@ -9,7 +9,7 @@ import {
   createValidationHandler,
   UnauthorizedError,
 } from '@core-services/core-common';
-import { TenantService, toKebabName, EventService, AdspId } from '@abgov/adsp-service-sdk';
+import { TenantService, toKebabName, EventService } from '@abgov/adsp-service-sdk';
 
 import * as passport from 'passport';
 import { ServiceRoles } from '../roles';
@@ -24,7 +24,6 @@ const TIME_OUT = 10000;
 
 const passportMiddleware = passport.authenticate(['core', 'tenant'], { session: false });
 interface DirectoryRouterProps {
-  serviceId: AdspId;
   logger?: Logger;
   directoryRepository: DirectoryRepository;
   tenantService: TenantService;
@@ -95,9 +94,10 @@ export const createNameSpace =
     }
   };
 export const addServiceByNamespace =
-  (directoryRepository: DirectoryRepository, logger: Logger): RequestHandler =>
+  (directoryRepository: DirectoryRepository, eventService: EventService, logger: Logger): RequestHandler =>
   async (req, res, _next) => {
     const { namespace } = req.params;
+    const user = req.user;
     try {
       const { service, url } = req.body;
       const result = await directoryRepository.getDirectories(namespace);
@@ -124,7 +124,9 @@ export const addServiceByNamespace =
         await directoryRepository.update(directory);
         const resultInDB = await directoryRepository.getDirectories(namespace);
         const serviceInDB = resultInDB.services;
-
+        const serviceEvent = service.split(':').length === 0 ? service : service.split(':')[0];
+        const eventApi = service.split(':').length === 0 ? '' : service.split(':')[1];
+        eventService.send(entryUpdated(user, namespace, serviceEvent, eventApi, url));
         return res.status(HttpStatusCodes.CREATED).json(serviceInDB.find((x) => x.service === service));
       }
     } catch (err) {
@@ -134,12 +136,7 @@ export const addServiceByNamespace =
   };
 
 export const updateService =
-  (
-    directoryRepository: DirectoryRepository,
-    eventService: EventService,
-    logger: Logger,
-    serviceId: AdspId
-  ): RequestHandler =>
+  (directoryRepository: DirectoryRepository, eventService: EventService, logger: Logger): RequestHandler =>
   async (req, res, _next) => {
     const { namespace } = req.params;
     const user = req.user;
@@ -158,12 +155,10 @@ export const updateService =
         const serviceEvent = isExist.service.split(':').length === 0 ? isExist.service : isExist.service.split(':')[0];
         const eventApi = isExist.service.split(':').length === 0 ? '' : isExist.service.split(':')[1];
 
-        logger.info(`Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}) `);
-        eventService.send(
-          entryUpdated(user, serviceId, namespace, serviceEvent, eventApi, url, {
-            data: isExist,
-          })
+        logger.info(
+          `Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}) user tenant id : ${user.tenantId} `
         );
+        eventService.send(entryUpdated(user, namespace, serviceEvent, eventApi, url));
 
         return res.sendStatus(HttpStatusCodes.CREATED);
       } else {
@@ -177,12 +172,7 @@ export const updateService =
   };
 
 export const deleteService =
-  (
-    directoryRepository: DirectoryRepository,
-    eventService: EventService,
-    logger: Logger,
-    serviceId: AdspId
-  ): RequestHandler =>
+  (directoryRepository: DirectoryRepository, eventService: EventService, logger: Logger): RequestHandler =>
   async (req, res, _next) => {
     const { namespace, service } = req.params;
     const user = req.user;
@@ -205,8 +195,10 @@ export const deleteService =
       await directoryRepository.update(directory);
       const serviceEvent = isExist.service.split(':').length === 0 ? isExist.service : isExist.service.split(':')[0];
       const eventApi = isExist.service.split(':').length === 0 ? '' : isExist.service.split(':')[1];
-      logger.info(`Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}) `);
-      eventService.send(entryDeleted(user, serviceId, namespace, serviceEvent, eventApi, isExist.host));
+      logger.info(
+        `Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}), user tenant id : ${user.tenantId} `
+      );
+      eventService.send(entryDeleted(user, namespace, serviceEvent, eventApi, isExist.host));
       return res.sendStatus(HttpStatusCodes.OK);
     } catch (err) {
       logger.error(`Failed deleting directory for namespace: ${namespace} with error ${err.message}`);
@@ -265,7 +257,6 @@ export const getMetadataByService =
   };
 
 export const createDirectoryRouter = ({
-  serviceId,
   logger,
   directoryRepository,
   tenantService,
@@ -303,7 +294,7 @@ export const createDirectoryRouter = ({
   directoryRouter.post(
     '/namespaces/:namespace',
     [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
-    addServiceByNamespace(directoryRepository, logger)
+    addServiceByNamespace(directoryRepository, eventService, logger)
   );
   /**
    * modify one services for the namespace
@@ -311,7 +302,7 @@ export const createDirectoryRouter = ({
   directoryRouter.put(
     '/namespaces/:namespace',
     [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
-    updateService(directoryRepository, eventService, logger, serviceId)
+    updateService(directoryRepository, eventService, logger)
   );
 
   /**
@@ -320,7 +311,7 @@ export const createDirectoryRouter = ({
   directoryRouter.delete(
     '/namespaces/:namespace/services/:service',
     [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
-    deleteService(directoryRepository, eventService, logger, serviceId)
+    deleteService(directoryRepository, eventService, logger)
   );
 
   /**

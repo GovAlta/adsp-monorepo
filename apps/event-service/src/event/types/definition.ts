@@ -1,12 +1,3 @@
-export interface Interval {
-  metric: string | string[];
-  namespace: string;
-  name: string;
-}
+import { DomainEventDefinition } from '@abgov/adsp-service-sdk';
 
-export interface EventDefinition {
-  name: string;
-  description: string;
-  payloadSchema: Record<string, unknown>;
-  interval?: Interval;
-}
+export type EventDefinition = DomainEventDefinition;
