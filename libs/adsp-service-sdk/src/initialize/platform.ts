@@ -111,5 +111,6 @@ export async function initializePlatform(
     healthCheck,
     clearCached,
     metricsHandler,
+    logger,
   };
 }

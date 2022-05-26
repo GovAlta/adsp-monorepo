@@ -52,7 +52,6 @@ export async function writeMetrics(
     const token = await tokenProvider.getAccessToken();
     await axios.post(valueUrl, valueWrite, {
       headers: { Authorization: `Bearer ${token}` },
-      params: { tenantId: tenantId.toString() },
       timeout: 2000,
     });
     logger.debug(
@@ -74,17 +73,19 @@ export async function createMetricsHandler(
   serviceId: AdspId,
   logger: Logger,
   tokenProvider: TokenProvider,
-  directory: ServiceDirectory
+  directory: ServiceDirectory,
+  defaultTenantId?: AdspId
 ): Promise<RequestHandler> {
   const valueServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:value-service:v1`);
   const valueUrl = new URL(`v1/${serviceId.service}/values/service-metrics`, valueServiceUrl);
   const responseTimeHandler = responseTime((req: Request, _res: Response, time) => {
     // Write if there is a tenant context to the request.
-    if (req.tenant?.id) {
+    const tenantId = defaultTenantId || req.tenant?.id;
+    if (tenantId) {
       writeMetrics(logger, tokenProvider, valueUrl.href, {
-        tenantId: req.tenant.id,
+        tenantId,
         method: req.method,
-        path: req.baseUrl + req.url,
+        path: `${req.baseUrl || ''}${req.path || ''}` || req.originalUrl,
         responseTime: time,
         benchmark: req[REQ_BENCHMARK],
       });
