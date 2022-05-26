@@ -7,5 +7,6 @@ export const ServiceMetricsValueDefinition = {
     properties: {
       responseTime: { type: 'number' },
     },
+    additionalProperties: { type: 'number' },
   },
 };

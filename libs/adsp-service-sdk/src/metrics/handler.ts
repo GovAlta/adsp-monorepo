@@ -22,6 +22,7 @@ export async function writeMetrics(
   { tenantId, method, path, responseTime, benchmark }: ServiceMetrics
 ): Promise<void> {
   try {
+    const metrics = benchmark?.metrics || {};
     const valueWrite = {
       timestamp: new Date(),
       correlationId: `${method}:${path}`,
@@ -30,19 +31,22 @@ export async function writeMetrics(
         method,
         path,
       },
-      value: { responseTime },
+      value: {
+        ...metrics,
+        responseTime,
+      },
       metrics: {
-        [`total:count`]: 1,
-        [`${method}:${path}:count`]: 1,
-        [`total:response-time`]: responseTime,
-        [`${method}:${path}:response-time`]: responseTime,
-        ...Object.entries(benchmark?.metrics || {}).reduce(
+        ...Object.entries(metrics).reduce(
           (values, [name, value]) => ({
             ...values,
             [`${method}:${path}:${name}`]: value,
           }),
           {}
         ),
+        [`total:count`]: 1,
+        [`${method}:${path}:count`]: 1,
+        [`total:response-time`]: responseTime,
+        [`${method}:${path}:response-time`]: responseTime,
       },
     };
     const token = await tokenProvider.getAccessToken();

@@ -60,7 +60,7 @@ describe('handler', () => {
             method: 'GET',
             path: '/abc/123',
           }),
-          value: expect.objectContaining({ responseTime: 300 }),
+          value: expect.objectContaining({ responseTime: 300, 'metric-a': 123 }),
           metrics: expect.objectContaining({
             'GET:/abc/123:count': 1,
             'GET:/abc/123:response-time': 300,
