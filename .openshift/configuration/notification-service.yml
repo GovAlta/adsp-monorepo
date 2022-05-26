@@ -9,8 +9,8 @@ items:
         component: api
       name: notification-service
     data:
-      KEYCLOAK_ROOT_URL: https://access-test.os99.gov.ab.ca
-      DIRECTORY_URL: https://tenant-management-api-core-services-test.os99.gov.ab.ca
+        KEYCLOAK_ROOT_URL: https://access.adsp-dev.gov.ab.ca
+      DIRECTORY_URL: https://directory-service.adsp-dev.gov.ab.ca
       LOG_LEVEL: info
       AMQP_HOST: event-service-rabbitmq-balancer
       SMTP_HOST: smtp.gov.ab.ca

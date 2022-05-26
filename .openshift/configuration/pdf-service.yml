@@ -9,8 +9,8 @@ items:
         component: api
       name: pdf-service
     data:
-      KEYCLOAK_ROOT_URL: https://access.adsp-dev.gov.ab.ca
-      DIRECTORY_URL: https://tenant-service.adsp-dev.gov.ab.ca
+    KEYCLOAK_ROOT_URL: https://access.adsp-dev.gov.ab.ca
+      DIRECTORY_URL: https://directory-service.adsp-dev.gov.ab.ca
       AMQP_HOST: event-service-rabbitmq-balancer
       LOG_LEVEL: debug
   - apiVersion: v1
