@@ -42,6 +42,11 @@ export const FileDeletedDefinition: DomainEventDefinition = {
       },
     },
   },
+  interval: {
+    namespace: 'file-service',
+    name: FILE_UPLOADED_EVENT,
+    metric: ['file-service', 'file-lifetime'],
+  },
 };
 
 export function fileUploaded(tenantId: AdspId, user: User, file: File): DomainEvent {

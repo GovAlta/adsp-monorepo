@@ -8,6 +8,7 @@ import {
   UPDATE_FILE_TYPE_SUCCEEDED,
   CREATE_FILE_TYPE_SUCCEEDED,
   FETCH_FILE_TYPE_HAS_FILE_SUCCEEDED,
+  FETCH_FILE_METRICS_SUCCEEDED,
 } from './actions';
 import { FILE_INIT, FileService } from './models';
 
@@ -84,7 +85,11 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
       }
       return newState;
     }
-
+    case FETCH_FILE_METRICS_SUCCEEDED:
+      return {
+        ...state,
+        metrics: action.payload,
+      };
     default:
       return state;
   }

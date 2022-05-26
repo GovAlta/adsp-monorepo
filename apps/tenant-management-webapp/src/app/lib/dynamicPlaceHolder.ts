@@ -1,4 +1,6 @@
 import { EventDefinition } from '@store/event/models';
+import jsf from 'json-schema-faker';
+import { faker } from '@faker-js/faker/locale/en_CA';
 
 export const eventObject = {
   application: {
@@ -136,64 +138,16 @@ export const dynamicGeneratePayload = (
   eventDef: EventDefinition,
   managementUrl: string
 ): Record<string, unknown> => {
-  const eventName = eventDef?.name;
-  const eventNamespace = eventDef?.namespace;
-
-  const payload = {};
-
-  if (!eventDef) {
-    return { event: { payload: eventObject.form } };
-  }
+  jsf.extend('faker', () => faker);
+  jsf.option({
+    optionalsProbability: 1,
+    maxItems: 3,
+    fixedProbabilities: true,
+  });
+  let payload = {};
   const payloadSchema = eventDef?.payloadSchema;
-  if (payloadSchema && payloadSchema?.type) {
-    if (payloadSchema?.type === 'object' || payloadSchema?.type[0] === 'object') {
-      // eslint-disable-next-line
-      const properties: any = payloadSchema?.properties;
-      if (properties) {
-        for (const k in properties) {
-          switch (properties[k]?.type) {
-            case 'object':
-              payload[k] = eventObject[k] ? eventObject[k] : null;
-              break;
-            case 'number':
-              payload[k] = Math.floor(Math.random() * 6);
-              break;
-            case 'string':
-              switch (k) {
-                case 'name':
-                  payload['name'] = `${eventName}-name`;
-                  break;
-                case 'namespace':
-                  payload['namespace'] = `${eventNamespace}-namespace`;
-                  break;
-                case 'id':
-                  payload['id'] = '61d61d3cba517c0013b3a333';
-                  break;
-                case 'channel':
-                  payload['channel'] = 'email';
-                  break;
-                case 'to' || 'from':
-                  payload[k] = 'auto.test@gov.ab.ca';
-                  break;
-                case 'description':
-                  payload['description'] = 'Notice for application notice';
-                  break;
-                default:
-                  payload[k] = k;
-                  break;
-              }
-              break;
-            default:
-              payload[k] = eventObject[k] ? eventObject[k] : null;
-              break;
-          }
-        }
-      }
-    }
-  } else {
-    for (const j in payloadSchema) {
-      payload[j] = eventObject[j] ? eventObject[j] : null;
-    }
+  if (payloadSchema) {
+    payload = jsf.generate(payloadSchema);
   }
 
   return {
