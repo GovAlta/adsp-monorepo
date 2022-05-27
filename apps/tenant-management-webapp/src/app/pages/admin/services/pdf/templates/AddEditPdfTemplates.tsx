@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useState } from 'react';
 import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { PdfTemplate } from '@store/pdf/model';
 import { IdField } from '../styled-components';
 import { toKebabName } from '@lib/kebabName';
@@ -50,17 +50,17 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
           <GoAForm>
             <GoAFormItem error={errors?.['name']}>
               <label>Name</label>
-              <input
+              <GoAInput
                 type="text"
                 name="pdf-template-name"
                 value={template.name}
                 disabled={isEdit}
                 data-testid="pdf-template-name"
                 aria-label="pdf-template-name"
-                onChange={(e) => {
-                  checkInput(e.target.value, [checkForBadChars, isNotEmptyCheck('name')], errorHandler('name'));
-                  const templateId = toKebabName(e.target.value);
-                  setTemplate({ ...template, name: e.target.value, id: templateId });
+                onChange={(name, value) => {
+                  checkInput(value, [checkForBadChars, isNotEmptyCheck('name')], errorHandler('name'));
+                  const templateId = toKebabName(value);
+                  setTemplate({ ...template, name: value, id: templateId });
                 }}
               />
             </GoAFormItem>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAButton } from '@abgov/react-components';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { Service } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { createEntry, updateEntry, fetchEntryDetail } from '@store/directory/actions';
@@ -81,49 +81,46 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
         <GoAForm>
           <GoAFormItem error={errors?.['service']}>
             <label>Service</label>
-            <input
+            <GoAInput
               type="text"
               name="service"
               value={entry.service}
               data-testid={`directory-modal-service-input`}
               aria-label="service"
-              maxLength={50}
               disabled={!isNew || isQuickAdd}
-              onChange={(e) => {
-                checkInput(e.target.value, [lowerCaseCheck, checkServiceExists], errorHandler('service'));
-                setEntry({ ...entry, service: e.target.value });
+              onChange={(name, value) => {
+                checkInput(value, [lowerCaseCheck, checkServiceExists], errorHandler('service'));
+                setEntry({ ...entry, service: value });
               }}
             />
           </GoAFormItem>
           <GoAFormItem error={errors?.['api']}>
             <label>API</label>
-            <input
+            <GoAInput
               type="text"
               name="api"
               value={entry.api}
               data-testid={`directory-modal-api-input`}
               aria-label="api"
-              maxLength={50}
               disabled={!isNew || isQuickAdd}
-              onChange={(e) => {
-                checkInput(e.target.value, [lowerCaseCheck], errorHandler('api'));
-                setEntry({ ...entry, api: e.target.value });
+              onChange={(name, value) => {
+                checkInput(value, [lowerCaseCheck], errorHandler('api'));
+                setEntry({ ...entry, api: value });
               }}
             />
           </GoAFormItem>
           <GoAFormItem error={errors?.['url']}>
             <label>URL</label>
-            <input
+            <GoAInput
               type="url"
               name="url"
               value={entry.url}
               data-testid={`directory-modal-url-input`}
               aria-label="name"
-              maxLength={1024}
               disabled={isQuickAdd}
-              onChange={(e) => {
-                checkInput(e.target.value, [checkForBadUrl, checkUrlExists], errorHandler('url'));
-                setEntry({ ...entry, url: e.target.value });
+              onChange={(name, value) => {
+                checkInput(value, [checkForBadUrl, checkUrlExists], errorHandler('url'));
+                setEntry({ ...entry, url: value });
               }}
             />
           </GoAFormItem>
