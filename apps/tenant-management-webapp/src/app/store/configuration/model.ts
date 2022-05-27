@@ -5,7 +5,7 @@ export interface ConfigurationDefinitionTypes {
   core: ServiceSchemas;
   tenant: ServiceSchemas;
 }
-export interface ConfigurationState {
+export interface ConfigurationDefinitionState {
   coreConfigDefinitions: ServiceSchemas;
   tenantConfigDefinitions: ServiceSchemas;
   isAddedFromOverviewPage: boolean;
@@ -45,13 +45,19 @@ export interface ServiceSchemas {
   revision: number;
 }
 
-export interface ServiceConfigurations {
+export interface ServiceConfiguration {
   namespace: string;
   name: string;
   latest: ServiceSchemas;
 }
 
 export interface ServiceConfigurationTypes {
-  core: ServiceConfigurations;
-  tenant: ServiceConfigurations;
+  core: ServiceConfiguration;
+  tenant: ServiceConfiguration;
 }
+
+export interface ConfigurationExportType {
+  configuration: unknown;
+  revision: number;
+}
+export type ConfigurationExportState = Record<Service, ConfigurationExportType>;

@@ -11,7 +11,7 @@ import Tenant from './tenant/reducers';
 import ServiceStatus from './status/reducers';
 import Event from './event/reducers';
 import Notice from './notice/reducers';
-import Configuration from './configuration/reducers';
+import Configuration, { ConfigurationExport } from './configuration/reducers';
 import Stream from './stream/reducers';
 import Pdf from './pdf/reducers';
 
@@ -21,6 +21,7 @@ export const rootReducer = combineReducers({
   config: Config,
   pdf: Pdf,
   configuration: Configuration,
+  configurationExport: ConfigurationExport,
   access: Access,
   directory: Directory,
   tenant: Tenant,
