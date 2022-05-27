@@ -9,7 +9,7 @@ function createContinuousViews(schema) {
         '   AVG(value),' +
         '   SUM(value),' +
         '   MAX(value),' +
-        '   MIN(value)' +
+        '   MIN(value),' +
         '   COUNT(value)' +
         'FROM metrics ' +
         'GROUP BY namespace, name, tenant, metric, bucket;'
@@ -21,7 +21,7 @@ function createContinuousViews(schema) {
         '   AVG(value),' +
         '   SUM(value),' +
         '   MAX(value),' +
-        '   MIN(value)' +
+        '   MIN(value),' +
         '   COUNT(value)' +
         'FROM metrics ' +
         'GROUP BY namespace, name, tenant, metric, bucket;'
@@ -33,7 +33,7 @@ function createContinuousViews(schema) {
         '   AVG(value),' +
         '   SUM(value),' +
         '   MAX(value),' +
-        '   MIN(value)' +
+        '   MIN(value),' +
         '   COUNT(value)' +
         'FROM metrics ' +
         'GROUP BY namespace, name, tenant, metric, bucket;'
@@ -45,7 +45,7 @@ function createContinuousViews(schema) {
         '   AVG(value),' +
         '   SUM(value),' +
         '   MAX(value),' +
-        '   MIN(value)' +
+        '   MIN(value),' +
         '   COUNT(value)' +
         'FROM metrics ' +
         'GROUP BY namespace, name, tenant, metric, bucket;'
@@ -57,7 +57,7 @@ function createContinuousViews(schema) {
         '   AVG(value),' +
         '   SUM(value),' +
         '   MAX(value),' +
-        '   MIN(value)' +
+        '   MIN(value),' +
         '   COUNT(value)' +
         'FROM metrics ' +
         'GROUP BY namespace, name, tenant, metric, bucket;'
