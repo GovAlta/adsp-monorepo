@@ -78,7 +78,6 @@ Then('the user clicks Save button', function () {
 
 When('the user clicks Cancel button on Entry modal', function () {
   directoryObj.entryModalCancelButton().click();
-  cy.wait(2000);
 });
 
 Then(
