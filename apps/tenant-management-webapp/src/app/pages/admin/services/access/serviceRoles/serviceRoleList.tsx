@@ -1,7 +1,7 @@
 import React from 'react';
 import DataTable from '@components/DataTable';
 import { ServiceRoles } from '@store/access/models';
-import { TableDiv } from './styled-component';
+import { TableDiv } from '../styled-component';
 
 interface ServiceRoleListProps {
   roles: ServiceRoles;

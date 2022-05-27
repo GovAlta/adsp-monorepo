@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ServiceRoleList } from './serviceRoleList';
 import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
-import { NoItem, NameDiv } from './styled-component';
+import { NoItem, NameDiv } from '../styled-component';
 import { PageIndicator } from '@components/Indicator';
 
 export const selectServiceTenantRoles = createSelector(
