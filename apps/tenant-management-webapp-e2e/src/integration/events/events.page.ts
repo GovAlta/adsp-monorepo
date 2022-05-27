@@ -123,7 +123,7 @@ class eventsPage {
 
   streamToggleButton(streamName) {
     return cy.xpath(
-      `//*[@data-testid="Platform-stream-table"]//tbody/tr/td[text()="${streamName}"]/following-sibling::td//button[@data-testid="toggle-event-visibility"]`
+      `//*[@data-testid="Platform-stream-table"]//tbody/tr/td[text()="${streamName}"]/following-sibling::td//button[@data-testid="toggle-stream-visibility"]`
     );
   }
 
