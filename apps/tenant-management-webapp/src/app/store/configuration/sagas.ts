@@ -3,9 +3,12 @@ import {
   DeleteConfigurationDefinitionAction,
   deleteConfigurationDefinitionSuccess,
   DELETE_CONFIGURATION_ACTION,
+  FetchConfigurationAction,
   FetchConfigurationDefinitionsAction,
+  FETCH_CONFIGURATION_ACTION,
   FETCH_CONFIGURATION_DEFINITIONS_ACTION,
   getConfigurationDefinitionsSuccess,
+  getConfigurationSuccess,
   UpdateConfigurationDefinitionAction,
   updateConfigurationDefinitionSuccess,
   UPDATE_CONFIGURATION_DEFINITION_ACTION,
@@ -44,6 +47,46 @@ export function* fetchConfigurationDefinitions(action: FetchConfigurationDefinit
           core: core.data,
         })
       );
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    } catch (err) {
+      yield put(ErrorNotification({ message: err.message }));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    }
+  }
+}
+
+export function* fetchConfiguration(action: FetchConfigurationAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading...',
+    })
+  );
+
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  if (configBaseUrl && token) {
+    try {
+      const { config } = yield all({
+        config: call(
+          axios.get,
+          `${configBaseUrl}/configuration/v2/configuration/${action.namespace}/${action.serviceName}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        ),
+      });
+      yield put(getConfigurationSuccess(config.data));
       yield put(
         UpdateIndicator({
           show: false,
@@ -120,4 +163,5 @@ export function* watchConfigurationSagas(): Generator {
   yield takeEvery(FETCH_CONFIGURATION_DEFINITIONS_ACTION, fetchConfigurationDefinitions);
   yield takeEvery(UPDATE_CONFIGURATION_DEFINITION_ACTION, updateConfigurationDefinition);
   yield takeEvery(DELETE_CONFIGURATION_ACTION, deleteConfigurationDefinition);
+  yield takeEvery(FETCH_CONFIGURATION_ACTION, fetchConfiguration);
 }

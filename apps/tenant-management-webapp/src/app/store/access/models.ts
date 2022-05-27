@@ -36,3 +36,26 @@ export const ACCESS_INIT: AccessState = {
   users: {},
   roles: null,
 };
+
+export interface ServiceRoleState {
+  tenant: ServiceRoles;
+  core: ServiceRoles;
+}
+
+export type ServiceRoles = ServiceRole[];
+
+export const SERVICE_ROLES_INIT: ServiceRoleState = {
+  tenant: null,
+  core: null,
+};
+
+export interface ServiceRole {
+  role: string;
+  description: string;
+  inTenantAdmin?: boolean;
+}
+
+interface ConfigServiceRole {
+  roles?: ServiceRoles;
+}
+export type ServiceRoleConfig = Record<string, ConfigServiceRole>;
