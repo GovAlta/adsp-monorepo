@@ -68,6 +68,7 @@ export const FormStatusLockedDefinition: DomainEventDefinition = {
     properties: {
       form: formSchema,
       lockedBy: userInfoSchema,
+      deleteOn: { type: 'string', format: 'date-time' },
     },
   },
 };
@@ -146,7 +147,7 @@ export const formDeleted = (user: User, form: FormEntity): DomainEvent => ({
   },
 });
 
-export const formLocked = (user: User, form: FormEntity): DomainEvent => ({
+export const formLocked = (user: User, form: FormEntity, deleteOn: Date): DomainEvent => ({
   name: FORM_LOCKED,
   timestamp: form.locked,
   tenantId: form.tenantId,
@@ -160,6 +161,7 @@ export const formLocked = (user: User, form: FormEntity): DomainEvent => ({
       id: user.id,
       name: user.name,
     },
+    deleteOn,
   },
 });
 
