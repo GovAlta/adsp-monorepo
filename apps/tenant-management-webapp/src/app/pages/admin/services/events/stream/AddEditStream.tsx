@@ -39,7 +39,7 @@ export const AddEditStream = ({
 
   const isDuplicateStreamId = (streamId: string): Validator => {
     return () => {
-      return streams[streamId] ? 'Stream ID is duplicate, please use a different name to get a unique Template ID' : '';
+      return streams[streamId] ? 'Stream ID is duplicate, please use a different name to get a unique Stream ID' : '';
     };
   };
 
@@ -78,7 +78,7 @@ export const AddEditStream = ({
               />
             </GoAFormItem>
             <GoAFormItem>
-              <label>Template ID</label>
+              <label>Stream ID</label>
               <IdField>{stream.id}</IdField>
             </GoAFormItem>
             <GoAFormItem>
@@ -151,19 +151,8 @@ export const AddEditStream = ({
                 ))}
               </GoADropdown>
             </GoAFormItem>
-            <GoAFormItem>
-              <GoACheckbox
-                name="streamPublic"
-                checked={!!stream.publicSubscribe}
-                onChange={() => {
-                  setStream({ ...stream, publicSubscribe: !stream.publicSubscribe });
-                }}
-                data-testid="manage-stream-checkbox"
-                value="manageStream"
-              >
-                Make this stream available to public?
-              </GoACheckbox>
-            </GoAFormItem>
+            <br />
+            <br />
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>

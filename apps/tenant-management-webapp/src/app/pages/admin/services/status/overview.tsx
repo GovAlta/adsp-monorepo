@@ -27,7 +27,7 @@ export const StatusOverview: FunctionComponent<StatusOverviewProps> = (props) =>
           subsidy and child care certification
         </p>
         <>
-          <h2>Guidelines for choosing a health check endpoint:</h2>
+          <h2>Guidelines for choosing a health check endpoint</h2>
           <ol>
             <li>A Health check endpoint needs to be publicly accessible over the internet</li>
             <li>

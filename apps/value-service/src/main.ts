@@ -72,6 +72,15 @@ const initializeApp = async () => {
               )
             : null;
         },
+        combineConfiguration: (
+          tenantConfig: Record<string, NamespaceEntity>,
+          coreConfig: Record<string, NamespaceEntity>
+        ) => [
+          {
+            ...tenantConfig,
+            ...coreConfig,
+          },
+        ],
       },
       { logger }
     );

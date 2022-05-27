@@ -111,6 +111,8 @@ export class TimescaleValuesRepository implements ValuesRepository {
   ): Promise<Record<string, Metric>> {
     let view = null;
     switch (criteria.interval) {
+      case 'one_minute':
+      case 'five_minutes':
       case 'hourly':
       case 'daily':
       case 'weekly':
@@ -208,6 +210,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
         avg: row.avg,
         min: row.min,
         max: row.max,
+        count: row.count,
       })),
     };
   }

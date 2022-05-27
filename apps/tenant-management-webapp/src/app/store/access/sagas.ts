@@ -1,10 +1,12 @@
-import { put, select } from 'redux-saga/effects';
+import { put, select, call, all } from 'redux-saga/effects';
 import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
-import { FetchAccessSuccessAction } from './actions';
+import { FetchAccessSuccessAction, fetchServiceRolesSuccess, FetchServiceRolesAction } from './actions';
 import { KeycloakApi } from './api';
-import { Role } from './models';
+import { Role, ServiceRoles, ServiceRoleConfig } from './models';
 import { UpdateIndicator } from '@store/session/actions';
+import { SagaIterator } from '@redux-saga/core';
+import axios from 'axios';
 
 // eslint-disable-next-line
 export function* fetchAccess() {
@@ -66,5 +68,67 @@ export function* fetchAccess() {
       })
     );
     yield put(ErrorNotification({ message: e.message }));
+  }
+}
+
+const selectServiceRoles = (config?: ServiceRoleConfig): ServiceRoles => {
+  const roles: ServiceRoles = [];
+  if (config) {
+    Object.entries(config).forEach(([k, c]) => {
+      if (c?.roles) {
+        c.roles.forEach((role) => {
+          roles.push(role);
+        });
+      }
+    });
+
+    return roles;
+  }
+
+  return roles;
+};
+
+export function* fetchServiceRoles(action: FetchServiceRolesAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading...',
+    })
+  );
+
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  if (configBaseUrl && token) {
+    try {
+      const { tenantResponse, coreResponse } = yield all({
+        tenantResponse: call(axios.get, `${configBaseUrl}/configuration/v2/configuration/platform/tenant-service`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        coreResponse: call(axios.get, `${configBaseUrl}/configuration/v2/configuration/platform/tenant-service?core`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      });
+
+      yield put(
+        fetchServiceRolesSuccess({
+          tenant: selectServiceRoles(tenantResponse?.data?.latest?.configuration),
+          core: selectServiceRoles(coreResponse?.data?.latest?.configuration),
+        })
+      );
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    } catch (err) {
+      yield put(ErrorNotification({ message: err.message }));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    }
   }
 }

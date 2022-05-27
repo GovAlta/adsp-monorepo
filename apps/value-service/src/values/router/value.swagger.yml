@@ -184,6 +184,8 @@ components:
         schema:
           type: string
           enum:
+            - one_minute
+            - five_minutes
             - hourly
             - daily
             - weekly
@@ -244,6 +246,8 @@ components:
         schema:
           type: string
           enum:
+            - one_minute
+            - five_minutes
             - hourly
             - daily
             - weekly

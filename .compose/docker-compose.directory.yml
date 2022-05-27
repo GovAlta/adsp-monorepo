@@ -12,7 +12,7 @@ services:
       - 3331
     environment:
       - KEYCLOAK_ROOT_URL=http://keycloak:8080
-      - DIRECTORY_URL=http://tenant-management-api:3333
+      - DIRECTORY_URL=http://directory-service:3331
       - CLIENT_ID=urn:ads:platform:directory-service
       - CLIENT_SECRET=a7b3cf6e-81ab-497d-9103-4f7ff82da46b
       - PORT=3331
