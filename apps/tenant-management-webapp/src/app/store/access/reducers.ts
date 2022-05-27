@@ -1,5 +1,5 @@
 import { ActionTypes } from './actions';
-import { ACCESS_INIT, AccessState } from './models';
+import { ACCESS_INIT, AccessState, SERVICE_ROLES_INIT, ServiceRoleState } from './models';
 
 export default function accessReducer(state: AccessState = ACCESS_INIT, action: ActionTypes): AccessState {
   switch (action.type) {
@@ -14,6 +14,21 @@ export default function accessReducer(state: AccessState = ACCESS_INIT, action: 
       };
     case 'tenant/access/RESET':
       return { ...ACCESS_INIT };
+    default:
+      return state;
+  }
+}
+
+export function serviceRolesReduce(
+  state: ServiceRoleState = SERVICE_ROLES_INIT,
+  action: ActionTypes
+): ServiceRoleState {
+  switch (action.type) {
+    case 'tenant/service/roles/success': {
+      return {
+        ...action.payload,
+      };
+    }
     default:
       return state;
   }

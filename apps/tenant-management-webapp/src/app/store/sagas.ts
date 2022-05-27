@@ -1,7 +1,7 @@
 import { all, takeEvery, takeLatest, takeLeading } from 'redux-saga/effects';
 
 // Sagas
-import { fetchAccess } from './access/sagas';
+import { fetchAccess, fetchServiceRoles } from './access/sagas';
 import { fetchConfig } from './config/sagas';
 import { watchTenantSagas } from './tenant/sagas';
 import { watchStreamSagas } from './stream/saga';
@@ -31,7 +31,7 @@ import { watchNotificationSagas } from './notification/sagas';
 import { watchSubscriptionSagas } from './subscription/sagas';
 
 // Actions
-import { FETCH_ACCESS_ACTION } from './access/actions';
+import { FETCH_ACCESS_ACTION, FETCH_SERVICE_ROLES } from './access/actions';
 import { FETCH_CONFIG_ACTION } from './config/actions';
 import {
   FETCH_DIRECTORY,
@@ -58,6 +58,7 @@ import { TOGGLE_APPLICATION_STATUS_ACTION } from './status/actions/toggleApplica
 export function* watchSagas() {
   yield takeEvery(FETCH_CONFIG_ACTION, fetchConfig);
   yield takeLatest(FETCH_ACCESS_ACTION, fetchAccess);
+  yield takeLatest(FETCH_SERVICE_ROLES, fetchServiceRoles);
 
   //directory
   yield takeEvery(FETCH_DIRECTORY, fetchDirectory);
