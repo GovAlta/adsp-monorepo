@@ -81,32 +81,29 @@ When('the user clicks Cancel button on Entry modal', function () {
   cy.wait(2000);
 });
 
-Then('the user views the entry of {string}, {string}', function (directoryName, url) {
-  directoryObj.directoryTable().contains('td[data-testid="service"]', directoryName).siblings().contains(url);
-});
-
-Then('the user views the entry of {string}, {string}, {string}', function (directoryName, api, url) {
-  directoryObj
-    .directoryTable()
-    .contains('td[data-testid="service"]', directoryName)
-    .siblings()
-    .contains(api)
-    .siblings()
-    .contains(url);
-});
-
-Then('the user {string} the entry of {string}, {string}', function (viewOrNot, servicename, url) {
-  switch (viewOrNot) {
-    case 'views':
-      directoryObj.directoryEntryWithNameUrl(servicename, url).should('exist');
-      break;
-    case 'should not view':
-      directoryObj.directoryEntryWithNameUrl(servicename, url).should('not.exist');
-      break;
-    default:
-      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+Then(
+  'the user {string} the entry of {string} in Service, {string} in API, {string} in URL',
+  function (viewOrNot, entryName, api, url) {
+    switch (viewOrNot) {
+      case 'views':
+        if (api == 'Empty') {
+          directoryObj.directoryEntryWithNameUrl(entryName, url).should('exist');
+        } else {
+          directoryObj.directoryEntryWithNameApiUrl(entryName, api, url).should('exist');
+        }
+        break;
+      case 'should not view':
+        if (api == 'Empty') {
+          directoryObj.directoryEntryWithNameUrl(entryName, url).should('not.exist');
+        } else {
+          directoryObj.directoryEntryWithNameApiUrl(entryName, api, url).should('not.exist');
+        }
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
   }
-});
+);
 
 Then('the user views the error message {string} for {string} field', function (errorMsg, field) {
   switch (field) {
@@ -124,12 +121,22 @@ Then('the user views the error message {string} for {string} field', function (e
   }
 });
 
-When('the user clicks Edit icon of {string}, {string} on entries page', function (serviceName, url) {
-  directoryObj.entryEditIcon(serviceName, url).click();
+When('the user clicks Edit icon of {string}, {string}, {string} on entries page', function (entryName, api, url) {
+  if (api == 'Empty') {
+    directoryObj.directoryEntryWithNameUrl(entryName, url).click();
+  } else {
+    directoryObj.directoryEntryWithNameApiUrl(entryName, api, url).click();
+  }
+  cy.wait(2000);
 });
 
-When('the user clicks Delete icon of {string}, {string} on entries page', function (serviceName, url) {
-  directoryObj.entryDeleteIcon(serviceName, url).click();
+When('the user clicks Delete icon of {string}, {string}, {string} on entries page', function (entryName, api, url) {
+  if (api == 'Empty') {
+    directoryObj.directoryEntryWithNameUrl(entryName, url).click();
+  } else {
+    directoryObj.directoryEntryWithNameApiUrl(entryName, api, url).click();
+  }
+  cy.wait(2000);
 });
 
 When('the user clicks Delete button', function () {
