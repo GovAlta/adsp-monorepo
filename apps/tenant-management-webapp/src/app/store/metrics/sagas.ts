@@ -5,7 +5,6 @@ import { select, call, put, takeLatest } from 'redux-saga/effects';
 import {
   FetchServiceMetricsAction,
   fetchServiceMetricsSuccess,
-  FetchServicesAction,
   fetchServicesSuccess,
   FETCH_SERVICES_ACTION,
   FETCH_SERVICE_METRICS_ACTION,
