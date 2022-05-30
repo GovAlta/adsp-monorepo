@@ -29,7 +29,9 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
     }
     case UPDATE_ENTRY_SUCCESS: {
       const directoryUpdateList = state.directory;
-      const index = directoryUpdateList.findIndex((x) => x?._id === action.payload?._id);
+      const index = directoryUpdateList.findIndex(
+        (x) => x?.service === action.payload?.service && x.api === action.payload.api
+      );
       if (index !== -1) {
         directoryUpdateList[index] = action.payload;
       }
@@ -37,10 +39,12 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
     }
     case DELETE_ENTRY_SUCCESS: {
       const directoryDelList = state.directory;
-      const hasExist = directoryDelList.find((x) => x._id === action.payload._id);
+      const hasExist = directoryDelList.find(
+        (x) => x.service === action.payload.service && x.api === action.payload.api
+      );
       if (hasExist) {
         directoryDelList.splice(
-          directoryDelList.findIndex((x) => x._id === action.payload._id),
+          directoryDelList.findIndex((x) => x.service === action.payload.service && x.api === action.payload.api),
           1
         );
       }
@@ -49,7 +53,9 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
     }
     case FETCH_ENTRY_DETAIL_SUCCESS: {
       const directoryUpdateList = state.directory;
-      const isExist = directoryUpdateList.find((x) => x.service === action.payload.service);
+      const isExist = directoryUpdateList.find(
+        (x) => x.service === action.payload.service && x.api === action.payload.api
+      );
       if (isExist) {
         isExist.metadata = action.payload.metadata;
       }
