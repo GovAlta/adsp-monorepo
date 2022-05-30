@@ -11,6 +11,7 @@ import { Directory } from './services/directory';
 import Container from '@components/Container';
 import Status from './services/status';
 import { EventLog } from './event-log';
+import { ServiceMetrics } from './service-metrics';
 import { Events } from './services/events';
 import { Notifications } from './services/notifications';
 import { Configuration } from './services/configuration';
@@ -35,6 +36,9 @@ const TenantManagement = (): JSX.Element => {
           </Route>
           <Route exact path="/admin/event-log">
             <EventLog />
+          </Route>
+          <Route exact path="/admin/service-metrics">
+            <ServiceMetrics />
           </Route>
           <Route path="/admin/access">
             <AccessPage />
