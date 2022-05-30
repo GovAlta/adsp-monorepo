@@ -40,51 +40,103 @@ describe('handler', () => {
 
     it('can write metrics', async () => {
       axiosMock.post.mockResolvedValueOnce({ data: null });
-      await writeMetrics(loggerMock, tokenProviderMock, valueUrl.href, {
-        tenantId,
-        method: 'GET',
-        path: '/abc/123',
-        responseTime: 300,
-        benchmark: {
-          timings: {},
+
+      const method = 'GET';
+      const path = '/abc/123';
+      const metrics = {
+        'metric-a': 123,
+      };
+      const time = 300;
+      await writeMetrics(loggerMock, tokenProviderMock, valueUrl.href, tenantId, [
+        {
+          timestamp: new Date(),
+          correlationId: `${method}:${path}`,
+          tenantId: tenantId.toString(),
+          context: {
+            method,
+            path,
+          },
+          value: {
+            ...metrics,
+            responseTime: time,
+          },
           metrics: {
-            'metric-a': 123,
+            ...Object.entries(metrics).reduce(
+              (values, [name, value]) => ({
+                ...values,
+                [`total:${name}`]: value,
+                [`${method}:${path}:${name}`]: value,
+              }),
+              {}
+            ),
+            [`total:count`]: 1,
+            [`${method}:${path}:count`]: 1,
+            [`total:response-time`]: time,
+            [`${method}:${path}:response-time`]: time,
           },
         },
-      });
+      ]);
 
       expect(axiosMock.post).toHaveBeenCalledWith(
         valueUrl.href,
-        expect.objectContaining({
-          context: expect.objectContaining({
-            method: 'GET',
-            path: '/abc/123',
+        expect.arrayContaining([
+          expect.objectContaining({
+            context: expect.objectContaining({
+              method: 'GET',
+              path: '/abc/123',
+            }),
+            value: expect.objectContaining({ responseTime: 300, 'metric-a': 123 }),
+            metrics: expect.objectContaining({
+              'GET:/abc/123:count': 1,
+              'GET:/abc/123:response-time': 300,
+              'total:count': 1,
+              'total:response-time': 300,
+              'GET:/abc/123:metric-a': 123,
+            }),
           }),
-          value: expect.objectContaining({ responseTime: 300, 'metric-a': 123 }),
-          metrics: expect.objectContaining({
-            'GET:/abc/123:count': 1,
-            'GET:/abc/123:response-time': 300,
-            'total:count': 1,
-            'total:response-time': 300,
-            'GET:/abc/123:metric-a': 123,
-          }),
-        }),
+        ]),
         expect.any(Object)
       );
     });
 
     it('can catch error', async () => {
       axiosMock.post.mockRejectedValueOnce(new Error('oh noes!'));
-      await writeMetrics(loggerMock, tokenProviderMock, valueUrl.href, {
-        tenantId,
-        method: 'GET',
-        path: '/abc/123',
-        responseTime: 300,
-        benchmark: {
-          timings: {},
-          metrics: {},
+
+      const method = 'GET';
+      const path = '/abc/123';
+      const metrics = {
+        'metric-a': 123,
+      };
+      const time = 300;
+      await writeMetrics(loggerMock, tokenProviderMock, valueUrl.href, tenantId, [
+        {
+          timestamp: new Date(),
+          correlationId: `${method}:${path}`,
+          tenantId: tenantId.toString(),
+          context: {
+            method,
+            path,
+          },
+          value: {
+            ...metrics,
+            responseTime: time,
+          },
+          metrics: {
+            ...Object.entries(metrics).reduce(
+              (values, [name, value]) => ({
+                ...values,
+                [`total:${name}`]: value,
+                [`${method}:${path}:${name}`]: value,
+              }),
+              {}
+            ),
+            [`total:count`]: 1,
+            [`${method}:${path}:count`]: 1,
+            [`total:response-time`]: time,
+            [`${method}:${path}:response-time`]: time,
+          },
         },
-      });
+      ]);
 
       expect(axiosMock.post).toHaveBeenCalled();
     });
