@@ -71,23 +71,6 @@ export function* fetchAccess() {
   }
 }
 
-const selectServiceRoles = (config?: ServiceRoleConfig): ServiceRoles => {
-  const roles: ServiceRoles = [];
-  if (config) {
-    Object.entries(config).forEach(([k, c]) => {
-      if (c?.roles) {
-        c.roles.forEach((role) => {
-          roles.push(role);
-        });
-      }
-    });
-
-    return roles;
-  }
-
-  return roles;
-};
-
 export function* fetchServiceRoles(action: FetchServiceRolesAction): SagaIterator {
   yield put(
     UpdateIndicator({
@@ -113,8 +96,8 @@ export function* fetchServiceRoles(action: FetchServiceRolesAction): SagaIterato
 
       yield put(
         fetchServiceRolesSuccess({
-          tenant: selectServiceRoles(tenantResponse?.data?.latest?.configuration),
-          core: selectServiceRoles(coreResponse?.data?.latest?.configuration),
+          tenant: tenantResponse?.data?.latest?.configuration,
+          core: coreResponse?.data?.latest?.configuration,
         })
       );
       yield put(
