@@ -39,6 +39,7 @@ export async function writeMetrics(
         ...Object.entries(metrics).reduce(
           (values, [name, value]) => ({
             ...values,
+            [`total:${name}`]: value,
             [`${method}:${path}:${name}`]: value,
           }),
           {}
