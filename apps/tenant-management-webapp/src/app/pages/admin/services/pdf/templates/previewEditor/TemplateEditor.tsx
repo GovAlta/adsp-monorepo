@@ -63,7 +63,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   useEffect(() => {
     setPreview(template?.useWrapper ? 'Snippet' : 'Html');
     setHtmlType(template?.useWrapper ? 'Snippet' : 'Html');
-  }, [template]);
+  }, [template, modelOpen]);
 
   let radioOptions = [];
 

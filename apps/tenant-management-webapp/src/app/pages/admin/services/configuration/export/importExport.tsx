@@ -8,15 +8,15 @@ import { PageIndicator } from '@components/Indicator';
 import { ConfigurationExportType, Service } from '@store/configuration/model';
 
 export const ConfigurationImportExport: FunctionComponent = () => {
-  const { tenantConfigDefinitions } = useSelector((state: RootState) => state.configuration);
+  const { coreConfigDefinitions, tenantConfigDefinitions } = useSelector((state: RootState) => state.configuration);
   const exports = useSelector((state: RootState) => state.configurationExport);
   const indicator = useSelector((state: RootState) => state?.session?.indicator);
 
   const sortedConfiguration = useMemo(() => {
-    const schemas = toSchemaMap(tenantConfigDefinitions);
-    const namespaces = toNamespaceMap(tenantConfigDefinitions);
+    const schemas = toSchemaMap(tenantConfigDefinitions, coreConfigDefinitions);
+    const namespaces = toNamespaceMap(tenantConfigDefinitions, coreConfigDefinitions);
     return { schemas: schemas, namespaces: namespaces };
-  }, [tenantConfigDefinitions]);
+  }, [coreConfigDefinitions, tenantConfigDefinitions]);
 
   const dispatch = useDispatch();
 
