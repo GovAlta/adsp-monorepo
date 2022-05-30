@@ -59,15 +59,27 @@ class DirectoryServicePage {
     return cy.xpath('//input[@data-testid="directory-modal-url-input"]/following-sibling::div[@class="error-msg"]');
   }
 
-  entryEditIcon(serviceName, url) {
+  entryNameUrlEditIcon(serviceName, url) {
     return cy.xpath(
       `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/following-sibling::*[contains(text(), "${url}")]/parent::*//*[@data-testid="icon-create"]`
     );
   }
 
-  entryDeleteIcon(serviceName, url) {
+  entryNameApiUrlEditIcon(serviceName, api, url) {
+    return cy.xpath(
+      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/following-sibling::*[contains(text(), "${api}")]/following-sibling::*[contains(text(), "${url}")]/parent::*//*[@data-testid="icon-create"]`
+    );
+  }
+
+  entryNameUrlDeleteIcon(serviceName, url) {
     return cy.xpath(
       `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/following-sibling::*[contains(text(), "${url}")]/parent::*//*[@data-testid="icon-trash"]`
+    );
+  }
+
+  entryNameApiUrlDeleteIcon(serviceName, api, url) {
+    return cy.xpath(
+      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/following-sibling::*[contains(text(), "${api}")]/following-sibling::*[contains(text(), "${url}")]/parent::*//*[@data-testid="icon-trash"]`
     );
   }
 

@@ -68,7 +68,7 @@ When('the user enters {string} in Service, {string} in API, {string} in URL', fu
 });
 
 When('the user modifies URL field {string}', function (url) {
-  directoryObj.entryModalUrlField().clear().type(url);
+  directoryObj.entryModalUrlField().scrollIntoView().clear().type(url);
 });
 
 Then('the user clicks Save button', function () {
@@ -122,18 +122,18 @@ Then('the user views the error message {string} for {string} field', function (e
 
 When('the user clicks Edit icon of {string}, {string}, {string} on entries page', function (entryName, api, url) {
   if (api == 'Empty') {
-    directoryObj.directoryEntryWithNameUrl(entryName, url).click();
+    directoryObj.entryNameUrlEditIcon(entryName, url).click();
   } else {
-    directoryObj.directoryEntryWithNameApiUrl(entryName, api, url).click();
+    directoryObj.entryNameApiUrlEditIcon(entryName, api, url).click();
   }
   cy.wait(2000);
 });
 
 When('the user clicks Delete icon of {string}, {string}, {string} on entries page', function (entryName, api, url) {
   if (api == 'Empty') {
-    directoryObj.directoryEntryWithNameUrl(entryName, url).click();
+    directoryObj.entryNameUrlDeleteIcon(entryName, url).click();
   } else {
-    directoryObj.directoryEntryWithNameApiUrl(entryName, api, url).click();
+    directoryObj.entryNameApiUrlDeleteIcon(entryName, api, url).click();
   }
   cy.wait(2000);
 });
