@@ -1,4 +1,4 @@
-import { AdspId, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AdspId, benchmark, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
   createValidationHandler,
@@ -58,6 +58,8 @@ export const getConfigurationEntity =
   ): RequestHandler =>
   async (req, _res, next) => {
     try {
+      benchmark(req, 'get-entity-time');
+
       const user = req.user;
       const { namespace, name } = req.params;
       const getCore = requestCore(req);
@@ -71,6 +73,7 @@ export const getConfigurationEntity =
       }
 
       req[ENTITY_KEY] = entity;
+      benchmark(req, 'get-entity-time');
       next();
     } catch (err) {
       next(err);
@@ -93,10 +96,11 @@ export const getConfiguration =
 export const patchConfigurationRevision =
   (logger: Logger, eventService: EventService): RequestHandler =>
   async (req, res, next) => {
-    const user = req.user;
-    const request: PatchRequests = req.body;
-
     try {
+      benchmark(req, 'operation-handler-time');
+
+      const user = req.user;
+      const request: PatchRequests = req.body;
       const entity: ConfigurationEntity = req[ENTITY_KEY];
 
       let update: Record<string, unknown> = null;
@@ -137,10 +141,13 @@ export const patchConfigurationRevision =
             user: `${user.name} (ID: ${user.id})`,
           }
         );
+
+        benchmark(req, 'operation-handler-time');
         res.send(mapConfiguration(entity));
       } else {
         const updated = await entity.update(user, update);
 
+        benchmark(req, 'operation-handler-time');
         res.send(mapConfiguration(updated));
         if (updated.tenantId) {
           eventService.send(
@@ -165,17 +172,19 @@ export const patchConfigurationRevision =
 export const createConfigurationRevision =
   (logger: Logger, eventService: EventService): RequestHandler =>
   async (req, res, next) => {
-    const user = req.user;
-    const { revision = false } = req.body;
-    if (!revision) {
-      next(new InvalidOperationError('Request operation not recognized.'));
-      return;
-    }
-
     try {
+      benchmark(req, 'operation-handler-time');
+
+      const user = req.user;
+      const { revision = false } = req.body;
+      if (!revision) {
+        throw new InvalidOperationError('Request operation not recognized.');
+      }
+
       const configuration: ConfigurationEntity = req[ENTITY_KEY];
       const updated = await configuration.createRevision(user);
 
+      benchmark(req, 'operation-handler-time');
       res.send(mapConfiguration(updated));
       if (updated.tenantId) {
         eventService.send(
@@ -203,15 +212,17 @@ export const getRevisions =
     mapResults = (_req: Request, results: Results<ConfigurationRevision>): unknown => results
   ): RequestHandler =>
   async (req, res, next) => {
-    const { top: topValue, after: afterValue } = req.query;
-
     try {
+      benchmark(req, 'operation-handler-time');
+      const { top: topValue, after: afterValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 10;
       const after = afterValue as string;
       const criteria = getCriteria(req);
 
       const entity: ConfigurationEntity = req[ENTITY_KEY];
       const results = await entity.getRevisions(top, after, criteria);
+
+      benchmark(req, 'operation-handler-time');
       res.send(mapResults(req, results));
     } catch (err) {
       next(err);
