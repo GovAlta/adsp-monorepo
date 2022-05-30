@@ -101,7 +101,7 @@ export function readMetrics(repository: ValuesRepository): RequestHandler {
       const tenant = req.tenant;
       const user = req.user as User;
       const { namespace, name } = req.params;
-      const { interval: intervalValue, criteria: criteriaValue } = req.query;
+      const { interval: intervalValue, criteria: criteriaValue, top: topValue, after } = req.query;
       const interval = (intervalValue as string) || 'daily';
       const criteriaParam = criteriaValue ? JSON.parse(criteriaValue as string) : {};
 
@@ -111,6 +111,7 @@ export function readMetrics(repository: ValuesRepository): RequestHandler {
         intervalMin: criteriaParam.intervalMin ? new Date(criteriaParam.intervalMin) : null,
         metricLike: criteriaParam.metricLike,
       };
+      const top = topValue ? parseInt(topValue as string) : 100;
 
       if (!tenant) {
         throw new InvalidOperationError('Tenant context is required for operation.');
@@ -120,7 +121,7 @@ export function readMetrics(repository: ValuesRepository): RequestHandler {
         throw new UnauthorizedUserError('read values', user);
       }
 
-      const result = await repository.readMetrics(tenant.id, namespace, name, criteria);
+      const result = await repository.readMetrics(tenant.id, namespace, name, top, after as string, criteria);
       res.send(result);
     } catch (err) {
       next(err);
@@ -134,7 +135,7 @@ export function readMetric(repository: ValuesRepository): RequestHandler {
       const tenant = req.tenant;
       const user = req.user as User;
       const { namespace, name, metric } = req.params;
-      const { interval: intervalValue, criteria: criteriaValue } = req.query;
+      const { interval: intervalValue, criteria: criteriaValue, top: topValue, after } = req.query;
       const interval = (intervalValue as string) || 'daily';
       const criteriaParam = criteriaValue ? JSON.parse(criteriaValue as string) : {};
 
@@ -143,6 +144,7 @@ export function readMetric(repository: ValuesRepository): RequestHandler {
         intervalMax: criteriaParam.intervalMax ? new Date(criteriaParam.intervalMax) : null,
         intervalMin: criteriaParam.intervalMin ? new Date(criteriaParam.intervalMin) : null,
       };
+      const top = topValue ? parseInt(topValue as string) : 100;
 
       if (!tenant) {
         throw new InvalidOperationError('Tenant context is required for operation.');
@@ -152,7 +154,7 @@ export function readMetric(repository: ValuesRepository): RequestHandler {
         throw new UnauthorizedUserError('read values', user);
       }
 
-      const result = await repository.readMetric(tenant.id, namespace, name, metric, criteria);
+      const result = await repository.readMetric(tenant.id, namespace, name, metric, top, after as string, criteria);
       res.send(result);
     } catch (err) {
       next(err);
@@ -165,8 +167,8 @@ export const assertUserCanWrite: RequestHandler = async (req, _res, next) => {
     const user = req.user;
     const { tenantId: tenantIdValue } = req.body;
 
-    // Use the specified tenantId or the user's tenantId.
-    const tenantId = tenantIdValue ? AdspId.parse(tenantIdValue as string) : user.tenantId;
+    // Use the specified tenantId or the tenant resolved by the tenant handler.
+    const tenantId = tenantIdValue ? AdspId.parse(tenantIdValue as string) : req.tenant?.id || user.tenantId;
 
     if (!isAllowedUser(user, tenantId, ServiceUserRoles.Writer, true)) {
       throw new UnauthorizedUserError('write value', user);
@@ -187,42 +189,61 @@ export function writeValue(logger: Logger, eventService: EventService, repositor
 
       logger.debug(`Processing write value ${namespace}:${name}...`);
 
-      const { tenantId: _tenantId, timestamp: timestampValue, ...value } = req.body;
       const tenantId: AdspId = req['tenantId'];
       const [namespaces] = await req.getConfiguration<Record<string, NamespaceEntity>>(tenantId);
 
-      // Handle either value write with envelop included or not.
-      const valueRecord: Omit<Value, 'tenantId'> =
-        (value as Value).value === undefined
-          ? {
-              context: {},
-              correlationId: null,
-              timestamp: new Date(),
-              value,
-            }
-          : {
-              ...value,
-              timestamp: timestampValue ? new Date(timestampValue) : new Date(),
-            };
+      const results = [];
+      const valuesToWrite = Array.isArray(req.body) ? req.body : [req.body];
+      for (const valueToWrite of valuesToWrite) {
+        try {
+          const { tenantId: _tenantId, timestamp: timestampValue, ...value } = valueToWrite;
 
-      // Write via the definition (which will validate) or directly if there is no definition.
-      const definition = namespaces?.[namespace]?.definitions[name];
-      let result: Value = null;
-      if (definition) {
-        result = await definition.writeValue(tenantId, valueRecord);
-      } else {
-        result = await repository.writeValue(namespace, name, tenantId, valueRecord);
+          // Handle either value write with envelop included or not.
+          const valueRecord: Omit<Value, 'tenantId'> =
+            (value as Value).value === undefined
+              ? {
+                  context: {},
+                  correlationId: null,
+                  timestamp: new Date(),
+                  value,
+                }
+              : {
+                  ...value,
+                  timestamp: timestampValue ? new Date(timestampValue) : new Date(),
+                };
+
+          // Write via the definition (which will validate) or directly if there is no definition.
+          const definition = namespaces?.[namespace]?.definitions[name];
+          let result: Value = null;
+          if (definition) {
+            result = await definition.writeValue(tenantId, valueRecord);
+          } else {
+            result = await repository.writeValue(namespace, name, tenantId, valueRecord);
+          }
+
+          results.push(result);
+          eventService.send(valueWritten(req.user, namespace, name, result));
+
+          logger.info(`Value ${namespace}:${name} written by user ${user.name} (ID: ${user.id}).`, {
+            context: 'value-router',
+            tenantId: tenantId?.toString(),
+            user: `${user.name} (ID: ${user.id})`,
+          });
+        } catch (err) {
+          logger.warn(`Error encountered writing value ${namespace}:${name}.`, {
+            context: 'value-router',
+            tenantId: tenantId?.toString(),
+            user: `${user.name} (ID: ${user.id})`,
+          });
+        }
       }
 
-      res.send(mapValue(result));
-
-      eventService.send(valueWritten(req.user, namespace, name, result));
-
-      logger.info(`Value ${namespace}:${name} written by user ${user.name} (ID: ${user.id}).`, {
-        context: 'value-router',
-        tenantId: tenantId?.toString(),
-        user: `${user.name} (ID: ${user.id})`,
-      });
+      // Return an array if the original write is an array.
+      if (Array.isArray(req.body)) {
+        res.send(results.map(mapValue));
+      } else {
+        res.send(mapValue(results[0]));
+      }
     } catch (err) {
       next(err);
     }
@@ -272,7 +293,11 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
   valueRouter.get(
     '/:namespace/values/:name/metrics',
     validateNamespaceNameHandler,
-    createValidationHandler(query('interval').optional().isString()),
+    createValidationHandler(
+      query('interval').optional().isString(),
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after').optional().isString()
+    ),
     readMetrics(repository)
   );
 
@@ -287,7 +312,9 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
         },
         ['params']
       ),
-      query('interval').optional().isString()
+      query('interval').optional().isString(),
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after').optional().isString()
     ),
     readMetric(repository)
   );
