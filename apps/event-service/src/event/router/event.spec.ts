@@ -120,6 +120,19 @@ describe('event router', () => {
         next
       );
     });
+
+    it('can fail for no tenant context', (done) => {
+      const req = {
+        user: { roles: [EventServiceRoles.sender], isCore: true },
+        body: {},
+      } as Request;
+
+      const next = (err) => {
+        expect(err).toEqual(expect.any(InvalidOperationError));
+        done();
+      };
+      assertUserCanSend(req, {} as Response, next);
+    });
   });
 
   describe('sendEvent', () => {
