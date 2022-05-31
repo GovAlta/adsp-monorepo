@@ -61,7 +61,7 @@ describe('event router', () => {
 
       const next = (err) => {
         expect(err).toBeFalsy();
-        expect(`${req['tenantId']}`).toBe(tenantId);
+        expect(`${req.tenant.id}`).toBe(tenantId);
         done();
       };
       assertUserCanSend(req, {} as Response, next);
@@ -92,7 +92,7 @@ describe('event router', () => {
 
       const next = (err) => {
         expect(err).toBeFalsy();
-        expect(req['tenantId']).toBe(tenantId);
+        expect(req.tenant.id).toBe(tenantId);
         done();
       };
 
@@ -145,7 +145,7 @@ describe('event router', () => {
     it('can send event', async () => {
       const req = {
         user: { tenantId, name: 'test', id: 'test' },
-        tenantId,
+        tenant: { id: tenantId },
         body: {
           namespace: 'test',
           name: 'test',
@@ -169,7 +169,7 @@ describe('event router', () => {
     it('can send defined event', async () => {
       const req = {
         user: { tenantId, name: 'test', id: 'test' },
-        tenantId,
+        tenant: { id: tenantId },
         body: {
           namespace: 'test',
           name: 'test',
@@ -201,7 +201,7 @@ describe('event router', () => {
     it('can call next with invalid error for no namespace', async () => {
       const req = {
         user: { tenantId, name: 'test', id: 'test' },
-        tenantId,
+        tenant: { id: tenantId },
         body: {
           name: 'test',
           timestamp: '2021-03-23T12:00:00Z',
@@ -221,7 +221,7 @@ describe('event router', () => {
     it('can call next with invalid error for no name', async () => {
       const req = {
         user: { tenantId, name: 'test', id: 'test' },
-        tenantId,
+        tenant: { id: tenantId },
         body: {
           namespace: 'test',
           timestamp: '2021-03-23T12:00:00Z',
@@ -241,7 +241,7 @@ describe('event router', () => {
     it('can call next with invalid error for no timestamp', async () => {
       const req = {
         user: { tenantId, name: 'test', id: 'test' },
-        tenantId,
+        tenant: { id: tenantId },
         body: {
           namespace: 'test',
           name: 'test',
