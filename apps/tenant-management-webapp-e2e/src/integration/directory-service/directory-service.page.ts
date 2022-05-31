@@ -17,7 +17,7 @@ class DirectoryServicePage {
     return cy.get('[data-testid="add-directory-btn"]');
   }
 
-  addEntryModalTitle() {
+  entryModalTitle() {
     return cy.xpath(
       '//div[@class="modal-root" and @data-state="visible"]/div[@class="modal"]/div[@class="modal-container"]/div[@class="modal-title"]'
     );
@@ -87,7 +87,7 @@ class DirectoryServicePage {
     return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//*[@class="goa-scrollable"]');
   }
 
-  deleteModalBtn() {
+  deleteModalDeleteBtn() {
     return cy.get('[data-testid="delete-confirm"]');
   }
 

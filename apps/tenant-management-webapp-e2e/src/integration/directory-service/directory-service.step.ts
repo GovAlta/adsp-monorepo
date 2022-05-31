@@ -42,15 +42,15 @@ When('the user clicks Add entry button', function () {
 });
 
 Then('the user views Add entry modal', function () {
-  directoryObj.addEntryModalTitle().invoke('text').should('eq', 'Add entry');
+  directoryObj.entryModalTitle().invoke('text').should('eq', 'Add entry');
 });
 
 Then('the user views Edit entry modal', function () {
-  directoryObj.addEntryModalTitle().invoke('text').should('eq', 'Edit entry');
+  directoryObj.entryModalTitle().invoke('text').should('eq', 'Edit entry');
 });
 
 Then('the user views Delete entry modal for {string}', function (entryName) {
-  directoryObj.addEntryModalTitle().invoke('text').should('eq', 'Delete entry');
+  directoryObj.entryModalTitle().invoke('text').should('eq', 'Delete entry');
   directoryObj
     .deleteModalContent()
     .invoke('text')
@@ -71,12 +71,12 @@ When('the user modifies URL field {string}', function (url) {
   directoryObj.entryModalUrlField().scrollIntoView().clear().type(url);
 });
 
-Then('the user clicks Save button', function () {
+Then('the user clicks Save button in Entry modal', function () {
   directoryObj.entryModalSaveButton().click();
   cy.wait(2000);
 });
 
-When('the user clicks Cancel button on Entry modal', function () {
+When('the user clicks Cancel button in Entry modal', function () {
   directoryObj.entryModalCancelButton().click();
 });
 
@@ -138,7 +138,7 @@ When('the user clicks Delete icon of {string}, {string}, {string} on entries pag
   cy.wait(2000);
 });
 
-When('the user clicks Delete button', function () {
-  directoryObj.deleteModalBtn().scrollIntoView().click();
+When('the user clicks Delete button in Entry modal', function () {
+  directoryObj.deleteModalDeleteBtn().scrollIntoView().click();
   cy.wait(2000);
 });
