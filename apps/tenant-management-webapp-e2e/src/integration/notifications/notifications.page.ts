@@ -357,7 +357,7 @@ class NotificationsPage {
   }
 
   editSubscriberModal() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]');
+    return cy.xpath('//div[@class="modal-title" and text()="Edit subscriber"]/ancestor::[@class="modal"]');
   }
 }
 export default NotificationsPage;
