@@ -54,6 +54,19 @@ export const TableDiv = styled.div`
   }
 
   & td:last-child {
+    width: 30%;
     text-align: center;
+  }
+
+  & th:first-child {
+    width: 30%;
+  }
+
+  & th:second-child {
+    width: 40%;
+  }
+
+  & td:last-child {
+    width: 30%;
   }
 `;
