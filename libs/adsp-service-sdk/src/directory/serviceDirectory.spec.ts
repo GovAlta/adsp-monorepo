@@ -64,7 +64,7 @@ describe('ServiceDirectory', () => {
 
     expect(result).toBe(apiUrl);
     expect(axiosMock.get).toHaveBeenCalledWith(
-      'https://directory/api/directory/v2/namespaces/test-sandbox/entries',
+      'https://directory/directory/v2/namespaces/test-sandbox/entries',
       expect.any(Object)
     );
   });

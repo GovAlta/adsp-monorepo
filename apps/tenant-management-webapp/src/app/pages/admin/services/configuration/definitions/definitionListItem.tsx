@@ -35,29 +35,29 @@ export const ConfigurationDefinitionItemComponent: FunctionComponent<serviceItem
                 onClick={() => setShowSchema(!showSchema)}
                 testId="configuration-toggle-details-visibility"
               />
+              {tenantName !== 'Platform' || isTenantSpecificConfig ? (
+                <>
+                  <GoAContextMenuIcon
+                    type="create"
+                    onClick={() =>
+                      onEdit({
+                        namespace: nameSpace,
+                        name: configName,
+                        payloadSchema: { ...configSchema },
+                      })
+                    }
+                    testId="edit-details"
+                  />
+                  <GoAContextMenuIcon
+                    type="trash"
+                    onClick={() => onDelete(`${nameSpace}:${configName}`)}
+                    testId="delete-config"
+                  />
+                </>
+              ) : (
+                ''
+              )}
             </GoAContextMenu>
-            {tenantName !== 'Platform' || isTenantSpecificConfig ? (
-              <>
-                <GoAContextMenuIcon
-                  type="create"
-                  onClick={() =>
-                    onEdit({
-                      namespace: nameSpace,
-                      name: configName,
-                      payloadSchema: { ...configSchema },
-                    })
-                  }
-                  testId="edit-details"
-                />
-                <GoAContextMenuIcon
-                  type="trash"
-                  onClick={() => onDelete(`${nameSpace}:${configName}`)}
-                  testId="delete-config"
-                />
-              </>
-            ) : (
-              ''
-            )}
           </IconDiv>
         </td>
       </tr>

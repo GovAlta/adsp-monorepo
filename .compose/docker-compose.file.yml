@@ -20,6 +20,7 @@ services:
     depends_on:
       - tenant-management-api
       - file-service-mongo
+      - directory-service
       # - file-service-av
     ports:
       - 3337:3337
@@ -34,7 +35,7 @@ services:
       - AMQP_HOST=rabbitmq
       - AMQP_USER=guest
       - AMQP_PASSWORD=guest
-      - DIRECTORY_URL=http://tenant-management-api:3333
+      - DIRECTORY_URL=http://directory-service:3331
       - KEYCLOAK_ROOT_URL=http://keycloak:8080
       - CLIENT_ID=urn:ads:platform:file-service
       - CLIENT_SECRET=63c023f4-6764-4146-af50-8481c6fdbeaa

@@ -13,6 +13,7 @@ services:
     depends_on:
       - tenant-management-api
       - configuration-service-mongo
+      - directory-service
     ports:
       - 3339:3339
     expose:
@@ -20,7 +21,7 @@ services:
     volumes:
       - ../data/file:/data/file
     environment:
-      - DIRECTORY_URL=http://tenant-management-api:3333
+      - DIRECTORY_URL=http://directory-service:3331
       - KEYCLOAK_ROOT_URL=http://keycloak:8080
       - CLIENT_ID=urn:ads:platform:configuration-service
       - CLIENT_SECRET=a52191ee-dd3b-4b0a-92d8-074800eb1d57

@@ -89,8 +89,7 @@ data:
           "tenantNameByRealm": "/api/tenant/v1/realm",
           "tenantByName": "/api/tenant/v1/name",
           "tenantByEmail": "/api/tenant/v1/email",
-          "tenantConfig": "/api/configuration/v1/tenantConfig",
-          "directory": "/api/directory/v2"
+          "tenantConfig": "/api/configuration/v1/tenantConfig"
         }
       },
       "fileApi": {
