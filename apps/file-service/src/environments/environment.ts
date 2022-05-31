@@ -7,8 +7,8 @@ dotenv.config();
 export const environment = envalid.cleanEnv(
   process.env,
   {
-    KEYCLOAK_ROOT_URL: envalid.str({ default: 'https://access-dev.os99.gov.ab.ca' }),
-    DIRECTORY_URL: envalid.str({ default: 'https://tenant-management-api-core-services-dev.os99.gov.ab.ca' }),
+    KEYCLOAK_ROOT_URL: envalid.str({ default: 'https://access.adsp-dev.gov.ab.ca' }),
+    DIRECTORY_URL: envalid.str({ default: 'https://localhost:3331' }),
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:file-service' }),
     CLIENT_SECRET: envalid.str({ default: '' }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),

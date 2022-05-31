@@ -3,6 +3,7 @@ import type { DomainEvent } from '@core-services/core-common';
 import axios from 'axios';
 import type { Logger } from 'winston';
 import { NamespaceEntity } from '../model';
+import { EventDefinition } from '../types';
 
 interface LogEventJobProps {
   serviceId: AdspId;
@@ -13,42 +14,40 @@ interface LogEventJobProps {
 }
 
 async function calculateIntervalMetric(
-  serviceId: AdspId,
   logger: Logger,
   tokenProvider: TokenProvider,
-  configurationService: ConfigurationService,
   logUrl: URL,
+  definition: EventDefinition,
   { timestamp, correlationId, tenantId, context: contextValue, namespace, name }: DomainEvent,
   metrics: Record<string, number>
 ) {
   // Try to calculate durations on a best effort basis.
   try {
-    // If there is a correlation ID, try to find the associated event definition.
-    let token = await tokenProvider.getAccessToken();
-    const namespaces = await configurationService.getConfiguration<
-      Record<string, NamespaceEntity>,
-      Record<string, NamespaceEntity>
-    >(serviceId, token, tenantId);
-
     // Get the interval configuration of the event definition.
-    const interval = namespaces?.[namespace]?.definitions?.[name]?.interval;
+    const interval = definition.interval;
     if (interval) {
       logger.debug(`Computing interval metric for event ${namespace}:${name} (correlation ID: ${correlationId})...`, {
         context: 'EventLog',
         tenantId: tenantId.toString(),
       });
 
-      const { namespace: intervalNamespace, name: intervalName, metric: metricValue } = interval;
+      const { namespace: intervalNamespace, name: intervalName, metric: metricValue, context: contextKeys } = interval;
       const metricNameElements = Array.isArray(metricValue) ? metricValue : [metricValue];
 
       const eventContext = contextValue || {};
+      const contextCriteria = (typeof contextKeys === 'string' ? [contextKeys] : contextKeys || []).reduce(
+        (values, key) => ({ ...values, [key]: eventContext[key] }),
+        {}
+      );
+
       const context = {
+        ...contextCriteria,
         namespace: intervalNamespace,
         name: intervalName,
       };
 
       // Read the start of the interval from the event log.
-      token = await tokenProvider.getAccessToken();
+      const token = await tokenProvider.getAccessToken();
       const { data } = await axios.get<Record<string, Record<string, { timestamp: string }[]>>>(
         logUrl.href + `?top=1&tenantId=${tenantId}&correlationId=${correlationId}&context=${JSON.stringify(context)}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -91,49 +90,45 @@ export const createLogEventJob =
 
     logger.debug(`Writing event to log (${namespace}:${name})...`, { context: 'EventLog', tenantId });
 
-    const { namespace: vNamespace, name: vName } = context || {};
-    // Skip logging of event value written events for the event log itself; otherwise it would be in a loop.
-    if (
-      namespace === 'value-service' &&
-      name === 'value-written' &&
-      vNamespace === 'event-service' &&
-      vName === 'event'
-    ) {
-      logger.debug('Skipping logging for event log written event.');
-      done();
-      return;
-    }
-
-    const valueWrite = {
-      timestamp,
-      correlationId,
-      tenantId: `${tenantId}`,
-      context: {
-        ...(context || {}),
-        namespace,
-        name,
-      },
-      value: { payload },
-      metrics: {
-        [`total:count`]: 1,
-        [`${namespace}:${name}:count`]: 1,
-      },
-    };
-
-    if (correlationId) {
-      await calculateIntervalMetric(
-        serviceId,
-        logger,
-        tokenProvider,
-        configurationService,
-        logUrl,
-        event,
-        valueWrite.metrics
-      );
-    }
-
     try {
-      const token = await tokenProvider.getAccessToken();
+      let token = await tokenProvider.getAccessToken();
+      const namespaces = await configurationService.getConfiguration<
+        Record<string, NamespaceEntity>,
+        Record<string, NamespaceEntity>
+      >(serviceId, token, tenantId);
+
+      const definition = namespaces?.[namespace]?.definitions?.[name];
+
+      // Skip logging for events based on definition; skipping value service as transition
+      if (namespace === 'value-service' || definition?.log?.skip) {
+        logger.debug(`Skipping logging for event ${namespace}:${name}.`, {
+          context: 'EventLog',
+          tenantId,
+        });
+        done();
+        return;
+      }
+
+      const valueWrite = {
+        timestamp,
+        correlationId,
+        tenantId: `${tenantId}`,
+        context: {
+          ...(context || {}),
+          namespace,
+          name,
+        },
+        value: { payload },
+        metrics: {
+          [`total:count`]: 1,
+          [`${namespace}:${name}:count`]: 1,
+        },
+      };
+
+      if (correlationId && definition) {
+        await calculateIntervalMetric(logger, tokenProvider, logUrl, definition, event, valueWrite.metrics);
+      }
+      token = await tokenProvider.getAccessToken();
       await axios.post(logUrl.href, valueWrite, { headers: { Authorization: `Bearer ${token}` } });
 
       logger.info(`Wrote event '${event.namespace}:${event.name}' to log.`, {

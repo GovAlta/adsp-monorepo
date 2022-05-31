@@ -595,14 +595,14 @@ Then(
     let newStatusValidationString;
 
     if (orgStatus != '{original status}') {
-      orgStatusValidationString = 'The original status was: ' + orgStatus;
+      orgStatusValidationString = orgStatus;
     } else {
-      orgStatusValidationString = 'The original status was: ' + originalStatus.toLowerCase();
+      orgStatusValidationString = originalStatus.toLowerCase();
     }
     if (newStatusInput != '{new status}') {
-      newStatusValidationString = 'The new status is now: ' + newStatusInput;
+      newStatusValidationString = newStatusInput;
     } else {
-      newStatusValidationString = 'The new status is now: ' + newStatus.toLowerCase();
+      newStatusValidationString = newStatus.toLowerCase();
     }
 
     tenantAdminObj.eventToggleDetailsIcons().each(($element, $index, $full_array) => {
@@ -615,9 +615,10 @@ Then(
           // Check if event log details contains expected info
           if (
             eventDetails.includes('to": "' + email) &&
-            eventDetails.includes(appName + ' status has changed') &&
-            eventDetails.includes(orgStatusValidationString) &&
-            eventDetails.includes(newStatusValidationString)
+            eventDetails.includes(appName + ' status changed to') &&
+            eventDetails.includes(
+              'from <b>' + orgStatusValidationString + '</b> to <b>' + newStatusValidationString + '</b>'
+            )
           ) {
             isFound = true;
             cy.wrap($element).click({ force: true });

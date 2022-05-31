@@ -3,7 +3,7 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import {
   AjvValidationService,
   createAmqpConfigUpdateService,
@@ -48,6 +48,7 @@ const initializeApp = async (): Promise<express.Application> => {
     configurationService,
     clearCached,
     healthCheck,
+    metricsHandler,
   } = await initializePlatform(
     {
       serviceId,
@@ -73,6 +74,7 @@ const initializeApp = async (): Promise<express.Application> => {
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
+      values: [ServiceMetricsValueDefinition],
     },
     { logger }
   );
@@ -101,7 +103,21 @@ const initializeApp = async (): Promise<express.Application> => {
   });
 
   app.use(passport.initialize());
-  app.use('/event', passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler, configurationHandler);
+  app.use(
+    '/event',
+    (req, res, next) => {
+      const { namespace } = req.body || {};
+      // Skip metrics for value service events; otherwise we're in a loop with the value write events.
+      if (namespace !== 'value-service') {
+        metricsHandler(req, res, next);
+      } else {
+        next();
+      }
+    },
+    passport.authenticate(['core', 'tenant'], { session: false }),
+    tenantHandler,
+    configurationHandler
+  );
 
   applyEventMiddleware(app, {
     serviceId,

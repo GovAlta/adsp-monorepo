@@ -5,6 +5,7 @@ import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 
 import BarChartIcon from '@icons/bar-chart-outline.svg';
+import KeyIcon from '@icons/key-outline.svg';
 import FileIcon from '@icons/file-outline.svg';
 import ReceiptIcon from '@icons/receipt-outline.svg';
 import DashboardIcon from '@icons/home-outline.svg';
@@ -57,9 +58,19 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
                 <span>Event log</span>
               </NavLink>
 
+              <NavLink
+                to="/admin/service-metrics"
+                activeClassName="current"
+                title="Service metrics"
+                data-testid="menu-service-metrics"
+              >
+                <img src={BarChartIcon} width="16" alt="Service metrics" />
+                <span>Service metrics</span>
+              </NavLink>
+
               <Title>Services</Title>
               <NavLink to="/admin/access" activeClassName="current" title="Access" data-testid="menu-access">
-                <img src={BarChartIcon} width="16" alt="Access Service " />
+                <img src={KeyIcon} width="16" alt="Access Service " />
                 <span>Access</span>
               </NavLink>
               <NavLink

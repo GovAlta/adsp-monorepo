@@ -4,7 +4,7 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler, AjvValidationService } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -31,35 +31,37 @@ const initializeApp = async (): Promise<express.Application> => {
   }
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
-  const { coreStrategy, tenantStrategy, tenantHandler, eventService, healthCheck } = await initializePlatform(
-    {
-      serviceId,
-      displayName: 'Configuration service',
-      description: 'Service for managing configuration',
-      roles: [
-        {
-          role: ConfigurationServiceRoles.Reader,
-          description: 'Reader role that grants access to configuration.',
-        },
-        {
-          role: ConfigurationServiceRoles.ConfigurationAdmin,
-          description: 'Administrator role that grants access to and modification of configuration.',
-          inTenantAdmin: true,
-        },
-        {
-          role: ConfigurationServiceRoles.ConfiguredService,
-          description: 'Service role that grants service accounts access to configuration.',
-        },
-      ],
-      events: [ConfigurationUpdatedDefinition, RevisionCreatedDefinition],
-      clientSecret: environment.CLIENT_SECRET,
-      accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
-      directoryUrl: new URL(environment.DIRECTORY_URL),
-      // Configuration service registers against itself and Keycloak doesn't include aud in that case.
-      ignoreServiceAud: true,
-    },
-    { logger }
-  );
+  const { coreStrategy, tenantStrategy, tenantHandler, eventService, healthCheck, metricsHandler } =
+    await initializePlatform(
+      {
+        serviceId,
+        displayName: 'Configuration service',
+        description: 'Service for managing configuration',
+        roles: [
+          {
+            role: ConfigurationServiceRoles.Reader,
+            description: 'Reader role that grants access to configuration.',
+          },
+          {
+            role: ConfigurationServiceRoles.ConfigurationAdmin,
+            description: 'Administrator role that grants access to and modification of configuration.',
+            inTenantAdmin: true,
+          },
+          {
+            role: ConfigurationServiceRoles.ConfiguredService,
+            description: 'Service role that grants service accounts access to configuration.',
+          },
+        ],
+        events: [ConfigurationUpdatedDefinition, RevisionCreatedDefinition],
+        clientSecret: environment.CLIENT_SECRET,
+        accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
+        directoryUrl: new URL(environment.DIRECTORY_URL),
+        // Configuration service registers against itself and Keycloak doesn't include aud in that case.
+        ignoreServiceAud: true,
+        values: [ServiceMetricsValueDefinition],
+      },
+      { logger }
+    );
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
@@ -73,7 +75,12 @@ const initializeApp = async (): Promise<express.Application> => {
   });
 
   app.use(passport.initialize());
-  app.use('/configuration', passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler);
+  app.use(
+    '/configuration',
+    metricsHandler,
+    passport.authenticate(['core', 'tenant'], { session: false }),
+    tenantHandler
+  );
 
   const validationService = new AjvValidationService(logger);
   const repositories = await createRepositories({ ...environment, validationService, logger });
