@@ -42,15 +42,15 @@ When('the user clicks Add entry button', function () {
 });
 
 Then('the user views Add entry modal', function () {
-  directoryObj.entryModalTitle().invoke('text').should('eq', 'Add entry');
+  commonObj.modalTitle().invoke('text').should('eq', 'Add entry');
 });
 
 Then('the user views Edit entry modal', function () {
-  directoryObj.entryModalTitle().invoke('text').should('eq', 'Edit entry');
+  commonObj.modalTitle().invoke('text').should('eq', 'Edit entry');
 });
 
 Then('the user views Delete entry modal for {string}', function (entryName) {
-  directoryObj.entryModalTitle().invoke('text').should('eq', 'Delete entry');
+  commonObj.modalTitle().invoke('text').should('eq', 'Delete entry');
   directoryObj
     .deleteModalContent()
     .invoke('text')
