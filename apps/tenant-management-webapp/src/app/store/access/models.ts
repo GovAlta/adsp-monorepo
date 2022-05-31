@@ -55,7 +55,7 @@ export interface ServiceRole {
   inTenantAdmin?: boolean;
 }
 
-interface ConfigServiceRole {
+export interface ConfigServiceRole {
   roles?: ServiceRoles;
 }
 export type ServiceRoleConfig = Record<string, ConfigServiceRole>;

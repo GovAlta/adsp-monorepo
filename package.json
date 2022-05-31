@@ -191,6 +191,8 @@
     "babel-jest": "27.2.3",
     "chalk": "^2.4.2",
     "chart.js": "^3.8.0",
+    "chartjs-adapter-moment": "^1.0.0",
+    "chartjs-plugin-datalabels": "^2.0.0",
     "clipboardy": "^2.3.0",
     "core-js": "^3.14.0",
     "cypress": "^8.4.0",

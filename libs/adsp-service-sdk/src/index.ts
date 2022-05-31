@@ -18,5 +18,5 @@ export { Channel } from './notification';
 export type { Template, NotificationType, NotificationTypeEvent } from './notification';
 export type { ValueDefinition } from './value';
 export type { ServiceRegistration, ServiceRole } from './registration';
-export { benchmark } from './metrics';
+export { benchmark, ServiceMetricsValueDefinition } from './metrics';
 export { initializePlatform, initializeService } from './initialize';
