@@ -2,6 +2,7 @@ import styled, { createGlobalStyle } from 'styled-components';
 import { PreviewPortal } from '../previewPortal';
 export const NotificationTemplateEditorContainer = styled.div`
   display: flex;
+  flex: auto;
   padding-left: 3rem;
   width: 100%;
   height: 100vh;
@@ -10,8 +11,8 @@ export const NotificationTemplateEditorContainer = styled.div`
 `;
 // Edit Template components
 export const TemplateEditorContainer = styled.div`
-  width: 40%;
   padding-right: 1rem;
+  flex: auto;
   margin-top: 4rem;
   overflow: hidden;
   &:hover {
@@ -57,7 +58,7 @@ export const ModalContent = styled.div`
   background: white;
 `;
 export const PreviewTemplateContainer = styled.div`
-  width: 60%;
+  width: 612px;
   margin-left: 2rem;
   padding-top: 4rem;
   padding-left: 2rem;

@@ -96,7 +96,7 @@ When('the user selects {string} tab for {string}', function (tab, menuItem) {
 });
 
 Then('the user views a callout message of {string}', function (message) {
-  cy.wait(1000); // Wait for the message to show up
+  cy.wait(4000); // Wait for the message to show up
   commonObj.notificationMessage().invoke('text').should('contain', message);
 });
 
@@ -110,6 +110,7 @@ Then('the user views delete {string} confirmation modal for {string}', function 
 
 When('the user clicks Delete button in delete confirmation modal', function () {
   commonObj.deleteConfirmationModalDeleteBtn().scrollIntoView().should('be.visible').click();
+  cy.wait(2000); // Wait for the record to be removed from the page
 });
 
 When('the user waits {string} seconds', function (seconds) {
