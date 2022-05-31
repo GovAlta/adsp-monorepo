@@ -31,7 +31,6 @@ export const getNamespaceEntries = async (
 
   for (const service of services) {
     const element = {};
-    element['_id'] = service._id;
     element['namespace'] = namespace;
     element['service'] = service.service;
     element['url'] = service.host;

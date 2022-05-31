@@ -32,7 +32,7 @@ export const assertUserCanSend: RequestHandler = async (req, res, next) => {
       throw new InvalidOperationError('Cannot send event without tenant context.');
     }
 
-    req['tenantId'] = tenantId;
+    req.tenant = { id: tenantId, name: null, realm: null };
 
     next();
   } catch (err) {
@@ -46,7 +46,7 @@ export const sendEvent =
     try {
       const user = req.user;
       const { namespace, name, timestamp: timeValue } = req.body;
-      const tenantId: AdspId = req['tenantId'];
+      const tenantId: AdspId = req.tenant.id;
 
       const namespaces = await req.getConfiguration<Record<string, NamespaceEntity>, Record<string, NamespaceEntity>>(
         tenantId
