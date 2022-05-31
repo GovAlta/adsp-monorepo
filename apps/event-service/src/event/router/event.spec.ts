@@ -40,12 +40,13 @@ describe('event router', () => {
 
   describe('assertUserCanSend', () => {
     it('can pass for core user', (done) => {
+      const tenantId = 'urn:ads:platform:tenant-service:v2:/tenants/test';
       const next = (err) => {
         expect(err).toBeFalsy();
         done();
       };
       assertUserCanSend(
-        { user: { roles: [EventServiceRoles.sender], isCore: true }, body: {} } as Request,
+        { user: { roles: [EventServiceRoles.sender], isCore: true }, body: { tenantId } } as Request,
         {} as Response,
         next
       );
@@ -55,7 +56,7 @@ describe('event router', () => {
       const tenantId = 'urn:ads:platform:tenant-service:v2:/tenants/test';
       const req = {
         user: { roles: [EventServiceRoles.sender], isCore: true },
-        body: { tenantId: tenantId },
+        body: { tenantId },
       } as Request;
 
       const next = (err) => {
