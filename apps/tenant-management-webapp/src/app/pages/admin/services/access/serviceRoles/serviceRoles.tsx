@@ -12,14 +12,14 @@ import { PageIndicator } from '@components/Indicator';
 export const selectServiceTenantRoles = createSelector(
   (state: RootState) => state.serviceRoles,
   (serviceRoles) => {
-    return serviceRoles?.tenant;
+    return serviceRoles?.tenant || {};
   }
 );
 
 export const selectServiceCoreRoles = createSelector(
   (state: RootState) => state.serviceRoles,
   (serviceRoles) => {
-    return serviceRoles?.core;
+    return serviceRoles?.core || {};
   }
 );
 
