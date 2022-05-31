@@ -17,6 +17,8 @@ export const getTemplateBody = (body: string, channel: string, context?: Record<
       return emailWrapperTemplate({ content: body, ...context });
     } else if (channel === 'pdf') {
       return pdfWrapperTemplate({ content: body, ...context });
+    } else if (channel === 'pdfWithWrapper') {
+      return pdfWrapperTemplate({ content: body, ...context, wrapper: true });
     } else {
       return body;
     }
