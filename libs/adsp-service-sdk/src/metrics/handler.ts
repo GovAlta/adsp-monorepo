@@ -20,6 +20,7 @@ export async function writeMetrics(
     const token = await tokenProvider.getAccessToken();
     await axios.post(valueUrl, values, {
       headers: { Authorization: `Bearer ${token}` },
+      params: { tenantId: tenantId.toString() },
       timeout: 30000,
     });
     logger.debug(`Wrote service metrics to value service.`, {

@@ -170,6 +170,10 @@ export const assertUserCanWrite: RequestHandler = async (req, _res, next) => {
     // Use the specified tenantId or the tenant resolved by the tenant handler.
     const tenantId = tenantIdValue ? AdspId.parse(tenantIdValue as string) : req.tenant?.id || user.tenantId;
 
+    if (!tenantId) {
+      throw new InvalidOperationError('Cannot write value without tenant context');
+    }
+
     if (!isAllowedUser(user, tenantId, ServiceUserRoles.Writer, true)) {
       throw new UnauthorizedUserError('write value', user);
     }
