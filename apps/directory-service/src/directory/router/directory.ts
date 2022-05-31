@@ -142,10 +142,10 @@ export const updateService =
     const user = req.user;
 
     try {
-      const { _id, service, url } = req.body;
+      const { service, url } = req.body;
       const result = await directoryRepository.getDirectories(namespace);
       const services = result.services;
-      const isExist = services.find((x) => x._id.toString() === _id);
+      const isExist = services.find((x) => x.service.toString() === service);
 
       if (isExist) {
         isExist.service = service;

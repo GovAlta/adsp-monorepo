@@ -23,7 +23,6 @@ describe('directory', () => {
       expect(results).toEqual(
         expect.arrayContaining([
           {
-            _id: directory.services[0]._id,
             namespace: directory.services[0].namespace,
             service: directory.services[0].service,
             url: directory.services[0].host,
