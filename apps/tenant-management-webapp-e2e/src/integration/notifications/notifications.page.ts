@@ -359,5 +359,17 @@ class NotificationsPage {
   editSubscriberModal() {
     return cy.xpath('//div[@class="modal-title" and text()="Edit subscriber"]/ancestor::[@class="modal"]');
   }
+
+  editSubscriberModalSaveBtn() {
+    return cy.get('[data-testid="form-save"]');
+  }
+
+  editSubscriberModalNameField() {
+    return cy.get('[data-testid="form-name"]');
+  }
+
+  editSubscriberModalEmailField() {
+    return cy.get('[data-testid="form-email"]');
+  }
 }
 export default NotificationsPage;

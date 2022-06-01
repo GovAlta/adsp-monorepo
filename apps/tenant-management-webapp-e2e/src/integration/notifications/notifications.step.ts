@@ -659,8 +659,8 @@ Then(
 );
 
 When('the user modifies the name to {string} and email to {string} in subscriber modal', function (name, editEmail) {
-  notificationsObj.notificationTypeModalNameField().clear().type(name);
-  notificationsObj.editContactModalEmail().clear().type(editEmail);
+  notificationsObj.editSubscriberModalNameField().clear().type(name);
+  notificationsObj.editSubscriberModalEmailField().clear().type(editEmail);
 });
 
 When('the user clicks Edit button of {string} and {string} on subscribers page', function (addressAs, email) {
@@ -671,7 +671,7 @@ Then('the user views Edit subscriber modal', function () {
   notificationsObj.editSubscriberModal().should('exist');
 });
 
-Then('the user clicks Save button in Edit contact subscriber modal', function () {
-  notificationsObj.editContactModalSaveBtn().click();
+Then('the user clicks Save button in Edit subscriber modal', function () {
+  notificationsObj.editSubscriberModalSaveBtn().click();
   cy.wait(2000);
 });

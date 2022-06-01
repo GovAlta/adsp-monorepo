@@ -159,12 +159,12 @@ Feature: Notifications
     And the user clicks Edit button of "auto-test-DO-NOT-DELETE" and "auto.test2@gov.ab.ca" on subscribers page
     Then the user views Edit subscriber modal
     When the user modifies the name to "auto-test2-DO-NOT-DELETE" and email to "auto.test22@gov.ab.ca" in subscriber modal
-    And the user clicks Save button in Edit contact subscriber modal
+    And the user clicks Save button in Edit subscriber modal
     When the user searches subscribers with address as containing "auto-test2-DO-NOT-DELETE" and email containing "auto.test22@gov.ab.ca"
     Then the user "views" the subscriber of "auto-test2-DO-NOT-DELETE", "auto.test22@gov.ab.ca"
     When the user clicks Edit button of "auto-test2-DO-NOT-DELETE" and "auto.test22@gov.ab.ca" on subscribers page
     And the user modifies the name to "auto-test-DO-NOT-DELETE" and email to "auto.test2@gov.ab.ca" in subscriber modal
-    Then the user clicks Save button in Edit contact subscriber modal
+    Then the user clicks Save button in Edit subscriber modal
     When the user searches subscribers with address as containing "auto-test-DO-NOT-DELETE" and email containing "auto.test2@gov.ab.ca"
     Then the user "views" the subscriber of "auto-test-DO-NOT-DELETE", "auto.test2@gov.ab.ca"
 
