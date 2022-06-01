@@ -3,7 +3,7 @@ import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
 import { FetchAccessSuccessAction, fetchServiceRolesSuccess, FetchServiceRolesAction } from './actions';
 import { KeycloakApi } from './api';
-import { Role, ServiceRoles, ServiceRoleConfig } from './models';
+import { Role } from './models';
 import { UpdateIndicator } from '@store/session/actions';
 import { SagaIterator } from '@redux-saga/core';
 import axios from 'axios';
