@@ -4,7 +4,7 @@ import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
 import { createLogger, createErrorHandler, createAmqpConfigUpdateService } from '@core-services/core-common';
-import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import { environment } from './environments/environment';
 import {
   applyFileMiddleware,
@@ -50,6 +50,7 @@ async function initializeApp(): Promise<express.Application> {
     clearCached,
     healthCheck,
     eventService,
+    metricsHandler,
   } = await initializePlatform(
     {
       serviceId,
@@ -72,6 +73,7 @@ async function initializeApp(): Promise<express.Application> {
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
+      values: [ServiceMetricsValueDefinition],
     },
     { logger }
   );
@@ -92,6 +94,7 @@ async function initializeApp(): Promise<express.Application> {
 
   app.use(
     '/file',
+    metricsHandler,
     passport.authenticate(['jwt-core', 'jwt', 'anonymous'], { session: false }),
     tenantHandler,
     configurationHandler
