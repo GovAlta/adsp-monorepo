@@ -97,7 +97,6 @@ export function* createEntryDirectory(action: CreateEntryAction): SagaIterator {
     );
 
     if (data) {
-      action.data['_id'] = data._id;
       yield put(createEntrySuccess(action.data));
     }
   } catch (err) {
@@ -121,7 +120,6 @@ export function* updateEntryDirectory(action: UpdateEntryAction): SagaIterator {
     sendEntry.service = action.data.api ? `${action.data.service}:${action.data.api}` : action.data.service;
     sendEntry.url = action.data.url;
     sendEntry.namespace = action.data.namespace;
-    sendEntry._id = action.data._id;
     const { data } = yield call(
       axios.put,
       `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}`,

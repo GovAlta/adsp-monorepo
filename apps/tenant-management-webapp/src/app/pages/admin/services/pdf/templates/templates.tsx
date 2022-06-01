@@ -194,7 +194,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                   try {
                     setBodyPreview(
                       generateMessage(
-                        getTemplateBody(body, channel === 'Snippet' ? 'pdf' : '', {
+                        getTemplateBody(body, channel === 'Snippet' ? 'pdfWithWrapper' : 'pdf', {
                           data: currentTemplate,
                           serviceUrl: webappUrl,
                           today: new Date().toDateString(),

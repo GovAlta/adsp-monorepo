@@ -12,14 +12,14 @@ import { PageIndicator } from '@components/Indicator';
 export const selectServiceTenantRoles = createSelector(
   (state: RootState) => state.serviceRoles,
   (serviceRoles) => {
-    return serviceRoles?.tenant;
+    return serviceRoles?.tenant || {};
   }
 );
 
 export const selectServiceCoreRoles = createSelector(
   (state: RootState) => state.serviceRoles,
   (serviceRoles) => {
-    return serviceRoles?.core;
+    return serviceRoles?.core || {};
   }
 );
 
@@ -45,7 +45,6 @@ export const ServiceRoles = (): JSX.Element => {
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
-  const tenantName = useSelector((state: RootState) => state.tenant?.name);
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
   useEffect(() => {
@@ -55,19 +54,18 @@ export const ServiceRoles = (): JSX.Element => {
     <div>
       {!indicator.show && tenantRoles !== null && (
         <div>
-          <h2>{tenantName} service roles:</h2>
-          {Object.entries(tenantRoles).length === 0 && <RenderNoItem />}
           {Object.entries(tenantRoles).length > 0 &&
             Object.entries(tenantRoles).map(([clientId, config]): JSX.Element => {
               const roles = (config as ConfigServiceRole).roles;
-
+              if (roles.length === 0) {
+                return <></>;
+              }
               return (
                 <ServiceRoleListContainer key={`tenant-service-role-${clientId}`}>
                   <div className="title" key={`tenant-service-role-id-${clientId}`}>
                     {clientId}
                   </div>
-                  {roles.length === 0 && <RenderNoServiceRole key={`core-service-role-list-${clientId}`} />}
-                  {roles.length > 0 && <ServiceRoleList key={`core-service-role-list-${clientId}`} roles={roles} />}
+                  <ServiceRoleList key={`core-service-role-list-${clientId}`} roles={roles} />
                 </ServiceRoleListContainer>
               );
             })}
@@ -76,13 +74,16 @@ export const ServiceRoles = (): JSX.Element => {
           {Object.entries(coreRoles).length > 0 &&
             Object.entries(coreRoles).map(([clientId, config]): JSX.Element => {
               const roles = (config as ConfigServiceRole).roles;
+
+              if (roles.length === 0) {
+                return <></>;
+              }
               return (
                 <ServiceRoleListContainer key={`core-service-role-${clientId}`}>
                   <div className="title" key={`core-service-role-id-${clientId}`}>
                     {clientId}
                   </div>
-                  {roles.length === 0 && <RenderNoServiceRole key={`core-service-role-list-${clientId}`} />}
-                  {roles.length > 0 && <ServiceRoleList key={`core-service-role-list-${clientId}`} roles={roles} />}
+                  <ServiceRoleList key={`core-service-role-list-${clientId}`} roles={roles} />
                 </ServiceRoleListContainer>
               );
             })}

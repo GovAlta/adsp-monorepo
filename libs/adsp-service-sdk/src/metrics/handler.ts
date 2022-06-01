@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Request, RequestHandler, Response } from 'express';
+import { throttle } from 'lodash';
 import * as responseTime from 'response-time';
 import { Logger } from 'winston';
 import { TokenProvider } from '../access';
@@ -7,61 +8,25 @@ import { ServiceDirectory } from '../directory';
 import { adspId, AdspId } from '../utils';
 import { RequestBenchmark, REQ_BENCHMARK } from './types';
 
-interface ServiceMetrics {
-  tenantId: AdspId;
-  method: string;
-  path: string;
-  responseTime: number;
-  benchmark: RequestBenchmark;
-}
-
 export async function writeMetrics(
   logger: Logger,
   tokenProvider: TokenProvider,
   valueUrl: string,
-  { tenantId, method, path, responseTime, benchmark }: ServiceMetrics
+  tenantId: AdspId,
+  buffer: unknown[]
 ): Promise<void> {
   try {
-    const metrics = benchmark?.metrics || {};
-    const valueWrite = {
-      timestamp: new Date(),
-      correlationId: `${method}:${path}`,
-      tenantId: tenantId.toString(),
-      context: {
-        method,
-        path,
-      },
-      value: {
-        ...metrics,
-        responseTime,
-      },
-      metrics: {
-        ...Object.entries(metrics).reduce(
-          (values, [name, value]) => ({
-            ...values,
-            [`total:${name}`]: value,
-            [`${method}:${path}:${name}`]: value,
-          }),
-          {}
-        ),
-        [`total:count`]: 1,
-        [`${method}:${path}:count`]: 1,
-        [`total:response-time`]: responseTime,
-        [`${method}:${path}:response-time`]: responseTime,
-      },
-    };
+    const values = buffer.splice(0);
     const token = await tokenProvider.getAccessToken();
-    await axios.post(valueUrl, valueWrite, {
+    await axios.post(valueUrl, values, {
       headers: { Authorization: `Bearer ${token}` },
-      timeout: 2000,
+      params: { tenantId: tenantId.toString() },
+      timeout: 30000,
     });
-    logger.debug(
-      `Wrote service metric to value service for ${valueWrite.correlationId} with response time ${responseTime} ms.`,
-      {
-        context: 'MetricsHandler',
-        tenant: tenantId.toString(),
-      }
-    );
+    logger.debug(`Wrote service metrics to value service.`, {
+      context: 'MetricsHandler',
+      tenant: tenantId.toString(),
+    });
   } catch (err) {
     logger.debug(`Error encountered writing service metrics. ${err}`, {
       context: 'MetricsHandler',
@@ -70,6 +35,8 @@ export async function writeMetrics(
   }
 }
 
+// Throttle the metric writes so that there isn't a write request per measured request at higher request volumes.
+const WRITE_THROTTLE_MS = 60000;
 export async function createMetricsHandler(
   serviceId: AdspId,
   logger: Logger,
@@ -79,17 +46,47 @@ export async function createMetricsHandler(
 ): Promise<RequestHandler> {
   const valueServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:value-service:v1`);
   const valueUrl = new URL(`v1/${serviceId.service}/values/service-metrics`, valueServiceUrl);
+  const valuesBuffer = [];
+  const writeBuffer = throttle(writeMetrics, WRITE_THROTTLE_MS, { leading: false });
   const responseTimeHandler = responseTime((req: Request, _res: Response, time) => {
     // Write if there is a tenant context to the request.
     const tenantId = defaultTenantId || req.tenant?.id;
     if (tenantId) {
-      writeMetrics(logger, tokenProvider, valueUrl.href, {
-        tenantId,
-        method: req.method,
-        path: `${req.baseUrl || ''}${req.path || ''}` || req.originalUrl,
-        responseTime: time,
-        benchmark: req[REQ_BENCHMARK],
-      });
+      const benchmark: RequestBenchmark = req[REQ_BENCHMARK];
+      const metrics = benchmark?.metrics || {};
+
+      const method = req.method;
+      const path = `${req.baseUrl || ''}${req.path || ''}` || req.originalUrl;
+
+      const value = {
+        timestamp: new Date(),
+        correlationId: `${method}:${path}`,
+        tenantId: tenantId.toString(),
+        context: {
+          method,
+          path,
+        },
+        value: {
+          ...metrics,
+          responseTime: time,
+        },
+        metrics: {
+          ...Object.entries(metrics).reduce(
+            (values, [name, value]) => ({
+              ...values,
+              [`total:${name}`]: value,
+              [`${method}:${path}:${name}`]: value,
+            }),
+            {}
+          ),
+          [`total:count`]: 1,
+          [`${method}:${path}:count`]: 1,
+          [`total:response-time`]: time,
+          [`${method}:${path}:response-time`]: time,
+        },
+      };
+      valuesBuffer.push(value);
+      writeBuffer(logger, tokenProvider, valueUrl.href, tenantId, valuesBuffer);
     }
   });
 

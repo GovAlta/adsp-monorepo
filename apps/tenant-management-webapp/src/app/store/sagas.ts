@@ -53,6 +53,7 @@ import { SAVE_NOTICE_ACTION, GET_NOTICES_ACTION, DELETE_NOTICE_ACTION } from './
 import { saveNotice, getNotices, deleteNotice } from './notice/sagas';
 import { SET_APPLICATION_STATUS_ACTION } from './status/actions/setApplicationStatus';
 import { TOGGLE_APPLICATION_STATUS_ACTION } from './status/actions/toggleApplication';
+import { watchServiceMetricsSagas } from './metrics/sagas';
 
 // eslint-disable-next-line  @typescript-eslint/explicit-module-boundary-types
 export function* watchSagas() {
@@ -99,5 +100,7 @@ export function* watchSagas() {
     watchStreamSagas(),
     //pdf
     watchPdfSagas(),
+    // service metrics
+    watchServiceMetricsSagas(),
   ]);
 }

@@ -9,8 +9,6 @@ import * as healthCheck from 'express-healthcheck';
 import * as fs from 'fs';
 import * as passport from 'passport';
 import { environment } from './environments/environment';
-import { applyDirectoryMiddleware, bootstrapDirectory, directoryService } from './directory';
-import { applyDirectoryV2Middleware } from './directoryV2';
 import { createRepositories, disconnect } from './mongo';
 import { logger } from './middleware/logger';
 import { TenantServiceRoles } from './roles';
@@ -24,9 +22,7 @@ import {
 
 async function initializeApp(): Promise<express.Application> {
   const repositories = await createRepositories({ ...environment, logger });
-  if (environment.DIRECTORY_BOOTSTRAP) {
-    await bootstrapDirectory(logger, environment.DIRECTORY_BOOTSTRAP, repositories.directoryRepository);
-  }
+
 
   const app = express();
   app.use(compression());
@@ -46,7 +42,7 @@ async function initializeApp(): Promise<express.Application> {
         displayName: 'Tenant service',
         description: 'Service for management of ADSP tenants.',
         clientSecret: environment.CLIENT_SECRET,
-        directoryUrl: null,
+        directoryUrl: new URL(environment.DIRECTORY_URL),
         accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
         configurationSchema,
         configurationConverter: (c) => Object.entries(c).map(([k, v]) => ({ serviceId: AdspId.parse(k), ...v })),
@@ -65,10 +61,6 @@ async function initializeApp(): Promise<express.Application> {
       },
       { logger },
       {
-        directory: {
-          getServiceUrl: (serviceId) => directoryService.getServiceUrl(repositories.directoryRepository, serviceId),
-          getResourceUrl: (resourceId) => directoryService.getResourceUrl(repositories.directoryRepository, resourceId),
-        },
         tenantService: {
           getTenant: (tenantId) => tenantDBService.getTenant(repositories.tenantRepository, tenantId),
           getTenants: () => tenantDBService.getTenants(repositories.tenantRepository),
@@ -113,9 +105,7 @@ async function initializeApp(): Promise<express.Application> {
   });
 
   applyTenantMiddleware(app, { ...repositories, logger, eventService, configurationHandler });
-  applyDirectoryMiddleware(app, { ...repositories, logger });
-  applyDirectoryV2Middleware(app, { ...repositories, logger, tenantService });
-
+ 
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 

@@ -7,7 +7,7 @@ import { environment } from './environments/environment';
 import path = require('path');
 import { applyDocsMiddleware } from './docs';
 
-const logger = createLogger('verify-service', environment.LOG_LEVEL);
+const logger = createLogger('api-docs-app', environment.LOG_LEVEL);
 
 const initializeApp = async (): Promise<express.Application> => {
   const app = express();

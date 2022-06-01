@@ -66,7 +66,7 @@ describe('event router', () => {
         done();
       };
       assertUserCanWrite(
-        { user: { roles: [ServiceUserRoles.Writer], isCore: true }, body: {} } as Request,
+        { user: { roles: [ServiceUserRoles.Writer], isCore: true }, tenant: { id: tenantId }, body: {} } as Request,
         {} as Response,
         next
       );
