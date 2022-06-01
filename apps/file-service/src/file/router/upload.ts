@@ -1,3 +1,4 @@
+import { benchmark } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request } from 'express';
 import * as multer from 'multer';
@@ -36,6 +37,9 @@ export class FileStorageEngine implements multer.StorageEngine {
     callback: (error?: unknown, info?: Partial<Express.Multer.File>) => void
   ): Promise<void> {
     try {
+      // End of the handling happens the request handler where the response is written.
+      benchmark(req, 'operation-handler-time');
+
       const user = req.user;
       const { type = null, recordId = null, filename = null } = { ...req.query, ...req.body };
 
