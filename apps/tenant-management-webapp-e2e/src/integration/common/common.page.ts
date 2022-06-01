@@ -48,6 +48,12 @@ class Common {
       '//*[@data-testid="delete-confirmation" and @data-state="visible"]//*[@data-testid="delete-confirm"]'
     );
   }
+
+  modalTitle() {
+    return cy.xpath(
+      '//div[@class="modal-root" and @data-state="visible"]/div[@class="modal"]/div[@class="modal-container"]/div[@class="modal-title"]'
+    );
+  }
 }
 
 export default Common;
