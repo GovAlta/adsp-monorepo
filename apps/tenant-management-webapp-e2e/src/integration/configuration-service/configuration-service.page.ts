@@ -3,7 +3,7 @@ class ConfigurationServicePage {
     return cy.xpath('//h1[text()="Configuration service"]/parent::main//p');
   }
 
-  configurationAsideItems(text, link) {
+  configurationSupportLink(text, link) {
     return cy.xpath(
       `//h1[text()="Configuration service"]/parent::main/following-sibling::aside//h3[text()="${text}"]/following-sibling::*[contains(text(), "${link}")]`
     );

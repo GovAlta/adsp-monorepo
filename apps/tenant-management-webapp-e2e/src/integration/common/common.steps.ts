@@ -118,3 +118,12 @@ When('the user waits {string} seconds', function (seconds) {
   expect(Number(seconds)).to.be.lessThan(300); // provent user from passing in too big a number to hang the test execution
   cy.wait(Number(seconds) * 1000); // Wait N seconds
 });
+
+Then('the user views the link for {string} See the code', function (serviceName) {
+  commonObj
+    .readSeeTheCodeLink()
+    .should('have.attr', 'href')
+    .then((href) => {
+      expect(href).to.contain(serviceName);
+    });
+});

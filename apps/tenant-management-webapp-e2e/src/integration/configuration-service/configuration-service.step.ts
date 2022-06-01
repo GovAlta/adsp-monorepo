@@ -7,6 +7,6 @@ Then('the user views the Configuration service overview content {string}', funct
   configurationObj.configurationOverviewContent().invoke('text').should('contain', paragraphText);
 });
 
-Then('the user views the item {string} with the aside item link {string}', function (asideItem, asideLink) {
-  configurationObj.configurationAsideItems(asideItem, asideLink).should('have.attr', 'href');
+Then('the user views the link for Configuration service under {string} as {string}', function (asideItem, asideLink) {
+  configurationObj.configurationSupportLink(asideItem, asideLink).should('have.attr', 'href');
 });

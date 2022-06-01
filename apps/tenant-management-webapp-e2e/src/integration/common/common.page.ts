@@ -54,6 +54,10 @@ class Common {
       '//div[@class="modal-root" and @data-state="visible"]/div[@class="modal"]/div[@class="modal-container"]/div[@class="modal-title"]'
     );
   }
+
+  readSeeTheCodeLink() {
+    return cy.xpath('//*[contains(text(), "Helpful links")]/following-sibling::a[contains(text(), "See the code")]');
+  }
 }
 
 export default Common;
