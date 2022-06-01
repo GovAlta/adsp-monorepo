@@ -163,8 +163,9 @@ When(
   }
 );
 
-Then('the user clicks save button', function () {
+Then('the user clicks save button in notification type modal', function () {
   notificationsObj.notificationTypeModalSaveBtn().click();
+  cy.wait(2000);
 });
 
 Then(
