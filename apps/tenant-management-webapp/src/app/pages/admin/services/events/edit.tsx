@@ -4,8 +4,8 @@ import type { EventDefinition } from '@store/event/models';
 import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
-import { wordCheck, characterCheck, validationPattern, checkInput, isNotEmptyCheck } from '@lib/checkInput';
-import { reactInputHandlerFactory } from '@lib/reactInputHandlerFactory';
+import { wordCheck, characterCheck, validationPattern, isNotEmptyCheck } from '@lib/checkInput';
+import { useValidators } from '@lib/useValidators';
 import { updateEventDefinition } from '@store/event/actions';
 import { useDispatch } from 'react-redux';
 
@@ -27,16 +27,21 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
   coreNamespaces,
 }) => {
   const [definition, setDefinition] = useState<EventDefinition>(initialValue);
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
 
-  const hasFormErrors = () => {
-    return Object.keys(errors).length !== 0;
-  };
   const forbiddenWords = coreNamespaces.concat('platform');
   const checkForConflicts = wordCheck(forbiddenWords);
   const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
-  const errorHandler = reactInputHandlerFactory(errors, setErrors);
+
+  const { errors, validators } = useValidators(
+    'namespace',
+    'namespace',
+    checkForConflicts,
+    checkForBadChars,
+    isNotEmptyCheck('namespace')
+  )
+    .add('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
+    .build();
 
   return (
     <GoAModal testId="definition-form" isOpen={open}>
@@ -53,11 +58,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               data-testid="form-namespace"
               aria-label="nameSpace"
               onChange={(e) => {
-                checkInput(
-                  e.target.value,
-                  [checkForConflicts, checkForBadChars, isNotEmptyCheck('namespace')],
-                  errorHandler('namespace')
-                );
+                validators['namespace'].check(e.target.value);
                 setDefinition({ ...definition, namespace: e.target.value });
               }}
             />
@@ -72,7 +73,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               data-testid="form-name"
               aria-label="name"
               onChange={(e) => {
-                checkInput(e.target.value, [checkForBadChars, isNotEmptyCheck('name')], errorHandler('name'));
+                validators['name'].check(e.target.value);
                 setDefinition({ ...definition, name: e.target.value });
               }}
             />
@@ -107,13 +108,13 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
           type="button"
           onClick={() => {
             onClose();
-            setErrors({});
+            validators.clear();
           }}
         >
           Cancel
         </GoAButton>
         <GoAButton
-          disabled={!definition.namespace || !definition.name || hasFormErrors()}
+          disabled={!definition.namespace || !definition.name || validators.haveErrors()}
           buttonType="primary"
           data-testid="form-save"
           type="submit"
@@ -123,7 +124,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               onSave();
             }
             onClose();
-            setErrors({});
+            validators.clear();
           }}
         >
           Save

@@ -1,22 +1,26 @@
 import {
-  ConfigurationActionTypes,
+  ConfigurationExportActionTypes,
+  ConfigurationDefinitionActionTypes,
   DELETE_CONFIGURATION_ACTION_SUCCESS,
+  FETCH_CONFIGURATION_ACTION,
   FETCH_CONFIGURATION_DEFINITIONS_ACTION,
   FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION,
+  FETCH_CONFIGURATION_SUCCESS_ACTION,
   UPDATE_CONFIGURATION__DEFINITION_SUCCESS_ACTION,
+  CLEAR_CONFIGURATION_ACTION,
 } from './action';
-import { ConfigurationState } from './model';
+import { ConfigurationDefinitionState, ConfigurationExportState } from './model';
 
-const defaultState: ConfigurationState = {
+const defaultState: ConfigurationDefinitionState = {
   coreConfigDefinitions: undefined,
   tenantConfigDefinitions: undefined,
   isAddedFromOverviewPage: false,
 };
 
 export default function (
-  state: ConfigurationState = defaultState,
-  action: ConfigurationActionTypes
-): ConfigurationState {
+  state: ConfigurationDefinitionState = defaultState,
+  action: ConfigurationDefinitionActionTypes
+): ConfigurationDefinitionState {
   switch (action.type) {
     case FETCH_CONFIGURATION_DEFINITIONS_ACTION:
       return {
@@ -46,3 +50,32 @@ export default function (
       return state;
   }
 }
+
+export const ConfigurationExport = (
+  state: ConfigurationExportState = {},
+  action: ConfigurationExportActionTypes
+): ConfigurationExportState => {
+  switch (action.type) {
+    case FETCH_CONFIGURATION_ACTION:
+      return {
+        ...state,
+      };
+    case FETCH_CONFIGURATION_SUCCESS_ACTION:
+      return {
+        ...state,
+        [`${action.payload.namespace}:${action.payload.name}`]: {
+          configuration: action.payload.latest?.configuration,
+          revision: action.payload.latest?.revision,
+        },
+      };
+    case CLEAR_CONFIGURATION_ACTION: {
+      const tmp = { ...state };
+      if (tmp[action.payload]) {
+        delete tmp[action.payload];
+      }
+      return tmp;
+    }
+    default:
+      return state;
+  }
+};

@@ -16,7 +16,7 @@ interface DeleteJobProps {
   notificationService: NotificationService;
 }
 
-const MAX_LOCKED_AGE = Duration.fromISO('P15D');
+export const MAX_LOCKED_AGE = Duration.fromISO('P15D');
 export function createDeleteJob({
   logger,
   repository,

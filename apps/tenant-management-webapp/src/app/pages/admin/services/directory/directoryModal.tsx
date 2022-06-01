@@ -6,8 +6,8 @@ import { Service } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { createEntry, updateEntry, fetchEntryDetail } from '@store/directory/actions';
 import { RootState } from '@store/index';
-import { characterCheck, validationPattern, checkInput, Validator, isNotEmptyCheck } from '@lib/checkInput';
-import { reactInputHandlerFactory } from '@lib/reactInputHandlerFactory';
+import { characterCheck, validationPattern, Validator, isNotEmptyCheck } from '@lib/checkInput';
+import { useValidators } from '@lib/useValidators';
 
 interface DirectoryModalProps {
   entry?: Service;
@@ -15,19 +15,31 @@ interface DirectoryModalProps {
   onCancel?: () => void;
   open: boolean;
 }
-const duplicateServiceCheck = (directory: Service[], tenantName: string): Validator => {
-  return (input: string) => {
-    const duplicate = directory.find((s) => !s.api && s.namespace === tenantName && s.service === input);
-    return duplicate ? 'Service duplicate, please use another' : '';
+const duplicateServiceCheck = (directory: Service[], tenantName: string, isNew: boolean): Validator => {
+  return (input: Service) => {
+    // If we don't have an API, check that the service is not duplicated.
+    if (!input.api) {
+      // If we're editing then the service name will already be in the directory; remove it for duplicate check.
+      const dir = isNew ? directory : directory.slice(0).filter((e) => e.service === input.service);
+      const duplicate = dir.find((s) => !s.api && s.namespace === tenantName && s.service === input.service);
+      return duplicate ? 'Service duplicate, please use another' : '';
+    }
   };
 };
 
-const duplicateApiCheck = (directory: Service[], tenantName: string): Validator => {
+const duplicateApiCheck = (directory: Service[], tenantName: string, isNew: boolean): Validator => {
   return (input: Service) => {
-    const duplicate = directory.find(
-      (s) => s.namespace === tenantName && s.service === input.service && s.api === input.api
-    );
-    return duplicate ? 'Api duplicate, please use another' : '';
+    // If we have an API check that it is not a duplicate for the service.
+    if (input.api) {
+      // If we're editing then the api name will already be in the directory; remove it for duplicate check.
+      const dir = isNew
+        ? directory
+        : directory.slice(0).filter((e) => e.api !== input.api && e.service === input.service);
+      const duplicate = dir.find(
+        (s) => s.namespace === tenantName && s.service === input.service && s.api === input.api
+      );
+      return duplicate ? 'Api duplicate, please use another' : '';
+    }
   };
 };
 
@@ -43,36 +55,15 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const [entry, setEntry] = useState(props.entry);
 
   const title = isNew || isQuickAdd ? 'Add entry' : 'Edit entry';
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const { directory } = useSelector((state: RootState) => state.directory);
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const dispatch = useDispatch();
-  const hasFormErrors = () => {
-    return Object.keys(errors).length !== 0;
-  };
-  const errorHandler = reactInputHandlerFactory(errors, setErrors);
-
-  const duplicateExists = (entry: Service): boolean => {
-    // If we have an API check that it is not a duplicate for the service.
-    if (entry.api) {
-      // If we're editing then the api name will already be in the directory; remove it for duplicate check.
-      const dir = isNew
-        ? directory
-        : directory.slice(0).filter((e) => e.api !== entry.api && e.service === entry.service);
-      if (checkInput(entry, [duplicateApiCheck(dir, tenantName)], errorHandler('api'))) {
-        return true;
-      }
-    }
-    // If we don't have an API, check that the service is not duplicated.
-    else {
-      // If we're editing then the service name will already be in the directory; remove it for duplicate check.
-      const dir = isNew ? directory : directory.slice(0).filter((e) => e.service === entry.service);
-      if (checkInput(entry.service, [duplicateServiceCheck(dir, tenantName)], errorHandler('service'))) {
-        return true;
-      }
-    }
-    return false;
-  };
+  const { errors, validators } = useValidators('service', 'service', lowerCaseCheck, checkServiceExists)
+    .add('api', 'api', lowerCaseCheck)
+    .add('url', 'url', checkForBadUrl, checkUrlExists)
+    .add('apiDuplicate', 'api', duplicateApiCheck(directory, tenantName, isNew))
+    .add('serviceDuplicate', 'service', duplicateServiceCheck(directory, tenantName, isNew))
+    .build();
 
   return (
     <GoAModal testId="directory-modal" isOpen={props.open}>
@@ -89,7 +80,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               aria-label="service"
               disabled={!isNew || isQuickAdd}
               onChange={(name, value) => {
-                checkInput(value, [lowerCaseCheck, checkServiceExists], errorHandler('service'));
+                validators['service'].check(value);
                 setEntry({ ...entry, service: value });
               }}
             />
@@ -104,7 +95,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               aria-label="api"
               disabled={!isNew || isQuickAdd}
               onChange={(name, value) => {
-                checkInput(value, [lowerCaseCheck], errorHandler('api'));
+                validators['api'].check(value);
                 setEntry({ ...entry, api: value });
               }}
             />
@@ -119,7 +110,7 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               aria-label="name"
               disabled={isQuickAdd}
               onChange={(name, value) => {
-                checkInput(value, [checkForBadUrl, checkUrlExists], errorHandler('url'));
+                validators['url'].check(value);
                 setEntry({ ...entry, url: value });
               }}
             />
@@ -132,17 +123,17 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
           data-testid="directory-modal-cancel"
           onClick={() => {
             props.onCancel();
-            setErrors({});
+            validators.clear();
           }}
         >
           Cancel
         </GoAButton>
         <GoAButton
           buttonType="primary"
-          disabled={!entry.service || !entry.url || hasFormErrors()}
+          disabled={!entry.service || !entry.url || validators.haveErrors()}
           data-testid="directory-modal-save"
           onClick={(e) => {
-            if (!isEdit && duplicateExists(entry)) {
+            if (!isEdit && (validators['serviceDuplicate'].check(entry) || validators['apiDuplicate'].check(entry))) {
               e.stopPropagation();
               return;
             }

@@ -4,6 +4,7 @@ import { Logger } from 'winston';
 import { formLocked } from '../events';
 import { FormRepository } from '../repository';
 import { FormStatus } from '../types';
+import { MAX_LOCKED_AGE } from './delete';
 import { jobUser } from './user';
 
 interface LockJobProps {
@@ -27,9 +28,9 @@ export function createLockJob({ logger, repository, eventService }: LockJobProps
         });
 
         for (const result of results) {
-          await result.lock(jobUser);
+          const { locked } = await result.lock(jobUser);
           numberLocked++;
-          eventService.send(formLocked(jobUser, result));
+          eventService.send(formLocked(jobUser, result, DateTime.fromJSDate(locked).plus(MAX_LOCKED_AGE).toJSDate()));
         }
 
         after = page.next;

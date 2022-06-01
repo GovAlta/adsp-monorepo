@@ -30,17 +30,43 @@ export const NoItem = styled.div`
   font-weight: 700;
 `;
 
-export const NameDiv = styled.div`
+export const ServiceRoleListContainer = styled.div`
+  margin-bottom: 1.5rem;
+  .title {
+    font-weight: 700;
+    font-size: var(--fs-lg);
+  }
+`;
+
+export const NoServiceRole = styled.div`
+  font-weight: 700;
   margin-top: 1rem;
-  text-transform: capitalize;
-  font-size: var(--fs-xl);
-  font-weight: var(--fw-bold);
-  padding-left: 0.4rem;
-  padding-bottom: 0.5rem;
+  margin-left: 0.5rem;
 `;
 
 export const TableDiv = styled.div`
+  & td:first-child {
+    width: 30%;
+  }
+
+  & td:second-child {
+    width: 40%;
+  }
+
   & td:last-child {
+    width: 30%;
     text-align: center;
+  }
+
+  & th:first-child {
+    width: 30%;
+  }
+
+  & th:second-child {
+    width: 40%;
+  }
+
+  & td:last-child {
+    width: 30%;
   }
 `;

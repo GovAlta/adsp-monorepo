@@ -179,6 +179,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
           data-testid="edit-contact-cancel-button"
           onClick={() => {
             setEditContactInformation(!editContactInformation);
+            setPreferredChannel(subscriberPreferredChannel);
             setFormErrors({});
           }}
         >

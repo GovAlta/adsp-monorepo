@@ -67,7 +67,7 @@ class ServiceDocsImpl {
   };
 
   #retrieveDocEntries = async (tenant?: string): Promise<Record<string, ServiceDoc>> => {
-    const directoryServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:tenant-service`);
+    const directoryServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:directory-service`);
     const docs = {} as Record<string, ServiceDoc>;
 
     if (tenant) {
