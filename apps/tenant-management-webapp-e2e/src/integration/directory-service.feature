@@ -12,7 +12,8 @@ Feature: Directory-service
     Examples:
       | Directory Name | URL          |
       | file-service   | env{fileApi} |
-        @TEST_CS-1294 @REQ_CS-1095, @regression
+
+  @TEST_CS-1294 @REQ_CS-1095, @regression
   Scenario: As a tenant admin, I can add/edit/delete directory entries in a tenant namespace
     Given a tenant admin user is on directory entries page
     # Add a service entry
