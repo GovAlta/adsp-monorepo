@@ -35,7 +35,7 @@ async function initializeApp(): Promise<express.Application> {
   }
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
-  const { coreStrategy, tenantStrategy, tenantService, eventService, configurationHandler } =
+  const { coreStrategy, tenantStrategy,  eventService, configurationHandler } =
     await initializePlatform(
       {
         serviceId,
