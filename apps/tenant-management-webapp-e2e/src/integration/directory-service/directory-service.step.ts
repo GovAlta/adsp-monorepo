@@ -41,8 +41,17 @@ When('the user clicks Add entry button', function () {
   directoryObj.addEntryButton().click();
 });
 
-Then('the user views Add entry modal', function () {
-  commonObj.modalTitle().invoke('text').should('eq', 'Add entry');
+Then('the user {string} Add entry modal', function (viewOrNot) {
+  switch (viewOrNot) {
+    case 'views':
+      commonObj.modalTitle().invoke('text').should('eq', 'Add entry');
+      break;
+    case 'should not view':
+      commonObj.modalTitle().should('not.exist');
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
 });
 
 Then('the user views Edit entry modal', function () {
