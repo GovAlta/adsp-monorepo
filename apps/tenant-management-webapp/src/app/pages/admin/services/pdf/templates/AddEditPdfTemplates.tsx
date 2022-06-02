@@ -1,12 +1,12 @@
 import React, { FunctionComponent, useState } from 'react';
 import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { PdfTemplate } from '@store/pdf/model';
 import { IdField } from '../styled-components';
 import { toKebabName } from '@lib/kebabName';
-import { reactInputHandlerFactory } from '@lib/reactInputHandlerFactory';
-import { characterCheck, validationPattern, checkInput, isNotEmptyCheck, Validator } from '@lib/checkInput';
+import { useValidators } from '@lib/useValidators';
+import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
 
 interface AddEditPdfTemplateProps {
   open: boolean;
@@ -25,22 +25,19 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
   templates,
 }) => {
   const [template, setTemplate] = useState<PdfTemplate>(initialValue);
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
-  const errorHandler = reactInputHandlerFactory(errors, setErrors);
 
-  const hasFormErrors = () => {
-    return Object.keys(errors).length !== 0;
-  };
-
-  const isDuplicateTemplateId = (templateId: string): Validator => {
-    return () => {
+  const isDuplicateTemplateId = (): Validator => {
+    return (templateId: string) => {
       return templates[templateId]
         ? 'Template ID is duplicate, please use a different name to get a unique Template ID'
         : '';
     };
   };
+  const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
+    .add('duplicate', 'name', isDuplicateTemplateId())
+    .build();
 
   return (
     <>
@@ -50,17 +47,17 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
           <GoAForm>
             <GoAFormItem error={errors?.['name']}>
               <label>Name</label>
-              <input
+              <GoAInput
                 type="text"
                 name="pdf-template-name"
                 value={template.name}
                 disabled={isEdit}
                 data-testid="pdf-template-name"
                 aria-label="pdf-template-name"
-                onChange={(e) => {
-                  checkInput(e.target.value, [checkForBadChars, isNotEmptyCheck('name')], errorHandler('name'));
-                  const templateId = toKebabName(e.target.value);
-                  setTemplate({ ...template, name: e.target.value, id: templateId });
+                onChange={(name, value) => {
+                  validators['name'].check(value);
+                  const templateId = toKebabName(value);
+                  setTemplate({ ...template, name: value, id: templateId });
                 }}
               />
             </GoAFormItem>
@@ -98,9 +95,9 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             buttonType="primary"
             data-testid="form-save"
             type="submit"
-            disabled={!template.name || hasFormErrors()}
+            disabled={!template.name || validators.haveErrors()}
             onClick={(e) => {
-              if (checkInput(template.id, [isDuplicateTemplateId(template.id)], errorHandler('name'))) {
+              if (validators['duplicate'].check(template.id)) {
                 e.stopPropagation();
                 return;
               }

@@ -102,7 +102,7 @@ function AppWithAuthContext() {
 export default App;
 
 const HideMobile = styled.div`
-  @media (max-width: 480px) {
+  @media (max-width: 767px) {
     display: none;
   }
 `;
@@ -114,7 +114,7 @@ const MobileMessage = styled.div`
     margin: 40px;
   }
 
-  @media (min-width: 480px) {
+  @media (min-width: 768px) {
     display: none;
   }
 `;

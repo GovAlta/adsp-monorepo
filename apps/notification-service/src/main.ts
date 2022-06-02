@@ -1,4 +1,4 @@
-import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, ServiceMetricsValueDefinition, User } from '@abgov/adsp-service-sdk';
 import {
   createLogger,
   createAmqpEventService,
@@ -56,6 +56,7 @@ async function initializeApp() {
     directory,
     eventService,
     healthCheck,
+    metricsHandler,
   } = await initializePlatform(
     {
       displayName: 'Notification service',
@@ -86,6 +87,7 @@ async function initializeApp() {
           description: 'Role for sending and checking verify codes to subscribers',
         },
       ],
+      values: [ServiceMetricsValueDefinition],
     },
     { logger }
   );
@@ -104,6 +106,7 @@ async function initializeApp() {
   app.use(passport.initialize());
   app.use(
     '/subscription',
+    metricsHandler,
     passport.authenticate(['core', 'tenant'], { session: false }),
     tenantHandler,
     configurationHandler

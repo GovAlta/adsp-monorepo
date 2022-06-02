@@ -30,6 +30,8 @@ components:
           type: number
         max:
           type: number
+        count:
+          type: number
     Metric:
       type: object
       properties:
@@ -134,6 +136,16 @@ components:
           application/json:
             schema:
               type: object
+              properties:
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                    next:
+                      type: string
+                    size:
+                      type: number
               additionalProperties:
                 type: object
                 additionalProperties:
@@ -152,13 +164,23 @@ components:
             oneOf:
               - $ref: "#/components/schemas/Value"
               - type: object
+              - type: array
+                items:
+                  oneOf:
+                    - $ref: "#/components/schemas/Value"
+                    - type: object
     responses:
       200:
         description: Value successfully written.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Value"
+              oneOf:
+                - $ref: "#/components/schemas/Value"
+                - type: array
+                  items:
+                    $ref: "#/components/schemas/Value"
+
 /value/v1/{namespace}/values/{name}/metrics:
   get:
     tags:
@@ -189,6 +211,18 @@ components:
             - hourly
             - daily
             - weekly
+      - name: top
+        description: Number of results to read.
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: after
+        description: Cursor for next set of results.
+        in: query
+        required: false
+        schema:
+          type: string
       - name: criteria
         description: Criteria for the read.
         in: query
@@ -213,6 +247,16 @@ components:
           application/json:
             schema:
               type: object
+              properties:
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                    next:
+                      type: string
+                    size:
+                      type: number
               additionalProperties:
                 $ref: "#/components/schemas/Metric"
 /value/v1/{namespace}/values/{name}/metrics/{metric}:
@@ -251,6 +295,18 @@ components:
             - hourly
             - daily
             - weekly
+      - name: top
+        description: Number of results to read.
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: after
+        description: Cursor for next set of results.
+        in: query
+        required: false
+        schema:
+          type: string
       - name: criteria
         description: Criteria for the read.
         in: query
@@ -272,4 +328,16 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Metric"
+              allOf:
+                - $ref: "#/components/schemas/Metric"
+                - type: "object"
+                  properties:
+                    page:
+                      type: object
+                      properties:
+                        after:
+                          type: string
+                        next:
+                          type: string
+                        size:
+                          type: number

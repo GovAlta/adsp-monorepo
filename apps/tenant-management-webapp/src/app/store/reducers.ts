@@ -15,6 +15,7 @@ import Configuration, { ConfigurationExport } from './configuration/reducers';
 import Stream from './stream/reducers';
 import Pdf from './pdf/reducers';
 import { serviceRolesReduce as ServiceRoles } from './access/reducers';
+import ServiceMetrics from './metrics/reducers';
 
 export const rootReducer = combineReducers({
   fileService: File,
@@ -34,4 +35,5 @@ export const rootReducer = combineReducers({
   notice: Notice,
   stream: Stream,
   serviceRoles: ServiceRoles,
+  serviceMetrics: ServiceMetrics,
 });

@@ -59,7 +59,6 @@ export const ConfigurationImportExport: FunctionComponent = () => {
           disabled={Object.keys(exportServices).length < 1 || indicator.show}
           onClick={(e) => {
             e.preventDefault();
-            console.log('dispatching get configs...');
             dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
           }}
         >
@@ -90,6 +89,18 @@ export const ConfigurationImportExport: FunctionComponent = () => {
           </React.Fragment>
         );
       })}
+      {
+        <GoAButton
+          data-testid="export-configuration-1"
+          disabled={Object.keys(exportServices).length < 1 || indicator.show}
+          onClick={(e) => {
+            e.preventDefault();
+            dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
+          }}
+        >
+          {'Export configuration'}
+        </GoAButton>
+      }
     </div>
   );
 };
@@ -99,8 +110,6 @@ const toServiceId = (key: string): ServiceId => {
 };
 
 const downloadSelectedConfigurations = (exports: Record<Service, ConfigurationExportType>): void => {
-  console.log('#### exporting...');
-  console.log(toDownloadFormat(exports));
   const fileName = 'adsp-configuration.json';
   const jsonConfigs = JSON.stringify(toDownloadFormat(exports), null, 2);
   doDownload(fileName, jsonConfigs);
