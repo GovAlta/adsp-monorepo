@@ -2,7 +2,13 @@ import React, { FunctionComponent, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import type { EventDefinition } from '@store/event/models';
 import { GoAButton } from '@abgov/react-components';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+import {
+  GoAModal,
+  GoAModalActions,
+  GoAModalContent,
+  GoAModalTitle,
+  GoAInput,
+} from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { wordCheck, characterCheck, validationPattern, isNotEmptyCheck } from '@lib/checkInput';
 import { useValidators } from '@lib/useValidators';
@@ -50,31 +56,31 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
         <GoAForm>
           <GoAFormItem error={errors?.['namespace']}>
             <label>Namespace</label>
-            <input
+            <GoAInput
               type="text"
               name="namespace"
               value={definition.namespace}
               disabled={isEdit}
               data-testid="form-namespace"
               aria-label="nameSpace"
-              onChange={(e) => {
-                validators['namespace'].check(e.target.value);
-                setDefinition({ ...definition, namespace: e.target.value });
+              onChange={(name, value) => {
+                validators['namespace'].check(value);
+                setDefinition({ ...definition, namespace: value });
               }}
             />
           </GoAFormItem>
           <GoAFormItem error={errors?.['name']}>
             <label>Name</label>
-            <input
+            <GoAInput
               type="text"
               name="name"
               value={definition.name}
               disabled={isEdit}
               data-testid="form-name"
               aria-label="name"
-              onChange={(e) => {
-                validators['name'].check(e.target.value);
-                setDefinition({ ...definition, name: e.target.value });
+              onChange={(name, value) => {
+                validators['name'].check(value);
+                setDefinition({ ...definition, name: value });
               }}
             />
           </GoAFormItem>
