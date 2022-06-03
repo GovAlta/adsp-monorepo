@@ -3,4 +3,5 @@ import { FileTypeEntity } from '../model';
 
 export interface FileTypeRepository {
   getType(tenantId: AdspId, id: string): Promise<FileTypeEntity>;
+  getTypes(tenantId: AdspId): Promise<Record<string, FileTypeEntity>>;
 }
