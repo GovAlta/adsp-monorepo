@@ -80,10 +80,6 @@ When('the user modifies URL field {string}', function (url) {
   directoryObj.entryModalUrlField().scrollIntoView().clear().type(url);
 });
 
-When('the user modifies Service field {string}', function (serviceName) {
-  directoryObj.entryModalServiceField().scrollIntoView().clear().type(serviceName);
-});
-
 Then('the user clicks Save button in Entry modal', function () {
   directoryObj.entryModalSaveButton().click();
   cy.wait(2000);
