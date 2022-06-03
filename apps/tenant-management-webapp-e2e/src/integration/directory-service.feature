@@ -53,7 +53,7 @@ Feature: Directory-service
   Scenario: As a tenant admin, I can add/edit/delete service API entries in a tenant namespace
     Given a tenant admin user is on directory entries page
     When the user clicks Add entry button
-    Then the user views Add entry modal
+    Then the user "views" Add entry modal
     When the user enters "autotest-api" in Service, "v2" in API, "https://myServiceEntry.ca" in URL
     And the user clicks Save button in Entry modal
     Then the user "views" the entry of "autotest-api" in Service, "v2" in API, "https://myServiceEntry.ca" in URL
