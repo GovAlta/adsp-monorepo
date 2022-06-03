@@ -5,7 +5,7 @@ import { AdspId } from '../utils';
 import { initializePlatform } from './platform';
 import { LogOptions, PlatformCapabilities, PlatformOptions } from './types';
 
-type Options = Omit<PlatformOptions, 'ignoreServiceAud' | 'roles'>;
+type Options = Omit<PlatformOptions, 'ignoreServiceAud'>;
 type Capabilities = Omit<PlatformCapabilities, 'tenantService' | 'tenantHandler' | 'clearCached'> & {
   /**
    *
