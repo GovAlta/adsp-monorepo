@@ -48,30 +48,20 @@ export type ConfigurationDefinitionActionTypes =
   | DeleteConfigurationDefinitionAction
   | DeleteConfigurationDefinitionSuccessAction;
 
-export const FETCH_CONFIGURATION_ACTION = 'configuration/FETCH_CONFIGURATION_ACTION';
-export const FETCH_CONFIGURATION_SUCCESS_ACTION = 'configuration/FETCH_CONFIGURATION_SUCCESS_ACTION';
-export const CLEAR_CONFIGURATION_ACTION = 'configuration/CLEAR_CONFIGURATION_EXPORT_ACTION';
-
-export interface FetchConfigurationAction {
-  type: typeof FETCH_CONFIGURATION_ACTION;
-  namespace: string;
-  serviceName: string;
+export const FETCH_CONFIGURATIONS_ACTION = 'configuration/FETCH_CONFIGURATIONS_ACTION';
+export const FETCH_CONFIGURATIONS_SUCCESS_ACTION = 'configuration/FETCH_CONFIGURATIONS_SUCCESS_ACTION';
+export type ServiceId = { namespace: string; service: string };
+export interface FetchConfigurationsAction {
+  type: typeof FETCH_CONFIGURATIONS_ACTION;
+  services: ServiceId[];
 }
 
 export interface FetchConfigurationSuccessAction {
-  type: typeof FETCH_CONFIGURATION_SUCCESS_ACTION;
-  payload: ServiceConfiguration;
+  type: typeof FETCH_CONFIGURATIONS_SUCCESS_ACTION;
+  payload: ServiceConfiguration[];
 }
 
-export interface ClearConfigurationAction {
-  type: typeof CLEAR_CONFIGURATION_ACTION;
-  payload: string;
-}
-
-export type ConfigurationExportActionTypes =
-  | FetchConfigurationAction
-  | FetchConfigurationSuccessAction
-  | ClearConfigurationAction;
+export type ConfigurationExportActionTypes = FetchConfigurationsAction | FetchConfigurationSuccessAction;
 
 export const deleteConfigurationDefinition = (definitionName: string): DeleteConfigurationDefinitionAction => ({
   type: DELETE_CONFIGURATION_ACTION,
@@ -112,18 +102,12 @@ export const getConfigurationDefinitionsSuccess = (
   payload: results,
 });
 
-export const getConfiguration = (namespace: string, serviceName: string): FetchConfigurationAction => ({
-  type: FETCH_CONFIGURATION_ACTION,
-  namespace: namespace,
-  serviceName: serviceName,
+export const getConfigurations = (services: ServiceId[]): FetchConfigurationsAction => ({
+  type: FETCH_CONFIGURATIONS_ACTION,
+  services: services,
 });
 
-export const getConfigurationSuccess = (results: ServiceConfiguration): FetchConfigurationSuccessAction => ({
-  type: FETCH_CONFIGURATION_SUCCESS_ACTION,
+export const getConfigurationsSuccess = (results: ServiceConfiguration[]): FetchConfigurationSuccessAction => ({
+  type: FETCH_CONFIGURATIONS_SUCCESS_ACTION,
   payload: results,
-});
-
-export const clearConfigurationAction = (key: string): ClearConfigurationAction => ({
-  type: CLEAR_CONFIGURATION_ACTION,
-  payload: key,
 });
