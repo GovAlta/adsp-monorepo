@@ -58,6 +58,7 @@ export async function createMetricsHandler(
       const method = req.method;
       const path = `${req.baseUrl || ''}${req.path || ''}` || req.originalUrl;
       const route = req.route?.path;
+      const ip = req.ip;
 
       const value = {
         timestamp: new Date(),
@@ -67,6 +68,7 @@ export async function createMetricsHandler(
           method,
           path,
           route,
+          ip,
         },
         value: {
           ...metrics,
