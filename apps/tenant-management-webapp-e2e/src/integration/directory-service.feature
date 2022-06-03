@@ -49,14 +49,20 @@ Feature: Directory-service
     Then the user "should not view" the entry of "autotest-addentry" in Service, "Empty" in API, "https://myServiceEntry-2.ca" in URL
 
   @TEST_CS-1468 @REQ_CS-1095, @regression
-  Scenario: As a tenant admin, I can configure directory entries in a tenant namespace, so that I can add my own services and APIs
+  Scenario: As a tenant admin, I can add/edit/delete service API entries in a tenant namespace
     Given a tenant admin user is on directory entries page
     When the user clicks Add entry button
     Then the user views Add entry modal
-    When the user enters "autotest-api-entry" in Service, "urn-ads-platform-tenant-service-v2" in API, "https://myServiceEntry.ca" in URL
+    When the user enters "autotest-api" in Service, "v2" in API, "https://myServiceEntry.ca" in URL
     And the user clicks Save button in Entry modal
-    Then the user "views" the entry of "autotest-api-entry" in Service, "urn-ads-platform-tenant-service-v2" in API, "https://myServiceEntry.ca" in URL
-    When the user clicks Delete icon of "autotest-addentry", "urn-ads-platform-tenant-service-v2", "https://myServiceEntry-2.ca" on entries page
-    Then the user views Delete entry modal for "autotest-api-entry:urn-ads-platform-tenant-service-v2"
+    Then the user "views" the entry of "autotest-api" in Service, "v2" in API, "https://myServiceEntry.ca" in URL
+    When the user clicks Edit icon of "autotest-api", "v2", "https://myServiceEntry.ca" on entries page
+    Then the user views Edit entry modal
+    When the user modifies Service field "autotest-api-v2"
+    And the user clicks Save button in Entry modal
+    Then the user views the error message "Service duplicate, please use another" for "Service" field
+    When the user clicks Cancel button in Entry modal
+    When the user clicks Delete icon of "autotest-api", "v2", "https://myServiceEntry.ca" on entries page
+    Then the user views Delete entry modal for "autotest-api:v2"
     When the user clicks Delete button in Entry modal
-    Then the user "should not view" the entry of "autotest-api-entry" in Service, "urn-ads-platform-tenant-service-v2" in API, "https://myServiceEntry-2.ca" in URL
+    Then the user "should not view" the entry of "autotest-api" in Service, "v2" in API, "https://myServiceEntry.ca" in URL
