@@ -67,7 +67,7 @@ export const EventsOverview: FunctionComponent<OverviewProps> = (props) => {
         <GoAButton
           data-testid="add-definition"
           onClick={() => {
-            setActiveEdit(true);
+            setOpenAddDefinition(true);
           }}
         >
           Add definition
@@ -84,6 +84,7 @@ export const EventsOverview: FunctionComponent<OverviewProps> = (props) => {
           initialValue={defaultEventDefinition}
           onSave={() => {
             setActiveIndex(1);
+            setOpenAddDefinition(false);
           }}
         />
       )}

@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ServiceRoleList } from './serviceRoleList';
 import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
-import { NoItem, ServiceRoleListContainer, NoServiceRole } from '../styled-component';
+import { NoItem, ServiceRoleListContainer } from '../styled-component';
 import { PageIndicator } from '@components/Indicator';
 
 export const selectServiceTenantRoles = createSelector(
@@ -28,13 +28,6 @@ const RenderNoItem = (): JSX.Element => {
     <NoItem>
       <p>No client found</p>
     </NoItem>
-  );
-};
-const RenderNoServiceRole = (): JSX.Element => {
-  return (
-    <NoServiceRole>
-      <p>No service roles found</p>
-    </NoServiceRole>
   );
 };
 

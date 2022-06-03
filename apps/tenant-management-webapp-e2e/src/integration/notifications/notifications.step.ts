@@ -163,8 +163,9 @@ When(
   }
 );
 
-Then('the user clicks save button', function () {
+Then('the user clicks save button in notification type modal', function () {
   notificationsObj.notificationTypeModalSaveBtn().click();
+  cy.wait(2000);
 });
 
 Then(
@@ -657,3 +658,21 @@ Then(
     }
   }
 );
+
+When('the user modifies the name to {string} and email to {string} in subscriber modal', function (name, editEmail) {
+  notificationsObj.editSubscriberModalNameField().clear().type(name);
+  notificationsObj.editSubscriberModalEmailField().clear().type(editEmail);
+});
+
+When('the user clicks Edit button of {string} and {string} on subscribers page', function (addressAs, email) {
+  notificationsObj.subscriberEditIcon(addressAs, email).click();
+});
+
+Then('the user views Edit subscriber modal', function () {
+  notificationsObj.editSubscriberModal().should('exist');
+});
+
+Then('the user clicks Save button in Edit subscriber modal', function () {
+  notificationsObj.editSubscriberModalSaveBtn().click();
+  cy.wait(2000);
+});
