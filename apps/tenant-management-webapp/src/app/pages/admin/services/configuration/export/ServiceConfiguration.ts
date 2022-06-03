@@ -27,8 +27,16 @@ export const toSchemaMap = (...revisions: ServiceSchemas[]): Record<Service, Con
   return merge(results);
 };
 
-export const toService = (namespace: string, name: string): Service => {
+export const toServiceKey = (namespace: string, name: string): Service => {
   return `${namespace}:${name}`;
+};
+
+export const toNamespace = (key: Service): string => {
+  return key.split(':')[0];
+};
+
+export const toServiceName = (key: Service): string => {
+  return key.split(':')[1];
 };
 
 export type serviceExports = Record<Service, ConfigurationExportType>;
@@ -88,12 +96,4 @@ const merge = <T>(records: Record<Service, T>[]): Record<Service, T> => {
     }
   }
   return result;
-};
-
-const toNamespace = (key: Service): string => {
-  return key.split(':')[0];
-};
-
-const toServiceName = (key: Service): string => {
-  return key.split(':')[1];
 };
