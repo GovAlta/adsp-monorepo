@@ -42,15 +42,21 @@ class DirectoryServicePage {
   }
 
   entryModalServiceFieldErrorMsg() {
-    return cy.xpath('//input[@data-testid="directory-modal-service-input"]/following-sibling::div[@class="error-msg"]');
+    return cy.xpath(
+      '//input[@data-testid="directory-modal-service-input"]/parent::*/following-sibling::div[@class="error-msg"]'
+    );
   }
 
   entryModalApiFieldErrorMsg() {
-    return cy.xpath('//input[@data-testid="directory-modal-api-input"]/following-sibling::div[@class="error-msg"]');
+    return cy.xpath(
+      '//input[@data-testid="directory-modal-api-input"]/parent::*/following-sibling::div[@class="error-msg"]'
+    );
   }
 
   entryModalUrlFieldErrorMsg() {
-    return cy.xpath('//input[@data-testid="directory-modal-url-input"]/following-sibling::div[@class="error-msg"]');
+    return cy.xpath(
+      '//input[@data-testid="directory-modal-url-input"]/parent::*/following-sibling::div[@class="error-msg"]'
+    );
   }
 
   entryNameUrlEditIcon(serviceName, url) {

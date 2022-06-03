@@ -1,8 +1,6 @@
 import { connect, connection, ConnectionStates } from 'mongoose';
 import { Logger } from 'winston';
-import { Repositories as DirectoryRepositories } from '../directory';
 import { Repositories as TenantRepositories } from '../tenant';
-import { MongoDirectoryRepository } from './directory';
 import { MongoTenantRepository } from './tenant';
 
 export const disconnect = async (logger: Logger): Promise<void> => {
@@ -19,7 +17,7 @@ interface MongoRepositoryProps {
   MONGO_TLS: boolean;
 }
 
-type Repositories = DirectoryRepositories & TenantRepositories;
+type Repositories =  TenantRepositories;
 
 export const createRepositories = ({
   logger,
@@ -46,7 +44,6 @@ export const createRepositories = ({
         } else {
           resolve({
             tenantRepository: new MongoTenantRepository(),
-            directoryRepository: new MongoDirectoryRepository(),
             isConnected: () => connection.readyState === ConnectionStates.connected,
           });
 
