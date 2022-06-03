@@ -68,7 +68,6 @@ Feature: Notifications
   # Then the user gets "Cannot edit in read-only editor"
   # Verify the event is still there (had a bug of the event disappearing after preview)
 
-
   @TEST_CS-1081 @REQ_CS-1029 @TEST_CS-1002 @REQ_CS-1027 @regression
   Scenario: Test As a tenant admin, I can delete a subscription
     # Autotest user should be already subscribed to application health change notifications. If not, set it to subscribed
@@ -153,4 +152,19 @@ Feature: Notifications
       | Email              | Phone           | Instructions  |
       | rnd{abc@gov.ab.ca} | rnd{7805671456} | rnd{autotest} |
 
+  @TEST_CS-1102 @REQ_CS-1130 @regression
+  Scenario: As a tenant admin, I can modify a subscriber name and email
+    Given a tenant admin user is on notification subscribers page
+    When the user searches subscribers with address as containing "auto-test-DO-NOT-DELETE" and email containing "auto.test2@gov.ab.ca"
+    And the user clicks Edit button of "auto-test-DO-NOT-DELETE" and "auto.test2@gov.ab.ca" on subscribers page
+    Then the user views Edit subscriber modal
+    When the user modifies the name to "auto-test2-DO-NOT-DELETE" and email to "auto.test22@gov.ab.ca" in subscriber modal
+    And the user clicks Save button in Edit subscriber modal
+    When the user searches subscribers with address as containing "auto-test2-DO-NOT-DELETE" and email containing "auto.test22@gov.ab.ca"
+    Then the user "views" the subscriber of "auto-test2-DO-NOT-DELETE", "auto.test22@gov.ab.ca"
+    When the user clicks Edit button of "auto-test2-DO-NOT-DELETE" and "auto.test22@gov.ab.ca" on subscribers page
+    And the user modifies the name to "auto-test-DO-NOT-DELETE" and email to "auto.test2@gov.ab.ca" in subscriber modal
+    Then the user clicks Save button in Edit subscriber modal
+    When the user searches subscribers with address as containing "auto-test-DO-NOT-DELETE" and email containing "auto.test2@gov.ab.ca"
+    Then the user "views" the subscriber of "auto-test-DO-NOT-DELETE", "auto.test2@gov.ab.ca"
 
