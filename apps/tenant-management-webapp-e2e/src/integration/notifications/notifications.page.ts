@@ -357,7 +357,7 @@ class NotificationsPage {
   }
 
   editSubscriberModal() {
-    return cy.xpath('//div[@class="modal-title" and text()="Edit subscriber"]/ancestor::[@class="modal"]');
+    return cy.xpath('//div[@class="modal-title" and text()="Edit subscriber"]/ancestor::div[@class="modal"]');
   }
 
   editSubscriberModalSaveBtn() {
