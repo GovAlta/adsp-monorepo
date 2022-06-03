@@ -18,13 +18,14 @@ Feature: Directory-service
     Given a tenant admin user is on directory entries page
     # Add a service entry
     When the user clicks Add entry button
-    Then the user views Add entry modal
+    Then the user "views" Add entry modal
     When the user enters "autotest-addentry" in Service, "Empty" in API, "https://myServiceEntry.com" in URL
     And the user clicks Save button in Entry modal
+    And the user "should not view" Add entry modal
     Then the user "views" the entry of "autotest-addentry" in Service, "Empty" in API, "https://myServiceEntry.com" in URL
     # Test input field restriction
     When the user clicks Add entry button
-    Then the user views Add entry modal
+    Then the user "views" Add entry modal
     When the user enters "autotest-addentry" in Service, "Empty" in API, "https://myServiceEntry.com" in URL
     And the user clicks Save button in Entry modal
     Then the user views the error message "Service duplicate, please use another" for "Service" field
