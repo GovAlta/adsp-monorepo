@@ -70,7 +70,7 @@ When('the user selects the {string} menu item', function (menuItem) {
   commonlib.tenantAdminMenuItem(menuItem, 2000);
 });
 
-Then('the user views the link for {string} API docs', function (serviceName) {
+Then('the user views the link of API docs for {string}', function (serviceName) {
   commonObj
     .readTheApiDocsLink()
     .should('have.attr', 'href')
@@ -119,7 +119,7 @@ When('the user waits {string} seconds', function (seconds) {
   cy.wait(Number(seconds) * 1000); // Wait N seconds
 });
 
-Then('the user views the link for {string} See the code', function (serviceName) {
+Then('the user views the link of See the code for {string}', function (serviceName) {
   commonObj
     .readSeeTheCodeLink()
     .should('have.attr', 'href')

@@ -6,6 +6,8 @@ Feature: Configuration-service
     Given a tenant admin user is on tenant admin page
     When the user selects the "Configuration" menu item
     Then the user views the Configuration service overview content "The configuration service provides"
-    Then the user views the link for "Configuration service" API docs
-    And the user views the link for "configuration-service" See the code
+    And the user views the link of API docs for "Configuration service"
+    #serviceName parameter needs to be lower case with kebab format for See the code link
+    And the user views the link of See the code for "configuration-service"
     And the user views the link for Configuration service under "Support" as "Get support"
+

@@ -8,5 +8,10 @@ Then('the user views the Configuration service overview content {string}', funct
 });
 
 Then('the user views the link for Configuration service under {string} as {string}', function (asideItem, asideLink) {
-  configurationObj.configurationSupportLink(asideItem, asideLink).should('have.attr', 'href');
+  configurationObj
+    .configurationSupportLink(asideItem, asideLink)
+    .should('have.attr', 'href')
+    .then((href) => {
+      expect(href).to.contain('mailto:adsp@gov.ab.ca');
+    });
 });
