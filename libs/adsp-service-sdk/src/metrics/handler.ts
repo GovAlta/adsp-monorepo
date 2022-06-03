@@ -57,14 +57,16 @@ export async function createMetricsHandler(
 
       const method = req.method;
       const path = `${req.baseUrl || ''}${req.path || ''}` || req.originalUrl;
+      const route = req.route?.path;
 
       const value = {
         timestamp: new Date(),
-        correlationId: `${method}:${path}`,
+        correlationId: `${method}:${route || path}`,
         tenantId: tenantId.toString(),
         context: {
           method,
           path,
+          route,
         },
         value: {
           ...metrics,
