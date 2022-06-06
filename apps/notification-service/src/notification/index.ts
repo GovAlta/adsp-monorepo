@@ -12,7 +12,7 @@ import { assertAuthenticatedHandler, DomainEventSubscriberService, WorkQueueServ
 import { Repositories } from './repository';
 import { createJobs } from './job';
 import { TemplateService } from './template';
-import { Notification, Providers } from './types';
+import { NotificationWorkItem, Providers } from './types';
 import { createSubscriptionRouter } from './router';
 import { VerifyService } from './verify';
 
@@ -34,7 +34,7 @@ interface NotificationMiddlewareProps extends Repositories {
   eventService: EventService;
   templateService: TemplateService;
   eventSubscriber: DomainEventSubscriberService;
-  queueService: WorkQueueService<Notification>;
+  queueService: WorkQueueService<NotificationWorkItem>;
   verifyService: VerifyService;
   providers: Providers;
 }
