@@ -1,12 +1,19 @@
 import { put, select, call, all } from 'redux-saga/effects';
 import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
-import { FetchAccessSuccessAction, fetchServiceRolesSuccess, FetchServiceRolesAction } from './actions';
+import {
+  FetchAccessSuccessAction,
+  fetchServiceRolesSuccess,
+  FetchServiceRolesAction,
+  FetchKeycloakServiceRolesAction,
+  fetchKeycloakServiceRolesSuccess,
+} from './actions';
 import { KeycloakApi } from './api';
 import { Role } from './models';
 import { UpdateIndicator } from '@store/session/actions';
 import { SagaIterator } from '@redux-saga/core';
 import axios from 'axios';
+import { KeycloakRoleToServiceRole } from './models';
 
 // eslint-disable-next-line
 export function* fetchAccess() {
@@ -112,6 +119,58 @@ export function* fetchServiceRoles(action: FetchServiceRolesAction): SagaIterato
           show: false,
         })
       );
+    }
+  }
+}
+
+export function* fetchKeycloakServiceRoles(action: FetchKeycloakServiceRolesAction): SagaIterator {
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const keycloakBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.keycloakUrl);
+  const realm: string = yield select((state: RootState) => state.session.realm);
+
+  const tenantRoleNames = Object.keys(yield select((state: RootState) => state.serviceRoles.tenant));
+  const coreRoleNames = Object.keys(yield select((state: RootState) => state.serviceRoles.core));
+  const configRoleNames = [...tenantRoleNames, ...coreRoleNames];
+
+  if (token && keycloakBaseUrl && realm) {
+    try {
+      const url = `${keycloakBaseUrl}/auth/admin/realms/${realm}/clients`;
+
+      const { data } = yield call(axios.get, url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const keycloakRoles = {};
+      const keycloakRoleIds: string[] = [];
+      const keycloakRoleNames: string[] = [];
+
+      data
+        .filter((c) => {
+          return configRoleNames.includes(c.clientId);
+        })
+        .forEach((c) => {
+          keycloakRoleNames.push(c.clientId);
+          keycloakRoleIds.push(c.id);
+        });
+
+      for (const [index, id] of keycloakRoleIds.entries()) {
+        const url = `${keycloakBaseUrl}/auth/admin/realms/${realm}/clients/${id}/roles`;
+
+        const { data } = yield call(axios.get, url, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        keycloakRoles[keycloakRoleNames[index]] = {
+          roles: KeycloakRoleToServiceRole(data),
+        };
+      }
+
+      yield put(
+        fetchKeycloakServiceRolesSuccess({
+          keycloak: keycloakRoles,
+        })
+      );
+    } catch (err) {
+      yield put(ErrorNotification({ message: err.message }));
     }
   }
 }

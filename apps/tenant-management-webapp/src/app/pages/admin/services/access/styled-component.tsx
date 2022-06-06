@@ -53,20 +53,29 @@ export const TableDiv = styled.div`
     width: 40%;
   }
 
-  & td:last-child {
-    width: 30%;
+  &td: 3th-child {
+    width: 20%;
     text-align: center;
   }
 
+  & td:last-child {
+    width: 10%;
+  }
+
   & th:first-child {
-    width: 30%;
+    width: 20%;
   }
 
   & th:second-child {
     width: 40%;
   }
 
+  &td: 3th-child {
+    width: 20%;
+    text-align: center;
+  }
+
   & td:last-child {
-    width: 30%;
+    width: 10%;
   }
 `;

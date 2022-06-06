@@ -1,4 +1,4 @@
-import { ActionTypes } from './actions';
+import { ActionTypes, FETCH_SERVICE_ROLES_SUCCESS, FETCH_KEYCLOAK_SERVICE_ROLES_SUCCESS } from './actions';
 import { ACCESS_INIT, AccessState, SERVICE_ROLES_INIT, ServiceRoleState } from './models';
 
 export default function accessReducer(state: AccessState = ACCESS_INIT, action: ActionTypes): AccessState {
@@ -24,8 +24,15 @@ export function serviceRolesReduce(
   action: ActionTypes
 ): ServiceRoleState {
   switch (action.type) {
-    case 'tenant/service/roles/success': {
+    case FETCH_SERVICE_ROLES_SUCCESS: {
       return {
+        ...state,
+        ...action.payload,
+      };
+    }
+    case FETCH_KEYCLOAK_SERVICE_ROLES_SUCCESS: {
+      return {
+        ...state,
         ...action.payload,
       };
     }

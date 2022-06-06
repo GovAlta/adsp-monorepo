@@ -38,8 +38,9 @@ export const ACCESS_INIT: AccessState = {
 };
 
 export interface ServiceRoleState {
-  tenant: ServiceRoles;
-  core: ServiceRoles;
+  tenant?: ServiceRoleConfig;
+  core?: ServiceRoleConfig;
+  keycloak?: ServiceRoleConfig;
 }
 
 export type ServiceRoles = ServiceRole[];
@@ -47,6 +48,7 @@ export type ServiceRoles = ServiceRole[];
 export const SERVICE_ROLES_INIT: ServiceRoleState = {
   tenant: null,
   core: null,
+  keycloak: null,
 };
 
 export interface ServiceRole {
@@ -58,4 +60,20 @@ export interface ServiceRole {
 export interface ConfigServiceRole {
   roles?: ServiceRoles;
 }
+
+export interface KeycloakClientRole {
+  name: string;
+  description: string;
+  isComposite: boolean;
+}
+
+export function KeycloakRoleToServiceRole(kcRoles: KeycloakClientRole[]): ServiceRole[] {
+  return kcRoles.map((role) => {
+    return {
+      role: role.name,
+      description: role.description,
+    };
+  });
+}
+
 export type ServiceRoleConfig = Record<string, ConfigServiceRole>;
