@@ -2,7 +2,7 @@ import { EventService } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { notificationSendFailed, notificationSent } from '../events';
-import { Notification, Providers } from '../types';
+import { NotificationWorkItem, Providers } from '../types';
 
 interface SendNotificationJobProps {
   logger: Logger;
@@ -13,7 +13,7 @@ interface SendNotificationJobProps {
 const LOG_CONTEXT = { context: 'SendNotificationJob' };
 export const createSendNotificationJob =
   ({ logger, eventService, providers }: SendNotificationJobProps) =>
-  async (notification: Notification, retryOnError: boolean, done: (err?: unknown) => void): Promise<void> => {
+  async (notification: NotificationWorkItem, retryOnError: boolean, done: (err?: unknown) => void): Promise<void> => {
     logger.debug(
       `Processing notification of type '${notification.type.id}' to ${notification.to} via ${notification.channel} provider.`,
       { ...LOG_CONTEXT, tenant: notification.tenantId?.toString() }

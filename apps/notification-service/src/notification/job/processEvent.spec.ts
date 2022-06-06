@@ -4,7 +4,7 @@ import { Logger } from 'winston';
 import { NotificationConfiguration } from '../configuration';
 import { SubscriberEntity, SubscriptionEntity } from '../model';
 import { SubscriptionRepository } from '../repository';
-import { Channel, Notification } from '../types';
+import { Channel, NotificationWorkItem } from '../types';
 import { createProcessEventJob } from './processEvent';
 
 describe('createProcessEventJob', () => {
@@ -71,7 +71,7 @@ describe('createProcessEventJob', () => {
       tenantService: tenantServiceMock,
       directory: directoryMock,
       subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
-      queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
+      queueService: queueServiceMock as unknown as WorkQueueService<NotificationWorkItem>,
     });
     expect(job).toBeTruthy();
   });
@@ -88,7 +88,7 @@ describe('createProcessEventJob', () => {
         tenantService: tenantServiceMock,
         directory: directoryMock,
         subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
-        queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
+        queueService: queueServiceMock as unknown as WorkQueueService<NotificationWorkItem>,
       });
 
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -173,7 +173,7 @@ describe('createProcessEventJob', () => {
         tenantService: tenantServiceMock,
         directory: directoryMock,
         subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
-        queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
+        queueService: queueServiceMock as unknown as WorkQueueService<NotificationWorkItem>,
       });
 
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -281,7 +281,7 @@ describe('createProcessEventJob', () => {
         tenantService: tenantServiceMock,
         directory: directoryMock,
         subscriptionRepository: repositoryDoubleMock as unknown as SubscriptionRepository,
-        queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
+        queueService: queueServiceMock as unknown as WorkQueueService<NotificationWorkItem>,
       });
 
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -372,7 +372,7 @@ describe('createProcessEventJob', () => {
         tenantService: tenantServiceMock,
         directory: directoryMock,
         subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
-        queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
+        queueService: queueServiceMock as unknown as WorkQueueService<NotificationWorkItem>,
       });
       const error = new Error('Something is terribly wrong.');
       tokenProviderMock.getAccessToken.mockRejectedValueOnce(error);
@@ -403,7 +403,7 @@ describe('createProcessEventJob', () => {
         tenantService: tenantServiceMock,
         directory: directoryMock,
         subscriptionRepository: repositoryMock as unknown as SubscriptionRepository,
-        queueService: queueServiceMock as unknown as WorkQueueService<Notification>,
+        queueService: queueServiceMock as unknown as WorkQueueService<NotificationWorkItem>,
       });
 
       const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
