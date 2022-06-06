@@ -146,7 +146,7 @@ export const notificationsGenerated = (
 ): DomainEvent => ({
   name: 'notifications-generated',
   timestamp: new Date(),
-  correlationId,
+  correlationId: correlationId || generationId,
   tenantId,
   context: {
     ...context,
@@ -175,7 +175,7 @@ export const notificationSent = ({
 }: NotificationWorkItem): DomainEvent => ({
   name: 'notification-sent',
   timestamp: new Date(),
-  correlationId,
+  correlationId: correlationId || generationId,
   context: {
     ...context,
     generationId,
@@ -190,7 +190,7 @@ export const notificationSendFailed = (
 ): DomainEvent => ({
   name: 'notification-send-failed',
   timestamp: new Date(),
-  correlationId,
+  correlationId: correlationId || generationId,
   context: {
     ...context,
     generationId,
