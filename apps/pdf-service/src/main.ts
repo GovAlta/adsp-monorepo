@@ -4,7 +4,7 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler, createAmqpConfigUpdateService } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -52,6 +52,7 @@ const initializeApp = async (): Promise<express.Application> => {
     directory,
     eventService,
     healthCheck,
+    metricsHandler,
     tenantHandler,
     tenantStrategy,
     tokenProvider,
@@ -82,6 +83,7 @@ const initializeApp = async (): Promise<express.Application> => {
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
+      values: [ServiceMetricsValueDefinition],
     },
     { logger }
   );
@@ -107,7 +109,13 @@ const initializeApp = async (): Promise<express.Application> => {
   });
 
   app.use(passport.initialize());
-  app.use('/pdf', passport.authenticate(['tenant'], { session: false }), tenantHandler, configurationHandler);
+  app.use(
+    '/pdf',
+    metricsHandler,
+    passport.authenticate(['tenant'], { session: false }),
+    tenantHandler,
+    configurationHandler
+  );
 
   const { repository, ...repositories } = createJobRepository(environment);
   const queueService = await createPdfQueueService({ logger, ...environment });
