@@ -4,7 +4,7 @@ import { Logger } from 'winston';
 import { NotificationConfiguration } from '../configuration';
 import { SubscriberEntity, SubscriptionEntity } from '../model';
 import { SubscriptionRepository } from '../repository';
-import { Channel, Notification, NotificationWorkItem } from '../types';
+import { Channel, NotificationWorkItem } from '../types';
 import { createProcessEventJob } from './processEvent';
 
 describe('createProcessEventJob', () => {
