@@ -1,16 +1,24 @@
-import React, { FunctionComponent, useEffect, useMemo } from 'react';
+import React, { FunctionComponent, useEffect, useMemo, useState } from 'react';
 import { RootState } from '@store/index';
-import { toService, toSchemaMap, toNamespaceMap, toDownloadFormat } from './ServiceConfiguration';
+import {
+  toServiceKey,
+  toSchemaMap,
+  toNamespaceMap,
+  toDownloadFormat,
+  toServiceName,
+  toNamespace,
+} from './ServiceConfiguration';
 import { GoAButton, GoACheckbox } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
-import { getConfigurationDefinitions, getConfiguration, clearConfigurationAction } from '@store/configuration/action';
+import { getConfigurationDefinitions, getConfigurations, ServiceId } from '@store/configuration/action';
 import { PageIndicator } from '@components/Indicator';
 import { ConfigurationExportType, Service } from '@store/configuration/model';
 
 export const ConfigurationImportExport: FunctionComponent = () => {
   const { coreConfigDefinitions, tenantConfigDefinitions } = useSelector((state: RootState) => state.configuration);
-  const exports = useSelector((state: RootState) => state.configurationExport);
+  const exportState = useSelector((state: RootState) => state.configurationExport);
   const indicator = useSelector((state: RootState) => state?.session?.indicator);
+  const [exportServices, setExportServices] = useState<Record<string, boolean>>({});
 
   const sortedConfiguration = useMemo(() => {
     const schemas = toSchemaMap(tenantConfigDefinitions, coreConfigDefinitions);
@@ -20,33 +28,41 @@ export const ConfigurationImportExport: FunctionComponent = () => {
 
   const dispatch = useDispatch();
 
-  const toggleSelection = (namespace: string, name: string) => {
-    const key = toService(namespace, name);
-    if (exports[key]) {
-      dispatch(clearConfigurationAction(key));
+  const toggleSelection = (key: string) => {
+    if (exportServices[key]) {
+      const temp = { ...exportServices };
+      delete temp[key];
+      setExportServices(temp);
     } else {
-      dispatch(getConfiguration(namespace, name));
+      setExportServices({
+        ...exportServices,
+        [key]: true,
+      });
     }
   };
-
-  const exportButtonName = 'Export configuration';
 
   useEffect(() => {
     dispatch(getConfigurationDefinitions());
   }, []);
+
+  useEffect(() => {
+    if (Object.keys(exportState).length > 0) {
+      downloadSelectedConfigurations(exportState);
+    }
+  }, [exportState]);
 
   return (
     <div>
       {
         <GoAButton
           data-testid="export-configuration-1"
-          disabled={Object.keys(exports).length < 1 || indicator.show}
+          disabled={Object.keys(exportServices).length < 1 || indicator.show}
           onClick={(e) => {
             e.preventDefault();
-            downloadSelectedConfigurations(exports);
+            dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
           }}
         >
-          {exportButtonName}
+          {'Export configuration'}
         </GoAButton>
       }
       {indicator.show && <PageIndicator />}
@@ -56,14 +72,14 @@ export const ConfigurationImportExport: FunctionComponent = () => {
             <h2>{namespace}</h2>
             {sortedConfiguration.namespaces[namespace].map((name) => {
               return (
-                <div key={toService(namespace, name)}>
+                <div key={toServiceKey(namespace, name)}>
                   <GoACheckbox
                     name={name}
-                    checked={!!exports[toService(namespace, name)]}
+                    checked={exportServices[toServiceKey(namespace, name)] || false}
                     onChange={() => {
-                      toggleSelection(namespace, name);
+                      toggleSelection(toServiceKey(namespace, name));
                     }}
-                    data-testid={`${toService(namespace, name)}_id`}
+                    data-testid={`${toServiceKey(namespace, name)}_id`}
                   >
                     {name}
                   </GoACheckbox>
@@ -75,18 +91,22 @@ export const ConfigurationImportExport: FunctionComponent = () => {
       })}
       {
         <GoAButton
-          data-testid="export-configuration-2"
-          disabled={Object.keys(exports).length < 1 || indicator.show}
+          data-testid="export-configuration-1"
+          disabled={Object.keys(exportServices).length < 1 || indicator.show}
           onClick={(e) => {
             e.preventDefault();
-            downloadSelectedConfigurations(exports);
+            dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
           }}
         >
-          {exportButtonName}
+          {'Export configuration'}
         </GoAButton>
       }
     </div>
   );
+};
+
+const toServiceId = (key: string): ServiceId => {
+  return { namespace: toNamespace(key), service: toServiceName(key) };
 };
 
 const downloadSelectedConfigurations = (exports: Record<Service, ConfigurationExportType>): void => {

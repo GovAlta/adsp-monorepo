@@ -29,38 +29,22 @@ export class MongoFileRepository implements FileRepository {
     this.model = model<FileDoc>('file', fileSchema);
   }
 
-  find(top: number, after: string, criteria: FileCriteria): Promise<Results<FileEntity>> {
+  async find(tenantId: AdspId, top: number, after: string, criteria: FileCriteria): Promise<Results<FileEntity>> {
     const skip = decodeAfter(after);
-    const query: QueryProps = this.getQuery(criteria);
+    const query: QueryProps = this.getQuery(tenantId, criteria);
+    const types = await this.typeRepository.getTypes(tenantId);
 
-    return new Promise<FileEntity[]>((resolve, reject) => {
-      this.model
-        .find(query, null, { lean: true })
-        .skip(skip)
-        .limit(top)
-        .sort({ created: -1 })
-        .exec((err, docs) =>
-          err
-            ? reject(err)
-            : resolve(
-                Promise.all(
-                  docs.map(async (doc) => {
-                    const type = doc.spaceId
-                      ? await this.typeRepository.getType(AdspId.parse(doc.spaceId), doc.typeId)
-                      : null;
-                    return this.fromDoc(type, doc as FileDoc);
-                  })
-                )
-              )
-        );
-    }).then((docs) => ({
-      results: docs,
+    const docs = await this.model.find(query, null, { lean: true }).skip(skip).limit(top).sort({ created: -1 }).exec();
+    const results = docs.map((doc) => this.fromDoc(types[doc.typeId], doc as FileDoc));
+
+    return {
+      results,
       page: {
         after,
         next: encodeNext(docs.length, top, skip),
         size: docs.length,
       },
-    }));
+    };
   }
 
   get(id: string): Promise<FileEntity> {
@@ -135,12 +119,10 @@ export class MongoFileRepository implements FileRepository {
     };
   }
 
-  getQuery(criteria: FileCriteria): QueryProps {
-    const query = {} as QueryProps;
-
-    if (criteria.tenantEquals) {
-      query.spaceId = criteria.tenantEquals;
-    }
+  getQuery(tenantId: AdspId, criteria: FileCriteria): QueryProps {
+    const query = {
+      spaceId: tenantId.toString(),
+    } as QueryProps;
 
     if (criteria.typeEquals) {
       query.typeId = criteria.typeEquals;

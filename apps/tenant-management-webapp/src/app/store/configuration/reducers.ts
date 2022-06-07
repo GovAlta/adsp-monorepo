@@ -2,14 +2,18 @@ import {
   ConfigurationExportActionTypes,
   ConfigurationDefinitionActionTypes,
   DELETE_CONFIGURATION_ACTION_SUCCESS,
-  FETCH_CONFIGURATION_ACTION,
+  FETCH_CONFIGURATIONS_ACTION,
   FETCH_CONFIGURATION_DEFINITIONS_ACTION,
   FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION,
-  FETCH_CONFIGURATION_SUCCESS_ACTION,
+  FETCH_CONFIGURATIONS_SUCCESS_ACTION,
   UPDATE_CONFIGURATION__DEFINITION_SUCCESS_ACTION,
-  CLEAR_CONFIGURATION_ACTION,
 } from './action';
-import { ConfigurationDefinitionState, ConfigurationExportState } from './model';
+import {
+  ConfigurationDefinitionState,
+  ConfigurationExportState,
+  ConfigurationExportType,
+  ServiceConfiguration,
+} from './model';
 
 const defaultState: ConfigurationDefinitionState = {
   coreConfigDefinitions: undefined,
@@ -56,26 +60,18 @@ export const ConfigurationExport = (
   action: ConfigurationExportActionTypes
 ): ConfigurationExportState => {
   switch (action.type) {
-    case FETCH_CONFIGURATION_ACTION:
-      return {
-        ...state,
-      };
-    case FETCH_CONFIGURATION_SUCCESS_ACTION:
-      return {
-        ...state,
-        [`${action.payload.namespace}:${action.payload.name}`]: {
-          configuration: action.payload.latest?.configuration,
-          revision: action.payload.latest?.revision,
-        },
-      };
-    case CLEAR_CONFIGURATION_ACTION: {
-      const tmp = { ...state };
-      if (tmp[action.payload]) {
-        delete tmp[action.payload];
-      }
-      return tmp;
-    }
+    case FETCH_CONFIGURATIONS_ACTION:
+      return state;
+    case FETCH_CONFIGURATIONS_SUCCESS_ACTION:
+      return newConfigurationExportState(action.payload);
     default:
       return state;
   }
+};
+
+const newConfigurationExportState = (configs: ServiceConfiguration[]): Record<string, ConfigurationExportType> => {
+  return configs.reduce((result: Record<string, ConfigurationExportType>, c) => {
+    result[`${c.namespace}:${c.name}`] = c.latest;
+    return result;
+  }, {});
 };

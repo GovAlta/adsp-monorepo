@@ -1,3 +1,5 @@
+import { Moment } from 'moment';
+
 export interface ValueMetric {
   name: string;
   values: {
@@ -11,7 +13,7 @@ export interface ValueMetric {
 }
 
 export interface MetricValue {
-  interval: string;
+  interval: Moment;
   value: number;
 }
 

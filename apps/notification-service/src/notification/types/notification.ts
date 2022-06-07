@@ -26,3 +26,7 @@ export interface Notification extends NotificationContent {
     addressAs: string;
   };
 }
+
+export interface NotificationWorkItem extends Notification {
+  generationId: string;
+}

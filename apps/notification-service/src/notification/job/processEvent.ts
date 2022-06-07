@@ -8,8 +8,9 @@ import {
   TokenProvider,
 } from '@abgov/adsp-service-sdk';
 import type { DomainEvent, WorkQueueService } from '@core-services/core-common';
+import { v4 as uuid } from 'uuid';
 import { Logger } from 'winston';
-import type { Notification } from '../types';
+import type { Notification, NotificationWorkItem } from '../types';
 import type { SubscriptionRepository } from '../repository';
 import type { TemplateService } from '../template';
 import { NotificationConfiguration } from '../configuration';
@@ -25,7 +26,7 @@ interface ProcessEventJobProps {
   eventService: EventService;
   templateService: TemplateService;
   subscriptionRepository: SubscriptionRepository;
-  queueService: WorkQueueService<Notification>;
+  queueService: WorkQueueService<NotificationWorkItem>;
 }
 
 const LOG_CONTEXT = { context: 'ProcessEventJob' };
@@ -57,6 +58,8 @@ export const createProcessEventJob =
       return;
     }
 
+    // This is a unique value to provide traceability of one execution of notification generation.
+    const generationId = uuid();
     try {
       const tenant = await tenantService.getTenant(tenantId);
       const subscriberAppUrl = await directory.getServiceUrl(adspId`urn:ads:platform:subscriber-app`);
@@ -93,11 +96,11 @@ export const createProcessEventJob =
         } while (after);
 
         for (const notification of notifications) {
-          queueService.enqueue(notification);
+          queueService.enqueue({ generationId, ...notification });
         }
 
         if (notifications.length > 0) {
-          eventService.send(notificationsGenerated(event, type, notifications.length));
+          eventService.send(notificationsGenerated(generationId, event, type, notifications.length));
         }
 
         count += notifications.length;
