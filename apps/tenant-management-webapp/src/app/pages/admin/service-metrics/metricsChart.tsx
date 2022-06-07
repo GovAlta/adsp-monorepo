@@ -71,6 +71,7 @@ export const MetricsChart: FunctionComponent = () => {
         type="line"
         data={data}
         options={{
+          spanGaps: false,
           plugins: {
             datalabels: {
               formatter: function ({ y }: { y?: number } = {}, context) {

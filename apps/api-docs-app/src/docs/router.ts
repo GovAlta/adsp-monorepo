@@ -33,12 +33,14 @@ export const createDocsRouter = async ({
     if (tenant && serviceDoc.docs?.components?.securitySchemes) {
       const oidcUrl = new URL(`auth/realms/${tenant.realm}/.well-known/openid-configuration`, accessServiceUrl);
       serviceDoc.docs.components.securitySchemes = {
+        ...serviceDoc.docs.components.securitySchemes,
         openId: {
           type: 'openIdConnect',
           openIdConnectUrl: oidcUrl.href,
         },
       };
       serviceDoc.docs.security = [
+        ...(serviceDoc.docs.security || []),
         {
           openId: [],
         },

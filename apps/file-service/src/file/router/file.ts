@@ -15,6 +15,7 @@ import { createUpload } from './upload';
 import { fileDeleted, fileUploaded } from '../events';
 import { ServiceConfiguration } from '../configuration';
 import { FileStorageProvider } from '../storage';
+import { FileCriteria } from '../types';
 
 interface FileRouterProps {
   serviceId: AdspId;
@@ -92,17 +93,20 @@ export function getFiles(apiId: AdspId, repository: FileRepository): RequestHand
       benchmark(req, 'operation-handler-time');
 
       const user = req.user;
-      const tenantId = user.tenantId;
+      const tenantId = req.tenant?.id;
+      if (!tenantId) {
+        throw new InvalidOperationError('Cannot get files without a tenant context.');
+      }
+
       const { top: topValue, after, criteria: criteriaValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 50;
-      let criteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
+      let criteria: FileCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
 
       criteria = {
         ...criteria,
-        tenantEquals: tenantId.toString(),
         deleted: false,
       };
-      const files = await repository.find(top, after as string, criteria);
+      const files = await repository.find(tenantId, top, after as string, criteria);
 
       benchmark(req, 'operation-handler-time');
       res.send({

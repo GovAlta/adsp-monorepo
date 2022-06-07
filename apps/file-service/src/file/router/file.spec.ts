@@ -155,6 +155,9 @@ describe('file router', () => {
           id: 'test',
           roles: [ServiceUserRoles.Admin],
         },
+        tenant: {
+          id: tenantId,
+        },
         getConfiguration: jest.fn(),
         query: {},
       };
@@ -169,6 +172,27 @@ describe('file router', () => {
       const handler = getFiles(apiId, fileRepositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
+    });
+
+    it('can throw for no tenant', async () => {
+      const req = {
+        user: {
+          tenantId,
+          id: 'test',
+          roles: [ServiceUserRoles.Admin],
+        },
+        getConfiguration: jest.fn(),
+        query: {},
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = getFiles(apiId, fileRepositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toBeCalledWith(expect.any(InvalidOperationError));
+      expect(res.send).not.toBeCalled();
     });
   });
 

@@ -62,7 +62,7 @@ class eventsPage {
   }
 
   definitionModalNamespaceFieldErrorMsg() {
-    return cy.xpath('//input[@data-testid="form-namespace"]/following-sibling::div[@class="error-msg"]');
+    return cy.xpath('//input[@data-testid="form-namespace"]/parent::*/following-sibling::div[@class="error-msg"]');
   }
 
   definitionModalNameField() {
@@ -70,7 +70,7 @@ class eventsPage {
   }
 
   definitionModalNameFieldErrorMsg() {
-    return cy.xpath('//input[@data-testid="form-name"]/following-sibling::div[@class="error-msg"]');
+    return cy.xpath('//input[@data-testid="form-name"]/parent::*/following-sibling::div[@class="error-msg"]');
   }
 
   definitionModalDescriptionField() {

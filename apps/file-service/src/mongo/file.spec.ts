@@ -18,11 +18,10 @@ describe('Mongo: FileEntity', () => {
 
   const storageProviderMock = new Mock<FileStorageProvider>();
   const typeRepository = new Mock<FileTypeRepository>();
-  typeRepository.setup((m) => m.getType(tenantId, It.IsAny())).returns(Promise.resolve(new FileTypeEntity(type)));
+  typeRepository.setup((m) => m.getTypes(tenantId)).returns(Promise.resolve({ [type.id]: new FileTypeEntity(type) }));
   const repo = new MongoFileRepository(storageProviderMock.object(), typeRepository.object());
 
   const criteria: FileCriteria = {
-    tenantEquals: tenantId.toString(),
     deleted: false,
   };
 
@@ -53,7 +52,7 @@ describe('Mongo: FileEntity', () => {
         type: entity,
       },
     ]);
-    const { results } = await repo.find(99, '', criteria);
+    const { results } = await repo.find(tenantId, 99, '', criteria);
     expect(results.length).toEqual(data.length);
   });
 });
