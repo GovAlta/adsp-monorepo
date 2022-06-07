@@ -27,7 +27,6 @@ export interface FileCriteria {
   scanned?: boolean;
   deleted?: boolean;
   infected?: boolean;
-  tenantEquals?: string;
   typeEquals?: string;
   recordIdEquals?: string;
 }

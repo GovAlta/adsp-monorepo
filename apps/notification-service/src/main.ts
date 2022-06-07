@@ -16,12 +16,12 @@ import { environment } from './environments/environment';
 import {
   applyNotificationMiddleware,
   configurationSchema,
-  Notification,
   NotificationConfiguration,
   NotificationSendFailedDefinition,
   NotificationSentDefinition,
   NotificationsGeneratedDefinition,
   NotificationType,
+  NotificationWorkItem,
   ServiceUserRoles,
 } from './notification';
 import { createRepositories } from './mongo';
@@ -120,7 +120,7 @@ async function initializeApp() {
     logger,
   });
 
-  const queueService = await createAmqpQueueService<Notification>({
+  const queueService = await createAmqpQueueService<NotificationWorkItem>({
     ...environment,
     queue: 'notification-send',
     logger,

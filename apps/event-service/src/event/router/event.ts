@@ -43,11 +43,11 @@ export const assertUserCanSend: RequestHandler = async (req, res, next) => {
 export const sendEvent =
   (logger: Logger, eventService: EventService): RequestHandler =>
   async (req, res, next) => {
-    try {
-      const user = req.user;
-      const { namespace, name, timestamp: timeValue } = req.body;
-      const tenantId: AdspId = req.tenant.id;
+    const user = req.user;
+    const tenantId: AdspId = req.tenant.id;
+    const { namespace, name, timestamp: timeValue } = req.body;
 
+    try {
       const namespaces = await req.getConfiguration<Record<string, NamespaceEntity>, Record<string, NamespaceEntity>>(
         tenantId
       );
@@ -85,6 +85,14 @@ export const sendEvent =
         user: `${user.name} (ID: ${user.id})`,
       });
     } catch (err) {
+      logger.warn(
+        `Error encountered for event ${namespace}:${name} sent by user ${user.name} (ID: ${user.id}). ${err}`,
+        {
+          context: 'event-router',
+          tenantId: tenantId.toString(),
+          user: `${user.name} (ID: ${user.id})`,
+        }
+      );
       next(err);
     }
   };

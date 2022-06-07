@@ -12,7 +12,7 @@ import { DomainEventWorkItem, WorkQueueService } from '@core-services/core-commo
 import { createProcessEventJob } from './processEvent';
 import { SubscriptionRepository } from '../repository';
 import { TemplateService } from '../template';
-import { Notification, Providers } from '../types';
+import { NotificationWorkItem, Providers } from '../types';
 import { createSendNotificationJob } from './sendNotification';
 
 interface JobProps {
@@ -25,7 +25,7 @@ interface JobProps {
   eventService: EventService;
   templateService: TemplateService;
   events: Subscribable<DomainEventWorkItem>;
-  queueService: WorkQueueService<Notification>;
+  queueService: WorkQueueService<NotificationWorkItem>;
   subscriptionRepository: SubscriptionRepository;
   providers: Providers;
 }
