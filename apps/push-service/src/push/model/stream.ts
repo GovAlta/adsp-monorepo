@@ -73,7 +73,7 @@ export class StreamEntity implements Stream {
   }
 
   getEvents(user: User, criteria?: EventCriteria): Observable<StreamItem> {
-    if (!this.canSubscribe(user)) {
+    if (user && !this.canSubscribe(user)) {
       throw new UnauthorizedUserError('access stream', user);
     }
 
