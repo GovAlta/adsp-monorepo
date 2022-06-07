@@ -292,12 +292,6 @@ class NotificationsPage {
     );
   }
 
-  subscriberEditIcon(addressAs, email) {
-    return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[@data-testid="icon-create"]`
-    );
-  }
-
   subscriberDeleteIcon(addressAs, email) {
     return cy.xpath(
       `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[@data-testid="icon-trash"]`
@@ -348,6 +342,12 @@ class NotificationsPage {
 
   editContactModalInstructions() {
     return cy.get('[data-testid="form-support-instructions"]');
+  }
+
+  subscriberEditIcon(addressAs, email) {
+    return cy.xpath(
+      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[@data-testid="icon-create"]`
+    );
   }
 
   editContactModalSaveBtn() {
