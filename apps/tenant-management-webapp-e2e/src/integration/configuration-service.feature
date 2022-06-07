@@ -8,5 +8,5 @@ Feature: Configuration-service
     Then the user views the Configuration service overview content "The configuration service provides"
     And the user views the link of API docs for "Configuration service"
     And the user views the link of See the code for "configuration-service"
-    And the user views the link under Support as "Get support"
+    And the user views the link of "Get support" under Support
 
