@@ -48,7 +48,7 @@ const intervalDelta: Record<ChartInterval, number> = {
 // The results range from newest to oldest, so we add an extra break value interval minutes older than the current value.
 function addIntervalBreaks(intervalMins: number) {
   return (results: MetricValue[], current: MetricValue, idx: number, array: MetricValue[]) => {
-    if (array[idx - 1] && Math.abs(current.interval.diff(array[idx - 1].interval, 'minutes')) > intervalMins) {
+    if (array[idx - 1] && array[idx - 1].interval.diff(current.interval, 'minutes') > intervalMins) {
       results.push({
         interval: current.interval.clone().subtract(intervalMins, 'minutes'),
         value: NaN,
