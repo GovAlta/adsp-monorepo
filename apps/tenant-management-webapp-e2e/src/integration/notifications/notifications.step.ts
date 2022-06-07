@@ -546,21 +546,47 @@ Then(
   }
 );
 
-Then('the user {string} the subscriber of {string}, {string}', function (viewOrNot, addressAs, email) {
-  switch (viewOrNot) {
-    case 'views':
-      notificationsObj.subscriber(addressAs, email).should('exist');
+Then(
+  'the user {string} the subscriber of {string}, {string}, {string}',
+  function (viewOrNot, addressAs, email, phoneNumber) {
+    let phoneNumberInDisplay;
+    expect(phoneNumber).match(/(EMPTY)|[0-9]{10}/);
+    if (phoneNumber !== 'EMPTY') {
+      phoneNumberInDisplay =
+        phoneNumber.substring(0, 3) + ' ' + phoneNumber.substring(3, 6) + ' ' + phoneNumber.substring(6, 10);
+    }
+    switch (viewOrNot) {
+      case 'views':
+        if (phoneNumber == 'EMPTY') {
+          notificationsObj.subscriber(addressAs, email).should('exist');
+        } else {
+          notificationsObj.subscriberWithPhoneNumber(addressAs, email, phoneNumberInDisplay).should('exist');
+        }
+        break;
+      case 'should not view':
+        if (phoneNumber == 'EMPTY') {
+          notificationsObj.subscriber(addressAs, email).should('not.exist');
+        } else {
+          notificationsObj.subscriberWithPhoneNumber(addressAs, email, phoneNumberInDisplay).should('not.exist');
+        }
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
+  }
+);
+
+When('the user clicks {string} button of {string}, {string} on subscribers page', function (button, addressAs, email) {
+  switch (button) {
+    case 'delete':
+      notificationsObj.subscriberDeleteIcon(addressAs, email).click();
       break;
-    case 'should not view':
-      notificationsObj.subscriber(addressAs, email).should('not.exist');
+    case 'edit':
+      notificationsObj.subscriberEditIcon(addressAs, email).click();
       break;
     default:
-      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+      expect(button).to.be.oneOf(['delete', 'edit']);
   }
-});
-
-When('the user clicks delete button of {string}, {string} on subscribers page', function (addressAs, email) {
-  notificationsObj.subscriberDeleteIcon(addressAs, email).click();
 });
 
 Then('the user views Delete subscriber modal', function () {

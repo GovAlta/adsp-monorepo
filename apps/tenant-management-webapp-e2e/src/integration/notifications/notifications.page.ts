@@ -288,6 +288,12 @@ class NotificationsPage {
     );
   }
 
+  subscriberEditIcon(addressAs, email) {
+    return cy.xpath(
+      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[@data-testid="icon-create"]`
+    );
+  }
+
   subscriberDeleteIcon(addressAs, email) {
     return cy.xpath(
       `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[@data-testid="icon-trash"]`
@@ -303,6 +309,12 @@ class NotificationsPage {
   subscriber(addressAs, email) {
     return cy.xpath(
       `//*[@data-testid="subscribers-list-title"]//table/div/tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*`
+    );
+  }
+
+  subscriberWithPhoneNumber(addressAs, email, phoneNumber) {
+    return cy.xpath(
+      `//*[@data-testid="subscribers-list-title"]//table/div/tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/following-sibling::*[contains(text(), "${phoneNumber}")]/parent::*`
     );
   }
 

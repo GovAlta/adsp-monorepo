@@ -125,13 +125,13 @@ Feature: Notifications
     # Test subscriber deletion
     Given a tenant admin user is on notification subscribers page
     When the user searches subscribers with address as containing "Auto Test" and email containing "auto.test@gov.ab.ca"
-    Then the user "views" the subscriber of "Auto Test", "auto.test@gov.ab.ca"
-    When the user clicks delete button of "Auto Test", "auto.test@gov.ab.ca" on subscribers page
+    Then the user "views" the subscriber of "Auto Test", "auto.test@gov.ab.ca", "EMPTY"
+    When the user clicks "delete" button of "Auto Test", "auto.test@gov.ab.ca" on subscribers page
     Then the user views Delete subscriber modal
     # The validation of delete confirmation modal content is skipped due to the bug of CS-1266
     # And the user views the Delete subscriber confirmation message of "auto.test@gov.ab.ca"
     When the user clicks Delete button on Delete subscriber modal
-    Then the user "should not view" the subscriber of "Auto Test", "auto.test@gov.ab.ca"
+    Then the user "should not view" the subscriber of "Auto Test", "auto.test@gov.ab.ca", "EMPTY"
     When the user selects "Subscriptions" tab for "Notification"
     Then the user "should not view" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Status-Application-Health-Change"
     # Restore the subscription
@@ -153,4 +153,30 @@ Feature: Notifications
       | Email              | Phone           | Instructions  |
       | rnd{abc@gov.ab.ca} | rnd{7805671456} | rnd{autotest} |
 
+  @TEST_CS-1372 @REQ_CS-1308 @REQ_CS-1309 @regression
+  Scenario: As a tenant admin, I can search, add, edit and delete SMS number of a subscriber
+    Given a tenant admin user is on notification subscribers page
+    # Add a number
+    When the user searches subscribers with address as containing "autotest-DO-NOT-DELETE" and email containing "auto.test2@gov.ab.ca"
+    Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "auto.test2@gov.ab.ca", "EMPTY"
+    When the user clicks "edit" button of "autotest-DO-NOT-DELETE", "auto.test2@gov.ab.ca" on subscribers page
+    Then the user views Edit subscriber modal
+    When the user enters "7808001234" in Phone number field
+    And the user clicks Save button in Edit subscriber modal
+    And the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "auto.test2@gov.ab.ca" and phone number containing "7808001234"
+    Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "auto.test2@gov.ab.ca", "7808001234"
+    # Edit a number
+    When the user clicks "edit" button of "autotest-DO-NOT-DELETE", "auto.test2@gov.ab.ca" on subscribers page
+    Then the user views Edit subscriber modal
+    When the user enters "7808005678" in Phone number field
+    And the user clicks Save button in Edit subscriber modal
+    And the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "auto.test2@gov.ab.ca" and phone number containing "7808005678"
+    Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "auto.test2@gov.ab.ca", "7808005678"
+    # Delete a number
+    When the user clicks "edit" button of "autotest-DO-NOT-DELETE", "auto.test2@gov.ab.ca" on subscribers page
+    Then the user views Edit subscriber modal
+    When the user enters "EMPTY" in Phone number field
+    And the user clicks Save button in Edit subscriber modal
+    And the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "auto.test2@gov.ab.ca" and phone number containing "EMPTY"
+    Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "auto.test2@gov.ab.ca", "EMPTY"
 
