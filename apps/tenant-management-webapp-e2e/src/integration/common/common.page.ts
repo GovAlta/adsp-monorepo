@@ -63,5 +63,4 @@ class Common {
     return cy.xpath(`//h3[text()="Support"]/following-sibling::*[contains(text(), "${link}")]`);
   }
 }
-
 export default Common;
