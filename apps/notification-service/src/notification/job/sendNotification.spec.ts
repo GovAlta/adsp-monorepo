@@ -30,6 +30,7 @@ describe('createSendNotificationJob', () => {
       const job = createSendNotificationJob({ logger, eventService, providers: { [Channel.email]: providerMock } });
       job(
         {
+          generationId: 'test',
           tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/test',
           to: 'test@test.co',
           type: { id: 'test', name: 'test' },
@@ -53,6 +54,7 @@ describe('createSendNotificationJob', () => {
       await expect(
         job(
           {
+            generationId: 'test',
             tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/test',
             to: 'test@test.co',
             type: { id: 'test', name: 'test' },
@@ -74,6 +76,7 @@ describe('createSendNotificationJob', () => {
       providerMock.send.mockRejectedValue(error);
       job(
         {
+          generationId: 'test',
           tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/test',
           to: 'test@test.co',
           type: { id: 'test', name: 'test' },

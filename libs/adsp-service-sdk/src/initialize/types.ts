@@ -172,8 +172,8 @@ export interface PlatformCapabilities extends PlatformServices {
    * Metrics handler: Request handler that write micro-benches of request times to
    * value service.
    *
-   * Note that metrics are only written if req.tenant is set by the tenantHandler before
-   * response headers are written.
+   * Note that for platform services metrics are written to tenant contexts. Values are
+   * only written if req.tenant is set by the tenantHandler before the response.
    *
    * @type {RequestHandler}
    * @memberof PlatformCapabilities
