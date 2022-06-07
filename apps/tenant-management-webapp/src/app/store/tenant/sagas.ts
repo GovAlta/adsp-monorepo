@@ -33,6 +33,7 @@ import {
   SessionLoginSuccess,
   SessionLoginSuccessAction,
   SESSION_LOGIN_SUCCESS,
+  UpdateIndicator,
 } from '@store/session/actions';
 import { TenantApi } from './api';
 import { TENANT_INIT } from './models';
@@ -192,11 +193,27 @@ export function* tenantLogout(): SagaIterator {
 export function* fetchRealmRoles(): SagaIterator {
   try {
     const state: RootState = yield select();
+    yield put(
+      UpdateIndicator({
+        show: true,
+        message: 'Loading...',
+      })
+    );
     const token = state?.session?.credentials?.token;
     const api = new TenantApi(state.config.tenantApi, token);
     const roles = yield call([api, api.fetchRealmRoles]);
     yield put(FetchRealmRolesSuccess(roles));
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
   } catch (e) {
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
     yield put(ErrorNotification({ message: `Failed to fetch realm roles: ${e.message}` }));
   }
 }
@@ -208,7 +225,7 @@ export function* watchTenantSagas(): SagaIterator {
   yield takeEvery(TENANT_LOGIN, tenantLogin);
   yield takeEvery(KEYCLOAK_CHECK_SSO_WITH_LOGOUT, keycloakCheckSSOWithLogout);
   yield takeEvery(TENANT_LOGOUT, tenantLogout);
-  yield takeLatest([SESSION_LOGIN_SUCCESS, CREDENTIAL_REFRESH], keycloakRefreshToken);
+  yield takeEvery([SESSION_LOGIN_SUCCESS, CREDENTIAL_REFRESH], keycloakRefreshToken);
 
   //tenant config
   yield takeEvery(CREATE_TENANT, createTenant);

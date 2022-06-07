@@ -23,7 +23,7 @@ services:
       - 3342
     environment:
       - KEYCLOAK_ROOT_URL=http://keycloak:8080
-      - DIRECTORY_URL=http://tenant-management-api:3333
+      - DIRECTORY_URL=http://directory-api:3331
       - CLIENT_ID=urn:ads:platform:calendar-service
       - CLIENT_SECRET=59b11e0e-d1b6-4a50-a1a0-ea7034534643
       - DB_HOST=calendar-service-postgres

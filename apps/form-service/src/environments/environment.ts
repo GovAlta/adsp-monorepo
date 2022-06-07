@@ -8,7 +8,7 @@ export const environment = envalid.cleanEnv(
   process.env,
   {
     KEYCLOAK_ROOT_URL: envalid.str({ default: 'http://localhost:8080' }),
-    DIRECTORY_URL: envalid.str({ default: 'http://localhost:3333' }),
+    DIRECTORY_URL: envalid.str({ default: 'http://localhost:3331' }),
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:form-service' }),
     CLIENT_SECRET: envalid.str(),
     MONGO_URI: envalid.str({ default: 'mongodb://localhost:27017' }),

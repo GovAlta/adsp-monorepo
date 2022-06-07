@@ -62,7 +62,7 @@ class eventsPage {
   }
 
   definitionModalNamespaceFieldErrorMsg() {
-    return cy.xpath('//input[@data-testid="form-namespace"]/following-sibling::div[@class="error-msg"]');
+    return cy.xpath('//input[@data-testid="form-namespace"]/parent::*/following-sibling::div[@class="error-msg"]');
   }
 
   definitionModalNameField() {
@@ -70,7 +70,7 @@ class eventsPage {
   }
 
   definitionModalNameFieldErrorMsg() {
-    return cy.xpath('//input[@data-testid="form-name"]/following-sibling::div[@class="error-msg"]');
+    return cy.xpath('//input[@data-testid="form-name"]/parent::*/following-sibling::div[@class="error-msg"]');
   }
 
   definitionModalDescriptionField() {
@@ -123,7 +123,7 @@ class eventsPage {
 
   streamToggleButton(streamName) {
     return cy.xpath(
-      `//*[@data-testid="Platform-stream-table"]//tbody/tr/td[text()="${streamName}"]/following-sibling::td//button[@data-testid="toggle-event-visibility"]`
+      `//*[@data-testid="Platform-stream-table"]//tbody/tr/td[text()="${streamName}"]/following-sibling::td//button[@data-testid="toggle-stream-visibility"]`
     );
   }
 

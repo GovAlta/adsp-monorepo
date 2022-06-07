@@ -1,9 +1,10 @@
 import { AdspId, DomainEvent, DomainEventDefinition } from '@abgov/adsp-service-sdk';
 import { DomainEvent as ProcessedEvent } from '@core-services/core-common';
-import type { Notification, NotificationType } from './types';
+import type { Notification, NotificationType, NotificationWorkItem } from './types';
 
+const NOTIFICATION_GENERATED = 'notifications-generated';
 export const NotificationsGeneratedDefinition: DomainEventDefinition = {
-  name: 'notifications-generated',
+  name: NOTIFICATION_GENERATED,
   description: 'Signalled when notifications are generated for an event',
   payloadSchema: {
     type: 'object',
@@ -70,6 +71,12 @@ export const NotificationSentDefinition: DomainEventDefinition = {
       },
     },
   },
+  interval: {
+    namespace: 'notification-service',
+    name: NOTIFICATION_GENERATED,
+    context: 'generationId',
+    metric: ['notification-service', 'notification-send'],
+  },
 };
 
 export const NotificationSendFailedDefinition: DomainEventDefinition = {
@@ -112,6 +119,12 @@ export const NotificationSendFailedDefinition: DomainEventDefinition = {
       error: { type: 'string' },
     },
   },
+  interval: {
+    namespace: 'notification-service',
+    name: NOTIFICATION_GENERATED,
+    context: 'generationId',
+    metric: ['notification-service', 'notification-send-failed'],
+  },
 };
 
 function mapNotification(notification: Omit<Notification, 'tenantId' | 'correlationId' | 'context'>) {
@@ -126,15 +139,19 @@ function mapNotification(notification: Omit<Notification, 'tenantId' | 'correlat
 }
 
 export const notificationsGenerated = (
+  generationId: string,
   { correlationId = null, tenantId, context = {}, namespace, name, timestamp }: ProcessedEvent,
   type: NotificationType,
   count: number
 ): DomainEvent => ({
   name: 'notifications-generated',
   timestamp: new Date(),
-  correlationId,
+  correlationId: correlationId || generationId,
   tenantId,
-  context,
+  context: {
+    ...context,
+    generationId,
+  },
   payload: {
     type: {
       id: type.id,
@@ -150,27 +167,34 @@ export const notificationsGenerated = (
 });
 
 export const notificationSent = ({
+  generationId,
   correlationId = null,
   tenantId,
   context = {},
   ...notification
-}: Notification): DomainEvent => ({
+}: NotificationWorkItem): DomainEvent => ({
   name: 'notification-sent',
   timestamp: new Date(),
-  correlationId,
-  context,
+  correlationId: correlationId || generationId,
+  context: {
+    ...context,
+    generationId,
+  },
   tenantId: AdspId.parse(tenantId),
   payload: mapNotification(notification),
 });
 
 export const notificationSendFailed = (
-  { correlationId = null, tenantId, context = {}, ...notification }: Notification,
+  { generationId, correlationId = null, tenantId, context = {}, ...notification }: NotificationWorkItem,
   error: string
 ): DomainEvent => ({
   name: 'notification-send-failed',
   timestamp: new Date(),
-  correlationId,
-  context,
+  correlationId: correlationId || generationId,
+  context: {
+    ...context,
+    generationId,
+  },
   tenantId: AdspId.parse(tenantId),
   payload: {
     ...mapNotification(notification),

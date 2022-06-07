@@ -168,4 +168,22 @@ export interface PlatformCapabilities extends PlatformServices {
    * @memberof PlatformCapabilities
    */
   clearCached: (tenantId: AdspId, serviceId: AdspId) => void;
+  /**
+   * Metrics handler: Request handler that write micro-benches of request times to
+   * value service.
+   *
+   * Note that for platform services metrics are written to tenant contexts. Values are
+   * only written if req.tenant is set by the tenantHandler before the response.
+   *
+   * @type {RequestHandler}
+   * @memberof PlatformCapabilities
+   */
+  metricsHandler: RequestHandler;
+  /**
+   * Logger used by SDK components.
+   *
+   * @type {Logger}
+   * @memberof PlatformCapabilities
+   */
+  logger: Logger;
 }

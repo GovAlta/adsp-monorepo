@@ -2,7 +2,13 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { NotificationItem } from '@store/notification/models';
 import { GoAButton, GoADropdownOption } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+import {
+  GoAModal,
+  GoAModalActions,
+  GoAModalContent,
+  GoAModalTitle,
+  GoAInput,
+} from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { GoADropdown } from '@abgov/react-components';
 import { RootState } from '@store/index';
@@ -81,15 +87,13 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           <GoAForm>
             <GoAFormItem error={errors?.['name']}>
               <label>Name</label>
-              <input
+              <GoAInput
                 type="text"
                 name="name"
                 value={type.name}
                 data-testid="form-name"
                 aria-label="name"
-                onChange={(e) =>
-                  setType({ ...type, name: e.target.value, id: isEdit ? type.id : toKebabName(e.target.value) })
-                }
+                onChange={(name, value) => setType({ ...type, name: value, id: isEdit ? type.id : toKebabName(value) })}
               />
             </GoAFormItem>
             <GoAFormItem>

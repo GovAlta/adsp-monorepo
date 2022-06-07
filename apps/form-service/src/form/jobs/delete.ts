@@ -16,7 +16,7 @@ interface DeleteJobProps {
   notificationService: NotificationService;
 }
 
-const MAX_LOCKED_AGE = Duration.fromISO('P15D');
+export const MAX_LOCKED_AGE = Duration.fromISO('P15D');
 export function createDeleteJob({
   logger,
   repository,
@@ -37,19 +37,24 @@ export function createDeleteJob({
         });
 
         for (const result of results) {
-          const deleted = await result.delete(jobUser, fileService, notificationService);
-          if (deleted) {
-            numberDeleted++;
-            eventService.send(formDeleted(jobUser, result));
+          try {
+            const deleted = await result.delete(jobUser, fileService, notificationService);
+            if (deleted) {
+              numberDeleted++;
+              eventService.send(formDeleted(jobUser, result));
+            }
+          } catch (err) {
+            // Log and continue with other forms if there's an error on form delete.
+            logger.error(`Error deleting form with ID: ${result.id}. ${err}`);
           }
         }
 
-        after = page.after;
+        after = page.next;
       } while (after);
 
       logger.info(`Completed form delete job and deleted ${numberDeleted} forms.`);
     } catch (err) {
-      logger.error(`Error encountered in form locking job. ${err}`);
+      logger.error(`Error encountered in form deleting job. ${err}`);
     }
   };
 }

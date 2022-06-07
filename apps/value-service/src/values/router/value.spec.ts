@@ -66,7 +66,7 @@ describe('event router', () => {
         done();
       };
       assertUserCanWrite(
-        { user: { roles: [ServiceUserRoles.Writer], isCore: true }, body: {} } as Request,
+        { user: { roles: [ServiceUserRoles.Writer], isCore: true }, tenant: { id: tenantId }, body: {} } as Request,
         {} as Response,
         next
       );
@@ -136,6 +136,52 @@ describe('event router', () => {
             tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
           },
           body: { tenantId: 'urn:ads:platform:tenant-service:v2:/tenants/test2' },
+        } as Request,
+        {} as Response,
+        next
+      );
+    });
+
+    it('can pass for tenant handler tenant.', (done) => {
+      const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+      const req = {
+        user: {
+          roles: [ServiceUserRoles.Writer],
+          isCore: true,
+        },
+        tenant: {
+          id: tenantId,
+        },
+        body: {},
+      } as Request;
+
+      const next = (err) => {
+        expect(err).toBeFalsy();
+        expect(req['tenantId']).toBe(tenantId);
+        done();
+      };
+
+      assertUserCanWrite(req, {} as Response, next);
+    });
+
+    it('can fail for tenant user specifying tenantId via tenant handler.', (done) => {
+      const next = (error) => {
+        try {
+          expect(error).toBeTruthy();
+          done();
+        } catch (err) {
+          done(err);
+        }
+      };
+      assertUserCanWrite(
+        {
+          user: {
+            roles: [ServiceUserRoles.Writer],
+            isCore: false,
+            tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
+          },
+          tenant: { id: adspId`urn:ads:platform:tenant-service:v2:/tenants/test2` },
+          body: {},
         } as Request,
         {} as Response,
         next
@@ -473,6 +519,36 @@ describe('event router', () => {
       expect(eventServiceMock.send).toHaveBeenCalled();
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ value }));
     });
+
+    it('can write array', async () => {
+      const req = {
+        tenantId,
+        user: {
+          tenantId,
+          id: 'test-reader',
+          roles: [ServiceUserRoles.Reader],
+        },
+        params: { namespace: 'test-service', name: 'test-value' },
+        query: {},
+        body: [{ value: {}, correlationId: '123', timestamp: new Date().toISOString() }],
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce([{}]);
+
+      repositoryMock.writeValue.mockImplementationOnce((_ns, _n, _t, v) => Promise.resolve(v));
+
+      const handler = writeValue(loggerMock, eventServiceMock, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(eventServiceMock.send).toHaveBeenCalled();
+      expect(res.send).toHaveBeenCalledWith(
+        expect.arrayContaining([expect.objectContaining({ correlationId: '123', timestamp: expect.any(Date) })])
+      );
+    });
   });
 
   describe('readMetrics', () => {
@@ -539,6 +615,8 @@ describe('event router', () => {
         tenantId,
         'test-service',
         'test-value',
+        100,
+        undefined,
         expect.objectContaining({
           interval: 'weekly',
           metricLike: 'count',
@@ -656,6 +734,8 @@ describe('event router', () => {
         'test-service',
         'test-value',
         'count',
+        100,
+        undefined,
         expect.objectContaining({ interval: 'weekly', intervalMin: expect.any(Date), intervalMax: expect.any(Date) })
       );
       expect(res.send).toHaveBeenCalledWith(metric);

@@ -70,6 +70,7 @@ export interface RequestBodySchema {
 export interface NotificationMetrics {
   notificationsSent?: number;
   notificationsFailed?: number;
+  sendDuration?: number;
 }
 
 export interface NotificationState {

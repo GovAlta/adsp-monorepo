@@ -25,8 +25,8 @@ describe('createLogEventJob', () => {
 
   beforeEach(() => {
     configurationService.getConfiguration.mockClear();
-    axiosMock.get.mockClear();
-    axiosMock.post.mockClear();
+    axiosMock.get.mockReset();
+    axiosMock.post.mockReset();
   });
 
   it('can create job', () => {
@@ -85,6 +85,36 @@ describe('createLogEventJob', () => {
       });
     });
 
+    it('can skip event based on definition', (done) => {
+      const job = createLogEventJob({
+        serviceId,
+        logger,
+        tokenProvider,
+        configurationService: configurationService as unknown as ConfigurationService,
+        valueServiceUrl: new URL('http://totally-real-value-service'),
+      });
+
+      configurationService.getConfiguration.mockResolvedValueOnce({
+        test: {
+          definitions: {
+            'test-started': {
+              log: { skip: true },
+            },
+          },
+        },
+      });
+
+      const start = new Date(event.timestamp.getTime() - 30000);
+      axiosMock.get.mockResolvedValueOnce({
+        data: { 'event-service': { event: [{ timestamp: start.toISOString() }] } },
+      });
+      axiosMock.post.mockResolvedValueOnce({});
+      job(event, (err) => {
+        expect(axiosMock.post).not.toHaveBeenCalled();
+        done(err);
+      });
+    });
+
     it('can compute interval duration metric', (done) => {
       const job = createLogEventJob({
         serviceId,
@@ -112,11 +142,12 @@ describe('createLogEventJob', () => {
       axiosMock.get.mockResolvedValueOnce({
         data: { 'event-service': { event: [{ timestamp: start.toISOString() }] } },
       });
-      axiosMock.get.mockResolvedValueOnce({
-        data: { page: { size: 0 } },
-      });
       axiosMock.post.mockResolvedValueOnce({});
       job(event, (err) => {
+        expect(axiosMock.get).toHaveBeenCalledWith(
+          expect.stringContaining(JSON.stringify({ namespace: 'test', name: 'test-prepared' })),
+          expect.any(Object)
+        );
         expect(axiosMock.post).toHaveBeenCalledTimes(1);
         expect(axios.post).toHaveBeenLastCalledWith(
           expect.any(String),
@@ -127,7 +158,7 @@ describe('createLogEventJob', () => {
       });
     });
 
-    it('can skip compute interval duration metric with previous occurrence event', (done) => {
+    it('can compute interval duration metric with array context criteria', (done) => {
       const job = createLogEventJob({
         serviceId,
         logger,
@@ -136,36 +167,79 @@ describe('createLogEventJob', () => {
         valueServiceUrl: new URL('http://totally-real-value-service'),
       });
 
-      configurationService.getConfiguration.mockResolvedValueOnce([
-        {
-          test: {
-            definitions: {
-              'test-started': {
-                interval: {
-                  metric: 'test',
-                  namespace: 'test',
-                  name: 'test-prepared',
-                },
+      configurationService.getConfiguration.mockResolvedValueOnce({
+        test: {
+          definitions: {
+            'test-started': {
+              interval: {
+                metric: 'test',
+                namespace: 'test',
+                name: 'test-prepared',
+                context: ['value'],
               },
             },
           },
         },
-      ]);
+      });
 
       const start = new Date(event.timestamp.getTime() - 30000);
       axiosMock.get.mockResolvedValueOnce({
         data: { 'event-service': { event: [{ timestamp: start.toISOString() }] } },
       });
-      // Previous occurrence result.
-      axiosMock.get.mockResolvedValueOnce({
-        data: { page: { size: 1 } },
-      });
       axiosMock.post.mockResolvedValueOnce({});
       job(event, (err) => {
+        expect(axiosMock.get).toHaveBeenCalledWith(
+          expect.stringContaining(JSON.stringify({ value: 'a', namespace: 'test', name: 'test-prepared' })),
+          expect.any(Object)
+        );
         expect(axiosMock.post).toHaveBeenCalledTimes(1);
         expect(axios.post).toHaveBeenLastCalledWith(
           expect.any(String),
-          expect.objectContaining({ metrics: expect.not.objectContaining({ 'test:duration': 30 }) }),
+          expect.objectContaining({ metrics: expect.objectContaining({ 'test:duration': 30 }) }),
+          expect.any(Object)
+        );
+        done(err);
+      });
+    });
+
+    it('can compute interval duration metric with string context criteria', (done) => {
+      const job = createLogEventJob({
+        serviceId,
+        logger,
+        tokenProvider,
+        configurationService: configurationService as unknown as ConfigurationService,
+        valueServiceUrl: new URL('http://totally-real-value-service'),
+      });
+
+      configurationService.getConfiguration.mockResolvedValueOnce({
+        test: {
+          definitions: {
+            'test-started': {
+              interval: {
+                metric: 'test',
+                namespace: 'test',
+                name: 'test-prepared',
+                context: 'value',
+              },
+            },
+          },
+        },
+      });
+
+      const start = new Date(event.timestamp.getTime() - 30000);
+      axiosMock.get.mockResolvedValueOnce({
+        data: { 'event-service': { event: [{ timestamp: start.toISOString() }] } },
+      });
+      axiosMock.post.mockResolvedValueOnce({});
+      job(event, (err) => {
+        expect(axiosMock.get).toHaveBeenCalledWith(
+          expect.stringContaining(JSON.stringify({ value: 'a', namespace: 'test', name: 'test-prepared' })),
+          expect.any(Object)
+        );
+        expect(axiosMock.post).toHaveBeenCalledTimes(1);
+        expect(axios.post).toHaveBeenLastCalledWith(
+          expect.any(String),
+          expect.objectContaining({ metrics: expect.objectContaining({ 'test:duration': 30 }) }),
           expect.any(Object)
         );
         done(err);

@@ -1,15 +1,18 @@
-import { put, select, call, takeEvery } from 'redux-saga/effects';
+import { put, select, call, takeEvery, all } from 'redux-saga/effects';
 import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
 import {
-  fetchCoreStreamsSuccess,
-  fetchTenantStreamsSuccess,
-  FETCH_CORE_STREAMS,
-  FETCH_TENANT_STREAMS,
+  DeleteEventStreamAction,
+  deleteEventStreamSuccess,
+  DELETE_EVENT_STREAM_ACTION,
+  fetchEventStreamsSuccess,
+  FETCH_EVENT_STREAMS,
+  UpdateEventStreamAction,
+  updateEventStreamSuccess,
+  UPDATE_EVENT_STREAM_ACTION,
 } from './actions';
 import { SagaIterator } from '@redux-saga/core';
 import axios from 'axios';
-import { CORE_TENANT } from '@store/tenant/models';
 import { UpdateIndicator } from '@store/session/actions';
 
 function selectConfigBaseUrl(state: RootState): string {
@@ -20,14 +23,10 @@ function selectToken(state: RootState): string {
   return state.session.credentials.token;
 }
 
-function selectTenant(state: RootState): string {
-  return state.tenant.name;
-}
-
 const SERVICE_NAME = 'push-service';
 const API_VERSION = 'v2';
 
-export function* fetchCoreStreams(): SagaIterator {
+export function* fetchEventStreams(): SagaIterator {
   try {
     yield put(
       UpdateIndicator({
@@ -39,54 +38,28 @@ export function* fetchCoreStreams(): SagaIterator {
     const baseUrl = selectConfigBaseUrl(state);
     const token = selectToken(state);
 
-    const response = yield call(
-      axios.get,
-      `${baseUrl}/configuration/${API_VERSION}/configuration/platform/${SERVICE_NAME}/latest?core`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-
-    yield put(fetchCoreStreamsSuccess(response.data));
-    yield put(
-      UpdateIndicator({
-        show: false,
-      })
-    );
-  } catch (e) {
-    yield put(
-      UpdateIndicator({
-        show: false,
-      })
-    );
-    yield put(ErrorNotification({ message: e.message }));
-  }
-}
-
-export function* fetchTenantStreams(): SagaIterator {
-  try {
-    yield put(
-      UpdateIndicator({
-        show: true,
-        message: 'Loading...',
-      })
-    );
-    const state: RootState = yield select();
-    const baseUrl = selectConfigBaseUrl(state);
-    const token = selectToken(state);
-    const tenant = selectTenant(state);
-
-    if (tenant !== CORE_TENANT) {
-      const response = yield call(
+    const { tenantStreams, coreStreams } = yield all({
+      tenantStreams: call(
         axios.get,
         `${baseUrl}/configuration/${API_VERSION}/configuration/platform/${SERVICE_NAME}/latest`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
-      );
-      yield put(fetchTenantStreamsSuccess(response.data));
-    }
-
+      ),
+      coreStreams: call(
+        axios.get,
+        `${baseUrl}/configuration/${API_VERSION}/configuration/platform/${SERVICE_NAME}/latest?core`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      ),
+    });
+    yield put(
+      fetchEventStreamsSuccess({
+        tenantStreams: tenantStreams.data,
+        coreStreams: coreStreams.data,
+      })
+    );
     yield put(
       UpdateIndicator({
         show: false,
@@ -102,7 +75,63 @@ export function* fetchTenantStreams(): SagaIterator {
   }
 }
 
+export function* updateEventStream({ stream }: UpdateEventStreamAction): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  if (baseUrl && token) {
+    try {
+      const eventStream = {
+        [stream.id]: {
+          ...stream,
+        },
+      };
+      const body = { operation: 'UPDATE', update: { ...eventStream } };
+      const {
+        data: { latest },
+      } = yield call(
+        axios.patch,
+        `${baseUrl}/configuration/${API_VERSION}/configuration/platform/${SERVICE_NAME}`,
+        body,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      yield put(
+        updateEventStreamSuccess({
+          ...latest.configuration,
+        })
+      );
+    } catch (err) {
+      yield put(ErrorNotification({ message: err.message }));
+    }
+  }
+}
+export function* deleteEventStream({ eventStreamId }: DeleteEventStreamAction): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  if (baseUrl && token) {
+    try {
+      const {
+        data: { latest },
+      } = yield call(
+        axios.patch,
+        `${baseUrl}/configuration/${API_VERSION}/configuration/platform/${SERVICE_NAME}`,
+        { operation: 'DELETE', property: eventStreamId },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      yield put(deleteEventStreamSuccess({ ...latest.configuration }));
+    } catch (err) {
+      yield put(ErrorNotification({ message: err.message }));
+    }
+  }
+}
 export function* watchStreamSagas(): Generator {
-  yield takeEvery(FETCH_CORE_STREAMS, fetchCoreStreams);
-  yield takeEvery(FETCH_TENANT_STREAMS, fetchTenantStreams);
+  yield takeEvery(FETCH_EVENT_STREAMS, fetchEventStreams);
+  yield takeEvery(UPDATE_EVENT_STREAM_ACTION, updateEventStream);
+  yield takeEvery(DELETE_EVENT_STREAM_ACTION, deleteEventStream);
 }

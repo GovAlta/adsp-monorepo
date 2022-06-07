@@ -3,12 +3,7 @@
  * GET /configuration/... API calls
  * into something easier to use by the import/Export tab.
  */
-import { ServiceSchemas, SchemaType, Service } from '@store/configuration/model';
-
-export interface SchemaRevision {
-  schema: SchemaType;
-  revision: number;
-}
+import { ServiceSchemas, Service, ConfigurationExportType } from '@store/configuration/model';
 
 export const toNamespaceMap = (...revisions: ServiceSchemas[]): Record<Service, string[]> => {
   const results: Record<Service, string[]>[] = [];
@@ -21,8 +16,8 @@ export const toNamespaceMap = (...revisions: ServiceSchemas[]): Record<Service, 
   return merge(results);
 };
 
-export const toSchemaMap = (...revisions: ServiceSchemas[]): Record<Service, SchemaRevision> => {
-  const results: Record<Service, SchemaRevision>[] = [];
+export const toSchemaMap = (...revisions: ServiceSchemas[]): Record<Service, ConfigurationExportType> => {
+  const results: Record<Service, ConfigurationExportType>[] = [];
   for (const revision of revisions) {
     const schemas = revision ? toSchema(revision) : {};
     if (schemas) {
@@ -32,14 +27,22 @@ export const toSchemaMap = (...revisions: ServiceSchemas[]): Record<Service, Sch
   return merge(results);
 };
 
-export const toService = (namespace: string, name: string): Service => {
+export const toServiceKey = (namespace: string, name: string): Service => {
   return `${namespace}:${name}`;
 };
 
-export type serviceExports = Record<Service, SchemaRevision>;
+export const toNamespace = (key: Service): string => {
+  return key.split(':')[0];
+};
+
+export const toServiceName = (key: Service): string => {
+  return key.split(':')[1];
+};
+
+export type serviceExports = Record<Service, ConfigurationExportType>;
 export type namespaceExports = Record<Service, serviceExports>;
 
-export const toDownloadFormat = (exports: Record<Service, SchemaRevision>): namespaceExports => {
+export const toDownloadFormat = (exports: Record<Service, ConfigurationExportType>): namespaceExports => {
   const results: namespaceExports = {};
   for (const key in exports) {
     const namespace = toNamespace(key);
@@ -70,13 +73,13 @@ const toNamespaces = (revisions: ServiceSchemas): Record<Service, string[]> => {
 };
 
 // return a map of namespace:name to {schema, revision}
-const toSchema = (revisions: ServiceSchemas): Record<Service, SchemaRevision> => {
+const toSchema = (revisions: ServiceSchemas): Record<Service, ConfigurationExportType> => {
   if (revisions && revisions.revision !== undefined && revisions.revision !== null) {
     return Object.keys(revisions.configuration)
       .sort()
-      .reduce((schemaMap: Record<Service, SchemaRevision>, key: Service) => {
+      .reduce((schemaMap: Record<Service, ConfigurationExportType>, key: Service) => {
         schemaMap[key] = {
-          schema: revisions.configuration[key],
+          configuration: revisions.configuration[key],
           revision: revisions.revision,
         };
         return schemaMap;
@@ -93,12 +96,4 @@ const merge = <T>(records: Record<Service, T>[]): Record<Service, T> => {
     }
   }
   return result;
-};
-
-const toNamespace = (key: Service): string => {
-  return key.split(':')[0];
-};
-
-const toServiceName = (key: Service): string => {
-  return key.split(':')[1];
 };

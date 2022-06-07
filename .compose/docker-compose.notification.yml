@@ -20,7 +20,7 @@ services:
     expose:
       - 3335
     environment:
-      - DIRECTORY_URL=http://tenant-management-api:3333
+      - DIRECTORY_URL=http://directory-service:3331
       - KEYCLOAK_ROOT_URL=http://keycloak:8080
       - CLIENT_ID=urn:ads:platform:notification-service
       - CLIENT_SECRET=98216839-8b7a-4af9-ad39-86823714ecfd

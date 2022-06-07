@@ -1,10 +1,11 @@
 import type { Logger } from 'winston';
 import { createTenantConfigurationHandler } from '../configuration/configurationHandler';
+import { createMetricsHandler } from '../metrics';
 import { AdspId } from '../utils';
 import { initializePlatform } from './platform';
 import { LogOptions, PlatformCapabilities, PlatformOptions } from './types';
 
-type Options = Omit<PlatformOptions, 'ignoreServiceAud' | 'roles'>;
+type Options = Omit<PlatformOptions, 'ignoreServiceAud'>;
 type Capabilities = Omit<PlatformCapabilities, 'tenantService' | 'tenantHandler' | 'clearCached'> & {
   /**
    *
@@ -37,6 +38,7 @@ export async function initializeService(options: Options, logOptions: Logger | L
     tenantStrategy,
     healthCheck,
     clearCached,
+    logger,
   } = await initializePlatform({ ...options }, logOptions);
 
   // In the case of a tenant service, it will only have access to one tenant (its own).
@@ -48,6 +50,8 @@ export async function initializeService(options: Options, logOptions: Logger | L
     tenant?.id
   );
 
+  const metricsHandler = await createMetricsHandler(options.serviceId, logger, tokenProvider, directory, tenant?.id);
+
   return {
     directory,
     configurationService,
@@ -57,6 +61,8 @@ export async function initializeService(options: Options, logOptions: Logger | L
     coreStrategy,
     tenantStrategy,
     healthCheck,
+    metricsHandler,
+    logger,
     clearCached: (serviceId) => clearCached(tenant?.id, serviceId),
   };
 }

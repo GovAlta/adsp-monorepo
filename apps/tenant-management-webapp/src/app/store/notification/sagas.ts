@@ -199,7 +199,7 @@ export function* updateContactInformation({ payload }: UpdateContactInformationA
 }
 
 interface MetricResponse {
-  values: { sum: string }[];
+  values: { sum: string; avg: string }[];
 }
 
 export function* fetchNotificationMetrics(): SagaIterator {
@@ -222,10 +222,14 @@ export function* fetchNotificationMetrics(): SagaIterator {
 
       const sentMetric = 'notification-service:notification-sent:count';
       const failedMetric = 'notification-service:notification-send-failed:count';
+      const sendDurationMetric = 'notification-service:notification-send:duration';
       yield put(
         FetchNotificationMetricsSucceeded({
           notificationsSent: parseInt(metrics[sentMetric]?.values[0]?.sum || '0'),
           notificationsFailed: parseInt(metrics[failedMetric]?.values[0]?.sum || '0'),
+          sendDuration: metrics[sendDurationMetric]?.values[0]
+            ? parseInt(metrics[sendDurationMetric]?.values[0].avg)
+            : null,
         })
       );
     } catch (e) {

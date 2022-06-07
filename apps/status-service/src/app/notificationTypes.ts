@@ -119,14 +119,10 @@ export const StatusApplicationStatusChange: NotificationType = {
       name: 'application-status-changed',
       templates: {
         email: {
-          subject: '{{ event.payload.application.name }} status has changed',
+          subject: '{{ event.payload.application.name }} status changed to "{{ event.payload.application.newStatus }}"',
           body: `<div>
-  <p> {{ event.payload.application.name }} status has changed</p>
-  <p>
-    {{ event.payload.application.name }} is described as follows: {{ event.payload.application.description }}
-  </p>
-  <p>The original status was: {{ event.payload.application.originalStatus }}</p>
-  <p>The new status is now: {{ event.payload.application.newStatus }}</p>
+  <p>{{ event.payload.application.name }} status changed from <b>{{ event.payload.application.originalStatus }}</b> to <b>{{ event.payload.application.newStatus }}</b>.</p>
+  <p>{{ event.payload.application.name }}: {{ event.payload.application.description }}</p>
 </div>`,
         },
       },

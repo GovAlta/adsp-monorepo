@@ -361,5 +361,27 @@ class NotificationsPage {
   contactInformationInstructions() {
     return cy.get('[data-testid="support-instructions"]');
   }
+
+  subscriberEditIcon(addressAs, email) {
+    return cy.xpath(
+      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[@data-testid="icon-create"]`
+    );
+  }
+
+  editSubscriberModal() {
+    return cy.xpath('//div[@class="modal-title" and text()="Edit subscriber"]/ancestor::div[@class="modal"]');
+  }
+
+  editSubscriberModalSaveBtn() {
+    return cy.get('[data-testid="form-save"]');
+  }
+
+  editSubscriberModalNameField() {
+    return cy.get('[data-testid="form-name"]');
+  }
+
+  editSubscriberModalEmailField() {
+    return cy.get('[data-testid="form-email"]');
+  }
 }
 export default NotificationsPage;

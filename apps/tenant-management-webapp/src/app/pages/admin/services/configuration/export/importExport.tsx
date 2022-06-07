@@ -1,15 +1,24 @@
 import React, { FunctionComponent, useEffect, useMemo, useState } from 'react';
 import { RootState } from '@store/index';
-import { toService, toSchemaMap, toNamespaceMap, SchemaRevision, toDownloadFormat } from './ServiceConfiguration';
+import {
+  toServiceKey,
+  toSchemaMap,
+  toNamespaceMap,
+  toDownloadFormat,
+  toServiceName,
+  toNamespace,
+} from './ServiceConfiguration';
 import { GoAButton, GoACheckbox } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
-import { getConfigurationDefinitions } from '@store/configuration/action';
+import { getConfigurationDefinitions, getConfigurations, ServiceId } from '@store/configuration/action';
 import { PageIndicator } from '@components/Indicator';
+import { ConfigurationExportType, Service } from '@store/configuration/model';
 
 export const ConfigurationImportExport: FunctionComponent = () => {
   const { coreConfigDefinitions, tenantConfigDefinitions } = useSelector((state: RootState) => state.configuration);
-  const [exports, setExports] = useState<Record<string, SchemaRevision>>({});
+  const exportState = useSelector((state: RootState) => state.configurationExport);
   const indicator = useSelector((state: RootState) => state?.session?.indicator);
+  const [exportServices, setExportServices] = useState<Record<string, boolean>>({});
 
   const sortedConfiguration = useMemo(() => {
     const schemas = toSchemaMap(tenantConfigDefinitions, coreConfigDefinitions);
@@ -17,80 +26,90 @@ export const ConfigurationImportExport: FunctionComponent = () => {
     return { schemas: schemas, namespaces: namespaces };
   }, [coreConfigDefinitions, tenantConfigDefinitions]);
 
-  const toggleSelection = (namespace: string, name: string) => {
-    const key = toService(namespace, name);
-    const tmp = { ...exports };
-    if (tmp[key]) {
-      delete tmp[key];
+  const dispatch = useDispatch();
+
+  const toggleSelection = (key: string) => {
+    if (exportServices[key]) {
+      const temp = { ...exportServices };
+      delete temp[key];
+      setExportServices(temp);
     } else {
-      tmp[key] = sortedConfiguration.schemas[key];
+      setExportServices({
+        ...exportServices,
+        [key]: true,
+      });
     }
-    setExports(tmp);
   };
 
-  const exportButtonName = 'Export configuration';
-
-  const dispatch = useDispatch();
   useEffect(() => {
     dispatch(getConfigurationDefinitions());
   }, []);
 
+  useEffect(() => {
+    if (Object.keys(exportState).length > 0) {
+      downloadSelectedConfigurations(exportState);
+    }
+  }, [exportState]);
+
   return (
     <div>
-      {indicator.show && <PageIndicator />}
-      {!indicator.show && (
+      {
         <GoAButton
           data-testid="export-configuration-1"
-          disabled={Object.keys(exports).length < 1}
+          disabled={Object.keys(exportServices).length < 1 || indicator.show}
           onClick={(e) => {
             e.preventDefault();
-            downloadSelectedConfigurations(exports);
+            dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
           }}
         >
-          {exportButtonName}
+          {'Export configuration'}
         </GoAButton>
-      )}
-      {!indicator.show &&
-        Object.keys(sortedConfiguration.namespaces).map((namespace) => {
-          return (
-            <React.Fragment key={namespace}>
-              <h2>{namespace}</h2>
-              {sortedConfiguration.namespaces[namespace].map((name) => {
-                return (
-                  <div key={toService(namespace, name)}>
-                    <GoACheckbox
-                      name={name}
-                      checked={!!exports[toService(namespace, name)]}
-                      onChange={() => {
-                        toggleSelection(namespace, name);
-                      }}
-                      data-testid={`${toService(namespace, name)}_id`}
-                    >
-                      {name}
-                    </GoACheckbox>
-                  </div>
-                );
-              })}
-            </React.Fragment>
-          );
-        })}
-      {!indicator.show && (
+      }
+      {indicator.show && <PageIndicator />}
+      {Object.keys(sortedConfiguration.namespaces).map((namespace) => {
+        return (
+          <React.Fragment key={namespace}>
+            <h2>{namespace}</h2>
+            {sortedConfiguration.namespaces[namespace].map((name) => {
+              return (
+                <div key={toServiceKey(namespace, name)}>
+                  <GoACheckbox
+                    name={name}
+                    checked={exportServices[toServiceKey(namespace, name)] || false}
+                    onChange={() => {
+                      toggleSelection(toServiceKey(namespace, name));
+                    }}
+                    data-testid={`${toServiceKey(namespace, name)}_id`}
+                  >
+                    {name}
+                  </GoACheckbox>
+                </div>
+              );
+            })}
+          </React.Fragment>
+        );
+      })}
+      {
         <GoAButton
-          data-testid="export-configuration-2"
-          disabled={Object.keys(exports).length < 1}
+          data-testid="export-configuration-1"
+          disabled={Object.keys(exportServices).length < 1 || indicator.show}
           onClick={(e) => {
             e.preventDefault();
-            downloadSelectedConfigurations(exports);
+            dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
           }}
         >
-          {exportButtonName}
+          {'Export configuration'}
         </GoAButton>
-      )}
+      }
     </div>
   );
 };
 
-const downloadSelectedConfigurations = (exports: Record<string, SchemaRevision>): void => {
+const toServiceId = (key: string): ServiceId => {
+  return { namespace: toNamespace(key), service: toServiceName(key) };
+};
+
+const downloadSelectedConfigurations = (exports: Record<Service, ConfigurationExportType>): void => {
   const fileName = 'adsp-configuration.json';
   const jsonConfigs = JSON.stringify(toDownloadFormat(exports), null, 2);
   doDownload(fileName, jsonConfigs);

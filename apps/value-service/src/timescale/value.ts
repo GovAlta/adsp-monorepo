@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
 import { decodeAfter, encodeNext, InvalidOperationError, Results } from '@core-services/core-common';
-import { Value, ValueCriteria, ValuesRepository, MetricValue, Metric, MetricCriteria } from '../values';
+import { Value, ValueCriteria, ValuesRepository, MetricValue, Metric, MetricCriteria, Page } from '../values';
 import { AdspId } from '@abgov/adsp-service-sdk';
 
 type ValueRecord = Value & { namespace: string; name: string; tenant: string };
@@ -107,10 +107,16 @@ export class TimescaleValuesRepository implements ValuesRepository {
     tenantId: AdspId,
     namespace: string,
     name: string,
-    criteria: MetricCriteria
-  ): Promise<Record<string, Metric>> {
+    top = 100,
+    after?: string,
+    criteria?: MetricCriteria
+  ): Promise<Record<string, Metric> & { page: Page }> {
+    const skip = decodeAfter(after);
+
     let view = null;
     switch (criteria.interval) {
+      case 'one_minute':
+      case 'five_minutes':
       case 'hourly':
       case 'daily':
       case 'weekly':
@@ -129,7 +135,11 @@ export class TimescaleValuesRepository implements ValuesRepository {
       queryCriteria['tenant'] = tenantId.toString();
     }
 
-    let query = this.knex(view).select('metric', 'bucket', 'sum', 'avg', 'min', 'max').where(queryCriteria);
+    let query = this.knex(view)
+      .offset(skip)
+      .limit(top)
+      .select('metric', 'bucket', 'sum', 'avg', 'min', 'max', 'count')
+      .where(queryCriteria);
 
     if (criteria.intervalMax) {
       query = query.where('bucket', '<=', criteria.intervalMax);
@@ -143,22 +153,32 @@ export class TimescaleValuesRepository implements ValuesRepository {
       query = query.where('metric', 'like', `%${criteria.metricLike}%`);
     }
 
-    const rows = await query;
-    return rows.reduce((metrics, row) => {
-      const metric = metrics[row.metric] || { name: row.metric, values: [] };
-      metric.values.push({
-        interval: new Date(row.bucket),
-        sum: row.sum,
-        avg: row.avg,
-        min: row.min,
-        max: row.max,
-      });
+    const rows = await query.orderBy('bucket', 'desc');
+    return rows.reduce(
+      (metrics, row) => {
+        const metric = metrics[row.metric] || { name: row.metric, values: [] };
+        metric.values.push({
+          interval: new Date(row.bucket),
+          sum: row.sum,
+          avg: row.avg,
+          min: row.min,
+          max: row.max,
+          count: row.count,
+        });
 
-      return {
-        ...metrics,
-        [row.metric]: metric,
-      };
-    }, {});
+        return {
+          ...metrics,
+          [row.metric]: metric,
+        };
+      },
+      {
+        page: {
+          after,
+          next: encodeNext(rows.length, top, skip),
+          size: rows.length,
+        },
+      }
+    );
   }
 
   async readMetric(
@@ -166,8 +186,12 @@ export class TimescaleValuesRepository implements ValuesRepository {
     namespace: string,
     name: string,
     metric: string,
-    criteria: MetricCriteria
-  ): Promise<Metric> {
+    top = 100,
+    after?: string,
+    criteria?: MetricCriteria
+  ): Promise<Metric & { page: Page }> {
+    const skip = decodeAfter(after);
+
     let view = null;
     switch (criteria.interval) {
       case 'hourly':
@@ -189,7 +213,11 @@ export class TimescaleValuesRepository implements ValuesRepository {
       queryCriteria['tenant'] = tenantId.toString();
     }
 
-    let query = this.knex(view).select('bucket', 'sum', 'avg', 'min', 'max').where(queryCriteria);
+    let query = this.knex(view)
+      .offset(skip)
+      .limit(top)
+      .select('bucket', 'sum', 'avg', 'min', 'max', 'count')
+      .where(queryCriteria);
 
     if (criteria.intervalMax) {
       query = query.where('bucket', '<=', criteria.intervalMax);
@@ -199,7 +227,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
       query = query.where('bucket', '>=', criteria.intervalMin);
     }
 
-    const rows = await query;
+    const rows = await query.orderBy('bucket', 'desc');
     return {
       name: metric,
       values: rows.map((row) => ({
@@ -208,7 +236,13 @@ export class TimescaleValuesRepository implements ValuesRepository {
         avg: row.avg,
         min: row.min,
         max: row.max,
+        count: row.count,
       })),
+      page: {
+        after,
+        next: encodeNext(rows.length, top, skip),
+        size: rows.length,
+      },
     };
   }
 

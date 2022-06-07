@@ -50,6 +50,7 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
                 description: def.description,
                 payloadSchema: def.payloadSchema,
                 interval: def.interval,
+                log: def.log
               },
             }),
             {}

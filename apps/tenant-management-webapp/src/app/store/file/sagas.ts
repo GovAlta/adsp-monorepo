@@ -26,12 +26,15 @@ import {
   UPDATE_FILE_TYPE,
   UPLOAD_FILE,
   FetchFileTypeHasFileService,
+  FetchFileMetricsSucceeded,
+  FETCH_FILE_METRICS,
 } from './actions';
 
 import { FileApi } from './api';
 import { RootState } from '../index';
 import axios from 'axios';
 import { FileTypeItem } from './models';
+import moment from 'moment';
 
 // eslint-disable-next-line
 export function* uploadFile(file) {
@@ -269,6 +272,44 @@ export function* fetchFileTypeHasFile(action: FetchFileTypeHasFileAction): SagaI
   }
 }
 
+interface MetricResponse {
+  values: { sum: string; avg: string }[];
+}
+
+export function* fetchFileMetrics(): SagaIterator {
+  const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  if (baseUrl && token) {
+    try {
+      const criteria = JSON.stringify({
+        intervalMax: moment().toISOString(),
+        intervalMin: moment().subtract(7, 'day').toISOString(),
+        metricLike: 'file-service',
+      });
+
+      const { data: metrics }: { data: Record<string, MetricResponse> } = yield call(
+        axios.get,
+        `${baseUrl}/value/v1/event-service/values/event/metrics?interval=weekly&criteria=${criteria}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const uploadedMetric = 'file-service:file-uploaded:count';
+      const lifetimeMetric = 'file-service:file-lifetime:duration';
+      yield put(
+        FetchFileMetricsSucceeded({
+          filesUploaded: parseInt(metrics[uploadedMetric]?.values[0]?.sum || '0', 10),
+          fileLifetime: metrics[lifetimeMetric]?.values[0]
+            ? moment.duration(parseInt(metrics[lifetimeMetric]?.values[0].avg, 10), 'seconds').asDays()
+            : null,
+        })
+      );
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationMetrics` }));
+    }
+  }
+}
+
 export function* watchFileSagas(): Generator {
   //file service
   yield takeEvery(UPLOAD_FILE, uploadFile);
@@ -281,4 +322,5 @@ export function* watchFileSagas(): Generator {
   yield takeEvery(DELETE_FILE_TYPE, deleteFileTypes);
   yield takeEvery(CREATE_FILE_TYPE, createFileType);
   yield takeEvery(UPDATE_FILE_TYPE, updateFileType);
+  yield takeEvery(FETCH_FILE_METRICS, fetchFileMetrics);
 }
