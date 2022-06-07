@@ -60,7 +60,7 @@ Feature: File service
   # Ignore this test until CS-1134 is fixed
   Scenario: Test As a service owner, I can see the API documentation for file service in the tenant admin, so I can understand how to use the API
     Given a service owner user is on Files overview page
-    Then the user views the link for "File service" API docs
+    Then the user views the link of API docs for "File service"
     When the user goes to the web link of the API docs
     Then the user views "File service" API documentation
 
