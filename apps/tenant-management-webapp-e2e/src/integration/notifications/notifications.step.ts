@@ -468,6 +468,7 @@ When(
   function (addressAs, email, phoneNumber) {
     notificationsObj.searchSubscriberAddressAs().clear().type(addressAs);
     notificationsObj.searchSubscriberEmail().clear().type(email);
+    expect(phoneNumber).match(/(EMPTY)|[0-9]{10}/);
     if (phoneNumber == 'EMPTY') {
       notificationsObj.searchSubscriberPhone().clear();
     } else {
