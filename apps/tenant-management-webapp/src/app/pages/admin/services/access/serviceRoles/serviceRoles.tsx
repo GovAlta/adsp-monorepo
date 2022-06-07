@@ -45,7 +45,9 @@ export const ServiceRoles = (): JSX.Element => {
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
-  const [addRoleClientId, setAddRoleClientId] = useState<string>(null);
+  const [newClientId, setNewClientId] = useState<string>(null);
+  const [newRole, setNewRole] = useState<string>(null);
+
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
   useEffect(() => {
@@ -61,11 +63,12 @@ export const ServiceRoles = (): JSX.Element => {
 
   return (
     <div>
-      {addRoleClientId && (
+      {newClientId && (
         <ConfirmationModal
-          clientId={addRoleClientId}
+          clientId={newClientId}
+          role={newRole}
           onCancel={() => {
-            setAddRoleClientId(null);
+            setNewClientId(null);
           }}
         />
       )}
@@ -81,15 +84,21 @@ export const ServiceRoles = (): JSX.Element => {
                 const roles = (config as ConfigServiceRole).roles;
                 return (
                   <ServiceRoleListContainer key={`tenant-service-role-${clientId}`}>
-                    <div className="title" key={`tenant-service-role-id-${clientId}`}>
+                    <div
+                      className="title"
+                      key={`tenant-service-role-id-${clientId}`}
+                      data-testid={`tenant-service-role-id-${clientId}`}
+                    >
                       {clientId}
                     </div>
                     <ServiceRoleList
                       key={`tenant-service-role-list-${clientId}`}
+                      data-testid={`tenant-service-role-list-${clientId}`}
                       roles={roles}
                       clientId={clientId}
-                      addRoleFunc={(clientId) => {
-                        setAddRoleClientId(clientId);
+                      addRoleFunc={(clientId, role: string) => {
+                        setNewClientId(clientId);
+                        setNewRole(role);
                       }}
                     />
                   </ServiceRoleListContainer>
@@ -107,15 +116,20 @@ export const ServiceRoles = (): JSX.Element => {
                 const roles = (config as ConfigServiceRole).roles;
                 return (
                   <ServiceRoleListContainer key={`core-service-role-${clientId}`}>
-                    <div className="title" key={`core-service-role-id-${clientId}`}>
+                    <div
+                      className="title"
+                      key={`core-service-role-id-${clientId}`}
+                      data-testid={`core-service-role-id-${clientId}`}
+                    >
                       {clientId}
                     </div>
                     <ServiceRoleList
                       key={`core-service-role-list-${clientId}`}
+                      data-testid={`core-service-role-list-${clientId}`}
                       roles={roles}
                       clientId={clientId}
-                      addRoleFunc={(clientId) => {
-                        setAddRoleClientId(clientId);
+                      addRoleFunc={(role) => {
+                        setNewRole(role);
                       }}
                     />
                   </ServiceRoleListContainer>

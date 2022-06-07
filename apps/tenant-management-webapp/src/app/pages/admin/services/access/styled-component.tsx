@@ -49,11 +49,11 @@ export const TableDiv = styled.div`
     width: 30%;
   }
 
-  & td:second-child {
+  & td:nth-child(2) {
     width: 40%;
   }
 
-  &td: 3th-child {
+  & td:nth-child(3) {
     width: 20%;
     text-align: center;
   }
@@ -63,19 +63,30 @@ export const TableDiv = styled.div`
   }
 
   & th:first-child {
-    width: 20%;
+    width: 30%;
   }
 
-  & th:second-child {
+  & th:nth-child(2) {
     width: 40%;
   }
 
-  &td: 3th-child {
+  & td:nth-child(3) {
     width: 20%;
     text-align: center;
   }
 
   & td:last-child {
     width: 10%;
+  }
+`;
+
+export const TextLoadingIndicator = styled.span`
+  animation: blinker 1s linear infinite;
+  font-size: 14px;
+  font-style: italic;
+  @keyframes blinker {
+    50% {
+      opacity: 0;
+    }
   }
 `;

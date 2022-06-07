@@ -1,17 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import DataTable from '@components/DataTable';
 import { ServiceRoles } from '@store/access/models';
-import { TableDiv } from '../styled-component';
+import { TableDiv, TextLoadingIndicator } from '../styled-component';
 import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { ServiceRoleConfig } from '@store/access/models';
-import { GoAIconButton, GoAButton } from '@abgov/react-components/experimental';
+import { GoAIconButton } from '@abgov/react-components/experimental';
 
 interface ServiceRoleListProps {
   roles: ServiceRoles;
   clientId: string;
-  addRoleFunc: (clientId: string) => void;
+  addRoleFunc: (clientId: string, role: string) => void;
 }
 
 export const selectKeycloakServiceRoles = createSelector(
@@ -47,7 +47,7 @@ export const ServiceRoleList = ({ roles, clientId, addRoleFunc }: ServiceRoleLis
               <th>Name</th>
               <th>Description</th>
               <th>composite?</th>
-              <th>Actions</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -58,13 +58,18 @@ export const ServiceRoleList = ({ roles, clientId, addRoleFunc }: ServiceRoleLis
                   <td>{role.description}</td>
                   <td>{role?.inTenantAdmin ? 'Yes' : 'No'}</td>
                   <td>
-                    {isRoleExisted(keycloakRoles, clientId, role.role) && (
-                      <GoAIconButton
-                        type="add-circle"
-                        onClick={() => {
-                          addRoleFunc(clientId);
-                        }}
-                      />
+                    {keycloakRoles !== null &&
+                      Object.entries(keycloakRoles).length > 0 &&
+                      !isRoleExisted(keycloakRoles, clientId, role.role) && (
+                        <GoAIconButton
+                          type="add-circle"
+                          onClick={() => {
+                            addRoleFunc(clientId, role.role);
+                          }}
+                        />
+                      )}
+                    {(keycloakRoles === null || Object.entries(keycloakRoles).length === 0) && (
+                      <TextLoadingIndicator>Loading</TextLoadingIndicator>
                     )}
                   </td>
                 </tr>

@@ -1,4 +1,9 @@
-import { ActionTypes, FETCH_SERVICE_ROLES_SUCCESS, FETCH_KEYCLOAK_SERVICE_ROLES_SUCCESS } from './actions';
+import {
+  ActionTypes,
+  FETCH_SERVICE_ROLES_SUCCESS,
+  FETCH_KEYCLOAK_SERVICE_ROLES_SUCCESS,
+  CREATE_KEYCLOAK_ROLE_SUCCESS,
+} from './actions';
 import { ACCESS_INIT, AccessState, SERVICE_ROLES_INIT, ServiceRoleState } from './models';
 
 export default function accessReducer(state: AccessState = ACCESS_INIT, action: ActionTypes): AccessState {
@@ -36,6 +41,27 @@ export function serviceRolesReduce(
         ...action.payload,
       };
     }
+    case CREATE_KEYCLOAK_ROLE_SUCCESS: {
+      const { clientId, id, role } = action.payload;
+      if (!(clientId in state.keycloakIdMap)) {
+        state.keycloakIdMap[clientId] = id;
+      }
+
+      if (!(clientId in state.keycloak)) {
+        state.keycloak[clientId] = {
+          roles: [],
+        };
+      }
+
+      const mergedRoleConfig = { ...state.tenant, ...state.core };
+      state.keycloak[clientId].roles.push(
+        mergedRoleConfig[clientId].roles.find((r) => {
+          return r.role === role;
+        })
+      );
+      return { ...state };
+    }
+    // eslint-disable-next-line
     default:
       return state;
   }
