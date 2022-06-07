@@ -464,15 +464,16 @@ When('the user searches subscribers with {string} containing {string}', function
 });
 
 When(
-  'the user searches subscribers with address as containing {string} and email containing {string}',
-  function (addressAsSearchText, emailSearchText) {
-    //Enter search text
-    notificationsObj.subscribersAddressAsSearchField().clear().type(addressAsSearchText);
-    notificationsObj.subscribersEmailSearchField().clear().type(emailSearchText);
-
-    //Click Search button
-    notificationsObj.subscribersSearchBtn().click();
-    cy.wait(2000);
+  'the user searches subscribers with address as containing {string}, email containing {string} and phone number containing {string}',
+  function (addressAs, email, phoneNumber) {
+    notificationsObj.searchSubscriberAddressAs().clear().type(addressAs);
+    notificationsObj.searchSubscriberEmail().clear().type(email);
+    if (phoneNumber == 'EMPTY') {
+      notificationsObj.searchSubscriberPhone().clear();
+    } else {
+      notificationsObj.searchSubscriberPhone().clear().type(phoneNumber);
+    }
+    notificationsObj.notificationSearchBtn().click();
   }
 );
 
@@ -701,4 +702,13 @@ Then('the user views Edit subscriber modal', function () {
 Then('the user clicks Save button in Edit subscriber modal', function () {
   notificationsObj.editSubscriberModalSaveBtn().click();
   cy.wait(2000);
+});
+
+When('the user enters {string} in Phone number field', function (phoneNumber) {
+  expect(phoneNumber).match(/(EMPTY)|[0-9]{10}/);
+  if (phoneNumber !== 'EMPTY') {
+    notificationsObj.editSubscriberModalPhoneNumberField().clear().type(phoneNumber);
+  } else {
+    notificationsObj.editSubscriberModalPhoneNumberField().clear();
+  }
 });
