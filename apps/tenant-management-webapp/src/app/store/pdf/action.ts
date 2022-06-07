@@ -1,4 +1,4 @@
-import { PdfMetrics, PdfTemplate } from './model';
+import { PdfMetrics, PdfTemplate, PdfGenerationResponse, PdfGenerationPayload } from './model';
 
 export const FETCH_PDF_TEMPLATES_ACTION = 'pdf/FETCH_PDF_TEMPLATES_ACTION';
 export const FETCH_PDF_TEMPLATES_SUCCESS_ACTION = 'pdf/FETCH_PDF_TEMPLATES_SUCCESS_ACTION';
@@ -9,6 +9,11 @@ export const UPDATE_PDF_TEMPLATE_SUCCESS_ACTION = 'pdf/UPDATE_PDF_TEMPLATE_SUCCE
 export const FETCH_PDF_METRICS_ACTION = 'pdf/FETCH_PDF_METRICS';
 export const FETCH_PDF_METRICS_SUCCESS_ACTION = 'pdf/FETCH_PDF_METRICS_SUCCESS';
 
+export const GENERATE_PDF_ACTION = 'pdf/GENERATE_PDF_ACTION';
+export const GENERATE_PDF_SUCCESS_ACTION = 'pdf/GENERATE_PDF_SUCCESS_ACTION';
+
+export const ADD_TO_STREAM = 'pdf/ADD_TO_STREAM';
+
 export interface FetchPdfTemplatesAction {
   type: typeof FETCH_PDF_TEMPLATES_ACTION;
 }
@@ -16,6 +21,23 @@ export interface FetchPdfTemplatesAction {
 export interface FetchPdfTemplatesSuccessAction {
   type: typeof FETCH_PDF_TEMPLATES_SUCCESS_ACTION;
   payload: Record<string, PdfTemplate>;
+}
+
+export interface GeneratePdfSuccessAction {
+  type: typeof GENERATE_PDF_SUCCESS_ACTION;
+  payload: PdfGenerationResponse;
+}
+
+// eslint-disable-next-line
+export interface AddToStreamAction {
+  type: typeof ADD_TO_STREAM;
+  // eslint-disable-next-line
+  payload: any;
+}
+
+export interface GeneratePdfAction {
+  type: typeof GENERATE_PDF_ACTION;
+  payload: PdfGenerationPayload;
 }
 
 export interface UpdatePdfTemplatesAction {
@@ -43,7 +65,9 @@ export type PdfActionTypes =
   | UpdatePdfTemplatesAction
   | UpdatePdfTemplatesSuccessAction
   | FetchPdfMetricsAction
-  | FetchPdfMetricsSuccessAction;
+  | FetchPdfMetricsSuccessAction
+  | FetchPdfMetricsSuccessAction
+  | AddToStreamAction;
 
 export const updatePdfTemplate = (template: PdfTemplate): UpdatePdfTemplatesAction => ({
   type: UPDATE_PDF_TEMPLATE_ACTION,
@@ -62,6 +86,22 @@ export const getPdfTemplates = (): FetchPdfTemplatesAction => ({
 export const getPdfTemplatesSuccess = (results: Record<string, PdfTemplate>): FetchPdfTemplatesSuccessAction => ({
   type: FETCH_PDF_TEMPLATES_SUCCESS_ACTION,
   payload: results,
+});
+
+export const generatePdf = (payload: PdfGenerationPayload): GeneratePdfAction => ({
+  type: GENERATE_PDF_ACTION,
+  payload: payload,
+});
+
+export const generatePdfSuccess = (results: PdfGenerationResponse): GeneratePdfSuccessAction => ({
+  type: GENERATE_PDF_SUCCESS_ACTION,
+  payload: results,
+});
+
+// eslint-disable-next-line
+export const addToStream = (payload: any): AddToStreamAction => ({
+  type: ADD_TO_STREAM,
+  payload: payload,
 });
 
 export const fetchPdfMetrics = (): FetchPdfMetricsAction => ({

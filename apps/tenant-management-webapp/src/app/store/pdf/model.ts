@@ -6,6 +6,23 @@ export interface PdfTemplate {
   useWrapper: boolean;
 }
 
+export interface PdfGenerationResponse {
+  id: string;
+  status: string;
+  result: {
+    urn: string;
+    id: string;
+  };
+}
+
+export interface PdfGenerationPayload {
+  templateId: string;
+  data: Record<string, SchemaType>;
+  fileName: string;
+}
+
+export type SchemaType = unknown;
+
 export interface PdfMetrics {
   pdfGenerated?: number;
   pdfFailed?: number;
@@ -15,6 +32,8 @@ export interface PdfMetrics {
 export interface PdfState {
   pdfTemplates: Record<string, PdfTemplate>;
   metrics: PdfMetrics;
+  // eslint-disable-next-line
+  stream: any[];
 }
 
 export const defaultPdfTemplate: PdfTemplate = {
