@@ -227,7 +227,9 @@ export function* fetchNotificationMetrics(): SagaIterator {
         FetchNotificationMetricsSucceeded({
           notificationsSent: parseInt(metrics[sentMetric]?.values[0]?.sum || '0'),
           notificationsFailed: parseInt(metrics[failedMetric]?.values[0]?.sum || '0'),
-          sendDuration: parseInt(metrics[sendDurationMetric]?.values[0]?.avg || '0'),
+          sendDuration: metrics[sendDurationMetric]?.values[0]
+            ? parseInt(metrics[sendDurationMetric]?.values[0].avg)
+            : null,
         })
       );
     } catch (e) {
