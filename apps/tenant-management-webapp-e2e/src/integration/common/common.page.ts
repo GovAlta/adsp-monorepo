@@ -59,7 +59,7 @@ class Common {
     return cy.xpath('//*[contains(text(), "Helpful links")]/following-sibling::a[contains(text(), "See the code")]');
   }
 
-  seeSupportLink(link) {
+  supportLink(link) {
     return cy.xpath(`//h3[text()="Support"]/following-sibling::*[contains(text(), "${link}")]`);
   }
 }

@@ -122,7 +122,7 @@ When('the user waits {string} seconds', function (seconds) {
 //serviceName parameter needs to be lower case with kebab format for See the code link
 Then('the user views the link of See the code for {string}', function (serviceName) {
   commonObj
-    .codeLink()
+    .seeTheCodeLink()
     .should('have.attr', 'href')
     .then((href) => {
       expect(href).to.contain(serviceName);
