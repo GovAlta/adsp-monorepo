@@ -4,10 +4,12 @@ import { adspId } from '../utils';
 import { ConfigurationServiceImpl } from './configurationService';
 
 const cacheMock = jest.fn();
+const cacheClear = jest.fn();
 jest.mock('node-cache', () => {
   return class FakeCache {
     get = cacheMock;
     set = jest.fn();
+    del = cacheClear;
   };
 });
 
@@ -26,6 +28,10 @@ describe('ConfigurationService', () => {
     getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-directory'))),
     getResourceUrl: jest.fn(),
   };
+
+  beforeEach(() => {
+    cacheClear.mockReset();
+  });
 
   it('can be constructed', () => {
     const service = new ConfigurationServiceImpl(logger, directoryMock);
@@ -64,6 +70,26 @@ describe('ConfigurationService', () => {
     );
 
     expect(result.value).toBe(config.value);
+    expect(options.value).toBe(configOptions.value);
+  });
+
+  it('can handle no configuration from API', async () => {
+    const service = new ConfigurationServiceImpl(logger, directoryMock);
+
+    cacheMock.mockReturnValueOnce(null);
+    cacheMock.mockReturnValueOnce(null);
+
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: null }));
+    const configOptions = { value: 'this is core' };
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: configOptions }));
+
+    const [result, options] = await service.getConfiguration<{ value: string }>(
+      adspId`urn:ads:platform:test`,
+      'test',
+      adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+    );
+
+    expect(result).toBeFalsy();
     expect(options.value).toBe(configOptions.value);
   });
 
@@ -154,5 +180,16 @@ describe('ConfigurationService', () => {
 
     expect(combined).toBe('combined');
     expect(combine).toHaveBeenCalledTimes(1);
+  });
+
+  it('can clear cached', () => {
+    const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+    const serviceId = adspId`urn:ads:platform:test`;
+    const service = new ConfigurationServiceImpl(logger, directoryMock);
+
+    cacheClear.mockReturnValueOnce(1);
+    service.clearCached(tenantId, serviceId);
+
+    expect(cacheClear).toHaveBeenCalled();
   });
 });

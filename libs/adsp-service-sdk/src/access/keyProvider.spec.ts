@@ -33,15 +33,17 @@ jest.mock('jwks-rsa', () => {
 });
 
 describe('TenantKeyProvider', () => {
-  const logger: Logger = ({
+  const logger: Logger = {
     debug: jest.fn(),
     info: jest.fn(),
     error: jest.fn(),
-  } as unknown) as Logger;
+  } as unknown as Logger;
 
-  const issuerMock = ({
+  const issuerMock = {
     getTenantByIssuer: jest.fn(),
-  } as unknown) as jest.Mocked<IssuerCache>;
+  } as unknown as jest.Mocked<IssuerCache>;
+
+  beforeEach(() => axiosMock.get.mockReset());
 
   it('can be constructed', () => {
     const provider = new TenantKeyProvider(logger, new URL('http://totally-access'), issuerMock);
@@ -80,6 +82,40 @@ describe('TenantKeyProvider', () => {
     provider.keyRequestHandler(req, '', (err, k) => {
       expect(k).toBe(key);
       done(err);
+    });
+  });
+
+  it('can throw for unknown tenant issuer in create jwks client', (done) => {
+    const provider = new TenantKeyProvider(logger, new URL('http://totally-access'), issuerMock);
+    const req: Request = {} as Request;
+
+    cacheMock.mockReturnValueOnce(null);
+    issuerMock.getTenantByIssuer.mockResolvedValueOnce(null);
+
+    axiosMock.get.mockResolvedValueOnce({ data: { issuer: 'test', jwks_uri: 'http://totally-jwks' } });
+
+    provider.keyRequestHandler(req, '', (err) => {
+      expect(err).toBeTruthy();
+      done();
+    });
+  });
+
+  it('can throw for oidc metadata issuer not matching iss', (done) => {
+    const provider = new TenantKeyProvider(logger, new URL('http://totally-access'), issuerMock);
+    const req: Request = {} as Request;
+
+    cacheMock.mockReturnValueOnce(null);
+    issuerMock.getTenantByIssuer.mockResolvedValueOnce({
+      id: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
+      name: 'test',
+      realm: 'test',
+    });
+
+    axiosMock.get.mockResolvedValueOnce({ data: { issuer: 'test2', jwks_uri: 'http://totally-jwks' } });
+
+    provider.keyRequestHandler(req, '', (err) => {
+      expect(err).toBeTruthy();
+      done();
     });
   });
 });

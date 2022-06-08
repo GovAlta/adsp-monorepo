@@ -59,8 +59,6 @@ describe('EventService', () => {
       ]
     );
 
-    axiosMock.get.mockResolvedValue({ data: { results: [{ id: 'test-123', configOptions: {} }] } });
-
     const event = {
       tenantId,
       name: 'test-event',
@@ -96,10 +94,7 @@ describe('EventService', () => {
       ]
     );
 
-    axiosMock.get.mockResolvedValue({ data: { results: [{ id: 'test-123', configOptions: {} }] } });
-
     const event = {
-      tenantId,
       name: 'test-event',
       timestamp: new Date(),
       payload: {},
@@ -134,5 +129,37 @@ describe('EventService', () => {
         payload: {},
       })
     ).rejects.toThrow(/Event test-service:test-event is not recognized; only registered events can be sent./);
+  });
+
+  it('can handle send error', async () => {
+    const service = new EventServiceImpl(
+      true,
+      logger,
+      directoryMock,
+      tokenProviderMock,
+      adspId`urn:ads:platform:test-service`,
+      [
+        {
+          name: 'test-event',
+          description: 'signalled when unit testing',
+          payloadSchema: {
+            type: 'object',
+          },
+        },
+      ]
+    );
+
+    axiosMock.post.mockRejectedValue(new Error('oh noes!'));
+
+    const event = {
+      tenantId,
+      name: 'test-event',
+      timestamp: new Date(),
+      payload: {},
+    };
+
+    await service.send(event);
+
+    expect(axiosMock.post).toHaveBeenCalledTimes(1);
   });
 });
