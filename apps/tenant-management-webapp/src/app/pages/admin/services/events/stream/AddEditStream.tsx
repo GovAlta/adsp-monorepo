@@ -1,6 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { GoAButton, GoADropdownOption, GoADropdown, GoACheckbox } from '@abgov/react-components';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+import {
+  GoAModal,
+  GoAModalActions,
+  GoAModalContent,
+  GoAModalTitle,
+  GoAInput,
+} from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { IdField, StreamModalStyles } from './styleComponents';
 import { Stream } from '@store/stream/models';
@@ -61,17 +67,17 @@ export const AddEditStream = ({
           <GoAForm>
             <GoAFormItem error={errors?.['name']}>
               <label>Name</label>
-              <input
+              <GoAInput
                 type="text"
                 name="stream-name"
                 value={stream.name}
                 disabled={isEdit}
                 data-testid="stream-name"
                 aria-label="stream-name"
-                onChange={(e) => {
-                  validators['name'].check(e.target.value);
-                  const streamId = toKebabName(e.target.value);
-                  setStream({ ...stream, name: e.target.value, id: streamId });
+                onChange={(name, value) => {
+                  validators['name'].check(value);
+                  const streamId = toKebabName(value);
+                  setStream({ ...stream, name: value, id: streamId });
                 }}
               />
             </GoAFormItem>
@@ -86,6 +92,7 @@ export const AddEditStream = ({
                 value={stream.description}
                 data-testid="stream-description"
                 aria-label="stream-description"
+                className="goa-textarea"
                 onChange={(e) => {
                   setStream({ ...stream, description: e.target.value });
                 }}
