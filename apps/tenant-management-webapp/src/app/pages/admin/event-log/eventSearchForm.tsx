@@ -189,34 +189,30 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
         </SearchBox>
         <GoAFormItem>
           <label>Minimum timestamp</label>
-          <DateTimeInput>
-            <input
-              type="datetime-local"
-              name="timestampMin"
-              max={today}
-              aria-label="timestampMin"
-              value={searchCriteria.timestampMin}
-              onChange={(e) => setValue('timestampMin', e.target.value)}
-            />
-          </DateTimeInput>
+          <DateTimeInput
+            type="datetime-local"
+            name="timestampMin"
+            max={today}
+            aria-label="timestampMin"
+            value={searchCriteria.timestampMin}
+            onChange={(e) => setValue('timestampMin', e.target.value)}
+          />
         </GoAFormItem>
         <GoAFormItem>
           <label>Maximum timestamp</label>
-          <DateTimeInput>
-            <input
-              type="datetime-local"
-              name="timestampMax"
-              max={today}
-              aria-label="timestampMax"
-              value={searchCriteria.timestampMax}
-              onChange={(e) => setValue('timestampMax', e.target.value)}
-            />
-          </DateTimeInput>
+          <DateTimeInput
+            type="datetime-local"
+            name="timestampMax"
+            max={today}
+            aria-label="timestampMax"
+            value={searchCriteria.timestampMax}
+            onChange={(e) => setValue('timestampMax', e.target.value)}
+          />
         </GoAFormItem>
       </GoAFlexRow>
       <GoAFormActions alignment="right">
         <GoAButton
-          type={"secondary"}
+          type={'secondary'}
           title="Reset"
           onClick={() => {
             setOpen(false);
@@ -285,7 +281,7 @@ const SearchBox = styled.div`
   }
 `;
 
-const DateTimeInput = styled.div`
+const DateTimeInput = styled.input`
   display: flex;
   align-content: center;
   line-height: var(--input-height);
@@ -294,5 +290,14 @@ const DateTimeInput = styled.div`
   border-radius: 3px;
   > input {
     border: none;
+  }
+  :hover {
+    border-color: var(--color-blue-600);
+  }
+  :active,
+  :focus {
+    border-color: #004f84;
+    box-shadow: 0 0 0 3px #feba35;
+    outline: none;
   }
 `;
