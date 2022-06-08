@@ -9,7 +9,7 @@ import {
   GoAModalTitle,
   GoAInput,
 } from '@abgov/react-components/experimental';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem, GoATextArea } from '@abgov/react-components/experimental';
 import { GoADropdown } from '@abgov/react-components';
 import { RootState } from '@store/index';
 import { GoACallout } from '@abgov/react-components';
@@ -107,12 +107,12 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
             </GoAFormItem>
             <GoAFormItem>
               <label>Description</label>
-              <textarea
+              <GoATextArea
                 name="description"
                 data-testid="form-description"
                 value={type.description}
                 aria-label="description"
-                onChange={(e) => setType({ ...type, description: e.target.value })}
+                onChange={(name, value) => setType({ ...type, description: value })}
               />
             </GoAFormItem>
             <GoAFormItem>

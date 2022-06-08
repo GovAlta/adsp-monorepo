@@ -3,7 +3,13 @@ import type { Subscriber } from '@store/subscription/models';
 import { GoAButton } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+import {
+  GoAModal,
+  GoAModalActions,
+  GoAModalContent,
+  GoAModalTitle,
+  GoATextArea,
+} from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem, GoAInputEmail, GoAInput } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
 import { isSmsValid, emailError, smsError } from '@lib/inputValidation';
@@ -200,13 +206,13 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
               {botIndex !== -1 && (
                 <GoAFormItem error={formErrors?.['slack'] || updateError}>
                   <label>Slack</label>
-                  <textarea
+                  <GoATextArea
                     name="slack"
                     data-testid="form-slack"
                     value={bot}
                     aria-label="slack"
-                    onChange={(e) => {
-                      setBot(e.target.value);
+                    onChange={(name, value) => {
+                      setBot(value);
                     }}
                   />
                 </GoAFormItem>

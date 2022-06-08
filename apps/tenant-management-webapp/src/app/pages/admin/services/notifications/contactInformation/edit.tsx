@@ -1,7 +1,13 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { ContactInformation } from '@store/notification/models';
 import { GoAButton } from '@abgov/react-components';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+import {
+  GoAModal,
+  GoAModalActions,
+  GoAModalContent,
+  GoAModalTitle,
+  GoATextArea,
+} from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
 
@@ -95,14 +101,13 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
               </GoAFormItem>
               <GoAFormItem error={formErrors?.['supportInstructions']}>
                 <label>Support instructions</label>
-                <textarea
-                  rows={7}
+                <GoATextArea
                   name="supportInstruction"
                   value={contactInformation?.supportInstructions || ''}
                   data-testid="form-support-instructions"
                   aria-label="name"
-                  onChange={(e) =>
-                    setContactInformation({ ...contactInformation, supportInstructions: e.target.value })
+                  onChange={(name, value) =>
+                    setContactInformation({ ...contactInformation, supportInstructions: value })
                   }
                 />
               </GoAFormItem>

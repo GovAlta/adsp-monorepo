@@ -12,6 +12,7 @@ import {
   GoAModalActions,
   GoAModalContent,
   GoAModalTitle,
+  GoATextArea,
 } from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
 import { createSelector } from 'reselect';
@@ -112,13 +113,13 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSav
 
           <GoAFormItem>
             <label>Description</label>
-            <textarea
+            <GoATextArea
               name="description"
               value={application?.description}
-              onChange={(e) =>
+              onChange={(name, value) =>
                 setApplication({
                   ...application,
-                  description: e.target.value,
+                  description: value,
                 })
               }
               aria-label="description"

@@ -8,6 +8,7 @@ import {
   GoAModalContent,
   GoAModalTitle,
   GoAInput,
+  GoATextArea,
 } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { wordCheck, characterCheck, validationPattern, isNotEmptyCheck } from '@lib/checkInput';
@@ -86,12 +87,12 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
           </GoAFormItem>
           <GoAFormItem>
             <label>Description</label>
-            <textarea
+            <GoATextArea
               name="description"
               data-testid="form-description"
               value={definition.description}
               aria-label="description"
-              onChange={(e) => setDefinition({ ...definition, description: e.target.value })}
+              onChange={(name, value) => setDefinition({ ...definition, description: value })}
             />
           </GoAFormItem>
           <GoAFormItem>

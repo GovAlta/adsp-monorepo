@@ -10,6 +10,7 @@ import {
   GoAModal,
   GoAModalContent,
   GoAModalTitle,
+  GoATextArea,
 } from '@abgov/react-components/experimental';
 import TimePicker from 'react-time-picker';
 import DatePicker from 'react-date-picker';
@@ -107,11 +108,6 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
     return { ...applicationSelectedConst, ...validDateRangeConst, ...messageExistsConst };
   }
 
-  function setValue(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, customValue?: unknown) {
-    const { value } = e.target;
-    setMessage(value);
-  }
-
   function submit(e: FormEvent) {
     e.preventDefault();
     const formErrorList = formErrors();
@@ -152,12 +148,13 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
           <GoAForm data-testid="notice-form">
             <GoAFormItem error={errors?.['message']}>
               <label>Description</label>
-              <textarea
+              <GoATextArea
                 data-testid="notice-form-description"
                 name="message"
                 value={message}
-                onChange={setValue}
-                maxLength={280}
+                onChange={(name, value) => {
+                  setMessage(value);
+                }}
               />
             </GoAFormItem>
 
