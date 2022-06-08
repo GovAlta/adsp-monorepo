@@ -220,6 +220,10 @@ class NotificationsPage {
     return cy.xpath('//input[@id="email"]');
   }
 
+  searchSubscriberPhone() {
+    return cy.xpath('//input[@id="sms"]');
+  }
+
   notificationSearchBtn() {
     return cy.xpath('//button[@title="Search"]');
   }
@@ -306,6 +310,12 @@ class NotificationsPage {
     );
   }
 
+  subscriberWithPhoneNumber(addressAs, email, phoneNumber) {
+    return cy.xpath(
+      `//*[@data-testid="subscribers-list-title"]//table/div/tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/following-sibling::*[contains(text(), "${phoneNumber}")]/parent::*`
+    );
+  }
+
   subscriberDeleteConfirmationModalTitle() {
     return cy.xpath('//*[@data-testid="delete-confirmation"]//*[@class="modal-title"]');
   }
@@ -370,6 +380,10 @@ class NotificationsPage {
 
   editSubscriberModalEmailField() {
     return cy.get('[data-testid="form-email"]');
+  }
+
+  editSubscriberModalPhoneNumberField() {
+    return cy.get('[data-testid="contact-sms-input"]');
   }
 }
 export default NotificationsPage;
