@@ -17,7 +17,7 @@ export class IssuerCache {
   ) {}
 
   #getIssuer = (tenant: Tenant): string => {
-    if (!tenant || !tenant.realm) {
+    if (!tenant?.realm) {
       return null;
     }
 
@@ -46,12 +46,10 @@ export class IssuerCache {
   getTenantByIssuer = async (issuer: string): Promise<Tenant> => {
     let tenant = this.#issuers.get<Tenant>(issuer);
     if (!tenant) {
-      try
-      {
+      try {
         await this.#updateIssuers();
         tenant = this.#issuers.get<Tenant>(issuer);
-      }
-      catch (err) {
+      } catch (err) {
         this.logger.error(`Encountered error on updating issuers. ${err}`);
       }
     }
