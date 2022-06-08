@@ -122,7 +122,7 @@ When('the user waits {string} seconds', function (seconds) {
 //serviceName parameter needs to be lower case with kebab format for See the code link
 Then('the user views the link of See the code for {string}', function (serviceName) {
   commonObj
-    .seeTheCodeLink()
+    .codeLink()
     .should('have.attr', 'href')
     .then((href) => {
       expect(href).to.contain(serviceName);
@@ -131,7 +131,7 @@ Then('the user views the link of See the code for {string}', function (serviceNa
 
 Then('the user views the link of {string} under Support', function (asideLink) {
   commonObj
-    .seeSupportLink(asideLink)
+    .supportLink(asideLink)
     .should('have.attr', 'href')
     .then((href) => {
       expect(href).to.contain('mailto:adsp@gov.ab.ca');
