@@ -55,11 +55,11 @@ class Common {
     );
   }
 
-  codeLink() {
+  seeTheCodeLink() {
     return cy.xpath('//*[contains(text(), "Helpful links")]/following-sibling::a[contains(text(), "See the code")]');
   }
 
-  supportLink(link) {
+  seeSupportLink(link) {
     return cy.xpath(`//h3[text()="Support"]/following-sibling::*[contains(text(), "${link}")]`);
   }
 }
