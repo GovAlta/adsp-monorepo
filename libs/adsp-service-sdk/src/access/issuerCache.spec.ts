@@ -58,13 +58,32 @@ describe('IssuerCache', () => {
     };
 
     cacheMock.mockReturnValueOnce(null);
-    serviceMock.getTenants.mockResolvedValueOnce([tenant]);
+    serviceMock.getTenants.mockResolvedValueOnce([
+      tenant,
+      // Incomplete tenant value.
+      {
+        id: adspId`urn:ads:platform:tenant-service:v2:/tenants/test2`,
+        name: 'test2',
+      },
+      null,
+    ]);
     cacheMock.mockReturnValueOnce(tenant);
 
     const cache = new IssuerCache(logger, new URL('http://totally-access'), serviceMock);
     const result = await cache.getTenantByIssuer('issuer');
 
     expect(result).toBe(tenant);
+    expect(serviceMock.getTenants).toHaveBeenCalledTimes(1);
+  });
+
+  it('can null from get tenants from service', async () => {
+    cacheMock.mockReturnValueOnce(null);
+    serviceMock.getTenants.mockResolvedValueOnce(null);
+
+    const cache = new IssuerCache(logger, new URL('http://totally-access'), serviceMock);
+    const result = await cache.getTenantByIssuer('issuer');
+
+    expect(result).toBeFalsy();
     expect(serviceMock.getTenants).toHaveBeenCalledTimes(1);
   });
 

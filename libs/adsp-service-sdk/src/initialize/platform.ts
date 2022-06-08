@@ -43,7 +43,7 @@ export async function initializePlatform(
   const tenantService = service?.tenantService || createTenantService({ logger, directory, tokenProvider });
   const tenantHandler = createTenantHandler(tenantService);
 
-  const coreStrategy = createRealmStrategy({
+  const coreStrategy = await createRealmStrategy({
     realm: 'core',
     logger,
     serviceId,
@@ -55,7 +55,7 @@ export async function initializePlatform(
   const tenantStrategy =
     realm === 'core'
       ? createTenantStrategy({ logger, serviceId, accessServiceUrl, tenantService, ignoreServiceAud })
-      : createRealmStrategy({ realm, logger, serviceId, accessServiceUrl, tenantService, ignoreServiceAud });
+      : await createRealmStrategy({ realm, logger, serviceId, accessServiceUrl, tenantService, ignoreServiceAud });
 
   let configurationService = service?.configurationService;
   let clearCached = function (_tenantId: AdspId, _serviceId: AdspId) {

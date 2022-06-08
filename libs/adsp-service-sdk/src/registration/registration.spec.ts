@@ -78,6 +78,29 @@ describe('ServiceRegistrar', () => {
     expect(axiosMock.patch.mock.calls[1][1].update).toHaveProperty('test-service');
   });
 
+  it('can register roles', async () => {
+    const registrar = new ServiceRegistrarImpl(logger, directoryMock, tokenProviderMock);
+
+    axiosMock.patch.mockResolvedValue({ data: {} });
+
+    await registrar.register({
+      serviceId: adspId`urn:ads:platform:test-service`,
+      displayName: 'Test service',
+      description: 'This is a test service.',
+      roles: [
+        {
+          role: 'tester',
+          description: 'For testing.',
+        },
+        'tester2',
+      ],
+    });
+
+    expect(axiosMock.patch).toHaveBeenCalledTimes(1);
+    expect(axiosMock.patch.mock.calls[0][0]).toContain('tenant-service');
+    expect(axiosMock.patch.mock.calls[0][1].update).toHaveProperty('urn:ads:platform:test-service');
+  });
+
   it('can register notifications', async () => {
     const registrar = new ServiceRegistrarImpl(logger, directoryMock, tokenProviderMock);
 
