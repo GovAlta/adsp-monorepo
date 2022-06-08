@@ -128,7 +128,8 @@ export const ServiceRoles = (): JSX.Element => {
                       data-testid={`core-service-role-list-${clientId}`}
                       roles={roles}
                       clientId={clientId}
-                      addRoleFunc={(role) => {
+                      addRoleFunc={(clientId, role: string) => {
+                        setNewClientId(clientId);
                         setNewRole(role);
                       }}
                     />
