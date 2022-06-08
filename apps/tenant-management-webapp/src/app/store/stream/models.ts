@@ -1,3 +1,5 @@
+import { Socket } from 'socket.io-client';
+
 export interface Event {
   namespace: string;
   name: string;
@@ -23,6 +25,8 @@ export const initialStream: Stream = {
 export interface StreamStatus {
   core: Streams;
   tenant: Streams;
+  socket: Socket;
+  streamData: Record<string, any>[];
 }
 
 export type Streams = Record<string, Stream>;
@@ -30,6 +34,8 @@ export type Streams = Record<string, Stream>;
 export const InitialStreams: StreamStatus = {
   core: {},
   tenant: {},
+  socket: undefined,
+  streamData: [],
 };
 
 export interface SubscriberRolesOptions {

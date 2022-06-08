@@ -91,6 +91,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               data-testid="form-description"
               value={definition.description}
               aria-label="description"
+              className="goa-textarea"
               onChange={(e) => setDefinition({ ...definition, description: e.target.value })}
             />
           </GoAFormItem>
