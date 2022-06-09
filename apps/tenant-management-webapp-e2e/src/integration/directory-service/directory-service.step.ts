@@ -151,3 +151,22 @@ When('the user clicks Delete button in Entry modal', function () {
   directoryObj.deleteModalDeleteBtn().scrollIntoView().click();
   cy.wait(2000);
 });
+
+When('the user clicks Eye icon for the service entry of {string}', function (serviceName) {
+  directoryObj.entryNameEyeIcon(serviceName).click();
+});
+
+Then('the user views the meta data of {string}', function (serviceName) {
+  directoryObj
+    .directoryServiceMetaData()
+    .invoke('text')
+    .should('contain', '"name": "' + serviceName);
+});
+
+When('the user clicks Eye icon to close meta data for the service entry of {string}', function (serviceName) {
+  directoryObj.entryNameEyeOffIcon(serviceName).click();
+});
+
+Then('the user views the meta data information', function () {
+  directoryObj.directoryServiceMetaData().invoke('text').should('contain', 'No metadata found');
+});
