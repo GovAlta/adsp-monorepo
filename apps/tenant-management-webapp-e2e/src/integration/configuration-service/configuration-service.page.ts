@@ -3,13 +3,12 @@ class ConfigurationServicePage {
     return cy.xpath('//h1[text()="Configuration service"]/parent::main//p');
   }
 
-  definitionTitle(text) {
+  namespaceTitle(text) {
     return cy.xpath(`//*[text()="${text}"]`);
   }
-
-  coreDefinitionsTable() {
+  configurationDefinition(name) {
     return cy.xpath(
-      '//*[@data-testid="configuration-table"]//tbody/tr/td/parent::*/following-sibling::tr//*[contains(@data-testid, "configuration-name")]'
+      `//*[@data-testid="configuration-table"]//tbody/tr/td/parent::*/following-sibling::tr//*[@data-testid="configuration-name" and contains(text(), "${name}")]`
     );
   }
 

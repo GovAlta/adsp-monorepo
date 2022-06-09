@@ -19,5 +19,7 @@ Feature: Configuration-service
     Then the user views a heading of "platform" namespace
     And the user views a "file-service" under core-service configurations
     When the user clicks eye icon of "file-service" under Platform to view the schema
-    Then the user views the schema of file-service
-    When the user clicks eye icon of "file-service" under Platform to close the schema
+    Then the user "views" the schema of file-service
+    And the user validate partial content "readRoles" of file service schema
+    When the user clicks eye-off icon of "file-service" under Platform to close the schema
+    Then the user "should not view" the schema of file-service
