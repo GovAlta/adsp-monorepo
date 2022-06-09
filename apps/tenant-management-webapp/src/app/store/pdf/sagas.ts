@@ -19,12 +19,8 @@ import {
   GENERATE_PDF_ACTION,
   addToStream,
 } from './action';
-import { io, Socket } from 'socket.io-client';
-
-interface MessageEvent {
-  // eslint-disable-next-line
-  payload: any;
-}
+import { io } from 'socket.io-client';
+import { FETCH_FILE_LIST } from '@store/file/actions';
 
 export function* fetchPdfTemplates(): SagaIterator {
   yield put(
@@ -67,24 +63,17 @@ export function* fetchPdfTemplates(): SagaIterator {
 // wrapping function for socket.on
 let socket;
 
-const connect = (pushServiceUrl, token, stream) => {
+const connect = (pushServiceUrl, token, stream, tenantName) => {
   return new Promise((resolve) => {
-    const handler = (data) => {
-      console.log('handlerxx');
-      console.log(JSON.stringify(data) + '<dataxx');
-    };
-    socket = io(`${pushServiceUrl}/autotest`, {
+    socket = io(`${pushServiceUrl}/${tenantName}`, {
       query: {
         stream: stream,
       },
-      transports: ['websocket', 'polling'],
       path: '/socket.io',
       secure: true,
       withCredentials: true,
       extraHeaders: { Authorization: `Bearer ${token}` },
     });
-    // socket.onAny(handler);
-    // resolve(socket);
 
     socket.on('connect', () => {
       console.log('socket connected');
@@ -99,19 +88,6 @@ const connect = (pushServiceUrl, token, stream) => {
     return socket;
   });
 };
-
-// const connect = (pushServiceUrl, token, stream) => {
-//   return io(`${pushServiceUrl}/autotest`, {
-//     query: {
-//       stream: stream,
-//     },
-//     // transports: ['websocket'],
-//     // path: '/socket.io',
-//     // secure: true,
-//     withCredentials: true,
-//     extraHeaders: { Authorization: `Bearer ${token}` },
-//   });
-// };
 
 export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
@@ -141,12 +117,11 @@ export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): Saga
   }
 }
 
-//export function* activateSocketIo(): SagaIterator {}
-
 export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
   const pdfServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pdfServiceApiUrl);
   const pushServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pushServiceApiUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const tenant = yield select((state: RootState) => state?.tenant);
 
   yield put(
     UpdateIndicator({
@@ -159,50 +134,47 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
   const createSocketChannel = (socket) =>
     eventChannel((emit) => {
       const handler = (data) => {
-        console.log('handler');
-        console.log(JSON.stringify(data) + '<data');
+        console.log('Handler: ' + JSON.stringify(data));
         emit(data);
       };
       socket.on('connect', () => {
         console.log('socket connected');
       });
 
-      socket.on('pdf-service:pdf-generated', handler);
+      const doneHandler = (data) => {
+        emit(data);
+        socket.disconnect();
+      };
+
+      socket.on('pdf-service:pdf-generated', doneHandler);
       socket.on('pdf-service:pdf-generation-queued', handler);
       socket.on('pdf-service:pdf-generation-failed', handler);
       socket.on('file-service:file-uploaded', handler);
       socket.on('error', handler);
-      // the subscriber must return an unsubscribe function
-      // this will be invoked when the saga calls `channel.close` method
+
       const unsubscribe = () => {
         socket.off('ping', handler);
       };
 
       return unsubscribe;
     });
-  console.log('----1');
-  const sk = yield call(connect, pushServiceUrl, token, 'pdf-generation-updates');
-  console.log('----2');
+
+  const sk = yield call(connect, pushServiceUrl, token, 'pdf-generation-updates', tenant?.name);
 
   const socketChannel = yield call(createSocketChannel, sk);
-
-  console.log('----3');
 
   if (pdfServiceUrl && token) {
     try {
       const pdfData = {
-        // fileType: 'pdf',
         templateId: payload.templateId,
         recordId: payload.templateId + '_' + Date.now(),
         data: payload.data,
         filename: payload.fileName,
       };
       const body = { operation: 'generate', ...pdfData };
-      console.log(JSON.stringify(body) + '><bodybody');
       const response = yield call(axios.post, `${pdfServiceUrl}/pdf/v1/jobs`, body, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log(JSON.stringify(response) + '><response');
       yield put(generatePdfSuccess(response));
 
       yield put(
@@ -213,16 +185,17 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
       try {
         while (true) {
           const payload = yield take(socketChannel);
-          console.log(JSON.stringify(payload) + '<payload');
           yield put(addToStream(payload));
+          if (payload?.name === 'pdf-generated' || payload?.name === 'pdf-generation-failed') {
+            yield put({ type: FETCH_FILE_LIST });
+          }
+
           yield fork(emitResponse, socket);
         }
       } catch (err) {
         console.log('socket error: ', err);
       }
     } catch (err) {
-      console.log(JSON.stringify(err) + '<err');
-      console.log(JSON.stringify(err.message) + '<err.message');
       yield put(ErrorNotification({ message: err.message }));
       yield put(
         UpdateIndicator({

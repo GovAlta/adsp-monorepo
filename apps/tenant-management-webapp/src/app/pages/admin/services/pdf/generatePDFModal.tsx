@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { FunctionComponent, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { GoAButton, GoADropdown, GoADropdownOption } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
@@ -14,7 +14,6 @@ interface GeneratePDFModalProps {
 }
 export const GeneratePDFModal: FunctionComponent<GeneratePDFModalProps> = ({ onSave, onClose, open }) => {
   const [definition, setDefinition] = useState<PdfGenerationPayload>({ templateId: null, data: {}, fileName: null });
-  const [selectedPDF, setSelectedPDF] = useState<string>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const hasFormErrors = () => {
@@ -25,15 +24,6 @@ export const GeneratePDFModal: FunctionComponent<GeneratePDFModalProps> = ({ onS
     return state?.pdf?.pdfTemplates;
   });
 
-  console.log(JSON.stringify(definition) + '<definitiondefinition');
-
-  useEffect(() => {
-    console.log(JSON.stringify(selectedPDF) + '<selectedPDFselectedPDF');
-    if (selectedPDF) {
-      setDefinition({ ...definition, templateId: selectedPDF, fileName: `${selectedPDF}_${Date.now()}.pdf` });
-    }
-    console.log(JSON.stringify(definition) + '<definition');
-  }, [selectedPDF]);
   return (
     <>
       <GoAModal testId="definition-form" isOpen={open}>
@@ -44,11 +34,14 @@ export const GeneratePDFModal: FunctionComponent<GeneratePDFModalProps> = ({ onS
               <label>PDF Template</label>
               <GoADropdown
                 name="subscriberRoles"
-                selectedValues={[selectedPDF]}
+                selectedValues={[definition.templateId]}
                 multiSelect={false}
                 onChange={(name, values) => {
-                  console.log(JSON.stringify(values) + '<values');
-                  setSelectedPDF(values[0]);
+                  setDefinition({
+                    ...definition,
+                    templateId: values[0],
+                    fileName: `${values[0]}_${new Date().toJSON().slice(0, 19).replace(/:/g, '-')}.pdf`,
+                  });
                 }}
               >
                 {Object.keys(pdfTemplates).map((item) => {

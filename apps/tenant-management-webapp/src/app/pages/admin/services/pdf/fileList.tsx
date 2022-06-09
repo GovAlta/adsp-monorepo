@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { DeleteFileService, DownloadFileService } from '@store/file/actions';
 import DataTable from '@components/DataTable';
@@ -24,9 +24,6 @@ const FileList = (): JSX.Element => {
     setSelectFile(file);
     setShowDeleteConfirmation(true);
   };
-
-  // // eslint-disable-next-line
-  // useEffect(() => {}, [indicator]);
 
   const renderFileTable = () => {
     return (
@@ -85,7 +82,9 @@ const FileList = (): JSX.Element => {
       </div>
     );
   };
-  return <>{!indicator.show && fileList?.length > 0 && renderFileTable()}</>;
+  return (
+    <>{!indicator.show && fileList?.filter((f) => f.typeName === 'Generated PDF').length > 0 && renderFileTable()}</>
+  );
 };
 
 export default FileList;
