@@ -27,7 +27,15 @@ function* fetchServices() {
         }
       );
 
-      const services = Object.entries(data)
+      const { data: tenantData }: { data: Record<string, { definitions: Record<string, unknown> }> } = yield call(
+        axios.get,
+        `${baseUrl}/configuration/v2/configuration/platform/value-service/latest`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const services = [...Object.entries(tenantData), ...Object.entries(data)]
         .filter(([_service, { definitions }]) => definitions['service-metrics'])
         .map(([service]) => service);
 
