@@ -11,14 +11,18 @@ Then('the user views a heading of {string} namespace', function (namespace) {
   configurationObj.definitionTitle(namespace).invoke('text').should('contain', namespace);
 });
 
-Then('the user views a list of core-service configurations', function () {
-  configurationObj.coreDefinitionsTable().find('tr').its('length').should('be.gte', 1);
+Then('the user views a {string} under core-service configurations', function (definitionName) {
+  configurationObj.coreDefinitionsTable().invoke('text').should('contain', definitionName);
 });
 
-When('the user clicks eye icon of {string} under Platform', function (platformName) {
-  configurationObj.definitionsToggleButton(platformName).click();
+When('the user clicks eye icon of {string} under Platform to view the schema', function (definitionName) {
+  configurationObj.configurationDetailsIcon(definitionName).click();
 });
 
-Then('the user views the schema of "file-service" configuration', function () {
-  configurationObj.definitionsDetails().should('exist');
+Then('the user views the schema of file-service', function () {
+  configurationObj.configurationSchemaDetails().should('be.visible');
+});
+
+When('the user clicks eye icon of {string} under Platform to close the schema', function (definitionName) {
+  configurationObj.configurationHideDetailsIcon(definitionName).click();
 });

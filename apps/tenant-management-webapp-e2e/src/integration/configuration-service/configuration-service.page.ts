@@ -8,16 +8,24 @@ class ConfigurationServicePage {
   }
 
   coreDefinitionsTable() {
-    return cy.xpath('//table[@data-testid="configuration-name"]//tbody');
-  }
-
-  definitionsToggleButton(definitionName) {
     return cy.xpath(
-      `//*[@data-testid="configuration-name"]//tbody/tr/td[text()="${definitionName}"]/following-sibling::td//button[@data-testid="configuration-toggle-details-visibility"]`
+      '//*[@data-testid="configuration-table"]//tbody/tr/td/parent::*/following-sibling::tr//*[contains(@data-testid, "configuration-name")]'
     );
   }
 
-  definitionsDetails() {
+  configurationDetailsIcon(name) {
+    return cy.xpath(
+      `//*[@data-testid="configuration-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="configuration-toggle-details-visibility"]`
+    );
+  }
+
+  configurationHideDetailsIcon(name) {
+    return cy.xpath(
+      `//*[@data-testid="configuration-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="icon-eye-off"]`
+    );
+  }
+
+  configurationSchemaDetails() {
     return cy.get('[data-testid="configuration-details"]');
   }
 }

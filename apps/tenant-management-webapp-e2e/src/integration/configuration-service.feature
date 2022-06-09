@@ -17,6 +17,7 @@ Feature: Configuration-service
     Then the user views the Configuration service overview content "The configuration service provides"
     When the user selects "Definitions" tab for "Configuration"
     Then the user views a heading of "platform" namespace
-    And the user views a list of core-service configurations
-    When the user clicks eye icon of "file-service" under Platform
-    Then the user views the schema of "file-service" configuration
+    And the user views a "file-service" under core-service configurations
+    When the user clicks eye icon of "file-service" under Platform to view the schema
+    Then the user views the schema of file-service
+    When the user clicks eye icon of "file-service" under Platform to close the schema
