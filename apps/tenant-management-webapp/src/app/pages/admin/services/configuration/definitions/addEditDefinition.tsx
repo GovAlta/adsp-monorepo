@@ -2,7 +2,7 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { ConfigDefinition } from '@store/configuration/model';
 
 interface AddEditConfigDefinitionProps {
@@ -37,45 +37,45 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
           <GoAForm>
             <GoAFormItem error={errors?.['namespace']}>
               <label>Namespace</label>
-              <input
+              <GoAInput
                 type="text"
                 name="namespace"
                 value={definition.namespace}
                 disabled={isEdit}
                 data-testid="form-namespace"
                 aria-label="nameSpace"
-                onChange={(e) => {
-                  if (!regex.test(e.target.value)) {
+                onChange={(name, value) => {
+                  if (!regex.test(value)) {
                     setErrors({ ...errors, namespace: 'Allowed characters: a-z, A-Z, 0-9, -' });
                   } else {
-                    if (e.target.value.toLocaleLowerCase() === 'platform') {
+                    if (value.toLocaleLowerCase() === 'platform') {
                       setErrors({ ...errors, namespace: 'Cannot use the word platform as namespace' });
                     } else {
                       delete errors['namespace'];
                       setErrors({ ...errors });
                     }
                   }
-                  setDefinition({ ...definition, namespace: e.target.value });
+                  setDefinition({ ...definition, namespace: value });
                 }}
               />
             </GoAFormItem>
             <GoAFormItem error={errors?.['name']}>
               <label>Name</label>
-              <input
+              <GoAInput
                 type="text"
                 name="name"
                 value={definition.name}
                 disabled={isEdit}
                 data-testid="form-name"
                 aria-label="name"
-                onChange={(e) => {
-                  if (!regex.test(e.target.value)) {
+                onChange={(name, value) => {
+                  if (!regex.test(value)) {
                     setErrors({ ...errors, name: 'Allowed characters: a-z, A-Z, 0-9, -' });
                   } else {
                     delete errors['name'];
                     setErrors({ ...errors });
                   }
-                  setDefinition({ ...definition, name: e.target.value });
+                  setDefinition({ ...definition, name: value });
                 }}
               />
             </GoAFormItem>

@@ -8,6 +8,13 @@ describe('PathBuilder', () => {
     expect(path).toEqual('/namespaces/fred/entries');
   });
 
+  it('can make valid entries path, with empty namespace', () => {
+    const builder = new DirectoryServicePathBuilder();
+    const path = builder.namespace(null).entries('fred').build();
+
+    expect(path).toEqual('/namespaces/fred/entries');
+  });
+
   it('uses root', () => {
     const builder = new DirectoryServicePathBuilder('root-beer');
     const path = builder.namespace('fred').entries().build();
@@ -34,6 +41,22 @@ describe('PathBuilder', () => {
     const path = builder.namespace('bob').services().apis().api('toot').build();
 
     expect(path).toEqual('/namespaces/bob/services');
+  });
+
+  it('truncates at undefined with service', () => {
+    const builder = new DirectoryServicePathBuilder();
+    const path = builder.namespace('bob').services().apis('fred').api('toot').build();
+
+    expect(path).toEqual('/namespaces/bob/services/fred/apis');
+
+  });
+
+  it('truncates at undefined with service and api', () => {
+    const builder = new DirectoryServicePathBuilder();
+   
+    const path = builder.namespace('bob').api('toot','john').build();
+
+    expect(path).toEqual('/namespaces/bob/services/john/apis');
   });
 
   it('wont allow services with entries', () => {

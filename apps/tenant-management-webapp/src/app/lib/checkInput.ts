@@ -29,14 +29,14 @@ export interface ValidInput {
 }
 
 /**
- * Given a list of cleansers and name of the input field, report on its cleanliness
+ * Given a list of validators and name of the input field, report on its cleanliness
  */
-export const checkInput = (input: unknown, cleansers: Validator[], action?: ValidationAction): string => {
+export const checkInput = (input: unknown, validators: Validator[], action?: ValidationAction): string => {
   if (!action) {
     action = nonAction;
   }
-  for (let i = 0; i < cleansers.length; i++) {
-    const message = cleansers[i](input);
+  for (let i = 0; i < validators.length; i++) {
+    const message = validators[i](input);
     if (message) {
       action.onFailure(message);
       return message;

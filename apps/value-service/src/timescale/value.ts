@@ -138,7 +138,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
     let query = this.knex(view)
       .offset(skip)
       .limit(top)
-      .select('metric', 'bucket', 'sum', 'avg', 'min', 'max')
+      .select('metric', 'bucket', 'sum', 'avg', 'min', 'max', 'count')
       .where(queryCriteria);
 
     if (criteria.intervalMax) {
@@ -163,6 +163,7 @@ export class TimescaleValuesRepository implements ValuesRepository {
           avg: row.avg,
           min: row.min,
           max: row.max,
+          count: row.count,
         });
 
         return {

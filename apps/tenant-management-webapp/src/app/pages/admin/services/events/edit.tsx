@@ -2,10 +2,16 @@ import React, { FunctionComponent, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import type { EventDefinition } from '@store/event/models';
 import { GoAButton } from '@abgov/react-components';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+import {
+  GoAModal,
+  GoAModalActions,
+  GoAModalContent,
+  GoAModalTitle,
+  GoAInput,
+} from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
-import { wordCheck, characterCheck, validationPattern, checkInput, isNotEmptyCheck } from '@lib/checkInput';
-import { reactInputHandlerFactory } from '@lib/reactInputHandlerFactory';
+import { wordCheck, characterCheck, validationPattern, isNotEmptyCheck } from '@lib/checkInput';
+import { useValidators } from '@lib/useValidators';
 import { updateEventDefinition } from '@store/event/actions';
 import { useDispatch } from 'react-redux';
 
@@ -27,16 +33,21 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
   coreNamespaces,
 }) => {
   const [definition, setDefinition] = useState<EventDefinition>(initialValue);
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
 
-  const hasFormErrors = () => {
-    return Object.keys(errors).length !== 0;
-  };
   const forbiddenWords = coreNamespaces.concat('platform');
   const checkForConflicts = wordCheck(forbiddenWords);
   const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
-  const errorHandler = reactInputHandlerFactory(errors, setErrors);
+
+  const { errors, validators } = useValidators(
+    'namespace',
+    'namespace',
+    checkForConflicts,
+    checkForBadChars,
+    isNotEmptyCheck('namespace')
+  )
+    .add('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
+    .build();
 
   return (
     <GoAModal testId="definition-form" isOpen={open}>
@@ -45,35 +56,31 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
         <GoAForm>
           <GoAFormItem error={errors?.['namespace']}>
             <label>Namespace</label>
-            <input
+            <GoAInput
               type="text"
               name="namespace"
               value={definition.namespace}
               disabled={isEdit}
               data-testid="form-namespace"
               aria-label="nameSpace"
-              onChange={(e) => {
-                checkInput(
-                  e.target.value,
-                  [checkForConflicts, checkForBadChars, isNotEmptyCheck('namespace')],
-                  errorHandler('namespace')
-                );
-                setDefinition({ ...definition, namespace: e.target.value });
+              onChange={(name, value) => {
+                validators['namespace'].check(value);
+                setDefinition({ ...definition, namespace: value });
               }}
             />
           </GoAFormItem>
           <GoAFormItem error={errors?.['name']}>
             <label>Name</label>
-            <input
+            <GoAInput
               type="text"
               name="name"
               value={definition.name}
               disabled={isEdit}
               data-testid="form-name"
               aria-label="name"
-              onChange={(e) => {
-                checkInput(e.target.value, [checkForBadChars, isNotEmptyCheck('name')], errorHandler('name'));
-                setDefinition({ ...definition, name: e.target.value });
+              onChange={(name, value) => {
+                validators['name'].check(value);
+                setDefinition({ ...definition, name: value });
               }}
             />
           </GoAFormItem>
@@ -84,6 +91,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               data-testid="form-description"
               value={definition.description}
               aria-label="description"
+              className="goa-textarea"
               onChange={(e) => setDefinition({ ...definition, description: e.target.value })}
             />
           </GoAFormItem>
@@ -107,13 +115,13 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
           type="button"
           onClick={() => {
             onClose();
-            setErrors({});
+            validators.clear();
           }}
         >
           Cancel
         </GoAButton>
         <GoAButton
-          disabled={!definition.namespace || !definition.name || hasFormErrors()}
+          disabled={!definition.namespace || !definition.name || validators.haveErrors()}
           buttonType="primary"
           data-testid="form-save"
           type="submit"
@@ -123,7 +131,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               onSave();
             }
             onClose();
-            setErrors({});
+            validators.clear();
           }}
         >
           Save

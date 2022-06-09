@@ -1,8 +1,8 @@
-<html>
+<html class="full-document-container">
   <head>
     <style>
       @font-face {
-        font-family: 'acumin-pro-semi-condensed';
+        font-family: 'Helvetica Neue LT Std';
         src: url('https://use.typekit.net/af/3f7b4d/00000000000000003b9acb2d/27/l?subset_id=1&fvd=n4&v=3')
             format('woff2'),
           url('https://use.typekit.net/af/3f7b4d/00000000000000003b9acb2d/27/d?subset_id=1&fvd=n4&v=3') format('woff'),
@@ -13,7 +13,7 @@
       }
 
       @font-face {
-        font-family: 'acumin-pro-semi-condensed';
+        font-family: 'Helvetica Neue LT Std';
         src: url('https://use.typekit.net/af/761912/00000000000000003b9acb2e/27/l?subset_id=1&fvd=i4&v=3')
             format('woff2'),
           url('https://use.typekit.net/af/761912/00000000000000003b9acb2e/27/d?subset_id=1&fvd=i4&v=3') format('woff'),
@@ -24,7 +24,7 @@
       }
 
       @font-face {
-        font-family: 'acumin-pro-semi-condensed';
+        font-family: 'Helvetica Neue LT Std';
         src: url('https://use.typekit.net/af/ee7f3d/00000000000000003b9acb33/27/l?subset_id=1&fvd=n7&v=3')
             format('woff2'),
           url('https://use.typekit.net/af/ee7f3d/00000000000000003b9acb33/27/d?subset_id=1&fvd=n7&v=3') format('woff'),
@@ -35,7 +35,7 @@
       }
 
       @font-face {
-        font-family: 'acumin-pro-semi-condensed';
+        font-family: 'Helvetica Neue LT Std';
         src: url('https://use.typekit.net/af/503f80/00000000000000003b9acb34/27/l?subset_id=1&fvd=i7&v=3')
             format('woff2'),
           url('https://use.typekit.net/af/503f80/00000000000000003b9acb34/27/d?subset_id=1&fvd=i7&v=3') format('woff'),
@@ -46,7 +46,7 @@
       }
 
       @font-face {
-        font-family: 'acumin-pro-semi-condensed';
+        font-family: 'Helvetica Neue LT Std';
         src: url('https://use.typekit.net/af/e60e87/00000000000000003b9acb31/27/l?subset_id=1&fvd=n6&v=3')
             format('woff2'),
           url('https://use.typekit.net/af/e60e87/00000000000000003b9acb31/27/d?subset_id=1&fvd=n6&v=3') format('woff'),
@@ -56,7 +56,7 @@
         font-weight: 600;
       }
       body {
-        font-family: 'acumin-pro-semi-condensed';
+        font-family: 'Helvetica Neue LT Std';
         --light-grey: #f1f1f1;
         --grey: #dcdcdc;
         --dark-grey: #666666;
@@ -64,64 +64,77 @@
         color: #333333;
         background-color: white;
         margin: auto;
+        font-size: 9px;
+        line-height: 12px;
+      }
+
+      p {
+        margin: 0.5rem 0 0.5rem 0 ;
+      }
+
+      ul {
+        margin: 0.75rem 0 0.75rem 0;
+        padding-left: 1rem;
       }
 
       h1 {
-        margin: 0;
+        margin: 32px 0 16px 0;
         padding: 0;
-        line-height: 56px;
-        font-size: 48px;
+        line-height: 19px;
+        font-size: 16px;
         font-weight: 700;
         color: #333333;
       }
 
       h2 {
-        margin: 24px 0 0;
+        margin: 24px 0 16px;
         padding: 0;
-        line-height: 44px;
+        line-height: 12px;
         color: #333333;
-        font-size: 36px;
-        font-weight: 400;
+        font-size: 12px;
+        font-weight: bold;
       }
 
       h3 {
-        margin: 24px 0 0;
+        margin: 16px 0 8px 0;
         padding: 0;
-        line-height: 32px;
+        line-height: 12px;
         color: #333333;
-        font-size: 24px;
-        font-weight: 400;
+        font-size: 10px;
+        font-weight: bold;
       }
 
       h4 {
         margin: 23px 0 0;
         padding: 0;
-        line-height: 28px;
+        line-height: 12px;
         color: #333333;
-        font-size: 18px;
-        font-weight: 700;
+        font-size: 9px;
+        font-weight: bold;
       }
 
       h5 {
         margin: 23px 0 0;
         padding: 0;
-        line-height: 28px;
+        line-height: 12px;
         color: #333333;
-        font-size: 18px;
-        font-weight: 700;
+        font-size: 8px;
+        font-weight: bold;
       }
 
       h6 {
         margin: 23px 0 0;
         padding: 0;
-        line-height: 28px;
+        line-height: 12px;
         color: #333333;
-        font-size: 18px;
-        font-weight: 700;
+        font-size: 7px;
+        font-weight: bold;
+      }
+
+      caption {
+        font-size: 7px;
       }
       .goa-header-event-template {
-        padding-bottom: 0.875rem;
-        padding-top: 0.875rem;
         display: flex;
       }
       #goa-callout-custom {
@@ -164,37 +177,40 @@
         font-size: 14px;
         text-align: justify;
       }
-      .container {
-        padding-bottom: 2rem;
-        margin-left: 20px;
-      }
       .pdf-content {
-        padding: 3rem 7.5rem;
         background-color: white;
-      }
-      .goa-logo {
-        padding-left: 1.25rem;
-        padding-top: 0.625rem;
       }
       .goa-header-right {
         flex: 1;
         text-align-last: end;
-        margin-right: 20px;
-
       }
       .goa-large-font {
-        font-weight: bold;
-        font-size: x-large;
+        font-weight: 700;
+        font-size: 1rem;
+        line-height: 19px;
+        font-family: 'Helvetica Neue LT Std';
+        margin-bottom: .5rem;
+      }
+      .goa-small-font {
+        font-weight: 400;
+        line-height: 12px;
+        font-size: 0.5625rem;
+        font-family: 'Helvetica Neue LT Std';
       }
       .full-width {
         width: 100%;
+        margin: 8px 0 8px 0;
+      }
+      .full-document-container {
+        margin: 1.5rem;
       }
     </style>
   </head>
   <body>
+    {{#if wrapper}}
     <header>
       <div class='goa-header-event-template'>
-        <div class='goa-logo'>
+        <div>
           <img
             alt='Government of Alberta'
             src='https://file-service.adsp.alberta.ca/file/v1/files/4b95b597-395f-4f4a-90ba-1d6cf2be0756/download?embed=true'
@@ -202,21 +218,24 @@
         </div>
         <div class='goa-header-right'>
            <div class='goa-large-font'>{{data.name}}</div>
-           <div>{{data.description}}</div>
+           <div class='goa-small-font'>{{data.description}}</div>
         </div>
 
       </div>
       <hr class='full-width'>
     </header>
+    {{/if}}
     <div class="pdf-content">
       {{content}}
     </div>
+    {{#if wrapper}}
     <footer>
-      <div class='container'>
+      <div>
         <hr class='full-width'>
         Visit <a href={{serviceUrl}}>{{serviceUrl}}</a> or call support form more information and help
         <div>This document is generated by Pdf Service on {{today}}.</div>
       </div>
     </footer>
+     {{/if}}
   </body>
 </html>

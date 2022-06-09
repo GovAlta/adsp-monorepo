@@ -9,6 +9,12 @@ export class ConfigurationFileTypeRepository implements FileTypeRepository {
   ) {}
 
   async getType(tenantId: AdspId, id: string): Promise<FileTypeEntity> {
+    const types = await this.getTypes(tenantId);
+
+    return types[id];
+  }
+
+  async getTypes(tenantId: AdspId): Promise<Record<string, FileTypeEntity>> {
     const token = await this.tokenProvider.getAccessToken();
     const configuration = await this.configurationService.getConfiguration<ServiceConfiguration, ServiceConfiguration>(
       this.serviceId,
@@ -16,6 +22,6 @@ export class ConfigurationFileTypeRepository implements FileTypeRepository {
       tenantId
     );
 
-    return configuration[id];
+    return configuration;
   }
 }

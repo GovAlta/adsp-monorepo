@@ -1,11 +1,17 @@
 import React, { useMemo, useState } from 'react';
 import { GoAButton, GoADropdownOption, GoADropdown, GoACheckbox } from '@abgov/react-components';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+import {
+  GoAModal,
+  GoAModalActions,
+  GoAModalContent,
+  GoAModalTitle,
+  GoAInput,
+} from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { IdField, StreamModalStyles } from './styleComponents';
 import { Stream } from '@store/stream/models';
-import { reactInputHandlerFactory } from '@lib/reactInputHandlerFactory';
-import { characterCheck, validationPattern, checkInput, isNotEmptyCheck, Validator } from '@lib/checkInput';
+import { useValidators } from '@lib/useValidators';
+import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
 import { toKebabName } from '@lib/kebabName';
 import { generateEventOptions, generateSubscriberRolesOptions } from './utils';
 import { Role } from '@store/tenant/models';
@@ -32,20 +38,18 @@ export const AddEditStream = ({
   streams,
 }: AddEditStreamProps): JSX.Element => {
   const [stream, setStream] = useState<Stream>({ ...initialValue });
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
-  const errorHandler = reactInputHandlerFactory(errors, setErrors);
-
-  const isDuplicateStreamId = (streamId: string): Validator => {
-    return () => {
+  const isDuplicateStreamId = (): Validator => {
+    return (streamId: string) => {
       return streams[streamId] ? 'Stream ID is duplicate, please use a different name to get a unique Stream ID' : '';
     };
   };
 
-  const hasFormErrors = () => {
-    return Object.keys(errors).length !== 0;
-  };
+  const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
+    .add('duplicate', 'name', isDuplicateStreamId())
+    .build();
+
   const streamEvents = useMemo(() => {
     return stream?.events.map((event) => {
       return `${event.namespace}:${event.name}`;
@@ -63,17 +67,17 @@ export const AddEditStream = ({
           <GoAForm>
             <GoAFormItem error={errors?.['name']}>
               <label>Name</label>
-              <input
+              <GoAInput
                 type="text"
                 name="stream-name"
                 value={stream.name}
                 disabled={isEdit}
                 data-testid="stream-name"
                 aria-label="stream-name"
-                onChange={(e) => {
-                  checkInput(e.target.value, [checkForBadChars, isNotEmptyCheck('name')], errorHandler('name'));
-                  const streamId = toKebabName(e.target.value);
-                  setStream({ ...stream, name: e.target.value, id: streamId });
+                onChange={(name, value) => {
+                  validators['name'].check(value);
+                  const streamId = toKebabName(value);
+                  setStream({ ...stream, name: value, id: streamId });
                 }}
               />
             </GoAFormItem>
@@ -88,6 +92,7 @@ export const AddEditStream = ({
                 value={stream.description}
                 data-testid="stream-description"
                 aria-label="stream-description"
+                className="goa-textarea"
                 onChange={(e) => {
                   setStream({ ...stream, description: e.target.value });
                 }}
@@ -170,9 +175,9 @@ export const AddEditStream = ({
             buttonType="primary"
             data-testid="form-save"
             type="submit"
-            disabled={!stream.name || hasFormErrors()}
+            disabled={!stream.name || validators.haveErrors()}
             onClick={(e) => {
-              if (!isEdit && checkInput(stream.id, [isDuplicateStreamId(stream.id)], errorHandler('name'))) {
+              if (!isEdit && validators['duplicate'].check(stream.id)) {
                 e.stopPropagation();
                 return;
               }

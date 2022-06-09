@@ -14,13 +14,13 @@ export interface AccessStrategyOptions {
   accessServiceUrl: URL;
   logger: Logger;
 }
-export const createRealmStrategy = ({
+export const createRealmStrategy = async ({
   realm,
   serviceId,
   tenantService,
   accessServiceUrl,
   ignoreServiceAud,
-}: AccessStrategyOptions): Strategy => {
+}: AccessStrategyOptions): Promise<Strategy> => {
   assertAdspId(serviceId, null, 'service');
 
   const serviceAud = serviceId.toString();
@@ -29,11 +29,8 @@ export const createRealmStrategy = ({
   const realmJwksUrl = new URL(`/auth/realms/${realm}/protocol/openid-connect/certs`, accessServiceUrl);
   const realmJwks = realmJwksUrl.href;
 
-  let tenant: Tenant = null;
-  const verifyCallback: VerifyCallbackWithRequest = async (req, payload, done) => {
-    if (!tenant && realm !== 'core') {
-      tenant = await tenantService.getTenantByRealm(realm);
-    }
+  const tenant: Tenant = realm !== 'core' ? await tenantService.getTenantByRealm(realm) : null;
+  const verifyCallback: VerifyCallbackWithRequest = (req, payload, done) => {
     const user: Express.User = {
       id: payload.sub,
       name: payload.name || payload.preferred_username,

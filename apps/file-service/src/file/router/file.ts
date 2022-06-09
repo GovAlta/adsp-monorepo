@@ -1,4 +1,4 @@
-import { adspId, AdspId, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, benchmark, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
   UnauthorizedError,
@@ -15,6 +15,7 @@ import { createUpload } from './upload';
 import { fileDeleted, fileUploaded } from '../events';
 import { ServiceConfiguration } from '../configuration';
 import { FileStorageProvider } from '../storage';
+import { FileCriteria } from '../types';
 
 interface FileRouterProps {
   serviceId: AdspId;
@@ -89,19 +90,25 @@ export function getType(_logger: Logger): RequestHandler {
 export function getFiles(apiId: AdspId, repository: FileRepository): RequestHandler {
   return async (req, res, next) => {
     try {
+      benchmark(req, 'operation-handler-time');
+
       const user = req.user;
-      const tenantId = user.tenantId;
+      const tenantId = req.tenant?.id;
+      if (!tenantId) {
+        throw new InvalidOperationError('Cannot get files without a tenant context.');
+      }
+
       const { top: topValue, after, criteria: criteriaValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 50;
-      let criteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
+      let criteria: FileCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
 
       criteria = {
         ...criteria,
-        tenantEquals: tenantId.toString(),
         deleted: false,
       };
-      const files = await repository.find(top, after as string, criteria);
+      const files = await repository.find(tenantId, top, after as string, criteria);
 
+      benchmark(req, 'operation-handler-time');
       res.send({
         page: files.page,
         results: files.results.filter((r) => r.canAccess(user)).map((f) => mapFile(apiId, f)),
@@ -121,6 +128,8 @@ export function uploadFile(apiId: AdspId, logger: Logger, eventService: EventSer
         throw new InvalidOperationError('No file uploaded.');
       }
 
+      // Start of the handling happens in the upload (multer storage engine).
+      benchmark(req, 'operation-handler-time');
       res.send(mapFile(apiId, fileEntity));
 
       eventService.send(
@@ -152,6 +161,8 @@ export function uploadFile(apiId: AdspId, logger: Logger, eventService: EventSer
 export function getFile(repository: FileRepository): RequestHandler {
   return async (req, _res, next) => {
     try {
+      benchmark(req, 'get-entity-time');
+
       const user = req.user;
       const { fileId } = req.params;
 
@@ -163,6 +174,11 @@ export function getFile(repository: FileRepository): RequestHandler {
       }
 
       req.fileEntity = fileEntity;
+      if (!req.tenant) {
+        req.tenant = { id: fileEntity.tenantId, name: null, realm: null };
+      }
+
+      benchmark(req, 'get-entity-time');
       next();
     } catch (err) {
       next(err);
@@ -181,6 +197,8 @@ function encodeRFC5987(value: string) {
 export function downloadFile(logger: Logger): RequestHandler {
   return async (req, res, next) => {
     try {
+      benchmark(req, 'operation-handler-time');
+
       const user = req.user;
       const { unsafe, embed } = req.query;
       const fileEntity = req.fileEntity;
@@ -189,6 +207,9 @@ export function downloadFile(logger: Logger): RequestHandler {
       }
 
       const stream = await fileEntity.readFile(user);
+
+      benchmark(req, 'operation-handler-time');
+
       res.status(200);
       res.setHeader('Content-Type', 'application/octet-stream');
       res.setHeader('Content-Length', fileEntity.size);
@@ -218,6 +239,8 @@ export function downloadFile(logger: Logger): RequestHandler {
 export function deleteFile(logger: Logger, eventService: EventService): RequestHandler {
   return async (req, res, next) => {
     try {
+      benchmark(req, 'operation-handler-time');
+
       const user = req.user;
       const fileEntity = req.fileEntity;
       await fileEntity.markForDeletion(user);
@@ -232,6 +255,7 @@ export function deleteFile(logger: Logger, eventService: EventService): RequestH
         }
       );
 
+      benchmark(req, 'operation-handler-time');
       res.send({ deleted: fileEntity.deleted });
 
       eventService.send(

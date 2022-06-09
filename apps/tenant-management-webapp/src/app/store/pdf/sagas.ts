@@ -239,7 +239,9 @@ export function* fetchPdfMetrics(): SagaIterator {
         fetchPdfMetricsSucceeded({
           pdfGenerated: parseInt(metrics[generatedMetric]?.values[0]?.sum || '0'),
           pdfFailed: parseInt(metrics[failedMetric]?.values[0]?.sum || '0'),
-          generationDuration: parseInt(metrics[durationMetric]?.values[0]?.avg || '0'),
+          generationDuration: metrics[durationMetric]?.values[0]
+            ? parseInt(metrics[durationMetric]?.values[0].avg)
+            : null,
         })
       );
     } catch (e) {

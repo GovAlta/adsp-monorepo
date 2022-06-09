@@ -163,8 +163,9 @@ When(
   }
 );
 
-Then('the user clicks save button', function () {
+Then('the user clicks save button in notification type modal', function () {
   notificationsObj.notificationTypeModalSaveBtn().click();
+  cy.wait(2000);
 });
 
 Then(
@@ -463,15 +464,17 @@ When('the user searches subscribers with {string} containing {string}', function
 });
 
 When(
-  'the user searches subscribers with address as containing {string} and email containing {string}',
-  function (addressAsSearchText, emailSearchText) {
-    //Enter search text
-    notificationsObj.subscribersAddressAsSearchField().clear().type(addressAsSearchText);
-    notificationsObj.subscribersEmailSearchField().clear().type(emailSearchText);
-
-    //Click Search button
-    notificationsObj.subscribersSearchBtn().click();
-    cy.wait(2000);
+  'the user searches subscribers with address as containing {string}, email containing {string} and phone number containing {string}',
+  function (addressAs, email, phoneNumber) {
+    notificationsObj.searchSubscriberAddressAs().clear().type(addressAs);
+    notificationsObj.searchSubscriberEmail().clear().type(email);
+    expect(phoneNumber).match(/(EMPTY)|[0-9]{10}/);
+    if (phoneNumber == 'EMPTY') {
+      notificationsObj.searchSubscriberPhone().clear();
+    } else {
+      notificationsObj.searchSubscriberPhone().clear().type(phoneNumber);
+    }
+    notificationsObj.notificationSearchBtn().click();
   }
 );
 
@@ -546,21 +549,47 @@ Then(
   }
 );
 
-Then('the user {string} the subscriber of {string}, {string}', function (viewOrNot, addressAs, email) {
-  switch (viewOrNot) {
-    case 'views':
-      notificationsObj.subscriber(addressAs, email).should('exist');
+Then(
+  'the user {string} the subscriber of {string}, {string}, {string}',
+  function (viewOrNot, addressAs, email, phoneNumber) {
+    let phoneNumberInDisplay;
+    expect(phoneNumber).match(/(EMPTY)|[0-9]{10}/);
+    if (phoneNumber !== 'EMPTY') {
+      phoneNumberInDisplay =
+        phoneNumber.substring(0, 3) + ' ' + phoneNumber.substring(3, 6) + ' ' + phoneNumber.substring(6, 10);
+    }
+    switch (viewOrNot) {
+      case 'views':
+        if (phoneNumber == 'EMPTY') {
+          notificationsObj.subscriber(addressAs, email).should('exist');
+        } else {
+          notificationsObj.subscriberWithPhoneNumber(addressAs, email, phoneNumberInDisplay).should('exist');
+        }
+        break;
+      case 'should not view':
+        if (phoneNumber == 'EMPTY') {
+          notificationsObj.subscriber(addressAs, email).should('not.exist');
+        } else {
+          notificationsObj.subscriberWithPhoneNumber(addressAs, email, phoneNumberInDisplay).should('not.exist');
+        }
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
+  }
+);
+
+When('the user clicks {string} button of {string}, {string} on subscribers page', function (button, addressAs, email) {
+  switch (button) {
+    case 'delete':
+      notificationsObj.subscriberDeleteIcon(addressAs, email).click();
       break;
-    case 'should not view':
-      notificationsObj.subscriber(addressAs, email).should('not.exist');
+    case 'edit':
+      notificationsObj.subscriberEditIcon(addressAs, email).click();
       break;
     default:
-      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+      expect(button).to.be.oneOf(['delete', 'edit']);
   }
-});
-
-When('the user clicks delete button of {string}, {string} on subscribers page', function (addressAs, email) {
-  notificationsObj.subscriberDeleteIcon(addressAs, email).click();
 });
 
 Then('the user views Delete subscriber modal', function () {
@@ -657,3 +686,30 @@ Then(
     }
   }
 );
+
+When('the user modifies the name to {string} and email to {string} in subscriber modal', function (name, editEmail) {
+  notificationsObj.editSubscriberModalNameField().clear().type(name);
+  notificationsObj.editSubscriberModalEmailField().clear().type(editEmail);
+});
+
+When('the user clicks Edit button of {string} and {string} on subscribers page', function (addressAs, email) {
+  notificationsObj.subscriberEditIcon(addressAs, email).click();
+});
+
+Then('the user views Edit subscriber modal', function () {
+  notificationsObj.editSubscriberModal().should('exist');
+});
+
+Then('the user clicks Save button in Edit subscriber modal', function () {
+  notificationsObj.editSubscriberModalSaveBtn().click();
+  cy.wait(2000);
+});
+
+When('the user enters {string} in Phone number field', function (phoneNumber) {
+  expect(phoneNumber).match(/(EMPTY)|[0-9]{10}/);
+  if (phoneNumber !== 'EMPTY') {
+    notificationsObj.editSubscriberModalPhoneNumberField().clear().type(phoneNumber);
+  } else {
+    notificationsObj.editSubscriberModalPhoneNumberField().clear();
+  }
+});

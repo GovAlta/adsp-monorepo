@@ -1,42 +1,6 @@
 @REQ_CS-224 @file-service
 Feature: File service
 
-  # TEST DATA: the core api user needs to have directory-admin role to be able to call POST requests for discovery service
-  @TEST_CS-311 @REQ_CS-232 @regression @api
-  Scenario Outline: As a developer of a GoA digital service, I can get a map of urns to urls for all available services
-    Given a testing mapping of "<Name>", "<Service>" and "<Service URL>" is inserted with "<RequestURL>"
-    When the user sends a discovery request with "<RequestURL>"
-    Then the user should get a map of logical names to urls for all services
-    # Verify the URLs are from Dev or preprod or prod
-    # And the user verifies that all urls are for the corrected deployed environment
-    When the user sends a delete request of "<Name>" with "<RequestURL>"
-    Then the testing mapping is removed
-    Examples:
-      | RequestURL        | Name   | Service | Service URL     |
-      | /api/discovery/v1 | arcgis | maps    | maps.alberta.ca |
-
-  @TEST_CS-344 @REQ_CS-232 @regression @api
-  Scenario Outline: As a developer of a GoA digital service, I can discover individual service URL
-    Given a testing mapping of "<Name>", "<Service>" and "<Service URL>" is inserted with "<Request URL>"
-    When the user sends a discovery request with "<Request URL With Urn>"
-    Then the user should get "<Service URL>" with a mapped URL for the individual service
-    When the user sends a delete request of "<Name>" with "<Request URL>"
-    Then the testing mapping is removed
-    Examples:
-      | Request URL       | Request URL With Urn                      | Name   | Service | Service URL     |
-      | /api/discovery/v1 | /api/discovery/v1?urn=urn:ads:arcgis:maps | arcgis | maps    | maps.alberta.ca |
-
-  @TEST_CS-317 @REQ_CS-233 @regression @api
-  Scenario Outline: As a developer of a GoA digital service, I can reference files using an urn
-    Given a testing mapping of "<Name>", "<Service>" and "<Service URL>" is inserted with "<Request URL>"
-    When the user sends a discovery request with "<Request URL With Urn And File Resource Path>"
-    Then the user can get the URL with "<File Resource URL>"
-    When the user sends a delete request of "<Name>" with "<Request URL>"
-    Then the testing mapping is removed
-    Examples:
-      | Request URL       | Request URL With Urn And File Resource Path                      | Name   | Service | Service URL     | File Resource URL                     |
-      | /api/discovery/v1 | /api/discovery/v1?urn=urn:ads:arcgis:maps:/files/v1/files/123456 | arcgis | maps    | maps.alberta.ca | maps.alberta.ca/files/v1/files/123456 |
-
   # Data required before running the file types and files api tests
   # TODO: file-service-admin now has read/write permissions across all types; this is a simplification so that the tenant admin can try test files without permission restrictiono.
   # Tenant: autotest
@@ -96,7 +60,7 @@ Feature: File service
   # Ignore this test until CS-1134 is fixed
   Scenario: Test As a service owner, I can see the API documentation for file service in the tenant admin, so I can understand how to use the API
     Given a service owner user is on Files overview page
-    Then the user views the link for "File service" API docs
+    Then the user views the link of API docs for "File service"
     When the user goes to the web link of the API docs
     Then the user views "File service" API documentation
 
