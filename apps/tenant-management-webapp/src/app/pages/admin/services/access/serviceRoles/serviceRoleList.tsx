@@ -11,6 +11,7 @@ import { GoAIconButton } from '@abgov/react-components/experimental';
 interface ServiceRoleListProps {
   roles: ServiceRoles;
   clientId: string;
+  inProcess: Record<string, string> | null;
   addRoleFunc: (clientId: string, role: string) => void;
 }
 
@@ -34,8 +35,9 @@ const isRoleExisted = (kcRoleConfig: ServiceRoleConfig, clientId: string, roleNa
   return false;
 };
 
-export const ServiceRoleList = ({ roles, clientId, addRoleFunc }: ServiceRoleListProps): JSX.Element => {
+export const ServiceRoleList = ({ roles, clientId, addRoleFunc, inProcess }: ServiceRoleListProps): JSX.Element => {
   const keycloakRoles = useSelector(selectKeycloakServiceRoles);
+
   // eslint-disable-next-line
   useEffect(() => {}, [keycloakRoles]);
   return (
@@ -52,6 +54,7 @@ export const ServiceRoleList = ({ roles, clientId, addRoleFunc }: ServiceRoleLis
           </thead>
           <tbody>
             {roles.map((role): JSX.Element => {
+              const isInProcess = inProcess !== null && inProcess.clientId === clientId && inProcess.role === role.role;
               return (
                 <tr key={`${role.role}`}>
                   <td>{role.role}</td>
@@ -60,6 +63,7 @@ export const ServiceRoleList = ({ roles, clientId, addRoleFunc }: ServiceRoleLis
                   <td>
                     {keycloakRoles !== null &&
                       Object.entries(keycloakRoles).length > 0 &&
+                      !isInProcess &&
                       !isRoleExisted(keycloakRoles, clientId, role.role) && (
                         <GoAIconButton
                           type="add-circle"
@@ -68,7 +72,7 @@ export const ServiceRoleList = ({ roles, clientId, addRoleFunc }: ServiceRoleLis
                           }}
                         />
                       )}
-                    {(keycloakRoles === null || Object.entries(keycloakRoles).length === 0) && (
+                    {(keycloakRoles === null || Object.entries(keycloakRoles).length === 0 || isInProcess) && (
                       <TextLoadingIndicator>Loading</TextLoadingIndicator>
                     )}
                   </td>

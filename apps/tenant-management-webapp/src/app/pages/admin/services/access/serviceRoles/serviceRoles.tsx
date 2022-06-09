@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchServiceRoles, fetchKeycloakServiceRoles } from '@store/access/actions';
-import { ConfigServiceRole } from '@store/access/models';
+import { ConfigServiceRole, Events } from '@store/access/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { ServiceRoleList } from './serviceRoleList';
 import { createSelector } from 'reselect';
@@ -47,9 +47,23 @@ export const ServiceRoles = (): JSX.Element => {
   });
   const [newClientId, setNewClientId] = useState<string>(null);
   const [newRole, setNewRole] = useState<string>(null);
+  const updateState: Record<string, string> | null = useSelector((state: RootState) => {
+    const loadingStates = state?.session?.loadingStates;
 
+    const index = loadingStates.findIndex((s) => {
+      return s.name === Events.update;
+    });
+    if (index !== -1 && loadingStates[index].state === 'start') {
+      return loadingStates[index].data;
+    } else {
+      return {};
+    }
+  });
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
+
+  // eslint-disable-next-line
+  useEffect(() => {}, [updateState]);
   useEffect(() => {
     dispatch(fetchServiceRoles());
   }, []);
@@ -96,6 +110,7 @@ export const ServiceRoles = (): JSX.Element => {
                       data-testid={`tenant-service-role-list-${clientId}`}
                       roles={roles}
                       clientId={clientId}
+                      inProcess={updateState}
                       addRoleFunc={(clientId, role: string) => {
                         setNewClientId(clientId);
                         setNewRole(role);
@@ -105,7 +120,7 @@ export const ServiceRoles = (): JSX.Element => {
                 );
               })}
           <h2>Core service roles:</h2>
-          {Object.entries(coreRoles).length === 0 && <RenderNoItem />}
+          {coreRoles !== null && Object.entries(coreRoles).length === 0 && <RenderNoItem />}
           {Object.entries(coreRoles).length > 0 &&
             Object.entries(coreRoles)
               .filter(([clientId, config]) => {
@@ -127,6 +142,7 @@ export const ServiceRoles = (): JSX.Element => {
                       key={`core-service-role-list-${clientId}`}
                       data-testid={`core-service-role-list-${clientId}`}
                       roles={roles}
+                      inProcess={updateState}
                       clientId={clientId}
                       addRoleFunc={(clientId, role: string) => {
                         setNewClientId(clientId);
