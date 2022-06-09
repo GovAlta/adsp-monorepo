@@ -205,6 +205,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
                     data-testid="form-slack"
                     value={bot}
                     aria-label="slack"
+                    className="goa-textarea"
                     onChange={(e) => {
                       setBot(e.target.value);
                     }}

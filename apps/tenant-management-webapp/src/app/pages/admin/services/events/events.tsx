@@ -7,6 +7,7 @@ import { useSelector } from 'react-redux';
 import { EventDefinitions } from './definitions';
 import { EventsOverview } from './overview';
 import { EventStreams } from './stream';
+import { TestStream } from './stream/test-stream/testStream';
 
 export const Events: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -37,6 +38,9 @@ export const Events: FunctionComponent = () => {
 
           <Tab label="Streams" data-testid="events-streams-tab">
             <EventStreams />
+          </Tab>
+          <Tab label="Test stream" data-testid="test-stream-tab">
+            <TestStream />
           </Tab>
         </Tabs>
       </Main>

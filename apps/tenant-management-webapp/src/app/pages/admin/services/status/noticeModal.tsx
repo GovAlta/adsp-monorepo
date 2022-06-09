@@ -156,6 +156,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
                 data-testid="notice-form-description"
                 name="message"
                 value={message}
+                className="goa-textarea"
                 onChange={setValue}
                 maxLength={280}
               />
