@@ -195,7 +195,7 @@ export class TenantServiceImpl implements TenantService {
       if (!tenantId) {
         // Query for the tenant if no existing record.
         await this.#retrieveTenants({ realm });
-        tenantId = this.#tenantNames[realm.toLowerCase()];
+        tenantId = this.#tenantRealms[realm.toLowerCase()];
       }
 
       return tenantId ? this.getTenant(tenantId) : null;
