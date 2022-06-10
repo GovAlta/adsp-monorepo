@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { Role } from '@store/tenant/models';
 import { GoAButton } from '@abgov/react-components';
@@ -10,6 +10,11 @@ import { FileTypeItem } from '@store/file/models';
 import { useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
 import { toKebabName } from '@lib/kebabName';
+import { createSelector } from 'reselect';
+import { RootState } from '@store/index';
+import { useSelector } from 'react-redux';
+import { ConfigServiceRole } from '@store/access/models';
+import { Grid, GridItem } from '@components/Grid';
 
 interface FileTypeModalProps {
   fileType?: FileTypeItem;
@@ -21,8 +26,33 @@ interface FileTypeModalProps {
 
 const ModalOverwrite = styled.div`
   .modal {
-    max-height: 250% !important;
+    max-height: 95% !important;
     min-width: 37.5em;
+    max-width: 2000px;
+  }
+
+  .title {
+    font-weight: 700;
+    font-size: var(--fs-lg);
+    margin-top: 15px;
+  }
+
+  .three-wide {
+    display: none;
+  }
+
+  .two-wide {
+    display: block;
+  }
+
+  @media (min-width: 1280px) {
+    .three-wide {
+      display: block;
+    }
+
+    .two-wide {
+      display: none;
+    }
   }
 `;
 
@@ -34,6 +64,11 @@ const AnonymousReadWrapper = styled.div`
 const DataTableWrapper = styled.div`
   .goa-checkbox input[type='checkbox'] {
     display: none !important;
+  }
+
+  .goa-checkbox {
+    margin-right: 15px;
+    min-height: calc(3rem - 10px);
   }
 
   th {
@@ -50,13 +85,12 @@ const DataTableWrapper = styled.div`
   }
 
   tbody {
-    height: 10em;
     overflow-y: auto;
     overflow-x: hidden;
   }
 
   .role-name {
-    width: 30em;
+    width: 40em;
   }
 
   .role {
@@ -64,12 +98,17 @@ const DataTableWrapper = styled.div`
   }
 
   td {
-    padding-left: 0em !important;
+    // padding-left: 0em !important;
+    padding: 0em !important;
   }
 
   table {
     border-collapse: collapse !important;
     width: 100%;
+  }
+
+  th {
+    white-space: pre-wrap;
   }
 `;
 
@@ -89,24 +128,26 @@ const validateFileType = (fileType: FileTypeItem): FileTypeError[] => {
   return errors;
 };
 
-interface FileRoleTableProps {
+interface ClientRoleTableProps {
   roles: string[];
   roleSelectFunc: (roles: string[], type: string) => void;
   readRoles: string[];
   updateRoles: string[];
   anonymousRead: boolean;
+  clientId: string;
 }
 
-const FileRoleTable = (props: FileRoleTableProps): JSX.Element => {
+const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
   const [readRoles, setReadRoles] = useState(props.readRoles);
   const [updateRoles, setUpdateRoles] = useState(props.updateRoles);
+
   return (
     <DataTableWrapper>
       <DataTable noScroll={true}>
         <thead>
           <tr>
             <th id="file-type-roles" className="role-name">
-              Roles
+              {props.clientId ? props.clientId + ' roles' : 'Roles'}
             </th>
             <th id="read-role-action" className="role">
               Read
@@ -118,7 +159,7 @@ const FileRoleTable = (props: FileRoleTableProps): JSX.Element => {
         </thead>
 
         <tbody>
-          {props.roles.map((role): JSX.Element => {
+          {props.roles?.map((role): JSX.Element => {
             return (
               <tr key={`file-type-row-${role}`}>
                 <td className="role-name">{role}</td>
@@ -187,51 +228,21 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
     return role.name;
   });
   const dispatch = useDispatch();
-  return (
-    <ModalOverwrite>
-      <GoAModal testId="file-type-modal" isOpen={true}>
-        <GoAModalTitle>{title}</GoAModalTitle>
-        <GoAModalContent>
-          <GoAFormItem>
-            <label>Name</label>
-            <GoAInput
-              type="text"
-              name="name"
-              value={fileType.name}
-              data-testid={`file-type-modal-name-input`}
-              onChange={(name, value) => {
-                const newFileType = {
-                  ...fileType,
-                  name: value,
-                  id: isNew ? toKebabName(value) : fileType.id,
-                };
-                setFileType(newFileType);
-                setErrors(validateFileType(newFileType));
-              }}
-              aria-label="name"
-            />
-          </GoAFormItem>
-          <GoAFormItem>
-            <label>Type ID</label>
-            <IdField data-testid={`file-type-modal-id`}>{fileType.id || ''}</IdField>
-          </GoAFormItem>
-          <AnonymousReadWrapper>
-            <GoACheckbox
-              checked={fileType.anonymousRead}
-              name="file-type-anonymousRead-checkbox"
-              data-testid="file-type-anonymousRead-checkbox"
-              onChange={() => {
-                setFileType({
-                  ...fileType,
-                  anonymousRead: !fileType.anonymousRead,
-                });
-              }}
-            />
-            Make public (read only)
-          </AnonymousReadWrapper>
-          <FileRoleTable
+  const selectServiceCoreRoles = createSelector(
+    (state: RootState) => state.serviceRoles,
+    (serviceRoles) => {
+      return serviceRoles?.core || {};
+    }
+  );
+
+  const ClientRole = ({ roleNames, clientId }) => {
+    return (
+      <>
+        <div style={{ margin: '0 0' }}>
+          <ClientRoleTable
             roles={roleNames}
-            anonymousRead={fileType.anonymousRead}
+            clientId={clientId}
+            anonymousRead={fileType?.anonymousRead}
             roleSelectFunc={(roles, type) => {
               if (type === 'read') {
                 setFileType({
@@ -245,9 +256,139 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
                 });
               }
             }}
-            readRoles={fileType.readRoles}
-            updateRoles={fileType.updateRoles}
+            readRoles={fileType?.readRoles}
+            updateRoles={fileType?.updateRoles}
           />
+        </div>
+      </>
+    );
+  };
+  const coreRoles = useSelector(selectServiceCoreRoles);
+
+  let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
+
+  const clientElements =
+    Object.entries(coreRoles).length > 0 &&
+    Object.entries(coreRoles)
+      .filter(([clientId, config]) => {
+        const roles = (config as ConfigServiceRole).roles;
+        const uniqueRoles = roles.filter((role) => !roleNames.includes(role.role));
+        return uniqueRoles.length > 0;
+      })
+      .map(([clientId, config]) => {
+        const roles = (config as ConfigServiceRole).roles;
+        const roleNames = roles.map((role) => {
+          return role.role;
+        });
+        return { roleNames: roleNames, clientId: clientId, currentElements: null };
+      });
+  elements = elements.concat(clientElements);
+
+  elements.forEach((e, index) => {
+    let currentElements = e.roleNames?.length + 1;
+    if (index > 0) {
+      currentElements = currentElements + elements[index - 1].currentElements;
+    } else {
+      currentElements = currentElements - 1;
+    }
+    elements[index] = { ...e, currentElements: currentElements };
+  });
+
+  const totalElements = elements[elements.length - 1].currentElements;
+
+  return (
+    <ModalOverwrite>
+      <GoAModal testId="file-type-modal" isOpen={true}>
+        <GoAModalTitle>{title}</GoAModalTitle>
+        <GoAModalContent>
+          <Grid>
+            <GridItem md={4} vSpacing={1} hSpacing={0.5}>
+              <label>Name</label>
+              <GoAInput
+                type="text"
+                name="name"
+                value={fileType.name}
+                data-testid={`file-type-modal-name-input`}
+                onChange={(name, value) => {
+                  const newFileType = {
+                    ...fileType,
+                    name: value,
+                    id: isNew ? toKebabName(value) : fileType.id,
+                  };
+                  setFileType(newFileType);
+                  setErrors(validateFileType(newFileType));
+                }}
+                aria-label="name"
+              />
+            </GridItem>
+            <GridItem md={4} vSpacing={1} hSpacing={0.5}>
+              <div style={{ margin: '0 15px' }}>
+                <label>Type ID</label>
+                <IdField data-testid={`file-type-modal-id`}>{fileType.id || ''}</IdField>
+              </div>
+            </GridItem>
+            <GridItem md={4} vSpacing={1} hSpacing={0.5}>
+              <div style={{ margin: '0 15px' }}>
+                <AnonymousReadWrapper>
+                  <GoACheckbox
+                    checked={fileType.anonymousRead}
+                    name="file-type-anonymousRead-checkbox"
+                    data-testid="file-type-anonymousRead-checkbox"
+                    onChange={() => {
+                      setFileType({
+                        ...fileType,
+                        anonymousRead: !fileType.anonymousRead,
+                      });
+                    }}
+                  />
+                  Make public (read only)
+                </AnonymousReadWrapper>
+              </div>
+            </GridItem>
+          </Grid>
+          <div className="three-wide">
+            <Grid>
+              <GridItem xl={4} lg={6} md={12} vSpacing={1} hSpacing={1.5}>
+                {elements.map((e) => {
+                  if (Math.floor(e.currentElements / (totalElements / 3)) === 0) {
+                    return <ClientRole roleNames={e.roleNames} clientId={e.clientId} />;
+                  } else return null;
+                })}
+              </GridItem>
+              <GridItem xl={4} lg={6} md={12} vSpacing={1} hSpacing={1.5}>
+                {elements.map((e) => {
+                  if (Math.floor(e.currentElements / (totalElements / 3)) === 1) {
+                    return <ClientRole roleNames={e.roleNames} clientId={e.clientId} />;
+                  } else return null;
+                })}
+              </GridItem>
+              <GridItem xl={4} lg={6} md={12} vSpacing={1} hSpacing={1.5}>
+                {elements.map((e) => {
+                  if (Math.floor(e.currentElements / (totalElements / 3)) === 2) {
+                    return <ClientRole roleNames={e.roleNames} clientId={e.clientId} />;
+                  } else return null;
+                })}
+              </GridItem>
+            </Grid>
+          </div>
+          <div className="two-wide">
+            <Grid>
+              <GridItem xl={6} lg={6} md={12} vSpacing={1} hSpacing={1.5}>
+                {elements.map((e) => {
+                  if (Math.floor(e.currentElements / (totalElements / 2)) === 0) {
+                    return <ClientRole roleNames={e.roleNames} clientId={e.clientId} />;
+                  } else return null;
+                })}
+              </GridItem>
+              <GridItem xl={6} lg={6} md={12} vSpacing={1} hSpacing={1.5}>
+                {elements.map((e) => {
+                  if (Math.floor(e.currentElements / (totalElements / 2)) === 1) {
+                    return <ClientRole roleNames={e.roleNames} clientId={e.clientId} />;
+                  } else return null;
+                })}
+              </GridItem>
+            </Grid>
+          </div>
         </GoAModalContent>
         <GoAModalActions>
           <GoAButton
