@@ -16,7 +16,6 @@ import { ServiceRoles } from '../roles';
 import axios from 'axios';
 import { Service, Links } from '../types/directory';
 import { getNamespaceEntries } from './util/getNamespaceEntries';
-import { DirectoryServicePathBuilder } from './util/directoryServicePathBuilder';
 import { checkSchema } from 'express-validator';
 import { entryUpdated, entryDeleted } from '../events';
 
@@ -93,83 +92,155 @@ export const createNameSpace =
       _next(err);
     }
   };
-export const addServiceByNamespace =
+
+export const addService =
   (directoryRepository: DirectoryRepository, eventService: EventService, logger: Logger): RequestHandler =>
   async (req, res, _next) => {
     const { namespace } = req.params;
     const user = req.user;
+    const { service, url } = req.body;
+    const entry = service;
     try {
-      const { service, url } = req.body;
-      const result = await directoryRepository.getDirectories(namespace);
-
-      const mappingService = {
-        service: service,
-        host: url,
-      };
+      const result = await addEntry(namespace, entry, url, directoryRepository);
       if (!result) {
-        const directory = { name: namespace, services: [mappingService] };
-        await directoryRepository.update(directory);
-
         return res.sendStatus(HttpStatusCodes.CREATED);
       }
-      const services = result.services;
-      const isExist = services.find((x) => x.service === service);
-
-      if (isExist) {
-        throw new InvalidValueError('Create new service', `${service} is exist in ${namespace}`);
-      } else {
-        services.push(mappingService);
-        const directory = { name: namespace, services: services };
-
-        await directoryRepository.update(directory);
-        const resultInDB = await directoryRepository.getDirectories(namespace);
-        const serviceInDB = resultInDB.services;
-        const serviceEvent = service.split(':').length === 0 ? service : service.split(':')[0];
-        const eventApi = service.split(':').length === 0 ? '' : service.split(':')[1];
-        eventService.send(entryUpdated(user, namespace, serviceEvent, eventApi, url));
-        return res.status(HttpStatusCodes.CREATED).json(serviceInDB.find((x) => x.service === service));
-      }
+      const serviceEvent = entry;
+      eventService.send(entryUpdated(user, namespace, serviceEvent, '', url));
+      return res.status(HttpStatusCodes.CREATED).json(result);
     } catch (err) {
       logger.error(`Failed creating directory for namespace: ${namespace} with error ${err.message}`);
       _next(err);
     }
   };
 
+export const addServiceApi =
+  (directoryRepository: DirectoryRepository, eventService: EventService, logger: Logger): RequestHandler =>
+  async (req, res, _next) => {
+    const { namespace, service } = req.params;
+    const user = req.user;
+    const { api, url } = req.body;
+    const entry = `${service}:${api}`;
+    try {
+      const result = await addEntry(namespace, entry, url, directoryRepository);
+      if (!result) {
+        return res.sendStatus(HttpStatusCodes.CREATED);
+      }
+      eventService.send(entryUpdated(user, namespace, service, api, url));
+      return res.status(HttpStatusCodes.CREATED).json(result);
+    } catch (err) {
+      logger.error(`Failed creating directory for namespace: ${namespace} with error ${err.message}`);
+      _next(err);
+    }
+  };
+
+const addEntry = async (
+  namespace: string,
+  entry: string,
+  url: string,
+  directoryRepository: DirectoryRepository
+): Promise<Service> => {
+  const result = await directoryRepository.getDirectories(namespace);
+
+  const mappingService = {
+    service: entry,
+    host: url,
+  };
+  if (!result) {
+    const directory = { name: namespace, services: [mappingService] };
+    await directoryRepository.update(directory);
+    return null;
+  }
+  const services = result.services;
+  const isExist = services.find((x) => x.service === entry);
+
+  if (isExist) {
+    throw new InvalidValueError('Create new service', `${entry} already exists in ${namespace}`);
+  } else {
+    services.push(mappingService);
+    const directory = { name: namespace, services: services };
+
+    await directoryRepository.update(directory);
+    const resultInDB = await directoryRepository.getDirectories(namespace);
+    const serviceInDB = resultInDB.services;
+    const results = serviceInDB.find((x) => x.service === entry);
+    delete results._id;
+    return results;
+  }
+};
+
 export const updateService =
   (directoryRepository: DirectoryRepository, eventService: EventService, logger: Logger): RequestHandler =>
   async (req, res, _next) => {
-    const { namespace } = req.params;
+    const { namespace, service } = req.params;
     const user = req.user;
+    const { url } = req.body;
 
     try {
-      const { service, url } = req.body;
-      const result = await directoryRepository.getDirectories(namespace);
-      const services = result.services;
-      const isExist = services.find((x) => x.service.toString() === service);
+      const didUpdate = await updateEntry(namespace, service, url, directoryRepository);
 
-      if (isExist) {
-        isExist.service = service;
-        isExist.host = url;
-        const directory = { name: namespace, services: services };
-        await directoryRepository.update(directory);
-        const serviceEvent = isExist.service.split(':').length === 0 ? isExist.service : isExist.service.split(':')[0];
-        const eventApi = isExist.service.split(':').length === 0 ? '' : isExist.service.split(':')[1];
-
+      if (didUpdate) {
         logger.info(
           `Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}) user tenant id : ${user.tenantId} `
         );
-        eventService.send(entryUpdated(user, namespace, serviceEvent, eventApi, url));
-
+        eventService.send(entryUpdated(user, namespace, service, '', url));
         return res.sendStatus(HttpStatusCodes.CREATED);
       } else {
         logger.error('modify service has error');
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({ errors: `${service} not exist in ${namespace}` });
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({ errors: `${service} does not exist in ${namespace}` });
       }
     } catch (err) {
       logger.error(`Failed updating directory for namespace: ${namespace} with error ${err.message}`);
       _next(err);
     }
   };
+
+export const updateApi =
+  (directoryRepository: DirectoryRepository, eventService: EventService, logger: Logger): RequestHandler =>
+  async (req, res, _next) => {
+    const { namespace, service, api } = req.params;
+    const user = req.user;
+    const { url } = req.body;
+
+    try {
+      const entry = `${service}:${api}`;
+      const didUpdate = await updateEntry(namespace, entry, url, directoryRepository);
+
+      if (didUpdate) {
+        logger.info(
+          `Directory ${namespace}:${entry} update by ${user.name} (ID: ${user.id}) user tenant id : ${user.tenantId} `
+        );
+        eventService.send(entryUpdated(user, namespace, service, api, url));
+        return res.sendStatus(HttpStatusCodes.CREATED);
+      } else {
+        logger.error('modify service has error');
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({ errors: `${entry} does not exist in ${namespace}` });
+      }
+    } catch (err) {
+      logger.error(`Failed updating directory for namespace: ${namespace} with error ${err.message}`);
+      _next(err);
+    }
+  };
+
+const updateEntry = async (
+  namespace: string,
+  entry: string,
+  url: string,
+  directoryRepository: DirectoryRepository
+): Promise<boolean> => {
+  const result = await directoryRepository.getDirectories(namespace);
+  const services = result.services;
+  const dbEntry = services.find((x) => x.service.toString() === entry);
+
+  if (dbEntry) {
+    dbEntry.service = entry;
+    dbEntry.host = url;
+    const directory = { name: namespace, services: services };
+    await directoryRepository.update(directory);
+    return true;
+  }
+  return false;
+};
 
 export const deleteService =
   (directoryRepository: DirectoryRepository, eventService: EventService, logger: Logger): RequestHandler =>
@@ -178,33 +249,60 @@ export const deleteService =
     const user = req.user;
 
     try {
-      const directoryEntity = await directoryRepository.getDirectories(namespace);
-      if (!directoryEntity) {
-        throw new InvalidValueError('Delete namespace service', `Cannot found namespace: ${namespace}`);
-      }
-      const services = directoryEntity.services;
-      const isExist = services.find((x) => x.service === service);
-      if (!isExist) {
-        throw new InvalidValueError('Delete namespace service', `${service} could not find`);
-      }
-      services.splice(
-        services.findIndex((item) => item.service === service),
-        1
-      );
-      const directory = { name: namespace, services: services };
-      await directoryRepository.update(directory);
-      const serviceEvent = isExist.service.split(':').length === 0 ? isExist.service : isExist.service.split(':')[0];
-      const eventApi = isExist.service.split(':').length === 0 ? '' : isExist.service.split(':')[1];
+      const dbEntry = await deleteEntry(namespace, service, directoryRepository);
       logger.info(
         `Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}), user tenant id : ${user.tenantId} `
       );
-      eventService.send(entryDeleted(user, namespace, serviceEvent, eventApi, isExist.host));
+      eventService.send(entryDeleted(user, namespace, service, 'eventApi', dbEntry.host));
       return res.sendStatus(HttpStatusCodes.OK);
     } catch (err) {
       logger.error(`Failed deleting directory for namespace: ${namespace} with error ${err.message}`);
       _next(err);
     }
   };
+
+export const deleteApi =
+  (directoryRepository: DirectoryRepository, eventService: EventService, logger: Logger): RequestHandler =>
+  async (req, res, _next) => {
+    const { namespace, service, api } = req.params;
+    const user = req.user;
+
+    try {
+      const dbEntry = await deleteEntry(namespace, `${service}:${api}`, directoryRepository);
+      logger.info(
+        `Directory ${namespace}:${service} update by ${user.name} (ID: ${user.id}), user tenant id : ${user.tenantId} `
+      );
+      eventService.send(entryDeleted(user, namespace, service, api, dbEntry.host));
+      return res.sendStatus(HttpStatusCodes.OK);
+    } catch (err) {
+      logger.error(`Failed deleting directory for namespace: ${namespace} with error ${err.message}`);
+      _next(err);
+    }
+  };
+
+const deleteEntry = async (
+  namespace: string,
+  entry: string,
+  directoryRepository: DirectoryRepository
+): Promise<Service> => {
+  const directoryEntity = await directoryRepository.getDirectories(namespace);
+  if (!directoryEntity) {
+    throw new InvalidValueError('Delete namespace service', `Cannot find namespace: ${namespace}`);
+  }
+
+  const services = directoryEntity.services;
+  const dbEntry = services.find((x) => x.service === entry);
+  if (!dbEntry) {
+    throw new InvalidValueError('Delete namespace service', `Cannot find ${entry}`);
+  }
+  services.splice(
+    services.findIndex((item) => item.service === entry),
+    1
+  );
+  const directory = { name: namespace, services: services };
+  await directoryRepository.update(directory);
+  return dbEntry;
+};
 
 export const getMetadataByService =
   (directoryRepository: DirectoryRepository, logger: Logger): RequestHandler =>
@@ -264,14 +362,12 @@ export const createDirectoryRouter = ({
 }: DirectoryRouterProps): Router => {
   const directoryRouter = Router();
 
-  const entriesPath = new DirectoryServicePathBuilder().entries(':namespace').build();
-
   /**
    * Get all directory entries
    */
 
   directoryRouter.get(
-    entriesPath,
+    '/namespaces/:namespace/entries',
     createValidationHandler(
       ...checkSchema(
         {
@@ -283,30 +379,51 @@ export const createDirectoryRouter = ({
     getDirectoriesByNamespace(directoryRepository)
   );
 
-  /*
+  /**
    * Create new namespace.
    */
   directoryRouter.post('/namespaces', passportMiddleware, createNameSpace(directoryRepository, tenantService, logger));
 
   /**
-   * Add one services to namespace
+   * Add a service to a namespace.
    */
   directoryRouter.post(
-    '/namespaces/:namespace',
+    '/namespaces/:namespace/services',
     [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
-    addServiceByNamespace(directoryRepository, eventService, logger)
+    addService(directoryRepository, eventService, logger)
   );
+
   /**
-   * modify one services for the namespace
+   * Add an api to a service.
+   * NOTE: This is a bit quirky; the implementation allows a service api to
+   * effectively exist without the service.
    */
-  directoryRouter.put(
-    '/namespaces/:namespace',
+  directoryRouter.post(
+    '/namespaces/:namespace/services/:service/apis',
+    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
+    addServiceApi(directoryRepository, eventService, logger)
+  );
+
+  /**
+   * modify a service in the namespace
+   */
+  directoryRouter.patch(
+    '/namespaces/:namespace/services/:service',
     [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
     updateService(directoryRepository, eventService, logger)
   );
 
   /**
-   * Delete one service by namespace
+   * modify an api in the service
+   */
+  directoryRouter.patch(
+    '/namespaces/:namespace/services/:service/apis/:api',
+    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
+    updateApi(directoryRepository, eventService, logger)
+  );
+
+  /**
+   * Delete a service
    */
   directoryRouter.delete(
     '/namespaces/:namespace/services/:service',
@@ -315,7 +432,16 @@ export const createDirectoryRouter = ({
   );
 
   /**
-   * Get service by service name
+   * Delete an API
+   */
+  directoryRouter.delete(
+    '/namespaces/:namespace/services/:service/apis/:api',
+    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
+    deleteApi(directoryRepository, eventService, logger)
+  );
+
+  /**
+   * Get service by name
    */
   directoryRouter.get(
     '/namespaces/:namespace/services/:service',
