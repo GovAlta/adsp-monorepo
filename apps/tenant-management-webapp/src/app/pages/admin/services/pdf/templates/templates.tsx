@@ -48,8 +48,6 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     return state.config.serviceUrls.tenantManagementWebApp;
   });
 
-  console.log(JSON.stringify(webappUrl) + '<webapprul');
-
   const getSuggestion = () => {
     if (currentTemplate) {
       const x = [
