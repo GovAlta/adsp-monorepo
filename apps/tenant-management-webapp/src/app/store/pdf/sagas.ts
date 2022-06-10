@@ -78,12 +78,10 @@ const connect = (pushServiceUrl, token, stream, tenantName) => {
     });
 
     socket.on('connect', () => {
-      console.log('socket connected');
       resolve(socket);
     });
 
     socket.on('disconnect', () => {
-      console.log('socket disconnected');
       resolve(socket);
     });
 
@@ -128,12 +126,8 @@ export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIte
   const createSocketChannel = (socket) =>
     eventChannel((emit) => {
       const handler = (data) => {
-        console.log('Handler: ' + JSON.stringify(data));
         emit(data);
       };
-      socket.on('connect', () => {
-        console.log('socket connected');
-      });
 
       const doneHandler = (data) => {
         emit(data);
@@ -169,7 +163,7 @@ export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIte
         yield fork(emitResponse, socket);
       }
     } catch (err) {
-      console.log('socket error: ', err);
+      console.error('socket error: ', err);
     }
   }
 }
