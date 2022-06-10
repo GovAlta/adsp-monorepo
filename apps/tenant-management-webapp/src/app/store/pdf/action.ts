@@ -11,6 +11,7 @@ export const FETCH_PDF_METRICS_SUCCESS_ACTION = 'pdf/FETCH_PDF_METRICS_SUCCESS';
 
 export const GENERATE_PDF_ACTION = 'pdf/GENERATE_PDF_ACTION';
 export const GENERATE_PDF_SUCCESS_ACTION = 'pdf/GENERATE_PDF_SUCCESS_ACTION';
+export const STREAM_PDF_SOCKET_ACTION = 'pdf/STREAM_PDF_SOCKET_ACTION';
 
 export const ADD_TO_STREAM = 'pdf/ADD_TO_STREAM';
 
@@ -38,6 +39,11 @@ export interface AddToStreamAction {
 export interface GeneratePdfAction {
   type: typeof GENERATE_PDF_ACTION;
   payload: PdfGenerationPayload;
+}
+
+export interface StreamPdfSocketAction {
+  type: typeof STREAM_PDF_SOCKET_ACTION;
+  disconnect: boolean;
 }
 
 export interface UpdatePdfTemplatesAction {
@@ -91,6 +97,11 @@ export const getPdfTemplatesSuccess = (results: Record<string, PdfTemplate>): Fe
 export const generatePdf = (payload: PdfGenerationPayload): GeneratePdfAction => ({
   type: GENERATE_PDF_ACTION,
   payload: payload,
+});
+
+export const streamPdfSocket = (disconnect: boolean): StreamPdfSocketAction => ({
+  type: STREAM_PDF_SOCKET_ACTION,
+  disconnect: disconnect,
 });
 
 export const generatePdfSuccess = (results: PdfGenerationResponse): GeneratePdfSuccessAction => ({

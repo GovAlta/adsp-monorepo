@@ -97,7 +97,6 @@ export const GeneratePDFModal: FunctionComponent<GeneratePDFModalProps> = ({ onS
               if (!hasFormErrors()) {
                 onSave(definition);
                 setDefinition(null);
-                onClose();
               } else {
                 return;
               }

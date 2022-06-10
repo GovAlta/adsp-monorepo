@@ -2,7 +2,7 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { GoAButton } from '@abgov/react-components';
 import { GeneratePDFModal } from './generatePDFModal';
 import { useDispatch, useSelector } from 'react-redux';
-import { getPdfTemplates, generatePdf } from '@store/pdf/action';
+import { getPdfTemplates, generatePdf, streamPdfSocket } from '@store/pdf/action';
 import { RootState } from '@store/index';
 import { GoAPageLoader } from '@abgov/react-components';
 
@@ -25,7 +25,7 @@ const PdfProcessing = styled.div`
 `;
 
 const GeneratorStyling = styled.div`
-  .extraPadding {
+  .extra-padding {
     margin: 20px 0 0 0;
   }
 
@@ -47,6 +47,10 @@ const GeneratorStyling = styled.div`
     flex: 3;
     fontsize: 12px;
   }
+
+  .button-margin {
+    margin: 0 10px;
+  }
 `;
 
 export const TestGenerate: FunctionComponent = () => {
@@ -55,6 +59,12 @@ export const TestGenerate: FunctionComponent = () => {
   useEffect(() => {
     dispatch(getPdfTemplates());
   }, []);
+  useEffect(() => {
+    if (showGeneratorWindow) {
+      dispatch(streamPdfSocket(false));
+    }
+  }, [showGeneratorWindow]);
+
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -72,18 +82,20 @@ export const TestGenerate: FunctionComponent = () => {
             <div className="row-flex">
               <div className="indicator">
                 {!indicator.show && !currentlyLoading && (
-                  <GoAButton
-                    data-testid="add-templates"
-                    disabled={indicator.show || currentlyLoading}
-                    onClick={() => {
-                      setShowGenerateWindow(true);
-                    }}
-                  >
-                    Generate PDF
-                  </GoAButton>
+                  <div className="button-margin">
+                    <GoAButton
+                      data-testid="add-templates"
+                      disabled={indicator.show || currentlyLoading}
+                      onClick={() => {
+                        setShowGenerateWindow(true);
+                      }}
+                    >
+                      Generate PDF
+                    </GoAButton>
+                  </div>
                 )}
-                {currentlyLoading && (
-                  <div className="extraPadding">
+                {(indicator.show || currentlyLoading) && (
+                  <div className="extra-padding">
                     <GoAPageLoader visible={true} message="" type="infinite" pagelock={false} />
                   </div>
                 )}
@@ -113,6 +125,7 @@ export const TestGenerate: FunctionComponent = () => {
                 setShowGenerateWindow(false);
               }}
               onClose={() => {
+                dispatch(streamPdfSocket(true));
                 setShowGenerateWindow(false);
               }}
             />

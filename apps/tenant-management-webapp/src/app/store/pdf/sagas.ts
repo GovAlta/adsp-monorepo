@@ -4,7 +4,7 @@ import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '../index';
 import { select, call, put, takeEvery, take, apply, fork } from 'redux-saga/effects';
-import { eventChannel } from 'redux-saga';
+import { eventChannel, END } from 'redux-saga';
 import { ErrorNotification } from '@store/notifications/actions';
 import {
   fetchPdfMetricsSucceeded,
@@ -18,6 +18,8 @@ import {
   generatePdfSuccess,
   GENERATE_PDF_ACTION,
   addToStream,
+  STREAM_PDF_SOCKET_ACTION,
+  StreamPdfSocketAction,
 } from './action';
 import { io } from 'socket.io-client';
 import { FETCH_FILE_LIST } from '@store/file/actions';
@@ -117,18 +119,10 @@ export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): Saga
   }
 }
 
-export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
-  const pdfServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pdfServiceApiUrl);
+export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIterator {
   const pushServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pushServiceApiUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
   const tenant = yield select((state: RootState) => state?.tenant);
-
-  yield put(
-    UpdateIndicator({
-      show: true,
-      message: 'Loading...',
-    })
-  );
 
   // This is how a channel is created
   const createSocketChannel = (socket) =>
@@ -149,7 +143,6 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
       socket.on('pdf-service:pdf-generated', doneHandler);
       socket.on('pdf-service:pdf-generation-queued', handler);
       socket.on('pdf-service:pdf-generation-failed', handler);
-      socket.on('file-service:file-uploaded', handler);
       socket.on('error', handler);
 
       const unsubscribe = () => {
@@ -158,10 +151,44 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
 
       return unsubscribe;
     });
+  if (disconnect === true) {
+    socket.disconnect();
+  } else {
+    const sk = yield call(connect, pushServiceUrl, token, 'pdf-generation-updates', tenant?.name);
 
-  const sk = yield call(connect, pushServiceUrl, token, 'pdf-generation-updates', tenant?.name);
+    const socketChannel = yield call(createSocketChannel, sk);
 
-  const socketChannel = yield call(createSocketChannel, sk);
+    try {
+      while (true) {
+        const payload = yield take(socketChannel);
+        yield put(addToStream(payload));
+        if (payload?.name === 'pdf-generated' || payload?.name === 'pdf-generation-failed') {
+          yield put({ type: FETCH_FILE_LIST });
+        }
+
+        yield fork(emitResponse, socket);
+      }
+    } catch (err) {
+      console.log('socket error: ', err);
+    }
+  }
+}
+
+function* emitResponse(socket) {
+  yield apply(socket, socket.emit, ['message received']);
+}
+
+export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
+  const pdfServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pdfServiceApiUrl);
+
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading...',
+    })
+  );
 
   if (pdfServiceUrl && token) {
     try {
@@ -176,25 +203,6 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
         headers: { Authorization: `Bearer ${token}` },
       });
       yield put(generatePdfSuccess(response));
-
-      yield put(
-        UpdateIndicator({
-          show: false,
-        })
-      );
-      try {
-        while (true) {
-          const payload = yield take(socketChannel);
-          yield put(addToStream(payload));
-          if (payload?.name === 'pdf-generated' || payload?.name === 'pdf-generation-failed') {
-            yield put({ type: FETCH_FILE_LIST });
-          }
-
-          yield fork(emitResponse, socket);
-        }
-      } catch (err) {
-        console.log('socket error: ', err);
-      }
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));
       yield put(
@@ -204,10 +212,6 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
       );
     }
   }
-}
-
-function* emitResponse(socket) {
-  yield apply(socket, socket.emit, ['message received']);
 }
 
 interface MetricResponse {
@@ -255,4 +259,5 @@ export function* watchPdfSagas(): Generator {
   yield takeEvery(UPDATE_PDF_TEMPLATE_ACTION, updatePdfTemplate);
   yield takeEvery(FETCH_PDF_METRICS_ACTION, fetchPdfMetrics);
   yield takeEvery(GENERATE_PDF_ACTION, generatePdf);
+  yield takeEvery(STREAM_PDF_SOCKET_ACTION, streamPdfSocket);
 }

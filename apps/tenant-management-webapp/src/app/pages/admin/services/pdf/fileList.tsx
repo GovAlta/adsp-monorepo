@@ -82,9 +82,8 @@ const FileList = (): JSX.Element => {
       </div>
     );
   };
-  return (
-    <>{!indicator.show && fileList?.filter((f) => f.typeName === 'Generated PDF').length > 0 && renderFileTable()}</>
-  );
+
+  return <>{fileList?.filter((f) => f.typeName === 'Generated PDF').length > 0 && renderFileTable()}</>;
 };
 
 export default FileList;
