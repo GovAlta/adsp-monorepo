@@ -107,4 +107,8 @@ export function KeycloakRoleToServiceRole(kcRoles: KeycloakClientRole[]): Servic
   });
 }
 
+export const Events = {
+  update: 'service.role.update',
+};
+
 export type ServiceRoleConfig = Record<string, ConfigServiceRole>;

@@ -12,7 +12,7 @@ import {
 } from './actions';
 import { KeycloakApi } from './api';
 import { Role } from './models';
-import { UpdateIndicator } from '@store/session/actions';
+import { UpdateIndicator, UpdateLoadingState } from '@store/session/actions';
 import { SagaIterator } from '@redux-saga/core';
 import axios from 'axios';
 import {
@@ -21,6 +21,7 @@ import {
   TENANT_SERVICE_CLIENT_URN,
   TENANT_ADMIN_ROLE,
   ConfigServiceRole,
+  Events,
 } from './models';
 
 // eslint-disable-next-line
@@ -190,11 +191,6 @@ export function* createKeycloakClient(action: CreateKeycloakRoleAction): SagaIte
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
   const keycloakBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.keycloakUrl);
   const realm: string = yield select((state: RootState) => state.session.realm);
-  yield put(
-    UpdateIndicator({
-      show: true,
-    })
-  );
 
   try {
     const tenantRoleConfig = yield select((state: RootState) => state.serviceRoles.tenant);
@@ -203,6 +199,17 @@ export function* createKeycloakClient(action: CreateKeycloakRoleAction): SagaIte
     const keycloakIdMap = yield select((state: RootState) => state.serviceRoles.keycloakIdMap);
     const mergedConfig = { ...tenantRoleConfig, ...coreRoleConfig };
     const { clientId, roleName } = action.payload;
+
+    yield put(
+      UpdateLoadingState({
+        name: Events.update,
+        state: 'start',
+        data: {
+          clientId: clientId,
+          role: roleName,
+        },
+      })
+    );
 
     const headers = {
       headers: { Authorization: `Bearer ${token}` },
@@ -281,16 +288,22 @@ export function* createKeycloakClient(action: CreateKeycloakRoleAction): SagaIte
     }
 
     yield put(createKeycloakRoleSuccess(clientId, clientIdInDB, roleName));
+
     yield put(
-      UpdateIndicator({
-        show: false,
+      UpdateLoadingState({
+        name: Events.update,
+        state: 'completed',
+        data: null,
       })
     );
   } catch (err) {
     yield put(ErrorNotification({ message: err.message }));
+
     yield put(
-      UpdateIndicator({
-        show: false,
+      UpdateLoadingState({
+        name: Events.update,
+        state: 'error',
+        data: null,
       })
     );
   }
