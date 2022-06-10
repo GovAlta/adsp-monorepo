@@ -73,6 +73,42 @@ export const getDirectoriesByNamespace =
     res.json(entries);
   };
 
+export const getEntriesForService =
+  (directoryRepository: DirectoryRepository): RequestHandler =>
+  async (req, res, _next) => {
+    try {
+      const { namespace, service } = req.params;
+      const data = await getNamespaceEntries(directoryRepository, namespace);
+      // regex matches service | service:whatever
+      const re = new RegExp(`^${service}(:[a-zA-Z-]+)?$`);
+      const entries = data.filter((x) => x.service.match(re));
+
+      if (!entries) {
+        return res.sendStatus(HttpStatusCodes.NOT_FOUND);
+      }
+      res.json(entries);
+    } catch (err) {
+      _next(err);
+    }
+  };
+
+export const getDirectoryEntryForApi =
+  (directoryRepository: DirectoryRepository): RequestHandler =>
+  async (req, res, _next) => {
+    let result = null;
+    try {
+      const { namespace, service, api } = req.params;
+      const entries = await getNamespaceEntries(directoryRepository, namespace);
+      result = entries.find((x) => x.service === `${service}:${api}`);
+      if (!result) {
+        return res.sendStatus(HttpStatusCodes.NOT_FOUND);
+      }
+    } catch (err) {
+      _next(err);
+    }
+    res.json(result);
+  };
+
 export const createNameSpace =
   (directoryRepository: DirectoryRepository, tenantService: TenantService, logger: Logger): RequestHandler =>
   async (req, res, _next) => {
@@ -304,7 +340,7 @@ const deleteEntry = async (
   return dbEntry;
 };
 
-export const getMetadataByService =
+export const getServiceMetadata =
   (directoryRepository: DirectoryRepository, logger: Logger): RequestHandler =>
   async (req, res, _next) => {
     const { namespace, service } = req.params;
@@ -380,6 +416,38 @@ export const createDirectoryRouter = ({
   );
 
   /**
+   * Get entries for the specified Service
+   */
+  directoryRouter.get(
+    '/namespaces/:namespace/services/:service/entries',
+    createValidationHandler(
+      ...checkSchema(
+        {
+          namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+        },
+        ['params']
+      )
+    ),
+    getEntriesForService(directoryRepository)
+  );
+
+  /**
+   * Get entry for the specified API
+   */
+  directoryRouter.get(
+    '/namespaces/:namespace/services/:service/apis/:api',
+    createValidationHandler(
+      ...checkSchema(
+        {
+          namespace: { isString: true, isLength: { options: { min: 1, max: 50 } } },
+        },
+        ['params']
+      )
+    ),
+    getDirectoryEntryForApi(directoryRepository)
+  );
+
+  /**
    * Create new namespace.
    */
   directoryRouter.post('/namespaces', passportMiddleware, createNameSpace(directoryRepository, tenantService, logger));
@@ -441,10 +509,10 @@ export const createDirectoryRouter = ({
   );
 
   /**
-   * Get service by name
+   * Get the service metadata
    */
   directoryRouter.get(
-    '/namespaces/:namespace/services/:service',
+    '/namespaces/:namespace/services/:service/metadata',
     createValidationHandler(
       ...checkSchema(
         {
@@ -454,7 +522,8 @@ export const createDirectoryRouter = ({
         ['params']
       )
     ),
-    getMetadataByService(directoryRepository, logger)
+    getServiceMetadata(directoryRepository, logger)
   );
+
   return directoryRouter;
 };
