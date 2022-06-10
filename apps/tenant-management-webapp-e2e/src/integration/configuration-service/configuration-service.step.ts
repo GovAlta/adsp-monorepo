@@ -23,19 +23,18 @@ When('the user clicks eye-off icon of {string} under Platform to close the schem
   configurationObj.configurationHideDetailsIcon(definitionName).click();
 });
 
-Then('the user {string} the schema of file-service', function (viewOrNot) {
-  switch (viewOrNot) {
-    case 'views':
-      configurationObj.configurationSchemaDetails().should('not.empty');
-      break;
-    case 'should not view':
-      configurationObj.configurationSchemaDetails().should('not.exist');
-      break;
-    default:
-      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+Then(
+  'the user {string} of the schema for {string} and validates {string} in details',
+  function (viewOrNot, definitionName, content) {
+    switch (viewOrNot) {
+      case 'views':
+        configurationObj.configurationSchemaDetails(definitionName).invoke('text').should('contain', content);
+        break;
+      case 'should not view':
+        configurationObj.configurationSchemaDetails(definitionName).should('not.exist');
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
   }
-});
-
-When('the user validate partial content {string} of file service schema', function (content) {
-  configurationObj.configurationSchemaDetails().invoke('text').should('contain', content);
-});
+);

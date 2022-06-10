@@ -6,6 +6,7 @@ class ConfigurationServicePage {
   namespaceTitle(text) {
     return cy.xpath(`//*[text()="${text}"]`);
   }
+
   configurationDefinition(name) {
     return cy.xpath(
       `//*[@data-testid="configuration-table"]//tbody/tr/td/parent::*/following-sibling::tr//*[@data-testid="configuration-name" and contains(text(), "${name}")]`
@@ -24,8 +25,10 @@ class ConfigurationServicePage {
     );
   }
 
-  configurationSchemaDetails() {
-    return cy.get('[data-testid="configuration-details"]');
+  configurationSchemaDetails(name) {
+    return cy.xpath(
+      `//*[@data-testid="configuration-name" and contains(text(), "${name}")]/parent::tr/following-sibling::tr//*[@data-testid="configuration-details"]`
+    );
   }
 }
 export default ConfigurationServicePage;
