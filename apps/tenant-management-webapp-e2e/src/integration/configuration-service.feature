@@ -10,3 +10,18 @@ Feature: Configuration-service
     And the user views the link of See the code for "configuration-service"
     And the user views the link of "Get support" under Support
 
+  @TEST_CS-1357 @REQ_CS-1272, @regression
+  Scenario: As a tenant admin, I can see the core configuration definitions, so I understand how they are used.
+    Given a tenant admin user is on tenant admin page
+    When the user selects the "Configuration" menu item
+    Then the user views the Configuration service overview content "The configuration service provides"
+    When the user selects "Definitions" tab for "Configuration"
+    Then the user views a heading of "platform" namespace
+    And the user views a "file-service" under core-service configurations
+    When the user clicks eye icon of "file-service" under Platform to view the schema
+    Then the user "views" of the schema for "file-service" and validates "readRoles" in the details
+    When the user clicks eye-off icon of "file-service" under Platform to close the schema
+    Then the user "should not view" of the schema for "file-service" and validates "readRoles" in the details
+
+
+
