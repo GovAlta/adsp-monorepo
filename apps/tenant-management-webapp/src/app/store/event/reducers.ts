@@ -13,7 +13,7 @@ import { EventState } from './models';
 
 const defaultState: EventState = {
   definitions: {},
-  entries: [],
+  entries: null,
   results: [],
   nextEntries: null,
   metrics: {},
