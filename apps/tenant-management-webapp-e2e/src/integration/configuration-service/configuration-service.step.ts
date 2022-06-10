@@ -24,7 +24,7 @@ When('the user clicks eye-off icon of {string} under Platform to close the schem
 });
 
 Then(
-  'the user {string} of the schema for {string} and validates {string} in details',
+  'the user {string} of the schema for {string} and validates {string} in the details',
   function (viewOrNot, definitionName, content) {
     switch (viewOrNot) {
       case 'views':
