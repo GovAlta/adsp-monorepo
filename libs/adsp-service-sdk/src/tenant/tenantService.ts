@@ -36,6 +36,11 @@ export interface TenantService {
   getTenantByRealm(realm: string): Promise<Tenant>;
 }
 
+interface TenantCriteria {
+  name?: string;
+  realm?: string;
+}
+
 export class TenantServiceImpl implements TenantService {
   private readonly LOG_CONTEXT = { context: 'TenantService' };
 
@@ -50,18 +55,27 @@ export class TenantServiceImpl implements TenantService {
   constructor(
     private readonly logger: Logger,
     private readonly directory: ServiceDirectory,
-    private readonly tokenProvider: TokenProvider
+    private readonly tokenProvider: TokenProvider,
+    preload = true
   ) {
-    // load into the cache.
-    this.#retrieveTenants().catch((err) => logger.error(`Encountered error during initialization of tenants. ${err}`));
+    if (preload) {
+      // load into the cache.
+      this.#retrieveTenants().catch((err) =>
+        logger.error(`Encountered error during initialization of tenants. ${err}`)
+      );
+    }
   }
 
-  #tryRetrieveTenants = async (requestUrl: URL, count: number): Promise<Tenant[]> => {
+  #tryRetrieveTenants = async (requestUrl: URL, count: number, criteria?: TenantCriteria): Promise<Tenant[]> => {
     this.logger.debug(`Try ${count}: retrieving tenants from ${requestUrl}...'`, this.LOG_CONTEXT);
 
     const token = await this.tokenProvider.getAccessToken();
     const { data } = await axios.get<TenantsResponse>(requestUrl.href, {
       headers: { Authorization: `Bearer ${token}` },
+      params: {
+        name: criteria?.name,
+        realm: criteria?.realm,
+      },
     });
 
     const tenants = data?.results?.map((r) => ({
@@ -73,14 +87,14 @@ export class TenantServiceImpl implements TenantService {
     return tenants;
   };
 
-  #retrieveTenants = async (): Promise<Tenant[]> => {
+  #retrieveTenants = async (criteria?: TenantCriteria): Promise<Tenant[]> => {
     const tenantServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:tenant-service:v2`);
     const tenantsUrl = new URL('v2/tenants', tenantServiceUrl);
 
     try {
       const tenants: Tenant[] = await retry(async (next, count) => {
         try {
-          return await this.#tryRetrieveTenants(tenantsUrl, count);
+          return await this.#tryRetrieveTenants(tenantsUrl, count, criteria);
         } catch (err) {
           this.logger.debug(`Try ${count} failed with error. ${err}`, this.LOG_CONTEXT);
           next(err);
@@ -131,6 +145,7 @@ export class TenantServiceImpl implements TenantService {
       if (tenant) {
         this.#tenants.set(`${tenant.id}`, tenant);
         this.#tenantNames[tenant.name.toLowerCase()] = tenant.id;
+        this.#tenantRealms[tenant.realm.toLowerCase()] = tenant.id;
         this.logger.debug(`Cached tenant '${tenant.id}' -> ${tenant.name} (${tenant.realm})`, this.LOG_CONTEXT);
       }
 
@@ -158,14 +173,32 @@ export class TenantServiceImpl implements TenantService {
   };
 
   getTenantByName = async (name: string): Promise<Tenant> => {
-    const tenantId = name && this.#tenantNames[name.toLowerCase()];
+    if (!name) {
+      return;
+    } else {
+      let tenantId = this.#tenantNames[name.toLowerCase()];
+      if (!tenantId) {
+        // Query for the tenant if no existing record.
+        await this.#retrieveTenants({ name });
+        tenantId = this.#tenantNames[name.toLowerCase()];
+      }
 
-    return tenantId ? this.getTenant(tenantId) : null;
+      return tenantId ? this.getTenant(tenantId) : null;
+    }
   };
 
   getTenantByRealm = async (realm: string): Promise<Tenant> => {
-    const tenantId = realm && this.#tenantRealms[realm.toLowerCase()];
+    if (!realm) {
+      return;
+    } else {
+      let tenantId = this.#tenantRealms[realm.toLowerCase()];
+      if (!tenantId) {
+        // Query for the tenant if no existing record.
+        await this.#retrieveTenants({ realm });
+        tenantId = this.#tenantRealms[realm.toLowerCase()];
+      }
 
-    return tenantId ? this.getTenant(tenantId) : null;
+      return tenantId ? this.getTenant(tenantId) : null;
+    }
   };
 }

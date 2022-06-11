@@ -49,3 +49,22 @@ Feature: Directory-service
     When the user clicks Delete button in Entry modal
     Then the user "should not view" the entry of "autotest-addentry" in Service, "Empty" in API, "https://myServiceEntry-2.ca" in URL
 
+  @TEST_CS-1468 @REQ_CS-1095, @regression
+  Scenario: As a tenant admin, I can add/edit/delete service API entries in a tenant namespace
+    Given a tenant admin user is on directory entries page
+    When the user clicks Add entry button
+    Then the user "views" Add entry modal
+    When the user enters "autotest-api" in Service, "v2" in API, "https://myServiceEntry.ca" in URL
+    And the user clicks Save button in Entry modal
+    Then the user "views" the entry of "autotest-api" in Service, "v2" in API, "https://myServiceEntry.ca" in URL
+    # Test validation for Api entry duplication
+    When the user clicks Add entry button
+    Then the user "views" Add entry modal
+    When the user enters "autotest-api" in Service, "v2" in API, "https://myServiceEntry.ca" in URL
+    And the user clicks Save button in Entry modal
+    Then the user views the error message "Api duplicate, please use another" for "Api" field
+    When the user clicks Cancel button in Entry modal
+    And the user clicks Delete icon of "autotest-api", "v2", "https://myServiceEntry.ca" on entries page
+    Then the user views Delete entry modal for "autotest-api:v2"
+    When the user clicks Delete button in Entry modal
+    Then the user "should not view" the entry of "autotest-api" in Service, "v2" in API, "https://myServiceEntry.ca" in URL

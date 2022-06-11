@@ -112,6 +112,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 data-testid="form-description"
                 value={type.description}
                 aria-label="description"
+                className="goa-textarea"
                 onChange={(e) => setType({ ...type, description: e.target.value })}
               />
             </GoAFormItem>

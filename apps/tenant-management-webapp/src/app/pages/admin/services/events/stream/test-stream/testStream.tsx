@@ -55,6 +55,15 @@ export const TestStream = (): JSX.Element => {
     };
   }, [socket]);
 
+  const disableConnectButton = () => {
+    if (selectedSteamId.length === 0) {
+      return true;
+    }
+    if (socket && socketConnection) {
+      return true;
+    }
+  };
+
   return (
     <>
       {indicator.show && <PageIndicator />}
@@ -72,7 +81,7 @@ export const TestStream = (): JSX.Element => {
             <StreamsDropdown>
               <GoADropdown
                 disabled={socketConnection}
-                name="fileType"
+                name="streams"
                 selectedValues={selectedSteamId}
                 multiSelect={false}
                 onChange={(name, streamId) => {
@@ -92,7 +101,7 @@ export const TestStream = (): JSX.Element => {
             <GoAButton
               type="submit"
               buttonType="primary"
-              disabled={socketConnection}
+              disabled={disableConnectButton()}
               onClick={() => {
                 dispatch(startSocket(`${pushServiceUrl}/${tenant?.name}`, selectedSteamId[0]));
               }}

@@ -44,10 +44,14 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
     case 'Directory':
       menuItemTestid = 'menu-directory';
       break;
+    case 'Configuration':
+      menuItemTestid = 'menu-configuration';
+      break;
     default:
       expect(menuItem).to.be.oneOf([
         'File',
         'Access',
+        'Configuration',
         'Status',
         'Event',
         'Notification',
