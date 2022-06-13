@@ -87,7 +87,7 @@ export function* createEntryDirectory(action: CreateEntryAction): SagaIterator {
 
     if (action.data.api) {
       sendEntry.api = action.data.api;
-      url = `${servicesUrl}/${action.data.service}/apis}`;
+      url = `${servicesUrl}/${action.data.service}/apis`;
     } else {
       sendEntry.service = action.data.service;
       url = servicesUrl;
@@ -125,7 +125,7 @@ export function* updateEntryDirectory(action: UpdateEntryAction): SagaIterator {
 
   try {
     const sendEntry = { url: action.data.url } as Service;
-    const url = action.data.api ? `${servicesUrl}/apis}/${action.data.api}` : servicesUrl;
+    const url = action.data.api ? `${servicesUrl}/apis/${action.data.api}` : servicesUrl;
     if (action.data.api) {
       sendEntry.api = action.data.api;
     } else {
@@ -133,7 +133,7 @@ export function* updateEntryDirectory(action: UpdateEntryAction): SagaIterator {
     }
 
     const { data } = yield call(
-      axios.put,
+      axios.patch,
       url,
       { ...sendEntry },
       {
@@ -144,7 +144,7 @@ export function* updateEntryDirectory(action: UpdateEntryAction): SagaIterator {
       yield put(updateEntrySuccess(action.data));
     }
   } catch (err) {
-    yield put(ErrorNotification({ message: `Failed to update service: entry ${action.data.service} already exists.` }));
+    yield put(ErrorNotification({ message: `Failed to update service: ${err.message}` }));
   }
 }
 
@@ -156,7 +156,7 @@ export function* deleteEntryDirectory(action: DeleteEntryAction): SagaIterator {
   const servicesUrl = `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}/services/${
     action.data.service
   }`;
-  const url = action.data.api ? `${servicesUrl}/apis}/${action.data.api}` : servicesUrl;
+  const url = action.data.api ? `${servicesUrl}/apis/${action.data.api}` : servicesUrl;
 
   try {
     const { data } = yield call(axios.delete, url, {
@@ -186,7 +186,7 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
       axios.get,
       `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(action.data.namespace)}/services/${
         action.data.service
-      }`,
+      }/metadata`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
