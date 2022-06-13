@@ -170,3 +170,13 @@ When('the user clicks Eye icon to close meta data for the service entry of {stri
 Then('the user views the meta data information', function () {
   directoryObj.directoryServiceMetaData().invoke('text').should('contain', 'No metadata found');
 });
+
+Then('the user clicks on Add from the action menu', function () {
+  directoryObj.addEntryActionBtn().click();
+});
+
+Then('the user views disabled input for Service, API and URL fields', function () {
+  directoryObj.entryModalServiceField().should('be.disabled');
+  directoryObj.entryModalApiField().should('be.disabled');
+  directoryObj.entryModalUrlField().should('be.disabled');
+});

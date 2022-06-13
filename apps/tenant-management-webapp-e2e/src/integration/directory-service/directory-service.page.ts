@@ -118,5 +118,9 @@ class DirectoryServicePage {
   directoryServiceMetaData() {
     return cy.get('[data-testid="details"]');
   }
+
+  addEntryActionBtn() {
+    return cy.get('[data-testid=icon-add]');
+  }
 }
 export default DirectoryServicePage;
