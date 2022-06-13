@@ -57,14 +57,9 @@ class PlatformFileService implements FileService {
 
       return data;
     } catch (err) {
-      this.logger.debug(
-        `Upload to file service failed with error. ${
-          axios.isAxiosError(err) ? JSON.stringify(err.toJSON(), null, 2) : err
-        }`,
-        {
-          context: 'PlatformFileService',
-        }
-      );
+      this.logger.warn(`Upload to file service failed with error. ${axios.isAxiosError(err) ? err.toJSON() : err}`, {
+        context: 'PlatformFileService',
+      });
       throw err;
     }
   }

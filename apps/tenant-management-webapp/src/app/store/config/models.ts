@@ -44,6 +44,7 @@ export interface ServiceUrls {
   chatServiceApiUrl: string;
   pushServiceApiUrl: string;
   directoryServiceApiUrl?: string;
+  pdfServiceApiUrl?: string;
 }
 
 export interface ConfigState {

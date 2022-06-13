@@ -26,6 +26,7 @@ export const TestStream = (): JSX.Element => {
   });
   const [selectedSteamId, setSelectedStreamId] = useState<string[]>([]);
   const [socketConnection, setSocketConnection] = useState(false);
+  const [socketConnectionError, setSocketConnectionError] = useState(false);
   const [streamData, setStreamData] = useState([]);
 
   useEffect(() => {
@@ -36,11 +37,16 @@ export const TestStream = (): JSX.Element => {
   useEffect(() => {
     socket?.on('connect', () => {
       setSocketConnection(true);
+      setSocketConnectionError(false);
     });
     socket?.on('disconnect', () => {
       setSocketConnection(false);
+      setSocketConnectionError(false);
     });
-
+    socket?.on('connect_error', (error) => {
+      setSocketConnectionError(true);
+      setSocketConnection(false);
+    });
     // once we have socket init, available streams and a stream selected by user then start listening to streams
     // TO-DO: we can use a wrapper of some sort here in the future for re-usability
     if (tenantStreams && coreStreams && socket && selectedSteamId[0]) {
@@ -55,6 +61,26 @@ export const TestStream = (): JSX.Element => {
     };
   }, [socket]);
 
+  const disableConnectButton = () => {
+    if (selectedSteamId.length === 0) {
+      return true;
+    }
+    if (socket && socketConnection) {
+      return true;
+    }
+  };
+
+  const socketStatus = () => {
+    if (socketConnectionError) {
+      return <GoABadge type={'emergency'} content={'failed'} />;
+    }
+    return socketConnection ? (
+      <GoABadge type={'success'} content={'connected'} />
+    ) : (
+      <GoABadge type={'midtone'} content={'disconnected'} />
+    );
+  };
+
   return (
     <>
       {indicator.show && <PageIndicator />}
@@ -62,17 +88,11 @@ export const TestStream = (): JSX.Element => {
         <>
           <GoAForm>
             <StreamHeading>Please select a stream to test</StreamHeading>
-            <span>
-              {socketConnection ? (
-                <GoABadge type={'success'} content={'connected'} />
-              ) : (
-                <GoABadge type={'midtone'} content={'disconnected'} />
-              )}
-            </span>
+            <span>{socketStatus()}</span>
             <StreamsDropdown>
               <GoADropdown
                 disabled={socketConnection}
-                name="fileType"
+                name="streams"
                 selectedValues={selectedSteamId}
                 multiSelect={false}
                 onChange={(name, streamId) => {
@@ -92,7 +112,7 @@ export const TestStream = (): JSX.Element => {
             <GoAButton
               type="submit"
               buttonType="primary"
-              disabled={socketConnection}
+              disabled={disableConnectButton()}
               onClick={() => {
                 dispatch(startSocket(`${pushServiceUrl}/${tenant?.name}`, selectedSteamId[0]));
               }}
