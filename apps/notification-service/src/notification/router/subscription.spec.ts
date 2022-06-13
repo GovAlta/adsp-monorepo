@@ -7,7 +7,7 @@ import { NotificationConfiguration } from '../configuration';
 import {
   createTypeSubscription,
   getTypeSubscriptions,
-  addTypeSubscription,
+  addOrUpdateTypeSubscription,
   createSubscriptionRouter,
   deleteTypeSubscription,
   getNotificationType,
@@ -192,10 +192,14 @@ describe('subscription router', () => {
         },
         query: {},
         notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        getConfiguration: jest.fn(),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
 
+      req.getConfiguration.mockResolvedValueOnce(
+        new NotificationConfiguration({ test: notificationType }, {}, tenantId)
+      );
       const result = { results: [], page: {} };
       repositoryMock.getSubscriptions.mockResolvedValueOnce(result);
 
@@ -204,7 +208,7 @@ describe('subscription router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
     });
 
-    it('can get handle query params', async () => {
+    it('can handle query params', async () => {
       const req = {
         user: {
           id: 'tester',
@@ -218,16 +222,20 @@ describe('subscription router', () => {
         },
         query: { top: '11', after: '123' },
         notificationType: new NotificationTypeEntity(notificationType, tenantId),
+        getConfiguration: jest.fn(),
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
 
+      const configuration = new NotificationConfiguration({ test: notificationType }, {}, tenantId);
+      req.getConfiguration.mockResolvedValueOnce(configuration);
       const result = { results: [], page: {} };
       repositoryMock.getSubscriptions.mockResolvedValueOnce(result);
 
       const handler = getTypeSubscriptions(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getSubscriptions).toHaveBeenCalledWith(
+        configuration,
         req.tenant.id,
         11,
         '123',
@@ -292,6 +300,7 @@ describe('subscription router', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        req.notificationType,
         subscriber
       );
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
@@ -331,6 +340,7 @@ describe('subscription router', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        req.notificationType,
         subscriber
       );
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
@@ -348,7 +358,7 @@ describe('subscription router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
     });
 
-    it('can create subscription for existing subscriber', async () => {
+    it('can create subscription for existing user subscriber', async () => {
       const req = {
         tenant: {
           id: tenantId,
@@ -376,6 +386,7 @@ describe('subscription router', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        req.notificationType,
         subscriber
       );
       repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
@@ -387,11 +398,52 @@ describe('subscription router', () => {
       expect(repositoryMock.saveSubscriber).not.toBeCalled();
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
     });
+
+    it('can create subscription for existing subscriber', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.SubscriptionAdmin],
+        },
+        query: {},
+        body: { id: 'subscriber' },
+        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const subscriber = new SubscriberEntity(repositoryMock, {
+        id: 'subscriber',
+        tenantId,
+        addressAs: 'tester',
+        channels: [],
+      });
+      const subscription = new SubscriptionEntity(
+        repositoryMock,
+        { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        req.notificationType,
+        subscriber
+      );
+      repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
+      repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
+
+      const handler = createTypeSubscription(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'subscriber', false);
+      expect(repositoryMock.saveSubscriber).not.toBeCalled();
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
+    });
   });
 
-  describe('addTypeSubscription', () => {
+  describe('addOrUpdateTypeSubscription', () => {
     it('can create handler', () => {
-      const handler = addTypeSubscription(apiId, repositoryMock);
+      const handler = addOrUpdateTypeSubscription(apiId, repositoryMock);
       expect(handler).toBeTruthy();
     });
 
@@ -424,12 +476,14 @@ describe('subscription router', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        req.notificationType,
         subscriber
       );
       repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
+      repositoryMock.getSubscription.mockResolvedValueOnce(null);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
-      const handler = addTypeSubscription(apiId, repositoryMock);
+      const handler = addOrUpdateTypeSubscription(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'subscriber', false);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
@@ -464,12 +518,14 @@ describe('subscription router', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        req.notificationType,
         subscriber
       );
       repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
+      repositoryMock.getSubscription.mockResolvedValueOnce(null);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
-      const handler = addTypeSubscription(apiId, repositoryMock);
+      const handler = addOrUpdateTypeSubscription(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'subscriber', false);
       expect(repositoryMock.saveSubscription).toHaveBeenCalledWith(
@@ -483,7 +539,57 @@ describe('subscription router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
     });
 
-    it('can call with error 400', async () => {
+    it('can update subscription criteria', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          id: 'tester',
+          tenantId,
+          name: 'Tester',
+          email: 'tester@test.co',
+          roles: [ServiceUserRoles.SubscriptionAdmin],
+        },
+        body: { criteria: { correlationId: '123', context: {} } },
+        query: {},
+        params: { subscriber: 'subscriber' },
+        notificationType: new NotificationTypeEntity(notificationType, tenantId),
+      };
+      const res = { send: jest.fn() };
+      const next = jest.fn();
+
+      const subscriber = new SubscriberEntity(repositoryMock, {
+        id: 'subscriber',
+        tenantId,
+        addressAs: 'tester',
+        channels: [],
+      });
+      const subscription = new SubscriptionEntity(
+        repositoryMock,
+        { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        req.notificationType,
+        subscriber
+      );
+      repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
+      repositoryMock.getSubscription.mockResolvedValueOnce(subscription);
+      repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
+
+      const handler = addOrUpdateTypeSubscription(apiId, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'subscriber', false);
+      expect(repositoryMock.saveSubscription).toHaveBeenCalledWith(
+        expect.objectContaining({
+          criteria: expect.objectContaining({
+            correlationId: req.body.criteria.correlationId,
+            context: req.body.criteria.context,
+          }),
+        })
+      );
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
+    });
+
+    it('can call next with error', async () => {
       const req = {
         tenant: {
           id: tenantId,
@@ -513,9 +619,9 @@ describe('subscription router', () => {
 
       repositoryMock.getSubscriber.mockResolvedValueOnce(null);
 
-      const handler = addTypeSubscription(apiId, repositoryMock);
+      const handler = addOrUpdateTypeSubscription(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(res.status).toHaveBeenCalledWith(400);
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
     });
   });
 
@@ -553,6 +659,7 @@ describe('subscription router', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        req.notificationType,
         subscriber
       );
 
@@ -1097,7 +1204,14 @@ describe('subscription router', () => {
         criteria: {},
       };
       repositoryMock.getSubscriptions.mockResolvedValueOnce({
-        results: [new SubscriptionEntity(repositoryMock, subscription, subscriber)],
+        results: [
+          new SubscriptionEntity(
+            repositoryMock,
+            subscription,
+            new NotificationTypeEntity(notificationType, tenantId),
+            subscriber
+          ),
+        ],
       });
 
       const handler = getSubscriberDetails(apiId, repositoryMock);
@@ -1240,26 +1354,35 @@ describe('subscription router', () => {
           subscriber: 'subscriber-id',
         },
         getConfiguration: jest.fn(),
-        notificationType: {
-          channels: ['email', 'sms'],
-          events: [
-            {
-              namespace: 'mock-namespace',
-              name: 'mock-name',
-              customized: true,
-              templates: {
-                email: {
-                  subject: 'mock-email-subject',
-                  body: '<html></html>',
+        notificationType: new NotificationTypeEntity(
+          {
+            id: 'test',
+            name: 'Test',
+            description: null,
+            publicSubscribe: false,
+            subscriberRoles: [],
+            channels: [Channel.email, Channel.sms],
+            events: [
+              {
+                namespace: 'mock-namespace',
+                name: 'mock-name',
+                customized: true,
+                templates: {
+                  email: {
+                    subject: 'mock-email-subject',
+                    body: '<html></html>',
+                  },
                 },
               },
-            },
-          ],
-        },
+            ],
+          },
+          tenantId
+        ),
       };
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        req.notificationType,
         subscriber
       );
       repositoryMock.getSubscription.mockResolvedValueOnce(subscription);
@@ -1282,26 +1405,36 @@ describe('subscription router', () => {
           subscriber: 'subscriber-id',
         },
         getConfiguration: jest.fn(),
-        notificationType: {
-          channels: ['sms'],
-          events: [
-            {
-              namespace: 'mock-namespace',
-              name: 'mock-name',
-              customized: true,
-              templates: {
-                email: {
-                  subject: 'mock-email-subject',
-                  body: '<html></html>',
+        notificationType: new NotificationTypeEntity(
+          {
+            id: 'test',
+            name: 'Test',
+            description: null,
+            channels: [Channel.sms],
+            publicSubscribe: false,
+            subscriberRoles: [],
+            events: [
+              {
+                namespace: 'mock-namespace',
+                name: 'mock-name',
+                customized: true,
+                templates: {
+                  email: {
+                    subject: 'mock-email-subject',
+                    body: '<html></html>',
+                  },
                 },
               },
-            },
-          ],
-        },
+            ],
+          },
+          tenantId
+        ),
       };
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+
+        req.notificationType,
         subscriber
       );
       repositoryMock.getSubscription.mockResolvedValueOnce(subscription);
@@ -1638,7 +1771,7 @@ describe('subscription router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
     });
 
-    it('can get handle query params', async () => {
+    it('can handle query params', async () => {
       const req = {
         user: {
           id: 'tester',
@@ -1657,13 +1790,13 @@ describe('subscription router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      req.getConfiguration.mockResolvedValueOnce(
-        new NotificationConfiguration({ test: notificationType }, {}, tenantId)
-      );
+      const configuration = new NotificationConfiguration({ test: notificationType }, {}, tenantId);
+      req.getConfiguration.mockResolvedValueOnce(configuration);
 
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        null,
         subscriber
       );
 
@@ -1673,6 +1806,7 @@ describe('subscription router', () => {
       const handler = getSubscriberSubscriptions(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getSubscriptions).toHaveBeenCalledWith(
+        configuration,
         req.tenant.id,
         11,
         '123',

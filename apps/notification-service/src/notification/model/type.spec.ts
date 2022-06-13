@@ -395,6 +395,7 @@ describe('NotificationTypeEntity', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: {} },
+        entity,
         subscriber
       );
 
@@ -469,6 +470,7 @@ describe('NotificationTypeEntity', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: {} },
+        entity,
         subscriber
       );
 
@@ -536,6 +538,7 @@ describe('NotificationTypeEntity', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: { correlationId: '123' } },
+        entity,
         subscriber
       );
 
@@ -611,6 +614,7 @@ describe('NotificationTypeEntity', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: { correlationId: '123' } },
+        entity,
         subscriber
       );
 
@@ -686,6 +690,7 @@ describe('NotificationTypeEntity', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test-type', subscriberId: 'test', criteria: { correlationId: '123' } },
+        entity,
         subscriber
       );
 

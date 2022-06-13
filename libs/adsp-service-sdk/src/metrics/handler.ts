@@ -28,7 +28,7 @@ export async function writeMetrics(
       tenant: tenantId.toString(),
     });
   } catch (err) {
-    logger.debug(`Error encountered writing service metrics. ${err}`, {
+    logger.warn(`Error encountered writing service metrics. ${err}`, {
       context: 'MetricsHandler',
       tenant: tenantId.toString(),
     });

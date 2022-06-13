@@ -76,7 +76,10 @@ components:
       type: object
       properties:
         correlationId:
-          type: string
+          oneOf:
+            - type: string
+            - type: array
+              items: string
         context:
           type: object
           additionalProperties: true
@@ -329,7 +332,7 @@ components:
   post:
     tags:
       - Subscription
-    description: Subscribes an existing subscriber to the notification type.
+    description: Adds or updates the subscription of a subscriber to the notification type.
     requestBody:
       required: false
       content:
