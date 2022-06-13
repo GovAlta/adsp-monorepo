@@ -81,6 +81,6 @@ Feature: Directory-service
     And the user clicks Save button in Entry modal
     Then the user "views" the entry of "automatedtest-use-only" in Service, "v1" in API, "https://file-service.adsp-uat.alberta.ca/file/v1" in URL
     When the user clicks Delete icon of "automatedtest-use-only", "v1", "https://file-service.adsp-uat.alberta.ca/file/v1" on entries page
-    Then the user views Delete entry modal for "automatedtest-use-only"
+    Then the user views Delete entry modal for "automatedtest-use-only:v1"
     When the user clicks Delete button in Entry modal
     Then the user "should not view" the entry of "automatedtest-use-only" in Service, "v1" in API, "https://file-service.adsp-uat.alberta.ca/file/v1" in URL
