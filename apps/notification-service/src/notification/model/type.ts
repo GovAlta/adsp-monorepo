@@ -61,7 +61,7 @@ export class NotificationTypeEntity implements NotificationType {
       throw new UnauthorizedError('User not authorized to subscribe.');
     }
 
-    return await SubscriptionEntity.create(repository, subscriber, {
+    return await SubscriptionEntity.create(repository, this, subscriber, {
       tenantId: subscriber.tenantId,
       typeId: this.id,
       subscriberId: subscriber.id,

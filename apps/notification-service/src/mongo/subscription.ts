@@ -2,6 +2,7 @@ import { AdspId } from '@abgov/adsp-service-sdk';
 import { decodeAfter, encodeNext, Results } from '@core-services/core-common';
 import { Document, model, Model, Types } from 'mongoose';
 import {
+  NotificationConfiguration,
   NotificationTypeEntity,
   SubscriberCriteria,
   SubscriberEntity,
@@ -51,10 +52,11 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
       )
       .populate('subscriberId');
 
-    return this.fromSubscriptionDoc(doc);
+    return this.fromSubscriptionDoc(doc, type);
   }
 
   async getSubscriptions(
+    configuration: NotificationConfiguration,
     tenantId: AdspId,
     top: number,
     after: string,
@@ -134,10 +136,10 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
       mongoQuery.limit(top);
     }
 
-    const docs = await mongoQuery.exec();
+    const docs: SubscriptionDoc[] = await mongoQuery.exec();
 
     return {
-      results: docs.map((doc) => this.fromSubscriptionDoc(doc)),
+      results: docs.map((doc) => this.fromSubscriptionDoc(doc, configuration.getNotificationType(doc.typeId))),
       page: {
         after,
         next: encodeNext(docs.length, top, skip),
@@ -206,7 +208,7 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
       { upsert: true, new: true, lean: true }
     );
 
-    return this.fromSubscriptionDoc(doc, subscription.subscriber);
+    return this.fromSubscriptionDoc(doc, subscription.type, subscription.subscriber);
   }
 
   async deleteSubscriptions(tenantId: AdspId, typeId: string, subscriberId: string): Promise<boolean> {
@@ -252,7 +254,7 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
       : null;
   }
 
-  private fromSubscriptionDoc(doc: SubscriptionDoc, subscriber?: SubscriberEntity) {
+  private fromSubscriptionDoc(doc: SubscriptionDoc, type: NotificationTypeEntity, subscriber?: SubscriberEntity) {
     return doc
       ? new SubscriptionEntity(
           this,
@@ -263,10 +265,10 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
             subscriberId: `${((doc.subscriberId as any) || {})._id || doc.subscriberId}`,
             criteria: doc.criteria,
           },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          type,
           subscriber ||
-            (doc.subscriberId?.['tenantId']
-              ? new SubscriberEntity(this, this.fromDoc(doc.subscriberId as unknown as SubscriberDoc))
+            ((doc.subscriberId as SubscriberDoc)?.tenantId
+              ? new SubscriberEntity(this, this.fromDoc(doc.subscriberId as SubscriberDoc))
               : null)
         )
       : null;

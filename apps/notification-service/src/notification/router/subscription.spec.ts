@@ -7,7 +7,7 @@ import { NotificationConfiguration } from '../configuration';
 import {
   createTypeSubscription,
   getTypeSubscriptions,
-  addTypeSubscription,
+  addOrUpdateTypeSubscription,
   createSubscriptionRouter,
   deleteTypeSubscription,
   getNotificationType,
@@ -292,6 +292,7 @@ describe('subscription router', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        req.notificationType,
         subscriber
       );
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
@@ -331,6 +332,7 @@ describe('subscription router', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        req.notificationType,
         subscriber
       );
       repositoryMock.saveSubscriber.mockResolvedValueOnce(subscriber);
@@ -376,6 +378,7 @@ describe('subscription router', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        req.notificationType,
         subscriber
       );
       repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
@@ -391,7 +394,7 @@ describe('subscription router', () => {
 
   describe('addTypeSubscription', () => {
     it('can create handler', () => {
-      const handler = addTypeSubscription(apiId, repositoryMock);
+      const handler = addOrUpdateTypeSubscription(apiId, repositoryMock);
       expect(handler).toBeTruthy();
     });
 
@@ -424,12 +427,13 @@ describe('subscription router', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        req.notificationType,
         subscriber
       );
       repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
-      const handler = addTypeSubscription(apiId, repositoryMock);
+      const handler = addOrUpdateTypeSubscription(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'subscriber', false);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
@@ -464,12 +468,13 @@ describe('subscription router', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        req.notificationType,
         subscriber
       );
       repositoryMock.getSubscriber.mockResolvedValueOnce(subscriber);
       repositoryMock.saveSubscription.mockResolvedValueOnce(subscription);
 
-      const handler = addTypeSubscription(apiId, repositoryMock);
+      const handler = addOrUpdateTypeSubscription(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'subscriber', false);
       expect(repositoryMock.saveSubscription).toHaveBeenCalledWith(
@@ -513,7 +518,7 @@ describe('subscription router', () => {
 
       repositoryMock.getSubscriber.mockResolvedValueOnce(null);
 
-      const handler = addTypeSubscription(apiId, repositoryMock);
+      const handler = addOrUpdateTypeSubscription(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.status).toHaveBeenCalledWith(400);
     });
@@ -553,6 +558,7 @@ describe('subscription router', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        req.notificationType,
         subscriber
       );
 
@@ -1097,7 +1103,14 @@ describe('subscription router', () => {
         criteria: {},
       };
       repositoryMock.getSubscriptions.mockResolvedValueOnce({
-        results: [new SubscriptionEntity(repositoryMock, subscription, subscriber)],
+        results: [
+          new SubscriptionEntity(
+            repositoryMock,
+            subscription,
+            new NotificationTypeEntity(notificationType, tenantId),
+            subscriber
+          ),
+        ],
       });
 
       const handler = getSubscriberDetails(apiId, repositoryMock);
@@ -1240,26 +1253,35 @@ describe('subscription router', () => {
           subscriber: 'subscriber-id',
         },
         getConfiguration: jest.fn(),
-        notificationType: {
-          channels: ['email', 'sms'],
-          events: [
-            {
-              namespace: 'mock-namespace',
-              name: 'mock-name',
-              customized: true,
-              templates: {
-                email: {
-                  subject: 'mock-email-subject',
-                  body: '<html></html>',
+        notificationType: new NotificationTypeEntity(
+          {
+            id: 'test',
+            name: 'Test',
+            description: null,
+            publicSubscribe: false,
+            subscriberRoles: [],
+            channels: [Channel.email, Channel.sms],
+            events: [
+              {
+                namespace: 'mock-namespace',
+                name: 'mock-name',
+                customized: true,
+                templates: {
+                  email: {
+                    subject: 'mock-email-subject',
+                    body: '<html></html>',
+                  },
                 },
               },
-            },
-          ],
-        },
+            ],
+          },
+          tenantId
+        ),
       };
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        req.notificationType,
         subscriber
       );
       repositoryMock.getSubscription.mockResolvedValueOnce(subscription);
@@ -1282,26 +1304,36 @@ describe('subscription router', () => {
           subscriber: 'subscriber-id',
         },
         getConfiguration: jest.fn(),
-        notificationType: {
-          channels: ['sms'],
-          events: [
-            {
-              namespace: 'mock-namespace',
-              name: 'mock-name',
-              customized: true,
-              templates: {
-                email: {
-                  subject: 'mock-email-subject',
-                  body: '<html></html>',
+        notificationType: new NotificationTypeEntity(
+          {
+            id: 'test',
+            name: 'Test',
+            description: null,
+            channels: [Channel.sms],
+            publicSubscribe: false,
+            subscriberRoles: [],
+            events: [
+              {
+                namespace: 'mock-namespace',
+                name: 'mock-name',
+                customized: true,
+                templates: {
+                  email: {
+                    subject: 'mock-email-subject',
+                    body: '<html></html>',
+                  },
                 },
               },
-            },
-          ],
-        },
+            ],
+          },
+          tenantId
+        ),
       };
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+
+        req.notificationType,
         subscriber
       );
       repositoryMock.getSubscription.mockResolvedValueOnce(subscription);
@@ -1664,6 +1696,7 @@ describe('subscription router', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
+        null,
         subscriber
       );
 

@@ -14,11 +14,16 @@ export const mapSubscriber = (apiId: AdspId, subscriber: SubscriberEntity): Reco
   userId: subscriber.userId,
 });
 
-export const mapSubscription = (apiId: AdspId, subscription: SubscriptionEntity): Record<string, unknown> => ({
+export const mapSubscription = (
+  apiId: AdspId,
+  subscription: SubscriptionEntity,
+  includeType = false
+): Record<string, unknown> => ({
   subscriber: subscription.subscriber ? mapSubscriber(apiId, subscription.subscriber) : null,
   subscriberId: subscription.subscriberId,
   typeId: subscription.typeId,
   criteria: subscription.criteria,
+  type: includeType ? mapType(subscription.type, true) : undefined,
 });
 
 export const mapType = (type: NotificationTypeEntity, lean?: boolean): Record<string, unknown> =>
