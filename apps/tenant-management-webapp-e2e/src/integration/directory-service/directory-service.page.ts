@@ -115,7 +115,7 @@ class DirectoryServicePage {
     );
   }
 
-  directoryServiceMetaData() {
+  directoryServiceMetadata() {
     return cy.get('[data-testid="details"]');
   }
 

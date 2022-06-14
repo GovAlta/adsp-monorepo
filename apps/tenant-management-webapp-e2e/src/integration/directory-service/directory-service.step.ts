@@ -156,26 +156,23 @@ When('the user clicks Eye icon for the service entry of {string}', function (ser
   directoryObj.entryNameEyeIcon(serviceName).click();
 });
 
-Then('the user views the meta data of {string}', function (serviceName) {
-  directoryObj
-    .directoryServiceMetaData()
-    .invoke('text')
-    .should('contain', '"name": "' + serviceName);
+Then('the user views the metadata', function () {
+  directoryObj.directoryServiceMetadata().should('exist');
 });
 
-When('the user clicks Eye icon to close meta data for the service entry of {string}', function (serviceName) {
+When('the user clicks Eye icon to close metadata for the service entry of {string}', function (serviceName) {
   directoryObj.entryNameEyeOffIcon(serviceName).click();
 });
 
-Then('the user views the meta data information', function () {
-  directoryObj.directoryServiceMetaData().invoke('text').should('contain', 'No metadata found');
+Then('the user views the metadata information', function () {
+  directoryObj.directoryServiceMetadata().invoke('text').should('contain', 'No metadata found');
 });
 
 Then('the user clicks on Add from the action menu', function () {
   directoryObj.addEntryActionBtn().click();
 });
 
-Then('the user views disabled input for Service, API and URL fields', function () {
+Then('the user views disabled inputs for Service, API and URL fields', function () {
   directoryObj.entryModalServiceField().should('be.disabled');
   directoryObj.entryModalApiField().should('be.disabled');
   directoryObj.entryModalUrlField().should('be.disabled');

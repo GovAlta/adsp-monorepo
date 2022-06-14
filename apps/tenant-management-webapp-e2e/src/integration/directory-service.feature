@@ -73,11 +73,11 @@ Feature: Directory-service
   Scenario: As a tenant admin, when I add directory entries, I can select from APIs resolved via service metadata, so I have a quick way to add API entries
     Given a tenant admin user is on directory entries page
     When the user clicks Eye icon for the service entry of "automatedtest-use-only"
-    Then the user views the meta data of "File service"
-    When the user clicks Eye icon to close meta data for the service entry of "automatedtest-use-only"
+    Then the user views the metadata
+    When the user clicks Eye icon to close metadata for the service entry of "automatedtest-use-only"
     And the user clicks on Add from the action menu
     Then the user "views" Add entry modal
-    And the user views disabled input for Service, API and URL fields
+    And the user views disabled inputs for Service, API and URL fields
     And the user clicks Save button in Entry modal
     Then the user "views" the entry of "automatedtest-use-only" in Service, "v1" in API, "https://file-service.adsp-uat.alberta.ca/file/v1" in URL
     When the user clicks Delete icon of "automatedtest-use-only", "v1", "https://file-service.adsp-uat.alberta.ca/file/v1" on entries page
