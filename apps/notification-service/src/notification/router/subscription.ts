@@ -440,7 +440,7 @@ export function getSubscriberSubscriptions(apiId: AdspId, repository: Subscripti
 
       res.send({
         results: result.results.map((r) => {
-          const { subscriber: _subscriber, ...subscription } = mapSubscription(apiId, r);
+          const { subscriber: _subscriber, ...subscription } = mapSubscription(apiId, r, true);
 
           return subscription;
         }),
@@ -467,7 +467,7 @@ export function getSubscriberDetails(apiId: AdspId, repository: SubscriptionRepo
         });
 
         const subscriberSubscriptions = results.map((r) => {
-          const { subscriber: _subscriber, ...subscription } = mapSubscription(apiId, r);
+          const { subscriber: _subscriber, ...subscription } = mapSubscription(apiId, r, true);
 
           return subscription;
         });

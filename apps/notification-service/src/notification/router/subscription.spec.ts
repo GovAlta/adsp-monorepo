@@ -1796,7 +1796,7 @@ describe('subscription router', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock,
         { tenantId, typeId: 'test', subscriberId: 'subscriber', criteria: {} },
-        null,
+        configuration.getNotificationType('test'),
         subscriber
       );
 
