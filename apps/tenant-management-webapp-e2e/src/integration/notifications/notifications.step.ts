@@ -291,11 +291,14 @@ Then('the user {string} the event of {string} in {string}', function (viewOrNot,
 
 When('the user clicks {string} button for {string} in {string}', function (buttonName, event, cardTitle) {
   switch (buttonName) {
+    case 'edit':
+      notificationsObj.internalNotificationTypeEventEditButton(cardTitle, event).click();
+      break;
     case 'delete':
       notificationsObj.eventDeleteIcon(cardTitle, event).click();
       break;
     default:
-      expect(buttonName).to.be.oneOf(['delete']);
+      expect(buttonName).to.be.oneOf(['edit', 'delete']);
   }
 });
 
@@ -712,4 +715,24 @@ When('the user enters {string} in Phone number field', function (phoneNumber) {
   } else {
     notificationsObj.editSubscriberModalPhoneNumberField().clear();
   }
+});
+
+Then('the user views an email template modal title for {string}', function (notificationEvent) {
+  notificationsObj
+    .editTemplateModalTitle()
+    .invoke('text')
+    .should('contain', 'Edit an email template--' + notificationEvent);
+});
+
+Then('the user views the email subject {string}', function (subject) {
+  notificationsObj.editTemplateModalSubject().invoke('text').should('contain', subject);
+});
+
+Then('the user views the email body {string}', function (emailBody) {
+  notificationsObj.editTemplateModalBody().invoke('text').should('contain', emailBody);
+});
+
+When('the user clicks Close button in an email template modal', function () {
+  cy.scrollTo('bottom');
+  notificationsObj.editTemplateModalCloseBtn().click();
 });

@@ -385,5 +385,21 @@ class NotificationsPage {
   editSubscriberModalPhoneNumberField() {
     return cy.get('[data-testid="contact-sms-input"]');
   }
+
+  editTemplateModalTitle() {
+    return cy.get('[data-testid="modal-title"]');
+  }
+
+  editTemplateModalSubject() {
+    return cy.get('.view-line');
+  }
+
+  editTemplateModalBody() {
+    return cy.get('.mtk1');
+  }
+
+  editTemplateModalCloseBtn() {
+    return cy.get('[data-testid="template-form-cancel"]');
+  }
 }
 export default NotificationsPage;

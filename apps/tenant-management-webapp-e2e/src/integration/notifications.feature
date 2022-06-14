@@ -195,3 +195,12 @@ Feature: Notifications
     And the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "auto.test@abc.com" and phone number containing "EMPTY"
     Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "auto.test@abc.com", "EMPTY"
 
+  @TEST_CS-1157 @REQ_CS-1070 @regression
+  Scenario: As a tenant admin, I can preview the rendered notification message, so I know what my subscribers will receive.
+    Given a tenant admin user is on notification types page
+    When the user clicks "edit" button for "Autotest:autotest-eventDefinition" in "autotest-notificationType"
+    Then the user views an email template modal title for "Autotest:autotest-eventDefinition"
+    And the user views the email subject "Autotest"
+    And the user views the email body "Autotest"
+    When the user clicks Close button in an email template modal
+    Then Preview an email template modal is closed
