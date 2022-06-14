@@ -135,28 +135,48 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
 
       payload.events = sanitizedEvents;
 
-      yield call(
-        axios.patch,
-        `${configBaseUrl}/configuration/v2/configuration/platform/notification-service`,
-        {
-          operation: 'UPDATE',
-          update: {
-            [payloadId]: {
-              id: payloadId,
-              name: payload.name,
-              description: payload.description,
-              subscriberRoles: payload.subscriberRoles,
-              channels: payload.channels || ['email'], //TODO: This is for 'migration' of pre-existing types.
-              events: payload.events,
-              publicSubscribe: payload.publicSubscribe,
-              manageSubscribe: payload.manageSubscribe,
+      const url = `${configBaseUrl}/configuration/v2/configuration/platform/notification-service`;
+      const headers = {
+        headers: { Authorization: `Bearer ${token}` },
+      };
+
+      if (payload.events.length === 0) {
+        // If there is no events in the custom notification type, we need to clean up the custom notification type.
+
+        const config = (yield call(axios.get, url, headers)).data.latest.configuration;
+        delete config[payloadId];
+
+        yield call(
+          axios.patch,
+          url,
+          {
+            operation: 'REPLACE',
+            configuration: config,
+          },
+          headers
+        );
+      } else {
+        yield call(
+          axios.patch,
+          url,
+          {
+            operation: 'UPDATE',
+            update: {
+              [payloadId]: {
+                id: payloadId,
+                name: payload.name,
+                description: payload.description,
+                subscriberRoles: payload.subscriberRoles,
+                channels: payload.channels || ['email'], //TODO: This is for 'migration' of pre-existing types.
+                events: payload.events,
+                publicSubscribe: payload.publicSubscribe,
+                manageSubscribe: payload.manageSubscribe,
+              },
             },
           },
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+          headers
+        );
+      }
 
       yield put(FetchNotificationConfigurationService());
     } catch (e) {
@@ -227,7 +247,9 @@ export function* fetchNotificationMetrics(): SagaIterator {
         FetchNotificationMetricsSucceeded({
           notificationsSent: parseInt(metrics[sentMetric]?.values[0]?.sum || '0'),
           notificationsFailed: parseInt(metrics[failedMetric]?.values[0]?.sum || '0'),
-          sendDuration: parseInt(metrics[sendDurationMetric]?.values[0]?.avg || '0'),
+          sendDuration: metrics[sendDurationMetric]?.values[0]
+            ? parseInt(metrics[sendDurationMetric]?.values[0].avg)
+            : null,
         })
       );
     } catch (e) {

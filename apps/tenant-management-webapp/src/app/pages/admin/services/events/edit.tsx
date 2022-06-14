@@ -91,6 +91,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               data-testid="form-description"
               value={definition.description}
               aria-label="description"
+              className="goa-textarea"
               onChange={(e) => setDefinition({ ...definition, description: e.target.value })}
             />
           </GoAFormItem>
@@ -102,7 +103,19 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               value={JSON.stringify(definition.payloadSchema, null, 2)}
               onChange={(value) => setDefinition({ ...definition, payloadSchema: JSON.parse(value) })}
               language="json"
-              options={{ automaticLayout: true, scrollBeyondLastLine: false, tabSize: 2, minimap: { enabled: false } }}
+              options={{
+                automaticLayout: true,
+                scrollBeyondLastLine: false,
+                tabSize: 2,
+                stickyTabStops: false,
+                suggestOnTriggerCharacters: false,
+                tabCompletion: 'off',
+                acceptSuggestionOnEnter: 'off',
+                acceptSuggestionOnCommitCharacter: false,
+                autoClosingQuotes: 'never',
+                quickSuggestions: false,
+                minimap: { enabled: false },
+              }}
             />
           </GoAFormItem>
         </GoAForm>

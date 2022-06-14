@@ -114,6 +114,7 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSav
             <label>Description</label>
             <textarea
               name="description"
+              className="goa-textarea"
               value={application?.description}
               onChange={(e) =>
                 setApplication({

@@ -48,8 +48,6 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     return state.config.serviceUrls.tenantManagementWebApp;
   });
 
-  console.log(JSON.stringify(webappUrl) + '<webapprul');
-
   const getSuggestion = () => {
     if (currentTemplate) {
       const x = [
@@ -178,7 +176,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                   try {
                     setBodyPreview(
                       generateMessage(
-                        getTemplateBody(value, channel === 'Snippet' ? 'pdf' : '', {
+                        getTemplateBody(value, channel === 'Snippet' ? 'pdfWithWrapper' : 'pdf', {
                           data: currentTemplate,
                           serviceUrl: webappUrl,
                           today: new Date().toDateString(),

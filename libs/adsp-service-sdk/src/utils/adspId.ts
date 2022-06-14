@@ -17,7 +17,7 @@ export type ResourceType = 'namespace' | 'service' | 'api' | 'resource';
 export class AdspId {
   static parse(urn: string): AdspId {
     // urn:ads:{namespace}:{service}:{apiVersion}:{resource}
-    if (!urn.startsWith(PREFIX)) {
+    if (!urn?.startsWith(PREFIX)) {
       throw new AdspIdFormatError(`ADSP ID must begin with: ${PREFIX}`);
     }
 

@@ -39,6 +39,7 @@ export type LoadingStateType = 'start' | 'completed' | 'error';
 export interface LoadingState {
   name: string;
   state?: LoadingStateType;
+  data?: Record<string, string>;
 }
 
 export type LoadingStates = Array<LoadingState>;

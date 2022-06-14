@@ -70,7 +70,7 @@ When('the user selects the {string} menu item', function (menuItem) {
   commonlib.tenantAdminMenuItem(menuItem, 2000);
 });
 
-Then('the user views the link for {string} API docs', function (serviceName) {
+Then('the user views the link of API docs for {string}', function (serviceName) {
   commonObj
     .readTheApiDocsLink()
     .should('have.attr', 'href')
@@ -117,4 +117,23 @@ When('the user waits {string} seconds', function (seconds) {
   expect(isNaN(seconds)).to.be.false; // Verify the pass in seconds is a number
   expect(Number(seconds)).to.be.lessThan(300); // provent user from passing in too big a number to hang the test execution
   cy.wait(Number(seconds) * 1000); // Wait N seconds
+});
+
+//serviceName parameter needs to be lower case with kebab format for See the code link
+Then('the user views the link of See the code for {string}', function (serviceName) {
+  commonObj
+    .seeTheCodeLink()
+    .should('have.attr', 'href')
+    .then((href) => {
+      expect(href).to.contain(serviceName);
+    });
+});
+
+Then('the user views the link of {string} under Support', function (asideLink) {
+  commonObj
+    .supportLink(asideLink)
+    .should('have.attr', 'href')
+    .then((href) => {
+      expect(href).to.contain('mailto:adsp@gov.ab.ca');
+    });
 });

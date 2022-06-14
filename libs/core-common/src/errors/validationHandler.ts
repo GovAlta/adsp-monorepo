@@ -2,7 +2,7 @@ import { RequestHandler } from 'express';
 import { ValidationChain, validationResult } from 'express-validator';
 import { ValidationFailedError } from './validationFailed';
 
-export function createValidationHandler(...chain: ValidationChain[]): RequestHandler[] {
+export function createValidationHandler(...chain: (ValidationChain | RequestHandler)[]): RequestHandler[] {
   return [
     ...chain,
     (req, _res, next) => {

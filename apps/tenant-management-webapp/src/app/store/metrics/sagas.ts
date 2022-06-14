@@ -11,7 +11,7 @@ import {
 } from './actions';
 import { RootState } from '../index';
 import { ErrorNotification } from '../notifications/actions';
-import { ChartInterval, ValueMetric } from './models';
+import { ChartInterval, MetricValue, ValueMetric } from './models';
 
 function* fetchServices() {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
@@ -27,7 +27,15 @@ function* fetchServices() {
         }
       );
 
-      const services = Object.entries(data)
+      const { data: tenantData }: { data: Record<string, { definitions: Record<string, unknown> }> } = yield call(
+        axios.get,
+        `${baseUrl}/configuration/v2/configuration/platform/value-service/latest`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const services = [...Object.entries(tenantData), ...Object.entries(data)]
         .filter(([_service, { definitions }]) => definitions['service-metrics'])
         .map(([service]) => service);
 
@@ -43,6 +51,23 @@ const intervalDelta: Record<ChartInterval, number> = {
   '1 hour': 1,
   '5 hours': 5,
 };
+
+// Results from value service metrics are sparse, so we need to introduce breaks when the values don't represent contiguous values.
+// The results range from newest to oldest, so we add an extra break value interval minutes older than the current value.
+function addIntervalBreaks(intervalMins: number) {
+  return (results: MetricValue[], current: MetricValue, idx: number, array: MetricValue[]) => {
+    if (array[idx - 1] && array[idx - 1].interval.diff(current.interval, 'minutes') > intervalMins) {
+      results.push({
+        interval: current.interval.clone().subtract(intervalMins, 'minutes'),
+        value: NaN,
+      });
+    }
+
+    results.push(current);
+
+    return results;
+  };
+}
 
 function* fetchServiceMetrics(action: FetchServiceMetricsAction): SagaIterator {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
@@ -71,8 +96,15 @@ function* fetchServiceMetrics(action: FetchServiceMetricsAction): SagaIterator {
         fetchServiceMetricsSuccess(
           intervalMin.toDate(),
           intervalMax.toDate(),
-          data['total:response-time']?.values?.map(({ interval, avg }) => ({ interval, value: parseFloat(avg) })) || [],
-          data['total:count']?.values?.map(({ interval, sum }) => ({ interval, value: parseInt(sum) })) || []
+          data['total:response-time']?.values
+            ?.map(({ interval, avg }) => ({ interval: moment(interval), value: parseFloat(avg) }))
+            .reduce(addIntervalBreaks(chartInterval === '15 mins' ? 1 : 5), []) || [],
+          data['total:count']?.values
+            ?.map(({ interval, sum }) => ({
+              interval: moment(interval),
+              value: parseInt(sum),
+            }))
+            .reduce(addIntervalBreaks(chartInterval === '15 mins' ? 1 : 5), []) || []
         )
       );
     } catch (err) {

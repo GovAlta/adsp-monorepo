@@ -1,7 +1,8 @@
-import { AdspId, DomainEvent, NotificationType } from '@abgov/adsp-service-sdk';
+import { AdspId, DomainEvent, NotificationType, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { SubscriptionRepository } from '../repository';
 import { NotificationTypeEvent, SubscriberChannel, Subscription, SubscriptionCriteria } from '../types';
 import { SubscriberEntity } from './subscriber';
+import { NotificationTypeEntity } from './type';
 
 export class SubscriptionEntity implements Subscription {
   tenantId: AdspId;
@@ -11,16 +12,18 @@ export class SubscriptionEntity implements Subscription {
 
   static async create(
     repository: SubscriptionRepository,
+    type: NotificationTypeEntity,
     subscriber: SubscriberEntity,
     subscription: Subscription
   ): Promise<SubscriptionEntity> {
-    const entity = new SubscriptionEntity(repository, subscription, subscriber);
+    const entity = new SubscriptionEntity(repository, subscription, type, subscriber);
     return repository.saveSubscription(entity);
   }
 
   constructor(
     private repository: SubscriptionRepository,
     subscription: Subscription,
+    public type: NotificationTypeEntity = null,
     public subscriber: SubscriberEntity = null
   ) {
     this.tenantId = subscription.tenantId;
@@ -33,7 +36,10 @@ export class SubscriptionEntity implements Subscription {
     // truthy event AND correlationId match AND context match
     return (
       !!event &&
-      (!this.criteria.correlationId || this.criteria.correlationId === event.correlationId) &&
+      (!this.criteria.correlationId ||
+        !!(
+          Array.isArray(this.criteria.correlationId) ? this.criteria.correlationId : [this.criteria.correlationId]
+        ).find((correlationId) => correlationId === event.correlationId)) &&
       !Object.entries(this.criteria.context || {}).find(([key, value]) => value !== event.context[key])
     );
   }
@@ -55,5 +61,14 @@ export class SubscriptionEntity implements Subscription {
     } else {
       return [];
     }
+  }
+
+  updateCriteria(user: User, criteria: SubscriptionCriteria): Promise<SubscriptionEntity> {
+    if (!this.type.canSubscribe(user, this.subscriber)) {
+      throw new UnauthorizedUserError('update subscription', user);
+    }
+
+    this.criteria = criteria;
+    return this.repository.saveSubscription(this);
   }
 }

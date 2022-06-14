@@ -22,7 +22,7 @@ Feature: Events
   Scenario: As a service admin, I can see event service API docs
     Given a tenant admin user is on tenant admin page
     When the user selects the "Event" menu item
-    Then the user views the link for "Event service" API docs
+    Then the user views the link of API docs for "Event service"
     When the user goes to the web link of the API docs
     Then the user views "Event service" API documentation
 

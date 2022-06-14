@@ -2,7 +2,7 @@ import { AdspId } from '@abgov/adsp-service-sdk';
 import { SubscriberCriteria } from './subscriber';
 
 export interface SubscriptionCriteria {
-  correlationId?: string;
+  correlationId?: string | string[];
   context?: {
     [key: string]: unknown;
   };
