@@ -238,28 +238,26 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   const ClientRole = ({ roleNames, clientId }) => {
     return (
       <>
-        <div style={{ margin: '0 0' }}>
-          <ClientRoleTable
-            roles={roleNames}
-            clientId={clientId}
-            anonymousRead={fileType?.anonymousRead}
-            roleSelectFunc={(roles, type) => {
-              if (type === 'read') {
-                setFileType({
-                  ...fileType,
-                  readRoles: roles,
-                });
-              } else {
-                setFileType({
-                  ...fileType,
-                  updateRoles: roles,
-                });
-              }
-            }}
-            readRoles={fileType?.readRoles}
-            updateRoles={fileType?.updateRoles}
-          />
-        </div>
+        <ClientRoleTable
+          roles={roleNames}
+          clientId={clientId}
+          anonymousRead={fileType?.anonymousRead}
+          roleSelectFunc={(roles, type) => {
+            if (type === 'read') {
+              setFileType({
+                ...fileType,
+                readRoles: roles,
+              });
+            } else {
+              setFileType({
+                ...fileType,
+                updateRoles: roles,
+              });
+            }
+          }}
+          readRoles={fileType?.readRoles}
+          updateRoles={fileType?.updateRoles}
+        />
       </>
     );
   };
