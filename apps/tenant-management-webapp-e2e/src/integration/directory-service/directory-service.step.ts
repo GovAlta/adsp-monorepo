@@ -2,6 +2,7 @@ import { Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
 import DirectoryServicePage from './directory-service.page';
 import Common from '../common/common.page';
 import commonlib from '../common/common-library';
+import { contains } from 'cypress/types/jquery';
 
 const directoryObj = new DirectoryServicePage();
 const commonObj = new Common();
@@ -156,16 +157,15 @@ When('the user clicks Eye icon for the service entry of {string}', function (ser
   directoryObj.entryNameEyeIcon(serviceName).click();
 });
 
-Then('the user views the metadata', function () {
-  directoryObj.directoryServiceMetadata().should('exist');
+Then('the user views the metadata of service for {string}', function (service) {
+  directoryObj
+    .directoryServiceMetadata()
+    .invoke('text')
+    .should('contain', '"name": ' + '"' + service + '"');
 });
 
 When('the user clicks Eye icon to close metadata for the service entry of {string}', function (serviceName) {
   directoryObj.entryNameEyeOffIcon(serviceName).click();
-});
-
-Then('the user views the metadata information', function () {
-  directoryObj.directoryServiceMetadata().invoke('text').should('contain', 'No metadata found');
 });
 
 Then('the user clicks on Add from the action menu', function () {
