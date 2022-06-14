@@ -1,5 +1,6 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { Results } from '@core-services/core-common';
+import { NotificationConfiguration } from '../configuration';
 import { NotificationTypeEntity, SubscriptionEntity, SubscriberEntity } from '../model';
 import { SubscriberCriteria, SubscriptionSearchCriteria } from '../types';
 
@@ -8,6 +9,7 @@ export interface SubscriptionRepository {
 
   getSubscription(type: NotificationTypeEntity, subscriberId: string): Promise<SubscriptionEntity>;
   getSubscriptions(
+    configuration: NotificationConfiguration,
     tenantId: AdspId,
     top: number,
     after: string,
