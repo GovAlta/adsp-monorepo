@@ -240,4 +240,5 @@ const DashboardDiv = styled.div`
       color: var(--color-primary);
     }
   }
+  margin-bottom: 2.5rem;
 `;
