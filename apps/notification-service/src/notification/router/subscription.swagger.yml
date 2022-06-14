@@ -79,7 +79,8 @@ components:
           oneOf:
             - type: string
             - type: array
-              items: string
+              items:
+                type: string
         context:
           type: object
           additionalProperties: true
