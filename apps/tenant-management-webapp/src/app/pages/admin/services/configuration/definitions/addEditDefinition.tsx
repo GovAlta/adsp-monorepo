@@ -84,8 +84,8 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
               <Editor
                 data-testid="form-schema"
                 height={200}
-                value={JSON.stringify(definition.payloadSchema, null, 2)}
-                onChange={(value) => setDefinition({ ...definition, payloadSchema: JSON.parse(value) })}
+                value={JSON.stringify(definition.configurationSchema, null, 2)}
+                onChange={(value) => setDefinition({ ...definition, configurationSchema: JSON.parse(value) })}
                 language="json"
                 options={{
                   automaticLayout: true,

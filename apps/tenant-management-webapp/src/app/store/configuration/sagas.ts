@@ -2,7 +2,7 @@ import axios from 'axios';
 import {
   DeleteConfigurationDefinitionAction,
   deleteConfigurationDefinitionSuccess,
-  DELETE_CONFIGURATION_ACTION,
+  DELETE_CONFIGURATION_DEFINITION_ACTION,
   FetchConfigurationsAction,
   FetchConfigurationDefinitionsAction,
   FETCH_CONFIGURATIONS_ACTION,
@@ -12,6 +12,12 @@ import {
   UpdateConfigurationDefinitionAction,
   updateConfigurationDefinitionSuccess,
   UPDATE_CONFIGURATION_DEFINITION_ACTION,
+  SetConfigurationRevisionAction,
+  SET_CONFIGURATION_REVISION_ACTION,
+  setConfigurationRevisionSuccessAction,
+  ReplaceConfigurationDataAction,
+  REPLACE_CONFIGURATION_DATA_ACTION,
+  replaceConfigurationDataSuccessAction,
   ServiceId,
 } from './action';
 import { SagaIterator } from '@redux-saga/core';
@@ -31,6 +37,7 @@ export function* fetchConfigurationDefinitions(action: FetchConfigurationDefinit
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
+
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
   if (configBaseUrl && token) {
     try {
@@ -118,8 +125,9 @@ export function* updateConfigurationDefinition({
   if (baseUrl && token) {
     try {
       const namespaceUpdate = {
-        configurationSchema: definition.payloadSchema,
+        configurationSchema: definition.configurationSchema,
       };
+
       const body = { operation: 'UPDATE', update: { [`${definition.namespace}:${definition.name}`]: namespaceUpdate } };
       const {
         data: { latest },
@@ -164,9 +172,60 @@ export function* deleteConfigurationDefinition({ definitionName }: DeleteConfigu
   }
 }
 
+export function* setConfigurationRevision(action: SetConfigurationRevisionAction): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  if (baseUrl && token) {
+    try {
+      const revision = yield call(
+        axios.post,
+        `${baseUrl}/configuration/v2/configuration/${action.request.namespace}/${action.request.name}`,
+        {
+          revision: true,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      yield put(setConfigurationRevisionSuccessAction(revision));
+    } catch (err) {
+      yield put(ErrorNotification({ message: err.message }));
+    }
+  }
+}
+
+export function* replaceConfigurationData(action: ReplaceConfigurationDataAction): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+
+  if (baseUrl && token) {
+    try {
+      const body = {
+        operation: 'REPLACE',
+        configuration: action.configuration.configuration,
+      };
+      yield call(
+        axios.patch,
+        `${baseUrl}/configuration/v2/configuration/${action.configuration.namespace}/${action.configuration.name}`,
+        body,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      yield put(replaceConfigurationDataSuccessAction());
+    } catch (err) {
+      yield put(ErrorNotification({ message: err.message }));
+    }
+  }
+}
+
 export function* watchConfigurationSagas(): Generator {
   yield takeEvery(FETCH_CONFIGURATION_DEFINITIONS_ACTION, fetchConfigurationDefinitions);
   yield takeEvery(UPDATE_CONFIGURATION_DEFINITION_ACTION, updateConfigurationDefinition);
-  yield takeEvery(DELETE_CONFIGURATION_ACTION, deleteConfigurationDefinition);
+  yield takeEvery(DELETE_CONFIGURATION_DEFINITION_ACTION, deleteConfigurationDefinition);
   yield takeEvery(FETCH_CONFIGURATIONS_ACTION, fetchConfigurations);
+  yield takeEvery(SET_CONFIGURATION_REVISION_ACTION, setConfigurationRevision);
+  yield takeEvery(REPLACE_CONFIGURATION_DATA_ACTION, replaceConfigurationData);
 }
