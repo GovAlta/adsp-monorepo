@@ -1,14 +1,5 @@
 export interface TenantApi {
   host: string;
-  endpoints: {
-    spaceAdmin: string;
-    createTenant: string;
-    tenantNameByRealm: string;
-    tenantByName: string;
-    tenantByEmail: string;
-    tenantConfig: string;
-    directory: string;
-  };
 }
 
 export interface KeycloakApi {
@@ -18,14 +9,14 @@ export interface KeycloakApi {
   checkLoginIframe?: boolean;
   flow?: string;
 }
+
 export interface FileApi {
   host: string;
   endpoints: {
-    spaceAdmin: string;
-    fileTypeAdmin: string;
     fileAdmin: string;
   };
 }
+
 export interface ServiceUrls {
   subscriberWebApp: string;
   eventServiceApiUrl: string;

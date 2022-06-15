@@ -17,25 +17,6 @@ items:
             "clientId": "urn:ads:platform:tenant-admin-app",
             "checkLoginIframe": false
           },
-          "tenantApi": {
-            "host": "https://tenant-management-api-core-services-dev.os99.gov.ab.ca" ,
-            "endpoints": {
-              "spaceAdmin": "/api/file/v1/space",
-              "createTenant": "/api/tenant/v1",
-              "tenantNameByRealm": "/api/tenant/v1/realm",
-              "tenantByName": "/api/tenant/v1/name",
-              "tenantByEmail": "/api/tenant/v1/email",
-              "tenantConfig": "/api/configuration/v1/tenantConfig"
-            }
-          },
-          "fileApi": {
-            "host": "https://file-service-core-services-dev.os99.gov.ab.ca" ,
-            "endpoints": {
-              "spaceAdmin": "/space/v1/spaces",
-              "fileTypeAdmin": "/file-type/v1/fileTypes",
-              "fileAdmin": "/file/v1/files"
-            }
-          },
           "serviceUrls": {
             "eventServiceApiUrl": "https://event-service-core-services-dev.os99.gov.ab.ca" ,
             "notificationServiceUrl": "https://notification-service-core-services-dev.os99.gov.ab.ca" ,
