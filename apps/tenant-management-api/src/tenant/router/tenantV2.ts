@@ -1,6 +1,5 @@
 import { adspId, Tenant, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { RequestHandler, Router } from 'express';
-import { requirePlatformService } from '../../middleware/authentication';
 import * as tenantService from '../services/tenant';
 import { logger } from '../../middleware/logger';
 import { TenantRepository } from '../repository';
@@ -77,8 +76,8 @@ export function getTenant(tenantRepository: TenantRepository): RequestHandler {
 export const createTenantV2Router = ({ tenantRepository }: TenantRouterProps): Router => {
   const tenantV2Router: Router = Router();
 
-  tenantV2Router.get('/tenants', requirePlatformService, getTenants(tenantRepository));
-  tenantV2Router.get('/tenants/:id', requirePlatformService, getTenant(tenantRepository));
+  tenantV2Router.get('/tenants', getTenants(tenantRepository));
+  tenantV2Router.get('/tenants/:id', getTenant(tenantRepository));
 
   return tenantV2Router;
 };

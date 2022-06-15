@@ -87,6 +87,17 @@ export const isNotEmptyCheck = (label: string): Validator => {
   };
 };
 
+export const isValidJSONCheck = (): Validator => {
+  return (str: string) => {
+    try {
+      JSON.parse(str);
+      return '';
+    } catch (err) {
+      return 'Invalid JSON string';
+    }
+  };
+};
+
 export interface ValidationAction {
   // Action to take when a problem is detected
   onFailure(message: string): void;
