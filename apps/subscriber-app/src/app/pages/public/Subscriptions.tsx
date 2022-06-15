@@ -139,6 +139,7 @@ const Subscriptions = (): JSX.Element => {
                       <TableHeaders>
                         <tr>
                           <th id="subscriptions">Subscriptions</th>
+                          <th id="descriptions">Subscription Details</th>
                           <th id="available-channels">Available channels</th>
                           <th id="action">Action</th>
                         </tr>
