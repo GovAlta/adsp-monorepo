@@ -120,6 +120,8 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
   );
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
 
+  const coreNotificationTypes = yield select((state: RootState) => state.notification.core);
+
   if (configBaseUrl && token) {
     try {
       const payloadId = payload.id;
@@ -140,9 +142,12 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
         headers: { Authorization: `Bearer ${token}` },
       };
 
-      if (payload.events.length === 0) {
-        // If there is no events in the custom notification type, we need to clean up the custom notification type.
-
+      if (
+        payload.events.length === 0 &&
+        coreNotificationTypes &&
+        Object.keys(coreNotificationTypes).includes(payloadId)
+      ) {
+        // If there is no events in the custom "core" notification type, we need to clean up the custom notification type.
         const config = (yield call(axios.get, url, headers)).data.latest.configuration;
         delete config[payloadId];
 

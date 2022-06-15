@@ -225,10 +225,12 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
   tenantRouter.get('/realm/roles', requireTenantAdmin, getRealmRoles);
   tenantRouter.post('/', [requireBetaTesterOrAdmin, validationMiddleware(CreateTenantDto)], createTenant);
   tenantRouter.get('/:id', [validationMiddleware(GetTenantDto)], getTenant);
+  tenantRouter.delete('/', [requireTenantServiceAdmin, validationMiddleware(DeleteTenantDto)], deleteTenant);
+
+  // Deprecated
   tenantRouter.get('/realm/:realm', validationMiddleware(TenantByRealmDto), getTenantByRealm);
   tenantRouter.post('/email', [validationMiddleware(TenantByEmailDto)], getTenantByEmail);
   tenantRouter.post('/name', [validationMiddleware(TenantByNameDto)], getTenantByName);
-  tenantRouter.delete('/', [requireTenantServiceAdmin, validationMiddleware(DeleteTenantDto)], deleteTenant);
 
   return tenantRouter;
 };

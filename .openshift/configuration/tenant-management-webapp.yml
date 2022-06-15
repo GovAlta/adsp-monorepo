@@ -9,94 +9,20 @@ metadata:
   labels:
     app: tenant-management
     component: app
-  annotations:
-    kubectl.kubernetes.io/last-applied-configuration: >
-      {"apiVersion":"v1","data":{"configuration":"{\n  \"keycloakApi\": {\n
-      \"realm\": \"core\",\n    \"url\":
-      \"https://access.adsp-dev.gov.ab.ca/auth\" ,\n    \"clientId\":
-      \"urn:ads:platform:tenant-admin-app\",\n    \"checkLoginIframe\": false\n
-      },\n  \"tenantApi\": {\n    \"host\":
-      \"https://tenant-service.adsp-dev.gov.ab.ca\" ,\n    \"endpoints\":
-      {\n      \"spaceAdmin\": \"/api/file/v1/space\",\n      \"createTenant\":
-      \"/api/tenant/v1\",\n      \"tenantNameByRealm\":
-      \"/api/tenant/v1/realm\",\n      \"tenantByName\":
-      \"/api/tenant/v1/name\",\n      \"tenantByEmail\":
-      \"/api/tenant/v1/email\",\n      \"tenantConfig\":
-      \"/api/configuration/v1/tenantConfig\"\n    }\n  },\n  \"fileApi\": {\n
-      \"host\": \"https://file-service.adsp-dev.gov.ab.ca\" ,\n
-      \"endpoints\": {\n      \"spaceAdmin\": \"/space/v1/spaces\",\n
-      \"fileTypeAdmin\": \"/file-type/v1/fileTypes\",\n      \"fileAdmin\":
-      \"/file/v1/files\"\n    }\n  },\n  \"serviceUrls\": {\n
-      \"eventServiceApiUrl\": \"https://event-service.adsp-dev.gov.ab.ca\"
-      ,\n    \"notificationServiceUrl\":
-      \"https://notification-service.adsp-dev.gov.ab.ca\" ,\n
-      \"keycloakUrl\": \"https://access.adsp-dev.gov.ab.ca\" ,\n
-      \"tenantManagementApi\": \"https://tenant-service.adsp-dev.gov.ab.ca\"
-      ,\n    \"tenantManagementWebApp\": \"https://adsp-dev.gov.ab.ca\" ,\n
-      \"accessManagementApi\": \"https://access.adsp-dev.gov.ab.ca/auth\" ,\n
-      \"uiComponentUrl\":
-      \"https://ui-components-ui-components-dev.os99.gov.ab.ca\" ,\n
-      \"fileApi\": \"https://file-service.adsp-dev.gov.ab.ca\" ,\n
-      \"serviceStatusApiUrl\":
-      \"https://status-service.adsp-dev.gov.ab.ca\",\n
-      \"valueServiceApiUrl\": \"https://value-service.adsp-dev.gov.ab.ca\",\n
-      \"serviceStatusAppUrl\": \"https://status-app.adsp-dev.gov.ab.ca\",\n
-      \"docServiceApiUrl\": \"https://api-docs-app.adsp-dev.gov.ab.ca\",\n
-      \"configurationServiceApiUrl\":
-      \"https://configuration-service.adsp-dev.gov.ab.ca\"\n
-      }\n}"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"tenant-management","component":"app"},"name":"tenant-management-webapp","namespace":"adsp-dev"}}
-  managedFields:
-    - manager: oc
-      operation: Update
-      apiVersion: v1
-      time: '2021-11-29T18:52:19Z'
-      fieldsType: FieldsV1
-      fieldsV1:
-        'f:data': {}
-        'f:metadata':
-          'f:annotations':
-            .: {}
-            'f:kubectl.kubernetes.io/last-applied-configuration': {}
-          'f:labels':
-            .: {}
-            'f:app': {}
-            'f:component': {}
-    - manager: Mozilla
-      operation: Update
-      apiVersion: v1
-      time: '2022-01-25T18:53:17Z'
-      fieldsType: FieldsV1
-      fieldsV1:
-        'f:data':
-          'f:configuration': {}
-        'f:metadata':
-          'f:annotations':
-            'f:kubectl.kubernetes.io/last-applied-configuration': {}
 data:
   configuration: |-
     {
       "keycloakApi": {
         "realm": "core",
         "url": "https://access.adsp-dev.gov.ab.ca/auth" ,
-        "clientId": "urn:ads:platform:tenant-admin-app",
-        "checkLoginIframe": false
+        "clientId": "urn:ads:platform:tenant-admin-app"
       },
       "tenantApi": {
-        "host": "https://tenant-service.adsp-dev.gov.ab.ca" ,
-        "endpoints": {
-          "spaceAdmin": "/api/file/v1/space",
-          "createTenant": "/api/tenant/v1",
-          "tenantNameByRealm": "/api/tenant/v1/realm",
-          "tenantByName": "/api/tenant/v1/name",
-          "tenantByEmail": "/api/tenant/v1/email",
-          "tenantConfig": "/api/configuration/v1/tenantConfig"
-        }
+        "host": "https://tenant-service.adsp-dev.gov.ab.ca"
       },
       "fileApi": {
         "host": "https://file-service.adsp-dev.gov.ab.ca" ,
         "endpoints": {
-          "spaceAdmin": "/space/v1/spaces",
-          "fileTypeAdmin": "/file-type/v1/fileTypes",
           "fileAdmin": "/file/v1/files"
         }
       },
