@@ -2,7 +2,6 @@ import { Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
 import DirectoryServicePage from './directory-service.page';
 import Common from '../common/common.page';
 import commonlib from '../common/common-library';
-import { contains } from 'cypress/types/jquery';
 
 const directoryObj = new DirectoryServicePage();
 const commonObj = new Common();
