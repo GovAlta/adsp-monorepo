@@ -14,8 +14,7 @@ items:
           "keycloakApi": {
             "realm": "core",
             "url": "https://access-dev.os99.gov.ab.ca/auth" ,
-            "clientId": "urn:ads:platform:tenant-admin-app",
-            "checkLoginIframe": false
+            "clientId": "urn:ads:platform:status-app"
           },
           "serviceUrls": {
             "eventServiceApiUrl": "https://event-service-core-services-dev.os99.gov.ab.ca" ,

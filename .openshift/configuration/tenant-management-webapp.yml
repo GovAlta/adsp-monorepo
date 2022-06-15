@@ -15,8 +15,7 @@ data:
       "keycloakApi": {
         "realm": "core",
         "url": "https://access.adsp-dev.gov.ab.ca/auth" ,
-        "clientId": "urn:ads:platform:tenant-admin-app",
-        "checkLoginIframe": false
+        "clientId": "urn:ads:platform:tenant-admin-app"
       },
       "tenantApi": {
         "host": "https://tenant-service.adsp-dev.gov.ab.ca"

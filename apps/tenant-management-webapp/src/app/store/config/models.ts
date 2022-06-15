@@ -6,8 +6,6 @@ export interface KeycloakApi {
   realm: string;
   url: string;
   clientId: string;
-  checkLoginIframe?: boolean;
-  flow?: string;
 }
 
 export interface FileApi {
