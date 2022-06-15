@@ -9,6 +9,7 @@ import {
   CREATE_FILE_TYPE_SUCCEEDED,
   FETCH_FILE_TYPE_HAS_FILE_SUCCEEDED,
   FETCH_FILE_METRICS_SUCCEEDED,
+  FETCH_FILE_LIST,
 } from './actions';
 import { FILE_INIT, FileService } from './models';
 
@@ -49,6 +50,11 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
         ...state, // remove delete file from reducer
         fileList: deleteFile(state.fileList, action.payload.data),
       };
+    case FETCH_FILE_LIST:
+      return {
+        ...state,
+        isLoading: true,
+      };
     case FETCH_FILE_LIST_SUCCESSES: {
       const fileList = action.payload.results.after
         ? [...state.fileList, ...action.payload.results.data]
@@ -57,7 +63,7 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
         ...state,
         fileList: fileList,
         nextEntries: action.payload.results.next,
-        isLoading: { ...state.isLoading, log: false },
+        isLoading: false,
       };
     }
     case FETCH_FILE_TYPE_SUCCEEDED:

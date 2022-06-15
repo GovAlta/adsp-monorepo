@@ -57,14 +57,13 @@ export function* uploadFile(file) {
 }
 
 export function* fetchFiles(action: FetchFilesAction): SagaIterator {
-  if (!action.after) {
-    yield put(
-      UpdateIndicator({
-        show: true,
-        message: 'Loading...',
-      })
-    );
-  }
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading...',
+    })
+  );
+
   const state = yield select();
   try {
     const token = state.session?.credentials?.token;
@@ -72,13 +71,12 @@ export function* fetchFiles(action: FetchFilesAction): SagaIterator {
 
     const files = yield call([api, api.fetchFiles]);
     yield put(FetchFilesSuccessService({ data: files.results, after: files.page.after, next: files.page.next }));
-    if (!action.after) {
-      yield put(
-        UpdateIndicator({
-          show: false,
-        })
-      );
-    }
+
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
     yield put(

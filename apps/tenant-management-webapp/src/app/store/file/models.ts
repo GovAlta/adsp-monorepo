@@ -49,10 +49,7 @@ export interface FileMetrics {
 export interface FileService {
   fileList: Array<FileItem>;
   nextEntries: string;
-  isLoading: {
-    definitions: boolean;
-    log: boolean;
-  };
+  isLoading: boolean;
   fileTypes: Array<FileTypeItem>;
   coreFileTypes: Array<FileTypeItem>;
   metrics: FileMetrics;
@@ -61,10 +58,7 @@ export interface FileService {
 export const FILE_INIT: FileService = {
   fileList: [],
   nextEntries: '',
-  isLoading: {
-    definitions: false,
-    log: false,
-  },
+  isLoading: false,
   fileTypes: null,
   coreFileTypes: null,
   metrics: {},

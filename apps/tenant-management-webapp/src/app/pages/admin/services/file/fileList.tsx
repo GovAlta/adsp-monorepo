@@ -26,7 +26,7 @@ const FileList = (): JSX.Element => {
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
   const next = useSelector((state: RootState) => state.fileService.nextEntries);
-  const isLoading = useSelector((state: RootState) => state.fileService.isLoading.log);
+  const isLoading = useSelector((state: RootState) => state.fileService.isLoading);
   const coreFileTypes = useSelector((state: RootState) => state.fileService.coreFileTypes);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
@@ -156,8 +156,8 @@ const FileList = (): JSX.Element => {
       </GoAForm>
       <br />
       {!indicator.show && fileList?.length === 0 && renderNoItem('file')}
+      {(!indicator.show || fileList?.length > 0) && renderFileTable()}
       {indicator.show && <PageIndicator />}
-      {!indicator.show && fileList?.length > 0 && renderFileTable()}
       {next && (
         <GoAButton disabled={isLoading} onClick={onNext}>
           Load more...
