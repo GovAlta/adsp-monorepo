@@ -5,11 +5,14 @@ import { FileService } from './models';
 export class FileApi {
   private http: AxiosInstance;
   private fileConfig: FileApiConfig;
-  constructor(config: ConfigState, token: string) {
+  private after: string;
+
+  constructor(config: ConfigState, token: string, after?: string) {
     if (!token) {
       throw new Error('missing auth token = tenant api');
     }
     this.fileConfig = config.fileApi;
+    this.after = after;
     this.http = axios.create({ baseURL: this.fileConfig.host });
     this.http.interceptors.request.use((req: AxiosRequestConfig) => {
       req.headers['Authorization'] = `Bearer ${token}`;
@@ -26,7 +29,7 @@ export class FileApi {
 
   async fetchFiles(): Promise<FileService> {
     const url = this.fileConfig.endpoints.fileAdmin;
-    const res = await this.http.get(url);
+    const res = await this.http.get(`${url}?after=${this.after || ''}`);
     return res.data;
   }
 

@@ -28,6 +28,7 @@ import {
   FetchFileTypeHasFileService,
   FetchFileMetricsSucceeded,
   FETCH_FILE_METRICS,
+  FetchFilesAction,
 } from './actions';
 
 import { FileApi } from './api';
@@ -55,25 +56,29 @@ export function* uploadFile(file) {
   }
 }
 
-export function* fetchFiles(): SagaIterator {
-  yield put(
-    UpdateIndicator({
-      show: true,
-      message: 'Loading...',
-    })
-  );
+export function* fetchFiles(action: FetchFilesAction): SagaIterator {
+  if (!action.after) {
+    yield put(
+      UpdateIndicator({
+        show: true,
+        message: 'Loading...',
+      })
+    );
+  }
   const state = yield select();
   try {
     const token = state.session?.credentials?.token;
-    const api = new FileApi(state.config, token);
+    const api = new FileApi(state.config, token, action.after);
 
     const files = yield call([api, api.fetchFiles]);
-    yield put(FetchFilesSuccessService({ data: files.results }));
-    yield put(
-      UpdateIndicator({
-        show: false,
-      })
-    );
+    yield put(FetchFilesSuccessService({ data: files.results, after: files.page.after, next: files.page.next }));
+    if (!action.after) {
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    }
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
     yield put(
