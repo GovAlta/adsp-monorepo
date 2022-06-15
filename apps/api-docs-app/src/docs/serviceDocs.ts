@@ -82,7 +82,7 @@ class ServiceDocsImpl {
         if (id.type === 'service') {
           try {
             const serviceDirectoryUrl = new URL(
-              `directory/v2/namespaces/${namespace}/services/${id.service}`,
+              `directory/v2/namespaces/${namespace}/services/${id.service}/metadata`,
               directoryServiceUrl.href
             );
             const { metadata } = (await axios.get<DirectoryServiceResponse>(serviceDirectoryUrl.href)).data;

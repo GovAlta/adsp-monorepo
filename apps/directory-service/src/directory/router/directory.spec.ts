@@ -1,5 +1,5 @@
 import { DirectoryRepository } from '../../directory/repository';
-import { getNamespaceEntries , getServiceUrlById} from './util/getNamespaceEntries';
+import { getNamespaceEntries, getServiceUrlById } from './util/getNamespaceEntries';
 import { adspId } from '@abgov/adsp-service-sdk';
 
 describe('directory', () => {
@@ -10,7 +10,7 @@ describe('directory', () => {
   describe('getNamespaceEntries', () => {
     it('can get namespace', async () => {
       const directory = {
-        services: [{ _id: '3', namespace: 'test-namespace', service: 'test-service', host: '/test/service' }],
+        services: [{ namespace: 'test-namespace', service: 'test-service', host: '/test/service' }],
       };
       repositoryMock.getDirectories.mockResolvedValueOnce(directory);
       const repository = repositoryMock as unknown as DirectoryRepository;
@@ -45,36 +45,31 @@ describe('directory', () => {
       });
     });
   });
-
 });
-describe('getServiceUrlById', () => {
+describe('getServiceUrlByName', () => {
   const repositoryMock = {
     getDirectories: jest.fn(),
   };
   it('can return right service url for platform service', async () => {
-
     const directory = {
-      services: [{ _id: '3', namespace: 'platform', service: 'test-service', host: 'https://chat.adsp-dev.gov.ab.ca/api/' }],
+      services: [{ namespace: 'platform', service: 'test-service', host: 'https://chat.adsp-dev.gov.ab.ca/api/' }],
     };
     repositoryMock.getDirectories.mockResolvedValueOnce(directory);
     const repository = repositoryMock as unknown as DirectoryRepository;
     const tenantId = adspId`urn:ads:platform:test-service`;
 
-    const results = await getServiceUrlById(tenantId,repository);
+    const results = await getServiceUrlById(tenantId, repository);
     expect(results.href).toEqual(directory.services[0].host);
   });
 
   it('can get error if service not found', async () => {
-  
     const directory = {
-      services: [{ _id: '3', namespace: 'platform', service: 'test-service', host: 'https://chat.adsp-dev.gov.ab.ca/api/' }],
+      services: [{ namespace: 'platform', service: 'test-service', host: 'https://chat.adsp-dev.gov.ab.ca/api/' }],
     };
     repositoryMock.getDirectories.mockResolvedValueOnce(directory);
     const repository = repositoryMock as unknown as DirectoryRepository;
     const tenantId = adspId`urn:ads:platform:file-service`;
-    const result = await getServiceUrlById(tenantId,repository);
-    expect (result).toEqual(null);
-   
+    const result = await getServiceUrlById(tenantId, repository);
+    expect(result).toEqual(null);
   });
-
 });

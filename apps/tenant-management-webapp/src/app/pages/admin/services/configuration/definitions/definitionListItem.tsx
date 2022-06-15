@@ -43,7 +43,7 @@ export const ConfigurationDefinitionItemComponent: FunctionComponent<serviceItem
                       onEdit({
                         namespace: nameSpace,
                         name: configName,
-                        payloadSchema: { ...configSchema },
+                        configurationSchema: { ...configSchema },
                       })
                     }
                     testId="edit-details"
