@@ -156,11 +156,8 @@ When('the user clicks Eye icon for the service entry of {string}', function (ser
   directoryObj.entryNameEyeIcon(serviceName).click();
 });
 
-Then('the user views the metadata of service for {string}', function (service) {
-  directoryObj
-    .directoryServiceMetadata()
-    .invoke('text')
-    .should('contain', '"name": ' + '"' + service + '"');
+Then('the user views the metadata of service for {string}', function (serviceName) {
+  directoryObj.directoryServiceMetadata(serviceName).should('not.be.empty');
 });
 
 When('the user clicks Eye icon to close metadata for the service entry of {string}', function (serviceName) {

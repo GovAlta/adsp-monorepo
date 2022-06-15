@@ -115,8 +115,10 @@ class DirectoryServicePage {
     );
   }
 
-  directoryServiceMetadata() {
-    return cy.get('[data-testid="details"]');
+  directoryServiceMetadata(serviceName) {
+    return cy.xpath(
+      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/following::div[data-testid="details"]`
+    );
   }
 
   addEntryActionBtn() {
