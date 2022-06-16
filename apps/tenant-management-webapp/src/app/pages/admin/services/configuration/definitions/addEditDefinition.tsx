@@ -4,6 +4,7 @@ import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { ConfigDefinition } from '@store/configuration/model';
+import { isValidJSONCheck } from '@lib/checkInput';
 
 interface AddEditConfigDefinitionProps {
   onSave: (definition: ConfigDefinition) => void;
@@ -22,6 +23,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
   const [definition, setDefinition] = useState<ConfigDefinition>(initialValue);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const regex = new RegExp(/^[a-zA-Z0-9-]+$/);
+  const [payloadSchema, setPayloadSchema] = useState<string>(JSON.stringify(definition.configurationSchema, null, 2));
 
   const hasFormErrors = () => {
     return Object.keys(errors).length !== 0;
@@ -79,13 +81,13 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
                 }}
               />
             </GoAFormItem>
-            <GoAFormItem>
+            <GoAFormItem error={errors?.['payloadSchema']}>
               <label>Payload schema</label>
               <Editor
                 data-testid="form-schema"
                 height={200}
-                value={JSON.stringify(definition.payloadSchema, null, 2)}
-                onChange={(value) => setDefinition({ ...definition, payloadSchema: JSON.parse(value) })}
+                value={payloadSchema}
+                onChange={(value) => setPayloadSchema(value)}
                 language="json"
                 options={{
                   automaticLayout: true,
@@ -111,14 +113,19 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
             Cancel
           </GoAButton>
           <GoAButton
-            disabled={!definition.namespace || !definition.name || hasFormErrors()}
             buttonType="primary"
             data-testid="form-save"
             type="submit"
             onClick={(e) => {
               // if no errors in the form then save the definition
+              const payloadSchemaValidationResult = isValidJSONCheck()(payloadSchema);
+
+              if (payloadSchemaValidationResult !== '') {
+                setErrors({ ...errors, payloadSchema: payloadSchemaValidationResult });
+                return;
+              }
               if (!hasFormErrors()) {
-                onSave(definition);
+                onSave({ ...definition, configurationSchema: JSON.parse(payloadSchema) });
                 setDefinition(initialValue);
                 onClose();
               } else {

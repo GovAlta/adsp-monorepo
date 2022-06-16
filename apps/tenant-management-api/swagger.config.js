@@ -11,10 +11,6 @@ module.exports = {
       name: 'Tenant service',
       description: 'Tenant API to store and read tenant information.',
     },
-    {
-      name: 'Directory service',
-      description: 'Directory API to read and update the directory of services.',
-    },
   ],
   components: {
     securitySchemes: {

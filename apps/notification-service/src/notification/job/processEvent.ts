@@ -78,9 +78,15 @@ export const createProcessEventJob =
         const notifications: Notification[] = [];
         let after: string = null;
         do {
-          const { results, page } = await subscriptionRepository.getSubscriptions(tenantId, 1000, after, {
-            typeIdEquals: type.id,
-          });
+          const { results, page } = await subscriptionRepository.getSubscriptions(
+            configuration,
+            tenantId,
+            1000,
+            after,
+            {
+              typeIdEquals: type.id,
+            }
+          );
           const pageNotifications = type.generateNotifications(
             logger,
             templateService,

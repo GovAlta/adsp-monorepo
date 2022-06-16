@@ -60,7 +60,7 @@ components:
   get:
     tags:
       - Directory service
-    description: Fetch the directory entries by namespace
+    description: Fetch all directory entries by namespace
     parameters:
       - name: namespace
         description: namespace of the directory entry
@@ -77,10 +77,12 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/DirectoryEntry'
-  put:
+
+'/directory/v2/namespaces/{namespace}/services':
+  post:
     tags:
       - Directory service
-    description: Update the directory entires
+    description: Add a new service to the directory
     parameters:
       - name: namespace
         description: namespace of the directory entry
@@ -94,11 +96,43 @@ components:
           schema:
             type: object
             properties:
-              url:
-                type: string
               service:
                 type: string
-              api:
+              url:
+                type: string
+    responses:
+      201:
+        description: Directory entry is successfully added
+      400:
+        description: Bad request
+      401:
+        description: Unauthorized
+
+'/directory/v2/namespaces/{namespace}/services/{service}':
+  patch:
+    tags:
+      - Directory service
+    description: Update the url of the specified service
+    parameters:
+      - name: namespace
+        description: namespace of the directory entry
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service
+        description: name of the service to be updated
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              url:
                 type: string
     responses:
       201:
@@ -108,10 +142,10 @@ components:
       401:
         description: Unauthorized
 
-'/directory/v2/namespaces/{namespace}/services/{service}':
-  get:
+  delete:
     tags:
       - Directory service
+    description: Delete the specified service entry
     parameters:
       - name: namespace
         description: namespace of the directory entry
@@ -120,14 +154,143 @@ components:
         schema:
           type: string
       - name: service
-        description: service of the directory entry
+        description: name of the service to be deleted
         in: path
         required: true
         schema:
           type: string
     responses:
       200:
-        description: Return service metadata
+        description: The entry was successfully deleted.
+      401:
+        description: Unauthorized
+
+'/directory/v2/namespaces/{namespace}/services/{service}/apis':
+  post:
+    tags:
+      - Directory service
+    description: Add a new service API to the directory
+    parameters:
+      - name: namespace
+        description: namespace of the directory entry
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service
+        description: name of the service to which the API will be added
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              api:
+                type: string
+              url:
+                type: string
+    responses:
+      201:
+        description: Directory entry is successfully added
+      400:
+        description: Bad request
+      401:
+        description: Unauthorized
+
+'/directory/v2/namespaces/{namespace}/services/{service}/apis/{api}':
+  patch:
+    tags:
+      - Directory service
+    description: Update the url of the specified service API
+    parameters:
+      - name: namespace
+        description: namespace of the directory entry
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service
+        description: name of the service
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: api
+        description: name of the service API
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              url:
+                type: string
+    responses:
+      201:
+        description: Directory entry is successfully updated
+      400:
+        description: Bad request
+      401:
+        description: Unauthorized
+
+  delete:
+    tags:
+      - Directory service
+    description: Delete the specified service API entry
+    parameters:
+      - name: namespace
+        description: namespace of the entry
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service
+        description: name of the service
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: api
+        description: name of the service API
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: The entry was successfully deleted
+      401:
+        description: Unauthorized
+
+'/directory/v2/namespaces/{namespace}/services/{service}/metadata':
+  get:
+    tags:
+      - Directory service
+    description: Fetch the service metadata
+    parameters:
+      - name: namespace
+        description: namespace of the directory entry
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service
+        description: name of the service
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Returns the service's metadata
         content:
           application/json:
             schema:
@@ -144,9 +307,11 @@ components:
       401:
         description: Unauthorized
 
-  delete:
+'/directory/v2/namespaces/{namespace}/services/{service}/entries':
+  get:
     tags:
       - Directory service
+    description: Fetch service and service API entries for the specified service.
     parameters:
       - name: namespace
         description: namespace of the directory entry
@@ -155,13 +320,17 @@ components:
         schema:
           type: string
       - name: service
-        description: service of the directory entry
+        description: Name of the service
         in: path
         required: true
         schema:
           type: string
     responses:
       200:
-        description: Directory entry is deleted
-      401:
-        description: Unauthorized
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/DirectoryEntry'

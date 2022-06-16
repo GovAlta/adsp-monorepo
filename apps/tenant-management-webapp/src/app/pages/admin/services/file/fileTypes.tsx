@@ -9,6 +9,8 @@ import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
 import { AddFileType } from './fileTypeNew';
 import styled from 'styled-components';
+import { createSelector } from 'reselect';
+import { fetchServiceRoles, fetchKeycloakServiceRoles } from '@store/access/actions';
 import { Role } from '@store/tenant/models';
 
 const NoContentContainer = styled.div`
@@ -20,12 +22,31 @@ interface AddFileTypeProps {
 }
 
 export const FileTypes = ({ activeEdit }: AddFileTypeProps): JSX.Element => {
+  const selectServiceCoreRoles = createSelector(
+    (state: RootState) => state.serviceRoles,
+    (serviceRoles) => {
+      return serviceRoles?.core || {};
+    }
+  );
+
   const dispatch = useDispatch();
   const roles = useSelector((state: RootState) => state.tenant.realmRoles);
 
   useEffect(() => {
     dispatch(FetchRealmRoles());
   }, []);
+
+  const coreRoles = useSelector(selectServiceCoreRoles);
+  useEffect(() => {
+    dispatch(fetchServiceRoles());
+  }, []);
+
+  useEffect(() => {
+    // Fetch keycloak service roles after the roles from configuration service are fetched
+    if (Object.entries(coreRoles).length) {
+      dispatch(fetchKeycloakServiceRoles());
+    }
+  }, [coreRoles]);
 
   return (
     <div>

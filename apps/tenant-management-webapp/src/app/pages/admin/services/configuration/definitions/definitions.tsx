@@ -1,13 +1,16 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { deleteConfigurationDefinition, getConfigurationDefinitions } from '../../../../../store/configuration/action';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
 import { ConfigurationDefinitionsTableComponent } from './definitionsList';
 import { GoAButton } from '@abgov/react-components';
 import { defaultConfigDefinition } from '@store/configuration/model';
-import { updateConfigurationDefinition } from '@store/configuration/action';
+import {
+  updateConfigurationDefinition,
+  deleteConfigurationDefinition,
+  getConfigurationDefinitions,
+} from '@store/configuration/action';
 import { AddEditConfigDefinition } from './addEditDefinition';
 import { DeleteModal } from '@components/DeleteModal';
 

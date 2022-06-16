@@ -3,6 +3,7 @@ import {
   ActionTypes,
   DELETE_EVENT_STREAM_SUCCESS_ACTION,
   FETCH_EVENT_STREAMS_SUCCESS,
+  START_SOCKET_STREAM_SUCCESS,
   UPDATE_EVENT_STREAM_SUCCESS_ACTION,
 } from './actions';
 
@@ -27,6 +28,11 @@ export default function statusReducer(state: StreamStatus = InitialStreams, acti
         tenant: action.payload.tenantStreams,
       };
     }
+    case START_SOCKET_STREAM_SUCCESS:
+      return {
+        ...state,
+        socket: action.socket,
+      };
     default:
       return state;
   }

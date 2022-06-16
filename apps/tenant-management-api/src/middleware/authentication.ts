@@ -62,19 +62,6 @@ export const toKebabName = (tenantName: string): string => {
   return tenantName.toLowerCase().replace(/ /g, '-');
 };
 
-export const requirePlatformService: RequestHandler = (req, res, next) => {
-  const authConfig: AuthenticationConfig = {
-    requireCore: false,
-    allowedRoles: [TenantServiceRoles.PlatformService],
-  };
-
-  if (authenticateToken(authConfig, req.user)) {
-    next();
-  } else {
-    res.sendStatus(HttpStatusCodes.UNAUTHORIZED);
-  }
-};
-
 export const validateNamespaceEndpointsPermission =
   (tenantService: TenantService): RequestHandler =>
   async (req, res, next) => {

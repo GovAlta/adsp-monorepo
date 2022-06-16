@@ -1,3 +1,4 @@
+import { Socket } from 'socket.io-client';
 import { Stream, Streams } from './models';
 
 export const FETCH_EVENT_STREAMS_SUCCESS = 'fetch/events/streams/success';
@@ -5,6 +6,9 @@ export const FETCH_EVENT_STREAMS = 'fetch/events/streams';
 
 export const UPDATE_EVENT_STREAM_ACTION = 'update/events/streams/UPDATE_EVENT_STREAM_ACTION';
 export const UPDATE_EVENT_STREAM_SUCCESS_ACTION = 'update/events/stream/UPDATE_EVENT_STREAM_SUCCESS_ACTION';
+
+export const START_SOCKET_STREAM_ACTION = 'start/socket/streams/START_SOCKET_STREAM_ACTION';
+export const START_SOCKET_STREAM_SUCCESS = 'start/socket/streams/START_SOCKET_STREAM_SUCCESS';
 
 export const DELETE_EVENT_STREAM_ACTION = 'configuration/DELETE_EVENT_STREAM_ACTION';
 export const DELETE_EVENT_STREAM_SUCCESS_ACTION = 'configuration/DELETE_EVENT_STREAM_ACTION_SUCCESS';
@@ -15,7 +19,9 @@ export type ActionTypes =
   | UpdateEventStreamAction
   | UpdateEventStreamSuccessAction
   | DeleteEventStreamAction
-  | DeleteEventStreamSuccessAction;
+  | DeleteEventStreamSuccessAction
+  | StartStreamAction
+  | StartStreamActionSuccess;
 
 // delete streams actions
 export interface DeleteEventStreamAction {
@@ -42,6 +48,27 @@ export const deleteEventStreamSuccess = (eventStreams: Record<string, Stream>): 
   },
 });
 
+// socket actions
+export interface StartStreamAction {
+  type: typeof START_SOCKET_STREAM_ACTION;
+  stream: string;
+  url: string;
+}
+export interface StartStreamActionSuccess {
+  type: typeof START_SOCKET_STREAM_SUCCESS;
+  socket: Socket;
+}
+
+export const startSocket = (url: string, stream: string): StartStreamAction => ({
+  type: START_SOCKET_STREAM_ACTION,
+  url,
+  stream,
+});
+export const startSocketSuccess = (socket: Socket): StartStreamActionSuccess => ({
+  type: START_SOCKET_STREAM_SUCCESS,
+  socket,
+});
+
 // update stream actions
 export interface UpdateEventStreamAction {
   type: typeof UPDATE_EVENT_STREAM_ACTION;
@@ -53,7 +80,6 @@ export interface UpdateEventStreamSuccessAction {
     tenantStreams: Record<string, Stream>;
   };
 }
-
 export const updateEventStream = (stream: Stream): UpdateEventStreamAction => ({
   type: UPDATE_EVENT_STREAM_ACTION,
   stream,

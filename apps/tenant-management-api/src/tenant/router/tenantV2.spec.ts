@@ -1,14 +1,9 @@
 import { adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { Request, Response } from 'express';
-import { TenantRepository } from '../repository';
-import * as tenantService from '../services/tenant';
 import { createTenantV2Router, getTenant, getTenants } from './tenantV2';
 
-jest.mock('../services/tenant');
-const tenantServiceMock = tenantService as jest.Mocked<typeof tenantService>;
-
 describe('createTenantV2Router', () => {
-  const repositoryMock: TenantRepository = {
+  const repositoryMock = {
     save: jest.fn(),
     delete: jest.fn(),
     find: jest.fn(),
@@ -16,8 +11,8 @@ describe('createTenantV2Router', () => {
   };
 
   beforeEach(() => {
-    tenantServiceMock.getTenants.mockReset();
-    tenantServiceMock.getTenant.mockReset();
+    repositoryMock.find.mockReset();
+    repositoryMock.get.mockReset();
   });
 
   it('can create router', () => {
@@ -43,15 +38,18 @@ describe('createTenantV2Router', () => {
       const handler = getTenants(repositoryMock);
 
       const tenant = {
-        id: adspId`urn:ads:platform:tenant-service:v2:/tenants/tenant-a`,
+        id: 'tenant-a',
         name: 'tenant-a',
         realm: 'tenant-a-realm',
+        adminEmail: 'tester@test.co',
       };
-      tenantServiceMock.getTenants.mockResolvedValueOnce([tenant]);
+      repositoryMock.find.mockResolvedValueOnce([tenant]);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          results: expect.arrayContaining([expect.objectContaining({ ...tenant, id: `${tenant.id}` })]),
+          results: expect.arrayContaining([
+            expect.objectContaining({ ...tenant, id: `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` }),
+          ]),
           page: expect.objectContaining({ size: 1 }),
         })
       );
@@ -73,14 +71,14 @@ describe('createTenantV2Router', () => {
       const handler = getTenants(repositoryMock);
 
       const tenant = {
-        id: adspId`urn:ads:platform:tenant-service:v2:/tenants/tenant-a`,
+        id: 'tenant-a',
         name: 'tenant-a',
         realm: 'tenant-a-realm',
+        adminEmail: 'test-admin@gov.ab.ca',
       };
-      tenantServiceMock.getTenants.mockResolvedValueOnce([tenant]);
+      repositoryMock.find.mockResolvedValueOnce([tenant]);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(tenantServiceMock.getTenants).toHaveBeenCalledWith(
-        repositoryMock,
+      expect(repositoryMock.find).toHaveBeenCalledWith(
         expect.objectContaining({
           nameEquals: req.query.name,
           realmEquals: req.query.realm,
@@ -89,7 +87,9 @@ describe('createTenantV2Router', () => {
       );
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          results: expect.arrayContaining([expect.objectContaining({ ...tenant, id: `${tenant.id}` })]),
+          results: expect.arrayContaining([
+            expect.objectContaining({ ...tenant, id: `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` }),
+          ]),
           page: expect.objectContaining({ size: 1 }),
         })
       );
@@ -108,15 +108,18 @@ describe('createTenantV2Router', () => {
       const handler = getTenants(repositoryMock);
 
       const tenant = {
-        id: tenantId,
+        id: 'tenant-a',
         name: 'tenant-a',
         realm: 'tenant-a-realm',
+        adminEmail: 'tester@test.co',
       };
-      tenantServiceMock.getTenants.mockResolvedValueOnce([tenant]);
+      repositoryMock.find.mockResolvedValueOnce([tenant]);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          results: expect.arrayContaining([expect.objectContaining({ ...tenant, id: `${tenant.id}` })]),
+          results: expect.arrayContaining([
+            expect.objectContaining({ ...tenant, id: `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` }),
+          ]),
           page: expect.objectContaining({ size: 1 }),
         })
       );
@@ -135,11 +138,12 @@ describe('createTenantV2Router', () => {
       const handler = getTenants(repositoryMock);
 
       const tenant = {
-        id: adspId`urn:ads:platform:tenant-service:v2:/tenants/tenant-123`,
+        id: 'tenant-123',
         name: 'tenant-a',
         realm: 'tenant-a-realm',
+        adminEmail: 'tester@test.co',
       };
-      tenantServiceMock.getTenants.mockResolvedValueOnce([tenant]);
+      repositoryMock.find.mockResolvedValueOnce([tenant]);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -160,7 +164,7 @@ describe('createTenantV2Router', () => {
       const next = jest.fn();
       const handler = getTenants(repositoryMock);
 
-      tenantServiceMock.getTenants.mockRejectedValueOnce(new Error('oh noes!'));
+      repositoryMock.find.mockRejectedValueOnce(new Error('oh noes!'));
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.json).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(Error));
@@ -185,13 +189,16 @@ describe('createTenantV2Router', () => {
       const handler = getTenant(repositoryMock);
 
       const tenant = {
-        id: adspId`urn:ads:platform:tenant-service:v2:/tenants/tenant-a`,
+        id: 'tenant-a',
         name: 'tenant-a',
         realm: 'tenant-a-realm',
+        adminEmail: 'tester@test.co',
       };
-      tenantServiceMock.getTenant.mockResolvedValueOnce(tenant);
+      repositoryMock.get.mockResolvedValueOnce(tenant);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ ...tenant, id: `${tenant.id}` }));
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ ...tenant, id: `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` })
+      );
     });
 
     it('can get own tenant', async () => {
@@ -207,13 +214,16 @@ describe('createTenantV2Router', () => {
       const handler = getTenant(repositoryMock);
 
       const tenant = {
-        id: tenantId,
+        id: 'tenant-a',
         name: 'tenant-a',
         realm: 'tenant-a-realm',
+        adminEmail: 'tester@test.co',
       };
-      tenantServiceMock.getTenant.mockResolvedValueOnce(tenant);
+      repositoryMock.get.mockResolvedValueOnce(tenant);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ ...tenant, id: `${tenant.id}` }));
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ ...tenant, id: `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` })
+      );
     });
 
     it('can throw unauthorized for not own tenant', async () => {
@@ -229,11 +239,12 @@ describe('createTenantV2Router', () => {
       const handler = getTenant(repositoryMock);
 
       const tenant = {
-        id: tenantId,
+        id: 'tenant-a',
         name: 'tenant-a',
         realm: 'tenant-a-realm',
+        adminEmail: 'tester@test.co',
       };
-      tenantServiceMock.getTenant.mockResolvedValueOnce(tenant);
+      repositoryMock.get.mockResolvedValueOnce(tenant);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
       expect(res.json).not.toHaveBeenCalled();
@@ -250,7 +261,7 @@ describe('createTenantV2Router', () => {
       const next = jest.fn();
       const handler = getTenant(repositoryMock);
 
-      tenantServiceMock.getTenant.mockRejectedValueOnce(new Error('oh noes!'));
+      repositoryMock.get.mockRejectedValueOnce(new Error('oh noes!'));
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.json).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(Error));

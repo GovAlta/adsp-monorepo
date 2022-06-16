@@ -25,6 +25,8 @@ const FileList = (): JSX.Element => {
   const fileName = useRef() as React.MutableRefObject<HTMLInputElement>;
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
   const fileTypes = useSelector((state: RootState) => state.fileService.fileTypes);
+  const next = useSelector((state: RootState) => state.fileService.nextEntries);
+  const isLoading = useSelector((state: RootState) => state.fileService.isLoading);
   const coreFileTypes = useSelector((state: RootState) => state.fileService.coreFileTypes);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
@@ -51,6 +53,10 @@ const FileList = (): JSX.Element => {
 
   const onChange = (event) => {
     setSelectFile(event.target.files[0]);
+  };
+
+  const onNext = () => {
+    dispatch(FetchFilesService(next));
   };
 
   const onDownloadFile = async (file) => {
@@ -82,9 +88,9 @@ const FileList = (): JSX.Element => {
             </tr>
           </thead>
           <tbody>
-            {fileList.map((file) => {
+            {fileList.map((file, key) => {
               return (
-                <tr key={file.id}>
+                <tr key={key}>
                   <td>{file.filename}</td>
                   {/* Use ceil here to make sure people will allocate enough resouces */}
                   <td>{Math.ceil(file.size / 1024)}</td>
@@ -138,8 +144,8 @@ const FileList = (): JSX.Element => {
               setUploadFileType(values);
             }}
           >
-            {getFileTypesValues().map((item) => (
-              <GoADropdownOption label={item.name} value={item.name} key={item.id} data-testid={item.id} />
+            {getFileTypesValues().map((item, key) => (
+              <GoADropdownOption label={item.name} value={item.name} key={key} data-testid={item.id} />
             ))}
           </GoADropdown>
         </FileTypeDropdown>
@@ -150,8 +156,13 @@ const FileList = (): JSX.Element => {
       </GoAForm>
       <br />
       {!indicator.show && fileList?.length === 0 && renderNoItem('file')}
+      {(!indicator.show || fileList?.length > 0) && renderFileTable()}
       {indicator.show && <PageIndicator />}
-      {!indicator.show && fileList?.length > 0 && renderFileTable()}
+      {next && (
+        <GoAButton disabled={isLoading} onClick={onNext}>
+          Load more...
+        </GoAButton>
+      )}
     </>
   );
 };
