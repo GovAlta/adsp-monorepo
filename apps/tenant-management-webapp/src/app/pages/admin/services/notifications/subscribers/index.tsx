@@ -34,12 +34,15 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
   };
 
   const searchFn2 = (criteria: SubscriberSearchCriteria) => {
-    dispatch(FindSubscribers(criteria));
+    const resetCriteria = { ...criteria, reset: true };
+    dispatch(FindSubscribers(resetCriteria));
     setCriteriaState(criteria);
   };
 
   const resetState = () => {
-    dispatch(FindSubscribers(criteriaInit));
+    const resetCriteria = { ...criteriaInit, reset: true };
+    dispatch(FindSubscribers(resetCriteria));
+
     setCriteriaState(criteriaInit);
   };
 

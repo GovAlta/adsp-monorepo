@@ -130,9 +130,15 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
 
   const search = useSelector((state: RootState) => state.subscription.subscriberSearch);
 
-  const subscribers = useSelector((state: RootState) =>
-    state.subscription.subscriberSearch.results.map((id) => state.subscription.subscribers[id]).filter((subs) => !!subs)
-  );
+  const subscribers = useSelector((state: RootState) => {
+    if (state.subscription.subscriberSearch.results) {
+      return state.subscription.subscriberSearch.results
+        .map((id) => state.subscription.subscribers[id])
+        .filter((subs) => !!subs);
+    } else {
+      return null;
+    }
+  });
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -161,31 +167,33 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
   return (
     <div>
       {indicator.show === false && subscribers && subscribers.length === 0 && renderNoItem('subscriber')}
-      <DataTable>
-        <DataTableStyle>
-          <thead style={{ width: '100%' }}>
-            <tr>
-              <th className="spread">Address as</th>
-              <th className="spread">Email</th>
-              <th className="spread">Phone</th>
-              <th className="action">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {subscribers &&
-              subscribers.length > 0 &&
-              subscribers.map((subscriber) => (
-                <SubscriberListItem
-                  openModalFunction={openModalFunction}
-                  subscriber={subscriber}
-                  openDeleteModalFunction={openDeleteModalFunction}
-                  key={subscriber.id}
-                  hideUserActions={false}
-                />
-              ))}
-          </tbody>
-        </DataTableStyle>
-      </DataTable>
+      {(subscribers === null || subscribers.length > 0) && (
+        <DataTable>
+          <DataTableStyle>
+            <thead style={{ width: '100%' }}>
+              <tr>
+                <th className="spread">Address as</th>
+                <th className="spread">Email</th>
+                <th className="spread">Phone</th>
+                <th className="action">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {subscribers &&
+                subscribers.length > 0 &&
+                subscribers.map((subscriber) => (
+                  <SubscriberListItem
+                    openModalFunction={openModalFunction}
+                    subscriber={subscriber}
+                    openDeleteModalFunction={openDeleteModalFunction}
+                    key={subscriber.id}
+                    hideUserActions={false}
+                  />
+                ))}
+            </tbody>
+          </DataTableStyle>
+        </DataTable>
+      )}
 
       <SubscriberModalForm
         open={editSubscription}
