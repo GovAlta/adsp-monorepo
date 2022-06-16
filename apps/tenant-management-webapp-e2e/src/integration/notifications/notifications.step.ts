@@ -718,10 +718,7 @@ When('the user enters {string} in Phone number field', function (phoneNumber) {
 });
 
 Then('the user views an email template modal title for {string}', function (notificationEvent) {
-  notificationsObj
-    .editTemplateModalTitle()
-    .invoke('text')
-    .should('contain', 'Edit an email template--' + notificationEvent);
+  notificationsObj.editTemplateModalTitle().invoke('text').should('contain', notificationEvent);
 });
 
 Then('the user views the email subject {string}', function (subject) {
