@@ -48,13 +48,17 @@ export interface FileMetrics {
 
 export interface FileService {
   fileList: Array<FileItem>;
+  nextEntries: string;
+  isLoading: boolean;
   fileTypes: Array<FileTypeItem>;
   coreFileTypes: Array<FileTypeItem>;
   metrics: FileMetrics;
 }
 
 export const FILE_INIT: FileService = {
-  fileList: null,
+  fileList: [],
+  nextEntries: '',
+  isLoading: false,
   fileTypes: null,
   coreFileTypes: null,
   metrics: {},
