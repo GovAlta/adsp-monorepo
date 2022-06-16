@@ -14,7 +14,8 @@ export interface ConfigurationDefinitionState {
 export interface ConfigDefinition {
   name: string;
   namespace: string;
-  payloadSchema: ConfigurationSchema;
+  configurationSchema: ConfigurationSchema;
+  serviceSchemas?: ServiceSchemas;
 }
 
 export interface ConfigurationSchema {
@@ -26,7 +27,7 @@ export interface ConfigurationSchema {
 export const defaultConfigDefinition: ConfigDefinition = {
   namespace: '',
   name: '',
-  payloadSchema: {
+  configurationSchema: {
     type: 'object',
     properties: {},
     required: [],
@@ -59,5 +60,15 @@ export interface ServiceConfigurationTypes {
 export interface ConfigurationExportType {
   configuration: unknown;
   revision: number;
+}
+
+export interface ConfigurationRevisionRequest {
+  name: string;
+  namespace: string;
+}
+export interface ReplaceConfiguration {
+  namespace: string;
+  name: string;
+  configuration: Record<Service, SchemaType>;
 }
 export type ConfigurationExportState = Record<Service, ConfigurationExportType>;

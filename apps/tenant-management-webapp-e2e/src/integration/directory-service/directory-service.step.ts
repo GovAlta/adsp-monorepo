@@ -151,3 +151,25 @@ When('the user clicks Delete button in Entry modal', function () {
   directoryObj.deleteModalDeleteBtn().scrollIntoView().click();
   cy.wait(2000);
 });
+
+When('the user clicks Eye icon for the service entry of {string}', function (serviceName) {
+  directoryObj.entryNameEyeIcon(serviceName).click();
+});
+
+Then('the user views the metadata of service for {string}', function (serviceName) {
+  directoryObj.directoryServiceMetadata(serviceName).should('not.be.empty');
+});
+
+When('the user clicks Eye icon to close metadata for the service entry of {string}', function (serviceName) {
+  directoryObj.entryNameEyeOffIcon(serviceName).click();
+});
+
+Then('the user clicks on Add from the action menu', function () {
+  directoryObj.addEntryActionBtn().click();
+});
+
+Then('the user views disabled inputs for Service, API and URL fields', function () {
+  directoryObj.entryModalServiceField().should('be.disabled');
+  directoryObj.entryModalApiField().should('be.disabled');
+  directoryObj.entryModalUrlField().should('be.disabled');
+});

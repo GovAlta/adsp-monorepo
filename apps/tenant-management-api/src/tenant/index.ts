@@ -1,4 +1,5 @@
 import { EventService } from '@abgov/adsp-service-sdk';
+import { assertAuthenticatedHandler } from '@core-services/core-common';
 import { Application, RequestHandler } from 'express';
 import * as passport from 'passport';
 import { Logger } from 'winston';
@@ -26,7 +27,7 @@ export function applyTenantMiddleware(
   const tenantV2Router = createTenantV2Router({ tenantRepository });
   const authenticate = passport.authenticate(['jwt', 'jwt-tenant'], { session: false });
   app.use('/api/tenant/v1', authenticate, configurationHandler, tenantRouter);
-  app.use('/api/tenant/v2', authenticate, tenantV2Router);
+  app.use('/api/tenant/v2', authenticate, assertAuthenticatedHandler, tenantV2Router);
 
   return app;
 }

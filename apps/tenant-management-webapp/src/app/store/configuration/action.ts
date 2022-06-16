@@ -1,22 +1,40 @@
-import { ServiceConfigurationTypes, ConfigDefinition, ServiceSchemas, ServiceConfiguration } from './model';
+import {
+  ServiceConfigurationTypes,
+  ConfigDefinition,
+  ServiceSchemas,
+  ServiceConfiguration,
+  ConfigurationRevisionRequest,
+  ReplaceConfiguration,
+} from './model';
 
-export const DELETE_CONFIGURATION_ACTION = 'configuration/DELETE_CONFIGURATION_ACTION';
-export const DELETE_CONFIGURATION_ACTION_SUCCESS = 'configuration/DELETE_CONFIGURATION_ACTION_SUCCESS';
+export const DELETE_CONFIGURATION_DEFINITION_ACTION = 'configuration/DELETE_CONFIGURATION_DEFINITION_ACTION';
+export const DELETE_CONFIGURATION_DEFINITION_ACTION_SUCCESS =
+  'configuration/DELETE_CONFIGURATION_DEFINITION_ACTION_SUCCESS';
 
 export const UPDATE_CONFIGURATION_DEFINITION_ACTION = 'configuration/UPDATE_CONFIGURATION_DEFINITION_ACTION';
-export const UPDATE_CONFIGURATION__DEFINITION_SUCCESS_ACTION =
-  'configuration/UPDATE_CONFIGURATION__DEFINITION_SUCCESS_ACTION';
+export const UPDATE_CONFIGURATION_DEFINITION_SUCCESS_ACTION =
+  'configuration/UPDATE_CONFIGURATION_DEFINITION_SUCCESS_ACTION';
 
 export const FETCH_CONFIGURATION_DEFINITIONS_ACTION = 'configuration/FETCH_CONFIGURATION_DEFINITIONS_ACTION';
 export const FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION =
   'configuration/FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION';
+
+export const FETCH_CONFIGURATIONS_ACTION = 'configuration/FETCH_CONFIGURATIONS_ACTION';
+export const FETCH_CONFIGURATIONS_SUCCESS_ACTION = 'configuration/FETCH_CONFIGURATIONS_SUCCESS_ACTION';
+
+export const SET_CONFIGURATION_REVISION_ACTION = 'configuration/SET_CONFIGURATION_REVISION_ACTION';
+export const SET_CONFIGURATION_REVISION_SUCCESS_ACTION = 'configuration/SET_CONFIGURATION_REVISION_SUCCESS_ACTION';
+
+export const REPLACE_CONFIGURATION_DATA_ACTION = 'configuration/REPLACE_CONFIGURATION_DATA_ACTION';
+export const REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION = 'configuration/REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION';
+
 export interface DeleteConfigurationDefinitionAction {
-  type: typeof DELETE_CONFIGURATION_ACTION;
+  type: typeof DELETE_CONFIGURATION_DEFINITION_ACTION;
   definitionName: string;
 }
 
 export interface DeleteConfigurationDefinitionSuccessAction {
-  type: typeof DELETE_CONFIGURATION_ACTION_SUCCESS;
+  type: typeof DELETE_CONFIGURATION_DEFINITION_ACTION_SUCCESS;
   payload: ServiceSchemas;
 }
 export interface FetchConfigurationDefinitionsAction {
@@ -35,9 +53,28 @@ export interface UpdateConfigurationDefinitionAction {
 }
 
 export interface UpdateConfigurationDefinitionSuccessAction {
-  type: typeof UPDATE_CONFIGURATION__DEFINITION_SUCCESS_ACTION;
+  type: typeof UPDATE_CONFIGURATION_DEFINITION_SUCCESS_ACTION;
   payload: ServiceSchemas;
   isAddedFromOverviewPage: boolean;
+}
+
+export interface SetConfigurationRevisionAction {
+  type: typeof SET_CONFIGURATION_REVISION_ACTION;
+  request: ConfigurationRevisionRequest;
+}
+
+export interface SetConfigurationRevisionSuccessAction {
+  type: typeof SET_CONFIGURATION_REVISION_SUCCESS_ACTION;
+  payload: ServiceConfiguration;
+}
+
+export interface ReplaceConfigurationDataAction {
+  type: typeof REPLACE_CONFIGURATION_DATA_ACTION;
+  configuration: ReplaceConfiguration;
+}
+
+export interface ReplaceConfigurationDataSuccessAction {
+  type: typeof REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION;
 }
 
 export type ConfigurationDefinitionActionTypes =
@@ -46,10 +83,12 @@ export type ConfigurationDefinitionActionTypes =
   | UpdateConfigurationDefinitionAction
   | UpdateConfigurationDefinitionSuccessAction
   | DeleteConfigurationDefinitionAction
-  | DeleteConfigurationDefinitionSuccessAction;
+  | DeleteConfigurationDefinitionSuccessAction
+  | SetConfigurationRevisionAction
+  | SetConfigurationRevisionSuccessAction
+  | ReplaceConfigurationDataAction
+  | ReplaceConfigurationDataSuccessAction;
 
-export const FETCH_CONFIGURATIONS_ACTION = 'configuration/FETCH_CONFIGURATIONS_ACTION';
-export const FETCH_CONFIGURATIONS_SUCCESS_ACTION = 'configuration/FETCH_CONFIGURATIONS_SUCCESS_ACTION';
 export type ServiceId = { namespace: string; service: string };
 export interface FetchConfigurationsAction {
   type: typeof FETCH_CONFIGURATIONS_ACTION;
@@ -64,14 +103,14 @@ export interface FetchConfigurationSuccessAction {
 export type ConfigurationExportActionTypes = FetchConfigurationsAction | FetchConfigurationSuccessAction;
 
 export const deleteConfigurationDefinition = (definitionName: string): DeleteConfigurationDefinitionAction => ({
-  type: DELETE_CONFIGURATION_ACTION,
+  type: DELETE_CONFIGURATION_DEFINITION_ACTION,
   definitionName,
 });
 
 export const deleteConfigurationDefinitionSuccess = (
   definition: ServiceSchemas
 ): DeleteConfigurationDefinitionSuccessAction => ({
-  type: DELETE_CONFIGURATION_ACTION_SUCCESS,
+  type: DELETE_CONFIGURATION_DEFINITION_ACTION_SUCCESS,
   payload: definition,
 });
 
@@ -87,7 +126,7 @@ export const updateConfigurationDefinitionSuccess = (
   definition: ServiceSchemas,
   isAddedFromOverviewPage: boolean
 ): UpdateConfigurationDefinitionSuccessAction => ({
-  type: UPDATE_CONFIGURATION__DEFINITION_SUCCESS_ACTION,
+  type: UPDATE_CONFIGURATION_DEFINITION_SUCCESS_ACTION,
   payload: definition,
   isAddedFromOverviewPage,
 });
@@ -100,6 +139,30 @@ export const getConfigurationDefinitionsSuccess = (
 ): FetchConfigurationDefinitionsSuccessAction => ({
   type: FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION,
   payload: results,
+});
+
+export const setConfigurationRevisionAction = (
+  request: ConfigurationRevisionRequest
+): SetConfigurationRevisionAction => ({
+  type: SET_CONFIGURATION_REVISION_ACTION,
+  request,
+});
+export const setConfigurationRevisionSuccessAction = (
+  payload: ServiceConfiguration
+): SetConfigurationRevisionSuccessAction => ({
+  type: SET_CONFIGURATION_REVISION_SUCCESS_ACTION,
+  payload,
+});
+
+export const replaceConfigurationDataAction = (
+  configuration: ReplaceConfiguration
+): ReplaceConfigurationDataAction => ({
+  type: REPLACE_CONFIGURATION_DATA_ACTION,
+  configuration,
+});
+
+export const replaceConfigurationDataSuccessAction = (): ReplaceConfigurationDataSuccessAction => ({
+  type: REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION,
 });
 
 export const getConfigurations = (services: ServiceId[]): FetchConfigurationsAction => ({
