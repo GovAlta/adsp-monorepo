@@ -134,6 +134,10 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
     state.subscription.subscriberSearch.results.map((id) => state.subscription.subscribers[id]).filter((subs) => !!subs)
   );
 
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
+
   useEffect(() => {
     reset();
   }, [search]);
@@ -156,20 +160,21 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
 
   return (
     <div>
-      {subscribers && subscribers.length === 0 && renderNoItem('subscriber')}
-      {subscribers && subscribers.length > 0 && (
-        <DataTable>
-          <DataTableStyle>
-            <thead>
-              <tr>
-                <th>Address as</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th className="action">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {subscribers.map((subscriber) => (
+      {indicator.show === false && subscribers && subscribers.length === 0 && renderNoItem('subscriber')}
+      <DataTable>
+        <DataTableStyle>
+          <thead style={{ width: '100%' }}>
+            <tr>
+              <th className="spread">Address as</th>
+              <th className="spread">Email</th>
+              <th className="spread">Phone</th>
+              <th className="action">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {subscribers &&
+              subscribers.length > 0 &&
+              subscribers.map((subscriber) => (
                 <SubscriberListItem
                   openModalFunction={openModalFunction}
                   subscriber={subscriber}
@@ -178,10 +183,10 @@ export const SubscriberList = (props: SubscriberListProps): JSX.Element => {
                   hideUserActions={false}
                 />
               ))}
-            </tbody>
-          </DataTableStyle>
-        </DataTable>
-      )}
+          </tbody>
+        </DataTableStyle>
+      </DataTable>
+
       <SubscriberModalForm
         open={editSubscription}
         initialValue={selectedSubscriber}
@@ -245,6 +250,10 @@ const DataTableStyle = styled.div`
   .action {
     width: 0;
     text-align-last: right;
+  }
+
+  .spread {
+    width: 300px;
   }
 
   .no-wrap {

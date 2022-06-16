@@ -56,9 +56,10 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
           searchCriteria={criteriaState}
           onUpdate={setCriteriaState}
         />
-        {indicator.show && <PageIndicator />}
-        {indicator.show === false && <SubscriberList searchCriteria={criteriaState} />}
+
+        <SubscriberList searchCriteria={criteriaState} />
         {indicator.show === false && <NextLoader onSearch={searchFn} searchCriteria={criteriaState} />}
+        {indicator.show && <PageIndicator />}
       </div>
     </CheckSubscriberRoles>
   );
