@@ -105,6 +105,7 @@ const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
         return (
           <tr key={`${subscription.typeId}`}>
             <td data-testid="subscription-name">{subscription.type.name}</td>
+            <td>{subscription.type.description}</td>
             <td>
               <AvailableChannels channels={typeChannels} effectiveChannel={effectiveChannel?.channel as Channel} />
             </td>
