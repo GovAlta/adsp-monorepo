@@ -55,7 +55,6 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
                 data-testid="pdf-template-name"
                 aria-label="pdf-template-name"
                 onChange={(name, value) => {
-                  validators['name'].check(value);
                   const templateId = toKebabName(value);
                   setTemplate({ ...template, name: value, id: templateId });
                 }}
@@ -96,14 +95,20 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             buttonType="primary"
             data-testid="form-save"
             type="submit"
-            disabled={!template.name || validators.haveErrors()}
             onClick={(e) => {
-              if (validators['duplicate'].check(template.id)) {
-                e.stopPropagation();
-                return;
+              if (isEdit) {
+                validators['duplicate'].check(template.id);
               }
-              onSave(template);
-              onClose();
+              validators['name'].check(template.name);
+
+              if (validators.haveErrors()) {
+                validators.update();
+                return;
+              } else {
+                validators.clear();
+                onSave(template);
+                onClose();
+              }
             }}
           >
             Save

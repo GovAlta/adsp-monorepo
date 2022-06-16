@@ -87,7 +87,7 @@ export const isNotEmptyCheck = (label: string): Validator => {
   };
 };
 
-export const isValidJSONCheck = (): Validator => {
+export const isValidJSONCheck = (label?: string): Validator => {
   return (str: string) => {
     try {
       JSON.parse(str);

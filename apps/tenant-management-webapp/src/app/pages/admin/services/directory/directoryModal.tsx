@@ -80,7 +80,6 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               aria-label="service"
               disabled={!isNew || isQuickAdd}
               onChange={(name, value) => {
-                validators['service'].check(value);
                 setEntry({ ...entry, service: value });
               }}
             />
@@ -95,7 +94,6 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               aria-label="api"
               disabled={!isNew || isQuickAdd}
               onChange={(name, value) => {
-                validators['api'].check(value);
                 setEntry({ ...entry, api: value });
               }}
             />
@@ -110,7 +108,6 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               aria-label="name"
               disabled={isQuickAdd}
               onChange={(name, value) => {
-                validators['url'].check(value);
                 setEntry({ ...entry, url: value });
               }}
             />
@@ -130,13 +127,19 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
         </GoAButton>
         <GoAButton
           buttonType="primary"
-          disabled={!entry.service || !entry.url || validators.haveErrors()}
           data-testid="directory-modal-save"
           onClick={(e) => {
-            if (!isEdit && (validators['serviceDuplicate'].check(entry) || validators['apiDuplicate'].check(entry))) {
-              e.stopPropagation();
+            validators['serviceDuplicate'].check(entry);
+            validators['apiDuplicate'].check(entry);
+            validators['service'].check(entry.service);
+            validators['api'].check(entry.api);
+            validators['url'].check(entry.url);
+
+            if (!isEdit || validators.haveErrors()) {
+              validators.update();
               return;
             }
+
             if (isNew) {
               dispatch(createEntry(entry));
               if (!entry.api) {

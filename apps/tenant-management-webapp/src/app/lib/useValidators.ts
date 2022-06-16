@@ -43,6 +43,7 @@ export type ValidatorService = {
 export interface ValidatorCollection {
   haveErrors: () => boolean;
   clear: () => void;
+  update: () => void;
   add(name: string, field: string, ...validators: Validator[]): ValidatorServiceBuilder;
 }
 
@@ -59,6 +60,7 @@ interface reactInputChecker {
   clear: () => void;
   error: (name: string) => string;
   hasErrors: () => boolean;
+  update: () => void;
 }
 
 const reactInputCheckerFactory = (
@@ -69,13 +71,10 @@ const reactInputCheckerFactory = (
     handleErrors: (field: string) => {
       return {
         onFailure(message: string): void {
-          const err = { ...errors };
-          err[field] = message;
-          setErrors(err);
+          errors[field] = message;
         },
         onSuccess(): void {
           delete errors[field];
-          setErrors({ ...errors });
         },
       };
     },
@@ -84,6 +83,9 @@ const reactInputCheckerFactory = (
     },
     error: (name: string) => {
       return errors[name] || '';
+    },
+    update: () => {
+      setErrors({ ...errors });
     },
     hasErrors: (): boolean => {
       return Object.keys(errors).length > 0;
@@ -106,6 +108,10 @@ class ValidatorCollectionImpl implements ValidatorCollection {
 
   clear(): void {
     this.errorHandler.clear();
+  }
+
+  update(): void {
+    this.errorHandler.update();
   }
 
   add(name: string, field: string, ...validators: Validator[]): ValidatorServiceBuilder {

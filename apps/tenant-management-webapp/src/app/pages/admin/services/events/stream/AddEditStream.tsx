@@ -47,7 +47,7 @@ export const AddEditStream = ({
   };
 
   const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
-    .add('duplicate', 'name', isDuplicateStreamId())
+    .add('duplicated', 'id', isDuplicateStreamId())
     .build();
 
   const streamEvents = useMemo(() => {
@@ -75,7 +75,6 @@ export const AddEditStream = ({
                 data-testid="stream-name"
                 aria-label="stream-name"
                 onChange={(name, value) => {
-                  validators['name'].check(value);
                   const streamId = toKebabName(value);
                   setStream({ ...stream, name: value, id: streamId });
                 }}
@@ -175,10 +174,14 @@ export const AddEditStream = ({
             buttonType="primary"
             data-testid="form-save"
             type="submit"
-            disabled={!stream.name || validators.haveErrors()}
             onClick={(e) => {
-              if (!isEdit && validators['duplicate'].check(stream.id)) {
-                e.stopPropagation();
+              validators['name'].check(stream?.name);
+              if (!isEdit) {
+                validators['duplicated'].check(stream?.id);
+              }
+
+              if (validators.haveErrors()) {
+                validators.update();
                 return;
               }
               onSave(stream);
