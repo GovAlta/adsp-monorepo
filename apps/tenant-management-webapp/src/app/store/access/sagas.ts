@@ -137,8 +137,8 @@ export function* fetchKeycloakServiceRoles(action: FetchKeycloakServiceRolesActi
   const keycloakBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.keycloakUrl);
   const realm: string = yield select((state: RootState) => state.session.realm);
 
-  const tenantRoleNames = Object.keys(yield select((state: RootState) => state.serviceRoles.tenant));
-  const coreRoleNames = Object.keys(yield select((state: RootState) => state.serviceRoles.core));
+  const tenantRoleNames = Object.keys((yield select((state: RootState) => state.serviceRoles.tenant)) || {});
+  const coreRoleNames = Object.keys((yield select((state: RootState) => state.serviceRoles.core)) || {});
   const configRoleNames = [...tenantRoleNames, ...coreRoleNames];
   const keycloakIdMap = {};
 
