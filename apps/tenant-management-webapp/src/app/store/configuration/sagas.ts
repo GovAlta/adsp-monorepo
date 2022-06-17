@@ -25,7 +25,7 @@ import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '..';
 import { select, call, put, takeEvery, all } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
-
+import { jsonSchemaCheck } from '@lib/checkInput';
 export function* fetchConfigurationDefinitions(action: FetchConfigurationDefinitionsAction): SagaIterator {
   yield put(
     UpdateIndicator({
@@ -206,6 +206,30 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
         operation: 'REPLACE',
         configuration: action.configuration.configuration,
       };
+      // Get Json schema from configuration definition
+      let definition;
+      if (action.configuration.namespace === 'platform') {
+        const coreConfig = yield select((state: RootState) => state.configuration.coreConfigDefinitions.configuration);
+        definition = coreConfig[`${action.configuration.namespace}:${action.configuration.name}`];
+      } else {
+        const tenantConfig: string = yield select(
+          (state: RootState) => state.configuration.tenantConfigDefinitions.configuration
+        );
+        definition = tenantConfig[`${action.configuration.namespace}:${action.configuration.name}`];
+      }
+      // Check if configuration item following definition
+
+      const jsonSchemaValidation = jsonSchemaCheck(definition.configurationSchema, action.configuration.configuration);
+      if (!jsonSchemaValidation) {
+        yield put(
+          ErrorNotification({
+            message: `${action.configuration.namespace}:${action.configuration.name} configuration definition not match import configuration`,
+          })
+        );
+        return;
+      }
+
+      // Send request to replace configuration
       yield call(
         axios.patch,
         `${baseUrl}/configuration/v2/configuration/${action.configuration.namespace}/${action.configuration.name}`,
@@ -214,6 +238,7 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
       yield put(replaceConfigurationDataSuccessAction());
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));

@@ -19,8 +19,19 @@ import {
 } from '@store/configuration/action';
 import { PageIndicator } from '@components/Indicator';
 import { ConfigurationExportType, Service, ConfigDefinition } from '@store/configuration/model';
-import { GoAForm } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { ImportModal } from './importModal';
+import { isValidJSONCheck, jsonSchemaCheck } from '@lib/checkInput';
+
+const exportSchema = {
+  type: 'string',
+  additionalProperties: {
+    type: 'string',
+    additionalProperties: {
+      type: 'object',
+    },
+  },
+};
 
 export const ConfigurationImportExport: FunctionComponent = () => {
   const { coreConfigDefinitions, tenantConfigDefinitions } = useSelector((state: RootState) => state.configuration);
@@ -37,7 +48,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
     const namespaces = toNamespaceMap(tenantConfigDefinitions, coreConfigDefinitions);
     return { schemas: schemas, namespaces: namespaces };
   }, [coreConfigDefinitions, tenantConfigDefinitions]);
-
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const dispatch = useDispatch();
 
   const toggleSelection = (key: string) => {
@@ -54,8 +65,19 @@ export const ConfigurationImportExport: FunctionComponent = () => {
   };
   const onUploadSubmit = (e) => {
     e.preventDefault();
-    //Todo: Error is shown if the selected file is not in the expected export format
-    //open a modal to list impact configuration
+    setErrors({ ...errors, inputJsonFile: '' });
+    //Open a modal to list impact configuration
+    const jsonValidationFormat = isValidJSONCheck()(selectedImportFile);
+
+    if (jsonValidationFormat !== '') {
+      setErrors({ ...errors, inputJsonFile: 'Invalid Json format! please check!' });
+      return;
+    }
+    const jsonSchemaValidation = jsonSchemaCheck(exportSchema, selectedImportFile);
+    if (!jsonSchemaValidation) {
+      setErrors({ ...errors, inputJsonFile: 'The json file not match Configuration schema' });
+      return;
+    }
     const configList = [];
     const importConfig: ConfigDefinition = JSON.parse(selectedImportFile);
     const configKeys = Object.keys(importConfig);
@@ -78,7 +100,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
     fileReader.readAsText(e.target.files[0], 'UTF-8');
     fileReader.onload = (e) => {
       const inputJson = e.target.result.toString();
-      // Todo: validate json in export format
+
       setSelectedImportFile(inputJson);
     };
   };
@@ -89,18 +111,19 @@ export const ConfigurationImportExport: FunctionComponent = () => {
     setOpenImportModal(false);
 
     for (const config in importConfigJson) {
-      //dispatch(updateConfigurationDefinition(importConfigJson[config], false));
       for (const name in importConfigJson[config]) {
-        // Import creates a new revision so there is a snapshot of pre-import revision.
-        dispatch(setConfigurationRevisionAction({ namespace: config, name: name }));
-        //Import configuration replaces (REPLACE operation in PATCH) the configuration stored in latest revision
-        dispatch(
-          replaceConfigurationDataAction({
-            namespace: config,
-            name: name,
-            configuration: importConfigJson[config][name].configuration,
-          })
-        );
+        if (importConfigJson[config][name] != null || importConfigJson[config][name].configuration) {
+          // Import creates a new revision so there is a snapshot of pre-import revision.
+          dispatch(setConfigurationRevisionAction({ namespace: config, name: name }));
+          //Import configuration replaces (REPLACE operation in PATCH) the configuration stored in latest revision
+          dispatch(
+            replaceConfigurationDataAction({
+              namespace: config,
+              name: name,
+              configuration: importConfigJson[config][name].configuration,
+            })
+          );
+        }
       }
     }
   };
@@ -120,14 +143,16 @@ export const ConfigurationImportExport: FunctionComponent = () => {
       {
         <>
           <GoAForm>
-            <input
-              type="file"
-              onChange={onImportChange}
-              aria-label="file import"
-              ref={fileName}
-              accept="application/JSON"
-            />
-
+            <GoAFormItem error={errors?.['inputJsonFile']}>
+              <input
+                name="inputJsonFile"
+                type="file"
+                onChange={onImportChange}
+                aria-label="file import"
+                ref={fileName}
+                accept="application/JSON"
+              />
+            </GoAFormItem>
             <GoAButton type="submit" onClick={onUploadSubmit} disabled={selectedImportFile.length === 0}>
               Import
             </GoAButton>
