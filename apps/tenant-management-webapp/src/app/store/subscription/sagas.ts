@@ -282,6 +282,10 @@ function* findSubscribers(action: FindSubscribersAction): SagaIterator {
   const criteria = action.payload;
   const params: Record<string, string | number> = { top: 10 };
 
+  if (action.payload.reset) {
+    yield put(FindSubscribersSuccess(null, ''));
+  }
+
   yield put(
     UpdateIndicator({
       show: true,
@@ -335,9 +339,11 @@ function* findSubscribers(action: FindSubscribersAction): SagaIterator {
 }
 
 function* resolveSubscriberUsers(action: FindSubscribersSuccessAction): SagaIterator {
-  for (const subscriber of action.payload.subscribers) {
-    if (subscriber.userId && validateUuid(subscriber.userId)) {
-      yield put(ResolveSubscriberUser(subscriber.id, subscriber.userId));
+  if (action.payload.subscribers) {
+    for (const subscriber of action.payload.subscribers) {
+      if (subscriber.userId && validateUuid(subscriber.userId)) {
+        yield put(ResolveSubscriberUser(subscriber.id, subscriber.userId));
+      }
     }
   }
 }
