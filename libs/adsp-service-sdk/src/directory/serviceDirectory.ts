@@ -43,6 +43,19 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
     private readonly tokenProvider: TokenProvider
   ) {}
 
+  #getOverrideEnv = (urn: string): string => {
+    try {
+      const entryId = AdspId.parse(urn);
+      assertAdspId(entryId, 'Directory entry must be a service or API.', 'service', 'api');
+      const namespace = entryId.namespace.toUpperCase().replace(/[ -]/g, '_');
+      const service = entryId.service.toUpperCase().replace(/[ -]/g, '_');
+      const api = entryId.api?.toUpperCase().replace(/[ -]/g, '_');
+      return `DIR_${namespace}_${service}${api ? `_${api}` : ''}`;
+    } catch (err) {
+      this.logger.debug(`Error resolving override env variable name for: ${urn}`, this.LOG_CONTEXT);
+    }
+  };
+
   #tryRetrieveDirectory = async (requestUrl: URL, count: number): Promise<{ urn: string; serviceUrl: URL }[]> => {
     this.logger.debug(`Try ${count}: retrieve directory entries...`, this.LOG_CONTEXT);
 
@@ -51,20 +64,31 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    return data.map(({ urn, url }) => {
-      let serviceUrl = null;
-      try {
-        serviceUrl = new URL(url);
-        this.logger.debug(`Cached service directory entry ${urn} -> ${serviceUrl}`, this.LOG_CONTEXT);
-      } catch (err) {
-        this.logger.error(
-          `Error encountered caching entry '${urn}'; entry url may be invalid: ${url}`,
-          this.LOG_CONTEXT
-        );
-      }
+    return data
+      .map(({ urn, url }) => {
+        let serviceUrl: URL = null;
+        try {
+          const overrideEnv = this.#getOverrideEnv(urn);
+          const override = process.env[overrideEnv];
+          if (override) {
+            this.logger.info(
+              `Overrode entry ${urn} with value from env variable ${overrideEnv}: ${override}`,
+              this.LOG_CONTEXT
+            );
+            url = override;
+          }
+          serviceUrl = new URL(url);
+          this.logger.debug(`Cached service directory entry ${urn} -> ${serviceUrl}`, this.LOG_CONTEXT);
+        } catch (err) {
+          this.logger.error(
+            `Error encountered caching entry '${urn}'; entry url may be invalid: ${url}`,
+            this.LOG_CONTEXT
+          );
+        }
 
-      return { urn, serviceUrl };
-    });
+        return { urn, serviceUrl };
+      })
+      .filter(({ serviceUrl }) => serviceUrl);
   };
 
   #retrieveDirectory = async (namespace: string): Promise<void> => {
