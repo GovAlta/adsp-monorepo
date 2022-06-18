@@ -125,13 +125,28 @@ export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIte
   // This is how a channel is created
   const createSocketChannel = (socket) =>
     eventChannel((emit) => {
+      const currentEvents = [];
       const handler = (data) => {
-        emit(data);
+        if (
+          currentEvents.length === 0 ||
+          (currentEvents[0].context.jobId === data.context.jobId &&
+            currentEvents[0].context.templateId === data.context.templateId)
+        ) {
+          currentEvents.push(data);
+          emit(data);
+        }
       };
 
       const doneHandler = (data) => {
-        emit(data);
-        socket.disconnect();
+        if (
+          currentEvents.length === 0 ||
+          (currentEvents[0].context.jobId === data.context.jobId &&
+            currentEvents[0].context.templateId === data.context.templateId)
+        ) {
+          currentEvents.push(data);
+          emit(data);
+          socket.disconnect();
+        }
       };
 
       socket.on('pdf-service:pdf-generated', doneHandler);
@@ -153,9 +168,18 @@ export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIte
     const socketChannel = yield call(createSocketChannel, sk);
 
     try {
+      const currentEvents = [];
       while (true) {
         const payload = yield take(socketChannel);
-        yield put(addToStream(payload));
+        if (
+          currentEvents.length === 0 ||
+          (currentEvents[0].context.jobId === payload.context.jobId &&
+            currentEvents[0].context.templateId === payload.context.templateId)
+        ) {
+          currentEvents.push(payload);
+          yield put(addToStream(payload));
+        }
+
         if (payload?.name === 'pdf-generated' || payload?.name === 'pdf-generation-failed') {
           yield put({ type: FETCH_FILE_LIST });
         }

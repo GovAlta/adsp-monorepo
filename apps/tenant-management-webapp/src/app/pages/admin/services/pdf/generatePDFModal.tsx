@@ -102,7 +102,7 @@ export const GeneratePDFModal: FunctionComponent<GeneratePDFModalProps> = ({ onS
               }
             }}
           >
-            Save
+            Generate PDF
           </GoAButton>
         </GoAModalActions>
       </GoAModal>
