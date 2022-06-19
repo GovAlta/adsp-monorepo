@@ -20,7 +20,6 @@ import {
   ContactInformationWrapper,
   CalloutWrapper,
   SubscriptionListContainer,
-  TableHeaders,
   DescriptionWrapper,
 } from './styled-components';
 import { phoneWrapper } from '@lib/wrappers';
@@ -115,14 +114,12 @@ const Subscriptions = (): JSX.Element => {
               <SubscriptionListContainer>
                 {subscriber?.subscriptions?.length > 0 ? (
                   <DataTable data-testid="subscriptions-table">
-                    <TableHeaders>
-                      <tr>
-                        <th id="subscriptions">Subscriptions</th>
-                        <th id="descriptions">Subscription Details</th>
-                        <th id="available-channels">Available channels</th>
-                        <th id="action">Action</th>
-                      </tr>
-                    </TableHeaders>
+                    <tr>
+                      <th id="subscriptions">Subscriptions</th>
+                      <th id="descriptions">Subscription Details</th>
+                      <th id="available-channels">Available channels</th>
+                      <th id="action">Action</th>
+                    </tr>
                     <tbody>
                       <SubscriptionsList onUnsubscribe={unSubscribe} subscriber={subscriber} />
                     </tbody>
