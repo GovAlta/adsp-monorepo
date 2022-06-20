@@ -30,17 +30,17 @@ const Container = styled.div`
   @media (min-width: 768px) {
     margin: 0 auto;
     padding: ${(props: Props) => `${props.mdVSpacing ?? props.vs ?? 0}rem ${props.mdHSpacing ?? props.hs ?? 0}rem`};
-    width: 90%;
+    width: 691px;
   }
   @media (min-width: 1024px) {
     padding: ${(props: Props) => `${props.lgVSpacing ?? props.vs ?? 0}rem ${props.lgHSpacing ?? props.hs ?? 0}rem`};
     margin: 0 auto;
-    width: 90%;
+    width: 922px;
   }
   @media (min-width: 1280px) {
     padding: ${(props: Props) => `${props.xlVSpacing ?? props.vs ?? 0}rem ${props.xlHSpacing ?? props.hs ?? 0}rem`};
     margin: 0 auto;
-    width: 90%;
+    width: 1152px;
   }
 `;
 
