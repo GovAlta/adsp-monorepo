@@ -121,19 +121,17 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     <>
       <div>
         <br />
+        <GoAButton
+          data-testid="add-template"
+          onClick={() => {
+            setOpenAddPdfTemplate(true);
+          }}
+        >
+          Add template
+        </GoAButton>
+        <br />
+        <br />
         {indicator.show && <PageIndicator />}
-        {!indicator.show && (
-          <GoAButton
-            data-testid="add-template"
-            onClick={() => {
-              setOpenAddPdfTemplate(true);
-            }}
-          >
-            Add template
-          </GoAButton>
-        )}
-        <br />
-        <br />
         {(isEdit || openAddPdfTemplate) && (
           <AddEditPdfTemplate
             open={openAddPdfTemplate}
