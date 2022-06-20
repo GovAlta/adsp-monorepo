@@ -48,7 +48,7 @@ export interface ValidatorCollection {
 }
 
 export type ValidatorErrors = Record<string, string>;
-export type ValidationInputs = Record<string, string>;
+export type ValidationInputs = Record<string, unknown>;
 
 type ValidatorServiceBuilder = {
   service: ValidatorService;

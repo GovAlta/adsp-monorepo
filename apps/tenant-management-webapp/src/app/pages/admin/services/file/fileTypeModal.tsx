@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { Role } from '@store/tenant/models';
 import { GoAButton } from '@abgov/react-components';
@@ -14,11 +14,11 @@ import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { ConfigServiceRole } from '@store/access/models';
-import { Grid, GridItem } from '@components/Grid';
 
 interface FileTypeModalProps {
   fileType?: FileTypeItem;
   onCancel: () => void;
+  fileTypeNames?: string[];
   type: 'new' | 'edit';
   roles: Role[];
   onSwitch?: () => void;
@@ -112,19 +112,17 @@ const DataTableWrapper = styled.div`
   }
 `;
 
-interface FileTypeError {
-  attribute: string;
-  message: string;
-}
-
-const validateFileType = (fileType: FileTypeItem): FileTypeError[] => {
-  const errors: FileTypeError[] = [];
-  if (fileType?.name) {
-    errors.push({
-      attribute: 'name',
-      message: 'File type name missing',
-    });
+type Error = Record<string, string>;
+const validateFileType = (fileType: FileTypeItem, type?: string, names?: string[]): Error => {
+  const errors = {};
+  if (type === 'new' && !fileType?.name) {
+    errors['name'] = 'File type name missing.';
   }
+
+  if (type === 'new' && fileType?.name && names.includes(fileType.name)) {
+    errors['name'] = 'Duplicated file type name.';
+  }
+
   return errors;
 };
 
@@ -224,10 +222,11 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   const isNew = props.type === 'new';
   const [fileType, setFileType] = useState(props.fileType);
   const title = isNew ? 'Add file type' : 'Edit file type';
-  const [errors, setErrors] = useState<FileTypeError[]>(validateFileType(fileType));
+  const [errors, setErrors] = useState<Error>(validateFileType(fileType));
   const roleNames = props.roles.map((role) => {
     return role.name;
   });
+
   const dispatch = useDispatch();
   const selectServiceCoreRoles = createSelector(
     (state: RootState) => state.serviceRoles,
@@ -288,11 +287,12 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
       <GoAModal testId="file-type-modal" isOpen={true}>
         <GoAModalTitle>{title}</GoAModalTitle>
         <GoAModalContent>
-          <GoAFormItem>
+          <GoAFormItem error={errors?.['name']}>
             <label>Name</label>
             <GoAInput
               type="text"
               name="name"
+              disabled={props.type === 'edit'}
               value={fileType.name}
               data-testid={`file-type-modal-name-input`}
               onChange={(name, value) => {
@@ -302,7 +302,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
                   id: isNew ? toKebabName(value) : fileType.id,
                 };
                 setFileType(newFileType);
-                setErrors(validateFileType(newFileType));
+                setErrors(validateFileType(newFileType, props.type, props?.fileTypeNames));
               }}
               aria-label="name"
             />
@@ -341,7 +341,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
           </GoAButton>
           <GoAButton
             buttonType="primary"
-            disabled={errors.length === 0}
+            disabled={!fileType.name || Object.entries(errors).length > 0}
             data-testid="file-type-modal-save"
             onClick={() => {
               let elementNames = [];
