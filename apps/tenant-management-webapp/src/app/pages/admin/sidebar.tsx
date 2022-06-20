@@ -6,7 +6,7 @@ import styled from 'styled-components';
 
 import BarChartIcon from '@icons/bar-chart-outline.svg';
 import KeyIcon from '@icons/key-outline.svg';
-import FileIcon from '@icons/file-outline.svg';
+import FileIcon from '@icons/file-tray-stacked-outline.svg';
 import ReceiptIcon from '@icons/receipt-outline.svg';
 import DashboardIcon from '@icons/home-outline.svg';
 import LogoutIcon from '@icons/log-out-outline.svg';
