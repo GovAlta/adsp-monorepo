@@ -2,7 +2,6 @@ import { ValidationAction } from './checkInput';
 
 import { useState } from 'react';
 import { checkInput, Validator } from './checkInput';
-import { ThemeProvider } from 'styled-components';
 
 /**
  * A React Hook for creating a set of validation methods that will
