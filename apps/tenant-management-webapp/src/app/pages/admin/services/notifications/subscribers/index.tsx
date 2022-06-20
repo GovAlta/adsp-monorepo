@@ -34,12 +34,15 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
   };
 
   const searchFn2 = (criteria: SubscriberSearchCriteria) => {
-    dispatch(FindSubscribers(criteria));
+    const resetCriteria = { ...criteria, reset: true };
+    dispatch(FindSubscribers(resetCriteria));
     setCriteriaState(criteria);
   };
 
   const resetState = () => {
-    dispatch(FindSubscribers(criteriaInit));
+    const resetCriteria = { ...criteriaInit, reset: true };
+    dispatch(FindSubscribers(resetCriteria));
+
     setCriteriaState(criteriaInit);
   };
 
@@ -56,9 +59,10 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
           searchCriteria={criteriaState}
           onUpdate={setCriteriaState}
         />
-        {indicator.show && <PageIndicator />}
-        {indicator.show === false && <SubscriberList searchCriteria={criteriaState} />}
+
+        <SubscriberList searchCriteria={criteriaState} />
         {indicator.show === false && <NextLoader onSearch={searchFn} searchCriteria={criteriaState} />}
+        {indicator.show && <PageIndicator />}
       </div>
     </CheckSubscriberRoles>
   );
