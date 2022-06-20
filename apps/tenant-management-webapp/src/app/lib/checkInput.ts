@@ -22,6 +22,7 @@
  *      of forbidden words.
  *
  */
+import Ajv from 'ajv';
 
 export interface ValidInput {
   pattern: RegExp;
@@ -120,3 +121,11 @@ export const errorLogger: ValidationAction = {
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const nonAction: ValidationAction = { onFailure: () => {} };
+
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+export const jsonSchemaCheck = (schema: Record<string, unknown>, value: unknown) => {
+  const ajv = new Ajv();
+  ajv.compile(schema);
+  const result = ajv.validate(schema, value);
+  return result;
+};
