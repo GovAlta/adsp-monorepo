@@ -98,13 +98,8 @@ export const GeneratePDFModal: FunctionComponent<GeneratePDFModalProps> = ({ onS
             onClick={(e) => {
               // if no errors in the form then save the definition
               if (!hasFormErrors()) {
-                //dispatch(streamPdfSocket(false, definition.templateId));
-                console.log(JSON.stringify('one'));
-                setTimeout(function () {
-                  console.log(JSON.stringify('two'));
-                  onSave(definition);
-                  setDefinition(null);
-                }, 1);
+                onSave(definition);
+                setDefinition(null);
               } else {
                 return;
               }

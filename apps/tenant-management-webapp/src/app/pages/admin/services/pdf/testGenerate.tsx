@@ -69,8 +69,6 @@ export const TestGenerate: FunctionComponent = () => {
 
   const queuedCount = stream.filter((s) => s.name === 'pdf-generation-queued').length;
   const queuedComplete = stream.filter((s) => s.name === 'pdf-generated' || s.name === 'pdf-generation-failed').length;
-  console.log(queuedCount);
-  console.log(queuedComplete);
   const currentlyLoading = queuedCount !== queuedComplete;
 
   return (

@@ -128,7 +128,6 @@ export function* streamPdfSocket({ disconnect, templateId }: StreamPdfSocketActi
       const currentEvents = [];
 
       const handler = (data) => {
-        console.log(JSON.stringify(data) + '<data');
         if (templateId === data.context.templateId) {
           currentEvents.push(data);
           emit(data);
