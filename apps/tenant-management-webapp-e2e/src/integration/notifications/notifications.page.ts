@@ -391,11 +391,11 @@ class NotificationsPage {
   }
 
   editTemplateModalSubject() {
-    return cy.get('.view-line');
+    return cy.get('[data-testid="templated-editor-subject"]');
   }
 
   editTemplateModalBody() {
-    return cy.get('.mtk1');
+    return cy.get('[data-testid="templated-editor-body"]');
   }
 
   editTemplateModalCloseBtn() {
