@@ -107,6 +107,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               aria-label="name"
               onChange={(name, value) => {
                 validators['name'].check(value);
+                validators['duplicated'].check(`${definition.namespace}:${value}`);
                 setDefinition({ ...definition, name: value });
               }}
             />
@@ -128,7 +129,10 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               data-testid="form-schema"
               height={200}
               value={payloadSchema}
-              onChange={(value) => setPayloadSchema(value)}
+              onChange={(value) => {
+                validators.remove('payloadSchema');
+                setPayloadSchema(value);
+              }}
               language="json"
               options={{
                 automaticLayout: true,
@@ -153,7 +157,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
           Cancel
         </GoAButton>
         <GoAButton
-          disabled={!definition.namespace || !definition.name}
+          disabled={!definition.namespace || !definition.name || validators.haveErrors()}
           buttonType="primary"
           data-testid="form-save"
           type="submit"
