@@ -133,10 +133,15 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
           disabled={!entry.service || !entry.url || validators.haveErrors()}
           data-testid="directory-modal-save"
           onClick={(e) => {
-            if (!isEdit && (validators['serviceDuplicate'].check(entry) || validators['apiDuplicate'].check(entry))) {
-              e.stopPropagation();
+            const validations = {
+              serviceDuplicate: entry,
+              apiDuplicate: entry,
+            };
+
+            if (!isEdit && !validators.checkAll(validations)) {
               return;
             }
+
             if (isNew) {
               dispatch(createEntry(entry));
               if (!entry.api) {
