@@ -4,8 +4,9 @@ import { GoAButton, GoADropdown, GoADropdownOption } from '@abgov/react-componen
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { PdfGenerationPayload } from '@store/pdf/model';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@store/index';
+import { streamPdfSocket } from '@store/pdf/action';
 
 interface GeneratePDFModalProps {
   onSave: (definition: PdfGenerationPayload) => void;
@@ -15,6 +16,7 @@ interface GeneratePDFModalProps {
 export const GeneratePDFModal: FunctionComponent<GeneratePDFModalProps> = ({ onSave, onClose, open }) => {
   const [definition, setDefinition] = useState<PdfGenerationPayload>({ templateId: null, data: {}, fileName: null });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const dispatch = useDispatch();
 
   const hasFormErrors = () => {
     return Object.keys(errors).length !== 0;
@@ -42,6 +44,7 @@ export const GeneratePDFModal: FunctionComponent<GeneratePDFModalProps> = ({ onS
                     templateId: values[0],
                     fileName: `${values[0]}_${new Date().toJSON().slice(0, 19).replace(/:/g, '-')}.pdf`,
                   });
+                  dispatch(streamPdfSocket(false, values[0]));
                 }}
               >
                 {Object.keys(pdfTemplates).map((item) => {
@@ -95,8 +98,13 @@ export const GeneratePDFModal: FunctionComponent<GeneratePDFModalProps> = ({ onS
             onClick={(e) => {
               // if no errors in the form then save the definition
               if (!hasFormErrors()) {
-                onSave(definition);
-                setDefinition(null);
+                //dispatch(streamPdfSocket(false, definition.templateId));
+                console.log(JSON.stringify('one'));
+                setTimeout(function () {
+                  console.log(JSON.stringify('two'));
+                  onSave(definition);
+                  setDefinition(null);
+                }, 1);
               } else {
                 return;
               }

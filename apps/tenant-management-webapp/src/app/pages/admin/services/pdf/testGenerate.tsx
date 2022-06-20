@@ -39,8 +39,8 @@ const GeneratorStyling = styled.div`
   }
 
   .indicator {
-    flex: 1;
     background: #f3f3f3;
+    min-width: 160px;
   }
 
   .event-stream {
@@ -59,11 +59,6 @@ export const TestGenerate: FunctionComponent = () => {
   useEffect(() => {
     dispatch(getPdfTemplates());
   }, []);
-  useEffect(() => {
-    if (showGeneratorWindow) {
-      dispatch(streamPdfSocket(false));
-    }
-  }, [showGeneratorWindow]);
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -126,7 +121,7 @@ export const TestGenerate: FunctionComponent = () => {
               setShowGenerateWindow(false);
             }}
             onClose={() => {
-              dispatch(streamPdfSocket(true));
+              dispatch(streamPdfSocket(true, null));
               setShowGenerateWindow(false);
             }}
           />

@@ -117,21 +117,19 @@ export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): Saga
   }
 }
 
-export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIterator {
+export function* streamPdfSocket({ disconnect, templateId }: StreamPdfSocketAction): SagaIterator {
   const pushServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pushServiceApiUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
   const tenant = yield select((state: RootState) => state?.tenant);
 
   // This is how a channel is created
-  const createSocketChannel = (socket) =>
+  const createSocketChannel = (socket, templateId) =>
     eventChannel((emit) => {
       const currentEvents = [];
+
       const handler = (data) => {
-        if (
-          currentEvents.length === 0 ||
-          (currentEvents[0].context.jobId === data.context.jobId &&
-            currentEvents[0].context.templateId === data.context.templateId)
-        ) {
+        console.log(JSON.stringify(data) + '<data');
+        if (templateId === data.context.templateId) {
           currentEvents.push(data);
           emit(data);
         }
@@ -151,7 +149,7 @@ export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIte
 
       socket.on('pdf-service:pdf-generated', doneHandler);
       socket.on('pdf-service:pdf-generation-queued', handler);
-      socket.on('pdf-service:pdf-generation-failed', handler);
+      socket.on('pdf-service:pdf-generation-failed', doneHandler);
       socket.on('error', handler);
 
       const unsubscribe = () => {
@@ -165,7 +163,7 @@ export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIte
   } else {
     const sk = yield call(connect, pushServiceUrl, token, 'pdf-generation-updates', tenant?.name);
 
-    const socketChannel = yield call(createSocketChannel, sk);
+    const socketChannel = yield call(createSocketChannel, sk, templateId);
 
     try {
       const currentEvents = [];
@@ -212,7 +210,6 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
     try {
       const pdfData = {
         templateId: payload.templateId,
-        recordId: payload.templateId + '_' + Date.now(),
         data: payload.data,
         filename: payload.fileName,
       };
