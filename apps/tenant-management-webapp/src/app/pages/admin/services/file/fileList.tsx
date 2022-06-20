@@ -77,7 +77,7 @@ const FileList = (): JSX.Element => {
 
   const renderFileTable = () => {
     return (
-      <div>
+      <FileTableStyles>
         <DataTable id="files-information">
           <thead>
             <tr>
@@ -96,18 +96,24 @@ const FileList = (): JSX.Element => {
                   <td>{Math.ceil(file.size / 1024)}</td>
                   <td>{file.typeName}</td>
                   <td>
-                    <GoAIconButton
-                      data-testid="download-icon"
-                      size="medium"
-                      type="download"
-                      onClick={() => onDownloadFile(file)}
-                    />
-                    <GoAIconButton
-                      data-testid="delete-icon"
-                      size="medium"
-                      type="trash"
-                      onClick={() => onDeleteFile(file)}
-                    />
+                    <div className="flex-horizontal">
+                      <div className="flex">
+                        <GoAIconButton
+                          data-testid="download-icon"
+                          size="medium"
+                          type="download"
+                          onClick={() => onDownloadFile(file)}
+                        />
+                      </div>
+                      <div className="flex">
+                        <GoAIconButton
+                          data-testid="delete-icon"
+                          size="medium"
+                          type="trash"
+                          onClick={() => onDeleteFile(file)}
+                        />
+                      </div>
+                    </div>
                   </td>
                 </tr>
               );
@@ -127,7 +133,7 @@ const FileList = (): JSX.Element => {
             }}
           />
         )}
-      </div>
+      </FileTableStyles>
     );
   };
   return (
@@ -178,4 +184,15 @@ const FileTypeDropdown = styled.div`
 const UploadHeading = styled.div`
   margin-bottom: 1rem;
   font-weight: var(--fw-bold);
+`;
+
+const FileTableStyles = styled.div`
+  .flex-horizontal {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .flex {
+    flex: 1;
+  }
 `;
