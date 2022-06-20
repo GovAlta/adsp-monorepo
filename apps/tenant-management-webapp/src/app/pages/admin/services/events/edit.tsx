@@ -10,13 +10,21 @@ import {
   GoAInput,
 } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
-import { wordCheck, characterCheck, validationPattern, isNotEmptyCheck, isValidJSONCheck } from '@lib/checkInput';
+import {
+  wordCheck,
+  characterCheck,
+  validationPattern,
+  isNotEmptyCheck,
+  Validator,
+  isValidJSONCheck,
+} from '@lib/checkInput';
 import { useValidators } from '@lib/useValidators';
 import { updateEventDefinition } from '@store/event/actions';
 import { useDispatch } from 'react-redux';
 
 interface EventDefinitionFormProps {
   initialValue?: EventDefinition;
+  definitions: EventDefinition[];
   onClose?: () => void;
   onSave?: () => void;
   open: boolean;
@@ -31,6 +39,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
   onSave,
   isEdit,
   coreNamespaces,
+  definitions,
 }) => {
   const [definition, setDefinition] = useState<EventDefinition>(initialValue);
   const dispatch = useDispatch();
@@ -38,6 +47,20 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
   const forbiddenWords = coreNamespaces.concat('platform');
   const checkForConflicts = wordCheck(forbiddenWords);
   const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
+
+  const duplicateEventCheck = (definitions: EventDefinition[]): Validator => {
+    return (identifier: string) => {
+      return definitions
+        .map((event) => {
+          return `${event.namespace}:${event.name}`;
+        })
+        .find((_identifier) => {
+          return _identifier === identifier;
+        })
+        ? `Duplicated event ${identifier}.`
+        : '';
+    };
+  };
 
   const { errors, validators } = useValidators(
     'namespace',
@@ -47,8 +70,11 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
     isNotEmptyCheck('namespace')
   )
     .add('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
+    .add('duplicated', 'name', duplicateEventCheck(definitions))
     .add('payloadSchema', 'payloadSchema', isValidJSONCheck('payloadSchema'))
     .build();
+
+  console.log(errors);
 
   return (
     <GoAModal testId="definition-form" isOpen={open}>
@@ -138,11 +164,11 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
 
             if (!isEdit) {
               validations['namespace'] = definition?.namespace;
-              validations['name'] = definition?.name;
+              validations['duplicated'] = `${definition?.namespace}:${definition?.name}`;
             }
-            validators.checkAll(validations);
-            if (validators.haveErrors()) {
-              e.preventDefault();
+
+            if (!validators.checkAll(validations)) {
+              return;
             }
             dispatch(updateEventDefinition({ ...definition, payloadSchema: JSON.parse(payloadSchema) }));
             if (onSave) {

@@ -81,6 +81,9 @@ export const EventsOverview: FunctionComponent<OverviewProps> = (props) => {
           coreNamespaces={coreNamespaces}
           onClose={reset}
           isEdit={false}
+          definitions={Object.entries(definitions).map(([id, definition]) => {
+            return definition;
+          })}
           initialValue={defaultEventDefinition}
           onSave={() => {
             setActiveIndex(1);

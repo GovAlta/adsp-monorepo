@@ -44,7 +44,7 @@ export interface ValidatorCollection {
   haveErrors: () => boolean;
   clear: () => void;
   add(name: string, field: string, ...validators: Validator[]): ValidatorServiceBuilder;
-  checkAll: (inputs: ValidationInputs) => void;
+  checkAll: (inputs: ValidationInputs) => boolean;
 }
 
 export type ValidatorErrors = Record<string, string>;
@@ -119,13 +119,15 @@ class ValidatorCollectionImpl implements ValidatorCollection {
       if ((this[name]?.field && input, this[name].validators)) {
         const err = checkInput(input, this[name].validators);
         if (err) {
-          errCopy[this[name].field] = err;
+          errCopy[this[name].field] = errCopy[this[name].field] ? err + errCopy[this[name].field] : err;
         }
       } else {
         console.warn(`Cannot find validators for ${name}.`);
       }
     });
+
     this.setErrors(errCopy);
+    return Object.entries(errCopy).length === 0;
   }
 
   add(name: string, field: string, ...validators: Validator[]): ValidatorServiceBuilder {
