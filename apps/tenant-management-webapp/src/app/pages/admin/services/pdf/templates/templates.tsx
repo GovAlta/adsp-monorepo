@@ -131,7 +131,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
         </GoAButton>
         <br />
         <br />
-        {indicator.show && <PageIndicator />}
+        <PageIndicator />
         {(isEdit || openAddPdfTemplate) && (
           <AddEditPdfTemplate
             open={openAddPdfTemplate}
