@@ -118,26 +118,38 @@ export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): Saga
   }
 }
 
-export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIterator {
+export function* streamPdfSocket({ disconnect, templateId }: StreamPdfSocketAction): SagaIterator {
   const pushServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pushServiceApiUrl);
   const token: string = yield call(getAccessToken);
   const tenant = yield select((state: RootState) => state?.tenant);
 
   // This is how a channel is created
-  const createSocketChannel = (socket) =>
+  const createSocketChannel = (socket, templateId) =>
     eventChannel((emit) => {
+      const currentEvents = [];
+
       const handler = (data) => {
-        emit(data);
+        if (templateId === data.context.templateId) {
+          currentEvents.push(data);
+          emit(data);
+        }
       };
 
       const doneHandler = (data) => {
-        emit(data);
-        socket.disconnect();
+        if (
+          currentEvents.length === 0 ||
+          (currentEvents[0].context.jobId === data.context.jobId &&
+            currentEvents[0].context.templateId === data.context.templateId)
+        ) {
+          currentEvents.push(data);
+          emit(data);
+          socket.disconnect();
+        }
       };
 
       socket.on('pdf-service:pdf-generated', doneHandler);
       socket.on('pdf-service:pdf-generation-queued', handler);
-      socket.on('pdf-service:pdf-generation-failed', handler);
+      socket.on('pdf-service:pdf-generation-failed', doneHandler);
       socket.on('error', handler);
 
       const unsubscribe = () => {
@@ -151,12 +163,21 @@ export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIte
   } else {
     const sk = yield call(connect, pushServiceUrl, token, 'pdf-generation-updates', tenant?.name);
 
-    const socketChannel = yield call(createSocketChannel, sk);
+    const socketChannel = yield call(createSocketChannel, sk, templateId);
 
     try {
+      const currentEvents = [];
       while (true) {
         const payload = yield take(socketChannel);
-        yield put(addToStream(payload));
+        if (
+          currentEvents.length === 0 ||
+          (currentEvents[0].context.jobId === payload.context.jobId &&
+            currentEvents[0].context.templateId === payload.context.templateId)
+        ) {
+          currentEvents.push(payload);
+          yield put(addToStream(payload));
+        }
+
         if (payload?.name === 'pdf-generated' || payload?.name === 'pdf-generation-failed') {
           yield put({ type: FETCH_FILE_LIST });
         }
@@ -189,7 +210,6 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
     try {
       const pdfData = {
         templateId: payload.templateId,
-        recordId: payload.templateId + '_' + Date.now(),
         data: payload.data,
         filename: payload.fileName,
       };

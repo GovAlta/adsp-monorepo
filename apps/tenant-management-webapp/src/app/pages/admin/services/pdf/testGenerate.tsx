@@ -39,8 +39,8 @@ const GeneratorStyling = styled.div`
   }
 
   .indicator {
-    flex: 1;
     background: #f3f3f3;
+    min-width: 160px;
   }
 
   .event-stream {
@@ -49,7 +49,7 @@ const GeneratorStyling = styled.div`
   }
 
   .button-margin {
-    margin: 0 10px;
+    margin: 0 0 20px 0;
   }
 `;
 
@@ -59,11 +59,6 @@ export const TestGenerate: FunctionComponent = () => {
   useEffect(() => {
     dispatch(getPdfTemplates());
   }, []);
-  useEffect(() => {
-    if (showGeneratorWindow) {
-      dispatch(streamPdfSocket(false));
-    }
-  }, [showGeneratorWindow]);
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -72,66 +67,64 @@ export const TestGenerate: FunctionComponent = () => {
     return state?.pdf.stream;
   });
 
-  const currentlyLoading = stream[stream.length - 1]?.name === 'pdf-generation-queued';
+  const queuedCount = stream.filter((s) => s.name === 'pdf-generation-queued').length;
+  const queuedComplete = stream.filter((s) => s.name === 'pdf-generated' || s.name === 'pdf-generation-failed').length;
+  const currentlyLoading = queuedCount !== queuedComplete;
 
   return (
-    <div>
+    <GeneratorStyling>
       <section>
-        <GeneratorStyling>
-          <PdfProcessing>
-            <div className="row-flex">
-              <div className="indicator">
-                {!indicator.show && !currentlyLoading && (
-                  <div className="button-margin">
-                    <GoAButton
-                      data-testid="add-templates"
-                      disabled={indicator.show || currentlyLoading}
-                      onClick={() => {
-                        setShowGenerateWindow(true);
-                      }}
-                    >
-                      Generate PDF
-                    </GoAButton>
-                  </div>
-                )}
-                {(indicator.show || currentlyLoading) && (
-                  <div className="extra-padding">
-                    <GoAPageLoader visible={true} message="" type="infinite" pagelock={false} />
-                  </div>
-                )}
-              </div>
-              <div className="event-stream">
-                {stream.map((streamItem, index) => {
-                  const currentTime = new Date(streamItem?.timestamp);
-                  const paddedTime = (time) => time.toString().padStart(2, '0');
-                  return (
-                    <div key={index}>
-                      [{paddedTime(currentTime.getHours())}:{paddedTime(currentTime.getMinutes())}:
-                      {paddedTime(currentTime.getSeconds())}]: {streamItem?.payload?.templateId}: {streamItem.namespace}
-                      :{streamItem.name}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </PdfProcessing>
+        <div className="button-margin">
+          <GoAButton
+            data-testid="add-templates"
+            onClick={() => {
+              setShowGenerateWindow(true);
+            }}
+          >
+            Generate PDF
+          </GoAButton>
+        </div>
 
-          <FileList />
-          {showGeneratorWindow && (
-            <GeneratePDFModal
-              open={showGeneratorWindow}
-              onSave={(definition) => {
-                dispatch(generatePdf(definition));
-                setShowGenerateWindow(false);
-              }}
-              onClose={() => {
-                dispatch(streamPdfSocket(true));
-                setShowGenerateWindow(false);
-              }}
-            />
-          )}
-        </GeneratorStyling>
+        <PdfProcessing>
+          <div className="row-flex">
+            <div className="indicator">
+              {(indicator.show || currentlyLoading) && (
+                <div className="extra-padding">
+                  <GoAPageLoader visible={true} message="" type="infinite" pagelock={false} />
+                </div>
+              )}
+            </div>
+            <div className="event-stream">
+              {stream.map((streamItem, index) => {
+                const currentTime = new Date(streamItem?.timestamp);
+                const paddedTime = (time) => time.toString().padStart(2, '0');
+                return (
+                  <div key={index}>
+                    [{paddedTime(currentTime.getHours())}:{paddedTime(currentTime.getMinutes())}:
+                    {paddedTime(currentTime.getSeconds())}]: {streamItem?.payload?.templateId}: {streamItem.namespace}:
+                    {streamItem.name}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </PdfProcessing>
+
+        <FileList />
+        {showGeneratorWindow && (
+          <GeneratePDFModal
+            open={showGeneratorWindow}
+            onSave={(definition) => {
+              dispatch(generatePdf(definition));
+              setShowGenerateWindow(false);
+            }}
+            onClose={() => {
+              dispatch(streamPdfSocket(true, null));
+              setShowGenerateWindow(false);
+            }}
+          />
+        )}
       </section>
-    </div>
+    </GeneratorStyling>
   );
 };
