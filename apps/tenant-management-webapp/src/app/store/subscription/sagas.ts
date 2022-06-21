@@ -46,10 +46,11 @@ import { UpdateIndicator, UpdateLoadingState } from '@store/session/actions';
 import { fetchCoreNotificationTypes, fetchNotificationTypes } from '@store/notification/sagas';
 import { NotificationItem } from '@store/notification/models';
 import { ErrorNotification, SuccessNotification } from '@store/notifications/actions';
+import { getAccessToken } from '@store/tenant/sagas';
 
 export function* getMySubscriber(): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
     try {
@@ -77,7 +78,7 @@ function* subscribe(action: SubscribeAction): SagaIterator {
   const type = action.payload.notificationInfo.data.type;
 
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
   const email: string = yield select((state: RootState) => state.session.userInfo.email);
 
   if (configBaseUrl && token) {
@@ -116,7 +117,7 @@ function* unsubscribe(action: UnsubscribeAction): SagaIterator {
   const subscriber = action.payload.subscriptionInfo.data.data;
 
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
   const userId: string = yield select((state: RootState) => state.session.userInfo?.sub);
 
   if (configBaseUrl && token) {
@@ -146,7 +147,7 @@ function* deleteSubscription(action: UnsubscribeAction): SagaIterator {
   const subscriber = action.payload.subscriptionInfo.data.data;
 
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
     try {
@@ -224,7 +225,7 @@ function* getTypeSubscriptions(action: GetTypeSubscriptionsActions): SagaIterato
   const { criteria, type, after } = action.payload;
 
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
     try {
@@ -255,7 +256,7 @@ function* getTypeSubscriptions(action: GetTypeSubscriptionsActions): SagaIterato
 
 function* updateSubscriber(action: UpdateSubscriberAction): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
   const subscriber = action.payload.subscriber;
 
   if (configBaseUrl && token) {
@@ -274,13 +275,17 @@ function* updateSubscriber(action: UpdateSubscriberAction): SagaIterator {
 
 function* findSubscribers(action: FindSubscribersAction): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
   const hasNotificationAdminRole = yield select((state: RootState) =>
     state.session?.resourceAccess?.['urn:ads:platform:notification-service']?.roles?.includes('subscription-admin')
   );
   const findSubscriberPath = 'subscription/v1/subscribers';
   const criteria = action.payload;
   const params: Record<string, string | number> = { top: 10 };
+
+  if (action.payload.reset) {
+    yield put(FindSubscribersSuccess(null, ''));
+  }
 
   yield put(
     UpdateIndicator({
@@ -335,9 +340,11 @@ function* findSubscribers(action: FindSubscribersAction): SagaIterator {
 }
 
 function* resolveSubscriberUsers(action: FindSubscribersSuccessAction): SagaIterator {
-  for (const subscriber of action.payload.subscribers) {
-    if (subscriber.userId && validateUuid(subscriber.userId)) {
-      yield put(ResolveSubscriberUser(subscriber.id, subscriber.userId));
+  if (action.payload.subscribers) {
+    for (const subscriber of action.payload.subscribers) {
+      if (subscriber.userId && validateUuid(subscriber.userId)) {
+        yield put(ResolveSubscriberUser(subscriber.id, subscriber.userId));
+      }
     }
   }
 }
@@ -347,7 +354,7 @@ function* resolveSubscriberUser(action: ResolveSubscriberUserAction): SagaIterat
     const currentState: RootState = yield select();
 
     const baseUrl = currentState.config.keycloakApi.url;
-    const token = currentState.session.credentials.token;
+    const token = yield call(getAccessToken);
     const realm = currentState.session.realm;
 
     const keycloakApi = new KeycloakApi(baseUrl, realm, token);
@@ -367,7 +374,7 @@ function* resolveSubscriberUser(action: ResolveSubscriberUserAction): SagaIterat
 
 function* getSubscriberSubscriptions(action: GetSubscriberSubscriptionsAction): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
   const { subscriber, after } = action.payload;
   const findSubscriberPath = `subscription/v1/subscribers/${subscriber.id}/subscriptions?top=100`;
 
@@ -386,7 +393,7 @@ function* getSubscriberSubscriptions(action: GetSubscriberSubscriptionsAction): 
 
 function* deleteSubscriber(action: DeleteSubscriberAction): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
   const subscriberId = action.payload.subscriberId;
   const deleteSubscriberPath = `subscription/v1/subscribers/${subscriberId}`;
 

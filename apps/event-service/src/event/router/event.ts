@@ -119,11 +119,11 @@ export const createEventRouter = ({ logger, eventService }: EventRouterProps): R
             isISO8601: true,
           },
           correlationId: {
-            optional: true,
+            optional: { options: { nullable: true } },
             isString: true,
           },
           context: {
-            optional: true,
+            optional: { options: { nullable: true } },
             isObject: true,
           },
           payload: {

@@ -25,6 +25,8 @@ import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '..';
 import { select, call, put, takeEvery, all } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
+import { jsonSchemaCheck } from '@lib/checkInput';
+import { getAccessToken } from '@store/tenant/sagas';
 
 export function* fetchConfigurationDefinitions(action: FetchConfigurationDefinitionsAction): SagaIterator {
   yield put(
@@ -38,7 +40,7 @@ export function* fetchConfigurationDefinitions(action: FetchConfigurationDefinit
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
 
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
   if (configBaseUrl && token) {
     try {
       const { tenant, core } = yield all({
@@ -82,7 +84,7 @@ export function* fetchConfigurations(action: FetchConfigurationsAction): SagaIte
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
   const urls = getFetchUrls(action.services, configBaseUrl);
   if (configBaseUrl && token && urls.length > 0) {
     try {
@@ -120,7 +122,7 @@ export function* updateConfigurationDefinition({
   isAddedFromOverviewPage,
 }: UpdateConfigurationDefinitionAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
@@ -150,7 +152,7 @@ export function* updateConfigurationDefinition({
 
 export function* deleteConfigurationDefinition({ definitionName }: DeleteConfigurationDefinitionAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
@@ -174,7 +176,7 @@ export function* deleteConfigurationDefinition({ definitionName }: DeleteConfigu
 
 export function* setConfigurationRevision(action: SetConfigurationRevisionAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
@@ -198,7 +200,7 @@ export function* setConfigurationRevision(action: SetConfigurationRevisionAction
 
 export function* replaceConfigurationData(action: ReplaceConfigurationDataAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
@@ -206,6 +208,30 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
         operation: 'REPLACE',
         configuration: action.configuration.configuration,
       };
+      // Get Json schema from configuration definition
+      let definition;
+      if (action.configuration.namespace === 'platform') {
+        const coreConfig = yield select((state: RootState) => state.configuration.coreConfigDefinitions.configuration);
+        definition = coreConfig[`${action.configuration.namespace}:${action.configuration.name}`];
+      } else {
+        const tenantConfig: string = yield select(
+          (state: RootState) => state.configuration.tenantConfigDefinitions.configuration
+        );
+        definition = tenantConfig[`${action.configuration.namespace}:${action.configuration.name}`];
+      }
+      // Check if configuration item following definition
+
+      const jsonSchemaValidation = jsonSchemaCheck(definition.configurationSchema, action.configuration.configuration);
+      if (!jsonSchemaValidation) {
+        yield put(
+          ErrorNotification({
+            message: `${action.configuration.namespace}:${action.configuration.name} configuration definition not match import configuration`,
+          })
+        );
+        return;
+      }
+
+      // Send request to replace configuration
       yield call(
         axios.patch,
         `${baseUrl}/configuration/v2/configuration/${action.configuration.namespace}/${action.configuration.name}`,
@@ -214,6 +240,7 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
       yield put(replaceConfigurationDataSuccessAction());
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));

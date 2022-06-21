@@ -12,10 +12,11 @@ import {
 import { RootState } from '../index';
 import { ErrorNotification } from '../notifications/actions';
 import { ChartInterval, MetricValue, ValueMetric } from './models';
+import { getAccessToken } from '@store/tenant/sagas';
 
 function* fetchServices() {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
@@ -71,7 +72,7 @@ function addIntervalBreaks(intervalMins: number) {
 
 function* fetchServiceMetrics(action: FetchServiceMetricsAction): SagaIterator {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   const now = moment();
   const chartInterval = action.chartInterval;

@@ -70,7 +70,7 @@ export const SUBSCRIBER_INIT: SubscriberService = {
   subscribers: {},
   subscriptions: {},
   subscriberSearch: {
-    results: [],
+    results: null,
     next: null,
   },
   typeSubscriptionSearch: {},
@@ -84,6 +84,7 @@ export interface SubscriberSearchCriteria {
   name?: string;
   next?: string;
   sms?: string;
+  reset?: boolean;
 }
 
 export interface SubscriptionSearchCriteria {

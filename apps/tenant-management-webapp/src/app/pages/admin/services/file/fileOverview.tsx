@@ -25,11 +25,11 @@ const FileOverview = ({ setActiveEdit, setActiveIndex }: FileOverviewProps): JSX
   return (
     <div>
       <section>
-        <div>
+        <p>
           The file service provides the capability to upload and download files. Consumers are registered with their own
           space (tenant) containing file types that include role based access policy, and can associate files to domain
           records.
-        </div>
+        </p>
         <h2>File types</h2>
         <div>
           File types describe categories of files and include configuration of roles permitted to access and updated

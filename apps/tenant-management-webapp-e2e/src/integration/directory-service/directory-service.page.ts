@@ -102,5 +102,27 @@ class DirectoryServicePage {
       `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/following-sibling::*[contains(text(), "${api}")]/following-sibling::*[contains(text(), "${url}")]/parent::*`
     );
   }
+
+  entryNameEyeIcon(serviceName) {
+    return cy.xpath(
+      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/parent::*//*[@data-testid="icon-eye"]`
+    );
+  }
+
+  entryNameEyeOffIcon(serviceName) {
+    return cy.xpath(
+      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/parent::*//*[@data-testid="icon-eye-off"]`
+    );
+  }
+
+  directoryServiceMetadata(serviceName) {
+    return cy.xpath(
+      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/following::div[data-testid="details"]`
+    );
+  }
+
+  addEntryActionBtn() {
+    return cy.get('[data-testid=icon-add]');
+  }
 }
 export default DirectoryServicePage;

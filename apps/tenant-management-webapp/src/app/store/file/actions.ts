@@ -78,14 +78,15 @@ interface UploadFileFailAction {
   payload: { data: string };
 }
 
-interface FetchFilesAction {
+export interface FetchFilesAction {
   type: typeof FETCH_FILE_LIST;
+  after: string;
 }
 
 interface FetchFilesSuccessAction {
   type: typeof FETCH_FILE_LIST_SUCCESSES;
   payload: {
-    results: { data: FileItem[] };
+    results: { data: FileItem[]; after?: string; next?: string };
   };
 }
 
@@ -203,11 +204,16 @@ export const UploadFileSuccessService = (result: { data: FileItem }): UploadFile
   },
 });
 
-export const FetchFilesService = (): FetchFilesAction => ({
+export const FetchFilesService = (after?: string): FetchFilesAction => ({
   type: FETCH_FILE_LIST,
+  after,
 });
 
-export const FetchFilesSuccessService = (results: { data: FileItem[] }): FetchFilesSuccessAction => ({
+export const FetchFilesSuccessService = (results: {
+  data: FileItem[];
+  after: string;
+  next: string;
+}): FetchFilesSuccessAction => ({
   type: FETCH_FILE_LIST_SUCCESSES,
   payload: {
     results,

@@ -21,11 +21,12 @@ import { UpdateIndicator, UpdateElementIndicator } from '@store/session/actions'
 import { adspId } from '@lib/adspId';
 import { Service } from './models';
 import { toKebabName } from '@lib/kebabName';
+import { getAccessToken } from '@store/tenant/sagas';
 
 export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
   const core = 'platform';
   const state: RootState = yield select();
-  const token: string = state.session.credentials.token;
+  const token: string = yield call(getAccessToken);
   const tenantName: string = state.tenant.name;
   const directoryBaseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
 
@@ -77,7 +78,7 @@ export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
 
 export function* createEntryDirectory(action: CreateEntryAction): SagaIterator {
   const state: RootState = yield select();
-  const token = state.session.credentials.token;
+  const token = yield call(getAccessToken);
   const directoryBaseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
   const tenantName: string = state.tenant.name;
   const servicesUrl = `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}/services`;
@@ -116,7 +117,7 @@ export function* createEntryDirectory(action: CreateEntryAction): SagaIterator {
 
 export function* updateEntryDirectory(action: UpdateEntryAction): SagaIterator {
   const state: RootState = yield select();
-  const token = state.session.credentials.token;
+  const token = yield call(getAccessToken);
   const directoryBaseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
   const tenantName: string = state.tenant.name;
   const servicesUrl = `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}/services/${
@@ -150,7 +151,7 @@ export function* updateEntryDirectory(action: UpdateEntryAction): SagaIterator {
 
 export function* deleteEntryDirectory(action: DeleteEntryAction): SagaIterator {
   const state: RootState = yield select();
-  const token = state.session.credentials.token;
+  const token = yield call(getAccessToken);
   const directoryBaseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
   const tenantName: string = state.tenant.name;
   const servicesUrl = `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}/services/${
@@ -172,7 +173,7 @@ export function* deleteEntryDirectory(action: DeleteEntryAction): SagaIterator {
 
 export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator {
   const state: RootState = yield select();
-  const token = state.session.credentials.token;
+  const token = yield call(getAccessToken);
   const directoryBaseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
 
   yield put(
@@ -217,7 +218,7 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
 
 export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction): SagaIterator {
   const state: RootState = yield select();
-  const token = state.session.credentials.token;
+  const token = yield call(getAccessToken);
   const directoryBaseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
   const tenantName: string = state.tenant.name;
   const directoryUpdateList = state.directory.directory;

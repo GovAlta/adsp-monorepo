@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { Role } from '@store/tenant/models';
 import { GoAButton } from '@abgov/react-components';
@@ -14,11 +14,11 @@ import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { ConfigServiceRole } from '@store/access/models';
-import { Grid, GridItem } from '@components/Grid';
 
 interface FileTypeModalProps {
   fileType?: FileTypeItem;
   onCancel: () => void;
+  fileTypeNames?: string[];
   type: 'new' | 'edit';
   roles: Role[];
   onSwitch?: () => void;
@@ -67,7 +67,7 @@ const DataTableWrapper = styled.div`
   }
 
   .goa-checkbox {
-    margin-right: 15px;
+    margin-left: 10px;
     min-height: calc(3rem - 10px);
   }
 
@@ -112,19 +112,17 @@ const DataTableWrapper = styled.div`
   }
 `;
 
-interface FileTypeError {
-  attribute: string;
-  message: string;
-}
-
-const validateFileType = (fileType: FileTypeItem): FileTypeError[] => {
-  const errors: FileTypeError[] = [];
-  if (fileType?.name) {
-    errors.push({
-      attribute: 'name',
-      message: 'File type name missing',
-    });
+type Error = Record<string, string>;
+const validateFileType = (fileType: FileTypeItem, type?: string, names?: string[]): Error => {
+  const errors = {};
+  if (type === 'new' && !fileType?.name) {
+    errors['name'] = 'File type name missing.';
   }
+
+  if (type === 'new' && fileType?.name && names.includes(fileType.name)) {
+    errors['name'] = 'Duplicated file type name.';
+  }
+
   return errors;
 };
 
@@ -160,25 +158,26 @@ const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
 
         <tbody>
           {props.roles?.map((role): JSX.Element => {
+            const compositeRole = props.clientId ? `${props.clientId}:${role}` : role;
             return (
               <tr key={`file-type-row-${role}`}>
                 <td className="role-name">{role}</td>
                 <td className="role">
                   <GoACheckbox
                     name={`file-type-read-role-checkbox-${role}`}
-                    key={`file-type-read-role-checkbox-${role}`}
-                    checked={readRoles.includes(role)}
+                    key={`file-type-read-role-checkbox-${compositeRole}`}
+                    checked={readRoles.includes(compositeRole)}
                     data-testid={`file-type-read-role-checkbox-${role}`}
                     disabled={props.anonymousRead}
                     onChange={() => {
-                      if (readRoles.includes(role)) {
+                      if (readRoles.includes(compositeRole)) {
                         const newRoles = readRoles.filter((readRole) => {
-                          return readRole !== role;
+                          return readRole !== compositeRole;
                         });
                         setReadRoles(newRoles);
                         props.roleSelectFunc(newRoles, 'read');
                       } else {
-                        const newRoles = [...readRoles, role];
+                        const newRoles = [...readRoles, compositeRole];
                         setReadRoles(newRoles);
                         props.roleSelectFunc(newRoles, 'read');
                       }
@@ -189,17 +188,17 @@ const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
                   <GoACheckbox
                     name={`file-type-update-role-checkbox-${role}`}
                     key={`file-type-update-role-checkbox-${role}`}
-                    checked={updateRoles.includes(role)}
+                    checked={updateRoles.includes(compositeRole)}
                     data-testid={`file-type-update-role-checkbox-${role}`}
                     onChange={() => {
-                      if (updateRoles.includes(role)) {
+                      if (updateRoles.includes(compositeRole)) {
                         const newRoles = updateRoles.filter((updateRole) => {
-                          return updateRole !== role;
+                          return updateRole !== compositeRole;
                         });
                         setUpdateRoles(newRoles);
                         props.roleSelectFunc(newRoles, 'write');
                       } else {
-                        const newRoles = [...updateRoles, role];
+                        const newRoles = [...updateRoles, compositeRole];
                         setUpdateRoles(newRoles);
                         props.roleSelectFunc(newRoles, 'write');
                       }
@@ -223,10 +222,11 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   const isNew = props.type === 'new';
   const [fileType, setFileType] = useState(props.fileType);
   const title = isNew ? 'Add file type' : 'Edit file type';
-  const [errors, setErrors] = useState<FileTypeError[]>(validateFileType(fileType));
+  const [errors, setErrors] = useState<Error>(validateFileType(fileType));
   const roleNames = props.roles.map((role) => {
     return role.name;
   });
+
   const dispatch = useDispatch();
   const selectServiceCoreRoles = createSelector(
     (state: RootState) => state.serviceRoles,
@@ -282,111 +282,52 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
       });
   elements = elements.concat(clientElements);
 
-  elements.forEach((e, index) => {
-    let currentElements = e.roleNames?.length + 1;
-    if (index > 0) {
-      currentElements = currentElements + elements[index - 1].currentElements;
-    } else {
-      currentElements = currentElements - 1;
-    }
-    elements[index] = { ...e, currentElements: currentElements };
-  });
-
-  const totalElements = elements[elements.length - 1].currentElements;
-
   return (
     <ModalOverwrite>
       <GoAModal testId="file-type-modal" isOpen={true}>
         <GoAModalTitle>{title}</GoAModalTitle>
         <GoAModalContent>
-          <Grid>
-            <GridItem md={4} vSpacing={1} hSpacing={0.5}>
-              <label>Name</label>
-              <GoAInput
-                type="text"
-                name="name"
-                value={fileType.name}
-                data-testid={`file-type-modal-name-input`}
-                onChange={(name, value) => {
-                  const newFileType = {
-                    ...fileType,
-                    name: value,
-                    id: isNew ? toKebabName(value) : fileType.id,
-                  };
-                  setFileType(newFileType);
-                  setErrors(validateFileType(newFileType));
-                }}
-                aria-label="name"
-              />
-            </GridItem>
-            <GridItem md={4} vSpacing={1} hSpacing={0.5}>
-              <div style={{ margin: '0 15px' }}>
-                <label>Type ID</label>
-                <IdField data-testid={`file-type-modal-id`}>{fileType.id || ''}</IdField>
-              </div>
-            </GridItem>
-            <GridItem md={4} vSpacing={1} hSpacing={0.5}>
-              <div style={{ margin: '0 15px' }}>
-                <AnonymousReadWrapper>
-                  <GoACheckbox
-                    checked={fileType.anonymousRead}
-                    name="file-type-anonymousRead-checkbox"
-                    data-testid="file-type-anonymousRead-checkbox"
-                    onChange={() => {
-                      setFileType({
-                        ...fileType,
-                        anonymousRead: !fileType.anonymousRead,
-                      });
-                    }}
-                  />
-                  Make public (read only)
-                </AnonymousReadWrapper>
-              </div>
-            </GridItem>
-          </Grid>
-          <div className="three-wide">
-            <Grid>
-              <GridItem xl={4} lg={6} md={12} vSpacing={1} hSpacing={1.5}>
-                {elements.map((e) => {
-                  if (Math.floor(e.currentElements / (totalElements / 3)) === 0) {
-                    return <ClientRole roleNames={e.roleNames} clientId={e.clientId} />;
-                  } else return null;
-                })}
-              </GridItem>
-              <GridItem xl={4} lg={6} md={12} vSpacing={1} hSpacing={1.5}>
-                {elements.map((e) => {
-                  if (Math.floor(e.currentElements / (totalElements / 3)) === 1) {
-                    return <ClientRole roleNames={e.roleNames} clientId={e.clientId} />;
-                  } else return null;
-                })}
-              </GridItem>
-              <GridItem xl={4} lg={6} md={12} vSpacing={1} hSpacing={1.5}>
-                {elements.map((e) => {
-                  if (Math.floor(e.currentElements / (totalElements / 3)) === 2) {
-                    return <ClientRole roleNames={e.roleNames} clientId={e.clientId} />;
-                  } else return null;
-                })}
-              </GridItem>
-            </Grid>
-          </div>
-          <div className="two-wide">
-            <Grid>
-              <GridItem xl={6} lg={6} md={12} vSpacing={1} hSpacing={1.5}>
-                {elements.map((e) => {
-                  if (Math.floor(e.currentElements / (totalElements / 2)) === 0) {
-                    return <ClientRole roleNames={e.roleNames} clientId={e.clientId} />;
-                  } else return null;
-                })}
-              </GridItem>
-              <GridItem xl={6} lg={6} md={12} vSpacing={1} hSpacing={1.5}>
-                {elements.map((e) => {
-                  if (Math.floor(e.currentElements / (totalElements / 2)) === 1) {
-                    return <ClientRole roleNames={e.roleNames} clientId={e.clientId} />;
-                  } else return null;
-                })}
-              </GridItem>
-            </Grid>
-          </div>
+          <GoAFormItem error={errors?.['name']}>
+            <label>Name</label>
+            <GoAInput
+              type="text"
+              name="name"
+              disabled={props.type === 'edit'}
+              value={fileType.name}
+              data-testid={`file-type-modal-name-input`}
+              onChange={(name, value) => {
+                const newFileType = {
+                  ...fileType,
+                  name: value,
+                  id: isNew ? toKebabName(value) : fileType.id,
+                };
+                setFileType(newFileType);
+                setErrors(validateFileType(newFileType, props.type, props?.fileTypeNames));
+              }}
+              aria-label="name"
+            />
+          </GoAFormItem>
+          <GoAFormItem>
+            <label>Type ID</label>
+            <IdField data-testid={`file-type-modal-id`}>{fileType.id || ''}</IdField>
+          </GoAFormItem>
+          <AnonymousReadWrapper>
+            <GoACheckbox
+              checked={fileType.anonymousRead}
+              name="file-type-anonymousRead-checkbox"
+              data-testid="file-type-anonymousRead-checkbox"
+              onChange={() => {
+                setFileType({
+                  ...fileType,
+                  anonymousRead: !fileType.anonymousRead,
+                });
+              }}
+            />
+            Make public (read only)
+          </AnonymousReadWrapper>
+          {elements.map((e, key) => {
+            return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+          })}
         </GoAModalContent>
         <GoAModalActions>
           <GoAButton
@@ -400,9 +341,23 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
           </GoAButton>
           <GoAButton
             buttonType="primary"
-            disabled={errors.length === 0}
+            disabled={!fileType.name || Object.entries(errors).length > 0}
             data-testid="file-type-modal-save"
             onClick={() => {
+              let elementNames = [];
+              elements.forEach((e) => {
+                elementNames = elementNames.concat(
+                  e.roleNames.map((roleName) => (e.clientId ? `${e.clientId}:${roleName}` : roleName))
+                );
+              });
+              const cleanReadRoles = fileType.readRoles.filter((readRole) => {
+                return elementNames.includes(readRole);
+              });
+              const cleanUpdateRoles = fileType.updateRoles.filter((updateRole) => elementNames.includes(updateRole));
+
+              fileType.readRoles = cleanReadRoles;
+              fileType.updateRoles = cleanUpdateRoles;
+
               if (props.type === 'new') {
                 dispatch(CreateFileTypeService(fileType));
               }
