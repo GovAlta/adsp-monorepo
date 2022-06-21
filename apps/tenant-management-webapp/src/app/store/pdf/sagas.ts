@@ -4,7 +4,7 @@ import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '../index';
 import { select, call, put, takeEvery, take, apply, fork } from 'redux-saga/effects';
-import { eventChannel, END } from 'redux-saga';
+import { eventChannel } from 'redux-saga';
 import { ErrorNotification } from '@store/notifications/actions';
 import {
   fetchPdfMetricsSucceeded,
@@ -23,6 +23,7 @@ import {
 } from './action';
 import { io } from 'socket.io-client';
 import { FETCH_FILE_LIST } from '@store/file/actions';
+import { getAccessToken } from '@store/tenant/sagas';
 
 export function* fetchPdfTemplates(): SagaIterator {
   yield put(
@@ -35,7 +36,7 @@ export function* fetchPdfTemplates(): SagaIterator {
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
   if (configBaseUrl && token) {
     try {
       const { data } = yield call(
@@ -91,7 +92,7 @@ const connect = (pushServiceUrl, token, stream, tenantName) => {
 
 export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
@@ -119,7 +120,7 @@ export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): Saga
 
 export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIterator {
   const pushServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pushServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
   const tenant = yield select((state: RootState) => state?.tenant);
 
   // This is how a channel is created
@@ -175,7 +176,7 @@ function* emitResponse(socket) {
 export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
   const pdfServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pdfServiceApiUrl);
 
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   yield put(
     UpdateIndicator({
@@ -214,7 +215,7 @@ interface MetricResponse {
 
 export function* fetchPdfMetrics(): SagaIterator {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {

@@ -26,6 +26,8 @@ import { RootState } from '..';
 import { select, call, put, takeEvery, all } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { jsonSchemaCheck } from '@lib/checkInput';
+import { getAccessToken } from '@store/tenant/sagas';
+
 export function* fetchConfigurationDefinitions(action: FetchConfigurationDefinitionsAction): SagaIterator {
   yield put(
     UpdateIndicator({
@@ -38,7 +40,7 @@ export function* fetchConfigurationDefinitions(action: FetchConfigurationDefinit
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
 
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
   if (configBaseUrl && token) {
     try {
       const { tenant, core } = yield all({
@@ -82,7 +84,7 @@ export function* fetchConfigurations(action: FetchConfigurationsAction): SagaIte
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
   const urls = getFetchUrls(action.services, configBaseUrl);
   if (configBaseUrl && token && urls.length > 0) {
     try {
@@ -120,7 +122,7 @@ export function* updateConfigurationDefinition({
   isAddedFromOverviewPage,
 }: UpdateConfigurationDefinitionAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
@@ -150,7 +152,7 @@ export function* updateConfigurationDefinition({
 
 export function* deleteConfigurationDefinition({ definitionName }: DeleteConfigurationDefinitionAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
@@ -174,7 +176,7 @@ export function* deleteConfigurationDefinition({ definitionName }: DeleteConfigu
 
 export function* setConfigurationRevision(action: SetConfigurationRevisionAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
@@ -198,7 +200,7 @@ export function* setConfigurationRevision(action: SetConfigurationRevisionAction
 
 export function* replaceConfigurationData(action: ReplaceConfigurationDataAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {

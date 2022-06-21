@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { GoAButton, GoADropdownOption, GoADropdown, GoACheckbox } from '@abgov/react-components';
+import { GoAButton, GoADropdownOption, GoADropdown } from '@abgov/react-components';
 import {
   GoAModal,
   GoAModalActions,
