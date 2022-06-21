@@ -38,6 +38,49 @@ class SubscriptionManagementPage {
   contactSupportCalloutContent() {
     return cy.xpath('//*[@id="contactSupport"]//*[@data-testid="callout-content"]');
   }
+
+  editContactInformation() {
+    return cy.get('[data-testid="edit-contact-button"]');
+  }
+
+  phoneNumberInput() {
+    return cy.get('[data-testid="contact-sms-input"]');
+  }
+
+  phoneNumberDisplay() {
+    return cy.get('[data-testid=phone-number-label] > p');
+  }
+  emailInput() {
+    return cy.get('[data-testid="contact-email-input"]');
+  }
+
+  emailDisplay() {
+    return cy.get('[data-testid=email-label] > p');
+  }
+
+  contactInformationSaveBtn() {
+    return cy.get('[data-testid="edit-contact-save-button"]');
+  }
+
+  phoneNumberErrorMsg() {
+    return cy.xpath('//input[@data-testid="contact-sms-input"]/parent::*/following-sibling::div[@class="error-msg"]');
+  }
+
+  emailErrorMsg() {
+    return cy.xpath('//input[@data-testid="contact-email-input"]/parent::*/following-sibling::div[@class="error-msg"]');
+  }
+
+  preferredNotificationChannelRadio(radio) {
+    return cy.xpath(`//*[@class="goa-radio"]/input[@value="${radio}"]`);
+  }
+
+  preferredNotificationChannelDysplay() {
+    return cy.xpath('//input[@type="radio" and @checked]');
+  }
+
+  calloutMessage() {
+    return cy.xpath('//*[@role="notification"]//*[@class="message"]');
+  }
 }
 
 export default SubscriptionManagementPage;

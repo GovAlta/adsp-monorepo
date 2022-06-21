@@ -71,3 +71,69 @@ And('the user views the support link for the scription of {string}', function (s
     .should('eq', '/subscriptions/' + Cypress.env('realm') + '#contactSupport');
   subscriptionManagementObj.contactSupportCalloutContent().should('exist');
 });
+
+When('the user clicks edit contact information button', function () {
+  subscriptionManagementObj.editContactInformation().click();
+});
+
+And('the user enters an invalid phone number in contact information', function () {
+  subscriptionManagementObj.phoneNumberInput().clear().type('123');
+});
+
+And('the user clicks Save button in contact information', function () {
+  subscriptionManagementObj.contactInformationSaveBtn().click();
+});
+
+And('the user views an error message for the invalid phone number in contact information', function () {
+  subscriptionManagementObj.phoneNumberErrorMsg().should('contain', 'You must enter a valid phone number.');
+});
+
+And('the user removes phone number value in contact information', function () {
+  subscriptionManagementObj.phoneNumberInput().clear();
+});
+
+When('the user selects {string} as the preferred channel in contact information', function (radio) {
+  subscriptionManagementObj.preferredNotificationChannelRadio(radio).click({ force: true });
+});
+
+Then('the user views an error messsage for missing phone number', function () {
+  subscriptionManagementObj
+    .phoneNumberErrorMsg()
+    .should('contain', 'SMS is set as the preferred channel. A valid SMS number is required.');
+});
+
+When('the user removes email value in contact information', function () {
+  subscriptionManagementObj.emailInput().clear();
+});
+
+Then('the user views an error messsage for missing email', function () {
+  subscriptionManagementObj.emailErrorMsg().should('contain', 'You must enter a valid email.');
+});
+
+When(
+  'the user enters {string} as email, {string} as phone number and {string} as preferred channel',
+  function (email, phone, channel) {
+    subscriptionManagementObj.emailInput().clear().type(email);
+    if (phone == 'EMPTY') {
+      subscriptionManagementObj.phoneNumberInput().clear();
+    } else {
+      subscriptionManagementObj.phoneNumberInput().clear().type(phone);
+    }
+    subscriptionManagementObj.preferredNotificationChannelRadio(channel).click({ force: true });
+  }
+);
+
+Then('the user views a callout message of {string}', function (message) {
+  cy.wait(1000);
+  subscriptionManagementObj.calloutMessage().invoke('text').should('contain', message);
+});
+
+And('the user views contact information of {string}, {string} and {string}', function (email, phone, channel) {
+  subscriptionManagementObj.emailDisplay().invoke('text').should('contain', email);
+  if (phone == 'EMPTY') {
+    subscriptionManagementObj.phoneNumberInput().should('not.exist');
+  } else {
+    subscriptionManagementObj.phoneNumberDisplay().invoke('text').should('contain', phone);
+  }
+  subscriptionManagementObj.preferredNotificationChannelDysplay().should('have.value', channel);
+});
