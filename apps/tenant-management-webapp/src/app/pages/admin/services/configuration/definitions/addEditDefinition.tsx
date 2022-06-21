@@ -5,7 +5,10 @@ import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgo
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { ConfigDefinition } from '@store/configuration/model';
 import { isValidJSONCheck } from '@lib/checkInput';
-
+import { createSelector } from 'reselect';
+import { RootState } from '@store/index';
+import { useSelector, useDispatch } from 'react-redux';
+import { getConfigurationDefinitions } from '@store/configuration/action';
 interface AddEditConfigDefinitionProps {
   onSave: (definition: ConfigDefinition) => void;
   initialValue: ConfigDefinition;
@@ -13,6 +16,15 @@ interface AddEditConfigDefinitionProps {
   isEdit: boolean;
   onClose: () => void;
 }
+
+export const selectConfigurationIdentifier = createSelector(
+  (state: RootState) => state.configuration?.coreConfigDefinitions?.configuration || {},
+  (state: RootState) => state.configuration?.tenantConfigDefinitions?.configuration || {},
+  (coreConfig, tenantConfig) => {
+    return [...Object.keys(coreConfig), ...Object.keys(tenantConfig)];
+  }
+);
+
 export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionProps> = ({
   onSave,
   initialValue,
@@ -24,13 +36,22 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
   const [errors, setErrors] = useState<Record<string, string>>({});
   const regex = new RegExp(/^[a-zA-Z0-9-]+$/);
   const [payloadSchema, setPayloadSchema] = useState<string>(JSON.stringify(definition.configurationSchema, null, 2));
-
+  const identifiers = useSelector(selectConfigurationIdentifier);
   const hasFormErrors = () => {
     return Object.keys(errors).length !== 0;
   };
+
   useEffect(() => {
     setDefinition(initialValue);
   }, [initialValue]);
+
+  const dispatch = useDispatch();
+  useEffect(() => {
+    if (!identifiers) {
+      dispatch(getConfigurationDefinitions());
+    }
+  }, []);
+
   return (
     <>
       <GoAModal testId="definition-form" isOpen={open}>
@@ -71,11 +92,15 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
                 data-testid="form-name"
                 aria-label="name"
                 onChange={(name, value) => {
+                  const identifier = `${definition?.namespace}:${value}`;
                   if (!regex.test(value)) {
                     setErrors({ ...errors, name: 'Allowed characters: a-z, A-Z, 0-9, -' });
                   } else {
                     delete errors['name'];
                     setErrors({ ...errors });
+                  }
+                  if (identifiers.includes(identifier)) {
+                    setErrors({ ...errors, name: `Duplication name: ${identifier}` });
                   }
                   setDefinition({ ...definition, name: value });
                 }}
@@ -87,7 +112,12 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
                 data-testid="form-schema"
                 height={200}
                 value={payloadSchema}
-                onChange={(value) => setPayloadSchema(value)}
+                onChange={(value) => {
+                  if ('payloadSchema' in errors) {
+                    delete errors['payloadSchema'];
+                  }
+                  setPayloadSchema(value);
+                }}
                 language="json"
                 options={{
                   automaticLayout: true,
@@ -115,10 +145,11 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
           <GoAButton
             buttonType="primary"
             data-testid="form-save"
+            disabled={!definition.name || !definition.namespace || Object.entries(errors).length > 0}
             type="submit"
             onClick={(e) => {
               // if no errors in the form then save the definition
-              const payloadSchemaValidationResult = isValidJSONCheck()(payloadSchema);
+              const payloadSchemaValidationResult = isValidJSONCheck('payloadSchema')(payloadSchema);
 
               if (payloadSchemaValidationResult !== '') {
                 setErrors({ ...errors, payloadSchema: payloadSchemaValidationResult });
