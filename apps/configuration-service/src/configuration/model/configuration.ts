@@ -1,8 +1,10 @@
 import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, Results, ValidationService } from '@core-services/core-common';
+import { InvalidOperationError, Results, ValidationService, createLogger } from '@core-services/core-common';
 import { ConfigurationRepository } from '../repository';
 import { ConfigurationServiceRoles } from '../roles';
 import { ConfigurationRevision, Configuration, RevisionCriteria } from '../types';
+import type { Logger } from 'winston';
+import { environment } from './../../environments/environment';
 
 /**
  * Represents an aggregate context for configuration revisions.
@@ -20,7 +22,8 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     public validationService: ValidationService,
     public latest?: ConfigurationRevision<C>,
     public tenantId?: AdspId,
-    private schema?: Record<string, unknown>
+    private schema?: Record<string, unknown>,
+    private logger?: Logger
   ) {
     if (!namespace || !name) {
       throw new InvalidOperationError('Configuration must have a namespace and name.');
@@ -30,7 +33,22 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
       throw new InvalidOperationError(`Configuration and namespace and name cannot contain ':'.`);
     }
 
-    validationService.setSchema(this.getSchemaKey(), schema || {});
+    if (!logger) {
+      logger = createLogger('configuration-service-modal', environment.LOG_LEVEL);
+    }
+
+    try {
+      validationService.setSchema(this.getSchemaKey(), schema);
+      return;
+    } catch {
+      logger.warn(`JSON schema of ${namespace}:${name} is invalid. An empty JSON schema {} will be used.`);
+    }
+
+    try {
+      validationService.setSchema(this.getSchemaKey(), {});
+    } catch (err) {
+      throw new InvalidOperationError(`Failed in adding empty schema {}: ${err.message}`);
+    }
   }
 
   public canAccess(user: User): boolean {
