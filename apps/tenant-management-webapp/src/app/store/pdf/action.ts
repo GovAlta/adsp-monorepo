@@ -1,3 +1,4 @@
+import { template } from 'handlebars';
 import { PdfMetrics, PdfTemplate, PdfGenerationResponse, PdfGenerationPayload } from './model';
 
 export const FETCH_PDF_TEMPLATES_ACTION = 'pdf/FETCH_PDF_TEMPLATES_ACTION';
@@ -44,6 +45,7 @@ export interface GeneratePdfAction {
 export interface StreamPdfSocketAction {
   type: typeof STREAM_PDF_SOCKET_ACTION;
   disconnect: boolean;
+  templateId: string;
 }
 
 export interface UpdatePdfTemplatesAction {
@@ -99,9 +101,10 @@ export const generatePdf = (payload: PdfGenerationPayload): GeneratePdfAction =>
   payload: payload,
 });
 
-export const streamPdfSocket = (disconnect: boolean): StreamPdfSocketAction => ({
+export const streamPdfSocket = (disconnect: boolean, templateId: string): StreamPdfSocketAction => ({
   type: STREAM_PDF_SOCKET_ACTION,
   disconnect: disconnect,
+  templateId: templateId,
 });
 
 export const generatePdfSuccess = (results: PdfGenerationResponse): GeneratePdfSuccessAction => ({

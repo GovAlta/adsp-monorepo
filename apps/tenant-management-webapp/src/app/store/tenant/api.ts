@@ -39,9 +39,9 @@ export class TenantApi {
     return data.results[0];
   }
 
-  async fetchTenantByEmail(email: string): Promise<Tenant> {
+  async fetchTenantByEmail(adminEmail: string): Promise<Tenant> {
     const url = '/api/tenant/v2/tenants';
-    const { data } = await this.http.get<TenantsResponse>(url, { params: { email } });
+    const { data } = await this.http.get<TenantsResponse>(url, { params: { adminEmail } });
     return data.results[0];
   }
 

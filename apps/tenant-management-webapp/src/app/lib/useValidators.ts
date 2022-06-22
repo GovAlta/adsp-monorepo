@@ -30,8 +30,7 @@ import { checkInput, Validator } from './checkInput';
  */
 export const useValidators = (name: string, field: string, ...validators: Validator[]): ValidatorServiceBuilder => {
   const [error, setError] = useState<ValidatorErrors>({});
-  const inputChecker = reactInputCheckerFactory(error, setError);
-  const set = new ValidatorCollectionImpl(inputChecker, error);
+  const set = new ValidatorCollectionImpl(error, setError);
   return set.add(name, field, ...validators);
 };
 
@@ -44,9 +43,12 @@ export interface ValidatorCollection {
   haveErrors: () => boolean;
   clear: () => void;
   add(name: string, field: string, ...validators: Validator[]): ValidatorServiceBuilder;
+  checkAll: (inputs: ValidationInputs) => boolean;
+  remove: (field: string) => void;
 }
 
 export type ValidatorErrors = Record<string, string>;
+export type ValidationInputs = Record<string, unknown>;
 
 type ValidatorServiceBuilder = {
   service: ValidatorService;
@@ -94,18 +96,48 @@ const reactInputCheckerFactory = (
 class ValidatorCollectionImpl implements ValidatorCollection {
   private errorHandler: reactInputChecker;
   private errors: ValidatorErrors;
+  private setErrors: React.Dispatch<React.SetStateAction<ValidatorErrors>>;
 
-  constructor(errorHandler: reactInputChecker, errors: ValidatorErrors) {
-    this.errorHandler = errorHandler;
+  constructor(errors: ValidatorErrors, setErrors: React.Dispatch<React.SetStateAction<ValidatorErrors>>) {
     this.errors = errors;
+    this.setErrors = setErrors;
+    this.errorHandler = reactInputCheckerFactory(errors, setErrors);
   }
 
   haveErrors(): boolean {
     return this.errorHandler.hasErrors();
   }
 
+  remove(field: string) {
+    if (field in this.errors) {
+      delete this.errors[field];
+      this.setErrors({ ...this.errors });
+    }
+  }
+
   clear(): void {
     this.errorHandler.clear();
+  }
+
+  checkAll(inputs: ValidationInputs) {
+    const entries = Object.entries(inputs);
+    const errCopy = { ...this.errors };
+    entries.forEach(([name, input]) => {
+      if ((this[name]?.field && input, this[name].validators)) {
+        const err = checkInput(input, this[name].validators);
+        if (err) {
+          errCopy[this[name].field] =
+            errCopy[this[name].field] && !errCopy[this[name].field].includes(err)
+              ? err + errCopy[this[name].field]
+              : err;
+        }
+      } else {
+        console.warn(`Cannot find validators for ${name}.`);
+      }
+    });
+
+    this.setErrors(errCopy);
+    return Object.entries(errCopy).length === 0;
   }
 
   add(name: string, field: string, ...validators: Validator[]): ValidatorServiceBuilder {
@@ -114,7 +146,10 @@ class ValidatorCollectionImpl implements ValidatorCollection {
       check: (input: string): string => {
         return checkInput(input, validators, this.errorHandler.handleErrors(field));
       },
+      field,
+      validators,
     };
+
     return {
       service: { errors: this.errors, validators: this },
       add: (name: string, field: string, ...validators: Validator[]): ValidatorServiceBuilder => {

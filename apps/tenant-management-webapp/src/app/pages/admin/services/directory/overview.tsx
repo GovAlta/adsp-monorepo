@@ -18,12 +18,12 @@ export const DirectoryOverview: FunctionComponent = () => {
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
   return (
     <div>
-      <p>
-        The directory service is a register of services and their APIs. Applications can use the directory API to lookup
-        URLs for services. Directory information is public and anonymous frontend applications can read this
-        information. Add your own entry so they can be found using the directory.
-      </p>
       <section>
+        <p>
+          The directory service is a register of services and their APIs. Applications can use the directory API to
+          lookup URLs for services. Directory information is public and anonymous frontend applications can read this
+          information. Add your own entry so they can be found using the directory.
+        </p>
         <h2>Service metadata</h2>
         <p>
           For services, the directory will make a GET request at the associated URL to look for additional metadata.

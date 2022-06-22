@@ -22,12 +22,13 @@ import axios from 'axios';
 import moment from 'moment';
 import { EventItem } from './models';
 import { UpdateIndicator } from '@store/session/actions';
+import { getAccessToken } from '@store/tenant/sagas';
 
 export function* fetchNotificationTypes(): SagaIterator {
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
     try {
@@ -53,7 +54,7 @@ export function* fetchCoreNotificationTypes(): SagaIterator {
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
     try {
@@ -95,7 +96,7 @@ export function* deleteNotificationTypes(action: DeleteNotificationTypeAction): 
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
     try {
@@ -118,7 +119,9 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
+
+  const coreNotificationTypes = yield select((state: RootState) => state.notification.core);
 
   if (configBaseUrl && token) {
     try {
@@ -140,9 +143,12 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
         headers: { Authorization: `Bearer ${token}` },
       };
 
-      if (payload.events.length === 0) {
-        // If there is no events in the custom notification type, we need to clean up the custom notification type.
-
+      if (
+        payload.events.length === 0 &&
+        coreNotificationTypes &&
+        Object.keys(coreNotificationTypes).includes(payloadId)
+      ) {
+        // If there is no events in the custom "core" notification type, we need to clean up the custom notification type.
         const config = (yield call(axios.get, url, headers)).data.latest.configuration;
         delete config[payloadId];
 
@@ -189,7 +195,7 @@ export function* updateContactInformation({ payload }: UpdateContactInformationA
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
     try {
@@ -224,7 +230,7 @@ interface MetricResponse {
 
 export function* fetchNotificationMetrics(): SagaIterator {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {

@@ -47,79 +47,78 @@ export const Overview = (): JSX.Element => {
   }, [indicator]);
 
   return (
-    <>
-      <h1 data-testid="access-title">Access service</h1>
-      <p>
-        Access allows you to add a secure sign in to your application and services with minimum effort and
-        configuration. No need to deal with storing or authenticating users. It's all available out of the box.
-      </p>
+    <div>
+      <section>
+        <p>
+          Access allows you to add a secure sign in to your application and services with minimum effort and
+          configuration. No need to deal with storing or authenticating users. It's all available out of the box.
+        </p>
+      </section>
 
-      <div>
-        <section id="keycloak-user-info">
-          <TitleLinkHeader>
-            <Title>Keycloak user information</Title>
-            <a
-              href={getKeycloakAdminPortal()}
-              rel="noopener noreferrer"
-              target="_blank"
-              className="link-button"
-              title="Keycloak Admin"
-            >
-              Keycloak admin portal
-            </a>
-          </TitleLinkHeader>
+      <section id="keycloak-user-info">
+        <TitleLinkHeader>
+          <Title>Keycloak user information</Title>
+          <a
+            href={getKeycloakAdminPortal()}
+            rel="noopener noreferrer"
+            target="_blank"
+            className="link-button"
+            title="Keycloak Admin"
+          >
+            Keycloak admin portal
+          </a>
+        </TitleLinkHeader>
 
-          <Metrics
-            metrics={[
-              { id: 'user-count', name: 'Total number of users', value: userCount },
-              { id: 'role-count', name: 'Total number of roles', value: roles?.length },
-              { id: 'active-user-count', name: 'Active users', value: activeUserCount },
-            ]}
-          />
-        </section>
+        <Metrics
+          metrics={[
+            { id: 'user-count', name: 'Total number of users', value: userCount },
+            { id: 'role-count', name: 'Total number of roles', value: roles?.length },
+            { id: 'active-user-count', name: 'Active users', value: activeUserCount },
+          ]}
+        />
+      </section>
 
-        <section id="keycloak-role-info">
-          <h3>Keycloak role information</h3>
-          <p>
-            Displayed below are the top 5 user roles based on their counts. To view all your available roles, please{' '}
-            <a href={getKeycloakAdminPortal()} rel="noopener noreferrer" target="_blank">
-              sign in
-            </a>{' '}
-            to your Keycloak admin portal.
-          </p>
-          <TableStyle>
-            <DataTable id="role-information">
-              <thead>
+      <section id="keycloak-role-info">
+        <h3>Keycloak role information</h3>
+        <p>
+          Displayed below are the top 5 user roles based on their counts. To view all your available roles, please{' '}
+          <a href={getKeycloakAdminPortal()} rel="noopener noreferrer" target="_blank">
+            sign in
+          </a>{' '}
+          to your Keycloak admin portal.
+        </p>
+        <TableStyle>
+          <DataTable id="role-information">
+            <thead>
+              <tr>
+                <th className="half-width">Role</th>
+                <th>User count</th>
+              </tr>
+            </thead>
+            <tbody>
+              {roles ? (
+                roles
+                  .sort((a, b) => (a.userIds?.length > b.userIds?.length ? -1 : 1))
+                  .slice(0, 5)
+                  .map((role) => {
+                    return (
+                      <tr key={role.name}>
+                        <td>{role.name}</td>
+                        <td>{role.userIds?.length ?? 0}</td>
+                      </tr>
+                    );
+                  })
+              ) : (
                 <tr>
-                  <th className="half-width">Role</th>
-                  <th>User count</th>
+                  <td colSpan={2}>
+                    <PageIndicator />
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {roles ? (
-                  roles
-                    .sort((a, b) => (a.userIds?.length > b.userIds?.length ? -1 : 1))
-                    .slice(0, 5)
-                    .map((role) => {
-                      return (
-                        <tr key={role.name}>
-                          <td>{role.name}</td>
-                          <td>{role.userIds?.length ?? 0}</td>
-                        </tr>
-                      );
-                    })
-                ) : (
-                  <tr>
-                    <td colSpan={2}>
-                      <PageIndicator />
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </DataTable>
-          </TableStyle>
-        </section>
-      </div>
-    </>
+              )}
+            </tbody>
+          </DataTable>
+        </TableStyle>
+      </section>
+    </div>
   );
 };
