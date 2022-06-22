@@ -77,6 +77,7 @@ export const MonacoDivBody = styled.div`
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
   height: calc(100vh - 510px);
+  min-height: 65px;
 
   @media (max-width: 1420px) {
     height: calc(100vh - 560px);
