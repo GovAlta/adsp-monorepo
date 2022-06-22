@@ -9,6 +9,7 @@ export interface ConfigurationDefinitionState {
   coreConfigDefinitions: ServiceSchemas;
   tenantConfigDefinitions: ServiceSchemas;
   isAddedFromOverviewPage: boolean;
+  importedConfiguration: string[];
 }
 
 export interface ConfigDefinition {

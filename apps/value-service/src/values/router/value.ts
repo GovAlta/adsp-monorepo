@@ -330,9 +330,18 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
     createValidationHandler(
       ...checkSchema(
         {
-          timestamp: { optional: true, isISO8601: true },
-          context: { optional: true, isObject: true },
-          correlationId: { optional: true, isString: true },
+          timestamp: {
+            optional: true,
+            isISO8601: true,
+          },
+          context: {
+            optional: { options: { nullable: true } },
+            isObject: true,
+          },
+          correlationId: {
+            optional: { options: { nullable: true } },
+            isString: true,
+          },
         },
         ['body']
       )

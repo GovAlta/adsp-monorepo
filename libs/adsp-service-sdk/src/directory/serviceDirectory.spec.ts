@@ -5,10 +5,11 @@ import { adspId } from '../utils';
 import { ServiceDirectoryImpl } from './serviceDirectory';
 
 const cacheMock = jest.fn();
+const cacheSetMock = jest.fn();
 jest.mock('node-cache', () => {
   return class FakeCache {
     get = cacheMock;
-    set = jest.fn();
+    set = cacheSetMock;
   };
 });
 
@@ -25,6 +26,11 @@ describe('ServiceDirectory', () => {
   const tokenProvider: TokenProvider = {
     getAccessToken: jest.fn(),
   };
+
+  beforeEach(() => {
+    cacheMock.mockReset();
+    cacheSetMock.mockReset();
+  });
 
   it('can create ServiceDirectory', () => {
     const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'), tokenProvider);
@@ -59,7 +65,7 @@ describe('ServiceDirectory', () => {
 
     cacheMock.mockReturnValueOnce(null);
     cacheMock.mockReturnValueOnce(apiUrl);
-    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: [{ urn: `${adspId}`, url: apiUrl }] }));
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: [{ urn: `${apiId}`, url: apiUrl }] }));
     const result = await directory.getServiceUrl(apiId);
 
     expect(result).toBe(apiUrl);
@@ -67,6 +73,36 @@ describe('ServiceDirectory', () => {
       'https://directory/directory/v2/namespaces/test-sandbox/entries',
       expect.any(Object)
     );
+    expect(cacheSetMock).toHaveBeenCalledWith(apiId.toString(), expect.any(URL));
+  });
+
+  it('can override URLs from directory', async () => {
+    const serviceId = adspId`urn:ads:test-sandbox:test-service`;
+    const apiId = adspId`urn:ads:test-sandbox:test-service:v1`;
+    const serviceUrl = 'https://test-service';
+    const apiUrl = 'https://test-service/v1';
+    process.env['DIR_TEST_SANDBOX_TEST_SERVICE'] = serviceUrl;
+    process.env['DIR_TEST_SANDBOX_TEST_SERVICE_V1'] = apiUrl;
+
+    const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'), tokenProvider);
+
+    cacheMock.mockReturnValueOnce(null);
+    cacheMock.mockReturnValueOnce(serviceUrl);
+    cacheMock.mockReturnValueOnce(apiUrl);
+    axiosMock.get.mockReturnValueOnce(
+      Promise.resolve({
+        data: [
+          { urn: `${serviceId}`, url: 'https://original-entry' },
+          { urn: `${apiId}`, url: 'https://original-entry' },
+        ],
+      })
+    );
+    let result = await directory.getServiceUrl(serviceId);
+    expect(result).toBe(serviceUrl);
+    result = await directory.getServiceUrl(apiId);
+    expect(result).toBe(apiUrl);
+    expect(cacheSetMock).toHaveBeenCalledWith(serviceId.toString(), expect.any(URL));
+    expect(cacheSetMock).toHaveBeenCalledWith(apiId.toString(), expect.any(URL));
   });
 
   it('can throw for missing entry', async () => {
@@ -90,7 +126,7 @@ describe('ServiceDirectory', () => {
 
     cacheMock.mockReturnValueOnce(null);
     cacheMock.mockReturnValueOnce(apiUrl);
-    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: [{ urn: `${adspId}`, url: apiUrl }] }));
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: [{ urn: `${apiUrl}`, url: apiUrl }] }));
     const result = await directory.getResourceUrl(resourceId);
 
     expect(result.href).toBe(`${apiUrl.href}/tests/test`);
@@ -105,7 +141,7 @@ describe('ServiceDirectory', () => {
 
     cacheMock.mockReturnValueOnce(null);
     cacheMock.mockReturnValueOnce(apiUrl);
-    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: [{ urn: `${adspId}`, url: apiUrl }] }));
+    axiosMock.get.mockReturnValueOnce(Promise.resolve({ data: [{ urn: `${apiUrl}`, url: apiUrl }] }));
     const result = await directory.getResourceUrl(resourceId);
 
     expect(result.href).toBe(`${apiUrl.href}tests/test`);

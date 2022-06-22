@@ -27,7 +27,8 @@ const Table = styled.table`
   width: 100%;
 
   td {
-    padding: 0.5rem;
+    padding: 0.5rem 1.5rem;
+    vertical-align: baseline;
   }
 
   tr + tr {
@@ -38,7 +39,7 @@ const Table = styled.table`
     color: var(--color-th);
     font-size: var(--fs-base);
     font-weight: var(--fw-bold);
-    padding: 0.5rem;
+    padding: 0.5rem 1.5rem 0.5rem 1.5rem;
     text-align: left;
     white-space: nowrap;
   }

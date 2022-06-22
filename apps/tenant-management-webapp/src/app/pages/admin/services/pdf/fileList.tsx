@@ -6,16 +6,13 @@ import { RootState } from '@store/index';
 import { GoAIconButton } from '@abgov/react-components/experimental';
 import { DeleteModal } from '@components/DeleteModal';
 import { FileItem } from '@store/file/models';
+import styled from 'styled-components';
 
 const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<FileItem>(null);
   const dispatch = useDispatch();
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
 
   const onDownloadFile = async (file) => {
     dispatch(DownloadFileService(file));
@@ -27,7 +24,7 @@ const FileList = (): JSX.Element => {
 
   const renderFileTable = () => {
     return (
-      <div>
+      <FileTableStyles>
         <DataTable id="files-information">
           <thead>
             <tr>
@@ -48,18 +45,24 @@ const FileList = (): JSX.Element => {
                     <td>{Math.ceil(file.size / 1024)}</td>
                     <td>{file.typeName}</td>
                     <td>
-                      <GoAIconButton
-                        data-testid="download-icon"
-                        size="medium"
-                        type="download"
-                        onClick={() => onDownloadFile(file)}
-                      />
-                      <GoAIconButton
-                        data-testid="delete-icon"
-                        size="medium"
-                        type="trash"
-                        onClick={() => onDeleteFile(file)}
-                      />
+                      <div className="flex-horizontal">
+                        <div className="flex">
+                          <GoAIconButton
+                            data-testid="download-icon"
+                            size="medium"
+                            type="download"
+                            onClick={() => onDownloadFile(file)}
+                          />
+                        </div>
+                        <div className="flex">
+                          <GoAIconButton
+                            data-testid="delete-icon"
+                            size="medium"
+                            type="trash"
+                            onClick={() => onDeleteFile(file)}
+                          />
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -79,7 +82,7 @@ const FileList = (): JSX.Element => {
             }}
           />
         )}
-      </div>
+      </FileTableStyles>
     );
   };
 
@@ -87,3 +90,14 @@ const FileList = (): JSX.Element => {
 };
 
 export default FileList;
+
+const FileTableStyles = styled.div`
+  .flex-horizontal {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .flex {
+    flex: 1;
+  }
+`;

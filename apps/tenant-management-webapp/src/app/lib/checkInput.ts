@@ -22,6 +22,7 @@
  *      of forbidden words.
  *
  */
+import Ajv from 'ajv';
 
 export interface ValidInput {
   pattern: RegExp;
@@ -87,13 +88,13 @@ export const isNotEmptyCheck = (label: string): Validator => {
   };
 };
 
-export const isValidJSONCheck = (): Validator => {
+export const isValidJSONCheck = (label?: string): Validator => {
   return (str: string) => {
     try {
       JSON.parse(str);
       return '';
     } catch (err) {
-      return 'Invalid JSON string';
+      return `${label} is invalid for JSON string`;
     }
   };
 };
@@ -120,3 +121,9 @@ export const errorLogger: ValidationAction = {
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const nonAction: ValidationAction = { onFailure: () => {} };
+
+export const jsonSchemaCheck = (schema: Record<string, unknown>, value: unknown): boolean | PromiseLike<any> => {
+  const ajv = new Ajv();
+  ajv.compile(schema);
+  return ajv.validate(schema, value);
+};

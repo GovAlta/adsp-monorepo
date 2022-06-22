@@ -31,13 +31,3 @@ export const ContactInformationContainer = styled.div`
 export const SubscriptionListContainer = styled.div`
   padding-top: 0rem;
 `;
-
-export const TableHeaders = styled.thead`
-  #action {
-    text-align: right;
-  }
-
-  #available-channels {
-    text-align: center;
-  }
-`;

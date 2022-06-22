@@ -7,6 +7,7 @@ import {
   FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION,
   FETCH_CONFIGURATIONS_SUCCESS_ACTION,
   UPDATE_CONFIGURATION_DEFINITION_SUCCESS_ACTION,
+  REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION,
 } from './action';
 import {
   ConfigurationDefinitionState,
@@ -19,6 +20,7 @@ const defaultState: ConfigurationDefinitionState = {
   coreConfigDefinitions: undefined,
   tenantConfigDefinitions: undefined,
   isAddedFromOverviewPage: false,
+  importedConfiguration: [],
 };
 
 export default function (
@@ -49,6 +51,11 @@ export default function (
         ...state,
         tenantConfigDefinitions: action.payload,
         isAddedFromOverviewPage: false,
+      };
+    case REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION:
+      return {
+        ...state,
+        importedConfiguration: action.payload,
       };
     default:
       return state;
