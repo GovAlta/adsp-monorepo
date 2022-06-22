@@ -23,7 +23,7 @@ Feature: public site for service status and notice
     And the user views the timezone information
 
   #TEST DATA: an all application notice message of "Published notice - AUTOMATION USE ONLY" is created for autotest tenant
-  @regression @smoke-test
+  @regression
   Scenario: As an interested stakeholder, I can see application notices
     Given a user is on the public service status page for "autotest"
     Then the user views the status and outages page
