@@ -385,5 +385,27 @@ class NotificationsPage {
   editSubscriberModalPhoneNumberField() {
     return cy.get('[data-testid="contact-sms-input"]');
   }
+
+  addNotificationTypeBtnOnNotificationType() {
+    return cy.get('[data-testid="add-notification"]');
+  }
+
+  tenantNotificationTypeEventMailIcon(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-email-channel"]`
+    );
+  }
+
+  tenantNotificationTypeBotBadge(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-bot-channel-badge"]`
+    );
+  }
+
+  tenantNotificationTypeEventSMSBadge(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-sms-channel-badge"]`
+    );
+  }
 }
 export default NotificationsPage;
