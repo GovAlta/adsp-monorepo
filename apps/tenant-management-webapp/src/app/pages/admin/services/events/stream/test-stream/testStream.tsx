@@ -68,6 +68,7 @@ export const TestStream = (): JSX.Element => {
         setSocketDisconnect(true);
       }
       // if connection is closed due to an error from client or server, consider this as unexpected error
+      // once these errors are caught here, it then goes to connect_error event
       if (reason === 'transport close' || reason === 'transport error') {
         setSocketConnectionError(true);
       }
