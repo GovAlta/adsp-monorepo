@@ -50,19 +50,16 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
 
   return (
     <>
-      {!indicator.show && (
-        <>
-          <br />
-          <GoAButton
-            data-testid="add-definition"
-            onClick={() => {
-              setOpenAddDefinition(true);
-            }}
-          >
-            Add definition
-          </GoAButton>
-        </>
-      )}
+      <br />
+      <GoAButton
+        data-testid="add-definition"
+        onClick={() => {
+          setOpenAddDefinition(true);
+        }}
+      >
+        Add definition
+      </GoAButton>
+
       {/*Add/Edit definition */}
       {(isEdit || openAddDefinition) && (
         <AddEditConfigDefinition
