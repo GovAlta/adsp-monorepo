@@ -17,6 +17,7 @@ import {
   setConfigurationRevisionAction,
   replaceConfigurationDataAction,
   getReplaceConfigurationErrorAction,
+  resetReplaceConfigurationListAction,
 } from '@store/configuration/action';
 import { PageIndicator } from '@components/Indicator';
 import { ConfigurationExportType, Service, ConfigDefinition } from '@store/configuration/model';
@@ -107,7 +108,6 @@ export const ConfigurationImportExport: FunctionComponent = () => {
     setImportConfigJson(importConfig);
     setImportNameList(configList);
     setOpenImportModal(true);
-    fileName.current.value = '';
   };
 
   const onImportChange = (e) => {
@@ -120,6 +120,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
     };
     setShowStatus(false);
     setImportNameList([]);
+    dispatch(resetReplaceConfigurationListAction());
   };
   const onImportCancel = () => {
     setOpenImportModal(false);
@@ -144,6 +145,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
       }
     }
     dispatch(getReplaceConfigurationErrorAction());
+    fileName.current.value = '';
     setShowStatus(true);
   };
 

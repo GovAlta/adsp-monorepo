@@ -20,6 +20,9 @@ import {
   replaceConfigurationDataSuccessAction,
   REPLACE_CONFIGURATION_ERROR_ACTION,
   getReplaceConfigurationErrorSuccessAction,
+  ResetReplaceConfigurationListAction,
+  resetReplaceConfigurationListSuccessAction,
+  RESET_REPLACE_CONFIGURATION_LIST_ACTION,
   ServiceId,
 } from './action';
 import { SagaIterator } from '@redux-saga/core';
@@ -228,7 +231,6 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
           definition = tenantConfig[`${action.configuration.namespace}:${action.configuration.name}`];
         }
         // Check if configuration item following definition
-
         const jsonSchemaValidation = jsonSchemaCheck(
           definition.configurationSchema,
           action.configuration.configuration
@@ -274,6 +276,9 @@ export function* getReplaceList(action: SetConfigurationRevisionAction): SagaIte
   replacedConfiguration = [];
 }
 
+export function* resetReplaceList(action: ResetReplaceConfigurationListAction): SagaIterator {
+  yield put(resetReplaceConfigurationListSuccessAction());
+}
 export function* watchConfigurationSagas(): Generator {
   yield takeEvery(FETCH_CONFIGURATION_DEFINITIONS_ACTION, fetchConfigurationDefinitions);
   yield takeEvery(UPDATE_CONFIGURATION_DEFINITION_ACTION, updateConfigurationDefinition);
@@ -282,4 +287,5 @@ export function* watchConfigurationSagas(): Generator {
   yield takeEvery(SET_CONFIGURATION_REVISION_ACTION, setConfigurationRevision);
   yield takeEvery(REPLACE_CONFIGURATION_DATA_ACTION, replaceConfigurationData);
   yield takeEvery(REPLACE_CONFIGURATION_ERROR_ACTION, getReplaceList);
+  yield takeEvery(RESET_REPLACE_CONFIGURATION_LIST_ACTION, resetReplaceList);
 }
