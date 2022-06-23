@@ -5,8 +5,29 @@ import { useDispatch, useSelector } from 'react-redux';
 import { PageIndicator } from '@components/Indicator';
 import { GoAButton, GoADropdown, GoADropdownOption } from '@abgov/react-components';
 import { Divider, StreamHeading, StreamsDropdown } from './styledComponents';
-import { GoAForm, GoABadge } from '@abgov/react-components/experimental';
+import { GoAForm } from '@abgov/react-components/experimental';
+import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
+import { ReactComponent as Warning } from '@icons/warning.svg';
 import { StreamPayloadTable } from './streamPayloadTable';
+
+const Icons = {
+  greenCircleCheckMark: (
+    <GreenCircleCheckMark
+      data-testid="green-circle-checkmark-icon"
+      style={{
+        verticalAlign: 'middle',
+      }}
+    />
+  ),
+  warning: (
+    <Warning
+      data-testid="warning-icon"
+      style={{
+        verticalAlign: 'middle',
+      }}
+    />
+  ),
+};
 
 export const TestStream = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -25,8 +46,9 @@ export const TestStream = (): JSX.Element => {
     return state?.session?.indicator;
   });
   const [selectedSteamId, setSelectedStreamId] = useState<string[]>([]);
-  const [socketConnection, setSocketConnection] = useState(false);
-  const [socketConnectionError, setSocketConnectionError] = useState(false);
+  const [socketConnection, setSocketConnection] = useState(undefined); // to track socket connection status
+  const [socketDisconnect, setSocketDisconnect] = useState(undefined); // to track socket disconnection status
+  const [socketConnectionError, setSocketConnectionError] = useState(undefined); // to track socket unexpected errors status
   const [streamData, setStreamData] = useState([]);
 
   useEffect(() => {
@@ -37,15 +59,24 @@ export const TestStream = (): JSX.Element => {
   useEffect(() => {
     socket?.on('connect', () => {
       setSocketConnection(true);
+      setSocketDisconnect(false);
       setSocketConnectionError(false);
     });
-    socket?.on('disconnect', () => {
+    socket?.on('disconnect', (reason) => {
+      // if connection disconnects from client or server side, consider it as a successful disconnect
+      if (reason === 'io client disconnect' || reason === 'io server disconnect') {
+        setSocketDisconnect(true);
+      }
+      // if connection is closed due to an error from client or server, consider this as unexpected error
+      if (reason === 'transport close' || reason === 'transport error') {
+        setSocketConnectionError(true);
+      }
       setSocketConnection(false);
-      setSocketConnectionError(false);
     });
     socket?.on('connect_error', (error) => {
       setSocketConnectionError(true);
       setSocketConnection(false);
+      setSocketDisconnect(false);
     });
     // once we have socket init, available streams and a stream selected by user then start listening to streams
     // TO-DO: we can use a wrapper of some sort here in the future for re-usability
@@ -71,14 +102,30 @@ export const TestStream = (): JSX.Element => {
   };
 
   const socketStatus = () => {
-    if (socketConnectionError) {
-      return <GoABadge type={'emergency'} content={'failed'} />;
+    if (socketConnection === undefined) {
+      return;
     }
-    return socketConnection ? (
-      <GoABadge type={'success'} content={'connected'} />
-    ) : (
-      <GoABadge type={'midtone'} content={'disconnected'} />
-    );
+    if (socketDisconnect) {
+      return (
+        <span>
+          <p>{Icons.greenCircleCheckMark} Disconnecting from stream was successful</p>
+        </span>
+      );
+    }
+    if (socketConnectionError) {
+      return (
+        <span>
+          <p>{Icons.warning} stream was unexpectedly disconnected, please try to reconnect</p>
+        </span>
+      );
+    }
+    if (socketConnection) {
+      return (
+        <span>
+          <p>{Icons.greenCircleCheckMark} Connected to the stream</p>
+        </span>
+      );
+    }
   };
 
   return (
@@ -86,9 +133,18 @@ export const TestStream = (): JSX.Element => {
       {indicator.show && <PageIndicator />}
       {!indicator.show && streams && (
         <>
+          <h2>Test stream</h2>
+          <p>
+            Connect to streams to view and verify the included events. Leaving this test view will disconnect from any
+            connected stream. Use another tab or window or APIs to trigger events for testing. In your own applications,
+            use &nbsp;
+            <a rel="noreferrer" target="_blank" href="https://socket.io/docs/v4/client-api/">
+              Socket.Io client
+            </a>
+            &nbsp; to connect to streams.
+          </p>
+          <StreamHeading>Please select a stream to test</StreamHeading>
           <GoAForm>
-            <StreamHeading>Please select a stream to test</StreamHeading>
-            <span>{socketStatus()}</span>
             <StreamsDropdown>
               <GoADropdown
                 disabled={socketConnection}
@@ -109,6 +165,7 @@ export const TestStream = (): JSX.Element => {
                 ))}
               </GoADropdown>
             </StreamsDropdown>
+            {socketStatus()}
             <GoAButton
               type="submit"
               buttonType="primary"
