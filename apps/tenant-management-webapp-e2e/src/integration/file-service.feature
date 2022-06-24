@@ -69,26 +69,25 @@ Feature: File service
     Given a service owner user is on Files overview page
     Then no critical or serious accessibility issues on "file service overview page"
 
-  # Ignore this test due to UI change to add client roles in progress. Will need to update the tests after UI change is completed
-  @TEST_CS-315 @REQ_CS-196 @FileTypes @regression @ignore
+  @TEST_CS-315 @REQ_CS-196 @FileTypes @regression
   Scenario: As a GoA service admin, I can add, update and remove file types
     Given a service owner user is on Files overview page
     When the user selects "File types" tab for "File"
     Then the user views file types page
     When the user clicks Add file type button on file types page
     Then the user views "Add" file type modal
-    When the user enters "autotest-add", "public", "auto-test-role1, file-service-admin" on file type modal
+    When the user enters "autotest-addEditDelete", "public", "auto-test-role1, file-service-admin" on file type modal
     And the user clicks Save button on file type modal
-    Then the user "views" the file type of "autotest-add", "public", "auto-test-role1, file-service-admin"
-    When the user clicks "Edit" button for the file type of "autotest-add", "public", "auto-test-role1, file-service-admin"
+    Then the user "views" the file type of "autotest-addEditDelete", "public", "auto-test-role1, file-service-admin"
+    When the user clicks "Edit" button for the file type of "autotest-addEditDelete", "public", "auto-test-role1, file-service-admin"
     Then the user views "Edit" file type modal
-    When the user enters "autotest-modify", "auto-test-role1", "auto-test-role2" on file type modal
+    When the user enters "N/A", "auto-test-role1", "auto-test-role2" on file type modal
     And the user clicks Save button on file type modal
-    Then the user "views" the file type of "autotest-modify", "auto-test-role1", "auto-test-role2"
-    When the user clicks "Delete" button for the file type of "autotest-modify", "auto-test-role1", "auto-test-role2"
-    Then the user views Delete file type modal for "autotest-modify"
+    Then the user "views" the file type of "autotest-addEditDelete", "auto-test-role1", "auto-test-role2"
+    When the user clicks "Delete" button for the file type of "autotest-addEditDelete", "auto-test-role1", "auto-test-role2"
+    Then the user views Delete file type modal for "autotest-addEditDelete"
     When the user clicks Delete button on file type modal
-    Then the user "should not view" the file type of "autotest-modify", "auto-test-role1", "auto-test-role2"
+    Then the user "should not view" the file type of "autotest-addEditDelete", "auto-test-role1", "auto-test-role2"
 
   # TODO: This is broken after removal of the file service specific 'feedback zone'; re-enable after feedback zone implementation.
   @FileTypes @regression @ignore
