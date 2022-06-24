@@ -85,6 +85,10 @@ const DataTableWrapper = styled.div`
     display: block;
   }
 
+  thead {
+    padding-top: 20px;
+  }
+
   tbody {
     overflow-y: auto;
     overflow-x: hidden;
