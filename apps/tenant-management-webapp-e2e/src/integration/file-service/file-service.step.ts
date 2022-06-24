@@ -375,7 +375,9 @@ Then('the user views {string} file type modal', function (addOrEdit) {
 
 When('the user enters {string}, {string}, {string} on file type modal', function (name, readRole, updateRole) {
   //Enter Name
-  fileServiceObj.fileTypeModalNameField().clear().type(name);
+  if (name !== 'N/A') {
+    fileServiceObj.fileTypeModalNameField().clear().type(name);
+  }
 
   //Select Who can read
   if (readRole == 'public') {

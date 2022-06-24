@@ -23,13 +23,14 @@ import {
   ConfigServiceRole,
   Events,
 } from './models';
+import { getAccessToken } from '@store/tenant/sagas';
 
 // eslint-disable-next-line
 export function* fetchAccess() {
   const currentState: RootState = yield select();
 
   const baseUrl = currentState.config.keycloakApi.url;
-  const token = currentState.session.credentials.token;
+  const token = yield call(getAccessToken);
   const realm = currentState.session.realm;
 
   const keycloakApi = new KeycloakApi(baseUrl, realm, token);
@@ -98,7 +99,7 @@ export function* fetchServiceRoles(action: FetchServiceRolesAction): SagaIterato
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
   if (configBaseUrl && token) {
     try {
       const { tenantResponse, coreResponse } = yield all({
@@ -133,7 +134,7 @@ export function* fetchServiceRoles(action: FetchServiceRolesAction): SagaIterato
 }
 
 export function* fetchKeycloakServiceRoles(action: FetchKeycloakServiceRolesAction): SagaIterator {
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
   const keycloakBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.keycloakUrl);
   const realm: string = yield select((state: RootState) => state.session.realm);
 
@@ -188,7 +189,7 @@ export function* fetchKeycloakServiceRoles(action: FetchKeycloakServiceRolesActi
 }
 
 export function* createKeycloakClient(action: CreateKeycloakRoleAction): SagaIterator {
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
   const keycloakBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.keycloakUrl);
   const realm: string = yield select((state: RootState) => state.session.realm);
 

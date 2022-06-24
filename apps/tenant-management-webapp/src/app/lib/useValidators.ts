@@ -2,7 +2,6 @@ import { ValidationAction } from './checkInput';
 
 import { useState } from 'react';
 import { checkInput, Validator } from './checkInput';
-import { ThemeProvider } from 'styled-components';
 
 /**
  * A React Hook for creating a set of validation methods that will
@@ -44,11 +43,12 @@ export interface ValidatorCollection {
   haveErrors: () => boolean;
   clear: () => void;
   add(name: string, field: string, ...validators: Validator[]): ValidatorServiceBuilder;
-  checkAll: (inputs: ValidationInputs) => void;
+  checkAll: (inputs: ValidationInputs) => boolean;
+  remove: (field: string) => void;
 }
 
 export type ValidatorErrors = Record<string, string>;
-export type ValidationInputs = Record<string, string>;
+export type ValidationInputs = Record<string, unknown>;
 
 type ValidatorServiceBuilder = {
   service: ValidatorService;
@@ -108,6 +108,13 @@ class ValidatorCollectionImpl implements ValidatorCollection {
     return this.errorHandler.hasErrors();
   }
 
+  remove(field: string) {
+    if (field in this.errors) {
+      delete this.errors[field];
+      this.setErrors({ ...this.errors });
+    }
+  }
+
   clear(): void {
     this.errorHandler.clear();
   }
@@ -119,13 +126,18 @@ class ValidatorCollectionImpl implements ValidatorCollection {
       if ((this[name]?.field && input, this[name].validators)) {
         const err = checkInput(input, this[name].validators);
         if (err) {
-          errCopy[this[name].field] = err;
+          errCopy[this[name].field] =
+            errCopy[this[name].field] && !errCopy[this[name].field].includes(err)
+              ? err + errCopy[this[name].field]
+              : err;
         }
       } else {
         console.warn(`Cannot find validators for ${name}.`);
       }
     });
+
     this.setErrors(errCopy);
+    return Object.entries(errCopy).length === 0;
   }
 
   add(name: string, field: string, ...validators: Validator[]): ValidatorServiceBuilder {

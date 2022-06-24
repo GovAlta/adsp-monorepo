@@ -14,10 +14,6 @@ const FileList = (): JSX.Element => {
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
-
   const onDownloadFile = async (file) => {
     dispatch(DownloadFileService(file));
   };

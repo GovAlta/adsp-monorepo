@@ -20,6 +20,7 @@ import {
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
 import moment from 'moment';
+import { getAccessToken } from '@store/tenant/sagas';
 
 export function* fetchEventDefinitions(action: FetchEventDefinitionsAction): SagaIterator {
   yield put(
@@ -32,7 +33,7 @@ export function* fetchEventDefinitions(action: FetchEventDefinitionsAction): Sag
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
     try {
@@ -84,7 +85,7 @@ export function* fetchEventDefinitions(action: FetchEventDefinitionsAction): Sag
 
 export function* updateEventDefinition({ definition }: UpdateEventDefinitionAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
@@ -134,7 +135,7 @@ export function* updateEventDefinition({ definition }: UpdateEventDefinitionActi
 
 export function* deleteEventDefinition({ definition }: UpdateEventDefinitionAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
@@ -167,7 +168,7 @@ export function* deleteEventDefinition({ definition }: UpdateEventDefinitionActi
 
 export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaIterator {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
   let eventUrl = `${baseUrl}/value/v1/event-service/values/event?top=10&after=${action.after || ''}`;
   if (baseUrl && token) {
     if (action.searchCriteria) {
@@ -231,7 +232,7 @@ interface MetricResponse {
 
 export function* fetchEventMetrics(): SagaIterator {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {

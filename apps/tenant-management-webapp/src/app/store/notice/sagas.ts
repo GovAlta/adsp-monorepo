@@ -10,16 +10,16 @@ import {
   DeleteNoticeAction,
 } from './actions';
 import { UpdateIndicator } from '@store/session/actions';
-import { Session } from '@store/session/models';
 import { ConfigState } from '@store/config/models';
 import { NoticesResult, Notice } from './models';
 import { SagaIterator } from '@redux-saga/core';
+import { getAccessToken } from '@store/tenant/sagas';
 
 export function* saveNotice(action: SaveNoticeAction): SagaIterator {
   const currentState: RootState = yield select();
 
   const baseUrl = getServiceStatusUrl(currentState.config);
-  const token = getToken(currentState.session);
+  const token = yield call(getAccessToken);
 
   try {
     yield put(UpdateIndicator({ show: true }));
@@ -36,7 +36,7 @@ export function* saveNotice(action: SaveNoticeAction): SagaIterator {
 export function* getNotices(): SagaIterator {
   const currentState: RootState = yield select();
   const baseUrl = getServiceStatusUrl(currentState.config);
-  const token = getToken(currentState.session);
+  const token = yield call(getAccessToken);
 
   try {
     const api = new NoticeApi(baseUrl, token);
@@ -51,7 +51,7 @@ export function* deleteNotice(action: DeleteNoticeAction): SagaIterator {
   const currentState: RootState = yield select();
 
   const baseUrl = getServiceStatusUrl(currentState.config);
-  const token = getToken(currentState.session);
+  const token = yield call(getAccessToken);
 
   try {
     yield put(UpdateIndicator({ show: true }));
@@ -63,10 +63,6 @@ export function* deleteNotice(action: DeleteNoticeAction): SagaIterator {
     yield put(UpdateIndicator({ show: false }));
     yield put(ErrorNotification({ message: e.message }));
   }
-}
-
-function getToken(session: Session): string {
-  return session?.credentials?.token;
 }
 
 function getServiceStatusUrl(config: ConfigState): string {

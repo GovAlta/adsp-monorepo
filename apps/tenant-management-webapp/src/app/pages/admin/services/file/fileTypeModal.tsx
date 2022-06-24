@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { Role } from '@store/tenant/models';
 import { GoAButton } from '@abgov/react-components';
@@ -14,11 +14,12 @@ import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { ConfigServiceRole } from '@store/access/models';
-import { Grid, GridItem } from '@components/Grid';
-
+import { useValidators } from '@lib/useValidators';
+import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
 interface FileTypeModalProps {
   fileType?: FileTypeItem;
   onCancel: () => void;
+  fileTypeNames?: string[];
   type: 'new' | 'edit';
   roles: Role[];
   onSwitch?: () => void;
@@ -111,22 +112,6 @@ const DataTableWrapper = styled.div`
     white-space: pre-wrap;
   }
 `;
-
-interface FileTypeError {
-  attribute: string;
-  message: string;
-}
-
-const validateFileType = (fileType: FileTypeItem): FileTypeError[] => {
-  const errors: FileTypeError[] = [];
-  if (fileType?.name) {
-    errors.push({
-      attribute: 'name',
-      message: 'File type name missing',
-    });
-  }
-  return errors;
-};
 
 interface ClientRoleTableProps {
   roles: string[];
@@ -224,10 +209,22 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   const isNew = props.type === 'new';
   const [fileType, setFileType] = useState(props.fileType);
   const title = isNew ? 'Add file type' : 'Edit file type';
-  const [errors, setErrors] = useState<FileTypeError[]>(validateFileType(fileType));
+  const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
+
+  const duplicateFileTypeCheck = (names: string[]): Validator => {
+    return (name: string) => {
+      return names.includes(name) ? `Duplicated file type name ${name}.` : '';
+    };
+  };
+
+  const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
+    .add('duplicated', 'name', duplicateFileTypeCheck(props.fileTypeNames))
+    .build();
+
   const roleNames = props.roles.map((role) => {
     return role.name;
   });
+
   const dispatch = useDispatch();
   const selectServiceCoreRoles = createSelector(
     (state: RootState) => state.serviceRoles,
@@ -288,11 +285,12 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
       <GoAModal testId="file-type-modal" isOpen={true}>
         <GoAModalTitle>{title}</GoAModalTitle>
         <GoAModalContent>
-          <GoAFormItem>
+          <GoAFormItem error={errors?.['name']}>
             <label>Name</label>
             <GoAInput
               type="text"
               name="name"
+              disabled={props.type === 'edit'}
               value={fileType.name}
               data-testid={`file-type-modal-name-input`}
               onChange={(name, value) => {
@@ -301,8 +299,16 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
                   name: value,
                   id: isNew ? toKebabName(value) : fileType.id,
                 };
+
+                const validations = {
+                  name: value,
+                };
+                validators.remove('name');
+                if (isNew) {
+                  validations['duplicated'] = value;
+                }
+                validators.checkAll(validations);
                 setFileType(newFileType);
-                setErrors(validateFileType(newFileType));
               }}
               aria-label="name"
             />
@@ -341,9 +347,21 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
           </GoAButton>
           <GoAButton
             buttonType="primary"
-            disabled={errors.length === 0}
+            disabled={!fileType.name || validators.haveErrors()}
             data-testid="file-type-modal-save"
             onClick={() => {
+              const validations = {
+                name: fileType.name,
+              };
+
+              if (props.type === 'new') {
+                validations['duplicated'] = fileType.name;
+              }
+
+              if (!validators.checkAll(validations)) {
+                return;
+              }
+
               let elementNames = [];
               elements.forEach((e) => {
                 elementNames = elementNames.concat(

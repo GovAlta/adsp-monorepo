@@ -18,13 +18,13 @@ import {
   FetchStatusConfigurationService,
   FetchStatusConfigurationSucceededService,
 } from './actions';
-import { Session } from '@store/session/models';
 import { ConfigState } from '@store/config/models';
 import { SetApplicationStatusAction, setApplicationStatusSuccess } from './actions/setApplicationStatus';
 import { EndpointStatusEntry, ServiceStatusApplication } from './models';
 import { SagaIterator } from '@redux-saga/core';
 import moment from 'moment';
 import axios from 'axios';
+import { getAccessToken } from '@store/tenant/sagas';
 
 export function* fetchServiceStatusAppHealthEffect(
   api: StatusApi,
@@ -43,7 +43,7 @@ export function* fetchServiceStatusApps(): SagaIterator {
   const currentState: RootState = yield select();
 
   const baseUrl = getServiceStatusUrl(currentState.config);
-  const token = getToken(currentState.session);
+  const token = yield call(getAccessToken);
 
   try {
     const api = new StatusApi(baseUrl, token);
@@ -65,7 +65,7 @@ export function* saveApplication(action: SaveApplicationAction): SagaIterator {
   const currentState: RootState = yield select();
 
   const baseUrl = getServiceStatusUrl(currentState.config);
-  const token = getToken(currentState.session);
+  const token = yield call(getAccessToken);
   try {
     const api = new StatusApi(baseUrl, token);
     const data = yield call([api, api.saveApplication], action.payload);
@@ -80,7 +80,7 @@ export function* deleteApplication(action: DeleteApplicationAction): SagaIterato
   const currentState: RootState = yield select();
 
   const baseUrl = getServiceStatusUrl(currentState.config);
-  const token = getToken(currentState.session);
+  const token = yield call(getAccessToken);
 
   try {
     const api = new StatusApi(baseUrl, token);
@@ -96,7 +96,7 @@ export function* setApplicationStatus(action: SetApplicationStatusAction): SagaI
   const currentState: RootState = yield select();
 
   const baseUrl = getServiceStatusUrl(currentState.config);
-  const token = getToken(currentState.session);
+  const token = yield call(getAccessToken);
 
   try {
     const api = new StatusApi(baseUrl, token);
@@ -123,7 +123,7 @@ export function* toggleApplicationStatus(action: ToggleApplicationStatusAction):
   const currentState: RootState = yield select();
 
   const baseUrl = getServiceStatusUrl(currentState.config);
-  const token = getToken(currentState.session);
+  const token = yield call(getAccessToken);
 
   try {
     const api = new StatusApi(baseUrl, token);
@@ -159,7 +159,7 @@ interface MetricResponse {
 
 export function* fetchStatusMetrics(): SagaIterator {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   yield take(FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION);
   const apps: Record<string, ServiceStatusApplication> = (yield select(
@@ -223,7 +223,7 @@ export function* updateStatusContactInformation({ payload }: UpdateStatusContact
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
     try {
@@ -254,7 +254,7 @@ export function* fetchStatusConfiguration(): SagaIterator {
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
     try {
@@ -271,10 +271,6 @@ export function* fetchStatusConfiguration(): SagaIterator {
       yield put(ErrorNotification({ message: `${e.message} - fetchStatusConfiguration` }));
     }
   }
-}
-
-function getToken(session: Session): string {
-  return session?.credentials?.token;
 }
 
 function getServiceStatusUrl(config: ConfigState): string {

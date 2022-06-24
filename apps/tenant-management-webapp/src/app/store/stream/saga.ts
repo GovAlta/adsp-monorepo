@@ -18,13 +18,10 @@ import { SagaIterator } from '@redux-saga/core';
 import axios from 'axios';
 import { UpdateIndicator } from '@store/session/actions';
 import { io, Socket } from 'socket.io-client';
+import { getAccessToken } from '@store/tenant/sagas';
 
 function selectConfigBaseUrl(state: RootState): string {
   return state.config.serviceUrls.configurationServiceApiUrl;
-}
-
-function selectToken(state: RootState): string {
-  return state.session.credentials.token;
 }
 
 const SERVICE_NAME = 'push-service';
@@ -40,7 +37,7 @@ export function* fetchEventStreams(): SagaIterator {
     );
     const state: RootState = yield select();
     const baseUrl = selectConfigBaseUrl(state);
-    const token = selectToken(state);
+    const token = yield call(getAccessToken);
 
     const { tenantStreams, coreStreams } = yield all({
       tenantStreams: call(
@@ -81,7 +78,7 @@ export function* fetchEventStreams(): SagaIterator {
 
 export function* updateEventStream({ stream }: UpdateEventStreamAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
@@ -113,7 +110,7 @@ export function* updateEventStream({ stream }: UpdateEventStreamAction): SagaIte
 }
 export function* deleteEventStream({ eventStreamId }: DeleteEventStreamAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
@@ -136,7 +133,7 @@ export function* deleteEventStream({ eventStreamId }: DeleteEventStreamAction): 
 }
 
 export function* startSocket({ url, stream }: StartStreamAction): SagaIterator {
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
   const socket: Socket = io(url, {
     query: {
       stream: stream,

@@ -3,7 +3,7 @@ import { PdfTemplate } from '@store/pdf/model';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import styled from 'styled-components';
 
-import { GoAInfoBadge, GoABadge } from '@abgov/react-components/experimental';
+import { GoABadge } from '@abgov/react-components/experimental';
 
 interface PdfTemplateItemProps {
   pdfTemplate: PdfTemplate;

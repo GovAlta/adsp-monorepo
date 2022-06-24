@@ -16,6 +16,8 @@ import {
   ServiceId,
   setConfigurationRevisionAction,
   replaceConfigurationDataAction,
+  getReplaceConfigurationErrorAction,
+  resetReplaceConfigurationListAction,
 } from '@store/configuration/action';
 import { PageIndicator } from '@components/Indicator';
 import { ConfigurationExportType, Service, ConfigDefinition } from '@store/configuration/model';
@@ -34,13 +36,17 @@ const exportSchema = {
 };
 
 export const ConfigurationImportExport: FunctionComponent = () => {
-  const { coreConfigDefinitions, tenantConfigDefinitions } = useSelector((state: RootState) => state.configuration);
+  const { coreConfigDefinitions, tenantConfigDefinitions, importedConfiguration } = useSelector(
+    (state: RootState) => state.configuration
+  );
   const exportState = useSelector((state: RootState) => state.configurationExport);
   const indicator = useSelector((state: RootState) => state?.session?.indicator);
   const [exportServices, setExportServices] = useState<Record<string, boolean>>({});
   const fileName = useRef() as React.MutableRefObject<HTMLInputElement>;
+
   const [selectedImportFile, setSelectedImportFile] = useState('');
   const [openImportModal, setOpenImportModal] = useState(false);
+  const [showStatus, setShowStatus] = useState(false);
   const [importNameList, setImportNameList] = useState([]);
   const [importConfigJson, setImportConfigJson] = useState<ConfigDefinition>(null);
   const sortedConfiguration = useMemo(() => {
@@ -86,9 +92,18 @@ export const ConfigurationImportExport: FunctionComponent = () => {
       const configItems = Object.keys(importConfig[configKeys[config]]);
       if (configItems && configItems.length > 0) {
         for (const item in configItems) {
-          configList.push(`${configKeys[config]}: ${configItems[item]}`);
+          if (
+            importConfig[configKeys[config]][configItems[item]] !== null &&
+            importConfig[configKeys[config]][configItems[item]].configuration
+          ) {
+            configList.push(`${configKeys[config]}: ${configItems[item]}`);
+          }
         }
       }
+    }
+    if (configList.length === 0) {
+      setErrors({ ...errors, inputJsonFile: 'The json file not match Configuration schema' });
+      return;
     }
     setImportConfigJson(importConfig);
     setImportNameList(configList);
@@ -103,6 +118,9 @@ export const ConfigurationImportExport: FunctionComponent = () => {
 
       setSelectedImportFile(inputJson);
     };
+    setShowStatus(false);
+    setImportNameList([]);
+    dispatch(resetReplaceConfigurationListAction());
   };
   const onImportCancel = () => {
     setOpenImportModal(false);
@@ -112,7 +130,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
 
     for (const config in importConfigJson) {
       for (const name in importConfigJson[config]) {
-        if (importConfigJson[config][name] != null || importConfigJson[config][name].configuration) {
+        if (importConfigJson[config][name] !== null && importConfigJson[config][name].configuration) {
           // Import creates a new revision so there is a snapshot of pre-import revision.
           dispatch(setConfigurationRevisionAction({ namespace: config, name: name }));
           //Import configuration replaces (REPLACE operation in PATCH) the configuration stored in latest revision
@@ -126,6 +144,9 @@ export const ConfigurationImportExport: FunctionComponent = () => {
         }
       }
     }
+    dispatch(getReplaceConfigurationErrorAction());
+    fileName.current.value = '';
+    setShowStatus(true);
   };
 
   useEffect(() => {
@@ -145,21 +166,35 @@ export const ConfigurationImportExport: FunctionComponent = () => {
           <GoAForm>
             <GoAFormItem error={errors?.['inputJsonFile']}>
               <input
+                id="file-uploads"
                 name="inputJsonFile"
                 type="file"
                 onChange={onImportChange}
                 aria-label="file import"
                 ref={fileName}
                 accept="application/JSON"
+                data-testid="import-input"
               />
             </GoAFormItem>
-            <GoAButton type="submit" onClick={onUploadSubmit} disabled={selectedImportFile.length === 0}>
+            {importedConfiguration && importedConfiguration.length > 0 && (
+              <div style={{ display: showStatus && importedConfiguration.length > 0 ? 'block' : 'none' }}>
+                <label>{`${importedConfiguration.length} configurations be imported!`}</label>
+                <br />
+              </div>
+            )}
+            <GoAButton
+              type="submit"
+              onClick={onUploadSubmit}
+              disabled={selectedImportFile.length === 0}
+              data-testid="import-input-button"
+            >
               Import
             </GoAButton>
           </GoAForm>
           <br />
         </>
       }
+      <hr />
       {
         <GoAButton
           data-testid="export-configuration-1"

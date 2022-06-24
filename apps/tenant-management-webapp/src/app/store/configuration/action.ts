@@ -28,6 +28,12 @@ export const SET_CONFIGURATION_REVISION_SUCCESS_ACTION = 'configuration/SET_CONF
 export const REPLACE_CONFIGURATION_DATA_ACTION = 'configuration/REPLACE_CONFIGURATION_DATA_ACTION';
 export const REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION = 'configuration/REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION';
 
+export const REPLACE_CONFIGURATION_ERROR_ACTION = 'configuration/REPLACE_CONFIGURATION_ERROR_ACTION';
+export const REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION = 'configuration/REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION';
+
+export const RESET_REPLACE_CONFIGURATION_LIST_ACTION = 'configuration/RESET_REPLACE_CONFIGURATION_LIST_ACTION';
+export const RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION =
+  'configuration/RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION';
 export interface DeleteConfigurationDefinitionAction {
   type: typeof DELETE_CONFIGURATION_DEFINITION_ACTION;
   definitionName: string;
@@ -77,6 +83,22 @@ export interface ReplaceConfigurationDataSuccessAction {
   type: typeof REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION;
 }
 
+export interface GetReplaceConfigurationErrorAction {
+  type: typeof REPLACE_CONFIGURATION_ERROR_ACTION;
+}
+export interface GetReplaceConfigurationErrorSuccessAction {
+  type: typeof REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION;
+  payload: string[];
+}
+
+export interface ResetReplaceConfigurationListAction {
+  type: typeof RESET_REPLACE_CONFIGURATION_LIST_ACTION;
+}
+
+export interface ResetReplaceConfigurationListSuccessAction {
+  type: typeof RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION;
+}
+
 export type ConfigurationDefinitionActionTypes =
   | FetchConfigurationDefinitionsAction
   | FetchConfigurationDefinitionsSuccessAction
@@ -87,7 +109,11 @@ export type ConfigurationDefinitionActionTypes =
   | SetConfigurationRevisionAction
   | SetConfigurationRevisionSuccessAction
   | ReplaceConfigurationDataAction
-  | ReplaceConfigurationDataSuccessAction;
+  | ReplaceConfigurationDataSuccessAction
+  | GetReplaceConfigurationErrorAction
+  | GetReplaceConfigurationErrorSuccessAction
+  | ResetReplaceConfigurationListAction
+  | ResetReplaceConfigurationListSuccessAction;
 
 export type ServiceId = { namespace: string; service: string };
 export interface FetchConfigurationsAction {
@@ -160,6 +186,12 @@ export const replaceConfigurationDataAction = (
   type: REPLACE_CONFIGURATION_DATA_ACTION,
   configuration,
 });
+export const resetReplaceConfigurationListAction = (): ResetReplaceConfigurationListAction => ({
+  type: RESET_REPLACE_CONFIGURATION_LIST_ACTION,
+});
+export const resetReplaceConfigurationListSuccessAction = (): ResetReplaceConfigurationListSuccessAction => ({
+  type: RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION,
+});
 
 export const replaceConfigurationDataSuccessAction = (): ReplaceConfigurationDataSuccessAction => ({
   type: REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION,
@@ -173,4 +205,14 @@ export const getConfigurations = (services: ServiceId[]): FetchConfigurationsAct
 export const getConfigurationsSuccess = (results: ServiceConfiguration[]): FetchConfigurationSuccessAction => ({
   type: FETCH_CONFIGURATIONS_SUCCESS_ACTION,
   payload: results,
+});
+export const getReplaceConfigurationErrorAction = (): GetReplaceConfigurationErrorAction => ({
+  type: REPLACE_CONFIGURATION_ERROR_ACTION,
+});
+
+export const getReplaceConfigurationErrorSuccessAction = (
+  replacedConfiguration: string[]
+): GetReplaceConfigurationErrorSuccessAction => ({
+  type: REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION,
+  payload: replacedConfiguration,
 });

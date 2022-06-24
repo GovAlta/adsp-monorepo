@@ -36,11 +36,12 @@ import { RootState } from '../index';
 import axios from 'axios';
 import { FileTypeItem } from './models';
 import moment from 'moment';
+import { getAccessToken } from '@store/tenant/sagas';
 
 // eslint-disable-next-line
 export function* uploadFile(file) {
   const state = yield select();
-  const token = state.session.credentials.token;
+  const token = yield call(getAccessToken);
   const api = yield new FileApi(state.config, token);
 
   const formData = new FormData();
@@ -66,7 +67,7 @@ export function* fetchFiles(action: FetchFilesAction): SagaIterator {
 
   const state = yield select();
   try {
-    const token = state.session?.credentials?.token;
+    const token = yield call(getAccessToken);
     const api = new FileApi(state.config, token, action.after);
 
     const files = yield call([api, api.fetchFiles]);
@@ -90,7 +91,7 @@ export function* fetchFiles(action: FetchFilesAction): SagaIterator {
 export function* deleteFile(file: DeleteFileAction): SagaIterator {
   const state = yield select();
   try {
-    const token = state.session?.credentials?.token;
+    const token = yield call(getAccessToken);
     const api = new FileApi(state.config, token);
     yield call([api, api.deleteFile], file.payload.data);
     yield put(DeleteFileSuccessService(file.payload.data));
@@ -103,7 +104,7 @@ export function* deleteFile(file: DeleteFileAction): SagaIterator {
 export function* downloadFile(file) {
   const state = yield select();
   try {
-    const token = state.session?.credentials?.token;
+    const token = yield call(getAccessToken);
     const api = yield new FileApi(state.config, token);
     const files = yield api.downloadFiles(file.payload.data.id, token);
     const element = document.createElement('a');
@@ -120,7 +121,7 @@ export function* fetchFileTypes(): SagaIterator {
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   yield put(
     UpdateIndicator({
@@ -175,7 +176,7 @@ export function* deleteFileTypes(action: DeleteFileTypeAction): SagaIterator {
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
     try {
@@ -199,7 +200,7 @@ export function* createFileType({ payload }: CreateFileTypeAction): SagaIterator
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
     try {
@@ -233,7 +234,7 @@ export function* updateFileType({ payload }: UpdateFileTypeAction): SagaIterator
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
     try {
@@ -266,7 +267,7 @@ export function* updateFileType({ payload }: UpdateFileTypeAction): SagaIterator
 export function* fetchFileTypeHasFile(action: FetchFileTypeHasFileAction): SagaIterator {
   try {
     const state = yield select();
-    const token = state.session.credentials.token;
+    const token = yield call(getAccessToken);
     const api = new FileApi(state.config, token);
     const hasFile = yield call([api, api.fetchFileTypeHasFile], action.payload);
     yield put(FetchFileTypeHasFileSucceededService(hasFile, action.payload));
@@ -281,7 +282,7 @@ interface MetricResponse {
 
 export function* fetchFileMetrics(): SagaIterator {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
