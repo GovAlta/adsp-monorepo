@@ -60,6 +60,7 @@ class SubscriptionManagementPage {
   phoneNumberDisplay() {
     return cy.get('[data-testid=phone-number-label] > p');
   }
+
   emailInput() {
     return cy.get('[data-testid="contact-email-input"]');
   }
@@ -80,11 +81,11 @@ class SubscriptionManagementPage {
     return cy.xpath('//input[@data-testid="contact-email-input"]/parent::*/following-sibling::div[@class="error-msg"]');
   }
 
-  preferredNotificationChannelRadio(radio) {
-    return cy.xpath(`//*[@class="goa-radio"]/input[@value="${radio}"]`);
+  preferredNotificationChannelSelection(selection) {
+    return cy.xpath(`//*[@class="goa-radio"]/input[@value="${selection}"]`);
   }
 
-  preferredNotificationChannelDysplay() {
+  preferredNotificationChannelDisplay() {
     return cy.xpath('//input[@type="radio" and @checked]');
   }
 

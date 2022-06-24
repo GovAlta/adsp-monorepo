@@ -15,8 +15,9 @@ Feature: Subscription management
     When an authenticated user is in the subscriber app
     Then the user views subscription management page
     And the user views the user contact information
-<<<<<<< HEAD
-    And the user views the subscription of "Application health check change"
+    And the user views the subscription of "Application health check change" and its description
+    And the user views the support link for the scription of "Application health check change"
+    And the user views the subscription of "Application health check change" and its description
     And the user views the support link for the scription of "Application health check change"
 
   @TEST_CS-1371 @REQ_CS-1238 @REQ_CS-1239 @regression
@@ -34,16 +35,13 @@ Feature: Subscription management
     When the user removes email value in contact information
     And the user clicks Save button in contact information
     Then the user views an error messsage for missing email
-    When the user enters "auto.test3@abc.com" as email, "7801001234" as phone number and "sms" as preferred channel
+    When the user enters "autotest.chaneltest@abc.com" as email, "7801001234" as phone number and "sms" as preferred channel
     And the user clicks Save button in contact information
     Then the user views a callout message of "Contact information updated."
-    And the user views contact information of "auto.test3@abc.com", "780 100 1234" and "sms"
+    And the user views contact information of "autotest.chaneltest@abc.com", "780 100 1234" and "sms"
     When the user clicks edit contact information button
-    And the user enters "auto.test3@gov.ab.ca" as email, "EMPTY" as phone number and "email" as preferred channel
+    And the user enters "autotest.chaneltest@abc.com" as email, "EMPTY" as phone number and "email" as preferred channel
     And the user clicks Save button in contact information
     Then the user views a callout message of "Contact information updated."
-    And the user views contact information of "auto.test3@gov.ab.ca", "EMPTY" and "email"
-=======
-    And the user views the subscription of "Application health check change" and its description
-    And the user views the support link for the scription of "Application health check change"
->>>>>>> 8642b7266310c13e0d238d015181a148437f44cc
+    And the user views contact information of "autotest.chaneltest@abc.com", "EMPTY" and "email"
+
