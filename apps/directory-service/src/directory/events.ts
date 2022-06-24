@@ -1,7 +1,13 @@
-import type { DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
+import type { DomainEvent, DomainEventDefinition, User, Stream } from '@abgov/adsp-service-sdk';
+import { ServiceRoles } from './roles';
+
+const EVENTS = {
+  updated: 'entry-updated',
+  deleted: 'entry-deleted',
+};
 
 export const EntryUpdatedDefinition: DomainEventDefinition = {
-  name: 'entry-updated',
+  name: EVENTS.updated,
   description: 'Signalled when a directory entry is updated.',
   payloadSchema: {
     type: 'object',
@@ -31,7 +37,7 @@ export const EntryUpdatedDefinition: DomainEventDefinition = {
 };
 
 export const EntryDeletedDefinition: DomainEventDefinition = {
-  name: 'entry-deleted',
+  name: EVENTS.deleted,
   description: 'Signalled when a directory entry is deleted.',
   payloadSchema: {
     type: 'object',
@@ -67,7 +73,7 @@ export const entryUpdated = (
   api: string,
   URL: string
 ): DomainEvent => ({
-  name: 'entry-updated',
+  name: EVENTS.updated,
   timestamp: new Date(),
   tenantId: updatedBy.tenantId,
   correlationId: `${namespace}:${service}`,
@@ -93,7 +99,7 @@ export const entryDeleted = (
   api: string,
   URL: string
 ): DomainEvent => ({
-  name: 'entry-deleted',
+  name: EVENTS.deleted,
   timestamp: new Date(),
   tenantId: deletedBy.tenantId,
   correlationId: `${namespace}:${service}`,
@@ -111,3 +117,31 @@ export const entryDeleted = (
     },
   },
 });
+
+export const DirectoryEntryUpdatedStream: Stream = {
+  id: 'directory-entry-updated',
+  name: 'Directory entry updates',
+  description: 'Provides update events for directory service.',
+  subscriberRoles: [`urn:ads:platform:tenant-service:${ServiceRoles.StreamSubscription}`],
+  publicSubscribe: false,
+  events: [
+    {
+      namespace: 'directory-service',
+      name: EVENTS.updated,
+    },
+  ],
+};
+
+export const DirectoryEntryDeletedStream: Stream = {
+  id: 'directory-entry-deleted',
+  name: 'Directory entry deletion',
+  description: 'Provides deletion events for directory service.',
+  subscriberRoles: [`urn:ads:platform:tenant-service:${ServiceRoles.StreamSubscription}`],
+  publicSubscribe: false,
+  events: [
+    {
+      namespace: 'directory-service',
+      name: EVENTS.deleted,
+    },
+  ],
+};
