@@ -318,7 +318,7 @@ describe('NotificationTypes Page', () => {
     });
 
     // fields
-    const cancelBtn = queryByTestId('template-form-cancel');
+    const cancelBtn = queryByTestId('template-form-close');
     const saveBtn = queryByTestId('template-form-save');
 
     expect(cancelBtn).toBeTruthy();
