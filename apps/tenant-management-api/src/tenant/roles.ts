@@ -4,6 +4,5 @@ export enum TenantServiceRoles {
   // These are core realm roles:
   TenantServiceAdmin = 'tenant-service-admin',
   PlatformService = 'platform-service',
-  DirectoryAdmin = 'directory-admin',
   BetaTester = 'beta-tester',
 }
