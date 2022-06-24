@@ -25,8 +25,18 @@ class SubscriptionManagementPage {
     );
   }
 
-  subscriptionNames() {
-    return cy.xpath('//tbody/tr/td[@data-testid="subscription-name"]');
+  subscriptionName(subscriptionName) {
+    return cy.xpath(`//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]`);
+  }
+
+  subscriptionRow(subscriptionName) {
+    return cy.xpath(`//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]/parent::tr`);
+  }
+
+  subscriptionDesc(subscriptionName) {
+    return cy.xpath(
+      `//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]/following-sibling::td`
+    );
   }
 
   contactSupportToUnsbuscribe(subscriptionName) {

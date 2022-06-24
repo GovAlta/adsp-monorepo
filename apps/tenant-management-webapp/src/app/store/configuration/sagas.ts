@@ -18,6 +18,11 @@ import {
   ReplaceConfigurationDataAction,
   REPLACE_CONFIGURATION_DATA_ACTION,
   replaceConfigurationDataSuccessAction,
+  REPLACE_CONFIGURATION_ERROR_ACTION,
+  getReplaceConfigurationErrorSuccessAction,
+  ResetReplaceConfigurationListAction,
+  resetReplaceConfigurationListSuccessAction,
+  RESET_REPLACE_CONFIGURATION_LIST_ACTION,
   ServiceId,
 } from './action';
 import { SagaIterator } from '@redux-saga/core';
@@ -198,56 +203,82 @@ export function* setConfigurationRevision(action: SetConfigurationRevisionAction
   }
 }
 
+let replaceErrorConfiguration = [];
+let replacedConfiguration = [];
+
 export function* replaceConfigurationData(action: ReplaceConfigurationDataAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
-    try {
-      const body = {
-        operation: 'REPLACE',
-        configuration: action.configuration.configuration,
-      };
-      // Get Json schema from configuration definition
-      let definition;
-      if (action.configuration.namespace === 'platform') {
-        const coreConfig = yield select((state: RootState) => state.configuration.coreConfigDefinitions.configuration);
-        definition = coreConfig[`${action.configuration.namespace}:${action.configuration.name}`];
-      } else {
-        const tenantConfig: string = yield select(
-          (state: RootState) => state.configuration.tenantConfigDefinitions.configuration
-        );
-        definition = tenantConfig[`${action.configuration.namespace}:${action.configuration.name}`];
-      }
-      // Check if configuration item following definition
-
-      const jsonSchemaValidation = jsonSchemaCheck(definition.configurationSchema, action.configuration.configuration);
-      if (!jsonSchemaValidation) {
-        yield put(
-          ErrorNotification({
-            message: `${action.configuration.namespace}:${action.configuration.name} configuration definition not match import configuration`,
-          })
-        );
-        return;
-      }
-
-      // Send request to replace configuration
-      yield call(
-        axios.patch,
-        `${baseUrl}/configuration/v2/configuration/${action.configuration.namespace}/${action.configuration.name}`,
-        body,
-        {
-          headers: { Authorization: `Bearer ${token}` },
+    if (action.configuration.configuration) {
+      try {
+        const body = {
+          operation: 'REPLACE',
+          configuration: action.configuration.configuration,
+        };
+        // Get Json schema from configuration definition
+        let definition;
+        if (action.configuration.namespace === 'platform') {
+          const coreConfig = yield select(
+            (state: RootState) => state.configuration.coreConfigDefinitions.configuration
+          );
+          definition = coreConfig[`${action.configuration.namespace}:${action.configuration.name}`];
+        } else {
+          const tenantConfig: string = yield select(
+            (state: RootState) => state.configuration.tenantConfigDefinitions.configuration
+          );
+          definition = tenantConfig[`${action.configuration.namespace}:${action.configuration.name}`];
         }
-      );
+        // Check if configuration item following definition
+        const jsonSchemaValidation = jsonSchemaCheck(
+          definition.configurationSchema,
+          action.configuration.configuration
+        );
+        if (!jsonSchemaValidation) {
+          replaceErrorConfiguration.push(`${action.configuration.namespace}:${action.configuration.name} `);
+          return;
+        }
+        replacedConfiguration.push(`${action.configuration.namespace}:${action.configuration.name} `);
 
-      yield put(replaceConfigurationDataSuccessAction());
-    } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+        // Send request to replace configuration
+        yield call(
+          axios.patch,
+          `${baseUrl}/configuration/v2/configuration/${action.configuration.namespace}/${action.configuration.name}`,
+          body,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        yield put(replaceConfigurationDataSuccessAction());
+      } catch (err) {
+        yield put(ErrorNotification({ message: err.message }));
+      }
+    } else {
+      replaceErrorConfiguration.push(`${action.configuration.namespace}:${action.configuration.name} `);
     }
   }
 }
+export function* getReplaceList(action: SetConfigurationRevisionAction): SagaIterator {
+  if (replaceErrorConfiguration.length > 0) {
+    yield put(
+      ErrorNotification({
+        message: ` ${replaceErrorConfiguration}  configuration definition not match import configuration`,
+      })
+    );
+  }
 
+  if (replacedConfiguration.length > 0) {
+    yield put(getReplaceConfigurationErrorSuccessAction(replacedConfiguration));
+  }
+  replaceErrorConfiguration = [];
+  replacedConfiguration = [];
+}
+
+export function* resetReplaceList(action: ResetReplaceConfigurationListAction): SagaIterator {
+  yield put(resetReplaceConfigurationListSuccessAction());
+}
 export function* watchConfigurationSagas(): Generator {
   yield takeEvery(FETCH_CONFIGURATION_DEFINITIONS_ACTION, fetchConfigurationDefinitions);
   yield takeEvery(UPDATE_CONFIGURATION_DEFINITION_ACTION, updateConfigurationDefinition);
@@ -255,4 +286,6 @@ export function* watchConfigurationSagas(): Generator {
   yield takeEvery(FETCH_CONFIGURATIONS_ACTION, fetchConfigurations);
   yield takeEvery(SET_CONFIGURATION_REVISION_ACTION, setConfigurationRevision);
   yield takeEvery(REPLACE_CONFIGURATION_DATA_ACTION, replaceConfigurationData);
+  yield takeEvery(REPLACE_CONFIGURATION_ERROR_ACTION, getReplaceList);
+  yield takeEvery(RESET_REPLACE_CONFIGURATION_LIST_ACTION, resetReplaceList);
 }

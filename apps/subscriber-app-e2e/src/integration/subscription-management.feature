@@ -10,11 +10,12 @@ Feature: Subscription management
     When a user goes to subscription management overview site
     Then no critical or serious accessibility issues on "subscription management" page
 
-  @TEST_CS-995 @REQ_CS-915 @TEST_CS-1248 @REQ_CS-1040 @regression
+  @TEST_CS-995 @REQ_CS-915 @TEST_CS-1248 @REQ_CS-1040 @REQ_CS-1502 @regression
   Scenario: As an authenticated stakeholder, I can login to see non-self-serve subscriptions
     When an authenticated user is in the subscriber app
     Then the user views subscription management page
     And the user views the user contact information
+<<<<<<< HEAD
     And the user views the subscription of "Application health check change"
     And the user views the support link for the scription of "Application health check change"
 
@@ -42,3 +43,7 @@ Feature: Subscription management
     And the user clicks Save button in contact information
     Then the user views a callout message of "Contact information updated."
     And the user views contact information of "auto.test3@gov.ab.ca", "EMPTY" and "email"
+=======
+    And the user views the subscription of "Application health check change" and its description
+    And the user views the support link for the scription of "Application health check change"
+>>>>>>> 8642b7266310c13e0d238d015181a148437f44cc

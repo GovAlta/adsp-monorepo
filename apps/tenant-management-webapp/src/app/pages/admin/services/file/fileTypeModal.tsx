@@ -14,7 +14,8 @@ import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { ConfigServiceRole } from '@store/access/models';
-
+import { useValidators } from '@lib/useValidators';
+import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
 interface FileTypeModalProps {
   fileType?: FileTypeItem;
   onCancel: () => void;
@@ -112,20 +113,6 @@ const DataTableWrapper = styled.div`
   }
 `;
 
-type Error = Record<string, string>;
-const validateFileType = (fileType: FileTypeItem, type?: string, names?: string[]): Error => {
-  const errors = {};
-  if (type === 'new' && !fileType?.name) {
-    errors['name'] = 'File type name missing.';
-  }
-
-  if (type === 'new' && fileType?.name && names.includes(fileType.name)) {
-    errors['name'] = 'Duplicated file type name.';
-  }
-
-  return errors;
-};
-
 interface ClientRoleTableProps {
   roles: string[];
   roleSelectFunc: (roles: string[], type: string) => void;
@@ -222,7 +209,18 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   const isNew = props.type === 'new';
   const [fileType, setFileType] = useState(props.fileType);
   const title = isNew ? 'Add file type' : 'Edit file type';
-  const [errors, setErrors] = useState<Error>(validateFileType(fileType));
+  const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
+
+  const duplicateFileTypeCheck = (names: string[]): Validator => {
+    return (name: string) => {
+      return names.includes(name) ? `Duplicated file type name ${name}.` : '';
+    };
+  };
+
+  const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
+    .add('duplicated', 'name', duplicateFileTypeCheck(props.fileTypeNames))
+    .build();
+
   const roleNames = props.roles.map((role) => {
     return role.name;
   });
@@ -301,8 +299,16 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
                   name: value,
                   id: isNew ? toKebabName(value) : fileType.id,
                 };
+
+                const validations = {
+                  name: value,
+                };
+                validators.remove('name');
+                if (isNew) {
+                  validations['duplicated'] = value;
+                }
+                validators.checkAll(validations);
                 setFileType(newFileType);
-                setErrors(validateFileType(newFileType, props.type, props?.fileTypeNames));
               }}
               aria-label="name"
             />
@@ -341,9 +347,21 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
           </GoAButton>
           <GoAButton
             buttonType="primary"
-            disabled={!fileType.name || Object.entries(errors).length > 0}
+            disabled={!fileType.name || validators.haveErrors()}
             data-testid="file-type-modal-save"
             onClick={() => {
+              const validations = {
+                name: fileType.name,
+              };
+
+              if (props.type === 'new') {
+                validations['duplicated'] = fileType.name;
+              }
+
+              if (!validators.checkAll(validations)) {
+                return;
+              }
+
               let elementNames = [];
               elements.forEach((e) => {
                 elementNames = elementNames.concat(

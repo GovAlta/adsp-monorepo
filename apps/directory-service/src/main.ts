@@ -11,7 +11,12 @@ import { environment } from './environments/environment';
 import { createRepositories } from './mongo';
 import { ServiceRoles, bootstrapDirectory, applyDirectoryV2Middleware } from './directory';
 import { getServiceUrlById, getResourceUrlById } from './directory/router/util/getNamespaceEntries';
-import { EntryUpdatedDefinition, EntryDeletedDefinition } from './directory/events';
+import {
+  EntryUpdatedDefinition,
+  EntryDeletedDefinition,
+  DirectoryEntryUpdatedStream,
+  DirectoryEntryDeletedStream,
+} from './directory/events';
 const logger = createLogger('directory-service', environment.LOG_LEVEL);
 
 const initializeApp = async (): Promise<express.Application> => {
@@ -50,6 +55,7 @@ const initializeApp = async (): Promise<express.Application> => {
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
+      eventStreams: [DirectoryEntryUpdatedStream, DirectoryEntryDeletedStream],
     },
     { logger },
     {
