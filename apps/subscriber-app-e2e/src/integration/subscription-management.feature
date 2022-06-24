@@ -15,7 +15,6 @@ Feature: Subscription management
     When an authenticated user is in the subscriber app
     Then the user views subscription management page
     And the user views the user contact information
-    And the user views the subscription of "Application health check change"
     And the user views the support link for the scription of "Application health check change"
     And the user views the subscription of "Application health check change" and its description
     And the user views the support link for the scription of "Application health check change"
