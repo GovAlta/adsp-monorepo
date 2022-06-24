@@ -62,9 +62,9 @@ export function* fetchConfig(): SagaIterator {
           directoryServiceApiUrl: entryMapping['directory-service'],
           pdfServiceApiUrl: entryMapping['pdf-service'],
           pushServiceApiUrl: entryMapping['push-service'],
+          tenantManagementWebApp: entryMapping['tenant-app'],
         },
       };
-
       const action: FetchConfigSuccessAction = {
         type: 'config/fetch-config-success',
         payload: tenantWebConfig,
