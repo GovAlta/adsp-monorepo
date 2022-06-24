@@ -4,7 +4,7 @@ import type { User } from '@abgov/adsp-service-sdk';
 
 describe('ServiceStatusApplicationEntity', () => {
   const repositoryMock = {
-    findRecentByUrl: jest.fn(),
+    findRecentByUrlAndApplicationId: jest.fn(),
     deleteOldUrlStatus: jest.fn(),
     findEnabledApplications: jest.fn(),
     find: jest.fn(),
@@ -17,6 +17,7 @@ describe('ServiceStatusApplicationEntity', () => {
   const endpointMock = {
     status: 'offline' as EndpointStatusType,
     url: 'https://www.mock-test.com',
+    id: '12345',
     statusEntries: [],
   };
 

@@ -88,6 +88,8 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
 
   // start the endpoint checking jobs
   if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.job)) {
+    console.log(JSON.stringify(repositories.serviceStatusRepository) + "<repositories.serviceStatusRepository")
+    console.log(JSON.stringify(repositories.endpointStatusEntryRepository) + "<repositories.endpointStatusEntryRepository")
     scheduleServiceStatusJobs({
       logger,
       eventService,
