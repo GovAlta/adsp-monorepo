@@ -13,7 +13,7 @@ import { NotFoundError } from '@core-services/core-common';
 import { mapTenant } from './mappers';
 import { RealmService } from '../services/realm';
 import { createkcAdminClient } from '../../keycloak';
-import { createTenant, deleteTenant } from './tenantV2';
+import { createTenant } from './tenantV2';
 import { tenantDeleted } from '../events';
 
 class CreateTenantDto {
