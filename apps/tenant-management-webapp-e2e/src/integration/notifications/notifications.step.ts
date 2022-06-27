@@ -292,7 +292,7 @@ Then('the user {string} the event of {string} in {string}', function (viewOrNot,
 When('the user clicks {string} button for {string} in {string}', function (buttonName, event, cardTitle) {
   switch (buttonName) {
     case 'edit':
-      notificationsObj.internalNotificationTypeEventEditButton(cardTitle, event).click();
+      notificationsObj.notificationTypeEventEditButton(cardTitle, event).click();
       break;
     case 'delete':
       notificationsObj.eventDeleteIcon(cardTitle, event).click();
@@ -327,13 +327,13 @@ Then('the user {string} {string} for {string} in {string}', function (viewOrNot,
   if (viewOrNot == 'views') {
     switch (elementType) {
       case 'email template indicator':
-        notificationsObj.internalNotificationTypeEventMailIcon(typeName, eventName).should('exist');
+        notificationsObj.notificationTypeEventMailIcon(typeName, eventName).should('exist');
         break;
       case 'Edit button':
-        notificationsObj.internalNotificationTypeEventEditButton(typeName, eventName).should('exist');
+        notificationsObj.notificationTypeEventEditButton(typeName, eventName).should('exist');
         break;
       case 'Reset':
-        notificationsObj.internalNotificationTypeEventResetBtn(typeName, eventName).should('exist');
+        notificationsObj.notificationTypeEventDeleteBtn(typeName, eventName).should('exist');
         break;
       default:
         expect(elementType).to.be.oneOf(['email template indicator', 'Preview link', 'Edit button', 'Reset']);
@@ -341,13 +341,13 @@ Then('the user {string} {string} for {string} in {string}', function (viewOrNot,
   } else if (viewOrNot == 'should not view') {
     switch (elementType) {
       case 'email template indicator':
-        notificationsObj.internalNotificationTypeEventMailIcon(typeName, eventName).should('not.exist');
+        notificationsObj.notificationTypeEventMailIcon(typeName, eventName).should('not.exist');
         break;
       case 'Edit button':
-        notificationsObj.internalNotificationTypeEventEditButton(typeName, eventName).should('not.exist');
+        notificationsObj.notificationTypeEventEditButton(typeName, eventName).should('not.exist');
         break;
       case 'Reset':
-        notificationsObj.internalNotificationTypeEventResetBtn(typeName, eventName).should('not.exist');
+        notificationsObj.notificationTypeEventDeleteBtn(typeName, eventName).should('not.exist');
         break;
       default:
         expect(elementType).to.be.oneOf(['email template indicator', 'Preview link', 'Edit button', 'Reset']);
