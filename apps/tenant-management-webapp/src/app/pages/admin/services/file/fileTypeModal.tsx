@@ -25,94 +25,6 @@ interface FileTypeModalProps {
   onSwitch?: () => void;
 }
 
-const ModalOverwrite = styled.div`
-  .modal {
-    max-height: 95% !important;
-    min-width: 37.5em;
-    max-width: 2000px;
-  }
-
-  .title {
-    font-weight: 700;
-    font-size: var(--fs-lg);
-    margin-top: 15px;
-  }
-
-  .three-wide {
-    display: none;
-  }
-
-  .two-wide {
-    display: block;
-  }
-
-  @media (min-width: 1280px) {
-    .three-wide {
-      display: block;
-    }
-
-    .two-wide {
-      display: none;
-    }
-  }
-`;
-
-const AnonymousReadWrapper = styled.div`
-  line-height: 2.5em;
-  display: flex;
-`;
-
-const DataTableWrapper = styled.div`
-  .goa-checkbox input[type='checkbox'] {
-    display: none !important;
-  }
-
-  .goa-checkbox {
-    margin-left: 10px;
-    min-height: calc(3rem - 10px);
-  }
-
-  th {
-    position: -webkit-sticky;
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background-color: white;
-    padding-left: 0em !important;
-  }
-  thead,
-  tbody {
-    display: block;
-  }
-
-  tbody {
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
-  .role-name {
-    width: 40em;
-  }
-
-  .role {
-    width: 3em;
-  }
-
-  td {
-    // padding-left: 0em !important;
-    padding: 0em !important;
-  }
-
-  table {
-    border-collapse: collapse !important;
-    width: 100%;
-  }
-
-  th {
-    white-space: pre-wrap;
-  }
-`;
-
 interface ClientRoleTableProps {
   roles: string[];
   roleSelectFunc: (roles: string[], type: string) => void;
@@ -205,6 +117,13 @@ const IdField = styled.div`
   min-height: 1.6rem;
 `;
 
+const selectServiceKeycloakRoles = createSelector(
+  (state: RootState) => state.serviceRoles,
+  (serviceRoles) => {
+    return serviceRoles?.keycloak || {};
+  }
+);
+
 export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   const isNew = props.type === 'new';
   const [fileType, setFileType] = useState(props.fileType);
@@ -226,12 +145,8 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   });
 
   const dispatch = useDispatch();
-  const selectServiceCoreRoles = createSelector(
-    (state: RootState) => state.serviceRoles,
-    (serviceRoles) => {
-      return serviceRoles?.core || {};
-    }
-  );
+
+  const keycloakClientRoles = useSelector(selectServiceKeycloakRoles);
 
   const ClientRole = ({ roleNames, clientId }) => {
     return (
@@ -259,13 +174,12 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
       </>
     );
   };
-  const coreRoles = useSelector(selectServiceCoreRoles);
 
   let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
 
   const clientElements =
-    Object.entries(coreRoles).length > 0 &&
-    Object.entries(coreRoles)
+    Object.entries(keycloakClientRoles).length > 0 &&
+    Object.entries(keycloakClientRoles)
       .filter(([clientId, config]) => {
         const roles = (config as ConfigServiceRole).roles;
         const uniqueRoles = roles.filter((role) => !roleNames.includes(role.role));
@@ -334,6 +248,10 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
           {elements.map((e, key) => {
             return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
           })}
+
+          {Object.entries(keycloakClientRoles).length === 0 && (
+            <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
+          )}
         </GoAModalContent>
         <GoAModalActions>
           <GoAButton
@@ -394,3 +312,103 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
     </ModalOverwrite>
   );
 };
+
+const ModalOverwrite = styled.div`
+  .modal {
+    max-height: 95% !important;
+    min-width: 37.5em;
+    max-width: 2000px;
+  }
+
+  .title {
+    font-weight: 700;
+    font-size: var(--fs-lg);
+    margin-top: 15px;
+  }
+
+  .three-wide {
+    display: none;
+  }
+
+  .two-wide {
+    display: block;
+  }
+
+  @media (min-width: 1280px) {
+    .three-wide {
+      display: block;
+    }
+
+    .two-wide {
+      display: none;
+    }
+  }
+`;
+
+const AnonymousReadWrapper = styled.div`
+  line-height: 2.5em;
+  display: flex;
+`;
+
+const DataTableWrapper = styled.div`
+  .goa-checkbox input[type='checkbox'] {
+    display: none !important;
+  }
+
+  .goa-checkbox {
+    margin-left: 10px;
+    min-height: calc(3rem - 10px);
+  }
+
+  th {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: white;
+    padding-left: 0em !important;
+  }
+  thead,
+  tbody {
+    display: block;
+  }
+
+  tbody {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .role-name {
+    width: 40em;
+  }
+
+  .role {
+    width: 3em;
+  }
+
+  td {
+    // padding-left: 0em !important;
+    padding: 0em !important;
+  }
+
+  table {
+    border-collapse: collapse !important;
+    width: 100%;
+  }
+
+  th {
+    white-space: pre-wrap;
+  }
+`;
+
+export const TextLoadingIndicator = styled.div`
+  animation: blinker 1s linear infinite;
+  font-size: 16px;
+  font-style: italic;
+  text-align: center;
+  @keyframes blinker {
+    50% {
+      opacity: 0;
+    }
+  }
+`;

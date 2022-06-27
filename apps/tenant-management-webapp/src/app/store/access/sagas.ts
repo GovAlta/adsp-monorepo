@@ -138,9 +138,7 @@ export function* fetchKeycloakServiceRoles(action: FetchKeycloakServiceRolesActi
   const keycloakBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.keycloakUrl);
   const realm: string = yield select((state: RootState) => state.session.realm);
 
-  const tenantRoleNames = Object.keys((yield select((state: RootState) => state.serviceRoles.tenant)) || {});
-  const coreRoleNames = Object.keys((yield select((state: RootState) => state.serviceRoles.core)) || {});
-  const configRoleNames = [...tenantRoleNames, ...coreRoleNames];
+  const defaultRealmClients = ['broker', 'realm-management', 'account'];
   const keycloakIdMap = {};
 
   if (token && keycloakBaseUrl && realm) {
@@ -157,7 +155,7 @@ export function* fetchKeycloakServiceRoles(action: FetchKeycloakServiceRolesActi
 
       data
         .filter((c) => {
-          return configRoleNames.includes(c.clientId);
+          return !defaultRealmClients.includes(c.clientId);
         })
         .forEach((c) => {
           keycloakRoleNames.push(c.clientId);
