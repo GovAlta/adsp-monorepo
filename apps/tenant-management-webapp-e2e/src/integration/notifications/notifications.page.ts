@@ -399,7 +399,7 @@ class NotificationsPage {
   }
 
   editTemplateModalCloseBtn() {
-    return cy.get('[data-testid="template-form-cancel"]');
+    return cy.get('[data-testid="template-form-close"]');
   }
 }
 export default NotificationsPage;
