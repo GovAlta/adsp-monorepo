@@ -155,7 +155,7 @@ export function createTenant(
         await realmService.createRealm(clients || [], { realm, adminEmail: email, name });
       }
 
-      const entity = await TenantEntity.create(tenantRepository, realm, name, email);
+      const entity = await TenantEntity.create(tenantRepository, name, realm, email);
       const tenant = mapTenant(entity);
 
       eventService.send(tenantCreated(user, { ...tenant, id: AdspId.parse(tenant.id) }));
