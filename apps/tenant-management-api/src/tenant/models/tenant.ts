@@ -10,6 +10,11 @@ export class TenantEntity implements Tenant {
   createdBy: string;
   name: string;
 
+  static create(repository: TenantRepository, name: string, realm: string, adminEmail: string): Promise<TenantEntity> {
+    const entity = new TenantEntity(repository, { name, adminEmail, realm });
+    return repository.save(entity);
+  }
+
   constructor(private repository: TenantRepository, tenant: Tenant | New<Tenant>) {
     const record = tenant as Tenant;
     if (record.id) {
@@ -25,12 +30,7 @@ export class TenantEntity implements Tenant {
     return this.repository.save(this);
   }
 
-  obj(): Tenant {
-    return {
-      id: this.id,
-      realm: this.realm,
-      adminEmail: this.adminEmail,
-      name: this.name,
-    };
+  delete(): Promise<boolean> {
+    return this.repository.delete(this.id);
   }
 }
