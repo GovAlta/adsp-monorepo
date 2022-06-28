@@ -5,17 +5,6 @@ import { ServiceStatusApplicationEntity } from '../model';
 import { ServiceStatusApplication } from '../types';
 import { adspId } from '@abgov/adsp-service-sdk';
 
-jest.mock('./healthCheckJobs', () => {
-  class HealthCheckJobsSub {
-    idsByUrl(): string[] {
-      return ['test-app'];
-    }
-  }
-  return {
-    HealthCheckJobs: HealthCheckJobsSub,
-  };
-});
-
 describe('checkEndpoint', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const loggerMock: Logger = {
