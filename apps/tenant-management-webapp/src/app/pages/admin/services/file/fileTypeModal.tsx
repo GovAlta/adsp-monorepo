@@ -86,7 +86,7 @@ const DataTableWrapper = styled.div`
   }
 
   thead {
-    padding-top: 20px;
+    padding-top: 1.25rem;
   }
 
   tbody {
