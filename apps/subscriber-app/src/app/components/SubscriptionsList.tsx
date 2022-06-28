@@ -38,24 +38,24 @@ const AvailableChannelsContainer = styled.div`
   }
   .icon-1 {
     position: absolute;
-    left: calc(50% - 31px);
-    top: -12px;
+    left: calc(50% - 32px);
+    top: -10px;
   }
   .icon-checked-1 {
     position: absolute;
-    left: calc(50% - 14px);
+    left: calc(50% - 17px);
     top: -22px;
   }
 
   .icon-2 {
     position: absolute;
-    left: calc(50% + 6px);
+    left: calc(50% + 10px);
     top: -12px;
   }
 
   .icon-checked-2 {
     position: absolute;
-    left: calc(50% + 21px);
+    left: calc(50% + 25px);
     top: -22px;
   }
 `;

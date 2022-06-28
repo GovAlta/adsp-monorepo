@@ -115,8 +115,8 @@ const Subscriptions = (): JSX.Element => {
                 {subscriber?.subscriptions?.length > 0 ? (
                   <DataTable data-testid="subscriptions-table">
                     <tr>
-                      <th id="subscriptions">Subscriptions</th>
-                      <th id="descriptions">Subscription Details</th>
+                      <th id="subscriptions">Subscription</th>
+                      <th id="descriptions">Description</th>
                       <th id="available-channels">Available channels</th>
                       <th id="action">Action</th>
                     </tr>
