@@ -6,7 +6,7 @@ import commonlib from '../common/common-library';
 const pdfServiceObj = new PdfServicePage();
 const commonObj = new Common();
 
-Given('a tenant admin user is on pdf service overview page', function () {
+Given('a tenant admin user is on Pdf service overview page', function () {
   commonlib.tenantAdminDirectURLLogin(
     Cypress.config().baseUrl,
     Cypress.env('realm'),
@@ -14,7 +14,6 @@ Given('a tenant admin user is on pdf service overview page', function () {
     Cypress.env('password')
   );
   commonlib.tenantAdminMenuItem('Pdf', 4000);
-  commonObj.serviceTab('Pdf', 'Overview').click();
   cy.wait(2000);
 });
 
