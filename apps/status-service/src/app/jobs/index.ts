@@ -31,7 +31,7 @@ export async function scheduleServiceStatusJobs(props: ServiceStatusJobProps): P
       ...props,
       applicationId: application._id,
       url: application.endpoint.url,
-      getter: async (url: string) => {
+      getEndpointResponse: async (url: string) => {
         return await axios.get(url, { timeout: REQUEST_TIMEOUT });
       },
     });

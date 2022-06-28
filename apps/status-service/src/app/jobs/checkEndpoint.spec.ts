@@ -41,7 +41,7 @@ describe('checkEndpoint', () => {
       const job = createCheckEndpointJob({
         url: 'https//test.co',
         applicationId: '123',
-        getter: jest.fn(),
+        getEndpointResponse: jest.fn(),
         logger: loggerMock,
         serviceStatusRepository: statusRepositoryMock,
         endpointStatusEntryRepository: endpointRepositoryMock,
@@ -52,11 +52,11 @@ describe('checkEndpoint', () => {
     });
 
     describe('checkEndpointJob', () => {
-      const getter = jest.fn();
+      const getEndpointResponse = jest.fn();
       const job = createCheckEndpointJob({
         url: 'https//test.co',
         applicationId: '123',
-        getter: jest.fn(),
+        getEndpointResponse: jest.fn(),
         logger: loggerMock,
         serviceStatusRepository: statusRepositoryMock,
         endpointStatusEntryRepository: endpointRepositoryMock,
@@ -72,7 +72,7 @@ describe('checkEndpoint', () => {
       });
 
       it('can updated application healthy', async () => {
-        getter.mockResolvedValueOnce({ status: 200 });
+        getEndpointResponse.mockResolvedValueOnce({ status: 200 });
         endpointRepositoryMock.save.mockImplementationOnce((entity) => entity);
         endpointRepositoryMock.findRecentByUrlAndApplicationId.mockReturnValueOnce([
           {
@@ -114,7 +114,7 @@ describe('checkEndpoint', () => {
       });
 
       it('can updated application unhealthy', async () => {
-        getter.mockResolvedValueOnce({ status: 200 });
+        getEndpointResponse.mockResolvedValueOnce({ status: 200 });
         endpointRepositoryMock.save.mockImplementationOnce((entity) => entity);
         endpointRepositoryMock.findRecentByUrlAndApplicationId.mockReturnValueOnce([
           {
@@ -156,7 +156,7 @@ describe('checkEndpoint', () => {
       });
 
       it('can not update when status unchanged', async () => {
-        getter.mockResolvedValueOnce({ status: 200 });
+        getEndpointResponse.mockResolvedValueOnce({ status: 200 });
         endpointRepositoryMock.save.mockImplementationOnce((entity) => entity);
         endpointRepositoryMock.findRecentByUrlAndApplicationId.mockReturnValueOnce([
           {

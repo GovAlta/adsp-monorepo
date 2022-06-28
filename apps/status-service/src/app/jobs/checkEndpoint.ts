@@ -12,7 +12,7 @@ const ENTRY_SAMPLE_SIZE = 5;
 const HEALTHY_MAX_FAIL_COUNT = 0;
 const UNHEALTHY_MIN_FAIL_COUNT = 3;
 
-type Getter = (url: string) => Promise<{ status: number | string }>;
+type GetEndpointResponse = (url: string) => Promise<{ status: number | string }>;
 export interface CreateCheckEndpointProps {
   logger?: Logger;
   url: string;
@@ -20,27 +20,27 @@ export interface CreateCheckEndpointProps {
   serviceStatusRepository: ServiceStatusRepository;
   endpointStatusEntryRepository: EndpointStatusEntryRepository;
   eventService: EventService;
-  getter: Getter;
+  getEndpointResponse: GetEndpointResponse;
 }
 
 export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
   return async (): Promise<void> => {
-    const { getter } = props;
+    const { getEndpointResponse } = props;
     // run all endpoint tests
-    const statusEntry = await doRequest(getter, props.url, props.applicationId, props.logger);
+    const statusEntry = await doRequest(getEndpointResponse, props.url, props.applicationId, props.logger);
     await doSave(props, statusEntry);
   };
 }
 
 async function doRequest(
-  getter: Getter,
+  getEndpointResponse: GetEndpointResponse,
   url: string,
   applicationId: string,
   logger: Logger
 ): Promise<EndpointStatusEntry> {
   const start = Date.now();
   try {
-    const { status } = await getter(url);
+    const { status } = await getEndpointResponse(url);
     const duration = Date.now() - start;
     logger.info(`Sent health check request to ${url} with response of ${status} and duration of ${duration} ms.`);
 
