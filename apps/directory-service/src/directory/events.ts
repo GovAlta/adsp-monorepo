@@ -118,9 +118,9 @@ export const entryDeleted = (
   },
 });
 
-export const DirectoryEntryUpdatedStream: Stream = {
-  id: 'directory-entry-updated',
-  name: 'Directory entry updates',
+export const EntryUpdatesStream: Stream = {
+  id: 'directory-entry-updates',
+  name: 'Directory updates',
   description: 'Provides update events for directory service.',
   subscriberRoles: [`urn:ads:platform:tenant-service:${ServiceRoles.StreamSubscription}`],
   publicSubscribe: false,
@@ -129,16 +129,6 @@ export const DirectoryEntryUpdatedStream: Stream = {
       namespace: 'directory-service',
       name: EVENTS.updated,
     },
-  ],
-};
-
-export const DirectoryEntryDeletedStream: Stream = {
-  id: 'directory-entry-deleted',
-  name: 'Directory entry deletion',
-  description: 'Provides deletion events for directory service.',
-  subscriberRoles: [`urn:ads:platform:tenant-service:${ServiceRoles.StreamSubscription}`],
-  publicSubscribe: false,
-  events: [
     {
       namespace: 'directory-service',
       name: EVENTS.deleted,
