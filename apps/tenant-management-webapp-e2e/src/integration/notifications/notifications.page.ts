@@ -394,8 +394,16 @@ class NotificationsPage {
     return cy.get('[data-testid="templated-editor-subject"]');
   }
 
+  editTemplateModalSubjectRightPane() {
+    return cy.get('.sc-kmQMED');
+  }
+
   editTemplateModalBody() {
     return cy.get('[data-testid="templated-editor-body"]');
+  }
+
+  editContactModalBodyRightPane() {
+    return cy.get('.sc-cvZCdy');
   }
 
   editTemplateModalCloseBtn() {
