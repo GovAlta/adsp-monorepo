@@ -22,7 +22,7 @@ export class TenantApi {
   }
 
   async createTenant(name: string): Promise<Tenant> {
-    const url = '/api/tenant/v1';
+    const url = '/api/tenant/v2/tenants';
     const res = await this.http
       .post(url, {
         name: name,
