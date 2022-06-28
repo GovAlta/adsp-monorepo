@@ -8,6 +8,7 @@ import {
   FETCH_CONFIGURATIONS_SUCCESS_ACTION,
   UPDATE_CONFIGURATION_DEFINITION_SUCCESS_ACTION,
   REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION,
+  RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION,
 } from './action';
 import {
   ConfigurationDefinitionState,
@@ -56,6 +57,11 @@ export default function (
       return {
         ...state,
         importedConfiguration: action.payload,
+      };
+    case RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION:
+      return {
+        ...state,
+        importedConfiguration: [],
       };
     default:
       return state;

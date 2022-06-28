@@ -11,18 +11,18 @@ import * as passport from 'passport';
 import { environment } from './environments/environment';
 import { createRepositories, disconnect } from './mongo';
 import { logger } from './middleware/logger';
-import { TenantServiceRoles } from './roles';
 import {
-  tenantService as tenantDBService,
   TenantCreatedDefinition,
   TenantDeletedDefinition,
   configurationSchema,
   applyTenantMiddleware,
+  TenantServiceImpl,
+  TenantServiceRoles,
 } from './tenant';
+import { createKeycloakRealmService } from './keycloak';
 
 async function initializeApp(): Promise<express.Application> {
   const repositories = await createRepositories({ ...environment, logger });
-
 
   const app = express();
   app.use(compression());
@@ -35,47 +35,34 @@ async function initializeApp(): Promise<express.Application> {
   }
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
-  const { coreStrategy, tenantStrategy,  eventService, configurationHandler } =
-    await initializePlatform(
-      {
-        serviceId,
-        displayName: 'Tenant service',
-        description: 'Service for management of ADSP tenants.',
-        clientSecret: environment.CLIENT_SECRET,
-        directoryUrl: new URL(environment.DIRECTORY_URL),
-        accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
-        configurationSchema,
-        configurationConverter: (c) => Object.entries(c).map(([k, v]) => ({ serviceId: AdspId.parse(k), ...v })),
-        events: [TenantCreatedDefinition, TenantDeletedDefinition],
-        roles: [
-          // Note: Tenant Admin role is a special composite role.
-          {
-            role: TenantServiceRoles.TenantAdmin,
-            description: 'Administrator role for accessing the ADSP tenant admin.',
-          },
-          {
-            role: TenantServiceRoles.PlatformService,
-            description: 'Service role for backend services for reading tenants.',
-          },
-        ],
-      },
-      { logger },
-      {
-        tenantService: {
-          getTenant: (tenantId) => tenantDBService.getTenant(repositories.tenantRepository, tenantId),
-          getTenants: () => tenantDBService.getTenants(repositories.tenantRepository),
-          // Note: There is no need for an implementation of this capability in tenant admin service itself for now.
-          getTenantByName: async (name: string) => {
-            const tenants = await tenantDBService.getTenants(repositories.tenantRepository, { nameEquals: name });
-            return tenants[0];
-          },
-          getTenantByRealm: async (realm: string) => {
-            const tenants = await tenantDBService.getTenants(repositories.tenantRepository, { realmEquals: realm });
-            return tenants[0];
-          },
+  const { coreStrategy, tenantStrategy, eventService, configurationHandler } = await initializePlatform(
+    {
+      serviceId,
+      displayName: 'Tenant service',
+      description: 'Service for management of ADSP tenants.',
+      clientSecret: environment.CLIENT_SECRET,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+      accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
+      configurationSchema,
+      configurationConverter: (c) => Object.entries(c).map(([k, v]) => ({ serviceId: AdspId.parse(k), ...v })),
+      events: [TenantCreatedDefinition, TenantDeletedDefinition],
+      roles: [
+        // Note: Tenant Admin role is a special composite role.
+        {
+          role: TenantServiceRoles.TenantAdmin,
+          description: 'Administrator role for accessing the ADSP tenant admin.',
         },
-      }
-    );
+        {
+          role: TenantServiceRoles.PlatformService,
+          description: 'Service role for backend services for reading tenants.',
+        },
+      ],
+    },
+    { logger },
+    {
+      tenantService: new TenantServiceImpl(repositories.tenantRepository),
+    }
+  );
 
   passport.use('jwt', coreStrategy);
   passport.use('jwt-tenant', tenantStrategy);
@@ -104,8 +91,15 @@ async function initializeApp(): Promise<express.Application> {
     next();
   });
 
-  applyTenantMiddleware(app, { ...repositories, logger, eventService, configurationHandler });
- 
+  const realmService = createKeycloakRealmService({ logger, KEYCLOAK_ROOT_URL: environment.KEYCLOAK_ROOT_URL });
+  applyTenantMiddleware(app, {
+    ...repositories,
+    logger,
+    eventService,
+    realmService,
+    configurationHandler,
+  });
+
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
 

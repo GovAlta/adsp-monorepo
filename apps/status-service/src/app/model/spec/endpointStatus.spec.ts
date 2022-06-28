@@ -3,7 +3,7 @@ import type { User } from '@abgov/adsp-service-sdk';
 
 describe('EndpointStatusEntryEntity', () => {
   const repositoryMock = {
-    findRecentByUrl: jest.fn(),
+    findRecentByUrlAndApplicationId: jest.fn(),
     deleteOldUrlStatus: jest.fn(),
     delete: jest.fn(),
     save: jest.fn(),
@@ -16,6 +16,7 @@ describe('EndpointStatusEntryEntity', () => {
     timestamp: 1652124960014,
     responseTime: 179,
     status: '200',
+    applicationId: '1234',
   };
   const userMock = {} as User;
 

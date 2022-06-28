@@ -1,5 +1,8 @@
-import { environment } from '../environments/environment';
 import KcAdminClient from '@keycloak/keycloak-admin-client';
+import { Logger } from 'winston';
+import { environment } from '../environments/environment';
+import { RealmService } from '../tenant';
+import { KeycloakRealmServiceImpl } from './keycloak';
 
 interface Options {
   baseUrl?: string;
@@ -27,4 +30,13 @@ export async function createkcAdminClient(opts?: Options): Promise<KcAdminClient
   });
 
   return client;
+}
+
+interface RealmServiceProps {
+  logger: Logger;
+  KEYCLOAK_ROOT_URL: string;
+}
+
+export function createKeycloakRealmService({ logger, KEYCLOAK_ROOT_URL }: RealmServiceProps): RealmService {
+  return new KeycloakRealmServiceImpl(logger, KEYCLOAK_ROOT_URL, 'core', createkcAdminClient);
 }
