@@ -23,6 +23,7 @@ function scheduleServiceStatusJob(props: CreateCheckEndpointProps): Job {
 export async function scheduleServiceStatusJobs(props: ServiceStatusJobProps): Promise<void> {
   props.logger.info('Scheduling endpoint checks...');
 
+  // start enabled apps
   const applications = await props.serviceStatusRepository.findEnabledApplications();
 
   applications.forEach((application): Job => {
