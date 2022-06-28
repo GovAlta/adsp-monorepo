@@ -15,6 +15,7 @@ import {
   createWebappClientConfig,
 } from './configuration';
 
+const LOG_CONTEXT = { context: 'RealmService' };
 export class KeycloakRealmServiceImpl implements RealmService {
   constructor(
     private logger: Logger,
@@ -33,6 +34,8 @@ export class KeycloakRealmServiceImpl implements RealmService {
     realm: string,
     tenantAdminRole: RoleRepresentation
   ) {
+    this.logger.debug(`Creating tenant admin aggregate role for realm '${realm}'...`, LOG_CONTEXT);
+
     // Unfortunately the keycloak client isn't very friendly around creating composite roles.
     // Find all the client roles that should be included as part of tenant admin.
     const tenantAdminRoles: RoleRepresentation[] = [];
@@ -46,7 +49,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
             clientId: registeredClient.serviceId.toString(),
           })
         )[0];
-        this.logger.debug(`Found ${registeredClient.serviceId} service client : ${serviceClient?.id}`);
+        this.logger.debug(`Found ${registeredClient.serviceId} service client : ${serviceClient?.id}`, LOG_CONTEXT);
 
         const adminRole = adminRoles[j];
 
@@ -56,13 +59,15 @@ export class KeycloakRealmServiceImpl implements RealmService {
           roleName: adminRole.role,
         });
         this.logger.debug(
-          `Found ${registeredClient.serviceId} service client role ${adminRole?.role}: ${serviceClientRole.id}`
+          `Found ${registeredClient.serviceId} service client role ${adminRole?.role}: ${serviceClientRole.id}`,
+          LOG_CONTEXT
         );
         tenantAdminRoles.push(serviceClientRole);
       }
     }
 
     await client.roles.createComposite({ realm, roleId: tenantAdminRole.id }, tenantAdminRoles);
+    this.logger.info(`Created tenant admin composite role for realm '${realm}.`, LOG_CONTEXT);
   }
 
   private async createAdminUser(
@@ -72,7 +77,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
     tenantServiceClientId: string,
     tenantAdminRole: RoleRepresentation
   ) {
-    this.logger.info('Start to create admin user');
+    this.logger.info(`Creating admin user ${email} for realm '${realm}'...`, LOG_CONTEXT);
     const username = email;
     const adminUser = {
       id: uuidv4(),
@@ -109,7 +114,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
       });
     }
 
-    this.logger.info(`Add realm management roles to user: ${util.inspect(roleMapping)}`);
+    this.logger.debug(`Add realm management roles to user: ${util.inspect(roleMapping)}`, LOG_CONTEXT);
     await client.users.addClientRoleMappings(roleMapping);
 
     await client.users.addClientRoleMappings({
@@ -124,9 +129,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
       ],
     });
 
-    this.logger.info('Add tenant admin role to user.');
-
-    this.logger.info('Created admin user');
+    this.logger.info(`Created admin user ${email} for realm '${realm}'.`, LOG_CONTEXT);
   }
 
   private async createCoreIdentityProvider(
@@ -136,6 +139,8 @@ export class KeycloakRealmServiceImpl implements RealmService {
     flowAlias: string,
     realm: string
   ): Promise<{ id: string }> {
+    this.logger.debug(`Creating core identity provider for realm '${realm}...`, LOG_CONTEXT);
+
     const issuer = `${this.keycloakRootUrl}/auth/realms/core`;
     const authorizationUrl = `${this.keycloakRootUrl}/auth/realms/core/protocol/openid-connect/auth`;
     const tokenUrl = `${this.keycloakRootUrl}/auth/realms/core/protocol/openid-connect/token`;
@@ -174,10 +179,20 @@ export class KeycloakRealmServiceImpl implements RealmService {
       },
     };
 
-    return await client.identityProviders.create(config);
+    const result = await client.identityProviders.create(config);
+    this.logger.info(`Created core identity provider with client '${clientId}' for realm '${realm}.`, LOG_CONTEXT);
+
+    return result;
   }
 
-  private async createBrokerClient(client: KeycloakAdminClient, realm: string, secret: string, clientId: string) {
+  private async createBrokerClient(
+    client: KeycloakAdminClient,
+    realm: string,
+    secret: string,
+    clientId: string
+  ): Promise<{ id: string }> {
+    this.logger.debug(`Creating IdP broker client in core realm for ${realm} realm...`, LOG_CONTEXT);
+
     const redirectUrl = `${this.keycloakRootUrl}/auth/realms/${realm}/broker/core/endpoint/*`;
 
     const config: ClientRepresentation & { realm: string } = {
@@ -194,11 +209,14 @@ export class KeycloakRealmServiceImpl implements RealmService {
       standardFlowEnabled: true,
       serviceAccountsEnabled: true,
     };
-    await client.clients.create(config);
+    const result = await client.clients.create(config);
+
+    this.logger.info(`Created IdP broker client in core realm for ${realm} realm.`, LOG_CONTEXT);
+    return result;
   }
 
   private async createAuthenticationFlow(client: KeycloakAdminClient, realm: string): Promise<string> {
-    this.logger.debug('Adding authentication flow to tenant public client...');
+    this.logger.debug(`Creating authentication flow to tenant public client for realm ${realm}...`, LOG_CONTEXT);
 
     const flowAlias = 'GOA SSO Login Flow';
     const authFlow = {
@@ -246,14 +264,13 @@ export class KeycloakRealmServiceImpl implements RealmService {
       await axios.put(executionsUrl, updatePayload, { headers });
     }
 
-    this.logger.info('Added authentication flow to tenant public client.');
+    this.logger.info(`Created authentication flow to tenant public client for realm ${realm}...`, LOG_CONTEXT);
 
     return authFlow.alias;
   }
 
   private async validateRealmCreation(client: KeycloakAdminClient, realm: string): Promise<void> {
-    // Re-init the keycloak client after realm creation
-    this.logger.info(`Start to validate the tenant creation: ${realm}`);
+    this.logger.debug(`Validating new tenant realm '${realm}'...`, LOG_CONTEXT);
     const clientName = this.brokerClientName(realm);
     const brokerClient = await client.clients.find({
       clientId: clientName,
@@ -271,22 +288,23 @@ export class KeycloakRealmServiceImpl implements RealmService {
     if (!newRealm) {
       throw new InvalidOperationError(`Cannot find the tenant realm: ${realm}`);
     }
+    this.logger.info(
+      `Validated new tenant realm '${realm}' and associated broker client '${clientName}'.`,
+      LOG_CONTEXT
+    );
   }
 
   async createRealm(serviceClients: ServiceClient[], { name, realm, adminEmail }: Omit<Tenant, 'id'>): Promise<void> {
-    this.logger.info(`Starting create ${realm} realm...`);
+    this.logger.info(`Creating realm '${realm}' for tenant '${name}'...`, LOG_CONTEXT);
     const brokerClientSecret = uuidv4();
     const tenantPublicClientId = uuidv4();
     const subscriberAppPublicClientId = uuidv4();
     const brokerClient = this.brokerClientName(realm);
 
-    this.logger.info(`Starting to create IdP broker client on the core for ${realm} realm...`);
-
     let client = await this.createAdminClient();
     await this.createBrokerClient(client, realm, brokerClientSecret, brokerClient);
 
-    this.logger.info(`Created IdP broker client on the core realm for ${realm} realm`);
-
+    this.logger.debug(`Creating realm '${realm}' with base configuration...`, LOG_CONTEXT);
     const publicClientConfig = createWebappClientConfig(tenantPublicClientId);
     const subscriberAppPublicClientConfig = createSubscriberAppPublicClientConfig(subscriberAppPublicClientId);
 
@@ -308,9 +326,10 @@ export class KeycloakRealmServiceImpl implements RealmService {
       enabled: true,
     };
 
-    this.logger.info(`New realm config: ${util.inspect(realmConfig)}`);
+    this.logger.debug(`New realm configuration: ${util.inspect(realmConfig)}`, LOG_CONTEXT);
 
     await client.realms.create(realmConfig);
+    this.logger.info(`Created realm '${realm}' with base configuration.`, LOG_CONTEXT);
 
     // Re-authenticate the admin client. This is necessary because the original access token does not include access
     // to the new realm that was just created.
@@ -323,17 +342,16 @@ export class KeycloakRealmServiceImpl implements RealmService {
         clientId: 'urn:ads:platform:tenant-service',
       })
     )[0];
-    this.logger.debug(`Found tenant service client: ${tenantServiceClient?.id}`);
+    this.logger.debug(`Found tenant service client: ${tenantServiceClient?.id}`, LOG_CONTEXT);
 
     const tenantAdminRole = await client.clients.findRole({
       realm,
       id: tenantServiceClient.id,
       roleName: TenantServiceRoles.TenantAdmin,
     });
-    this.logger.debug(`Found tenant service client admin role: ${tenantAdminRole?.id}`);
+    this.logger.debug(`Found tenant service client admin role: ${tenantAdminRole?.id}`, LOG_CONTEXT);
 
     await this.createTenantAdminComposite(client, serviceClients, realm, tenantAdminRole);
-    this.logger.info(`Created tenant admin composite role.`);
 
     const flowAlias = await this.createAuthenticationFlow(client, realm);
     await this.createCoreIdentityProvider(client, brokerClientSecret, brokerClient, flowAlias, realm);
