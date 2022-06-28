@@ -256,7 +256,11 @@ export const getApplicationEntries =
       if (tenantId?.toString() !== application.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
       }
-      const entries = await endpointStatusEntryRepository.findRecentByUrl(application.endpoint.url, top);
+      const entries = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
+        application.endpoint.url,
+        applicationId,
+        top
+      );
       res.send(entries);
     } catch (err) {
       logger.error(`Failed to get application: ${err.message}`);

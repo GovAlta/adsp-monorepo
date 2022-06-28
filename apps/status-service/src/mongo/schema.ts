@@ -26,6 +26,9 @@ export const endpointStatusEntrySchema = new Schema({
   status: {
     type: String,
   },
+  applicationId: {
+    type: String,
+  },
   responseTime: {
     type: Number,
   },

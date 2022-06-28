@@ -9,6 +9,7 @@ export class EndpointStatusEntryEntity implements EndpointStatusEntry {
   timestamp: number;
   responseTime: number;
   status: number | string;
+  applicationId: string;
 
   static create(
     repository: EndpointStatusEntryRepository,
@@ -24,6 +25,7 @@ export class EndpointStatusEntryEntity implements EndpointStatusEntry {
     this.timestamp = entry.timestamp;
     this.responseTime = entry.responseTime;
     this.status = entry.status;
+    this.applicationId = entry.applicationId;
   }
 
   async delete(user: User): Promise<boolean> {
