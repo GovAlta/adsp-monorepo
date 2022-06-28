@@ -1,22 +1,26 @@
 import React, { FunctionComponent, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { GoAButton, GoADropdown, GoADropdownOption } from '@abgov/react-components';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { PdfGenerationPayload } from '@store/pdf/model';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { streamPdfSocket } from '@store/pdf/action';
+import styled from 'styled-components';
+import { GoAElementLoader } from '@abgov/react-components';
 
 interface GeneratePDFModalProps {
   onSave: (definition: PdfGenerationPayload) => void;
-  open: boolean;
-  onClose: () => void;
 }
-export const GeneratePDFModal: FunctionComponent<GeneratePDFModalProps> = ({ onSave, onClose, open }) => {
-  const [definition, setDefinition] = useState<PdfGenerationPayload>({ templateId: null, data: {}, fileName: null });
+export const GeneratePDF: FunctionComponent<GeneratePDFModalProps> = ({ onSave }) => {
+  const [definition, setDefinition] = useState<PdfGenerationPayload>({
+    templateId: null,
+    data: { testVariable: 'some data' },
+    fileName: null,
+  });
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const dispatch = useDispatch();
 
   const hasFormErrors = () => {
     return Object.keys(errors).length !== 0;
@@ -28,70 +32,59 @@ export const GeneratePDFModal: FunctionComponent<GeneratePDFModalProps> = ({ onS
 
   return (
     <>
-      <GoAModal testId="definition-form" isOpen={open}>
-        <GoAModalTitle testId="definition-form-title">Generate PDF</GoAModalTitle>
-        <GoAModalContent>
-          <GoAForm>
-            <GoAFormItem error={errors?.['namespace']}>
-              <label>PDF Template</label>
-              <GoADropdown
-                name="subscriberRoles"
-                selectedValues={[definition.templateId]}
-                multiSelect={false}
-                onChange={(name, values) => {
-                  setDefinition({
-                    ...definition,
-                    templateId: values[0],
-                    fileName: `${values[0]}_${new Date().toJSON().slice(0, 19).replace(/:/g, '-')}.pdf`,
-                  });
-                  dispatch(streamPdfSocket(false, values[0]));
-                }}
-              >
-                {Object.keys(pdfTemplates).map((item) => {
-                  const pdfTemplate = pdfTemplates[item];
-                  return (
-                    <GoADropdownOption
-                      label={pdfTemplate.name}
-                      value={pdfTemplate.id}
-                      key={pdfTemplate.id}
-                      data-testid={pdfTemplate.id}
-                    />
-                  );
-                })}
-              </GoADropdown>
-            </GoAFormItem>
-            <GoAFormItem>
-              <label>Payload schema</label>
-              <Editor
-                data-testid="form-schema"
-                height={200}
-                value={JSON.stringify(definition?.data, null, 2)}
-                onChange={(value) => setDefinition({ ...definition, data: JSON.parse(value) })}
-                language="json"
-                options={{
-                  automaticLayout: true,
-                  scrollBeyondLastLine: false,
-                  tabSize: 2,
-                  minimap: { enabled: false },
-                }}
-              />
-            </GoAFormItem>
-          </GoAForm>
-        </GoAModalContent>
-        <GoAModalActions>
-          <GoAButton
-            data-testid="form-cancel"
-            buttonType="secondary"
-            type="button"
-            onClick={() => {
-              onClose();
-              setErrors({});
+      <h1 data-testid="definition-form-title">Generate PDF</h1>
+      <GoAForm>
+        <GoAFormItem error={errors?.['namespace']}>
+          <label>Select a PDF Template</label>
+          <GoADropdown
+            name="subscriberRoles"
+            selectedValues={[definition?.templateId]}
+            multiSelect={false}
+            onChange={(name, values) => {
+              setDefinition({
+                ...definition,
+                templateId: values[0],
+                fileName: `${values[0]}_${new Date().toJSON().slice(0, 19).replace(/:/g, '-')}.pdf`,
+              });
             }}
           >
-            Cancel
-          </GoAButton>
+            {Object.keys(pdfTemplates).map((item) => {
+              const pdfTemplate = pdfTemplates[item];
+              return (
+                <GoADropdownOption
+                  label={pdfTemplate.name}
+                  value={pdfTemplate.id}
+                  key={pdfTemplate.id}
+                  data-testid={pdfTemplate.id}
+                />
+              );
+            })}
+          </GoADropdown>
+        </GoAFormItem>
+        <GoAFormItem>
+          <label>Payload schema</label>
+          <EditorStyles>
+            <Editor
+              data-testid="form-schema"
+              height={200}
+              value={JSON.stringify(definition?.data, null, 2)}
+              onChange={(value) => setDefinition({ ...definition, data: JSON.parse(value) })}
+              language="json"
+              options={{
+                automaticLayout: true,
+                scrollBeyondLastLine: false,
+                tabSize: 2,
+                minimap: { enabled: false },
+              }}
+            />
+          </EditorStyles>
+        </GoAFormItem>
+      </GoAForm>
+
+      <FlexRow>
+        <PaddingRight>
           <GoAButton
-            disabled={!definition?.templateId}
+            disabled={!definition?.templateId || indicator.show}
             buttonType="primary"
             data-testid="form-save"
             type="submit"
@@ -99,16 +92,64 @@ export const GeneratePDFModal: FunctionComponent<GeneratePDFModalProps> = ({ onS
               // if no errors in the form then save the definition
               if (!hasFormErrors()) {
                 onSave(definition);
-                setDefinition(null);
               } else {
                 return;
               }
             }}
           >
-            Generate PDF
+            <GenerateButtonPadding>
+              Generate PDF
+              {indicator.show ? (
+                <SpinnerPadding>
+                  <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
+                </SpinnerPadding>
+              ) : (
+                <SpinnerSpace></SpinnerSpace>
+              )}
+            </GenerateButtonPadding>
           </GoAButton>
-        </GoAModalActions>
-      </GoAModal>
+        </PaddingRight>
+
+        <GoAButton
+          data-testid="form-cancel"
+          buttonType="secondary"
+          type="button"
+          onClick={() => {
+            setDefinition({ templateId: null, data: { testVariable: 'some data' }, fileName: null });
+            setErrors({});
+          }}
+        >
+          Reset PDF
+        </GoAButton>
+      </FlexRow>
     </>
   );
 };
+
+const EditorStyles = styled.div`
+  border: 1px solid #666;
+  border-radius: 3px;
+`;
+
+const SpinnerPadding = styled.div`
+  margin: 0 0 0 5px;
+  float: right;
+`;
+
+const SpinnerSpace = styled.div`
+  margin: 10px 9px 10px 14px;
+  float: right;
+`;
+
+const GenerateButtonPadding = styled.div`
+  margin: 0 0 0 14px;
+`;
+
+const PaddingRight = styled.div`
+  margin-right: 12px;
+`;
+
+const FlexRow = styled.div`
+  display: flex;
+  flex-direction: row;
+`;
