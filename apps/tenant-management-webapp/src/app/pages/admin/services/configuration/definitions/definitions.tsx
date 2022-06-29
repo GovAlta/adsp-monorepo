@@ -69,13 +69,7 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
           isEdit={isEdit}
           initialValue={selectedDefinition}
           onSave={(definition) => {
-            if (!indicator.show) {
               dispatch(updateConfigurationDefinition(definition, false));
-            } else {
-              setTimeout(() => {
-                dispatch(updateConfigurationDefinition(definition, false));
-              }, 2000);
-            }
           }}
         />
       )}
