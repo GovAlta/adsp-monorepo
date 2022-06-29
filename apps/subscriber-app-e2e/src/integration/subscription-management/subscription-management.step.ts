@@ -62,7 +62,7 @@ And('the user views the subscription of {string} and its description', function 
   subscriptionManagementObj.subscriptionDesc(subscriptionName).invoke('text').should('not.be.empty');
 });
 
-And('the user views the support link for the scription of {string}', function (subscriptionName) {
+And('the user views the support link for the subscription of {string}', function (subscriptionName) {
   subscriptionManagementObj
     .contactSupportToUnsbuscribe(subscriptionName)
     .invoke('attr', 'href')
@@ -127,7 +127,7 @@ Then('the user views a callout message of {string}', function (message) {
 });
 
 And('the user views contact information of {string}, {string} and {string}', function (email, phone, channel) {
-  subscriptionManagementObj.emailLabel().invoke('text').should('contain', email);
+  subscriptionManagementObj.emailDisplay().invoke('text').should('contain', email);
   if (phone == 'EMPTY') {
     subscriptionManagementObj.phoneNumberDisplay().should('be.empty');
   } else {
