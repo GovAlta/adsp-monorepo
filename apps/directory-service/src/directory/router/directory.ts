@@ -80,13 +80,20 @@ export const getEntriesForService =
       const { namespace, service } = req.params;
       const data = await getNamespaceEntries(directoryRepository, namespace);
       // regex matches service | service:whatever
-      const re = new RegExp(`^${service}(:[a-zA-Z-]+)?$`);
-      const entries = data.filter((x) => x.service.match(re));
+      const serviceRe = new RegExp(`^${service}$`);
+      const apisRe = new RegExp(`^${service}(:[a-zA-Z-]+)$`);
+      const serviceEntry = data.filter((x) => x.service.match(serviceRe));
+      const apiEntries = data.filter((x) => x.service.match(apisRe));
 
-      if (!entries) {
+      if (!serviceEntry && !apiEntries) {
         return res.sendStatus(HttpStatusCodes.NOT_FOUND);
+      } else if (!serviceEntry) {
+        return res.json({ apis: apiEntries });
+      } else if (!apiEntries) {
+        return res.json({ service: serviceEntry });
+      } else {
+        return res.json({ service: serviceEntry, apis: apiEntries });
       }
-      res.json(entries);
     } catch (err) {
       _next(err);
     }
