@@ -40,6 +40,15 @@ When('an authenticated user is in the subscriber app', function () {
   cy.wait(5000); // Wait all the redirects to settle down
 });
 
+When('an authenticated user with {string} and {string} is in the subscriber app', function (username, password) {
+  cy.visit('/' + Cypress.env('realm') + '/login?kc_idp_hint=');
+  // Enter user name and password and click log in button
+  subscriptionManagementObj.usernameEmailField().type(username);
+  subscriptionManagementObj.passwordField().type(password);
+  subscriptionManagementObj.loginButton().click();
+  cy.wait(5000); // Wait all the redirects to settle down
+});
+
 Then('the user views subscription management page', function () {
   subscriptionManagementObj.serviceName().invoke('text').should('contain', 'Subscription management');
 });
@@ -118,9 +127,9 @@ Then('the user views a callout message of {string}', function (message) {
 });
 
 And('the user views contact information of {string}, {string} and {string}', function (email, phone, channel) {
-  subscriptionManagementObj.emailDisplay().invoke('text').should('contain', email);
+  subscriptionManagementObj.emailLabel().invoke('text').should('contain', email);
   if (phone == 'EMPTY') {
-    subscriptionManagementObj.phoneNumberInput().should('not.exist');
+    subscriptionManagementObj.phoneNumberDisplay().should('be.empty');
   } else {
     subscriptionManagementObj.phoneNumberDisplay().invoke('text').should('contain', phone);
   }

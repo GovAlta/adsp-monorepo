@@ -65,7 +65,7 @@ class SubscriptionManagementPage {
     return cy.get('[data-testid="contact-email-input"]');
   }
 
-  emailDisplay() {
+  emailLabel() {
     return cy.get('[data-testid=email-label] > p');
   }
 

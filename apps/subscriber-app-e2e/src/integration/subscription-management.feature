@@ -21,7 +21,7 @@ Feature: Subscription management
 
   @TEST_CS-1371 @REQ_CS-1238 @REQ_CS-1239 @regression
   Scenario: As a tenant admin, I can configure what channels are supported by a notification type, so that I can support multiple channels of notifications.
-    When an authenticated user is in the subscriber app
+    When an authenticated user with "auto.contact" and "autotest" is in the subscriber app
     Then the user views subscription management page
     When the user clicks edit contact information button
     And the user enters an invalid phone number in contact information
@@ -34,13 +34,13 @@ Feature: Subscription management
     When the user removes email value in contact information
     And the user clicks Save button in contact information
     Then the user views an error messsage for missing email
-    When the user enters "autotest.chaneltest@abc.com" as email, "7801001234" as phone number and "sms" as preferred channel
+    When the user enters "superxw@gmail.com" as email, "7801001234" as phone number and "sms" as preferred channel
     And the user clicks Save button in contact information
     Then the user views a callout message of "Contact information updated."
-    And the user views contact information of "autotest.chaneltest@abc.com", "780 100 1234" and "sms"
+    And the user views contact information of "superxw@gmail.com", "780 100 1234" and "sms"
     When the user clicks edit contact information button
-    And the user enters "autotest.chaneltest@abc.com" as email, "EMPTY" as phone number and "email" as preferred channel
+    And the user enters "superxw@gmail.com" as email, "EMPTY" as phone number and "email" as preferred channel
     And the user clicks Save button in contact information
     Then the user views a callout message of "Contact information updated."
-    And the user views contact information of "autotest.chaneltest@abc.com", "EMPTY" and "email"
+    And the user views contact information of "superxw@gmail.com", "EMPTY" and "email"
 
