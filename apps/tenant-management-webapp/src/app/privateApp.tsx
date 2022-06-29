@@ -82,5 +82,5 @@ const ScrollBarFixTop = styled.div`
 const ScrollBarFixMain = styled.div`
   margin-left: calc(100vw - 100%);
   margin-right: 0;
-  padding-top: 6rem;
+  padding-top: 7rem;
 `;
