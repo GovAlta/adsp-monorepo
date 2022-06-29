@@ -64,16 +64,13 @@ export const ServiceRoles = (): JSX.Element => {
 
   // eslint-disable-next-line
   useEffect(() => {}, [updateState]);
-  useEffect(() => {
-    dispatch(fetchServiceRoles());
-  }, []);
 
   useEffect(() => {
-    // Fetch keycloak service roles after the roles from configuration service are fetched
-    if (Object.entries(tenantRoles).length > 0 || Object.entries(coreRoles).length) {
+    if (Object.entries(coreRoles).length === 0) {
+      dispatch(fetchServiceRoles());
       dispatch(fetchKeycloakServiceRoles());
     }
-  }, [tenantRoles, coreRoles]);
+  }, []);
 
   return (
     <div>
