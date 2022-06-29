@@ -2,8 +2,10 @@ import { InvalidOperationError, InvalidValueError } from '@core-services/core-co
 import { Logger } from 'winston';
 import { TenantRepository } from '../repository';
 
+const LOG_CONTEXT = { context: 'TenantRouter' };
+
 export const validateEmailInDB = async (logger: Logger, repository: TenantRepository, email: string): Promise<void> => {
-  logger.info(`Validate - has user created tenant realm before?`);
+  logger.debug(`Validate - has user created tenant realm before?`, LOG_CONTEXT);
   const isTenantAdmin = !!(await repository.find({ adminEmailEquals: email }))[0];
 
   if (isTenantAdmin) {
@@ -13,7 +15,7 @@ export const validateEmailInDB = async (logger: Logger, repository: TenantReposi
 };
 
 export const validateName = async (logger: Logger, repository: TenantRepository, name: string): Promise<void> => {
-  logger.info(`Validate - is the tenant name valid and unique?`);
+  logger.debug(`Validate - is the tenant name valid and unique?`, LOG_CONTEXT);
 
   const invalidChars = [
     '!',

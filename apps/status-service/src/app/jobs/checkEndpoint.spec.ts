@@ -5,17 +5,6 @@ import { ServiceStatusApplicationEntity } from '../model';
 import { ServiceStatusApplication } from '../types';
 import { adspId } from '@abgov/adsp-service-sdk';
 
-jest.mock('./healthCheckJobs', () => {
-  class HealthCheckJobsSub {
-    idsByUrl(): string[] {
-      return ['test-app'];
-    }
-  }
-  return {
-    HealthCheckJobs: HealthCheckJobsSub,
-  };
-});
-
 describe('checkEndpoint', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const loggerMock: Logger = {
@@ -35,7 +24,7 @@ describe('checkEndpoint', () => {
   };
 
   const endpointRepositoryMock = {
-    findRecentByUrl: jest.fn(),
+    findRecentByUrlAndApplicationId: jest.fn(),
     deleteOldUrlStatus: jest.fn(),
     get: jest.fn(),
     find: jest.fn(),
@@ -51,7 +40,8 @@ describe('checkEndpoint', () => {
     it('can create job', () => {
       const job = createCheckEndpointJob({
         url: 'https//test.co',
-        getter: jest.fn(),
+        applicationId: '123',
+        getEndpointResponse: jest.fn(),
         logger: loggerMock,
         serviceStatusRepository: statusRepositoryMock,
         endpointStatusEntryRepository: endpointRepositoryMock,
@@ -62,10 +52,11 @@ describe('checkEndpoint', () => {
     });
 
     describe('checkEndpointJob', () => {
-      const getter = jest.fn();
+      const getEndpointResponse = jest.fn();
       const job = createCheckEndpointJob({
         url: 'https//test.co',
-        getter: jest.fn(),
+        applicationId: '123',
+        getEndpointResponse: jest.fn(),
         logger: loggerMock,
         serviceStatusRepository: statusRepositoryMock,
         endpointStatusEntryRepository: endpointRepositoryMock,
@@ -75,15 +66,15 @@ describe('checkEndpoint', () => {
       beforeEach(() => {
         eventServiceMock.send.mockReset();
         endpointRepositoryMock.save.mockReset();
-        endpointRepositoryMock.findRecentByUrl.mockReset();
+        endpointRepositoryMock.findRecentByUrlAndApplicationId.mockReset();
         statusRepositoryMock.get.mockReset();
         statusRepositoryMock.save.mockReset();
       });
 
       it('can updated application healthy', async () => {
-        getter.mockResolvedValueOnce({ status: 200 });
+        getEndpointResponse.mockResolvedValueOnce({ status: 200 });
         endpointRepositoryMock.save.mockImplementationOnce((entity) => entity);
-        endpointRepositoryMock.findRecentByUrl.mockReturnValueOnce([
+        endpointRepositoryMock.findRecentByUrlAndApplicationId.mockReturnValueOnce([
           {
             ok: true,
             url: 'https//test.co',
@@ -123,9 +114,9 @@ describe('checkEndpoint', () => {
       });
 
       it('can updated application unhealthy', async () => {
-        getter.mockResolvedValueOnce({ status: 200 });
+        getEndpointResponse.mockResolvedValueOnce({ status: 200 });
         endpointRepositoryMock.save.mockImplementationOnce((entity) => entity);
-        endpointRepositoryMock.findRecentByUrl.mockReturnValueOnce([
+        endpointRepositoryMock.findRecentByUrlAndApplicationId.mockReturnValueOnce([
           {
             ok: false,
             url: 'https//test.co',
@@ -165,9 +156,9 @@ describe('checkEndpoint', () => {
       });
 
       it('can not update when status unchanged', async () => {
-        getter.mockResolvedValueOnce({ status: 200 });
+        getEndpointResponse.mockResolvedValueOnce({ status: 200 });
         endpointRepositoryMock.save.mockImplementationOnce((entity) => entity);
-        endpointRepositoryMock.findRecentByUrl.mockReturnValueOnce([
+        endpointRepositoryMock.findRecentByUrlAndApplicationId.mockReturnValueOnce([
           {
             ok: false,
             url: 'https//test.co',
