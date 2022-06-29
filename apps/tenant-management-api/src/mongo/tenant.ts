@@ -1,6 +1,6 @@
 import { TenantRepository } from '../tenant/repository';
 import { TenantEntity, Tenant } from '../tenant/models';
-import { Doc, NotFoundError } from '@core-services/core-common';
+import { Doc, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Document, Model, model, Types } from 'mongoose';
 import { tenantSchema } from './schema';
 import { TenantCriteria } from '../tenant/types';
@@ -25,8 +25,13 @@ export class MongoTenantRepository implements TenantRepository {
     return Promise.resolve(this.fromDoc(doc));
   }
 
-  async delete(realm: string): Promise<void> {
-    await this.tenantModel.deleteOne({ realm: realm });
+  async delete(id: string): Promise<boolean> {
+    if (!id) {
+      throw new InvalidOperationError('ID of tenant to delete not specified');
+    }
+
+    const { deletedCount } = await this.tenantModel.deleteOne({ _id: id });
+    return deletedCount > 0;
   }
 
   async get(id: string): Promise<TenantEntity> {

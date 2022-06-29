@@ -1,11 +1,6 @@
 import { AdspId, adspId } from '@abgov/adsp-service-sdk';
-import KeycloakAdminClient from '@keycloak/keycloak-admin-client';
-import * as keycloak from '../../../keycloak';
 import { TenantRepository } from '../../repository';
-import { getRealmRoles, getTenant, getTenants } from './get';
-
-jest.mock('../../../keycloak');
-const keycloakMock = keycloak as jest.Mocked<typeof keycloak>;
+import { getTenant, getTenants } from './get';
 
 describe('get', () => {
   const repositoryMock = {
@@ -57,23 +52,6 @@ describe('get', () => {
       const result = await getTenants(repositoryMock as unknown as TenantRepository, criteria);
       expect(result).toContainEqual({ name: tenant.name, realm: tenant.realm, id: expect.any(AdspId) });
       expect(repositoryMock.find).toHaveBeenCalledWith(criteria);
-    });
-  });
-
-  describe('getRealmRoles', () => {
-    it('can get realm roles', async () => {
-      const realm = 'my-realm';
-      const keycloakClientMock = {
-        roles: {
-          find: jest.fn(),
-        },
-      };
-      const roles = [];
-      keycloakMock.createkcAdminClient.mockResolvedValue(keycloakClientMock as unknown as KeycloakAdminClient);
-      keycloakClientMock.roles.find.mockResolvedValueOnce(roles);
-      const result = await getRealmRoles(realm);
-      expect(result).toBe(roles);
-      expect(keycloakClientMock.roles.find).toHaveBeenCalledWith(expect.objectContaining({ realm }));
     });
   });
 });
