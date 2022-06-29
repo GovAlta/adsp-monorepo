@@ -383,7 +383,7 @@ export const getServiceMetadata =
         });
       }
       directoryCache.set(`directory-${namespace}`, services);
-      return res.status(HttpStatusCodes.OK).json(filteredService);
+      return res.json(filteredService);
     } catch (err) {
       logger.error(`Failed get service for namespace: ${namespace} with error ${err.message}`);
       _next(err);
