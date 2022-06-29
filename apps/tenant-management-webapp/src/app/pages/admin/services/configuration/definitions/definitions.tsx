@@ -30,6 +30,7 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+
   const reset = () => {
     setIsEdit(false);
     setOpenAddDefinition(false);
@@ -68,14 +69,14 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
           isEdit={isEdit}
           initialValue={selectedDefinition}
           onSave={(definition) => {
-            dispatch(updateConfigurationDefinition(definition, false));
+              dispatch(updateConfigurationDefinition(definition, false));
           }}
         />
       )}
       {indicator.show && <PageIndicator />}
       {/* tenant config definition */}
       <div>
-        {!indicator.show && !tenantConfigDefinitions && renderNoItem('configuration')}
+        {!indicator.show && !tenantConfigDefinitions && renderNoItem('tenant configuration')}
         {!indicator.show && tenantConfigDefinitions && (
           <>
             <ConfigurationDefinitionsTableComponent
@@ -97,7 +98,7 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
       </div>
       {/* platform config definitions */}
       <div>
-        {!indicator.show && !coreConfigDefinitions && renderNoItem('configuration')}
+        {!indicator.show && !coreConfigDefinitions && renderNoItem('core configuration')}
         {!indicator.show && coreConfigDefinitions && (
           <>
             <ConfigurationDefinitionsTableComponent

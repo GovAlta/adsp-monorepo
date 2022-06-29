@@ -69,7 +69,7 @@ Feature: File service
     Given a service owner user is on Files overview page
     Then no critical or serious accessibility issues on "file service overview page"
 
-  @TEST_CS-315 @REQ_CS-196 @FileTypes @regression
+  @TEST_CS-315 @REQ_CS-196 @FileTypes @regression @ignore
   Scenario: As a GoA service admin, I can add, update and remove file types
     Given a service owner user is on Files overview page
     When the user selects "File types" tab for "File"

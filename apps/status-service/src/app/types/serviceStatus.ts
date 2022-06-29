@@ -50,6 +50,7 @@ export type ServiceStatusApplicationModel = ServiceStatusApplication & Document;
 
 export interface ServiceStatusEndpoint {
   url: string;
+  id: string;
   status: EndpointStatusType;
 }
 

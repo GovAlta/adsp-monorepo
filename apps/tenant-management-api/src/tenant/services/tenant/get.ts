@@ -1,6 +1,4 @@
 import { adspId, AdspId, Tenant } from '@abgov/adsp-service-sdk';
-import type RoleRepresentation from '@keycloak/keycloak-admin-client/lib/defs/roleRepresentation';
-import { createkcAdminClient } from '../../../keycloak';
 import { TenantRepository } from '../..';
 import { TenantCriteria } from '../../types';
 
@@ -26,16 +24,6 @@ export const getTenants = async (repository: TenantRepository, criteria?: Tenant
         id: adspId`urn:ads:platform:tenant-service:v2:/tenants/${entity.id}`,
       }))
     );
-  } catch (e) {
-    return Promise.reject(e);
-  }
-};
-
-export const getRealmRoles = async (realm: string): Promise<RoleRepresentation[]> => {
-  try {
-    const client = await createkcAdminClient();
-    const roles = await client.roles.find({ realm: realm });
-    return Promise.resolve(roles);
   } catch (e) {
     return Promise.reject(e);
   }
