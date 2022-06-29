@@ -9,6 +9,7 @@ import { KeycloakCheckSSOWithLogout } from '@store/tenant/actions';
 import { GoAPageLoader } from '@abgov/react-components';
 import { NotificationBanner } from './notificationBanner';
 import styled from 'styled-components';
+import { LogoutModal } from '@components/LogoutModal';
 
 interface privateAppProps {
   children: ReactNode;
@@ -47,6 +48,7 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
       /> */}
 
           <NotificationBanner />
+          <LogoutModal />
         </FixedContainer>
       </ScrollBarFixTop>
       <ScrollBarFixMain>

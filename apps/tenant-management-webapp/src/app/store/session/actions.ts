@@ -6,6 +6,7 @@ export const CREDENTIAL_REFRESH = 'credential/refresh';
 export const UPDATE_INDICATOR = 'session/indicator';
 export const UPDATE_ELEMENT_INDICATOR = 'session/elementIndicator';
 export const UPDATE_LOADING_STATE = 'session/loading/state';
+export const SET_SESSION_EXPIRED = 'session/expired';
 
 export type ActionType =
   | SessionLoginSuccessAction
@@ -13,7 +14,8 @@ export type ActionType =
   | CredentialRefreshAction
   | UpdateIndicatorAction
   | UpdateLoadingStateAction
-  | UpdateElementIndicatorAction;
+  | UpdateElementIndicatorAction
+  | SetSessionExpiredAction;
 
 export interface CredentialRefreshAction {
   type: typeof CREDENTIAL_REFRESH;
@@ -44,6 +46,11 @@ export interface UpdateElementIndicatorAction {
   payload: ElementIndicator;
 }
 
+export interface SetSessionExpiredAction {
+  type: typeof SET_SESSION_EXPIRED;
+  payload: boolean;
+}
+
 export const SessionLoginSuccess = (session: Session): SessionLoginSuccessAction => ({
   type: SESSION_LOGIN_SUCCESS,
   payload: session,
@@ -71,4 +78,9 @@ export const UpdateIndicator = (indicator: Indicator): UpdateIndicatorAction => 
 export const UpdateLoadingState = (loadingState: LoadingState): UpdateLoadingStateAction => ({
   type: UPDATE_LOADING_STATE,
   payload: loadingState,
+});
+
+export const SetSessionExpired = (isExpired: boolean): SetSessionExpiredAction => ({
+  type: SET_SESSION_EXPIRED,
+  payload: isExpired,
 });
