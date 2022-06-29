@@ -1,5 +1,6 @@
 import { DirectoryRepository } from '../../repository';
 import { AdspId, adspId } from '@abgov/adsp-service-sdk';
+import { DirectoryEntry, Service } from '../../types';
 
 interface URNComponent {
   scheme?: string;
@@ -30,24 +31,29 @@ export const getNamespaceEntries = async (
   const response = [];
 
   for (const service of services) {
-    const element = {};
-    element['namespace'] = namespace;
-    element['service'] = service.service;
-    element['url'] = service.host;
-
-    const component: URNComponent = {
-      scheme: 'urn',
-      nic: 'ads',
-      core: namespace,
-      service: service.service,
-    };
-    element['urn'] = getUrn(component);
-
-    response.push(element);
+    const entry = getEntry(namespace, service);
+    response.push(entry);
   }
 
   return response;
 };
+
+export const getEntry = (namespace: string, service: Service): DirectoryEntry => {
+  const element = {};
+  element['namespace'] = namespace;
+  element['service'] = service.service;
+  element['url'] = service.host;
+
+  const component: URNComponent = {
+    scheme: 'urn',
+    nic: 'ads',
+    core: namespace,
+    service: service.service,
+  };
+  element['urn'] = getUrn(component);
+  return element as DirectoryEntry;
+};
+
 //eslint-disable-next-line
 export const getServiceUrlById = async (serviceId: AdspId, directoryRepository: DirectoryRepository) => {
   let directories = [];

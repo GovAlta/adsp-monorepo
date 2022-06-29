@@ -19,6 +19,8 @@ import {
   getServiceMetadata,
 } from './directory';
 import axios from 'axios';
+import { DirectoryRepository } from '../../directory/repository';
+import { getEntriesForServiceImpl } from './directory';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -156,14 +158,14 @@ describe('router', () => {
           { service: 'file-service', host: '/file/service' },
         ],
       };
-      const testServiceRes = [
-        {
+      const testServiceRes = {
+        service: {
           namespace: 'platform',
           service: 'test-service',
           url: '/test/service',
           urn: 'urn:ads:platform:test-service',
         },
-      ];
+      };
       const next = jest.fn();
       const entity = new DirectoryEntity(repositoryMock, testDirectory);
       repositoryMock.getDirectories.mockResolvedValueOnce(entity);
@@ -190,6 +192,137 @@ describe('router', () => {
       repositoryMock.getDirectories.mockResolvedValueOnce(entity);
       await handler(req, res as unknown as Response, next);
       expect(next).toHaveBeenCalled();
+    });
+
+    describe('getEntriesForService Implementation', () => {
+      const repositoryMock = {
+        getDirectories: jest.fn(),
+      };
+
+      it('can find a service with no APIs', async () => {
+        const directory = {
+          services: [
+            {
+              _id: '3',
+              namespace: 'test-namespace',
+              service: 'test-service',
+              host: 'http://test/service',
+            },
+          ],
+        };
+        repositoryMock.getDirectories.mockResolvedValueOnce(directory);
+        const repository = repositoryMock as unknown as DirectoryRepository;
+
+        const results = await getEntriesForServiceImpl(
+          directory.services[0].namespace,
+          directory.services[0].service,
+          repository
+        );
+        expect(results.service).toEqual({
+          namespace: directory.services[0].namespace,
+          service: directory.services[0].service,
+          url: directory.services[0].host,
+          urn: 'urn:ads:test-namespace:test-service',
+        });
+        expect(results.apis).toEqual([]);
+      });
+    });
+
+    it('can find a service with APIs', async () => {
+      const directory = {
+        services: [
+          { _id: '4', namespace: 'test-namespace', service: 'test-service', host: 'http://service' },
+          { _id: '5', namespace: 'test-namespace', service: 'test-service:apiA', host: 'http://api1' },
+          { _id: '6', namespace: 'test-namespace', service: 'test-service:apiB', host: 'http://api2' },
+          { _id: '7', namespace: 'test-namespace', service: 'test-service:apiC', host: 'http://api3' },
+        ],
+      };
+      repositoryMock.getDirectories.mockResolvedValueOnce(directory);
+      const repository = repositoryMock as unknown as DirectoryRepository;
+
+      const results = await getEntriesForServiceImpl(directory.services[0].namespace, 'test-service', repository);
+      expect(results.service).toEqual({
+        namespace: 'test-namespace',
+        service: 'test-service',
+        url: 'http://service',
+        urn: 'urn:ads:test-namespace:test-service',
+      });
+      expect(results.apis).toEqual(
+        expect.arrayContaining([
+          {
+            namespace: 'test-namespace',
+            service: 'test-service:apiA',
+            url: 'http://api1',
+            urn: 'urn:ads:test-namespace:test-service:apiA',
+          },
+          {
+            namespace: 'test-namespace',
+            service: 'test-service:apiB',
+            url: 'http://api2',
+            urn: 'urn:ads:test-namespace:test-service:apiB',
+          },
+          {
+            namespace: 'test-namespace',
+            service: 'test-service:apiC',
+            url: 'http://api3',
+            urn: 'urn:ads:test-namespace:test-service:apiC',
+          },
+        ])
+      );
+    });
+
+    it('can find APIs but no service', async () => {
+      const directory = {
+        services: [
+          { _id: '5', namespace: 'test-namespace', service: 'test-service:apiA', host: 'http://api1' },
+          { _id: '6', namespace: 'test-namespace', service: 'test-service:apiB', host: 'http://api2' },
+          { _id: '7', namespace: 'test-namespace', service: 'test-service:apiC', host: 'http://api3' },
+        ],
+      };
+      repositoryMock.getDirectories.mockResolvedValueOnce(directory);
+      const repository = repositoryMock as unknown as DirectoryRepository;
+
+      const results = await getEntriesForServiceImpl(directory.services[0].namespace, 'test-service', repository);
+
+      expect(results.service).toEqual(null);
+      expect(results.apis).toEqual(
+        expect.arrayContaining([
+          {
+            namespace: 'test-namespace',
+            service: 'test-service:apiA',
+            url: 'http://api1',
+            urn: 'urn:ads:test-namespace:test-service:apiA',
+          },
+          {
+            namespace: 'test-namespace',
+            service: 'test-service:apiB',
+            url: 'http://api2',
+            urn: 'urn:ads:test-namespace:test-service:apiB',
+          },
+          {
+            namespace: 'test-namespace',
+            service: 'test-service:apiC',
+            url: 'http://api3',
+            urn: 'urn:ads:test-namespace:test-service:apiC',
+          },
+        ])
+      );
+    });
+
+    it('cant find anything', async () => {
+      const directory = {
+        services: [
+          { _id: '5', namespace: 'test-namespace', service: 'test-service:apiA', host: 'http://api1' },
+          { _id: '6', namespace: 'test-namespace', service: 'test-service:apiB', host: 'http://api2' },
+          { _id: '7', namespace: 'test-namespace', service: 'test-service:apiC', host: 'http://api3' },
+        ],
+      };
+      repositoryMock.getDirectories.mockResolvedValueOnce(directory);
+      const repository = repositoryMock as unknown as DirectoryRepository;
+
+      const results = await getEntriesForServiceImpl(directory.services[0].namespace, 'bob', repository);
+
+      expect(results).toEqual(null);
     });
   });
 
