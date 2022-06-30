@@ -395,7 +395,7 @@ class NotificationsPage {
   }
 
   editTemplateModalSubjectRightPane() {
-    return cy.get('.sc-kmQMED');
+    return cy.get('[data-testid="email-preview-subject"]');
   }
 
   editTemplateModalBody() {
@@ -403,7 +403,7 @@ class NotificationsPage {
   }
 
   editContactModalBodyRightPane() {
-    return cy.get('.sc-cvZCdy');
+    return cy.get('[data-testid="email-preview-body"]');
   }
 
   editTemplateModalCloseBtn() {
