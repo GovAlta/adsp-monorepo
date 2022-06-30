@@ -12,9 +12,10 @@ Feature: Subscription management
 
   @TEST_CS-995 @REQ_CS-915 @TEST_CS-1248 @REQ_CS-1040 @REQ_CS-1502 @regression
   Scenario: As an authenticated stakeholder, I can login to see non-self-serve subscriptions
-    When an authenticated user is in the subscriber app
+    When an authenticated user with "auto.contact" and "autotest" is in the subscriber app
     Then the user views subscription management page
     And the user views the user contact information
+    # the user with auto.contact.test@gmail.com should be subscribed to below app
     And the user views the support link for the subscription of "Application health check change"
     And the user views the subscription of "Application health check change" and its description
 
@@ -33,13 +34,13 @@ Feature: Subscription management
     When the user removes email value in contact information
     And the user clicks Save button in contact information
     Then the user views an error messsage for missing email
-    When the user enters "superxw@gmail.com" as email, "7801001234" as phone number and "sms" as preferred channel
+    When the user enters "auto.contact.test@gmail.com" as email, "7801001234" as phone number and "sms" as preferred channel
     And the user clicks Save button in contact information
     Then the user views a callout message of "Contact information updated."
-    And the user views contact information of "superxw@gmail.com", "780 100 1234" and "sms"
+    And the user views contact information of "auto.contact.test@gmail.com", "780 100 1234" and "sms"
     When the user clicks edit contact information button
-    And the user enters "superxw@gmail.com" as email, "EMPTY" as phone number and "email" as preferred channel
+    And the user enters "auto.contact.test@gmail.com" as email, "EMPTY" as phone number and "email" as preferred channel
     And the user clicks Save button in contact information
     Then the user views a callout message of "Contact information updated."
-    And the user views contact information of "superxw@gmail.com", "EMPTY" and "email"
+    And the user views contact information of "auto.contact.test@gmail.com", "EMPTY" and "email"
 
