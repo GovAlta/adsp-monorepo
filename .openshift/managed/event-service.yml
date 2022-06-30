@@ -276,6 +276,7 @@ objects:
             resources:
               requests:
                 storage: 5Gi
+      podManagementPolicy: Parallel
   - apiVersion: route.openshift.io/v1
     kind: Route
     metadata:

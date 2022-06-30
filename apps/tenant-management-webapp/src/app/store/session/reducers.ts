@@ -1,4 +1,4 @@
-import { ActionType } from './actions';
+import { ActionType, SET_SESSION_EXPIRED } from './actions';
 import { Session, SESSION_INIT } from './models';
 
 export default function (state: Session = SESSION_INIT, action: ActionType): Session {
@@ -52,6 +52,12 @@ export default function (state: Session = SESSION_INIT, action: ActionType): Ses
       state.loadingStates = [...state.loadingStates];
       return state;
     }
+
+    case SET_SESSION_EXPIRED:
+      return {
+        ...state,
+        isExpired: action.payload,
+      };
 
     default:
       return state;
