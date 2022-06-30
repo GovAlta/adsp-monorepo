@@ -1,16 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { TenantLogout } from '@store/tenant/actions';
+import React, { useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { GoAModal, GoAModalContent, GoAModalTitle, GoAModalActions } from '@abgov/react-components/experimental';
 import { GoAButton } from '@abgov/react-components';
-
 import { RootState } from '@store/index';
 
 export const LogoutModal = (): JSX.Element => {
   const { isExpired } = useSelector((state: RootState) => ({
     isExpired: state.session?.isExpired,
   }));
-  const dispatch = useDispatch();
 
   // eslint-disable-next-line
   useEffect(() => {}, [isExpired]);
@@ -18,14 +15,19 @@ export const LogoutModal = (): JSX.Element => {
   return (
     <GoAModal isOpen={isExpired === true} testId="tenant-logout-notice-modal">
       <GoAModalTitle>Session expired</GoAModalTitle>
-      <GoAModalContent>Your session has expired. We are going to logout.</GoAModalContent>
+      <GoAModalContent>
+        You were logged out of the system. If you wish to continue, please login again. Otherwise, close the tab or
+        window.
+      </GoAModalContent>
       <GoAModalActions>
         <GoAButton
           onClick={() => {
-            dispatch(TenantLogout());
+            const tenantRealm = localStorage.getItem('realm');
+            localStorage.removeItem('realm');
+            window.location.replace(`${tenantRealm}/login`);
           }}
         >
-          Ok
+          Login again
         </GoAButton>
       </GoAModalActions>
     </GoAModal>
