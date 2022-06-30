@@ -5,11 +5,11 @@ import { Job } from 'node-schedule';
 
 interface HealthCheckJob {
   url: string,
-  applicationIds: string[]
+  applicationId: string
   job?: Job
 }
 
-type healthCheckJobType = (url: string) => Job;
+type healthCheckJobType = (applicationId: string, url: string) => Job;
 
 const Jobs = new NodeCache();
 
@@ -19,15 +19,13 @@ export class HealthCheckJobs {
     this.#logger = logger;
   }
 
-  forEach = (healCheckJob: healthCheckJobType): void => {
+  forEach = (healthCheckJob: healthCheckJobType): void => {
     const keys = Jobs.keys();
     keys.forEach((key) => {
       const job = Jobs.get(key) as HealthCheckJob;
       // If job does not exist, we need to create a new one for the endpoint.
       if (!job.job) {
-        const scheduledJob = healCheckJob(
-          job.url
-        );
+        const scheduledJob = healthCheckJob(job.applicationId, job.url );
 
         job.job = scheduledJob;
         this.#logger.info(`Add job definition for ${job.url}`)
@@ -42,37 +40,28 @@ export class HealthCheckJobs {
     }
   }
 
-  idsByUrl = (url: string): string[] => {
+  idByUrl = (url: string): string => {
     const key = url;
     const job = Jobs.get(key)
     if (job) {
-      return (job as HealthCheckJob).applicationIds;
+      return (job as HealthCheckJob).applicationId;
     }
 
-    return [];
+    return "";
   }
 
   #add = (application: ServiceStatusApplicationEntity): void => {
-    const key = application.endpoint.url;
-    const existedJob = Jobs.get(key);
     let job: HealthCheckJob = undefined;
     const id = application._id.toString();
-    if (existedJob) {
-      job = existedJob as HealthCheckJob;
-      if (!job.applicationIds.includes(id)) {
-        job.applicationIds.push(id);
-        this.#logger.info(
-          `Add a new application id ${id} to an existing job.`)
-      }
-    } else {
-      this.#logger.info(
-        `Create a new job with application id ${application._id}.`)
-      job = {
-        url: application.endpoint.url,
-        applicationIds: [id],
-        job: null
-      }
+    const key = id;
+  
+    this.#logger.info(`Create a new job with application id ${application._id}.`)
+    job = {
+      url: application.endpoint.url,
+      applicationId: id,
+      job: null
     }
+
     Jobs.set(key, job);
   }
 
@@ -82,7 +71,7 @@ export class HealthCheckJobs {
 
     keys.forEach((key) => {
       const job = Jobs.get(key) as HealthCheckJob;
-      job.applicationIds.map((id) => { applicationIds.push(id) });
+      applicationIds.push(job.applicationId);
     });
 
     return applicationIds;
@@ -91,7 +80,7 @@ export class HealthCheckJobs {
   #key = (id: string): string => {
     const keys = Jobs.keys();
     return keys.find((key) => {
-      return (Jobs.get(key) as HealthCheckJob).applicationIds.includes(id)
+      return (Jobs.get(key) as HealthCheckJob).applicationId === id
     });
   }
 
@@ -106,10 +95,10 @@ export class HealthCheckJobs {
 
       const url = app.endpoint.url;
       const id = app._id.toString();
-      const idsInUrl = (Jobs.get(url) as HealthCheckJob)?.applicationIds;
+      const idInUrl = (Jobs.get(url) as HealthCheckJob)?.applicationId;
 
       if (ids.includes(id)) {
-        if (!idsInUrl || (idsInUrl && !idsInUrl.includes(id))) {
+        if (idInUrl === id) {
           // Condition a; old app moved to a new endpoint
           // Condition b: old app moved to an existing endpoint
           idsToRemove.push(id);
@@ -145,14 +134,8 @@ export class HealthCheckJobs {
     const value = Jobs.get(key);
     if (value) {
       const job = value as HealthCheckJob;
-      if (job.applicationIds.length > 1) {
-        this.#logger.info(
-          `Remove application with id ${id} from url ${job.url}`);
-        job.applicationIds = job.applicationIds.filter((_id) => { return _id !== id });
-        Jobs.set(key, job)
-      }
 
-      if (job.applicationIds.length == 1 && job.applicationIds[0] === id) {
+      if (job.applicationId === id) {
         this.#logger.info(
           `Delete job with url ${job.url}`);
         if (Jobs.get(key)) {
@@ -164,4 +147,4 @@ export class HealthCheckJobs {
       }
     }
   }
-}
+} 

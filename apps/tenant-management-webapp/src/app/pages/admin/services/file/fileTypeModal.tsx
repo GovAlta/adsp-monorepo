@@ -325,24 +325,6 @@ const ModalOverwrite = styled.div`
     font-size: var(--fs-lg);
     margin-top: 15px;
   }
-
-  .three-wide {
-    display: none;
-  }
-
-  .two-wide {
-    display: block;
-  }
-
-  @media (min-width: 1280px) {
-    .three-wide {
-      display: block;
-    }
-
-    .two-wide {
-      display: none;
-    }
-  }
 `;
 
 const AnonymousReadWrapper = styled.div`
@@ -398,6 +380,10 @@ const DataTableWrapper = styled.div`
 
   th {
     white-space: pre-wrap;
+  }
+  
+  thead {
+    padding-top: 1.25rem;
   }
 `;
 

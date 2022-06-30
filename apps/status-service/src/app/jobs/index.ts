@@ -6,6 +6,7 @@ import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { createCheckEndpointJob, CreateCheckEndpointProps } from './checkEndpoint';
 import { EventService } from '@abgov/adsp-service-sdk';
 import { HealthCheckJobs } from './healthCheckJobs';
+
 const JOB_TIME_INTERVAL_MIN = 1;
 const REQUEST_TIMEOUT = 5000;
 interface ServiceStatusJobProps {
@@ -27,18 +28,20 @@ export async function scheduleServiceStatusJobs(props: ServiceStatusJobProps): P
   const applications = await props.serviceStatusRepository.findEnabledApplications();
   const healthCheckJobs = new HealthCheckJobs(props.logger);
   healthCheckJobs.addBatch(applications);
-  healthCheckJobs.forEach((url): Job => {
+
+  healthCheckJobs.forEach((applicationId, url): Job => {
     return scheduleServiceStatusJob({
       ...props,
-      url,
-      getter: async (url: string) => {
+      applicationId: applicationId,
+      url: url,
+      getEndpointResponse: async (url: string) => {
         return await axios.get(url, { timeout: REQUEST_TIMEOUT });
       },
     });
   });
 
-  scheduleJob('*/5 * * * *', watchApps(props));
   scheduleJob('0 0 * * *', deleteOldStatus(props));
+  scheduleJob('*/5 * * * *', watchApps(props));
 }
 
 function deleteOldStatus(props: ServiceStatusJobProps) {
@@ -56,11 +59,13 @@ function watchApps(props: ServiceStatusJobProps) {
   return async () => {
     const applications = await props.serviceStatusRepository.findEnabledApplications();
     const healthCheckJobs = new HealthCheckJobs(props.logger);
-    await healthCheckJobs.sync(applications, (url) => {
+
+    healthCheckJobs.sync(applications, (applicationId, url) => {
       return scheduleServiceStatusJob({
         ...props,
-        url,
-        getter: async (url: string) => {
+        applicationId: applicationId,
+        url: url,
+        getEndpointResponse: async (url: string) => {
           return await axios.get(url, { timeout: REQUEST_TIMEOUT });
         },
       });

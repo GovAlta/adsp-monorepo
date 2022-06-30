@@ -23,10 +23,9 @@ import {
   TENANT_CREATION_LOGIN_INIT,
   TENANT_LOGIN,
   TENANT_LOGOUT,
-  TenantLogout,
 } from './actions';
 
-import { CredentialRefresh, SessionLoginSuccess, UpdateIndicator } from '@store/session/actions';
+import { CredentialRefresh, SessionLoginSuccess, UpdateIndicator, SetSessionExpired } from '@store/session/actions';
 import { TenantApi } from './api';
 import { TENANT_INIT } from './models';
 import { createKeycloakAuth, KeycloakAuth, LOGIN_TYPES } from '@lib/keycloak';
@@ -148,24 +147,26 @@ export function* getAccessToken(): SagaIterator {
   try {
     // Check if credentials still present or if logout has occurred.
     const credentials: Credentials = yield select((state: RootState) => state.session.credentials);
-    if (credentials?.token) {
-      // Check if token is within 1 min of expiry.
-      if (credentials.tokenExp - Date.now() / 1000 < 60) {
-        const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth);
-        const session: Session = yield call([keycloakAuth, keycloakAuth.refreshToken]);
-        if (session) {
-          const { credentials } = session;
-          yield put(CredentialRefresh(credentials));
+    if (!credentials || !credentials?.token || Date.now() / 1000 > credentials.tokenExp + 1) {
+      throw new Error('Cannot refresh token.');
+    }
 
-          return credentials.token;
-        }
-      } else {
+    // Check if token is within 1 min of expiry.
+    if (credentials.tokenExp - Date.now() / 1000 < 60) {
+      const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth);
+      const session: Session = yield call([keycloakAuth, keycloakAuth.refreshToken]);
+      if (session) {
+        const { credentials } = session;
+        yield put(CredentialRefresh(credentials));
+
         return credentials.token;
       }
+    } else {
+      return credentials.token;
     }
   } catch (e) {
     // Failure to get the access token results in a logout.
-    yield put(TenantLogout());
+    yield put(SetSessionExpired(true));
   }
 }
 
