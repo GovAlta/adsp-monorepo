@@ -24,3 +24,10 @@ export interface Links {
 export interface Criteria {
   name: { $regex: string; $options: 'i' };
 }
+
+export interface DirectoryEntry {
+  namespace: string;
+  service: string;
+  url: string;
+  urn: string;
+}

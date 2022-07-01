@@ -25,6 +25,7 @@ export interface Session {
   indicator?: Indicator;
   elementIndicator?: ElementIndicator;
   loadingStates?: LoadingStates;
+  isExpired?: boolean;
 }
 
 export interface Credentials {
@@ -50,4 +51,5 @@ export const SESSION_INIT: Session = {
     message: '',
   },
   loadingStates: [],
+  isExpired: null,
 };
