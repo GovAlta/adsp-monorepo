@@ -3,12 +3,13 @@ import { RootState } from '@store/index';
 import { fetchEventStreams, startSocket } from '@store/stream/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import { PageIndicator } from '@components/Indicator';
-import { GoAButton, GoADropdown, GoADropdownOption } from '@abgov/react-components';
+import { GoAButton, GoADropdown, GoADropdownOption, GoAElementLoader } from '@abgov/react-components';
 import { Divider, StreamHeading, StreamsDropdown } from './styledComponents';
 import { GoAForm } from '@abgov/react-components/experimental';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
 import { ReactComponent as Warning } from '@icons/warning.svg';
 import { StreamPayloadTable } from './streamPayloadTable';
+import styled from 'styled-components';
 
 const Icons = {
   greenCircleCheckMark: (
@@ -47,8 +48,10 @@ export const TestStream = (): JSX.Element => {
   });
   const [selectedSteamId, setSelectedStreamId] = useState<string[]>([]);
   const [socketConnection, setSocketConnection] = useState(undefined); // to track socket connection status
+  const [socketConnecting, setSocketConnecting] = useState(undefined); // to track socket connection initializing progress
   const [socketDisconnect, setSocketDisconnect] = useState(undefined); // to track socket disconnection status
   const [socketConnectionError, setSocketConnectionError] = useState(undefined); // to track socket unexpected errors status
+  const [spinner, setSpinner] = useState(false);
   const [streamData, setStreamData] = useState([]);
 
   useEffect(() => {
@@ -59,6 +62,8 @@ export const TestStream = (): JSX.Element => {
   useEffect(() => {
     socket?.on('connect', () => {
       setSocketConnection(true);
+      setSocketConnecting(false);
+      setSpinner(false);
       setSocketDisconnect(false);
       setSocketConnectionError(false);
     });
@@ -95,6 +100,9 @@ export const TestStream = (): JSX.Element => {
 
   const disableConnectButton = () => {
     if (selectedSteamId.length === 0) {
+      return true;
+    }
+    if (socketConnecting) {
       return true;
     }
     if (socket && socketConnection) {
@@ -172,10 +180,17 @@ export const TestStream = (): JSX.Element => {
               buttonType="primary"
               disabled={disableConnectButton()}
               onClick={() => {
+                setSocketConnecting(true);
+                setTimeout(() => setSpinner(true), 2000);
                 dispatch(startSocket(`${pushServiceUrl}/${tenant?.name}`, selectedSteamId[0]));
               }}
             >
               Connect
+              {spinner && (
+                <SpinnerPadding>
+                  <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
+                </SpinnerPadding>
+              )}
             </GoAButton>
             <Divider />
             <GoAButton
@@ -196,3 +211,8 @@ export const TestStream = (): JSX.Element => {
     </>
   );
 };
+
+const SpinnerPadding = styled.div`
+  margin: 0 0 0 5px;
+  float: right;
+`;
