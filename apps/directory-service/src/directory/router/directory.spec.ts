@@ -110,7 +110,7 @@ describe('router', () => {
       await handler(req, res as unknown as Response, next);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining(platformDirectoryRes));
     });
-    it('can call next with not found', async () => {
+    it('can return not found', async () => {
       const handler = getDirectoriesByNamespace(repositoryMock);
       const testDirectory = {
         name: 'platform',
@@ -124,13 +124,14 @@ describe('router', () => {
       } as unknown as Request;
       const res = {
         json: jest.fn(),
+        sendStatus: jest.fn(),
       };
       const next = jest.fn();
 
       const entity = new DirectoryEntity(repositoryMock, testDirectory);
       repositoryMock.getDirectories.mockResolvedValueOnce(entity);
       await handler(req, res as unknown as Response, next);
-      expect(next).toHaveBeenCalled();
+      expect(res.sendStatus).toHaveBeenCalledWith(HttpStatusCodes.NOT_FOUND);
     });
   });
 
@@ -172,7 +173,7 @@ describe('router', () => {
       await handler(req, res as unknown as Response, next);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining(testServiceRes));
     });
-    it('getEntriesForService can call next with not found', async () => {
+    it('getEntriesForService can return not found', async () => {
       const handler = getEntriesForService(repositoryMock);
       const testDirectory = {
         name: 'platform',
@@ -186,12 +187,13 @@ describe('router', () => {
       } as unknown as Request;
       const res = {
         json: jest.fn(),
+        sendStatus: jest.fn(),
       };
       const next = jest.fn();
       const entity = new DirectoryEntity(repositoryMock, testDirectory);
       repositoryMock.getDirectories.mockResolvedValueOnce(entity);
       await handler(req, res as unknown as Response, next);
-      expect(next).toHaveBeenCalled();
+      expect(res.sendStatus).toHaveBeenCalledWith(HttpStatusCodes.NOT_FOUND);
     });
 
     describe('getEntriesForService Implementation', () => {
@@ -364,7 +366,7 @@ describe('router', () => {
       await handler(req, res as unknown as Response, next);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining(testServiceRes));
     });
-    it('getDirectoryEntryForApi can call next with not found', async () => {
+    it('getDirectoryEntryForApi will return with not found', async () => {
       const handler = getDirectoryEntryForApi(repositoryMock);
       const testDirectory = {
         name: 'platform',
@@ -379,12 +381,13 @@ describe('router', () => {
       } as unknown as Request;
       const res = {
         json: jest.fn(),
+        sendStatus: jest.fn(),
       };
       const next = jest.fn();
       const entity = new DirectoryEntity(repositoryMock, testDirectory);
       repositoryMock.getDirectories.mockResolvedValueOnce(entity);
       await handler(req, res as unknown as Response, next);
-      expect(next).toHaveBeenCalled();
+      expect(res.sendStatus).toHaveBeenCalledWith(HttpStatusCodes.NOT_FOUND);
     });
   });
   describe('getServiceMetadata', () => {

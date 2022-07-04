@@ -67,10 +67,13 @@ export const getDirectoriesByNamespace =
     try {
       const { namespace } = req.params;
       entries = await getNamespaceEntries(directoryRepository, namespace);
+      if (entries.length === 0) {
+        return res.sendStatus(HttpStatusCodes.NOT_FOUND);
+      }
+      res.json(entries);
     } catch (err) {
       _next(err);
     }
-    res.json(entries);
   };
 
 export const getEntriesForService =
@@ -80,7 +83,7 @@ export const getEntriesForService =
       const { namespace, service } = req.params;
       const result = await getEntriesForServiceImpl(namespace, service, directoryRepository);
       if (!result) {
-        _next();
+        return res.sendStatus(HttpStatusCodes.NOT_FOUND);
       }
       return res.json(result);
     } catch (err) {
@@ -103,22 +106,13 @@ export const getEntriesForServiceImpl = async (
     return null;
   }
 
-  // regex matches the service name;
-  // partial matches are not allowed at this point.
+  // regex matches the service name, exactly;
   const serviceRe = new RegExp(`^${service}$`);
-  const serviceEntry = data.services
-    .filter((x) => x.service.match(serviceRe))
-    .map((s: Service) => {
-      return getEntry(namespace, s);
-    });
+  const serviceEntry = data.services.filter((x) => x.service.match(serviceRe)).map((s) => getEntry(namespace, s));
 
-  // regex matches service:whatever
-  const apisRe = new RegExp(`^${service}:[a-zA-Z-]+$`);
-  const apiEntries = data.services
-    .filter((x) => x.service.match(apisRe))
-    .map((s: Service) => {
-      return getEntry(namespace, s);
-    });
+  // regex matches service:api
+  const apisRe = new RegExp(`^${service}:.+`);
+  const apiEntries = data.services.filter((x) => x.service.match(apisRe)).map((s) => getEntry(namespace, s));
 
   const theService = serviceEntry.length > 0 ? serviceEntry[0] : null;
   return !theService && apiEntries.length == 0 ? null : { service: theService, apis: apiEntries };
@@ -135,10 +129,10 @@ export const getDirectoryEntryForApi =
       if (!result) {
         return res.sendStatus(HttpStatusCodes.NOT_FOUND);
       }
+      res.json(result);
     } catch (err) {
       _next(err);
     }
-    res.json(result);
   };
 
 export const createNameSpace =
