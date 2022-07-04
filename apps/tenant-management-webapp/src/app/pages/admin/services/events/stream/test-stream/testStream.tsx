@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { RootState } from '@store/index';
 import { fetchEventStreams, startSocket } from '@store/stream/actions';
 import { useDispatch, useSelector } from 'react-redux';
@@ -53,6 +53,7 @@ export const TestStream = (): JSX.Element => {
   const [socketConnectionError, setSocketConnectionError] = useState(undefined); // to track socket unexpected errors status
   const [spinner, setSpinner] = useState(false);
   const [streamData, setStreamData] = useState([]);
+  const spinnerTimeout = useRef(null);
 
   useEffect(() => {
     dispatch(fetchEventStreams());
@@ -61,6 +62,7 @@ export const TestStream = (): JSX.Element => {
   // socket connection
   useEffect(() => {
     socket?.on('connect', () => {
+      clearTimeout(spinnerTimeout.current);
       setSocketConnection(true);
       setSocketConnecting(false);
       setSpinner(false);
@@ -68,6 +70,7 @@ export const TestStream = (): JSX.Element => {
       setSocketConnectionError(false);
     });
     socket?.on('disconnect', (reason) => {
+      clearTimeout(spinnerTimeout.current);
       // if connection disconnects from client or server side, consider it as a successful disconnect
       if (reason === 'io client disconnect' || reason === 'io server disconnect') {
         setSocketDisconnect(true);
@@ -80,6 +83,7 @@ export const TestStream = (): JSX.Element => {
       setSocketConnection(false);
     });
     socket?.on('connect_error', (error) => {
+      clearTimeout(spinnerTimeout.current);
       setSocketConnectionError(true);
       setSocketConnection(false);
       setSocketDisconnect(false);
@@ -181,7 +185,7 @@ export const TestStream = (): JSX.Element => {
               disabled={disableConnectButton()}
               onClick={() => {
                 setSocketConnecting(true);
-                setTimeout(() => setSpinner(true), 2000);
+                spinnerTimeout.current = setTimeout(() => setSpinner(true), 2000);
                 dispatch(startSocket(`${pushServiceUrl}/${tenant?.name}`, selectedSteamId[0]));
               }}
             >
