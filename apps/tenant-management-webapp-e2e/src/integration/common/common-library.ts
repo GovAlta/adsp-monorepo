@@ -47,6 +47,9 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
     case 'Configuration':
       menuItemTestid = 'menu-configuration';
       break;
+    case 'Pdf':
+      menuItemTestid = 'menu-pdf';
+      break;
     default:
       expect(menuItem).to.be.oneOf([
         'File',
@@ -58,6 +61,7 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
         'Directory',
         'Dashboard',
         'Event log',
+        'Pdf',
       ]);
   }
   commonObj.adminMenuItem(menuItemTestid).click();

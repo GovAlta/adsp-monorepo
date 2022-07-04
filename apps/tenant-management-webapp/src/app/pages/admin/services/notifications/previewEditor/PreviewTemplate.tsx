@@ -22,12 +22,13 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
       <>
         <h3>Subject</h3>
         <SubjectPreview
+          data-testid="email-preview-subject"
           dangerouslySetInnerHTML={{
             __html: sanitizeHtml(subjectPreviewContent),
           }}
         ></SubjectPreview>
         <h3>{channelTitle}</h3>
-        <BodyPreview title={channelTitle} html={bodyPreviewContent}></BodyPreview>
+        <BodyPreview data-testid="email-preview-body" title={channelTitle} html={bodyPreviewContent}></BodyPreview>
       </>
     );
   };
@@ -37,12 +38,17 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
       <>
         <h3>Sender’s number/short code</h3>
         <SubjectPreview
+          data-testid="sms-preview-subject"
           dangerouslySetInnerHTML={{
             __html: sanitizeHtml(phoneWrapper(contactPhoneNumber)),
           }}
         ></SubjectPreview>
         <h3>{channelTitle}</h3>
-        <SMSBodyPreview subject={subjectPreviewContent} body={bodyPreviewContent}></SMSBodyPreview>
+        <SMSBodyPreview
+          data-testid="sms-preview-body"
+          subject={subjectPreviewContent}
+          body={bodyPreviewContent}
+        ></SMSBodyPreview>
       </>
     );
   };
@@ -51,7 +57,11 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
     return (
       <>
         <h3>{channelTitle}</h3>
-        <SlackPreview subject={subjectPreviewContent} body={bodyPreviewContent}></SlackPreview>
+        <SlackPreview
+          data-testid="bot-preview"
+          subject={subjectPreviewContent}
+          body={bodyPreviewContent}
+        ></SlackPreview>
       </>
     );
   };

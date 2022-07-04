@@ -27,6 +27,8 @@ interface TenantRouterProps {
   eventService: EventService;
 }
 
+const LOG_CONTEXT = { context: 'TenantRouter' };
+
 export function getTenants(logger: Logger, repository: TenantRepository): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -58,7 +60,7 @@ export function getTenants(logger: Logger, repository: TenantRepository): Reques
         },
       });
     } catch (err) {
-      logger.error(`Failed to get tenants with error: ${err.message}`);
+      logger.error(`Failed to get tenants with error: ${err.message}`, LOG_CONTEXT);
       next(err);
     }
   };
@@ -78,7 +80,7 @@ export function getTenant(logger: Logger, repository: TenantRepository): Request
       const tenant = await repository.get(id);
       res.send(mapTenant(tenant));
     } catch (err) {
-      logger.error(`Failed to get tenant with error: ${err.message}`);
+      logger.error(`Failed to get tenant with error: ${err.message}`, LOG_CONTEXT);
       next(err);
     }
   };
@@ -103,7 +105,7 @@ export function deleteTenant(
       const deletedTenant = await entity.delete();
       const success = deletedRealm && deletedTenant;
 
-      if (success) {
+      if (deletedTenant) {
         eventService.send(tenantDeleted(req.user, { ...tenant, id: AdspId.parse(tenant.id) }));
       }
       res.send({ deletedRealm, deletedTenant, success });
@@ -138,17 +140,20 @@ export function createTenant(
 
       if (existingRealm) {
         if (!adminEmail) {
-          throw new InvalidOperationError('Please put adminEmail in body');
+          throw new InvalidOperationError('Administrator email not specified.');
         }
 
-        const testRealm = (await tenantRepository.find({ realmEquals: existingRealm }))[0];
+        const [testRealm] = await tenantRepository.find({ realmEquals: existingRealm });
         if (testRealm) {
-          throw new InvalidOperationError(`Realm '${existingRealm}' has been used, please use another realm name`);
+          throw new InvalidOperationError(`Realm '${existingRealm}' associated to existing tenant: ${testRealm.name}`);
         }
-        logger.info('Realm exist in request....');
+        logger.info(
+          `Creating tenant '${name}' with existing realm '${existingRealm}' for admin ${email}...`,
+          LOG_CONTEXT
+        );
       } else {
         //create new realm
-        logger.info('Starting create realm on keycloak....');
+        logger.info(`Creating tenant '${name}' with new realm for admin ${email}...`, LOG_CONTEXT);
 
         realm = uuidv4();
         const [_, clients] = await req.getConfiguration<ServiceClient[]>();
@@ -159,9 +164,11 @@ export function createTenant(
       const tenant = mapTenant(entity);
 
       eventService.send(tenantCreated(user, { ...tenant, id: AdspId.parse(tenant.id) }));
+      logger.info(`Created tenant '${name}' with realm '${realm}' for admin ${email}.`, LOG_CONTEXT);
+
       res.send(tenant);
     } catch (err) {
-      logger.error(`Error creating new tenant ${err.message}`);
+      logger.error(`Error creating new tenant ${err.message}`, LOG_CONTEXT);
       next(err);
     }
   };
