@@ -1,46 +1,33 @@
-import React, { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { TenantLogout } from '@store/tenant/actions';
+import React, { useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { GoAModal, GoAModalContent, GoAModalTitle, GoAModalActions } from '@abgov/react-components/experimental';
 import { GoAButton } from '@abgov/react-components';
-
 import { RootState } from '@store/index';
 
 export const LogoutModal = (): JSX.Element => {
   const { isExpired } = useSelector((state: RootState) => ({
     isExpired: state.session?.isExpired,
   }));
-  const autoLogoutTimeInSec = 10;
-  const dispatch = useDispatch();
-  const [count, setCount] = useState(autoLogoutTimeInSec);
 
-  useEffect(() => {
-    if (count > 0 && isExpired === true) {
-      const logoutTimer = setInterval(() => {
-        setCount(count - 1);
-      }, 1000);
-
-      return () => {
-        clearInterval(logoutTimer);
-      };
-    } else {
-      dispatch(TenantLogout());
-    }
-  }, [isExpired, count]);
-
-  const timeUnit = count <= 1 ? `second` : `seconds`;
+  // eslint-disable-next-line
+  useEffect(() => {}, [isExpired]);
 
   return (
-    <GoAModal isOpen={isExpired === true && count > 0} testId="tenant-logout-notice-modal">
+    <GoAModal isOpen={isExpired === true} testId="tenant-logout-notice-modal">
       <GoAModalTitle>Session expired</GoAModalTitle>
-      <GoAModalContent>You session has expired. You will log out in {`${count} ${timeUnit}`} .</GoAModalContent>
+      <GoAModalContent>
+        You were logged out of the system. If you wish to continue, please login again. Otherwise, close the tab or
+        window.
+      </GoAModalContent>
       <GoAModalActions>
         <GoAButton
           onClick={() => {
-            dispatch(TenantLogout());
+            const tenantRealm = localStorage.getItem('realm');
+            localStorage.removeItem('realm');
+            window.location.replace(`${tenantRealm}/login`);
           }}
         >
-          Logout
+          Login again
         </GoAButton>
       </GoAModalActions>
     </GoAModal>
