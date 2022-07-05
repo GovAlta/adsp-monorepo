@@ -131,11 +131,14 @@ export function* updateConfigurationDefinition({
 
   if (baseUrl && token) {
     try {
-      const namespaceUpdate = {
-        configurationSchema: definition.configurationSchema,
+      const body = {
+        operation: 'UPDATE',
+        update: {
+          [`${definition.namespace}:${definition.name}`]: {
+            configurationSchema: definition.configurationSchema,
+          },
+        },
       };
-
-      const body = { operation: 'UPDATE', update: { [`${definition.namespace}:${definition.name}`]: namespaceUpdate } };
       const {
         data: { latest },
       } = yield call(axios.patch, `${baseUrl}/configuration/v2/configuration/platform/configuration-service`, body, {
