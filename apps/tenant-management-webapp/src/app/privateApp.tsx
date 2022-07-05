@@ -9,6 +9,7 @@ import { KeycloakCheckSSOWithLogout } from '@store/tenant/actions';
 import { GoAPageLoader } from '@abgov/react-components';
 import { NotificationBanner } from './notificationBanner';
 import styled from 'styled-components';
+import { LogoutModal } from '@components/LogoutModal';
 
 interface privateAppProps {
   children: ReactNode;
@@ -16,6 +17,8 @@ interface privateAppProps {
 export function PrivateApp({ children }: privateAppProps): JSX.Element {
   const [title, setTitle] = useState<string>('');
   const dispatch = useDispatch();
+  const notifications = useSelector((state: RootState) => state.notifications.notifications);
+
   const urlParams = new URLSearchParams(window.location.search);
   const realmFromParams = urlParams.get('realm');
   const realm = realmFromParams || localStorage.getItem('realm');
@@ -47,9 +50,10 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
       /> */}
 
           <NotificationBanner />
+          <LogoutModal />
         </FixedContainer>
       </ScrollBarFixTop>
-      <ScrollBarFixMain>
+      <ScrollBarFixMain notifications={notifications}>
         <Container>{children}</Container>
       </ScrollBarFixMain>
     </HeaderCtx.Provider>
@@ -79,8 +83,11 @@ const ScrollBarFixTop = styled.div`
   margin-right: calc(100% - 100vw);
 `;
 
+interface ItemProps {
+  notifications: any[];
+}
 const ScrollBarFixMain = styled.div`
   margin-left: calc(100vw - 100%);
   margin-right: 0;
-  padding-top: 7rem;
+  padding-top: ${(props: ItemProps) => (props.notifications.length >= 1 ? '12rem' : '7rem')};
 `;

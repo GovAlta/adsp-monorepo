@@ -14,8 +14,8 @@ import { TenantService, toKebabName, EventService } from '@abgov/adsp-service-sd
 import * as passport from 'passport';
 import { ServiceRoles } from '../roles';
 import axios from 'axios';
-import { Service, Links } from '../types/directory';
-import { getNamespaceEntries } from './util/getNamespaceEntries';
+import { Service, Links, DirectoryEntry } from '../types/directory';
+import { getEntry, getNamespaceEntries } from './util/getNamespaceEntries';
 import { checkSchema } from 'express-validator';
 import { entryUpdated, entryDeleted } from '../events';
 
@@ -67,23 +67,7 @@ export const getDirectoriesByNamespace =
     try {
       const { namespace } = req.params;
       entries = await getNamespaceEntries(directoryRepository, namespace);
-    } catch (err) {
-      _next(err);
-    }
-    res.json(entries);
-  };
-
-export const getEntriesForService =
-  (directoryRepository: DirectoryRepository): RequestHandler =>
-  async (req, res, _next) => {
-    try {
-      const { namespace, service } = req.params;
-      const data = await getNamespaceEntries(directoryRepository, namespace);
-      // regex matches service | service:whatever
-      const re = new RegExp(`^${service}(:[a-zA-Z-]+)?$`);
-      const entries = data.filter((x) => x.service.match(re));
-
-      if (!entries) {
+      if (entries.length === 0) {
         return res.sendStatus(HttpStatusCodes.NOT_FOUND);
       }
       res.json(entries);
@@ -91,6 +75,48 @@ export const getEntriesForService =
       _next(err);
     }
   };
+
+export const getEntriesForService =
+  (directoryRepository: DirectoryRepository): RequestHandler =>
+  async (req, res, _next) => {
+    try {
+      const { namespace, service } = req.params;
+      const result = await getEntriesForServiceImpl(namespace, service, directoryRepository);
+      if (!result) {
+        return res.sendStatus(HttpStatusCodes.NOT_FOUND);
+      }
+      return res.json(result);
+    } catch (err) {
+      _next(err);
+    }
+  };
+
+export interface ServiceEntity {
+  service?: DirectoryEntry;
+  apis: DirectoryEntry[];
+}
+
+export const getEntriesForServiceImpl = async (
+  namespace: string,
+  service: string,
+  directoryRepository: DirectoryRepository
+): Promise<ServiceEntity> => {
+  const data = await directoryRepository.getDirectories(namespace);
+  if (!data.services) {
+    return null;
+  }
+
+  // regex matches the service name, exactly;
+  const serviceRe = new RegExp(`^${service}$`);
+  const serviceEntry = data.services.filter((x) => x.service.match(serviceRe)).map((s) => getEntry(namespace, s));
+
+  // regex matches service:api
+  const apisRe = new RegExp(`^${service}:.+`);
+  const apiEntries = data.services.filter((x) => x.service.match(apisRe)).map((s) => getEntry(namespace, s));
+
+  const theService = serviceEntry.length > 0 ? serviceEntry[0] : null;
+  return !theService && apiEntries.length == 0 ? null : { service: theService, apis: apiEntries };
+};
 
 export const getDirectoryEntryForApi =
   (directoryRepository: DirectoryRepository): RequestHandler =>
@@ -103,10 +129,10 @@ export const getDirectoryEntryForApi =
       if (!result) {
         return res.sendStatus(HttpStatusCodes.NOT_FOUND);
       }
+      res.json(result);
     } catch (err) {
       _next(err);
     }
-    res.json(result);
   };
 
 export const createNameSpace =
