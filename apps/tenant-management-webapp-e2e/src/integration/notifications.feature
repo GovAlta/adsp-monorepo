@@ -6,14 +6,14 @@ Feature: Notifications
     Given a tenant admin user is on notification overview page
     When the user clicks Add notification type button
     Then the user views Add notification type modal
-    When the user enters "autotest-addNotificationType", "autotest notification desc", "Anyone (Anonymous)", "yes", "no", "no", "yes" on notification type modal
+    When the user enters "autotest-addNotificationType", "autotest notification desc", "Anyone (Anonymous)", "no", "no", "yes" on notification type modal
     And the user clicks save button in notification type modal
     Then the user "views" the notification type card of "autotest-addNotificationType", "autotest notification desc", "Anyone (Anonymous)", "yes", "yes"
     # Verify there is Add notification button on the notification type page as well after saving a new notification type
     And the user views Add notification type button on Notification types page
     When the user clicks "edit" button for the notification type card of "autotest-addNotificationType"
     Then the user views Edit notification type modal for "autotest-addNotificationType"
-    When the user enters "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, file-service-admin", "yes", "no", "no", "no" on notification type modal
+    When the user enters "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no", "no" on notification type modal
     And the user clicks save button in notification type modal
     Then the user "views" the notification type card of "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no"
     When the user clicks "delete" button for the notification type card of "autotest-editNotificationType"
@@ -219,7 +219,7 @@ Feature: Notifications
     And the user "views" "email template indicator" for the event of "tenant-service:tenant-created" in "autotest-add-multi-channels" on tenant events
     And the user "views" "sms template indicator" for the event of "tenant-service:tenant-created" in "autotest-add-multi-channels" on tenant events
     And the user "views" "bot template indicator with warning" for the event of "tenant-service:tenant-created" in "autotest-add-multi-channels" on tenant events
-    # # Edit the event, remove bot & sms channels from template
+    # Edit the event, remove bot & sms channels from template
     When the user clicks "edit" button for the notification type card of "autotest-add-multi-channels"
     Then the user views Edit notification type modal for "autotest-add-multi-channels"
     When the user enters "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no", "no" on notification type modal
@@ -237,7 +237,7 @@ Feature: Notifications
     Then the user "views" the notification type card of "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no"
     And the user "views" "sms template indicator" for the event of "tenant-service:tenant-created" in "autotest-edit-multi-channels" on tenant events
     And the user "views" "bot template indicator with warning" for the event of "tenant-service:tenant-created" in "autotest-edit-multi-channels" on tenant events
-    # # Delete the notification type
+    # Delete the notification type
     When the user clicks "delete" button for the notification type card of "autotest-edit-multi-channels"
     Then the user views delete "notification type" confirmation modal for "autotest-edit-multi-channels"
     When the user clicks Delete button in delete confirmation modal
