@@ -68,8 +68,9 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
           onClose={reset}
           isEdit={isEdit}
           initialValue={selectedDefinition}
+          configurations={tenantConfigDefinitions}
           onSave={(definition) => {
-              dispatch(updateConfigurationDefinition(definition, false));
+            dispatch(updateConfigurationDefinition(definition, false));
           }}
         />
       )}

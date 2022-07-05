@@ -1,9 +1,9 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoAElementLoader } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
-import { ConfigDefinition } from '@store/configuration/model';
+import { ConfigDefinition, ServiceSchemas } from '@store/configuration/model';
 import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
@@ -18,6 +18,7 @@ interface AddEditConfigDefinitionProps {
   open: boolean;
   isEdit: boolean;
   onClose: () => void;
+  configurations: ServiceSchemas;
 }
 
 export const selectConfigurationIdentifier = createSelector(
@@ -34,10 +35,11 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
   open,
   isEdit,
   onClose,
+  configurations,
 }) => {
   const [definition, setDefinition] = useState<ConfigDefinition>(initialValue);
   const [payloadSchema, setPayloadSchema] = useState<string>(JSON.stringify(definition.configurationSchema, null, 2));
-
+  const [spinner, setSpinner] = useState<boolean>(false);
   const identifiers = useSelector(selectConfigurationIdentifier);
   const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
 
@@ -76,6 +78,14 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
     }
   }, []);
 
+  useEffect(() => {
+    if (spinner && Object.keys(configurations).length > 0) {
+      onSave(definition);
+      onClose();
+      setSpinner(false);
+    }
+  }, [configurations]);
+
   return (
     <>
       <ModalOverwrite>
@@ -112,6 +122,19 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
                     validators.remove('name');
                     validators['name'].check(value);
                     setDefinition({ ...definition, name: value });
+                  }}
+                />
+              </GoAFormItem>
+              <GoAFormItem error={errors?.['description']}>
+                <label>Description</label>
+                <GoAInput
+                  type="text"
+                  name="description"
+                  value={definition.description}
+                  data-testid="form-description"
+                  aria-label="description"
+                  onChange={(description, value) => {
+                    setDefinition({ ...definition, description: value });
                   }}
                 />
               </GoAFormItem>
@@ -155,25 +178,35 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
               disabled={!definition.name || !definition.namespace || Object.entries(errors).length > 0}
               type="submit"
               onClick={(e) => {
-                const validations = {
-                  payloadSchema: payloadSchema,
-                };
-
-                if (!isEdit) {
-                  validations['duplicated'] = `${definition.namespace}:${definition.name}`;
-                  validations['name'] = definition.name;
-                  validations['namespace'] = definition.namespace;
+                if (!configurations) {
+                  setSpinner(true);
+                } else {
+                  const validations = {
+                    payloadSchema: payloadSchema,
+                  };
+                  if (!isEdit) {
+                    validations['duplicated'] = `${definition.namespace}:${definition.name}`;
+                    validations['name'] = definition.name;
+                    validations['namespace'] = definition.namespace;
+                  }
+                  if (!validators.checkAll(validations)) {
+                    return;
+                  }
+                  const payloadSchemaObj = JSON.parse(payloadSchema);
+                  payloadSchemaObj['description'] = definition.description;
+                  // if no errors in the form then save the definition
+                  onSave({ ...definition, configurationSchema: payloadSchemaObj });
+                  setDefinition(initialValue);
+                  onClose();
                 }
-                if (!validators.checkAll(validations)) {
-                  return;
-                }
-                // if no errors in the form then save the definition
-                onSave({ ...definition, configurationSchema: JSON.parse(payloadSchema) });
-                setDefinition(initialValue);
-                onClose();
               }}
             >
               Save
+              {spinner && (
+                <SpinnerPadding>
+                  <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
+                </SpinnerPadding>
+              )}
             </GoAButton>
           </GoAModalActions>
         </GoAModal>
@@ -186,4 +219,8 @@ const ModalOverwrite = styled.div`
   .modal {
     max-height: 100% !important;
   }
+`;
+const SpinnerPadding = styled.div`
+  margin: 0 0 0 5px;
+  float: right;
 `;
