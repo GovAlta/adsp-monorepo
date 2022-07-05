@@ -221,7 +221,7 @@ Then('the user views Add an email template page', function () {
   notificationsObj.addAnEmailTemplateModalTitle().invoke('text').should('contain', 'Add an email template');
 });
 
-When('the user enters {string} as subject and {string} as body', function (subjectText, bodyText) {
+When('the user enters {string} as subject and {string} as body on the email page', function (subjectText, bodyText) {
   notificationsObj.addAnEmailTemplateModalSubject().type(subjectText);
   notificationsObj.addAnEmailTemplateModalBody().type(bodyText);
 });
@@ -689,12 +689,18 @@ When('the user clicks Add notification type button on Notification type page', f
 });
 
 Then(
-  'the user {string} {string} for {string} in {string} on tenant events',
+  'the user {string} {string} for the event of {string} in {string} on tenant events',
   function (viewOrNot, elementType, eventName, typeName) {
     if (viewOrNot == 'views') {
       switch (elementType) {
         case 'email template indicator':
           notificationsObj.tenantNotificationTypeEventMailIcon(typeName, eventName).should('exist');
+          break;
+        case 'bot template indicator':
+          notificationsObj.tenantNotificationTypeBot(typeName, eventName).should('exist');
+          break;
+        case 'sms template indicator':
+          notificationsObj.tenantNotificationTypeEventSMS(typeName, eventName).should('exist');
           break;
         case 'bot template indicator with warning':
           notificationsObj.tenantNotificationTypeBotBadge(typeName, eventName).should('exist');
@@ -705,12 +711,20 @@ Then(
         default:
           expect(elementType).to.be.oneOf([
             'email template indicator',
+            'bot template indicator',
+            'sms template indicator',
             'bot template indicator with warning',
             'sms template indicator with warning',
           ]);
       }
     } else if (viewOrNot == 'should not view') {
       switch (elementType) {
+        case 'bot template indicator':
+          notificationsObj.tenantNotificationTypeBot(typeName, eventName).should('not.exist');
+          break;
+        case 'sms template indicator':
+          notificationsObj.tenantNotificationTypeEventSMS(typeName, eventName).should('not.exist');
+          break;
         case 'bot template indicator with warning':
           notificationsObj.tenantNotificationTypeBotBadge(typeName, eventName).should('not.exist');
           break;
@@ -719,6 +733,8 @@ Then(
           break;
         default:
           expect(elementType).to.be.oneOf([
+            'bot template indicator',
+            'sms template indicator',
             'bot template indicator with warning',
             'sms template indicator with warning',
           ]);
@@ -730,5 +746,15 @@ Then(
 );
 
 Then('the user views that email channel is greyed out', function () {
-  notificationsObj.notificationChannelCheckbox('email').should('exist');
+  notificationsObj.notificationChannelCheckboxDisabled().should('be.disabled');
+});
+
+When('the user selects {string} tab on the event template', function (tab) {
+  notificationsObj.notificationEventTemplateTab(tab).click();
+  cy.wait(1000);
+});
+
+Then('the user enters {string} as subject and {string} as body on the SMS page', function (subjectText, bodyText) {
+  notificationsObj.addSmsTemplateModalSubject().type(subjectText);
+  notificationsObj.addSmsTemplateModalBody().type(bodyText);
 });

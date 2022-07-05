@@ -41,6 +41,10 @@ class NotificationsPage {
     );
   }
 
+  notificationChannelCheckboxDisabled() {
+    return cy.xpath('//input[@name="email"]');
+  }
+
   notificationTypeModalSelfServiceCheckbox() {
     return cy.xpath(
       '//*[@data-testid="manage-subscriptions-checkbox-wrapper"]//div[contains(@class, "goa-checkbox-container")]'
@@ -396,9 +400,21 @@ class NotificationsPage {
     );
   }
 
+  tenantNotificationTypeBot(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-bot-channel"]`
+    );
+  }
+
   tenantNotificationTypeBotBadge(cardTitle, eventName) {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-bot-channel-badge"]`
+    );
+  }
+
+  tenantNotificationTypeEventSMS(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-sms-channel"]`
     );
   }
 
@@ -406,6 +422,20 @@ class NotificationsPage {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-sms-channel-badge"]`
     );
+  }
+
+  notificationEventTemplateTab(text) {
+    return cy.xpath(
+      `//*[@data-testid="template-form"]//*[@class="goa-form-item"]//descendant::div//descendant::div/div/div[contains(text(), "${text}")]`
+    );
+  }
+
+  addSmsTemplateModalSubject() {
+    return cy.get('[data-testid="templated-editor-subject"]');
+  }
+
+  addSmsTemplateModalBody() {
+    return cy.get('[data-testid="templated-editor-body"]');
   }
 }
 export default NotificationsPage;
