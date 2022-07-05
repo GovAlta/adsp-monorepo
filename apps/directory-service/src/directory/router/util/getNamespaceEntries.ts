@@ -23,7 +23,7 @@ export const getNamespaceEntries = async (
   namespace: string
 ): Promise<URNComponent[]> => {
   const directory = await directoryRepository.getDirectories(namespace);
-  if (!directory) {
+  if (!directory || !directory.services) {
     return [];
   }
   const services = directory.services;
