@@ -31,7 +31,7 @@ Feature: Notifications
     When the user selects "tenant-service:tenant-created" in the event dropdown
     And the user clicks Next button on Select an event page
     Then the user views Add an email template page
-    When the user enters "autotest subject" as subject and "autotest body" as body
+    When the user enters "autotest subject" as subject and "autotest body" as body on the email page
     And the user clicks Add button in Add an email template page
     Then the user "views" the event of "tenant-service:tenant-created" in "autotest-notificationType"
     When the user clicks Select event button for "autotest-notificationType"
@@ -211,31 +211,33 @@ Feature: Notifications
     When the user selects "tenant-service:tenant-created" in the event dropdown
     And the user clicks Next button on Select an event page
     Then the user views Add an email template page
-    When the user enters "autotest subject" as subject and "autotest body" as body
+    When the user enters "autotest subject" as subject and "autotest body" as body on the email page
+    Then the user selects "SMS" tab on the event template
+    When the user enters "autotest subject" as subject and "autotest subject" as body on the SMS page
     And the user clicks Add button in Add an email template page
     Then the user "views" the event of "tenant-service:tenant-created" in "autotest-add-multi-channels"
-    And the user "views" "email template indicator" for "tenant-service:tenant-created" in "autotest-add-multi-channels" on tenant events
-    And the user "views" "sms template indicator with warning" for "tenant-service:tenant-created" in "autotest-add-multi-channels" on tenant events
-    And the user "views" "bot template indicator with warning" for "tenant-service:tenant-created" in "autotest-add-multi-channels" on tenant events
-    # Edit the event, remove bot & sms channels from template
+    And the user "views" "email template indicator" for the event of "tenant-service:tenant-created" in "autotest-add-multi-channels" on tenant events
+    And the user "views" "sms template indicator" for the event of "tenant-service:tenant-created" in "autotest-add-multi-channels" on tenant events
+    And the user "views" "bot template indicator with warning" for the event of "tenant-service:tenant-created" in "autotest-add-multi-channels" on tenant events
+    # # Edit the event, remove bot & sms channels from template
     When the user clicks "edit" button for the notification type card of "autotest-add-multi-channels"
     Then the user views Edit notification type modal for "autotest-add-multi-channels"
     When the user enters "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no", "no" on notification type modal
     And the user views that email channel is greyed out
     And the user clicks save button in notification type modal
     Then the user "views" the notification type card of "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no"
-    And the user "views" "email template indicator" for "tenant-service:tenant-created" in "autotest-edit-multi-channels" on tenant events
-    And the user "should not view" "sms template indicator with warning" for "tenant-service:tenant-created" in "autotest-edit-multi-channels" on tenant events
-    And the user "should not view" "bot template indicator with warning" for "tenant-service:tenant-created" in "autotest-edit-multi-channels" on tenant events
-    # Add back bot and sms channels to see the template perserved
+    And the user "views" "email template indicator" for the event of "tenant-service:tenant-created" in "autotest-edit-multi-channels" on tenant events
+    And the user "should not view" "sms template indicator" for the event of "tenant-service:tenant-created" in "autotest-edit-multi-channels" on tenant events
+    And the user "should not view" "bot template indicator with warning" for the event of "tenant-service:tenant-created" in "autotest-edit-multi-channels" on tenant events
+    # Add back bot and sms channels to see the template preserved
     When the user clicks "edit" button for the notification type card of "autotest-edit-multi-channels"
     Then the user views Edit notification type modal for "autotest-edit-multi-channels"
     When the user enters "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1, file-service-admin", "yes", "yes", "no" on notification type modal
     And the user clicks save button in notification type modal
     Then the user "views" the notification type card of "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no"
-    And the user "views" "sms template indicator with warning" for "tenant-service:tenant-created" in "autotest-edit-multi-channels" on tenant events
-    And the user "views" "bot template indicator with warning" for "tenant-service:tenant-created" in "autotest-edit-multi-channels" on tenant events
-    # Delete the notification type
+    And the user "views" "sms template indicator" for the event of "tenant-service:tenant-created" in "autotest-edit-multi-channels" on tenant events
+    And the user "views" "bot template indicator with warning" for the event of "tenant-service:tenant-created" in "autotest-edit-multi-channels" on tenant events
+    # # Delete the notification type
     When the user clicks "delete" button for the notification type card of "autotest-edit-multi-channels"
     Then the user views delete "notification type" confirmation modal for "autotest-edit-multi-channels"
     When the user clicks Delete button in delete confirmation modal
