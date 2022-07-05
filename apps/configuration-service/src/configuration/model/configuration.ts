@@ -44,6 +44,9 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
       logger.warn(`JSON schema of ${namespace}:${name} is invalid. An empty JSON schema {} will be used.`);
     }
 
+    /**
+      Initialize the ConfigurationEntity with empty schema if schema is mis-configured or not provided.
+    */
     try {
       validationService.setSchema(this.getSchemaKey(), {});
     } catch (err) {
