@@ -51,6 +51,7 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
                 <thead data-testid="configuration-table-header">
                   <tr>
                     <th data-testid="configuration-table-header-name">Name</th>
+                    <th data-testid="configuration-table-header-description">Description</th>
                     <th id="configuration-action" data-testid="configuration-table-header-action">
                       Action
                     </th>
@@ -70,6 +71,9 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
                         onEdit={(configurationDefinition) => {
                           onEdit(configurationDefinition);
                         }}
+                        description={
+                          memoizedSortedConfiguration[`${nameSpace}:${configName}`]?.configurationSchema?.description
+                        }
                         configSchema={memoizedSortedConfiguration[`${nameSpace}:${configName}`]?.configurationSchema}
                       />
                     );

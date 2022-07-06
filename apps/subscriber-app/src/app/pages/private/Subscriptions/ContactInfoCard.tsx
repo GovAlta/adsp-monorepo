@@ -1,5 +1,5 @@
 import React, { FormEvent, useState, useEffect } from 'react';
-import { GoAButton, GoARadio } from '@abgov/react-components';
+import { GoAButton, GoARadio, GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { GoAInputEmail, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { useDispatch, useSelector } from 'react-redux';
 import { patchSubscriber } from '@store/subscription/actions';
@@ -12,7 +12,6 @@ import { Label } from './styled-components';
 import { GapVS } from './styled-components';
 import { RootState } from '@store/index';
 import { phoneWrapper } from '@lib/wrappers';
-import { GoAPageLoader } from '@abgov/react-components';
 
 interface ContactInfoCardProps {
   subscriber: Subscriber;
@@ -26,12 +25,14 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
   const subscriberSMS =
     subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === Channels.sms)[0]?.address || '';
 
-  const subscriberPreferredChannel = subscriber?.channels ? subscriber?.channels[0].channel : null;
+  useEffect(() => {
+    setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
+  }, [subscriber]);
 
   const [emailContactInformation, setEmailContactInformation] = useState(subscriberEmail);
   const [SMSContactInformation, setSMSContactInformation] = useState(subscriberSMS);
   const [editContactInformation, setEditContactInformation] = useState(false);
-  const [preferredChannel, setPreferredChannel] = useState(subscriberPreferredChannel);
+  const [preferredChannel, setPreferredChannel] = useState(null);
   const indicator = useSelector((state: RootState) => {
     const indicator = state.session?.indicator;
     if (indicator) {
@@ -179,7 +180,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
           data-testid="edit-contact-cancel-button"
           onClick={() => {
             setEditContactInformation(!editContactInformation);
-            setPreferredChannel(subscriberPreferredChannel);
+            setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
             setFormErrors({});
           }}
         >
@@ -195,7 +196,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
 
   return (
     <InfoCard title="Contact information">
-      {!indicator && (
+      {!indicator && subscriber && (
         <div>
           {editContactInformation ? (
             <Grid>
@@ -298,26 +299,28 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
           )}
         </div>
       )}
-      {indicator && <GoAPageLoader visible={true} type="infinite" message={'Loading...'} pagelock={true} />}
+      {(!subscriber || indicator) && <GoASkeletonGridColumnContent rows={5}></GoASkeletonGridColumnContent>}
       <GapVS />
-      <div>
-        {editContactInformation ? (
-          updateContactInfoButtons()
-        ) : (
-          <GoAButton
-            buttonSize="small"
-            data-testid="edit-contact-button"
-            onClick={() => {
-              setEditContactInformation(!editContactInformation);
-              setEmailContactInformation(subscriberEmail);
-              setSMSContactInformation(subscriberSMS);
-              setPreferredChannel(subscriberPreferredChannel);
-            }}
-          >
-            Edit contact information
-          </GoAButton>
-        )}
-      </div>
+      {subscriber && !indicator && (
+        <div>
+          {editContactInformation ? (
+            updateContactInfoButtons()
+          ) : (
+            <GoAButton
+              buttonSize="small"
+              data-testid="edit-contact-button"
+              onClick={() => {
+                setEditContactInformation(!editContactInformation);
+                setEmailContactInformation(subscriberEmail);
+                setSMSContactInformation(subscriberSMS);
+                setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
+              }}
+            >
+              Edit contact information
+            </GoAButton>
+          )}
+        </div>
+      )}
     </InfoCard>
   );
 };
