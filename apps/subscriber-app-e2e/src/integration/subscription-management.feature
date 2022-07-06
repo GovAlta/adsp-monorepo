@@ -15,9 +15,8 @@ Feature: Subscription management
     When an authenticated user with "auto.contact" and "autotest" is in the subscriber app
     Then the user views subscription management page
     And the user views the user contact information
-    # the user with auto.contact.test@gmail.com should be subscribed to below app
-    And the user views the support link for the subscription of "Application health check change"
     And the user views the subscription of "Application health check change" and its description
+    And the user views the support link for the subscription of "Application health check change"
 
   @TEST_CS-1371 @REQ_CS-1238 @REQ_CS-1239 @regression
   Scenario: As a tenant admin, I can configure what channels are supported by a notification type, so that I can support multiple channels of notifications.
