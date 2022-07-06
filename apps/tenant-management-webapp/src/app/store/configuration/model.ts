@@ -15,6 +15,7 @@ export interface ConfigurationDefinitionState {
 export interface ConfigDefinition {
   name: string;
   namespace: string;
+  description?: string;
   configurationSchema: ConfigurationSchema;
   serviceSchemas?: ServiceSchemas;
 }
@@ -28,6 +29,7 @@ export interface ConfigurationSchema {
 export const defaultConfigDefinition: ConfigDefinition = {
   namespace: '',
   name: '',
+  description: '',
   configurationSchema: {
     type: 'object',
     properties: {},
@@ -50,6 +52,7 @@ export interface ServiceSchemas {
 export interface ServiceConfiguration {
   namespace: string;
   name: string;
+  description?: string;
   latest: ServiceSchemas;
 }
 

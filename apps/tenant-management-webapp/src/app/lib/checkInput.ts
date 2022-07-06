@@ -121,7 +121,7 @@ export const errorLogger: ValidationAction = {
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const nonAction: ValidationAction = { onFailure: () => {} };
-
+// eslint-disable-next-line
 export const jsonSchemaCheck = (schema: Record<string, unknown>, value: unknown): boolean | PromiseLike<any> => {
   const ajv = new Ajv();
   ajv.compile(schema);
