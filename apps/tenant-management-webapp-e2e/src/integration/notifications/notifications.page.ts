@@ -394,7 +394,7 @@ class NotificationsPage {
     return cy.get('[data-testid="templated-editor-subject"]');
   }
 
-  editTemplateModalSubjectRightPane() {
+  editTemplateModalSubjectPreviewPane() {
     return cy.get('[data-testid="email-preview-subject"]');
   }
 
@@ -402,7 +402,7 @@ class NotificationsPage {
     return cy.get('[data-testid="templated-editor-body"]');
   }
 
-  editContactModalBodyRightPane() {
+  editContactModalBodyPreviewPane() {
     return cy.get('[data-testid="email-preview-body"]');
   }
 
