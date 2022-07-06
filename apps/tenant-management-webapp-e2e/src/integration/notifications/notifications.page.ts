@@ -176,13 +176,13 @@ class NotificationsPage {
   }
 
   // Internal notification type card elements have different xpath than those from custom created notification type cards, so use "Internal" prefix for the following several UI page object names
-  internalNotificationTypeEventMailIcon(cardTitle, eventName) {
+  notificationTypeEventMailIcon(cardTitle, eventName) {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="core-email-channel"]`
     );
   }
 
-  internalNotificationTypeEventEditButton(cardTitle, eventName) {
+  notificationTypeEventEditButton(cardTitle, eventName) {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="edit-event"]`
     );
@@ -256,7 +256,7 @@ class NotificationsPage {
     return cy.get('[data-testid="delete-confirm"]');
   }
 
-  internalNotificationTypeEventResetBtn(cardTitle, eventName) {
+  notificationTypeEventDeleteBtn(cardTitle, eventName) {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="delete-event"]`
     );
@@ -384,6 +384,30 @@ class NotificationsPage {
 
   editSubscriberModalPhoneNumberField() {
     return cy.get('[data-testid="contact-sms-input"]');
+  }
+
+  editTemplateModalTitle() {
+    return cy.get('[data-testid="modal-title"]');
+  }
+
+  editTemplateModalSubject() {
+    return cy.get('[data-testid="templated-editor-subject"]');
+  }
+
+  editTemplateModalSubjectPreviewPane() {
+    return cy.get('[data-testid="email-preview-subject"]');
+  }
+
+  editTemplateModalBody() {
+    return cy.get('[data-testid="templated-editor-body"]');
+  }
+
+  editContactModalBodyPreviewPane() {
+    return cy.get('[data-testid="email-preview-body"]');
+  }
+
+  editTemplateModalCloseBtn() {
+    return cy.get('[data-testid="template-form-close"]');
   }
 }
 export default NotificationsPage;
