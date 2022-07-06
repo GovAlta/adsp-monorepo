@@ -8,6 +8,7 @@ import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { ContactInformationModalForm } from './editContactInfo';
 import { ReactComponent as Edit } from '@icons/edit.svg';
+import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 
 interface SubscribersProps {
   subscribers?: Subscriber[];
@@ -70,7 +71,7 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
         <Grid>
           <GridItem data-testid="email" className="word-break contact-border" md={12} vSpacing={1} hSpacing={0.5}>
             <h4>Contact email</h4>
-            {contact?.contactEmail}
+            {contact?.contactEmail ?? <GoASkeletonGridColumnContent rows={1}></GoASkeletonGridColumnContent>}
           </GridItem>
         </Grid>
         <ContactInformationModalForm
