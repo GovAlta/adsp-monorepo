@@ -101,7 +101,7 @@ export const GeneratePDF: FunctionComponent<GeneratePDFModalProps> = ({ onSave }
               Generate PDF
               {indicator.show ? (
                 <SpinnerPadding>
-                  <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
+                  <GoAElementLoader visible={true} size="default" />
                 </SpinnerPadding>
               ) : (
                 <SpinnerSpace></SpinnerSpace>
