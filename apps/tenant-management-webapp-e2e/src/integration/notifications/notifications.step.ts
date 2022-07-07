@@ -261,11 +261,14 @@ Then('the user {string} the event of {string} in {string}', function (viewOrNot,
 
 When('the user clicks {string} button for {string} in {string}', function (buttonName, event, cardTitle) {
   switch (buttonName) {
+    case 'edit':
+      notificationsObj.notificationTypeEventEditButton(cardTitle, event).click();
+      break;
     case 'delete':
       notificationsObj.eventDeleteIcon(cardTitle, event).click();
       break;
     default:
-      expect(buttonName).to.be.oneOf(['delete']);
+      expect(buttonName).to.be.oneOf(['edit', 'delete']);
   }
 });
 
@@ -294,13 +297,13 @@ Then('the user {string} {string} for {string} in {string}', function (viewOrNot,
   if (viewOrNot == 'views') {
     switch (elementType) {
       case 'email template indicator':
-        notificationsObj.internalNotificationTypeEventMailIcon(typeName, eventName).should('exist');
+        notificationsObj.notificationTypeEventMailIcon(typeName, eventName).should('exist');
         break;
       case 'Edit button':
-        notificationsObj.internalNotificationTypeEventEditButton(typeName, eventName).should('exist');
+        notificationsObj.notificationTypeEventEditButton(typeName, eventName).should('exist');
         break;
       case 'Reset':
-        notificationsObj.internalNotificationTypeEventResetBtn(typeName, eventName).should('exist');
+        notificationsObj.notificationTypeEventDeleteBtn(typeName, eventName).should('exist');
         break;
       default:
         expect(elementType).to.be.oneOf(['email template indicator', 'Preview link', 'Edit button', 'Reset']);
@@ -308,13 +311,13 @@ Then('the user {string} {string} for {string} in {string}', function (viewOrNot,
   } else if (viewOrNot == 'should not view') {
     switch (elementType) {
       case 'email template indicator':
-        notificationsObj.internalNotificationTypeEventMailIcon(typeName, eventName).should('not.exist');
+        notificationsObj.notificationTypeEventMailIcon(typeName, eventName).should('not.exist');
         break;
       case 'Edit button':
-        notificationsObj.internalNotificationTypeEventEditButton(typeName, eventName).should('not.exist');
+        notificationsObj.notificationTypeEventEditButton(typeName, eventName).should('not.exist');
         break;
       case 'Reset':
-        notificationsObj.internalNotificationTypeEventResetBtn(typeName, eventName).should('not.exist');
+        notificationsObj.notificationTypeEventDeleteBtn(typeName, eventName).should('not.exist');
         break;
       default:
         expect(elementType).to.be.oneOf(['email template indicator', 'Preview link', 'Edit button', 'Reset']);
@@ -684,6 +687,7 @@ When('the user enters {string} in Phone number field', function (phoneNumber) {
   }
 });
 
+<<<<<<< HEAD
 When('the user clicks Add notification type button on Notification type page', function () {
   notificationsObj.addNotificationTypeBtnOnNotificationType().click();
 });
@@ -757,4 +761,23 @@ When('the user selects {string} tab on the event template', function (tab) {
 Then('the user enters {string} as subject and {string} as body on the SMS page', function (subjectText, bodyText) {
   notificationsObj.addSmsTemplateModalSubject().type(subjectText);
   notificationsObj.addSmsTemplateModalBody().type(bodyText);
+=======
+Then('the user views an email template modal title for {string}', function (notificationEvent) {
+  notificationsObj.editTemplateModalTitle().invoke('text').should('contain', notificationEvent);
+});
+
+Then('the user views the email subject {string}', function (subject) {
+  notificationsObj.editTemplateModalSubject().invoke('text').should('contain', subject);
+  notificationsObj.editTemplateModalSubjectPreviewPane().invoke('text').should('contain', subject);
+});
+
+Then('the user views the email body {string}', function (emailBody) {
+  notificationsObj.editTemplateModalBody().invoke('text').should('contain', emailBody);
+  notificationsObj.editContactModalBodyPreviewPane().invoke('text').should('contain', emailBody);
+});
+
+When('the user clicks Close button in an email template modal', function () {
+  cy.scrollTo('bottom');
+  notificationsObj.editTemplateModalCloseBtn().click();
+>>>>>>> ac92d90e5914d18948dec213c36566b06a899a89
 });
