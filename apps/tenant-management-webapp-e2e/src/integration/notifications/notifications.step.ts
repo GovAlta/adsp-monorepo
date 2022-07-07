@@ -706,7 +706,7 @@ Then(
           notificationsObj.tenantNotificationTypeBotBadge(typeName, eventName).should('exist');
           break;
         case 'sms template indicator with warning':
-          notificationsObj.tenantNotificationTypeEventSMSBadge(typeName, eventName).should('exist');
+          notificationsObj.tenantNotificationTypeEventSmsIconBadge(typeName, eventName).should('exist');
           break;
         default:
           expect(elementType).to.be.oneOf([
@@ -729,7 +729,7 @@ Then(
           notificationsObj.tenantNotificationTypeBotBadge(typeName, eventName).should('not.exist');
           break;
         case 'sms template indicator with warning':
-          notificationsObj.tenantNotificationTypeEventSMSBadge(typeName, eventName).should('not.exist');
+          notificationsObj.tenantNotificationTypeEventSmsIconBadge(typeName, eventName).should('not.exist');
           break;
         default:
           expect(elementType).to.be.oneOf([

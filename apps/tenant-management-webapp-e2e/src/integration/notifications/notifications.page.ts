@@ -418,7 +418,7 @@ class NotificationsPage {
     );
   }
 
-  tenantNotificationTypeEventSMSBadge(cardTitle, eventName) {
+  tenantNotificationTypeEventSmsIconBadge(cardTitle, eventName) {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-sms-channel-badge"]`
     );
@@ -431,7 +431,10 @@ class NotificationsPage {
   }
 
   addSmsTemplateModalSubject() {
-    return cy.get('[data-testid="templated-editor-subject"]');
+    // return cy.get('[data-testid="templated-editor-subject"]');
+    return cy.xpath(
+      '//[@data-testid="modal-title" and contains(text(), "SMS")]//parent:://[@data-testid="templated-editor-subject"]'
+    );
   }
 
   addSmsTemplateModalBody() {
