@@ -687,7 +687,6 @@ When('the user enters {string} in Phone number field', function (phoneNumber) {
   }
 });
 
-<<<<<<< HEAD
 When('the user clicks Add notification type button on Notification type page', function () {
   notificationsObj.addNotificationTypeBtnOnNotificationType().click();
 });
@@ -761,7 +760,8 @@ When('the user selects {string} tab on the event template', function (tab) {
 Then('the user enters {string} as subject and {string} as body on the SMS page', function (subjectText, bodyText) {
   notificationsObj.addSmsTemplateModalSubject().type(subjectText);
   notificationsObj.addSmsTemplateModalBody().type(bodyText);
-=======
+});
+
 Then('the user views an email template modal title for {string}', function (notificationEvent) {
   notificationsObj.editTemplateModalTitle().invoke('text').should('contain', notificationEvent);
 });
@@ -779,5 +779,4 @@ Then('the user views the email body {string}', function (emailBody) {
 When('the user clicks Close button in an email template modal', function () {
   cy.scrollTo('bottom');
   notificationsObj.editTemplateModalCloseBtn().click();
->>>>>>> ac92d90e5914d18948dec213c36566b06a899a89
 });
