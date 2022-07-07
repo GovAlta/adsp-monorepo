@@ -8,6 +8,7 @@ export interface ConfigurationRevision<C = Record<string, unknown>> {
 export interface Configuration<C = Record<string, unknown>> {
   namespace: string;
   name: string;
+  description?: string;
   tenantId?: AdspId;
   latest?: ConfigurationRevision<C>;
 }
