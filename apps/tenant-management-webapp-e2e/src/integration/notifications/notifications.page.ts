@@ -390,7 +390,6 @@ class NotificationsPage {
     return cy.get('[data-testid="contact-sms-input"]');
   }
 
-<<<<<<< HEAD
   addNotificationTypeBtnOnNotificationType() {
     return cy.get('[data-testid="add-notification"]');
   }
@@ -440,7 +439,8 @@ class NotificationsPage {
 
   addSmsTemplateModalBody() {
     return cy.get('[data-testid="templated-editor-body"]');
-=======
+  }
+
   editTemplateModalTitle() {
     return cy.get('[data-testid="modal-title"]');
   }
@@ -463,7 +463,6 @@ class NotificationsPage {
 
   editTemplateModalCloseBtn() {
     return cy.get('[data-testid="template-form-close"]');
->>>>>>> ac92d90e5914d18948dec213c36566b06a899a89
   }
 }
 export default NotificationsPage;
