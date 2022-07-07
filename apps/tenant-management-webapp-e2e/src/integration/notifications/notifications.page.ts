@@ -390,20 +390,21 @@ class NotificationsPage {
     return cy.get('[data-testid="modal-title"]');
   }
 
-  editTemplateModalSubject() {
+  editTemplateModalEmailSubject() {
     return cy.get('[data-testid="templated-editor-subject"]');
   }
 
-  editTemplateModalSubjectPreviewPane() {
+  editTemplateModalEmailSubjectPreviewPane() {
     return cy.get('[data-testid="email-preview-subject"]');
   }
 
-  editTemplateModalBody() {
+  editTemplateModalEmailBody() {
     return cy.get('[data-testid="templated-editor-body"]');
   }
 
-  editContactModalBodyPreviewPane() {
-    return cy.get('[data-testid="email-preview-body"]');
+  editContactModalBodyEmailPreviewPane() {
+    return cy.get('iframe[data-testid="email-preview-body"]');
+    // return cy.xpath('//div[@class="email-content"]');
   }
 
   editTemplateModalCloseBtn() {
