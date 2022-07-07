@@ -50,7 +50,9 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
               <DataTable data-testid="configuration-table">
                 <thead data-testid="configuration-table-header">
                   <tr>
-                    <th data-testid="configuration-table-header-name">Name</th>
+                    <th id="configuration-name" data-testid="configuration-table-header-name">
+                      Name
+                    </th>
                     <th data-testid="configuration-table-header-description">Description</th>
                     <th id="configuration-action" data-testid="configuration-table-header-action">
                       Action

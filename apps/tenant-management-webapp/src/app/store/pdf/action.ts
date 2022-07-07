@@ -1,4 +1,3 @@
-import { template } from 'handlebars';
 import { PdfMetrics, PdfTemplate, PdfGenerationResponse, PdfGenerationPayload } from './model';
 
 export const FETCH_PDF_TEMPLATES_ACTION = 'pdf/FETCH_PDF_TEMPLATES_ACTION';
