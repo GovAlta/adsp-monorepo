@@ -24,6 +24,9 @@ import { ConfigurationExportType, Service, ConfigDefinition } from '@store/confi
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { ImportModal } from './importModal';
 import { isValidJSONCheck, jsonSchemaCheck } from '@lib/checkInput';
+import { StatusText } from '../styled-components';
+import GreenCircleCheckMark from '@icons/green-circle-checkmark.svg';
+import Warning from '@icons/warning.svg';
 
 const exportSchema = {
   type: 'string',
@@ -36,7 +39,7 @@ const exportSchema = {
 };
 
 export const ConfigurationImportExport: FunctionComponent = () => {
-  const { coreConfigDefinitions, tenantConfigDefinitions, importedConfiguration } = useSelector(
+  const { coreConfigDefinitions, tenantConfigDefinitions, importedConfigurationError } = useSelector(
     (state: RootState) => state.configuration
   );
   const exportState = useSelector((state: RootState) => state.configurationExport);
@@ -145,7 +148,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
       }
     }
     dispatch(getReplaceConfigurationErrorAction());
-    fileName.current.value = '';
+
     setShowStatus(true);
   };
 
@@ -162,7 +165,12 @@ export const ConfigurationImportExport: FunctionComponent = () => {
   return (
     <div>
       {
-        <>
+        <div>
+          <h2>Import</h2>
+          <p>
+            As a tenant admin, you can import configuration from JSON file, so that I can apply previously exported
+            configuration.
+          </p>
           <GoAForm>
             <GoAFormItem error={errors?.['inputJsonFile']}>
               <input
@@ -174,14 +182,14 @@ export const ConfigurationImportExport: FunctionComponent = () => {
                 ref={fileName}
                 accept="application/JSON"
                 data-testid="import-input"
+                style={{ display: 'none' }}
               />
+              <button data-testid="import-input-button" onClick={() => fileName.current.click()}>
+                {' Choose a file'}
+              </button>
+              <br />
+              <p>{fileName?.current?.value ? fileName.current.value : 'No file was chosen'}</p>
             </GoAFormItem>
-            {importedConfiguration && importedConfiguration.length > 0 && (
-              <div style={{ display: showStatus && importedConfiguration.length > 0 ? 'block' : 'none' }}>
-                <label>{`${importedConfiguration.length} configurations be imported!`}</label>
-                <br />
-              </div>
-            )}
             <GoAButton
               type="submit"
               onClick={onUploadSubmit}
@@ -190,9 +198,25 @@ export const ConfigurationImportExport: FunctionComponent = () => {
             >
               Import
             </GoAButton>
+            <br />
+            {importedConfigurationError && showStatus && (
+              <StatusText style={{ display: 'flex', paddingTop: '1rem' }}>
+                <img
+                  src={importedConfigurationError.length > 0 ? Warning : GreenCircleCheckMark}
+                  width="16"
+                  style={{ marginRight: '1rem' }}
+                  alt="status"
+                />
+                {importedConfigurationError.length > 0
+                  ? `  Import ${fileName?.current?.value} failed, Error list:  ${importedConfigurationError} `
+                  : `   ${fileName?.current?.value}  Imported successfully `}
+
+                <br />
+              </StatusText>
+            )}
           </GoAForm>
           <br />
-        </>
+        </div>
       }
       <hr />
       {

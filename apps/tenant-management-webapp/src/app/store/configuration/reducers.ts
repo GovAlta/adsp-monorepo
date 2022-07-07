@@ -21,7 +21,7 @@ const defaultState: ConfigurationDefinitionState = {
   coreConfigDefinitions: undefined,
   tenantConfigDefinitions: undefined,
   isAddedFromOverviewPage: false,
-  importedConfiguration: [],
+  importedConfigurationError: [],
 };
 
 export default function (
@@ -56,12 +56,12 @@ export default function (
     case REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION:
       return {
         ...state,
-        importedConfiguration: action.payload,
+        importedConfigurationError: action.payload,
       };
     case RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION:
       return {
         ...state,
-        importedConfiguration: [],
+        importedConfigurationError: [],
       };
     default:
       return state;
