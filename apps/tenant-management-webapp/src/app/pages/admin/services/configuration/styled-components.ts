@@ -22,16 +22,30 @@ export const EntryDetail = styled.div`
 
 export const TableDiv = styled.div`
   #configuration-name {
-    white-space: nowrap;
     overflow-x: hidden;
     text-overflow: ellipsis;
+    max-width: 100px;
   }
 
   #configuration-action {
+    width: 40px;
     white-space: nowrap;
     overflow-x: hidden;
     text-overflow: ellipsis;
-    text-align: right;
+    text-align: left;
+    padding: 0.5rem;
+  }
+  & td:first-child {
+    max-width: 100px;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    justify-content: center;
+  }
+  & td:last-child {
+    width: 40px;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    justify-content: center;
   }
 `;
 
@@ -45,4 +59,9 @@ export const NoItem = styled.div`
   text-align: center;
   padding-top: 1.5rem;
   padding-bottom: 0.5rem;
+`;
+
+export const StatusText = styled.div`
+  display: 'flex';
+  padding-top: '1rem';
 `;

@@ -207,7 +207,6 @@ export function* setConfigurationRevision(action: SetConfigurationRevisionAction
 }
 
 let replaceErrorConfiguration = [];
-let replacedConfiguration = [];
 
 export function* replaceConfigurationData(action: ReplaceConfigurationDataAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
@@ -242,8 +241,6 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
           replaceErrorConfiguration.push(`${action.configuration.namespace}:${action.configuration.name} `);
           return;
         }
-        replacedConfiguration.push(`${action.configuration.namespace}:${action.configuration.name} `);
-
         // Send request to replace configuration
         yield call(
           axios.patch,
@@ -265,18 +262,9 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
 }
 export function* getReplaceList(action: SetConfigurationRevisionAction): SagaIterator {
   if (replaceErrorConfiguration.length > 0) {
-    yield put(
-      ErrorNotification({
-        message: ` ${replaceErrorConfiguration}  configuration definition not match import configuration`,
-      })
-    );
-  }
-
-  if (replacedConfiguration.length > 0) {
-    yield put(getReplaceConfigurationErrorSuccessAction(replacedConfiguration));
+    yield put(getReplaceConfigurationErrorSuccessAction(replaceErrorConfiguration));
   }
   replaceErrorConfiguration = [];
-  replacedConfiguration = [];
 }
 
 export function* resetReplaceList(action: ResetReplaceConfigurationListAction): SagaIterator {
