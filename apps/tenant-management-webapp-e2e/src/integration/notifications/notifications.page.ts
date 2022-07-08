@@ -403,8 +403,7 @@ class NotificationsPage {
   }
 
   editContactModalBodyEmailPreviewPane() {
-    return cy.get('iframe[data-testid="email-preview-body"]');
-    // return cy.xpath('//div[@class="email-content"]');
+    return cy.get('[data-testid="email-preview-body"]');
   }
 
   editTemplateModalCloseBtn() {
