@@ -3,6 +3,7 @@ import { AdspId } from '@abgov/adsp-service-sdk';
 export interface ConfigurationRevision<C = Record<string, unknown>> {
   configuration: C;
   revision: number;
+  active?: number;
 }
 
 export interface Configuration<C = Record<string, unknown>> {
@@ -10,6 +11,7 @@ export interface Configuration<C = Record<string, unknown>> {
   name: string;
   tenantId?: AdspId;
   latest?: ConfigurationRevision<C>;
+  active?: ConfigurationRevision<C>;
 }
 
 export interface RevisionCriteria {

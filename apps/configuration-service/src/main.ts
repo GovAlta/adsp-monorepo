@@ -12,6 +12,7 @@ import { createRepositories } from './mongo';
 import {
   applyConfigurationMiddleware,
   RevisionCreatedDefinition,
+  ActiveRevisionSetDefinition,
   ConfigurationServiceRoles,
   ConfigurationUpdatedDefinition,
 } from './configuration';
@@ -52,7 +53,7 @@ const initializeApp = async (): Promise<express.Application> => {
             description: 'Service role that grants service accounts access to configuration.',
           },
         ],
-        events: [ConfigurationUpdatedDefinition, RevisionCreatedDefinition],
+        events: [ConfigurationUpdatedDefinition, RevisionCreatedDefinition, ActiveRevisionSetDefinition],
         clientSecret: environment.CLIENT_SECRET,
         accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
         directoryUrl: new URL(environment.DIRECTORY_URL),

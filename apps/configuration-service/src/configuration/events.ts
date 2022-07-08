@@ -59,6 +59,35 @@ export const RevisionCreatedDefinition: DomainEventDefinition = {
   },
 };
 
+export const ActiveRevisionSetDefinition: DomainEventDefinition = {
+  name: 'active-revision-set',
+  description: 'Signalled when the active revision of configuration is set.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      namespace: {
+        type: 'string',
+      },
+      name: {
+        type: 'string',
+      },
+      revision: {
+        type: 'number',
+      },
+      from: {
+        type: 'number',
+      },
+      setBy: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+        },
+      },
+    },
+  },
+};
+
 export const configurationUpdated = (
   updatedBy: User,
   tenantId: AdspId,
@@ -107,6 +136,34 @@ export const revisionCreated = (
     name,
     revision,
     createdBy: {
+      name: createdBy.name,
+      id: createdBy.id,
+    },
+  },
+});
+
+export const activeRevisionSet = (
+  createdBy: User,
+  tenantId: AdspId,
+  namespace: string,
+  name: string,
+  revision: number,
+  from: number
+): DomainEvent => ({
+  name: 'active-revision-set',
+  timestamp: new Date(),
+  tenantId,
+  correlationId: `${namespace}:${name}`,
+  context: {
+    namespace,
+    name,
+  },
+  payload: {
+    namespace,
+    name,
+    revision,
+    from,
+    setBy: {
       name: createdBy.name,
       id: createdBy.id,
     },

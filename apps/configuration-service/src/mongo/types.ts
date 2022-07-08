@@ -4,4 +4,5 @@ export interface ConfigurationRevisionDoc<C = unknown> {
   tenant?: string;
   revision: number;
   configuration: C;
+  active: number;
 }

@@ -1,5 +1,6 @@
 import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, Results, ValidationService } from '@core-services/core-common';
+import { threadId } from 'worker_threads';
 import { ConfigurationRepository } from '../repository';
 import { ConfigurationServiceRoles } from '../roles';
 import { ConfigurationRevision, Configuration, RevisionCriteria } from '../types';
@@ -9,7 +10,7 @@ import { ConfigurationRevision, Configuration, RevisionCriteria } from '../types
  *
  * @export
  * @class ServiceConfigurationEntity
- * @implements {Configuration<C>}
+ * @implements {Configuration<C>}Banff, Alberta
  * @template C
  */
 export class ConfigurationEntity<C = Record<string, unknown>> implements Configuration<C> {
@@ -20,7 +21,8 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     public validationService: ValidationService,
     public latest?: ConfigurationRevision<C>,
     public tenantId?: AdspId,
-    private schema?: Record<string, unknown>
+    private schema?: Record<string, unknown>,
+    public active?: ConfigurationRevision<C>
   ) {
     if (!namespace || !name) {
       throw new InvalidOperationError('Configuration must have a namespace and name.');
@@ -76,6 +78,7 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
   }
 
   public async update(user: User, configuration: C): Promise<ConfigurationEntity<C>> {
+    console.log(JSON.stringify(user) + '<useruser');
     if (!this.canModify(user)) {
       throw new UnauthorizedUserError('modify configuration', user);
     }
@@ -96,6 +99,23 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     };
 
     this.latest = await this.repository.saveRevision(this, revision);
+    const activeCriteria = await this.repository.getRevisions(this, 1, null, { active: this.latest.active });
+    console.log(JSON.stringify(activeCriteria) + '<activeCriteriaxxxx');
+    this.active = activeCriteria.results[0];
+    return this;
+  }
+
+  public async setActiveRevision(
+    user: User,
+    revision: ConfigurationRevision,
+    latestRevision: ConfigurationRevision
+  ): Promise<ConfigurationEntity<C>> {
+    if (!this.canModify(user)) {
+      throw new UnauthorizedUserError('modify configuration', user);
+    }
+
+    this.active = await this.repository.setActiveRevision(this, revision, latestRevision);
+    this.latest.active = revision.revision;
     return this;
   }
 
@@ -114,7 +134,7 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
   }
 
   public async getRevisions(
-    top = 10,
+    top = 8,
     after: string = null,
     criteria: RevisionCriteria = null
   ): Promise<Results<ConfigurationRevision<C>>> {

@@ -21,4 +21,9 @@ export interface ConfigurationRepository {
     entity: ConfigurationEntity<C>,
     revision: ConfigurationRevision<C>
   ): Promise<ConfigurationRevision<C>>;
+  setActiveRevision<C>(
+    entity: ConfigurationEntity<C>,
+    revision: ConfigurationRevision,
+    latestRevision: ConfigurationRevision
+  ): Promise<ConfigurationRevision<C>>;
 }

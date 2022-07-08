@@ -37,10 +37,27 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       ? {
           revision: latestDoc.revision,
           configuration: latestDoc.configuration as C,
+          active: latestDoc.active,
         }
       : null;
 
-    return new ConfigurationEntity<C>(namespace, name, this, this.validationService, latest, tenantId, schema);
+    const docs = await new Promise<ConfigurationRevisionDoc[]>((resolve, reject) => {
+      this.revisionModel
+        .find({ revision: latest.active }, null, { lean: true })
+        .sort({ revision: -1 })
+        .skip(null)
+        .limit(1)
+        .exec((err, results: ConfigurationRevisionDoc[]) => (err ? reject(err) : resolve(results)));
+    });
+
+    const activeList: ConfigurationRevision<C>[] = docs.map((doc) => ({
+      configuration: doc.configuration as C,
+      revision: doc.revision,
+    }));
+
+    const active = activeList[0];
+
+    return new ConfigurationEntity<C>(namespace, name, this, this.validationService, latest, tenantId, schema, active);
   }
 
   async getRevisions<C>(
@@ -58,6 +75,8 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     if (criteria?.revision !== undefined) {
       query.revision = criteria.revision;
     }
+    console.log(top + '<top');
+    console.log(JSON.stringify(query) + '<query');
     const skip = decodeAfter(after);
 
     const docs = await new Promise<ConfigurationRevisionDoc[]>((resolve, reject) => {
@@ -76,6 +95,53 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         next: encodeNext(docs.length, top, skip),
         size: docs.length,
       },
+    };
+  }
+
+  async setActiveRevision<C>(
+    entity: ConfigurationEntity<C>,
+    revision: ConfigurationRevision,
+    latestRevision: ConfigurationRevision
+  ): Promise<ConfigurationRevision<C>> {
+    const query: Record<string, unknown> = {
+      namespace: entity.namespace,
+      name: entity.name,
+      revision: latestRevision.revision,
+      tenant: entity.tenantId?.toString() || { $exists: false },
+    };
+
+    const update: Record<string, unknown> = {
+      // namespace: entity.namespace,
+      // name: entity.name,
+      // revision: revision.revision,
+      active: revision.revision,
+    };
+
+    console.log(update.active + '<update.active');
+
+    // Only include tenant if there is a tenantId on the entity.
+    if (entity.tenantId) {
+      update.tenant = entity.tenantId.toString();
+    }
+
+    const doc = await new Promise<ConfigurationRevisionDoc<C>>((resolve, reject) => {
+      this.revisionModel
+        .findOneAndUpdate(
+          query,
+          {
+            ...update,
+            configuration: latestRevision.configuration,
+          },
+          { upsert: true, new: true, lean: true }
+        )
+        .exec((err, res) => (err ? reject(err) : resolve(res as ConfigurationRevisionDoc<C>)));
+    });
+
+    const activeRevision = await this.getRevisions(entity, 1, null, { revision: revision.revision });
+
+    return {
+      revision: activeRevision.results[0].revision,
+      configuration: activeRevision.results[0].configuration,
     };
   }
 
@@ -117,6 +183,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     return {
       revision: doc.revision,
       configuration: doc.configuration,
+      active: doc.active,
     };
   }
 }
