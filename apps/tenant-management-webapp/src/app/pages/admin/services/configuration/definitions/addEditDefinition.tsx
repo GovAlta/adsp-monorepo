@@ -80,12 +80,29 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
 
   useEffect(() => {
     if (spinner && Object.keys(configurations).length > 0) {
-      onSave(definition);
-      onClose();
+      validationCheck();
       setSpinner(false);
     }
   }, [configurations]);
-
+  const validationCheck = () => {
+    const validations = {
+      payloadSchema: payloadSchema,
+    };
+    if (!isEdit) {
+      validations['duplicated'] = `${definition.namespace}:${definition.name}`;
+      validations['name'] = definition.name;
+      validations['namespace'] = definition.namespace;
+    }
+    if (!validators.checkAll(validations)) {
+      return;
+    }
+    const payloadSchemaObj = JSON.parse(payloadSchema);
+    payloadSchemaObj['description'] = definition.description;
+    // if no errors in the form then save the definition
+    onSave({ ...definition, configurationSchema: payloadSchemaObj });
+    setDefinition(initialValue);
+    onClose();
+  };
   return (
     <>
       <ModalOverwrite>
@@ -181,23 +198,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
                 if (!configurations) {
                   setSpinner(true);
                 } else {
-                  const validations = {
-                    payloadSchema: payloadSchema,
-                  };
-                  if (!isEdit) {
-                    validations['duplicated'] = `${definition.namespace}:${definition.name}`;
-                    validations['name'] = definition.name;
-                    validations['namespace'] = definition.namespace;
-                  }
-                  if (!validators.checkAll(validations)) {
-                    return;
-                  }
-                  const payloadSchemaObj = JSON.parse(payloadSchema);
-                  payloadSchemaObj['description'] = definition.description;
-                  // if no errors in the form then save the definition
-                  onSave({ ...definition, configurationSchema: payloadSchemaObj });
-                  setDefinition(initialValue);
-                  onClose();
+                  validationCheck();
                 }
               }}
             >
