@@ -730,7 +730,7 @@ Then('the user views the email body {string}', function (emailBody) {
   notificationsObj.editTemplateModalEmailBody().invoke('text').should('contain', emailBody);
   notificationsObj.editContactModalBodyEmailPreviewPane().then(function ($iFrame) {
     const iFrameContent = $iFrame.contents().find('body');
-    cy.wrap(iFrameContent).invoke('text').should('contain', emailBody);
+    cy.wrap(iFrameContent).find('[class*="email-content"]').invoke('text').should('contain', emailBody);
   });
 });
 
