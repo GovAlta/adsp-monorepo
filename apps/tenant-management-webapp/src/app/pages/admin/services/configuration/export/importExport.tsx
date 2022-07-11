@@ -26,7 +26,7 @@ import { ImportModal } from './importModal';
 import { isValidJSONCheck, jsonSchemaCheck } from '@lib/checkInput';
 import { StatusText } from '../styled-components';
 import GreenCircleCheckMark from '@icons/green-circle-checkmark.svg';
-import Warning from '@icons/warning.svg';
+import CloseCircle from '@components/icons/CloseCircle';
 
 const exportSchema = {
   type: 'string',
@@ -168,7 +168,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
         <div>
           <h2>Import</h2>
           <p>
-            As a tenant admin, you can import configuration from JSON file, so that I can apply previously exported
+            As a tenant admin, you can import configuration from JSON file, so that you can apply previously exported
             configuration.
           </p>
           <GoAForm>
@@ -188,7 +188,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
                 {' Choose a file'}
               </button>
               <br />
-              <p>{fileName?.current?.value ? fileName.current.value : 'No file was chosen'}</p>
+              <p>{fileName?.current?.value ? fileName.current.value.split('\\').pop() : 'No file was chosen'}</p>
             </GoAFormItem>
             <GoAButton
               type="submit"
@@ -201,15 +201,18 @@ export const ConfigurationImportExport: FunctionComponent = () => {
             <br />
             {importedConfigurationError && showStatus && (
               <StatusText style={{ display: 'flex', paddingTop: '1rem' }}>
-                <img
-                  src={importedConfigurationError.length > 0 ? Warning : GreenCircleCheckMark}
-                  width="16"
-                  style={{ marginRight: '1rem' }}
-                  alt="status"
-                />
+                <div style={{ marginRight: '1rem' }}>
+                  {importedConfigurationError.length > 0 ? (
+                    <CloseCircle size="medium" />
+                  ) : (
+                    <img src={GreenCircleCheckMark} width="16" alt="status" />
+                  )}
+                </div>
                 {importedConfigurationError.length > 0
-                  ? `  Import ${fileName?.current?.value} failed, Error list:  ${importedConfigurationError} `
-                  : `   ${fileName?.current?.value}  Imported successfully `}
+                  ? `  Import ${fileName?.current?.value
+                      .split('\\')
+                      .pop()} failed. Error list:  ${importedConfigurationError.toString().split(' ,').join(', ')}.`
+                  : `   ${fileName?.current?.value.split('\\').pop()}  Imported successfully. `}
 
                 <br />
               </StatusText>

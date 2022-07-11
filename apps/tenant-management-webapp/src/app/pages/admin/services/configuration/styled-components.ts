@@ -22,29 +22,29 @@ export const EntryDetail = styled.div`
 
 export const TableDiv = styled.div`
   #configuration-name {
-    overflow-x: hidden;
-    text-overflow: ellipsis;
-    max-width: 100px;
+    width: 120px;
   }
 
   #configuration-action {
-    width: 40px;
-    white-space: nowrap;
-    overflow-x: hidden;
-    text-overflow: ellipsis;
+    width: 95px;
     text-align: left;
     padding: 0.5rem;
   }
+  & table {
+    table-layout: fixed;
+  }
   & td:first-child {
-    max-width: 100px;
     overflow-x: hidden;
-    text-overflow: ellipsis;
     justify-content: center;
+    word-wrap: break-word;
+  }
+  & td:nth-child(2) {
+    word-wrap: break-word;
   }
   & td:last-child {
-    width: 40px;
-    overflow-x: hidden;
-    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
     justify-content: center;
   }
 `;
