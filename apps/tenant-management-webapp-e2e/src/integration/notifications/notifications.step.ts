@@ -767,13 +767,16 @@ Then('the user views an email template modal title for {string}', function (noti
 });
 
 Then('the user views the email subject {string}', function (subject) {
-  notificationsObj.editTemplateModalSubject().invoke('text').should('contain', subject);
-  notificationsObj.editTemplateModalSubjectPreviewPane().invoke('text').should('contain', subject);
+  notificationsObj.editTemplateModalEmailSubject().invoke('text').should('contain', subject);
+  notificationsObj.editTemplateModalEmailSubjectPreviewPane().invoke('text').should('contain', subject);
 });
 
 Then('the user views the email body {string}', function (emailBody) {
-  notificationsObj.editTemplateModalBody().invoke('text').should('contain', emailBody);
-  notificationsObj.editContactModalBodyPreviewPane().invoke('text').should('contain', emailBody);
+  notificationsObj.editTemplateModalEmailBody().invoke('text').should('contain', emailBody);
+  notificationsObj.editContactModalBodyEmailPreviewPane().then(function ($iFrame) {
+    const iFrameContent = $iFrame.contents().find('body');
+    cy.wrap(iFrameContent).find('[class*="email-content"]').invoke('text').should('contain', emailBody);
+  });
 });
 
 When('the user clicks Close button in an email template modal', function () {

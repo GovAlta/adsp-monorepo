@@ -445,19 +445,19 @@ class NotificationsPage {
     return cy.get('[data-testid="modal-title"]');
   }
 
-  editTemplateModalSubject() {
+  editTemplateModalEmailSubject() {
     return cy.get('[data-testid="templated-editor-subject"]');
   }
 
-  editTemplateModalSubjectPreviewPane() {
+  editTemplateModalEmailSubjectPreviewPane() {
     return cy.get('[data-testid="email-preview-subject"]');
   }
 
-  editTemplateModalBody() {
+  editTemplateModalEmailBody() {
     return cy.get('[data-testid="templated-editor-body"]');
   }
 
-  editContactModalBodyPreviewPane() {
+  editContactModalBodyEmailPreviewPane() {
     return cy.get('[data-testid="email-preview-body"]');
   }
 
