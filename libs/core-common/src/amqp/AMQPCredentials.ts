@@ -1,5 +1,3 @@
-// TODO move to SDK?
-
 export type PasswordConnectionProps = {
   hostname: string;
   username: string;
