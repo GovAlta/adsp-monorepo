@@ -24,7 +24,7 @@ const userSchema = {
   },
 };
 
-interface ApplicationEvent {
+export interface ApplicationEvent {
   id: string;
   name: string;
   description: string;
@@ -38,8 +38,11 @@ interface ApplicationNotificationEvent {
   created: Date;
 }
 
+export const healthCheckStartedEvent = 'health-check-started';
+export const healthCheckStoppedEvent = 'health-check-stopped';
+
 export const HealthCheckStartedDefinition: DomainEventDefinition = {
-  name: 'health-check-started',
+  name: healthCheckStartedEvent,
   description: 'Signalled when an application health check is started.',
   payloadSchema: {
     type: 'object',
@@ -51,7 +54,7 @@ export const HealthCheckStartedDefinition: DomainEventDefinition = {
 };
 
 export const HealthCheckStoppedDefinition: DomainEventDefinition = {
-  name: 'health-check-stopped',
+  name: healthCheckStoppedEvent,
   description: 'Signalled when an application health check is stopped.',
   payloadSchema: {
     type: 'object',
@@ -194,7 +197,7 @@ const mapNotice = (notice: NoticeApplicationEntity): ApplicationNotificationEven
 };
 
 export const applicationStatusToStarted = (application: ServiceStatusApplication, user: User): DomainEvent => ({
-  name: 'health-check-started',
+  name: healthCheckStartedEvent,
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
   correlationId: `${application._id}`,
@@ -212,7 +215,7 @@ export const applicationStatusToStarted = (application: ServiceStatusApplication
 });
 
 export const applicationStatusToStopped = (application: ServiceStatusApplication, user: User): DomainEvent => ({
-  name: 'health-check-stopped',
+  name: healthCheckStoppedEvent,
   timestamp: new Date(),
   tenantId: AdspId.parse(application.tenantId),
   correlationId: `${application._id}`,
