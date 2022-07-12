@@ -96,7 +96,7 @@ export interface ServiceEntity {
   apis: DirectoryEntry[];
 }
 
-const getEntriesForServiceImpl = async (
+export const getEntriesForServiceImpl = async (
   namespace: string,
   service: string,
   directoryRepository: DirectoryRepository
@@ -366,7 +366,7 @@ const deleteEntry = async (
   return dbEntry;
 };
 
-export const getServiceMetadata =
+export const getServiceData =
   (directoryRepository: DirectoryRepository, logger: Logger): RequestHandler =>
   async (req, res, _next) => {
     const { namespace, service } = req.params;
@@ -538,7 +538,7 @@ export const createDirectoryRouter = ({
    * Get the service data
    */
   directoryRouter.get(
-    '/namespaces/:namespace/services/:service/metadata',
+    '/namespaces/:namespace/services/:service',
     createValidationHandler(
       ...checkSchema(
         {
@@ -548,7 +548,7 @@ export const createDirectoryRouter = ({
         ['params']
       )
     ),
-    getServiceMetadata(directoryRepository, logger)
+    getServiceData(directoryRepository, logger)
   );
 
   return directoryRouter;
