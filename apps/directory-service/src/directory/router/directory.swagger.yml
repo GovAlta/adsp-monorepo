@@ -307,11 +307,11 @@ components:
       401:
         description: Unauthorized
 
-'/directory/v2/namespaces/{namespace}/services/{service}/entries':
+'/directory/v2/namespaces/{namespace}/services/{service}/apis':
   get:
     tags:
       - Directory service
-    description: Fetch service and service API entries for the specified service.
+    description: Fetch the API entries for the specified service.
     parameters:
       - name: namespace
         description: namespace of the directory entry
@@ -335,7 +335,7 @@ components:
               properties:
                 service:
                   type: object
-                  description: The directory entry for the requested service.  The entry will be null if the service is only defined by its APIs.
+                  description: The directory entries for the requested service apis.
                   properties:
                     namespace:
                       type: string
