@@ -35,19 +35,21 @@ export class HealthCheckController {
 
   subscribe = (queueService: WorkQueueService<HealthCheckControllerWorkItem>): void => {
     queueService.getItems().subscribe(({ item, done }) => {
-      switch (item?.work) {
-        case 'start':
-          this.startApplicationHealthChecks(item);
-          done();
-          break;
-        case 'stop':
-          this.stopApplicationHealthChecks(item);
-          done();
-          break;
-        default: {
-          this.#logger.warn(`Received unrecognized status controller job '${item}'.`);
-          done();
-          break;
+      if (item?.work) {
+        switch (item.work) {
+          case 'start':
+            this.startApplicationHealthChecks(item);
+            done();
+            break;
+          case 'stop':
+            this.stopApplicationHealthChecks(item);
+            done();
+            break;
+          default: {
+            this.#logger.warn(`Received unrecognized status controller job '${item.work}'.`);
+            done();
+            break;
+          }
         }
       }
     });
