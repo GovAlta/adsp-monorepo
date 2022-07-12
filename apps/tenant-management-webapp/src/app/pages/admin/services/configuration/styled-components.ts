@@ -62,6 +62,11 @@ export const NoItem = styled.div`
 `;
 
 export const StatusText = styled.div`
-  display: 'flex';
-  padding-top: '1rem';
+  display: flex;
+  padding-top: 1rem;
+`;
+
+export const StatusIcon = styled.div`
+  margin-right: 0.25rem;
+  padding-top: 0.25rem;
 `;

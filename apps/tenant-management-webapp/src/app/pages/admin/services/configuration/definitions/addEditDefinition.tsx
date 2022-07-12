@@ -55,6 +55,9 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
     };
   };
 
+  const descriptionCheck = (): Validator => (description: string) =>
+    description.length > 250 ? 'Description could not over 250 characters ' : '';
+
   const { errors, validators } = useValidators(
     'namespace',
     'namespace',
@@ -65,6 +68,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
     .add('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
     .add('duplicated', 'name', duplicateConfigCheck(identifiers))
     .add('payloadSchema', 'payloadSchema', isValidJSONCheck('payloadSchema'))
+    .add('description', 'description', descriptionCheck())
     .build();
 
   useEffect(() => {
@@ -72,6 +76,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
   }, [initialValue]);
 
   const dispatch = useDispatch();
+
   useEffect(() => {
     if (!identifiers) {
       dispatch(getConfigurationDefinitions());
@@ -84,6 +89,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
       setSpinner(false);
     }
   }, [configurations]);
+
   const validationCheck = () => {
     const validations = {
       payloadSchema: payloadSchema,
@@ -92,6 +98,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
       validations['duplicated'] = `${definition.namespace}:${definition.name}`;
       validations['name'] = definition.name;
       validations['namespace'] = definition.namespace;
+      validations['description'] = definition.description;
     }
     if (!validators.checkAll(validations)) {
       return;
@@ -103,6 +110,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
     setDefinition(initialValue);
     onClose();
   };
+
   return (
     <>
       <ModalOverwrite>
@@ -151,6 +159,8 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
                   data-testid="form-description"
                   aria-label="description"
                   onChange={(description, value) => {
+                    validators.remove('description');
+                    validators['description'].check(value);
                     setDefinition({ ...definition, description: value });
                   }}
                 />

@@ -24,7 +24,7 @@ import { ConfigurationExportType, Service, ConfigDefinition } from '@store/confi
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { ImportModal } from './importModal';
 import { isValidJSONCheck, jsonSchemaCheck } from '@lib/checkInput';
-import { StatusText } from '../styled-components';
+import { StatusText, StatusIcon } from '../styled-components';
 import GreenCircleCheckMark from '@icons/green-circle-checkmark.svg';
 import CloseCircle from '@components/icons/CloseCircle';
 
@@ -200,20 +200,21 @@ export const ConfigurationImportExport: FunctionComponent = () => {
             </GoAButton>
             <br />
             {importedConfigurationError && showStatus && (
-              <StatusText style={{ display: 'flex', paddingTop: '1rem' }}>
-                <div style={{ marginRight: '1rem' }}>
+              <StatusText style={{ display: 'flex' }}>
+                <StatusIcon>
                   {importedConfigurationError.length > 0 ? (
                     <CloseCircle size="medium" />
                   ) : (
                     <img src={GreenCircleCheckMark} width="16" alt="status" />
                   )}
+                </StatusIcon>
+                <div>
+                  {importedConfigurationError.length > 0
+                    ? `  Import ${fileName?.current?.value
+                        .split('\\')
+                        .pop()} failed. Error list:  ${importedConfigurationError.toString().split(' ,').join(', ')}`
+                    : `   ${fileName?.current?.value.split('\\').pop()}  Imported successfully. `}
                 </div>
-                {importedConfigurationError.length > 0
-                  ? `  Import ${fileName?.current?.value
-                      .split('\\')
-                      .pop()} failed. Error list:  ${importedConfigurationError.toString().split(' ,').join(', ')}.`
-                  : `   ${fileName?.current?.value.split('\\').pop()}  Imported successfully. `}
-
                 <br />
               </StatusText>
             )}
