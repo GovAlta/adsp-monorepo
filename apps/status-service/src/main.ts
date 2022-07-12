@@ -103,6 +103,21 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
         await repositories.endpointStatusEntryRepository.deleteOldUrlStatus();
         logger.info('Completed the old application status deletion.');
       });
+
+      const healthCheckController = new HealthCheckController({
+        serviceStatusRepository: repositories.serviceStatusRepository,
+        healthCheckScheduler: scheduler,
+        logger: logger,
+      });
+
+      const amqpCredentials: AMQPCredentials = {
+        AMQP_HOST: environment.AMQP_HOST,
+        AMQP_USER: environment.AMQP_USER,
+        AMQP_PASSWORD: environment.AMQP_PASSWORD,
+        AMQP_URL: environment.AMQP_URL,
+      };
+      const queueService = await healthCheckController.connect(amqpCredentials);
+      healthCheckController.subscribe(queueService);
     };
 
     // reload the cache every 5 minutes
@@ -128,21 +143,6 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
       db: repositories.isConnected(),
     });
   });
-
-  const healthCheckController = new HealthCheckController({
-    serviceStatusRepository: repositories.serviceStatusRepository,
-    healthCheckScheduler: scheduler,
-    logger: logger,
-  });
-
-  const amqpCredentials: AMQPCredentials = {
-    AMQP_HOST: environment.AMQP_HOST,
-    AMQP_USER: environment.AMQP_USER,
-    AMQP_PASSWORD: environment.AMQP_PASSWORD,
-    AMQP_URL: environment.AMQP_URL,
-  };
-  const queueService = await healthCheckController.connect(amqpCredentials);
-  healthCheckController.subscribe(queueService);
 
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
