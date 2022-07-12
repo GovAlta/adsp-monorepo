@@ -3,12 +3,10 @@ import Editor from '@monaco-editor/react';
 import { GoAButton, GoAElementLoader } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
-import { ConfigDefinition, ServiceSchemas } from '@store/configuration/model';
-import { createSelector } from 'reselect';
+import { ConfigDefinition } from '@store/configuration/model';
 import { RootState } from '@store/index';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useValidators } from '@lib/useValidators';
-import { getConfigurationDefinitions } from '@store/configuration/action';
 import { characterCheck, validationPattern, isNotEmptyCheck, isValidJSONCheck, Validator } from '@lib/checkInput';
 import styled from 'styled-components';
 
@@ -18,16 +16,8 @@ interface AddEditConfigDefinitionProps {
   open: boolean;
   isEdit: boolean;
   onClose: () => void;
-  configurations: ServiceSchemas;
+  configurations: Record<string, unknown>;
 }
-
-export const selectConfigurationIdentifier = createSelector(
-  (state: RootState) => state.configuration?.coreConfigDefinitions?.configuration || {},
-  (state: RootState) => state.configuration?.tenantConfigDefinitions?.configuration || {},
-  (coreConfig, tenantConfig) => {
-    return [...Object.keys(coreConfig), ...Object.keys(tenantConfig)];
-  }
-);
 
 export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionProps> = ({
   onSave,
@@ -37,12 +27,17 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
   onClose,
   configurations,
 }) => {
+  const getIdentifer = () => {
+    return Object.keys(configurations);
+  };
   const [definition, setDefinition] = useState<ConfigDefinition>(initialValue);
   const [payloadSchema, setPayloadSchema] = useState<string>(JSON.stringify(definition.configurationSchema, null, 2));
   const [spinner, setSpinner] = useState<boolean>(false);
-  const identifiers = useSelector(selectConfigurationIdentifier);
+  const identifiers = getIdentifer();
   const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
-
+  const loadingIndicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
   const duplicateConfigCheck = (identifiers: string[]): Validator => {
     return (identifier: string) => {
       return identifiers.includes(identifier) ? `Duplicated event ${identifier}.` : '';
@@ -75,16 +70,8 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
     setDefinition(initialValue);
   }, [initialValue]);
 
-  const dispatch = useDispatch();
-
   useEffect(() => {
-    if (!identifiers) {
-      dispatch(getConfigurationDefinitions());
-    }
-  }, []);
-
-  useEffect(() => {
-    if (spinner && Object.keys(configurations).length > 0) {
+    if (spinner && loadingIndicator.show) {
       validationCheck();
       setSpinner(false);
     }
@@ -205,7 +192,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
               disabled={!definition.name || !definition.namespace || Object.entries(errors).length > 0}
               type="submit"
               onClick={(e) => {
-                if (!configurations) {
+                if (loadingIndicator.show) {
                   setSpinner(true);
                 } else {
                   validationCheck();
