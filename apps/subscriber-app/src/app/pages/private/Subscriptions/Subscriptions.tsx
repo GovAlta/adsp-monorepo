@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Main } from '@components/Html';
 import Container from '@components/Container';
 import DataTable from '@components/DataTable';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { GoACallout } from '@abgov/react-components';
 import { FetchContactInfoService } from '@store/notification/actions';
 import { useParams } from 'react-router-dom';
@@ -20,12 +20,10 @@ import {
   ContactInformationWrapper,
   CalloutWrapper,
   SubscriptionListContainer,
-  TableHeaders,
   DescriptionWrapper,
 } from './styled-components';
 import { phoneWrapper } from '@lib/wrappers';
 import { ContactInfoCard } from './ContactInfoCard';
-import { IndicatorWithDelay } from '@components/Indicator';
 
 const Subscriptions = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -106,52 +104,68 @@ const Subscriptions = (): JSX.Element => {
             </p>
           </DescriptionWrapper>
           {showUnSubscribeModal ? unSubscribeModal() : ''}
-          {subscriber ? (
-            <>
-              <ContactInformationWrapper>
-                <ContactInfoCard subscriber={subscriber} />
-              </ContactInformationWrapper>
 
-              <SubscriptionListContainer>
-                {subscriber?.subscriptions?.length > 0 ? (
-                  <DataTable data-testid="subscriptions-table">
-                    <TableHeaders>
-                      <tr>
-                        <th id="subscriptions">Subscriptions</th>
-                        <th id="available-channels">Available channels</th>
-                        <th id="action">Action</th>
-                      </tr>
-                    </TableHeaders>
-                    <tbody>
-                      <SubscriptionsList onUnsubscribe={unSubscribe} subscriber={subscriber} />
-                    </tbody>
-                  </DataTable>
-                ) : (
-                  <GoACallout title="You have no subscriptions" type="important"></GoACallout>
-                )}
-              </SubscriptionListContainer>
-              {contact?.contactEmail && (
-                <CalloutWrapper id="contactSupport">
-                  <GoACallout title="Need help? Contact your service admin" type="information">
-                    <div>{contact?.supportInstructions}</div>
-                    <div>
-                      Email:{' '}
-                      <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
-                        {contact?.contactEmail}
-                      </a>
-                    </div>
-                    {contact?.phoneNumber && <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>}
-                    <div data-testid="service-notice-date-range"></div>
-                  </GoACallout>
-                </CalloutWrapper>
+          <ContactInformationWrapper>
+            <ContactInfoCard subscriber={subscriber} />
+          </ContactInformationWrapper>
+
+          <SubscriptionListContainer>
+            <DataTable data-testid="subscriptions-table">
+              {!subscriber || subscriber?.subscriptions.length > 0 ? (
+                <tr>
+                  <th id="subscriptions">Subscription</th>
+                  <th id="descriptions">Description</th>
+                  <th id="available-channels">Available channels</th>
+                  <th id="action">Action</th>
+                </tr>
+              ) : (
+                ''
               )}
-            </>
-          ) : hasSubscriberId === false ? (
+              <tbody>
+                {subscriber ? (
+                  <SubscriptionsList onUnsubscribe={unSubscribe} subscriber={subscriber} />
+                ) : (
+                  <tr>
+                    <td colSpan={4}>
+                      <GoASkeletonGridColumnContent rows={5}></GoASkeletonGridColumnContent>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </DataTable>
+
+            {subscriber?.subscriptions?.length <= 0 ? (
+              <GoACallout title="You have no subscriptions" type="important"></GoACallout>
+            ) : (
+              ''
+            )}
+          </SubscriptionListContainer>
+
+          <>
+            {contact?.contactEmail ? (
+              <CalloutWrapper id="contactSupport">
+                <GoACallout title="Need help? Contact your service admin" type="information">
+                  <div>{contact?.supportInstructions}</div>
+                  <div>
+                    Email:{' '}
+                    <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
+                      {contact?.contactEmail}
+                    </a>
+                  </div>
+                  {contact?.phoneNumber && <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>}
+                  <div data-testid="service-notice-date-range"></div>
+                </GoACallout>
+              </CalloutWrapper>
+            ) : (
+              <GoASkeletonGridColumnContent rows={5}></GoASkeletonGridColumnContent>
+            )}
+          </>
+          {hasSubscriberId === false ? (
             <NoSubscriberCallout>
               <GoACallout title="You have no subscriptions" type="important"></GoACallout>
             </NoSubscriberCallout>
           ) : (
-            <IndicatorWithDelay pageLock={false} />
+            ''
           )}
         </Container>
       </Main>

@@ -71,4 +71,4 @@ Feature: Tenant management welcome page
         When the user enters "autotest!&%" as tenant name, clicks create tenant button and waits "2" seconds
         Then the user views the error message of "Value not valid for Tenant name: Names cannot contain special characters (e.g. ! & %)." for tenant creation
         When the user enters "autoTest" as tenant name, clicks create tenant button and waits "2" seconds
-        Then the user views the error message of "Tenant exist, please use another tenant name" for tenant creation
+        Then the user views the error message of "This tenant name has already been used" for tenant creation

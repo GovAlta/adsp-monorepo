@@ -149,20 +149,26 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
     }
     case FIND_SUBSCRIBERS_SUCCESS: {
       const { subscribers, after, next } = action.payload;
-      return {
-        ...state,
-        subscribers: subscribers.reduce(
+      let newSubscriber = {};
+      let results = null;
+
+      if (subscribers) {
+        newSubscriber = subscribers.reduce(
           (subs, sub) => ({ ...subs, [sub.id]: { ...subs[sub.id], ...sub } }),
           state.subscribers
-        ),
+        );
+        results = [...(after ? state.subscriberSearch.results : []), ...subscribers.map((subscriber) => subscriber.id)];
+      }
+
+      return {
+        ...state,
+        subscribers: newSubscriber,
         subscriberSearch: {
           ...state.subscriberSearch,
-          results: [
-            ...(after ? state.subscriberSearch.results : []),
-            ...subscribers.map((subscriber) => subscriber.id),
-          ],
+          results: results,
           next,
         },
+        typeSubscriptionSearch: {},
       };
     }
     case RESOLVE_SUBSCRIBER_USER_SUCCESS: {

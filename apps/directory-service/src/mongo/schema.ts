@@ -2,7 +2,7 @@ import { Schema } from 'mongoose';
 /* Schema Validation
  Required validator checks if a property is not empty.
  Numbers have min and max validators.
- Strings have enum, match, minlength, and maxlength validators.
+ Strings have enum, match, minlength, and max length validators.
   */
 
 export const directorySchema = new Schema({

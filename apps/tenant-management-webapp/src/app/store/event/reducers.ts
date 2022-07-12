@@ -13,7 +13,7 @@ import { EventState } from './models';
 
 const defaultState: EventState = {
   definitions: {},
-  entries: [],
+  entries: null,
   results: [],
   nextEntries: null,
   metrics: {},
@@ -82,7 +82,7 @@ export default function (state: EventState = defaultState, action: EventActionTy
     case CLEAR_EVENT_LOG_ENTRIES_SUCCESS_ACTION:
       return {
         ...state,
-        entries: [],
+        entries: null,
         nextEntries: null,
         isLoading: { ...state.isLoading, log: true },
       };

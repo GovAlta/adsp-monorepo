@@ -27,7 +27,7 @@
   --color-gray-800: hsla(216, 10%, 29%, 1);
   --color-gray-900: hsla(216, 10%, 19%, 1);
 
-  --color-green: hsl(148,100%,26%);
+  --color-green: hsl(148, 100%, 26%);
 
   --color-primary: #0070c4;
   --color-primary-dark: #004f84;
@@ -144,6 +144,22 @@ input[type='submit'].goa-button:disabled,
 input[type='submit'].goa-button:disabled.goa--secondary,
 input[type='submit'].goa-button:disabled.goa--tertiary {
   border: 2px solid var(--color-white) !important;
+}
+
+.goa-textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  transition: box-shadow 0.1s ease-in;
+  border: 1px solid var(--color-gray-600);
+  border-radius: 3px;
+  background: var(--color-white);
+  color: var(--color-black, #ccc);
+  padding: var(--input-padding, 0.5rem);
+  font-size: var(--input-font-size);
+  font-family: var(--font-family);
+  min-width: 100%;
 }
 
 /* == OVERRIDES END */

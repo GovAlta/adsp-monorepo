@@ -107,7 +107,7 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
 
   return (
     <>
-      <Visible visible={!indicator.show && entries.length > 0}>
+      <Visible visible={!indicator.show && entries !== null && entries.length > 0}>
         <div className={className}>
           <DataTable>
             <colgroup>
@@ -127,29 +127,30 @@ const EventLogEntriesComponent: FunctionComponent<EventLogEntriesComponentProps>
               </tr>
             </thead>
             <tbody>
-              {entries.map((entry) => (
-                <EventLogEntryComponent
-                  key={`${entry.timestamp}${entry.namespace}${entry.name}`}
-                  entry={entry}
-                  correlationColors={colors}
-                  addCorrelationColor={(id) => {
-                    const randomColor = `#${Math.floor(Math.random() * 16777215)
-                      .toString(16)
-                      .padStart(6, '0')}`;
-                    setColors({
-                      ...colors,
-                      [id]: randomColor,
-                    });
-                    return randomColor;
-                  }}
-                  onSearchRelated={(correlationId) => onSearch({ correlationId })}
-                />
-              ))}
+              {entries !== null &&
+                entries.map((entry) => (
+                  <EventLogEntryComponent
+                    key={`${entry.timestamp}${entry.namespace}${entry.name}`}
+                    entry={entry}
+                    correlationColors={colors}
+                    addCorrelationColor={(id) => {
+                      const randomColor = `#${Math.floor(Math.random() * 16777215)
+                        .toString(16)
+                        .padStart(6, '0')}`;
+                      setColors({
+                        ...colors,
+                        [id]: randomColor,
+                      });
+                      return randomColor;
+                    }}
+                    onSearchRelated={(correlationId) => onSearch({ correlationId })}
+                  />
+                ))}
             </tbody>
           </DataTable>
         </div>
       </Visible>
-      {!indicator.show && entries && entries.length === 0 && renderNoItem('event log')}
+      {!indicator.show && entries !== null && entries.length === 0 && renderNoItem('event log')}
       {indicator.show && <PageIndicator />}
     </>
   );

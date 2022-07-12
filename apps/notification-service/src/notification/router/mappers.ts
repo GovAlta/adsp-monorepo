@@ -14,30 +14,37 @@ export const mapSubscriber = (apiId: AdspId, subscriber: SubscriberEntity): Reco
   userId: subscriber.userId,
 });
 
-export const mapSubscription = (apiId: AdspId, subscription: SubscriptionEntity): Record<string, unknown> => ({
+export const mapSubscription = (
+  apiId: AdspId,
+  subscription: SubscriptionEntity,
+  includeType = false
+): Record<string, unknown> => ({
   subscriber: subscription.subscriber ? mapSubscriber(apiId, subscription.subscriber) : null,
   subscriberId: subscription.subscriberId,
   typeId: subscription.typeId,
   criteria: subscription.criteria,
+  type: includeType ? mapType(subscription.type, true) : undefined,
 });
 
 export const mapType = (type: NotificationTypeEntity, lean?: boolean): Record<string, unknown> =>
-  lean
-    ? {
-        id: type.id,
-        name: type.name,
-        description: type.description,
-        publicSubscribe: type.publicSubscribe,
-        manageSubscribe: type.manageSubscribe,
-        channels: type.channels,
-      }
-    : {
-        id: type.id,
-        name: type.name,
-        description: type.description,
-        publicSubscribe: type.publicSubscribe,
-        manageSubscribe: type.manageSubscribe,
-        subscriberRoles: type.subscriberRoles,
-        channels: type.channels,
-        events: type.events,
-      };
+  type
+    ? lean
+      ? {
+          id: type.id,
+          name: type.name,
+          description: type.description,
+          publicSubscribe: type.publicSubscribe,
+          manageSubscribe: type.manageSubscribe,
+          channels: type.channels,
+        }
+      : {
+          id: type.id,
+          name: type.name,
+          description: type.description,
+          publicSubscribe: type.publicSubscribe,
+          manageSubscribe: type.manageSubscribe,
+          subscriberRoles: type.subscriberRoles,
+          channels: type.channels,
+          events: type.events,
+        }
+    : null;

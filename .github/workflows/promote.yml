@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v2
         with:
-          node-version: "16"
+          node-version: "16.15.0"
       - uses: actions/cache@v2
         with:
           path: ~/.npm
@@ -52,12 +52,12 @@ jobs:
       name: Staging-e2e
     strategy:
       matrix:
-        app: [tenant-management-webapp, status-app]
+        app: [tenant-management-webapp, status-app, subscriber-app]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: "16"
+          node-version: "16.15.0"
       - uses: actions/cache@v2
         with:
           path: ~/.npm
@@ -121,12 +121,12 @@ jobs:
       name: Prod-e2e
     strategy:
       matrix:
-        app: [tenant-management-webapp, status-app]
+        app: [tenant-management-webapp, status-app, subscriber-app]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: "16"
+          node-version: "16.15.0"
       - uses: actions/cache@v2
         with:
           path: ~/.npm

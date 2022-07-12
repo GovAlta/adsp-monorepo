@@ -20,6 +20,7 @@ import {
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
 import moment from 'moment';
+import { getAccessToken } from '@store/tenant/sagas';
 
 export function* fetchEventDefinitions(action: FetchEventDefinitionsAction): SagaIterator {
   yield put(
@@ -32,7 +33,7 @@ export function* fetchEventDefinitions(action: FetchEventDefinitionsAction): Sag
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
     try {
@@ -84,7 +85,7 @@ export function* fetchEventDefinitions(action: FetchEventDefinitionsAction): Sag
 
 export function* updateEventDefinition({ definition }: UpdateEventDefinitionAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
@@ -134,7 +135,7 @@ export function* updateEventDefinition({ definition }: UpdateEventDefinitionActi
 
 export function* deleteEventDefinition({ definition }: UpdateEventDefinitionAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
@@ -146,17 +147,31 @@ export function* deleteEventDefinition({ definition }: UpdateEventDefinitionActi
         }
       );
 
+      const headers = { Authorization: `Bearer ${token}` };
+      const configPatchUrl = `${baseUrl}/configuration/v2/configuration/platform/event-service`;
+
       const namespaceUpdate = configuration[definition.namespace];
       delete namespaceUpdate['definitions'][definition.name];
 
-      yield call(
-        axios.patch,
-        `${baseUrl}/configuration/v2/configuration/platform/event-service`,
-        { operation: 'UPDATE', update: { [definition.namespace]: namespaceUpdate } },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      if (Object.keys(namespaceUpdate['definitions']).length === 0) {
+        yield call(
+          axios.patch,
+          configPatchUrl,
+          { operation: 'DELETE', property: definition.namespace },
+          {
+            headers,
+          }
+        );
+      } else {
+        yield call(
+          axios.patch,
+          configPatchUrl,
+          { operation: 'UPDATE', update: { [definition.namespace]: namespaceUpdate } },
+          {
+            headers,
+          }
+        );
+      }
 
       yield put(deleteEventDefinitionSuccess(definition));
     } catch (err) {
@@ -167,7 +182,7 @@ export function* deleteEventDefinition({ definition }: UpdateEventDefinitionActi
 
 export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaIterator {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
   let eventUrl = `${baseUrl}/value/v1/event-service/values/event?top=10&after=${action.after || ''}`;
   if (baseUrl && token) {
     if (action.searchCriteria) {
@@ -231,7 +246,7 @@ interface MetricResponse {
 
 export function* fetchEventMetrics(): SagaIterator {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {

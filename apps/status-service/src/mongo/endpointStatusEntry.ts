@@ -19,8 +19,12 @@ export default class MongoEndpointStatusEntryRepository implements EndpointStatu
     throw new Error('not implemented');
   }
 
-  async findRecentByUrl(url: string, top = this.opts.limit): Promise<EndpointStatusEntryEntity[]> {
-    const docs = await this.model.find({ url: url }).sort({ timestamp: -1 }).limit(top);
+  async findRecentByUrlAndApplicationId(
+    url: string,
+    applicationId: string,
+    top = this.opts.limit
+  ): Promise<EndpointStatusEntryEntity[]> {
+    const docs = await this.model.find({ url: url, applicationId: applicationId }).sort({ timestamp: -1 }).limit(top);
 
     const entries = docs.map((doc) => this.fromDoc(doc));
 
@@ -49,6 +53,7 @@ export default class MongoEndpointStatusEntryRepository implements EndpointStatu
     return {
       ok: endpoint.ok,
       responseTime: endpoint.responseTime,
+      applicationId: endpoint.applicationId,
       status: endpoint.status,
       timestamp: endpoint.timestamp,
       url: endpoint.url,
@@ -62,6 +67,7 @@ export default class MongoEndpointStatusEntryRepository implements EndpointStatu
     return new EndpointStatusEntryEntity(this, {
       ok: doc.ok,
       responseTime: doc.responseTime,
+      applicationId: doc.applicationId,
       status: doc.status,
       timestamp: doc.timestamp,
       url: doc.url,

@@ -137,6 +137,7 @@ describe('createProcessEventJob', () => {
       const subscription = new SubscriptionEntity(
         repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test', subscriberId: 'test', criteria: {} },
+        null,
         subscriber
       );
       repositoryMock.getSubscriptions.mockResolvedValueOnce({
@@ -222,6 +223,7 @@ describe('createProcessEventJob', () => {
       const subscriptionA = new SubscriptionEntity(
         repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test', subscriberId: 'testA', criteria: {} },
+        configuration.getNotificationType('test'),
         subscriberA
       );
 
@@ -241,6 +243,7 @@ describe('createProcessEventJob', () => {
       const subscriptionB = new SubscriptionEntity(
         repositoryMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test', subscriberId: 'testB', criteria: {} },
+        configuration.getNotificationType('test'),
         subscriberB
       );
       repositoryMock.getSubscriptions.mockResolvedValueOnce({
@@ -337,6 +340,7 @@ describe('createProcessEventJob', () => {
       const subscription = new SubscriptionEntity(
         repositoryDoubleMock as unknown as SubscriptionRepository,
         { tenantId, typeId: 'test', subscriberId: 'test', criteria: {} },
+        configuration.getNotificationType('test'),
         subscriber
       );
 

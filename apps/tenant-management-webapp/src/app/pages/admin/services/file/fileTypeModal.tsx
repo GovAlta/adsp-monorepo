@@ -10,103 +10,41 @@ import { FileTypeItem } from '@store/file/models';
 import { useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
 import { toKebabName } from '@lib/kebabName';
-
+import { createSelector } from 'reselect';
+import { RootState } from '@store/index';
+import { useSelector } from 'react-redux';
+import { ConfigServiceRole } from '@store/access/models';
+import { useValidators } from '@lib/useValidators';
+import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
 interface FileTypeModalProps {
   fileType?: FileTypeItem;
   onCancel: () => void;
+  fileTypeNames?: string[];
   type: 'new' | 'edit';
   roles: Role[];
   onSwitch?: () => void;
 }
 
-const ModalOverwrite = styled.div`
-  .modal {
-    max-height: 250% !important;
-    min-width: 37.5em;
-  }
-`;
-
-const AnonymousReadWrapper = styled.div`
-  line-height: 2.5em;
-  display: flex;
-`;
-
-const DataTableWrapper = styled.div`
-  .goa-checkbox input[type='checkbox'] {
-    display: none !important;
-  }
-
-  th {
-    position: -webkit-sticky;
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background-color: white;
-    padding-left: 0em !important;
-  }
-  thead,
-  tbody {
-    display: block;
-  }
-
-  tbody {
-    height: 10em;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
-  .role-name {
-    width: 30em;
-  }
-
-  .role {
-    width: 3em;
-  }
-
-  td {
-    padding-left: 0em !important;
-  }
-
-  table {
-    border-collapse: collapse !important;
-    width: 100%;
-  }
-`;
-
-interface FileTypeError {
-  attribute: string;
-  message: string;
-}
-
-const validateFileType = (fileType: FileTypeItem): FileTypeError[] => {
-  const errors: FileTypeError[] = [];
-  if (fileType?.name) {
-    errors.push({
-      attribute: 'name',
-      message: 'File type name missing',
-    });
-  }
-  return errors;
-};
-
-interface FileRoleTableProps {
+interface ClientRoleTableProps {
   roles: string[];
   roleSelectFunc: (roles: string[], type: string) => void;
   readRoles: string[];
   updateRoles: string[];
   anonymousRead: boolean;
+  clientId: string;
 }
 
-const FileRoleTable = (props: FileRoleTableProps): JSX.Element => {
+const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
   const [readRoles, setReadRoles] = useState(props.readRoles);
   const [updateRoles, setUpdateRoles] = useState(props.updateRoles);
+
   return (
     <DataTableWrapper>
       <DataTable noScroll={true}>
         <thead>
           <tr>
             <th id="file-type-roles" className="role-name">
-              Roles
+              {props.clientId ? props.clientId + ' roles' : 'Roles'}
             </th>
             <th id="read-role-action" className="role">
               Read
@@ -118,26 +56,27 @@ const FileRoleTable = (props: FileRoleTableProps): JSX.Element => {
         </thead>
 
         <tbody>
-          {props.roles.map((role): JSX.Element => {
+          {props.roles?.map((role): JSX.Element => {
+            const compositeRole = props.clientId ? `${props.clientId}:${role}` : role;
             return (
               <tr key={`file-type-row-${role}`}>
                 <td className="role-name">{role}</td>
                 <td className="role">
                   <GoACheckbox
                     name={`file-type-read-role-checkbox-${role}`}
-                    key={`file-type-read-role-checkbox-${role}`}
-                    checked={readRoles.includes(role)}
+                    key={`file-type-read-role-checkbox-${compositeRole}`}
+                    checked={readRoles.includes(compositeRole)}
                     data-testid={`file-type-read-role-checkbox-${role}`}
                     disabled={props.anonymousRead}
                     onChange={() => {
-                      if (readRoles.includes(role)) {
+                      if (readRoles.includes(compositeRole)) {
                         const newRoles = readRoles.filter((readRole) => {
-                          return readRole !== role;
+                          return readRole !== compositeRole;
                         });
                         setReadRoles(newRoles);
                         props.roleSelectFunc(newRoles, 'read');
                       } else {
-                        const newRoles = [...readRoles, role];
+                        const newRoles = [...readRoles, compositeRole];
                         setReadRoles(newRoles);
                         props.roleSelectFunc(newRoles, 'read');
                       }
@@ -148,17 +87,17 @@ const FileRoleTable = (props: FileRoleTableProps): JSX.Element => {
                   <GoACheckbox
                     name={`file-type-update-role-checkbox-${role}`}
                     key={`file-type-update-role-checkbox-${role}`}
-                    checked={updateRoles.includes(role)}
+                    checked={updateRoles.includes(compositeRole)}
                     data-testid={`file-type-update-role-checkbox-${role}`}
                     onChange={() => {
-                      if (updateRoles.includes(role)) {
+                      if (updateRoles.includes(compositeRole)) {
                         const newRoles = updateRoles.filter((updateRole) => {
-                          return updateRole !== role;
+                          return updateRole !== compositeRole;
                         });
                         setUpdateRoles(newRoles);
                         props.roleSelectFunc(newRoles, 'write');
                       } else {
-                        const newRoles = [...updateRoles, role];
+                        const newRoles = [...updateRoles, compositeRole];
                         setUpdateRoles(newRoles);
                         props.roleSelectFunc(newRoles, 'write');
                       }
@@ -178,25 +117,94 @@ const IdField = styled.div`
   min-height: 1.6rem;
 `;
 
+const selectServiceKeycloakRoles = createSelector(
+  (state: RootState) => state.serviceRoles,
+  (serviceRoles) => {
+    return serviceRoles?.keycloak || {};
+  }
+);
+
 export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   const isNew = props.type === 'new';
   const [fileType, setFileType] = useState(props.fileType);
   const title = isNew ? 'Add file type' : 'Edit file type';
-  const [errors, setErrors] = useState<FileTypeError[]>(validateFileType(fileType));
+  const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
+
+  const duplicateFileTypeCheck = (names: string[]): Validator => {
+    return (name: string) => {
+      return names.includes(name) ? `Duplicated file type name ${name}.` : '';
+    };
+  };
+
+  const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
+    .add('duplicated', 'name', duplicateFileTypeCheck(props.fileTypeNames))
+    .build();
+
   const roleNames = props.roles.map((role) => {
     return role.name;
   });
+
   const dispatch = useDispatch();
+
+  const keycloakClientRoles = useSelector(selectServiceKeycloakRoles);
+
+  const ClientRole = ({ roleNames, clientId }) => {
+    return (
+      <>
+        <ClientRoleTable
+          roles={roleNames}
+          clientId={clientId}
+          anonymousRead={fileType?.anonymousRead}
+          roleSelectFunc={(roles, type) => {
+            if (type === 'read') {
+              setFileType({
+                ...fileType,
+                readRoles: roles,
+              });
+            } else {
+              setFileType({
+                ...fileType,
+                updateRoles: roles,
+              });
+            }
+          }}
+          readRoles={fileType?.readRoles}
+          updateRoles={fileType?.updateRoles}
+        />
+      </>
+    );
+  };
+
+  let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
+
+  const clientElements =
+    Object.entries(keycloakClientRoles).length > 0 &&
+    Object.entries(keycloakClientRoles)
+      .filter(([clientId, config]) => {
+        const roles = (config as ConfigServiceRole).roles;
+        const uniqueRoles = roles.filter((role) => !roleNames.includes(role.role));
+        return uniqueRoles.length > 0;
+      })
+      .map(([clientId, config]) => {
+        const roles = (config as ConfigServiceRole).roles;
+        const roleNames = roles.map((role) => {
+          return role.role;
+        });
+        return { roleNames: roleNames, clientId: clientId, currentElements: null };
+      });
+  elements = elements.concat(clientElements);
+
   return (
     <ModalOverwrite>
       <GoAModal testId="file-type-modal" isOpen={true}>
         <GoAModalTitle>{title}</GoAModalTitle>
         <GoAModalContent>
-          <GoAFormItem>
+          <GoAFormItem error={errors?.['name']}>
             <label>Name</label>
             <GoAInput
               type="text"
               name="name"
+              disabled={props.type === 'edit'}
               value={fileType.name}
               data-testid={`file-type-modal-name-input`}
               onChange={(name, value) => {
@@ -205,8 +213,16 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
                   name: value,
                   id: isNew ? toKebabName(value) : fileType.id,
                 };
+
+                const validations = {
+                  name: value,
+                };
+                validators.remove('name');
+                if (isNew) {
+                  validations['duplicated'] = value;
+                }
+                validators.checkAll(validations);
                 setFileType(newFileType);
-                setErrors(validateFileType(newFileType));
               }}
               aria-label="name"
             />
@@ -229,25 +245,13 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
             />
             Make public (read only)
           </AnonymousReadWrapper>
-          <FileRoleTable
-            roles={roleNames}
-            anonymousRead={fileType.anonymousRead}
-            roleSelectFunc={(roles, type) => {
-              if (type === 'read') {
-                setFileType({
-                  ...fileType,
-                  readRoles: roles,
-                });
-              } else {
-                setFileType({
-                  ...fileType,
-                  updateRoles: roles,
-                });
-              }
-            }}
-            readRoles={fileType.readRoles}
-            updateRoles={fileType.updateRoles}
-          />
+          {elements.map((e, key) => {
+            return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+          })}
+
+          {Object.entries(keycloakClientRoles).length === 0 && (
+            <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
+          )}
         </GoAModalContent>
         <GoAModalActions>
           <GoAButton
@@ -261,9 +265,35 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
           </GoAButton>
           <GoAButton
             buttonType="primary"
-            disabled={errors.length === 0}
+            disabled={!fileType.name || validators.haveErrors()}
             data-testid="file-type-modal-save"
             onClick={() => {
+              const validations = {
+                name: fileType.name,
+              };
+
+              if (props.type === 'new') {
+                validations['duplicated'] = fileType.name;
+              }
+
+              if (!validators.checkAll(validations)) {
+                return;
+              }
+
+              let elementNames = [];
+              elements.forEach((e) => {
+                elementNames = elementNames.concat(
+                  e.roleNames.map((roleName) => (e.clientId ? `${e.clientId}:${roleName}` : roleName))
+                );
+              });
+              const cleanReadRoles = fileType.readRoles.filter((readRole) => {
+                return elementNames.includes(readRole);
+              });
+              const cleanUpdateRoles = fileType.updateRoles.filter((updateRole) => elementNames.includes(updateRole));
+
+              fileType.readRoles = cleanReadRoles;
+              fileType.updateRoles = cleanUpdateRoles;
+
               if (props.type === 'new') {
                 dispatch(CreateFileTypeService(fileType));
               }
@@ -282,3 +312,89 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
     </ModalOverwrite>
   );
 };
+
+const ModalOverwrite = styled.div`
+  .modal {
+    max-height: 95% !important;
+    min-width: 37.5em;
+    max-width: 2000px;
+  }
+
+  .title {
+    font-weight: 700;
+    font-size: var(--fs-lg);
+    margin-top: 15px;
+  }
+`;
+
+const AnonymousReadWrapper = styled.div`
+  line-height: 2.5em;
+  display: flex;
+`;
+
+const DataTableWrapper = styled.div`
+  .goa-checkbox input[type='checkbox'] {
+    display: none !important;
+  }
+
+  .goa-checkbox {
+    margin-left: 10px;
+    min-height: calc(3rem - 10px);
+  }
+
+  th {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: white;
+    padding-left: 0em !important;
+  }
+  thead,
+  tbody {
+    display: block;
+  }
+
+  tbody {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .role-name {
+    width: 40em;
+  }
+
+  .role {
+    width: 3em;
+  }
+
+  td {
+    // padding-left: 0em !important;
+    padding: 0em !important;
+  }
+
+  table {
+    border-collapse: collapse !important;
+    width: 100%;
+  }
+
+  th {
+    white-space: pre-wrap;
+  }
+  
+  thead {
+    padding-top: 1.25rem;
+  }
+`;
+
+export const TextLoadingIndicator = styled.div`
+  animation: blinker 1s linear infinite;
+  font-size: 16px;
+  font-style: italic;
+  text-align: center;
+  @keyframes blinker {
+    50% {
+      opacity: 0;
+    }
+  }
+`;

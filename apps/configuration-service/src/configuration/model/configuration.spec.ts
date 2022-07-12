@@ -1,6 +1,7 @@
 import { adspId, User } from '@abgov/adsp-service-sdk';
 import { ConfigurationServiceRoles } from '../roles';
 import { ConfigurationEntity } from './configuration';
+import type { Logger } from 'winston';
 
 describe('ConfigurationEntity', () => {
   const namespace = 'platform';
@@ -15,6 +16,12 @@ describe('ConfigurationEntity', () => {
     setSchema: jest.fn(),
     validate: jest.fn(),
   };
+
+  const loggerMock = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+  } as unknown as Logger;
 
   beforeEach(() => {
     repositoryMock.saveRevision.mockClear();
@@ -44,10 +51,16 @@ describe('ConfigurationEntity', () => {
     }).toThrow(/Configuration and namespace and name cannot contain ':'./);
   });
 
-  it('can throw for invalid name', () => {
-    expect(() => {
-      new ConfigurationEntity(namespace, 'value:', repositoryMock, validationMock);
-    }).toThrow(/Configuration and namespace and name cannot contain ':'./);
+  it('can handle invalid schema', () => {
+    const schema = { type: 'object', properties: { valueA: { type: 'number' } }, additionalProperties: null };
+
+    validationMock.setSchema.mockImplementationOnce(() => {
+      throw new Error('');
+    });
+    new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, null, schema, loggerMock);
+    expect(loggerMock.warn).toBeCalledWith(
+      'JSON schema of platform:test-service is invalid. An empty JSON schema {} will be used.'
+    );
   });
 
   describe('canAccess', () => {

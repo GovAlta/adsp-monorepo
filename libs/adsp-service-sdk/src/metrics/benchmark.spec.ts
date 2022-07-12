@@ -34,6 +34,6 @@ describe('benchmark', () => {
       benchmark(req as unknown as Request, 'test');
       expect(req[REQ_BENCHMARK].metrics['test']).toBeGreaterThan(200);
       done();
-    }, 200);
+    }, 205);
   });
 });

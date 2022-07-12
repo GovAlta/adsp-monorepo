@@ -22,12 +22,13 @@ import axios from 'axios';
 import moment from 'moment';
 import { EventItem } from './models';
 import { UpdateIndicator } from '@store/session/actions';
+import { getAccessToken } from '@store/tenant/sagas';
 
 export function* fetchNotificationTypes(): SagaIterator {
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
     try {
@@ -53,7 +54,7 @@ export function* fetchCoreNotificationTypes(): SagaIterator {
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
     try {
@@ -95,7 +96,7 @@ export function* deleteNotificationTypes(action: DeleteNotificationTypeAction): 
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
     try {
@@ -118,7 +119,9 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
+
+  const coreNotificationTypes = yield select((state: RootState) => state.notification.core);
 
   if (configBaseUrl && token) {
     try {
@@ -135,28 +138,51 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
 
       payload.events = sanitizedEvents;
 
-      yield call(
-        axios.patch,
-        `${configBaseUrl}/configuration/v2/configuration/platform/notification-service`,
-        {
-          operation: 'UPDATE',
-          update: {
-            [payloadId]: {
-              id: payloadId,
-              name: payload.name,
-              description: payload.description,
-              subscriberRoles: payload.subscriberRoles,
-              channels: payload.channels || ['email'], //TODO: This is for 'migration' of pre-existing types.
-              events: payload.events,
-              publicSubscribe: payload.publicSubscribe,
-              manageSubscribe: payload.manageSubscribe,
+      const url = `${configBaseUrl}/configuration/v2/configuration/platform/notification-service`;
+      const headers = {
+        headers: { Authorization: `Bearer ${token}` },
+      };
+
+      if (
+        payload.events.length === 0 &&
+        coreNotificationTypes &&
+        Object.keys(coreNotificationTypes).includes(payloadId)
+      ) {
+        // If there is no events in the custom "core" notification type, we need to clean up the custom notification type.
+        const config = (yield call(axios.get, url, headers)).data.latest.configuration;
+        delete config[payloadId];
+
+        yield call(
+          axios.patch,
+          url,
+          {
+            operation: 'REPLACE',
+            configuration: config,
+          },
+          headers
+        );
+      } else {
+        yield call(
+          axios.patch,
+          url,
+          {
+            operation: 'UPDATE',
+            update: {
+              [payloadId]: {
+                id: payloadId,
+                name: payload.name,
+                description: payload.description,
+                subscriberRoles: payload.subscriberRoles,
+                channels: payload.channels || ['email'], //TODO: This is for 'migration' of pre-existing types.
+                events: payload.events,
+                publicSubscribe: payload.publicSubscribe,
+                manageSubscribe: payload.manageSubscribe,
+              },
             },
           },
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+          headers
+        );
+      }
 
       yield put(FetchNotificationConfigurationService());
     } catch (e) {
@@ -169,7 +195,7 @@ export function* updateContactInformation({ payload }: UpdateContactInformationA
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
     try {
@@ -204,7 +230,7 @@ interface MetricResponse {
 
 export function* fetchNotificationMetrics(): SagaIterator {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {

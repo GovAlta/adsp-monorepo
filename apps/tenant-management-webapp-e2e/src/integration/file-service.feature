@@ -60,7 +60,7 @@ Feature: File service
   # Ignore this test until CS-1134 is fixed
   Scenario: Test As a service owner, I can see the API documentation for file service in the tenant admin, so I can understand how to use the API
     Given a service owner user is on Files overview page
-    Then the user views the link for "File service" API docs
+    Then the user views the link of API docs for "File service"
     When the user goes to the web link of the API docs
     Then the user views "File service" API documentation
 
@@ -76,18 +76,18 @@ Feature: File service
     Then the user views file types page
     When the user clicks Add file type button on file types page
     Then the user views "Add" file type modal
-    When the user enters "autotest-add", "public", "auto-test-role1, file-service-admin" on file type modal
+    When the user enters "autotest-addEditDelete", "public", "auto-test-role1, file-service-admin" on file type modal
     And the user clicks Save button on file type modal
-    Then the user "views" the file type of "autotest-add", "public", "auto-test-role1, file-service-admin"
-    When the user clicks "Edit" button for the file type of "autotest-add", "public", "auto-test-role1, file-service-admin"
+    Then the user "views" the file type of "autotest-addEditDelete", "public", "auto-test-role1, file-service-admin"
+    When the user clicks "Edit" button for the file type of "autotest-addEditDelete", "public", "auto-test-role1, file-service-admin"
     Then the user views "Edit" file type modal
-    When the user enters "autotest-modify", "auto-test-role1", "auto-test-role2" on file type modal
+    When the user enters "N/A", "auto-test-role1", "auto-test-role2" on file type modal
     And the user clicks Save button on file type modal
-    Then the user "views" the file type of "autotest-modify", "auto-test-role1", "auto-test-role2"
-    When the user clicks "Delete" button for the file type of "autotest-modify", "auto-test-role1", "auto-test-role2"
-    Then the user views Delete file type modal for "autotest-modify"
+    Then the user "views" the file type of "autotest-addEditDelete", "auto-test-role1", "auto-test-role2"
+    When the user clicks "Delete" button for the file type of "autotest-addEditDelete", "auto-test-role1", "auto-test-role2"
+    Then the user views Delete file type modal for "autotest-addEditDelete"
     When the user clicks Delete button on file type modal
-    Then the user "should not view" the file type of "autotest-modify", "auto-test-role1", "auto-test-role2"
+    Then the user "should not view" the file type of "autotest-addEditDelete", "auto-test-role1", "auto-test-role2"
 
   # TODO: This is broken after removal of the file service specific 'feedback zone'; re-enable after feedback zone implementation.
   @FileTypes @regression @ignore

@@ -71,6 +71,7 @@ describe('Service status mongo repository', () => {
         endpoint: {
           url: 'http://mock-a.com',
           status: null,
+          id: '12345',
         },
       },
       {
@@ -82,6 +83,7 @@ describe('Service status mongo repository', () => {
         endpoint: {
           url: 'http://mock-b.com',
           status: null,
+          id: '12345',
         },
       },
     ]);
@@ -97,7 +99,7 @@ describe('Service status mongo repository', () => {
     const applications = await insertMockData([
       {
         name: 'app 1',
-        endpoint: { status: 'online', url: 'foo.com' },
+        endpoint: { status: 'online', url: 'foo.com', id: '12345' },
         status: 'operational',
         tenantId: '99',
         tenantName: 'Child Services',

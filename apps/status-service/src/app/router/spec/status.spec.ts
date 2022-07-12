@@ -43,7 +43,7 @@ describe('Service router', () => {
   };
 
   const endpointRepositoryMock = {
-    findRecentByUrl: jest.fn(),
+    findRecentByUrlAndApplicationId: jest.fn(),
     deleteOldUrlStatus: jest.fn(),
     get: jest.fn(),
     find: jest.fn(),
@@ -200,7 +200,7 @@ describe('Service router', () => {
 
     it('Can get application entries', async () => {
       statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
-      endpointRepositoryMock.findRecentByUrl.mockResolvedValueOnce(entriesMock);
+      endpointRepositoryMock.findRecentByUrlAndApplicationId.mockResolvedValueOnce(entriesMock);
       const handler = getApplicationEntries(loggerMock, statusRepositoryMock, endpointRepositoryMock);
 
       const req: Request = {

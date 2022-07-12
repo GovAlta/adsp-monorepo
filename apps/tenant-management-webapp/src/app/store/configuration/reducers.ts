@@ -1,12 +1,14 @@
 import {
   ConfigurationExportActionTypes,
   ConfigurationDefinitionActionTypes,
-  DELETE_CONFIGURATION_ACTION_SUCCESS,
+  DELETE_CONFIGURATION_DEFINITION_ACTION_SUCCESS,
   FETCH_CONFIGURATIONS_ACTION,
   FETCH_CONFIGURATION_DEFINITIONS_ACTION,
   FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION,
   FETCH_CONFIGURATIONS_SUCCESS_ACTION,
-  UPDATE_CONFIGURATION__DEFINITION_SUCCESS_ACTION,
+  UPDATE_CONFIGURATION_DEFINITION_SUCCESS_ACTION,
+  REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION,
+  RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION,
 } from './action';
 import {
   ConfigurationDefinitionState,
@@ -19,6 +21,7 @@ const defaultState: ConfigurationDefinitionState = {
   coreConfigDefinitions: undefined,
   tenantConfigDefinitions: undefined,
   isAddedFromOverviewPage: false,
+  importedConfigurationError: [],
 };
 
 export default function (
@@ -38,17 +41,27 @@ export default function (
         tenantConfigDefinitions: action.payload.tenant.latest,
         isAddedFromOverviewPage: false,
       };
-    case UPDATE_CONFIGURATION__DEFINITION_SUCCESS_ACTION:
+    case UPDATE_CONFIGURATION_DEFINITION_SUCCESS_ACTION:
       return {
         ...state,
         tenantConfigDefinitions: action.payload,
         isAddedFromOverviewPage: action.isAddedFromOverviewPage,
       };
-    case DELETE_CONFIGURATION_ACTION_SUCCESS:
+    case DELETE_CONFIGURATION_DEFINITION_ACTION_SUCCESS:
       return {
         ...state,
         tenantConfigDefinitions: action.payload,
         isAddedFromOverviewPage: false,
+      };
+    case REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION:
+      return {
+        ...state,
+        importedConfigurationError: action.payload,
+      };
+    case RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION:
+      return {
+        ...state,
+        importedConfigurationError: [],
       };
     default:
       return state;

@@ -22,39 +22,40 @@ const ChannelIcons = {
 
 const AvailableChannelsContainer = styled.div`
   flex-wrap: wrap;
+  vertical-align: baseline;
   align-items: center;
   display: flex;
   position: relative;
   .icon-0 {
     position: absolute;
-    left: calc(50% - 50px);
+    left: calc(50% - 75px);
     top: -12px;
   }
   .icon-checked-0 {
     position: absolute;
-    left: calc(50% - 35px);
+    left: calc(50% - 60px);
     top: -22px;
   }
   .icon-1 {
     position: absolute;
-    left: calc(50% - 6px);
-    top: -12px;
+    left: calc(50% - 32px);
+    top: -10px;
   }
   .icon-checked-1 {
     position: absolute;
-    left: calc(50% + 9px);
+    left: calc(50% - 17px);
     top: -22px;
   }
 
   .icon-2 {
     position: absolute;
-    left: calc(50% + 36px);
+    left: calc(50% + 10px);
     top: -12px;
   }
 
   .icon-checked-2 {
     position: absolute;
-    left: calc(50% + 51px);
+    left: calc(50% + 25px);
     top: -22px;
   }
 `;
@@ -105,10 +106,11 @@ const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
         return (
           <tr key={`${subscription.typeId}`}>
             <td data-testid="subscription-name">{subscription.type.name}</td>
+            <td>{subscription.type.description}</td>
             <td>
               <AvailableChannels channels={typeChannels} effectiveChannel={effectiveChannel?.channel as Channel} />
             </td>
-            <ButtonsCell>
+            <td>
               {subscription.type?.manageSubscribe ? (
                 <GoAButton
                   buttonSize="small"
@@ -124,7 +126,7 @@ const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
               ) : (
                 <UnsubscribeMessage />
               )}
-            </ButtonsCell>
+            </td>
           </tr>
         );
       })}
@@ -146,7 +148,3 @@ const UnsubscribeMessage = (): JSX.Element => {
 };
 
 export default SubscriptionsList;
-
-const ButtonsCell = styled.td`
-  text-align: right;
-`;

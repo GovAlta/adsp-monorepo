@@ -127,7 +127,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             onClick={() => {
               cancel();
             }}
-            data-testid="template-form-cancel"
+            data-testid="template-form-close"
             buttonType="secondary"
             type="button"
           >

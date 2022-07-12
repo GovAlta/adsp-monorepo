@@ -12,10 +12,11 @@ import {
 import { RootState } from '../index';
 import { ErrorNotification } from '../notifications/actions';
 import { ChartInterval, MetricValue, ValueMetric } from './models';
+import { getAccessToken } from '@store/tenant/sagas';
 
 function* fetchServices() {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   if (baseUrl && token) {
     try {
@@ -27,7 +28,15 @@ function* fetchServices() {
         }
       );
 
-      const services = Object.entries(data)
+      const { data: tenantData }: { data: Record<string, { definitions: Record<string, unknown> }> } = yield call(
+        axios.get,
+        `${baseUrl}/configuration/v2/configuration/platform/value-service/latest`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const services = [...Object.entries(tenantData), ...Object.entries(data)]
         .filter(([_service, { definitions }]) => definitions['service-metrics'])
         .map(([service]) => service);
 
@@ -63,7 +72,7 @@ function addIntervalBreaks(intervalMins: number) {
 
 function* fetchServiceMetrics(action: FetchServiceMetricsAction): SagaIterator {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const token: string = yield call(getAccessToken);
 
   const now = moment();
   const chartInterval = action.chartInterval;

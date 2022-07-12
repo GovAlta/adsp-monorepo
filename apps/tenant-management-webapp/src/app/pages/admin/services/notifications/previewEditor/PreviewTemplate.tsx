@@ -22,6 +22,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
       <>
         <h3>Subject</h3>
         <SubjectPreview
+          data-testid="email-preview-subject"
           dangerouslySetInnerHTML={{
             __html: sanitizeHtml(subjectPreviewContent),
           }}
@@ -37,6 +38,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
       <>
         <h3>Sender’s number/short code</h3>
         <SubjectPreview
+          data-testid="sms-preview-subject"
           dangerouslySetInnerHTML={{
             __html: sanitizeHtml(phoneWrapper(contactPhoneNumber)),
           }}

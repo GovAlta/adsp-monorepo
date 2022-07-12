@@ -1,4 +1,4 @@
-import { put, select, call, takeEvery, takeLatest, delay } from 'redux-saga/effects';
+import { put, select, call, takeEvery, takeLatest } from 'redux-saga/effects';
 import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
 import {
@@ -26,20 +26,12 @@ import {
   TenantLogout,
 } from './actions';
 
-import {
-  CredentialRefresh,
-  CredentialRefreshAction,
-  CREDENTIAL_REFRESH,
-  SessionLoginSuccess,
-  SessionLoginSuccessAction,
-  SESSION_LOGIN_SUCCESS,
-  UpdateIndicator,
-} from '@store/session/actions';
+import { CredentialRefresh, SessionLoginSuccess, UpdateIndicator, SetSessionExpired } from '@store/session/actions';
 import { TenantApi } from './api';
 import { TENANT_INIT } from './models';
 import { createKeycloakAuth, KeycloakAuth, LOGIN_TYPES } from '@lib/keycloak';
 import { SagaIterator } from '@redux-saga/core';
-import { Session } from '@store/session/models';
+import { Credentials, Session } from '@store/session/models';
 
 export function* initializeKeycloakAuth(realm?: string): SagaIterator {
   const keycloakConfig = yield select((state: RootState) => state.config.keycloakApi);
@@ -49,7 +41,7 @@ export function* initializeKeycloakAuth(realm?: string): SagaIterator {
 
 export function* fetchTenant(action: FetchTenantAction): SagaIterator {
   const state: RootState = yield select();
-  const token = state.session.credentials.token;
+  const token = yield call(getAccessToken);
   const api = new TenantApi(state.config.tenantApi, token);
   const realm = action.payload;
 
@@ -63,7 +55,7 @@ export function* fetchTenant(action: FetchTenantAction): SagaIterator {
 
 export function* isTenantAdmin(action: CheckIsTenantAdminAction): SagaIterator {
   const state: RootState = yield select();
-  const token = state?.session?.credentials?.token;
+  const token = yield call(getAccessToken);
   const api = new TenantApi(state.config.tenantApi, token);
   const email = action.payload;
 
@@ -77,7 +69,7 @@ export function* isTenantAdmin(action: CheckIsTenantAdminAction): SagaIterator {
 
 export function* createTenant(action: CreateTenantAction): SagaIterator {
   const state: RootState = yield select();
-  const token = state?.session?.credentials?.token;
+  const token = yield call(getAccessToken);
   const api = new TenantApi(state.config.tenantApi, token);
   const name = action.payload;
 
@@ -152,29 +144,39 @@ export function* tenantLogin(action: TenantLoginAction): SagaIterator {
   }
 }
 
-export function* keycloakRefreshToken(action: CredentialRefreshAction | SessionLoginSuccessAction): SagaIterator {
-  try {
-    let credentials = action.type === SESSION_LOGIN_SUCCESS ? action.payload.credentials : action.payload;
-    const refreshDelay = Math.floor(credentials.tokenExp * 1000 - (Date.now() + 60000));
-    yield delay(refreshDelay);
+export function* getAccessToken(): SagaIterator {
+  const realmInSession = localStorage.getItem('realm');
 
+  try {
     // Check if credentials still present or if logout has occurred.
-    credentials = yield select((state: RootState) => state.session.credentials);
-    if (credentials) {
+    const credentials: Credentials = yield select((state: RootState) => state.session.credentials);
+
+    // Check if refresh token is expired, throw exception directly
+    if (realmInSession && credentials?.refreshTokenExp && credentials.tokenExp - Date.now() / 1000 < 30) {
+      throw new Error('Refresh token expired.');
+    }
+
+    // Check if token is within 1 min of expiry.
+    if (credentials.tokenExp - Date.now() / 1000 < 60) {
       const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth);
-      if (keycloakAuth) {
-        const session: Session = yield call([keycloakAuth, keycloakAuth.refreshToken]);
-        if (session) {
-          const { credentials } = session;
-          yield put(CredentialRefresh(credentials));
-        }
-      } else {
-        console.warn(`Try to fresh keycloak token. But, keycloak instance is empty.`);
+
+      const session: Session = yield call([keycloakAuth, keycloakAuth.refreshToken]);
+      if (session) {
+        const { credentials } = session;
+        yield put(CredentialRefresh(credentials));
+
+        return credentials.token;
       }
+    } else {
+      return credentials.token;
     }
   } catch (e) {
-    // Refresh error means that the session has expired or idle timeout etc... so log out.
-    yield put(TenantLogout());
+    // Failure to get the access token results in a logout.
+    if (realmInSession) {
+      yield put(SetSessionExpired(true));
+    } else {
+      yield put(TenantLogout());
+    }
   }
 }
 
@@ -199,7 +201,7 @@ export function* fetchRealmRoles(): SagaIterator {
         message: 'Loading...',
       })
     );
-    const token = state?.session?.credentials?.token;
+    const token = yield call(getAccessToken);
     const api = new TenantApi(state.config.tenantApi, token);
     const roles = yield call([api, api.fetchRealmRoles]);
     yield put(FetchRealmRolesSuccess(roles));
@@ -225,7 +227,6 @@ export function* watchTenantSagas(): SagaIterator {
   yield takeEvery(TENANT_LOGIN, tenantLogin);
   yield takeEvery(KEYCLOAK_CHECK_SSO_WITH_LOGOUT, keycloakCheckSSOWithLogout);
   yield takeEvery(TENANT_LOGOUT, tenantLogout);
-  yield takeEvery([SESSION_LOGIN_SUCCESS, CREDENTIAL_REFRESH], keycloakRefreshToken);
 
   //tenant config
   yield takeEvery(CREATE_TENANT, createTenant);

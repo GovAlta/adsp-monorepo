@@ -1,5 +1,5 @@
-import React, { FunctionComponent, useState } from 'react';
-import { GoAButton } from '@abgov/react-components';
+import React, { FunctionComponent, useState, useEffect } from 'react';
+import { GoAButton, GoAElementLoader } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { PdfTemplate } from '@store/pdf/model';
@@ -7,6 +7,7 @@ import { IdField } from '../styled-components';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/useValidators';
 import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
+import styled from 'styled-components';
 
 interface AddEditPdfTemplateProps {
   open: boolean;
@@ -16,6 +17,7 @@ interface AddEditPdfTemplateProps {
   onClose: () => void;
   onSave: (template: PdfTemplate) => void;
 }
+
 export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
   initialValue,
   onClose,
@@ -25,6 +27,19 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
   templates,
 }) => {
   const [template, setTemplate] = useState<PdfTemplate>(initialValue);
+  const [spinner, setSpinner] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (spinner && Object.keys(templates).length > 0) {
+      if (validators['duplicate'].check(template.id)) {
+        setSpinner(false);
+        return;
+      }
+      onSave(template);
+      onClose();
+      setSpinner(false);
+    }
+  }, [templates]);
 
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
 
@@ -35,6 +50,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
         : '';
     };
   };
+
   const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
     .add('duplicate', 'name', isDuplicateTemplateId())
     .build();
@@ -71,6 +87,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
                 name="pdf-template-description"
                 value={template.description}
                 disabled={isEdit}
+                className="goa-textarea"
                 data-testid="pdf-template-description"
                 aria-label="pdf-template-description"
                 onChange={(e) => {
@@ -97,18 +114,32 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             type="submit"
             disabled={!template.name || validators.haveErrors()}
             onClick={(e) => {
-              if (validators['duplicate'].check(template.id)) {
-                e.stopPropagation();
-                return;
+              if (Object.keys(templates).length === 0) {
+                setSpinner(true);
+              } else {
+                if (validators['duplicate'].check(template.id)) {
+                  e.stopPropagation();
+                  return;
+                }
+                onSave(template);
+                onClose();
               }
-              onSave(template);
-              onClose();
             }}
           >
             Save
+            {spinner && (
+              <SpinnerPadding>
+                <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
+              </SpinnerPadding>
+            )}
           </GoAButton>
         </GoAModalActions>
       </GoAModal>
     </>
   );
 };
+
+const SpinnerPadding = styled.div`
+  margin: 0 0 0 5px;
+  float: right;
+`;

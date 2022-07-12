@@ -10,7 +10,7 @@ interface SmsPreviewPortalProps {
 export const SmsPreviewPortal: FunctionComponent<SmsPreviewPortalProps> = ({ subject, body }) => {
   const TextContent = () => {
     return (
-      <div className="flexColumn">
+      <div data-testid="sms-preview-body" className="flexColumn">
         <div
           dangerouslySetInnerHTML={{
             __html: sanitizeHtml(subject, { WHOLE_DOCUMENT: true, ADD_TAGS: ['style'] }),

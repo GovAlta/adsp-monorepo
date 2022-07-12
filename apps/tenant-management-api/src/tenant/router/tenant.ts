@@ -1,21 +1,20 @@
-import { Request, Response, Router } from 'express';
+import { Router } from 'express';
 import { IsDefined } from 'class-validator';
 import validationMiddleware from '../../middleware/requestValidator';
-import * as HttpStatusCodes from 'http-status-codes';
 import {
   requireTenantServiceAdmin,
   requireTenantAdmin,
   requireBetaTesterOrAdmin,
 } from '../../middleware/authentication';
-import * as TenantService from '../services/tenant';
 import { logger } from '../../middleware/logger';
-import { v4 as uuidv4 } from 'uuid';
-import { adspId, EventService } from '@abgov/adsp-service-sdk';
-import { tenantCreated } from '../events';
+import { AdspId, EventService } from '@abgov/adsp-service-sdk';
 import { TenantRepository } from '../repository';
-import { ServiceClient } from '../types';
-import { InvalidOperationError, NotFoundError, UnauthorizedError } from '@core-services/core-common';
-import { TenantServiceRoles } from '../../roles';
+import { NotFoundError } from '@core-services/core-common';
+import { mapTenant } from './mappers';
+import { RealmService } from '../services/realm';
+import { createkcAdminClient } from '../../keycloak';
+import { createTenant } from './tenantV2';
+import { tenantDeleted } from '../events';
 
 class CreateTenantDto {
   @IsDefined()
@@ -47,9 +46,10 @@ class TenantByRealmDto {
 interface TenantRouterProps {
   eventService: EventService;
   tenantRepository: TenantRepository;
+  realmService: RealmService;
 }
 
-export const createTenantRouter = ({ tenantRepository, eventService }: TenantRouterProps): Router => {
+export const createTenantRouter = ({ tenantRepository, eventService, realmService }: TenantRouterProps): Router => {
   const tenantRouter = Router();
 
   async function getTenantByEmail(req, res, next) {
@@ -60,7 +60,7 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
         throw new NotFoundError('Tenant', email);
       }
 
-      res.json(tenant.obj());
+      res.json(mapTenant(tenant));
     } catch (err) {
       logger.error(`Failed fetching tenant info by email address: ${err.message}`);
       next(err);
@@ -76,7 +76,7 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
         throw new NotFoundError('Tenant', name);
       }
 
-      res.json(tenant.obj());
+      res.json(mapTenant(tenant));
     } catch (err) {
       logger.error(`Failed fetching tenant info by name: ${err.message}`);
       next(err);
@@ -94,7 +94,7 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
 
       res.json({
         success: true,
-        tenant: tenant.obj(),
+        tenant: mapTenant(tenant),
       });
     } catch (err) {
       logger.error(`Failed fetching tenant info by realm: ${err.message}`);
@@ -113,7 +113,7 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
 
       res.json({
         success: true,
-        tenant: tenant.obj(),
+        tenant: mapTenant(tenant),
       });
     } catch (err) {
       logger.error(`Failed fetching tenant by id: ${err.message}`);
@@ -121,80 +121,13 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
     }
   }
 
-  async function createTenant(req: Request, res: Response, next) {
-    const payload = req['payload'];
-    const tenantName = payload.name;
-    let realm = payload.realm;
-    const email = req.user.email;
-    let adminEmail;
-
-    try {
-      // check if tenant name exist in
-      const tenantInDB = (await tenantRepository.find({ nameEquals: tenantName }))[0];
-      if (tenantInDB) {
-        throw new InvalidOperationError('Tenant exist, please use another tenant name', tenantName);
-      }
-
-      if (realm) {
-        if (!req.user.roles.includes(TenantServiceRoles.TenantServiceAdmin)) {
-          throw new UnauthorizedError('tenant-service-admin role needed!');
-        }
-        const testRealm = (await tenantRepository.find({ realmEquals: realm }))[0];
-        if (testRealm) {
-          throw new InvalidOperationError('Realm has been used, please use another realm name', realm);
-        }
-        logger.info('Realm exist in request....');
-        adminEmail = payload?.adminEmail;
-
-        if (!adminEmail) {
-          throw new InvalidOperationError('Please put adminEmail in body');
-        }
-
-        const testAdminReal = (await tenantRepository.find({ adminEmailEquals: adminEmail }))[0];
-        if (testAdminReal) {
-          throw new InvalidOperationError('adminEmail has been used, please use another adminEmail', adminEmail);
-        }
-      } else {
-        //create new realm
-
-        logger.info('Starting create realm on keycloak....');
-        await TenantService.validateName(tenantRepository, tenantName);
-        realm = uuidv4();
-
-        const [_, clients] = await req.getConfiguration<ServiceClient[]>();
-
-        await TenantService.validateEmailInDB(tenantRepository, email);
-        await TenantService.createRealm(clients || [], realm, email, tenantName);
-      }
-
-      const { ...tenant } = await TenantService.createNewTenantInDB(
-        tenantRepository,
-        adminEmail ? adminEmail : email,
-        realm,
-        tenantName
-      );
-      const data = { status: 'ok', message: 'Create tenant Success!', realm: realm };
-
-      eventService.send(
-        tenantCreated(
-          req.user,
-          { ...tenant, id: adspId`urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}` },
-          false
-        )
-      );
-      res.status(HttpStatusCodes.OK).json(data);
-    } catch (err) {
-      logger.error(`Error creating new tenant ${err.message}`);
-      next(err);
-    }
-  }
-
   async function getRealmRoles(req, res, next) {
     //TODO: suppose we can use the req.tenant to fetch the realm
-    const tenant = req.user.token.iss.split('/').pop();
+    const realm = req.user.token.iss.split('/').pop();
 
     try {
-      const roles = await TenantService.getRealmRoles(tenant);
+      const client = await createkcAdminClient();
+      const roles = await client.roles.find({ realm });
       res.json({
         roles: roles,
       });
@@ -205,30 +138,41 @@ export const createTenantRouter = ({ tenantRepository, eventService }: TenantRou
   }
 
   async function deleteTenant(req, res, next) {
-    const payload = req.payload;
-    const keycloakRealm = payload.realm;
-
     try {
-      const results = await TenantService.deleteTenant(tenantRepository, keycloakRealm);
-      res.status(HttpStatusCodes.OK).json({
-        success: results.IdPBrokerClient.isDeleted && results.keycloakRealm.isDeleted && results.db.isDeleted,
-        ...results,
-      });
+      const { realm } = req['payload'];
+
+      const [entity] = await tenantRepository.find({ realmEquals: realm });
+      if (!entity) {
+        throw new NotFoundError('tenant', `realm: ${realm}`);
+      }
+      const tenant = mapTenant(entity);
+
+      const deletedRealm = await realmService.deleteRealm(entity);
+      const deletedTenant = await entity.delete();
+      const success = deletedRealm && deletedTenant;
+
+      if (success) {
+        eventService.send(tenantDeleted(req.user, { ...tenant, id: AdspId.parse(tenant.id) }));
+      }
+      res.send({ deletedRealm, deletedTenant, success });
     } catch (err) {
-      // The tenant delete include rescue functions. Serious error occur when reach here.
-      logger.error(`Error deleting tenant: ${err.message}`);
       next(err);
     }
   }
 
   // Tenant admin only APIs. Used by the admin web app.
-  tenantRouter.get('/realm/roles', requireTenantAdmin, getRealmRoles);
-  tenantRouter.post('/', [requireBetaTesterOrAdmin, validationMiddleware(CreateTenantDto)], createTenant);
+  tenantRouter.post(
+    '/',
+    [requireBetaTesterOrAdmin, validationMiddleware(CreateTenantDto)],
+    createTenant(logger, tenantRepository, realmService, eventService)
+  );
   tenantRouter.get('/:id', [validationMiddleware(GetTenantDto)], getTenant);
+  tenantRouter.delete('/', [requireTenantServiceAdmin, validationMiddleware(DeleteTenantDto)], deleteTenant);
+
+  tenantRouter.get('/realm/roles', requireTenantAdmin, getRealmRoles);
   tenantRouter.get('/realm/:realm', validationMiddleware(TenantByRealmDto), getTenantByRealm);
   tenantRouter.post('/email', [validationMiddleware(TenantByEmailDto)], getTenantByEmail);
   tenantRouter.post('/name', [validationMiddleware(TenantByNameDto)], getTenantByName);
-  tenantRouter.delete('/', [requireTenantServiceAdmin, validationMiddleware(DeleteTenantDto)], deleteTenant);
 
   return tenantRouter;
 };

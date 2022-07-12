@@ -15,7 +15,7 @@
 #   && yum install -y google-chrome-stable libXScrnSaver
 # # fipa-gothic-fonts wqy-zenhei-fonts thai-scalable-tlwgtypo-fonts kacst-one-fonts fonts-freefont-ttf
 
-FROM node:16-slim
+FROM node:16.15.0-slim
 
 # Install latest chrome dev package and fonts to support major charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
 # Note: this installs the necessary libs to make the bundled version of Chromium that Puppeteer

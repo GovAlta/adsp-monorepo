@@ -177,9 +177,10 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 <>
                   <h4>{subjectTitle}</h4>
                   <GoAFormItem error={errors['subject'] ?? ''} helpText={subjectEditorHintText}>
-                    <MonacoDiv>
+                    <MonacoDiv data-testid="templated-editor-subject">
                       <MonacoEditor
                         language={item.name === 'slack' ? 'markdown' : 'handlebars'}
+                        data-testid="templated-editor-subject"
                         onChange={(value) => {
                           onSubjectChange(value, item.name);
                         }}
@@ -190,7 +191,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   </GoAFormItem>
                   <h4>{bodyTitle}</h4>
                   <GoAFormItem error={errors['body'] ?? ''} helpText={bodyEditorHintText}>
-                    <MonacoDivBody>
+                    <MonacoDivBody data-testid="templated-editor-body">
                       <MonacoEditor
                         language={item.name === 'slack' ? 'markdown' : 'handlebars'}
                         value={templates[item.name]?.body}
@@ -216,7 +217,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 resetSavedAction();
               }
             }}
-            data-testid="template-form-cancel"
+            data-testid="template-form-close"
             buttonType="secondary"
             type="button"
           >
