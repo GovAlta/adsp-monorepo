@@ -15,6 +15,7 @@ export class HealthCheckQueueService extends AmqpWorkQueueService<HealthCheckCon
 
   protected convertMessage(msg: ConsumeMessage): HealthCheckControllerWorkItem {
     const { timestamp, tenantId, name } = msg.properties.headers;
+    this.logger.info(`status service received event ${msg.content.toString()}`);
     const { application }: { application: ApplicationEvent } = JSON.parse(msg.content.toString());
     switch (name) {
       case healthCheckStartedEvent:
