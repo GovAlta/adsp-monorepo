@@ -147,17 +147,31 @@ export function* deleteEventDefinition({ definition }: UpdateEventDefinitionActi
         }
       );
 
+      const headers = { Authorization: `Bearer ${token}` };
+      const configPatchUrl = `${baseUrl}/configuration/v2/configuration/platform/event-service`;
+
       const namespaceUpdate = configuration[definition.namespace];
       delete namespaceUpdate['definitions'][definition.name];
 
-      yield call(
-        axios.patch,
-        `${baseUrl}/configuration/v2/configuration/platform/event-service`,
-        { operation: 'UPDATE', update: { [definition.namespace]: namespaceUpdate } },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      if (Object.keys(namespaceUpdate['definitions']).length === 0) {
+        yield call(
+          axios.patch,
+          configPatchUrl,
+          { operation: 'DELETE', property: definition.namespace },
+          {
+            headers,
+          }
+        );
+      } else {
+        yield call(
+          axios.patch,
+          configPatchUrl,
+          { operation: 'UPDATE', update: { [definition.namespace]: namespaceUpdate } },
+          {
+            headers,
+          }
+        );
+      }
 
       yield put(deleteEventDefinitionSuccess(definition));
     } catch (err) {
