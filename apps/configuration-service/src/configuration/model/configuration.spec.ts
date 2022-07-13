@@ -10,6 +10,7 @@ describe('ConfigurationEntity', () => {
     get: jest.fn(),
     getRevisions: jest.fn(),
     saveRevision: jest.fn(),
+    setActiveRevision: jest.fn(),
   };
   const validationMock = {
     setSchema: jest.fn(),
@@ -412,7 +413,10 @@ describe('ConfigurationEntity', () => {
       repositoryMock.getRevisions.mockResolvedValueOnce(revisions);
 
       const result = await entity.getRevisions();
+
+      console.log(JSON.stringify(result) + '<result');
       expect(result).toBe(revisions);
+      console.log(JSON.stringify(revisions) + '<revisions');
       expect(repositoryMock.getRevisions).toHaveBeenCalledWith(entity, 10, null, null);
     });
   });

@@ -101,7 +101,7 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     this.latest = await this.repository.saveRevision(this, revision);
     const activeCriteria = await this.repository.getRevisions(this, 1, null, { active: this.latest.active });
     console.log(JSON.stringify(activeCriteria) + '<activeCriteriaxxxx');
-    this.active = activeCriteria.results[0];
+    this.active = activeCriteria?.results[0];
     return this;
   }
 
@@ -134,7 +134,7 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
   }
 
   public async getRevisions(
-    top = 8,
+    top = 10,
     after: string = null,
     criteria: RevisionCriteria = null
   ): Promise<Results<ConfigurationRevision<C>>> {
