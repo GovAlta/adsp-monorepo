@@ -8,12 +8,14 @@ import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/useValidators';
 import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
 import styled from 'styled-components';
+import { RootState } from '@store/index';
+import { useSelector } from 'react-redux';
+import { TextLoadingIndicator } from '@components/Indicator';
 
 interface AddEditPdfTemplateProps {
   open: boolean;
   isEdit: boolean;
   initialValue: PdfTemplate;
-  templates: Record<string, PdfTemplate>;
   onClose: () => void;
   onSave: (template: PdfTemplate) => void;
 }
@@ -24,10 +26,17 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
   open,
   isEdit,
   onSave,
-  templates,
 }) => {
   const [template, setTemplate] = useState<PdfTemplate>(initialValue);
   const [spinner, setSpinner] = useState<boolean>(false);
+
+  const templates = useSelector((state: RootState) => {
+    return state?.pdf?.pdfTemplates;
+  });
+
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
 
   useEffect(() => {
     if (spinner && Object.keys(templates).length > 0) {
@@ -40,6 +49,9 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
       setSpinner(false);
     }
   }, [templates]);
+
+  // eslint-disable-next-line
+  useEffect(() => {}, [indicator]);
 
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
 
@@ -81,6 +93,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
               <label>Template ID</label>
               <IdField>{template.id}</IdField>
             </GoAFormItem>
+
             <GoAFormItem>
               <label>Description</label>
               <textarea
@@ -97,6 +110,11 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             </GoAFormItem>
           </GoAForm>
         </GoAModalContent>
+        {indicator.show === true && (
+          <Center>
+            <TextLoadingIndicator>Loading PDF templates configuration.</TextLoadingIndicator>
+          </Center>
+        )}
         <GoAModalActions>
           <GoAButton
             data-testid="form-cancel"
@@ -112,13 +130,15 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             buttonType="primary"
             data-testid="form-save"
             type="submit"
-            disabled={!template.name || validators.haveErrors()}
+            disabled={!template.name || validators.haveErrors() || indicator.show === true}
             onClick={(e) => {
               if (Object.keys(templates).length === 0) {
                 setSpinner(true);
               } else {
-                if (validators['duplicate'].check(template.id)) {
-                  e.stopPropagation();
+                const validations = {
+                  duplicate: template.id,
+                };
+                if (!validators.checkAll(validations)) {
                   return;
                 }
                 onSave(template);
@@ -142,4 +162,8 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
 const SpinnerPadding = styled.div`
   margin: 0 0 0 5px;
   float: right;
+`;
+
+const Center = styled.div`
+  text-align: center;
 `;
