@@ -27,12 +27,12 @@ export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
   return async (): Promise<void> => {
     const { getEndpointResponse } = props;
     // run all endpoint tests
-    const statusEntry = await doRequest(getEndpointResponse, props.url, props.applicationId, props.logger);
+    const statusEntry = await checkEndpoint(getEndpointResponse, props.url, props.applicationId, props.logger);
     await doSave(props, statusEntry);
   };
 }
 
-async function doRequest(
+async function checkEndpoint(
   getEndpointResponse: GetEndpointResponse,
   url: string,
   applicationId: string,
