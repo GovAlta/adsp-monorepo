@@ -598,8 +598,9 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/web:build",
+          "builder": "@nrwl/web:webpack",
           "outputs": ["{options.outputPath}"],
+          "defaultConfiguration": "production",
           "options": {
             "outputPath": "dist/apps/status-app",
             "index": "apps/status-app/src/index.html",
@@ -773,7 +774,7 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/web:build",
+          "builder": "@nrwl/web:webpack",
           "outputs": ["{options.outputPath}"],
           "defaultConfiguration": "production",
           "options": {
@@ -1042,7 +1043,7 @@
       "schematics": {},
       "architect": {
         "build": {
-          "builder": "@nrwl/web:build",
+          "builder": "@nrwl/web:webpack",
           "options": {
             "outputPath": "dist/apps/tenant-management-webapp",
             "index": "apps/tenant-management-webapp/src/index.html",
@@ -1105,14 +1106,9 @@
           }
         },
         "lint": {
-          "builder": "@nrwl/linter:lint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "linter": "eslint",
-            "tsConfig": [
-              "apps/tenant-management-webapp/tsconfig.app.json",
-              "apps/tenant-management-webapp/tsconfig.spec.json"
-            ],
-            "exclude": ["**/node_modules/**", "!apps/tenant-management-webapp/**/*"]
+            "lintFilePatterns": ["apps/tenant-management-webapp/**/*.{ts,tsx,js,jsx}"]
           }
         },
         "test": {
