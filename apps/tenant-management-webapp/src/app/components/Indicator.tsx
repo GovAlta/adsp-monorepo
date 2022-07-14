@@ -59,3 +59,14 @@ export const PageIndicator = (): JSX.Element => {
     </>
   );
 };
+
+export const TextLoadingIndicator = styled.span`
+  animation: blinker 1s linear infinite;
+  font-size: 14px;
+  font-style: italic;
+  @keyframes blinker {
+    50% {
+      opacity: 0;
+    }
+  }
+`;
