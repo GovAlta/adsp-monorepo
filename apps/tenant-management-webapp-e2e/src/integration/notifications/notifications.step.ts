@@ -705,12 +705,15 @@ Then(
           break;
         case 'email template indicator with warning':
           notificationsObj.tenantNotificationTypeEventMailBadge(typeName, eventName).should('exist');
+          notificationsObj.tenantNotificationTypeEventMailIcon(typeName, eventName).should('exist');
           break;
         case 'bot template indicator with warning':
           notificationsObj.tenantNotificationTypeEventBotIconBadge(typeName, eventName).should('exist');
+          notificationsObj.tenantNotificationTypeEventBotIcon(typeName, eventName).should('exist');
           break;
         case 'sms template indicator with warning':
           notificationsObj.tenantNotificationTypeEventSmsIconBadge(typeName, eventName).should('exist');
+          notificationsObj.tenantNotificationTypeEventSmsIcon(typeName, eventName).should('exist');
           break;
         default:
           expect(elementType).to.be.oneOf([
@@ -764,9 +767,9 @@ When('the user selects {string} tab on the event template', function (tab) {
   cy.wait(1000);
 });
 
-Then(
-  'the user enters on the {string} page {string} as subject and {string} as body',
-  function (channel, subjectText, bodyText) {
+When(
+  'the user enters {string} as subject and {string} as body {string} template page',
+  function (subjectText, bodyText, channel) {
     notificationsObj.addTemplateModalSubject(channel).type(subjectText);
     notificationsObj.addTemplateModalBody(channel).type(bodyText);
   }
