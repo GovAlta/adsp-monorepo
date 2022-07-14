@@ -113,6 +113,8 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
 
     const revision: ConfigurationRevision<C> = {
       revision: this.latest?.revision || 0,
+      lastUpdated: new Date(),
+      created: this.latest ? this.latest?.created : new Date(),
       configuration: configuration,
     };
 
@@ -124,9 +126,10 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     if (!this.canModify(user)) {
       throw new UnauthorizedUserError('modify configuration', user);
     }
-
     const newRevision: ConfigurationRevision<C> = {
       revision: this.latest ? this.latest.revision + 1 : 0,
+      created: this.latest ? this.latest.created : new Date(),
+      lastUpdated: this.latest ? new Date() : null,
       configuration: this.latest?.configuration || ({} as C),
     };
 
