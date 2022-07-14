@@ -222,8 +222,8 @@ Feature: Notifications
     # Edit the event, remove bot & sms channels from template
     When the user clicks "edit" button for the notification type card of "autotest-add-multi-channels"
     Then the user views Edit notification type modal for "autotest-add-multi-channels"
-    When the user enters "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no", "no" on notification type modal
     And the user views that email channel is greyed out
+    When the user enters "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no", "no" on notification type modal
     And the user clicks save button in notification type modal
     Then the user "views" the notification type card of "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no"
     And the user "views" "email template indicator" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
