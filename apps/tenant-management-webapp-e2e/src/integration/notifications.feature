@@ -234,7 +234,7 @@ Feature: Notifications
     Then the user views Edit notification type modal for "autotest-edit-multi-channels"
     When the user enters "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1, file-service-admin", "yes", "yes", "no" on notification type modal
     And the user clicks save button in notification type modal
-    # Then the user "views" the notification type card of "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no"
+    Then the user "views" the notification type card of "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no"
     And the user "views" "sms template indicator" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
     And the user "views" "bot template indicator with warning" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
     # Delete the notification type

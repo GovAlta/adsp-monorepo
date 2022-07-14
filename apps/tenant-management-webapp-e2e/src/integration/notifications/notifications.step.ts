@@ -693,24 +693,31 @@ Then(
       switch (elementType) {
         case 'email template indicator':
           notificationsObj.tenantNotificationTypeEventMailIcon(typeName, eventName).should('exist');
+          notificationsObj.tenantNotificationTypeEventMailBadge(typeName, eventName).should('not.exist');
           break;
         case 'bot template indicator':
           notificationsObj.tenantNotificationTypeBot(typeName, eventName).should('exist');
+          notificationsObj.tenantNotificationTypeBotBadge(typeName, eventName).should('not.exist');
           break;
         case 'sms template indicator':
           notificationsObj.tenantNotificationTypeEventSMS(typeName, eventName).should('exist');
+          notificationsObj.tenantNotificationTypeSmsIconBadge(typeName, eventName).should('not.exist');
+          break;
+        case 'email template indicator with warning':
+          notificationsObj.tenantNotificationTypeEventMailBadge(typeName, eventName).should('exist');
           break;
         case 'bot template indicator with warning':
           notificationsObj.tenantNotificationTypeBotBadge(typeName, eventName).should('exist');
           break;
         case 'sms template indicator with warning':
-          notificationsObj.tenantNotificationTypeEventSmsIconBadge(typeName, eventName).should('exist');
+          notificationsObj.tenantNotificationTypeSmsIconBadge(typeName, eventName).should('exist');
           break;
         default:
           expect(elementType).to.be.oneOf([
             'email template indicator',
             'bot template indicator',
             'sms template indicator',
+            'email template indicator with warning',
             'bot template indicator with warning',
             'sms template indicator with warning',
           ]);
@@ -723,16 +730,20 @@ Then(
         case 'sms template indicator':
           notificationsObj.tenantNotificationTypeEventSMS(typeName, eventName).should('not.exist');
           break;
+        case 'email template indicator with warning':
+          notificationsObj.tenantNotificationTypeEventMailBadge(typeName, eventName).should('not.exist');
+          break;
         case 'bot template indicator with warning':
           notificationsObj.tenantNotificationTypeBotBadge(typeName, eventName).should('not.exist');
           break;
         case 'sms template indicator with warning':
-          notificationsObj.tenantNotificationTypeEventSmsIconBadge(typeName, eventName).should('not.exist');
+          notificationsObj.tenantNotificationTypeSmsIconBadge(typeName, eventName).should('not.exist');
           break;
         default:
           expect(elementType).to.be.oneOf([
             'bot template indicator',
             'sms template indicator',
+            'email template indicator with warning',
             'bot template indicator with warning',
             'sms template indicator with warning',
           ]);
