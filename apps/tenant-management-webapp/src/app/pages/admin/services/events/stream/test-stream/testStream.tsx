@@ -7,7 +7,7 @@ import { GoAButton, GoADropdown, GoADropdownOption, GoAElementLoader } from '@ab
 import { Divider, StreamHeading, StreamsDropdown } from './styledComponents';
 import { GoAForm } from '@abgov/react-components/experimental';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
-import { ReactComponent as Warning } from '@icons/warning.svg';
+import { ReactComponent as Error } from '@icons/close-circle-outline.svg';
 import { StreamPayloadTable } from './streamPayloadTable';
 import styled from 'styled-components';
 
@@ -20,11 +20,13 @@ const Icons = {
       }}
     />
   ),
-  warning: (
-    <Warning
+  error: (
+    <Error
       data-testid="warning-icon"
       style={{
         verticalAlign: 'middle',
+        height: '24px',
+        width: '24px',
       }}
     />
   ),
@@ -128,7 +130,7 @@ export const TestStream = (): JSX.Element => {
     if (socketConnectionError) {
       return (
         <span>
-          <p>{Icons.warning} stream was unexpectedly disconnected, please try to reconnect</p>
+          <p>{Icons.error} Failed to connect the stream, please try to reconnect</p>
         </span>
       );
     }

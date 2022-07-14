@@ -135,7 +135,6 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
         {(isEdit || openAddPdfTemplate) && (
           <AddEditPdfTemplate
             open={openAddPdfTemplate}
-            templates={pdfTemplates}
             isEdit={isEdit}
             onClose={reset}
             initialValue={selectedPdfTemplate}
@@ -183,7 +182,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                       )
                     );
                   } catch (e) {
-                    console.log('error: ' + e.message);
+                    console.error('error: ' + e.message);
                   }
                 }}
                 setPreview={(channel) => {
@@ -199,7 +198,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                       )
                     );
                   } catch (e) {
-                    console.log('error: ' + e.message);
+                    console.error('error: ' + e.message);
                   }
                 }}
                 suggestion={getSuggestion()}

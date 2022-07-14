@@ -21,13 +21,14 @@ exports.up = async function (knex) {
           .update({ is_in_lieu_day: true });
       } else {
         // case 2: one of Sunday or Saturday is holiday.
+
         if (
           (today.day_of_week === 6 && today.is_holiday === true) ||
           (tomorrow.day_of_week === 7 && tomorrow.is_holiday === true)
         ) {
           await knex(TABLE_NAME)
             .where({ id: calendarDates[i + 2].id })
-            .update({ is_holiday: true });
+            .update({ is_in_lieu_day: true });
         }
       }
     } else {
@@ -35,7 +36,7 @@ exports.up = async function (knex) {
         if (today.is_holiday === true && today.day_of_week === 7) {
           await knex(TABLE_NAME)
             .where({ id: calendarDates[i + 1].id })
-            .update({ is_holiday: true });
+            .update({ is_in_lieu_day: true });
         }
       }
     }
