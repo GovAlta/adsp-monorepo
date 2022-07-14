@@ -1,7 +1,7 @@
 @directory-service
 Feature: Directory-service
 
-  @TEST_CS-1104 @REQ_CS-1091, @regression
+  @TEST_CS-1104 @REQ_CS-1091 @regression
   Scenario Outline: As a tenant admin, I can see the Directory service overview and service entries
     Given a tenant admin user is on tenant admin page
     When the user selects the "Directory" menu item
@@ -13,7 +13,7 @@ Feature: Directory-service
       | Directory Name | URL          |
       | file-service   | env{fileApi} |
 
-  @TEST_CS-1294 @REQ_CS-1095, @regression
+  @TEST_CS-1294 @REQ_CS-1095 @regression
   Scenario: As a tenant admin, I can add/edit/delete directory entries in a tenant namespace
     Given a tenant admin user is on directory entries page
     # Add a service entry
@@ -49,7 +49,7 @@ Feature: Directory-service
     When the user clicks Delete button in Entry modal
     Then the user "should not view" the entry of "autotest-addentry" in Service, "Empty" in API, "https://myServiceEntry-2.ca" in URL
 
-  @TEST_CS-1468 @REQ_CS-1095, @regression
+  @TEST_CS-1468 @REQ_CS-1095 @regression
   Scenario: As a tenant admin, I can add/edit/delete service API entries in a tenant namespace
     Given a tenant admin user is on directory entries page
     When the user clicks Add entry button
@@ -69,7 +69,7 @@ Feature: Directory-service
     When the user clicks Delete button in Entry modal
     Then the user "should not view" the entry of "autotest-api" in Service, "v2" in API, "https://myServiceEntry.ca" in URL
 
-  @TEST_CS-1399 @REQ_CS-1227, @regression
+  @TEST_CS-1399 @REQ_CS-1227 @regression
   Scenario: As a tenant admin, when I add directory entries, I can select from APIs resolved via service metadata, so I have a quick way to add API entries
     Given a tenant admin user is on directory entries page
     When the user clicks Eye icon for the service entry of "automatedtest-use-only"
@@ -84,3 +84,41 @@ Feature: Directory-service
     Then the user views Delete entry modal for "automatedtest-use-only:v1"
     When the user clicks Delete button in Entry modal
     Then the user "should not view" the entry of "automatedtest-use-only" in Service, "v1" in API, "https://file-service.adsp-uat.alberta.ca/file/v1" in URL
+
+  @TEST_CS-1464 @REQ_CS-1318 @regression
+  Scenario: Test As a tenant admin, I can see the event definitions for directory service, so I know what events are available
+    # Create and update a service api entry
+    Given a tenant admin user is on directory entries page
+    When the user clicks Add entry button
+    Then the user "views" Add entry modal
+    When the user enters "autotest-test-event" in Service, "v1" in API, "https://myServiceEntry.com/v1" in URL
+    And the user clicks Save button in Entry modal
+    Then the user "views" the entry of "autotest-test-event" in Service, "v1" in API, "https://myServiceEntry.com/v1" in URL
+    When the user clicks Edit icon of "autotest-test-event", "v1", "https://myServiceEntry.com/v1" on entries page
+    Then the user views Edit entry modal
+    When the user modifies URL field "https://myServiceEntry-2.ca/v1"
+    And the user clicks Save button in Entry modal
+    Then the user "views" the entry of "autotest-test-event" in Service, "v1" in API, "https://myServiceEntry-2.ca/v1" in URL
+    # Check update directory entry event log
+    When the user waits "20" seconds
+    And the user selects the "Event log" menu item
+    Then the "Event log" landing page is displayed
+    When the user searches with "directory-service:entry-updated", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
+    Then the user views the events matching the search filter of "directory-service:entry-updated"
+    When the user clicks Show details button for the latest event of "entry-updated" for "directory-service"
+    Then the user views the event details of "autotest-test-event", "v1", "https://myServiceEntry-2.ca/v1", "autotest", "Auto Test"
+    # Delete the directory entry
+    When the user selects the "Directory" menu item
+    And the user selects "Entries" tab for "Directory"
+    And the user clicks Delete icon of "autotest-test-event", "v1", "https://myServiceEntry-2.ca/v1" on entries page
+    Then the user views Delete entry modal for "autotest-test-event:v1"
+    When the user clicks Delete button in Entry modal
+    Then the user "should not view" the entry of "autotest-test-event" in Service, "v1" in API, "https://myServiceEntry-2.ca/v1" in URL
+    # Check delete directory entry event log
+    When the user waits "20" seconds
+    And the user selects the "Event log" menu item
+    Then the "Event log" landing page is displayed
+    When the user searches with "directory-service:entry-deleted", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
+    Then the user views the events matching the search filter of "directory-service:entry-deleted"
+    When the user clicks Show details button for the latest event of "entry-deleted" for "directory-service"
+    Then the user views the event details of "autotest-test-event", "v1", "https://myServiceEntry-2.ca/v1", "autotest", "Auto Test"
