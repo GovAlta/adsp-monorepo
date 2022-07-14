@@ -41,7 +41,7 @@ class NotificationsPage {
     );
   }
 
-  notificationChannelCheckboxDisabled() {
+  notificationChannelEmailCheckbox() {
     return cy.xpath('//input[@name="email"]');
   }
 
@@ -430,15 +430,16 @@ class NotificationsPage {
     );
   }
 
-  addSmsTemplateModalSubject() {
-    // return cy.get('[data-testid="templated-editor-subject"]');
+  addTemplateModalSubject(channel) {
     return cy.xpath(
-      '//[@data-testid="modal-title" and contains(text(), "SMS")]//parent:://[@data-testid="templated-editor-subject"]'
+      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-subject"]`
     );
   }
 
-  addSmsTemplateModalBody() {
-    return cy.get('[data-testid="templated-editor-body"]');
+  addTemplateModalBody(channel) {
+    return cy.xpath(
+      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-body"]`
+    );
   }
 
   editTemplateModalTitle() {

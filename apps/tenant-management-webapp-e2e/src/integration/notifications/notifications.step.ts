@@ -221,11 +221,6 @@ Then('the user views Add an email template page', function () {
   notificationsObj.addAnEmailTemplateModalTitle().invoke('text').should('contain', 'Add an email template');
 });
 
-When('the user enters {string} as subject and {string} as body on the email page', function (subjectText, bodyText) {
-  notificationsObj.addAnEmailTemplateModalSubject().type(subjectText);
-  notificationsObj.addAnEmailTemplateModalBody().type(bodyText);
-});
-
 When('the user clicks Add button in Add an email template page', function () {
   notificationsObj.addAnEmailTemplateModalAddBtn().click();
   cy.wait(2000);
@@ -749,7 +744,8 @@ Then(
 );
 
 Then('the user views that email channel is greyed out', function () {
-  notificationsObj.notificationChannelCheckboxDisabled().should('be.disabled');
+  notificationsObj.notificationChannelEmailCheckbox().should('be.disabled');
+  notificationsObj.notificationChannelEmailCheckbox().should('be.checked');
 });
 
 When('the user selects {string} tab on the event template', function (tab) {
@@ -757,10 +753,13 @@ When('the user selects {string} tab on the event template', function (tab) {
   cy.wait(1000);
 });
 
-Then('the user enters {string} as subject and {string} as body on the SMS page', function (subjectText, bodyText) {
-  notificationsObj.addSmsTemplateModalSubject().type(subjectText);
-  notificationsObj.addSmsTemplateModalBody().type(bodyText);
-});
+Then(
+  'the user enters on the {string} page {string} as subject and {string} as body',
+  function (channel, subjectText, bodyText) {
+    notificationsObj.addTemplateModalSubject(channel).type(subjectText);
+    notificationsObj.addTemplateModalBody(channel).type(bodyText);
+  }
+);
 
 Then('the user views an email template modal title for {string}', function (notificationEvent) {
   notificationsObj.editTemplateModalTitle().invoke('text').should('contain', notificationEvent);
