@@ -11,6 +11,7 @@ describe('JobScheduler', () => {
     debug: jest.fn(),
     info: jest.fn(),
     error: jest.fn(),
+    warning: jest.fn(),
   } as unknown as Logger;
 
   const mockApplications: ServiceStatusApplicationEntity[] = [

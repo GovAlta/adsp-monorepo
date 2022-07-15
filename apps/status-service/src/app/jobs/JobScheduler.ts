@@ -61,6 +61,9 @@ export class HealthCheckJobScheduler {
   ): void => {
     if (this.#jobCache.exists(applicationId)) {
       this.#jobCache.remove(applicationId, cancelJob);
+      this.#logger.warning(`Cancelled job #${applicationId}`);
+    } else {
+      this.#logger.warning(`Asked to stop a job that isn't in the cache #${applicationId}`);
     }
   };
 
@@ -75,7 +78,7 @@ export class HealthCheckJobScheduler {
         },
       };
       const job = createCheckEndpointJob(cceProps);
-      this.#logger.info(`scheduling job for ${applicationId}`);
+      this.#logger.info(`scheduling job for ${url}`);
       return scheduleJob(`*/${JOB_TIME_INTERVAL_MIN} * * * *`, job);
     },
   };
@@ -83,7 +86,9 @@ export class HealthCheckJobScheduler {
   scheduleJob = (job: HealthCheckJob): void => {
     if (!job.job) {
       job.job = this.#scheduler.schedule(job.applicationId, job.url);
-      this.#logger.info(`Add job definition for ${job.url}`);
+      this.#logger.info(`Scheduled job for ${job.url}`);
+    } else {
+      this.#logger.warning(`Asked to schedule a job already running: #${job.url}`);
     }
   };
 
