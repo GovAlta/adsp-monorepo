@@ -3,5 +3,7 @@ export interface ConfigurationRevisionDoc<C = unknown> {
   name: string;
   tenant?: string;
   revision: number;
+  created?: Date;
+  lastUpdated?: Date;
   configuration: C;
 }

@@ -151,10 +151,18 @@ export const patchConfigurationRevision =
         res.send(mapConfiguration(updated));
         if (updated.tenantId) {
           eventService.send(
-            configurationUpdated(user, updated.tenantId, updated.namespace, updated.name, updated.latest?.revision, {
-              operation: request.operation,
-              data: updateData,
-            })
+            configurationUpdated(
+              user,
+              updated.tenantId,
+              updated.namespace,
+              updated.name,
+              updated.latest?.revision,
+              updated.latest?.lastUpdated,
+              {
+                operation: request.operation,
+                data: updateData,
+              }
+            )
           );
         }
 
@@ -188,7 +196,14 @@ export const createConfigurationRevision =
       res.send(mapConfiguration(updated));
       if (updated.tenantId) {
         eventService.send(
-          revisionCreated(user, updated.tenantId, updated.namespace, updated.name, updated.latest?.revision)
+          revisionCreated(
+            user,
+            updated.tenantId,
+            updated.namespace,
+            updated.name,
+            updated.latest?.created,
+            updated.latest?.revision
+          )
         );
       }
 

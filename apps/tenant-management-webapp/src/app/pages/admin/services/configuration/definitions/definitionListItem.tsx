@@ -30,7 +30,7 @@ export const ConfigurationDefinitionItemComponent: FunctionComponent<serviceItem
       <tr>
         <td data-testid="configuration-name">{configName}</td>
         <td data-testid="configuration-description">{description}</td>
-        <td>
+        <td data-testid="configuration-action" id="configuration-action-icons">
           <IconDiv>
             <GoAContextMenu>
               <GoAContextMenuIcon
