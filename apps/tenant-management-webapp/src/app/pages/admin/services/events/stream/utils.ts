@@ -17,7 +17,7 @@ export const generateSubscriberRolesOptions = (realmRoles: Role[]): SubscriberRo
   }
 };
 
-export const mapCoreTenantRoles = (roles) => {
+export const mapTenantClientRoles = (roles) => {
   const mappedRoles = Object.keys(roles).map((roleName) => {
     return {
       name: roleName,

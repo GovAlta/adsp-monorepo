@@ -13,7 +13,7 @@ import { Stream } from '@store/stream/models';
 import { useValidators } from '@lib/useValidators';
 import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
 import { toKebabName } from '@lib/kebabName';
-import { generateEventOptions, generateSubscriberRolesOptions, mapCoreTenantRoles } from '../utils';
+import { generateEventOptions, generateSubscriberRolesOptions, mapTenantClientRoles } from '../utils';
 import { Role } from '@store/tenant/models';
 import { EventDefinition } from '@store/event/models';
 import { RolesTable } from './rolesTable';
@@ -63,7 +63,7 @@ export const AddEditStream = ({
 
   const subscriberRolesOptions = realmRoles ? generateSubscriberRolesOptions(realmRoles) : undefined;
   const eventOptions = eventDefinitions ? generateEventOptions(eventDefinitions) : undefined;
-  const tenantClientsMappedRoles = tenantClients ? mapCoreTenantRoles(tenantClients) : undefined;
+  const tenantClientsMappedRoles = tenantClients ? mapTenantClientRoles(tenantClients) : undefined;
 
   return (
     <StreamModalStyles>
