@@ -197,11 +197,9 @@
       "schematics": {},
       "architect": {
         "lint": {
-          "builder": "@nrwl/linter:lint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "linter": "eslint",
-            "tsConfig": ["libs/core-common/tsconfig.lib.json", "libs/core-common/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!libs/core-common/**/*"]
+            "lintFilePatterns": ["libs/core-common/**/*.ts"]
           }
         },
         "test": {
@@ -297,11 +295,9 @@
           }
         },
         "lint": {
-          "builder": "@nrwl/linter:lint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "linter": "eslint",
-            "tsConfig": ["apps/event-service/tsconfig.app.json", "apps/event-service/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!apps/event-service/**/*"]
+            "lintFilePatterns": ["apps/event-service/**/*.ts"]
           }
         },
         "test": {
@@ -349,11 +345,9 @@
           }
         },
         "lint": {
-          "builder": "@nrwl/linter:lint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "linter": "eslint",
-            "tsConfig": ["apps/file-service/tsconfig.app.json", "apps/file-service/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!apps/file-service/**/*"]
+            "lintFilePatterns": ["apps/file-service/**/*.ts"]
           }
         },
         "test": {
@@ -451,11 +445,9 @@
           }
         },
         "lint": {
-          "builder": "@nrwl/linter:lint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "linter": "eslint",
-            "tsConfig": ["apps/notification-service/tsconfig.app.json", "apps/notification-service/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!apps/notification-service/**/*"]
+            "lintFilePatterns": ["apps/notification-service/**/*.ts"]
           }
         },
         "test": {
@@ -574,11 +566,9 @@
           }
         },
         "lint": {
-          "builder": "@nrwl/linter:lint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "linter": "eslint",
-            "tsConfig": ["apps/push-service/tsconfig.app.json", "apps/push-service/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!apps/push-service/**/*"]
+            "lintFilePatterns": ["apps/push-service/**/*.ts"]
           }
         },
         "test": {
@@ -598,8 +588,9 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/web:build",
+          "builder": "@nrwl/web:webpack",
           "outputs": ["{options.outputPath}"],
+          "defaultConfiguration": "production",
           "options": {
             "outputPath": "dist/apps/status-app",
             "index": "apps/status-app/src/index.html",
@@ -773,7 +764,7 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/web:build",
+          "builder": "@nrwl/web:webpack",
           "outputs": ["{options.outputPath}"],
           "defaultConfiguration": "production",
           "options": {
@@ -1013,14 +1004,9 @@
           }
         },
         "lint": {
-          "builder": "@nrwl/linter:lint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "linter": "eslint",
-            "tsConfig": [
-              "apps/tenant-management-api/tsconfig.app.json",
-              "apps/tenant-management-api/tsconfig.spec.json"
-            ],
-            "exclude": ["**/node_modules/**", "!apps/tenant-management-api/**/*"]
+            "lintFilePatterns": ["apps/tenant-management-api/**/*.ts"]
           }
         },
         "test": {
@@ -1042,7 +1028,7 @@
       "schematics": {},
       "architect": {
         "build": {
-          "builder": "@nrwl/web:build",
+          "builder": "@nrwl/web:webpack",
           "options": {
             "outputPath": "dist/apps/tenant-management-webapp",
             "index": "apps/tenant-management-webapp/src/index.html",
@@ -1105,14 +1091,9 @@
           }
         },
         "lint": {
-          "builder": "@nrwl/linter:lint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "linter": "eslint",
-            "tsConfig": [
-              "apps/tenant-management-webapp/tsconfig.app.json",
-              "apps/tenant-management-webapp/tsconfig.spec.json"
-            ],
-            "exclude": ["**/node_modules/**", "!apps/tenant-management-webapp/**/*"]
+            "lintFilePatterns": ["apps/tenant-management-webapp/**/*.{ts,tsx,js,jsx}"]
           }
         },
         "test": {
@@ -1145,11 +1126,9 @@
           }
         },
         "lint": {
-          "builder": "@nrwl/linter:lint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "linter": "eslint",
-            "tsConfig": ["apps/tenant-management-webapp-e2e/tsconfig.e2e.json"],
-            "exclude": ["**/node_modules/**", "!apps/tenant-management-webapp-e2e/**/*"]
+            "lintFilePatterns": ["apps/tenant-management-webapp-e2e/**/*.{ts,tsx,js,jsx}"]
           }
         }
       },
@@ -1250,11 +1229,9 @@
           }
         },
         "lint": {
-          "builder": "@nrwl/linter:lint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "linter": "eslint",
-            "tsConfig": ["apps/value-service/tsconfig.app.json", "apps/value-service/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!apps/value-service/**/*"]
+            "lintFilePatterns": ["apps/value-service/**/*.{ts,tsx,js,jsx}"]
           }
         },
         "test": {
