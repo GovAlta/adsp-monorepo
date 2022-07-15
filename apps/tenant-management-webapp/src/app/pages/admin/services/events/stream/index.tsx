@@ -7,10 +7,12 @@ import { CORE_TENANT } from '@store/tenant/models';
 import { NameDiv } from './styleComponents';
 import { PageIndicator } from '@components/Indicator';
 import { FetchRealmRoles } from '@store/tenant/actions';
-import { AddEditStream } from './AddEditStream';
+import { AddEditStream } from './addEditStream/addEditStream';
 import { GoAButton } from '@abgov/react-components';
 import { initialStream } from '@store/stream/models';
 import { DeleteModal } from '@components/DeleteModal';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
+import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 
 export const EventStreams = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -18,8 +20,9 @@ export const EventStreams = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const tenantStreams = useSelector((state: RootState) => state.stream?.tenant);
   const coreStreams = useSelector((state: RootState) => state.stream?.core);
-  const realmRoles = useSelector((state: RootState) => state.tenant?.realmRoles);
   const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
+  const tenant = useSelector(tenantRolesAndClients);
+
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -30,8 +33,9 @@ export const EventStreams = (): JSX.Element => {
   const [isEdit, setIsEdit] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchEventStreams());
     dispatch(FetchRealmRoles());
+    dispatch(fetchKeycloakServiceRoles());
+    dispatch(fetchEventStreams());
   }, []);
 
   const reset = () => {
@@ -61,7 +65,8 @@ export const EventStreams = (): JSX.Element => {
               isEdit={isEdit}
               onClose={reset}
               initialValue={selectedStream}
-              realmRoles={realmRoles}
+              realmRoles={tenant.realmRoles}
+              tenantClients={tenant.tenantClients}
               eventDefinitions={eventDefinitions}
               onSave={(stream) => {
                 dispatch(updateEventStream(stream));
