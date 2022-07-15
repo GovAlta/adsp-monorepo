@@ -41,6 +41,10 @@ class NotificationsPage {
     );
   }
 
+  notificationChannelEmailCheckbox() {
+    return cy.xpath('//input[@name="email"]');
+  }
+
   notificationTypeModalSelfServiceCheckbox() {
     return cy.xpath(
       '//*[@data-testid="manage-subscriptions-checkbox-wrapper"]//div[contains(@class, "goa-checkbox-container")]'
@@ -384,6 +388,64 @@ class NotificationsPage {
 
   editSubscriberModalPhoneNumberField() {
     return cy.get('[data-testid="contact-sms-input"]');
+  }
+
+  addNotificationTypeBtnOnNotificationType() {
+    return cy.get('[data-testid="add-notification"]');
+  }
+
+  tenantNotificationTypeEventMailIcon(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-email-channel"]`
+    );
+  }
+
+  tenantNotificationTypeEventMailBadge(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-email-badge"]`
+    );
+  }
+
+  tenantNotificationTypeEventBotIcon(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-bot-channel"]`
+    );
+  }
+
+  tenantNotificationTypeEventBotIconBadge(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-bot-channel-badge"]`
+    );
+  }
+
+  tenantNotificationTypeEventSmsIcon(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-sms-channel"]`
+    );
+  }
+
+  tenantNotificationTypeEventSmsIconBadge(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-sms-channel-badge"]`
+    );
+  }
+
+  notificationEventTemplateTab(text) {
+    return cy.xpath(
+      `//*[@data-testid="template-form"]//*[@class="goa-form-item"]//descendant::div//descendant::div/div/div[contains(text(), "${text}")]`
+    );
+  }
+
+  addTemplateModalSubject(channel) {
+    return cy.xpath(
+      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-subject"]`
+    );
+  }
+
+  addTemplateModalBody(channel) {
+    return cy.xpath(
+      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-body"]`
+    );
   }
 
   editTemplateModalTitle() {
