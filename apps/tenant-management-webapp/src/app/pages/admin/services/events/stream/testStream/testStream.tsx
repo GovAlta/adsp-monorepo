@@ -71,9 +71,9 @@ export const TestStream = (): JSX.Element => {
       setSocketConnecting(false);
       setSpinner(false);
     });
+
     socket?.on('disconnect', (reason) => {
       clearTimeout(spinnerTimeout.current);
-      console.log('disconnect', reason);
       // if connection disconnects from client or server side, consider it as a successful disconnect
       if (reason === 'io client disconnect' || reason === 'io server disconnect') {
         setSocketDisconnect(true);
@@ -87,8 +87,8 @@ export const TestStream = (): JSX.Element => {
       setSocketConnecting(false);
       setSpinner(false);
     });
+
     socket?.on('connect_error', (error) => {
-      console.log('connect_error', error);
       clearTimeout(spinnerTimeout.current);
       setSocketConnectionError(true);
       setSocketConnection(false);
@@ -96,6 +96,7 @@ export const TestStream = (): JSX.Element => {
       setSocketDisconnect(false);
       setSpinner(false);
     });
+
     // once we have socket init, available streams and a stream selected by user then start listening to streams
     // TO-DO: we can use a wrapper of some sort here in the future for re-usability
     if (tenantStreams && coreStreams && socket && selectedSteamId[0]) {

@@ -24,7 +24,6 @@ interface NotificationTypeFormProps {
   title: string;
   open: boolean;
   errors?: Record<string, string>;
-  realmRoles: any;
 }
 
 const channels = [
@@ -43,7 +42,6 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   onSave,
   errors,
   title,
-  realmRoles,
   open,
 }) => {
   //const dispatch = useDispatch();
@@ -53,6 +51,8 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   useEffect(() => {
     setType(JSON.parse(JSON.stringify(initialValue)));
   }, [initialValue]);
+
+  const realmRoles = useSelector((state: RootState) => state.tenant.realmRoles);
 
   let dropDownOptions = [];
 
