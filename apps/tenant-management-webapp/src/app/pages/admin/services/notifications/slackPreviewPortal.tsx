@@ -14,7 +14,7 @@ export const SlackPreviewPortal: FunctionComponent<SlackPreviewPortalProps> = ({
   const TextContent = () => {
     const time = new Date();
     return (
-      <div className="flexColumn">
+      <div data-testid="bot-preview" className="flexColumn">
         <div>
           <div className="appNotificationHeader">
             <b className="adspHeader">ADSP Notifications</b>

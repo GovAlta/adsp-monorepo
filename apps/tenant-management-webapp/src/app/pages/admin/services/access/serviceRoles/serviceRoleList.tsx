@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import DataTable from '@components/DataTable';
 import { ServiceRoles } from '@store/access/models';
-import { TableDiv, TextLoadingIndicator } from '../styled-component';
+import { TableDiv } from '../styled-component';
+import { TextLoadingIndicator } from '@components/Indicator';
 import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';

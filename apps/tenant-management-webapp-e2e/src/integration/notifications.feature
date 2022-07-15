@@ -6,14 +6,14 @@ Feature: Notifications
     Given a tenant admin user is on notification overview page
     When the user clicks Add notification type button
     Then the user views Add notification type modal
-    When the user enters "autotest-addNotificationType", "autotest notification desc", "Anyone (Anonymous)", "yes", "no", "no", "yes" on notification type modal
+    When the user enters "autotest-addNotificationType", "autotest notification desc", "Anyone (Anonymous)", "no", "no", "yes" on notification type modal
     And the user clicks save button in notification type modal
     Then the user "views" the notification type card of "autotest-addNotificationType", "autotest notification desc", "Anyone (Anonymous)", "yes", "yes"
     # Verify there is Add notification button on the notification type page as well after saving a new notification type
     And the user views Add notification type button on Notification types page
     When the user clicks "edit" button for the notification type card of "autotest-addNotificationType"
     Then the user views Edit notification type modal for "autotest-addNotificationType"
-    When the user enters "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, file-service-admin", "yes", "no", "no", "no" on notification type modal
+    When the user enters "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no", "no" on notification type modal
     And the user clicks save button in notification type modal
     Then the user "views" the notification type card of "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no"
     When the user clicks "delete" button for the notification type card of "autotest-editNotificationType"
@@ -31,7 +31,7 @@ Feature: Notifications
     When the user selects "tenant-service:tenant-created" in the event dropdown
     And the user clicks Next button on Select an event page
     Then the user views Add an email template page
-    When the user enters "autotest subject" as subject and "autotest body" as body
+    When the user enters "autotest subject" as subject and "autotest body" as body "email" template page
     And the user clicks Add button in Add an email template page
     Then the user "views" the event of "tenant-service:tenant-created" in "autotest-notificationType"
     When the user clicks Select event button for "autotest-notificationType"
@@ -195,3 +195,60 @@ Feature: Notifications
     And the user searches subscribers with address as containing "autotest-DO-NOT-DELETE", email containing "auto.test@abc.com" and phone number containing "EMPTY"
     Then the user "views" the subscriber of "autotest-DO-NOT-DELETE", "auto.test@abc.com", "EMPTY"
 
+  @TEST_CS-1339 @REQ_CS-1308 @REQ_CS-1233 @regression
+  Scenario: As a tenant admin, I can configure what channels are supported by a notification type, so that I can support multiple channels of notifications.
+    Given a tenant admin user is on notification types page
+    # Add a notification type
+    When the user clicks Add notification type button on Notification type page
+    Then the user views Add notification type modal
+    When the user enters "autotest-add-multi-channels", "autotest notification desc", "Anyone (Anonymous)", "yes", "yes", "yes" on notification type modal
+    Then the user views that email channel is greyed out
+    And the user clicks save button in notification type modal
+    Then the user "views" the notification type card of "autotest-add-multi-channels", "autotest notification desc", "Anyone (Anonymous)", "yes", "yes"
+    # Add an event
+    When the user clicks Select event button for "autotest-add-multi-channels"
+    Then the user views Select an event modal
+    When the user selects "form-service:form-submitted" in the event dropdown
+    And the user clicks Next button on Select an event page
+    Then the user views Add an email template page
+    When the user enters "autotest subject" as subject and "autotest body" as body "email" template page
+    Then the user selects "SMS" tab on the event template
+    When the user enters "autotest subject" as subject and "autotest body" as body "SMS" template page
+    And the user clicks Add button in Add an email template page
+    Then the user "views" the event of "form-service:form-submitted" in "autotest-add-multi-channels"
+    And the user "views" "email template indicator" for the event of "form-service:form-submitted" in "autotest-add-multi-channels" on tenant events
+    And the user "views" "sms template indicator" for the event of "form-service:form-submitted" in "autotest-add-multi-channels" on tenant events
+    And the user "views" "bot template indicator with warning" for the event of "form-service:form-submitted" in "autotest-add-multi-channels" on tenant events
+    # Edit the event, remove bot & sms channels from template
+    When the user clicks "edit" button for the notification type card of "autotest-add-multi-channels"
+    Then the user views Edit notification type modal for "autotest-add-multi-channels"
+    And the user views that email channel is greyed out
+    When the user enters "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no", "no" on notification type modal
+    And the user clicks save button in notification type modal
+    Then the user "views" the notification type card of "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no"
+    And the user "views" "email template indicator" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
+    And the user "should not view" "sms template indicator" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
+    And the user "should not view" "bot template indicator" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
+    # Add back bot and sms channels to see the template preserved
+    When the user clicks "edit" button for the notification type card of "autotest-edit-multi-channels"
+    Then the user views Edit notification type modal for "autotest-edit-multi-channels"
+    When the user enters "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role2, beta-tester", "yes", "yes", "no" on notification type modal
+    And the user clicks save button in notification type modal
+    Then the user "views" the notification type card of "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role2, beta-tester", "no", "no"
+    And the user "views" "sms template indicator" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
+    And the user "views" "bot template indicator with warning" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
+    # Delete the notification type
+    When the user clicks "delete" button for the notification type card of "autotest-edit-multi-channels"
+    Then the user views delete "notification type" confirmation modal for "autotest-edit-multi-channels"
+    When the user clicks Delete button in delete confirmation modal
+    Then the user "should not view" the notification type card of "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no"
+
+  @TEST_CS-1157 @REQ_CS-1070 @regression
+  Scenario: As a tenant admin, I can preview the rendered notification message, so I know what my subscribers will receive.
+    Given a tenant admin user is on notification types page
+    When the user clicks "edit" button for "Autotest:autotest-eventDefinition" in "autotest-notificationType"
+    Then the user views an email template modal title for "Autotest:autotest-eventDefinition"
+    And the user views the email subject "Autotest"
+    And the user views the email body "Autotest"
+    When the user clicks Close button in an email template modal
+    Then Preview an email template modal is closed

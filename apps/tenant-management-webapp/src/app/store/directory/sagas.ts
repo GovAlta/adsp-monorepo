@@ -187,7 +187,7 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
       axios.get,
       `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(action.data.namespace)}/services/${
         action.data.service
-      }/metadata`,
+      }`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
@@ -238,9 +238,7 @@ export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction
             // fetch metadata from remote only when it does not exist
             const { data: result } = yield call(
               axios.get,
-              `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}/services/${
-                _service.service
-              }/metadata`,
+              `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}/services/${_service.service}`,
               {
                 headers: { Authorization: `Bearer ${token}` },
               }

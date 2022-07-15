@@ -109,6 +109,41 @@ components:
         description: Unauthorized
 
 '/directory/v2/namespaces/{namespace}/services/{service}':
+  get:
+    tags:
+      - Directory service
+    description: Fetch the service data
+    parameters:
+      - name: namespace
+        description: namespace of the directory entry
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service
+        description: name of the service
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Returns the service's metadata
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                _id:
+                  type: string
+                service:
+                  type: string
+                host:
+                  type: string
+                metadata:
+                  $ref: '#/components/schemas/ServiceMetadata'
+      401:
+        description: Unauthorized
   patch:
     tags:
       - Directory service
@@ -166,6 +201,48 @@ components:
         description: Unauthorized
 
 '/directory/v2/namespaces/{namespace}/services/{service}/apis':
+  get:
+    tags:
+      - Directory service
+    description: Fetch the API entries for the specified service.
+    parameters:
+      - name: namespace
+        description: namespace of the directory entry
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service
+        description: Name of the service
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                service:
+                  type: object
+                  description: The directory entries for the requested service apis.
+                  properties:
+                    namespace:
+                      type: string
+                    service:
+                      type: string
+                    url:
+                      type: string
+                    urn:
+                      type: string
+                apis:
+                  type: array
+                  description: A list of service API entries for the requested service.
+                  items:
+                    $ref: '#/components/schemas/DirectoryEntry'
   post:
     tags:
       - Directory service
@@ -269,84 +346,3 @@ components:
         description: The entry was successfully deleted
       401:
         description: Unauthorized
-
-'/directory/v2/namespaces/{namespace}/services/{service}/metadata':
-  get:
-    tags:
-      - Directory service
-    description: Fetch the service metadata
-    parameters:
-      - name: namespace
-        description: namespace of the directory entry
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: service
-        description: name of the service
-        in: path
-        required: true
-        schema:
-          type: string
-    responses:
-      200:
-        description: Returns the service's metadata
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                _id:
-                  type: string
-                service:
-                  type: string
-                host:
-                  type: string
-                metadata:
-                  $ref: '#/components/schemas/ServiceMetadata'
-      401:
-        description: Unauthorized
-
-'/directory/v2/namespaces/{namespace}/services/{service}/entries':
-  get:
-    tags:
-      - Directory service
-    description: Fetch service and service API entries for the specified service.
-    parameters:
-      - name: namespace
-        description: namespace of the directory entry
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: service
-        description: Name of the service
-        in: path
-        required: true
-        schema:
-          type: string
-    responses:
-      200:
-        description: Request completed successfully.
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                service:
-                  type: object
-                  description: The directory entry for the requested service.  The entry will be null if the service is only defined by its APIs.
-                  properties:
-                    namespace:
-                      type: string
-                    service:
-                      type: string
-                    url:
-                      type: string
-                    urn:
-                      type: string
-                apis:
-                  type: array
-                  description: A list of service API entries for the requested service.
-                  items:
-                    $ref: '#/components/schemas/DirectoryEntry'

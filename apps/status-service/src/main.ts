@@ -8,13 +8,10 @@ import { environment, POD_TYPES } from './environments/environment';
 import { createRepositories } from './mongo';
 import { bindEndpoints, ServiceUserRoles } from './app';
 import * as cors from 'cors';
-import { scheduleServiceStatusJobs } from './app/jobs';
 import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
 import * as util from 'util';
 import type { User } from '@abgov/adsp-service-sdk';
-import {
-  configurationSchema
-} from './mongo/schema';
+import { configurationSchema } from './mongo/schema';
 import {
   HealthCheckStartedDefinition,
   HealthCheckStoppedDefinition,
@@ -25,6 +22,10 @@ import {
 } from './app/events';
 
 import { StatusApplicationHealthChange, StatusApplicationStatusChange } from './app/notificationTypes';
+import { scheduleJob } from 'node-schedule';
+import { AMQPCredentials } from '@core-services/core-common';
+import { HealthCheckController } from './app/amqp';
+import { HealthCheckJobScheduler } from './app/jobs';
 
 const logger = createLogger('status-service', environment?.LOG_LEVEL || 'info');
 const app = express();
@@ -86,14 +87,48 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
 
   app.use(passport.initialize());
 
+  const scheduler = new HealthCheckJobScheduler({
+    logger,
+    eventService,
+    serviceStatusRepository: repositories.serviceStatusRepository,
+    endpointStatusEntryRepository: repositories.endpointStatusEntryRepository,
+  });
+
   // start the endpoint checking jobs
   if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.job)) {
-    scheduleServiceStatusJobs({
-      logger,
-      eventService,
-      serviceStatusRepository: repositories.serviceStatusRepository,
-      endpointStatusEntryRepository: repositories.endpointStatusEntryRepository,
-    });
+    // clear the health status database every midnight
+    const scheduleDataReset = async () => {
+      scheduleJob('0 0 * * *', async () => {
+        logger.info('Start to delete the old application status.');
+        await repositories.endpointStatusEntryRepository.deleteOldUrlStatus();
+        logger.info('Completed the old application status deletion.');
+      });
+
+      const healthCheckController = new HealthCheckController({
+        serviceStatusRepository: repositories.serviceStatusRepository,
+        healthCheckScheduler: scheduler,
+        logger: logger,
+      });
+
+      const amqpCredentials: AMQPCredentials = {
+        AMQP_HOST: environment.AMQP_HOST,
+        AMQP_USER: environment.AMQP_USER,
+        AMQP_PASSWORD: environment.AMQP_PASSWORD,
+        AMQP_URL: environment.AMQP_URL,
+      };
+      const queueService = await healthCheckController.connect(amqpCredentials);
+      healthCheckController.subscribe(queueService);
+    };
+
+    // reload the cache every 5 minutes
+    const scheduleCacheReload = async () => {
+      scheduleJob('*/5 * * * *', async () => {
+        const applications = await repositories.serviceStatusRepository.findEnabledApplications();
+        scheduler.reloadCache(applications);
+      });
+    };
+
+    scheduler.loadHealthChecks(scheduler.scheduleJob, scheduleDataReset, scheduleCacheReload);
   }
 
   // service endpoints

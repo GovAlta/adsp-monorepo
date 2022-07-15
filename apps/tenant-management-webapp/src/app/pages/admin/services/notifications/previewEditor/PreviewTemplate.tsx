@@ -28,7 +28,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
           }}
         ></SubjectPreview>
         <h3>{channelTitle}</h3>
-        <BodyPreview data-testid="email-preview-body" title={channelTitle} html={bodyPreviewContent}></BodyPreview>
+        <BodyPreview title={channelTitle} html={bodyPreviewContent}></BodyPreview>
       </>
     );
   };
@@ -44,11 +44,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
           }}
         ></SubjectPreview>
         <h3>{channelTitle}</h3>
-        <SMSBodyPreview
-          data-testid="sms-preview-body"
-          subject={subjectPreviewContent}
-          body={bodyPreviewContent}
-        ></SMSBodyPreview>
+        <SMSBodyPreview subject={subjectPreviewContent} body={bodyPreviewContent}></SMSBodyPreview>
       </>
     );
   };
@@ -57,11 +53,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
     return (
       <>
         <h3>{channelTitle}</h3>
-        <SlackPreview
-          data-testid="bot-preview"
-          subject={subjectPreviewContent}
-          body={bodyPreviewContent}
-        ></SlackPreview>
+        <SlackPreview subject={subjectPreviewContent} body={bodyPreviewContent}></SlackPreview>
       </>
     );
   };

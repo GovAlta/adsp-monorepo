@@ -16,7 +16,7 @@ import {
   updateApi,
   deleteService,
   deleteApi,
-  getServiceMetadata,
+  getServiceData,
 } from './directory';
 import axios from 'axios';
 import { DirectoryRepository } from '../../directory/repository';
@@ -390,13 +390,13 @@ describe('router', () => {
       expect(res.sendStatus).toHaveBeenCalledWith(HttpStatusCodes.NOT_FOUND);
     });
   });
-  describe('getServiceMetadata', () => {
+  describe('getServiceData', () => {
     it('can create handler', () => {
-      const handler = getServiceMetadata(repositoryMock, loggerMock as Logger);
+      const handler = getServiceData(repositoryMock, loggerMock as Logger);
       expect(handler).toBeTruthy();
     });
     it('can get service metadata by service', async () => {
-      const handler = getServiceMetadata(repositoryMock, loggerMock as Logger);
+      const handler = getServiceData(repositoryMock, loggerMock as Logger);
 
       const cacheMock = jest.fn();
       jest.mock('node-cache', () => {

@@ -41,6 +41,10 @@ class NotificationsPage {
     );
   }
 
+  notificationChannelEmailCheckbox() {
+    return cy.xpath('//input[@name="email"]');
+  }
+
   notificationTypeModalSelfServiceCheckbox() {
     return cy.xpath(
       '//*[@data-testid="manage-subscriptions-checkbox-wrapper"]//div[contains(@class, "goa-checkbox-container")]'
@@ -176,13 +180,13 @@ class NotificationsPage {
   }
 
   // Internal notification type card elements have different xpath than those from custom created notification type cards, so use "Internal" prefix for the following several UI page object names
-  internalNotificationTypeEventMailIcon(cardTitle, eventName) {
+  notificationTypeEventMailIcon(cardTitle, eventName) {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="core-email-channel"]`
     );
   }
 
-  internalNotificationTypeEventEditButton(cardTitle, eventName) {
+  notificationTypeEventEditButton(cardTitle, eventName) {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="edit-event"]`
     );
@@ -256,7 +260,7 @@ class NotificationsPage {
     return cy.get('[data-testid="delete-confirm"]');
   }
 
-  internalNotificationTypeEventResetBtn(cardTitle, eventName) {
+  notificationTypeEventDeleteBtn(cardTitle, eventName) {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="delete-event"]`
     );
@@ -384,6 +388,88 @@ class NotificationsPage {
 
   editSubscriberModalPhoneNumberField() {
     return cy.get('[data-testid="contact-sms-input"]');
+  }
+
+  addNotificationTypeBtnOnNotificationType() {
+    return cy.get('[data-testid="add-notification"]');
+  }
+
+  tenantNotificationTypeEventMailIcon(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-email-channel"]`
+    );
+  }
+
+  tenantNotificationTypeEventMailBadge(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-email-badge"]`
+    );
+  }
+
+  tenantNotificationTypeEventBotIcon(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-bot-channel"]`
+    );
+  }
+
+  tenantNotificationTypeEventBotIconBadge(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-bot-channel-badge"]`
+    );
+  }
+
+  tenantNotificationTypeEventSmsIcon(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-sms-channel"]`
+    );
+  }
+
+  tenantNotificationTypeEventSmsIconBadge(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-sms-channel-badge"]`
+    );
+  }
+
+  notificationEventTemplateTab(text) {
+    return cy.xpath(
+      `//*[@data-testid="template-form"]//*[@class="goa-form-item"]//descendant::div//descendant::div/div/div[contains(text(), "${text}")]`
+    );
+  }
+
+  addTemplateModalSubject(channel) {
+    return cy.xpath(
+      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-subject"]`
+    );
+  }
+
+  addTemplateModalBody(channel) {
+    return cy.xpath(
+      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-body"]`
+    );
+  }
+
+  editTemplateModalTitle() {
+    return cy.get('[data-testid="modal-title"]');
+  }
+
+  editTemplateModalEmailSubject() {
+    return cy.get('[data-testid="templated-editor-subject"]');
+  }
+
+  editTemplateModalEmailSubjectPreviewPane() {
+    return cy.get('[data-testid="email-preview-subject"]');
+  }
+
+  editTemplateModalEmailBody() {
+    return cy.get('[data-testid="templated-editor-body"]');
+  }
+
+  editContactModalBodyEmailPreviewPane() {
+    return cy.get('[data-testid="email-preview-body"]');
+  }
+
+  editTemplateModalCloseBtn() {
+    return cy.get('[data-testid="template-form-close"]');
   }
 }
 export default NotificationsPage;
