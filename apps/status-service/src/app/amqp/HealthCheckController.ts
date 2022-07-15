@@ -66,8 +66,6 @@ export class HealthCheckController {
 
   stopApplicationHealthChecks = async (stopEvent: HealthCheckControllerWorkItem): Promise<void> => {
     this.#logger.info(`Stopping health checks for application ${stopEvent.applicationId} at ${stopEvent.url}`);
-    this.#healthCheckJobScheduler.stopHealthChecks(stopEvent.applicationId, (j: HealthCheckJob) => {
-      j.job.cancel();
-    });
+    this.#healthCheckJobScheduler.stopHealthChecks(stopEvent.applicationId);
   };
 }
