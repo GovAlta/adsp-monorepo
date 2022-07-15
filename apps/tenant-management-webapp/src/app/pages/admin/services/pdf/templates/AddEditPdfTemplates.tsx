@@ -110,11 +110,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             </GoAFormItem>
           </GoAForm>
         </GoAModalContent>
-        {indicator.show === true && (
-          <Center>
-            <TextLoadingIndicator>Loading PDF templates configuration.</TextLoadingIndicator>
-          </Center>
-        )}
+
         <GoAModalActions>
           <GoAButton
             data-testid="form-cancel"
@@ -130,9 +126,9 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             buttonType="primary"
             data-testid="form-save"
             type="submit"
-            disabled={!template.name || validators.haveErrors() || indicator.show === true}
+            disabled={!template.name || validators.haveErrors()}
             onClick={(e) => {
-              if (Object.keys(templates).length === 0) {
+              if (indicator.show === true) {
                 setSpinner(true);
               } else {
                 const validations = {
