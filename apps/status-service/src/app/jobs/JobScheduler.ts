@@ -61,9 +61,9 @@ export class HealthCheckJobScheduler {
   ): void => {
     if (this.#jobCache.exists(applicationId)) {
       this.#jobCache.remove(applicationId, cancelJob);
-      this.#logger.warning(`Cancelled job #${applicationId}`);
+      this.#logger.info(`Cancelled job #${applicationId}`);
     } else {
-      this.#logger.warning(`Asked to stop a job that isn't in the cache #${applicationId}`);
+      this.#logger.warn(`Asked to stop a job that isn't in the cache #${applicationId}`);
     }
   };
 
@@ -88,7 +88,7 @@ export class HealthCheckJobScheduler {
       job.job = this.#scheduler.schedule(job.applicationId, job.url);
       this.#logger.info(`Scheduled job for ${job.url}`);
     } else {
-      this.#logger.warning(`Asked to schedule a job already running: #${job.url}`);
+      this.#logger.warn(`Asked to schedule a job already running: #${job.url}`);
     }
   };
 
