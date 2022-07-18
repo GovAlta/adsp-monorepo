@@ -41,6 +41,5 @@ export const InitialStreams: StreamStatus = {
 export interface SubscriberRolesOptions {
   value: string;
   label: string;
-  key: string;
   dataTestId: string;
 }
