@@ -149,7 +149,7 @@ export const AddEditStream = ({
             {subscriberRolesOptions ? (
               ''
             ) : (
-              <GoASkeletonGridColumnContent key={1} rows={2}></GoASkeletonGridColumnContent>
+              <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>
             )}
             {!stream.publicSubscribe && subscriberRolesOptions ? (
               <RolesTable
@@ -181,7 +181,7 @@ export const AddEditStream = ({
             ) : (
               <>
                 <br />
-                <GoASkeletonGridColumnContent key={2} rows={2}></GoASkeletonGridColumnContent>
+                <GoASkeletonGridColumnContent key={2} rows={4}></GoASkeletonGridColumnContent>
               </>
             )}
             {!stream.publicSubscribe && tenantClientsMappedRoles
