@@ -1,2 +1,3 @@
 export { HealthCheckJobScheduler } from './JobScheduler';
-export { HealthCheckJobCache, HealthCheckJob } from './HealthCheckJobCache';
+export { HealthCheckJobCache } from './HealthCheckJobCache';
+export { HealthCheckJob } from './HealthCheckJob';
