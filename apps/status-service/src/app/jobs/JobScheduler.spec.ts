@@ -1,10 +1,11 @@
 import { Logger } from 'winston';
-import { HealthCheckJobScheduler } from './JobScheduler';
+import { HealthCheckJobScheduler, HealthCheckSchedulingProps } from './JobScheduler';
 import { ServiceStatusApplicationEntity } from '../model';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { EventService } from '@abgov/adsp-service-sdk';
-import { HealthCheckJob, HealthCheckJobCache } from './HealthCheckJobCache';
+import { HealthCheckJobCache } from './HealthCheckJobCache';
+import { getScheduler } from './SchedulerFactory';
 
 describe('JobScheduler', () => {
   const loggerMock: Logger = {
@@ -41,17 +42,18 @@ describe('JobScheduler', () => {
     findEnabledApplications: jest.fn().mockReturnValueOnce(mockApplications),
   } as unknown as ServiceStatusRepository;
 
-  const jobScheduler = new HealthCheckJobScheduler({
+  const props: HealthCheckSchedulingProps = {
     logger: loggerMock,
     serviceStatusRepository: statusRepoMock,
     endpointStatusEntryRepository: endpointRepoMock,
     eventService: eventServiceMock,
-  });
+  };
+  const jobScheduler = new HealthCheckJobScheduler(props);
 
   const jobCache = new HealthCheckJobCache(loggerMock);
 
   it('can load and start persistent health check jobs', async () => {
-    const healthCheckScheduler = jest.fn();
+    const healthCheckScheduler = { schedule: jest.fn() };
     const dataResetScheduler = jest.fn();
     const cacheReloadScheduler = jest.fn();
 
@@ -59,36 +61,18 @@ describe('JobScheduler', () => {
     await jobScheduler.loadHealthChecks(healthCheckScheduler, dataResetScheduler, cacheReloadScheduler);
     expect(dataResetScheduler).toHaveBeenCalledTimes(1);
     expect(cacheReloadScheduler).toHaveBeenCalledTimes(1);
-    expect(healthCheckScheduler).toHaveBeenCalledTimes(3);
-    expect(healthCheckScheduler).toHaveBeenCalledWith(
-      expect.objectContaining({
-        url: 'http://www.application1.com',
-        applicationId: 'application 1',
-        job: null,
-      })
-    );
-    expect(healthCheckScheduler).toHaveBeenCalledWith(
-      expect.objectContaining({
-        url: 'http://www.application2.com',
-        applicationId: 'application 2',
-        job: null,
-      })
-    );
-    expect(healthCheckScheduler).toHaveBeenCalledWith(
-      expect.objectContaining({
-        url: 'http://www.application3.com',
-        applicationId: 'application 3',
-        job: null,
-      })
-    );
+    expect(healthCheckScheduler.schedule).toHaveBeenCalledTimes(3);
+    expect(healthCheckScheduler.schedule).toHaveBeenCalledWith('application 1', 'http://www.application1.com');
+    expect(healthCheckScheduler.schedule).toHaveBeenCalledWith('application 2', 'http://www.application2.com');
+    expect(healthCheckScheduler.schedule).toHaveBeenCalledWith('application 3', 'http://www.application3.com');
     expect(jobCache.getApplicationIds().length).toEqual(3);
     expect(jobCache.exists('application 1')).not.toBeNull;
   });
 
   it('can start individual health check jobs', () => {
     jobCache.clear(jest.fn());
-    const scheduler = jest.fn() as unknown as (job: HealthCheckJob) => void;
-    jobScheduler.startHealthChecks(mockApplications[0], scheduler);
+    const scheduler = jest.fn();
+    jobScheduler.startHealthChecks(mockApplications[0], getScheduler(props, scheduler));
     expect(scheduler).toHaveBeenCalledTimes(1);
     expect(jobCache.getApplicationIds().length).toEqual(1);
     const app = jobCache.get(mockApplications[0]._id);
@@ -98,8 +82,7 @@ describe('JobScheduler', () => {
 
   it('can stop individual health check jobs', () => {
     jobCache.clear(jest.fn());
-    const scheduler = jest.fn() as unknown as (job: HealthCheckJob) => void;
-    jobScheduler.startHealthChecks(mockApplications[0], scheduler);
+    jobScheduler.startHealthChecks(mockApplications[0], getScheduler(props, jest.fn()));
     const cancelJob = jest.fn();
     jobScheduler.stopHealthChecks(mockApplications[0]._id, cancelJob);
     expect(cancelJob).toBeCalledTimes(1);
