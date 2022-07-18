@@ -22,6 +22,11 @@ export interface PdfGenerationResponse {
   data: any;
   stream: any;
   name?: string;
+  fileWasGenerated: boolean;
+}
+
+export interface UpdatePDFResponse {
+  fileList: FileItem[];
 }
 
 export interface PdfGenerationPayload {
@@ -36,6 +41,17 @@ interface SocketChannel {
 }
 
 export type SchemaType = unknown;
+
+export interface FileItem {
+  id: string;
+  filename: string;
+  size: number;
+  fileURN: string;
+  typeName?: string;
+  recordId?: string;
+  created?: string;
+  lastAccessed?: string;
+}
 
 export interface PdfMetrics {
   pdfGenerated?: number;
@@ -72,6 +88,7 @@ export interface PdfState {
   metrics: PdfMetrics;
   stream: Stream[];
   jobs: PdfGenerationResponse[];
+  status: string[];
   socketChannel: SocketChannel;
 }
 

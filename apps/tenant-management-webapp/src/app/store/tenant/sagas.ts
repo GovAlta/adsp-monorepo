@@ -151,11 +151,6 @@ export function* getAccessToken(): SagaIterator {
     // Check if credentials still present or if logout has occurred.
     const credentials: Credentials = yield select((state: RootState) => state.session.credentials);
 
-    // Check if refresh token is expired, throw exception directly
-    if (realmInSession && credentials?.refreshTokenExp && credentials.tokenExp - Date.now() / 1000 < 30) {
-      throw new Error('Refresh token expired.');
-    }
-
     // Check if token is within 1 min of expiry.
     if (credentials.tokenExp - Date.now() / 1000 < 60) {
       const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth);

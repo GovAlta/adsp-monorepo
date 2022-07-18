@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { GoAButton, GoADropdownOption, GoADropdown } from '@abgov/react-components';
+import { GoAButton, GoADropdownOption, GoADropdown, GoACheckbox } from '@abgov/react-components';
 import {
   GoAModal,
   GoAModalActions,
@@ -8,14 +8,17 @@ import {
   GoAInput,
 } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
-import { IdField, StreamModalStyles } from './styleComponents';
+import { AnonymousWrapper, IdField, StreamModalStyles } from '../styleComponents';
 import { Stream } from '@store/stream/models';
 import { useValidators } from '@lib/useValidators';
 import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
 import { toKebabName } from '@lib/kebabName';
-import { generateEventOptions, generateSubscriberRolesOptions } from './utils';
+import { generateEventOptions, generateSubscriberRolesOptions, mapTenantClientRoles } from '../utils';
 import { Role } from '@store/tenant/models';
 import { EventDefinition } from '@store/event/models';
+import { RolesTable } from './rolesTable';
+import { GoASkeletonGridColumnContent } from '@abgov/react-components';
+import { ServiceRoleConfig } from '@store/access/models';
 
 interface AddEditStreamProps {
   onSave: (stream: Stream) => void;
@@ -24,6 +27,7 @@ interface AddEditStreamProps {
   open: boolean;
   initialValue: Stream;
   realmRoles: Role[];
+  tenantClients: ServiceRoleConfig;
   eventDefinitions: Record<string, EventDefinition>;
   streams: Record<string, Stream>;
 }
@@ -35,6 +39,7 @@ export const AddEditStream = ({
   onClose,
   realmRoles,
   eventDefinitions,
+  tenantClients,
   streams,
 }: AddEditStreamProps): JSX.Element => {
   const [stream, setStream] = useState<Stream>({ ...initialValue });
@@ -56,8 +61,9 @@ export const AddEditStream = ({
     });
   }, [stream.events]);
 
-  const subscriberRolesOptions = generateSubscriberRolesOptions(realmRoles);
-  const eventOptions = generateEventOptions(eventDefinitions);
+  const subscriberRolesOptions = realmRoles ? generateSubscriberRolesOptions(realmRoles) : undefined;
+  const eventOptions = eventDefinitions ? generateEventOptions(eventDefinitions) : undefined;
+  const tenantClientsMappedRoles = tenantClients ? mapTenantClientRoles(tenantClients) : undefined;
 
   return (
     <StreamModalStyles>
@@ -99,36 +105,6 @@ export const AddEditStream = ({
               />
             </GoAFormItem>
             <GoAFormItem>
-              <label>Select subscriber roles</label>
-              <GoADropdown
-                name="subscriberRoles"
-                selectedValues={stream.subscriberRoles}
-                multiSelect={true}
-                onChange={(name, values) => {
-                  if (values[values.length - 1] === 'anonymousRead') {
-                    values = values.filter((value) => !realmRoles.map((realmRole) => realmRole.name).includes(value));
-                  }
-                  if (values.includes('anonymousRead') && values[values.length - 1] !== 'anonymousRead') {
-                    values = values.filter((value) => value !== 'anonymousRead');
-                  }
-                  let publicSubscribe = false;
-                  if (values.includes('anonymousRead')) {
-                    publicSubscribe = true;
-                  }
-                  setStream({ ...stream, subscriberRoles: values, publicSubscribe });
-                }}
-              >
-                {subscriberRolesOptions.map((item) => (
-                  <GoADropdownOption
-                    label={item.label}
-                    value={item.value}
-                    key={item.key}
-                    data-testid={item.dataTestId}
-                  />
-                ))}
-              </GoADropdown>
-            </GoAFormItem>
-            <GoAFormItem>
               <label>Select events</label>
               <GoADropdown
                 name="streamEvents"
@@ -156,6 +132,80 @@ export const AddEditStream = ({
                 ))}
               </GoADropdown>
             </GoAFormItem>
+            <AnonymousWrapper>
+              <GoACheckbox
+                checked={stream.publicSubscribe}
+                name="stream-anonymousRead-checkbox"
+                data-testid="stream-anonymousRead-checkbox"
+                onChange={() => {
+                  setStream({
+                    ...stream,
+                    publicSubscribe: !stream.publicSubscribe,
+                  });
+                }}
+              />
+              Make stream public
+            </AnonymousWrapper>
+            {subscriberRolesOptions ? (
+              ''
+            ) : (
+              <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>
+            )}
+            {!stream.publicSubscribe && subscriberRolesOptions ? (
+              <RolesTable
+                tableHeading="Roles"
+                key={'roles'}
+                subscriberRolesOptions={subscriberRolesOptions}
+                checkedRoles={stream.subscriberRoles}
+                onItemChecked={(value) => {
+                  if (stream.subscriberRoles.includes(value)) {
+                    const updatedRoles = stream.subscriberRoles.filter((roleName) => roleName !== value);
+                    setStream({ ...stream, subscriberRoles: updatedRoles });
+                  } else {
+                    setStream({ ...stream, subscriberRoles: [...stream.subscriberRoles, value] });
+                  }
+                }}
+              />
+            ) : (
+              // some extra white space so the modal height/width stays the same when roles are hidden
+              <div
+                style={{
+                  width: '33em',
+                  height: '6em',
+                }}
+              ></div>
+            )}
+
+            {tenantClientsMappedRoles ? (
+              ''
+            ) : (
+              <>
+                <br />
+                <GoASkeletonGridColumnContent key={2} rows={4}></GoASkeletonGridColumnContent>
+              </>
+            )}
+            {!stream.publicSubscribe && tenantClientsMappedRoles
+              ? tenantClientsMappedRoles.map((tenantRole) => {
+                  return (
+                    tenantRole.roles.length > 0 && (
+                      <RolesTable
+                        tableHeading={tenantRole.name}
+                        key={tenantRole.name}
+                        subscriberRolesOptions={tenantRole.roles}
+                        checkedRoles={stream.subscriberRoles}
+                        onItemChecked={(value) => {
+                          if (stream.subscriberRoles.includes(value)) {
+                            const updatedRoles = stream.subscriberRoles.filter((roleName) => roleName !== value);
+                            setStream({ ...stream, subscriberRoles: updatedRoles });
+                          } else {
+                            setStream({ ...stream, subscriberRoles: [...stream.subscriberRoles, value] });
+                          }
+                        }}
+                      />
+                    )
+                  );
+                })
+              : ''}
             <br />
             <br />
           </GoAForm>

@@ -1,6 +1,7 @@
 import { Logger } from 'winston';
 import { ServiceStatusApplicationEntity } from '../model';
-import { HealthCheckJob, HealthCheckJobCache } from './HealthCheckJobCache';
+import { HealthCheckJobCache } from './HealthCheckJobCache';
+import { HealthCheckJob } from './HealthCheckJob';
 
 describe('HealthCheckJobCache', () => {
   const loggerMock: Logger = {
@@ -26,11 +27,11 @@ describe('HealthCheckJobCache', () => {
 
   const cache = new HealthCheckJobCache(loggerMock);
   it('can add multiple application jobs', () => {
-    cache.addBatch(mockApplications);
+    cache.addBatch(mockApplications, { schedule: jest.fn() });
     expect(cache.getApplicationIds().length).toEqual(3);
-    expect(cache.get('application 1').url).toEqual('http://www.application1.com');
-    expect(cache.get('application 2').url).toEqual('http://www.application2.com');
-    expect(cache.get('application 3').url).toEqual('http://www.application3.com');
+    expect(cache.get('application 1').getUrl()).toEqual('http://www.application1.com');
+    expect(cache.get('application 2').getUrl()).toEqual('http://www.application2.com');
+    expect(cache.get('application 3').getUrl()).toEqual('http://www.application3.com');
     expect(cache.get('toot!')).toBeNull;
     expect(cache.exists('application 1')).toBeTruthy;
     expect(cache.exists('application 2')).toBeTruthy;
@@ -45,18 +46,17 @@ describe('HealthCheckJobCache', () => {
     expect(cache.getApplicationIds().length).toEqual(0);
   });
 
-  it('can update all application jobs', () => {
-    cache.addBatch(mockApplications);
-    const re = new RegExp('[a-z\\/]+([0-9]).*');
-    cache.updateJobs((job: HealthCheckJob) => {
-      const match = job.url.match(re);
-      job.url = `https://application/${match[1]}`;
-    });
-    expect(cache.getApplicationIds().length).toEqual(3);
-    expect(cache.get('application 1').url).toEqual('https://application/1');
-    expect(cache.get('application 2').url).toEqual('https://application/2');
-    expect(cache.get('application 3').url).toEqual('https://application/3');
-
+  it('can update  application jobs', () => {
     cache.clear(jest.fn());
+    cache.addBatch(mockApplications, { schedule: jest.fn() });
+    cache.remove('application 1', jest.fn());
+    const newApp = {
+      _id: 'application 1',
+      endpoint: { url: 'https://application/1' },
+    } as undefined as ServiceStatusApplicationEntity;
+
+    cache.add(newApp, { schedule: jest.fn() });
+    expect(cache.getApplicationIds().length).toEqual(3);
+    expect(cache.get('application 1').getUrl()).toEqual('https://application/1');
   });
 });

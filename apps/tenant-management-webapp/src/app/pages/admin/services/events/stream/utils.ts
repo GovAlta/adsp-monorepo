@@ -3,19 +3,9 @@ import { SubscriberRolesOptions } from '@store/stream/models';
 import { Role } from '@store/tenant/models';
 
 export const generateSubscriberRolesOptions = (realmRoles: Role[]): SubscriberRolesOptions[] => {
-  const dropDownOptions = [
-    {
-      value: 'anonymousRead',
-      label: 'Anyone (Anonymous)',
-      key: 'anonymous',
-      dataTestId: 'anonymous-option',
-    },
-  ];
-
+  let dropDownOptions = [];
   if (realmRoles) {
-    let defaultDropDowns = [];
-
-    defaultDropDowns = realmRoles.map((realmRole) => {
+    dropDownOptions = realmRoles.map((realmRole) => {
       return {
         value: realmRole.name,
         label: realmRole.name,
@@ -23,8 +13,24 @@ export const generateSubscriberRolesOptions = (realmRoles: Role[]): SubscriberRo
         dataTestId: `${realmRole}-update-roles-options`,
       };
     });
-    return dropDownOptions.concat(defaultDropDowns);
+    return dropDownOptions;
   }
+};
+
+export const mapTenantClientRoles = (roles) => {
+  const mappedRoles = Object.keys(roles).map((roleName) => {
+    return {
+      name: roleName,
+      roles: roles[roleName].roles.map((role) => {
+        return {
+          value: `${roleName}:${role.role}`,
+          label: role.role,
+          description: role.description,
+        };
+      }),
+    };
+  });
+  return mappedRoles;
 };
 
 export const generateEventOptions = (eventDefinitions: Record<string, EventDefinition>) => {

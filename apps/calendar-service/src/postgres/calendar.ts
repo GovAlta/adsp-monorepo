@@ -25,6 +25,7 @@ export class PostgresCalendarRepository implements CalendarRepository {
           isHoliday: record.is_holiday,
           isBusinessDay: record.is_business_day,
           holiday: record.holiday,
+          isInLieuOfDay: record.is_in_lieu_day,
         }
       : null;
   }
