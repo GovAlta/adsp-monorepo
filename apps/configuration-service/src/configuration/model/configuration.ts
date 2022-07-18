@@ -128,7 +128,7 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     }
     const newRevision: ConfigurationRevision<C> = {
       revision: this.latest ? this.latest.revision + 1 : 0,
-      created: this.latest ? this.latest.created : new Date(),
+      created: new Date(),
       lastUpdated: this.latest ? new Date() : null,
       configuration: this.latest?.configuration || ({} as C),
     };
