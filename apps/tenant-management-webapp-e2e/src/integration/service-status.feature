@@ -218,3 +218,18 @@ Feature: Service status
     When the user searches with "notification-service:notification-sent", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
     Then the user views the events matching the search filter of "notification-service:notification-sent"
     And the user views the event details of "autotest-DO-NOT-DELETE" application status changed from "{original status}" to "{new status}" for subscriber of "auto.test@abc.com"
+
+  @TEST_CS-1287 @REQ_CS-1261 @REQ_CS-1262 @regression
+  Scenario: As a public user, I can see tenant specific support email for the services on status app, so I know where to report issues.
+    Given a service owner user is on service status page
+    When the user clicks Edit button for contact information
+    Then the user views Edit contact information modal on the status service page
+    When the user enters "autotest-status-admin@gov.ab.ca"
+    And the user clicks Save button on contact information modal
+    Then the user views "autotest-status-admin@gov.ab.ca" as the email of contact information
+    Then the user views the link for public status page "autotest"
+    And the user views the link of "Get support" under Support
+    When the user clicks Edit button for contact information
+    When the user enters "test@gov.ab.ca"
+    And the user clicks Save button on contact information modal
+    Then the user views "test@gov.ab.ca" as the email of contact information

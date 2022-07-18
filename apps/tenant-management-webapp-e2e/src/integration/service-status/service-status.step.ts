@@ -636,3 +636,28 @@ Then(
     });
   }
 );
+
+When('the user clicks Edit button for contact information', function () {
+  statusObj.contactInformationEditBtn().click();
+});
+
+Then('the user views Edit contact information modal on the status service page', function () {
+  statusObj.editContactInformationModal().invoke('text').should('eq', 'Edit contact information');
+});
+
+When('the user enters {string}', function (email) {
+  statusObj.editContactInformationEmail().clear().type(email);
+});
+
+Then('the user clicks Save button on contact information modal', function () {
+  statusObj.editContactInformationEmailSaveBtn().click();
+  cy.wait(1000);
+});
+
+Then('the user views {string} as the email of contact information', function (email) {
+  statusObj.contactInformationEmailDisplay().invoke('text').should('contain', email);
+});
+
+Then('the user views the link for public status page {string}', function (link) {
+  statusObj.publicStatusPageUrl().invoke('text').should('contain', link);
+});
