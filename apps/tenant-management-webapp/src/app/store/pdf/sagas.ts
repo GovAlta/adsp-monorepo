@@ -25,6 +25,7 @@ import {
 import { io } from 'socket.io-client';
 import { FETCH_FILE_LIST } from '@store/file/actions';
 import { getAccessToken } from '@store/tenant/sagas';
+import { PdfGenerationResponse } from './model';
 
 export function* fetchPdfTemplates(): SagaIterator {
   yield put(
@@ -202,7 +203,7 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
         filename: payload.fileName,
       };
       const body = { operation: 'generate', ...pdfData };
-      const response = yield call(axios.post, `${pdfServiceUrl}/pdf/v1/jobs`, body, {
+      const response: PdfGenerationResponse = yield call(axios.post, `${pdfServiceUrl}/pdf/v1/jobs`, body, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const pdfResponse = { ...body, ...response?.data };

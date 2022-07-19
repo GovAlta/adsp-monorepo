@@ -47,6 +47,7 @@ export type Service = string; // a service is identified by "<namespace>:<name>"
 export interface ServiceSchemas {
   configuration: Record<Service, SchemaType>;
   revision: number;
+  description?: string;
 }
 
 export interface ServiceConfiguration {
@@ -64,6 +65,7 @@ export interface ServiceConfigurationTypes {
 export interface ConfigurationExportType {
   configuration: unknown;
   revision: number;
+  description?: string;
 }
 
 export interface ConfigurationRevisionRequest {

@@ -1,22 +1,19 @@
-import axios from 'axios';
-import { scheduleJob, Job } from 'node-schedule';
+import { Job } from 'node-schedule';
 import { Logger } from 'winston';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
-import { createCheckEndpointJob, CreateCheckEndpointProps } from './checkEndpoint';
 import { EventService } from '@abgov/adsp-service-sdk';
-import { HealthCheckJob, HealthCheckJobCache } from './HealthCheckJobCache';
+import { HealthCheckJobCache } from './HealthCheckJobCache';
+import { HealthCheckJob } from './HealthCheckJob';
 import { ServiceStatusApplicationEntity } from '../model';
+import { getScheduler } from './SchedulerFactory';
 
-const JOB_TIME_INTERVAL_MIN = 1;
-const REQUEST_TIMEOUT = 5000;
-interface HealthCheckSchedulingProps {
+export interface HealthCheckSchedulingProps {
   logger: Logger;
   serviceStatusRepository: ServiceStatusRepository;
   eventService: EventService;
   endpointStatusEntryRepository: EndpointStatusEntryRepository;
 }
-
 export interface JobScheduler {
   schedule: (applicationId: string, url: string) => Job;
 }
@@ -32,58 +29,31 @@ export class HealthCheckJobScheduler {
   }
 
   loadHealthChecks = async (
-    scheduleHealthChecks: (job: HealthCheckJob) => void,
+    scheduleHealthChecks: JobScheduler,
     scheduleDataReset: () => Promise<void>,
     scheduleCacheReload: () => Promise<void>
   ): Promise<void> => {
-    this.#logger.info('Scheduling endpoint checks...');
-
-    // start enabled apps
     const applications = await this.#props.serviceStatusRepository.findEnabledApplications();
-    this.#jobCache.addBatch(applications);
-    this.#jobCache.updateJobs(scheduleHealthChecks);
-
+    this.#jobCache.addBatch(applications, scheduleHealthChecks);
     scheduleCacheReload();
     scheduleDataReset();
   };
 
-  startHealthChecks = (
-    app: ServiceStatusApplicationEntity,
-    scheduler: (job: HealthCheckJob) => void = this.scheduleJob
-  ): void => {
-    const job = this.#jobCache.add(app);
-    this.#jobCache.updateJob(job, scheduler);
-  };
-
-  stopHealthChecks = (
-    applicationId: string,
-    cancelJob: (job: HealthCheckJob) => void = (j) => j.job?.cancel()
-  ): void => {
-    if (this.#jobCache.exists(applicationId)) {
-      this.#jobCache.remove(applicationId, cancelJob);
+  startHealthChecks = (app: ServiceStatusApplicationEntity, scheduler: JobScheduler): void => {
+    if (!this.#jobCache.exists(app._id)) {
+      this.#jobCache.add(app, scheduler);
+      this.#logger.info(`Added job for url: ${app.endpoint.url}`);
+    } else {
+      this.#logger.warn(`Asked to start a job already in the cache #${app._id}`);
     }
   };
 
-  #scheduler: JobScheduler = {
-    schedule: (applicationId: string, url: string): Job => {
-      const cceProps: CreateCheckEndpointProps = {
-        ...this.#props,
-        applicationId: applicationId,
-        url: url,
-        getEndpointResponse: async (url: string) => {
-          return await axios.get(url, { timeout: REQUEST_TIMEOUT });
-        },
-      };
-      const job = createCheckEndpointJob(cceProps);
-      this.#logger.info(`scheduling job for ${applicationId}`);
-      return scheduleJob(`*/${JOB_TIME_INTERVAL_MIN} * * * *`, job);
-    },
-  };
-
-  scheduleJob = (job: HealthCheckJob): void => {
-    if (!job.job) {
-      job.job = this.#scheduler.schedule(job.applicationId, job.url);
-      this.#logger.info(`Add job definition for ${job.url}`);
+  stopHealthChecks = (applicationId: string, cancelJob: (job: HealthCheckJob) => void = (j) => j.cancel()): void => {
+    if (this.#jobCache.exists(applicationId)) {
+      this.#jobCache.remove(applicationId, cancelJob);
+      this.#logger.info(`Cancelled job #${applicationId}`);
+    } else {
+      this.#logger.warn(`Asked to stop a job that isn't in the cache #${applicationId}`);
     }
   };
 
@@ -92,17 +62,17 @@ export class HealthCheckJobScheduler {
   // in the HealthCheckController.
   reloadCache = (applications: ServiceStatusApplicationEntity[]): void => {
     this.#logger.info(`Sync Job queue with database`);
-    const ids = this.#jobCache.getApplicationIds();
+    const cachedIds = this.#jobCache.getApplicationIds();
     const idsToRemove = [];
     const idsToAdd = [];
-    const newIds = applications.map((app) => {
+    const storedIds = applications.map((app) => {
       return app._id.toString();
     });
 
     for (const app of applications) {
       const id = app._id.toString();
 
-      if (ids.includes(id)) {
+      if (cachedIds.includes(id)) {
         // Update: kill it and add it back, in case the URL has changed.
         idsToRemove.push(id);
         idsToAdd.push(id);
@@ -112,23 +82,22 @@ export class HealthCheckJobScheduler {
       }
     }
 
-    for (const _id of ids) {
+    for (const cachedId of cachedIds) {
       // Deleted or disabled app
-      if (!newIds.includes(_id)) {
-        idsToRemove.push(_id);
+      if (!storedIds.includes(cachedId)) {
+        idsToRemove.push(cachedId);
       }
     }
 
-    // Update -> delete first, then add back.
+    // Update -> delete first;
     idsToRemove.forEach((id) => {
-      this.#logger.info(`Remove application with id ${id} from queue.`);
-      this.stopHealthChecks(id);
+      this.#jobCache.remove(id);
     });
 
+    // then add back.
     const appsToAdd = applications.filter((app) => {
       return idsToAdd.includes(app._id.toString());
     });
-    this.#jobCache.addBatch(appsToAdd);
-    this.#jobCache.updateJobs(this.scheduleJob);
+    this.#jobCache.addBatch(appsToAdd, getScheduler(this.#props));
   };
 }

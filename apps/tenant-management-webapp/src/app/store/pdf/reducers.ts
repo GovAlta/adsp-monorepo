@@ -4,6 +4,7 @@ import {
   FETCH_PDF_TEMPLATES_SUCCESS_ACTION,
   PdfActionTypes,
   UPDATE_PDF_TEMPLATE_SUCCESS_ACTION,
+  UPDATE_PDF_RESPONSE_ACTION,
   GENERATE_PDF_SUCCESS_ACTION,
   SOCKET_CHANNEL,
 } from './action';
@@ -14,6 +15,7 @@ const defaultState: PdfState = {
   metrics: {},
   stream: [],
   jobs: [],
+  status: [],
   socketChannel: null,
 };
 
@@ -41,6 +43,20 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
         ...state,
         stream: [...state.stream, action.payload],
       };
+    case UPDATE_PDF_RESPONSE_ACTION: {
+      const jobs = JSON.parse(JSON.stringify(state.jobs));
+
+      jobs.forEach((job, index) => {
+        if (action.payload.fileList.map((file) => file.recordId).includes(job.id)) {
+          jobs[index].fileWasGenerated = true;
+        }
+      });
+
+      return {
+        ...state,
+        jobs: jobs,
+      };
+    }
     case GENERATE_PDF_SUCCESS_ACTION: {
       let jobs = JSON.parse(JSON.stringify(state.jobs));
 

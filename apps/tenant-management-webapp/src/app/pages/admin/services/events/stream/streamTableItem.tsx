@@ -6,14 +6,19 @@ import { GoABadge } from '@abgov/react-components/experimental';
 
 interface SubscriberRolesProps {
   roles: string[];
+  publicSubscribe: boolean;
 }
 
-const SubscriberRoles = ({ roles }: SubscriberRolesProps): JSX.Element => {
+const SubscriberRoles = ({ roles, publicSubscribe }: SubscriberRolesProps): JSX.Element => {
   return (
     <td>
-      {roles.map((role): JSX.Element => {
-        return <GoABadge key={`roles-${role}`} type="information" content={role} />;
-      })}
+      {publicSubscribe ? (
+        <GoABadge key={`roles-public`} type="information" content={'Public'} />
+      ) : (
+        roles.map((role): JSX.Element => {
+          return <GoABadge key={`roles-${role}`} type="information" content={role} />;
+        })
+      )}
     </td>
   );
 };
@@ -36,7 +41,7 @@ export const StreamTableItem = ({
     <>
       <tr>
         <td data-testid={`stream-name`}>{stream?.name}</td>
-        <SubscriberRoles roles={stream?.subscriberRoles} />
+        <SubscriberRoles roles={stream?.subscriberRoles} publicSubscribe={stream.publicSubscribe} />
         <td>
           <IconDiv>
             <GoAContextMenu>

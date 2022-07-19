@@ -101,7 +101,7 @@ const initializeApp = async (): Promise<Server> => {
     handler(socket.request as express.Request, {} as express.Response, next);
 
   io.use(wrapForIo(passport.initialize()));
-  io.use(wrapForIo(passport.authenticate(['jwt', 'anonymous'])));
+  io.use(wrapForIo(passport.authenticate(['jwt', 'anonymous'], { session: false })));
   io.use(wrapForIo(configurationHandler));
 
   const eventService = await createAmqpEventService({ ...environment, logger });

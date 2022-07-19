@@ -26,6 +26,7 @@ import { scheduleJob } from 'node-schedule';
 import { AMQPCredentials } from '@core-services/core-common';
 import { HealthCheckController } from './app/amqp';
 import { HealthCheckJobScheduler } from './app/jobs';
+import { getScheduler } from './app/jobs/SchedulerFactory';
 
 const logger = createLogger('status-service', environment?.LOG_LEVEL || 'info');
 const app = express();
@@ -87,12 +88,14 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
 
   app.use(passport.initialize());
 
-  const scheduler = new HealthCheckJobScheduler({
+  const healthCheckSchedulingProps = {
     logger,
     eventService,
     serviceStatusRepository: repositories.serviceStatusRepository,
     endpointStatusEntryRepository: repositories.endpointStatusEntryRepository,
-  });
+  };
+
+  const scheduler = new HealthCheckJobScheduler(healthCheckSchedulingProps);
 
   // start the endpoint checking jobs
   if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.job)) {
@@ -104,11 +107,14 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
         logger.info('Completed the old application status deletion.');
       });
 
-      const healthCheckController = new HealthCheckController({
-        serviceStatusRepository: repositories.serviceStatusRepository,
-        healthCheckScheduler: scheduler,
-        logger: logger,
-      });
+      const healthCheckController = new HealthCheckController(
+        {
+          serviceStatusRepository: repositories.serviceStatusRepository,
+          healthCheckScheduler: scheduler,
+          logger: logger,
+        },
+        getScheduler(healthCheckSchedulingProps)
+      );
 
       const amqpCredentials: AMQPCredentials = {
         AMQP_HOST: environment.AMQP_HOST,
@@ -128,7 +134,7 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
       });
     };
 
-    scheduler.loadHealthChecks(scheduler.scheduleJob, scheduleDataReset, scheduleCacheReload);
+    scheduler.loadHealthChecks(getScheduler(healthCheckSchedulingProps), scheduleDataReset, scheduleCacheReload);
   }
 
   // service endpoints

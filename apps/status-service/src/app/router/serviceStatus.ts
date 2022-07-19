@@ -267,6 +267,7 @@ export const getApplicationEntries =
       next(err);
     }
   };
+
 export function createServiceStatusRouter({
   logger,
   serviceStatusRepository,

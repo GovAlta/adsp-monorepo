@@ -111,6 +111,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
     setImportConfigJson(importConfig);
     setImportNameList(configList);
     setOpenImportModal(true);
+    setSelectedImportFile('');
   };
 
   const onImportChange = (e) => {
@@ -135,15 +136,18 @@ export const ConfigurationImportExport: FunctionComponent = () => {
       for (const name in importConfigJson[config]) {
         if (importConfigJson[config][name] !== null && importConfigJson[config][name].configuration) {
           // Import creates a new revision so there is a snapshot of pre-import revision.
-          dispatch(setConfigurationRevisionAction({ namespace: config, name: name }));
+          const setConfig = dispatch(setConfigurationRevisionAction({ namespace: config, name: name }));
+
           //Import configuration replaces (REPLACE operation in PATCH) the configuration stored in latest revision
-          dispatch(
-            replaceConfigurationDataAction({
-              namespace: config,
-              name: name,
-              configuration: importConfigJson[config][name].configuration,
-            })
-          );
+          if (setConfig) {
+            dispatch(
+              replaceConfigurationDataAction({
+                namespace: config,
+                name: name,
+                configuration: importConfigJson[config][name].configuration,
+              })
+            );
+          }
         }
       }
     }
@@ -157,7 +161,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
   }, []);
 
   useEffect(() => {
-    if (Object.keys(exportState).length > 0) {
+    if (Object.keys(exportState).length > 0 && Object.keys(exportServices).length > 0) {
       downloadSelectedConfigurations(exportState);
     }
   }, [exportState]);

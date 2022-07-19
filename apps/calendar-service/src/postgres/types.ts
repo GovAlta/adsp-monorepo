@@ -7,6 +7,7 @@ export interface DateRecord {
   is_weekend: boolean;
   is_holiday: boolean;
   is_business_day: boolean;
+  is_in_lieu_day: boolean;
   holiday: string;
 }
 

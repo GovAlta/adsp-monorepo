@@ -84,7 +84,21 @@ export const ConfigurationExport = (
 
 const newConfigurationExportState = (configs: ServiceConfiguration[]): Record<string, ConfigurationExportType> => {
   return configs.reduce((result: Record<string, ConfigurationExportType>, c) => {
-    result[`${c.namespace}:${c.name}`] = c.latest;
+    if (c.description) {
+      if (!c.latest) {
+        result[`${c.namespace}:${c.name}`] = {
+          configuration: null,
+          revision: null,
+          description: c.description,
+        };
+      } else {
+        result[`${c.namespace}:${c.name}`] = c.latest;
+        result[`${c.namespace}:${c.name}`].description = c.description;
+      }
+    } else {
+      result[`${c.namespace}:${c.name}`] = c.latest;
+    }
+
     return result;
   }, {});
 };
