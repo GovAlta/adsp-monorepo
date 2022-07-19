@@ -9,12 +9,13 @@ export interface ConfigurationDefinitionState {
   coreConfigDefinitions: ServiceSchemas;
   tenantConfigDefinitions: ServiceSchemas;
   isAddedFromOverviewPage: boolean;
-  importedConfiguration: string[];
+  importedConfigurationError: string[];
 }
 
 export interface ConfigDefinition {
   name: string;
   namespace: string;
+  description?: string;
   configurationSchema: ConfigurationSchema;
   serviceSchemas?: ServiceSchemas;
 }
@@ -28,6 +29,7 @@ export interface ConfigurationSchema {
 export const defaultConfigDefinition: ConfigDefinition = {
   namespace: '',
   name: '',
+  description: '',
   configurationSchema: {
     type: 'object',
     properties: {},
@@ -45,11 +47,13 @@ export type Service = string; // a service is identified by "<namespace>:<name>"
 export interface ServiceSchemas {
   configuration: Record<Service, SchemaType>;
   revision: number;
+  description?: string;
 }
 
 export interface ServiceConfiguration {
   namespace: string;
   name: string;
+  description?: string;
   latest: ServiceSchemas;
 }
 
@@ -61,6 +65,7 @@ export interface ServiceConfigurationTypes {
 export interface ConfigurationExportType {
   configuration: unknown;
   revision: number;
+  description?: string;
 }
 
 export interface ConfigurationRevisionRequest {

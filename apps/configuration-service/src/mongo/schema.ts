@@ -19,6 +19,14 @@ export const revisionSchema = new Schema({
     type: Number,
     required: false,
   },
+  created: {
+    type: Date,
+    required: false,
+  },
+  lastUpdated: {
+    type: Date,
+    required: false,
+  },
   configuration: {
     type: SchemaTypes.Mixed,
     required: true,

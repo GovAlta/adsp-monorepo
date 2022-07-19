@@ -1,9 +1,10 @@
 import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, Results, ValidationService } from '@core-services/core-common';
-import { threadId } from 'worker_threads';
+import { InvalidOperationError, Results, ValidationService, createLogger } from '@core-services/core-common';
 import { ConfigurationRepository } from '../repository';
 import { ConfigurationServiceRoles } from '../roles';
 import { ConfigurationRevision, Configuration, RevisionCriteria } from '../types';
+import type { Logger } from 'winston';
+import { environment } from './../../environments/environment';
 
 /**
  * Represents an aggregate context for configuration revisions.
@@ -22,7 +23,8 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     public latest?: ConfigurationRevision<C>,
     public tenantId?: AdspId,
     private schema?: Record<string, unknown>,
-    public active?: ConfigurationRevision<C>
+    public active?: ConfigurationRevision<C>,
+    private logger?: Logger
   ) {
     if (!namespace || !name) {
       throw new InvalidOperationError('Configuration must have a namespace and name.');
@@ -32,7 +34,25 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
       throw new InvalidOperationError(`Configuration and namespace and name cannot contain ':'.`);
     }
 
-    validationService.setSchema(this.getSchemaKey(), schema || {});
+    if (!logger) {
+      logger = createLogger('configuration-service-modal', environment.LOG_LEVEL);
+    }
+
+    try {
+      validationService.setSchema(this.getSchemaKey(), schema);
+      return;
+    } catch {
+      logger.warn(`JSON schema of ${namespace}:${name} is invalid. An empty JSON schema {} will be used.`);
+    }
+
+    /**
+      Initialize the ConfigurationEntity with empty schema if schema is mis-configured or not provided.
+    */
+    try {
+      validationService.setSchema(this.getSchemaKey(), {});
+    } catch (err) {
+      throw new InvalidOperationError(`Failed in adding empty schema {}: ${err.message}`);
+    }
   }
 
   public canAccess(user: User): boolean {
@@ -94,6 +114,8 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
 
     const revision: ConfigurationRevision<C> = {
       revision: this.latest?.revision || 0,
+      lastUpdated: new Date(),
+      created: this.latest ? this.latest?.created : new Date(),
       configuration: configuration,
     };
 
@@ -121,9 +143,10 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     if (!this.canModify(user)) {
       throw new UnauthorizedUserError('modify configuration', user);
     }
-
     const newRevision: ConfigurationRevision<C> = {
       revision: this.latest ? this.latest.revision + 1 : 0,
+      created: new Date(),
+      lastUpdated: this.latest ? new Date() : null,
       configuration: this.latest?.configuration || ({} as C),
     };
 

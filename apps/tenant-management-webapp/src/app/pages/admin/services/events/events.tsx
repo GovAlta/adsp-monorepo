@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 import { EventDefinitions } from './definitions';
 import { EventsOverview } from './overview';
 import { EventStreams } from './stream';
-import { TestStream } from './stream/test-stream/testStream';
+import { TestStream } from './stream/testStream/testStream';
 
 export const Events: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);

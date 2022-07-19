@@ -4,6 +4,9 @@ import {
   FETCH_PDF_TEMPLATES_SUCCESS_ACTION,
   PdfActionTypes,
   UPDATE_PDF_TEMPLATE_SUCCESS_ACTION,
+  UPDATE_PDF_RESPONSE_ACTION,
+  GENERATE_PDF_SUCCESS_ACTION,
+  SOCKET_CHANNEL,
 } from './action';
 import { PdfState } from './model';
 
@@ -11,6 +14,9 @@ const defaultState: PdfState = {
   pdfTemplates: {},
   metrics: {},
   stream: [],
+  jobs: [],
+  status: [],
+  socketChannel: null,
 };
 
 export default function (state: PdfState = defaultState, action: PdfActionTypes): PdfState {
@@ -37,6 +43,44 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
         ...state,
         stream: [...state.stream, action.payload],
       };
+    case UPDATE_PDF_RESPONSE_ACTION: {
+      const jobs = JSON.parse(JSON.stringify(state.jobs));
+
+      jobs.forEach((job, index) => {
+        if (action.payload.fileList.map((file) => file.recordId).includes(job.id)) {
+          jobs[index].fileWasGenerated = true;
+        }
+      });
+
+      return {
+        ...state,
+        jobs: jobs,
+      };
+    }
+    case GENERATE_PDF_SUCCESS_ACTION: {
+      let jobs = JSON.parse(JSON.stringify(state.jobs));
+
+      const index = jobs.findIndex((job) => job.id === action.payload.context?.jobId);
+      if (index > -1) {
+        if (!jobs[index].stream) {
+          jobs[index].stream = [];
+        }
+        jobs[index].stream.push(action.payload);
+        jobs[index].status = action.payload.name;
+      } else {
+        jobs = [action.payload].concat(jobs);
+      }
+      return {
+        ...state,
+        jobs: jobs,
+      };
+    }
+    case SOCKET_CHANNEL: {
+      return {
+        ...state,
+        socketChannel: action.socketChannel,
+      };
+    }
     default:
       return state;
   }

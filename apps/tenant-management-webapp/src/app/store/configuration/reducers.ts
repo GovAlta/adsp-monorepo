@@ -21,7 +21,7 @@ const defaultState: ConfigurationDefinitionState = {
   coreConfigDefinitions: undefined,
   tenantConfigDefinitions: undefined,
   isAddedFromOverviewPage: false,
-  importedConfiguration: [],
+  importedConfigurationError: [],
 };
 
 export default function (
@@ -56,12 +56,12 @@ export default function (
     case REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION:
       return {
         ...state,
-        importedConfiguration: action.payload,
+        importedConfigurationError: action.payload,
       };
     case RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION:
       return {
         ...state,
-        importedConfiguration: [],
+        importedConfigurationError: [],
       };
     default:
       return state;
@@ -84,7 +84,21 @@ export const ConfigurationExport = (
 
 const newConfigurationExportState = (configs: ServiceConfiguration[]): Record<string, ConfigurationExportType> => {
   return configs.reduce((result: Record<string, ConfigurationExportType>, c) => {
-    result[`${c.namespace}:${c.name}`] = c.latest;
+    if (c.description) {
+      if (!c.latest) {
+        result[`${c.namespace}:${c.name}`] = {
+          configuration: null,
+          revision: null,
+          description: c.description,
+        };
+      } else {
+        result[`${c.namespace}:${c.name}`] = c.latest;
+        result[`${c.namespace}:${c.name}`].description = c.description;
+      }
+    } else {
+      result[`${c.namespace}:${c.name}`] = c.latest;
+    }
+
     return result;
   }, {});
 };

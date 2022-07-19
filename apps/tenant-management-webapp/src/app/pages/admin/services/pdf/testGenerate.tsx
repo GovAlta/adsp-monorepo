@@ -1,28 +1,11 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
-import { GoAButton } from '@abgov/react-components';
-import { GeneratePDFModal } from './generatePDFModal';
+import React, { FunctionComponent, useEffect } from 'react';
+import { GeneratePDF } from './generatePDFModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { getPdfTemplates, generatePdf, streamPdfSocket } from '@store/pdf/action';
 import { RootState } from '@store/index';
-import { GoAPageLoader } from '@abgov/react-components';
 
-import FileList from './fileList';
+import JobList from './jobList';
 import styled from 'styled-components';
-
-const PdfProcessing = styled.div`
-  min-height: 185px;
-  background: #f3f3f3;
-  white-space: pre-wrap;
-  font-family: monospace;
-  font-size: 12px;
-  line-height: 16px;
-  padding: 16px;
-  margin-bottom: 1rem;
-
-  .progress-container--large {
-    background: #f3f3f3;
-  }
-`;
 
 const GeneratorStyling = styled.div`
   .extra-padding {
@@ -55,75 +38,33 @@ const GeneratorStyling = styled.div`
 
 export const TestGenerate: FunctionComponent = () => {
   const dispatch = useDispatch();
-  const [showGeneratorWindow, setShowGenerateWindow] = useState<boolean>(false);
   useEffect(() => {
     dispatch(getPdfTemplates());
   }, []);
 
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
-  const stream = useSelector((state: RootState) => {
-    return state?.pdf.stream;
+  const socketChannel = useSelector((state: RootState) => {
+    return state?.pdf.socketChannel;
   });
 
-  const queuedCount = stream.filter((s) => s.name === 'pdf-generation-queued').length;
-  const queuedComplete = stream.filter((s) => s.name === 'pdf-generated' || s.name === 'pdf-generation-failed').length;
-  const currentlyLoading = queuedCount !== queuedComplete;
+  useEffect(() => {
+    if (!socketChannel || socketChannel.connected === false) dispatch(streamPdfSocket(false));
+  }, [socketChannel]);
 
   return (
     <GeneratorStyling>
+      <h1>Test Generate</h1>
+      <p>
+        Here you can test generating new PDFs from templates. Operations are run as asynchronous jobs and the PDF files
+        output to the file service.
+      </p>
+
+      <GeneratePDF
+        onSave={(definition) => {
+          dispatch(generatePdf(definition));
+        }}
+      />
       <section>
-        <div className="button-margin">
-          <GoAButton
-            data-testid="add-templates"
-            onClick={() => {
-              setShowGenerateWindow(true);
-            }}
-          >
-            Generate PDF
-          </GoAButton>
-        </div>
-
-        <PdfProcessing>
-          <div className="row-flex">
-            <div className="indicator">
-              {(indicator.show || currentlyLoading) && (
-                <div className="extra-padding">
-                  <GoAPageLoader visible={true} message="" type="infinite" pagelock={false} />
-                </div>
-              )}
-            </div>
-            <div className="event-stream">
-              {stream.map((streamItem, index) => {
-                const currentTime = new Date(streamItem?.timestamp);
-                const paddedTime = (time) => time.toString().padStart(2, '0');
-                return (
-                  <div key={index}>
-                    [{paddedTime(currentTime.getHours())}:{paddedTime(currentTime.getMinutes())}:
-                    {paddedTime(currentTime.getSeconds())}]: {streamItem?.payload?.templateId}: {streamItem.namespace}:
-                    {streamItem.name}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </PdfProcessing>
-
-        <FileList />
-        {showGeneratorWindow && (
-          <GeneratePDFModal
-            open={showGeneratorWindow}
-            onSave={(definition) => {
-              dispatch(generatePdf(definition));
-              setShowGenerateWindow(false);
-            }}
-            onClose={() => {
-              dispatch(streamPdfSocket(true, null));
-              setShowGenerateWindow(false);
-            }}
-          />
-        )}
+        <JobList />
       </section>
     </GeneratorStyling>
   );

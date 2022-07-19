@@ -96,7 +96,21 @@ export function* fetchConfigurations(action: FetchConfigurationsAction): SagaIte
       const configs = yield all(
         urls.map((url) => call(axios.get, url, { headers: { Authorization: `Bearer ${token}` } }))
       );
-      yield put(getConfigurationsSuccess(configs.map((c) => c.data)));
+      const { coreConfigDefinitions, tenantConfigDefinitions } = yield select(
+        (state: RootState) => state.configuration
+      );
+      const definitions = { ...tenantConfigDefinitions?.configuration, ...coreConfigDefinitions?.configuration };
+      yield put(
+        getConfigurationsSuccess(
+          configs.map((c) => {
+            const key = `${c.data.namespace}:${c.data.name}`;
+            if (definitions[key] && definitions[key]?.configurationSchema?.description) {
+              c.data['description'] = definitions[key]?.configurationSchema?.description;
+            }
+            return c.data;
+          })
+        )
+      );
       yield put(
         UpdateIndicator({
           show: false,
@@ -131,11 +145,14 @@ export function* updateConfigurationDefinition({
 
   if (baseUrl && token) {
     try {
-      const namespaceUpdate = {
-        configurationSchema: definition.configurationSchema,
+      const body = {
+        operation: 'UPDATE',
+        update: {
+          [`${definition.namespace}:${definition.name}`]: {
+            configurationSchema: definition.configurationSchema,
+          },
+        },
       };
-
-      const body = { operation: 'UPDATE', update: { [`${definition.namespace}:${definition.name}`]: namespaceUpdate } };
       const {
         data: { latest },
       } = yield call(axios.patch, `${baseUrl}/configuration/v2/configuration/platform/configuration-service`, body, {
@@ -204,7 +221,6 @@ export function* setConfigurationRevision(action: SetConfigurationRevisionAction
 }
 
 let replaceErrorConfiguration = [];
-let replacedConfiguration = [];
 
 export function* replaceConfigurationData(action: ReplaceConfigurationDataAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
@@ -239,8 +255,6 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
           replaceErrorConfiguration.push(`${action.configuration.namespace}:${action.configuration.name} `);
           return;
         }
-        replacedConfiguration.push(`${action.configuration.namespace}:${action.configuration.name} `);
-
         // Send request to replace configuration
         yield call(
           axios.patch,
@@ -262,18 +276,9 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
 }
 export function* getReplaceList(action: SetConfigurationRevisionAction): SagaIterator {
   if (replaceErrorConfiguration.length > 0) {
-    yield put(
-      ErrorNotification({
-        message: ` ${replaceErrorConfiguration}  configuration definition not match import configuration`,
-      })
-    );
-  }
-
-  if (replacedConfiguration.length > 0) {
-    yield put(getReplaceConfigurationErrorSuccessAction(replacedConfiguration));
+    yield put(getReplaceConfigurationErrorSuccessAction(replaceErrorConfiguration));
   }
   replaceErrorConfiguration = [];
-  replacedConfiguration = [];
 }
 
 export function* resetReplaceList(action: ResetReplaceConfigurationListAction): SagaIterator {

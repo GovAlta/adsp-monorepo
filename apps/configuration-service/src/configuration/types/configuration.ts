@@ -4,11 +4,14 @@ export interface ConfigurationRevision<C = Record<string, unknown>> {
   configuration: C;
   revision: number;
   active?: number;
+  created?: Date;
+  lastUpdated?: Date;
 }
 
 export interface Configuration<C = Record<string, unknown>> {
   namespace: string;
   name: string;
+  description?: string;
   tenantId?: AdspId;
   latest?: ConfigurationRevision<C>;
   active?: ConfigurationRevision<C>;

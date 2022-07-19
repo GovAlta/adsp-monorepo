@@ -8,6 +8,7 @@ interface serviceItemProps {
   configName: string;
   tenantName: string;
   nameSpace: string;
+  description: string;
   isTenantSpecificConfig?: boolean;
   onEdit: (definition: ConfigDefinition) => void;
   onDelete: (definitionName: string) => void;
@@ -20,6 +21,7 @@ export const ConfigurationDefinitionItemComponent: FunctionComponent<serviceItem
   onDelete,
   tenantName,
   nameSpace,
+  description,
   isTenantSpecificConfig,
 }) => {
   const [showSchema, setShowSchema] = useState(false);
@@ -27,7 +29,8 @@ export const ConfigurationDefinitionItemComponent: FunctionComponent<serviceItem
     <>
       <tr>
         <td data-testid="configuration-name">{configName}</td>
-        <td>
+        <td data-testid="configuration-description">{description}</td>
+        <td data-testid="configuration-action" id="configuration-action-icons">
           <IconDiv>
             <GoAContextMenu>
               <GoAContextMenuIcon
@@ -43,6 +46,7 @@ export const ConfigurationDefinitionItemComponent: FunctionComponent<serviceItem
                       onEdit({
                         namespace: nameSpace,
                         name: configName,
+                        description: description,
                         configurationSchema: { ...configSchema },
                       })
                     }

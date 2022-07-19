@@ -61,7 +61,7 @@ export const createDocsRouter = async ({
   router.use(
     '/:tenant([a-zA-Z0-9-_ ]+)?',
     async (req, _res, next) => {
-      const { tenant: tenantName } = req.params;
+      const { tenant: tenantName } = req.params as unknown as { tenant: string };
 
       if (req.url === '/swagger-ui-init.js') {
         const tenant = tenantName ? await tenantService.getTenantByName(tenantName.replace(/-/g, ' ') as string) : null;

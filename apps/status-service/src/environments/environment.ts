@@ -24,6 +24,7 @@ export const environment = envalid.cleanEnv(
     AMQP_HOST: envalid.str({ default: 'localhost' }),
     AMQP_USER: envalid.str({ default: 'guest' }),
     AMQP_PASSWORD: envalid.str({ default: 'guest' }),
+    AMQP_URL: envalid.str({ default: '' }),
     DIRECTORY_URL: envalid.str({ default: 'http://localhost:3331' }),
     TENANT_MANAGEMENT_API_HOST: envalid.str({ default: 'http://localhost:3333' }),
     PLATFORM_TENANT_REALM: envalid.str({ default: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5' }),
