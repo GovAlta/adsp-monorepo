@@ -86,7 +86,7 @@ Feature: Directory-service
     Then the user "should not view" the entry of "automatedtest-use-only" in Service, "v1" in API, "https://file-service.adsp-uat.alberta.ca/file/v1" in URL
 
   @TEST_CS-1464 @REQ_CS-1318 @regression
-  Scenario: Test As a tenant admin, I can see the event definitions for directory service, so I know what events are available
+  Scenario: As a tenant admin, I can see the event definitions for directory service, so I know what events are available
     # Create and update a service api entry
     Given a tenant admin user is on directory entries page
     When the user clicks Add entry button
@@ -114,7 +114,7 @@ Feature: Directory-service
     Then the user views Delete entry modal for "autotest-test-event:v1"
     When the user clicks Delete button in Entry modal
     Then the user "should not view" the entry of "autotest-test-event" in Service, "v1" in API, "https://myServiceEntry-2.ca/v1" in URL
-    # Check delete directory entry event log
+    # Check the event log for entry deleted from directory service
     When the user waits "20" seconds
     And the user selects the "Event log" menu item
     Then the "Event log" landing page is displayed
