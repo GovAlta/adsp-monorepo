@@ -965,11 +965,7 @@ describe('router', () => {
       const next = jest.fn();
       await configurationEntityHandler(req, res as unknown as Response, next);
       await handler(req, res as unknown as Response, next);
-      //expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
-      //expect(next).toHaveBeenCalledWith(expect.anything, NotFoundError);
       expect(next.mock.calls).toEqual([[], [expect.any(NotFoundError)]]);
-      //expect(entity.active).toHaveBeenCalledTimes(1);
-      //expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
     });
 
     it('can get active revision', async () => {

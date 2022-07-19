@@ -126,7 +126,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       update.tenant = entity.tenantId.toString();
     }
 
-    const doc = await new Promise<ConfigurationRevisionDoc<C>>((resolve, reject) => {
+    await new Promise<ConfigurationRevisionDoc<C>>((resolve, reject) => {
       this.revisionModel
         .findOneAndUpdate(
           query,

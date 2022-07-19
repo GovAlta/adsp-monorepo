@@ -118,7 +118,7 @@ components:
   post:
     tags:
       - Configuration
-    description: Creates a new revision of configuration.
+    description: Creates a new revision of configuration or sets the active revision if the serRevision property is set.
     requestBody:
       required: true
       content:
@@ -128,6 +128,8 @@ components:
             properties:
               revision:
                 type: boolean
+              setRevision:
+                type: number
     responses:
       200:
         description: Request completed successfully.
@@ -144,6 +146,49 @@ components:
                   $ref: '#/components/schemas/ConfigurationRevision'
       401:
         description: User not authorized to update configuration.
+      400:
+        description: The revision selected in setRevision does not exist.
+
+/configuration/v2/configuration/{namespace}/{name}/active:
+  parameters:
+    - name: namespace
+      description: Namespace of the configuration.
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: name
+      description: Name of the configuration.
+      in: path
+      required: true
+      schema:
+        type: string
+  get:
+    tags:
+      - Configuration
+    description: Retrieves active configuration.
+    parameters:
+      - name: core
+        description: Flag indicating if the core instead of tenant configuration should be retrieved.
+        in: query
+        required: false
+        schema: {}
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                configuration:
+                  $ref: '#/components/schemas/ConfigurationRevision'
+                revision:
+                  type: number
+      401:
+        description: User not authorized to retrieve configuration.
+      404:
+        description: No active revision found.
 
 /configuration/v2/configuration/{namespace}/{name}/latest:
   get:
