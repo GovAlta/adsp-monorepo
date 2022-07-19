@@ -65,8 +65,6 @@ export const getConfigurationEntity =
       const getCore = requestCore(req);
       const tenantId = req.tenant?.id;
 
-      console.log(JSON.stringify(tenantId) + '<---xx');
-
       const definition = await getDefinition(configurationServiceId, repository, namespace, name, tenantId);
 
       const entity = await repository.get(namespace, name, getCore ? null : tenantId, definition?.configurationSchema);
@@ -172,25 +170,11 @@ export const patchConfigurationRevision =
     }
   };
 
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};
-
 export const getActiveRevision =
-  (logger: Logger, eventService: EventService): RequestHandler =>
+  (logger: Logger): RequestHandler =>
   async (req, res, next) => {
     try {
       benchmark(req, 'operation-handler-time');
-
       const user = req.user;
       const configuration: ConfigurationEntity = req[ENTITY_KEY];
 
@@ -221,38 +205,22 @@ export const createConfigurationRevision =
       benchmark(req, 'operation-handler-time');
 
       const user = req.user;
-      console.log(JSON.stringify(user, getCircularReplacer()) + '<user--');
       const { revision = false, setRevision } = req.body;
-      console.log(JSON.stringify(setRevision, getCircularReplacer()) + '<setRevision--');
       if (!revision && !setRevision) {
         throw new InvalidOperationError('Request operation not recognized.');
       } else if (setRevision) {
         const configuration: ConfigurationEntity = req[ENTITY_KEY];
-        console.log(JSON.stringify(configuration, getCircularReplacer()) + '<configurationx--');
         const revisions = await configuration.getRevisions();
-        console.log(JSON.stringify(revisions) + '<revisions--xx');
-        console.log(JSON.stringify(revisions.results) + '<revisions--xx.results');
         const results = revisions.results;
         const currentRevision = results.find((rev) => {
-          console.log(JSON.stringify(rev) + '<rev');
-          console.log(JSON.stringify(rev.revision) + '<rev.revision');
           return rev.revision === setRevision;
         });
 
         if (!currentRevision) {
           throw new InvalidOperationError(`The selected revision does not exist`);
         }
-        console.log(JSON.stringify(revisions) + '<revisions--');
-        console.log(JSON.stringify(currentRevision) + '<currentRevision--');
-        console.log(JSON.stringify(configuration.active) + '<-configuration.active0');
-        console.log(JSON.stringify(configuration.latest) + '<-configuration.latest0');
         const lastRevision = configuration.active?.revision || configuration.latest?.revision;
         const updated = await configuration.setActiveRevision(user, currentRevision, configuration.latest);
-        const getRevisions = await configuration.getRevisions();
-        console.log(JSON.stringify(getRevisions) + '<----');
-        console.log(JSON.stringify(configuration.active) + '<-configuration.active');
-        console.log(JSON.stringify(configuration.latest) + '<-configuration.latest');
-        console.log(JSON.stringify(lastRevision) + '<-lastRevision');
 
         res.send(mapConfiguration(updated));
         eventService.send(
@@ -278,7 +246,6 @@ export const createConfigurationRevision =
       } else {
         const configuration: ConfigurationEntity = req[ENTITY_KEY];
         const updated = await configuration.createRevision(user);
-        console.log(JSON.stringify(updated, getCircularReplacer()) + '<updated--');
         benchmark(req, 'operation-handler-time');
         res.send(mapConfiguration(updated));
         if (updated.tenantId) {
@@ -392,7 +359,7 @@ export function createConfigurationRouter({
     validateNamespaceNameHandler,
     createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
     getConfigurationEntity(serviceId, configurationRepository),
-    getActiveRevision(logger, eventService)
+    getActiveRevision(logger)
   );
 
   router.get(

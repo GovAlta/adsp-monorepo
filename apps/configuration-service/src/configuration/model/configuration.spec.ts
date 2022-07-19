@@ -1,6 +1,7 @@
 import { adspId, User } from '@abgov/adsp-service-sdk';
 import { ConfigurationServiceRoles } from '../roles';
 import { ConfigurationEntity } from './configuration';
+import { ConfigurationRevision } from '../types';
 
 describe('ConfigurationEntity', () => {
   const namespace = 'platform';
@@ -414,10 +415,49 @@ describe('ConfigurationEntity', () => {
 
       const result = await entity.getRevisions();
 
-      console.log(JSON.stringify(result) + '<result');
       expect(result).toBe(revisions);
-      console.log(JSON.stringify(revisions) + '<revisions');
       expect(repositoryMock.getRevisions).toHaveBeenCalledWith(entity, 10, null, null);
+    });
+  });
+
+  describe('setActiveRevision', () => {
+    it('sets active revision', async () => {
+      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
+        revision: 3,
+        configuration: {} as unknown,
+      });
+
+      repositoryMock.getRevisions.mockResolvedValueOnce([{ revision: 2 }, { revision: 3 }]);
+
+      const revision = { revision: 2 } as ConfigurationRevision<Record<string, unknown>>;
+      const lastRevision = { revision: 3 } as ConfigurationRevision<Record<string, unknown>>;
+
+      repositoryMock.setActiveRevision.mockImplementationOnce((_entity, rev) => rev);
+
+      const activeRevisionResponce = await entity.setActiveRevision(
+        {
+          isCore: true,
+          roles: [ConfigurationServiceRoles.ConfiguredService],
+        } as User,
+        revision,
+        lastRevision
+      );
+      expect(activeRevisionResponce.latest.revision).toBe(3);
+      expect(activeRevisionResponce.active.revision).toBe(2);
+    });
+
+    it('can throw for unauthorized user', async () => {
+      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
+        revision: 3,
+        configuration: {} as unknown,
+      });
+
+      const revision = { revision: 2 } as ConfigurationRevision<Record<string, unknown>>;
+      const lastRevision = { revision: 3 } as ConfigurationRevision<Record<string, unknown>>;
+
+      await expect(
+        entity.setActiveRevision({ id: 'test', name: 'test' } as User, revision, lastRevision)
+      ).rejects.toThrow(/User test \(ID: test\) not permitted to modify configuration./);
     });
   });
 });

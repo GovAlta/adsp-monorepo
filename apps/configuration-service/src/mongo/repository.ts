@@ -75,8 +75,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     if (criteria?.revision !== undefined) {
       query.revision = criteria.revision;
     }
-    console.log(top + '<top');
-    console.log(JSON.stringify(query) + '<query');
+
     const skip = decodeAfter(after);
 
     const docs = await new Promise<ConfigurationRevisionDoc[]>((resolve, reject) => {
@@ -111,9 +110,6 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     };
 
     const update: Record<string, unknown> = {
-      // namespace: entity.namespace,
-      // name: entity.name,
-      // revision: revision.revision,
       active: revision.revision,
     };
 

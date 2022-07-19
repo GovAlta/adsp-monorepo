@@ -78,7 +78,6 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
   }
 
   public async update(user: User, configuration: C): Promise<ConfigurationEntity<C>> {
-    console.log(JSON.stringify(user) + '<useruser');
     if (!this.canModify(user)) {
       throw new UnauthorizedUserError('modify configuration', user);
     }
@@ -100,7 +99,6 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
 
     this.latest = await this.repository.saveRevision(this, revision);
     const activeCriteria = await this.repository.getRevisions(this, 1, null, { active: this.latest.active });
-    console.log(JSON.stringify(activeCriteria) + '<activeCriteriaxxxx');
     this.active = activeCriteria?.results[0];
     return this;
   }
