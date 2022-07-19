@@ -12,6 +12,8 @@ components:
           type: boolean
         isBusinessDay:
           type: boolean
+        isInLieuOfDay:
+          type: boolean
 
 /calendar/v1/dates:
   get:
@@ -50,6 +52,8 @@ components:
                   type: boolean
                 isBusinessDay:
                   type: boolean
+                isInLieuOfDay:
+                  type: boolean
     responses:
       200:
         description: Request completed successfully.
@@ -61,7 +65,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/CalendarDate"
+                    $ref: '#/components/schemas/CalendarDate'
                 page:
                   type: object
                   properties:
@@ -92,4 +96,4 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CalendarDate"
+              $ref: '#/components/schemas/CalendarDate'

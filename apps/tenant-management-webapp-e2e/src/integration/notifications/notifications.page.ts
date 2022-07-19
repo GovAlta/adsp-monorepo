@@ -31,6 +31,10 @@ class NotificationsPage {
     );
   }
 
+  notificationTypeModalSubscriberRolesDropdownItems() {
+    return cy.xpath('//*[@data-testid="subscriberRoles-dropdown"]/following-sibling::*//li');
+  }
+
   notificationTypeModalSubscriberRolesDropdownBackground() {
     return cy.get('[data-testid="subscriberRoles-dropdown-background"]');
   }
