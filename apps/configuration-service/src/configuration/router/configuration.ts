@@ -275,7 +275,7 @@ export function createConfigurationRouter({
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     getConfigurationEntity(serviceId, configurationRepository, (req) => req.query.core !== undefined),
-    getConfiguration((configuration) => configuration.latest?.configuration || {})
+    getConfiguration((configuration) => configuration.latest || {})
   );
 
   router.patch(
@@ -325,7 +325,7 @@ export function createConfigurationRouter({
         if (results.length < 1) {
           throw new NotFoundError('revision', req.params.revision);
         }
-        return results[0]?.configuration;
+        return results[0];
       }
     )
   );
