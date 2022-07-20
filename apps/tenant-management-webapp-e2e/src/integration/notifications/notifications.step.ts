@@ -810,3 +810,17 @@ When('the user clicks Close button in an email template modal', function () {
   cy.scrollTo('bottom');
   notificationsObj.editTemplateModalCloseBtn().click();
 });
+
+When('the user views the link for managing email subscription', function () {
+  notificationsObj
+    .editContactModalBodyEmailPreviewPane()
+    .its('0.contentDocument.body')
+    .find('footer')
+    .contains('Please do not reply to this email. Manage your subscription here.');
+  notificationsObj
+    .editContactModalBodyEmailPreviewPane()
+    .its('0.contentDocument.body')
+    .find('footer')
+    .find('[class="goa-footer-event"]')
+    .find('a[href*="adsp"]');
+});
