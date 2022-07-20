@@ -100,7 +100,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       name: entity.name,
       revision: revision.revision,
       created: revision.created,
-      lastUpdated: revision.lastUpdated,
+      lastUpdated: new Date(),
     };
     // Only include tenant if there is a tenantId on the entity.
     if (entity.tenantId) {

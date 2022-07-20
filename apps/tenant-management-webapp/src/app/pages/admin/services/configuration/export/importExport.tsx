@@ -161,7 +161,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
   }, []);
 
   useEffect(() => {
-    if (Object.keys(exportState).length > 0) {
+    if (Object.keys(exportState).length > 0 && Object.keys(exportServices).length > 0) {
       downloadSelectedConfigurations(exportState);
     }
   }, [exportState]);
