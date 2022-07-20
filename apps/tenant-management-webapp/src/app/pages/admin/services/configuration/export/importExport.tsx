@@ -24,7 +24,7 @@ import { ConfigurationExportType, Service, ConfigDefinition } from '@store/confi
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { ImportModal } from './importModal';
 import { isValidJSONCheck, jsonSchemaCheck } from '@lib/checkInput';
-import { StatusText, StatusIcon } from '../styled-components';
+import { StatusText, StatusIcon, DescriptionDiv } from '../styled-components';
 import GreenCircleCheckMark from '@icons/green-circle-checkmark.svg';
 import CloseCircle from '@components/icons/CloseCircle';
 
@@ -156,6 +156,14 @@ export const ConfigurationImportExport: FunctionComponent = () => {
     setShowStatus(true);
   };
 
+  const getDescription = (namespace: string, name: string) => {
+    const defs = { ...coreConfigDefinitions.configuration, ...tenantConfigDefinitions.configuration };
+    if (defs[`${namespace}:${name}`]) {
+      const schema = defs[`${namespace}:${name}`]['configurationSchema'];
+      return schema['description'] || '';
+    }
+  };
+
   useEffect(() => {
     dispatch(getConfigurationDefinitions());
   }, []);
@@ -245,6 +253,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
           <React.Fragment key={namespace}>
             <h2>{namespace}</h2>
             {sortedConfiguration.namespaces[namespace].map((name) => {
+              const desc = getDescription(namespace, name);
               return (
                 <div key={toServiceKey(namespace, name)}>
                   <GoACheckbox
@@ -257,6 +266,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
                   >
                     {name}
                   </GoACheckbox>
+                  {desc && <DescriptionDiv>{`Description: ${desc}`}</DescriptionDiv>}
                 </div>
               );
             })}

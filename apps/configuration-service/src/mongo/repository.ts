@@ -69,7 +69,6 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         .limit(top)
         .exec((err, results: ConfigurationRevisionDoc[]) => (err ? reject(err) : resolve(results)));
     });
-
     return {
       results: docs.map((doc) => ({
         revision: doc.revision,
@@ -99,8 +98,8 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       namespace: entity.namespace,
       name: entity.name,
       revision: revision.revision,
-      created: revision.created,
       lastUpdated: new Date(),
+      created: revision.created ? revision.created : new Date(),
     };
     // Only include tenant if there is a tenantId on the entity.
     if (entity.tenantId) {
@@ -121,8 +120,8 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     });
     return {
       revision: doc.revision,
-      lastUpdated: doc.lastUpdated ? doc.lastUpdated : doc.created,
-      created: doc.created,
+      lastUpdated: new Date(),
+      created: doc.created ? doc.created : new Date(),
       configuration: doc.configuration,
     };
   }
