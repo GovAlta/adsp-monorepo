@@ -1,6 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Adsp.Sdk.Directory;
-public class DirectoryEntry
+[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "For deserialization")]
+internal class DirectoryEntry
 {
-  public string? Urn { get; set; }
-  public string? Url { get; set; }
+  public Uri? Urn { get; set; }
+  public Uri? Url { get; set; }
 }

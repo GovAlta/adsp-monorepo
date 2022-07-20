@@ -45,6 +45,16 @@ public static class AdspExtensions
 
   public static IServiceCollection AddAdspForService(this IServiceCollection services, AdspOptions options)
   {
+    if (services == null)
+    {
+      throw new ArgumentNullException(nameof(services));
+    }
+
+    if (options == null)
+    {
+      throw new ArgumentNullException(nameof(options));
+    }
+
     services
       .AddAdspSdkServices(options)
       .AddAuthentication()
@@ -55,6 +65,16 @@ public static class AdspExtensions
 
   public static IServiceCollection AddAdspForPlatformService(this IServiceCollection services, AdspOptions options)
   {
+    if (services == null)
+    {
+      throw new ArgumentNullException(nameof(services));
+    }
+
+    if (options == null)
+    {
+      throw new ArgumentNullException(nameof(options));
+    }
+
     services.AddAdspSdkServices(options);
 
     var providers = services.BuildServiceProvider();
@@ -76,6 +96,11 @@ public static class AdspExtensions
 
   public static AdspContext GetAdspContext(this HttpContext context)
   {
+    if (context == null)
+    {
+      throw new ArgumentNullException(nameof(context));
+    }
+
     context.Items.TryGetValue(AccessExtensions.TenantContextKey, out object? tenant);
     var adspContext = new AdspContext(context.User.HasClaim(AdspClaimTypes.Core, "true"), tenant as Tenant);
 

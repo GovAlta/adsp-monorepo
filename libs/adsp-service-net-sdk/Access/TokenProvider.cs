@@ -67,7 +67,7 @@ internal class TokenProvider : ITokenProvider
     }
     else
     {
-      _logger.LogDebug("Requesting access token from {authUrl}...", _authUrl);
+      _logger.LogDebug("Requesting access token from {AuthUrl}...", _authUrl);
 
       try
       {
@@ -75,11 +75,15 @@ internal class TokenProvider : ITokenProvider
           .AddParameter("grant_type", "client_credentials")
           .AddParameter("client_id", _clientId, ParameterType.GetOrPost)
           .AddParameter("client_secret", _clientSecret, ParameterType.GetOrPost);
-        var response = await _client.PostAsync<TokenResponse>(request);
-        token = response.access_token;
-        setCachedToken(token, DateTime.Now.AddSeconds(response.expires_in - 60));
 
-        _logger.LogDebug("Retrieved and cached access token.");
+        var response = await _client.PostAsync<TokenResponse>(request).ConfigureAwait(false);
+        if (!String.IsNullOrEmpty(response?.AccessToken))
+        {
+          token = response.AccessToken;
+          setCachedToken(token, DateTime.Now.AddSeconds(response.ExpiresIn - 60));
+
+          _logger.LogDebug("Retrieved and cached access token.");
+        }
       }
       catch (Exception e)
       {

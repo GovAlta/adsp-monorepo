@@ -27,7 +27,7 @@ internal class TenantService : ITenantService
       retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
       (exception, timeSpan, retryCount, context) =>
       {
-        _logger.LogDebug("Try {count}: retrieving tenants...", retryCount);
+        _logger.LogDebug("Try {Count}: retrieving tenants...", retryCount);
       }
     );
   }
@@ -37,7 +37,7 @@ internal class TenantService : ITenantService
     var cached = _cache.TryGetValue<Tenant>(tenantId, out Tenant? tenant);
     if (!cached)
     {
-      tenant = await RetrieveTenant(tenantId);
+      tenant = await RetrieveTenant(tenantId).ConfigureAwait(false);
     }
 
     return tenant;
@@ -45,7 +45,7 @@ internal class TenantService : ITenantService
 
   public async Task<IList<Tenant>> GetTenants()
   {
-    var tenants = await RetrieveTenants();
+    var tenants = await RetrieveTenants().ConfigureAwait(false);
     return tenants;
   }
 
@@ -53,10 +53,10 @@ internal class TenantService : ITenantService
   {
     var tenant = await _retryPolicy.ExecuteAsync(async () =>
       {
-        var token = await _tokenProvider.GetAccessToken();
-        return await _client.GetAsync<Tenant>(new RestRequest(tenantId.Resource));
+        var token = await _tokenProvider.GetAccessToken().ConfigureAwait(false);
+        return await _client.GetAsync<Tenant>(new RestRequest(tenantId.Resource)).ConfigureAwait(false);
       }
-    );
+    ).ConfigureAwait(false);
 
     if (tenant != null)
     {
@@ -68,19 +68,19 @@ internal class TenantService : ITenantService
 
   private async Task<IList<Tenant>> RetrieveTenants()
   {
-    var tenantApiUrl = await _serviceDirectory.GetServiceUrl(AdspId.parse("urn:ads:platform:tenant-service:v2"));
+    var tenantApiUrl = await _serviceDirectory.GetServiceUrl(AdspId.Parse("urn:ads:platform:tenant-service:v2")).ConfigureAwait(false);
     var requestUrl = new Uri(tenantApiUrl, "v2/tenants").AbsoluteUri;
 
     var tenants = await _retryPolicy.ExecuteAsync(async () =>
       {
-        var token = await _tokenProvider.GetAccessToken();
+        var token = await _tokenProvider.GetAccessToken().ConfigureAwait(false);
         var request = new RestRequest(requestUrl);
         request.AddHeader("Authorization", $"Bearer {token}");
-        var result = await _client.GetAsync<CollectionResults<Tenant>>(request);
+        var result = await _client.GetAsync<CollectionResults<Tenant>>(request).ConfigureAwait(false);
 
         return result?.Results;
       }
-    );
+    ).ConfigureAwait(false);
 
     if (tenants != null)
     {

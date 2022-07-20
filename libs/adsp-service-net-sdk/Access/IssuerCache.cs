@@ -6,7 +6,7 @@ namespace Adsp.Sdk.Access;
 internal class IssuerCache : IIssuerCache
 {
   private readonly ILogger<IssuerCache> _logger;
-  private readonly MemoryCache _cache = new MemoryCache(new MemoryCacheOptions { });
+  private readonly MemoryCache _cache = new(new MemoryCacheOptions { });
   private readonly ITenantService _tenantService;
   private readonly Uri _accessServiceUrl;
 
@@ -27,7 +27,7 @@ internal class IssuerCache : IIssuerCache
     var cached = _cache.TryGetValue<Tenant>(issuer, out Tenant? tenant);
     if (!cached)
     {
-      var issuers = await RetrieveTenantIssuers();
+      var issuers = await RetrieveTenantIssuers().ConfigureAwait(false);
       issuers.TryGetValue(issuer, out tenant);
     }
 
@@ -36,7 +36,7 @@ internal class IssuerCache : IIssuerCache
 
   private async Task<IDictionary<string, Tenant>> RetrieveTenantIssuers()
   {
-    var tenants = await _tenantService.GetTenants();
+    var tenants = await _tenantService.GetTenants().ConfigureAwait(false);
     var issuers = tenants.ToDictionary((tenant) => new Uri(_accessServiceUrl, $"/auth/realms/{tenant.Realm}").ToString());
 
     foreach (var issuer in issuers)

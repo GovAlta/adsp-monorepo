@@ -1,4 +1,4 @@
-﻿
+
 namespace Adsp.Sdk;
 public static class Scaffold
 {

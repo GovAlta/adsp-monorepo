@@ -1,9 +1,8 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Text.Json;
 using Adsp.Sdk.Tenancy;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
@@ -15,11 +14,11 @@ internal static class AccessExtensions
   internal static TokenValidatedContext AddAdspContext(this TokenValidatedContext context, AdspId serviceId, Tenant? tenant)
   {
     var accessIdentity = new ClaimsIdentity();
-    if (tenant != null)
+    if (tenant?.Id != null)
     {
       accessIdentity.AddClaim(new Claim(AdspClaimTypes.Tenant, tenant.Id.ToString(), ClaimValueTypes.String));
     }
-    else
+    else if (tenant == null)
     {
       accessIdentity.AddClaim(new Claim(AdspClaimTypes.Core, "true", ClaimValueTypes.Boolean));
     }
@@ -28,24 +27,34 @@ internal static class AccessExtensions
     if (realmAccessClaim != null)
     {
       var access = JsonSerializer.Deserialize<AccessClaimRoles>(realmAccessClaim.Value);
-      accessIdentity.AddClaims(access.roles.Select(role => new Claim(ClaimTypes.Role, role)));
+      if (access?.Roles != null)
+      {
+        accessIdentity.AddClaims(access.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
+      }
     }
 
     var resourceAccessClaim = context.Principal?.Claims.FirstOrDefault(claim => claim.Type == "resource_access");
     if (resourceAccessClaim != null)
     {
       var clientsRoles = JsonSerializer.Deserialize<Dictionary<string, AccessClaimRoles>>(resourceAccessClaim.Value);
-      var serviceClient = serviceId.ToString();
-      foreach (var clientRoles in clientsRoles)
+
+      if (clientsRoles != null)
       {
-        accessIdentity.AddClaims(
-          clientRoles.Value.roles.Select(role =>
+        var serviceClient = serviceId.ToString();
+        foreach (var clientRoles in clientsRoles)
+        {
+          if (clientRoles.Value.Roles != null)
           {
-            // Exclude the prefix when for roles of the current service client.
-            var prefix = String.Equals(clientRoles.Key, serviceClient) ? "" : $"{clientRoles.Key}:";
-            return new Claim(ClaimTypes.Role, $"{prefix}{role}");
-          })
-        );
+            accessIdentity.AddClaims(
+              clientRoles.Value.Roles.Select(role =>
+              {
+                // Exclude the prefix when for roles of the current service client.
+                var prefix = String.Equals(clientRoles.Key, serviceClient, StringComparison.Ordinal) ? "" : $"{clientRoles.Key}:";
+                return new Claim(ClaimTypes.Role, $"{prefix}{role}");
+              })
+            );
+          }
+        }
       }
     }
 
@@ -64,7 +73,12 @@ internal static class AccessExtensions
   {
     if (options.AccessServiceUrl == null)
     {
-      throw new ArgumentException("Provided options must include value for AccessServiceUrl.", "options");
+      throw new ArgumentException("Provided options must include value for AccessServiceUrl.", nameof(options));
+    }
+
+    if (options.ServiceId == null)
+    {
+      throw new ArgumentException("Provided options must include value for AccessServiceUrl.", nameof(options));
     }
 
     builder.AddJwtBearer(authenticationScheme, jwt =>
@@ -94,6 +108,11 @@ internal static class AccessExtensions
     AdspOptions options
   )
   {
+    if (options.ServiceId == null)
+    {
+      throw new ArgumentException("Provided options must include value for AccessServiceUrl.", nameof(options));
+    }
+
     builder.AddJwtBearer(authenticationScheme, jwt =>
       {
         jwt.TokenValidationParameters = new TokenValidationParameters
@@ -124,7 +143,7 @@ internal static class AccessExtensions
         {
           OnTokenValidated = async (TokenValidatedContext context) =>
           {
-            var tenant = await issuerCache.GetTenantByIssuer(context.SecurityToken.Issuer);
+            var tenant = await issuerCache.GetTenantByIssuer(context.SecurityToken.Issuer).ConfigureAwait(false);
             if (tenant?.Id != null)
             {
               context.AddAdspContext(options.ServiceId, tenant);

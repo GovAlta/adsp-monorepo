@@ -8,9 +8,14 @@ public class AdspId
     RegexOptions.Singleline | RegexOptions.CultureInvariant
   );
 
-  public static AdspId parse(string urn)
+  public static AdspId Parse(string? urn)
   {
-    var match = AdspId.UrnRegex.Match(urn);
+    if (String.IsNullOrEmpty(urn))
+    {
+      throw new ArgumentNullException(nameof(urn));
+    }
+
+    var match = UrnRegex.Match(urn);
     var @namespace = match.Groups["namespace"].Value.TrimStart(':');
     var service = match.Groups["service"].Value.TrimStart(':');
     var api = match.Groups["api"].Value.TrimStart(':');
@@ -40,6 +45,11 @@ public class AdspId
     }
 
     return new AdspId((ResourceType)type, @namespace, service, api, resource);
+  }
+
+  public static AdspId Parse(Uri? urn)
+  {
+    return AdspId.Parse(urn?.ToString());
   }
 
   private readonly ResourceType _type;

@@ -23,7 +23,7 @@ internal class TenantKeyProvider : ITenantKeyProvider
     var cached = _cache.TryGetValue<SecurityKey>((issuer, kid), out SecurityKey key);
     if (!cached)
     {
-      key = await RetrieveSigningKey(issuer, kid);
+      key = await RetrieveSigningKey(issuer, kid).ConfigureAwait(false);
     }
 
     return key;
@@ -32,32 +32,32 @@ internal class TenantKeyProvider : ITenantKeyProvider
   public async Task<SecurityKey?> RetrieveSigningKey(string issuer, string kid)
   {
     SecurityKey? result = null;
-    var tenant = await _issuerCache.GetTenantByIssuer(issuer);
+    var tenant = await _issuerCache.GetTenantByIssuer(issuer).ConfigureAwait(false);
     if (tenant != null)
     {
       try
       {
         var metadata = await _client.GetAsync<MetadataResponse>(
           new RestRequest($"/auth/realms/{tenant.Realm}/.well-known/openid-configuration")
-        );
+        ).ConfigureAwait(false);
 
-        if (String.Equals(issuer, metadata?.issuer))
+        if (metadata != null && String.Equals(issuer, metadata.Issuer, StringComparison.Ordinal) && metadata.JwksUri != null)
         {
-          var jwksResponse = await _client.GetAsync(new RestRequest(new Uri(metadata.jwks_uri).AbsolutePath));
+          var jwksResponse = await _client.GetAsync(new RestRequest(metadata.JwksUri.AbsolutePath)).ConfigureAwait(false);
           var keySet = new JsonWebKeySet(jwksResponse.Content);
 
           var keys = keySet.GetSigningKeys();
           foreach (var key in keys)
           {
             _cache.Set((issuer, key.KeyId), key);
-            if (String.Equals(key.KeyId, kid))
+            if (String.Equals(key.KeyId, kid, StringComparison.Ordinal))
             {
               result = key;
             }
           }
         }
       }
-      catch (Exception e)
+      catch (HttpRequestException e)
       {
         _logger.LogError(e, "Error encountered retrieving signing key for issuer {Issuer}.", issuer);
       }

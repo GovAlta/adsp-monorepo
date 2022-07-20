@@ -8,7 +8,7 @@ namespace Adsp.Sdk.Directory;
 internal class ServiceDirectory : IServiceDirectory
 {
   private readonly ILogger<ServiceDirectory> _logger;
-  private readonly MemoryCache _cache = new MemoryCache(new MemoryCacheOptions { });
+  private readonly MemoryCache _cache = new(new MemoryCacheOptions { });
   private readonly RestClient _client;
   private readonly AsyncPolicy _retryPolicy;
 
@@ -26,7 +26,7 @@ internal class ServiceDirectory : IServiceDirectory
       retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
       (exception, timeSpan, retryCount, context) =>
       {
-        _logger.LogDebug("Try {count}: retrieving directory...", retryCount);
+        _logger.LogDebug("Try {Count}: retrieving directory...", retryCount);
       }
     );
   }
@@ -36,7 +36,7 @@ internal class ServiceDirectory : IServiceDirectory
     var cached = _cache.TryGetValue<Uri>(serviceId, out Uri? url);
     if (!cached)
     {
-      var entries = await RetrieveDirectory(serviceId.Namespace);
+      var entries = await RetrieveDirectory(serviceId.Namespace).ConfigureAwait(false);
       url = entries[serviceId];
     }
 
@@ -47,16 +47,22 @@ internal class ServiceDirectory : IServiceDirectory
   {
     var entries = await _retryPolicy.ExecuteAsync(async () =>
       {
-        var results = await _client.GetAsync<DirectoryEntry[]>(new RestRequest($"/directory/v2/namespaces/{@namespace}/entries"));
         var entries = new Dictionary<AdspId, Uri>();
-        foreach (var result in results)
+        var results = await _client.GetAsync<DirectoryEntry[]>(new RestRequest($"/directory/v2/namespaces/{@namespace}/entries")).ConfigureAwait(false);
+        if (results != null)
         {
-          entries[AdspId.parse(result.Urn)] = new Uri(result.Url);
+          foreach (var result in results)
+          {
+            if (result != null)
+            {
+              entries[AdspId.Parse(result.Urn)] = result.Url;
+            }
+          }
         }
 
         return entries;
       }
-    );
+    ).ConfigureAwait(false);
 
     foreach (var entry in entries)
     {

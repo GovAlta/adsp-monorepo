@@ -21,6 +21,9 @@
         },
         "lint": {
           "builder": "@nx-dotnet/core:format"
+        },
+        "test": {
+          "builder": "@nx-dotnet/core:test"
         }
       },
       "tags": []
