@@ -68,7 +68,7 @@ Then('the user views Delete entry modal for {string}', function (entryName) {
 
 When('the user enters {string} in Service, {string} in API, {string} in URL', function (service, api, url) {
   directoryObj.entryModalServiceField().clear().type(service);
-  if (api == 'Empty') {
+  if (api.toLowerCase() == 'empty') {
     directoryObj.entryModalApiField().type(api).clear();
   } else {
     directoryObj.entryModalApiField().clear().type(api);
@@ -94,14 +94,14 @@ Then(
   function (viewOrNot, entryName, api, url) {
     switch (viewOrNot) {
       case 'views':
-        if (api == 'Empty') {
+        if (api.toLowerCase() == 'empty') {
           directoryObj.directoryEntryWithNameUrl(entryName, url).should('exist');
         } else {
           directoryObj.directoryEntryWithNameApiUrl(entryName, api, url).should('exist');
         }
         break;
       case 'should not view':
-        if (api == 'Empty') {
+        if (api.toLowerCase() == 'empty') {
           directoryObj.directoryEntryWithNameUrl(entryName, url).should('not.exist');
         } else {
           directoryObj.directoryEntryWithNameApiUrl(entryName, api, url).should('not.exist');
@@ -130,7 +130,7 @@ Then('the user views the error message {string} for {string} field', function (e
 });
 
 When('the user clicks Edit icon of {string}, {string}, {string} on entries page', function (entryName, api, url) {
-  if (api == 'Empty') {
+  if (api.toLowerCase() == 'empty') {
     directoryObj.entryNameUrlEditIcon(entryName, url).click();
   } else {
     directoryObj.entryNameApiUrlEditIcon(entryName, api, url).click();
@@ -139,7 +139,7 @@ When('the user clicks Edit icon of {string}, {string}, {string} on entries page'
 });
 
 When('the user clicks Delete icon of {string}, {string}, {string} on entries page', function (entryName, api, url) {
-  if (api == 'Empty') {
+  if (api.toLowerCase() == 'empty') {
     directoryObj.entryNameUrlDeleteIcon(entryName, url).click();
   } else {
     directoryObj.entryNameApiUrlDeleteIcon(entryName, api, url).click();
