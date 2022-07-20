@@ -1,6 +1,30 @@
 {
   "version": 1,
   "projects": {
+    "adsp-service-net-sdk": {
+      "root": "libs/adsp-service-net-sdk",
+      "projectType": "library",
+      "sourceRoot": "libs/adsp-service-net-sdk",
+      "architect": {
+        "build": {
+          "builder": "@nx-dotnet/core:build",
+          "outputs": ["dist/libs/adsp-service-net-sdk"],
+          "options": {
+            "configuration": "Debug",
+            "noDependencies": true
+          },
+          "configurations": {
+            "production": {
+              "configuration": "Release"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@nx-dotnet/core:format"
+        }
+      },
+      "tags": []
+    },
     "adsp-service-sdk": {
       "root": "libs/adsp-service-sdk",
       "sourceRoot": "libs/adsp-service-sdk/src",
