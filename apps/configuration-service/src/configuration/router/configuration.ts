@@ -275,7 +275,14 @@ export function createConfigurationRouter({
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     getConfigurationEntity(serviceId, configurationRepository, (req) => req.query.core !== undefined),
-    getConfiguration((configuration) => configuration.latest || {})
+    getConfiguration((configuration) => {
+      if (configuration.latest) {
+        const config = configuration.latest?.configuration;
+        config['created'] = configuration.latest?.created;
+        config['lastUpdated'] = configuration.latest?.lastUpdated;
+      }
+      return configuration.latest?.configuration || {};
+    })
   );
 
   router.patch(
@@ -325,7 +332,12 @@ export function createConfigurationRouter({
         if (results.length < 1) {
           throw new NotFoundError('revision', req.params.revision);
         }
-        return results[0];
+        const config = results[0]?.configuration;
+        if (results[0]?.configuration) {
+          config['created'] = results[0]?.created;
+          config['lastUpdated'] = results[0]?.lastUpdated;
+        }
+        return results[0]?.configuration;
       }
     )
   );
