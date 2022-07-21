@@ -2,7 +2,9 @@
   <PropertyGroup>
     <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))</RepoRoot>
     <BaseOutputPath>$(RepoRoot)dist/libs/$(MSBuildProjectName)</BaseOutputPath>
+    <OutputPath>$(BaseOutputPath)</OutputPath>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 
   <!-- Configuration of Code Analysis -->

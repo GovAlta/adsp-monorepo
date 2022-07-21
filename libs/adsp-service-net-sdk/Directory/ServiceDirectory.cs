@@ -1,4 +1,3 @@
-using Adsp.Sdk.Utils;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Polly;
@@ -8,7 +7,7 @@ namespace Adsp.Sdk.Directory;
 internal class ServiceDirectory : IServiceDirectory
 {
   private readonly ILogger<ServiceDirectory> _logger;
-  private readonly MemoryCache _cache = new(new MemoryCacheOptions { });
+  private readonly IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions { });
   private readonly RestClient _client;
   private readonly AsyncPolicy _retryPolicy;
 
@@ -16,7 +15,7 @@ internal class ServiceDirectory : IServiceDirectory
   {
     if (options.DirectoryUrl == null)
     {
-      throw new ArgumentException("Provided options must include value for DirectoryUrl.", "options");
+      throw new ArgumentException("Provided options must include value for DirectoryUrl.", nameof(options));
     }
 
     _logger = logger;
@@ -36,7 +35,7 @@ internal class ServiceDirectory : IServiceDirectory
     var cached = _cache.TryGetValue<Uri>(serviceId, out Uri? url);
     if (!cached)
     {
-      var entries = await RetrieveDirectory(serviceId.Namespace).ConfigureAwait(false);
+      var entries = await RetrieveDirectory(serviceId.Namespace);
       url = entries[serviceId];
     }
 
@@ -48,12 +47,12 @@ internal class ServiceDirectory : IServiceDirectory
     var entries = await _retryPolicy.ExecuteAsync(async () =>
       {
         var entries = new Dictionary<AdspId, Uri>();
-        var results = await _client.GetAsync<DirectoryEntry[]>(new RestRequest($"/directory/v2/namespaces/{@namespace}/entries")).ConfigureAwait(false);
+        var results = await _client.GetAsync<DirectoryEntry[]>(new RestRequest($"/directory/v2/namespaces/{@namespace}/entries"));
         if (results != null)
         {
           foreach (var result in results)
           {
-            if (result != null)
+            if (result?.Url != null)
             {
               entries[AdspId.Parse(result.Urn)] = result.Url;
             }
@@ -62,7 +61,7 @@ internal class ServiceDirectory : IServiceDirectory
 
         return entries;
       }
-    ).ConfigureAwait(false);
+    );
 
     foreach (var entry in entries)
     {

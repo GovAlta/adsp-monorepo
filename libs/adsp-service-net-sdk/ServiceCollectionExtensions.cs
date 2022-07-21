@@ -1,13 +1,14 @@
 using Adsp.Sdk.Access;
+using Adsp.Sdk.Configuration;
 using Adsp.Sdk.Directory;
+using Adsp.Sdk.Registration;
 using Adsp.Sdk.Tenancy;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Adsp.Sdk;
-public static class AdspExtensions
+public static class ServiceCollectionExtensions
 {
   private static IServiceCollection AddAdspSdkServices(this IServiceCollection services, AdspOptions options)
   {
@@ -21,8 +22,7 @@ public static class AdspExtensions
       (providers) => new TenantService(
         providers.GetRequiredService<ILogger<TenantService>>(),
         providers.GetRequiredService<IServiceDirectory>(),
-        providers.GetRequiredService<ITokenProvider>(),
-        options
+        providers.GetRequiredService<ITokenProvider>()
       )
     ));
     services.Add(ServiceDescriptor.Singleton<IIssuerCache>(
@@ -39,6 +39,15 @@ public static class AdspExtensions
         options
       )
     ));
+    services.Add(ServiceDescriptor.Singleton<IConfigurationService>(
+      (providers) => new ConfigurationService(
+        providers.GetRequiredService<ILogger<ConfigurationService>>(),
+        providers.GetRequiredService<IServiceDirectory>(),
+        providers.GetRequiredService<ITokenProvider>(),
+        options
+      )
+    ));
+    services.AddRegistration(options);
 
     return services;
   }
@@ -87,23 +96,5 @@ public static class AdspExtensions
       .AddTenantJwtAuthentication("tenant", issuerCache, keyProvider, options);
 
     return services;
-  }
-
-  public static IApplicationBuilder UseAdspMiddleware(this IApplicationBuilder builder)
-  {
-    return builder;
-  }
-
-  public static AdspContext GetAdspContext(this HttpContext context)
-  {
-    if (context == null)
-    {
-      throw new ArgumentNullException(nameof(context));
-    }
-
-    context.Items.TryGetValue(AccessExtensions.TenantContextKey, out object? tenant);
-    var adspContext = new AdspContext(context.User.HasClaim(AdspClaimTypes.Core, "true"), tenant as Tenant);
-
-    return adspContext;
   }
 }

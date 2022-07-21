@@ -1,4 +1,3 @@
-using Adsp.Sdk.Utils;
 using Microsoft.Extensions.Logging;
 using RestSharp;
 
@@ -7,7 +6,7 @@ internal class TokenProvider : ITokenProvider
 {
   private readonly object _lock = new object();
   private string? _token;
-  private DateTime _expiry = new DateTime();
+  private DateTime _expiry;
 
   private readonly ILogger<TokenProvider> _logger;
   private readonly Uri _authUrl;
@@ -19,17 +18,17 @@ internal class TokenProvider : ITokenProvider
   {
     if (options.AccessServiceUrl == null)
     {
-      throw new ArgumentException("Provided options must include value for AccessServiceUrl.", "options");
+      throw new ArgumentException("Provided options must include value for AccessServiceUrl.", nameof(options));
     }
 
     if (options.ServiceId == null)
     {
-      throw new ArgumentException("Provided options must include value for ServiceId.", "options");
+      throw new ArgumentException("Provided options must include value for ServiceId.", nameof(options));
     }
 
     if (options.ClientSecret == null)
     {
-      throw new ArgumentException("Provided options must include value for ClientSecret.", "options");
+      throw new ArgumentException("Provided options must include value for ClientSecret.", nameof(options));
     }
 
     _logger = logger;
@@ -76,7 +75,7 @@ internal class TokenProvider : ITokenProvider
           .AddParameter("client_id", _clientId, ParameterType.GetOrPost)
           .AddParameter("client_secret", _clientSecret, ParameterType.GetOrPost);
 
-        var response = await _client.PostAsync<TokenResponse>(request).ConfigureAwait(false);
+        var response = await _client.PostAsync<TokenResponse>(request);
         if (!String.IsNullOrEmpty(response?.AccessToken))
         {
           token = response.AccessToken;

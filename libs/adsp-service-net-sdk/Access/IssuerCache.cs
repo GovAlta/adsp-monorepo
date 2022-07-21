@@ -14,7 +14,7 @@ internal class IssuerCache : IIssuerCache
   {
     if (options.AccessServiceUrl == null)
     {
-      throw new ArgumentException("Provided options must include value for AccessServiceUrl.", "options");
+      throw new ArgumentException("Provided options must include value for AccessServiceUrl.", nameof(options));
     }
 
     _logger = logger;
@@ -27,7 +27,7 @@ internal class IssuerCache : IIssuerCache
     var cached = _cache.TryGetValue<Tenant>(issuer, out Tenant? tenant);
     if (!cached)
     {
-      var issuers = await RetrieveTenantIssuers().ConfigureAwait(false);
+      var issuers = await RetrieveTenantIssuers();
       issuers.TryGetValue(issuer, out tenant);
     }
 
@@ -36,7 +36,7 @@ internal class IssuerCache : IIssuerCache
 
   private async Task<IDictionary<string, Tenant>> RetrieveTenantIssuers()
   {
-    var tenants = await _tenantService.GetTenants().ConfigureAwait(false);
+    var tenants = await _tenantService.GetTenants();
     var issuers = tenants.ToDictionary((tenant) => new Uri(_accessServiceUrl, $"/auth/realms/{tenant.Realm}").ToString());
 
     foreach (var issuer in issuers)

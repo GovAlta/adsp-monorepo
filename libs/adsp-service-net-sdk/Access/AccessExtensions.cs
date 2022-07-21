@@ -9,9 +9,9 @@ using Microsoft.IdentityModel.Tokens;
 namespace Adsp.Sdk.Access;
 internal static class AccessExtensions
 {
-  internal const string TenantContextKey = "Tenant";
+  internal const string TenantContextKey = "ADSP:Tenant";
 
-  internal static TokenValidatedContext AddAdspContext(this TokenValidatedContext context, AdspId serviceId, Tenant? tenant)
+  private static TokenValidatedContext AddAdspContext(this TokenValidatedContext context, AdspId serviceId, Tenant? tenant)
   {
     var accessIdentity = new ClaimsIdentity();
     if (tenant?.Id != null)
@@ -26,17 +26,25 @@ internal static class AccessExtensions
     var realmAccessClaim = context.Principal?.Claims.FirstOrDefault(claim => claim.Type == "realm_access");
     if (realmAccessClaim != null)
     {
-      var access = JsonSerializer.Deserialize<AccessClaimRoles>(realmAccessClaim.Value);
+      var access = JsonSerializer.Deserialize<AccessClaimRoles>(
+        realmAccessClaim.Value,
+        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+      );
+
       if (access?.Roles != null)
       {
-        accessIdentity.AddClaims(access.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
+        var claims = access.Roles.Select(role => new Claim(ClaimTypes.Role, role));
+        accessIdentity.AddClaims(claims);
       }
     }
 
     var resourceAccessClaim = context.Principal?.Claims.FirstOrDefault(claim => claim.Type == "resource_access");
     if (resourceAccessClaim != null)
     {
-      var clientsRoles = JsonSerializer.Deserialize<Dictionary<string, AccessClaimRoles>>(resourceAccessClaim.Value);
+      var clientsRoles = JsonSerializer.Deserialize<Dictionary<string, AccessClaimRoles>>(
+        resourceAccessClaim.Value,
+        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+      );
 
       if (clientsRoles != null)
       {
@@ -143,7 +151,7 @@ internal static class AccessExtensions
         {
           OnTokenValidated = async (TokenValidatedContext context) =>
           {
-            var tenant = await issuerCache.GetTenantByIssuer(context.SecurityToken.Issuer).ConfigureAwait(false);
+            var tenant = await issuerCache.GetTenantByIssuer(context.SecurityToken.Issuer);
             if (tenant?.Id != null)
             {
               context.AddAdspContext(options.ServiceId, tenant);

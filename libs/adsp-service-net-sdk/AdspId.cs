@@ -49,7 +49,7 @@ public class AdspId
 
   public static AdspId Parse(Uri? urn)
   {
-    return AdspId.Parse(urn?.ToString());
+    return Parse(urn?.ToString());
   }
 
   private readonly ResourceType _type;

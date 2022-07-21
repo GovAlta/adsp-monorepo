@@ -1,6 +1,4 @@
-using Adsp.Sdk.Utils;
-
-namespace Adsp.Sdk.Tenancy;
+namespace Adsp.Sdk;
 public interface ITenantService
 {
   Task<Tenant?> GetTenant(AdspId tenantId);

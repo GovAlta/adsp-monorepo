@@ -1,5 +1,4 @@
 using Adsp.Sdk.Access;
-using Adsp.Sdk.Directory;
 using Adsp.Sdk.Utils;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -10,13 +9,13 @@ namespace Adsp.Sdk.Tenancy;
 internal class TenantService : ITenantService
 {
   private readonly ILogger<TenantService> _logger;
-  private readonly MemoryCache _cache = new MemoryCache(new MemoryCacheOptions { });
+  private readonly IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions { });
   private readonly IServiceDirectory _serviceDirectory;
   private readonly ITokenProvider _tokenProvider;
   private readonly RestClient _client;
   private readonly AsyncPolicy _retryPolicy;
 
-  public TenantService(ILogger<TenantService> logger, IServiceDirectory serviceDirectory, ITokenProvider tokenProvider, AdspOptions options)
+  public TenantService(ILogger<TenantService> logger, IServiceDirectory serviceDirectory, ITokenProvider tokenProvider)
   {
     _logger = logger;
     _serviceDirectory = serviceDirectory;
@@ -37,7 +36,7 @@ internal class TenantService : ITenantService
     var cached = _cache.TryGetValue<Tenant>(tenantId, out Tenant? tenant);
     if (!cached)
     {
-      tenant = await RetrieveTenant(tenantId).ConfigureAwait(false);
+      tenant = await RetrieveTenant(tenantId);
     }
 
     return tenant;
@@ -45,7 +44,7 @@ internal class TenantService : ITenantService
 
   public async Task<IList<Tenant>> GetTenants()
   {
-    var tenants = await RetrieveTenants().ConfigureAwait(false);
+    var tenants = await RetrieveTenants();
     return tenants;
   }
 
@@ -53,10 +52,10 @@ internal class TenantService : ITenantService
   {
     var tenant = await _retryPolicy.ExecuteAsync(async () =>
       {
-        var token = await _tokenProvider.GetAccessToken().ConfigureAwait(false);
-        return await _client.GetAsync<Tenant>(new RestRequest(tenantId.Resource)).ConfigureAwait(false);
+        var token = await _tokenProvider.GetAccessToken();
+        return await _client.GetAsync<Tenant>(new RestRequest(tenantId.Resource));
       }
-    ).ConfigureAwait(false);
+    );
 
     if (tenant != null)
     {
@@ -68,19 +67,19 @@ internal class TenantService : ITenantService
 
   private async Task<IList<Tenant>> RetrieveTenants()
   {
-    var tenantApiUrl = await _serviceDirectory.GetServiceUrl(AdspId.Parse("urn:ads:platform:tenant-service:v2")).ConfigureAwait(false);
+    var tenantApiUrl = await _serviceDirectory.GetServiceUrl(AdspId.Parse("urn:ads:platform:tenant-service:v2"));
     var requestUrl = new Uri(tenantApiUrl, "v2/tenants").AbsoluteUri;
 
     var tenants = await _retryPolicy.ExecuteAsync(async () =>
       {
-        var token = await _tokenProvider.GetAccessToken().ConfigureAwait(false);
+        var token = await _tokenProvider.GetAccessToken();
         var request = new RestRequest(requestUrl);
         request.AddHeader("Authorization", $"Bearer {token}");
-        var result = await _client.GetAsync<CollectionResults<Tenant>>(request).ConfigureAwait(false);
+        var result = await _client.GetAsync<CollectionResults<Tenant>>(request);
 
         return result?.Results;
       }
-    ).ConfigureAwait(false);
+    );
 
     if (tenants != null)
     {

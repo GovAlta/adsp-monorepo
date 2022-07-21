@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using Adsp.Sdk.Utils;
 
-namespace Adsp.Sdk.Tenancy;
+namespace Adsp.Sdk;
 public class Tenant
 {
   [JsonConverter(typeof(AdspIdJsonConverter))]
