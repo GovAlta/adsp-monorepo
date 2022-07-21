@@ -1,5 +1,9 @@
 export interface ConfigurationDefinition {
   configurationSchema: Record<string, SchemaType>;
+  configuration: {
+    schema: Record<string, SchemaType>;
+    description: string;
+  };
 }
 export interface ConfigurationDefinitionTypes {
   core: ServiceSchemas;
@@ -16,7 +20,7 @@ export interface ConfigDefinition {
   name: string;
   namespace: string;
   description?: string;
-  configurationSchema: ConfigurationSchema;
+  configuration: { schema: ConfigurationSchema; description: string };
   serviceSchemas?: ServiceSchemas;
 }
 
@@ -30,11 +34,14 @@ export const defaultConfigDefinition: ConfigDefinition = {
   namespace: '',
   name: '',
   description: '',
-  configurationSchema: {
-    type: 'object',
-    properties: {},
-    required: [],
-    additionalProperties: true,
+  configuration: {
+    schema: {
+      type: 'object',
+      properties: {},
+      required: [],
+      additionalProperties: true,
+    },
+    description: '',
   },
 };
 

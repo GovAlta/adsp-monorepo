@@ -23,8 +23,17 @@ export const applyConfigurationMiddleware = async (
         description: {
           type: ['string', 'null'],
         },
+        /**
+         * @deprecated
+         */
         configurationSchema: {
           type: 'object',
+        },
+        configuration: {
+          description: {
+            type: 'string',
+          },
+          schema: 'object',
         },
       },
       required: ['configurationSchema'],
@@ -39,7 +48,7 @@ export const applyConfigurationMiddleware = async (
     schema
   );
 
-  if (!entity.latest) {
+  if (!entity.latest || !entity.latest.configuration['platform:configuration-service']?.configuration) {
     await entity.update({ isCore: true, roles: [ConfigurationServiceRoles.ConfigurationAdmin] } as User, {
       [`${serviceId.namespace}:${serviceId.service}`]: { configurationSchema: schema },
     });

@@ -61,6 +61,7 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
                 </thead>
                 <tbody>
                   {nameSpaces[nameSpace].map((configName) => {
+                    const sortedConfig = memoizedSortedConfiguration[`${nameSpace}:${configName}`];
                     return (
                       <ConfigurationDefinitionItemComponent
                         tenantName={tenantName}
@@ -73,10 +74,8 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
                         onEdit={(configurationDefinition) => {
                           onEdit(configurationDefinition);
                         }}
-                        description={
-                          memoizedSortedConfiguration[`${nameSpace}:${configName}`]?.configurationSchema?.description
-                        }
-                        configSchema={memoizedSortedConfiguration[`${nameSpace}:${configName}`]?.configurationSchema}
+                        description={sortedConfig?.configuration?.description}
+                        configSchema={sortedConfig?.configuration?.schema || sortedConfig?.configurationSchema}
                       />
                     );
                   })}

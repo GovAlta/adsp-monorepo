@@ -47,7 +47,7 @@ export const ConfigurationDefinitionItemComponent: FunctionComponent<serviceItem
                         namespace: nameSpace,
                         name: configName,
                         description: description,
-                        configurationSchema: { ...configSchema },
+                        configuration: { schema: { ...configSchema }, description: description },
                       })
                     }
                     testId="edit-details"

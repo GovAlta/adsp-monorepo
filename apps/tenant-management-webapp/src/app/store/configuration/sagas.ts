@@ -149,7 +149,10 @@ export function* updateConfigurationDefinition({
         operation: 'UPDATE',
         update: {
           [`${definition.namespace}:${definition.name}`]: {
-            configurationSchema: definition.configurationSchema,
+            configuration: {
+              schema: definition.configuration.schema,
+              description: definition.configuration.description,
+            },
           },
         },
       };
