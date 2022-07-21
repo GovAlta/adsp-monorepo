@@ -66,3 +66,9 @@ export const DescriptionDiv = styled.div`
   margin-left: 2rem;
   font-size: 12px;
 `;
+export const ErrorStatusText = styled.div`
+  font-size: var(--fs-sm);
+  line-height: calc(var(--fs-sm) + 0.5rem);
+  color: var(--color-red);
+  margin-top: 1rem;
+`;

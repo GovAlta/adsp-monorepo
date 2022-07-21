@@ -120,8 +120,8 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     });
     return {
       revision: doc.revision,
-      lastUpdated: new Date(),
-      created: doc.created ? doc.created : new Date(),
+      lastUpdated: doc.lastUpdated,
+      created: doc.created,
       configuration: doc.configuration,
     };
   }

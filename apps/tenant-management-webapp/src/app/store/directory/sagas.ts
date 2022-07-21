@@ -45,20 +45,17 @@ export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+      yield put(fetchDirectorySuccess({ directory: coreDirectory }));
 
-      if (tenantName.toLowerCase() !== core) {
-        const { data: tenantDirectory } = yield call(
-          axios.get,
-          `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}/entries`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+      const { data: tenantDirectory } = yield call(
+        axios.get,
+        `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}/entries`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
-        yield put(fetchDirectorySuccess({ directory: [...tenantDirectory, ...coreDirectory] }));
-      } else {
-        yield put(fetchDirectorySuccess({ directory: coreDirectory }));
-      }
+      yield put(fetchDirectorySuccess({ directory: [...tenantDirectory, ...coreDirectory] }));
 
       yield put(
         UpdateIndicator({
