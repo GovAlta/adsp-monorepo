@@ -79,7 +79,7 @@ describe('ServiceRegistrar', () => {
     });
 
     expect(axiosMock.patch).toHaveBeenCalledTimes(3);
-    expect(axiosMock.patch.mock.calls[1][1].update).toHaveProperty('test-service');
+    expect(axiosMock.patch.mock.calls[2][1].update).toHaveProperty('test-service');
   });
 
   it('can register roles', async () => {
