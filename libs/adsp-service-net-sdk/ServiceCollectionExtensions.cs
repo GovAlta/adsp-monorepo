@@ -66,8 +66,8 @@ public static class ServiceCollectionExtensions
 
     services
       .AddAdspSdkServices(options)
-      .AddAuthentication()
-      .AddRealmJwtAuthentication("tenant", options);
+      .AddAuthentication(AdspAuthenticationSchemes.Tenant)
+      .AddRealmJwtAuthentication(AdspAuthenticationSchemes.Tenant, options);
 
     return services;
   }
@@ -92,8 +92,8 @@ public static class ServiceCollectionExtensions
 
     services
       .AddAuthentication()
-      .AddRealmJwtAuthentication("core", options)
-      .AddTenantJwtAuthentication("tenant", issuerCache, keyProvider, options);
+      .AddRealmJwtAuthentication(AdspAuthenticationSchemes.Core, options)
+      .AddTenantJwtAuthentication(AdspAuthenticationSchemes.Tenant, issuerCache, keyProvider, options);
 
     return services;
   }

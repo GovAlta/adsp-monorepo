@@ -609,6 +609,55 @@
       },
       "tags": []
     },
+    "script-service": {
+      "root": "apps/script-service",
+      "projectType": "application",
+      "sourceRoot": "apps/script-service",
+      "architect": {
+        "build": {
+          "builder": "@nx-dotnet/core:build",
+          "outputs": ["dist/apps/script-service"],
+          "options": {
+            "configuration": "Debug",
+            "noDependencies": true
+          },
+          "configurations": {
+            "production": {
+              "configuration": "Release"
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nx-dotnet/core:serve",
+          "options": {
+            "configuration": "Debug"
+          },
+          "configurations": {
+            "production": {
+              "configuration": "Release"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@nx-dotnet/core:format"
+        },
+        "test": {
+          "builder": "@nx-dotnet/core:test"
+        },
+        "swagger": {
+          "builder": "@nx-dotnet/core:update-swagger",
+          "outputs": ["options.output"],
+          "options": {
+            "output": "libs/generated/script-service-swagger/swagger.json"
+          }
+        }
+      },
+      "tags": []
+    },
+    "script-service-swagger": {
+      "root": "libs/generated/script-service-swagger",
+      "implicitDependencies": ["script-service"]
+    },
     "status-app": {
       "root": "apps/status-app",
       "sourceRoot": "apps/status-app/src",

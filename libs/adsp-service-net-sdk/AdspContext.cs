@@ -1,5 +1,3 @@
-using Adsp.Sdk.Tenancy;
-
 namespace Adsp.Sdk;
 public class AdspContext
 {

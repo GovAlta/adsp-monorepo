@@ -1,9 +1,12 @@
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using Adsp.Sdk.Utils;
 
 namespace Adsp.Sdk;
+[JsonConverter(typeof(AdspIdJsonConverter))]
 public class AdspId
 {
-  private static readonly Regex UrnRegex = new Regex(
+  private static readonly Regex UrnRegex = new(
     "^(?i:urn):ads(?<namespace>:[a-z0-9-]{1,30})?(?<service>:[a-z0-9-]{1,30})?(?<api>:[a-z0-9-]{1,30})?(?<resource>:[a-zA-Z0-9-_/ ]{1,1000})?$",
     RegexOptions.Singleline | RegexOptions.CultureInvariant
   );

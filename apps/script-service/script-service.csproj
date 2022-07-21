@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+
+    <TargetFramework>net6.0</TargetFramework>
+
+    <Nullable>enable</Nullable>
+
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <OutputPath>../../dist/apps/script-service</OutputPath>
+
+    <RootNamespace>Adsp.Platform.ScriptService</RootNamespace>
+
+    <AssemblyName>Adsp.Platform.ScriptService</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+
+    <AssemblyAttribute Include="CLSCompliantAttribute">
+
+      <_Parameter1>false</_Parameter1>
+
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+
+    <PackageReference Include="NJsonSchema" Version="10.7.2" />
+
+    <PackageReference Include="NLua" Version="1.6.0" />
+
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+
+  </ItemGroup>
+
+  <ItemGroup>
+
+    <ProjectReference Include="../../libs/adsp-service-net-sdk/adsp-service-net-sdk.csproj" />
+
+  </ItemGroup>
+
+  <Target Name="CheckNxModuleBoundaries" BeforeTargets="Build">
+
+    <Exec Command="node ../../node_modules/@nx-dotnet/core/src/tasks/check-module-boundaries.js -p script-service" />
+
+  </Target>
+</Project>

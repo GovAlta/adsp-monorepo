@@ -12,8 +12,8 @@
 
     <AssemblyName>Adsp.Sdk</AssemblyName>
 
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <IsPackable>true</IsPackable>
+
     <Company>Government of Alberta</Company>
   </PropertyGroup>
 
