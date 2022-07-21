@@ -62,3 +62,7 @@ export const StatusIcon = styled.div`
   margin-right: 0.25rem;
   padding-top: 0.25rem;
 `;
+export const DescriptionDiv = styled.div`
+  margin-left: 2rem;
+  font-size: 12px;
+`;
