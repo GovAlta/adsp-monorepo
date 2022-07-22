@@ -842,12 +842,31 @@ Then(
       .eventDetails()
       .invoke('text')
       .then((eventDetails) => {
-        if (oldStatus == 'Empty') {
+        if (oldStatus.toLowerCase() == 'empty') {
           expect(eventDetails).to.not.contain('originalStatus');
         } else {
           expect(eventDetails).to.contain('"originalStatus": ' + '"' + oldStatus.toLowerCase() + '"');
         }
         expect(eventDetails).to.contain('"newStatus": ' + '"' + newStatus.toLowerCase() + '"');
+      });
+  }
+);
+
+Then(
+  'the user views the event details of {string}, {string}, {string}, {string}, {string}',
+  function (serviceName, apiVersion, url, namespace, username) {
+    tenantAdminObj.eventDetails().then((elements) => {
+      expect(elements.length).to.equal(1);
+    });
+    tenantAdminObj
+      .eventDetails()
+      .invoke('text')
+      .then((eventDetails) => {
+        expect(eventDetails).to.contain('"URL": ' + '"' + url + '"');
+        expect(eventDetails).to.contain('"api": ' + '"' + apiVersion + '"');
+        expect(eventDetails).to.contain('"service": ' + '"' + serviceName + '"');
+        expect(eventDetails).to.contain('"namespace": ' + '"' + namespace + '"');
+        expect(eventDetails).to.contain('"name": ' + '"' + username + '"');
       });
   }
 );

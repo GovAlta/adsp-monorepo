@@ -67,9 +67,6 @@ export const getDirectoriesByNamespace =
     try {
       const { namespace } = req.params;
       entries = await getNamespaceEntries(directoryRepository, namespace);
-      if (entries.length === 0) {
-        return res.sendStatus(HttpStatusCodes.NOT_FOUND);
-      }
       res.json(entries);
     } catch (err) {
       _next(err);

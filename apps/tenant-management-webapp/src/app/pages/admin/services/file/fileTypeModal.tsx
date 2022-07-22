@@ -181,9 +181,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
     Object.entries(keycloakClientRoles).length > 0 &&
     Object.entries(keycloakClientRoles)
       .filter(([clientId, config]) => {
-        const roles = (config as ConfigServiceRole).roles;
-        const uniqueRoles = roles.filter((role) => !roleNames.includes(role.role));
-        return uniqueRoles.length > 0;
+        return (config as ConfigServiceRole).roles.length > 0;
       })
       .map(([clientId, config]) => {
         const roles = (config as ConfigServiceRole).roles;
@@ -381,7 +379,7 @@ const DataTableWrapper = styled.div`
   th {
     white-space: pre-wrap;
   }
-  
+
   thead {
     padding-top: 1.25rem;
   }
