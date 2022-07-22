@@ -658,7 +658,13 @@ Then('the user views {string} as the email of contact information', function (em
   statusObj.contactInformationEmailDisplay().invoke('text').should('contain', email);
 });
 
-Then('the user views the link for public status page {string}', function (link) {
-  statusObj.publicStatusPageUrl().invoke('text').should('contain', link);
-  // cy.get('[class*="copy-url"]').invoke('attr', 'href', 'https://status.adsp-uat.alberta.ca/autotest');
+Then('the public status app displays {string} as support email', function (email) {
+  cy.visit('https://status.adsp-uat.alberta.ca/autotest');
+  cy.wait(3000);
+  statusObj
+    .publicStatusPageContainer()
+    .should('have.attr', 'href')
+    .then((href) => {
+      expect(href).to.contain(email);
+    });
 });

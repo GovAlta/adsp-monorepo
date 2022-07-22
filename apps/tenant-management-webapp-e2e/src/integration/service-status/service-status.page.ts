@@ -245,8 +245,8 @@ class StatusServicePage {
     return cy.get('[data-testid="email"]');
   }
 
-  publicStatusPageUrl() {
-    return cy.xpath('//div[@class="copy-url"]');
+  publicStatusPageContainer() {
+    return cy.xpath('//h3[text()="Sign up for notifications"]/following-sibling::div/a');
   }
 }
 export default StatusServicePage;
