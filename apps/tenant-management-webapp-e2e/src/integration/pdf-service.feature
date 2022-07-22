@@ -17,3 +17,9 @@ Feature: Pdf service
     When the user enters "autotest-addtemplate" as name, "autotest template desc" as description in pdf template modal
     And the user clicks Save button in Add template modal
     Then the user views name "autotest-addtemplate", template id "autotest-addtemplate" and description "autotest template desc" on pdf templates'
+# Waiting for Delete function implementation to finish
+# When the user clicks Delete icon related to "autotest-addtemplate" template name
+# Then the user views Delete pdf modal modal
+# And the user views the Delete confirmation message of "autotest-addtemplate"
+# When the user clicks Confirm button on Delete pdf template modal
+# Then the user "should not view" the template of "autotest-addtemplate"
