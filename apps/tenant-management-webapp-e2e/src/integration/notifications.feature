@@ -250,8 +250,8 @@ Feature: Notifications
     Then the user views an email template modal title for "Autotest:autotest-eventDefinition"
     And the user views the email subject "Autotest"
     And the user views the email body "Autotest"
-    When the user clicks Close button in an email template modal
-    Then Preview an email template modal is closed
+    When the user clicks Close button in event template modal
+    Then Preview event template modal is closed
 
   @TEST_CS-1289 @REQ_CS-1269 @regression
   Scenario: As a tenant admin, I can access subscription management from the notification email, so that I can view and modify the subscription.
@@ -259,5 +259,5 @@ Feature: Notifications
     Then the user "views" the event of "status-service:health-check-started" in "Application health check change"
     When the user clicks "edit" button for "status-service:health-check-started" in "Application health check change"
     Then the user views the link for managing email subscription
-    When the user clicks Close button in an email template modal
-    Then Preview an email template modal is closed
+    When the user clicks Close button in event template modal
+    Then Preview event template modal is closed

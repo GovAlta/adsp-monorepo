@@ -272,6 +272,7 @@ When('the user clicks {string} button for {string} in {string}', function (butto
   switch (buttonName) {
     case 'edit':
       notificationsObj.notificationTypeEventEditButton(cardTitle, event).click();
+      cy.wait(1000);
       break;
     case 'delete':
       notificationsObj.eventDeleteIcon(cardTitle, event).click();
@@ -344,7 +345,7 @@ When('the user clicks Close button in Preview an email template modal', function
   notificationsObj.eventTemplatePreviewModalCloseBtn().click();
 });
 
-Then('Preview an email template modal is closed', function () {
+Then('Preview event template modal is closed', function () {
   notificationsObj.eventTemplatePreviewModal().should('not.exist');
 });
 
@@ -806,7 +807,7 @@ Then('the user views the email body {string}', function (emailBody) {
   });
 });
 
-When('the user clicks Close button in an email template modal', function () {
+When('the user clicks Close button in event template modal', function () {
   cy.scrollTo('bottom');
   notificationsObj.editTemplateModalCloseBtn().click();
 });
@@ -822,5 +823,5 @@ When('the user views the link for managing email subscription', function () {
     .its('0.contentDocument.body')
     .find('footer')
     .find('[class="goa-footer-event"]')
-    .find('a[href*="adsp"]');
+    .find('a[href*="https://subscription.adsp-uat.alberta.ca/2ef492af-0a16-470b-9ea5-c8bfa7b08a7c/login"]');
 });
