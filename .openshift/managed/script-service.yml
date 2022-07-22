@@ -31,6 +31,10 @@ parameters:
     description: Name of the ImageStreamTag to deploy.
     displayName: Deploy Tag
     value: latest
+  - name: ROUTE_HOST
+    description: Host for the route.
+    displayName: Route Host
+    value: ""
 objects:
   # Service Objects
 
