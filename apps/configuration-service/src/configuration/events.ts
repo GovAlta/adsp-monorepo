@@ -15,6 +15,9 @@ export const ConfigurationUpdatedDefinition: DomainEventDefinition = {
       revision: {
         type: 'number',
       },
+      lastUpdated: {
+        type: 'date',
+      },
       update: {
         type: 'object',
         properties: {
@@ -48,6 +51,9 @@ export const RevisionCreatedDefinition: DomainEventDefinition = {
       revision: {
         type: 'number',
       },
+      created: {
+        type: 'date',
+      },
       createdBy: {
         type: 'object',
         properties: {
@@ -65,6 +71,7 @@ export const configurationUpdated = (
   namespace: string,
   name: string,
   revision: number,
+  lastUpdated: Date,
   update: { operation: string; data: unknown }
 ): DomainEvent => ({
   name: 'configuration-updated',
@@ -79,6 +86,7 @@ export const configurationUpdated = (
     namespace,
     name,
     revision,
+    lastUpdated,
     update,
     updatedBy: {
       name: updatedBy.name,
@@ -92,6 +100,7 @@ export const revisionCreated = (
   tenantId: AdspId,
   namespace: string,
   name: string,
+  created: Date,
   revision: number
 ): DomainEvent => ({
   name: 'revision-created',
@@ -105,6 +114,7 @@ export const revisionCreated = (
   payload: {
     namespace,
     name,
+    created,
     revision,
     createdBy: {
       name: createdBy.name,

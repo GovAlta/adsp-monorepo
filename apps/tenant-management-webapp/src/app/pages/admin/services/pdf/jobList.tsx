@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { DownloadFileService } from '@store/file/actions';
+import { updatePdfResponse } from '@store/pdf/action';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
 import { GoAIconButton } from '@abgov/react-components/experimental';
@@ -17,6 +18,10 @@ const JobList = (): JSX.Element => {
   const onDownloadFile = async (file) => {
     dispatch(DownloadFileService(file));
   };
+
+  useEffect(() => {
+    dispatch(updatePdfResponse({ fileList: fileList }));
+  }, [fileList]);
 
   const jobList = useSelector((state: RootState) => state.pdf.jobs);
 
@@ -64,7 +69,13 @@ const JobList = (): JSX.Element => {
                       {file?.size ? (
                         Math.ceil(file.size / 1024)
                       ) : (
-                        <GoASkeletonGridColumnContent key={job.id} rows={1}></GoASkeletonGridColumnContent>
+                        <div>
+                          {job.fileWasGenerated ? (
+                            'Deleted'
+                          ) : (
+                            <GoASkeletonGridColumnContent key={job.id} rows={1}></GoASkeletonGridColumnContent>
+                          )}
+                        </div>
                       )}
                     </td>
                     <td>
@@ -77,7 +88,11 @@ const JobList = (): JSX.Element => {
                           onClick={() => onDownloadFile(file)}
                         />
                       ) : (
-                        <GoASkeletonGridColumnContent key={key} rows={1}></GoASkeletonGridColumnContent>
+                        <div>
+                          {!job.fileWasGenerated && (
+                            <GoASkeletonGridColumnContent key={job.id} rows={1}></GoASkeletonGridColumnContent>
+                          )}
+                        </div>
                       )}
                     </td>
                   </tr>

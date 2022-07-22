@@ -28,46 +28,30 @@ Then('the user views Add notification type modal', function () {
 });
 
 When(
-  'the user enters {string}, {string}, {string}, {string}, {string}, {string}, {string} on notification type modal',
-  function (name, description, role, email, bot, sms, selfService) {
+  'the user enters {string}, {string}, {string}, {string}, {string}, {string} on notification type modal',
+  function (name, description, role, bot, sms, selfService) {
     const roles = role.split(',');
     notificationsObj.notificationTypeModalNameField().clear().type(name);
     notificationsObj.notificationTypeModalDescriptionField().clear().type(description);
-    notificationsObj.notificationTypeModalSubscriberRolesDropdown().click();
-    for (let i = 0; i < roles.length; i++) {
-      notificationsObj.notificationTypeModalSubscriberRolesDropdownItem(roles[i].trim()).click();
-    }
-    notificationsObj.notificationTypeModalSubscriberRolesDropdownBackground().click({ force: true }); // To collapse the dropdown after selection
-    //email checkbox
+    notificationsObj.notificationTypeModalSubscriberRolesDropdown().click({ force: true });
+    // Deselect all previously selected roles and then select roles
     notificationsObj
-      .notificationChannelCheckbox('email')
-      .invoke('attr', 'class')
-      .then((classAttVal) => {
-        if (classAttVal == undefined) {
-          expect.fail('Failed to get email checkbox class attribute value.');
-        } else {
-          switch (email) {
-            case 'yes':
-              if (classAttVal.includes('selected')) {
-                cy.log('Email check box is already selected. ');
-              } else {
-                notificationsObj.notificationChannelCheckbox('email').click();
-              }
-              break;
-            case 'no':
-              {
-                if (!classAttVal.includes('selected')) {
-                  cy.log('Email check box is already not selected. ');
-                } else {
-                  notificationsObj.notificationChannelCheckbox('email').click();
-                }
-              }
-              break;
-            default:
-              expect(email).to.be.oneOf(['yes', 'no']);
-          }
+      .notificationTypeModalSubscriberRolesDropdownItems()
+      .each((element) => {
+        cy.wrap(element)
+          .invoke('attr', 'class')
+          .then((classAttr) => {
+            if (classAttr?.includes('-selected')) {
+              cy.wrap(element).click();
+            }
+          });
+      })
+      .then(() => {
+        for (let i = 0; i < roles.length; i++) {
+          notificationsObj.notificationTypeModalSubscriberRolesDropdownItem(roles[i].trim()).click({ force: true });
         }
       });
+    notificationsObj.notificationTypeModalSubscriberRolesDropdownBackground().click({ force: true }); // To collapse the dropdown after selection
     //bot checkbox
     notificationsObj
       .notificationChannelCheckbox('bot')
@@ -221,7 +205,7 @@ Given('a tenant admin user is on notification types page', function () {
 });
 
 When('the user clicks Select event button for {string}', function (cardTitle) {
-  notificationsObj.notificationTypeSelectAnEventBtn(cardTitle).click();
+  notificationsObj.notificationTypeSelectAnEventBtn(cardTitle).click({ force: true });
 });
 
 Then('the user views Select an event modal', function () {
@@ -249,11 +233,6 @@ When('the user clicks Cancel button in Select an event modal', function () {
 
 Then('the user views Add an email template page', function () {
   notificationsObj.addAnEmailTemplateModalTitle().invoke('text').should('contain', 'Add an email template');
-});
-
-When('the user enters {string} as subject and {string} as body', function (subjectText, bodyText) {
-  notificationsObj.addAnEmailTemplateModalSubject().type(subjectText);
-  notificationsObj.addAnEmailTemplateModalBody().type(bodyText);
 });
 
 When('the user clicks Add button in Add an email template page', function () {
@@ -716,6 +695,99 @@ When('the user enters {string} in Phone number field', function (phoneNumber) {
     notificationsObj.editSubscriberModalPhoneNumberField().clear();
   }
 });
+
+When('the user clicks Add notification type button on Notification type page', function () {
+  notificationsObj.addNotificationTypeBtnOnNotificationType().click();
+});
+
+Then(
+  'the user {string} {string} for the event of {string} in {string} on tenant events',
+  function (viewOrNot, elementType, eventName, typeName) {
+    if (viewOrNot == 'views') {
+      switch (elementType) {
+        case 'email template indicator':
+          notificationsObj.tenantNotificationTypeEventMailIcon(typeName, eventName).should('exist');
+          notificationsObj.tenantNotificationTypeEventMailBadge(typeName, eventName).should('not.exist');
+          break;
+        case 'bot template indicator':
+          notificationsObj.tenantNotificationTypeEventBotIcon(typeName, eventName).should('exist');
+          notificationsObj.tenantNotificationTypeEventBotIconBadge(typeName, eventName).should('not.exist');
+          break;
+        case 'sms template indicator':
+          notificationsObj.tenantNotificationTypeEventSmsIcon(typeName, eventName).should('exist');
+          notificationsObj.tenantNotificationTypeEventSmsIconBadge(typeName, eventName).should('not.exist');
+          break;
+        case 'email template indicator with warning':
+          notificationsObj.tenantNotificationTypeEventMailBadge(typeName, eventName).should('exist');
+          notificationsObj.tenantNotificationTypeEventMailIcon(typeName, eventName).should('exist');
+          break;
+        case 'bot template indicator with warning':
+          notificationsObj.tenantNotificationTypeEventBotIconBadge(typeName, eventName).should('exist');
+          notificationsObj.tenantNotificationTypeEventBotIcon(typeName, eventName).should('exist');
+          break;
+        case 'sms template indicator with warning':
+          notificationsObj.tenantNotificationTypeEventSmsIconBadge(typeName, eventName).should('exist');
+          notificationsObj.tenantNotificationTypeEventSmsIcon(typeName, eventName).should('exist');
+          break;
+        default:
+          expect(elementType).to.be.oneOf([
+            'email template indicator',
+            'bot template indicator',
+            'sms template indicator',
+            'email template indicator with warning',
+            'bot template indicator with warning',
+            'sms template indicator with warning',
+          ]);
+      }
+    } else if (viewOrNot == 'should not view') {
+      switch (elementType) {
+        case 'bot template indicator':
+          notificationsObj.tenantNotificationTypeEventBotIcon(typeName, eventName).should('not.exist');
+          break;
+        case 'sms template indicator':
+          notificationsObj.tenantNotificationTypeEventSmsIcon(typeName, eventName).should('not.exist');
+          break;
+        case 'email template indicator with warning':
+          notificationsObj.tenantNotificationTypeEventMailBadge(typeName, eventName).should('not.exist');
+          break;
+        case 'bot template indicator with warning':
+          notificationsObj.tenantNotificationTypeEventBotIconBadge(typeName, eventName).should('not.exist');
+          break;
+        case 'sms template indicator with warning':
+          notificationsObj.tenantNotificationTypeEventSmsIconBadge(typeName, eventName).should('not.exist');
+          break;
+        default:
+          expect(elementType).to.be.oneOf([
+            'bot template indicator',
+            'sms template indicator',
+            'email template indicator with warning',
+            'bot template indicator with warning',
+            'sms template indicator with warning',
+          ]);
+      }
+    } else {
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
+  }
+);
+
+Then('the user views that email channel is greyed out', function () {
+  notificationsObj.notificationChannelEmailCheckbox().should('be.disabled');
+  notificationsObj.notificationChannelEmailCheckbox().should('be.checked');
+});
+
+When('the user selects {string} tab on the event template', function (tab) {
+  notificationsObj.notificationEventTemplateTab(tab).click();
+  cy.wait(1000);
+});
+
+When(
+  'the user enters {string} as subject and {string} as body {string} template page',
+  function (subjectText, bodyText, channel) {
+    notificationsObj.addTemplateModalSubject(channel).type(subjectText);
+    notificationsObj.addTemplateModalBody(channel).type(bodyText);
+  }
+);
 
 Then('the user views an email template modal title for {string}', function (notificationEvent) {
   notificationsObj.editTemplateModalTitle().invoke('text').should('contain', notificationEvent);

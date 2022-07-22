@@ -65,12 +65,13 @@ export const TestStream = (): JSX.Element => {
   useEffect(() => {
     socket?.on('connect', () => {
       clearTimeout(spinnerTimeout.current);
+      setSocketDisconnect(false);
+      setSocketConnectionError(false);
       setSocketConnection(true);
       setSocketConnecting(false);
       setSpinner(false);
-      setSocketDisconnect(false);
-      setSocketConnectionError(false);
     });
+
     socket?.on('disconnect', (reason) => {
       clearTimeout(spinnerTimeout.current);
       // if connection disconnects from client or server side, consider it as a successful disconnect
@@ -83,13 +84,19 @@ export const TestStream = (): JSX.Element => {
         setSocketConnectionError(true);
       }
       setSocketConnection(false);
+      setSocketConnecting(false);
+      setSpinner(false);
     });
+
     socket?.on('connect_error', (error) => {
       clearTimeout(spinnerTimeout.current);
       setSocketConnectionError(true);
       setSocketConnection(false);
+      setSocketConnecting(false);
       setSocketDisconnect(false);
+      setSpinner(false);
     });
+
     // once we have socket init, available streams and a stream selected by user then start listening to streams
     // TO-DO: we can use a wrapper of some sort here in the future for re-usability
     if (tenantStreams && coreStreams && socket && selectedSteamId[0]) {
@@ -105,13 +112,13 @@ export const TestStream = (): JSX.Element => {
   }, [socket]);
 
   const disableConnectButton = () => {
-    if (selectedSteamId.length === 0) {
-      return true;
-    }
     if (socketConnecting) {
       return true;
     }
     if (socket && socketConnection) {
+      return true;
+    }
+    if (selectedSteamId.length === 0) {
       return true;
     }
   };

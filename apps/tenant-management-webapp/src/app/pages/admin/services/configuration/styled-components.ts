@@ -21,35 +21,27 @@ export const EntryDetail = styled.div`
 `;
 
 export const TableDiv = styled.div`
-  #configuration-name {
-    width: 120px;
-  }
-
-  #configuration-action {
-    width: 95px;
-    text-align: left;
-    padding: 0.5rem;
-  }
-  & table {
-    table-layout: fixed;
-  }
   & td:first-child {
+    width: 120px;
     overflow-x: hidden;
-    justify-content: center;
+    text-overflow: ellipsis;
     word-wrap: break-word;
   }
   & td:nth-child(2) {
     word-wrap: break-word;
   }
+
   & td:last-child {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    justify-content: center;
+    width: 40px;
+    white-space: nowrap;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    text-align: right;
   }
 `;
 
 export const IconDiv = styled.div`
+  width: 100%;
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
@@ -69,4 +61,14 @@ export const StatusText = styled.div`
 export const StatusIcon = styled.div`
   margin-right: 0.25rem;
   padding-top: 0.25rem;
+`;
+export const DescriptionDiv = styled.div`
+  margin-left: 2rem;
+  font-size: 12px;
+`;
+export const ErrorStatusText = styled.div`
+  font-size: var(--fs-sm);
+  line-height: calc(var(--fs-sm) + 0.5rem);
+  color: var(--color-red);
+  margin-top: 1rem;
 `;

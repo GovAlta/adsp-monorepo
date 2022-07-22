@@ -1,4 +1,4 @@
-import { PdfMetrics, PdfTemplate, PdfGenerationResponse, PdfGenerationPayload } from './model';
+import { PdfMetrics, PdfTemplate, PdfGenerationResponse, PdfGenerationPayload, UpdatePDFResponse } from './model';
 
 export const FETCH_PDF_TEMPLATES_ACTION = 'pdf/FETCH_PDF_TEMPLATES_ACTION';
 export const FETCH_PDF_TEMPLATES_SUCCESS_ACTION = 'pdf/FETCH_PDF_TEMPLATES_SUCCESS_ACTION';
@@ -11,6 +11,7 @@ export const FETCH_PDF_METRICS_SUCCESS_ACTION = 'pdf/FETCH_PDF_METRICS_SUCCESS';
 
 export const GENERATE_PDF_ACTION = 'pdf/GENERATE_PDF_ACTION';
 export const GENERATE_PDF_SUCCESS_ACTION = 'pdf/GENERATE_PDF_SUCCESS_ACTION';
+export const UPDATE_PDF_RESPONSE_ACTION = 'pdf/UPDATE_PDF_RESPONSE_ACTION';
 export const STREAM_PDF_SOCKET_ACTION = 'pdf/STREAM_PDF_SOCKET_ACTION';
 
 export const SOCKET_CHANNEL = 'pdf/SOCKET_CHANNEL';
@@ -29,6 +30,11 @@ export interface FetchPdfTemplatesSuccessAction {
 export interface GeneratePdfSuccessAction {
   type: typeof GENERATE_PDF_SUCCESS_ACTION;
   payload: PdfGenerationResponse;
+}
+
+export interface UpdatePdfResponseAction {
+  type: typeof UPDATE_PDF_RESPONSE_ACTION;
+  payload: UpdatePDFResponse;
 }
 
 // eslint-disable-next-line
@@ -84,7 +90,8 @@ export type PdfActionTypes =
   | FetchPdfMetricsSuccessAction
   | AddToStreamAction
   | SocketChannelAction
-  | GeneratePdfSuccessAction;
+  | GeneratePdfSuccessAction
+  | UpdatePdfResponseAction;
 
 export const updatePdfTemplate = (template: PdfTemplate): UpdatePdfTemplatesAction => ({
   type: UPDATE_PDF_TEMPLATE_ACTION,
@@ -117,6 +124,11 @@ export const streamPdfSocket = (disconnect: boolean): StreamPdfSocketAction => (
 
 export const generatePdfSuccess = (results: PdfGenerationResponse): GeneratePdfSuccessAction => ({
   type: GENERATE_PDF_SUCCESS_ACTION,
+  payload: results,
+});
+
+export const updatePdfResponse = (results: UpdatePDFResponse): UpdatePdfResponseAction => ({
+  type: UPDATE_PDF_RESPONSE_ACTION,
   payload: results,
 });
 

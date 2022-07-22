@@ -32,10 +32,11 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         .limit(1)
         .exec((err, results: ConfigurationRevisionDoc[]) => (err ? reject(err) : resolve(results[0])));
     });
-
     const latest = latestDoc
       ? {
           revision: latestDoc.revision,
+          created: latestDoc.created,
+          lastUpdated: latestDoc.lastUpdated,
           configuration: latestDoc.configuration as C,
         }
       : null;
@@ -68,9 +69,13 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         .limit(top)
         .exec((err, results: ConfigurationRevisionDoc[]) => (err ? reject(err) : resolve(results)));
     });
-
     return {
-      results: docs.map((doc) => ({ revision: doc.revision, configuration: doc.configuration as C })),
+      results: docs.map((doc) => ({
+        revision: doc.revision,
+        created: doc.created,
+        lastUpdated: doc.lastUpdated,
+        configuration: doc.configuration as C,
+      })),
       page: {
         after,
         next: encodeNext(docs.length, top, skip),
@@ -89,13 +94,13 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       revision: revision.revision,
       tenant: entity.tenantId?.toString() || { $exists: false },
     };
-
     const update: Record<string, unknown> = {
       namespace: entity.namespace,
       name: entity.name,
       revision: revision.revision,
+      lastUpdated: new Date(),
+      created: revision.created ? revision.created : new Date(),
     };
-
     // Only include tenant if there is a tenantId on the entity.
     if (entity.tenantId) {
       update.tenant = entity.tenantId.toString();
@@ -113,9 +118,10 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         )
         .exec((err, res) => (err ? reject(err) : resolve(res as ConfigurationRevisionDoc<C>)));
     });
-
     return {
       revision: doc.revision,
+      lastUpdated: doc.lastUpdated,
+      created: doc.created,
       configuration: doc.configuration,
     };
   }
