@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { NotificationItem } from '@store/notification/models';
-import { GoAButton, GoADropdownOption } from '@abgov/react-components';
+import { GoAButton, GoADropdownOption, GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import {
   GoAModal,
@@ -16,6 +16,11 @@ import { GoACallout } from '@abgov/react-components';
 import styled from 'styled-components';
 import { GoACheckbox } from '@abgov/react-components';
 import { toKebabName } from '@lib/kebabName';
+import { Role } from '@store/tenant/models';
+import { ServiceRoleConfig } from '@store/access/models';
+import { AnonymousWrapper } from './styledComponents';
+import { RolesTable } from './rolesTable';
+import { mapTenantClientRoles } from '../../events/stream/utils';
 
 interface NotificationTypeFormProps {
   initialValue?: NotificationItem;
@@ -24,6 +29,8 @@ interface NotificationTypeFormProps {
   title: string;
   open: boolean;
   errors?: Record<string, string>;
+  realmRoles: Role[];
+  tenantClients: ServiceRoleConfig;
 }
 
 const channels = [
@@ -43,6 +50,8 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   errors,
   title,
   open,
+  realmRoles,
+  tenantClients,
 }) => {
   //const dispatch = useDispatch();
   const isEdit = !!initialValue?.id;
@@ -52,23 +61,10 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
     setType(JSON.parse(JSON.stringify(initialValue)));
   }, [initialValue]);
 
-  const realmRoles = useSelector((state: RootState) => state.tenant.realmRoles);
-
-  let dropDownOptions = [];
-
-  dropDownOptions = [
-    {
-      value: 'anonymousRead',
-      label: 'Anyone (Anonymous)',
-      key: 'anonymous',
-      dataTestId: 'anonymous-option',
-    },
-  ];
-
-  let defaultDropDowns = [];
+  let mappedRealmRoles = [];
 
   if (realmRoles) {
-    defaultDropDowns = realmRoles.map((realmRole) => {
+    mappedRealmRoles = realmRoles.map((realmRole) => {
       return {
         value: realmRole.name,
         label: realmRole.name,
@@ -76,8 +72,8 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
         dataTestId: `${realmRole}-update-roles-options`,
       };
     });
-    dropDownOptions = dropDownOptions.concat(defaultDropDowns);
   }
+  const tenantClientsMappedRoles = tenantClients ? mapTenantClientRoles(tenantClients) : undefined;
 
   return (
     <EditStyles>
@@ -115,39 +111,6 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 className="goa-textarea"
                 onChange={(e) => setType({ ...type, description: e.target.value })}
               />
-            </GoAFormItem>
-            <GoAFormItem>
-              <label>Select subscriber roles</label>
-              <GoADropdown
-                name="subscriberRoles"
-                selectedValues={type?.subscriberRoles}
-                multiSelect={true}
-                onChange={(name, values) => {
-                  if (values[values.length - 1] === 'anonymousRead') {
-                    values = values.filter((value) => !realmRoles.map((realmRole) => realmRole.name).includes(value));
-                  }
-                  if (values.includes('anonymousRead') && values[values.length - 1] !== 'anonymousRead') {
-                    values = values.filter((value) => value !== 'anonymousRead');
-                  }
-
-                  let publicSubscribe = false;
-
-                  if (values.includes('anonymousRead')) {
-                    publicSubscribe = true;
-                  }
-
-                  setType({ ...type, subscriberRoles: values, publicSubscribe });
-                }}
-              >
-                {dropDownOptions.map((item) => (
-                  <GoADropdownOption
-                    label={item.label}
-                    value={item.value}
-                    key={item.key}
-                    data-testid={item.dataTestId}
-                  />
-                ))}
-              </GoADropdown>
             </GoAFormItem>
             <GoAFormItem error={errors?.['channels']}>
               <label>Select Notification Channels</label>
@@ -197,16 +160,82 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 >
                   My subscribers are allowed to manage their own subscription for this notification type
                 </GoACheckbox>
-                <div className="fitContent">
-                  {type.manageSubscribe && (
+                {type.manageSubscribe && (
+                  <div className="fitContent">
                     <GoACallout type="important">
                       This checkbox enables your subscribers to manage subscriptions on a self serve basis. Subscribers
                       can unsubscribe from the notification type without contacting the program area.
                     </GoACallout>
-                  )}
-                </div>
+                  </div>
+                )}
               </GoAFormItem>
             </div>
+            <AnonymousWrapper>
+              <GoACheckbox
+                checked={type.publicSubscribe}
+                name="anonymousRead-checkbox"
+                data-testid="anonymousRead-checkbox"
+                onChange={() => {
+                  setType({
+                    ...type,
+                    publicSubscribe: !type.publicSubscribe,
+                  });
+                }}
+              />
+              Make notification public
+            </AnonymousWrapper>
+            {mappedRealmRoles ? '' : <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>}
+            {!type.publicSubscribe && mappedRealmRoles ? (
+              <RolesTable
+                tableHeading={'Roles'}
+                key={'roles'}
+                subscriberRolesOptions={mappedRealmRoles}
+                checkedRoles={type.subscriberRoles}
+                onItemChecked={(value) => {
+                  if (type.subscriberRoles.includes(value)) {
+                    const updatedRoles = type.subscriberRoles.filter((roleName) => roleName !== value);
+                    setType({ ...type, subscriberRoles: updatedRoles });
+                  } else {
+                    setType({ ...type, subscriberRoles: [...type.subscriberRoles, value] });
+                  }
+                }}
+              />
+            ) : (
+              // some extra white space so the modal height/width stays the same when roles are hidden
+              <div
+                style={{
+                  width: '35em',
+                  height: '8em',
+                }}
+              ></div>
+            )}
+            {tenantClientsMappedRoles ? (
+              ''
+            ) : (
+              <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>
+            )}
+            {!type.publicSubscribe && tenantClientsMappedRoles
+              ? tenantClientsMappedRoles.map((tenantRole) => {
+                  return (
+                    tenantRole.roles.length > 0 && (
+                      <RolesTable
+                        tableHeading={tenantRole.name}
+                        key={tenantRole.name}
+                        subscriberRolesOptions={tenantRole.roles}
+                        checkedRoles={type.subscriberRoles}
+                        onItemChecked={(value) => {
+                          if (type.subscriberRoles.includes(value)) {
+                            const updatedRoles = type.subscriberRoles.filter((roleName) => roleName !== value);
+                            setType({ ...type, subscriberRoles: updatedRoles });
+                          } else {
+                            setType({ ...type, subscriberRoles: [...type.subscriberRoles, value] });
+                          }
+                        }}
+                      />
+                    )
+                  );
+                })
+              : ''}
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
@@ -257,4 +286,5 @@ const EditStyles = styled.div`
   h3 {
     margin-bottom: 0;
   }
+  width: 36em;
 `;
