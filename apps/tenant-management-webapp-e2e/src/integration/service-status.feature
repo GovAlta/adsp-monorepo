@@ -3,7 +3,7 @@ Feature: Service status
 
   @TEST_CS-528 @REQ_CS-283 @regression
   Scenario: Test As a developer, I can access recommendations about health check, so I can add an appropriate health check to my app
-    Given a service owner user is on service status page
+    Given a service owner user is on status overview page
     Then the user views the health check guidelines
 
   # TEST DATA: need 2 applications named "Autotest" and "File Service"
@@ -220,15 +220,14 @@ Feature: Service status
     And the user views the event details of "autotest-DO-NOT-DELETE" application status changed from "{original status}" to "{new status}" for subscriber of "auto.test@abc.com"
 
   @TEST_CS-1287 @REQ_CS-1261 @REQ_CS-1262 @regression
-  Scenario: As a public user, I can see tenant specific support email for the services on status app, so I know where to report issues.
-    Given a service owner user is on service status page
+  Scenario: As a tenant I can see, edit specific support email on status page and view the link, so I know where to report the issues.
+    Given a service owner user is on status overview page
     When the user clicks Edit button for contact information
-    Then the user views Edit contact information modal on the status service page
+    Then the user views Edit contact information modal on the status overview page
     When the user enters "autotest-status-admin@gov.ab.ca"
     And the user clicks Save button on contact information modal
     Then the user views "autotest-status-admin@gov.ab.ca" as the email of contact information
     Then the user views the link for public status page "autotest"
-    And the user views the link of "Get support" under Support
     When the user clicks Edit button for contact information
     When the user enters "test@gov.ab.ca"
     And the user clicks Save button on contact information modal

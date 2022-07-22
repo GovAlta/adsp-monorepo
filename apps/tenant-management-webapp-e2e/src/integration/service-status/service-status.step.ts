@@ -641,7 +641,7 @@ When('the user clicks Edit button for contact information', function () {
   statusObj.contactInformationEditBtn().click();
 });
 
-Then('the user views Edit contact information modal on the status service page', function () {
+Then('the user views Edit contact information modal on the status overview page', function () {
   statusObj.editContactInformationModal().invoke('text').should('eq', 'Edit contact information');
 });
 
