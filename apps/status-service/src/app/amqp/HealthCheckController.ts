@@ -1,11 +1,13 @@
 import { WorkQueueService } from '@core-services/core-common';
 import { connect } from 'amqp-connection-manager';
 import { Logger } from 'winston';
-import { HealthCheckJob, HealthCheckJobScheduler } from '../jobs/';
+import { HealthCheckJobScheduler } from '../jobs/';
 import { HealthCheckControllerWorkItem } from './HealthCheckControllerWorkItem';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { AMQPCredentials, getConnectionProps } from '@core-services/core-common';
 import { HealthCheckQueueService } from './HealthCheckQueueService';
+import { getScheduler } from '../jobs/SchedulerFactory';
+import { JobScheduler } from '../jobs/JobScheduler';
 
 interface HealthCheckControllerProps {
   healthCheckScheduler: HealthCheckJobScheduler;
@@ -15,12 +17,14 @@ interface HealthCheckControllerProps {
 export class HealthCheckController {
   #serviceStatusRepository: ServiceStatusRepository;
   #healthCheckJobScheduler: HealthCheckJobScheduler;
+  #scheduler: JobScheduler;
   #logger: Logger;
 
-  constructor(props: HealthCheckControllerProps) {
+  constructor(props: HealthCheckControllerProps, scheduler: JobScheduler) {
     this.#logger = props.logger;
     this.#serviceStatusRepository = props.serviceStatusRepository;
     this.#healthCheckJobScheduler = props.healthCheckScheduler;
+    this.#scheduler = scheduler;
   }
 
   connect = async (credentials: AMQPCredentials): Promise<WorkQueueService<HealthCheckControllerWorkItem>> => {
@@ -60,14 +64,12 @@ export class HealthCheckController {
     const applications = await this.#serviceStatusRepository.findEnabledApplications();
     const app = applications.find((app) => app._id == startEvent.applicationId);
     if (app) {
-      this.#healthCheckJobScheduler.startHealthChecks(app);
+      this.#healthCheckJobScheduler.startHealthChecks(app, this.#scheduler);
     }
   };
 
   stopApplicationHealthChecks = async (stopEvent: HealthCheckControllerWorkItem): Promise<void> => {
     this.#logger.info(`Stopping health checks for application ${stopEvent.applicationId} at ${stopEvent.url}`);
-    this.#healthCheckJobScheduler.stopHealthChecks(stopEvent.applicationId, (j: HealthCheckJob) => {
-      j.job.cancel();
-    });
+    this.#healthCheckJobScheduler.stopHealthChecks(stopEvent.applicationId);
   };
 }

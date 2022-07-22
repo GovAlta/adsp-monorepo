@@ -96,7 +96,21 @@ export function* fetchConfigurations(action: FetchConfigurationsAction): SagaIte
       const configs = yield all(
         urls.map((url) => call(axios.get, url, { headers: { Authorization: `Bearer ${token}` } }))
       );
-      yield put(getConfigurationsSuccess(configs.map((c) => c.data)));
+      const { coreConfigDefinitions, tenantConfigDefinitions } = yield select(
+        (state: RootState) => state.configuration
+      );
+      const definitions = { ...tenantConfigDefinitions?.configuration, ...coreConfigDefinitions?.configuration };
+      yield put(
+        getConfigurationsSuccess(
+          configs.map((c) => {
+            const key = `${c.data.namespace}:${c.data.name}`;
+            if (definitions[key] && definitions[key]?.configurationSchema?.description) {
+              c.data['description'] = definitions[key]?.configurationSchema?.description;
+            }
+            return c.data;
+          })
+        )
+      );
       yield put(
         UpdateIndicator({
           show: false,

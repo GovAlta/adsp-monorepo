@@ -24,7 +24,7 @@ import { ConfigurationExportType, Service, ConfigDefinition } from '@store/confi
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { ImportModal } from './importModal';
 import { isValidJSONCheck, jsonSchemaCheck } from '@lib/checkInput';
-import { StatusText, StatusIcon } from '../styled-components';
+import { StatusText, StatusIcon, DescriptionDiv, ErrorStatusText } from '../styled-components';
 import GreenCircleCheckMark from '@icons/green-circle-checkmark.svg';
 import CloseCircle from '@components/icons/CloseCircle';
 
@@ -57,7 +57,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
     const namespaces = toNamespaceMap(tenantConfigDefinitions, coreConfigDefinitions);
     return { schemas: schemas, namespaces: namespaces };
   }, [coreConfigDefinitions, tenantConfigDefinitions]);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errorsStatus, setErrorsStatus] = useState<string>('');
   const dispatch = useDispatch();
 
   const toggleSelection = (key: string) => {
@@ -74,17 +74,19 @@ export const ConfigurationImportExport: FunctionComponent = () => {
   };
   const onUploadSubmit = (e) => {
     e.preventDefault();
-    setErrors({ ...errors, inputJsonFile: '' });
+    setErrorsStatus('');
     //Open a modal to list impact configuration
     const jsonValidationFormat = isValidJSONCheck()(selectedImportFile);
 
     if (jsonValidationFormat !== '') {
-      setErrors({ ...errors, inputJsonFile: 'Invalid Json format! please check!' });
+      setErrorsStatus('Invalid Json format! please check!');
+      setSelectedImportFile('');
       return;
     }
     const jsonSchemaValidation = jsonSchemaCheck(exportSchema, selectedImportFile);
     if (!jsonSchemaValidation) {
-      setErrors({ ...errors, inputJsonFile: 'The json file not match Configuration schema' });
+      setErrorsStatus('The json file not match Configuration schema');
+      setSelectedImportFile('');
       return;
     }
     const configList = [];
@@ -105,7 +107,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
       }
     }
     if (configList.length === 0) {
-      setErrors({ ...errors, inputJsonFile: 'The json file not match Configuration schema' });
+      setErrorsStatus('The json file not match Configuration schema');
       return;
     }
     setImportConfigJson(importConfig);
@@ -123,6 +125,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
       setSelectedImportFile(inputJson);
     };
     setShowStatus(false);
+    setErrorsStatus('');
     setImportNameList([]);
     dispatch(resetReplaceConfigurationListAction());
   };
@@ -156,12 +159,42 @@ export const ConfigurationImportExport: FunctionComponent = () => {
     setShowStatus(true);
   };
 
+  const getDescription = (namespace: string, name: string) => {
+    const defs = { ...coreConfigDefinitions.configuration, ...tenantConfigDefinitions.configuration };
+    if (defs[`${namespace}:${name}`]) {
+      const schema = defs[`${namespace}:${name}`]['configurationSchema'];
+      return schema['description'] || '';
+    }
+  };
+
+  const renderStatusWithIcon = () => {
+    return (
+      <div style={{ display: 'flex' }}>
+        <StatusIcon>
+          {importedConfigurationError.length > 0 ? (
+            <CloseCircle size="medium" />
+          ) : (
+            <img src={GreenCircleCheckMark} width="16" alt="status" />
+          )}
+        </StatusIcon>
+        <div>
+          {importedConfigurationError.length > 0
+            ? `  Import ${fileName?.current?.value.split('\\').pop()} failed. Error list:  ${importedConfigurationError
+                .toString()
+                .split(' ,')
+                .join(', ')}`
+            : `   ${fileName?.current?.value.split('\\').pop()}  Imported successfully. `}
+        </div>
+      </div>
+    );
+  };
+
   useEffect(() => {
     dispatch(getConfigurationDefinitions());
   }, []);
 
   useEffect(() => {
-    if (Object.keys(exportState).length > 0) {
+    if (Object.keys(exportState).length > 0 && Object.keys(exportServices).length > 0) {
       downloadSelectedConfigurations(exportState);
     }
   }, [exportState]);
@@ -176,7 +209,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
             configuration.
           </p>
           <GoAForm>
-            <GoAFormItem error={errors?.['inputJsonFile']}>
+            <GoAFormItem>
               <input
                 id="file-uploads"
                 name="inputJsonFile"
@@ -191,8 +224,10 @@ export const ConfigurationImportExport: FunctionComponent = () => {
               <button data-testid="import-input-button" onClick={() => fileName.current.click()}>
                 {' Choose a file'}
               </button>
-              <br />
-              <p>{fileName?.current?.value ? fileName.current.value.split('\\').pop() : 'No file was chosen'}</p>
+
+              <div style={{ marginTop: '0.5rem' }}>
+                {fileName?.current?.value ? fileName.current.value.split('\\').pop() : 'No file was chosen'}
+              </div>
             </GoAFormItem>
             <GoAButton
               type="submit"
@@ -204,23 +239,16 @@ export const ConfigurationImportExport: FunctionComponent = () => {
             </GoAButton>
             <br />
             {importedConfigurationError && showStatus && (
-              <StatusText style={{ display: 'flex' }}>
-                <StatusIcon>
-                  {importedConfigurationError.length > 0 ? (
-                    <CloseCircle size="medium" />
-                  ) : (
-                    <img src={GreenCircleCheckMark} width="16" alt="status" />
-                  )}
-                </StatusIcon>
-                <div>
-                  {importedConfigurationError.length > 0
-                    ? `  Import ${fileName?.current?.value
-                        .split('\\')
-                        .pop()} failed. Error list:  ${importedConfigurationError.toString().split(' ,').join(', ')}`
-                    : `   ${fileName?.current?.value.split('\\').pop()}  Imported successfully. `}
-                </div>
+              <StatusText>
+                {renderStatusWithIcon()}
                 <br />
               </StatusText>
+            )}
+            {errorsStatus && (
+              <ErrorStatusText>
+                {errorsStatus}
+                <br />
+              </ErrorStatusText>
             )}
           </GoAForm>
           <br />
@@ -245,6 +273,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
           <React.Fragment key={namespace}>
             <h2>{namespace}</h2>
             {sortedConfiguration.namespaces[namespace].map((name) => {
+              const desc = getDescription(namespace, name);
               return (
                 <div key={toServiceKey(namespace, name)}>
                   <GoACheckbox
@@ -257,6 +286,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
                   >
                     {name}
                   </GoACheckbox>
+                  {desc && <DescriptionDiv>{`Description: ${desc}`}</DescriptionDiv>}
                 </div>
               );
             })}

@@ -34,9 +34,23 @@ When(
     notificationsObj.notificationTypeModalNameField().clear().type(name);
     notificationsObj.notificationTypeModalDescriptionField().clear().type(description);
     notificationsObj.notificationTypeModalSubscriberRolesDropdown().click({ force: true });
-    for (let i = 0; i < roles.length; i++) {
-      notificationsObj.notificationTypeModalSubscriberRolesDropdownItem(roles[i].trim()).click({ force: true });
-    }
+    // Deselect all previously selected roles and then select roles
+    notificationsObj
+      .notificationTypeModalSubscriberRolesDropdownItems()
+      .each((element) => {
+        cy.wrap(element)
+          .invoke('attr', 'class')
+          .then((classAttr) => {
+            if (classAttr?.includes('-selected')) {
+              cy.wrap(element).click();
+            }
+          });
+      })
+      .then(() => {
+        for (let i = 0; i < roles.length; i++) {
+          notificationsObj.notificationTypeModalSubscriberRolesDropdownItem(roles[i].trim()).click({ force: true });
+        }
+      });
     notificationsObj.notificationTypeModalSubscriberRolesDropdownBackground().click({ force: true }); // To collapse the dropdown after selection
     //bot checkbox
     notificationsObj

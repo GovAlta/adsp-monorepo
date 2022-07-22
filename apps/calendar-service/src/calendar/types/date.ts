@@ -16,6 +16,7 @@ export interface CalendarDate {
   isHoliday: boolean;
   isBusinessDay: boolean;
   holiday: string;
+  isInLieuOfDay: boolean;
 }
 
 export interface CalendarDateCriteria {
