@@ -160,7 +160,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
   };
 
   const getDescription = (namespace: string, name: string) => {
-    const defs = { ...coreConfigDefinitions.configuration, ...tenantConfigDefinitions.configuration };
+    const defs = { ...coreConfigDefinitions?.configuration, ...tenantConfigDefinitions?.configuration };
     if (defs[`${namespace}:${name}`]) {
       const schema = defs[`${namespace}:${name}`]['configurationSchema'];
       return schema['description'] || '';
@@ -220,6 +220,10 @@ export const ConfigurationImportExport: FunctionComponent = () => {
                 accept="application/JSON"
                 data-testid="import-input"
                 style={{ display: 'none' }}
+                onClick={(event: React.MouseEvent<HTMLInputElement, MouseEvent>) => {
+                  const element = event.target as HTMLInputElement;
+                  element.value = '';
+                }}
               />
               <button data-testid="import-input-button" onClick={() => fileName.current.click()}>
                 {' Choose a file'}
