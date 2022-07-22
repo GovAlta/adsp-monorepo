@@ -10,7 +10,7 @@ const tenantAdminObj = new TenantAdminPage();
 let originalStatus;
 let newStatus;
 
-Given('a service owner user is on service status page', function () {
+Given('a service owner user is on status overview page', function () {
   commonlib.tenantAdminDirectURLLogin(
     Cypress.config().baseUrl,
     Cypress.env('realm'),
@@ -660,4 +660,5 @@ Then('the user views {string} as the email of contact information', function (em
 
 Then('the user views the link for public status page {string}', function (link) {
   statusObj.publicStatusPageUrl().invoke('text').should('contain', link);
+  cy.get('[class*="copy-url"]').invoke('attr', 'href', 'https://status.adsp-uat.alberta.ca/autotest');
 });
