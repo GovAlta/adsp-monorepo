@@ -662,7 +662,13 @@ Then('the public status app displays {string} as support email', function (email
   cy.visit('https://status.adsp-uat.alberta.ca/autotest');
   cy.wait(3000);
   statusObj
-    .publicStatusPageContainer()
+    .statusNotificationPleaseContact()
+    .should('have.attr', 'href')
+    .then((href) => {
+      expect(href).to.contain(email);
+    });
+  statusObj
+    .statusNotificationSignupDescription()
     .should('have.attr', 'href')
     .then((href) => {
       expect(href).to.contain(email);
