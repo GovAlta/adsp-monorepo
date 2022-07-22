@@ -1,6 +1,7 @@
 using Adsp.Sdk.Access;
 using Adsp.Sdk.Configuration;
 using Adsp.Sdk.Directory;
+using Adsp.Sdk.Event;
 using Adsp.Sdk.Registration;
 using Adsp.Sdk.Tenancy;
 using Microsoft.AspNetCore.Http;
@@ -47,6 +48,14 @@ public static class ServiceCollectionExtensions
         options
       )
     ));
+    services.Add(ServiceDescriptor.Singleton<IEventService>(
+      (providers) => new EventService(
+        providers.GetRequiredService<ILogger<EventService>>(),
+        providers.GetRequiredService<IServiceDirectory>(),
+        providers.GetRequiredService<ITokenProvider>(),
+        options
+      ))
+    );
     services.AddRegistration(options);
 
     return services;

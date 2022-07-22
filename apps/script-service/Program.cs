@@ -1,3 +1,4 @@
+using Adsp.Platform.ScriptService.Services;
 using Adsp.Sdk;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Swagger;
@@ -31,6 +32,7 @@ internal class Program
       AccessServiceUrl = adspConfiguration.GetValue<Uri>("AccessServiceUrl"),
       DirectoryUrl = adspConfiguration.GetValue<Uri>("DirectoryUrl")
     });
+    builder.Services.AddSingleton<ILuaScriptService, LuaScriptService>();
 
     var app = builder.Build();
 

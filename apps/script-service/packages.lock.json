@@ -1310,6 +1310,7 @@
           "Microsoft.Extensions.Caching.Memory": "6.0.0",
           "Microsoft.Extensions.DependencyInjection": "6.0.0",
           "Microsoft.NET.Test.Sdk": "17.2.0",
+          "NJsonSchema": "10.7.2",
           "Polly": "7.2.3",
           "RestSharp": "108.0.1",
           "xunit": "2.4.1"

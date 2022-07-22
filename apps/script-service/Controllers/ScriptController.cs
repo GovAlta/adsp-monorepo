@@ -1,11 +1,11 @@
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Adsp.Platform.ScriptService.Model;
+using Adsp.Platform.ScriptService.Services;
 using Adsp.Sdk;
+using Adsp.Sdk.Error;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using NLua;
 
 namespace Adsp.Platform.ScriptService.Controller;
 
@@ -15,10 +15,12 @@ namespace Adsp.Platform.ScriptService.Controller;
 public class ScriptController : ControllerBase
 {
   private readonly ILogger<ScriptController> _logger;
+  private readonly ILuaScriptService _luaService;
 
-  public ScriptController(ILogger<ScriptController> logger)
+  public ScriptController(ILogger<ScriptController> logger, ILuaScriptService luaService)
   {
     _logger = logger;
+    _luaService = luaService;
   }
 
 
@@ -37,15 +39,15 @@ public class ScriptController : ControllerBase
   [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
   public async Task<ScriptDefinition> GetScript(string? script)
   {
-    if (String.IsNullOrEmpty(script))
+    if (String.IsNullOrWhiteSpace(script))
     {
-      throw new ArgumentNullException(nameof(script));
+      throw new RequestArgumentException("script parameter cannot be null or empty.");
     }
 
     var (definitions, _) = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>>();
     if (definitions?.TryGetValue(script, out ScriptDefinition? definition) != true)
     {
-      throw new ArgumentException($"Script definition with ID '{script}' not found.", nameof(script));
+      throw new NotFoundException($"Script definition with ID '{script}' not found.");
     }
 
     return definition;
@@ -56,22 +58,20 @@ public class ScriptController : ControllerBase
   [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant, Roles = ServiceRoles.ScriptRunner)]
   public async Task<IEnumerable<object>> RunScript(string? script, [FromBody] IDictionary<string, JsonElement> inputs)
   {
-    if (String.IsNullOrEmpty(script))
+    if (String.IsNullOrWhiteSpace(script))
     {
-      throw new ArgumentNullException(nameof(script));
+      throw new RequestArgumentException("script parameter cannot be null or empty.");
     }
 
     var (definitions, _) = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>>();
-    // if (definitions?.TryGetValue(script, out ScriptDefinition? definition) != true)
-    // {
-    //   throw new ArgumentException($"Script definition with ID '{script}' not found.", nameof(script));
-    // }
-
-    IEnumerable<object> results;
-    using (var lua = new Lua())
+    if (definitions?.TryGetValue(script, out ScriptDefinition? definition) != true || definition == null)
     {
-      lua.State.Encoding = Encoding.UTF8;
-      lua["inputs"] = inputs.ToDictionary((input) => input.Key, (input) =>
+      throw new NotFoundException($"Script definition with ID '{script}' not found.");
+    }
+
+    var luaInputs = inputs.ToDictionary(
+      (input) => input.Key,
+      (input) =>
       {
         object? converted = null;
         switch (input.Value.ValueKind)
@@ -86,22 +86,13 @@ public class ScriptController : ControllerBase
           case JsonValueKind.False:
             converted = input.Value.GetBoolean();
             break;
-        }
+        };
 
         return converted;
-      });
-      lua.LoadCLRPackage();
+      }
+    );
 
-      lua.DoString(@"
-        import ('System.Collections.Generic')
-        import = function () end
-      ");
-
-      results = lua.DoString(@"
-        return inputs['test'], inputs['value']
-      ");
-    }
-
+    var results = await _luaService.RunScript(definition, luaInputs);
     return results;
   }
 }

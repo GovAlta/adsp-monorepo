@@ -26,6 +26,12 @@
 
   <ItemGroup>
 
+    <None Include="scripts/*.lua" CopyToOutputDirectory="PreserveNewest" />
+
+  </ItemGroup>
+
+  <ItemGroup>
+
     <PackageReference Include="NJsonSchema" Version="10.7.2" />
 
     <PackageReference Include="NLua" Version="1.6.0" />
