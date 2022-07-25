@@ -29,4 +29,17 @@ describe('renamePrefixProperties', () => {
     expect(result).toHaveProperty('nested.META_prefixed');
     expect(result['nested']['META_prefixed']).toBe(true);
   });
+
+  it('can handle array', () => {
+    const value = {
+      $prefixed: [true],
+      notPrefixed: false,
+    };
+
+    const result = renamePrefixProperties(value, '$', 'META_');
+    expect(result).toHaveProperty('META_prefixed');
+    expect(result['META_prefixed']).toEqual(expect.arrayContaining([true]));
+    expect(result).toHaveProperty('notPrefixed');
+    expect(result['notPrefixed']).toBe(false);
+  });
 });
