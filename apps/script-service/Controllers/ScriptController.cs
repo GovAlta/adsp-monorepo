@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Adsp.Platform.ScriptService.Events;
 using Adsp.Platform.ScriptService.Model;
 using Adsp.Platform.ScriptService.Services;
 using Adsp.Sdk;
@@ -16,11 +17,13 @@ public class ScriptController : ControllerBase
 {
   private readonly ILogger<ScriptController> _logger;
   private readonly ILuaScriptService _luaService;
+  private readonly IEventService _evenService;
 
-  public ScriptController(ILogger<ScriptController> logger, ILuaScriptService luaService)
+  public ScriptController(ILogger<ScriptController> logger, ILuaScriptService luaService, IEventService eventService)
   {
     _logger = logger;
     _luaService = luaService;
+    _evenService = eventService;
   }
 
 
@@ -29,7 +32,7 @@ public class ScriptController : ControllerBase
   [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
   public async Task<IEnumerable<ScriptDefinition>> GetScripts()
   {
-    var (definitions, _) = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>>();
+    var definitions = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, Dictionary<string, ScriptDefinition>>();
 
     return definitions?.Values ?? Enumerable.Empty<ScriptDefinition>();
   }
@@ -44,7 +47,7 @@ public class ScriptController : ControllerBase
       throw new RequestArgumentException("script parameter cannot be null or empty.");
     }
 
-    var (definitions, _) = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>>();
+    var definitions = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, Dictionary<string, ScriptDefinition>>();
     if (definitions?.TryGetValue(script, out ScriptDefinition? definition) != true)
     {
       throw new NotFoundException($"Script definition with ID '{script}' not found.");
@@ -63,7 +66,9 @@ public class ScriptController : ControllerBase
       throw new RequestArgumentException("script parameter cannot be null or empty.");
     }
 
-    var (definitions, _) = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>>();
+    var user = HttpContext.GetAdspUser();
+
+    var definitions = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, Dictionary<string, ScriptDefinition>>();
     if (definitions?.TryGetValue(script, out ScriptDefinition? definition) != true || definition == null)
     {
       throw new NotFoundException($"Script definition with ID '{script}' not found.");
@@ -93,6 +98,15 @@ public class ScriptController : ControllerBase
     );
 
     var results = await _luaService.RunScript(definition, luaInputs);
+    await _evenService.Send(
+      new DomainEvent<ScriptExecuted>(
+        ScriptExecuted.EVENT_NAME,
+        DateTime.Now,
+        new ScriptExecuted { Definition = definition, ExecutedBy = user }
+      ),
+      user.Tenant.Id
+    );
+
     return results;
   }
 }

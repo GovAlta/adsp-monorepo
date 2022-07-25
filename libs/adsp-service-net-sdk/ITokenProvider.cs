@@ -1,4 +1,4 @@
-namespace Adsp.Sdk.Access;
+namespace Adsp.Sdk;
 public interface ITokenProvider
 {
   Task<string> GetAccessToken();
