@@ -28,6 +28,7 @@
     "fileApi":""
   },
   "baseUrl": "https://adsp-dev.gov.ab.ca",
+  "statusAppUrl": "https://status.adsp-uat.alberta.ca/autotest",
   "fileServerFolder": ".",
   "fixturesFolder": "./src/fixtures",
   "integrationFolder": "./src/integration",
