@@ -94,9 +94,6 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
     //payloadSchemaObj['description'] = definition.description;
     // if no errors in the form then save the definition
 
-    console.log(JSON.stringify(definition) + '<definitiondefinitiondefinitiondefinitiondefinition');
-
-    console.log(JSON.stringify(definition.configuration.description) + '<definition.configuration.description');
     onSave({
       ...definition,
       configuration: { schema: payloadSchemaObj, description: definition.configuration.description },
