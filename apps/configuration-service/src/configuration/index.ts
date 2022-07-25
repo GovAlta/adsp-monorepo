@@ -1,4 +1,5 @@
 import { User } from '@abgov/adsp-service-sdk';
+import { isEqual as isDeepEqual } from 'lodash';
 import { Application } from 'express';
 import { ConfigurationServiceRoles } from './roles';
 import { ConfigurationRouterProps, createConfigurationRouter } from './router';
@@ -39,7 +40,14 @@ export const applyConfigurationMiddleware = async (
     schema
   );
 
-  if (!entity.latest) {
+  const serviceConfiguration = {
+    description: 'Definitions of configuration with description and schema.',
+    configurationSchema: schema,
+  };
+  if (
+    !entity.latest ||
+    !isDeepEqual(serviceConfiguration, entity.latest[`${serviceId.namespace}:${serviceId.service}`])
+  ) {
     await entity.update({ isCore: true, roles: [ConfigurationServiceRoles.ConfigurationAdmin] } as User, {
       [`${serviceId.namespace}:${serviceId.service}`]: { configurationSchema: schema },
     });
