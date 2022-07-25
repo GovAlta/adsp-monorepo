@@ -21,22 +21,20 @@ class NotificationsPage {
     return cy.get('[data-testid="form-description"]');
   }
 
-  notificationTypeModalSubscriberRolesDropdown() {
-    return cy.get('[data-testid="subscriberRoles-dropdown"]');
+  notificationTypeModalPublicCheckbox() {
+    return cy.xpath('//input[@name="anonymousRead-checkbox"]/parent::div');
   }
 
-  notificationTypeModalSubscriberRolesDropdownItem(text) {
+  notificationTypeModalRolesCheckboxes() {
     return cy.xpath(
-      `//*[@data-testid="subscriberRoles-dropdown"]/following-sibling::*//*[contains(text(), "${text}")]`
+      '//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-label"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]'
     );
   }
 
-  notificationTypeModalSubscriberRolesDropdownItems() {
-    return cy.xpath('//*[@data-testid="subscriberRoles-dropdown"]/following-sibling::*//li');
-  }
-
-  notificationTypeModalSubscriberRolesDropdownBackground() {
-    return cy.get('[data-testid="subscriberRoles-dropdown-background"]');
+  notificationTypeModalRolesCheckbox(roleLabel) {
+    return cy.xpath(
+      `//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-label" and text()="${roleLabel}"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]`
+    );
   }
 
   notificationChannelCheckbox(channelName) {
