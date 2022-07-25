@@ -7,6 +7,7 @@ using RestSharp;
 namespace Adsp.Sdk.Configuration;
 internal class ConfigurationService : IConfigurationService
 {
+  private static readonly AdspId CONFIGURATION_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:configuration-service:v2");
   private readonly ILogger<ConfigurationService> _logger;
   private readonly IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions { });
   private readonly IServiceDirectory _serviceDirectory;
@@ -26,7 +27,7 @@ internal class ConfigurationService : IConfigurationService
     _serviceDirectory = serviceDirectory;
     _tokenProvider = tokenProvider;
     _serviceId = options.ServiceId;
-    _combine = options.CombineConfiguration;
+    _combine = options.Configuration?.CombineConfiguration;
     _client = new RestClient();
   }
 
@@ -64,7 +65,7 @@ internal class ConfigurationService : IConfigurationService
     T? configuration = default;
     try
     {
-      var configurationServiceUrl = await _serviceDirectory.GetServiceUrl(AdspId.Parse("urn:ads:platform:configuration-service:v2"));
+      var configurationServiceUrl = await _serviceDirectory.GetServiceUrl(CONFIGURATION_SERVICE_API_ID);
       var token = await _tokenProvider.GetAccessToken();
 
       var requestUrl = new Uri(configurationServiceUrl, $"v2/configuration/{_serviceId.Namespace}/{_serviceId.Service}/latest");
