@@ -20,6 +20,6 @@ FROM registry.access.redhat.com/ubi8/dotnet-60-runtime
 ARG SERVICE
 
 COPY ./dist/apps/${SERVICE} .
-COPY --from=builder /opt/app-root/src/_build/lib64/liblua54.so ./runtimes/linux-x64/liblua54.so
+COPY --from=builder /opt/app-root/src/_build/lib64/liblua54.so ./runtimes/linux-x64/native/liblua54.so
 
 CMD dotnet Adsp.Platform.ScriptService.dll
