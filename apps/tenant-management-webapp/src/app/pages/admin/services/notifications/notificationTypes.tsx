@@ -2,7 +2,7 @@ import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton, GoACard } from '@abgov/react-components';
 import { Grid, GridItem } from '@components/Grid';
-import { NotificationTypeModalForm } from './edit';
+import { NotificationTypeModalForm } from './addEditNotification/addEditNotification';
 import { EventModalForm } from './editEvent';
 import { IndicatorWithDelay } from '@components/Indicator';
 import * as handlebars from 'handlebars';
@@ -41,6 +41,8 @@ import { dynamicGeneratePayload } from '@lib/dynamicPlaceHolder';
 import { convertToSuggestion } from '@lib/autoComplete';
 import { useDebounce } from '@lib/useDebounce';
 import { subscriberAppUrlSelector } from './selectors';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
+import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 
 const emptyNotificationType: NotificationItem = {
   name: '',
@@ -107,6 +109,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const htmlPayload = dynamicGeneratePayload(tenant, eventDef, subscriberAppUrl);
   const serviceName = `${selectedEvent?.namespace}:${selectedEvent?.name}`;
   const contact = useSelector((state: RootState) => state.notification.supportContact);
+  const tenantClientsRoles = useSelector(tenantRolesAndClients);
 
   const getEventSuggestion = () => {
     if (eventDef) {
@@ -169,6 +172,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   useEffect(() => {
     dispatch(FetchNotificationConfigurationService());
+    dispatch(fetchKeycloakServiceRoles());
     dispatch(FetchRealmRoles());
   }, [dispatch]);
 
@@ -380,11 +384,13 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                         <div data-testid="tenant-subscriber-roles">
                           Subscriber roles:{' '}
                           <b>
-                            {notificationType?.subscriberRoles
-                              .filter((value) => value !== 'anonymousRead')
-                              .map(
-                                (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
-                              )}{' '}
+                            {!notificationType.publicSubscribe &&
+                              notificationType?.subscriberRoles
+                                .filter((value) => value !== 'anonymousRead')
+                                .map(
+                                  (roles, ix) =>
+                                    roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
+                                )}{' '}
                           </b>
                         </div>
                       )}
@@ -673,6 +679,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         initialValue={selectedType}
         errors={errors}
         title={formTitle}
+        tenantClients={tenantClientsRoles.tenantClients}
+        realmRoles={tenantClientsRoles.realmRoles}
         onSave={(type) => {
           type.subscriberRoles = type.subscriberRoles || [];
           type.events = type.events || [];
