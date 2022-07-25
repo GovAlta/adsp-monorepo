@@ -9,9 +9,9 @@ items:
         component: api
       name: script-service
     data:
-      Adsp_AccessServiceUrl: https://access.adsp-dev.gov.ab.ca
-      Adsp_DirectoryUrl: https://directory-service.adsp-dev.gov.ab.ca
-      Logging_LogLevel_Default: debug
+      Adsp__AccessServiceUrl: https://access.adsp-dev.gov.ab.ca
+      Adsp__DirectoryUrl: https://directory-service.adsp-dev.gov.ab.ca
+      Logging__LogLevel__Default: debug
   - apiVersion: v1
     kind: Secret
     metadata:
@@ -20,5 +20,5 @@ items:
         component: api
       name: script-service
     stringData:
-      Adsp_ServiceId: urn:ads:platform:script-service
-      Adsp_ClientSecret:
+      Adsp__ServiceId: urn:ads:platform:script-service
+      Adsp__ClientSecret:
