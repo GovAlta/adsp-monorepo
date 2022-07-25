@@ -3,10 +3,12 @@ import commonlib from '../common/common-library';
 import common from '../common/common.page';
 import ServiceStatusPage from './service-status.page';
 import TenantAdminPage from '../tenant-admin/tenant-admin.page';
+import StatusAppPage from '../status-app/status-app.page';
 
 const commonObj = new common();
 const statusObj = new ServiceStatusPage();
 const tenantAdminObj = new TenantAdminPage();
+const statusAppObj = new StatusAppPage();
 let originalStatus;
 let newStatus;
 
@@ -661,13 +663,13 @@ Then('the user views {string} as the email of contact information', function (em
 Then('the public status app displays {string} as support email', function (email) {
   cy.visit('https://status.adsp-uat.alberta.ca/autotest');
   cy.wait(3000);
-  statusObj
+  statusAppObj
     .statusNotificationPleaseContact()
     .should('have.attr', 'href')
     .then((href) => {
       expect(href).to.contain(email);
     });
-  statusObj
+  statusAppObj
     .statusNotificationSignupDescription()
     .should('have.attr', 'href')
     .then((href) => {
