@@ -267,6 +267,8 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
 
         yield put(replaceConfigurationDataSuccessAction());
       } catch (err) {
+        replaceErrorConfiguration.push(`${action.configuration.namespace}:${action.configuration.name} `);
+        yield put(getReplaceConfigurationErrorSuccessAction(replaceErrorConfiguration));
         yield put(ErrorNotification({ message: err.message }));
       }
     } else {

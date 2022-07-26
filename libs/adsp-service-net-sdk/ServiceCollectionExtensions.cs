@@ -51,6 +51,7 @@ public static class ServiceCollectionExtensions
     services.Add(ServiceDescriptor.Singleton<IEventService>(
       (providers) => new EventService(
         providers.GetRequiredService<ILogger<EventService>>(),
+        providers.GetRequiredService<IServiceRegistrar>(),
         providers.GetRequiredService<IServiceDirectory>(),
         providers.GetRequiredService<ITokenProvider>(),
         options
@@ -73,10 +74,14 @@ public static class ServiceCollectionExtensions
       throw new ArgumentNullException(nameof(options));
     }
 
+    services.AddAdspSdkServices(options);
+
+    var providers = services.BuildServiceProvider();
+    var tenantService = providers.GetRequiredService<ITenantService>();
+
     services
-      .AddAdspSdkServices(options)
       .AddAuthentication(AdspAuthenticationSchemes.Tenant)
-      .AddRealmJwtAuthentication(AdspAuthenticationSchemes.Tenant, options);
+      .AddRealmJwtAuthentication(AdspAuthenticationSchemes.Tenant, tenantService, options);
 
     return services;
   }
@@ -96,12 +101,13 @@ public static class ServiceCollectionExtensions
     services.AddAdspSdkServices(options);
 
     var providers = services.BuildServiceProvider();
+    var tenantService = providers.GetRequiredService<ITenantService>();
     var issuerCache = providers.GetRequiredService<IIssuerCache>();
     var keyProvider = providers.GetRequiredService<ITenantKeyProvider>();
 
     services
       .AddAuthentication()
-      .AddRealmJwtAuthentication(AdspAuthenticationSchemes.Core, options)
+      .AddRealmJwtAuthentication(AdspAuthenticationSchemes.Core, tenantService, options)
       .AddTenantJwtAuthentication(AdspAuthenticationSchemes.Tenant, issuerCache, keyProvider, options);
 
     return services;

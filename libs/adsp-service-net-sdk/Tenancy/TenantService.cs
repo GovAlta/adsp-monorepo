@@ -8,6 +8,7 @@ using RestSharp;
 namespace Adsp.Sdk.Tenancy;
 internal class TenantService : ITenantService
 {
+  private static readonly AdspId TENANT_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:tenant-service:v2");
   private readonly ILogger<TenantService> _logger;
   private readonly IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions { });
   private readonly IServiceDirectory _serviceDirectory;
@@ -67,7 +68,7 @@ internal class TenantService : ITenantService
 
   private async Task<IList<Tenant>> RetrieveTenants()
   {
-    var tenantApiUrl = await _serviceDirectory.GetServiceUrl(AdspId.Parse("urn:ads:platform:tenant-service:v2"));
+    var tenantApiUrl = await _serviceDirectory.GetServiceUrl(TENANT_SERVICE_API_ID);
     var requestUrl = new Uri(tenantApiUrl, "v2/tenants").AbsoluteUri;
 
     var tenants = await _retryPolicy.ExecuteAsync(async () =>
