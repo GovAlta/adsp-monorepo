@@ -37,6 +37,10 @@ class NotificationsPage {
     );
   }
 
+  notificationTypeModalClientRoleCheckbox(clientRole) {
+    return cy.xpath(`//input[@type="checkbox" and @value="${clientRole}"]/parent::div`);
+  }
+
   notificationChannelCheckbox(channelName) {
     return cy.xpath(
       `//*[@class="modal"]//input[@name="${channelName}"]/parent::*[contains(@class, "goa-checkbox-container")]`
