@@ -175,3 +175,15 @@ Then('the user views the details of {string} under Core streams', function (stre
     .invoke('text')
     .should('contain', '"name": "' + streamName + '"');
 });
+
+Given('a tenant admin user is on event streams page', function () {
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+  commonObj.adminMenuItem('menu-event').click();
+  commonObj.serviceTab('Event', 'Streams').click();
+  cy.wait(2000);
+});
