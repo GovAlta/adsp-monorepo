@@ -818,10 +818,20 @@ When('the user views the link for managing email subscription', function () {
     .its('0.contentDocument.body')
     .find('footer')
     .contains('Please do not reply to this email. Manage your subscription here.');
+
+  const linkURL1 = Cypress.config('baseUrl');
+  const urlToTenantLogin = Cypress.config('baseUrl');
+  cy.log(urlToTenantLogin + '');
+  // const modified = urlToTenantLogin.slice(0, 7) + 'subscription.' + Cypress.env('realm') + '/login';
+
   notificationsObj
     .editContactModalBodyEmailPreviewPane()
     .its('0.contentDocument.body')
     .find('footer')
     .find('[class="goa-footer-event"]')
-    .find('a[href*="https://subscription.adsp-uat.alberta.ca/2ef492af-0a16-470b-9ea5-c8bfa7b08a7c/login"]');
+    // .find('a[href*="https://subscription.adsp-uat.alberta.ca/2ef492af-0a16-470b-9ea5-c8bfa7b08a7c/login"]');
+    // https://adsp-uat.alberta.ca
+    .find('a[href]');
+  // .should('contain', linkURL1);
+  // .find('a[href*="Cypress.config().baseUrl.slice(0,7) + 'subscription.'+Cypress.config().baseUrl.slice(7) + '/' + Cypress.env(realm) + '/login"]');
 });
