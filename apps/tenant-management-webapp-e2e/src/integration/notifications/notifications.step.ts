@@ -58,7 +58,11 @@ When(
             })
             .then(() => {
               for (let i = 0; i < roles.length; i++) {
-                notificationsObj.notificationTypeModalRolesCheckbox(roles[i].trim()).click();
+                if (roles[i].includes(':')) {
+                  notificationsObj.notificationTypeModalClientRoleCheckbox(roles[i].trim()).click();
+                } else {
+                  notificationsObj.notificationTypeModalRolesCheckbox(roles[i].trim()).click();
+                }
               }
             });
         }
