@@ -661,7 +661,7 @@ Then('the user views {string} as the email of contact information', function (em
 });
 
 Then('the public status app displays {string} as support email', function (email) {
-  cy.visit('https://status.adsp-uat.alberta.ca/autotest');
+  cy.visit('statusAppUrl');
   cy.wait(3000);
   statusAppObj
     .statusNotificationPleaseContact()
