@@ -110,6 +110,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
       setErrorsStatus('The json file not match Configuration schema');
       return;
     }
+    dispatch(resetReplaceConfigurationListAction());
     setImportConfigJson(importConfig);
     setImportNameList(configList);
     setOpenImportModal(true);
