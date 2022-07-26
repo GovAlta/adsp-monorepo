@@ -659,20 +659,3 @@ Then('the user clicks Save button on contact information modal', function () {
 Then('the user views {string} as the email of contact information', function (email) {
   statusObj.contactInformationEmailDisplay().invoke('text').should('contain', email);
 });
-
-Then('the public status app displays {string} as support email', function (email) {
-  cy.visit('statusAppUrl');
-  cy.wait(3000);
-  statusAppObj
-    .statusNotificationPleaseContact()
-    .should('have.attr', 'href')
-    .then((href) => {
-      expect(href).to.contain(email);
-    });
-  statusAppObj
-    .statusNotificationSignupDescription()
-    .should('have.attr', 'href')
-    .then((href) => {
-      expect(href).to.contain(email);
-    });
-});
