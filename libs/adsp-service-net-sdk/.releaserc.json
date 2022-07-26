@@ -11,6 +11,7 @@
     [
       "@abgov/semantic-release-nuget",
       {
+        "noBuild": true,
         "nupkgRoot": "dist/libs/adsp-service-net-sdk",
         "includeSymbols": true,
         "includeSource": true,
