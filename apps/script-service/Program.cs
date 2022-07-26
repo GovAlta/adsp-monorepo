@@ -27,50 +27,54 @@ internal class Program
     );
 
     var adspConfiguration = builder.Configuration.GetSection("Adsp");
-    builder.Services.AddAdspForPlatformService(new AdspOptions
-    {
-      ServiceId = AdspId.Parse(adspConfiguration.GetValue<string>("ServiceId")),
-      ClientSecret = adspConfiguration.GetValue<string>("ClientSecret"),
-      AccessServiceUrl = adspConfiguration.GetValue<Uri>("AccessServiceUrl"),
-      DirectoryUrl = adspConfiguration.GetValue<Uri>("DirectoryUrl"),
-      Configuration = new ConfigurationDefinition<Dictionary<string, ScriptDefinition>>(
-        "Definitions of the scripts available to run.",
-        (tenant, core) =>
-        {
-          var combined = new Dictionary<string, ScriptDefinition>();
-          if (tenant is IDictionary<string, ScriptDefinition> tenantDefinitions)
+    builder.Services.AddAdspForPlatformService(
+      new AdspOptions
+      {
+        DisplayName = "Script service",
+        Description = "Service that execute configured scripts.",
+        ServiceId = AdspId.Parse(adspConfiguration.GetValue<string>("ServiceId")),
+        ClientSecret = adspConfiguration.GetValue<string>("ClientSecret"),
+        AccessServiceUrl = adspConfiguration.GetValue<Uri>("AccessServiceUrl"),
+        DirectoryUrl = adspConfiguration.GetValue<Uri>("DirectoryUrl"),
+        Configuration = new ConfigurationDefinition<Dictionary<string, ScriptDefinition>>(
+          "Definitions of the scripts available to run.",
+          (tenant, core) =>
           {
-            foreach (var entry in tenantDefinitions)
+            var combined = new Dictionary<string, ScriptDefinition>();
+            if (tenant is IDictionary<string, ScriptDefinition> tenantDefinitions)
             {
-              combined[entry.Key] = entry.Value;
+              foreach (var entry in tenantDefinitions)
+              {
+                combined[entry.Key] = entry.Value;
+              }
             }
-          }
 
-          if (core is IDictionary<string, ScriptDefinition> coreDefinitions)
-          {
-            foreach (var entry in coreDefinitions)
+            if (core is IDictionary<string, ScriptDefinition> coreDefinitions)
             {
-              combined[entry.Key] = entry.Value;
+              foreach (var entry in coreDefinitions)
+              {
+                combined[entry.Key] = entry.Value;
+              }
             }
-          }
 
-          return combined;
+            return combined;
+          }
+        ),
+        Roles = new[] {
+          new ServiceRole {
+            Role = ServiceRoles.ScriptRunner,
+            Description = "Script runner role that allows execution of scripts.",
+            InTenantAdmin = true
+          }
+        },
+        Events = new[] {
+          new DomainEventDefinition<ScriptExecuted>(
+            ScriptExecuted.EVENT_NAME,
+            "Signalled when a script is executed."
+          )
         }
-      ),
-      Roles = new[] {
-        new ServiceRole {
-          Role = ServiceRoles.ScriptRunner,
-          Description = "Script runner role that allows execution of scripts.",
-          InTenantAdmin = true
-        }
-      },
-      Events = new[] {
-        new DomainEventDefinition<ScriptExecuted>(
-          ScriptExecuted.EVENT_NAME,
-          "Signalled when a script is executed."
-        )
       }
-    });
+    );
     builder.Services.AddSingleton<ILuaScriptService, LuaScriptService>();
 
     var app = builder.Build();
@@ -79,6 +83,12 @@ internal class Program
 
     app.UseAuthorization();
     app.UseAdsp();
+    app.UseAdspMetadata(new AdspMetadataOptions
+    {
+      SwaggerJsonPath = "docs/v1/swagger.json",
+      ApiPath = "script/v1"
+    });
+
     app.MapControllers();
 
     app.Run();

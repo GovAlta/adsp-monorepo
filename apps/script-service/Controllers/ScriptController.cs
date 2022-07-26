@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Adsp.Platform.ScriptService.Controller;
 
 [ApiController]
-[Route("/script/v2")]
+[Route("/script/v1")]
 [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
 public class ScriptController : ControllerBase
 {

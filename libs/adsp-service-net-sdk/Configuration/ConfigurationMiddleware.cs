@@ -11,12 +11,19 @@ internal class ConfigurationMiddleware
   private readonly ILogger<ConfigurationMiddleware> _logger;
   private readonly IConfigurationService _configurationService;
   private readonly RequestDelegate _next;
+  private readonly AdspId _serviceId;
 
-  public ConfigurationMiddleware(ILogger<ConfigurationMiddleware> logger, IConfigurationService configurationService, RequestDelegate next)
+  public ConfigurationMiddleware(ILogger<ConfigurationMiddleware> logger, IConfigurationService configurationService, AdspOptions options, RequestDelegate next)
   {
+    if (options?.ServiceId == null)
+    {
+      throw new ArgumentException("Provided options must include value for ServiceId.");
+    }
+
     _logger = logger;
     _configurationService = configurationService;
     _next = next;
+    _serviceId = options.ServiceId;
   }
 
   public async Task InvokeAsync(HttpContext httpContext)
@@ -26,7 +33,7 @@ internal class ConfigurationMiddleware
       throw new ArgumentNullException(nameof(httpContext));
     }
 
-    httpContext.Items.Add(ConfigurationServiceContextKey, _configurationService);
+    httpContext.Items.Add(ConfigurationServiceContextKey, (_serviceId, _configurationService));
 
     await _next(httpContext);
   }
