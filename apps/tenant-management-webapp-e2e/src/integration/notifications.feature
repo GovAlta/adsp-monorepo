@@ -254,7 +254,7 @@ Feature: Notifications
     Then Preview event template modal is closed
 
   @TEST_CS-1289 @REQ_CS-1269 @regression
-  Scenario: As a tenant admin, I can access subscription management from the notification email, so that I can view and modify the subscription.
+  Scenario: As a tenant admin, I can access subscription management from the notification email preview.
     Given a tenant admin user is on notification types page
     Then the user "views" the event of "status-service:health-check-started" in "Application health check change"
     When the user clicks "edit" button for "status-service:health-check-started" in "Application health check change"
