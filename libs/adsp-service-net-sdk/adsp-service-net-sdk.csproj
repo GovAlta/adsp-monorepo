@@ -15,6 +15,10 @@
     <IsPackable>true</IsPackable>
 
     <Company>Government of Alberta</Company>
+
+    <RepositoryUrl>https://github.com/GovAlta/adsp-monorepo.git</RepositoryUrl>
+
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
