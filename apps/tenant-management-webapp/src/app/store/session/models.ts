@@ -1,10 +1,15 @@
 export interface Indicator {
-  show: boolean;
+  show?: boolean;
   message?: string;
   details?: Record<string, ActionState>;
 }
 
-export type ActionState = 'start' | 'in_progress' | 'completed' | 'error';
+export enum ActionState {
+  start,
+  inProcess,
+  completed,
+  error,
+}
 
 export interface ElementIndicator {
   show: boolean;
