@@ -1,8 +1,9 @@
-using Adsp.Sdk.Tenancy;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace Adsp.Sdk.Access;
+[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
 internal class IssuerCache : IIssuerCache
 {
   private readonly ILogger<IssuerCache> _logger;

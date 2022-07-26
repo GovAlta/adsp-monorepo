@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using RestSharp;
 
 namespace Adsp.Sdk.Configuration;
+[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
 internal class ConfigurationService : IConfigurationService
 {
   private static readonly AdspId CONFIGURATION_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:configuration-service:v2");

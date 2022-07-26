@@ -1,8 +1,10 @@
 
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using SocketIOClient;
 
 namespace Adsp.Sdk.Configuration;
+[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
 internal class ConfigurationUpdateClient
 {
   private static readonly AdspId PushServiceId = AdspId.Parse("urn:ads:platform:push-service");

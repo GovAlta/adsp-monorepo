@@ -1,10 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
-using Adsp.Sdk.Access;
 using Adsp.Sdk.Registration;
 using Microsoft.Extensions.Logging;
 using RestSharp;
 
 namespace Adsp.Sdk.Event;
+[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
 internal class EventService : IEventService
 {
   private static readonly AdspId EVENT_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:event-service:v1");
