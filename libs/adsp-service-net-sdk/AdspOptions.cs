@@ -10,6 +10,4 @@ public class AdspOptions : ServiceRegistration
   public string? ClientSecret { get; set; }
 
   public string? Realm { get; set; } = "core";
-
-  public Func<object?, object?, object?>? CombineConfiguration { get; set; }
 }

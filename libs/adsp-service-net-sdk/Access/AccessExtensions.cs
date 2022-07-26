@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using System.Text.Json;
-using Adsp.Sdk.Tenancy;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,10 +8,20 @@ using Microsoft.IdentityModel.Tokens;
 namespace Adsp.Sdk.Access;
 internal static class AccessExtensions
 {
-  internal const string TenantContextKey = "ADSP:Tenant";
+  internal const string AdspContextKey = "ADSP:Context";
 
   private static TokenValidatedContext AddAdspContext(this TokenValidatedContext context, AdspId serviceId, Tenant? tenant)
   {
+    var subClaim = context.Principal?.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier);
+    var usernameClaim = context.Principal?.Claims.FirstOrDefault(claim => claim.Type == "preferred_username");
+    var emailClaim = context.Principal?.Claims.FirstOrDefault(claim => claim.Type == "email");
+
+    // If there is no subject, then something isn't right about the token authentication.
+    if (subClaim == null)
+    {
+      return context;
+    }
+
     var accessIdentity = new ClaimsIdentity();
     if (tenant?.Id != null)
     {
@@ -67,7 +76,17 @@ internal static class AccessExtensions
     }
 
     context.Principal?.AddIdentity(accessIdentity);
-    context.HttpContext.Items.Add(TenantContextKey, tenant);
+
+    context.HttpContext.Items.Add(
+      AdspContextKey,
+      new User(
+        accessIdentity.HasClaim(AdspClaimTypes.Core, "true"),
+        tenant,
+        subClaim.Value,
+        usernameClaim?.Value,
+        emailClaim?.Value
+      )
+    );
 
     return context;
   }
@@ -75,8 +94,8 @@ internal static class AccessExtensions
   internal static AuthenticationBuilder AddRealmJwtAuthentication(
     this AuthenticationBuilder builder,
     string authenticationScheme,
-    AdspOptions options,
-    Tenant? tenant = null
+    ITenantService tenantService,
+    AdspOptions options
   )
   {
     if (options.AccessServiceUrl == null)
@@ -100,6 +119,12 @@ internal static class AccessExtensions
         {
           OnTokenValidated = async (TokenValidatedContext context) =>
           {
+            Tenant? tenant = null;
+            if (String.Equals(AdspAuthenticationSchemes.Tenant, authenticationScheme, StringComparison.Ordinal))
+            {
+              var tenants = await tenantService.GetTenants();
+              tenant = tenants.FirstOrDefault();
+            }
             context.AddAdspContext(options.ServiceId, tenant);
           }
         };
@@ -125,9 +150,10 @@ internal static class AccessExtensions
       {
         jwt.TokenValidationParameters = new TokenValidationParameters
         {
-          IssuerValidator = (issuer, securityToken, validationParameters) =>
+          IssuerValidator = (issuer, token, parameters) =>
           {
-            return issuer;
+            var tenant = issuerCache.GetTenantByIssuer(issuer).Result;
+            return tenant != null ? issuer : null;
           },
           IssuerSigningKeyResolver = (token, securityToken, kid, validationParameters) =>
           {
@@ -139,10 +165,6 @@ internal static class AccessExtensions
             }
 
             return keys;
-          },
-          TokenDecryptionKeyResolver = (string token, SecurityToken securityToken, string kid, TokenValidationParameters validationParameters) =>
-          {
-            return Enumerable.Empty<SecurityKey>();
           },
         };
 

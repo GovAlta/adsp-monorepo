@@ -6,17 +6,16 @@ using Microsoft.AspNetCore.Http;
 namespace Adsp.Sdk;
 public static class HttpContextExtensions
 {
-  public static AdspContext GetAdspContext(this HttpContext context)
+  public static User? GetAdspUser(this HttpContext context)
   {
     if (context == null)
     {
       throw new ArgumentNullException(nameof(context));
     }
 
-    context.Items.TryGetValue(AccessExtensions.TenantContextKey, out object? tenant);
-    var adspContext = new AdspContext(context.User.HasClaim(AdspClaimTypes.Core, "true"), tenant as Tenant);
+    context.Items.TryGetValue(AccessExtensions.AdspContextKey, out object? user);
 
-    return adspContext;
+    return user as User;
   }
 
   public static Task<TC?> GetConfiguration<T, TC>(this HttpContext context, AdspId? tenantId = null) where T : class
@@ -26,7 +25,7 @@ public static class HttpContextExtensions
       throw new ArgumentNullException(nameof(context));
     }
 
-    var adspContext = context.GetAdspContext();
+    var adspContext = context.GetAdspUser();
 
     var hasService = context.Items.TryGetValue(ConfigurationMiddleware.ConfigurationServiceContextKey, out object? service);
     if (!hasService || service == null)

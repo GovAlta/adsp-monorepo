@@ -48,9 +48,8 @@ export const applyConfigurationMiddleware = async (
     !entity.latest ||
     !isDeepEqual(serviceConfiguration, entity.latest[`${serviceId.namespace}:${serviceId.service}`])
   ) {
-    await entity.update({ isCore: true, roles: [ConfigurationServiceRoles.ConfigurationAdmin] } as User, {
-      [`${serviceId.namespace}:${serviceId.service}`]: { configurationSchema: schema },
-    });
+    const merged = entity.mergeUpdate({ [`${serviceId.namespace}:${serviceId.service}`]: serviceConfiguration });
+    await entity.update({ isCore: true, roles: [ConfigurationServiceRoles.ConfigurationAdmin] } as User, merged);
   }
 
   const router = createConfigurationRouter({ ...props, serviceId, configuration });
