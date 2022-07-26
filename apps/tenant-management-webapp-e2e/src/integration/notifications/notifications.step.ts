@@ -796,6 +796,7 @@ When('the user selects {string} tab on the event template', function (tab) {
 When(
   'the user enters {string} as subject and {string} as body {string} template page',
   function (subjectText, bodyText, channel) {
+    cy.wait(1000); // Wait for the template editor elements to show
     notificationsObj.addTemplateModalSubject(channel).type(subjectText);
     notificationsObj.addTemplateModalBody(channel).type(bodyText);
   }
