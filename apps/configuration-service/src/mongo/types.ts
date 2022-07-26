@@ -6,5 +6,11 @@ export interface ConfigurationRevisionDoc<C = unknown> {
   created?: Date;
   lastUpdated?: Date;
   configuration: C;
+}
+
+export interface ActiveRevisionDoc {
+  namespace: string;
+  name: string;
+  tenant?: string;
   active: number;
 }

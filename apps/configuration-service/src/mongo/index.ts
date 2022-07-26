@@ -2,6 +2,7 @@ import { ValidationService } from '@core-services/core-common';
 import { connect, connection, ConnectionStates } from 'mongoose';
 import { Logger } from 'winston';
 import { Repositories } from '../configuration';
+import { MongoActiveRevisionRepository } from './activeRevisions';
 import { MongoConfigurationRepository } from './repository';
 
 interface MongoRepositoryProps {
@@ -39,8 +40,10 @@ export const createRepositories = ({
           reject(err);
         } else {
           const configurationRepository = new MongoConfigurationRepository(validationService);
+          const activeRevisionRepository = new MongoActiveRevisionRepository();
           resolve({
             configuration: configurationRepository,
+            activeRevision: activeRevisionRepository,
             // NOTE: Typescript seems to have issues with exported enums where enum is null at runtime.
             // Possible that express js module doesn't actually export anything for ConnectionStates and
             // type definition is wrong (or intended to be substituted at transpile time... but doesn't happen)

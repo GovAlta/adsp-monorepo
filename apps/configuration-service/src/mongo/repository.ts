@@ -38,27 +38,10 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
           created: latestDoc.created,
           lastUpdated: latestDoc.lastUpdated,
           configuration: latestDoc.configuration as C,
-          active: latestDoc.active,
         }
       : null;
 
-    const docs = await new Promise<ConfigurationRevisionDoc[]>((resolve, reject) => {
-      this.revisionModel
-        .find({ revision: latest.active }, null, { lean: true })
-        .sort({ revision: -1 })
-        .skip(null)
-        .limit(1)
-        .exec((err, results: ConfigurationRevisionDoc[]) => (err ? reject(err) : resolve(results)));
-    });
-
-    const activeList: ConfigurationRevision<C>[] = docs.map((doc) => ({
-      configuration: doc.configuration as C,
-      revision: doc.revision,
-    }));
-
-    const active = activeList[0];
-
-    return new ConfigurationEntity<C>(namespace, name, this, this.validationService, latest, tenantId, schema, active);
+    return new ConfigurationEntity<C>(namespace, name, this, this.validationService, latest, tenantId, schema);
   }
 
   async getRevisions<C>(
@@ -103,50 +86,6 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     };
   }
 
-  async setActiveRevision<C>(
-    entity: ConfigurationEntity<C>,
-    revision: ConfigurationRevision,
-    latestRevision: ConfigurationRevision
-  ): Promise<ConfigurationRevision<C>> {
-    const query: Record<string, unknown> = {
-      namespace: entity.namespace,
-      name: entity.name,
-      revision: latestRevision.revision,
-      tenant: entity.tenantId?.toString() || { $exists: false },
-    };
-
-    const update: Record<string, unknown> = {
-      active: revision.revision,
-    };
-
-    console.log(update.active + '<update.active');
-
-    // Only include tenant if there is a tenantId on the entity.
-    if (entity.tenantId) {
-      update.tenant = entity.tenantId.toString();
-    }
-
-    await new Promise<ConfigurationRevisionDoc<C>>((resolve, reject) => {
-      this.revisionModel
-        .findOneAndUpdate(
-          query,
-          {
-            ...update,
-            configuration: latestRevision.configuration,
-          },
-          { upsert: true, new: true, lean: true }
-        )
-        .exec((err, res) => (err ? reject(err) : resolve(res as ConfigurationRevisionDoc<C>)));
-    });
-
-    const activeRevision = await this.getRevisions(entity, 1, null, { revision: revision.revision });
-
-    return {
-      revision: activeRevision.results[0].revision,
-      configuration: activeRevision.results[0].configuration,
-    };
-  }
-
   async saveRevision<C>(
     entity: ConfigurationEntity<C>,
     revision: ConfigurationRevision<C>
@@ -186,7 +125,6 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       lastUpdated: doc.lastUpdated ? doc.lastUpdated : doc.created,
       created: doc.created,
       configuration: doc.configuration,
-      active: doc.active,
     };
   }
 }

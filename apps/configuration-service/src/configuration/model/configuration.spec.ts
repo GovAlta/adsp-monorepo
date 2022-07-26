@@ -1,6 +1,7 @@
 import { adspId, User } from '@abgov/adsp-service-sdk';
 import { ConfigurationServiceRoles } from '../roles';
 import { ConfigurationEntity } from './configuration';
+import { ActiveRevisionEntity } from './activeRevisionEntity';
 import { ConfigurationRevision } from '../types';
 import type { Logger } from 'winston';
 
@@ -12,6 +13,9 @@ describe('ConfigurationEntity', () => {
     get: jest.fn(),
     getRevisions: jest.fn(),
     saveRevision: jest.fn(),
+  };
+  const activeRevisionMock = {
+    get: jest.fn(),
     setActiveRevision: jest.fn(),
   };
   const validationMock = {
@@ -59,7 +63,7 @@ describe('ConfigurationEntity', () => {
     validationMock.setSchema.mockImplementationOnce(() => {
       throw new Error('');
     });
-    new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, null, schema, null, loggerMock);
+    new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, null, schema, loggerMock);
     expect(loggerMock.warn).toBeCalledWith(
       'JSON schema of platform:test-service is invalid. An empty JSON schema {} will be used.'
     );
@@ -434,43 +438,36 @@ describe('ConfigurationEntity', () => {
   });
 
   describe('setActiveRevision', () => {
+    it('can be created', () => {
+      const entity = new ActiveRevisionEntity(namespace, name, activeRevisionMock, 5);
+      expect(entity).toBeTruthy();
+    });
     it('sets active revision', async () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
-        revision: 3,
-        configuration: {} as unknown,
+      const entity = new ActiveRevisionEntity(namespace, name, activeRevisionMock, 5);
+      const active = 2;
+
+      activeRevisionMock.setActiveRevision.mockImplementationOnce((_entity, rev) => {
+        return { active: rev };
       });
 
-      repositoryMock.getRevisions.mockResolvedValueOnce([{ revision: 2 }, { revision: 3 }]);
-
-      const revision = { revision: 2 } as ConfigurationRevision<Record<string, unknown>>;
-      const lastRevision = { revision: 3 } as ConfigurationRevision<Record<string, unknown>>;
-
-      repositoryMock.setActiveRevision.mockImplementationOnce((_entity, rev) => rev);
-
-      const activeRevisionResponce = await entity.setActiveRevision(
+      const activeRevisionResponse = await entity.setActiveRevision(
         {
           isCore: true,
           roles: [ConfigurationServiceRoles.ConfiguredService],
         } as User,
-        revision,
-        lastRevision
+        active
       );
-      expect(activeRevisionResponce.latest.revision).toBe(3);
-      expect(activeRevisionResponce.active.revision).toBe(2);
+      expect(activeRevisionResponse.active).toBe(2);
     });
 
     it('can throw for unauthorized user', async () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
-        revision: 3,
-        configuration: {} as unknown,
-      });
+      const entity = new ActiveRevisionEntity(namespace, name, activeRevisionMock, 5);
 
-      const revision = { revision: 2 } as ConfigurationRevision<Record<string, unknown>>;
-      const lastRevision = { revision: 3 } as ConfigurationRevision<Record<string, unknown>>;
+      const active = 2;
 
-      await expect(
-        entity.setActiveRevision({ id: 'test', name: 'test' } as User, revision, lastRevision)
-      ).rejects.toThrow(/User test \(ID: test\) not permitted to modify configuration./);
+      await expect(entity.setActiveRevision({ id: 'test', name: 'test' } as User, active)).rejects.toThrow(
+        /User test \(ID: test\) not permitted to modify configuration./
+      );
     });
   });
 });

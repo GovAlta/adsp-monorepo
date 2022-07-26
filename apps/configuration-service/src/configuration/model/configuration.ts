@@ -11,7 +11,7 @@ import { environment } from './../../environments/environment';
  *
  * @export
  * @class ServiceConfigurationEntity
- * @implements {Configuration<C>}Banff, Alberta
+ * @implements {Configuration<C>}
  * @template C
  */
 export class ConfigurationEntity<C = Record<string, unknown>> implements Configuration<C> {
@@ -23,7 +23,6 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     public latest?: ConfigurationRevision<C>,
     public tenantId?: AdspId,
     private schema?: Record<string, unknown>,
-    public active?: ConfigurationRevision<C>,
     private logger?: Logger
   ) {
     if (!namespace || !name) {
@@ -120,22 +119,6 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     };
 
     this.latest = await this.repository.saveRevision(this, revision);
-    const activeCriteria = await this.repository.getRevisions(this, 1, null, { active: this.latest.active });
-    this.active = activeCriteria?.results[0];
-    return this;
-  }
-
-  public async setActiveRevision(
-    user: User,
-    revision: ConfigurationRevision,
-    latestRevision: ConfigurationRevision
-  ): Promise<ConfigurationEntity<C>> {
-    if (!this.canModify(user)) {
-      throw new UnauthorizedUserError('modify configuration', user);
-    }
-
-    this.active = await this.repository.setActiveRevision(this, revision, latestRevision);
-    this.latest.active = revision.revision;
     return this;
   }
 

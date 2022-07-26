@@ -81,7 +81,7 @@ export const ActiveRevisionSetDefinition: DomainEventDefinition = {
         type: 'number',
       },
       from: {
-        type: 'number',
+        type: ['number', 'null'],
       },
       setBy: {
         type: 'object',
@@ -157,7 +157,6 @@ export const activeRevisionSet = (
   tenantId: AdspId,
   namespace: string,
   name: string,
-  created: Date,
   revision: number,
   from: number
 ): DomainEvent => ({
@@ -172,7 +171,6 @@ export const activeRevisionSet = (
   payload: {
     namespace,
     name,
-    created,
     revision,
     from,
     setBy: {
