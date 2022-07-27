@@ -1,25 +1,29 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Polly;
 using RestSharp;
 
 namespace Adsp.Sdk.Directory;
-internal class ServiceDirectory : IServiceDirectory
+[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+internal class ServiceDirectory : IServiceDirectory, IDisposable
 {
   private readonly ILogger<ServiceDirectory> _logger;
-  private readonly IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions { });
+  private readonly IMemoryCache _cache;
   private readonly RestClient _client;
   private readonly AsyncPolicy _retryPolicy;
 
-  public ServiceDirectory(ILogger<ServiceDirectory> logger, AdspOptions options)
+  public ServiceDirectory(ILogger<ServiceDirectory> logger, IMemoryCache cache, IOptions<AdspOptions> options)
   {
-    if (options.DirectoryUrl == null)
+    if (options.Value.DirectoryUrl == null)
     {
       throw new ArgumentException("Provided options must include value for DirectoryUrl.", nameof(options));
     }
 
     _logger = logger;
-    _client = new RestClient(options.DirectoryUrl);
+    _cache = cache;
+    _client = new RestClient(options.Value.DirectoryUrl);
     _retryPolicy = Policy.Handle<Exception>().WaitAndRetryAsync(
       10,
       retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
@@ -66,8 +70,14 @@ internal class ServiceDirectory : IServiceDirectory
     foreach (var entry in entries)
     {
       _cache.Set(entry.Key, entry.Value, TimeSpan.FromHours(1));
+      _logger.LogDebug("Cached directory entry {Urn} -> {Url}", entry.Key, entry.Value);
     }
 
     return entries;
+  }
+
+  public void Dispose()
+  {
+    _client.Dispose();
   }
 }

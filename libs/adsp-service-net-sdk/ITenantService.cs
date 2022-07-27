@@ -3,5 +3,7 @@ public interface ITenantService
 {
   Task<Tenant?> GetTenant(AdspId tenantId);
 
-  Task<IList<Tenant>> GetTenants();
+  Task<Tenant?> GetTenantByRealm(string realm);
+
+  Task<IEnumerable<Tenant>> GetTenants();
 }

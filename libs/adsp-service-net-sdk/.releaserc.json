@@ -1,0 +1,24 @@
+{
+  "extends": "../../.releaserc.json",
+  "tagFormat": "adsp-service-net-sdk-v${version}",
+  "plugins": [
+    [
+      "@abgov/nx-release",
+      {
+        "project": "adsp-service-net-sdk"
+      }
+    ],
+    [
+      "@abgov/semantic-release-nuget",
+      {
+        "noBuild": true,
+        "project": "libs/adsp-service-net-sdk",
+        "nupkgRoot": "dist/libs/adsp-service-net-sdk",
+        "includeSymbols": true,
+        "includeSource": true,
+        "source": "https://nuget.pkg.github.com/GovAlta/index.json"
+      }
+    ],
+    "@semantic-release/github"
+  ]
+}
