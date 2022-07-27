@@ -844,5 +844,6 @@ When('the user views the link for managing email subscription', function () {
     .find('footer')
     .find('[class="goa-footer-event"]')
     .find('a[href]')
-    .contains(urlSubscriptionLogin);
+    .invoke('attr', 'href')
+    .should('contain', urlSubscriptionLogin);
 });
