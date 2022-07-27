@@ -92,7 +92,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
     }
     const payloadSchemaObj = JSON.parse(payloadSchema);
     // if no errors in the form then save the definition
-    onSave({ ...definition, configurationSchema: payloadSchemaObj });
+    onSave({ ...definition, configurationSchema: payloadSchemaObj, description: definition.description });
     setDefinition(initialValue);
     onClose();
   };

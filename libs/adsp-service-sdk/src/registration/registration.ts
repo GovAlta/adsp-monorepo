@@ -33,10 +33,8 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
       const name = registration.serviceId.service;
       const update = {
         [`${namespace}:${name}`]: {
-          configuration: {
-            schema: registration.configuration.schema,
-            description: registration.configuration.description,
-          },
+          configurationSchema: registration.configuration.schema,
+          description: registration.configuration.description,
         },
       };
       await this.updateConfiguration(adspId`urn:ads:platform:configuration-service`, update);

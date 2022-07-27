@@ -74,8 +74,8 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
                         onEdit={(configurationDefinition) => {
                           onEdit(configurationDefinition);
                         }}
-                        description={sortedConfig?.configuration?.description}
-                        configSchema={sortedConfig?.configuration?.schema || sortedConfig?.configurationSchema}
+                        description={sortedConfig?.description}
+                        configSchema={sortedConfig?.configurationSchema}
                       />
                     );
                   })}
