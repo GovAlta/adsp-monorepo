@@ -31,7 +31,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
     return Object.keys(configurations);
   };
   const [definition, setDefinition] = useState<ConfigDefinition>(initialValue);
-  const [payloadSchema, setPayloadSchema] = useState<string>(JSON.stringify(definition.configuration?.schema, null, 2));
+  const [payloadSchema, setPayloadSchema] = useState<string>(JSON.stringify(definition.configurationSchema, null, 2));
   const [spinner, setSpinner] = useState<boolean>(false);
   const identifiers = getIdentifer();
   const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
@@ -91,16 +91,8 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
       return;
     }
     const payloadSchemaObj = JSON.parse(payloadSchema);
-    //payloadSchemaObj['description'] = definition.description;
     // if no errors in the form then save the definition
-
-    console.log(JSON.stringify(definition) + '<definitiondefinitiondefinitiondefinitiondefinition');
-
-    console.log(JSON.stringify(definition.configuration.description) + '<definition.configuration.description');
-    onSave({
-      ...definition,
-      configuration: { schema: payloadSchemaObj, description: definition.configuration.description },
-    });
+    onSave({ ...definition, configurationSchema: payloadSchemaObj });
     setDefinition(initialValue);
     onClose();
   };
@@ -149,16 +141,13 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
                 <GoAInput
                   type="text"
                   name="description"
-                  value={definition.configuration.description}
+                  value={definition.description}
                   data-testid="form-description"
                   aria-label="description"
                   onChange={(description, value) => {
                     validators.remove('description');
                     validators['description'].check(value);
-                    setDefinition({
-                      ...definition,
-                      configuration: { schema: definition.configuration.schema, description: value },
-                    });
+                    setDefinition({ ...definition, description: value });
                   }}
                 />
               </GoAFormItem>
