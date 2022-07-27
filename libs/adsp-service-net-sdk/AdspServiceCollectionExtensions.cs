@@ -5,13 +5,19 @@ using Adsp.Sdk.Event;
 using Adsp.Sdk.Registration;
 using Adsp.Sdk.Tenancy;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Adsp.Sdk;
 public static class AdspServiceCollectionExtensions
 {
-  private static IServiceCollection AddAdspSdkServices(this IServiceCollection services, AdspOptions options)
+  private static IServiceCollection AddAdspSdkServices(this IServiceCollection services, Action<AdspOptions>? configureOptions = null)
   {
-    services.AddSingleton(options);
+    if (configureOptions != null)
+    {
+      services.Configure(configureOptions);
+    }
+
+    services.AddMemoryCache();
     services.AddSingleton<ITokenProvider, TokenProvider>();
     services.AddSingleton<IServiceDirectory, ServiceDirectory>();
     services.AddSingleton<ITenantService, TenantService>();
@@ -19,58 +25,50 @@ public static class AdspServiceCollectionExtensions
     services.AddSingleton<ITenantKeyProvider, TenantKeyProvider>();
     services.AddSingleton<IConfigurationService, ConfigurationService>();
     services.AddSingleton<IEventService, EventService>();
-    services.AddRegistration(options);
+    services.AddRegistration();
 
     return services;
   }
 
-  public static IServiceCollection AddAdspForService(this IServiceCollection services, AdspOptions options)
+  public static IServiceCollection AddAdspForService(this IServiceCollection services, Action<AdspOptions>? configureOptions = null)
   {
     if (services == null)
     {
       throw new ArgumentNullException(nameof(services));
     }
 
-    if (options == null)
-    {
-      throw new ArgumentNullException(nameof(options));
-    }
-
-    services.AddAdspSdkServices(options);
+    services.AddAdspSdkServices(configureOptions);
 
     var providers = services.BuildServiceProvider();
     var tenantService = providers.GetRequiredService<ITenantService>();
+    var options = providers.GetRequiredService<IOptions<AdspOptions>>();
 
     services
       .AddAuthentication(AdspAuthenticationSchemes.Tenant)
-      .AddRealmJwtAuthentication(AdspAuthenticationSchemes.Tenant, tenantService, options);
+      .AddRealmJwtAuthentication(AdspAuthenticationSchemes.Tenant, tenantService, options.Value);
 
     return services;
   }
 
-  public static IServiceCollection AddAdspForPlatformService(this IServiceCollection services, AdspOptions options)
+  public static IServiceCollection AddAdspForPlatformService(this IServiceCollection services, Action<AdspOptions>? configureOptions = null)
   {
     if (services == null)
     {
       throw new ArgumentNullException(nameof(services));
     }
 
-    if (options == null)
-    {
-      throw new ArgumentNullException(nameof(options));
-    }
-
-    services.AddAdspSdkServices(options);
+    services.AddAdspSdkServices(configureOptions);
 
     var providers = services.BuildServiceProvider();
     var tenantService = providers.GetRequiredService<ITenantService>();
     var issuerCache = providers.GetRequiredService<IIssuerCache>();
     var keyProvider = providers.GetRequiredService<ITenantKeyProvider>();
+    var options = providers.GetRequiredService<IOptions<AdspOptions>>();
 
     services
       .AddAuthentication()
-      .AddRealmJwtAuthentication(AdspAuthenticationSchemes.Core, tenantService, options)
-      .AddTenantJwtAuthentication(AdspAuthenticationSchemes.Tenant, issuerCache, keyProvider, options);
+      .AddRealmJwtAuthentication(AdspAuthenticationSchemes.Core, tenantService, options.Value)
+      .AddTenantJwtAuthentication(AdspAuthenticationSchemes.Tenant, issuerCache, keyProvider, options.Value);
 
     return services;
   }

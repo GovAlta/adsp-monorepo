@@ -1,12 +1,13 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RestSharp;
 
 namespace Adsp.Sdk.Access;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
-internal class TokenProvider : ITokenProvider
+internal class TokenProvider : ITokenProvider, IDisposable
 {
-  private readonly object _lock = new object();
+  private readonly object _lock = new();
   private string? _token;
   private DateTime _expiry;
 
@@ -16,31 +17,34 @@ internal class TokenProvider : ITokenProvider
   private readonly string _clientId;
   private readonly string _clientSecret;
 
-  public TokenProvider(ILogger<TokenProvider> logger, AdspOptions options)
+  public TokenProvider(ILogger<TokenProvider> logger, IOptions<AdspOptions> options)
   {
-    if (options.AccessServiceUrl == null)
+    if (options.Value.AccessServiceUrl == null)
     {
       throw new ArgumentException("Provided options must include value for AccessServiceUrl.", nameof(options));
     }
 
-    if (options.ServiceId == null)
+    if (options.Value.ServiceId == null)
     {
       throw new ArgumentException("Provided options must include value for ServiceId.", nameof(options));
     }
 
-    if (options.ClientSecret == null)
+    if (options.Value.ClientSecret == null)
     {
       throw new ArgumentException("Provided options must include value for ClientSecret.", nameof(options));
     }
 
     _logger = logger;
-    _authUrl = new Uri(options.AccessServiceUrl, $"/auth/realms/{options.Realm}/protocol/openid-connect/token");
+    _authUrl = new Uri(
+      options.Value.AccessServiceUrl,
+      $"/auth/realms/{options.Value.Realm ?? AccessConstants.CoreRealm}/protocol/openid-connect/token"
+    );
     _client = new RestClient(_authUrl);
-    _clientId = options.ServiceId.ToString();
-    _clientSecret = options.ClientSecret;
+    _clientId = options.Value.ServiceId.ToString();
+    _clientSecret = options.Value.ClientSecret;
   }
 
-  private string? getCachedToken(out DateTime expiry)
+  private string? GetCachedToken(out DateTime expiry)
   {
     lock (_lock)
     {
@@ -49,7 +53,7 @@ internal class TokenProvider : ITokenProvider
     }
   }
 
-  private void setCachedToken(string token, DateTime expiry)
+  private void SetCachedToken(string token, DateTime expiry)
   {
     lock (_lock)
     {
@@ -60,7 +64,7 @@ internal class TokenProvider : ITokenProvider
 
   public async Task<string> GetAccessToken()
   {
-    var token = getCachedToken(out DateTime expiry);
+    var token = GetCachedToken(out DateTime expiry);
     if (!String.IsNullOrEmpty(token) && DateTime.Now < expiry)
     {
       _logger.LogDebug("Using existing access token...");
@@ -81,7 +85,7 @@ internal class TokenProvider : ITokenProvider
         if (!String.IsNullOrEmpty(response?.AccessToken))
         {
           token = response.AccessToken;
-          setCachedToken(token, DateTime.Now.AddSeconds(response.ExpiresIn - 60));
+          SetCachedToken(token, DateTime.Now.AddSeconds(response.ExpiresIn - 60));
 
           _logger.LogDebug("Retrieved and cached access token.");
         }
@@ -92,7 +96,12 @@ internal class TokenProvider : ITokenProvider
         throw;
       }
 
-      return token;
+      return token!;
     }
+  }
+
+  public void Dispose()
+  {
+    _client.Dispose();
   }
 }

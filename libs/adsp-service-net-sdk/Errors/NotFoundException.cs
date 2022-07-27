@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace Adsp.Sdk.Error;
+namespace Adsp.Sdk.Errors;
 public class NotFoundException : HttpResponseException
 {
 

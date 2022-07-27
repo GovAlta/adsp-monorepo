@@ -1,15 +1,19 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Polly;
 using RestSharp;
 
 namespace Adsp.Sdk.Registration;
-internal class ServiceRegistrar : IServiceRegistrar
+[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+internal class ServiceRegistrar : IServiceRegistrar, IDisposable
 {
   private static readonly AdspId CONFIGURATION_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:configuration-service:v2");
   private static readonly AdspId CONFIGURATION_SERVICE_ID = AdspId.Parse("urn:ads:platform:configuration-service");
   private static readonly AdspId TENANT_SERVICE_ID = AdspId.Parse("urn:ads:platform:tenant-service");
   private static readonly AdspId EVENT_SERVICE_ID = AdspId.Parse("urn:ads:platform:event-service");
+
+  private const string ContextServiceKey = "service";
 
   private readonly ILogger<ServiceRegistrar> _logger;
   private readonly IServiceDirectory _serviceDirectory;
@@ -19,9 +23,14 @@ internal class ServiceRegistrar : IServiceRegistrar
   private readonly AdspId _serviceId;
   private readonly Dictionary<string, DomainEventDefinition> _eventDefinitions = new();
 
-  public ServiceRegistrar(ILogger<ServiceRegistrar> logger, IServiceDirectory serviceDirectory, ITokenProvider tokenProvider, AdspOptions options)
+  public ServiceRegistrar(
+    ILogger<ServiceRegistrar> logger,
+    IServiceDirectory serviceDirectory,
+    ITokenProvider tokenProvider,
+    IOptions<AdspOptions> options
+  )
   {
-    if (options?.ServiceId == null)
+    if (options.Value.ServiceId == null)
     {
       throw new ArgumentException("Provided options must include value for ServiceId.");
     }
@@ -29,7 +38,7 @@ internal class ServiceRegistrar : IServiceRegistrar
     _logger = logger;
     _serviceDirectory = serviceDirectory;
     _tokenProvider = tokenProvider;
-    _serviceId = options.ServiceId;
+    _serviceId = options.Value.ServiceId;
 
     _client = new RestClient();
     _retryPolicy = Policy.Handle<Exception>().WaitAndRetryAsync(
@@ -37,7 +46,7 @@ internal class ServiceRegistrar : IServiceRegistrar
       retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
       (exception, timeSpan, retryCount, context) =>
       {
-        _logger.LogDebug("Try {Count}: update registration configuration...", retryCount);
+        _logger.LogDebug("Try {Count}: update registration configuration of {Service}..", retryCount, context.GetValueOrDefault(ContextServiceKey));
       }
     );
   }
@@ -83,7 +92,7 @@ internal class ServiceRegistrar : IServiceRegistrar
           update = new Dictionary<string, object>
           {
             {
-              _serviceId.Service,
+              _serviceId.Service!,
               new
               {
                 name = _serviceId.Namespace,
@@ -116,15 +125,25 @@ internal class ServiceRegistrar : IServiceRegistrar
     var configurationServiceUrl = await _serviceDirectory.GetServiceUrl(CONFIGURATION_SERVICE_API_ID);
     var requestUrl = new Uri(configurationServiceUrl, $"v2/configuration/{serviceId.Namespace}/{serviceId.Service}");
 
-    await _retryPolicy.ExecuteAsync(async () =>
-    {
-      var token = await _tokenProvider.GetAccessToken();
+    await _retryPolicy.ExecuteAsync(
+      async (_ctx) =>
+      {
+        var token = await _tokenProvider.GetAccessToken();
 
-      var request = new RestRequest(requestUrl, Method.Patch);
-      request.AddHeader("Authorization", $"Bearer {token}");
-      request.AddJsonBody(update);
+        var request = new RestRequest(requestUrl, Method.Patch);
+        request.AddHeader("Authorization", $"Bearer {token}");
+        request.AddJsonBody(update);
 
-      await _client.PatchAsync(request);
-    });
+        var response = await _client.ExecuteAsync(request);
+      },
+      new Dictionary<string, object?> { { ContextServiceKey, serviceId.Service } }
+    );
+
+    _logger.LogInformation("Updating registration configuration for {Service}.", serviceId.Service);
+  }
+
+  public void Dispose()
+  {
+    _client.Dispose();
   }
 }

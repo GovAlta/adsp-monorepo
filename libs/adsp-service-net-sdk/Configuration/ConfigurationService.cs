@@ -1,26 +1,34 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RestSharp;
 
 namespace Adsp.Sdk.Configuration;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
-internal class ConfigurationService : IConfigurationService
+internal class ConfigurationService : IConfigurationService, IDisposable
 {
   private static readonly AdspId CONFIGURATION_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:configuration-service:v2");
   private readonly ILogger<ConfigurationService> _logger;
-  private readonly IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions { });
+  private readonly IMemoryCache _cache;
   private readonly IServiceDirectory _serviceDirectory;
   private readonly ITokenProvider _tokenProvider;
   private readonly Func<object?, object?, object?>? _combine;
   private readonly RestClient _client;
 
-  public ConfigurationService(ILogger<ConfigurationService> logger, IServiceDirectory serviceDirectory, ITokenProvider tokenProvider, AdspOptions options)
+  public ConfigurationService(
+    ILogger<ConfigurationService> logger,
+    IMemoryCache cache,
+    IServiceDirectory serviceDirectory,
+    ITokenProvider tokenProvider,
+    IOptions<AdspOptions> options
+  )
   {
     _logger = logger;
+    _cache = cache;
     _serviceDirectory = serviceDirectory;
     _tokenProvider = tokenProvider;
-    _combine = options.Configuration?.CombineConfiguration;
+    _combine = options.Value.Configuration?.CombineConfiguration;
     _client = new RestClient();
   }
 
@@ -88,10 +96,12 @@ internal class ConfigurationService : IConfigurationService
         if (tenantId != null)
         {
           _cache.Set((serviceId, tenantId), configuration, TimeSpan.FromMinutes(15));
+          _logger.LogDebug("Cached configuration for {ServiceId} of tenant ({TenantId}).", serviceId, tenantId);
         }
         else
         {
           _cache.Set(serviceId, configuration, TimeSpan.FromMinutes(15));
+          _logger.LogDebug("Cached core configuration for {ServiceId}.", serviceId);
         }
       }
     }
@@ -101,5 +111,10 @@ internal class ConfigurationService : IConfigurationService
     }
 
     return configuration;
+  }
+
+  public void Dispose()
+  {
+    _client.Dispose();
   }
 }

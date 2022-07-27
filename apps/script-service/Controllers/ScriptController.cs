@@ -4,7 +4,7 @@ using Adsp.Platform.ScriptService.Events;
 using Adsp.Platform.ScriptService.Model;
 using Adsp.Platform.ScriptService.Services;
 using Adsp.Sdk;
-using Adsp.Sdk.Error;
+using Adsp.Sdk.Errors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -53,7 +53,7 @@ public class ScriptController : ControllerBase
       throw new NotFoundException($"Script definition with ID '{script}' not found.");
     }
 
-    return definition;
+    return definition!;
   }
 
   [HttpPost]
@@ -100,11 +100,11 @@ public class ScriptController : ControllerBase
     var results = await _luaService.RunScript(definition, luaInputs);
     await _evenService.Send(
       new DomainEvent<ScriptExecuted>(
-        ScriptExecuted.EVENT_NAME,
+        ScriptExecuted.EventName,
         DateTime.Now,
         new ScriptExecuted { Definition = definition, ExecutedBy = user }
       ),
-      user.Tenant.Id
+      user!.Tenant!.Id
     );
 
     return results;

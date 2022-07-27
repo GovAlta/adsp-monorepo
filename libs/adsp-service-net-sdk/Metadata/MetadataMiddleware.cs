@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Adsp.Sdk.Metadata;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Middleware for application builder")]
@@ -14,11 +15,11 @@ internal class MetadataMiddleware
   private readonly AdspMetadataOptions _options;
   private readonly RequestDelegate _next;
 
-  public MetadataMiddleware(ILogger<MetadataMiddleware> logger, AdspOptions adspOptions, AdspMetadataOptions options, RequestDelegate next)
+  public MetadataMiddleware(ILogger<MetadataMiddleware> logger, IOptions<AdspOptions> adspOptions, AdspMetadataOptions options, RequestDelegate next)
   {
 
     _logger = logger;
-    _adspOptions = adspOptions;
+    _adspOptions = adspOptions.Value;
     _options = options;
     _next = next;
   }

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using static System.Net.Mime.MediaTypeNames;
 
-namespace Adsp.Sdk.Error;
+namespace Adsp.Sdk.Errors;
 internal static class HttpResponseExceptionHandler
 {
   internal static async Task Handle(HttpContext context)

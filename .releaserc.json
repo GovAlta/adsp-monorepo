@@ -9,11 +9,6 @@
     {
       "name": "alpha",
       "prerelease": true
-    },
-    {
-      "name": "feature/net-sdk-release",
-      "channel": "alpha",
-      "prerelease": "alpha"
     }
   ]
 }

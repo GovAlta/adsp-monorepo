@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Adsp.Sdk.Configuration;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Middleware for application builder")]
@@ -13,9 +14,14 @@ internal class ConfigurationMiddleware
   private readonly RequestDelegate _next;
   private readonly AdspId _serviceId;
 
-  public ConfigurationMiddleware(ILogger<ConfigurationMiddleware> logger, IConfigurationService configurationService, AdspOptions options, RequestDelegate next)
+  public ConfigurationMiddleware(
+    ILogger<ConfigurationMiddleware> logger,
+    IConfigurationService configurationService,
+    IOptions<AdspOptions> options,
+    RequestDelegate next
+  )
   {
-    if (options?.ServiceId == null)
+    if (options.Value.ServiceId == null)
     {
       throw new ArgumentException("Provided options must include value for ServiceId.");
     }
@@ -23,7 +29,7 @@ internal class ConfigurationMiddleware
     _logger = logger;
     _configurationService = configurationService;
     _next = next;
-    _serviceId = options.ServiceId;
+    _serviceId = options.Value.ServiceId;
   }
 
   public async Task InvokeAsync(HttpContext httpContext)

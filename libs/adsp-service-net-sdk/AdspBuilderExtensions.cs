@@ -1,6 +1,6 @@
 
 using Adsp.Sdk.Configuration;
-using Adsp.Sdk.Error;
+using Adsp.Sdk.Errors;
 using Adsp.Sdk.Metadata;
 using Microsoft.AspNetCore.Builder;
 

@@ -13,7 +13,7 @@ public static class AdspHttpContextExtensions
       throw new ArgumentNullException(nameof(context));
     }
 
-    context.Items.TryGetValue(AccessExtensions.AdspContextKey, out object? user);
+    context.Items.TryGetValue(AccessConstants.AdspContextKey, out object? user);
 
     return user as User;
   }

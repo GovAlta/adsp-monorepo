@@ -27,16 +27,14 @@ internal class Program
     );
 
     var adspConfiguration = builder.Configuration.GetSection("Adsp");
+    builder.Services.Configure<AdspOptions>(adspConfiguration);
     builder.Services.AddAdspForPlatformService(
-      new AdspOptions
+      options =>
       {
-        DisplayName = "Script service",
-        Description = "Service that execute configured scripts.",
-        ServiceId = AdspId.Parse(adspConfiguration.GetValue<string>("ServiceId")),
-        ClientSecret = adspConfiguration.GetValue<string>("ClientSecret"),
-        AccessServiceUrl = adspConfiguration.GetValue<Uri>("AccessServiceUrl"),
-        DirectoryUrl = adspConfiguration.GetValue<Uri>("DirectoryUrl"),
-        Configuration = new ConfigurationDefinition<Dictionary<string, ScriptDefinition>>(
+        options.ServiceId = AdspId.Parse(adspConfiguration.GetValue<string>("ServiceId"));
+        options.DisplayName = "Script service";
+        options.Description = "Service that execute configured scripts.";
+        options.Configuration = new ConfigurationDefinition<Dictionary<string, ScriptDefinition>>(
           "Definitions of the scripts available to run.",
           (tenant, core) =>
           {
@@ -59,20 +57,20 @@ internal class Program
 
             return combined;
           }
-        ),
-        Roles = new[] {
+        );
+        options.Roles = new[] {
           new ServiceRole {
             Role = ServiceRoles.ScriptRunner,
             Description = "Script runner role that allows execution of scripts.",
             InTenantAdmin = true
           }
-        },
-        Events = new[] {
+        };
+        options.Events = new[] {
           new DomainEventDefinition<ScriptExecuted>(
-            ScriptExecuted.EVENT_NAME,
+            ScriptExecuted.EventName,
             "Signalled when a script is executed."
           )
-        }
+        };
       }
     );
     builder.Services.AddSingleton<ILuaScriptService, LuaScriptService>();
