@@ -19,6 +19,12 @@
         "source": "https://nuget.pkg.github.com/GovAlta/index.json"
       }
     ],
-    "@semantic-release/github"
+    [
+      "@semantic-release/github",
+      {
+        "releasedLabels": false,
+        "successComment": false
+      }
+    ]
   ]
 }
