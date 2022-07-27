@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using System.Text.Json;
-using Adsp.Sdk.Tenancy;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,16 +8,24 @@ using Microsoft.IdentityModel.Tokens;
 namespace Adsp.Sdk.Access;
 internal static class AccessExtensions
 {
-  internal const string TenantContextKey = "ADSP:Tenant";
-
-  private static TokenValidatedContext AddAdspContext(this TokenValidatedContext context, AdspId serviceId, Tenant? tenant)
+  private static TokenValidatedContext AddAdspContext(this TokenValidatedContext context, AdspId serviceId, bool isCore, Tenant? tenant)
   {
+    var subClaim = context.Principal?.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier);
+    var usernameClaim = context.Principal?.Claims.FirstOrDefault(claim => claim.Type == "preferred_username");
+    var emailClaim = context.Principal?.Claims.FirstOrDefault(claim => claim.Type == "email");
+
+    // If there is no subject, then something isn't right about the token authentication.
+    if (subClaim == null)
+    {
+      return context;
+    }
+
     var accessIdentity = new ClaimsIdentity();
     if (tenant?.Id != null)
     {
       accessIdentity.AddClaim(new Claim(AdspClaimTypes.Tenant, tenant.Id.ToString(), ClaimValueTypes.String));
     }
-    else if (tenant == null)
+    else if (isCore)
     {
       accessIdentity.AddClaim(new Claim(AdspClaimTypes.Core, "true", ClaimValueTypes.Boolean));
     }
@@ -67,7 +74,17 @@ internal static class AccessExtensions
     }
 
     context.Principal?.AddIdentity(accessIdentity);
-    context.HttpContext.Items.Add(TenantContextKey, tenant);
+
+    context.HttpContext.Items.Add(
+      AccessConstants.AdspContextKey,
+      new User(
+        accessIdentity.HasClaim(AdspClaimTypes.Core, "true"),
+        tenant,
+        subClaim.Value,
+        usernameClaim?.Value,
+        emailClaim?.Value
+      )
+    );
 
     return context;
   }
@@ -75,8 +92,8 @@ internal static class AccessExtensions
   internal static AuthenticationBuilder AddRealmJwtAuthentication(
     this AuthenticationBuilder builder,
     string authenticationScheme,
-    AdspOptions options,
-    Tenant? tenant = null
+    ITenantService tenantService,
+    AdspOptions options
   )
   {
     if (options.AccessServiceUrl == null)
@@ -89,21 +106,40 @@ internal static class AccessExtensions
       throw new ArgumentException("Provided options must include value for AccessServiceUrl.", nameof(options));
     }
 
-    builder.AddJwtBearer(authenticationScheme, jwt =>
+    if (
+      String.Equals(AdspAuthenticationSchemes.Tenant, authenticationScheme, StringComparison.Ordinal) &&
+      String.IsNullOrEmpty(options.Realm)
+    )
+    {
+      throw new ArgumentException("Provided options must include tenant realm for tenant authentication scheme.");
+    }
+    var isCore = String.Equals(AdspAuthenticationSchemes.Core, authenticationScheme, StringComparison.Ordinal);
+    var realm = isCore ? AccessConstants.CoreRealm : options.Realm;
+
+    builder.AddJwtBearer(
+      authenticationScheme,
+      jwt =>
       {
-        jwt.Authority = new Uri(
-            options.AccessServiceUrl,
-            $"/auth/realms/{options.Realm}"
-          ).AbsoluteUri;
+        jwt.Authority = new Uri(options.AccessServiceUrl, $"/auth/realms/{realm}").AbsoluteUri;
         jwt.Audience = $"{options.ServiceId}";
         jwt.Events = new JwtBearerEvents
         {
           OnTokenValidated = async (TokenValidatedContext context) =>
           {
-            context.AddAdspContext(options.ServiceId, tenant);
+            Tenant? tenant = null;
+            if (String.Equals(AdspAuthenticationSchemes.Tenant, authenticationScheme, StringComparison.Ordinal))
+            {
+              tenant = await tenantService.GetTenantByRealm(options.Realm!);
+              if (tenant == null)
+              {
+                throw new InvalidOperationException($"Failed to find tenant matching realm '{options.Realm}'.");
+              }
+            }
+            context.AddAdspContext(options.ServiceId, isCore, tenant);
           }
         };
-      });
+      }
+    );
 
     return builder;
   }
@@ -125,9 +161,10 @@ internal static class AccessExtensions
       {
         jwt.TokenValidationParameters = new TokenValidationParameters
         {
-          IssuerValidator = (issuer, securityToken, validationParameters) =>
+          IssuerValidator = (issuer, token, parameters) =>
           {
-            return issuer;
+            var tenant = issuerCache.GetTenantByIssuer(issuer).Result;
+            return tenant != null ? issuer : null;
           },
           IssuerSigningKeyResolver = (token, securityToken, kid, validationParameters) =>
           {
@@ -140,10 +177,6 @@ internal static class AccessExtensions
 
             return keys;
           },
-          TokenDecryptionKeyResolver = (string token, SecurityToken securityToken, string kid, TokenValidationParameters validationParameters) =>
-          {
-            return Enumerable.Empty<SecurityKey>();
-          },
         };
 
         jwt.Audience = $"{options.ServiceId}";
@@ -154,7 +187,7 @@ internal static class AccessExtensions
             var tenant = await issuerCache.GetTenantByIssuer(context.SecurityToken.Issuer);
             if (tenant?.Id != null)
             {
-              context.AddAdspContext(options.ServiceId, tenant);
+              context.AddAdspContext(options.ServiceId, false, tenant);
             }
           }
         };

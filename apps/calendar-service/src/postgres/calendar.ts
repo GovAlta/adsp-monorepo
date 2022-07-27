@@ -75,6 +75,10 @@ export class PostgresCalendarRepository implements CalendarRepository {
         queryCriteria.is_business_day = criteria.isBusinessDay;
       }
 
+      if (criteria.isInLieuOfDay != null) {
+        queryCriteria.is_in_lieu_day = criteria.isInLieuOfDay;
+      }
+
       query.where(queryCriteria);
 
       if (criteria.max) {

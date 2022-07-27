@@ -1,3 +1,5 @@
+using Adsp.Platform.ScriptService.Events;
+using Adsp.Platform.ScriptService.Model;
 using Adsp.Platform.ScriptService.Services;
 using Adsp.Sdk;
 using Microsoft.OpenApi.Models;
@@ -25,13 +27,52 @@ internal class Program
     );
 
     var adspConfiguration = builder.Configuration.GetSection("Adsp");
-    builder.Services.AddAdspForPlatformService(new AdspOptions
-    {
-      ServiceId = AdspId.Parse(adspConfiguration.GetValue<string>("ServiceId")),
-      ClientSecret = adspConfiguration.GetValue<string>("ClientSecret"),
-      AccessServiceUrl = adspConfiguration.GetValue<Uri>("AccessServiceUrl"),
-      DirectoryUrl = adspConfiguration.GetValue<Uri>("DirectoryUrl")
-    });
+    builder.Services.Configure<AdspOptions>(adspConfiguration);
+    builder.Services.AddAdspForPlatformService(
+      options =>
+      {
+        options.ServiceId = AdspId.Parse(adspConfiguration.GetValue<string>("ServiceId"));
+        options.DisplayName = "Script service";
+        options.Description = "Service that execute configured scripts.";
+        options.Configuration = new ConfigurationDefinition<Dictionary<string, ScriptDefinition>>(
+          "Definitions of the scripts available to run.",
+          (tenant, core) =>
+          {
+            var combined = new Dictionary<string, ScriptDefinition>();
+            if (tenant is IDictionary<string, ScriptDefinition> tenantDefinitions)
+            {
+              foreach (var entry in tenantDefinitions)
+              {
+                combined[entry.Key] = entry.Value;
+              }
+            }
+
+            if (core is IDictionary<string, ScriptDefinition> coreDefinitions)
+            {
+              foreach (var entry in coreDefinitions)
+              {
+                combined[entry.Key] = entry.Value;
+              }
+            }
+
+            return combined;
+          }
+        );
+        options.Roles = new[] {
+          new ServiceRole {
+            Role = ServiceRoles.ScriptRunner,
+            Description = "Script runner role that allows execution of scripts.",
+            InTenantAdmin = true
+          }
+        };
+        options.Events = new[] {
+          new DomainEventDefinition<ScriptExecuted>(
+            ScriptExecuted.EventName,
+            "Signalled when a script is executed."
+          )
+        };
+      }
+    );
     builder.Services.AddSingleton<ILuaScriptService, LuaScriptService>();
 
     var app = builder.Build();
@@ -40,6 +81,12 @@ internal class Program
 
     app.UseAuthorization();
     app.UseAdsp();
+    app.UseAdspMetadata(new AdspMetadataOptions
+    {
+      SwaggerJsonPath = "docs/v1/swagger.json",
+      ApiPath = "script/v1"
+    });
+
     app.MapControllers();
 
     app.Run();

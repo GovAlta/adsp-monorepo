@@ -28,6 +28,7 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
         NPM_TOKEN: ${{ inputs.github_token }}
+        NUGET_API_KEY: ${{ inputs.github_token }}
       run: npx nx affected --target=release --base=${{ inputs.affected-base }}
     # Set affected apps to output.
     - id: nx-affected

@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 
-namespace Adsp.Sdk.Error;
+namespace Adsp.Sdk.Errors;
 [SuppressMessage("Usage", "CA1032: Implement standard exception constructors", Justification = "Abstract class")]
 public abstract class HttpResponseException : Exception
 {
