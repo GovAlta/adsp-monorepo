@@ -9,6 +9,7 @@ import {
   UPDATE_CONFIGURATION_DEFINITION_SUCCESS_ACTION,
   REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION,
   RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION,
+  SET_CONFIGURATION_REVISION_SUCCESS_ACTION,
 } from './action';
 import {
   ConfigurationDefinitionState,
@@ -21,6 +22,7 @@ const defaultState: ConfigurationDefinitionState = {
   coreConfigDefinitions: undefined,
   tenantConfigDefinitions: undefined,
   isAddedFromOverviewPage: false,
+  lastImport: { namespace: null, name: null, latest: null },
   importedConfigurationError: [],
 };
 
@@ -63,6 +65,13 @@ export default function (
         ...state,
         importedConfigurationError: [],
       };
+    case SET_CONFIGURATION_REVISION_SUCCESS_ACTION: {
+      console.log(JSON.stringify(action.payload) + '<action.payload');
+      return {
+        ...state,
+        lastImport: action.payload,
+      };
+    }
     default:
       return state;
   }

@@ -10,6 +10,7 @@ export interface ConfigurationDefinitionState {
   tenantConfigDefinitions: ServiceSchemas;
   isAddedFromOverviewPage: boolean;
   importedConfigurationError: string[];
+  lastImport: ServiceConfiguration;
 }
 
 export interface ConfigDefinition {
