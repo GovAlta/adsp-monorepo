@@ -26,7 +26,7 @@ dotnet add package Adsp.Sdk
 ## Initializing the SDK
 The SDK follows ASP.NET conventions of extension methods and options pattern. Initialize the SDK by adding ADSP services to the service collection and using capabilities on the application builder. Use either `AddAdspForPlatformService` or `AddAdspForService` as appropriate.
 
-```C#
+```csharp
   using Adsp.Sdk;
   ...
   // Bind configuration from the appropriate section.
@@ -55,7 +55,7 @@ The SDK follows ASP.NET conventions of extension methods and options pattern. In
 The SDK adds [JWT Bearer authentication](https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.jwtbearerextensions.addjwtbearer?view=aspnetcore-6.0) for verifying JWT bearer tokens in tenant and core realm requests.
 
 The associated schemes are defined in:
-```C#
+```csharp
   public static class AdspAuthenticationSchemes
   {
     public const string Core = "Core";
@@ -64,7 +64,7 @@ The associated schemes are defined in:
 ```
 
 Authorize by scheme:
-```C#
+```csharp
   [HttpGet]
   [Route("hello")]
   [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
@@ -97,7 +97,7 @@ For my-service, the roles are mapped to role claims:
 - other-service:other-user
 
 Authorize based on a role:
-```C#
+```csharp
   [HttpGet]
   [Route("hello")]
   [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant, Roles="other-service:other-user")]
@@ -134,7 +134,7 @@ The handler uses the tenant service client to retrieve tenant information. This 
 The tenant service is available via dependency injection.
 
 Getting tenant information using the tenant service:
-```C#
+```csharp
   using Adsp.Sdk;
   public class HelloWorldController : ControllerBase
   {
@@ -158,7 +158,7 @@ Getting tenant information using the tenant service:
 Service discovery in ADSP is handled using client side service discovery with a directory of services providing a register of available services.
 
 Getting a service URL from the directory:
-```C#
+```csharp
   using Adsp.Sdk;
   public class HelloWorldController : ControllerBase
   {
@@ -182,7 +182,7 @@ Getting a service URL from the directory:
 Platform services can make use of a common configuration service for managing configuration. The SDK allows services to define their configuration schema and access configuration.
 
 Defining the configuration json schema:
-```C#
+```csharp
   builder.Services.AddAdspForPlatformService(
     options =>
     {
@@ -197,7 +197,7 @@ Defining the configuration json schema:
 Each service can have core configuration that applies across tenants and configuration specific to each tenant. The SDK provides a configuration HttpContext extension method that will retrieve configuration in request tenant context.
 
 Getting configuration via the context:
-```C#
+```csharp
   using Adsp.Sdk;
   public class HelloWorldController : ControllerBase
   {
@@ -216,7 +216,7 @@ Getting configuration via the context:
 The handler uses configuration service client to retrieve configuration. This is also available from the SDK via dependency injection for direct use.
 
 Getting configuration using the configuration service:
-```C#
+```csharp
   using Adsp.Sdk;
   public class HelloWorldController : ControllerBase
   {
@@ -244,7 +244,7 @@ Getting configuration using the configuration service:
 Services may want to apply transformations on the retrieved configuration. The SDK allows services to provide functions for combining core and tenant configuration. For example, services can use these to generate effective configuration when tenant overrides parts of core configuration.
 
 Provide conversion functions:
-```C#
+```csharp
 ```
 
 ## Registering event definitions, notification types, etc.
@@ -254,7 +254,7 @@ The SDK allows services to register configuration for some platform services.
 - `Events` defines the domain events of the service.
 
 Defining configuration for other platform services:
-```C#
+```csharp
   builder.Services.AddAdspForPlatformService(
     options =>
     {
