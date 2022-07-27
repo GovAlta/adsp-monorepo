@@ -288,7 +288,7 @@ When('the user clicks {string} button for {string} in {string}', function (butto
   switch (buttonName) {
     case 'edit':
       notificationsObj.notificationTypeEventEditButton(cardTitle, event).click();
-      cy.wait(1000);
+      cy.wait(2000);
       break;
     case 'delete':
       notificationsObj.eventDeleteIcon(cardTitle, event).click();
@@ -836,19 +836,13 @@ When('the user views the link for managing email subscription', function () {
     .find('footer')
     .contains('Please do not reply to this email. Manage your subscription here.');
 
-  const linkURL1 = Cypress.config('baseUrl');
-  const urlToTenantLogin = Cypress.config('baseUrl');
-  cy.log(urlToTenantLogin + '');
-  // const modified = urlToTenantLogin.slice(0, 7) + 'subscription.' + Cypress.env('realm') + '/login';
-
+  const urlSubscriptionLogin = Cypress.env('subscriptionUrl') + '/' + Cypress.env('realm') + '/login';
+  cy.log(urlSubscriptionLogin);
   notificationsObj
     .editContactModalBodyEmailPreviewPane()
     .its('0.contentDocument.body')
     .find('footer')
     .find('[class="goa-footer-event"]')
-    // .find('a[href*="https://subscription.adsp-uat.alberta.ca/2ef492af-0a16-470b-9ea5-c8bfa7b08a7c/login"]');
-    // https://adsp-uat.alberta.ca
-    .find('a[href]');
-  // .should('contain', linkURL1);
-  // .find('a[href*="Cypress.config().baseUrl.slice(0,7) + 'subscription.'+Cypress.config().baseUrl.slice(7) + '/' + Cypress.env(realm) + '/login"]');
+    .find('a[href]')
+    .contains(urlSubscriptionLogin);
 });
