@@ -27,6 +27,9 @@
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+  "[csharp]": {
+    "editor.defaultFormatter": "ms-dotnettools.csharp"
+  },
   "cSpell.words": [
     "abgov",
     "Adsp",
@@ -60,7 +63,9 @@
     "reduxjs",
     "signin",
     "testid",
+    "uninstantiated",
     "upsert",
     "uuidv"
-  ]
+  ],
+  "omnisharp.enableRoslynAnalyzers": true
 }

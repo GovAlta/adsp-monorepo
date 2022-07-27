@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: script-service
+        component: api
+      name: script-service
+    data:
+      Adsp_AccessServiceUrl: https://access.adsp-dev.gov.ab.ca
+      Adsp_DirectoryUrl: https://directory-service.adsp-dev.gov.ab.ca
+      Logging_LogLevel_Default: debug
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        app: script-service
+        component: api
+      name: script-service
+    stringData:
+      Adsp_ServiceId: urn:ads:platform:script-service
+      Adsp_ClientSecret:
