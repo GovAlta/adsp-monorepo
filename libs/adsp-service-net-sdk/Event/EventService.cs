@@ -1,11 +1,13 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
-using Adsp.Sdk.Access;
 using Adsp.Sdk.Registration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RestSharp;
 
 namespace Adsp.Sdk.Event;
-internal class EventService : IEventService
+[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+internal class EventService : IEventService, IDisposable
 {
   private static readonly AdspId EVENT_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:event-service:v1");
 
@@ -16,9 +18,15 @@ internal class EventService : IEventService
   private readonly string _namespace;
   private readonly RestClient _client;
 
-  public EventService(ILogger<EventService> logger, IServiceRegistrar registrar, IServiceDirectory serviceDirectory, ITokenProvider tokenProvider, AdspOptions options)
+  public EventService(
+    ILogger<EventService> logger,
+    IServiceRegistrar registrar,
+    IServiceDirectory serviceDirectory,
+    ITokenProvider tokenProvider,
+    IOptions<AdspOptions> options
+  )
   {
-    if (options?.ServiceId == null)
+    if (options.Value.ServiceId == null)
     {
       throw new ArgumentException("Provided options must include value for ServiceId.");
     }
@@ -27,7 +35,7 @@ internal class EventService : IEventService
     _registrar = registrar;
     _serviceDirectory = serviceDirectory;
     _tokenProvider = tokenProvider;
-    _namespace = options.ServiceId.Namespace;
+    _namespace = options.Value.ServiceId.Namespace;
     _client = new RestClient();
   }
 
@@ -58,5 +66,10 @@ internal class EventService : IEventService
         response.Content
       );
     }
+  }
+
+  public void Dispose()
+  {
+    _client.Dispose();
   }
 }
