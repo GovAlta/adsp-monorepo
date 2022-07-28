@@ -187,3 +187,20 @@ Given('a tenant admin user is on event streams page', function () {
   commonObj.serviceTab('Event', 'Streams').click();
   cy.wait(2000);
 });
+
+When('the user clicks Add stream button', function () {
+  eventsObj.addStreamBtn().click();
+});
+
+Then('the user views Add stream modal', function () {
+  eventsObj.addStreamModalTitle().invoke('text').should('eq', 'Add stream');
+});
+
+When(
+  'the user enters {string}, {string}, select events "status-service:application-healthy, fileservice:file-deleted" select roles "auto-test-role1, auto-test-role2"',
+  function () {}
+);
+
+Then('the user clicks Save button on Stream modal', function () {
+  eventsObj.addStreamModalSaveButton().click();
+});

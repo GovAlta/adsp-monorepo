@@ -132,6 +132,30 @@ class eventsPage {
       `//*[@data-testid="Platform-stream-table"]//tbody/tr/td[text()="${streamName}"]/parent::*/following-sibling::tr//*[contains(@data-testid, "details")]`
     );
   }
+
+  addStreamBtn() {
+    return cy.get('[data-testid="add-stream"]');
+  }
+
+  addStreamModal() {
+    return cy.get('[data-testid="stream-form"]');
+  }
+
+  addStreamModalTitle() {
+    return cy.xpath('//*[@data-testid="stream-form" and @data-state="visible"]//div[@class="modal-title"]');
+  }
+
+  addStreamModalNameInput() {
+    return cy.get('[data-testid="stream-form"]');
+  }
+
+  addStreamModalDescriptionInput() {
+    return cy.get('[data-testid="stream-form"]');
+  }
+
+  addStreamModalSaveButton() {
+    return cy.xpath('//*[@data-testid="stream-form" and @data-state="visible"]//*[@data-testid="form-save"]');
+  }
 }
 
 export default eventsPage;
