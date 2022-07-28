@@ -28,6 +28,18 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
       await this.updateConfiguration(adspId`urn:ads:platform:configuration-service`, update);
     }
 
+    if (registration.configuration) {
+      const namespace = registration.serviceId.namespace;
+      const name = registration.serviceId.service;
+      const update = {
+        [`${namespace}:${name}`]: {
+          configurationSchema: registration.configuration.schema,
+          description: registration.configuration.description,
+        },
+      };
+      await this.updateConfiguration(adspId`urn:ads:platform:configuration-service`, update);
+    }
+
     if (registration.roles) {
       const update = {
         [registration.serviceId.toString()]: {
@@ -50,7 +62,7 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
                 description: def.description,
                 payloadSchema: def.payloadSchema,
                 interval: def.interval,
-                log: def.log
+                log: def.log,
               },
             }),
             {}

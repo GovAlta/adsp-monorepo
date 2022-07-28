@@ -55,7 +55,31 @@ const Dashboard = (): JSX.Element => {
                         Access allows you to add a secure sign in to your application and services with minimum effort
                         and configuration. No need to deal with storing or authenticating users. It's all available out
                         of the box.
-                        <div>&nbsp;</div>
+                      </div>
+                      <div>&nbsp;</div>
+                    </GoACard>
+                  </GridItem>
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <h2>
+                        <Link to="/admin/services/calendar">Calendar</Link>
+                      </h2>
+                      <div>
+                        Calendar service provides information about dates, and a model for calendars, calendar events,
+                        and scheduling. This service manages date and times in a particular timezone (America/Edmonton)
+                        rather than UTC or a particular UTC offset.
+                      </div>
+                    </GoACard>
+                  </GridItem>
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <h2>
+                        <Link to="/admin/services/configuration">Configuration</Link>
+                      </h2>
+                      <div>
+                        The configuration service provides a generic json document store for storage and revisioning of
+                        infrequently changing configuration. Store configuration against namespace and name keys, and
+                        optionally define configuration schemas for write validation.
                       </div>
                     </GoACard>
                   </GridItem>
@@ -69,6 +93,7 @@ const Dashboard = (): JSX.Element => {
                         directory to lookup URLs for service from a common directory API. Add entries for your own
                         services so they can be found using the directory for service discovery.
                       </div>
+                      <div>&nbsp;</div>
                     </GoACard>
                   </GridItem>
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
@@ -118,19 +143,7 @@ const Dashboard = (): JSX.Element => {
                       </div>
                       <div>&nbsp;</div>
                       <div>&nbsp;</div>
-                    </GoACard>
-                  </GridItem>
-                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoACard type="primary">
-                      <h2>
-                        <Link to="/admin/services/configuration">Configuration</Link>
-                      </h2>
-                      <div>
-                        The configuration service provides a generic json document store for storage and revisioning of
-                        infrequently changing configuration. Store configuration against namespace and name keys, and
-                        optionally define configuration schemas for write validation.
-                        <div>&nbsp;</div>
-                      </div>
+                      <div>&nbsp;</div>
                     </GoACard>
                   </GridItem>
                 </Grid>
