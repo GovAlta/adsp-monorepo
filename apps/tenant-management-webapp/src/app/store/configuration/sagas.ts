@@ -150,6 +150,7 @@ export function* updateConfigurationDefinition({
         update: {
           [`${definition.namespace}:${definition.name}`]: {
             configurationSchema: definition.configurationSchema,
+            description: definition.description,
           },
         },
       };
@@ -261,7 +262,7 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
           `${baseUrl}/configuration/v2/configuration/${action.configuration.namespace}/${action.configuration.name}`,
           body,
           {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           }
         );
 

@@ -24,6 +24,12 @@
         },
         "test": {
           "builder": "@nx-dotnet/core:test"
+        },
+        "release": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "command": "npx semantic-release -e ./libs/adsp-service-net-sdk/.releaserc.json"
+          }
         }
       },
       "tags": []

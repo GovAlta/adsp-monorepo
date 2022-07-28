@@ -1,7 +1,7 @@
 ---
 layout: page
-title: Service SDK
-nav_order: 2
+title: Service SDK (Node.js)
+nav_order: 3
 parent: Platform development
 ---
 
@@ -14,10 +14,10 @@ parent: Platform development
 {:toc}
 </details>
 
-# ADSP service SDK
+# ADSP service SDK (Node.js)
 Platform services integrate into the foundational capabilities via a Software Development Kit (SDK). The SDK includes interfaces and utilities for handling tenancy, configurations, and registration. The same SDK can be used for development of tenant services.
 
-Note that the SDK provides friendly interfaces on top of APIs. It is intended to speed up service development but is not the only way to access platform capabilities. Currently the SDK is only available for NodeJS.
+Note that the SDK provides friendly interfaces on top of APIs. It is intended to speed up service development but is not the only way to access platform capabilities.
 
 ```bash
 npm i @govalta/adsp-service-sdk
@@ -89,9 +89,23 @@ Core requests are used by platform services making requests to other platform se
 ```
 
 ### Service specific user roles
-Keycloak issued tokens contain client roles nested under `realm_access`. Both tenant and core strategies flatten service specific roles from the token and exclude roles related to other service clients.
+Keycloak issued tokens contain client roles nested under `realm_access`. Both tenant and core strategies flatten service specific roles from the token and qualifies roles related to other service clients with the client ID..
 
-This means that service should define their roles in SDK initialization so the roles are created as roles under the service specific client. For services that allow users to configure which roles have what access, those roles must either be realm roles or roles added under the service client.
+For example:
+```json
+  {
+    "realm_access": { "roles": ["user"] },
+    "resource_access": {
+      "my-service": { "roles": ["my-user"] },
+      "other-service": { "roles": ["other-user"] }
+    }
+  }
+```
+
+For my-service, the roles are mapped to roles:
+- user
+- my-user
+- other-service:other-user
 
 ## Determining tenancy
 Requests to platform services are in the context of a specific tenant with few exceptions. The context is implicit when a request is made with a tenant bearer token. It can be explicit in cases where an endpoint allows anonymous access or when a platform service makes a request to another platform service under a core service account.
@@ -177,9 +191,9 @@ Defining the configuration json schema:
   const serviceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:event-service`);
 ```
 
-Each service can have core configuration that applies across tenants and configuration specific to each tenant. The SDK provides a configuration request handler that will retrieve configuration for in the request tenant context.
+Each service can have core configuration that applies across tenants and configuration specific to each tenant. The SDK provides a configuration request handler that will retrieve configuration in the request tenant context.
 
-Defining the configuration json schema:
+Getting configuration via the request:
 ```typescript
   const {
     configurationHandler,

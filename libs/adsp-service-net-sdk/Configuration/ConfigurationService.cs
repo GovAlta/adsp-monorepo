@@ -1,51 +1,64 @@
 using System.Diagnostics.CodeAnalysis;
-using Adsp.Sdk.Access;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RestSharp;
 
 namespace Adsp.Sdk.Configuration;
-internal class ConfigurationService : IConfigurationService
+[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+internal class ConfigurationService : IConfigurationService, IDisposable
 {
   private static readonly AdspId CONFIGURATION_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:configuration-service:v2");
   private readonly ILogger<ConfigurationService> _logger;
-  private readonly IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions { });
+  private readonly IMemoryCache _cache;
   private readonly IServiceDirectory _serviceDirectory;
   private readonly ITokenProvider _tokenProvider;
-  private readonly AdspId _serviceId;
   private readonly Func<object?, object?, object?>? _combine;
   private readonly RestClient _client;
 
-  public ConfigurationService(ILogger<ConfigurationService> logger, IServiceDirectory serviceDirectory, ITokenProvider tokenProvider, AdspOptions options)
+  public ConfigurationService(
+    ILogger<ConfigurationService> logger,
+    IMemoryCache cache,
+    IServiceDirectory serviceDirectory,
+    ITokenProvider tokenProvider,
+    IOptions<AdspOptions> options
+  )
   {
-    if (options?.ServiceId == null)
-    {
-      throw new ArgumentException("Provided options must include a value for ServiceId.");
-    }
-
     _logger = logger;
+    _cache = cache;
     _serviceDirectory = serviceDirectory;
     _tokenProvider = tokenProvider;
-    _serviceId = options.ServiceId;
-    _combine = options.Configuration?.CombineConfiguration;
+    _combine = options.Value.Configuration?.CombineConfiguration;
     _client = new RestClient();
   }
 
-  public async Task<TC?> GetConfiguration<T, TC>(AdspId? tenantId = null) where T : class
+  public void ClearCached(AdspId serviceId, AdspId? tenantId = null)
   {
-    var coreCached = _cache.TryGetValue<T>(_serviceId, out T? coreConfiguration);
+    if (tenantId != null)
+    {
+      _cache.Remove((serviceId, tenantId));
+    }
+    else
+    {
+      _cache.Remove(serviceId);
+    }
+  }
+
+  public async Task<TC?> GetConfiguration<T, TC>(AdspId serviceId, AdspId? tenantId = null) where T : class
+  {
+    var coreCached = _cache.TryGetValue<T>(serviceId, out T? coreConfiguration);
     if (!coreCached)
     {
-      coreConfiguration = await RetrieveConfiguration<T>();
+      coreConfiguration = await RetrieveConfiguration<T>(serviceId);
     }
 
     T? tenantConfiguration = default;
     if (tenantId != null)
     {
-      var tenantCached = _cache.TryGetValue((_serviceId, tenantId), out tenantConfiguration);
+      var tenantCached = _cache.TryGetValue((serviceId, tenantId), out tenantConfiguration);
       if (!tenantCached)
       {
-        tenantConfiguration = await RetrieveConfiguration<T>(tenantId);
+        tenantConfiguration = await RetrieveConfiguration<T>(serviceId, tenantId);
       }
     }
 
@@ -53,14 +66,14 @@ internal class ConfigurationService : IConfigurationService
     return (TC?)result;
   }
 
-  public Task<(T?, T?)> GetConfiguration<T>(AdspId? tenantId = null) where T : class
+  public Task<(T?, T?)> GetConfiguration<T>(AdspId serviceId, AdspId? tenantId = null) where T : class
   {
-    return GetConfiguration<T, (T?, T?)>(tenantId);
+    return GetConfiguration<T, (T?, T?)>(serviceId, tenantId);
   }
 
 
   [SuppressMessage("Usage", "CA1031: Do not catch general exception types", Justification = "Default to returning null")]
-  private async Task<T?> RetrieveConfiguration<T>(AdspId? tenantId = null)
+  private async Task<T?> RetrieveConfiguration<T>(AdspId serviceId, AdspId? tenantId = null)
   {
     T? configuration = default;
     try
@@ -68,7 +81,7 @@ internal class ConfigurationService : IConfigurationService
       var configurationServiceUrl = await _serviceDirectory.GetServiceUrl(CONFIGURATION_SERVICE_API_ID);
       var token = await _tokenProvider.GetAccessToken();
 
-      var requestUrl = new Uri(configurationServiceUrl, $"v2/configuration/{_serviceId.Namespace}/{_serviceId.Service}/latest");
+      var requestUrl = new Uri(configurationServiceUrl, $"v2/configuration/{serviceId.Namespace}/{serviceId.Service}/latest");
       var request = new RestRequest(requestUrl.AbsoluteUri);
       if (tenantId != null)
       {
@@ -82,19 +95,26 @@ internal class ConfigurationService : IConfigurationService
       {
         if (tenantId != null)
         {
-          _cache.Set((_serviceId, tenantId), configuration, TimeSpan.FromMinutes(15));
+          _cache.Set((serviceId, tenantId), configuration, TimeSpan.FromMinutes(15));
+          _logger.LogDebug("Cached configuration for {ServiceId} of tenant ({TenantId}).", serviceId, tenantId);
         }
         else
         {
-          _cache.Set(_serviceId, configuration, TimeSpan.FromMinutes(15));
+          _cache.Set(serviceId, configuration, TimeSpan.FromMinutes(15));
+          _logger.LogDebug("Cached core configuration for {ServiceId}.", serviceId);
         }
       }
     }
     catch (Exception e)
     {
-      _logger.LogDebug(e, "Error encountered retrieving configuration for service {ServiceId}.", _serviceId);
+      _logger.LogDebug(e, "Error encountered retrieving configuration for service {ServiceId}.", serviceId);
     }
 
     return configuration;
+  }
+
+  public void Dispose()
+  {
+    _client.Dispose();
   }
 }
