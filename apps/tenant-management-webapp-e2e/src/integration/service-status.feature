@@ -231,6 +231,6 @@ Feature: Service status
     Then the user should be able to view "autotest-status-admin@gov.ab.ca" as support email in the status app for "autotest" tenant
     Given a tenant admin user is on status overview page
     When the user clicks Edit button for contact information
-    When the user enters "test@gov.ab.ca"
+    And the user enters "test@gov.ab.ca"
     And the user clicks Save button on contact information modal
     Then the user views "test@gov.ab.ca" as the email of contact information
