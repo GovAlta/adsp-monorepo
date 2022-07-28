@@ -26,7 +26,7 @@
     "accessManagementApi": "",
     "uiComponentUrl": "",
     "fileApi": "",
-    "statusAppUrl": "https://status.adsp-uat.alberta.ca"
+    "statusAppUrl": "https://status.adsp.alberta.ca"
   },
   "baseUrl": "https://adsp.alberta.ca",
   "fileServerFolder": ".",
