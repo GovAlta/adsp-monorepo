@@ -33,25 +33,41 @@ When(
     const roles = role.split(',');
     notificationsObj.notificationTypeModalNameField().clear().type(name);
     notificationsObj.notificationTypeModalDescriptionField().clear().type(description);
-    notificationsObj.notificationTypeModalSubscriberRolesDropdown().click({ force: true });
-    // Deselect all previously selected roles and then select roles
+    // Public or select roles
     notificationsObj
-      .notificationTypeModalSubscriberRolesDropdownItems()
-      .each((element) => {
-        cy.wrap(element)
-          .invoke('attr', 'class')
-          .then((classAttr) => {
-            if (classAttr?.includes('-selected')) {
-              cy.wrap(element).click();
-            }
-          });
-      })
-      .then(() => {
-        for (let i = 0; i < roles.length; i++) {
-          notificationsObj.notificationTypeModalSubscriberRolesDropdownItem(roles[i].trim()).click({ force: true });
+      .notificationTypeModalPublicCheckbox()
+      .invoke('attr', 'class')
+      .then((publicCheckboxClassName) => {
+        if (role.toLowerCase() == 'public') {
+          if (!publicCheckboxClassName?.includes('--selected')) {
+            notificationsObj.notificationTypeModalPublicCheckbox().click();
+          }
+        } else {
+          if (publicCheckboxClassName?.includes('--selected')) {
+            notificationsObj.notificationTypeModalPublicCheckbox().click();
+          }
+          // Deselect all previously selected roles and then select new roles
+          notificationsObj
+            .notificationTypeModalRolesCheckboxes()
+            .then((elements) => {
+              for (let i = 0; i < elements.length; i++) {
+                if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
+                  elements[i].click();
+                }
+              }
+            })
+            .then(() => {
+              for (let i = 0; i < roles.length; i++) {
+                if (roles[i].includes(':')) {
+                  notificationsObj.notificationTypeModalClientRoleCheckbox(roles[i].trim()).click();
+                } else {
+                  notificationsObj.notificationTypeModalRolesCheckbox(roles[i].trim()).click();
+                }
+              }
+            });
         }
       });
-    notificationsObj.notificationTypeModalSubscriberRolesDropdownBackground().click({ force: true }); // To collapse the dropdown after selection
+
     //bot checkbox
     notificationsObj
       .notificationChannelCheckbox('bot')
@@ -155,7 +171,7 @@ Then('the user clicks save button in notification type modal', function () {
 Then(
   'the user {string} the notification type card of {string}, {string}, {string}, {string}, {string}',
   function (viewOrNot, name, desc, roles, publicOrNot, selfService) {
-    roles = roles.replace('Anyone (Anonymous)', '');
+    roles = roles.replace('public', '');
     if (viewOrNot == 'views') {
       notificationsObj.notificationTypeCardTitle(name).should('exist');
       notificationsObj.notificationTypeCardDesc(name).invoke('text').should('contain', desc);
@@ -784,6 +800,7 @@ When('the user selects {string} tab on the event template', function (tab) {
 When(
   'the user enters {string} as subject and {string} as body {string} template page',
   function (subjectText, bodyText, channel) {
+    cy.wait(1000); // Wait for the template editor elements to show
     notificationsObj.addTemplateModalSubject(channel).type(subjectText);
     notificationsObj.addTemplateModalBody(channel).type(bodyText);
   }

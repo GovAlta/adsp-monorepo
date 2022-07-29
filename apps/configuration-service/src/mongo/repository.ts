@@ -7,11 +7,14 @@ import {
   ConfigurationRevision,
   RevisionCriteria,
 } from '../configuration';
+import { renamePrefixProperties } from './prefix';
 import { revisionSchema } from './schema';
 import { ConfigurationRevisionDoc } from './types';
 
 export class MongoConfigurationRepository implements ConfigurationRepository {
   private revisionModel: Model<ConfigurationRevisionDoc>;
+
+  private readonly META_PREFIX = 'META_';
 
   constructor(private validationService: ValidationService) {
     this.revisionModel = model<ConfigurationRevisionDoc>('revision', revisionSchema);
@@ -32,15 +35,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         .limit(1)
         .exec((err, results: ConfigurationRevisionDoc[]) => (err ? reject(err) : resolve(results[0])));
     });
-    const latest = latestDoc
-      ? {
-          revision: latestDoc.revision,
-          created: latestDoc.created,
-          lastUpdated: latestDoc.lastUpdated,
-          configuration: latestDoc.configuration as C,
-        }
-      : null;
-
+    const latest = this.fromDoc<C>(latestDoc);
     return new ConfigurationEntity<C>(namespace, name, this, this.validationService, latest, tenantId, schema);
   }
 
@@ -69,14 +64,8 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         .limit(top)
         .exec((err, results: ConfigurationRevisionDoc[]) => (err ? reject(err) : resolve(results)));
     });
-
     return {
-      results: docs.map((doc) => ({
-        revision: doc.revision,
-        created: doc.created,
-        lastUpdated: doc.lastUpdated,
-        configuration: doc.configuration as C,
-      })),
+      results: docs.map((doc) => this.fromDoc<C>(doc)),
       page: {
         after,
         next: encodeNext(docs.length, top, skip),
@@ -99,8 +88,8 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       namespace: entity.namespace,
       name: entity.name,
       revision: revision.revision,
-      created: revision.created,
-      lastUpdated: revision.lastUpdated,
+      lastUpdated: new Date(),
+      created: revision.created ? revision.created : new Date(),
     };
     // Only include tenant if there is a tenantId on the entity.
     if (entity.tenantId) {
@@ -113,7 +102,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
           query,
           {
             ...update,
-            configuration: revision.configuration,
+            configuration: renamePrefixProperties(revision.configuration, '$', this.META_PREFIX),
           },
           { upsert: true, new: true, lean: true }
         )
@@ -121,9 +110,20 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     });
     return {
       revision: doc.revision,
-      lastUpdated: doc.lastUpdated ? doc.lastUpdated : doc.created,
+      lastUpdated: doc.lastUpdated,
       created: doc.created,
       configuration: doc.configuration,
     };
+  }
+
+  private fromDoc<C>(doc: ConfigurationRevisionDoc): ConfigurationRevision<C> {
+    return doc
+      ? {
+          revision: doc.revision,
+          created: doc.created,
+          lastUpdated: doc.lastUpdated,
+          configuration: renamePrefixProperties(doc.configuration, this.META_PREFIX, '$') as C,
+        }
+      : null;
   }
 }
