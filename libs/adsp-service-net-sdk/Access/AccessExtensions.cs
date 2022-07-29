@@ -8,9 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace Adsp.Sdk.Access;
 internal static class AccessExtensions
 {
-  internal const string AdspContextKey = "ADSP:Context";
-
-  private static TokenValidatedContext AddAdspContext(this TokenValidatedContext context, AdspId serviceId, Tenant? tenant)
+  private static TokenValidatedContext AddAdspContext(this TokenValidatedContext context, AdspId serviceId, bool isCore, Tenant? tenant)
   {
     var subClaim = context.Principal?.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier);
     var usernameClaim = context.Principal?.Claims.FirstOrDefault(claim => claim.Type == "preferred_username");
@@ -27,7 +25,7 @@ internal static class AccessExtensions
     {
       accessIdentity.AddClaim(new Claim(AdspClaimTypes.Tenant, tenant.Id.ToString(), ClaimValueTypes.String));
     }
-    else if (tenant == null)
+    else if (isCore)
     {
       accessIdentity.AddClaim(new Claim(AdspClaimTypes.Core, "true", ClaimValueTypes.Boolean));
     }
@@ -78,7 +76,7 @@ internal static class AccessExtensions
     context.Principal?.AddIdentity(accessIdentity);
 
     context.HttpContext.Items.Add(
-      AdspContextKey,
+      AccessConstants.AdspContextKey,
       new User(
         accessIdentity.HasClaim(AdspClaimTypes.Core, "true"),
         tenant,
@@ -108,12 +106,21 @@ internal static class AccessExtensions
       throw new ArgumentException("Provided options must include value for AccessServiceUrl.", nameof(options));
     }
 
-    builder.AddJwtBearer(authenticationScheme, jwt =>
+    if (
+      String.Equals(AdspAuthenticationSchemes.Tenant, authenticationScheme, StringComparison.Ordinal) &&
+      String.IsNullOrEmpty(options.Realm)
+    )
+    {
+      throw new ArgumentException("Provided options must include tenant realm for tenant authentication scheme.");
+    }
+    var isCore = String.Equals(AdspAuthenticationSchemes.Core, authenticationScheme, StringComparison.Ordinal);
+    var realm = isCore ? AccessConstants.CoreRealm : options.Realm;
+
+    builder.AddJwtBearer(
+      authenticationScheme,
+      jwt =>
       {
-        jwt.Authority = new Uri(
-            options.AccessServiceUrl,
-            $"/auth/realms/{options.Realm}"
-          ).AbsoluteUri;
+        jwt.Authority = new Uri(options.AccessServiceUrl, $"/auth/realms/{realm}").AbsoluteUri;
         jwt.Audience = $"{options.ServiceId}";
         jwt.Events = new JwtBearerEvents
         {
@@ -122,13 +129,17 @@ internal static class AccessExtensions
             Tenant? tenant = null;
             if (String.Equals(AdspAuthenticationSchemes.Tenant, authenticationScheme, StringComparison.Ordinal))
             {
-              var tenants = await tenantService.GetTenants();
-              tenant = tenants.FirstOrDefault();
+              tenant = await tenantService.GetTenantByRealm(options.Realm!);
+              if (tenant == null)
+              {
+                throw new InvalidOperationException($"Failed to find tenant matching realm '{options.Realm}'.");
+              }
             }
-            context.AddAdspContext(options.ServiceId, tenant);
+            context.AddAdspContext(options.ServiceId, isCore, tenant);
           }
         };
-      });
+      }
+    );
 
     return builder;
   }
@@ -176,7 +187,7 @@ internal static class AccessExtensions
             var tenant = await issuerCache.GetTenantByIssuer(context.SecurityToken.Issuer);
             if (tenant?.Id != null)
             {
-              context.AddAdspContext(options.ServiceId, tenant);
+              context.AddAdspContext(options.ServiceId, false, tenant);
             }
           }
         };

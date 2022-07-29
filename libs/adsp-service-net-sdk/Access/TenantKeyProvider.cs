@@ -1,26 +1,30 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using RestSharp;
 
 namespace Adsp.Sdk.Access;
-internal class TenantKeyProvider : ITenantKeyProvider
+[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+internal class TenantKeyProvider : ITenantKeyProvider, IDisposable
 {
-  private ILogger<TenantKeyProvider> _logger;
-  private readonly IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
+  private readonly ILogger<TenantKeyProvider> _logger;
+  private readonly IMemoryCache _cache;
   private readonly IIssuerCache _issuerCache;
   private readonly RestClient _client;
 
-  public TenantKeyProvider(ILogger<TenantKeyProvider> logger, IIssuerCache issuerCache, AdspOptions options)
+  public TenantKeyProvider(ILogger<TenantKeyProvider> logger, IMemoryCache cache, IIssuerCache issuerCache, IOptions<AdspOptions> options)
   {
-    if (options.AccessServiceUrl == null)
+    if (options.Value.AccessServiceUrl == null)
     {
       throw new ArgumentException("Provided options must include value for AccessServiceUrl", nameof(options));
     }
 
     _logger = logger;
+    _cache = cache;
     _issuerCache = issuerCache;
-    _client = new RestClient(options.AccessServiceUrl);
+    _client = new RestClient(options.Value.AccessServiceUrl);
   }
 
   public async Task<SecurityKey?> ResolveSigningKey(string issuer, string kid)
@@ -59,6 +63,8 @@ internal class TenantKeyProvider : ITenantKeyProvider
             {
               result = key;
             }
+
+            _logger.LogDebug("Cached key {Kid} of issuer: {Issuer}", key.KeyId, issuer);
           }
         }
       }
@@ -69,5 +75,10 @@ internal class TenantKeyProvider : ITenantKeyProvider
     }
 
     return result;
+  }
+
+  public void Dispose()
+  {
+    _client.Dispose();
   }
 }

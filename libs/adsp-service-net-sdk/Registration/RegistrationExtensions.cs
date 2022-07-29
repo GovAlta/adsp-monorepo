@@ -5,19 +5,10 @@ using Microsoft.Extensions.Logging;
 namespace Adsp.Sdk.Registration;
 internal static class RegistrationExtensions
 {
-  internal static IServiceCollection AddRegistration(this IServiceCollection services, AdspOptions options)
+  internal static IServiceCollection AddRegistration(this IServiceCollection services)
   {
-    services.AddSingleton<IServiceRegistrar, ServiceRegistrar>(
-      (providers) => new ServiceRegistrar(
-        providers.GetRequiredService<ILogger<ServiceRegistrar>>(),
-        providers.GetRequiredService<IServiceDirectory>(),
-        providers.GetRequiredService<ITokenProvider>(),
-        options
-      )
-    );
-    services.AddTransient<IStartupFilter>(
-      (providers) => new RegistrationStartupFilter(providers.GetRequiredService<IServiceRegistrar>(), options)
-    );
+    services.AddSingleton<IServiceRegistrar, ServiceRegistrar>();
+    services.AddTransient<IStartupFilter, RegistrationStartupFilter>();
     return services;
   }
 }

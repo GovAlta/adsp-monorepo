@@ -111,8 +111,7 @@ public class AdspId
 
   public override bool Equals(object? obj)
   {
-    var other = obj as AdspId;
-    if (other != null)
+    if (obj is AdspId other)
     {
       return Equals(other);
     }
@@ -124,6 +123,6 @@ public class AdspId
 
   public override int GetHashCode()
   {
-    return (Type, Namespace, Service, Api, Resource).GetHashCode();
+    return HashCode.Combine(Type, Namespace, Service, Api, Resource);
   }
 }

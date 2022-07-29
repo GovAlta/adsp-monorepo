@@ -110,6 +110,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
       setErrorsStatus('The json file not match Configuration schema');
       return;
     }
+    dispatch(resetReplaceConfigurationListAction());
     setImportConfigJson(importConfig);
     setImportNameList(configList);
     setOpenImportModal(true);
@@ -162,8 +163,8 @@ export const ConfigurationImportExport: FunctionComponent = () => {
   const getDescription = (namespace: string, name: string) => {
     const defs = { ...coreConfigDefinitions?.configuration, ...tenantConfigDefinitions?.configuration };
     if (defs[`${namespace}:${name}`]) {
-      const schema = defs[`${namespace}:${name}`]['configurationSchema'];
-      return schema['description'] || '';
+      const schema = defs[`${namespace}:${name}`];
+      return schema['description'] || schema['configurationSchema']['description'];
     }
   };
 
