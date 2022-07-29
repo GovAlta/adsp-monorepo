@@ -62,5 +62,9 @@ class Common {
   supportLink(link) {
     return cy.xpath(`//h3[text()="Support"]/following-sibling::*[contains(text(), "${link}")]`);
   }
+
+  serviceOverviewContent(serviceOverviewTitle) {
+    return cy.xpath(`//h1[text()="${serviceOverviewTitle}"]/parent::main//p`);
+  }
 }
 export default Common;
