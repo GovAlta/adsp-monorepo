@@ -21,13 +21,28 @@ export default function (state: Session = SESSION_INIT, action: ActionType): Ses
         },
       };
 
-    case 'session/indicator':
+    case 'session/indicator': {
+      if (action.payload?.show !== null) {
+        state.indicator = {
+          ...state.indicator,
+          show: action.payload?.show,
+          message: action.payload?.message,
+        };
+      }
+
+      if (action.payload.details) {
+        state.indicator = {
+          ...state.indicator,
+          details: {
+            ...state.indicator.details,
+            ...action.payload?.details,
+          },
+        };
+      }
       return {
         ...state,
-        indicator: {
-          ...action.payload,
-        },
       };
+    }
     case 'session/elementIndicator':
       return {
         ...state,
