@@ -27,7 +27,7 @@ export const Calendar: FunctionComponent = () => {
         <a
           rel="noopener noreferrer"
           target="_blank"
-          href={`${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Directory service`}
+          href={`${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Calendar service`}
         >
           Read the API docs
         </a>
