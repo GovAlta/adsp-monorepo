@@ -7,7 +7,7 @@ namespace Adsp.Sdk.Configuration;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Middleware for application builder")]
 internal class ConfigurationMiddleware
 {
-  public const string ConfigurationServiceContextKey = "ADSP:ConfigurationService";
+  public const string ConfigurationContextKey = "ADSP:ConfigurationService";
 
   private readonly ILogger<ConfigurationMiddleware> _logger;
   private readonly IConfigurationService _configurationService;
@@ -39,7 +39,9 @@ internal class ConfigurationMiddleware
       throw new ArgumentNullException(nameof(httpContext));
     }
 
-    httpContext.Items.Add(ConfigurationServiceContextKey, (_serviceId, _configurationService));
+    httpContext.Items.Add(ConfigurationContextKey, (_serviceId, _configurationService));
+
+    _logger.LogDebug("Added configuration capabilities to the context for {ServiceId}.", _serviceId);
 
     await _next(httpContext);
   }

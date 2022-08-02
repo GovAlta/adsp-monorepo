@@ -1,5 +1,6 @@
 export interface ConfigurationDefinition {
   configurationSchema: Record<string, SchemaType>;
+  description: string;
 }
 export interface ConfigurationDefinitionTypes {
   core: ServiceSchemas;
