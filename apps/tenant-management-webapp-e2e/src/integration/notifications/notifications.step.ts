@@ -288,6 +288,7 @@ When('the user clicks {string} button for {string} in {string}', function (butto
   switch (buttonName) {
     case 'edit':
       notificationsObj.notificationTypeEventEditButton(cardTitle, event).click();
+      cy.wait(2000);
       break;
     case 'delete':
       notificationsObj.eventDeleteIcon(cardTitle, event).click();
@@ -360,7 +361,7 @@ When('the user clicks Close button in Preview an email template modal', function
   notificationsObj.eventTemplatePreviewModalCloseBtn().click();
 });
 
-Then('Preview an email template modal is closed', function () {
+Then('Preview event template modal is closed', function () {
   notificationsObj.eventTemplatePreviewModal().should('not.exist');
 });
 
@@ -823,7 +824,26 @@ Then('the user views the email body {string}', function (emailBody) {
   });
 });
 
-When('the user clicks Close button in an email template modal', function () {
+When('the user clicks Close button in event template modal', function () {
   cy.scrollTo('bottom');
   notificationsObj.editTemplateModalCloseBtn().click();
+});
+
+When('the user views the link for managing email subscription', function () {
+  notificationsObj
+    .editContactModalBodyEmailPreviewPane()
+    .its('0.contentDocument.body')
+    .find('footer')
+    .contains('Please do not reply to this email. Manage your subscription here.');
+
+  const urlSubscriptionLogin = Cypress.env('subscriptionUrl') + '/' + Cypress.env('realm') + '/login';
+  cy.log(urlSubscriptionLogin);
+  notificationsObj
+    .editContactModalBodyEmailPreviewPane()
+    .its('0.contentDocument.body')
+    .find('footer')
+    .find('[class="goa-footer-event"]')
+    .find('a[href]')
+    .invoke('attr', 'href')
+    .should('contain', urlSubscriptionLogin);
 });
