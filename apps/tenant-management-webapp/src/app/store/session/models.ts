@@ -1,6 +1,14 @@
 export interface Indicator {
-  show: boolean;
+  show?: boolean;
   message?: string;
+  details?: Record<string, ActionState>;
+}
+
+export enum ActionState {
+  start,
+  inProcess,
+  completed,
+  error,
 }
 
 export interface ElementIndicator {
@@ -49,6 +57,7 @@ export const SESSION_INIT: Session = {
   indicator: {
     show: false,
     message: '',
+    details: {},
   },
   loadingStates: [],
   isExpired: null,

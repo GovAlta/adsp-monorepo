@@ -15,6 +15,12 @@
     <IsPackable>true</IsPackable>
 
     <Company>Government of Alberta</Company>
+
+    <RepositoryUrl>https://github.com/GovAlta/adsp-monorepo.git</RepositoryUrl>
+
+    <RepositoryType>git</RepositoryType>
+
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,6 +37,7 @@
     <PackageReference Include="NJsonSchema" Version="10.7.2" />
     <PackageReference Include="Polly" Version="7.2.3" />
     <PackageReference Include="RestSharp" Version="108.0.1" />
+    <PackageReference Include="SocketIOClient" Version="3.0.6" />
   </ItemGroup>
 
   <Target Name="CheckNxModuleBoundaries" BeforeTargets="Build">

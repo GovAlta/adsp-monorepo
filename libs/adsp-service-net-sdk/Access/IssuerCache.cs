@@ -1,25 +1,28 @@
-using Adsp.Sdk.Tenancy;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Adsp.Sdk.Access;
+[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
 internal class IssuerCache : IIssuerCache
 {
   private readonly ILogger<IssuerCache> _logger;
-  private readonly MemoryCache _cache = new(new MemoryCacheOptions { });
+  private readonly IMemoryCache _cache;
   private readonly ITenantService _tenantService;
   private readonly Uri _accessServiceUrl;
 
-  public IssuerCache(ILogger<IssuerCache> logger, ITenantService tenantService, AdspOptions options)
+  public IssuerCache(ILogger<IssuerCache> logger, IMemoryCache cache, ITenantService tenantService, IOptions<AdspOptions> options)
   {
-    if (options.AccessServiceUrl == null)
+    if (options.Value.AccessServiceUrl == null)
     {
       throw new ArgumentException("Provided options must include value for AccessServiceUrl.", nameof(options));
     }
 
     _logger = logger;
+    _cache = cache;
     _tenantService = tenantService;
-    _accessServiceUrl = options.AccessServiceUrl;
+    _accessServiceUrl = options.Value.AccessServiceUrl;
   }
 
   public async Task<Tenant?> GetTenantByIssuer(string issuer)
@@ -27,6 +30,8 @@ internal class IssuerCache : IIssuerCache
     var cached = _cache.TryGetValue<Tenant>(issuer, out Tenant? tenant);
     if (!cached)
     {
+      _logger.LogDebug("Cache miss for tenant of issuer: {Issuer}", issuer);
+
       var issuers = await RetrieveTenantIssuers();
       issuers.TryGetValue(issuer, out tenant);
     }
@@ -42,6 +47,7 @@ internal class IssuerCache : IIssuerCache
     foreach (var issuer in issuers)
     {
       _cache.Set(issuer.Key, issuer.Value, TimeSpan.FromHours(1));
+      _logger.LogDebug("Cached issuer {Issuer} -> {Tenant} ({TenantId})", issuer.Key, issuer.Value.Name, issuer.Value.Id);
     }
 
     return issuers;
