@@ -9,9 +9,7 @@ Then(
     const urlToTenantLogin = Cypress.env().statusAppUrl + '/' + tenant;
     cy.visit(urlToTenantLogin);
     cy.wait(3000);
-    statusAppObj.statusNotificationPageTitle();
-    cy.contains(tenant, { matchCase: false });
-
+    statusAppObj.statusNotificationPageTitle().should('contain', tenant, { matchCase: false });
     statusAppObj
       .statusNotificationPleaseContact()
       .should('have.attr', 'href')
