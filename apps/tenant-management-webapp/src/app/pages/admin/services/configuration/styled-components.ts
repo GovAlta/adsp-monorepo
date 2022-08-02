@@ -78,6 +78,7 @@ export const ScrollPane = styled.div`
 
   .header-background {
     background: #f1f1f1;
+    color: #000000;
     padding: 10px;
     font-weight: 700;
   }
