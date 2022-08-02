@@ -63,11 +63,17 @@ internal class TenantService : ITenantService, IDisposable
 
   private async Task<Tenant?> RetrieveTenant(AdspId tenantId)
   {
-    var tenant = await _retryPolicy.ExecuteAsync(async () =>
+    var tenantApiUrl = await _serviceDirectory.GetServiceUrl(TENANT_SERVICE_API_ID);
+    var requestUrl = new Uri(tenantApiUrl, $"v2{tenantId.Resource}").AbsoluteUri;
+
+    var tenant = await _retryPolicy.ExecuteAsync(async (ctx) =>
       {
         var token = await _tokenProvider.GetAccessToken();
-        return await _client.GetAsync<Tenant>(new RestRequest(tenantId.Resource));
-      }
+        var request = new RestRequest(requestUrl);
+        request.AddHeader("Authorization", $"Bearer {token}");
+        return await _client.GetAsync<Tenant>(request);
+      },
+      new Dictionary<string, object> { { ContextUrlKey, requestUrl } }
     );
 
     if (tenant != null)
