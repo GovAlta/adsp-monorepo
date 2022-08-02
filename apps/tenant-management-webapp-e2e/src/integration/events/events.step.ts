@@ -193,14 +193,16 @@ When('the user clicks Add stream button', function () {
 });
 
 Then('the user views Add stream modal', function () {
-  eventsObj.addStreamModalTitle().invoke('text').should('eq', 'Add stream');
+  eventsObj.streamModalTitle().invoke('text').should('eq', 'Add stream');
 });
 
-When(
-  'the user enters {string}, {string}, select events "status-service:application-healthy, fileservice:file-deleted" select roles "auto-test-role1, auto-test-role2"',
-  function () {}
-);
+When('the user enters {string}, {string}', function (name, description) {
+  // select events "status-service:application-healthy, fileservice:file-deleted" select roles "auto-test-role1, auto-test-role2"
+  eventsObj.streamModalNameInput().scrollIntoView().clear().type(name, { force: true });
+  eventsObj.streamModalDescriptionInput().scrollIntoView().clear().type(description, { force: true });
+});
 
 Then('the user clicks Save button on Stream modal', function () {
-  eventsObj.addStreamModalSaveButton().click();
+  eventsObj.streamModalSaveButton().click();
+  cy.wait(2000);
 });
