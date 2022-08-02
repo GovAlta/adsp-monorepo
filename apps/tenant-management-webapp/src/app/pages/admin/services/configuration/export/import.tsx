@@ -129,7 +129,6 @@ export const ConfigurationImport: FunctionComponent = () => {
         }
       }
     }
-    //dispatch(getReplaceConfigurationErrorAction());
 
     setShowStatus(true);
   };

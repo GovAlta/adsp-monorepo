@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useMemo, useState, useRef } from 'react';
+import React, { FunctionComponent, useEffect, useMemo, useState } from 'react';
 import { RootState } from '@store/index';
 import {
   toServiceKey,

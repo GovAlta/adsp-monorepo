@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, FunctionComponent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { updatePdfResponse } from '@store/pdf/action';
 import DataTable from '@components/DataTable';
@@ -8,7 +8,7 @@ import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import InformationCircle from '@components/icons/InformationCircle';
 
-const imports = (): JSX.Element => {
+const Imports: FunctionComponent = () => {
   const dispatch = useDispatch();
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
 
@@ -72,7 +72,7 @@ const imports = (): JSX.Element => {
   return <RenderFileTable />;
 };
 
-export default imports;
+export default Imports;
 
 const FileTableStyles = styled.div`
   .flex-horizontal {
