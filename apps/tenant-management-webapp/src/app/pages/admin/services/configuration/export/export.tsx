@@ -13,7 +13,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getConfigurationDefinitions, getConfigurations, ServiceId } from '@store/configuration/action';
 import { PageIndicator } from '@components/Indicator';
 import { ConfigurationExportType, Service } from '@store/configuration/model';
-import { DescriptionDiv, ErrorStatusText } from '../styled-components';
+import { DescriptionDiv } from '../styled-components';
+import styled from 'styled-components';
 
 export const ConfigurationExport: FunctionComponent = () => {
   const { coreConfigDefinitions, tenantConfigDefinitions } = useSelector((state: RootState) => state.configuration);
@@ -61,56 +62,54 @@ export const ConfigurationExport: FunctionComponent = () => {
 
   return (
     <div>
-      {
-        <GoAButton
-          data-testid="export-configuration-1"
-          disabled={Object.keys(exportServices).length < 1 || indicator.show}
-          onClick={(e) => {
-            e.preventDefault();
-            dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
-          }}
-        >
-          {'Export configuration'}
-        </GoAButton>
-      }
+      <h2>Export</h2>
+      <p>
+        As a tenant admin, you can export the configuration to JSON, so that you could save, and potentially import them
+        again later.
+      </p>
       {indicator.show && <PageIndicator />}
-      {Object.keys(sortedConfiguration.namespaces).map((namespace) => {
-        return (
-          <React.Fragment key={namespace}>
-            <h2>{namespace}</h2>
-            {sortedConfiguration.namespaces[namespace].map((name) => {
-              const desc = getDescription(namespace, name);
-              return (
-                <div key={toServiceKey(namespace, name)}>
-                  <GoACheckbox
-                    name={name}
-                    checked={exportServices[toServiceKey(namespace, name)] || false}
-                    onChange={() => {
-                      toggleSelection(toServiceKey(namespace, name));
-                    }}
-                    data-testid={`${toServiceKey(namespace, name)}_id`}
-                  >
-                    {name}
-                  </GoACheckbox>
-                  {desc && <DescriptionDiv>{`Description: ${desc}`}</DescriptionDiv>}
-                </div>
-              );
-            })}
-          </React.Fragment>
-        );
-      })}
-      {
-        <GoAButton
-          data-testid="export-configuration-1"
-          disabled={Object.keys(exportServices).length < 1 || indicator.show}
-          onClick={(e) => {
-            e.preventDefault();
-            dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
-          }}
-        >
-          {'Export configuration'}
-        </GoAButton>
-      }
+      <ScrollPane>
+        <h3 className="header-background">Export configuration list</h3>
+        <div className="main">
+          {Object.keys(sortedConfiguration.namespaces).map((namespace) => {
+            return (
+              <React.Fragment key={namespace}>
+                <h3>{namespace}</h3>
+                {sortedConfiguration.namespaces[namespace].map((name) => {
+                  const desc = getDescription(namespace, name);
+                  return (
+                    <div key={toServiceKey(namespace, name)}>
+                      <GoACheckbox
+                        name={name}
+                        checked={exportServices[toServiceKey(namespace, name)] || false}
+                        onChange={() => {
+                          toggleSelection(toServiceKey(namespace, name));
+                        }}
+                        data-testid={`${toServiceKey(namespace, name)}_id`}
+                      >
+                        {name}
+                      </GoACheckbox>
+                      {desc && <DescriptionDiv>{`Description: ${desc}`}</DescriptionDiv>}
+                    </div>
+                  );
+                })}
+              </React.Fragment>
+            );
+          })}
+        </div>
+        <div className="export-button">
+          <GoAButton
+            data-testid="export-configuration-1"
+            disabled={Object.keys(exportServices).length < 1 || indicator.show}
+            onClick={(e) => {
+              e.preventDefault();
+              dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
+            }}
+          >
+            {'Export'}
+          </GoAButton>
+        </div>
+      </ScrollPane>
     </div>
   );
 };
@@ -138,3 +137,23 @@ const doDownload = (fileName: string, json: string) => {
   // kill it.
   document.body.removeChild(element);
 };
+
+const ScrollPane = styled.div`
+  border: 1px solid black;
+
+  .header-background {
+    background: #f1f1f1;
+    padding: 10px;
+  }
+
+  .main {
+    padding: 10px;
+    max-height: calc(100vh - 525px);
+    overflow-y: scroll;
+  }
+
+  .export-button {
+    padding: 10px;
+    text-align-last: end;
+  }
+`;

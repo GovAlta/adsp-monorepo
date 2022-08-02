@@ -9,8 +9,9 @@ export interface ConfigurationDefinitionState {
   coreConfigDefinitions: ServiceSchemas;
   tenantConfigDefinitions: ServiceSchemas;
   isAddedFromOverviewPage: boolean;
-  importedConfigurationError: string[];
-  lastImport: ServiceConfiguration;
+  importedConfigurationError: { name: string; error: string }[];
+  previousImportCount: number;
+  imports: ServiceConfiguration[];
 }
 
 export interface ConfigDefinition {
@@ -56,6 +57,8 @@ export interface ServiceConfiguration {
   name: string;
   description?: string;
   latest: ServiceSchemas;
+  success?: boolean;
+  error?: string;
 }
 
 export interface ServiceConfigurationTypes {
