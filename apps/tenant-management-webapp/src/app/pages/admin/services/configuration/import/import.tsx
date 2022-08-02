@@ -14,9 +14,7 @@ import { ConfigDefinition } from '@store/configuration/model';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { ImportModal } from './importModal';
 import { isValidJSONCheck, jsonSchemaCheck } from '@lib/checkInput';
-import { StatusText, StatusIcon, ErrorStatusText } from '../styled-components';
-import GreenCircleCheckMark from '@icons/green-circle-checkmark.svg';
-import CloseCircle from '@components/icons/CloseCircle';
+import { ErrorStatusText } from '../styled-components';
 import JobList from './jobList';
 
 const exportSchema = {
@@ -30,16 +28,13 @@ const exportSchema = {
 };
 
 export const ConfigurationImport: FunctionComponent = () => {
-  const { importedConfigurationError } = useSelector((state: RootState) => state.configuration);
   const imports = useSelector((state: RootState) => state.configuration.imports);
-  const previousImportCount = useSelector((state: RootState) => state.configuration.previousImportCount);
   const indicator = useSelector((state: RootState) => state?.session?.indicator);
 
   const fileName = useRef() as React.MutableRefObject<HTMLInputElement>;
 
   const [selectedImportFile, setSelectedImportFile] = useState('');
   const [openImportModal, setOpenImportModal] = useState(false);
-  const [showStatus, setShowStatus] = useState(false);
   const [importNameList, setImportNameList] = useState([]);
   const [importConfigJson, setImportConfigJson] = useState<ConfigDefinition>(null);
 
@@ -99,7 +94,6 @@ export const ConfigurationImport: FunctionComponent = () => {
 
       setSelectedImportFile(inputJson);
     };
-    setShowStatus(false);
     setErrorsStatus('');
     setImportNameList([]);
     dispatch(resetReplaceConfigurationListAction());
@@ -129,47 +123,6 @@ export const ConfigurationImport: FunctionComponent = () => {
         }
       }
     }
-
-    setShowStatus(true);
-  };
-
-  const renderStatusWithIcon = () => {
-    const newImports = imports
-      .filter((imp, index) => {
-        if (index < imports.length - previousImportCount) {
-          return true;
-        } else return false;
-      })
-      .map((imp) => imp.latest?.revision);
-
-    let revisions = '';
-
-    newImports.forEach((revision, index) => {
-      revisions = revisions.concat(revision.toString() + (index === newImports.length - 1 ? '' : ', '));
-    });
-
-    return (
-      <div style={{ display: 'flex' }}>
-        <StatusIcon>
-          {importedConfigurationError.length > 0 ? (
-            <CloseCircle size="medium" />
-          ) : (
-            <img src={GreenCircleCheckMark} width="16" alt="status" />
-          )}
-        </StatusIcon>
-        <div>
-          {importedConfigurationError.length > 0
-            ? `  Import ${fileName?.current?.value.split('\\').pop()} failed. Error list:  ${importedConfigurationError
-                .map((error) => error.name)
-                .toString()
-                .split(' ,')
-                .join(', ')}`
-            : `   ${fileName?.current?.value
-                .split('\\')
-                .pop()}  imported successfully. Revision numbers are ${revisions} `}
-        </div>
-      </div>
-    );
   };
 
   useEffect(() => {
@@ -223,13 +176,6 @@ export const ConfigurationImport: FunctionComponent = () => {
               Import
             </GoAButton>
             <br />
-
-            {importedConfigurationError && showStatus && (
-              <StatusText>
-                {renderStatusWithIcon()}
-                <br />
-              </StatusText>
-            )}
             {errorsStatus && (
               <ErrorStatusText>
                 {errorsStatus}

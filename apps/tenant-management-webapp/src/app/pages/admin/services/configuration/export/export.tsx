@@ -13,8 +13,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getConfigurationDefinitions, getConfigurations, ServiceId } from '@store/configuration/action';
 import { PageIndicator } from '@components/Indicator';
 import { ConfigurationExportType, Service } from '@store/configuration/model';
-import { DescriptionDiv } from '../styled-components';
-import styled from 'styled-components';
+import { DescriptionDiv, ScrollPane } from '../styled-components';
 
 export const ConfigurationExport: FunctionComponent = () => {
   const { coreConfigDefinitions, tenantConfigDefinitions } = useSelector((state: RootState) => state.configuration);
@@ -137,23 +136,3 @@ const doDownload = (fileName: string, json: string) => {
   // kill it.
   document.body.removeChild(element);
 };
-
-const ScrollPane = styled.div`
-  border: 1px solid black;
-
-  .header-background {
-    background: #f1f1f1;
-    padding: 10px;
-  }
-
-  .main {
-    padding: 10px;
-    max-height: calc(100vh - 525px);
-    overflow-y: scroll;
-  }
-
-  .export-button {
-    padding: 10px;
-    text-align-last: end;
-  }
-`;

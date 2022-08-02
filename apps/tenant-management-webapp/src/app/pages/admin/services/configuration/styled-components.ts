@@ -72,3 +72,43 @@ export const ErrorStatusText = styled.div`
   color: var(--color-red);
   margin-top: 1rem;
 `;
+
+export const ScrollPane = styled.div`
+  border: 1px solid black;
+
+  .header-background {
+    background: #f1f1f1;
+    padding: 10px;
+    font-weight: 700;
+  }
+
+  .main {
+    padding: 10px;
+    max-height: calc(100vh - 525px);
+    overflow-y: scroll;
+  }
+
+  .export-button {
+    padding: 10px;
+    text-align-last: end;
+  }
+`;
+
+export const FileTableStyles = styled.div`
+  .flex-horizontal {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .flex {
+    flex: 1;
+  }
+
+  .mt-1 {
+    margin-top: 2px;
+  }
+
+  .mt-2 {
+    margin-top: 4px;
+  }
+`;
