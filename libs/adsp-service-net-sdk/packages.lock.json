@@ -97,6 +97,12 @@
         "resolved": "7.2.3",
         "contentHash": "DeCY0OFbNdNxsjntr1gTXHJ5pKUwYzp04Er2LLeN3g6pWhffsGuKVfMBLe1lw7x76HrPkLxKEFxBlpRxS2nDEQ=="
       },
+      "ReportGenerator": {
+        "type": "Direct",
+        "requested": "[5.1.9, )",
+        "resolved": "5.1.9",
+        "contentHash": "JUgS11vDkSijCVJb8WQ7NF1JE+DvA+hDAwR0o8RdJdSVMzg3QGuBy387fq3h7ole1MHcX/aUyXWdikDqgvdtOw=="
+      },
       "RestSharp": {
         "type": "Direct",
         "requested": "[108.0.1, )",
