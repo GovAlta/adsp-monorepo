@@ -64,7 +64,7 @@ export const StatusIcon = styled.div`
 `;
 export const DescriptionDiv = styled.div`
   margin-left: 2rem;
-  font-size: 12px;
+  font-size: 16px;
 `;
 export const ErrorStatusText = styled.div`
   font-size: var(--fs-sm);

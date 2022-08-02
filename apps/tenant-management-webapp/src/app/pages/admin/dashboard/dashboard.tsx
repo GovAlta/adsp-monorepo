@@ -65,8 +65,8 @@ const Dashboard = (): JSX.Element => {
                         <Link to="/admin/services/calendar">Calendar</Link>
                       </h2>
                       <div>
-                        Calendar service provides information about dates, and a model for calendars, calendar events,
-                        and scheduling. This service manages date and times in a particular timezone (America/Edmonton)
+                        The calendar service provides information about dates, a model of calendars, calendar events and
+                        scheduling. This service manages dates and times in a particular timezone (America/Edmonton)
                         rather than UTC or a particular UTC offset.
                       </div>
                     </GoACard>
