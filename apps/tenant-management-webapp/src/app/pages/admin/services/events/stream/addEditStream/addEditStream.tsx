@@ -8,7 +8,7 @@ import {
   GoAInput,
 } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
-import { AnonymousWrapper, IdField, StreamModalStyles } from '../styleComponents';
+import { AnonymousWrapper, ChipsWrapper, IdField, StreamModalStyles } from '../styleComponents';
 import { Stream } from '@store/stream/models';
 import { useValidators } from '@lib/useValidators';
 import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
@@ -19,6 +19,7 @@ import { EventDefinition } from '@store/event/models';
 import { RolesTable } from './rolesTable';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { ServiceRoleConfig } from '@store/access/models';
+import { GoAChip } from '@abgov/react-components-new';
 
 interface AddEditStreamProps {
   onSave: (stream: Stream) => void;
@@ -65,6 +66,18 @@ export const AddEditStream = ({
   const eventOptions = eventDefinitions ? generateEventOptions(eventDefinitions) : undefined;
   const tenantClientsMappedRoles = tenantClients ? mapTenantClientRoles(tenantClients) : undefined;
 
+  const deleteEventChip = (eventChip) => {
+    const updatedStreamEvents = streamEvents.filter((event) => event !== eventChip);
+    setStream({
+      ...stream,
+      events: updatedStreamEvents.map((event) => {
+        return {
+          namespace: event.split(':')[0],
+          name: event.split(':')[1],
+        };
+      }),
+    });
+  };
   return (
     <StreamModalStyles>
       <GoAModal testId="stream-form" isOpen={open}>
@@ -132,6 +145,19 @@ export const AddEditStream = ({
                 ))}
               </GoADropdown>
             </GoAFormItem>
+            <ChipsWrapper>
+              {streamEvents.map((eventChip) => {
+                return (
+                  <GoAChip
+                    key={eventChip}
+                    deletable={true}
+                    content={eventChip}
+                    onClick={() => deleteEventChip(eventChip)}
+                  />
+                );
+              })}
+            </ChipsWrapper>
+
             <AnonymousWrapper>
               <GoACheckbox
                 checked={stream.publicSubscribe}
