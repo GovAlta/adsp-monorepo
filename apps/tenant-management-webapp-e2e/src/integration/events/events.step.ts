@@ -204,25 +204,25 @@ When('the user enters {string}, {string} {string}', function (name, description,
   eventsObj.streamModalEventDropdown().click();
   // eventsObj.streamModalEventDropdownItem(event).click();
   eventsObj.streamModalEventDropdown().click({ force: true });
-        // Deselect all previously selected events and then select new events
-        eventsObj
-        .streamModalEventDropdownItem()
-        // .then((elements) => {
-        //   for (let i = 0; i < elements.length; i++) {
-        //     if (elements[i].className == 'goa-dropdown-list goa-dropdown--selected') {
-        //       elements[i].click();
-        //     }
-        //   }
-        // })
-        .then(() => {
-          for (let i = 0; i < events.length; i++) {
-            if (events[i].includes(',')) {
-              eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
-            } else {
-              eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
-            }
-          }
-        });
+  // Deselect all previously selected events and then select new events
+  // eventsObj
+  // .streamModalEventDropdownItem()
+  // // .then((elements) => {
+  // //   for (let i = 0; i < elements.length; i++) {
+  // //     if (elements[i].className == 'goa-dropdown-list goa-dropdown--selected') {
+  // //       elements[i].click();
+  // //     }
+  // //   }
+  // // })
+  // .then(() => {
+  //   for (let i = 0; i < events.length; i++) {
+  //     if (events[i].includes(',')) {
+  //       eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
+  //     } else {
+  //       eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
+  //     }
+  //   }
+});
 //     }
 //    });
 // });
