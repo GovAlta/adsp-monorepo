@@ -157,7 +157,7 @@ export const patchConfigurationRevision =
               updated.namespace,
               updated.name,
               updated.latest?.revision,
-              updated.latest?.lastUpdated,
+              updated.latest?.lastUpdated.toISOString(),
               {
                 operation: request.operation,
                 data: updateData,
@@ -201,7 +201,7 @@ export const createConfigurationRevision =
             updated.tenantId,
             updated.namespace,
             updated.name,
-            updated.latest?.created,
+            updated.latest?.created.toISOString(),
             updated.latest?.revision
           )
         );
