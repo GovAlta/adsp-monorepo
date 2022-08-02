@@ -196,11 +196,36 @@ Then('the user views Add stream modal', function () {
   eventsObj.streamModalTitle().invoke('text').should('eq', 'Add stream');
 });
 
-When('the user enters {string}, {string}', function (name, description) {
+When('the user enters {string}, {string} {string}', function (name, description, event) {
   // select events "status-service:application-healthy, fileservice:file-deleted" select roles "auto-test-role1, auto-test-role2"
+  const events = event.split(',');
   eventsObj.streamModalNameInput().scrollIntoView().clear().type(name, { force: true });
   eventsObj.streamModalDescriptionInput().scrollIntoView().clear().type(description, { force: true });
-});
+  eventsObj.streamModalEventDropdown().click();
+  // eventsObj.streamModalEventDropdownItem(event).click();
+  eventsObj.streamModalEventDropdown().click({ force: true });
+        // Deselect all previously selected events and then select new events
+        eventsObj
+        .streamModalEventDropdownItem()
+        // .then((elements) => {
+        //   for (let i = 0; i < elements.length; i++) {
+        //     if (elements[i].className == 'goa-dropdown-list goa-dropdown--selected') {
+        //       elements[i].click();
+        //     }
+        //   }
+        // })
+        .then(() => {
+          for (let i = 0; i < events.length; i++) {
+            if (events[i].includes(',')) {
+              eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
+            } else {
+              eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
+            }
+          }
+        });
+//     }
+//    });
+// });
 
 Then('the user clicks Save button on Stream modal', function () {
   eventsObj.streamModalSaveButton().click();

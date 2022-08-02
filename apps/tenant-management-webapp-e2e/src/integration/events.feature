@@ -110,8 +110,8 @@ Feature: Events
     # Add a stream
     When the user clicks Add stream button
     Then the user views Add stream modal
-    When the user enters "autotest-stream", "autotest-stream-desc"
-    And the user clicks Save button on Stream modal
+    When the user enters "autotest-stream", "autotest-stream-desc" "status-service:application-healthy, fileservice:file-deleted"
+# And the user clicks Save button on Stream modal
 # Then the user "views" the stream of "autotest-stream", "auto-test-role1, auto-test-role2"
 # When the user clicks "eye" button of "autotest-stream", "auto-test-role1, auto-test-role2"
 # Then the user views the stream details of "autotest-stream", "autotest-stream-desc", "auto-test-role1, auto-test-role2", "status-service:application-healthy, fileservice:file-deleted"

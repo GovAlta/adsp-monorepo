@@ -157,6 +157,18 @@ class eventsPage {
   streamModalSaveButton() {
     return cy.xpath('//*[@data-testid="stream-form" and @data-state="visible"]//*[@data-testid="form-save"]');
   }
+
+  streamModalEventDropdown() {
+    return cy.xpath(
+      '//*[@data-testid="stream-form" and @data-state="visible"]/*[@class="modal"]//*[@data-testid="streamEvents-dropdown"]'
+    );
+  }
+
+  streamModalEventDropdownItem(text) {
+    return cy.xpath(
+      `//*[@data-testid="stream-form" and @data-state="visible"]/*[@class="modal"]//*[@data-testid="streamEvents-dropdown"]/following-sibling::*//*[contains(text(), "${text}")]`
+    );
+  }
 }
 
 export default eventsPage;
