@@ -291,7 +291,7 @@ export const ConfigurationImportExport: FunctionComponent = () => {
                   >
                     {name}
                   </GoACheckbox>
-                  {desc && <DescriptionDiv>{`Description: ${desc}`}</DescriptionDiv>}
+                  {desc && <DescriptionDiv>{desc}</DescriptionDiv>}
                 </div>
               );
             })}

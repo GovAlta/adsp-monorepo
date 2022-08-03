@@ -1,8 +1,10 @@
 <Project>
   <PropertyGroup>
     <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))</RepoRoot>
-    <BaseOutputPath>$(RepoRoot)dist/libs/$(MSBuildProjectName)</BaseOutputPath>
+    <ProjectRelativePath>$([System.IO.Path]::GetRelativePath($(RepoRoot), $(MSBuildProjectDirectory)))</ProjectRelativePath>
+    <BaseOutputPath>$(RepoRoot)dist/$(ProjectRelativePath)</BaseOutputPath>
     <OutputPath>$(BaseOutputPath)</OutputPath>
+    <VSTestResultsDirectory>$(RepoRoot)coverage/$(ProjectRelativePath)</VSTestResultsDirectory>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
@@ -21,8 +23,10 @@
 
   <!-- Configuration of Unit Testing -->
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
     <PackageReference Include="FluentAssertions" Version="6.7.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
+    <PackageReference Include="Moq" Version="4.18.1" />
+    <PackageReference Include="RichardSzalay.MockHttp" Version="6.0.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -32,5 +36,17 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="ReportGenerator" Version="5.1.9" />
+
+    <!-- For mocking in unit tests -->
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>DynamicProxyGenAssembly2</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
+  <Target Name="Coverage">
+    <ItemGroup>
+      <CoverageFiles Include="$(VSTestResultsDirectory)/**/coverage.cobertura.xml" />
+    </ItemGroup>
+    <ReportGenerator ProjectDirectory="$(MSBuildProjectDirectory)" TargetDirectory="$(VSTestResultsDirectory)" ReportFiles="@(CoverageFiles)" />
+  </Target>
 </Project>

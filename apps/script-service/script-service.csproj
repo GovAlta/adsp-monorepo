@@ -8,8 +8,6 @@
 
     <ImplicitUsings>enable</ImplicitUsings>
 
-    <OutputPath>../../dist/apps/script-service</OutputPath>
-
     <RootNamespace>Adsp.Platform.ScriptService</RootNamespace>
 
     <AssemblyName>Adsp.Platform.ScriptService</AssemblyName>
