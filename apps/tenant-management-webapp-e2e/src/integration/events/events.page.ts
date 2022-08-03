@@ -169,6 +169,16 @@ class eventsPage {
       `//*[@data-testid="stream-form" and @data-state="visible"]/*[@class="modal"]//*[@data-testid="streamEvents-dropdown"]/following-sibling::*//*[contains(text(), "${text}")]`
     );
   }
+
+  streamModalRolesCheckbox(roleLabel) {
+    return cy.xpath(
+      `//*[@data-testid="stream-form"]//tbody/tr/td[@class="role-label" and text()="${roleLabel}"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]`
+    );
+  }
+
+  streamNameList() {
+    return cy.get('[data-testid="stream-name"]');
+  }
 }
 
 export default eventsPage;

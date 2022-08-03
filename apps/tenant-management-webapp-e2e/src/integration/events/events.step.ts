@@ -196,38 +196,75 @@ Then('the user views Add stream modal', function () {
   eventsObj.streamModalTitle().invoke('text').should('eq', 'Add stream');
 });
 
-When('the user enters {string}, {string} {string}', function (name, description, event) {
-  // select events "status-service:application-healthy, fileservice:file-deleted" select roles "auto-test-role1, auto-test-role2"
-  const events = event.split(',');
-  eventsObj.streamModalNameInput().scrollIntoView().clear().type(name, { force: true });
-  eventsObj.streamModalDescriptionInput().scrollIntoView().clear().type(description, { force: true });
-  eventsObj.streamModalEventDropdown().click();
-  // eventsObj.streamModalEventDropdownItem(event).click();
-  eventsObj.streamModalEventDropdown().click({ force: true });
-  // Deselect all previously selected events and then select new events
-  // eventsObj
-  // .streamModalEventDropdownItem()
-  // // .then((elements) => {
-  // //   for (let i = 0; i < elements.length; i++) {
-  // //     if (elements[i].className == 'goa-dropdown-list goa-dropdown--selected') {
-  // //       elements[i].click();
-  // //     }
-  // //   }
-  // // })
-  // .then(() => {
-  //   for (let i = 0; i < events.length; i++) {
-  //     if (events[i].includes(',')) {
-  //       eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
-  //     } else {
-  //       eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
-  //     }
-  //   }
-});
-//     }
-//    });
-// });
+When(
+  'the user enters {string}, {string}, selects event {string}, selects role {string}',
+  function (name, description, event, role) {
+    // select events "status-service:application-healthy, fileservice:file-deleted" select roles "auto-test-role1, auto-test-role2"
+    const events = event.split(',');
+    const roles = role.split(',');
+    eventsObj.streamModalNameInput().scrollIntoView().clear().type(name, { force: true });
+    eventsObj.streamModalDescriptionInput().scrollIntoView().clear().type(description, { force: true });
+    eventsObj.streamModalEventDropdown().click();
+
+    //Event Selector, Deselect all previously selected events and then select new events
+    eventsObj
+      .streamModalEventDropdownItem(event)
+      .then((elements) => {
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].className == 'goa-dropdown-list goa-dropdown--selected') {
+            elements[i].click();
+          }
+        }
+      })
+      .then(() => {
+        for (let i = 0; i < events.length; i++) {
+          if (events[i].includes(',')) {
+            eventsObj.streamModalEventDropdownItem(events[i].trim()).click({ force: true });
+          } else {
+            eventsObj.streamModalEventDropdownItem(events[i].trim()).click({ force: true });
+          }
+        }
+      });
+    eventsObj.streamModalEventDropdown().click({ force: true });
+
+    //Role selector, Deselect all previously selected roles and then select new roles
+    eventsObj.streamModalRolesCheckbox;
+    eventsObj
+      .streamModalRolesCheckbox(role)
+      .scrollIntoView()
+      .then((elements) => {
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
+            elements[i].click();
+          }
+        }
+      })
+      .then(() => {
+        for (let i = 0; i < events.length; i++) {
+          if (roles[i].includes(',')) {
+            eventsObj.streamModalRolesCheckbox(roles[i].trim()).click({ force: true });
+          } else {
+            eventsObj.streamModalRolesCheckbox(roles[i].trim()).click({ force: true });
+          }
+        }
+      });
+  }
+);
 
 Then('the user clicks Save button on Stream modal', function () {
-  eventsObj.streamModalSaveButton().click();
+  eventsObj.streamModalSaveButton().scrollIntoView().click({ force: true });
   cy.wait(2000);
+});
+
+Then('the user {string} the stream of {string}, {string}', function (viewOrNot, name) {
+  if (viewOrNot == 'views') {
+    eventsObj.streamNameList().should('contain', name);
+    // eventsObj.notificationTypeSubscriberRoles(name).invoke('text').should('contain', roles);
+    // eventsObj.notificationTypePublicSubscription(name).invoke('text').should('contain', publicOrNot);
+    // eventsObj.notificationTypeSelfService(name).invoke('text').should('contain', selfService);
+  } else if (viewOrNot == 'should not view') {
+    eventsObj.streamNameList().should('not.contain', name);
+  } else {
+    expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
 });
