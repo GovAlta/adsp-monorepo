@@ -174,6 +174,7 @@ interface RouterProps {
   tenantService: TenantService;
   tokenProvider: TokenProvider;
   RECAPTCHA_SECRET: string;
+  SUBSCRIPTION_RECAPTCHA_SECRET: string;
 }
 
 export const createSubscriberRouter = ({
@@ -182,6 +183,7 @@ export const createSubscriberRouter = ({
   tokenProvider,
   directory,
   RECAPTCHA_SECRET,
+  SUBSCRIPTION_RECAPTCHA_SECRET,
 }: RouterProps): Router => {
   const router = Router();
 
@@ -192,7 +194,12 @@ export const createSubscriberRouter = ({
   );
 
   router.get('/get-subscriber/:subscriberId', getSubscriber(tokenProvider, directory));
-  router.delete('/types/:type/subscriptions/:id', unsubscribe(tokenProvider, directory));
+
+  router.delete(
+    '/types/:type/subscriptions/:id',
+    verifyCaptcha(logger, SUBSCRIPTION_RECAPTCHA_SECRET),
+    unsubscribe(tokenProvider, directory)
+  );
   router.get('/subscribers/:subscriber/types/:type/channels', getSubscriptionChannels(tokenProvider, directory));
 
   return router;
