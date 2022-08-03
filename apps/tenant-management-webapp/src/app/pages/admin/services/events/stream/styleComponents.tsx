@@ -8,6 +8,13 @@ export const NameDiv = styled.div`
   padding-bottom: 0.5rem;
 `;
 
+export const ChipsWrapper = styled.div`
+  width: 33em;
+  display: flex;
+  flex-wrap: wrap;
+  padding-bottom: 1em;
+`;
+
 export const TableWrapper = styled.div`
   tr td:nth-child(1) {
     width: 40%;

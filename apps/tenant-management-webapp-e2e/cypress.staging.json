@@ -25,7 +25,9 @@
     "tenantManagementApi": "",
     "accessManagementApi": "",
     "uiComponentUrl": "",
-    "fileApi": ""
+    "fileApi": "",
+    "statusAppUrl": "https://status.adsp-uat.alberta.ca",
+    "subscriptionUrl": "https://subscription.adsp-uat.alberta.ca"
   },
   "baseUrl": "https://adsp-uat.alberta.ca",
   "fileServerFolder": ".",

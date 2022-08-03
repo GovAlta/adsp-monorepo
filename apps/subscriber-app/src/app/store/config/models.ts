@@ -23,6 +23,8 @@ export interface ServiceUrls {
 export interface ConfigState {
   keycloakApi?: KeycloakApi;
   serviceUrls?: ServiceUrls;
+  recaptchaKey?: string;
+  grecaptcha?: string;
 }
 
 export const CONFIG_INIT: ConfigState = {};
