@@ -70,6 +70,15 @@ And('the user views the timezone information', function () {
     });
 });
 
-And('the user views the all services notice of {string}', function (noticeMessage) {
-  statusNoticeObj.allApplicationNoticeMessage(noticeMessage).should('exist');
+And('the user {string} the all services notice of {string}', function (viewOrNot, noticeMessage) {
+  switch (viewOrNot) {
+    case 'views':
+      statusNoticeObj.allApplicationNoticeMessage(noticeMessage).should('exist');
+      break;
+    case 'should not view':
+      statusNoticeObj.allApplicationNoticeMessage(noticeMessage).should('not.exist');
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
 });

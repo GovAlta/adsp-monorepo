@@ -150,6 +150,7 @@ export function* updateConfigurationDefinition({
         update: {
           [`${definition.namespace}:${definition.name}`]: {
             configurationSchema: definition.configurationSchema,
+            description: definition.description,
           },
         },
       };
@@ -252,7 +253,10 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
           action.configuration.configuration
         );
         if (!jsonSchemaValidation) {
-          replaceErrorConfiguration.push(`${action.configuration.namespace}:${action.configuration.name} `);
+          replaceErrorConfiguration.push({
+            name: `${action.configuration.namespace}:${action.configuration.name}`,
+            error: 'JSON schema could not be validated',
+          });
           return;
         }
         // Send request to replace configuration
@@ -261,16 +265,24 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
           `${baseUrl}/configuration/v2/configuration/${action.configuration.namespace}/${action.configuration.name}`,
           body,
           {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           }
         );
 
         yield put(replaceConfigurationDataSuccessAction());
       } catch (err) {
+        replaceErrorConfiguration.push({
+          name: `${action.configuration.namespace}:${action.configuration.name}`,
+          error: err.message,
+        });
+        yield put(getReplaceConfigurationErrorSuccessAction(replaceErrorConfiguration));
         yield put(ErrorNotification({ message: err.message }));
       }
     } else {
-      replaceErrorConfiguration.push(`${action.configuration.namespace}:${action.configuration.name} `);
+      replaceErrorConfiguration.push({
+        name: `${action.configuration.namespace}:${action.configuration.name}`,
+        error: 'Configuration is not set',
+      });
     }
   }
 }
@@ -278,11 +290,11 @@ export function* getReplaceList(action: SetConfigurationRevisionAction): SagaIte
   if (replaceErrorConfiguration.length > 0) {
     yield put(getReplaceConfigurationErrorSuccessAction(replaceErrorConfiguration));
   }
-  replaceErrorConfiguration = [];
 }
 
 export function* resetReplaceList(action: ResetReplaceConfigurationListAction): SagaIterator {
   yield put(resetReplaceConfigurationListSuccessAction());
+  replaceErrorConfiguration = [];
 }
 export function* watchConfigurationSagas(): Generator {
   yield takeEvery(FETCH_CONFIGURATION_DEFINITIONS_ACTION, fetchConfigurationDefinitions);

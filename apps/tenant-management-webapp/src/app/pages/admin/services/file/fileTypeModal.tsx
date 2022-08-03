@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { Role } from '@store/tenant/models';
 import { GoAButton } from '@abgov/react-components';
@@ -15,6 +15,8 @@ import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { ConfigServiceRole } from '@store/access/models';
 import { useValidators } from '@lib/useValidators';
+import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
+import { ActionState } from '@store/session/models';
 import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
 interface FileTypeModalProps {
   fileType?: FileTypeItem;
@@ -148,6 +150,12 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
 
   const keycloakClientRoles = useSelector(selectServiceKeycloakRoles);
 
+  const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
+    fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
+  }));
+  //eslint-disable-next-line
+  useEffect(() => {}, [fetchKeycloakRolesState]);
+
   const ClientRole = ({ roleNames, clientId }) => {
     return (
       <>
@@ -181,9 +189,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
     Object.entries(keycloakClientRoles).length > 0 &&
     Object.entries(keycloakClientRoles)
       .filter(([clientId, config]) => {
-        const roles = (config as ConfigServiceRole).roles;
-        const uniqueRoles = roles.filter((role) => !roleNames.includes(role.role));
-        return uniqueRoles.length > 0;
+        return (config as ConfigServiceRole).roles.length > 0;
       })
       .map(([clientId, config]) => {
         const roles = (config as ConfigServiceRole).roles;
@@ -249,7 +255,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
             return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
           })}
 
-          {Object.entries(keycloakClientRoles).length === 0 && (
+          {fetchKeycloakRolesState === ActionState.inProcess && (
             <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
           )}
         </GoAModalContent>
@@ -381,7 +387,7 @@ const DataTableWrapper = styled.div`
   th {
     white-space: pre-wrap;
   }
-  
+
   thead {
     padding-top: 1.25rem;
   }

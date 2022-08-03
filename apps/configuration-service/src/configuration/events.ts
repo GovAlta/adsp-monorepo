@@ -16,7 +16,8 @@ export const ConfigurationUpdatedDefinition: DomainEventDefinition = {
         type: 'number',
       },
       lastUpdated: {
-        type: 'date',
+        type: 'string',
+        format: 'date-time',
       },
       update: {
         type: 'object',
@@ -52,7 +53,8 @@ export const RevisionCreatedDefinition: DomainEventDefinition = {
         type: 'number',
       },
       created: {
-        type: 'date',
+        type: 'string',
+        format: 'date-time',
       },
       createdBy: {
         type: 'object',
@@ -100,7 +102,7 @@ export const configurationUpdated = (
   namespace: string,
   name: string,
   revision: number,
-  lastUpdated: Date,
+  lastUpdated: string,
   update: { operation: string; data: unknown }
 ): DomainEvent => ({
   name: 'configuration-updated',
@@ -129,7 +131,7 @@ export const revisionCreated = (
   tenantId: AdspId,
   namespace: string,
   name: string,
-  created: Date,
+  created: string,
   revision: number
 ): DomainEvent => ({
   name: 'revision-created',
