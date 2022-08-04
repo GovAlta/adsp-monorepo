@@ -27,6 +27,13 @@ export default function (state: ConfigState = CONFIG_INIT, action: ActionTypes):
         },
       };
 
+    case 'config/recaptcha-script-loaded':
+      return {
+        ...state,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        grecaptcha: (window as any).grecaptcha,
+      };
+
     default:
       return state;
   }

@@ -17,7 +17,7 @@ internal class TokenProvider : ITokenProvider, IDisposable
   private readonly string _clientId;
   private readonly string _clientSecret;
 
-  public TokenProvider(ILogger<TokenProvider> logger, IOptions<AdspOptions> options)
+  public TokenProvider(ILogger<TokenProvider> logger, IOptions<AdspOptions> options, RestClient? client = null)
   {
     if (options.Value.AccessServiceUrl == null)
     {
@@ -39,7 +39,7 @@ internal class TokenProvider : ITokenProvider, IDisposable
       options.Value.AccessServiceUrl,
       $"/auth/realms/{options.Value.Realm ?? AccessConstants.CoreRealm}/protocol/openid-connect/token"
     );
-    _client = new RestClient(_authUrl);
+    _client = client ?? new RestClient(_authUrl);
     _clientId = options.Value.ServiceId.ToString();
     _clientSecret = options.Value.ClientSecret;
   }

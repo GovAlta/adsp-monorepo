@@ -122,6 +122,7 @@
     "@abgov/nx-oc": "^3.0.0",
     "@abgov/nx-release": "^3.0.1",
     "@abgov/react-components": "^3.4.0-beta.65",
+    "@abgov/react-components-new": "npm:@abgov/react-components@^4.0.0-alpha.23",
     "@abgov/semantic-release-nuget": "^1.0.0",
     "@babel/core": "7.9.6",
     "@babel/preset-env": "7.9.6",

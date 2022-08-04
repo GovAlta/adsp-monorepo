@@ -17,6 +17,7 @@ import { theme } from 'theme';
 import PublicApp from './publicApp';
 import Subscriptions from '@pages/private/Subscriptions/Subscriptions';
 import PublicSubscriptions from '@pages/public/Subscriptions';
+import Recaptcha from './components/Recaptcha';
 
 const AppRouters = () => {
   return (
@@ -68,6 +69,8 @@ export const App = (): JSX.Element => {
 
 function AppWithAuthContext() {
   const keycloakConfig = useSelector((state: RootState) => state.config.keycloakApi);
+  const recaptchaKey = useSelector((state: RootState) => state.config?.recaptchaKey);
+
   const dispatch = useDispatch();
   useEffect(() => {
     // Fetch config
@@ -76,7 +79,12 @@ function AppWithAuthContext() {
     }
   }, [dispatch, keycloakConfig]);
 
-  return <AuthContext.Provider value={{}}>{keycloakConfig && <AppRouters />}</AuthContext.Provider>;
+  return (
+    <div>
+      <AuthContext.Provider value={{}}>{keycloakConfig && <AppRouters />}</AuthContext.Provider>
+      {recaptchaKey && <Recaptcha siteKey={recaptchaKey} />}
+    </div>
+  );
 }
 
 export default App;
