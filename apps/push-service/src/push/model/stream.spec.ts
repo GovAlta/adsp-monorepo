@@ -84,6 +84,62 @@ describe('StreamEntity', () => {
       const result = publicEntity.canSubscribe(null);
       expect(result).toBe(true);
     });
+
+    it('can return false for cross-tenant non-core user', () => {
+      const stream = new StreamEntity(null, {
+        id: 'test',
+        name: 'Test Stream',
+        description: null,
+        subscriberRoles: ['test-subscriber'],
+        publicSubscribe: false,
+        events: [
+          {
+            namespace: 'test-service',
+            name: 'test-started',
+          },
+        ],
+      });
+
+      const result = stream.canSubscribe({ tenantId, id: 'tester', roles: ['test-subscriber'] } as User);
+      expect(result).toBe(false);
+    });
+
+    it('can return true for cross-tenant core user with role', () => {
+      const stream = new StreamEntity(null, {
+        id: 'test',
+        name: 'Test Stream',
+        description: null,
+        subscriberRoles: ['test-subscriber'],
+        publicSubscribe: false,
+        events: [
+          {
+            namespace: 'test-service',
+            name: 'test-started',
+          },
+        ],
+      });
+
+      const result = stream.canSubscribe({ isCore: true, id: 'tester', roles: ['test-subscriber'] } as User);
+      expect(result).toBe(true);
+    });
+
+    it('can return false for cross-tenant public stream', () => {
+      const publicEntity = new StreamEntity(null, {
+        id: 'test',
+        name: 'Test Stream',
+        description: null,
+        subscriberRoles: ['test-subscriber'],
+        publicSubscribe: true,
+        events: [
+          {
+            namespace: 'test-service',
+            name: 'test-started',
+          },
+        ],
+      });
+      const result = publicEntity.canSubscribe(null);
+      expect(result).toBe(false);
+    });
   });
 
   describe('connect', () => {

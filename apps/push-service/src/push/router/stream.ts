@@ -12,7 +12,7 @@ import { map, share } from 'rxjs/operators';
 import { Namespace as IoNamespace, Socket } from 'socket.io';
 import { Logger } from 'winston';
 import { EventCriteria, Stream } from '../types';
-import { StreamEntity } from '../model';
+import { StreamEntity, StreamItem } from '../model';
 import { ExtendedError } from 'socket.io/dist/namespace';
 
 interface StreamRouterProps {
@@ -32,6 +32,18 @@ function mapStream(entity: StreamEntity): Stream {
   };
 }
 
+function mapStreamItem(item: StreamItem): Record<string, unknown> {
+  const result: Record<string, unknown> = {
+    ...item,
+  };
+
+  if (result.tenantId) {
+    result.tenantId = result.tenantId.toString();
+  }
+
+  return result;
+}
+
 const STREAM_KEY = 'stream';
 export const getStream = async (
   tenantService: TenantService,
@@ -44,7 +56,7 @@ export const getStream = async (
     const user = req.user as User;
 
     const tenantId = (tenant && (await tenantService.getTenantByName(tenant.replace(/-/g, ' '))))?.id || user?.tenantId;
-    if (!tenantId) {
+    if (!tenantId && !user?.isCore) {
       throw new InvalidOperationError('No tenant specified for request.');
     }
 
@@ -93,7 +105,7 @@ export function subscribeBySse(logger: Logger, events: Observable<DomainEvent>):
       res.flushHeaders();
 
       const sub = entity.getEvents(user, criteria).subscribe((next) => {
-        res.write(`data: ${JSON.stringify(next)}\n\n`);
+        res.write(`data: ${JSON.stringify(mapStreamItem(next))}\n\n`);
         res.flush();
       });
 
@@ -139,7 +151,7 @@ export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) 
       entity.connect(events);
       const sub = entity
         .getEvents(user, criteria)
-        .subscribe((next) => socket.emit(`${next.namespace}:${next.name}`, next));
+        .subscribe((next) => socket.emit(`${next.namespace}:${next.name}`, mapStreamItem(next)));
 
       logger.info(
         `Client connected on stream '${entity.name}' for user ${user?.name || 'anonymous'} (ID: ${
