@@ -9,7 +9,7 @@ import 'compression'; // For unit tests to load the type extensions.
 import { NextFunction, Request, RequestHandler, Router } from 'express';
 import { Observable } from 'rxjs';
 import { map, share } from 'rxjs/operators';
-import { Server as IoServer, Socket } from 'socket.io';
+import { Namespace as IoNamespace, Socket } from 'socket.io';
 import { Logger } from 'winston';
 import { EventCriteria, Stream } from '../types';
 import { StreamEntity, StreamItem } from '../model';
@@ -179,7 +179,7 @@ export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) 
 
 const LOG_CONTEXT = { context: 'StreamRouter' };
 export const createStreamRouter = (
-  io: IoServer,
+  io: IoNamespace,
   { logger, eventService, tenantService }: StreamRouterProps
 ): Router => {
   const events = eventService.getItems().pipe(

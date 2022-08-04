@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { Logger } from 'winston';
 import { DomainEventSubscriberService } from '@core-services/core-common';
 import { createStreamRouter } from './router';
-import { Server as IoServer } from 'socket.io';
+import { Namespace as IoNamespace } from 'socket.io';
 import { TenantService } from '@abgov/adsp-service-sdk';
 
 export * from './configuration';
@@ -17,7 +17,11 @@ interface PushMiddlewareProps {
   tenantService: TenantService;
 }
 
-export const applyPushMiddleware = (app: Application, io: IoServer, props: PushMiddlewareProps): Application => {
+export const applyPushMiddleware = (
+  app: Application,
+  io: IoNamespace,
+  props: PushMiddlewareProps
+): Application => {
   const streamRouter = createStreamRouter(io, props);
   app.use('/stream/v1', streamRouter);
 
