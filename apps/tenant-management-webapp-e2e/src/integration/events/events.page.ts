@@ -193,6 +193,18 @@ class eventsPage {
   streamDetailes() {
     return cy.get('[data-testid="stream-details"]');
   }
+
+  streamEditBtn(name) {
+    return cy.xpath(
+      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="edit-stream"]`
+    );
+  }
+
+  streamDeleteBtn(name) {
+    return cy.xpath(
+      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="delete-stream"]`
+    );
+  }
 }
 
 export default eventsPage;
