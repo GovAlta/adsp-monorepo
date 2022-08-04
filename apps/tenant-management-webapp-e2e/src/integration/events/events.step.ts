@@ -198,12 +198,12 @@ Then('the user views Add stream modal', function () {
 
 When(
   'the user enters {string}, {string}, selects event {string}, selects role {string}',
-  function (name, description, event, role) {
+  function (streamName, description, event, role) {
     // select events "status-service:application-healthy, fileservice:file-deleted" select roles "auto-test-role1, auto-test-role2"
     const events = event.split(',');
     const roles = role.split(',');
-    eventsObj.streamModalNameInput().scrollIntoView().clear().type(name, { force: true });
-    eventsObj.streamModalDescriptionInput().scrollIntoView().clear().type(description, { force: true });
+    eventsObj.streamModalNameInput().clear().type(streamName, { force: true });
+    eventsObj.streamModalDescriptionInput().clear().type(description, { force: true });
     eventsObj.streamModalEventDropdown().click();
 
     //Event Selector, Deselect all previously selected events and then select new events
@@ -228,7 +228,7 @@ When(
     eventsObj.streamModalEventDropdown().click({ force: true });
 
     //Role selector, Deselect all previously selected roles and then select new roles
-    eventsObj.streamModalRolesCheckbox;
+
     eventsObj
       .streamModalRolesCheckbox(role)
       .scrollIntoView()
@@ -256,11 +256,11 @@ Then('the user clicks Save button on Stream modal', function () {
   cy.wait(2000);
 });
 
-Then('the user {string} the stream of {string}', function (viewOrNot, name) {
+Then('the user {string} the stream of {string}', function (viewOrNot, streamName) {
   if (viewOrNot == 'views') {
-    eventsObj.streamNameList().should('contain', name);
+    eventsObj.streamNameList().should('contain', streamName);
   } else if (viewOrNot == 'should not view') {
-    eventsObj.streamNameList().should('not.contain', name);
+    eventsObj.streamNameList().should('not.contain', streamName);
   } else {
     expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
   }
@@ -269,7 +269,7 @@ Then('the user {string} the stream of {string}', function (viewOrNot, name) {
 //Find stream  with name, Subscriber role(s)
 //Input: stream name, role(s) in a string separated with comma
 //Return: row number if the stream is found; zero if the stream isn't found
-function findStream(name, role) {
+function findStream(streamName, role) {
   return new Cypress.Promise((resolve, reject) => {
     try {
       let rowNumber = 0;
@@ -282,7 +282,7 @@ function findStream(name, role) {
         .then((rows) => {
           rows.toArray().forEach((rowElement) => {
             let counter = 0;
-            if (rowElement.cells[0].innerHTML.includes(name)) {
+            if (rowElement.cells[0].innerHTML.includes(streamName)) {
               counter = counter + 1;
             }
             subscriberRoles.forEach((sRole) => {
@@ -310,14 +310,14 @@ function findStream(name, role) {
   });
 }
 
-Then('the user {string} the stream of {string}, {string}', function (viewOrNot, name, role) {
+Then('the user {string} the stream of {string}, {string}', function (viewOrNot, streamName, role) {
   findStream(name, role).then((rowNumber) => {
     switch (viewOrNot) {
       case 'views':
-        expect(rowNumber).to.be.greaterThan(0, 'Stream of ' + name + ', ' + role + ' has row #' + rowNumber);
+        expect(rowNumber).to.be.greaterThan(0, 'Stream of ' + streamName + ', ' + role + ' has row #' + rowNumber);
         break;
       case 'should not view':
-        expect(rowNumber).to.equal(0, 'Stream of ' + name + ', ' + role + ' has row #' + rowNumber);
+        expect(rowNumber).to.equal(0, 'Stream of ' + streamName + ', ' + role + ' has row #' + rowNumber);
         break;
       default:
         expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
@@ -325,17 +325,64 @@ Then('the user {string} the stream of {string}, {string}', function (viewOrNot, 
   });
 });
 
-When('the user clicks "eye" icon of {string}, {string}', function (name) {
-  eventsObj.streamDetailsEyeIcon(name).click();
+When('the user clicks "eye" icon of {string}, {string}', function (streamName) {
+  eventsObj.streamDetailsEyeIcon(streamName).click({ force: true });
 });
 
 Then(
   'the user views the stream details of {string}, {string}, {string}, {string}',
-  function (name, description, role, event) {
+  function (streamName, description, role, event) {
     // "status-service:application-healthy"
-    eventsObj.streamDetailes().should('contain', name);
+    eventsObj.streamDetailes().should('contain', streamName);
     eventsObj.streamDetailes().should('contain', description);
     eventsObj.streamDetailes().should('contain', role);
     eventsObj.streamDetailes().should('contain', event);
   }
 );
+
+When('the user clicks {string} button of {string}', function (button, streamName) {
+  switch (button) {
+    case 'Edit':
+      eventsObj.streamEditBtn(streamName).click({ force: true });
+      break;
+    case 'Delete':
+      eventsObj.streamDeleteBtn(streamName).click({ force: true });
+      break;
+    default:
+      expect(button).to.be.oneOf(['Edit', 'Delete']);
+  }
+});
+
+Then('the user views Edit stream modal', function () {
+  eventsObj.streamModalTitle().invoke('text').should('eq', 'Edit stream');
+});
+
+When('the user enters {string}, {string}, {string}', function (description, event, role) {
+  eventsObj.streamModalDescriptionInput().scrollIntoView().clear({ force: true }).type(description, { force: true });
+  eventsObj.streamModalEventDropdown().click();
+  eventsObj.streamModalEventDropdownItem(event).then(() => {
+    for (let i = 0; i < events.length; i++) {
+      if (events[i].includes(',')) {
+        eventsObj.streamModalEventDropdownItem(events[i].trim()).click({ force: true });
+      } else {
+        eventsObj.streamModalEventDropdownItem(events[i].trim()).click({ force: true });
+      }
+    }
+  });
+  eventsObj.streamModalEventDropdown().click({ force: true });
+  const roles = role.split(',');
+  eventsObj
+    .streamModalRolesCheckbox(role)
+    .scrollIntoView()
+    .then(() => {
+      for (let i = 0; i < events.length; i++) {
+        if (roles[i].includes(',')) {
+          eventsObj.streamModalRolesCheckbox(roles[i].trim()).click({ force: true });
+        } else {
+          eventsObj.streamModalRolesCheckbox(roles[i].trim()).click({ force: true });
+        }
+      }
+    });
+});
+
+//Stream ID is duplicate, please use a different name to get a unique Stream ID
