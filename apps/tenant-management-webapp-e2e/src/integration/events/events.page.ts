@@ -179,6 +179,20 @@ class eventsPage {
   streamNameList() {
     return cy.get('[data-testid="stream-name"]');
   }
+
+  streamTableBody() {
+    return cy.xpath('//table[@data-testid="autotest-stream-table"]//tbody');
+  }
+
+  streamDetailsEyeIcon(name) {
+    return cy.xpath(
+      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="toggle-stream-visibility"]`
+    );
+  }
+
+  streamDetailes() {
+    return cy.get('[data-testid="stream-details"]');
+  }
 }
 
 export default eventsPage;
