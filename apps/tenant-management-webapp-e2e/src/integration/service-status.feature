@@ -228,7 +228,7 @@ Feature: Service status
     And the user clicks Save button on contact information modal
     Then the user views "autotest-status-admin@gov.ab.ca" as the email of contact information
     # Visiting public status page
-    Then the user should be able to view "autotest-status-admin@gov.ab.ca" as support email in the status app for "autotest" tenant
+    Then the user should be able to view "autotest-status-admin@gov.ab.ca" as support email in the status app for "Autotest" tenant
     Given a tenant admin user is on status overview page
     When the user clicks Edit button for contact information
     And the user enters "test@gov.ab.ca"
