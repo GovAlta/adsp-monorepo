@@ -75,12 +75,14 @@ export const ErrorStatusText = styled.div`
 
 export const ScrollPane = styled.div`
   border: 1px solid black;
+  border-radius: 4px;
 
   .header-background {
     background: #f1f1f1;
     color: #000000;
-    padding: 10px;
+    padding: 5px 10px;
     font-weight: 700;
+    margin-bottom: 0;
   }
 
   .main {
@@ -92,6 +94,11 @@ export const ScrollPane = styled.div`
   .export-button {
     padding: 10px;
     text-align-last: end;
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: bold;
   }
 `;
 
