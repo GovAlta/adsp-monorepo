@@ -23,7 +23,6 @@ handlebars.registerHelper('formatDate', function (value: unknown, { hash = {} }:
 
 class HandlebarsTemplateService implements TemplateService {
   getTemplateFunction(template: string) {
-    console.log(JSON.stringify(template) + '<template');
     const styledTemplate = getTemplateBody(template, 'pdf', {});
     return handlebars.compile(styledTemplate);
   }
