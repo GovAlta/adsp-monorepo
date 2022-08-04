@@ -116,16 +116,16 @@ Feature: Events
     Then the user "views" the stream of "autotest-stream", "auto-test-role1"
     When the user clicks "eye" icon of "autotest-stream", "auto-test-role1"
     Then the user views the stream details of "autotest-stream", "autotest-stream-desc", "auto-test-role1", "status-service"
-# # Edit a stream
-# When the user clicks "edit" button of "autotest-stream", "auto-test-role1, auto-test-role2"
-# Then the user views Edit stream modal
-# When the user enters "NA", "autotest-stream-desc2", "Anyone (Anonymous)", "form-service:form-created, fileservice:file-uploaded"
-# And the user clicks Save button
-# Then the user "views" the stream of "autotest-stream", "AnonymousRead"
-# When the user clicks "eye" button of "autotest-stream", "AnonymousRead"
-# Then the user views the stream details of "autotest-stream", "autotest-stream-desc2", "anonymousRead", "form-service:form-created, fileservice:file-uploaded"
-# # Delete a stream
-# When the user clicks "delete" button of "autotest-stream", "AnonymousRead"
-# Then the user views Delete stream modal for "autotest-stream"
-# When the user clicks Delete button
-# Then the user "should not view" the stream of "autotest-stream", "AnonymousRead"
+    # Edit a stream
+    When the user clicks "Edit" button of "autotest-stream"
+    Then the user views Edit stream modal
+    When the user enters "autotest-stream-desc2", "form-service:form-created", "auto-test-role2"
+    And the user clicks Save button on Stream modal
+    Then the user "views" the stream of "autotest-stream", "auto-test-role2"
+    When the user clicks "eye" button of "autotest-stream", "auto-test-role2"
+    Then the user views the stream details of "autotest-stream", "autotest-stream-desc2", "auto-test-role1", "auto-test-role2"
+    # Delete a stream
+    When the user clicks "Delete" button of "autotest-stream"
+    Then the user views delete "stream" confirmation modal for "autotest-stream"
+    When the user clicks Delete button in delete confirmation modal
+    Then the user "should not view" the stream of "autotest-stream"
