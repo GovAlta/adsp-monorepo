@@ -2,7 +2,7 @@ import { adspId, TenantService, User } from '@abgov/adsp-service-sdk';
 import { DomainEventSubscriberService, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { of } from 'rxjs';
-import { Namespace, Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { Logger } from 'winston';
 import { getStream, getStreams, subscribeBySse } from './stream';
 import { StreamEntity } from '../model';
@@ -64,7 +64,7 @@ describe('stream router', () => {
   });
 
   it('createStreamRouter', () => {
-    const router = createStreamRouter(ioMock as unknown as Namespace, {
+    const router = createStreamRouter(ioMock as unknown as Server, {
       logger: loggerMock,
       eventService: eventServiceMock as DomainEventSubscriberService,
       tenantService: tenantServiceMock as unknown as TenantService,
