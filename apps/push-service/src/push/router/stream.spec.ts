@@ -64,7 +64,7 @@ describe('stream router', () => {
   });
 
   it('createStreamRouter', () => {
-    const router = createStreamRouter(ioMock as unknown as Namespace, {
+    const router = createStreamRouter([ioMock as unknown as Namespace], {
       logger: loggerMock,
       eventService: eventServiceMock as DomainEventSubscriberService,
       tenantService: tenantServiceMock as unknown as TenantService,

@@ -93,19 +93,24 @@ const initializeApp = async (): Promise<Server> => {
   });
   ioServer.adapter(createIoAdapter(redisClient, redisClient.duplicate()));
 
-  // Connections on namespace correspond to tenants.
-  const io = ioServer.of(/^\/[a-zA-Z0-9- ]*$/);
-
   const wrapForIo = (handler: express.RequestHandler) => (socket: Socket, next) =>
     handler(socket.request as express.Request, {} as express.Response, next);
 
+  // Connections on default namespace for cross-tenant.
+  const defaultIo = ioServer.of('/');
+  defaultIo.use(wrapForIo(passport.initialize()));
+  defaultIo.use(wrapForIo(passport.authenticate(['jwt', 'core'], { session: false })));
+  defaultIo.use(wrapForIo(configurationHandler));
+
+  // Connections on namespace correspond to tenants.
+  const io = ioServer.of(/^\/[a-zA-Z0-9- ]+$/);
   io.use(wrapForIo(passport.initialize()));
   io.use(wrapForIo(passport.authenticate(['jwt', 'anonymous', 'core'], { session: false })));
   io.use(wrapForIo(configurationHandler));
 
   const eventService = await createAmqpEventService({ ...environment, logger });
 
-  applyPushMiddleware(app, io, { logger, eventService, tenantService });
+  applyPushMiddleware(app, [defaultIo, io], { logger, eventService, tenantService });
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();

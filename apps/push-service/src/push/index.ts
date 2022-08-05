@@ -19,10 +19,10 @@ interface PushMiddlewareProps {
 
 export const applyPushMiddleware = (
   app: Application,
-  io: IoNamespace,
+  ios: IoNamespace[],
   props: PushMiddlewareProps
 ): Application => {
-  const streamRouter = createStreamRouter(io, props);
+  const streamRouter = createStreamRouter(ios, props);
   app.use('/stream/v1', streamRouter);
 
   let swagger = null;

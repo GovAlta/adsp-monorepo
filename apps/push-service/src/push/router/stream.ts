@@ -179,7 +179,7 @@ export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) 
 
 const LOG_CONTEXT = { context: 'StreamRouter' };
 export const createStreamRouter = (
-  io: IoNamespace,
+  ios: IoNamespace[],
   { logger, eventService, tenantService }: StreamRouterProps
 ): Router => {
   const events = eventService.getItems().pipe(
@@ -202,22 +202,24 @@ export const createStreamRouter = (
     subscribeBySse(logger, events)
   );
 
-  io.use((socket, next) => {
-    const tenant = socket.nsp.name?.replace(/^\//, '');
-    const req = socket.request as Request;
-    const user = req.user;
-    req.query = socket.handshake.query;
+  for (const io of ios) {
+    io.use((socket, next) => {
+      const tenant = socket.nsp.name?.replace(/^\//, '');
+      const req = socket.request as Request;
+      const user = req.user;
+      req.query = socket.handshake.query;
 
-    getStream(tenantService, req, tenant, req.query.stream as string, (err?: unknown) => {
-      if (!err && !(req[STREAM_KEY] as StreamEntity).canSubscribe(user)) {
-        next(new UnauthorizedUserError('connect stream', user));
-      } else {
-        next(err as ExtendedError);
-      }
+      getStream(tenantService, req, tenant, req.query.stream as string, (err?: unknown) => {
+        if (!err && !(req[STREAM_KEY] as StreamEntity).canSubscribe(user)) {
+          next(new UnauthorizedUserError('connect stream', user));
+        } else {
+          next(err as ExtendedError);
+        }
+      });
     });
-  });
 
-  io.on('connection', onIoConnection(logger, events));
+    io.on('connection', onIoConnection(logger, events));
+  }
 
   return streamRouter;
 };
