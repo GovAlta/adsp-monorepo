@@ -33,7 +33,7 @@ Feature: Service status
 
   # TEST DATA: "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
   @TEST_CS-782 @REQ_CS-667 @REQ_CS-977 @regression
-  Scenario: As a service owner, I can publish and un-publish a notice, and see the notice published event
+  Scenario: As a tenant admin, I can publish and un-publish a notice, and see the notice published event
     Given a tenant admin user is on status notices page
     When the user clicks "publish" menu for the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
     And the user selects "Published" filter by status radio button
