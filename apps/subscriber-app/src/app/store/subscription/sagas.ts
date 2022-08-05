@@ -134,6 +134,7 @@ export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
       action: 'subscription_unsubscribe',
     });
   }
+
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
 
