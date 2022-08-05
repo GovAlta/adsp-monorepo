@@ -190,6 +190,12 @@ class eventsPage {
     );
   }
 
+  streamDetailsEyeIconOff(name) {
+    return cy.xpath(
+      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="icon-eye-off"]`
+    );
+  }
+
   streamDetailes() {
     return cy.get('[data-testid="stream-details"]');
   }
