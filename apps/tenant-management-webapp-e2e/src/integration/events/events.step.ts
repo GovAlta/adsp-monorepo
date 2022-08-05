@@ -325,10 +325,6 @@ Then('the user {string} the stream of {string}, {string}', function (viewOrNot, 
   });
 });
 
-When('the user clicks "eye" icon of {string}, {string}', function (streamName) {
-  eventsObj.streamDetailsEyeIcon(streamName).click({ force: true });
-});
-
 Then(
   'the user views the stream details of {string}, {string}, {string}, {string}',
   function (streamName, description, role, event) {
