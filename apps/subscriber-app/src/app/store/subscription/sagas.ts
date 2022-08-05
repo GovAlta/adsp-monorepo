@@ -17,6 +17,7 @@ import {
   GetSignedOutSubscriberAction,
 } from './actions';
 import { UpdateIndicator } from '@store/session/actions';
+import { ConfigState } from '@store/config/models';
 
 import { RootState } from '../index';
 import axios from 'axios';
@@ -124,12 +125,27 @@ export function* patchSubscriber(action: PatchSubscriberAction): SagaIterator {
 export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
   const type = action.payload.type;
   const id = action.payload.subscriberId;
+  const configState: ConfigState = yield select((state: RootState) => state.config);
+
+  let recaptchaToken = null;
+  const grecaptcha = configState.grecaptcha;
+  if (grecaptcha) {
+    recaptchaToken = yield call([grecaptcha, grecaptcha.execute], configState.recaptchaKey, {
+      action: 'subscription_unsubscribe',
+    });
+  }
+
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
 
-  if (configBaseUrl && token) {
+  console.log(token);
+  console.log(recaptchaToken);
+
+  if (configBaseUrl && token && recaptchaToken) {
     try {
       yield call(axios.delete, `${configBaseUrl}/subscription/v1/types/${type}/subscriptions/${id}`, {
+        data: { token: recaptchaToken },
+
         headers: { Authorization: `Bearer ${token}` },
       });
 

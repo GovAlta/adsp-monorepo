@@ -1,1 +1,1 @@
-export { EventCriteria, StreamEvent, Stream } from '@abgov/adsp-service-sdk';
+export type { EventCriteria, StreamEvent, Stream } from '@abgov/adsp-service-sdk';

@@ -1,12 +1,12 @@
 import * as _ from 'lodash';
 import { Observable } from 'rxjs';
 import { map, filter } from 'rxjs/operators';
-import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { AdspId, hasRequiredRole, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { DomainEvent, InvalidOperationError } from '@core-services/core-common';
 import { EventCriteria, Stream, StreamEvent } from '../types';
 import { PushServiceRoles } from '..';
 
-type StreamItem = unknown & Pick<DomainEvent, 'namespace' | 'name' | 'correlationId' | 'context'>;
+export type StreamItem = unknown & Pick<DomainEvent, 'namespace' | 'name' | 'correlationId' | 'context' | 'tenantId'>;
 export class StreamEntity implements Stream {
   id: string;
   name: string;
@@ -33,7 +33,7 @@ export class StreamEntity implements Stream {
           event,
           this.events.find(
             (se) =>
-              event.tenantId.toString() === this.tenantId.toString() &&
+              (!this.tenantId || event.tenantId.toString() === this.tenantId.toString()) &&
               event.namespace === se.namespace &&
               event.name === se.name &&
               this.isMatch(event, se.criteria)
@@ -54,8 +54,8 @@ export class StreamEntity implements Stream {
     );
   }
 
-  private mapEvent({ tenantId: _tenantId, ...event }: DomainEvent, streamEvent: StreamEvent): StreamItem {
-    return streamEvent.map
+  private mapEvent({ tenantId, ...event }: DomainEvent, streamEvent: StreamEvent): StreamItem {
+    const item: StreamItem = streamEvent.map
       ? Object.entries(streamEvent.map).reduce((o, [k, p]) => ({ ...o, [k]: _.get(event, p, undefined) }), {
           namespace: event.namespace,
           name: event.name,
@@ -63,13 +63,21 @@ export class StreamEntity implements Stream {
           context: event.context,
         })
       : { ...event };
+
+    // Include the tenant context in case the stream is retrieved in a core context (cross-tenant).
+    if (!this.tenantId) {
+      item.tenantId = tenantId;
+    }
+
+    return item;
   }
 
   canSubscribe(user: User): boolean {
-    return (
-      this.publicSubscribe ||
-      isAllowedUser(user, this.tenantId, [PushServiceRoles.StreamListener, ...this.subscriberRoles], true)
-    );
+    // In case the stream is accessed in a cross-tenant context (no tenantId), then only core users with required role are allowed.
+    return this.tenantId
+      ? this.publicSubscribe ||
+          isAllowedUser(user, this.tenantId, [PushServiceRoles.StreamListener, ...this.subscriberRoles], true)
+      : !!(user?.isCore && hasRequiredRole(user, [PushServiceRoles.StreamListener, ...this.subscriberRoles]));
   }
 
   getEvents(user: User, criteria?: EventCriteria): Observable<StreamItem> {

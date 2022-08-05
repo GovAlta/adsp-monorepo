@@ -12,6 +12,7 @@ export const environment = envalid.cleanEnv(
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:subscriber-gateway' }),
     CLIENT_SECRET: envalid.str(),
     RECAPTCHA_SECRET: envalid.str({ default: '' }),
+    SUBSCRIPTION_RECAPTCHA_SECRET: envalid.str({ default: '' }),
     LOG_LEVEL: envalid.str({ default: 'debug' }),
     PORT: envalid.num({ default: 3344 }),
   },

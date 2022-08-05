@@ -2,14 +2,14 @@
 Feature: Service status
 
   @TEST_CS-528 @REQ_CS-283 @regression
-  Scenario: Test As a developer, I can access recommendations about health check, so I can add an appropriate health check to my app
-    Given a service owner user is on service status page
+  Scenario: Test a tenant admin, I can access recommendations about health check, so I can add an appropriate health check to my app
+    Given a tenant admin user is on status overview page
     Then the user views the health check guidelines
 
   # TEST DATA: need 2 applications named "Autotest" and "File Service"
   @TEST_CS-781 @REQ_CS-667 @regression
-  Scenario Outline: As a service owner, I can add, edit and delete a notice
-    Given a service owner user is on status notices page
+  Scenario Outline: As a tenant admin, I can add, edit and delete a notice
+    Given a tenant admin user is on status notices page
     When the user clicks Add notice button
     Then the user views Add notice dialog
     When the user enters "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>" on notice dialog
@@ -34,7 +34,7 @@ Feature: Service status
   # TEST DATA: "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
   @TEST_CS-782 @REQ_CS-667 @REQ_CS-977 @regression
   Scenario: As a service owner, I can publish and un-publish a notice, and see the notice published event
-    Given a service owner user is on status notices page
+    Given a tenant admin user is on status notices page
     When the user clicks "publish" menu for the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
     And the user selects "Published" filter by status radio button
     Then the user "views" the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
@@ -52,8 +52,8 @@ Feature: Service status
 
   # TEST DATA: an application named "Autotest"
   @TEST_CS-783 @REQ_CS-667 @regression
-  Scenario: As a service owner, I can add, publish and archive a notice
-    Given a service owner user is on status notices page
+  Scenario: As a tenant admin, I can add, publish and archive a notice
+    Given a tenant admin user is on status notices page
     When the user clicks Add notice button
     Then the user views Add notice dialog
     When the user enters "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm" on notice dialog
@@ -71,8 +71,8 @@ Feature: Service status
     And the user should not view "gear icon" for the "Archived" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
 
   @TEST_CS-784 @REQ_CS-667 @regression
-  Scenario: As a service owner, I can filter notices by status
-    Given a service owner user is on status notices page
+  Scenario: As a tenant admin, I can filter notices by status
+    Given a tenant admin user is on status notices page
     When the user selects "Draft" filter by status radio button
     Then the user views "Draft" notices
     When the user selects "Published" filter by status radio button
@@ -104,8 +104,8 @@ Feature: Service status
     Then the user views the subscribe checkbox is "checked"
 
   @TEST_CS-835 @REQ_CS-792 @regression
-  Scenario Outline: As a service owner, I can add, edit, publish, unpublish and delete a tenant level notice
-    Given a service owner user is on status notices page
+  Scenario Outline: As a tenant admin, I can add, edit, publish, unpublish and delete a tenant level notice
+    Given a tenant admin user is on status notices page
     When the user clicks Add notice button
     # Add a notice for the tenant
     Then the user views Add notice dialog

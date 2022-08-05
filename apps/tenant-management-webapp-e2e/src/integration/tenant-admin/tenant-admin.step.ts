@@ -397,7 +397,7 @@ Then(
   function (access, calendar, directory, file, status, events, notification, configuration) {
     const cardTextArray = [
       'Access allows',
-      'Calendar service provides',
+      'The calendar service provides',
       'The configuration service provides',
       'The directory service is',
       'The file service provides',

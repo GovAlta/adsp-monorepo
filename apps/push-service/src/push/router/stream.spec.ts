@@ -64,7 +64,7 @@ describe('stream router', () => {
   });
 
   it('createStreamRouter', () => {
-    const router = createStreamRouter(ioMock as unknown as Namespace, {
+    const router = createStreamRouter([ioMock as unknown as Namespace], {
       logger: loggerMock,
       eventService: eventServiceMock as DomainEventSubscriberService,
       tenantService: tenantServiceMock as unknown as TenantService,
@@ -123,10 +123,10 @@ describe('stream router', () => {
       );
     });
 
-    it('can call next with error for no tenant context', async () => {
+    it('can call next with error for non-core user with no tenant context', async () => {
       const req = {
         tenantId,
-        user: { isCore: true, id: 'tester', roles: [] } as User,
+        user: { isCore: false, id: 'tester', roles: [] } as User,
         params: { stream: 'test' },
         query: {},
         getConfiguration: jest.fn(),
@@ -145,6 +145,28 @@ describe('stream router', () => {
       );
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+
+    it('can get stream with no tenant context for core user', async () => {
+      const req = {
+        tenantId,
+        user: { isCore: true, id: 'tester', roles: [] } as User,
+        params: { stream: 'test' },
+        query: {},
+        getConfiguration: jest.fn(),
+      };
+
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce({ test: stream });
+      await getStream(
+        tenantServiceMock as unknown as TenantService,
+        req as unknown as Request,
+        null,
+        req.params.stream,
+        next
+      );
+      expect(req['stream']).toBe(stream);
     });
 
     it('can call next for not found', async () => {

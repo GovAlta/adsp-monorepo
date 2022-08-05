@@ -22,7 +22,11 @@ export function verifyCaptcha(logger: Logger, RECAPTCHA_SECRET: string, SCORE_TH
           `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${token}`
         );
 
-        if (!data.success || data.action !== 'subscribe_status' || data.score < SCORE_THRESHOLD) {
+        if (
+          !data.success ||
+          !['subscribe_status', 'subscription_unsubscribe'].includes(data.action) ||
+          data.score < SCORE_THRESHOLD
+        ) {
           logger.warn(
             `Captcha verification failed for subscribe-status with result '${data.success}' on action '${data.action}' with score ${data.score}.`
           );
@@ -174,6 +178,7 @@ interface RouterProps {
   tenantService: TenantService;
   tokenProvider: TokenProvider;
   RECAPTCHA_SECRET: string;
+  SUBSCRIPTION_RECAPTCHA_SECRET: string;
 }
 
 export const createSubscriberRouter = ({
@@ -182,6 +187,7 @@ export const createSubscriberRouter = ({
   tokenProvider,
   directory,
   RECAPTCHA_SECRET,
+  SUBSCRIPTION_RECAPTCHA_SECRET,
 }: RouterProps): Router => {
   const router = Router();
 
@@ -192,7 +198,12 @@ export const createSubscriberRouter = ({
   );
 
   router.get('/get-subscriber/:subscriberId', getSubscriber(tokenProvider, directory));
-  router.delete('/types/:type/subscriptions/:id', unsubscribe(tokenProvider, directory));
+
+  router.delete(
+    '/types/:type/subscriptions/:id',
+    verifyCaptcha(logger, SUBSCRIPTION_RECAPTCHA_SECRET),
+    unsubscribe(tokenProvider, directory)
+  );
   router.get('/subscribers/:subscriber/types/:type/channels', getSubscriptionChannels(tokenProvider, directory));
 
   return router;

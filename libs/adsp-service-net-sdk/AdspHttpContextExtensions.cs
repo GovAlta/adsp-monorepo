@@ -6,6 +6,12 @@ using Microsoft.AspNetCore.Http;
 namespace Adsp.Sdk;
 public static class AdspHttpContextExtensions
 {
+  /// <summary>
+  /// Retrieves ADSP user details from the request context.
+  /// </summary>
+  /// <param name="context">Context to get the user from.</param>
+  /// <returns>Adsp user instance or null if no user in context (e.g. anonymous access).</returns>
+  /// <exception cref="ArgumentNullException">Thrown if the context is null.</exception>
   public static User? GetAdspUser(this HttpContext context)
   {
     if (context == null)
@@ -18,6 +24,15 @@ public static class AdspHttpContextExtensions
     return user as User;
   }
 
+  /// <summary>
+  /// Retrieves ADSP tenant details from the request context.
+  /// The tenant is typically based on the user; for platform services access under a core context, the tenant may
+  /// be specified by a tenantId query parameter.
+  /// </summary>
+  /// <param name="context">Context to get the tenant from.</param>
+  /// <returns>ADSP tenant instance associated with the context.</returns>
+  /// <exception cref="ArgumentNullException">Thrown if the context is null.</exception>
+  /// <exception cref="InvalidOperationException">Thrown if TenantMiddleware not in request pipeline.</exception>
   public static async Task<Tenant?> GetTenant(this HttpContext context)
   {
     if (context == null)
@@ -36,6 +51,19 @@ public static class AdspHttpContextExtensions
     return await tenantService.GetTenant(tenantId);
   }
 
+  /// <summary>
+  /// Retrieves configuration for the service in the request context. Configuration is retrieved for the current
+  /// context tenant. Note that AdspOptions.CombineConfiguration is called to merge the configuration and result
+  /// must be assignable to the specified combined configuration type.
+  /// </summary>
+  /// <typeparam name="T">Type of the configuration.</typeparam>
+  /// <typeparam name="TC">Type of the combined configuration</typeparam>
+  /// <param name="context">Context to get configuration under.</param>
+  /// <returns>Tenant and core configuration combined.</returns>
+  /// <exception cref="ArgumentNullException">Thrown if context is null.</exception>
+  /// <exception cref="InvalidOperationException">
+  ///   Thrown if ConfigurationMiddleware is not in the request pipeline.
+  /// </exception>
   public static async Task<TC?> GetConfiguration<T, TC>(this HttpContext context) where T : class
   {
     if (context == null)
@@ -55,6 +83,13 @@ public static class AdspHttpContextExtensions
     return await configurationService.GetConfiguration<T, TC>(serviceId, tenant?.Id);
   }
 
+  /// <summary>
+  /// Retrieves configuration for the service in the request context. Configuration is retrieved for the current
+  /// context tenant.
+  /// </summary>
+  /// <typeparam name="T">Type of the configuration.</typeparam>
+  /// <param name="context">Context to get configuration under.</param>
+  /// <returns>Tuple including tenant configuration and core configuration.</returns>
   public static Task<(T?, T?)> GetConfiguration<T>(this HttpContext context) where T : class
   {
     return context.GetConfiguration<T, (T?, T?)>();

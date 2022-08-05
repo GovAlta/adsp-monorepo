@@ -6,17 +6,18 @@ using SocketIOClient;
 
 namespace Adsp.Sdk.Configuration;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
-internal sealed class ConfigurationUpdateClient : IAsyncDisposable
+internal sealed class ConfigurationUpdateClient : IConfigurationUpdateClient, IAsyncDisposable
 {
   private static readonly AdspId PushServiceId = AdspId.Parse("urn:ads:platform:push-service");
   private const string StreamId = "configuration-updates";
+  private const string ConfigurationUpdatedEvent = "configuration-service:configuration-updated";
 
   private readonly ILogger<ConfigurationUpdateClient> _logger;
   private readonly IServiceDirectory _serviceDirectory;
   private readonly ITokenProvider _tokenProvider;
   private readonly IConfigurationService _configurationService;
   private readonly ITenantService _tenantService;
-  private readonly string _realm;
+  private readonly string? _realm;
   private SocketIO? _client;
 
   public ConfigurationUpdateClient(
@@ -28,11 +29,6 @@ internal sealed class ConfigurationUpdateClient : IAsyncDisposable
     IOptions<AdspOptions> options
   )
   {
-    if (String.IsNullOrEmpty(options.Value.Realm))
-    {
-      throw new ArgumentException("Provided options must include value for Realm.");
-    }
-
     _logger = logger;
     _serviceDirectory = serviceDirectory;
     _tokenProvider = tokenProvider;
@@ -61,18 +57,13 @@ internal sealed class ConfigurationUpdateClient : IAsyncDisposable
 
   private async Task<SocketIO> CreateSocketClient()
   {
-    var tenant = await _tenantService.GetTenantByRealm(_realm);
-    if (tenant == null)
-    {
-      throw new InvalidOperationException("Cannot determine tenant to connect to for configuration updates.");
-    }
+    var tenant = _realm != null ? await _tenantService.GetTenantByRealm(_realm) : null;
 
     var pushServiceUrl = await _serviceDirectory.GetServiceUrl(PushServiceId);
     var token = await _tokenProvider.GetAccessToken();
-    var requestUrl = new Uri(pushServiceUrl, tenant.Name);
 
     var client = new SocketIO(
-      requestUrl,
+      pushServiceUrl,
       new SocketIOOptions
       {
         Query = new Dictionary<string, string> { { "stream", StreamId } },
@@ -81,7 +72,7 @@ internal sealed class ConfigurationUpdateClient : IAsyncDisposable
     );
     client.OnConnected += (_s, _e) =>
     {
-      _logger.LogInformation("Connected to stream for configuration updates at: {Url}", requestUrl);
+      _logger.LogInformation("Connected to stream for configuration updates at: {Url}", pushServiceUrl);
     };
     client.OnDisconnected += (_s, _e) =>
     {
@@ -91,6 +82,16 @@ internal sealed class ConfigurationUpdateClient : IAsyncDisposable
     {
       _logger.LogError("Error encountered in configuration update stream. {Msg}", e);
     };
+    client.On(ConfigurationUpdatedEvent, (response) =>
+    {
+      _logger.LogDebug("Received configuration update event from configuration updates stream.");
+
+      var update = response.GetValue<ConfigurationUpdate>();
+      _configurationService.ClearCached(
+        AdspId.Parse($"urn:ads:{update.Payload!.Namespace}:{update.Payload!.Name}"),
+        update.TenantId ?? tenant?.Id
+      );
+    });
 
     return client;
   }

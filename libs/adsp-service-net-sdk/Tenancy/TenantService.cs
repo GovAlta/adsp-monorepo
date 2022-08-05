@@ -20,13 +20,19 @@ internal class TenantService : ITenantService, IDisposable
   private readonly RestClient _client;
   private readonly AsyncPolicy _retryPolicy;
 
-  public TenantService(ILogger<TenantService> logger, IMemoryCache cache, IServiceDirectory serviceDirectory, ITokenProvider tokenProvider)
+  public TenantService(
+    ILogger<TenantService> logger,
+    IMemoryCache cache,
+    IServiceDirectory serviceDirectory,
+    ITokenProvider tokenProvider,
+    RestClient? client = null
+  )
   {
     _logger = logger;
     _cache = cache;
     _serviceDirectory = serviceDirectory;
     _tokenProvider = tokenProvider;
-    _client = new RestClient();
+    _client = client ?? new RestClient();
     _retryPolicy = Policy.Handle<Exception>().WaitAndRetryAsync(
       10,
       retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
