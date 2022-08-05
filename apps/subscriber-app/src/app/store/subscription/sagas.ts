@@ -141,8 +141,9 @@ export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
   if (configBaseUrl && token && recaptchaToken) {
     try {
       yield call(axios.delete, `${configBaseUrl}/subscription/v1/types/${type}/subscriptions/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
         data: { token: recaptchaToken },
+
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       // remove the deleted subscription from the list after its successful
