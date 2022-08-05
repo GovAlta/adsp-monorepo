@@ -138,6 +138,9 @@ export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
 
+  console.log(token);
+  console.log(recaptchaToken);
+
   if (configBaseUrl && token && recaptchaToken) {
     try {
       yield call(axios.delete, `${configBaseUrl}/subscription/v1/types/${type}/subscriptions/${id}`, {
