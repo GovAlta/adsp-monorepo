@@ -26,7 +26,6 @@ public class ScriptController : ControllerBase
     _evenService = eventService;
   }
 
-
   [HttpGet]
   [Route("scripts")]
   [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
@@ -59,11 +58,16 @@ public class ScriptController : ControllerBase
   [HttpPost]
   [Route("scripts/{script?}")]
   [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant, Roles = ServiceRoles.ScriptRunner)]
-  public async Task<IEnumerable<object>> RunScript(string? script, [FromBody] IDictionary<string, JsonElement> inputs)
+  public async Task<IEnumerable<object>> RunScript(string? script, [FromBody] RunScriptRequest request)
   {
     if (String.IsNullOrWhiteSpace(script))
     {
       throw new RequestArgumentException("script parameter cannot be null or empty.");
+    }
+
+    if (request == null)
+    {
+      throw new RequestArgumentException("request body cannot be null");
     }
 
     var user = HttpContext.GetAdspUser();
@@ -74,7 +78,7 @@ public class ScriptController : ControllerBase
       throw new NotFoundException($"Script definition with ID '{script}' not found.");
     }
 
-    var luaInputs = inputs.ToDictionary(
+    var luaInputs = request.Inputs.ToDictionary(
       (input) => input.Key,
       (input) =>
       {
@@ -97,16 +101,24 @@ public class ScriptController : ControllerBase
       }
     );
 
-    var results = await _luaService.RunScript(definition, luaInputs);
+    var outputs = await _luaService.RunScript(definition, luaInputs);
+    var eventPayload = new ScriptExecuted { Definition = definition, ExecutedBy = user };
+    if (definition.IncludeValuesInEvent == true)
+    {
+      eventPayload.Inputs = luaInputs;
+      eventPayload.Outputs = outputs;
+    }
+
     await _evenService.Send(
       new DomainEvent<ScriptExecuted>(
         ScriptExecuted.EventName,
         DateTime.Now,
-        new ScriptExecuted { Definition = definition, ExecutedBy = user }
+        eventPayload,
+        request.CorrelationId
       ),
       user!.Tenant!.Id
     );
 
-    return results;
+    return outputs;
   }
 }

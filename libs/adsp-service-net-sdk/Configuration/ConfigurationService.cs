@@ -42,6 +42,7 @@ internal class ConfigurationService : IConfigurationService, IDisposable
     {
       _cache.Remove(serviceId);
     }
+    _logger.LogInformation("Cleared cached configuration for {ServiceId} of tenant: {TenantId}", serviceId, tenantId);
   }
 
   public async Task<TC?> GetConfiguration<T, TC>(AdspId serviceId, AdspId? tenantId = null) where T : class
