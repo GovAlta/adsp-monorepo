@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Adsp.Platform.ScriptService.Model;
 using Adsp.Sdk;
 
 namespace Adsp.Platform.ScriptService.Events;
+[SuppressMessage("Usage", "CA2227: Collection properties should be read only", Justification = "Data transfer object")]
 public class ScriptExecuted
 {
   public const string EventName = "script-executed";
