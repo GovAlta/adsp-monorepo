@@ -24,8 +24,8 @@ public static class AdspServiceCollectionExtensions
     services.AddSingleton<ITenantService, TenantService>();
     services.AddSingleton<IIssuerCache, IssuerCache>();
     services.AddSingleton<ITenantKeyProvider, TenantKeyProvider>();
-    services.AddSingleton<IConfigurationService, ConfigurationService>();
     services.AddSingleton<IEventService, EventService>();
+    services.AddConfiguration();
     services.AddRegistration();
 
     return services;
