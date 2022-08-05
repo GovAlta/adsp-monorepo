@@ -311,7 +311,7 @@ function findStream(streamName, role) {
 }
 
 Then('the user {string} the stream of {string}, {string}', function (viewOrNot, streamName, role) {
-  findStream(name, role).then((rowNumber) => {
+  findStream(streamName, role).then((rowNumber) => {
     switch (viewOrNot) {
       case 'views':
         expect(rowNumber).to.be.greaterThan(0, 'Stream of ' + streamName + ', ' + role + ' has row #' + rowNumber);
@@ -338,6 +338,9 @@ Then(
 
 When('the user clicks {string} button of {string}', function (button, streamName) {
   switch (button) {
+    case 'Eye':
+      eventsObj.streamDetailsEyeIcon(streamName).click({ force: true });
+      break;
     case 'Edit':
       eventsObj.streamEditBtn(streamName).click({ force: true });
       break;
@@ -345,8 +348,13 @@ When('the user clicks {string} button of {string}', function (button, streamName
       eventsObj.streamDeleteBtn(streamName).click({ force: true });
       break;
     default:
-      expect(button).to.be.oneOf(['Edit', 'Delete']);
+      expect(button).to.be.oneOf(['Eye', 'Edit', 'Delete']);
+      cy.wait(1000);
   }
+});
+
+Then('the user clicks eye-off icon of {string} to close the schema', function (streamName) {
+  eventsObj.streamDetailsEyeIconOff(streamName).click();
 });
 
 Then('the user views Edit stream modal', function () {
