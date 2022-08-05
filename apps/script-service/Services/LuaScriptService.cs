@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Adsp.Platform.ScriptService.Model;
+using Adsp.Sdk.Errors;
 using NLua;
 using NLua.Exceptions;
 
@@ -34,12 +35,12 @@ internal class LuaScriptService : ILuaScriptService
     catch (LuaScriptException e)
     {
       _logger.LogError(e, "Lua error encountered running script {Id}.", definition.Id);
+      throw new ScriptRunException(e.Message, e);
     }
     catch (Exception e)
     {
-      _logger.LogError(e, "Unknown error encountered running script {Id}.", definition.Id);
+      _logger.LogError(e, "Unrecognized error encountered running script {Id}.", definition.Id);
+      throw new InternalErrorException("Unrecognized error encountered running script.", e);
     }
-
-    return Enumerable.Empty<object>();
   }
 }
