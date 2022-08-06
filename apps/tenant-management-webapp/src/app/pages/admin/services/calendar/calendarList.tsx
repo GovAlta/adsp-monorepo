@@ -1,8 +1,8 @@
 import React, { FunctionComponent } from 'react';
-import styled from 'styled-components';
 import { CalendarItem } from '@store/calendar/models';
 import { GoABadge } from '@abgov/react-components/experimental';
 import DataTable from '@components/DataTable';
+import { TableDiv } from './styled-components';
 
 interface CalendarItemProps {
   calendar: CalendarItem;
@@ -68,10 +68,10 @@ export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ 
               Description
             </th>
             <th id="calendar-read-roles" data-testid="calendar-table-header-read-roles">
-              Read Roles
+              Read roles
             </th>
             <th id="calendar-update-roles" data-testid="calendar-table-header-update-roles">
-              Update Roles
+              Update roles
             </th>
           </tr>
         </thead>
@@ -86,23 +86,3 @@ export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ 
     </TableDiv>
   );
 };
-
-const TableDiv = styled.div`
-  & td:first-child {
-    width: 100px;
-    white-space: nowrap;
-    overflow-x: hidden;
-    text-overflow: ellipsis;
-  }
-
-  & td:last-child {
-    width: 40px;
-    white-space: nowrap;
-    overflow-x: hidden;
-    text-overflow: ellipsis;
-    text-align: right;
-  }
-  & .meta {
-    padding: 0;
-  }
-`;

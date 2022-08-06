@@ -20,13 +20,19 @@ internal class TenantService : ITenantService, IDisposable
   private readonly RestClient _client;
   private readonly AsyncPolicy _retryPolicy;
 
-  public TenantService(ILogger<TenantService> logger, IMemoryCache cache, IServiceDirectory serviceDirectory, ITokenProvider tokenProvider)
+  public TenantService(
+    ILogger<TenantService> logger,
+    IMemoryCache cache,
+    IServiceDirectory serviceDirectory,
+    ITokenProvider tokenProvider,
+    RestClient? client = null
+  )
   {
     _logger = logger;
     _cache = cache;
     _serviceDirectory = serviceDirectory;
     _tokenProvider = tokenProvider;
-    _client = new RestClient();
+    _client = client ?? new RestClient();
     _retryPolicy = Policy.Handle<Exception>().WaitAndRetryAsync(
       10,
       retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
@@ -63,11 +69,17 @@ internal class TenantService : ITenantService, IDisposable
 
   private async Task<Tenant?> RetrieveTenant(AdspId tenantId)
   {
-    var tenant = await _retryPolicy.ExecuteAsync(async () =>
+    var tenantApiUrl = await _serviceDirectory.GetServiceUrl(TENANT_SERVICE_API_ID);
+    var requestUrl = new Uri(tenantApiUrl, $"v2{tenantId.Resource}").AbsoluteUri;
+
+    var tenant = await _retryPolicy.ExecuteAsync(async (ctx) =>
       {
         var token = await _tokenProvider.GetAccessToken();
-        return await _client.GetAsync<Tenant>(new RestRequest(tenantId.Resource));
-      }
+        var request = new RestRequest(requestUrl);
+        request.AddHeader("Authorization", $"Bearer {token}");
+        return await _client.GetAsync<Tenant>(request);
+      },
+      new Dictionary<string, object> { { ContextUrlKey, requestUrl } }
     );
 
     if (tenant != null)

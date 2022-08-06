@@ -55,6 +55,7 @@ export interface ServiceRegistration {
    */
   roles?: (string | ServiceRole)[];
   /**
+   * @deprecated
    * Configuration schema: JSON schema for configuration of the service.
    *
    * The configuration schema provides a write schema for service configuration in the
@@ -65,6 +66,17 @@ export interface ServiceRegistration {
    * @memberof ServiceRegistration
    */
   configurationSchema?: Record<string, unknown>;
+  /**
+   * Configuration: JSON schema for configuration of the service and associated description.
+   *
+   * The configuration provides a schema and a description of the schema. The schema provides a write schema for service configuration in the
+   * configuration service. Service associated configuration is stored at namespace and
+   * (service) name.
+   *
+   * @type {schema: Record<string, unknown>, description: string}
+   * @memberof ServiceRegistration
+   */
+  configuration?: { schema: Record<string, unknown>; description: string };
   /**
    * Events: Definitions of domain events of the service.
    *

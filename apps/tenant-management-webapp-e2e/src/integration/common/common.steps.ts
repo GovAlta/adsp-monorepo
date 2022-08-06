@@ -137,3 +137,7 @@ Then('the user views the link of {string} under Support', function (asideLink) {
       expect(href).to.contain('mailto:adsp@gov.ab.ca');
     });
 });
+
+Then('the user views the {string} overview content {string}', function (serviceTitle, content) {
+  commonObj.serviceOverviewContent(serviceTitle).invoke('text').should('contain', content);
+});

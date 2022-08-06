@@ -23,7 +23,10 @@
           "builder": "@nx-dotnet/core:format"
         },
         "test": {
-          "builder": "@nx-dotnet/core:test"
+          "builder": "@nx-dotnet/core:test",
+          "options": {
+            "settings": "coverage.runsettings"
+          }
         },
         "release": {
           "builder": "@nrwl/workspace:run-commands",

@@ -4,6 +4,7 @@ using Adsp.Sdk.Directory;
 using Adsp.Sdk.Event;
 using Adsp.Sdk.Registration;
 using Adsp.Sdk.Tenancy;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -23,14 +24,18 @@ public static class AdspServiceCollectionExtensions
     services.AddSingleton<ITenantService, TenantService>();
     services.AddSingleton<IIssuerCache, IssuerCache>();
     services.AddSingleton<ITenantKeyProvider, TenantKeyProvider>();
-    services.AddSingleton<IConfigurationService, ConfigurationService>();
     services.AddSingleton<IEventService, EventService>();
+    services.AddConfiguration();
     services.AddRegistration();
 
     return services;
   }
 
-  public static IServiceCollection AddAdspForService(this IServiceCollection services, Action<AdspOptions>? configureOptions = null)
+  public static IServiceCollection AddAdspForService(
+    this IServiceCollection services,
+    Action<AdspOptions>? configureOptions = null,
+    Action<AuthenticationBuilder>? configureAuthentication = null
+  )
   {
     if (services == null)
     {
@@ -43,14 +48,20 @@ public static class AdspServiceCollectionExtensions
     var tenantService = providers.GetRequiredService<ITenantService>();
     var options = providers.GetRequiredService<IOptions<AdspOptions>>();
 
-    services
+    var authenticationBuilder = services
       .AddAuthentication(AdspAuthenticationSchemes.Tenant)
       .AddRealmJwtAuthentication(AdspAuthenticationSchemes.Tenant, tenantService, options.Value);
+
+    configureAuthentication?.Invoke(authenticationBuilder);
 
     return services;
   }
 
-  public static IServiceCollection AddAdspForPlatformService(this IServiceCollection services, Action<AdspOptions>? configureOptions = null)
+  public static IServiceCollection AddAdspForPlatformService(
+    this IServiceCollection services,
+    Action<AdspOptions>? configureOptions = null,
+    Action<AuthenticationBuilder>? configureAuthentication = null
+  )
   {
     if (services == null)
     {
@@ -65,10 +76,12 @@ public static class AdspServiceCollectionExtensions
     var keyProvider = providers.GetRequiredService<ITenantKeyProvider>();
     var options = providers.GetRequiredService<IOptions<AdspOptions>>();
 
-    services
+    var authenticationBuilder = services
       .AddAuthentication()
       .AddRealmJwtAuthentication(AdspAuthenticationSchemes.Core, tenantService, options.Value)
       .AddTenantJwtAuthentication(AdspAuthenticationSchemes.Tenant, issuerCache, keyProvider, options.Value);
+
+    configureAuthentication?.Invoke(authenticationBuilder);
 
     return services;
   }

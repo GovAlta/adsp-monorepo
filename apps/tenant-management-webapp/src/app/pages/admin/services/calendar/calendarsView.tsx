@@ -6,11 +6,12 @@ import { CalendarItem, defaultCalendar } from '@store/calendar/models';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
 import { GoAButton } from '@abgov/react-components';
-
+import { FetchRealmRoles } from '@store/tenant/actions';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { CalendarModal } from './calendarModal';
 import { CalendarTableComponent } from './calendarList';
+import { fetchEventStreams } from '@store/stream/actions';
 
-import styled from 'styled-components';
 interface AddCalendarProps {
   activeEdit: boolean;
 }
@@ -23,9 +24,11 @@ export const CalendarsView = ({ activeEdit }: AddCalendarProps): JSX.Element => 
 
   useEffect(() => {
     dispatch(fetchCalendars());
+    dispatch(FetchRealmRoles());
+    dispatch(fetchKeycloakServiceRoles());
+    dispatch(fetchEventStreams());
   }, []);
 
-  const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const { calendars } = useSelector((state: RootState) => state.calendarService);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -40,9 +43,6 @@ export const CalendarsView = ({ activeEdit }: AddCalendarProps): JSX.Element => 
   }, [activeEdit]);
 
   // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
-  // eslint-disable-next-line
-  useEffect(() => {}, [tenantName]);
 
   const reset = () => {
     setEditCalendar(false);

@@ -32,7 +32,6 @@ export function* fetchCalendars(action: FetchCalendarsAction): SagaIterator {
         headers: { Authorization: `Bearer ${token}` },
       });
       const calendars: CalendarItem[] = data;
-      console.log('payload', data);
       yield put(fetchCalendarSuccess(calendars));
       yield put(
         UpdateIndicator({
@@ -112,9 +111,8 @@ export function* createCalendar({ payload }: CreateCalendarAction): SagaIterator
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      // yield put(FetchFileTypeService());
     } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - createFileType` }));
+      yield put(ErrorNotification({ message: `${e.message} - createCalendar` }));
     }
   }
 }

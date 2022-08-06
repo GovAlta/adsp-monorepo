@@ -38,7 +38,7 @@ The SDK follows ASP.NET conventions of extension methods and options pattern. In
     {
       options.ServiceId = AdspId.Parse(adspConfiguration.GetValue<string>("ServiceId"));
       options.DisplayName = "My platform service";
-      options.Description = "Service that execute configured scripts.";
+      options.Description = "Hello world platform service.";
     }
   );
 
@@ -75,7 +75,7 @@ Authorize by scheme:
 ```
 When initialized with `AddAdspForService`, the `AdspAuthenticationSchemes.Tenant` is set as the default scheme, and `AuthorizeAttribute` can be used without specifying the scheme.
 
-### Role based authorization
+### Role-based authorization
 The SDK maps Keycloak access token `realm_access` and `resource_access` roles to role claims to allow for use of the `AuthorizeAttribute.Roles`.
 
 Keycloak issued tokens contain client roles nested under `realm_access`. SDK claim mapping flatten service specific roles from the token and qualifies roles related to other service clients with the client ID.
@@ -108,28 +108,32 @@ Authorize based on a role:
 ```
 
 ## Determining tenancy
-Requests to platform services are in the context of a specific tenant with few exceptions. The context is implicit when a request is made with a tenant bearer token.
+Requests to platform services are in the context of a specific tenant with few exceptions. The context is implicit when a request is made with a tenant bearer token. It can be explicit in cases where an endpoint allows anonymous access or when a platform service makes a request to another platform service under a core service account.
 
-<!-- It can be explicit in cases where an endpoint allows anonymous access or when a platform service makes a request to another platform service under a core service account. -->
+The SDK includes middleware that resolves implicit from user tenancy and explicit from a `tenantId` query parameter. Resolved tenant is set on the request object; no value is set if tenancy cannot be resolved.
 
-<!-- The SDK provides a request handler that resolves implicit from user tenancy and explicit from a `tenantId` query parameter. Resolved tenant is set on the request object; no value is set if tenancy cannot be resolved.
+Getting tenancy from the context:
+```csharp
+  using Adsp.Sdk;
+  public class HelloWorldController : ControllerBase
+  {
+    private readonly ITenantService _tenantService;
+    public HelloWorldController(ITenantService tenantService)
+    {
+      _tenantService = tenantService;
+    }
 
-Getting tenancy using the tenant request handler:
-```typescript
-  const {
-    tenantHandler,
-    ...sdkCapabilities
-  } = await initializePlatform(parameters);
-
-  app.use(
-    '/my-resource',
-    authenticateHandler,
-    tenantHandler,
-    (req, res) => { res.send(req.tenant) }
-  );
+    [HttpGet]
+    [Route("hello")]
+    public async Task<string> HelloWorld(string tenantId)
+    {
+      var tenant = await HttpContext.GetTenant();
+      ...
+    }
+  }
 ```
 
-The handler uses the tenant service client to retrieve tenant information. This is also available from the SDK for direct use. -->
+The handler uses the tenant service client to retrieve tenant information. This is also available from the SDK for direct use.
 
 The tenant service is available via dependency injection.
 
@@ -148,7 +152,7 @@ Getting tenant information using the tenant service:
     [Route("hello")]
     public async Task<string> HelloWorld(string tenantId)
     {
-      var tenant = await _tenantService.GetTenant(AdspId.parse(tenantId));
+      var tenant = await _tenantService.GetTenant(AdspId.Parse(tenantId));
       ...
     }
   }
@@ -172,7 +176,7 @@ Getting a service URL from the directory:
     [Route("hello")]
     public async Task<string> HelloWorld(string serviceId)
     {
-      var serviceUrl = await _directory.GetServiceUrl(AdspId.parse(serviceId));
+      var serviceUrl = await _directory.GetServiceUrl(AdspId.Parse(serviceId));
       ...
     }
   }
@@ -232,8 +236,8 @@ Getting configuration using the configuration service:
     {
       var (tenantConfig, coreConfig) =
         await _configurationService.GetConfiguration<HelloConfiguration>(
-          AdspId.parse(serviceId),
-          AdspId.parse(tenantId)
+          AdspId.Parse(serviceId),
+          AdspId.Parse(tenantId)
         );
       ...
     }
@@ -245,7 +249,19 @@ Services may want to apply transformations on the retrieved configuration. The S
 
 Provide conversion functions:
 ```csharp
+  builder.Services.AddAdspForPlatformService(
+    options =>
+    {
+      ...
+      options.Configuration = new ConfigurationDefinition<HelloConfiguration>(
+        "Configuration of the hello world service.",
+        (tenantConfig, coreConfig) => { return tenantConfig + coreConfig; }
+      );
+    }
+  );
 ```
+
+Use the second generic parameter of `GetConfiguration` for the type of the combined configuration object.
 
 ## Registering event definitions, notification types, etc.
 The SDK allows services to register configuration for some platform services.
@@ -280,9 +296,6 @@ The SDK provides several other useful utilities.
 
 ### ADSP ID
 Utilities for handling ADSP URNs.
-
-
-### Role-based authorization
 
 ### Platform health check
 
