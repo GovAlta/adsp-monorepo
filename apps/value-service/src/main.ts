@@ -51,7 +51,10 @@ const initializeApp = async () => {
             description: 'Writer role for writing new values.',
           },
         ],
-        configurationSchema,
+        configuration: {
+          description: 'Definitions for values including write schema and option to enable write events.',
+          schema: configurationSchema,
+        },
         events: [ValueWrittenDefinition],
         clientSecret: environment.CLIENT_SECRET,
         directoryUrl: new URL(environment.DIRECTORY_URL),
