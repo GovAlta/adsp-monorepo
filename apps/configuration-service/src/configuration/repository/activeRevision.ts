@@ -1,8 +1,8 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { ActiveRevisionEntity } from '../model';
-import { ActiveRevision } from '../types';
+import { ConfigurationEntity } from '../model';
+import { ActiveRevisionDoc } from '../../mongo/types';
 
 export interface ActiveRevisionRepository {
-  get(namespace: string, name: string, tenantId?: AdspId): Promise<ActiveRevisionEntity>;
-  setActiveRevision(entity: ActiveRevisionEntity, active: number): Promise<ActiveRevision>;
+  get(namespace: string, name: string, tenantId?: AdspId): Promise<ActiveRevisionDoc>;
+  setActiveRevision<C>(entity: ConfigurationEntity<C>, active: number): Promise<ConfigurationEntity<C>>;
 }

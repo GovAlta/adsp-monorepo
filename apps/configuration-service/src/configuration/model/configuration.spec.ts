@@ -1,7 +1,7 @@
 import { adspId, User } from '@abgov/adsp-service-sdk';
 import { ConfigurationServiceRoles } from '../roles';
 import { ConfigurationEntity } from './configuration';
-import { ActiveRevisionEntity } from './activeRevisionEntity';
+//import { ActiveRevisionEntity } from './activeRevisionEntity';
 import { ConfigurationRevision } from '../types';
 import type { Logger } from 'winston';
 
@@ -439,11 +439,28 @@ describe('ConfigurationEntity', () => {
 
   describe('setActiveRevision', () => {
     it('can be created', () => {
-      const entity = new ActiveRevisionEntity(namespace, name, activeRevisionMock, 5);
+      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
+        revision: 2,
+        configuration: {} as unknown,
+      });
       expect(entity).toBeTruthy();
     });
+
     it('sets active revision', async () => {
-      const entity = new ActiveRevisionEntity(namespace, name, activeRevisionMock, 5);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        repositoryMock,
+        validationMock,
+        {
+          revision: 1,
+          configuration: {} as unknown,
+        },
+        null,
+        null,
+        null,
+        activeRevisionMock
+      );
       const active = 2;
 
       activeRevisionMock.setActiveRevision.mockImplementationOnce((_entity, rev) => {
@@ -461,7 +478,10 @@ describe('ConfigurationEntity', () => {
     });
 
     it('can throw for unauthorized user', async () => {
-      const entity = new ActiveRevisionEntity(namespace, name, activeRevisionMock, 5);
+      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
+        revision: 2,
+        configuration: {} as unknown,
+      });
 
       const active = 2;
 

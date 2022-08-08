@@ -1,6 +1,6 @@
 import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, Results, ValidationService, createLogger } from '@core-services/core-common';
-import { ConfigurationRepository } from '../repository';
+import { ConfigurationRepository, ActiveRevisionRepository } from '../repository';
 import { ConfigurationServiceRoles } from '../roles';
 import { ConfigurationRevision, Configuration, RevisionCriteria } from '../types';
 import type { Logger } from 'winston';
@@ -23,7 +23,9 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     public latest?: ConfigurationRevision<C>,
     public tenantId?: AdspId,
     private schema?: Record<string, unknown>,
-    private logger?: Logger
+    private logger?: Logger,
+    public activeRevisionRepository?: ActiveRevisionRepository,
+    public active?: number
   ) {
     if (!namespace || !name) {
       throw new InvalidOperationError('Configuration must have a namespace and name.');
@@ -147,5 +149,15 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
 
   private getSchemaKey(): string {
     return `${this.namespace}:${this.name}`;
+  }
+
+  public async setActiveRevision(user: User, active: number): Promise<ConfigurationEntity<C>> {
+    if (!this.canModify(user)) {
+      throw new UnauthorizedUserError('modify configuration', user);
+    }
+
+    this.active = await (await this.activeRevisionRepository.setActiveRevision(this, active)).active;
+
+    return this;
   }
 }

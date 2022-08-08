@@ -1,9 +1,9 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { model, Model } from 'mongoose';
-import { ActiveRevisionRepository, ActiveRevisionEntity } from '../configuration';
+import { ActiveRevisionRepository } from '../configuration';
 import { activeRevisionSchema } from './schema';
 import { ActiveRevisionDoc } from './types';
-import { ActiveRevision } from '../configuration/types';
+import { ConfigurationEntity } from '../configuration';
 
 export class MongoActiveRevisionRepository implements ActiveRevisionRepository {
   private activeRevisionModel: Model<ActiveRevisionDoc>;
@@ -12,7 +12,7 @@ export class MongoActiveRevisionRepository implements ActiveRevisionRepository {
     this.activeRevisionModel = model<ActiveRevisionDoc>('activeRevision', activeRevisionSchema);
   }
 
-  async get(namespace: string, name: string, tenantId?: AdspId): Promise<ActiveRevisionEntity> {
+  async get(namespace: string, name: string, tenantId?: AdspId): Promise<ActiveRevisionDoc> {
     const tenant = tenantId?.toString() || { $exists: false };
     const query = { namespace, name, tenant };
     const activeDoc = await new Promise<ActiveRevisionDoc>((resolve, reject) => {
@@ -23,16 +23,10 @@ export class MongoActiveRevisionRepository implements ActiveRevisionRepository {
         .exec((err, results: ActiveRevisionDoc[]) => (err ? reject(err) : resolve(results[0])));
     });
 
-    const docs = activeDoc
-      ? {
-          active: activeDoc?.active,
-        }
-      : null;
-
-    return new ActiveRevisionEntity(namespace, name, this, docs?.active, tenantId);
+    return activeDoc;
   }
 
-  async setActiveRevision(entity: ActiveRevisionEntity, active: number): Promise<ActiveRevision> {
+  async setActiveRevision<C>(entity: ConfigurationEntity<C>, active: number): Promise<ConfigurationEntity<C>> {
     const query: Record<string, unknown> = {
       namespace: entity.namespace,
       name: entity.name,
@@ -58,13 +52,8 @@ export class MongoActiveRevisionRepository implements ActiveRevisionRepository {
         .exec((err, res) => (err ? reject(err) : resolve(res as ActiveRevisionDoc)));
     });
 
-    const activeRevision: ActiveRevision = {
-      namespace: entity.namespace,
-      name: entity.name,
-      tenantId: entity.tenantId,
-      active: doc.active,
-    };
+    entity.active = doc.active;
 
-    return activeRevision;
+    return entity;
   }
 }

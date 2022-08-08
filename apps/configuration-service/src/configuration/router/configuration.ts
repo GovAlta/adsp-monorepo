@@ -11,8 +11,7 @@ import { body, checkSchema, query } from 'express-validator';
 import { isEqual as isDeepEqual } from 'lodash';
 import { Logger } from 'winston';
 import { configurationUpdated, revisionCreated, activeRevisionSet } from '../events';
-import { ConfigurationEntity, ActiveRevisionEntity } from '../model';
-import { ActiveRevision } from '../types';
+import { ConfigurationEntity } from '../model';
 import { ConfigurationRepository, Repositories, ActiveRevisionRepository } from '../repository';
 import { ConfigurationDefinition, ConfigurationDefinitions, ConfigurationRevision } from '../types';
 import { OPERATION_DELETE, OPERATION_REPLACE, OPERATION_UPDATE, PatchRequests } from './types';
@@ -55,6 +54,7 @@ export const getConfigurationEntity =
   (
     configurationServiceId: AdspId,
     repository: ConfigurationRepository,
+    activeRevisionRepository: ActiveRevisionRepository,
     requestCore = (_req: Request): boolean => false
   ): RequestHandler =>
   async (req, _res, next) => {
@@ -72,37 +72,12 @@ export const getConfigurationEntity =
       if (!entity.canAccess(user)) {
         throw new UnauthorizedUserError('access configuration', user);
       }
+      entity.activeRevisionRepository = activeRevisionRepository;
+      const activeRevisionEntity = await activeRevisionRepository.get(namespace, name, getCore ? null : tenantId);
+
+      entity.active = activeRevisionEntity.active;
 
       req[ENTITY_KEY] = entity;
-
-      benchmark(req, 'get-entity-time');
-      next();
-    } catch (err) {
-      next(err);
-    }
-  };
-
-export const getActiveRevisionEntity =
-  (
-    configurationServiceId: AdspId,
-    repository: ActiveRevisionRepository,
-    requestCore = (_req: Request): boolean => false
-  ): RequestHandler =>
-  async (req, _res, next) => {
-    try {
-      benchmark(req, 'get-entity-time');
-
-      const user = req.user;
-      const { namespace, name } = req.params;
-      const getCore = requestCore(req);
-      const tenantId = req.tenant?.id;
-
-      const entity = await repository.get(namespace, name, getCore ? null : tenantId);
-      if (!entity.canAccess(user)) {
-        throw new UnauthorizedUserError('access configuration', user);
-      }
-
-      req['activeRevisionEntity'] = entity;
 
       benchmark(req, 'get-entity-time');
       next();
@@ -117,7 +92,7 @@ const mapConfiguration = (configuration: ConfigurationEntity): unknown => ({
   latest: configuration.latest,
 });
 
-const mapActiveRevision = (activeRevision: ActiveRevision): unknown => ({
+const mapActiveRevision = (activeRevision: ConfigurationEntity): unknown => ({
   namespace: activeRevision.namespace,
   name: activeRevision.name,
   tenantId: activeRevision.tenantId,
@@ -222,17 +197,16 @@ export const getActiveRevision =
       benchmark(req, 'operation-handler-time');
       const user = req.user;
       const configuration: ConfigurationEntity = req[ENTITY_KEY];
-      const activeRevision: ActiveRevisionEntity = req['activeRevisionEntity'];
 
-      if (!activeRevision.active) {
+      if (!configuration.active) {
         throw new NotFoundError('Active Revision');
       }
 
-      const revision = await configuration.getRevisions(1, null, { revision: activeRevision.active });
+      const revision = await configuration.getRevisions(1, null, { revision: configuration.active });
 
       res.send(revision.results);
 
-      logger.info(`Active revision ${activeRevision.active} ` + `retrieved by ${user.name} (ID: ${user.id}).`, {
+      logger.info(`Active revision ${configuration.active} ` + `retrieved by ${user.name} (ID: ${user.id}).`, {
         tenant: configuration.tenantId?.toString(),
         context: 'configuration-router',
         user: `${user.name} (ID: ${user.id})`,
@@ -257,7 +231,6 @@ export const createConfigurationRevision =
         throw new InvalidOperationError('Request operation not recognized.');
       } else if (setActiveRevision) {
         const configuration: ConfigurationEntity = req[ENTITY_KEY];
-        const activeRevision: ActiveRevisionEntity = req['activeRevisionEntity'];
         const revisions = await configuration.getRevisions(1, null, { revision: setActiveRevision });
         const results = revisions.results;
         const currentRevision = results[0];
@@ -266,7 +239,7 @@ export const createConfigurationRevision =
           throw new InvalidOperationError(`The selected revision does not exist`);
         }
 
-        const updated = await activeRevision.setActiveRevision(user, currentRevision.revision);
+        const updated = await configuration.setActiveRevision(user, currentRevision.revision);
 
         res.send(mapActiveRevision(updated));
         eventService.send(
@@ -276,7 +249,7 @@ export const createConfigurationRevision =
             updated.namespace,
             updated.name,
             updated.active,
-            activeRevision.active
+            configuration.active
           )
         );
 
@@ -368,7 +341,12 @@ export function createConfigurationRouter({
     '/configuration/:namespace/:name',
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
-    getConfigurationEntity(serviceId, configurationRepository, (req) => req.query.core !== undefined),
+    getConfigurationEntity(
+      serviceId,
+      configurationRepository,
+      activeRevisionRepository,
+      (req) => req.query.core !== undefined
+    ),
     getConfiguration()
   );
 
@@ -376,7 +354,12 @@ export function createConfigurationRouter({
     '/configuration/:namespace/:name/latest',
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
-    getConfigurationEntity(serviceId, configurationRepository, (req) => req.query.core !== undefined),
+    getConfigurationEntity(
+      serviceId,
+      configurationRepository,
+      activeRevisionRepository,
+      (req) => req.query.core !== undefined
+    ),
     getConfiguration((configuration) => configuration.latest?.configuration || {})
   );
 
@@ -385,7 +368,7 @@ export function createConfigurationRouter({
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(body('operation').isString().isIn([OPERATION_DELETE, OPERATION_UPDATE, OPERATION_REPLACE])),
-    getConfigurationEntity(serviceId, configurationRepository),
+    getConfigurationEntity(serviceId, configurationRepository, activeRevisionRepository),
     patchConfigurationRevision(logger, eventService)
   );
 
@@ -394,8 +377,7 @@ export function createConfigurationRouter({
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(body('revision').isBoolean()),
-    getConfigurationEntity(serviceId, configurationRepository),
-    getActiveRevisionEntity(serviceId, activeRevisionRepository),
+    getConfigurationEntity(serviceId, configurationRepository, activeRevisionRepository),
     createConfigurationRevision(logger, eventService)
   );
 
@@ -404,7 +386,7 @@ export function createConfigurationRouter({
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
-    getConfigurationEntity(serviceId, configurationRepository),
+    getConfigurationEntity(serviceId, configurationRepository, activeRevisionRepository),
     getRevisions()
   );
 
@@ -413,8 +395,7 @@ export function createConfigurationRouter({
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
-    getConfigurationEntity(serviceId, configurationRepository),
-    getActiveRevisionEntity(serviceId, activeRevisionRepository),
+    getConfigurationEntity(serviceId, configurationRepository, activeRevisionRepository),
     getActiveRevision(logger)
   );
 
@@ -431,7 +412,7 @@ export function createConfigurationRouter({
         ['params']
       )
     ),
-    getConfigurationEntity(serviceId, configurationRepository),
+    getConfigurationEntity(serviceId, configurationRepository, activeRevisionRepository),
     getRevisions(
       (req) => ({ revision: req.params.revision }),
       (req, { results }) => {

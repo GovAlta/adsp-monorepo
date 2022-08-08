@@ -14,7 +14,7 @@ export interface Configuration<C = Record<string, unknown>> {
   description?: string;
   tenantId?: AdspId;
   latest?: ConfigurationRevision<C>;
-  active?: ConfigurationRevision<C>;
+  active?: number;
 }
 
 export interface RevisionCriteria {
