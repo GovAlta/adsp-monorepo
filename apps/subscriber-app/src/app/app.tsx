@@ -68,6 +68,7 @@ export const App = (): JSX.Element => {
 
 function AppWithAuthContext() {
   const keycloakConfig = useSelector((state: RootState) => state.config.keycloakApi);
+
   const dispatch = useDispatch();
   useEffect(() => {
     // Fetch config
@@ -76,7 +77,11 @@ function AppWithAuthContext() {
     }
   }, [dispatch, keycloakConfig]);
 
-  return <AuthContext.Provider value={{}}>{keycloakConfig && <AppRouters />}</AuthContext.Provider>;
+  return (
+    <div>
+      <AuthContext.Provider value={{}}>{keycloakConfig && <AppRouters />}</AuthContext.Provider>
+    </div>
+  );
 }
 
 export default App;

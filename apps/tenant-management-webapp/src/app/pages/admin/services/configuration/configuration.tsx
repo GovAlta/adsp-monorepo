@@ -2,7 +2,8 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { ConfigurationOverview } from './overview';
-import { ConfigurationImportExport } from './export/importExport';
+import { ConfigurationImport } from './import/import';
+import { ConfigurationExport } from './export/export';
 import { ConfigurationDefinitions } from './definitions/definitions';
 import SupportLinks from '@components/SupportLinks';
 import { useSelector } from 'react-redux';
@@ -36,8 +37,11 @@ export const Configuration: FunctionComponent = () => {
           <Tab label="Definitions">
             <ConfigurationDefinitions activeEdit={activateEditState} />
           </Tab>
-          <Tab label="Import/Export">
-            <ConfigurationImportExport />
+          <Tab label="Import">
+            <ConfigurationImport />
+          </Tab>
+          <Tab label="Export">
+            <ConfigurationExport />
           </Tab>
         </Tabs>
       </Main>

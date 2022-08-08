@@ -9,6 +9,7 @@ import {
   UPDATE_CONFIGURATION_DEFINITION_SUCCESS_ACTION,
   REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION,
   RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION,
+  SET_CONFIGURATION_REVISION_SUCCESS_ACTION,
 } from './action';
 import {
   ConfigurationDefinitionState,
@@ -21,6 +22,8 @@ const defaultState: ConfigurationDefinitionState = {
   coreConfigDefinitions: undefined,
   tenantConfigDefinitions: undefined,
   isAddedFromOverviewPage: false,
+  imports: [],
+  previousImportCount: 0,
   importedConfigurationError: [],
 };
 
@@ -53,16 +56,45 @@ export default function (
         tenantConfigDefinitions: action.payload,
         isAddedFromOverviewPage: false,
       };
-    case REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION:
+
+    case REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION: {
+      const imports = JSON.parse(JSON.stringify(state.imports));
+
+      let changeExists = false;
+
+      for (let i = 0; i < imports.length - state.previousImportCount; i++) {
+        const imp = imports[i];
+
+        if (action.payload.map((error) => error.name).includes(`${imp.namespace}:${imp.name}`)) {
+          if (imp.success) {
+            changeExists = true;
+          }
+          imp.error = action.payload.find((error) => error.name === `${imp.namespace}:${imp.name}`).error;
+          imp.success = false;
+        }
+      }
+
       return {
         ...state,
         importedConfigurationError: action.payload,
+        imports: changeExists ? imports : state.imports,
       };
+    }
     case RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION:
       return {
         ...state,
         importedConfigurationError: [],
+        previousImportCount: state.imports.length,
       };
+    case SET_CONFIGURATION_REVISION_SUCCESS_ACTION: {
+      const stateImports = JSON.parse(JSON.stringify(state.imports));
+      action.payload.data.success = true;
+      stateImports.unshift(action.payload.data);
+      return {
+        ...state,
+        imports: stateImports,
+      };
+    }
     default:
       return state;
   }
