@@ -125,7 +125,7 @@ objects:
               readinessProbe:
                 httpGet:
                   path: /
-                  port: 3333
+                  port: 5000
                   scheme: HTTP
                 initialDelaySeconds: 5
                 timeoutSeconds: 1
@@ -135,7 +135,7 @@ objects:
               livenessProbe:
                 httpGet:
                   path: /
-                  port: 3333
+                  port: 5000
                   scheme: HTTP
                 initialDelaySeconds: 60
                 timeoutSeconds: 1
