@@ -35,7 +35,7 @@ Feature: Service status
   @TEST_CS-782 @REQ_CS-667 @REQ_CS-977 @regression
   Scenario: As a tenant admin, I can publish and un-publish a notice, and see the notice published event
     Given a tenant admin user is on status notices page
-    When the user clicks "publish" menu for the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+    When the user clicks "Publish" menu for the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
     And the user selects "Published" filter by status radio button
     Then the user "views" the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
     When the user waits "20" seconds
@@ -46,7 +46,7 @@ Feature: Service status
     Then the user views event details of "Drafted notice - AUTOMATED TEST ONLY", "Autotest" of application-notice-published for status-service
     When the user selects the "Status" menu item
     And the user selects "Notices" tab for "Status"
-    And the user clicks "unpublish" menu for the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+    And the user clicks "Unpublish" menu for the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
     And the user selects "Draft" filter by status radio button
     Then the user "views" the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
 
