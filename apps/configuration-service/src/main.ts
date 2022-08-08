@@ -15,6 +15,7 @@ import {
   ActiveRevisionSetDefinition,
   ConfigurationServiceRoles,
   ConfigurationUpdatedDefinition,
+  ConfigurationUpdatesStream,
 } from './configuration';
 
 const logger = createLogger('configuration-service', environment.LOG_LEVEL);
@@ -54,6 +55,7 @@ const initializeApp = async (): Promise<express.Application> => {
           },
         ],
         events: [ConfigurationUpdatedDefinition, RevisionCreatedDefinition, ActiveRevisionSetDefinition],
+        eventStreams: [ConfigurationUpdatesStream],
         clientSecret: environment.CLIENT_SECRET,
         accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
         directoryUrl: new URL(environment.DIRECTORY_URL),

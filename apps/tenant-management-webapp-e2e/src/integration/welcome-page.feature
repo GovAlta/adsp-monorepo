@@ -50,7 +50,7 @@ Feature: Tenant management welcome page
         Then no critical or serious accessibility issues on "tenant management welcome page"
 
     # TEST DATA: a user without beta-tester role
-    @TEST_CS-733 @regression
+    @TEST_CS-733 @REQ_CS-640 @regression
     Scenario: As a non-beta-tester user, I cannot create a new tenant in ADSP
         Given the user is on the tenant management welcome page
         When the user selects get started button
@@ -61,7 +61,7 @@ Feature: Tenant management welcome page
         Then the user views the tenant management welcome page title
 
     # TEST DATA: autotest tenant exists
-    @TEST_CS-332 @regression
+    @TEST_CS-332 @REQ_CS-791 @regression
     Scenario: As a tenant management user, I cannot create a tenant having a name with special chars or the same as an existing name
         Given the user is on the tenant management welcome page
         When the user selects get started button
@@ -72,3 +72,9 @@ Feature: Tenant management welcome page
         Then the user views the error message of "Value not valid for Tenant name: Names cannot contain special characters (e.g. ! & %)." for tenant creation
         When the user enters "autoTest" as tenant name, clicks create tenant button and waits "2" seconds
         Then the user views the error message of "This tenant name has already been used" for tenant creation
+
+    @TEST_CS-1435 @REQ_CS-1384 @regression
+    Scenario: As an interested service owner, I can see examples on the tenant admin landing page, so I can find and go to examples
+        When the user goes to the tenant management welcome page
+        Then the user views Chat app card under Example apps section
+        And the Learn More button for Chat app redirects users to ADSP Chat Example

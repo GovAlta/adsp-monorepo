@@ -154,3 +154,17 @@ When('the user clicks back to sign in page button', function () {
 Then('the user views the error message of {string} for tenant creation', function (errorMsg) {
   welcomPageObj.createTenantNameErrorMsg().invoke('text').should('contain', errorMsg);
 });
+
+Then('the user views Chat app card under Example apps section', function () {
+  welcomPageObj.chatAppCard().should('be.visible');
+});
+
+When('the Learn More button for Chat app redirects users to ADSP Chat Example', function () {
+  const chatUrl = Cypress.config().baseUrl?.slice(0, 8) + 'chat.' + Cypress.config().baseUrl?.slice(8);
+  // Stubbing window.open method used by the button and verify the window.open method using the chat app URL
+  cy.window().then((win) => {
+    cy.stub(win, 'open').as('open');
+  });
+  welcomPageObj.chatAppCardLearnMoreBtn().click();
+  cy.get('@open').should('have.been.calledWith', chatUrl);
+});

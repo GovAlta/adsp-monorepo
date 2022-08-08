@@ -1,11 +1,13 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Adsp.Platform.ScriptService.Model;
+using Adsp.Sdk.Errors;
 using NLua;
 using NLua.Exceptions;
 
 namespace Adsp.Platform.ScriptService.Services;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+[SuppressMessage("Usage", "CA1031: Do not catch general exception types", Justification = "WIP: script error handling")]
 internal class LuaScriptService : ILuaScriptService
 {
   private readonly ILogger<LuaScriptService> _logger;
@@ -20,12 +22,10 @@ internal class LuaScriptService : ILuaScriptService
     {
       using var lua = new Lua();
       lua.State.Encoding = Encoding.UTF8;
-      lua.LoadCLRPackage();
       lua["script"] = definition.Script;
       lua["inputs"] = inputs;
 
       return lua.DoString(@"
-        import ('System.Collections.Generic')
         import = function () end
 
         local sandbox = require 'scripts/sandbox'
@@ -34,8 +34,13 @@ internal class LuaScriptService : ILuaScriptService
     }
     catch (LuaScriptException e)
     {
-      _logger.LogError(e, "Error encountered running script {Id}.", definition.Id);
-      throw;
+      _logger.LogError(e, "Lua error encountered running script {Id}.", definition.Id);
+      throw new ScriptRunException(e.Message, e);
+    }
+    catch (Exception e)
+    {
+      _logger.LogError(e, "Unrecognized error encountered running script {Id}.", definition.Id);
+      throw new InternalErrorException("Unrecognized error encountered running script.", e);
     }
   }
 }
