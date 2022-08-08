@@ -1,3 +1,4 @@
+import { ActionState } from '@store/session/models';
 export interface CalendarItem {
   id?: string;
   name: string;
@@ -8,6 +9,7 @@ export interface CalendarItem {
 }
 export interface CalendarService {
   calendars: Array<CalendarItem>;
+  indicator?: Indicator;
 }
 export const defaultCalendar: CalendarItem = {
   id: '',
@@ -19,4 +21,10 @@ export const defaultCalendar: CalendarItem = {
 };
 export const CALENDAR_INIT: CalendarService = {
   calendars: null,
+  indicator: {
+    details: {},
+  },
 };
+export interface Indicator {
+  details?: Record<string, ActionState>;
+}

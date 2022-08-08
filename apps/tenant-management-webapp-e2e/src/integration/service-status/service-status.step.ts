@@ -187,7 +187,7 @@ When(
         .scrollIntoView()
         .click()
         .then(() => {
-          switch (menu) {
+          switch (menu.toLowerCase) {
             case 'edit':
               statusObj.noticeCardEditMenu(index).click();
               break;

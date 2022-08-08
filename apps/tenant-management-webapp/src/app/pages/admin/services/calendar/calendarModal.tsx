@@ -3,11 +3,9 @@ import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgo
 import { GoAButton } from '@abgov/react-components';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { CalendarItem } from '@store/calendar/models';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { CreateCalendar } from '@store/calendar/actions';
-import { RootState } from '@store/index';
 import { Role } from '@store/tenant/models';
-import { createSelector } from 'reselect';
 import { ClientRoleTable } from '@components/ClientRoleTable';
 import { ConfigServiceRole } from '@store/access/models';
 import { useValidators } from '@lib/useValidators';
@@ -15,28 +13,25 @@ import { toKebabName } from '@lib/kebabName';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
 import { IdField } from './styled-components';
+import { ServiceRoleConfig } from '@store/access/models';
+
 interface CalendarModalProps {
   calendar?: CalendarItem;
   type: string;
   onCancel?: () => void;
   open: boolean;
-  roles: Role[];
+  realmRoles: Role[];
+  tenantClients: ServiceRoleConfig;
   calendarNames?: string[];
 }
 
 export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
-  const isNew = props.type === 'new';
+  const isNew = props.type === 'new' || props.open;
 
   const [calendar, setCalendar] = useState(props.calendar);
 
-  const title = isNew || props.open ? 'Add calendar' : 'Edit calendar';
+  const title = isNew ? 'Add calendar' : 'Edit calendar';
 
-  const selectServiceKeycloakRoles = createSelector(
-    (state: RootState) => state.serviceRoles,
-    (serviceRoles) => {
-      return serviceRoles?.keycloak || {};
-    }
-  );
   const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
   const duplicateCalendarCheck = (names: string[]): Validator => {
     return (name: string) => {
@@ -51,16 +46,17 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
     .add('description', 'description', descriptionCheck())
     .build();
 
-  const roleNames = props.roles.map((role) => {
+  const roleNames = props.realmRoles.map((role) => {
     return role.name;
   });
   const dispatch = useDispatch();
-  const keycloakClientRoles = useSelector(selectServiceKeycloakRoles);
+
   let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
 
   const clientElements =
-    Object.entries(keycloakClientRoles).length > 0 &&
-    Object.entries(keycloakClientRoles)
+    props.tenantClients &&
+    Object.entries(props.tenantClients).length > 0 &&
+    Object.entries(props.tenantClients)
       .filter(([clientId, config]) => {
         return (config as ConfigServiceRole).roles.length > 0;
       })
@@ -127,7 +123,7 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
             />
           </GoAFormItem>
           <GoAFormItem>
-            <label>Template ID</label>
+            <label>Calendar ID</label>
             <IdField>{calendar.id}</IdField>
           </GoAFormItem>
           <GoAFormItem>
@@ -145,10 +141,11 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
               }}
             />
           </GoAFormItem>
-          {elements.map((e, key) => {
-            return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
-          })}
-          {Object.entries(keycloakClientRoles).length === 0 && (
+          {props.tenantClients &&
+            elements.map((e, key) => {
+              return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+            })}
+          {Object.entries(props.tenantClients).length === 0 && (
             <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>
           )}
         </GoAForm>
@@ -170,6 +167,7 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
             const validations = {
               name: calendar.name,
             };
+
             if (isNew) {
               calendar.id = calendar.name.toLowerCase();
               validations['duplicated'] = calendar.name;
@@ -178,9 +176,9 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
                 return;
               }
               dispatch(CreateCalendar(calendar));
-
-              props.onCancel();
             }
+            props.onCancel();
+            validators.clear();
           }}
         >
           Save

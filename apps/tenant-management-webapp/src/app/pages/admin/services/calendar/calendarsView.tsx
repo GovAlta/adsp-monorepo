@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { fetchCalendars } from '@store/calendar/actions';
+import { fetchCalendars, FETCH_CALENDARS_ACTION } from '@store/calendar/actions';
 import { CalendarItem, defaultCalendar } from '@store/calendar/models';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
@@ -11,6 +11,8 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { CalendarModal } from './calendarModal';
 import { CalendarTableComponent } from './calendarList';
 import { fetchEventStreams } from '@store/stream/actions';
+import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
+import { ActionState } from '@store/session/models';
 
 interface AddCalendarProps {
   activeEdit: boolean;
@@ -28,11 +30,12 @@ export const CalendarsView = ({ activeEdit }: AddCalendarProps): JSX.Element => 
     dispatch(fetchKeycloakServiceRoles());
     dispatch(fetchEventStreams());
   }, []);
+  const tenant = useSelector(tenantRolesAndClients);
 
   const { calendars } = useSelector((state: RootState) => state.calendarService);
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
+  const { fetchCalendarState } = useSelector((state: RootState) => ({
+    fetchCalendarState: state.calendarService.indicator?.details[FETCH_CALENDARS_ACTION] || '',
+  }));
   const nameArray = calendars ? calendars.map((a) => a.name) : [];
 
   useEffect(() => {
@@ -56,8 +59,6 @@ export const CalendarsView = ({ activeEdit }: AddCalendarProps): JSX.Element => 
     setEditCalendar(true);
   };
 
-  const roles = useSelector((state: RootState) => state.tenant.realmRoles);
-
   return (
     <>
       <div>
@@ -73,9 +74,9 @@ export const CalendarsView = ({ activeEdit }: AddCalendarProps): JSX.Element => 
           Add Calendar
         </GoAButton>
       </div>
-      {indicator.show && <PageIndicator />}
-      {!indicator.show && !calendars && renderNoItem('calendar')}
-      {!indicator.show && calendars && (
+      {fetchCalendarState === ActionState.inProcess && <PageIndicator />}
+      {fetchCalendarState === ActionState.completed && !calendars && renderNoItem('calendar')}
+      {fetchCalendarState === ActionState.completed && calendars && (
         <div>
           <CalendarTableComponent calendars={calendars} onDelete={reset} onEdit={onEdit} />
         </div>
@@ -86,7 +87,8 @@ export const CalendarsView = ({ activeEdit }: AddCalendarProps): JSX.Element => 
           open={true}
           calendar={selectedCalendar}
           type={modalType}
-          roles={roles}
+          realmRoles={tenant.realmRoles}
+          tenantClients={tenant.tenantClients ? tenant.tenantClients : {}}
           onCancel={() => {
             reset();
           }}
