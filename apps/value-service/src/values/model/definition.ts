@@ -13,6 +13,7 @@ export class ValueDefinitionEntity implements ValueDefinition {
   public description: string;
   public type: string;
   public jsonSchema: Record<string, unknown>;
+  public sendWriteEvent: boolean;
 
   constructor(public namespace: NamespaceEntity, definition: ValueDefinition) {
     this.namespace = namespace;
@@ -20,6 +21,7 @@ export class ValueDefinitionEntity implements ValueDefinition {
     this.description = definition.description;
     this.type = definition.type;
     this.jsonSchema = definition.jsonSchema;
+    this.sendWriteEvent = definition.sendWriteEvent || false;
     namespace.validationService.setSchema(this.getSchemaKey(), definition.jsonSchema || {});
   }
 

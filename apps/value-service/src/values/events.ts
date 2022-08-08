@@ -3,7 +3,8 @@ import { Value } from './types';
 
 export const ValueWrittenDefinition: DomainEventDefinition = {
   name: 'value-written',
-  description: 'Signalled when a value is written to',
+  description:
+    'Signalled when a value is written to. This event is only sent for values of value definitions configured to send write events.',
   payloadSchema: {
     type: 'object',
     properties: {
@@ -19,8 +20,8 @@ export const ValueWrittenDefinition: DomainEventDefinition = {
     },
   },
   log: {
-    skip: true
-  }
+    skip: true,
+  },
 };
 
 export function valueWritten(

@@ -13,6 +13,7 @@ export const configurationSchema = {
             displayName: { type: 'string' },
             description: { type: 'string' },
             jsonSchema: { type: 'object' },
+            sendWriteEvent: { type: 'boolean' },
           },
           required: ['name', 'description', 'jsonSchema'],
           additionalProperties: false,

@@ -451,7 +451,7 @@ describe('event router', () => {
 
       const handler = writeValue(loggerMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(eventServiceMock.send).toHaveBeenCalled();
+      expect(eventServiceMock.send).not.toHaveBeenCalled();
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ value }));
     });
 
@@ -479,7 +479,7 @@ describe('event router', () => {
 
       const handler = writeValue(loggerMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(eventServiceMock.send).toHaveBeenCalled();
+      expect(eventServiceMock.send).not.toHaveBeenCalled();
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({ correlationId: '123', timestamp: expect.any(Date) })
       );
@@ -516,7 +516,63 @@ describe('event router', () => {
 
       const handler = writeValue(loggerMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(eventServiceMock.send).toHaveBeenCalled();
+      expect(eventServiceMock.send).not.toHaveBeenCalled();
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ value }));
+    });
+
+    it('can send write event for defined value', async () => {
+      const req = {
+        tenantId,
+        user: {
+          tenantId,
+          id: 'test-reader',
+          roles: [ServiceUserRoles.Reader],
+        },
+        params: { namespace: 'test-service', name: 'test-value' },
+        query: {},
+        body: {},
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce([
+        {
+          'test-service': new NamespaceEntity(
+            validationServiceMock,
+            repositoryMock,
+            {
+              name: 'test-service',
+              description: null,
+              definitions: {
+                'test-value': {
+                  name: 'test-value',
+                  description: null,
+                  type: null,
+                  jsonSchema: {},
+                  sendWriteEvent: true,
+                },
+              },
+            },
+            tenantId
+          ),
+        },
+      ]);
+
+      const value = {};
+      repositoryMock.writeValue.mockResolvedValueOnce({
+        tenantId,
+        timestamp: new Date(),
+        context: {},
+        correlationId: null,
+        value,
+      });
+
+      const handler = writeValue(loggerMock, eventServiceMock, repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'value-written' }));
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ value }));
     });
 
@@ -544,7 +600,7 @@ describe('event router', () => {
 
       const handler = writeValue(loggerMock, eventServiceMock, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
-      expect(eventServiceMock.send).toHaveBeenCalled();
+      expect(eventServiceMock.send).not.toHaveBeenCalled();
       expect(res.send).toHaveBeenCalledWith(
         expect.arrayContaining([expect.objectContaining({ correlationId: '123', timestamp: expect.any(Date) })])
       );
