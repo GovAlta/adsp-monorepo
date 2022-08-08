@@ -397,7 +397,7 @@ Then(
   function (access, calendar, directory, file, status, events, notification, configuration) {
     const cardTextArray = [
       'Access allows',
-      'Calendar service provides',
+      'The calendar service provides',
       'The configuration service provides',
       'The directory service is',
       'The file service provides',
@@ -868,6 +868,37 @@ Then(
         expect(eventDetails).to.contain('"service": ' + '"' + serviceName + '"');
         expect(eventDetails).to.contain('"namespace": ' + '"' + namespace + '"');
         expect(eventDetails).to.contain('"name": ' + '"' + username + '"');
+      });
+  }
+);
+
+Then(
+  'the user views event details of {string}, {string} of application-notice-published for status-service',
+  function (noticeDesc, appName) {
+    const regex_notice_description = '"notice": {(.|\n)*"description": "' + noticeDesc + '"';
+    const regex_notice_endTimestamp = '"notice": {(.|\n)*"endTimestamp": ".+Z"';
+    const regex_notice_startTimestamp = '"notice": {(.|\n)*"startTimestamp": ".+Z"';
+    const regex_postedBy_userId = '"postedBy": {(.|\n)*"userId": ".+"';
+    const regex_postedBy_userName = '"postedBy": {(.|\n)*"userName": ".+"';
+    const regex_application_id = '"application": {(.|\n)*"id": ".+"';
+    const regex_application_name = '"application": {(.|\n)*"name": "' + appName + '"';
+    const regex_application_description = '"application": {(.|\n)*"description": ".*"';
+    tenantAdminObj.eventDetails().then((elements) => {
+      expect(elements.length).to.equal(1);
+    });
+    tenantAdminObj
+      .eventDetails()
+      .invoke('text')
+      .then((eventDetails) => {
+        // Verify all required information showing in event details including notice description and application name.
+        expect(eventDetails).to.match(new RegExp(regex_notice_description));
+        expect(eventDetails).to.match(new RegExp(regex_notice_endTimestamp));
+        expect(eventDetails).to.match(new RegExp(regex_notice_startTimestamp));
+        expect(eventDetails).to.match(new RegExp(regex_postedBy_userId));
+        expect(eventDetails).to.match(new RegExp(regex_postedBy_userName));
+        expect(eventDetails).to.match(new RegExp(regex_application_id));
+        expect(eventDetails).to.match(new RegExp(regex_application_name));
+        expect(eventDetails).to.match(new RegExp(regex_application_description));
       });
   }
 );

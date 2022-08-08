@@ -1,5 +1,10 @@
 import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
-import { createLogger, createAmqpConfigUpdateService, createErrorHandler } from '@core-services/core-common';
+import {
+  createLogger,
+  createAmqpConfigUpdateService,
+  createErrorHandler,
+  UnauthorizedError,
+} from '@core-services/core-common';
 import { createAdapter as createIoAdapter } from '@socket.io/redis-adapter';
 import * as compression from 'compression';
 import * as cors from 'cors';
@@ -31,30 +36,31 @@ const initializeApp = async (): Promise<Server> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { tenantService, tenantStrategy, configurationHandler, clearCached, healthCheck } = await initializePlatform(
-    {
-      serviceId,
-      displayName: 'Push service',
-      description: 'Service for push mode connections.',
-      roles: [
-        {
-          role: PushServiceRoles.StreamListener,
-          description: 'Role used to allow an account to listen to all streams.',
-          inTenantAdmin: true,
-        },
-      ],
-      configurationSchema,
-      combineConfiguration: (tenant: Record<string, Stream>, core: Record<string, Stream>, tenantId) =>
-        Object.entries({ ...tenant, ...core }).reduce(
-          (c, [k, s]) => ({ ...c, [k]: new StreamEntity(tenantId, s) }),
-          {}
-        ),
-      clientSecret: environment.CLIENT_SECRET,
-      accessServiceUrl,
-      directoryUrl: new URL(environment.DIRECTORY_URL),
-    },
-    { logger }
-  );
+  const { tenantService, tenantStrategy, coreStrategy, configurationHandler, clearCached, healthCheck } =
+    await initializePlatform(
+      {
+        serviceId,
+        displayName: 'Push service',
+        description: 'Service for push mode connections.',
+        roles: [
+          {
+            role: PushServiceRoles.StreamListener,
+            description: 'Role used to allow an account to listen to all streams.',
+            inTenantAdmin: true,
+          },
+        ],
+        configurationSchema,
+        combineConfiguration: (tenant: Record<string, Stream>, core: Record<string, Stream>, tenantId) =>
+          Object.entries({ ...tenant, ...core }).reduce(
+            (c, [k, s]) => ({ ...c, [k]: new StreamEntity(tenantId, s) }),
+            {}
+          ),
+        clientSecret: environment.CLIENT_SECRET,
+        accessServiceUrl,
+        directoryUrl: new URL(environment.DIRECTORY_URL),
+      },
+      { logger }
+    );
 
   const configurationSync = await createAmqpConfigUpdateService({
     ...environment,
@@ -67,6 +73,7 @@ const initializeApp = async (): Promise<Server> => {
   });
 
   passport.use('jwt', tenantStrategy);
+  passport.use('core', coreStrategy);
   passport.use(new AnonymousStrategy());
   passport.serializeUser(function (user, done) {
     done(null, user);
@@ -91,22 +98,31 @@ const initializeApp = async (): Promise<Server> => {
   });
   ioServer.adapter(createIoAdapter(redisClient, redisClient.duplicate()));
 
-  // No connection on default namespace.
-  ioServer.of('/').on('connection', async (socket) => socket.disconnect(true));
+  const wrapForIo = (handler: express.RequestHandler) => (socket: Socket, next) =>
+    handler(
+      socket.request as express.Request,
+      {
+        // Passport JS calls end w/ 401 when all authenticators fail.
+        end: () => next(new UnauthorizedError('User not authorized to connect.')),
+      } as unknown as express.Response,
+      next
+    );
+
+  // Connections on default namespace for cross-tenant.
+  const defaultIo = ioServer.of('/');
+  defaultIo.use(wrapForIo(passport.initialize()));
+  defaultIo.use(wrapForIo(passport.authenticate(['core', 'jwt'], { session: false })));
+  defaultIo.use(wrapForIo(configurationHandler));
 
   // Connections on namespace correspond to tenants.
   const io = ioServer.of(/^\/[a-zA-Z0-9- ]+$/);
-
-  const wrapForIo = (handler: express.RequestHandler) => (socket: Socket, next) =>
-    handler(socket.request as express.Request, {} as express.Response, next);
-
   io.use(wrapForIo(passport.initialize()));
-  io.use(wrapForIo(passport.authenticate(['jwt', 'anonymous'], { session: false })));
+  io.use(wrapForIo(passport.authenticate(['core', 'jwt', 'anonymous'], { session: false })));
   io.use(wrapForIo(configurationHandler));
 
   const eventService = await createAmqpEventService({ ...environment, logger });
 
-  applyPushMiddleware(app, io, { logger, eventService, tenantService });
+  applyPushMiddleware(app, [defaultIo, io], { logger, eventService, tenantService });
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();

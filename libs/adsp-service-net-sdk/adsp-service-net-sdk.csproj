@@ -14,6 +14,10 @@
 
     <IsPackable>true</IsPackable>
 
+  </PropertyGroup>
+
+  <PropertyGroup>
+
     <Company>Government of Alberta</Company>
 
     <RepositoryUrl>https://github.com/GovAlta/adsp-monorepo.git</RepositoryUrl>
@@ -21,12 +25,19 @@
     <RepositoryType>git</RepositoryType>
 
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
   </PropertyGroup>
 
   <ItemGroup>
     <AssemblyAttribute Include="CLSCompliantAttribute">
       <_Parameter1>false</_Parameter1>
     </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" CopyToOutputDirectory="PreserveNewest" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>

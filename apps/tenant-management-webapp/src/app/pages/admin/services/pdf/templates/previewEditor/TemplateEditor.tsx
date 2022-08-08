@@ -5,7 +5,6 @@ import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
 import { PdfTemplate } from '@store/pdf/model';
 import { languages } from 'monaco-editor';
 import { buildSuggestions } from '@lib/autoComplete';
-import { GoARadio, GoARadioGroup } from '@abgov/react-components';
 import { GoAButton } from '@abgov/react-components';
 
 interface TemplateEditorProps {
@@ -13,12 +12,13 @@ interface TemplateEditorProps {
   mainTitle: string;
   subjectTitle: string;
   subjectEditorConfig?: EditorProps;
-  onBodyChange: (value: string, channel: string) => void;
-  setPreview: (channel: string) => void;
+  onBodyChange: (value: string) => void;
+  setPreview: () => void;
+  bodyEditorHintText: string;
   template: PdfTemplate;
   bodyTitle: string;
   bodyEditorConfig?: EditorProps;
-  saveCurrentTemplate?: (useWrapper: boolean) => void;
+  saveCurrentTemplate?: () => void;
   errors?: any;
   suggestion?: any;
   cancel: () => void;
@@ -31,6 +31,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   subjectEditorConfig,
   onBodyChange,
   setPreview,
+  bodyEditorHintText,
   template,
   bodyTitle,
   bodyEditorConfig,
@@ -58,62 +59,27 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [monaco, suggestion]);
 
-  const [htmlType, setHtmlType] = useState('Html');
-
   useEffect(() => {
-    setPreview(template?.useWrapper ? 'Snippet' : 'Html');
-    setHtmlType(template?.useWrapper ? 'Snippet' : 'Html');
+    setPreview();
   }, [template, modelOpen]);
-
-  let radioOptions = [];
-
-  const validChannels = ['Html', 'Snippet'];
-
-  radioOptions = validChannels.map((eventKey, index) => {
-    return {
-      name: eventKey,
-      display: eventKey,
-      body: template?.template,
-      label: eventKey,
-      key: index,
-      dataTestId: `${eventKey}-radio-button`,
-    };
-  });
-
-  const item = radioOptions.find((channel) => channel.name === htmlType);
 
   return (
     <TemplateEditorContainer>
       <GoAForm>
         <GoAFormItem>
-          <GoARadioGroup
-            name="status"
-            value={htmlType}
-            onChange={(_name, value) => {
-              setHtmlType(value);
-              setPreview(value);
-            }}
-            orientation="horizontal"
-          >
-            {radioOptions.map((item, key) => (
-              <GoARadio key={key} value={item.name}>
-                {item.display}
-              </GoARadio>
-            ))}
-          </GoARadioGroup>
           <h3 className="reduce-margin" data-testid="modal-title">
             {`${template?.name}`}
             <p>{`${mainTitle} template`}</p>
           </h3>
 
           <>
-            <GoAFormItem error={errors['body'] ?? ''} helpText={''}>
+            <GoAFormItem error={errors?.body ?? ''} helpText={bodyEditorHintText}>
               <MonacoDivBody>
                 <MonacoEditor
                   language={'handlebars'}
-                  value={item.body}
+                  value={template?.template}
                   onChange={(value) => {
-                    onBodyChange(value, item.name);
+                    onBodyChange(value);
                   }}
                   {...bodyEditorConfig}
                 />
@@ -134,7 +100,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             Cancel
           </GoAButton>
           <GoAButton
-            onClick={() => saveCurrentTemplate(htmlType === 'Snippet')}
+            onClick={() => saveCurrentTemplate()}
             buttonType="primary"
             data-testid="template-form-save"
             type="submit"

@@ -340,7 +340,7 @@ objects:
                   path: /
                   port: 3333
                   scheme: HTTP
-                initialDelaySeconds: 10
+                initialDelaySeconds: 5
                 timeoutSeconds: 1
                 periodSeconds: 30
                 successThreshold: 1

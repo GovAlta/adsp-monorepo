@@ -32,11 +32,12 @@ export const DataTableWrapper = styled.div`
   }
 
   .role {
-    width: 6em;
-    text-align: center;
+    width: 10em;
+    text-align: right;
+    padding-right: 1em;
   }
   .role-label {
-    width: 29em;
+    width: 33em;
   }
   .role-checkbox {
     width: 4em;

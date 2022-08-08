@@ -71,7 +71,7 @@ export interface SetConfigurationRevisionAction {
 
 export interface SetConfigurationRevisionSuccessAction {
   type: typeof SET_CONFIGURATION_REVISION_SUCCESS_ACTION;
-  payload: ServiceConfiguration;
+  payload: { data: ServiceConfiguration };
 }
 
 export interface ReplaceConfigurationDataAction {
@@ -88,7 +88,7 @@ export interface GetReplaceConfigurationErrorAction {
 }
 export interface GetReplaceConfigurationErrorSuccessAction {
   type: typeof REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION;
-  payload: string[];
+  payload: { name: string; error: string }[];
 }
 
 export interface ResetReplaceConfigurationListAction {
@@ -173,9 +173,9 @@ export const setConfigurationRevisionAction = (
   type: SET_CONFIGURATION_REVISION_ACTION,
   request,
 });
-export const setConfigurationRevisionSuccessAction = (
-  payload: ServiceConfiguration
-): SetConfigurationRevisionSuccessAction => ({
+export const setConfigurationRevisionSuccessAction = (payload: {
+  data: ServiceConfiguration;
+}): SetConfigurationRevisionSuccessAction => ({
   type: SET_CONFIGURATION_REVISION_SUCCESS_ACTION,
   payload,
 });
@@ -211,7 +211,7 @@ export const getReplaceConfigurationErrorAction = (): GetReplaceConfigurationErr
 });
 
 export const getReplaceConfigurationErrorSuccessAction = (
-  replacedConfiguration: string[]
+  replacedConfiguration: { name: string; error: string }[]
 ): GetReplaceConfigurationErrorSuccessAction => ({
   type: REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION,
   payload: replacedConfiguration,

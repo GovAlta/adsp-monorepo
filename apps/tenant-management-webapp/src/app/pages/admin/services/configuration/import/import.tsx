@@ -1,32 +1,21 @@
-import React, { FunctionComponent, useEffect, useMemo, useState, useRef } from 'react';
+import React, { FunctionComponent, useEffect, useState, useRef } from 'react';
 import { RootState } from '@store/index';
-import {
-  toServiceKey,
-  toSchemaMap,
-  toNamespaceMap,
-  toDownloadFormat,
-  toServiceName,
-  toNamespace,
-} from './ServiceConfiguration';
-import { GoAButton, GoACheckbox } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   getConfigurationDefinitions,
-  getConfigurations,
-  ServiceId,
   setConfigurationRevisionAction,
   replaceConfigurationDataAction,
   getReplaceConfigurationErrorAction,
   resetReplaceConfigurationListAction,
 } from '@store/configuration/action';
 import { PageIndicator } from '@components/Indicator';
-import { ConfigurationExportType, Service, ConfigDefinition } from '@store/configuration/model';
+import { ConfigDefinition } from '@store/configuration/model';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { ImportModal } from './importModal';
 import { isValidJSONCheck, jsonSchemaCheck } from '@lib/checkInput';
-import { StatusText, StatusIcon, DescriptionDiv, ErrorStatusText } from '../styled-components';
-import GreenCircleCheckMark from '@icons/green-circle-checkmark.svg';
-import CloseCircle from '@components/icons/CloseCircle';
+import { ErrorStatusText } from '../styled-components';
+import JobList from './jobList';
 
 const exportSchema = {
   type: 'string',
@@ -38,40 +27,20 @@ const exportSchema = {
   },
 };
 
-export const ConfigurationImportExport: FunctionComponent = () => {
-  const { coreConfigDefinitions, tenantConfigDefinitions, importedConfigurationError } = useSelector(
-    (state: RootState) => state.configuration
-  );
-  const exportState = useSelector((state: RootState) => state.configurationExport);
+export const ConfigurationImport: FunctionComponent = () => {
+  const imports = useSelector((state: RootState) => state.configuration.imports);
   const indicator = useSelector((state: RootState) => state?.session?.indicator);
-  const [exportServices, setExportServices] = useState<Record<string, boolean>>({});
+
   const fileName = useRef() as React.MutableRefObject<HTMLInputElement>;
 
   const [selectedImportFile, setSelectedImportFile] = useState('');
   const [openImportModal, setOpenImportModal] = useState(false);
-  const [showStatus, setShowStatus] = useState(false);
   const [importNameList, setImportNameList] = useState([]);
   const [importConfigJson, setImportConfigJson] = useState<ConfigDefinition>(null);
-  const sortedConfiguration = useMemo(() => {
-    const schemas = toSchemaMap(tenantConfigDefinitions, coreConfigDefinitions);
-    const namespaces = toNamespaceMap(tenantConfigDefinitions, coreConfigDefinitions);
-    return { schemas: schemas, namespaces: namespaces };
-  }, [coreConfigDefinitions, tenantConfigDefinitions]);
+
   const [errorsStatus, setErrorsStatus] = useState<string>('');
   const dispatch = useDispatch();
 
-  const toggleSelection = (key: string) => {
-    if (exportServices[key]) {
-      const temp = { ...exportServices };
-      delete temp[key];
-      setExportServices(temp);
-    } else {
-      setExportServices({
-        ...exportServices,
-        [key]: true,
-      });
-    }
-  };
   const onUploadSubmit = (e) => {
     e.preventDefault();
     setErrorsStatus('');
@@ -125,7 +94,6 @@ export const ConfigurationImportExport: FunctionComponent = () => {
 
       setSelectedImportFile(inputJson);
     };
-    setShowStatus(false);
     setErrorsStatus('');
     setImportNameList([]);
     dispatch(resetReplaceConfigurationListAction());
@@ -155,39 +123,6 @@ export const ConfigurationImportExport: FunctionComponent = () => {
         }
       }
     }
-    dispatch(getReplaceConfigurationErrorAction());
-
-    setShowStatus(true);
-  };
-
-  const getDescription = (namespace: string, name: string) => {
-    const defs = { ...coreConfigDefinitions?.configuration, ...tenantConfigDefinitions?.configuration };
-    if (defs[`${namespace}:${name}`]) {
-      const schema = defs[`${namespace}:${name}`];
-      return schema['description'] || schema['configurationSchema']['description'];
-    }
-  };
-
-  const renderStatusWithIcon = () => {
-    return (
-      <div style={{ display: 'flex' }}>
-        <StatusIcon>
-          {importedConfigurationError.length > 0 ? (
-            <CloseCircle size="medium" />
-          ) : (
-            <img src={GreenCircleCheckMark} width="16" alt="status" />
-          )}
-        </StatusIcon>
-        <div>
-          {importedConfigurationError.length > 0
-            ? `  Import ${fileName?.current?.value.split('\\').pop()} failed. Error list:  ${importedConfigurationError
-                .toString()
-                .split(' ,')
-                .join(', ')}`
-            : `   ${fileName?.current?.value.split('\\').pop()}  Imported successfully. `}
-        </div>
-      </div>
-    );
   };
 
   useEffect(() => {
@@ -195,10 +130,8 @@ export const ConfigurationImportExport: FunctionComponent = () => {
   }, []);
 
   useEffect(() => {
-    if (Object.keys(exportState).length > 0 && Object.keys(exportServices).length > 0) {
-      downloadSelectedConfigurations(exportState);
-    }
-  }, [exportState]);
+    dispatch(getReplaceConfigurationErrorAction());
+  }, [imports]);
 
   return (
     <div>
@@ -243,100 +176,23 @@ export const ConfigurationImportExport: FunctionComponent = () => {
               Import
             </GoAButton>
             <br />
-            {importedConfigurationError && showStatus && (
-              <StatusText>
-                {renderStatusWithIcon()}
-                <br />
-              </StatusText>
-            )}
             {errorsStatus && (
               <ErrorStatusText>
                 {errorsStatus}
                 <br />
               </ErrorStatusText>
             )}
+            <section>
+              <JobList />
+            </section>
           </GoAForm>
           <br />
         </div>
       }
-      <hr />
-      {
-        <GoAButton
-          data-testid="export-configuration-1"
-          disabled={Object.keys(exportServices).length < 1 || indicator.show}
-          onClick={(e) => {
-            e.preventDefault();
-            dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
-          }}
-        >
-          {'Export configuration'}
-        </GoAButton>
-      }
       {indicator.show && <PageIndicator />}
-      {Object.keys(sortedConfiguration.namespaces).map((namespace) => {
-        return (
-          <React.Fragment key={namespace}>
-            <h2>{namespace}</h2>
-            {sortedConfiguration.namespaces[namespace].map((name) => {
-              const desc = getDescription(namespace, name);
-              return (
-                <div key={toServiceKey(namespace, name)}>
-                  <GoACheckbox
-                    name={name}
-                    checked={exportServices[toServiceKey(namespace, name)] || false}
-                    onChange={() => {
-                      toggleSelection(toServiceKey(namespace, name));
-                    }}
-                    data-testid={`${toServiceKey(namespace, name)}_id`}
-                  >
-                    {name}
-                  </GoACheckbox>
-                  {desc && <DescriptionDiv>{desc}</DescriptionDiv>}
-                </div>
-              );
-            })}
-          </React.Fragment>
-        );
-      })}
-      {
-        <GoAButton
-          data-testid="export-configuration-1"
-          disabled={Object.keys(exportServices).length < 1 || indicator.show}
-          onClick={(e) => {
-            e.preventDefault();
-            dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
-          }}
-        >
-          {'Export configuration'}
-        </GoAButton>
-      }
       {openImportModal && (
         <ImportModal importArray={importNameList} onCancel={onImportCancel} onConfirm={onImportConfirm} />
       )}
     </div>
   );
-};
-
-const toServiceId = (key: string): ServiceId => {
-  return { namespace: toNamespace(key), service: toServiceName(key) };
-};
-
-const downloadSelectedConfigurations = (exports: Record<Service, ConfigurationExportType>): void => {
-  const fileName = 'adsp-configuration.json';
-  const jsonConfigs = JSON.stringify(toDownloadFormat(exports), null, 2);
-  doDownload(fileName, jsonConfigs);
-};
-
-const doDownload = (fileName: string, json: string) => {
-  //create it.
-  const element = document.createElement('a');
-  element.setAttribute('href', 'data:application/json;charset=utf-8, ' + encodeURIComponent(json));
-  element.setAttribute('download', fileName);
-  document.body.appendChild(element);
-
-  //click it.
-  element.click();
-
-  // kill it.
-  document.body.removeChild(element);
 };
