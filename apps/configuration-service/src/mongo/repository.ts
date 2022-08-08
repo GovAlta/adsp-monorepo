@@ -54,7 +54,6 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     if (criteria?.revision !== undefined) {
       query.revision = criteria.revision;
     }
-
     const skip = decodeAfter(after);
 
     const docs = await new Promise<ConfigurationRevisionDoc[]>((resolve, reject) => {
