@@ -76,10 +76,10 @@ Feature: File service
     Then the user views file types page
     When the user clicks Add file type button on file types page
     Then the user views "Add" file type modal
-    When the user enters "autotest-addEditDelete", "public", "auto-test-role1, file-service-admin" on file type modal
+    When the user enters "autotest-addEditDelete", "public", "auto-test-role1" on file type modal
     And the user clicks Save button on file type modal
-    Then the user "views" the file type of "autotest-addEditDelete", "public", "auto-test-role1, file-service-admin"
-    When the user clicks "Edit" button for the file type of "autotest-addEditDelete", "public", "auto-test-role1, file-service-admin"
+    Then the user "views" the file type of "autotest-addEditDelete", "public", "auto-test-role1"
+    When the user clicks "Edit" button for the file type of "autotest-addEditDelete", "public", "auto-test-role1"
     Then the user views "Edit" file type modal
     When the user enters "N/A", "auto-test-role1", "auto-test-role2" on file type modal
     And the user clicks Save button on file type modal

@@ -38,7 +38,8 @@
     "tmw-e2e:regression-dev": "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --headless=true --env.'TAGS'='@regression' --baseUrl=https://tenant-management-webapp-core-services-dev.os99.gov.ab.ca",
     "tmw-e2e:regression-test": "npx nx e2e tenant-management-webapp-e2e --dev-server-target='' --headless=true --env.'TAGS'='@regression' --baseUrl=https://tenant-management-webapp-test.os99.int.alberta.ca",
     "tmw-e2e:html-report": "node .\\apps\\tenant-management-webapp-e2e\\src\\support\\multiple-cucumber-html-reporter.js",
-    "workspace-generator": "nx workspace-generator"
+    "workspace-generator": "nx workspace-generator",
+    "prepare": "nx g @nx-dotnet/core:restore"
   },
   "private": true,
   "dependencies": {
@@ -121,6 +122,8 @@
     "@abgov/nx-oc": "^3.0.0",
     "@abgov/nx-release": "^3.0.1",
     "@abgov/react-components": "^3.4.0-beta.65",
+    "@abgov/react-components-new": "npm:@abgov/react-components@^4.0.0-alpha.23",
+    "@abgov/semantic-release-nuget": "^1.0.0",
     "@babel/core": "7.9.6",
     "@babel/preset-env": "7.9.6",
     "@babel/preset-react": "7.9.4",
@@ -131,6 +134,7 @@
     "@monaco-editor/react": "^4.2.1",
     "@nrwl/cli": "13.4.3",
     "@nrwl/cypress": "13.4.3",
+    "@nrwl/devkit": "13.10.5",
     "@nrwl/eslint-plugin-nx": "13.4.3",
     "@nrwl/express": "13.4.3",
     "@nrwl/jest": "13.4.3",
@@ -138,6 +142,7 @@
     "@nrwl/react": "13.4.3",
     "@nrwl/web": "13.4.3",
     "@nrwl/workspace": "13.4.3",
+    "@nx-dotnet/core": "1.11.0",
     "@redux-devtools/extension": "^3.2.2",
     "@reduxjs/toolkit": "1.6.2",
     "@shelf/jest-mongodb": "^2.1.0",

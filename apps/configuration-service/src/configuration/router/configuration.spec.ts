@@ -403,7 +403,7 @@ describe('router', () => {
         name,
         mergeUpdate: jest.fn((update) => ({ ...entity.latest?.configuration, ...update })),
         update: jest.fn(() => Promise.resolve(entity)),
-        latest: { revision: 1, configuration: { old: 'old' } },
+        latest: { revision: 1, configuration: { old: 'old' }, lastUpdated: new Date() },
       };
       const req = {
         entity,
@@ -542,7 +542,7 @@ describe('router', () => {
         namespace,
         name,
         update: jest.fn(() => Promise.resolve(entity)),
-        latest: { revision: 1, configuration: { old: 'old' } },
+        latest: { revision: 1, configuration: { old: 'old' }, lastUpdated: new Date() },
       };
       const req = {
         entity,
@@ -611,7 +611,7 @@ describe('router', () => {
         namespace,
         name,
         update: jest.fn(() => Promise.resolve(entity)),
-        latest: { revision: 1, configuration: { old: 'old' } },
+        latest: { revision: 1, configuration: { old: 'old' }, lastUpdated: new Date() },
       };
       const req = {
         entity,
@@ -779,7 +779,7 @@ describe('router', () => {
         namespace,
         name,
         createRevision: jest.fn(() => Promise.resolve(entity)),
-        latest: { revision: 1, configuration: {} },
+        latest: { revision: 1, configuration: {}, created: new Date() },
       };
       const req = {
         entity,

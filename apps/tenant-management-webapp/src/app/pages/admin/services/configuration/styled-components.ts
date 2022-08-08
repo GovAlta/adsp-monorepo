@@ -62,3 +62,54 @@ export const StatusIcon = styled.div`
   margin-right: 0.25rem;
   padding-top: 0.25rem;
 `;
+export const DescriptionDiv = styled.div`
+  margin-left: 2rem;
+  font-size: 16px;
+`;
+export const ErrorStatusText = styled.div`
+  font-size: var(--fs-sm);
+  line-height: calc(var(--fs-sm) + 0.5rem);
+  color: var(--color-red);
+  margin-top: 1rem;
+`;
+
+export const ScrollPane = styled.div`
+  border: 1px solid black;
+
+  .header-background {
+    background: #f1f1f1;
+    color: #000000;
+    padding: 10px;
+    font-weight: 700;
+  }
+
+  .main {
+    padding: 10px;
+    max-height: calc(100vh - 525px);
+    overflow-y: scroll;
+  }
+
+  .export-button {
+    padding: 10px;
+    text-align-last: end;
+  }
+`;
+
+export const FileTableStyles = styled.div`
+  .flex-horizontal {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .flex {
+    flex: 1;
+  }
+
+  .mt-1 {
+    margin-top: 2px;
+  }
+
+  .mt-2 {
+    margin-top: 4px;
+  }
+`;

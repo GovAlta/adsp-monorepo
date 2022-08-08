@@ -1,8 +1,6 @@
 import { adspId, User } from '@abgov/adsp-service-sdk';
 import { ConfigurationServiceRoles } from '../roles';
 import { ConfigurationEntity } from './configuration';
-//import { ActiveRevisionEntity } from './activeRevisionEntity';
-import { ConfigurationRevision } from '../types';
 import type { Logger } from 'winston';
 
 describe('ConfigurationEntity', () => {

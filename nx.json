@@ -98,5 +98,6 @@
         "linter": "eslint"
       }
     }
-  }
+  },
+  "plugins": ["@nx-dotnet/core"]
 }

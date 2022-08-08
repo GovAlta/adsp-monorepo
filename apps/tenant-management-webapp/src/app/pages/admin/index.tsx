@@ -15,6 +15,7 @@ import { ServiceMetrics } from './service-metrics';
 import { Events } from './services/events';
 import { Notifications } from './services/notifications';
 import { Configuration } from './services/configuration';
+import { Calendar } from './services/calendar';
 import { Pdf } from './services/pdf';
 
 const TenantManagement = (): JSX.Element => {
@@ -45,6 +46,9 @@ const TenantManagement = (): JSX.Element => {
           </Route>
           <Route exact path="/admin/services/directory">
             <Directory />
+          </Route>
+          <Route exact path="/admin/services/calendar">
+            <Calendar />
           </Route>
           <Route exact path="/admin/services/configuration">
             <Configuration />

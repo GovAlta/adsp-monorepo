@@ -124,14 +124,14 @@ describe('router', () => {
       } as unknown as Request;
       const res = {
         json: jest.fn(),
-        sendStatus: jest.fn(),
+        send: jest.fn(),
       };
       const next = jest.fn();
 
       const entity = new DirectoryEntity(repositoryMock, testDirectory);
       repositoryMock.getDirectories.mockResolvedValueOnce(entity);
       await handler(req, res as unknown as Response, next);
-      expect(res.sendStatus).toHaveBeenCalledWith(HttpStatusCodes.NOT_FOUND);
+      expect(res.json).toHaveBeenCalledWith([]);
     });
   });
 

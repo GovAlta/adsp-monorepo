@@ -9,10 +9,13 @@ import {
   fetchKeycloakServiceRolesSuccess,
   CreateKeycloakRoleAction,
   createKeycloakRoleSuccess,
+  FETCH_KEYCLOAK_SERVICE_ROLES,
 } from './actions';
 import { KeycloakApi } from './api';
 import { Role } from './models';
 import { UpdateIndicator, UpdateLoadingState } from '@store/session/actions';
+import { ActionState } from '@store/session/models';
+
 import { SagaIterator } from '@redux-saga/core';
 import axios from 'axios';
 import {
@@ -140,7 +143,14 @@ export function* fetchKeycloakServiceRoles(action: FetchKeycloakServiceRolesActi
 
   const defaultRealmClients = ['broker', 'realm-management', 'account'];
   const keycloakIdMap = {};
+  const details = {};
+  details[FETCH_KEYCLOAK_SERVICE_ROLES] = ActionState.inProcess;
 
+  yield put(
+    UpdateIndicator({
+      details,
+    })
+  );
   if (token && keycloakBaseUrl && realm) {
     try {
       const url = `${keycloakBaseUrl}/auth/admin/realms/${realm}/clients`;
@@ -180,7 +190,21 @@ export function* fetchKeycloakServiceRoles(action: FetchKeycloakServiceRolesActi
           keycloakIdMap,
         })
       );
+
+      details[FETCH_KEYCLOAK_SERVICE_ROLES] = ActionState.completed;
+
+      yield put(
+        UpdateIndicator({
+          details,
+        })
+      );
     } catch (err) {
+      details[FETCH_KEYCLOAK_SERVICE_ROLES] = ActionState.error;
+      yield put(
+        UpdateIndicator({
+          details,
+        })
+      );
       yield put(ErrorNotification({ message: err.message }));
     }
   }
