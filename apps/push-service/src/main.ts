@@ -1,5 +1,10 @@
 import { AdspId, initializePlatform, User } from '@abgov/adsp-service-sdk';
-import { createLogger, createAmqpConfigUpdateService, createErrorHandler } from '@core-services/core-common';
+import {
+  createLogger,
+  createAmqpConfigUpdateService,
+  createErrorHandler,
+  UnauthorizedError,
+} from '@core-services/core-common';
 import { createAdapter as createIoAdapter } from '@socket.io/redis-adapter';
 import * as compression from 'compression';
 import * as cors from 'cors';
@@ -96,7 +101,10 @@ const initializeApp = async (): Promise<Server> => {
   const wrapForIo = (handler: express.RequestHandler) => (socket: Socket, next) =>
     handler(
       socket.request as express.Request,
-      { end: () => socket.disconnect(true) } as unknown as express.Response,
+      {
+        // Passport JS calls end w/ 401 when all authenticators fail.
+        end: () => next(new UnauthorizedError('User not authorized to connect.')),
+      } as unknown as express.Response,
       next
     );
 
