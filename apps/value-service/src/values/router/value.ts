@@ -226,7 +226,12 @@ export function writeValue(logger: Logger, eventService: EventService, repositor
           }
 
           results.push(result);
-          eventService.send(valueWritten(req.user, namespace, name, result));
+
+          // Only send write events for value definitions configured to emit write events.
+          // TODO: This is better encapsulated in ValueDefinitionEntity.writeValue ?
+          if (definition?.sendWriteEvent) {
+            eventService.send(valueWritten(req.user, namespace, name, result));
+          }
 
           logger.info(`Value ${namespace}:${name} written by user ${user.name} (ID: ${user.id}).`, {
             context: 'value-router',

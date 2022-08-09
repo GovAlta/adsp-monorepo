@@ -71,6 +71,7 @@ internal class Program
             "Signalled when a script is executed."
           )
         };
+        options.EnableConfigurationInvalidation = true;
       }
     );
     builder.Services.AddSingleton<ILuaScriptService, LuaScriptService>();
