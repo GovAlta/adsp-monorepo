@@ -12,26 +12,30 @@ export async function writeMetrics(
   logger: Logger,
   tokenProvider: TokenProvider,
   valueUrl: string,
-  tenantId: AdspId,
-  buffer: unknown[]
+  buffer: Record<string, unknown[]>
 ): Promise<void> {
-  try {
-    const values = buffer.splice(0);
-    const token = await tokenProvider.getAccessToken();
-    await axios.post(valueUrl, values, {
-      headers: { Authorization: `Bearer ${token}` },
-      params: { tenantId: tenantId.toString() },
-      timeout: 30000,
-    });
-    logger.debug(`Wrote service metrics to value service.`, {
-      context: 'MetricsHandler',
-      tenant: tenantId.toString(),
-    });
-  } catch (err) {
-    logger.warn(`Error encountered writing service metrics. ${err}`, {
-      context: 'MetricsHandler',
-      tenant: tenantId.toString(),
-    });
+  // Value service write does not handle writing a batch of values of mixed tenancy, so group by tenant then write.
+  for (const tenantId of Object.getOwnPropertyNames(buffer)) {
+    try {
+      const values = buffer[tenantId]?.splice(0) || [];
+      if (values.length > 0) {
+        const token = await tokenProvider.getAccessToken();
+        await axios.post(valueUrl, values, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { tenantId },
+          timeout: 30000,
+        });
+        logger.debug(`Wrote service metrics to value service.`, {
+          context: 'MetricsHandler',
+          tenant: tenantId,
+        });
+      }
+    } catch (err) {
+      logger.warn(`Error encountered writing service metrics. ${err}`, {
+        context: 'MetricsHandler',
+        tenant: tenantId,
+      });
+    }
   }
 }
 
@@ -46,7 +50,7 @@ export async function createMetricsHandler(
 ): Promise<RequestHandler> {
   const valueServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:value-service:v1`);
   const valueUrl = new URL(`v1/${serviceId.service}/values/service-metrics`, valueServiceUrl);
-  const valuesBuffer = [];
+  const valuesBuffer: Record<string, unknown[]> = {};
   const writeBuffer = throttle(writeMetrics, WRITE_THROTTLE_MS, { leading: false });
   const responseTimeHandler = responseTime((req: Request, _res: Response, time) => {
     // Write if there is a tenant context to the request.
@@ -89,8 +93,12 @@ export async function createMetricsHandler(
           [`${method}:${path}:response-time`]: time,
         },
       };
-      valuesBuffer.push(value);
-      writeBuffer(logger, tokenProvider, valueUrl.href, tenantId, valuesBuffer);
+
+      if (!valuesBuffer[value.tenantId]) {
+        valuesBuffer[value.tenantId] = [];
+      }
+      valuesBuffer[value.tenantId].push(value);
+      writeBuffer(logger, tokenProvider, valueUrl.href, valuesBuffer);
     }
   });
 

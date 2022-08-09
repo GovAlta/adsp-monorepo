@@ -4,6 +4,24 @@ import type { File } from './types';
 export const FILE_UPLOADED_EVENT = 'file-uploaded';
 export const FILE_DELETED_EVENT = 'file-deleted';
 
+const fileSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    recordId: { type: 'string' },
+    filename: { type: 'string' },
+    size: { type: 'number' },
+    createdBy: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        name: { type: 'string' },
+      },
+    },
+    created: { type: 'string', format: 'date-time' },
+    lastAccessed: { type: 'string', format: 'date-time' },
+  },
+};
 export const FileUploadedDefinition: DomainEventDefinition = {
   name: FILE_UPLOADED_EVENT,
   description: 'Signalled when a file is uploaded.',
@@ -17,9 +35,7 @@ export const FileUploadedDefinition: DomainEventDefinition = {
           name: { type: 'string' },
         },
       },
-      file: {
-        type: 'object',
-      },
+      file: fileSchema,
     },
   },
 };
@@ -37,9 +53,7 @@ export const FileDeletedDefinition: DomainEventDefinition = {
           name: { type: 'string' },
         },
       },
-      file: {
-        type: 'object',
-      },
+      file: fileSchema,
     },
   },
   interval: {

@@ -63,7 +63,10 @@ async function initializeApp(): Promise<express.Application> {
           inTenantAdmin: true,
         },
       ],
-      configurationSchema,
+      configuration: {
+        description: 'File types including configuration of the roles allowed to read or modify files of the type.',
+        schema: configurationSchema,
+      },
       combineConfiguration: (tenant: Record<string, FileType>, core: Record<string, FileType>, tenantId) =>
         Object.entries({
           ...tenant,

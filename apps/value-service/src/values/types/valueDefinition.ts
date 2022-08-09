@@ -3,4 +3,5 @@ export interface ValueDefinition {
   description: string;
   type: string;
   jsonSchema: Record<string, unknown>;
+  sendWriteEvent?: boolean;
 }
