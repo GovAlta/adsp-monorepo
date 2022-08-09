@@ -49,7 +49,10 @@ const initializeApp = async (): Promise<Server> => {
             inTenantAdmin: true,
           },
         ],
-        configurationSchema,
+        configuration: {
+          description: 'Streams available by websocket with configuration of the included events.',
+          schema: configurationSchema,
+        },
         combineConfiguration: (tenant: Record<string, Stream>, core: Record<string, Stream>, tenantId) =>
           Object.entries({ ...tenant, ...core }).reduce(
             (c, [k, s]) => ({ ...c, [k]: new StreamEntity(tenantId, s) }),

@@ -43,7 +43,11 @@ async function initializeApp(): Promise<express.Application> {
       clientSecret: environment.CLIENT_SECRET,
       directoryUrl: new URL(environment.DIRECTORY_URL),
       accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
-      configurationSchema,
+      configuration: {
+        description:
+          'Service roles with name, description, and whether the role is part of the tenant administrator role.',
+        schema: configurationSchema,
+      },
       configurationConverter: (c) => Object.entries(c).map(([k, v]) => ({ serviceId: AdspId.parse(k), ...v })),
       events: [TenantCreatedDefinition, TenantDeletedDefinition],
       roles: [
