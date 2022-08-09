@@ -122,3 +122,8 @@ Feature: Directory-service
     Then the user views the events matching the search filter of "directory-service:entry-deleted"
     When the user clicks Show details button for the latest event of "entry-deleted" for "directory-service"
     Then the user views the event details of "autotest-test-event", "v1", "https://myServiceEntry-2.ca/v1", "autotest", "Auto Test"
+
+  @TEST_CS-1241 @REQ_CS-1094 @regression
+  Scenario:  As a developer, I can access the directory via its API, so I can lookup specific service URLs.
+    When the user sends an anonymous request to directory service to get all "autotest" tenant service entries
+    Then the user receives response with all services and their URLs for "autotest"
