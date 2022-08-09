@@ -3,10 +3,6 @@ import ConfigurationServicePage from './configuration-service.page';
 
 const configurationObj = new ConfigurationServicePage();
 
-Then('the user views the Configuration service overview content {string}', function (paragraphText) {
-  configurationObj.configurationOverviewContent().invoke('text').should('contain', paragraphText);
-});
-
 Then('the user views a heading of {string} namespace', function (namespace) {
   configurationObj.namespaceTitle(namespace).invoke('text').should('contain', namespace);
 });

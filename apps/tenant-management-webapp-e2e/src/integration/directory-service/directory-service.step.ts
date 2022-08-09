@@ -6,10 +6,6 @@ import commonlib from '../common/common-library';
 const directoryObj = new DirectoryServicePage();
 const commonObj = new Common();
 
-Then('the user views the Directory service overview content {string}', function (paragraphText) {
-  directoryObj.directoryOverviewContent().invoke('text').should('contain', paragraphText);
-});
-
 Then('the user views the aside item {string} with the aside item link {string}', function (asideItem, asideLink) {
   directoryObj.directoryAsideItems(asideItem, asideLink).should('have.attr', 'href');
 });
