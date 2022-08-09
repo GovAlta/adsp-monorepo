@@ -171,7 +171,7 @@ When('the user clicks eye icon of {string} under Core streams', function (stream
 
 Then('the user views the details of {string} under Core streams', function (streamName) {
   eventsObj
-    .streamDetails(streamName)
+    .streamDetailsTable(streamName)
     .invoke('text')
     .should('contain', '"name": "' + streamName + '"');
 });
@@ -196,60 +196,58 @@ Then('the user views Add stream modal', function () {
   eventsObj.streamModalTitle().invoke('text').should('eq', 'Add stream');
 });
 
-When(
-  'the user enters {string}, {string}, selects event {string}, selects role {string}',
-  function (streamName, description, event, role) {
-    // select events "status-service:application-healthy, fileservice:file-deleted" select roles "auto-test-role1, auto-test-role2"
-    const events = event.split(',');
-    const roles = role.split(',');
-    eventsObj.streamModalNameInput().clear().type(streamName, { force: true });
-    eventsObj.streamModalDescriptionInput().clear().type(description, { force: true });
-    eventsObj.streamModalEventDropdown().click();
+// When(
+//   'the user enters {string}, {string}, selects event {string}, selects role {string}',
+//   function (streamName, description, event, role) {
+//     const events = event.split(',');
+//     const roles = role.split(',');
+//     eventsObj.streamModalNameInput().clear().type(streamName, { force: true });
+//     eventsObj.streamModalDescriptionInput().clear().type(description, { force: true });
+//     eventsObj.streamModalEventDropdown().click({ force: true });
 
-    //Event Selector, Deselect all previously selected events and then select new events
-    eventsObj
-      .streamModalEventDropdownItem(event)
-      .then((elements) => {
-        for (let i = 0; i < elements.length; i++) {
-          if (elements[i].className == 'goa-dropdown-list goa-dropdown--selected') {
-            elements[i].click();
-          }
+When('the user enters {string}, {string} and events {string}', function (name, description, event) {
+  const events = event.split(',');
+  eventsObj.streamModalNameInput().scrollIntoView().clear().type(name);
+  eventsObj.streamModalDescriptionInput().scrollIntoView().clear().type(description);
+  eventsObj.streamModalEventDropdown().click();
+  eventsObj
+    .streamModalEventDropdownItems()
+    .then((elements) => {
+      for (let i = 0; i < elements.length; i++) {
+        if (elements[i].className.includes('goa-dropdown0-option--selected')) {
+          elements[i].click();
         }
-      })
-      .then(() => {
-        for (let i = 0; i < events.length; i++) {
-          if (events[i].includes(',')) {
-            eventsObj.streamModalEventDropdownItem(events[i].trim()).click({ force: true });
-          } else {
-            eventsObj.streamModalEventDropdownItem(events[i].trim()).click({ force: true });
-          }
-        }
-      });
-    eventsObj.streamModalEventDropdown().click({ force: true });
+      }
+    })
+    .then(() => {
+      for (let i = 0; i < events.length; i++) {
+        eventsObj.streamModalEventDropdownItem(events[i].trim()).click({ force: true });
+      }
+    });
+  eventsObj.streamModalEventDropdownBackground().scrollIntoView().click({ force: true }); // To collapse the event dropdown
+});
 
-    //Role selector, Deselect all previously selected roles and then select new roles
+//Role selector, Deselect all previously selected roles and then select new roles
 
-    eventsObj
-      .streamModalRolesCheckbox(role)
-      .scrollIntoView()
-      .then((elements) => {
-        for (let i = 0; i < elements.length; i++) {
-          if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
-            elements[i].click();
-          }
-        }
-      })
-      .then(() => {
-        for (let i = 0; i < events.length; i++) {
-          if (roles[i].includes(',')) {
-            eventsObj.streamModalRolesCheckbox(roles[i].trim()).click({ force: true });
-          } else {
-            eventsObj.streamModalRolesCheckbox(roles[i].trim()).click({ force: true });
-          }
-        }
-      });
-  }
-);
+// eventsObj
+//   .streamModalRolesCheckbox(role)
+//   .scrollIntoView()
+//   .then((elements) => {
+//     for (let i = 0; i < elements.length; i++) {
+//       if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
+//         elements[i].click();
+//       }
+//     }
+//   })
+//   .then(() => {
+//     for (let i = 0; i < events.length; i++) {
+//       if (roles[i].includes(':')) {
+//         eventsObj.streamModalRolesCheckbox(roles[i].trim()).click({ force: true });
+//       } else {
+//         eventsObj.streamModalRolesCheckbox(roles[i].trim()).click({ force: true });
+//       }
+//     }
+//   });
 
 Then('the user clicks Save button on Stream modal', function () {
   eventsObj.streamModalSaveButton().scrollIntoView().click({ force: true });
@@ -325,16 +323,35 @@ Then('the user {string} the stream of {string}, {string}', function (viewOrNot, 
   });
 });
 
-Then(
-  'the user views the stream details of {string}, {string}, {string}, {string}',
-  function (streamName, description, role, event) {
-    // "status-service:application-healthy"
-    eventsObj.streamDetailes().should('contain', streamName);
-    eventsObj.streamDetailes().should('contain', description);
-    eventsObj.streamDetailes().should('contain', role);
-    eventsObj.streamDetailes().should('contain', event);
+Then('the user views the stream details of {string}, {string}, {string}', function (streamName, description, event) {
+  eventsObj.streamDetails().should('contain', streamName);
+  eventsObj.streamDetails().should('contain', description);
+
+  if (event.split(',')[0] == event) {
+    eventsObj
+      .streamDetails()
+      .invoke('text')
+      .then((eventDetails) => {
+        const namespace = event.split(':')[0].trim();
+        const name = event.split(':')[1].trim();
+        expect(eventDetails).to.contain('"namespace": ' + '"' + namespace + '"');
+        expect(eventDetails).to.contain('"name": ' + '"' + name + '"');
+      });
+  } else {
+    const events = event.split(',');
+    for (let i = 0; i < events.length; i++) {
+      eventsObj
+        .streamDetails()
+        .invoke('text')
+        .then((eventDetails) => {
+          const namespace = events[i].split(':')[0].trim();
+          const name = events[i].split(':')[1].trim();
+          expect(eventDetails).to.contain('"namespace": ' + '"' + namespace + '"');
+          expect(eventDetails).to.contain('"name": ' + '"' + name + '"');
+        });
+    }
   }
-);
+});
 
 When('the user clicks {string} button of {string}', function (button, streamName) {
   switch (button) {
@@ -388,5 +405,3 @@ When('the user enters {string}, {string}, {string}', function (description, even
       }
     });
 });
-
-//Stream ID is duplicate, please use a different name to get a unique Stream ID

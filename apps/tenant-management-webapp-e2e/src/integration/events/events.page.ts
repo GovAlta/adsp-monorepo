@@ -127,7 +127,7 @@ class eventsPage {
     );
   }
 
-  streamDetails(streamName) {
+  streamDetailsTable(streamName) {
     return cy.xpath(
       `//*[@data-testid="Platform-stream-table"]//tbody/tr/td[text()="${streamName}"]/parent::*/following-sibling::tr//*[contains(@data-testid, "details")]`
     );
@@ -170,6 +170,16 @@ class eventsPage {
     );
   }
 
+  streamModalEventDropdownItems() {
+    return cy.xpath(
+      '//*[@data-testid="stream-form" and @data-state="visible"]/*[@class="modal"]//*[@data-testid="streamEvents-dropdown"]/following-sibling::*//li'
+    );
+  }
+
+  streamModalEventDropdownBackground() {
+    return cy.xpath('//*[@data-testid="streamEvents-dropdown-background"]');
+  }
+
   streamModalRolesCheckbox(roleLabel) {
     return cy.xpath(
       `//*[@data-testid="stream-form"]//tbody/tr/td[@class="role-label" and text()="${roleLabel}"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]`
@@ -196,7 +206,7 @@ class eventsPage {
     );
   }
 
-  streamDetailes() {
+  streamDetails() {
     return cy.get('[data-testid="stream-details"]');
   }
 
