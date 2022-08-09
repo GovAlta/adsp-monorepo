@@ -180,9 +180,15 @@ class eventsPage {
     return cy.xpath('//*[@data-testid="streamEvents-dropdown-background"]');
   }
 
-  streamModalRolesCheckbox(roleLabel) {
+  streamModalRoleCheckbox(roleLabel) {
     return cy.xpath(
       `//*[@data-testid="stream-form"]//tbody/tr/td[@class="role-label" and text()="${roleLabel}"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]`
+    );
+  }
+
+  streamModalRolesCheckboxes() {
+    return cy.xpath(
+      '//*[@data-testid="stream-form"]//tbody/tr/td[@class="role-label"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]'
     );
   }
 

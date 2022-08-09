@@ -196,58 +196,47 @@ Then('the user views Add stream modal', function () {
   eventsObj.streamModalTitle().invoke('text').should('eq', 'Add stream');
 });
 
-// When(
-//   'the user enters {string}, {string}, selects event {string}, selects role {string}',
-//   function (streamName, description, event, role) {
-//     const events = event.split(',');
-//     const roles = role.split(',');
-//     eventsObj.streamModalNameInput().clear().type(streamName, { force: true });
-//     eventsObj.streamModalDescriptionInput().clear().type(description, { force: true });
-//     eventsObj.streamModalEventDropdown().click({ force: true });
+When(
+  'the user enters {string}, {string} and events {string} and roles {string}',
+  function (name, description, event, role) {
+    const events = event.split(',');
 
-When('the user enters {string}, {string} and events {string}', function (name, description, event) {
-  const events = event.split(',');
-  eventsObj.streamModalNameInput().scrollIntoView().clear().type(name);
-  eventsObj.streamModalDescriptionInput().scrollIntoView().clear().type(description);
-  eventsObj.streamModalEventDropdown().click();
-  eventsObj
-    .streamModalEventDropdownItems()
-    .then((elements) => {
-      for (let i = 0; i < elements.length; i++) {
-        if (elements[i].className.includes('goa-dropdown0-option--selected')) {
-          elements[i].click();
+    eventsObj.streamModalNameInput().scrollIntoView().clear().type(name);
+    eventsObj.streamModalDescriptionInput().scrollIntoView().clear().type(description);
+    eventsObj.streamModalEventDropdown().click();
+    eventsObj
+      .streamModalEventDropdownItems()
+      .then((elements) => {
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].className.includes('goa-dropdown0-option--selected')) {
+            elements[i].click();
+          }
         }
-      }
-    })
-    .then(() => {
-      for (let i = 0; i < events.length; i++) {
-        eventsObj.streamModalEventDropdownItem(events[i].trim()).click({ force: true });
-      }
-    });
-  eventsObj.streamModalEventDropdownBackground().scrollIntoView().click({ force: true }); // To collapse the event dropdown
-});
-
-//Role selector, Deselect all previously selected roles and then select new roles
-
-// eventsObj
-//   .streamModalRolesCheckbox(role)
-//   .scrollIntoView()
-//   .then((elements) => {
-//     for (let i = 0; i < elements.length; i++) {
-//       if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
-//         elements[i].click();
-//       }
-//     }
-//   })
-//   .then(() => {
-//     for (let i = 0; i < events.length; i++) {
-//       if (roles[i].includes(':')) {
-//         eventsObj.streamModalRolesCheckbox(roles[i].trim()).click({ force: true });
-//       } else {
-//         eventsObj.streamModalRolesCheckbox(roles[i].trim()).click({ force: true });
-//       }
-//     }
-//   });
+      })
+      .then(() => {
+        for (let i = 0; i < events.length; i++) {
+          eventsObj.streamModalEventDropdownItem(events[i].trim()).click({ force: true });
+        }
+      });
+    eventsObj.streamModalEventDropdownBackground().scrollIntoView().click({ force: true }); // To collapse the event dropdown
+    //Roles deselection, selection
+    const roles = role.split(',');
+    eventsObj
+      .streamModalRolesCheckboxes()
+      .then((elements) => {
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
+            elements[i].click();
+          }
+        }
+      })
+      .then(() => {
+        for (let i = 0; i < events.length; i++) {
+          eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
+        }
+      });
+  }
+);
 
 Then('the user clicks Save button on Stream modal', function () {
   eventsObj.streamModalSaveButton().scrollIntoView().click({ force: true });
@@ -326,7 +315,6 @@ Then('the user {string} the stream of {string}, {string}', function (viewOrNot, 
 Then('the user views the stream details of {string}, {string}, {string}', function (streamName, description, event) {
   eventsObj.streamDetails().should('contain', streamName);
   eventsObj.streamDetails().should('contain', description);
-
   if (event.split(',')[0] == event) {
     eventsObj
       .streamDetails()
@@ -378,7 +366,7 @@ Then('the user views Edit stream modal', function () {
   eventsObj.streamModalTitle().invoke('text').should('eq', 'Edit stream');
 });
 
-When('the user enters {string}, {string}, {string}', function (description, event, role) {
+When('the user enters {string}, {string}, {string}', function (description, role) {
   eventsObj.streamModalDescriptionInput().scrollIntoView().clear({ force: true }).type(description, { force: true });
   eventsObj.streamModalEventDropdown().click();
   eventsObj.streamModalEventDropdownItem(event).then(() => {
@@ -393,14 +381,14 @@ When('the user enters {string}, {string}, {string}', function (description, even
   eventsObj.streamModalEventDropdown().click({ force: true });
   const roles = role.split(',');
   eventsObj
-    .streamModalRolesCheckbox(role)
+    .streamModalRoleCheckbox(role)
     .scrollIntoView()
     .then(() => {
       for (let i = 0; i < events.length; i++) {
         if (roles[i].includes(',')) {
-          eventsObj.streamModalRolesCheckbox(roles[i].trim()).click({ force: true });
+          eventsObj.streamModalRoleCheckbox(roles[i].trim()).click({ force: true });
         } else {
-          eventsObj.streamModalRolesCheckbox(roles[i].trim()).click({ force: true });
+          eventsObj.streamModalRoleCheckbox(roles[i].trim()).click({ force: true });
         }
       }
     });
