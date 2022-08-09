@@ -189,7 +189,7 @@ Then('the user receives response with all services and their URLs for {string}',
   // Response with 200 status code and an array
   expect(responseObj.status).to.eq(200);
   expect(responseObj.body).to.be.a('array');
-  // The response contains tenant name as namespace, non-empty url and an urn with tenant name
+  // Each array element contains tenant name as namespace, non-empty url and an urn with tenant name
   for (let i = 0; i < responseObj.body.length; i++) {
     expect(responseObj.body[i].namespace).to.equal(tenant);
     expect(responseObj.body[i].url).to.be.not.null;
