@@ -2,13 +2,15 @@ import { AdspId } from '@abgov/adsp-service-sdk';
 import { Results } from '@core-services/core-common';
 import { ConfigurationEntity } from '../model';
 import { ConfigurationRevision } from '../types';
+import { ActiveRevisionRepository } from './activeRevision';
 
 export interface ConfigurationRepository {
   get<C>(
     namespace: string,
     name: string,
     tenantId?: AdspId,
-    schema?: Record<string, unknown>
+    schema?: Record<string, unknown>,
+    activeRevisionRepository?: ActiveRevisionRepository
   ): Promise<ConfigurationEntity<C>>;
 
   getRevisions<C>(

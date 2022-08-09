@@ -6,6 +6,7 @@ import {
   ConfigurationEntity,
   ConfigurationRevision,
   RevisionCriteria,
+  ActiveRevisionRepository,
 } from '../configuration';
 import { renamePrefixProperties } from './prefix';
 import { revisionSchema } from './schema';
@@ -24,7 +25,8 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     namespace: string,
     name: string,
     tenantId?: AdspId,
-    schema?: Record<string, unknown>
+    schema?: Record<string, unknown>,
+    activeRevisionRepository?: ActiveRevisionRepository
   ): Promise<ConfigurationEntity<C>> {
     const tenant = tenantId?.toString() || { $exists: false };
     const query = { namespace, name, tenant };
@@ -36,7 +38,23 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         .exec((err, results: ConfigurationRevisionDoc[]) => (err ? reject(err) : resolve(results[0])));
     });
     const latest = this.fromDoc<C>(latestDoc);
-    return new ConfigurationEntity<C>(namespace, name, this, this.validationService, latest, tenantId, schema);
+    let activeRevisionDoc = { active: null };
+    if (activeRevisionRepository) {
+      activeRevisionDoc = await activeRevisionRepository.get(namespace, name, tenantId);
+    }
+
+    return new ConfigurationEntity<C>(
+      namespace,
+      name,
+      this,
+      this.validationService,
+      latest,
+      tenantId,
+      schema,
+      null,
+      activeRevisionRepository,
+      activeRevisionDoc.active
+    );
   }
 
   async getRevisions<C>(

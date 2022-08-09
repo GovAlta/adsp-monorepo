@@ -68,14 +68,16 @@ export const getConfigurationEntity =
 
       const definition = await getDefinition(configurationServiceId, repository, namespace, name, tenantId);
 
-      const entity = await repository.get(namespace, name, getCore ? null : tenantId, definition?.configurationSchema);
+      const entity = await repository.get(
+        namespace,
+        name,
+        getCore ? null : tenantId,
+        definition?.configurationSchema,
+        activeRevisionRepository
+      );
       if (!entity.canAccess(user)) {
         throw new UnauthorizedUserError('access configuration', user);
       }
-      entity.activeRevisionRepository = activeRevisionRepository;
-      const activeRevisionEntity = await activeRevisionRepository.get(namespace, name, getCore ? null : tenantId);
-
-      entity.active = activeRevisionEntity.active;
 
       req[ENTITY_KEY] = entity;
 
