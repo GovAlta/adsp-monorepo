@@ -26,7 +26,6 @@ interface PdfTemplatesProps {
 }
 export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemplate }) => {
   const [openAddPdfTemplate, setOpenAddPdfTemplate] = useState(false);
-  const [selectedPdfTemplate, setSelectedPdfTemplate] = useState(defaultPdfTemplate);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [bodyPreview, setBodyPreview] = useState('');
   const pdfTemplates = useSelector((state: RootState) => {
@@ -34,9 +33,6 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
   });
 
   const [currentTemplate, setCurrentTemplate] = useState(defaultPdfTemplate);
-  const [templateEditErrors, setTemplateEditErrors] = useState({
-    body: '',
-  });
   const [body, setBody] = useState('');
 
   const [isEdit, setIsEdit] = useState(false);
@@ -71,10 +67,6 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
               label: 'template',
               insertText: 'template',
             },
-            {
-              label: 'useWrapper',
-              insertText: 'useWrapper',
-            },
           ],
         },
       ];
@@ -107,11 +99,9 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     dispatch(getPdfTemplates());
   }, []);
 
-  const savePdfTemplate = (useWrapper) => {
+  const savePdfTemplate = () => {
     const saveObject = JSON.parse(JSON.stringify(currentTemplate));
     saveObject.template = body;
-    saveObject.useWrapper = useWrapper;
-
     dispatch(updatePdfTemplate(saveObject));
 
     reset();
@@ -137,7 +127,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
             open={openAddPdfTemplate}
             isEdit={isEdit}
             onClose={reset}
-            initialValue={selectedPdfTemplate}
+            initialValue={defaultPdfTemplate}
             onSave={(definition) => {
               dispatch(updatePdfTemplate(definition));
             }}
@@ -167,13 +157,13 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                 template={currentTemplate}
                 subjectEditorConfig={subjectEditorConfig}
                 bodyTitle="Body"
-                onBodyChange={(value, channel) => {
+                onBodyChange={(value) => {
                   setBody(value);
 
                   try {
                     setBodyPreview(
                       generateMessage(
-                        getTemplateBody(value, channel === 'Snippet' ? 'pdfWithWrapper' : 'pdf', {
+                        getTemplateBody(value, 'pdf', {
                           data: currentTemplate,
                           serviceUrl: webappUrl,
                           today: new Date().toDateString(),
@@ -185,11 +175,11 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                     console.error('error: ' + e.message);
                   }
                 }}
-                setPreview={(channel) => {
+                setPreview={() => {
                   try {
                     setBodyPreview(
                       generateMessage(
-                        getTemplateBody(body, channel === 'Snippet' ? 'pdfWithWrapper' : 'pdf', {
+                        getTemplateBody(body, 'pdf', {
                           data: currentTemplate,
                           serviceUrl: webappUrl,
                           today: new Date().toDateString(),
@@ -201,10 +191,12 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                     console.error('error: ' + e.message);
                   }
                 }}
+                bodyEditorHintText={
+                  "*GOA default header and footer wrapper is applied if the template doesn't include proper <html> opening and closing tags"
+                }
                 suggestion={getSuggestion()}
                 bodyEditorConfig={bodyEditorConfig}
-                errors={templateEditErrors}
-                saveCurrentTemplate={(useWrapper) => savePdfTemplate(useWrapper)}
+                saveCurrentTemplate={() => savePdfTemplate()}
                 cancel={() => reset()}
               />
 
