@@ -108,6 +108,11 @@ Cypress.Commands.add('getConfig', () => {
       name: 'fileApi: ',
       message: response.body.serviceUrls.fileApi,
     });
+    Cypress.env('directoryServiceApiUrl', response.body.serviceUrls.directoryServiceApiUrl);
+    Cypress.log({
+      name: 'directoryServiceApiUrl: ',
+      message: response.body.serviceUrls.directoryServiceApiUrl,
+    });
   });
 });
 //

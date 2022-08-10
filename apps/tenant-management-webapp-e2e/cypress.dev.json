@@ -26,6 +26,7 @@
     "accessManagementApi": "",
     "uiComponentUrl": "",
     "fileApi":"",
+    "directoryServiceApiUrl": "",
     "statusAppUrl": "https://status.adsp-dev.gov.ab.ca",
     "subscriptionUrl": "https://subscription.adsp-dev.gov.ab.ca"
   },
