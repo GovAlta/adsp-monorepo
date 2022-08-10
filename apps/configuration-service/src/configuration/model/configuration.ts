@@ -24,7 +24,7 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
     public tenantId?: AdspId,
     private schema?: Record<string, unknown>,
     private logger?: Logger,
-    public activeRevisionRepository?: ActiveRevisionRepository,
+    private activeRevisionRepository?: ActiveRevisionRepository,
     public active?: number
   ) {
     if (!namespace || !name) {

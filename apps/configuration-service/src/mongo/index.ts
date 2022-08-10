@@ -39,11 +39,10 @@ export const createRepositories = ({
         if (err) {
           reject(err);
         } else {
-          const configurationRepository = new MongoConfigurationRepository(validationService);
           const activeRevisionRepository = new MongoActiveRevisionRepository();
+          const configurationRepository = new MongoConfigurationRepository(validationService, activeRevisionRepository);
           resolve({
             configuration: configurationRepository,
-            activeRevision: activeRevisionRepository,
             // NOTE: Typescript seems to have issues with exported enums where enum is null at runtime.
             // Possible that express js module doesn't actually export anything for ConnectionStates and
             // type definition is wrong (or intended to be substituted at transpile time... but doesn't happen)

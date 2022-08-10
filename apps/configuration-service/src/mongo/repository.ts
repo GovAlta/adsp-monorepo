@@ -14,19 +14,20 @@ import { ConfigurationRevisionDoc } from './types';
 
 export class MongoConfigurationRepository implements ConfigurationRepository {
   private revisionModel: Model<ConfigurationRevisionDoc>;
+  private activeRevisionRepository: ActiveRevisionRepository;
 
   private readonly META_PREFIX = 'META_';
 
-  constructor(private validationService: ValidationService) {
+  constructor(private validationService: ValidationService, activeRevisionRepository: ActiveRevisionRepository) {
     this.revisionModel = model<ConfigurationRevisionDoc>('revision', revisionSchema);
+    this.activeRevisionRepository = activeRevisionRepository;
   }
 
   async get<C>(
     namespace: string,
     name: string,
     tenantId?: AdspId,
-    schema?: Record<string, unknown>,
-    activeRevisionRepository?: ActiveRevisionRepository
+    schema?: Record<string, unknown>
   ): Promise<ConfigurationEntity<C>> {
     const tenant = tenantId?.toString() || { $exists: false };
     const query = { namespace, name, tenant };
@@ -39,9 +40,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     });
     const latest = this.fromDoc<C>(latestDoc);
     let activeRevisionDoc = { active: null };
-    if (activeRevisionRepository) {
-      activeRevisionDoc = await activeRevisionRepository.get(namespace, name, tenantId);
-    }
+    activeRevisionDoc = await this.activeRevisionRepository.get(namespace, name, tenantId);
 
     return new ConfigurationEntity<C>(
       namespace,
@@ -52,8 +51,8 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       tenantId,
       schema,
       null,
-      activeRevisionRepository,
-      activeRevisionDoc.active
+      this.activeRevisionRepository,
+      activeRevisionDoc?.active
     );
   }
 

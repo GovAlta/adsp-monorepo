@@ -12,9 +12,9 @@ import { isEqual as isDeepEqual } from 'lodash';
 import { Logger } from 'winston';
 import { configurationUpdated, revisionCreated, activeRevisionSet } from '../events';
 import { ConfigurationEntity } from '../model';
-import { ConfigurationRepository, Repositories, ActiveRevisionRepository } from '../repository';
+import { ConfigurationRepository, Repositories } from '../repository';
 import { ConfigurationDefinition, ConfigurationDefinitions, ConfigurationRevision } from '../types';
-import { OPERATION_DELETE, OPERATION_REPLACE, OPERATION_UPDATE, PatchRequests } from './types';
+import { OPERATION_DELETE, OPERATION_REPLACE, OPERATION_UPDATE, PatchRequests, ConfigurationMap } from './types';
 
 export interface ConfigurationRouterProps extends Repositories {
   serviceId: AdspId;
@@ -54,7 +54,6 @@ export const getConfigurationEntity =
   (
     configurationServiceId: AdspId,
     repository: ConfigurationRepository,
-    activeRevisionRepository: ActiveRevisionRepository,
     requestCore = (_req: Request): boolean => false
   ): RequestHandler =>
   async (req, _res, next) => {
@@ -68,13 +67,7 @@ export const getConfigurationEntity =
 
       const definition = await getDefinition(configurationServiceId, repository, namespace, name, tenantId);
 
-      const entity = await repository.get(
-        namespace,
-        name,
-        getCore ? null : tenantId,
-        definition?.configurationSchema,
-        activeRevisionRepository
-      );
+      const entity = await repository.get(namespace, name, getCore ? null : tenantId, definition?.configurationSchema);
       if (!entity.canAccess(user)) {
         throw new UnauthorizedUserError('access configuration', user);
       }
@@ -88,7 +81,7 @@ export const getConfigurationEntity =
     }
   };
 
-const mapConfiguration = (configuration: ConfigurationEntity): unknown => ({
+const mapConfiguration = (configuration: ConfigurationEntity): ConfigurationMap => ({
   namespace: configuration.namespace,
   name: configuration.name,
   latest: configuration.latest,
@@ -105,7 +98,13 @@ export const getConfiguration =
   (mapResult = mapConfiguration): RequestHandler =>
   async (req, res) => {
     const configuration: ConfigurationEntity = req[ENTITY_KEY];
-    res.send(mapResult(configuration));
+
+    let active = null;
+    if (configuration.active) {
+      active = await (await configuration.getRevisions(1, null, { revision: configuration.active })).results[0];
+    }
+
+    res.send({ ...mapResult(configuration), active });
   };
 
 export const patchConfigurationRevision =
@@ -206,7 +205,7 @@ export const getActiveRevision =
 
       const revision = await configuration.getRevisions(1, null, { revision: configuration.active });
 
-      res.send(revision.results);
+      res.send(revision.results[0]);
 
       logger.info(`Active revision ${configuration.active} ` + `retrieved by ${user.name} (ID: ${user.id}).`, {
         tenant: configuration.tenantId?.toString(),
@@ -325,7 +324,6 @@ export function createConfigurationRouter({
   serviceId,
   eventService,
   configuration: configurationRepository,
-  activeRevision: activeRevisionRepository,
 }: ConfigurationRouterProps): Router {
   const router = Router();
 
@@ -343,12 +341,7 @@ export function createConfigurationRouter({
     '/configuration/:namespace/:name',
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
-    getConfigurationEntity(
-      serviceId,
-      configurationRepository,
-      activeRevisionRepository,
-      (req) => req.query.core !== undefined
-    ),
+    getConfigurationEntity(serviceId, configurationRepository, (req) => req.query.core !== undefined),
     getConfiguration()
   );
 
@@ -356,12 +349,7 @@ export function createConfigurationRouter({
     '/configuration/:namespace/:name/latest',
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
-    getConfigurationEntity(
-      serviceId,
-      configurationRepository,
-      activeRevisionRepository,
-      (req) => req.query.core !== undefined
-    ),
+    getConfigurationEntity(serviceId, configurationRepository, (req) => req.query.core !== undefined),
     getConfiguration((configuration) => configuration.latest?.configuration || {})
   );
 
@@ -370,7 +358,7 @@ export function createConfigurationRouter({
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(body('operation').isString().isIn([OPERATION_DELETE, OPERATION_UPDATE, OPERATION_REPLACE])),
-    getConfigurationEntity(serviceId, configurationRepository, activeRevisionRepository),
+    getConfigurationEntity(serviceId, configurationRepository),
     patchConfigurationRevision(logger, eventService)
   );
 
@@ -379,7 +367,7 @@ export function createConfigurationRouter({
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(body('revision').isBoolean()),
-    getConfigurationEntity(serviceId, configurationRepository, activeRevisionRepository),
+    getConfigurationEntity(serviceId, configurationRepository),
     createConfigurationRevision(logger, eventService)
   );
 
@@ -388,7 +376,7 @@ export function createConfigurationRouter({
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
-    getConfigurationEntity(serviceId, configurationRepository, activeRevisionRepository),
+    getConfigurationEntity(serviceId, configurationRepository),
     getRevisions()
   );
 
@@ -397,7 +385,7 @@ export function createConfigurationRouter({
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
-    getConfigurationEntity(serviceId, configurationRepository, activeRevisionRepository),
+    getConfigurationEntity(serviceId, configurationRepository),
     getActiveRevision(logger)
   );
 
@@ -414,7 +402,7 @@ export function createConfigurationRouter({
         ['params']
       )
     ),
-    getConfigurationEntity(serviceId, configurationRepository, activeRevisionRepository),
+    getConfigurationEntity(serviceId, configurationRepository),
     getRevisions(
       (req) => ({ revision: req.params.revision }),
       (req, { results }) => {
