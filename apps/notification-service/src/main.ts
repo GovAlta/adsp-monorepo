@@ -65,7 +65,11 @@ async function initializeApp() {
       accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
       clientSecret: environment.CLIENT_SECRET,
       directoryUrl: new URL(environment.DIRECTORY_URL),
-      configurationSchema,
+      configuration: {
+        description:
+          'Notification types with configuration of subscriber role, available channels, trigger events, and templates.',
+        schema: configurationSchema,
+      },
       combineConfiguration: (
         tenantConfig: Record<string, NotificationType>,
         coreConfig: Record<string, NotificationType>,
