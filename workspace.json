@@ -57,7 +57,7 @@
           }
         },
         "build": {
-          "builder": "@nrwl/node:package",
+          "builder": "@nrwl/js:tsc",
           "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/libs/adsp-service-sdk",
@@ -82,7 +82,7 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/node:build",
+          "builder": "@nrwl/node:webpack",
           "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/apps/api-docs-app",
@@ -100,7 +100,7 @@
           }
         },
         "serve": {
-          "builder": "@nrwl/node:execute",
+          "builder": "@nrwl/node:node",
           "options": {
             "buildTarget": "api-docs-app:build",
             "port": 7779
@@ -129,7 +129,7 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/node:build",
+          "builder": "@nrwl/node:webpack",
           "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/apps/calendar-service",
@@ -154,7 +154,7 @@
           }
         },
         "serve": {
-          "builder": "@nrwl/node:execute",
+          "builder": "@nrwl/node:node",
           "options": {
             "buildTarget": "calendar-service:build",
             "port": 7782
@@ -184,7 +184,7 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/node:build",
+          "builder": "@nrwl/node:webpack",
           "outputs": ["{options.outputPath}"],
           "options": {
             "webpackConfig": "apps/configuration-service/webpack.config.js",
@@ -203,7 +203,7 @@
           }
         },
         "serve": {
-          "builder": "@nrwl/node:execute",
+          "builder": "@nrwl/node:node",
           "options": {
             "buildTarget": "configuration-service:build",
             "port": 7780
@@ -255,7 +255,7 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/node:build",
+          "builder": "@nrwl/node:webpack",
           "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/apps/directory-service",
@@ -274,7 +274,7 @@
           }
         },
         "serve": {
-          "builder": "@nrwl/node:execute",
+          "builder": "@nrwl/node:node",
           "options": {
             "buildTarget": "directory-service:build"
           }
@@ -305,7 +305,7 @@
       "schematics": {},
       "architect": {
         "build": {
-          "builder": "@nrwl/node:build",
+          "builder": "@nrwl/node:webpack",
           "options": {
             "webpackConfig": "apps/event-service/webpack.config.js",
             "outputPath": "dist/apps/event-service",
@@ -324,7 +324,7 @@
           "outputs": ["{options.outputPath}"]
         },
         "serve": {
-          "builder": "@nrwl/node:execute",
+          "builder": "@nrwl/node:node",
           "options": {
             "buildTarget": "event-service:build",
             "port": 7773
@@ -355,7 +355,7 @@
       "schematics": {},
       "architect": {
         "build": {
-          "builder": "@nrwl/node:build",
+          "builder": "@nrwl/node:webpack",
           "options": {
             "webpackConfig": "apps/file-service/webpack.config.js",
             "outputPath": "dist/apps/file-service",
@@ -374,7 +374,7 @@
           "outputs": ["{options.outputPath}"]
         },
         "serve": {
-          "builder": "@nrwl/node:execute",
+          "builder": "@nrwl/node:node",
           "options": {
             "buildTarget": "file-service:build",
             "port": 7770
@@ -404,7 +404,7 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/node:build",
+          "builder": "@nrwl/node:webpack",
           "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/apps/form-service",
@@ -423,7 +423,7 @@
           }
         },
         "serve": {
-          "builder": "@nrwl/node:execute",
+          "builder": "@nrwl/node:node",
           "options": {
             "buildTarget": "form-service:build",
             "port": 7783
@@ -455,7 +455,7 @@
       "schematics": {},
       "architect": {
         "build": {
-          "builder": "@nrwl/node:build",
+          "builder": "@nrwl/node:webpack",
           "options": {
             "webpackConfig": "apps/notification-service/webpack.config.js",
             "outputPath": "dist/apps/notification-service",
@@ -474,7 +474,7 @@
           "outputs": ["{options.outputPath}"]
         },
         "serve": {
-          "builder": "@nrwl/node:execute",
+          "builder": "@nrwl/node:node",
           "options": {
             "buildTarget": "notification-service:build",
             "port": 7772
@@ -526,7 +526,7 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/node:build",
+          "builder": "@nrwl/node:webpack",
           "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/apps/pdf-service",
@@ -545,7 +545,7 @@
           }
         },
         "serve": {
-          "builder": "@nrwl/node:execute",
+          "builder": "@nrwl/node:node",
           "options": {
             "buildTarget": "pdf-service:build"
           }
@@ -576,7 +576,7 @@
       "schematics": {},
       "architect": {
         "build": {
-          "builder": "@nrwl/node:build",
+          "builder": "@nrwl/node:webpack",
           "options": {
             "webpackConfig": "apps/push-service/webpack.config.js",
             "outputPath": "dist/apps/push-service",
@@ -595,7 +595,7 @@
           "outputs": ["{options.outputPath}"]
         },
         "serve": {
-          "builder": "@nrwl/node:execute",
+          "builder": "@nrwl/node:node",
           "options": {
             "buildTarget": "push-service:build",
             "port": 7774
@@ -780,7 +780,7 @@
       "schematics": {},
       "architect": {
         "build": {
-          "builder": "@nrwl/node:build",
+          "builder": "@nrwl/node:webpack",
           "options": {
             "webpackConfig": "apps/status-service/webpack.config.js",
             "outputPath": "dist/apps/status-service",
@@ -798,7 +798,7 @@
           }
         },
         "serve": {
-          "builder": "@nrwl/node:execute",
+          "builder": "@nrwl/node:node",
           "options": {
             "buildTarget": "status-service:build"
           }
@@ -958,7 +958,7 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/node:build",
+          "builder": "@nrwl/node:webpack",
           "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/apps/subscriber-gateway",
@@ -977,7 +977,7 @@
           }
         },
         "serve": {
-          "builder": "@nrwl/node:execute",
+          "builder": "@nrwl/node:node",
           "options": {
             "buildTarget": "subscriber-gateway:build",
             "port": 7784
@@ -1007,7 +1007,7 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/node:build",
+          "builder": "@nrwl/node:webpack",
           "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/apps/task-service",
@@ -1032,7 +1032,7 @@
           }
         },
         "serve": {
-          "builder": "@nrwl/node:execute",
+          "builder": "@nrwl/node:node",
           "options": {
             "buildTarget": "task-service:build",
             "port": 7781
@@ -1063,7 +1063,7 @@
       "schematics": {},
       "architect": {
         "build": {
-          "builder": "@nrwl/node:build",
+          "builder": "@nrwl/node:webpack",
           "options": {
             "outputPath": "dist/apps/tenant-management-api",
             "main": "apps/tenant-management-api/src/main.ts",
@@ -1082,7 +1082,7 @@
           "outputs": ["{options.outputPath}"]
         },
         "serve": {
-          "builder": "@nrwl/node:execute",
+          "builder": "@nrwl/node:node",
           "options": {
             "buildTarget": "tenant-management-api:build",
             "port": 7000
@@ -1227,7 +1227,7 @@
       "schematics": {},
       "architect": {
         "build-encodeSecrets": {
-          "builder": "@nrwl/node:build",
+          "builder": "@nrwl/node:webpack",
           "options": {
             "outputPath": "dist/tools/scripts/encodeSecrets",
             "main": "tools/scripts/encodeSecrets/index.ts",
@@ -1238,7 +1238,7 @@
           "outputs": ["{options.outputPath}"]
         },
         "build-loadDirectoryData": {
-          "builder": "@nrwl/node:build",
+          "builder": "@nrwl/node:webpack",
           "options": {
             "outputPath": "dist/tools/scripts/loadDirectoryData",
             "main": "tools/scripts/loadDirectoryData/index.ts",
@@ -1281,7 +1281,7 @@
       "schematics": {},
       "architect": {
         "build": {
-          "builder": "@nrwl/node:build",
+          "builder": "@nrwl/node:webpack",
           "options": {
             "webpackConfig": "apps/value-service/webpack.config.js",
             "outputPath": "dist/apps/value-service",
@@ -1307,7 +1307,7 @@
           "outputs": ["{options.outputPath}"]
         },
         "serve": {
-          "builder": "@nrwl/node:execute",
+          "builder": "@nrwl/node:node",
           "options": {
             "buildTarget": "value-service:build",
             "port": 7771
@@ -1336,7 +1336,7 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/node:build",
+          "builder": "@nrwl/node:webpack",
           "outputs": ["{options.outputPath}"],
           "options": {
             "webpackConfig": "apps/verify-service/webpack.config.js",
@@ -1355,7 +1355,7 @@
           }
         },
         "serve": {
-          "builder": "@nrwl/node:execute",
+          "builder": "@nrwl/node:node",
           "options": {
             "buildTarget": "verify-service:build"
           }
