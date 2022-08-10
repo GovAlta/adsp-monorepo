@@ -17,3 +17,9 @@ export interface DeleteRequest {
 }
 
 export type PatchRequests = ReplaceRequest | UpdateRequest | DeleteRequest;
+
+export interface ConfigurationMap {
+  namespace?: string;
+  name?: string;
+  latest?: unknown;
+}
