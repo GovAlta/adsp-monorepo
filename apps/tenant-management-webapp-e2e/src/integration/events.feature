@@ -110,25 +110,22 @@ Feature: Events
     # Add a stream
     When the user clicks Add stream button
     Then the user views Add stream modal
-    When the user enters "autotest-stream", "autotest-stream-desc" and events "status-service:application-healthy, file-service:file-deleted"
+    When the user enters "autotest-stream", "autotest-stream-desc" and events "status-service:application-healthy, file-service:file-deleted" and roles "auto-test-role1, auto-test-role2"
     And the user clicks Save button on Stream modal
-    Then the user "views" the stream of "autotest-stream"
+    Then the user "views" the stream of "autotest-stream", "auto-test-role1, auto-test-role2"
     When the user clicks "Eye" button of "autotest-stream"
     Then the user views the stream details of "autotest-stream", "autotest-stream-desc", "status-service:application-healthy, file-service:file-deleted"
-
-
-    Then the user clicks eye-off icon of "autotest-stream" to close the schema
-    # # Edit a stream
+    And the user clicks eye-off icon of "autotest-stream" to close the schema
+    # Edit a stream
     When the user clicks "Edit" button of "autotest-stream"
     Then the user views Edit stream modal
-    When the user enters "autotest-stream-desc2", "form-service:form-created", "auto-test-role2"
-    Then the user "views" the stream of "autotest-stream", "auto-test-role1"
+    When the user deletes "status-service:application-healthy" in stream modal
+    And the user enters "autotest-stream-desc2" and unselects roles
     And the user clicks Save button on Stream modal
-    # Then the user "views" the stream of "autotest-stream"
-    Then the user "views" the stream of "autotest-stream", "auto-test-role2"
+    Then the user "should not view" the stream of "autotest-stream", "auto-test-role1, auto-test-role2"
     When the user clicks "Eye" button of "autotest-stream"
-    Then the user views the stream details of "autotest-stream", "autotest-stream-desc2", "auto-test-role1", "auto-test-role2"
-    # # Delete a stream
+    Then the user views the stream details of "autotest-stream", "autotest-stream-desc2", "file-service:file-deleted"
+    # Delete a stream
     When the user clicks "Delete" button of "autotest-stream"
     Then the user views delete "stream" confirmation modal for "autotest-stream"
     When the user clicks Delete button in delete confirmation modal

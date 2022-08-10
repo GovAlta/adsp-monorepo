@@ -227,6 +227,10 @@ class eventsPage {
       `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="delete-stream"]`
     );
   }
+
+  streamChip(name) {
+    return cy.get(`[content="${name}"]`);
+  }
 }
 
 export default eventsPage;

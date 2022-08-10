@@ -218,7 +218,7 @@ When(
           eventsObj.streamModalEventDropdownItem(events[i].trim()).click({ force: true });
         }
       });
-    eventsObj.streamModalEventDropdownBackground().scrollIntoView().click({ force: true }); // To collapse the event dropdown
+    eventsObj.streamModalEventDropdownBackground().click({ force: true }); // To collapse the event dropdown
     //Roles deselection, selection
     const roles = role.split(',');
     eventsObj
@@ -239,7 +239,7 @@ When(
 );
 
 Then('the user clicks Save button on Stream modal', function () {
-  eventsObj.streamModalSaveButton().scrollIntoView().click({ force: true });
+  eventsObj.streamModalSaveButton().click({ force: true });
   cy.wait(2000);
 });
 
@@ -366,30 +366,18 @@ Then('the user views Edit stream modal', function () {
   eventsObj.streamModalTitle().invoke('text').should('eq', 'Edit stream');
 });
 
-When('the user enters {string}, {string}, {string}', function (description, role) {
-  eventsObj.streamModalDescriptionInput().scrollIntoView().clear({ force: true }).type(description, { force: true });
-  eventsObj.streamModalEventDropdown().click();
-  eventsObj.streamModalEventDropdownItem(event).then(() => {
-    for (let i = 0; i < events.length; i++) {
-      if (events[i].includes(',')) {
-        eventsObj.streamModalEventDropdownItem(events[i].trim()).click({ force: true });
-      } else {
-        eventsObj.streamModalEventDropdownItem(events[i].trim()).click({ force: true });
+Then('the user enters {string} and unselects roles', function (description) {
+  eventsObj.streamModalDescriptionInput().clear().type(description);
+
+  eventsObj.streamModalRolesCheckboxes().then((elements) => {
+    for (let i = 0; i < elements.length; i++) {
+      if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
+        elements[i].click();
       }
     }
   });
-  eventsObj.streamModalEventDropdown().click({ force: true });
-  const roles = role.split(',');
-  eventsObj
-    .streamModalRoleCheckbox(role)
-    .scrollIntoView()
-    .then(() => {
-      for (let i = 0; i < events.length; i++) {
-        if (roles[i].includes(',')) {
-          eventsObj.streamModalRoleCheckbox(roles[i].trim()).click({ force: true });
-        } else {
-          eventsObj.streamModalRoleCheckbox(roles[i].trim()).click({ force: true });
-        }
-      }
-    });
+});
+
+When('the user deletes {string} in stream modal', function (event) {
+  eventsObj.streamChip(event).click();
 });
