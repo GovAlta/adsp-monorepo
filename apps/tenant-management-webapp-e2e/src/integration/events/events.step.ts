@@ -196,49 +196,46 @@ Then('the user views Add stream modal', function () {
   eventsObj.streamModalTitle().invoke('text').should('eq', 'Add stream');
 });
 
-When(
-  'the user enters {string}, {string} and events {string} and roles {string}',
-  function (name, description, event, role) {
-    const events = event.split(',');
+When('the user enters {string}, {string}, {string}, {string}', function (name, description, event, role) {
+  const events = event.split(',');
 
-    eventsObj.streamModalNameInput().scrollIntoView().clear().type(name);
-    eventsObj.streamModalDescriptionInput().scrollIntoView().clear().type(description);
-    eventsObj.streamModalEventDropdown().click();
-    eventsObj
-      .streamModalEventDropdownItems()
-      .then((elements) => {
-        for (let i = 0; i < elements.length; i++) {
-          if (elements[i].className.includes('goa-dropdown0-option--selected')) {
-            elements[i].click();
-          }
+  eventsObj.streamModalNameInput().scrollIntoView().clear().type(name);
+  eventsObj.streamModalDescriptionInput().scrollIntoView().clear().type(description);
+  eventsObj.streamModalEventDropdown().click();
+  eventsObj
+    .streamModalEventDropdownItems()
+    .then((elements) => {
+      for (let i = 0; i < elements.length; i++) {
+        if (elements[i].className.includes('goa-dropdown0-option--selected')) {
+          elements[i].click();
         }
-      })
-      .then(() => {
-        for (let i = 0; i < events.length; i++) {
-          eventsObj.streamModalEventDropdownItem(events[i].trim()).click({ force: true });
+      }
+    })
+    .then(() => {
+      for (let i = 0; i < events.length; i++) {
+        eventsObj.streamModalEventDropdownItem(events[i].trim()).click({ force: true });
+      }
+    });
+  eventsObj.streamModalEventDropdownBackground().click({ force: true }); // To collapse the event dropdown
+  //Roles deselection, selection
+  const roles = role.split(',');
+  eventsObj
+    .streamModalRolesCheckboxes()
+    .then((elements) => {
+      for (let i = 0; i < elements.length; i++) {
+        if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
+          elements[i].click();
         }
-      });
-    eventsObj.streamModalEventDropdownBackground().click({ force: true }); // To collapse the event dropdown
-    //Roles deselection, selection
-    const roles = role.split(',');
-    eventsObj
-      .streamModalRolesCheckboxes()
-      .then((elements) => {
-        for (let i = 0; i < elements.length; i++) {
-          if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
-            elements[i].click();
-          }
-        }
-      })
-      .then(() => {
-        for (let i = 0; i < events.length; i++) {
-          eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
-        }
-      });
-  }
-);
+      }
+    })
+    .then(() => {
+      for (let i = 0; i < events.length; i++) {
+        eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
+      }
+    });
+});
 
-Then('the user clicks Save button on Stream modal', function () {
+Then('the user clicks Save button in Stream modal', function () {
   eventsObj.streamModalSaveButton().click({ force: true });
   cy.wait(2000);
 });
@@ -378,6 +375,6 @@ Then('the user enters {string} and unselects roles', function (description) {
   });
 });
 
-When('the user deletes {string} in stream modal', function (event) {
+When('the user removes event chips of {string} in stream modal', function (event) {
   eventsObj.streamChip(event).click();
 });
