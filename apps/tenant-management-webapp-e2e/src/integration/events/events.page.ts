@@ -147,7 +147,6 @@ class eventsPage {
 
   streamModalNameInput() {
     return cy.xpath('//*[@data-testid="stream-form" and @data-state="visible"]//*[@data-testid="stream-name"]');
-    // return cy.get('[data-testid="stream-name"]');
   }
 
   streamModalDescriptionInput() {
@@ -206,7 +205,7 @@ class eventsPage {
     );
   }
 
-  streamDetailsEyeIconOff(name) {
+  streamDetailsEyeOffIcon(name) {
     return cy.xpath(
       `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="icon-eye-off"]`
     );
@@ -228,7 +227,7 @@ class eventsPage {
     );
   }
 
-  streamChip(name) {
+  streamModalEventChip(name) {
     return cy.get(`[content="${name}"]`);
   }
 }

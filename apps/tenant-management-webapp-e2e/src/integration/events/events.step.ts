@@ -236,7 +236,7 @@ When('the user enters {string}, {string}, {string}, {string}', function (name, d
 });
 
 Then('the user clicks Save button in Stream modal', function () {
-  eventsObj.streamModalSaveButton().click({ force: true });
+  eventsObj.streamModalSaveButton().click();
   cy.wait(2000);
 });
 
@@ -312,29 +312,18 @@ Then('the user {string} the stream of {string}, {string}', function (viewOrNot, 
 Then('the user views the stream details of {string}, {string}, {string}', function (streamName, description, event) {
   eventsObj.streamDetails().should('contain', streamName);
   eventsObj.streamDetails().should('contain', description);
-  if (event.split(',')[0] == event) {
+
+  const events = event.split(',');
+  for (let i = 0; i < events.length; i++) {
     eventsObj
       .streamDetails()
       .invoke('text')
       .then((eventDetails) => {
-        const namespace = event.split(':')[0].trim();
-        const name = event.split(':')[1].trim();
+        const namespace = events[i].split(':')[0].trim();
+        const name = events[i].split(':')[1].trim();
         expect(eventDetails).to.contain('"namespace": ' + '"' + namespace + '"');
         expect(eventDetails).to.contain('"name": ' + '"' + name + '"');
       });
-  } else {
-    const events = event.split(',');
-    for (let i = 0; i < events.length; i++) {
-      eventsObj
-        .streamDetails()
-        .invoke('text')
-        .then((eventDetails) => {
-          const namespace = events[i].split(':')[0].trim();
-          const name = events[i].split(':')[1].trim();
-          expect(eventDetails).to.contain('"namespace": ' + '"' + namespace + '"');
-          expect(eventDetails).to.contain('"name": ' + '"' + name + '"');
-        });
-    }
   }
 });
 
@@ -344,19 +333,18 @@ When('the user clicks {string} button of {string}', function (button, streamName
       eventsObj.streamDetailsEyeIcon(streamName).click({ force: true });
       break;
     case 'Edit':
-      eventsObj.streamEditBtn(streamName).click({ force: true });
+      eventsObj.streamEditBtn(streamName).click();
       break;
     case 'Delete':
-      eventsObj.streamDeleteBtn(streamName).click({ force: true });
+      eventsObj.streamDeleteBtn(streamName).click();
       break;
     default:
       expect(button).to.be.oneOf(['Eye', 'Edit', 'Delete']);
-      cy.wait(1000);
   }
 });
 
 Then('the user clicks eye-off icon of {string} to close the schema', function (streamName) {
-  eventsObj.streamDetailsEyeIconOff(streamName).click();
+  eventsObj.streamDetailsEyeOffIcon(streamName).click();
 });
 
 Then('the user views Edit stream modal', function () {
@@ -376,5 +364,5 @@ Then('the user enters {string} and unselects roles', function (description) {
 });
 
 When('the user removes event chips of {string} in stream modal', function (event) {
-  eventsObj.streamChip(event).click();
+  eventsObj.streamModalEventChip(event).click();
 });
