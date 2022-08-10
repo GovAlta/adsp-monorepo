@@ -232,13 +232,13 @@ Feature: Service status
     Given a tenant admin user is on status overview page
     When the user clicks Edit button for contact information
     Then the user views Edit contact information modal on the status overview page
-    When the user enters "autotest-status-admin@gov.ab.ca" in email field
+    When the user enters "autotest-status-admin@gov.ab.ca" in Edit contact information modal
     And the user clicks Save button on contact information modal
     Then the user views "autotest-status-admin@gov.ab.ca" as the email of contact information
     # Visiting public status page
     Then the user should be able to view "autotest-status-admin@gov.ab.ca" as support email in the status app for "Autotest" tenant
     Given a tenant admin user is on status overview page
     When the user clicks Edit button for contact information
-    And the user enters "test@gov.ab.ca" in email field
+    And the user enters "test@gov.ab.ca" in Edit contact information modal
     And the user clicks Save button on contact information modal
     Then the user views "test@gov.ab.ca" as the email of contact information
