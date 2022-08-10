@@ -679,6 +679,7 @@
           "options": {
             "outputPath": "dist/apps/status-app",
             "index": "apps/status-app/src/index.html",
+            "baseHref": "/",
             "main": "apps/status-app/src/main.tsx",
             "polyfills": "apps/status-app/src/polyfills.ts",
             "tsConfig": "apps/status-app/tsconfig.app.json",
@@ -691,7 +692,7 @@
                 "output": "./"
               }
             ],
-            "styles": ["apps/status-app/src/styles.css"],
+            "styles": ["apps/status-app/src/styles.scss"],
             "scripts": [],
             "webpackConfig": "@nrwl/react/plugins/webpack"
           },
