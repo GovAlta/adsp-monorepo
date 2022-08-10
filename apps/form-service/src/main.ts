@@ -70,7 +70,10 @@ const initializeApp = async (): Promise<express.Application> => {
         FormStatusSubmittedDefinition,
       ],
       notifications: [FormStatusNotificationType],
-      configurationSchema,
+      configuration: {
+        description: 'Definitions of forms with configuration of roles allowed to submit and assess.',
+        schema: configurationSchema,
+      },
       configurationConverter: (config: Record<string, FormDefinition>, tenantId) =>
         Object.entries(config).reduce(
           (defs, [id, def]) => ({ ...defs, [id]: new FormDefinitionEntity(tenantId, def) }),
