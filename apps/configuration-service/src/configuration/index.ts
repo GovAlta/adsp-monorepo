@@ -19,7 +19,7 @@ export const applyConfigurationMiddleware = async (
   const schema = {
     type: 'object',
     patternProperties: {
-      '^[a-zA-Z0-9-]{1,30}:[a-zA-Z0-9-]{1,30}$': {
+      '^[a-zA-Z0-9-]{1,50}:[a-zA-Z0-9-]{1,50}$': {
         type: 'object',
         properties: {
           description: {
