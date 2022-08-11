@@ -1,6 +1,6 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { decodeAfter, encodeNext, Results } from '@core-services/core-common';
-import { Document, model, Model, Types } from 'mongoose';
+import { Document, model, Model, PipelineStage, Types } from 'mongoose';
 import {
   NotificationConfiguration,
   NotificationTypeEntity,
@@ -76,7 +76,7 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
       query.subscriberId = new Types.ObjectId(criteria.subscriberIdEquals);
     }
 
-    const pipeline: Record<string, unknown>[] = [
+    const pipeline: PipelineStage[] = [
       { $match: query },
       {
         $lookup: {

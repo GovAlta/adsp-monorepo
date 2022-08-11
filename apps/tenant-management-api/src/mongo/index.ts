@@ -17,7 +17,7 @@ interface MongoRepositoryProps {
   MONGO_TLS: boolean;
 }
 
-type Repositories =  TenantRepositories;
+type Repositories = TenantRepositories;
 
 export const createRepositories = ({
   logger,
@@ -34,9 +34,6 @@ export const createRepositories = ({
       {
         user: MONGO_USER,
         pass: MONGO_PASSWORD,
-        useNewUrlParser: true,
-        useFindAndModify: false,
-        useUnifiedTopology: true,
       },
       (err) => {
         if (err) {

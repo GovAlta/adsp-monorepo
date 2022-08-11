@@ -12,6 +12,10 @@ describe('ConfigurationEntity', () => {
     getRevisions: jest.fn(),
     saveRevision: jest.fn(),
   };
+  const activeRevisionMock = {
+    get: jest.fn(),
+    setActiveRevision: jest.fn(),
+  };
   const validationMock = {
     setSchema: jest.fn(),
     validate: jest.fn(),
@@ -425,8 +429,63 @@ describe('ConfigurationEntity', () => {
       repositoryMock.getRevisions.mockResolvedValueOnce(revisions);
 
       const result = await entity.getRevisions();
+
       expect(result).toBe(revisions);
       expect(repositoryMock.getRevisions).toHaveBeenCalledWith(entity, 10, null, null);
+    });
+  });
+
+  describe('setActiveRevision', () => {
+    it('can be created', () => {
+      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
+        revision: 2,
+        configuration: {} as unknown,
+      });
+      expect(entity).toBeTruthy();
+    });
+
+    it('sets active revision', async () => {
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        repositoryMock,
+        validationMock,
+        {
+          revision: 1,
+          configuration: {} as unknown,
+        },
+        null,
+        null,
+        null,
+        activeRevisionMock
+      );
+      const active = 2;
+
+      activeRevisionMock.setActiveRevision.mockImplementationOnce((_entity, rev) => {
+        return { active: rev };
+      });
+
+      const activeRevisionResponse = await entity.setActiveRevision(
+        {
+          isCore: true,
+          roles: [ConfigurationServiceRoles.ConfiguredService],
+        } as User,
+        active
+      );
+      expect(activeRevisionResponse.active).toBe(2);
+    });
+
+    it('can throw for unauthorized user', async () => {
+      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
+        revision: 2,
+        configuration: {} as unknown,
+      });
+
+      const active = 2;
+
+      await expect(entity.setActiveRevision({ id: 'test', name: 'test' } as User, active)).rejects.toThrow(
+        /User test \(ID: test\) not permitted to modify configuration./
+      );
     });
   });
 });

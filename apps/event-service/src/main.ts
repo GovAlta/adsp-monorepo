@@ -55,7 +55,10 @@ const initializeApp = async (): Promise<express.Application> => {
       displayName: 'Event service',
       description: 'Service for sending of domain events.',
       roles: [EventServiceRoles.sender],
-      configurationSchema,
+      configuration: {
+        description: 'Definitions of events including payload schema.',
+        schema: configurationSchema,
+      },
       configurationConverter: (config: Record<string, Namespace>, tenantId) => {
         return config
           ? Object.getOwnPropertyNames(config).reduce(
@@ -74,7 +77,21 @@ const initializeApp = async (): Promise<express.Application> => {
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
-      values: [ServiceMetricsValueDefinition],
+      values: [
+        ServiceMetricsValueDefinition,
+        {
+          id: 'event',
+          name: 'Event log',
+          description: 'Values representing entries in the event log.',
+          jsonSchema: {
+            type: 'object',
+            properties: {
+              payload: { type: 'object' },
+            },
+            required: ['payload'],
+          },
+        },
+      ],
     },
     { logger }
   );

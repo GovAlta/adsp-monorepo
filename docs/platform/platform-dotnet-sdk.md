@@ -68,6 +68,9 @@ The SDK follows ASP.NET conventions of extension methods and options pattern. In
     SwaggerJsonPath = "docs/v1/swagger.json",
     ApiPath = "script/v1"
   });
+
+  // Use authorization middleware after ADSP in order to use default authentication scheme.
+  app.UseAuthorization();
 ```
 
 ## Authorizing requests
