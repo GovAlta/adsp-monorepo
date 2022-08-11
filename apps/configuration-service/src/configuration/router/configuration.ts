@@ -81,11 +81,13 @@ export const getConfigurationEntity =
     }
   };
 
-const mapConfiguration = (configuration: ConfigurationEntity): ConfigurationMap => ({
-  namespace: configuration.namespace,
-  name: configuration.name,
-  latest: configuration.latest,
-});
+const mapConfiguration = (configuration: ConfigurationEntity): ConfigurationMap => {
+  return {
+    namespace: configuration.namespace,
+    name: configuration.name,
+    latest: configuration.latest,
+  };
+};
 
 const mapActiveRevision = (activeRevision: ConfigurationEntity): unknown => ({
   namespace: activeRevision.namespace,
@@ -99,13 +101,19 @@ export const getConfiguration =
   async (req, res) => {
     const configuration: ConfigurationEntity = req[ENTITY_KEY];
 
-    let active = null;
-    if (configuration.active) {
-      active = await (await configuration.getRevisions(1, null, { revision: configuration.active })).results[0];
-    }
-
-    res.send({ ...mapResult(configuration), active });
+    res.send(mapResult(configuration));
   };
+
+export const getConfigurationWithActive = (): RequestHandler => async (req, res) => {
+  const configuration: ConfigurationEntity = req[ENTITY_KEY];
+
+  let active = null;
+  if (configuration.active) {
+    active = await (await configuration.getRevisions(1, null, { revision: configuration.active })).results[0];
+  }
+
+  res.send({ ...mapConfiguration(configuration), active });
+};
 
 export const patchConfigurationRevision =
   (logger: Logger, eventService: EventService): RequestHandler =>
@@ -342,7 +350,7 @@ export function createConfigurationRouter({
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     getConfigurationEntity(serviceId, configurationRepository, (req) => req.query.core !== undefined),
-    getConfiguration()
+    getConfigurationWithActive()
   );
 
   router.get(
