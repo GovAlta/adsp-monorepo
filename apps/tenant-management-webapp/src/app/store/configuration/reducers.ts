@@ -10,6 +10,7 @@ import {
   REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION,
   RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION,
   SET_CONFIGURATION_REVISION_SUCCESS_ACTION,
+  RESET_IMPORTS_LIST_ACTION,
 } from './action';
 import {
   ConfigurationDefinitionState,
@@ -23,7 +24,6 @@ const defaultState: ConfigurationDefinitionState = {
   tenantConfigDefinitions: undefined,
   isAddedFromOverviewPage: false,
   imports: [],
-  previousImportCount: 0,
   importedConfigurationError: [],
 };
 
@@ -62,7 +62,7 @@ export default function (
 
       let changeExists = false;
 
-      for (let i = 0; i < imports.length - state.previousImportCount; i++) {
+      for (let i = 0; i < imports.length; i++) {
         const imp = imports[i];
 
         if (action.payload.map((error) => error.name).includes(`${imp.namespace}:${imp.name}`)) {
@@ -84,8 +84,9 @@ export default function (
       return {
         ...state,
         importedConfigurationError: [],
-        previousImportCount: state.imports.length,
       };
+    case RESET_IMPORTS_LIST_ACTION:
+      return { ...state, imports: [] };
     case SET_CONFIGURATION_REVISION_SUCCESS_ACTION: {
       const stateImports = JSON.parse(JSON.stringify(state.imports));
       action.payload.data.success = true;
