@@ -192,7 +192,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                   }
                 }}
                 bodyEditorHintText={
-                  "*GOA default header and footer wrapper is applied if the template doesn't include proper <html> opening and closing tags"
+                  "*GOA default styles are applied if the template doesn't include proper <html> opening and closing tags"
                 }
                 suggestion={getSuggestion()}
                 bodyEditorConfig={bodyEditorConfig}
