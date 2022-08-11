@@ -276,7 +276,6 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
           error: err.message,
         });
         yield put(getReplaceConfigurationErrorSuccessAction(replaceErrorConfiguration));
-        yield put(ErrorNotification({ message: err.message }));
       }
     } else {
       replaceErrorConfiguration.push({
