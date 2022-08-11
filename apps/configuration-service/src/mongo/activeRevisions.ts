@@ -18,7 +18,6 @@ export class MongoActiveRevisionRepository implements ActiveRevisionRepository {
     const activeDoc = await new Promise<ActiveRevisionDoc>((resolve, reject) => {
       this.activeRevisionModel
         .find(query, null, { lean: true })
-        .sort({ revision: -1 })
         .limit(1)
         .exec((err, results: ActiveRevisionDoc[]) => (err ? reject(err) : resolve(results[0])));
     });
