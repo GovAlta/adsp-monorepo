@@ -314,7 +314,7 @@ Then(
   function (streamName, description, event, role) {
     eventsObj.streamDetails().should('contain', streamName);
     eventsObj.streamDetails().should('contain', description);
-    eventsObj.streamDetails().should('contain', 'false');
+    eventsObj.streamDetails().should('contain', '"publicSubscribe": false');
     const roles = role.split(',');
     for (let i = 0; i < roles.length; i++) {
       eventsObj
