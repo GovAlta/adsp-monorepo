@@ -229,7 +229,7 @@ When('the user enters {string}, {string}, {string}, {string}', function (name, d
       }
     })
     .then(() => {
-      for (let i = 0; i < events.length; i++) {
+      for (let i = 0; i < roles.length; i++) {
         eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
       }
     });
@@ -309,23 +309,36 @@ Then('the user {string} the stream of {string}, {string}', function (viewOrNot, 
   });
 });
 
-Then('the user views the stream details of {string}, {string}, {string}', function (streamName, description, event) {
-  eventsObj.streamDetails().should('contain', streamName);
-  eventsObj.streamDetails().should('contain', description);
-
-  const events = event.split(',');
-  for (let i = 0; i < events.length; i++) {
-    eventsObj
-      .streamDetails()
-      .invoke('text')
-      .then((eventDetails) => {
-        const namespace = events[i].split(':')[0].trim();
-        const name = events[i].split(':')[1].trim();
-        expect(eventDetails).to.contain('"namespace": ' + '"' + namespace + '"');
-        expect(eventDetails).to.contain('"name": ' + '"' + name + '"');
-      });
+Then(
+  'the user views the stream details of {string}, {string}, {string}, {string}',
+  function (streamName, description, event, role) {
+    eventsObj.streamDetails().should('contain', streamName);
+    eventsObj.streamDetails().should('contain', description);
+    eventsObj.streamDetails().should('contain', 'false');
+    const roles = role.split(',');
+    for (let i = 0; i < roles.length; i++) {
+      eventsObj
+        .streamDetails()
+        .invoke('text')
+        .then((roleDetails) => {
+          const subscriberRoles = roles[i].split(',')[0].trim();
+          expect(roleDetails).to.contain(subscriberRoles);
+        });
+    }
+    const events = event.split(',');
+    for (let i = 0; i < events.length; i++) {
+      eventsObj
+        .streamDetails()
+        .invoke('text')
+        .then((eventDetails) => {
+          const namespace = events[i].split(':')[0].trim();
+          const name = events[i].split(':')[1].trim();
+          expect(eventDetails).to.contain('"namespace": ' + '"' + namespace + '"');
+          expect(eventDetails).to.contain('"name": ' + '"' + name + '"');
+        });
+    }
   }
-});
+);
 
 When('the user clicks {string} button of {string}', function (button, streamName) {
   switch (button) {
@@ -351,18 +364,28 @@ Then('the user views Edit stream modal', function () {
   eventsObj.streamModalTitle().invoke('text').should('eq', 'Edit stream');
 });
 
-Then('the user enters {string} and unselects roles', function (description) {
+Then('the user enters {string}, {string}', function (description, role) {
   eventsObj.streamModalDescriptionInput().clear().type(description);
-
-  eventsObj.streamModalRolesCheckboxes().then((elements) => {
-    for (let i = 0; i < elements.length; i++) {
-      if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
-        elements[i].click();
+  const roles = role.split(',');
+  eventsObj
+    .streamModalRolesCheckboxes()
+    .then((elements) => {
+      for (let i = 0; i < elements.length; i++) {
+        if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
+          elements[i].click();
+        }
       }
-    }
-  });
+    })
+    .then(() => {
+      for (let i = 0; i < roles.length; i++) {
+        eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
+      }
+    });
 });
 
 When('the user removes event chips of {string} in stream modal', function (event) {
-  eventsObj.streamModalEventChip(event).click();
+  const eventChip = event.split(',');
+  for (let i = 0; i < eventChip.length; i++) {
+    eventsObj.streamModalEventChip(eventChip).click();
+  }
 });
