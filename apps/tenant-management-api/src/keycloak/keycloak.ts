@@ -123,7 +123,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
       });
     }
 
-    this.logger.debug(`Add realm management roles to user: ${util.inspect(roleMapping)}`, LOG_CONTEXT);
+    this.logger.debug(`Adding realm management roles to user: ${util.inspect(roleMapping)}`, LOG_CONTEXT);
     await client.users.addClientRoleMappings(roleMapping);
 
     this.logger.debug(`Adding tenant admin role to user.`, LOG_CONTEXT);

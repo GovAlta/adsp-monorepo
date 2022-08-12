@@ -174,7 +174,10 @@ describe('KeycloakRealmService', () => {
         .mockResolvedValueOnce(testerRole);
 
       keycloakClientMock.users.create.mockResolvedValueOnce({ id: 'admin-user-123' });
-      keycloakClientMock.clients.listRoles.mockResolvedValueOnce([{ id: 'realm-admin-role-123', name: 'realm-admin' }]);
+      keycloakClientMock.clients.listRoles.mockResolvedValueOnce([
+        { id: 'realm-admin-role-123', name: 'realm-admin' },
+        { id: 'realm-admin-role-321', name: 'manage-realm' },
+      ]);
 
       axiosMock.get.mockResolvedValueOnce({ data: [{ id: 'execution-123' }] });
 
@@ -219,7 +222,7 @@ describe('KeycloakRealmService', () => {
         expect.objectContaining({
           id: 'admin-user-123',
           realm,
-          roles: expect.arrayContaining([expect.objectContaining({ id: 'realm-admin-role-123' })]),
+          roles: expect.arrayContaining([expect.objectContaining({ id: 'realm-admin-role-321' })]),
         })
       );
       expect(keycloakClientMock.users.addClientRoleMappings).toHaveBeenCalledWith(
