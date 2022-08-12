@@ -95,28 +95,28 @@ export class KeycloakRealmServiceImpl implements RealmService {
       })
     )[0];
 
-    const roles = await client.clients.listRoles({
-      id: realmManagementClient.id,
-      realm: realm,
-    });
+    const role = await client.clients.findRole({ id: realmManagementClient.id, roleName: 'realm-admin' });
+    if (!role) {
+      throw new Error('Failed to find admin role for realm management');
+    }
+    this.logger.debug(`Found realm-management realm-admin role with ID: ${role.id}`, LOG_CONTEXT);
 
     const roleMapping = {
       realm: realm,
       id: user.id,
       clientUniqueId: realmManagementClient.id,
-      roles: [],
+      roles: [
+        {
+          id: role.id,
+          name: role.name,
+        },
+      ],
     };
 
-    for (const role of roles) {
-      roleMapping.roles.push({
-        id: role.id,
-        name: role.name,
-      });
-    }
-
-    this.logger.debug(`Add realm management roles to user: ${util.inspect(roleMapping)}`, LOG_CONTEXT);
+    this.logger.debug(`Adding realm management role to user: ${util.inspect(roleMapping)}`, LOG_CONTEXT);
     await client.users.addClientRoleMappings(roleMapping);
 
+    this.logger.debug(`Adding tenant admin role to user.`, LOG_CONTEXT);
     await client.users.addClientRoleMappings({
       id: user.id,
       realm: realm,
