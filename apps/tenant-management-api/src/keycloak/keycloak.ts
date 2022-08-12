@@ -87,6 +87,8 @@ export class KeycloakRealmServiceImpl implements RealmService {
       enabled: true,
     };
     const user = await client.users.create(adminUser);
+    this.logger.debug(`Created realm admin user with ID: ${user.id}`, LOG_CONTEXT);
+
     // Add realm admin roles
     const realmManagementClient = (
       await client.clients.find({
@@ -95,7 +97,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
       })
     )[0];
 
-    const role = await client.clients.findRole({ id: realmManagementClient.id, roleName: 'realm-admin' });
+    const role = await client.clients.findRole({ realm, id: realmManagementClient.id, roleName: 'realm-admin' });
     if (!role) {
       throw new Error('Failed to find admin role for realm management');
     }
