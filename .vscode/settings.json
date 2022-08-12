@@ -8,6 +8,7 @@
   "cucumberautocomplete.strictGherkinCompletion": false,
   "cucumberautocomplete.smartSnippets": true,
   "cucumberautocomplete.stepsInvariants": true,
+  "dotnet-test-explorer.testProjectPath": "./libs/adsp-service-net-sdk/",
   "editor.formatOnSave": true,
   "editor.trimAutoWhitespace": true,
   "editor.tabSize": 2,
