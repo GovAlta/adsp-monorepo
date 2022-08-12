@@ -112,8 +112,8 @@ export class KeycloakRealmServiceImpl implements RealmService {
 
     for (const role of roles) {
       // Note: there appears to be some issue with accessing the composite realm-admin role from master realm client context.
-      // Add all the roles included in it instead.
-      if (role.name === 'realm-admin') {
+      // Add all the roles except for roles that are not default granted to the master realm service account with create-realm role.
+      if (role.name === 'realm-admin' || role.name === 'impersonation') {
         continue;
       }
 

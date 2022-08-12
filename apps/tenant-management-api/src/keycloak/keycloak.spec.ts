@@ -177,6 +177,7 @@ describe('KeycloakRealmService', () => {
       keycloakClientMock.clients.listRoles.mockResolvedValueOnce([
         { id: 'realm-admin-role-123', name: 'realm-admin' },
         { id: 'realm-admin-role-321', name: 'manage-realm' },
+        { id: 'realm-admin-role-456', name: 'impersonation' },
       ]);
 
       axiosMock.get.mockResolvedValueOnce({ data: [{ id: 'execution-123' }] });
