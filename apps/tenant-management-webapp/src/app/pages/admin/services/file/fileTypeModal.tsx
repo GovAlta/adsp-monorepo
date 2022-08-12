@@ -130,7 +130,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   const isNew = props.type === 'new';
   const [fileType, setFileType] = useState(props.fileType);
   const title = isNew ? 'Add file type' : 'Edit file type';
-  const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
+  const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
 
   const duplicateFileTypeCheck = (names: string[]): Validator => {
     return (name: string) => {
