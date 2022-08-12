@@ -97,25 +97,33 @@ export class KeycloakRealmServiceImpl implements RealmService {
       })
     )[0];
 
-    const role = await client.clients.findRole({ realm, id: realmManagementClient.id, roleName: 'realm-admin' });
-    if (!role) {
-      throw new Error('Failed to find admin role for realm management');
-    }
-    this.logger.debug(`Found realm-management realm-admin role with ID: ${role.id}`, LOG_CONTEXT);
+    const roles = await client.clients.listRoles({
+      id: realmManagementClient.id,
+      realm: realm,
+    });
+    this.logger.debug('Retrieved realm-management roles.', LOG_CONTEXT);
 
     const roleMapping = {
       realm: realm,
       id: user.id,
       clientUniqueId: realmManagementClient.id,
-      roles: [
-        {
-          id: role.id,
-          name: role.name,
-        },
-      ],
+      roles: [],
     };
 
-    this.logger.debug(`Adding realm management role to user: ${util.inspect(roleMapping)}`, LOG_CONTEXT);
+    for (const role of roles) {
+      // Note: there appears to be some issue with accessing the composite realm-admin role from master realm client context.
+      // Add all the roles included in it instead.
+      if (role.name === 'realm-admin') {
+        continue;
+      }
+
+      roleMapping.roles.push({
+        id: role.id,
+        name: role.name,
+      });
+    }
+
+    this.logger.debug(`Adding realm management roles to user: ${util.inspect(roleMapping)}`, LOG_CONTEXT);
     await client.users.addClientRoleMappings(roleMapping);
 
     this.logger.debug(`Adding tenant admin role to user.`, LOG_CONTEXT);
