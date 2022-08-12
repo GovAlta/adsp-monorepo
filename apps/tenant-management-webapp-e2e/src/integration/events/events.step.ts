@@ -213,7 +213,7 @@ When('the user enters {string}, {string}, {string}, {string}', function (name, d
     })
     .then(() => {
       for (let i = 0; i < events.length; i++) {
-        eventsObj.streamModalEventDropdownItem(events[i].trim()).click({ force: true });
+        eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
       }
     });
   eventsObj.streamModalEventDropdownBackground().click({ force: true }); // To collapse the event dropdown
@@ -356,7 +356,7 @@ When('the user clicks {string} button of {string}', function (button, streamName
   }
 });
 
-Then('the user clicks eye-off icon of {string} to close the schema', function (streamName) {
+Then('the user clicks eye-off button of {string}', function (streamName) {
   eventsObj.streamDetailsEyeOffIcon(streamName).click();
 });
 

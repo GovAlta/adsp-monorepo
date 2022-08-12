@@ -115,14 +115,14 @@ Feature: Events
     Then the user "views" the stream of "autotest-addEditDelete-stream", "auto-test-role1, auto-test-role2"
     When the user clicks "Eye" button of "autotest-addEditDelete-stream"
     Then the user views the stream details of "autotest-addEditDelete-stream", "autotest-stream-desc", "status-service:application-healthy, file-service:file-deleted", "auto-test-role1, auto-test-role2"
-    And the user clicks eye-off icon of "autotest-addEditDelete-stream" to close the schema
+    And the user clicks eye-off button of "autotest-addEditDelete-stream"
     # Edit a stream
     When the user clicks "Edit" button of "autotest-addEditDelete-stream"
     Then the user views Edit stream modal
     When the user removes event chips of "status-service:application-healthy" in stream modal
     And the user enters "autotest-stream-desc2", "auto-test-role3, beta-tester"
     And the user clicks Save button in Stream modal
-    Then the user "should not view" the stream of "autotest-addEditDelete-stream", "auto-test-role1, auto-test-role2"
+    Then the user "views" the stream of "autotest-addEditDelete-stream", "auto-test-role3, beta-tester"
     When the user clicks "Eye" button of "autotest-addEditDelete-stream"
     Then the user views the stream details of "autotest-addEditDelete-stream", "autotest-stream-desc2", "file-service:file-deleted", "auto-test-role3, beta-tester"
     # Delete a stream
