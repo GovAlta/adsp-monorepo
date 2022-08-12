@@ -7,7 +7,7 @@ namespace Adsp.Sdk;
 public class AdspId
 {
   private static readonly Regex UrnRegex = new(
-    "^(?i:urn):ads(?<namespace>:[a-z0-9-]{1,30})?(?<service>:[a-z0-9-]{1,30})?(?<api>:[a-z0-9-]{1,30})?(?<resource>:[a-zA-Z0-9-_/ ]{1,1000})?$",
+    "^(?i:urn):ads(?<namespace>:[a-zA-Z0-9-]{1,50})?(?<service>:[a-zA-Z0-9-]{1,50})?(?<api>:[a-zA-Z0-9-]{1,50})?(?<resource>:[a-zA-Z0-9-_/ ]{1,1000})?$",
     RegexOptions.Singleline | RegexOptions.CultureInvariant
   );
 

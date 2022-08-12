@@ -5,6 +5,7 @@ import commonlib from '../common/common-library';
 
 const directoryObj = new DirectoryServicePage();
 const commonObj = new Common();
+let responseObj: Cypress.Response<any>;
 
 Then('the user views the aside item {string} with the aside item link {string}', function (asideItem, asideLink) {
   directoryObj.directoryAsideItems(asideItem, asideLink).should('have.attr', 'href');
@@ -168,4 +169,30 @@ Then('the user views disabled inputs for Service, API and URL fields', function 
   directoryObj.entryModalServiceField().should('be.disabled');
   directoryObj.entryModalApiField().should('be.disabled');
   directoryObj.entryModalUrlField().should('be.disabled');
+});
+
+When(
+  'the user sends an anonymous request to directory service to get all {string} tenant service entries',
+  function (tenant) {
+    const requestURL = Cypress.env('directoryServiceApiUrl') + '/directory/v2/namespaces/' + tenant + '/entries';
+    cy.request({
+      method: 'GET',
+      url: requestURL,
+      failOnStatusCode: false,
+    }).then(function (response) {
+      responseObj = response;
+    });
+  }
+);
+
+Then('the user receives response with all services and their URLs for {string}', function (tenant) {
+  // Response with 200 status code and an array
+  expect(responseObj.status).to.eq(200);
+  expect(responseObj.body).to.be.a('array');
+  // Each array element contains tenant name as namespace, non-empty url and an urn with tenant name
+  for (let i = 0; i < responseObj.body.length; i++) {
+    expect(responseObj.body[i].namespace).to.equal(tenant);
+    expect(responseObj.body[i].url).to.be.not.null;
+    expect(responseObj.body[i].urn).to.contain('urn:ads:' + tenant);
+  }
 });

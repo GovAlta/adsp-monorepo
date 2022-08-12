@@ -68,7 +68,7 @@ export const ConfigurationExport: FunctionComponent = () => {
       </p>
       {indicator.show && <PageIndicator />}
       <ScrollPane>
-        <h3 className="header-background">Export configuration list</h3>
+        <h2 className="header-background">Export configuration list</h2>
         <div className="main">
           {Object.keys(sortedConfiguration.namespaces).map((namespace) => {
             return (

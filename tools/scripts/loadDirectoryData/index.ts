@@ -13,10 +13,7 @@ const logger = createLogger({
 });
 
 const loadDirectory = async () => {
-  const mongoose = await connect(`${mongoUri}/tenantDb`, {
-    useFindAndModify: false,
-    useUnifiedTopology: true,
-  });
+  const mongoose = await connect(`${mongoUri}/tenantDb`);
 
   await bootstrapDirectory(logger, file);
   await mongoose.disconnect();

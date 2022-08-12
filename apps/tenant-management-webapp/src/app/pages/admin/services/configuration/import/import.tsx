@@ -8,6 +8,7 @@ import {
   replaceConfigurationDataAction,
   getReplaceConfigurationErrorAction,
   resetReplaceConfigurationListAction,
+  resetImportsListAction,
 } from '@store/configuration/action';
 import { PageIndicator } from '@components/Indicator';
 import { ConfigDefinition } from '@store/configuration/model';
@@ -103,6 +104,8 @@ export const ConfigurationImport: FunctionComponent = () => {
   };
   const onImportConfirm = () => {
     setOpenImportModal(false);
+
+    dispatch(resetImportsListAction());
 
     for (const config in importConfigJson) {
       for (const name in importConfigJson[config]) {

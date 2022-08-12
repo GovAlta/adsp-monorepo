@@ -10,11 +10,11 @@ import { Request, RequestHandler, Router } from 'express';
 import { body, checkSchema, query } from 'express-validator';
 import { isEqual as isDeepEqual } from 'lodash';
 import { Logger } from 'winston';
-import { configurationUpdated, revisionCreated } from '../events';
+import { configurationUpdated, revisionCreated, activeRevisionSet } from '../events';
 import { ConfigurationEntity } from '../model';
 import { ConfigurationRepository, Repositories } from '../repository';
 import { ConfigurationDefinition, ConfigurationDefinitions, ConfigurationRevision } from '../types';
-import { OPERATION_DELETE, OPERATION_REPLACE, OPERATION_UPDATE, PatchRequests } from './types';
+import { OPERATION_DELETE, OPERATION_REPLACE, OPERATION_UPDATE, PatchRequests, ConfigurationMap } from './types';
 
 export interface ConfigurationRouterProps extends Repositories {
   serviceId: AdspId;
@@ -73,6 +73,7 @@ export const getConfigurationEntity =
       }
 
       req[ENTITY_KEY] = entity;
+
       benchmark(req, 'get-entity-time');
       next();
     } catch (err) {
@@ -80,18 +81,39 @@ export const getConfigurationEntity =
     }
   };
 
-const mapConfiguration = (configuration: ConfigurationEntity): unknown => ({
-  namespace: configuration.namespace,
-  name: configuration.name,
-  latest: configuration.latest,
+const mapConfiguration = (configuration: ConfigurationEntity): ConfigurationMap => {
+  return {
+    namespace: configuration.namespace,
+    name: configuration.name,
+    latest: configuration.latest,
+  };
+};
+
+const mapActiveRevision = (activeRevision: ConfigurationEntity): unknown => ({
+  namespace: activeRevision.namespace,
+  name: activeRevision.name,
+  tenantId: activeRevision.tenantId,
+  active: activeRevision.active,
 });
 
 export const getConfiguration =
   (mapResult = mapConfiguration): RequestHandler =>
   async (req, res) => {
     const configuration: ConfigurationEntity = req[ENTITY_KEY];
+
     res.send(mapResult(configuration));
   };
+
+export const getConfigurationWithActive = (): RequestHandler => async (req, res) => {
+  const configuration: ConfigurationEntity = req[ENTITY_KEY];
+
+  let active = null;
+  if (configuration.active) {
+    active = await (await configuration.getRevisions(1, null, { revision: configuration.active })).results[0];
+  }
+
+  res.send({ ...mapConfiguration(configuration), active });
+};
 
 export const patchConfigurationRevision =
   (logger: Logger, eventService: EventService): RequestHandler =>
@@ -177,6 +199,34 @@ export const patchConfigurationRevision =
     }
   };
 
+export const getActiveRevision =
+  (logger: Logger): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      benchmark(req, 'operation-handler-time');
+      const user = req.user;
+      const configuration: ConfigurationEntity = req[ENTITY_KEY];
+
+      if (!configuration.active) {
+        throw new NotFoundError('Active Revision');
+      }
+
+      const revision = await configuration.getRevisions(1, null, { revision: configuration.active });
+
+      res.send(revision.results[0]);
+
+      logger.info(`Active revision ${configuration.active} ` + `retrieved by ${user.name} (ID: ${user.id}).`, {
+        tenant: configuration.tenantId?.toString(),
+        context: 'configuration-router',
+        user: `${user.name} (ID: ${user.id})`,
+      });
+
+      benchmark(req, 'operation-handler-time');
+    } catch (err) {
+      next(err);
+    }
+  };
+
 export const createConfigurationRevision =
   (logger: Logger, eventService: EventService): RequestHandler =>
   async (req, res, next) => {
@@ -184,38 +234,71 @@ export const createConfigurationRevision =
       benchmark(req, 'operation-handler-time');
 
       const user = req.user;
-      const { revision = false } = req.body;
-      if (!revision) {
+      const { revision = false, setActiveRevision } = req.body;
+
+      if (!revision && !setActiveRevision) {
         throw new InvalidOperationError('Request operation not recognized.');
-      }
+      } else if (setActiveRevision) {
+        const configuration: ConfigurationEntity = req[ENTITY_KEY];
+        const revisions = await configuration.getRevisions(1, null, { revision: setActiveRevision });
+        const results = revisions.results;
+        const currentRevision = results[0];
 
-      const configuration: ConfigurationEntity = req[ENTITY_KEY];
-      const updated = await configuration.createRevision(user);
+        if (!currentRevision) {
+          throw new InvalidOperationError(`The selected revision does not exist`);
+        }
 
-      benchmark(req, 'operation-handler-time');
-      res.send(mapConfiguration(updated));
-      if (updated.tenantId) {
+        const updated = await configuration.setActiveRevision(user, currentRevision.revision);
+
+        res.send(mapActiveRevision(updated));
         eventService.send(
-          revisionCreated(
+          activeRevisionSet(
             user,
             updated.tenantId,
             updated.namespace,
             updated.name,
-            updated.latest?.created.toISOString(),
-            updated.latest?.revision
+            updated.active,
+            configuration.active
           )
         );
-      }
 
-      logger.info(
-        `Configuration revision ${updated.namespace}:${updated.name}:${updated.latest?.revision} created` +
-          ` by ${user.name} (ID: ${user.id}).`,
-        {
-          tenant: updated.tenantId?.toString(),
-          context: 'configuration-router',
-          user: `${user.name} (ID: ${user.id})`,
+        logger.info(
+          `Active revision ${updated.namespace}:${updated.name}:${updated.active} changed to revision ${currentRevision.revision}` +
+            ` by ${user.name} (ID: ${user.id}).`,
+          {
+            tenant: updated.tenantId?.toString(),
+            context: 'configuration-router',
+            user: `${user.name} (ID: ${user.id})`,
+          }
+        );
+      } else {
+        const configuration: ConfigurationEntity = req[ENTITY_KEY];
+        const updated = await configuration.createRevision(user);
+        benchmark(req, 'operation-handler-time');
+        res.send(mapConfiguration(updated));
+        if (updated.tenantId) {
+          eventService.send(
+            revisionCreated(
+              user,
+              updated.tenantId,
+              updated.namespace,
+              updated.name,
+              updated.latest?.created.toISOString(),
+              updated.latest?.revision
+            )
+          );
         }
-      );
+
+        logger.info(
+          `Configuration revision ${updated.namespace}:${updated.name}:${updated.latest?.revision} created` +
+            ` by ${user.name} (ID: ${user.id}).`,
+          {
+            tenant: updated.tenantId?.toString(),
+            context: 'configuration-router',
+            user: `${user.name} (ID: ${user.id})`,
+          }
+        );
+      }
     } catch (err) {
       next(err);
     }
@@ -267,7 +350,7 @@ export function createConfigurationRouter({
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
     getConfigurationEntity(serviceId, configurationRepository, (req) => req.query.core !== undefined),
-    getConfiguration()
+    getConfigurationWithActive()
   );
 
   router.get(
@@ -303,6 +386,15 @@ export function createConfigurationRouter({
     createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
     getConfigurationEntity(serviceId, configurationRepository),
     getRevisions()
+  );
+
+  router.get(
+    '/configuration/:namespace/:name/active',
+    assertAuthenticatedHandler,
+    validateNamespaceNameHandler,
+    createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
+    getConfigurationEntity(serviceId, configurationRepository),
+    getActiveRevision(logger)
   );
 
   router.get(
