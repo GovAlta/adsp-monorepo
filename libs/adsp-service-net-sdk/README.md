@@ -12,4 +12,4 @@ Initialize the SDK for either platform or tenant service.
 
 ```
 
-See [ADSP Development Guide](https://glowing-parakeet-0563ab2e.pages.github.io) for details.
+See [ADSP Development Guide](https://govalta.github.io/adsp-monorepo) for details.

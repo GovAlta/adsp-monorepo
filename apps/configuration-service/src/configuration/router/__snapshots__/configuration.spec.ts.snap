@@ -1,0 +1,92 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`router createServiceConfigurationRevision can create revision 1`] = `
+Object {
+  "latest": Object {
+    "configuration": Object {},
+    "created": Any<Date>,
+    "revision": 1,
+  },
+  "name": "test-service",
+  "namespace": "platform",
+}
+`;
+
+exports[`router createServiceConfigurationRevision can set the active revision 1`] = `
+Object {
+  "active": 2,
+  "name": "test-service",
+  "namespace": "platform",
+  "tenantId": AdspId {
+    "api": "v2",
+    "namespace": "platform",
+    "resource": "/tenants/test",
+    "service": "tenant-service",
+    "toString": [Function],
+    "type": "resource",
+  },
+}
+`;
+
+exports[`router getActiveRevision can get active revision 1`] = `
+Object {
+  "data": Object {
+    "a": 42,
+  },
+  "name": "test-service",
+  "namespace": "platform",
+  "revision": 3,
+}
+`;
+
+exports[`router getRevisions can get revisions 1`] = `Object {}`;
+
+exports[`router getServiceConfiguration can get configuration 1`] = `
+Object {
+  "latest": null,
+  "name": "test-service",
+  "namespace": "platform",
+}
+`;
+
+exports[`router patchServiceConfigurationRevision can delete 1`] = `
+Object {
+  "latest": Object {
+    "configuration": Object {
+      "old": "old",
+    },
+    "lastUpdated": Any<Date>,
+    "revision": 1,
+  },
+  "name": "test-service",
+  "namespace": "platform",
+}
+`;
+
+exports[`router patchServiceConfigurationRevision can replace 1`] = `
+Object {
+  "latest": Object {
+    "configuration": Object {
+      "old": "old",
+    },
+    "lastUpdated": Any<Date>,
+    "revision": 1,
+  },
+  "name": "test-service",
+  "namespace": "platform",
+}
+`;
+
+exports[`router patchServiceConfigurationRevision can update 1`] = `
+Object {
+  "latest": Object {
+    "configuration": Object {
+      "old": "old",
+    },
+    "lastUpdated": Any<Date>,
+    "revision": 1,
+  },
+  "name": "test-service",
+  "namespace": "platform",
+}
+`;
