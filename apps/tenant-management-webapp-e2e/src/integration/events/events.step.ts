@@ -196,44 +196,61 @@ Then('the user views Add stream modal', function () {
   eventsObj.streamModalTitle().invoke('text').should('eq', 'Add stream');
 });
 
-When('the user enters {string}, {string}, {string}, {string}', function (name, description, event, role) {
-  const events = event.split(',');
+When(
+  'the user enters {string}, {string}, {string}, {string} in stream modal',
+  function (name, description, event, role) {
+    const events = event.split(',');
 
-  eventsObj.streamModalNameInput().scrollIntoView().clear().type(name);
-  eventsObj.streamModalDescriptionInput().scrollIntoView().clear().type(description);
-  eventsObj.streamModalEventDropdown().click();
-  eventsObj
-    .streamModalEventDropdownItems()
-    .then((elements) => {
-      for (let i = 0; i < elements.length; i++) {
-        if (elements[i].className.includes('goa-dropdown0-option--selected')) {
-          elements[i].click();
+    eventsObj.streamModalNameInput().scrollIntoView().clear().type(name);
+    eventsObj.streamModalDescriptionInput().scrollIntoView().clear().type(description);
+    eventsObj.streamModalEventDropdown().click();
+    eventsObj
+      .streamModalEventDropdownItems()
+      .then((elements) => {
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].className.includes('goa-dropdown0-option--selected')) {
+            elements[i].click();
+          }
         }
-      }
-    })
-    .then(() => {
-      for (let i = 0; i < events.length; i++) {
-        eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
-      }
-    });
-  eventsObj.streamModalEventDropdownBackground().click({ force: true }); // To collapse the event dropdown
-  //Roles deselection, selection
-  const roles = role.split(',');
-  eventsObj
-    .streamModalRolesCheckboxes()
-    .then((elements) => {
-      for (let i = 0; i < elements.length; i++) {
-        if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
-          elements[i].click();
+      })
+      .then(() => {
+        for (let i = 0; i < events.length; i++) {
+          eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
         }
-      }
-    })
-    .then(() => {
-      for (let i = 0; i < roles.length; i++) {
-        eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
-      }
-    });
-});
+      });
+    eventsObj.streamModalEventDropdownBackground().click({ force: true }); // To collapse the event dropdown
+    //Roles deselection, selection of roles including public
+    if (role == 'public') {
+      eventsObj
+        .streamModalPublicCheckbox()
+        .invoke('attr', 'class')
+        .then((classAttr) => {
+          if (classAttr?.includes('-selected')) {
+            cy.log('Make stream public is already checked off. ');
+          } else {
+            eventsObj.streamModalPublicCheckbox().click();
+          }
+        });
+    } else {
+      const roles = role.split(',');
+      eventsObj
+        .streamModalRolesCheckboxes()
+        .then((elements) => {
+          for (let i = 0; i < elements.length; i++) {
+            if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
+              elements[i].click();
+            }
+          }
+        })
+
+        .then(() => {
+          for (let i = 0; i < roles.length; i++) {
+            eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
+          }
+        });
+    }
+  }
+);
 
 Then('the user clicks Save button in Stream modal', function () {
   eventsObj.streamModalSaveButton().click();
@@ -343,7 +360,10 @@ Then(
 When('the user clicks {string} button of {string}', function (button, streamName) {
   switch (button) {
     case 'Eye':
-      eventsObj.streamDetailsEyeIcon(streamName).click({ force: true });
+      eventsObj.streamDetailsEyeIcon(streamName).click();
+      break;
+    case 'Eye-Off':
+      eventsObj.streamDetailsEyeOffIcon(streamName).click();
       break;
     case 'Edit':
       eventsObj.streamEditBtn(streamName).click();
@@ -356,15 +376,11 @@ When('the user clicks {string} button of {string}', function (button, streamName
   }
 });
 
-Then('the user clicks eye-off button of {string}', function (streamName) {
-  eventsObj.streamDetailsEyeOffIcon(streamName).click();
-});
-
 Then('the user views Edit stream modal', function () {
   eventsObj.streamModalTitle().invoke('text').should('eq', 'Edit stream');
 });
 
-Then('the user enters {string}, {string}', function (description, role) {
+Then('the user enters {string}, {string} in stream modal', function (description, role) {
   eventsObj.streamModalDescriptionInput().clear().type(description);
   const roles = role.split(',');
   eventsObj

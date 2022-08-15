@@ -54,7 +54,7 @@ class eventsPage {
   }
 
   definitionModalTitle() {
-    return cy.xpath('//*[@data-testid="definition-form" and @data-state="visisble"]//div[@class="modal-title"]');
+    return cy.xpath('//*[@data-testid="definition-form" and @data-state="visible"]//div[@class="modal-title"]');
   }
 
   definitionModalNamespaceField() {
@@ -229,6 +229,13 @@ class eventsPage {
 
   streamModalEventChip(name) {
     return cy.get(`[content="${name}"]`);
+    return cy.xpath(`//*[@data-testid="stream-form"]/following-sibling::td//*[@data-testid="delete-stream"]`);
+  }
+
+  streamModalPublicCheckbox() {
+    return cy.xpath(
+      '//*[@data-testid="stream-form"]//input[@name="stream-anonymousRead-checkbox"]/parent::*[contains(@class, "goa-checkbox-container")]'
+    );
   }
 }
 
