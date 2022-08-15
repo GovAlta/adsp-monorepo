@@ -285,7 +285,7 @@ Then('the user {string} the event of {string} in {string}', function (viewOrNot,
 });
 
 When('the user clicks {string} button for {string} in {string}', function (buttonName, event, cardTitle) {
-  switch (buttonName) {
+  switch (buttonName.toLowerCase()) {
     case 'edit':
       notificationsObj.notificationTypeEventEditButton(cardTitle, event).click();
       cy.wait(2000);
@@ -293,8 +293,11 @@ When('the user clicks {string} button for {string} in {string}', function (butto
     case 'delete':
       notificationsObj.eventDeleteIcon(cardTitle, event).click();
       break;
+    case 'reset':
+      notificationsObj.notificationTypeEventResetBtn(cardTitle, event).click();
+      break;
     default:
-      expect(buttonName).to.be.oneOf(['edit', 'delete']);
+      expect(buttonName.toLowerCase()).to.be.oneOf(['edit', 'delete', 'reset']);
   }
 });
 
@@ -799,7 +802,7 @@ When('the user selects {string} tab on the event template', function (tab) {
 });
 
 When(
-  'the user enters {string} as subject and {string} as body {string} template page',
+  'the user enters {string} as subject and {string} as body on {string} template page',
   function (subjectText, bodyText, channel) {
     cy.wait(1000); // Wait for the template editor elements to show
     notificationsObj.addTemplateModalSubject(channel).type(subjectText);
@@ -846,4 +849,32 @@ When('the user views the link for managing email subscription', function () {
     .find('a[href]')
     .invoke('attr', 'href')
     .should('contain', urlSubscriptionLogin);
+});
+
+When('the user clicks Save all button in template modal', function () {
+  cy.wait(2000);
+  notificationsObj.editTemplateModalSaveallBtn().click();
+  cy.wait(5000);
+});
+
+Then('the user {string} Reset button for {string} in {string}', function (viewOrNot, eventName, typeName) {
+  switch (viewOrNot) {
+    case 'views':
+      notificationsObj.notificationTypeEventResetBtn(typeName, eventName).should('exist');
+      break;
+    case 'should not view':
+      notificationsObj.notificationTypeEventResetBtn(typeName, eventName).should('not.exist');
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
+
+Then('the user views Reset email template modal', function () {
+  notificationsObj.resetEmailTemplateModalTitle().should('have.text', 'Reset email template');
+});
+
+When('the user clicks Delete button in Reset email template modal', function () {
+  notificationsObj.resetEmailTemplateModalDeleteBtn().click();
+  cy.wait(2000); // Wait for the modal and reset button to go away
 });
