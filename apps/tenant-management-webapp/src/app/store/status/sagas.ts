@@ -17,6 +17,7 @@ import {
   UpdateStatusContactInformationAction,
   FetchStatusConfigurationService,
   FetchStatusConfigurationSucceededService,
+  toggleApplicationStatusSuccess,
 } from './actions';
 import { ConfigState } from '@store/config/models';
 import { SetApplicationStatusAction, setApplicationStatusSuccess } from './actions/setApplicationStatus';
@@ -133,16 +134,10 @@ export function* toggleApplicationStatus(action: ToggleApplicationStatusAction):
       action.payload.enabled
     );
 
-    // status entries
-    const entryMap: EndpointStatusEntry[] = yield call(
-      [api, api.getEndpointStatusEntries],
-      action.payload.applicationId
-    );
-    data.endpoint.statusEntries = entryMap;
     data.enabled = action.payload.enabled;
     // set as pending after toggling
     data.internalStatus = 'pending';
-    yield put(setApplicationStatusSuccess(data));
+    yield put(toggleApplicationStatusSuccess(data));
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
   }
