@@ -60,102 +60,83 @@ public class ConfigurationMiddlewareTests
     // options.
     // options.Setup(x => x.Value).Returns(true);
 
-    var middleware = new ConfigurationMiddleware(logger, ConfigurationService, options.Object, requestDelegate);
+    var middleware = () => new ConfigurationMiddleware(logger, ConfigurationService, options.Object, requestDelegate);
     // Console.WriteLine("aaqa");
     // Console.WriteLine(middleware);
     //middleware.Should().NotBeNull();
     middleware.Should().Throw<ArgumentException>();
   }
 
-  //[Fact]
-  // public async Task CanUseUserConfiguration()
-  // {
-  //   var logger = Mock.Of<ILogger<ConfigurationMiddleware>>();
-  //   var ConfigurationService = Mock.Of<IConfigurationService>();
-  //   var requestDelegate = Mock.Of<RequestDelegate>();
+  [Fact]
+  public async Task CanUseInvokeAsync()
+  {
+    var logger = Mock.Of<ILogger<ConfigurationMiddleware>>();
+    var ConfigurationService = Mock.Of<IConfigurationService>();
+    var requestDelegate = Mock.Of<RequestDelegate>();
 
-  //    var options = new Mock<IOptions<AdspOptions>>();
-  //   options
-  //     .Setup(o => o.Value)
-  //     .Returns(
-  //       new AdspOptions
-  //       {
-  //         ServiceId = AdspId.Parse("urn:ads:test:test-service"),
-  //       }
-  //     );
+    var seviceId = AdspId.Parse("urn:ads:test:test-service");
 
-  //   var middleware = new ConfigurationMiddleware(logger, ConfigurationService, options.Object, requestDelegate);
+    var options = new Mock<IOptions<AdspOptions>>();
+    options
+      .Setup(o => o.Value)
+      .Returns(
+        new AdspOptions
+        {
+          ServiceId = seviceId,
+        }
+      );
 
-  //   var ConfigurationId = AdspId.Parse("urn:ads:platform:Configuration-service:v2:/Configurations/test");
-  //   var contextItems = new Dictionary<object, object?>
-  //   {
-  //     {
-  //       AccessConstants.AdspContextKey,
-  //       new User(false, new Configuration { Id = ConfigurationId }, "tester", "tester", null)
-  //     }
-  //   };
-  //   var context = new Mock<HttpContext>();
-  //   context.Setup((c) => c.Items).Returns(contextItems);
+    var context = new Mock<HttpContext>();
 
-  //   await middleware.InvokeAsync(context.Object);
-  //   contextItems.Should().ContainKey(ConfigurationMiddleware.ConfigurationContextKey);
-  //   contextItems[ConfigurationMiddleware.ConfigurationContextKey].Should().Be((ConfigurationId, ConfigurationService));
-  // }
 
-  // [Fact]
-  // public async Task CanUseConfigurationIdQueryParameterForCoreUser()
-  // {
-  //   var logger = Mock.Of<ILogger<ConfigurationMiddleware>>();
-  //   var ConfigurationService = Mock.Of<IConfigurationService>();
-  //   var requestDelegate = Mock.Of<RequestDelegate>();
+    var contextItems = new Dictionary<object, object?>
+    {
+      {
+        AccessConstants.AdspContextKey,
+        new User(false, new Tenant { Id = seviceId }, "tester", "tester", null)
+      }
+    };
 
-  //   var middleware = new ConfigurationMiddleware(logger, ConfigurationService, requestDelegate);
+    context.Setup((c) => c.Items).Returns(contextItems);
 
-  //   var ConfigurationId = AdspId.Parse("urn:ads:platform:Configuration-service:v2:/Configurations/test");
-  //   var contextItems = new Dictionary<object, object?>
-  //   {
-  //     {
-  //       AccessConstants.AdspContextKey,
-  //       new User(true, null, "tester", "tester", null)
-  //     }
-  //   };
-  //   var context = new Mock<HttpContext>();
-  //   context.Setup((c) => c.Items).Returns(contextItems);
+    var middleware = new ConfigurationMiddleware(logger, ConfigurationService, options.Object, requestDelegate);
 
-  //   var queryCollection = new QueryCollection(new Dictionary<string, StringValues> { { "ConfigurationId", new StringValues(ConfigurationId.ToString()) } });
-  //   context.Setup((c) => c.Request.Query).Returns(queryCollection);
+    await middleware.InvokeAsync(context.Object);
 
-  //   await middleware.InvokeAsync(context.Object);
-  //   contextItems.Should().ContainKey(ConfigurationMiddleware.ConfigurationContextKey);
-  //   contextItems[ConfigurationMiddleware.ConfigurationContextKey].Should().Be((ConfigurationId, ConfigurationService));
-  // }
+    contextItems.Should().ContainKey(ConfigurationMiddleware.ConfigurationContextKey);
+    contextItems[ConfigurationMiddleware.ConfigurationContextKey].Should().Be((seviceId, ConfigurationService));
+  }
 
-  // [Fact]
-  // public async Task CanIgnoreConfigurationIdQueryParameterForConfigurationUser()
-  // {
-  //   var logger = Mock.Of<ILogger<ConfigurationMiddleware>>();
-  //   var ConfigurationService = Mock.Of<IConfigurationService>();
-  //   var requestDelegate = Mock.Of<RequestDelegate>();
+  [Fact]
+  public async Task HttpContextIsEmpty()
+  {
+    var logger = Mock.Of<ILogger<ConfigurationMiddleware>>();
+    var ConfigurationService = Mock.Of<IConfigurationService>();
+    var requestDelegate = Mock.Of<RequestDelegate>();
 
-  //   var middleware = new ConfigurationMiddleware(logger, ConfigurationService, requestDelegate);
+    var seviceId = AdspId.Parse("urn:ads:test:test-service");
 
-  //   var ConfigurationId = AdspId.Parse("urn:ads:platform:Configuration-service:v2:/Configurations/test");
-  //   var requestedConfigurationId = AdspId.Parse("urn:ads:platform:Configuration-service:v2:/Configurations/test2");
-  //   var contextItems = new Dictionary<object, object?>
-  //   {
-  //     {
-  //       AccessConstants.AdspContextKey,
-  //       new User(false, new Configuration { Id = ConfigurationId }, "tester", "tester", null)
-  //     }
-  //   };
-  //   var context = new Mock<HttpContext>();
-  //   context.Setup((c) => c.Items).Returns(contextItems);
+    var options = new Mock<IOptions<AdspOptions>>();
+    options
+      .Setup(o => o.Value)
+      .Returns(
+        new AdspOptions
+        {
+          ServiceId = seviceId,
+        }
+      );
 
-  //   var queryCollection = new QueryCollection(new Dictionary<string, StringValues> { { "ConfigurationId", new StringValues(requestedConfigurationId.ToString()) } });
-  //   context.Setup((c) => c.Request.Query).Returns(queryCollection);
+    var context = new Mock<HttpContext>();
 
-  //   await middleware.InvokeAsync(context.Object);
-  //   contextItems.Should().ContainKey(ConfigurationMiddleware.ConfigurationContextKey);
-  //   contextItems[ConfigurationMiddleware.ConfigurationContextKey].Should().Be((ConfigurationId, ConfigurationService));
-  // }
+    var middleware = () => new ConfigurationMiddleware(logger, ConfigurationService, options.Object, requestDelegate);
+
+    Func<Task> act = async () =>
+    {
+      var nullHttp = (HttpContext?)null;
+      await middleware().InvokeAsync(nullHttp);
+    };
+
+    await act.Should().ThrowAsync<ArgumentNullException>();
+
+  }
 }
