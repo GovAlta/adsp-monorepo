@@ -31,7 +31,7 @@ Feature: Notifications
     When the user selects "tenant-service:tenant-created" in the event dropdown
     And the user clicks Next button on Select an event page
     Then the user views Add an email template page
-    When the user enters "autotest subject" as subject and "autotest body" as body "email" template page
+    When the user enters "autotest subject" as subject and "autotest body" as body on "email" template page
     And the user clicks Add button in Add an email template page
     Then the user "views" the event of "tenant-service:tenant-created" in "autotest-notificationType"
     When the user clicks Select event button for "autotest-notificationType"
@@ -211,9 +211,9 @@ Feature: Notifications
     When the user selects "form-service:form-submitted" in the event dropdown
     And the user clicks Next button on Select an event page
     Then the user views Add an email template page
-    When the user enters "autotest subject" as subject and "autotest body" as body "email" template page
+    When the user enters "autotest subject" as subject and "autotest body" as body on "email" template page
     Then the user selects "SMS" tab on the event template
-    When the user enters "autotest subject" as subject and "autotest body" as body "SMS" template page
+    When the user enters "autotest subject" as subject and "autotest body" as body on "SMS" template page
     And the user clicks Add button in Add an email template page
     Then the user "views" the event of "form-service:form-submitted" in "autotest-add-multi-channels"
     And the user "views" "email template indicator" for the event of "form-service:form-submitted" in "autotest-add-multi-channels" on tenant events
@@ -261,3 +261,16 @@ Feature: Notifications
     Then the user views the link for managing email subscription
     When the user clicks Close button in event template modal
     Then Preview event template modal is closed
+
+  @TEST_CS-1170 @REQ_CS-1074 @regression
+  Scenario: As a tenant admin, I can override the email template for a platform notification type, so that I can customize the notification that is sent
+    Given a tenant admin user is on notification types page
+    When the user clicks "edit" button for "status-service:application-status-changed" in "Application status update"
+    Then the user views an email template modal title for "status-service:application-status-changed"
+    When the user enters "autotest subject" as subject and "autotest body" as body on "email" template page
+    And the user clicks Save all button in template modal
+    Then the user "views" Reset button for "status-service:application-status-changed" in "Application status update"
+    When the user clicks "Reset" button for "status-service:application-status-changed" in "Application status update"
+    Then the user views Reset email template modal
+    When the user clicks Delete button in Reset email template modal
+    Then the user "should not view" Reset button for "status-service:application-status-changed" in "Application status update"
