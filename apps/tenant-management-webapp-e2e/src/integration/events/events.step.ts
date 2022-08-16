@@ -425,6 +425,6 @@ Then('the user enters {string}, {string} in stream modal', function (description
 When('the user removes event chips of {string} in stream modal', function (event) {
   const eventChip = event.split(',');
   for (let i = 0; i < eventChip.length; i++) {
-    eventsObj.streamModalEventChip(eventChip).click();
+    eventsObj.streamModalEventChips().shadow().get(`[content="${eventChip}"]`).click();
   }
 });

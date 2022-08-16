@@ -227,8 +227,8 @@ class eventsPage {
     );
   }
 
-  streamModalEventChip(name) {
-    return cy.get(`[content="${name}"]`);
+  streamModalEventChips() {
+    return cy.get('goa-chip');
   }
 
   streamModalPublicCheckbox() {
