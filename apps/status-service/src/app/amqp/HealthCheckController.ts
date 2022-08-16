@@ -6,7 +6,6 @@ import { HealthCheckControllerWorkItem } from './HealthCheckControllerWorkItem';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { AMQPCredentials, getConnectionProps } from '@core-services/core-common';
 import { HealthCheckQueueService } from './HealthCheckQueueService';
-import { getScheduler } from '../jobs/SchedulerFactory';
 import { JobScheduler } from '../jobs/JobScheduler';
 
 interface HealthCheckControllerProps {
