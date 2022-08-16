@@ -187,7 +187,7 @@ When(
         .scrollIntoView()
         .click()
         .then(() => {
-          switch (menu.toLowerCase) {
+          switch (menu.toLowerCase()) {
             case 'edit':
               statusObj.noticeCardEditMenu(index).click();
               break;
@@ -204,7 +204,7 @@ When(
               statusObj.noticeCardArchiveMenu(index).click();
               break;
             default:
-              expect(menu).to.be.oneOf(['edit', 'delete', 'publish', 'unpublish', 'archive']);
+              expect(menu.toLowerCase()).to.be.oneOf(['edit', 'delete', 'publish', 'unpublish', 'archive']);
           }
           cy.wait(1000);
         });
