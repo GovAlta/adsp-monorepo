@@ -226,7 +226,7 @@ When(
         .invoke('attr', 'class')
         .then((classAttr) => {
           if (classAttr?.includes('-selected')) {
-            cy.log('Make stream public is already checked off. ');
+            cy.log('Make stream public is already checked off.');
           } else {
             eventsObj.streamModalPublicCheckbox().click();
           }
@@ -242,7 +242,6 @@ When(
             }
           }
         })
-
         .then(() => {
           for (let i = 0; i < roles.length; i++) {
             eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
@@ -331,7 +330,10 @@ Then(
   function (streamName, description, event, role) {
     eventsObj.streamDetails().should('contain', streamName);
     eventsObj.streamDetails().should('contain', description);
-    eventsObj.streamDetails().should('contain', '"publicSubscribe": false');
+    if (role == 'public') eventsObj.streamDetails().should('contain', '"publicSubscribe": true');
+    else {
+      eventsObj.streamDetails().should('contain', '"publicSubscribe": false');
+    }
     const roles = role.split(',');
     for (let i = 0; i < roles.length; i++) {
       eventsObj
@@ -382,21 +384,42 @@ Then('the user views Edit stream modal', function () {
 
 Then('the user enters {string}, {string} in stream modal', function (description, role) {
   eventsObj.streamModalDescriptionInput().clear().type(description);
-  const roles = role.split(',');
-  eventsObj
-    .streamModalRolesCheckboxes()
-    .then((elements) => {
-      for (let i = 0; i < elements.length; i++) {
-        if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
-          elements[i].click();
+  if (role == 'public') {
+    eventsObj
+      .streamModalPublicCheckbox()
+      .invoke('attr', 'class')
+      .then((classAttr) => {
+        if (classAttr?.includes('-selected')) {
+          cy.log('Make stream public is already checked off.');
+        } else {
+          eventsObj.streamModalPublicCheckbox().click();
         }
-      }
-    })
-    .then(() => {
-      for (let i = 0; i < roles.length; i++) {
-        eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
-      }
-    });
+      });
+  } else {
+    const roles = role.split(',');
+    eventsObj
+      .streamModalPublicCheckbox()
+      .invoke('attr', 'class')
+      .then((classAttr) => {
+        if (classAttr?.includes('-selected')) {
+          eventsObj.streamModalPublicCheckbox().click();
+        }
+      });
+    eventsObj
+      .streamModalRolesCheckboxes()
+      .then((elements) => {
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
+            elements[i].click();
+          }
+        }
+      })
+      .then(() => {
+        for (let i = 0; i < roles.length; i++) {
+          eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
+        }
+      });
+  }
 });
 
 When('the user removes event chips of {string} in stream modal', function (event) {

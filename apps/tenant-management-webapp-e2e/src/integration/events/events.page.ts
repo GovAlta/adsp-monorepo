@@ -229,7 +229,6 @@ class eventsPage {
 
   streamModalEventChip(name) {
     return cy.get(`[content="${name}"]`);
-    return cy.xpath(`//*[@data-testid="stream-form"]/following-sibling::td//*[@data-testid="delete-stream"]`);
   }
 
   streamModalPublicCheckbox() {
