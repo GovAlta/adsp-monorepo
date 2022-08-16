@@ -60,7 +60,7 @@ export const Subscriptions: FunctionComponent = () => {
       {indicator.show && <PageIndicator />}
 
       {(indicator.show === false && loadingState === undefined) ||
-        (loadingState.state === 'completed' && (
+        (loadingState?.state === 'completed' && (
           <SubscriptionList
             onDelete={(sub: Subscriber, type: string) => {
               setSelectedSubscription(sub);

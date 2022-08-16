@@ -26,6 +26,7 @@
     "accessManagementApi": "",
     "uiComponentUrl": "",
     "fileApi": "",
+    "directoryServiceApiUrl": "",
     "statusAppUrl": "https://status.adsp.alberta.ca",
     "subscriptionUrl": "https://subscription.adsp.alberta.ca"
   },

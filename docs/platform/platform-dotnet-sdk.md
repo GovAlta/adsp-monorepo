@@ -23,6 +23,25 @@ Note that the SDK provides friendly interfaces on top of APIs. It is intended to
 dotnet add package Adsp.Sdk
 ```
 
+Use a `nuget.config` file in your project to configure installing from the GitHub packages nuget source:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <packageSources>
+        <clear />
+        <add key="github" value="https://nuget.pkg.github.com/GovAlta/index.json" />
+    </packageSources>
+    <packageSourceCredentials>
+        <github>
+            <add key="Username" value="{github username}" />
+            <add key="ClearTextPassword" value="{personal access token}" />
+        </github>
+    </packageSourceCredentials>
+</configuration>
+```
+Note that the personal access token must be authorized for accessing the enterprise GitHub organization.
+
 ## Initializing the SDK
 The SDK follows ASP.NET conventions of extension methods and options pattern. Initialize the SDK by adding ADSP services to the service collection and using capabilities on the application builder. Use either `AddAdspForPlatformService` or `AddAdspForService` as appropriate.
 
@@ -49,6 +68,9 @@ The SDK follows ASP.NET conventions of extension methods and options pattern. In
     SwaggerJsonPath = "docs/v1/swagger.json",
     ApiPath = "script/v1"
   });
+
+  // Use authorization middleware after ADSP in order to use default authentication scheme.
+  app.UseAuthorization();
 ```
 
 ## Authorizing requests
@@ -198,7 +220,7 @@ Defining the configuration json schema:
   );
 ```
 
-Each service can have core configuration that applies across tenants and configuration specific to each tenant. The SDK provides a configuration HttpContext extension method that will retrieve configuration in request tenant context.
+Each service can have core configuration that applies across tenants and configuration specific to each tenant. The SDK provides a configuration HttpContext extension method that will retrieve configuration in request tenant context. The tenant context is determined using `HttpContext.GetTenant()`.
 
 Getting configuration via the context:
 ```csharp
@@ -214,8 +236,6 @@ Getting configuration via the context:
     }
   }
 ```
-
-<!-- The tenant context is based on `req.tenant` set by the tenant request handler when available and falls back to `req.user.tenantId`. -->
 
 The handler uses configuration service client to retrieve configuration. This is also available from the SDK via dependency injection for direct use.
 
@@ -289,6 +309,35 @@ Defining configuration for other platform services:
       };
     }
   );
+```
+
+## Sending domain events
+Domain events can be sent using the event service which is available via dependency injection.
+
+```csharp
+  using Adsp.Sdk;
+  public class HelloWorldController : ControllerBase
+  {
+    private readonly IEventService _eventService;
+    public HelloWorldController(IEventService eventService)
+    {
+      _eventService = eventService;
+    }
+
+    [HttpGet]
+    [Route("hello")]
+    public async Task<string> HelloWorld(string message)
+    {
+      ...
+      await _eventService.Send(
+        new DomainEvent<HelloWorldExecuted>(
+          HelloWorldExecuted.EventName,
+          DateTime.Now,
+          new HelloWorldExecuted { Message = message }
+        )
+      );
+    }
+  }
 ```
 
 ## Additional utilities

@@ -17,6 +17,8 @@ export function verifyCaptcha(logger: Logger, RECAPTCHA_SECRET: string, SCORE_TH
     } else {
       try {
         const { token } = req.body;
+        console.log(token);
+        console.log(RECAPTCHA_SECRET);
 
         const { data } = await axios.post<SiteVerifyResponse>(
           `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${token}`

@@ -54,7 +54,6 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
       };
     case SAVE_APPLICATION_SUCCESS_ACTION:
     case SET_APPLICATION_SUCCESS_STATUS_ACTION: {
-      // After toggle set the application internalStatus to pending
       const index = state.applications.findIndex((app) => {
         return app._id === action.payload._id;
       });
@@ -66,9 +65,13 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
     case TOGGLE_APPLICATION_SUCCESS_STATUS_ACTION:
       return {
         ...state,
-        applications: [...state.applications.filter((app) => app._id !== action.payload._id), action.payload].sort(
-          compareIds
-        ),
+        applications: state.applications
+          .map((app) =>
+            app._id !== action.payload._id
+              ? { ...app }
+              : { ...app, enabled: action.payload.enabled, internalStatus: action.payload.internalStatus }
+          )
+          .sort(compareIds),
       };
 
     case UPDATE_FORM_DATA_ACTION:

@@ -85,8 +85,7 @@ const LandingPage = (): JSX.Element => {
                       sign up to take advantage of the platform capabilities within their own products.
                     </Paragraph>
                     <p>
-                      Check out the quick-start{' '}
-                      <a href="https://glowing-parakeet-0563ab2e.pages.github.io">ADSP guide</a>
+                      Check out the quick-start <a href="https://govalta.github.io/adsp-monorepo">ADSP guide</a>
                     </p>
                   </GridItem>
                   <GridItem md={0.5} />
@@ -177,7 +176,7 @@ const LandingPage = (): JSX.Element => {
 
                         <RedirectButton
                           name="keycloak-access-service"
-                          url="https://glowing-parakeet-0563ab2e.pages.github.io/services/access-service.html"
+                          url="https://govalta.github.io/adsp-monorepo/services/access-service.html"
                           label="Learn more"
                         />
                       </CardLayout>
@@ -197,7 +196,7 @@ const LandingPage = (): JSX.Element => {
                         </CardContent>
                         <RedirectButton
                           name="file-service"
-                          url="https://glowing-parakeet-0563ab2e.pages.github.io/services/file-service.html"
+                          url="https://govalta.github.io/adsp-monorepo/services/file-service.html"
                           label="Learn more"
                         />
                       </CardLayout>
@@ -224,7 +223,7 @@ const LandingPage = (): JSX.Element => {
                         </CardContent>
                         <RedirectButton
                           name="event-service"
-                          url="https://glowing-parakeet-0563ab2e.pages.github.io/services/event-service.html"
+                          url="https://govalta.github.io/adsp-monorepo/services/event-service.html"
                           label="Learn more"
                         />
                       </CardLayout>
@@ -242,7 +241,7 @@ const LandingPage = (): JSX.Element => {
 
                         <RedirectButton
                           name="notification-service"
-                          url="https://glowing-parakeet-0563ab2e.pages.github.io/services/notification-service.html"
+                          url="https://govalta.github.io/adsp-monorepo/services/notification-service.html"
                           label="Learn more"
                         />
                       </CardLayout>

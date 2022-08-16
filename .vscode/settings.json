@@ -28,7 +28,8 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[csharp]": {
-    "editor.defaultFormatter": "ms-dotnettools.csharp"
+    "editor.defaultFormatter": "ms-dotnettools.csharp",
+    "editor.formatOnType": true,
   },
   "cSpell.words": [
     "abgov",
@@ -67,5 +68,6 @@
     "upsert",
     "uuidv"
   ],
-  "omnisharp.enableRoslynAnalyzers": true
+  "omnisharp.enableRoslynAnalyzers": true,
+  "dotnet-test-explorer.testProjectPath": "libs/adsp-service-net-sdk/"
 }

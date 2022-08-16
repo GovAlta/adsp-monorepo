@@ -6,6 +6,7 @@ import {
   ConfigurationEntity,
   ConfigurationRevision,
   RevisionCriteria,
+  ActiveRevisionRepository,
 } from '../configuration';
 import { renamePrefixProperties } from './prefix';
 import { revisionSchema } from './schema';
@@ -13,11 +14,13 @@ import { ConfigurationRevisionDoc } from './types';
 
 export class MongoConfigurationRepository implements ConfigurationRepository {
   private revisionModel: Model<ConfigurationRevisionDoc>;
+  private activeRevisionRepository: ActiveRevisionRepository;
 
   private readonly META_PREFIX = 'META_';
 
-  constructor(private validationService: ValidationService) {
+  constructor(private validationService: ValidationService, activeRevisionRepository: ActiveRevisionRepository) {
     this.revisionModel = model<ConfigurationRevisionDoc>('revision', revisionSchema);
+    this.activeRevisionRepository = activeRevisionRepository;
   }
 
   async get<C>(
@@ -36,7 +39,21 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         .exec((err, results: ConfigurationRevisionDoc[]) => (err ? reject(err) : resolve(results[0])));
     });
     const latest = this.fromDoc<C>(latestDoc);
-    return new ConfigurationEntity<C>(namespace, name, this, this.validationService, latest, tenantId, schema);
+    let activeRevisionDoc = { active: null };
+    activeRevisionDoc = await this.activeRevisionRepository.get(namespace, name, tenantId);
+
+    return new ConfigurationEntity<C>(
+      namespace,
+      name,
+      this,
+      this.validationService,
+      latest,
+      tenantId,
+      schema,
+      null,
+      this.activeRevisionRepository,
+      activeRevisionDoc?.active
+    );
   }
 
   async getRevisions<C>(

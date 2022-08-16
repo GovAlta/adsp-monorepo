@@ -29,7 +29,7 @@ export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
   const token: string = yield call(getAccessToken);
   const tenantName: string = state.tenant.name;
   const directoryBaseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
-
+  let tenantDirectoryData = [];
   yield put(
     UpdateIndicator({
       show: true,
@@ -45,17 +45,20 @@ export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      yield put(fetchDirectorySuccess({ directory: coreDirectory }));
 
-      const { data: tenantDirectory } = yield call(
-        axios.get,
-        `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}/entries`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      // if its our core Platform tenant then don't make this call
+      if (tenantName !== 'Platform') {
+        const { data: tenantDirectory } = yield call(
+          axios.get,
+          `${directoryBaseUrl}/directory/v2/namespaces/${toKebabName(tenantName)}/entries`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        tenantDirectoryData = tenantDirectory;
+      }
 
-      yield put(fetchDirectorySuccess({ directory: [...tenantDirectory, ...coreDirectory] }));
+      yield put(fetchDirectorySuccess({ directory: [...tenantDirectoryData, ...coreDirectory] }));
 
       yield put(
         UpdateIndicator({

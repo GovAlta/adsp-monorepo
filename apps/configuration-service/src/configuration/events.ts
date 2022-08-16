@@ -70,6 +70,36 @@ export const RevisionCreatedDefinition: DomainEventDefinition = {
   },
 };
 
+const ACTIVE_REVISION_SET = 'active-revision-set';
+export const ActiveRevisionSetDefinition: DomainEventDefinition = {
+  name: ACTIVE_REVISION_SET,
+  description: 'Signalled when the active revision of configuration is set.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      namespace: {
+        type: 'string',
+      },
+      name: {
+        type: 'string',
+      },
+      revision: {
+        type: 'number',
+      },
+      from: {
+        type: ['number', 'null'],
+      },
+      setBy: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+        },
+      },
+    },
+  },
+};
+
 export const configurationUpdated = (
   updatedBy: User,
   tenantId: AdspId,
@@ -128,6 +158,34 @@ export const revisionCreated = (
   },
 });
 
+export const activeRevisionSet = (
+  createdBy: User,
+  tenantId: AdspId,
+  namespace: string,
+  name: string,
+  revision: number,
+  from: number
+): DomainEvent => ({
+  name: ACTIVE_REVISION_SET,
+  timestamp: new Date(),
+  tenantId,
+  correlationId: `${namespace}:${name}`,
+  context: {
+    namespace,
+    name,
+  },
+  payload: {
+    namespace,
+    name,
+    revision,
+    from,
+    setBy: {
+      name: createdBy.name,
+      id: createdBy.id,
+    },
+  },
+});
+
 export const ConfigurationUpdatesStream: Stream = {
   id: 'configuration-updates',
   name: 'Configuration updates',
@@ -142,6 +200,10 @@ export const ConfigurationUpdatesStream: Stream = {
     {
       namespace: 'configuration-service',
       name: REVISION_CREATED,
+    },
+    {
+      namespace: 'configuration-service',
+      name: ACTIVE_REVISION_SET,
     },
   ],
 };

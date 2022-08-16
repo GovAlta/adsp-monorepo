@@ -18,19 +18,22 @@ export const applyConfigurationMiddleware = async (
   // Load a configuration-service configuration that requires configuration with a schema property.
   const schema = {
     type: 'object',
-    additionalProperties: {
-      type: 'object',
-      properties: {
-        description: {
-          type: ['string', 'null'],
+    patternProperties: {
+      '^[a-zA-Z0-9-]{1,50}:[a-zA-Z0-9-]{1,50}$': {
+        type: 'object',
+        properties: {
+          description: {
+            type: ['string', 'null'],
+          },
+          configurationSchema: {
+            type: 'object',
+          },
         },
-        configurationSchema: {
-          type: 'object',
-        },
+        required: ['configurationSchema'],
+        additionalProperties: false,
       },
-      required: ['configurationSchema'],
-      additionalProperties: false,
     },
+    additionalProperties: false,
   };
 
   const entity = await configuration.get<ConfigurationDefinitions>(

@@ -158,7 +158,6 @@ export function* signedOutUnsubscribe(action: GetSignedOutSubscriberAction): Sag
     });
   }
 
-  console.log(recaptchaToken);
   try {
     yield call(axios.delete, `/api/subscriber/v1/types/${type}/subscriptions/${id}?tenantId=${tenantId}`, {
       data: {

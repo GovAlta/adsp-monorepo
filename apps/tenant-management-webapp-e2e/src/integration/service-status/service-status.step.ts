@@ -187,7 +187,7 @@ When(
         .scrollIntoView()
         .click()
         .then(() => {
-          switch (menu) {
+          switch (menu.toLowerCase) {
             case 'edit':
               statusObj.noticeCardEditMenu(index).click();
               break;
@@ -646,7 +646,7 @@ Then('the user views Edit contact information modal on the status overview page'
   statusObj.editContactInformationModal().invoke('text').should('eq', 'Edit contact information');
 });
 
-When('the user enters {string}', function (email) {
+When('the user enters {string} in Edit contact information modal', function (email) {
   statusObj.editContactInformationEmail().clear().type(email);
 });
 

@@ -32,13 +32,21 @@ Feature: Service status
       | Autotest-NewNotice | Autotest    | Today      | 02:00 pm   | Today    | 11:00 pm | Autotest-ModifiedNotice | File Service | Today        | 10:00 am     | Today      | 02:00 pm   |
 
   # TEST DATA: "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
-  @TEST_CS-782 @REQ_CS-667 @regression
-  Scenario: As a tenant admin, I can publish and un-publish a notice
+  @TEST_CS-782 @REQ_CS-667 @REQ_CS-977 @regression
+  Scenario: As a tenant admin, I can publish and un-publish a notice, and see the notice published event
     Given a tenant admin user is on status notices page
-    When the user clicks "publish" menu for the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+    When the user clicks "Publish" menu for the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
     And the user selects "Published" filter by status radio button
     Then the user "views" the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
-    When the user clicks "unpublish" menu for the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+    When the user waits "20" seconds
+    And the user selects the "Event log" menu item
+    Then the "Event log" landing page is displayed
+    When the user searches with "status-service:application-notice-published", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
+    And the user clicks Show details button for the latest event of "application-notice-published" for "status-service"
+    Then the user views event details of "Drafted notice - AUTOMATED TEST ONLY", "Autotest" of application-notice-published for status-service
+    When the user selects the "Status" menu item
+    And the user selects "Notices" tab for "Status"
+    And the user clicks "Unpublish" menu for the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
     And the user selects "Draft" filter by status radio button
     Then the user "views" the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
 
@@ -224,13 +232,13 @@ Feature: Service status
     Given a tenant admin user is on status overview page
     When the user clicks Edit button for contact information
     Then the user views Edit contact information modal on the status overview page
-    When the user enters "autotest-status-admin@gov.ab.ca"
+    When the user enters "autotest-status-admin@gov.ab.ca" in Edit contact information modal
     And the user clicks Save button on contact information modal
     Then the user views "autotest-status-admin@gov.ab.ca" as the email of contact information
     # Visiting public status page
     Then the user should be able to view "autotest-status-admin@gov.ab.ca" as support email in the status app for "Autotest" tenant
     Given a tenant admin user is on status overview page
     When the user clicks Edit button for contact information
-    And the user enters "test@gov.ab.ca"
+    And the user enters "test@gov.ab.ca" in Edit contact information modal
     And the user clicks Save button on contact information modal
     Then the user views "test@gov.ab.ca" as the email of contact information

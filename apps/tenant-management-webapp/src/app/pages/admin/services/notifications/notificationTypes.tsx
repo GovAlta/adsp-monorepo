@@ -586,7 +586,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                                       setCoreEvent(true);
                                       setShowEventDeleteConfirmation(true);
                                     }}
-                                    data-testid="delete-event"
+                                    data-testid="reset-button"
                                   >
                                     Reset
                                   </a>

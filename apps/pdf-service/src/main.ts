@@ -61,7 +61,10 @@ const initializeApp = async (): Promise<express.Application> => {
       serviceId,
       displayName: 'PDF service',
       description: 'Provides utility PDF capabilities.',
-      configurationSchema,
+      configuration: {
+        description: 'Templates for PDF generation.',
+        schema: configurationSchema,
+      },
       configurationConverter: (config: Record<string, Omit<PdfTemplate, 'tenantId'>>, tenantId) =>
         Object.entries(config).reduce(
           (templates, [templateId, template]) => ({

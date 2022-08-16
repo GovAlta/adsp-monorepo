@@ -32,6 +32,8 @@ export const REPLACE_CONFIGURATION_ERROR_ACTION = 'configuration/REPLACE_CONFIGU
 export const REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION = 'configuration/REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION';
 
 export const RESET_REPLACE_CONFIGURATION_LIST_ACTION = 'configuration/RESET_REPLACE_CONFIGURATION_LIST_ACTION';
+export const RESET_IMPORTS_LIST_ACTION = 'configuration/RESET_IMPORTS_LIST_ACTION';
+
 export const RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION =
   'configuration/RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION';
 export interface DeleteConfigurationDefinitionAction {
@@ -95,6 +97,10 @@ export interface ResetReplaceConfigurationListAction {
   type: typeof RESET_REPLACE_CONFIGURATION_LIST_ACTION;
 }
 
+export interface ResetImportsListAction {
+  type: typeof RESET_IMPORTS_LIST_ACTION;
+}
+
 export interface ResetReplaceConfigurationListSuccessAction {
   type: typeof RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION;
 }
@@ -113,7 +119,8 @@ export type ConfigurationDefinitionActionTypes =
   | GetReplaceConfigurationErrorAction
   | GetReplaceConfigurationErrorSuccessAction
   | ResetReplaceConfigurationListAction
-  | ResetReplaceConfigurationListSuccessAction;
+  | ResetReplaceConfigurationListSuccessAction
+  | ResetImportsListAction;
 
 export type ServiceId = { namespace: string; service: string };
 export interface FetchConfigurationsAction {
@@ -188,6 +195,10 @@ export const replaceConfigurationDataAction = (
 });
 export const resetReplaceConfigurationListAction = (): ResetReplaceConfigurationListAction => ({
   type: RESET_REPLACE_CONFIGURATION_LIST_ACTION,
+});
+
+export const resetImportsListAction = (): ResetImportsListAction => ({
+  type: RESET_IMPORTS_LIST_ACTION,
 });
 export const resetReplaceConfigurationListSuccessAction = (): ResetReplaceConfigurationListSuccessAction => ({
   type: RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION,
