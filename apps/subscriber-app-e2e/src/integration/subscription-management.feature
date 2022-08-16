@@ -43,3 +43,16 @@ Feature: Subscription management
     Then the user views a callout message of "Contact information updated."
     And the user views contact information of "auto.contact.test@gmail.com", "EMPTY" and "email"
 
+  @TEST_CS-1413 @REQ_CS-1240 @regression
+  Scenario: As a subscriber, I can see the supported channels of a notification type in the subscriber app, so I know what's available.
+    When an authenticated user is in the subscriber app
+    Then the user views subscription management page
+    When the user clicks edit contact information button
+    When the user enters "auto.contact.test@gmail.com" as email, "7801001234" as phone number and "sms" as preferred channel
+    Then the user selects "sms" as the preferred channel in contact information
+    And the user clicks Save button in contact information
+# Then the user views the checked "SMS" icon for "Application health check change"
+# When the user sets the preferred channel to be "Email"
+# Then the user views the checked "Email" icon for "Application health check change"
+# And the user views the subscription of "Application health check change" and its description
+#     And the user views the support link for the subscription of "Application health check change"
