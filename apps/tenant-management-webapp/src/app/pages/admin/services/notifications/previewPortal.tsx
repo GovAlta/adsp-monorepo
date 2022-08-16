@@ -10,6 +10,7 @@ interface PreviewPortalProps {
 export const PreviewPortal: FunctionComponent<PreviewPortalProps> = ({ className, title, html }) => {
   return (
     <iframe
+      sandbox=""
       data-testid="email-preview-body"
       className={className}
       title={title}
