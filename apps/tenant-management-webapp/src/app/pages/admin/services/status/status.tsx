@@ -42,6 +42,7 @@ import { renderNoItem } from '@components/NoItem';
 import { DeleteModal } from '@components/DeleteModal';
 import { createSelector } from 'reselect';
 import { StatusOverview } from './overview';
+import { StatusBar } from './StatusBar';
 
 const userHealthSubscriptionSelector = createSelector(
   (state: RootState) => state.session.userInfo?.sub,
@@ -397,6 +398,7 @@ interface AppEndpointProps {
   displayCount: number;
 }
 
+// Display count normally set to 30
 function HealthBar({ app, displayCount }: AppEndpointProps) {
   const css: CSSProperties = {
     display: 'flex',
@@ -411,48 +413,26 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
     return `${hours > 12 ? hours - 12 : hours}:${minutes} ${hours < 12 ? 'AM' : 'PM'}`;
   }
 
+  const millisecondsPerMinute = 60 * 1000;
+
   /**
-   * Generate a list of health checks for the given endpoint and fills in the blank time slots with emtpy entries.
+   * Generate a list of health checks for the given endpoint and fills in the blank time slots with empty entries.
    * @param endpoint The service endpoint
    * @returns
    */
   function getStatusEntries(endpoint: ServiceStatusEndpoint): EndpointStatusEntry[] {
+    // Get the last 30 entries (one is generated per minute)
     const timePeriodEntries =
       endpoint.statusEntries
-        ?.filter((entry) => entry.timestamp > Date.now() - 1000 * 60 * 30)
+        ?.filter((entry) => entry.timestamp > Date.now() - 30 * millisecondsPerMinute)
         .sort((a, b) => a.timestamp - b.timestamp) || [];
 
     if (timePeriodEntries.length >= displayCount) {
       return timePeriodEntries;
     }
 
-    const makeEntry = (timestamp: number): EndpointStatusEntry => ({
-      ok: false,
-      timestamp,
-      status: 'n/a',
-      url: endpoint.url,
-      responseTime: -1,
-    });
-    const minute = 60 * 1000;
-
-    // must define time boundaries to allow for the insertion of filler entries and prevent gaps in time from not showing up
-    const entries = [makeEntry(Date.now() - 30 * minute), ...timePeriodEntries, makeEntry(Date.now() + minute)];
-    const filledEntries = [];
-
-    for (let i = 1; i < entries.length; i++) {
-      const prevEntry = entries[i - 1];
-      const entry = entries[i];
-      const diff = (entry.timestamp - prevEntry.timestamp) / minute;
-      filledEntries.push(prevEntry);
-      if (diff > 1) {
-        for (let j = 1; j < diff - 1; j++) {
-          filledEntries.push(makeEntry(prevEntry.timestamp + j * minute));
-        }
-      }
-    }
-
-    // remove the boundary entries that were inserted previously
-    return filledEntries.slice(1);
+    const statusBar = new StatusBar(endpoint, timePeriodEntries);
+    return statusBar.getEntries();
   }
 
   const statusEntries = app.endpoint ? getStatusEntries(app.endpoint) : null;
