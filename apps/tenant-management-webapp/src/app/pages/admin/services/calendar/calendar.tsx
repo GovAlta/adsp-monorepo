@@ -1,23 +1,34 @@
-import React, { FunctionComponent } from 'react';
+import React, { useState } from 'react';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { CalendarOverview } from './overview';
+import { CalendarsView } from './calendarsView';
 import SupportLinks from '@components/SupportLinks';
 
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 
-export const Calendar: FunctionComponent = () => {
+export const Calendar = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const [activateEditState, setActivateEditState] = useState<boolean>(false);
+
+  const activateEdit = (edit: boolean) => {
+    setActiveIndex(1);
+    setActivateEditState(edit);
+  };
   return (
     <Page>
       <Main>
         <>
           <h1 data-testid="calendar-title">Calendar service</h1>
-          <Tabs activeIndex={0}>
+          <Tabs activeIndex={activeIndex}>
             <Tab label="Overview">
-              <CalendarOverview />
+              <CalendarOverview setActiveIndex={setActiveIndex} setActiveEdit={activateEdit} />
+            </Tab>
+            <Tab label="Calendars">
+              <CalendarsView activeEdit={activateEditState} />
             </Tab>
           </Tabs>
         </>

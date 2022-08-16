@@ -10,7 +10,6 @@ import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@
 import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
-import { TextLoadingIndicator } from '@components/Indicator';
 
 interface AddEditPdfTemplateProps {
   open: boolean;

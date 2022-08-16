@@ -78,6 +78,14 @@ export interface PlatformOptions extends ServiceRegistration {
    * @memberof PlatformOptions
    */
   combineConfiguration?: CombineConfiguration;
+  /**
+   * Enable configuration invalidation: Flag indicating if websocket connection should be used to
+   * invalidate configuration cache on configuration updates.
+   *
+   * @type {boolean}
+   * @memberof PlatformOptions
+   */
+  enableConfigurationInvalidation?: boolean;
 }
 
 export interface PlatformServices {

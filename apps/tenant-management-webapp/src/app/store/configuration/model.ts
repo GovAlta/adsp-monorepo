@@ -11,7 +11,7 @@ export interface ConfigurationDefinitionState {
   tenantConfigDefinitions: ServiceSchemas;
   isAddedFromOverviewPage: boolean;
   importedConfigurationError: { name: string; error: string }[];
-  previousImportCount: number;
+  //previousImportCount: number;
   imports: ServiceConfiguration[];
 }
 

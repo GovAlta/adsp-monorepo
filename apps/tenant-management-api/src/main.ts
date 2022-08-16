@@ -80,21 +80,6 @@ async function initializeApp(): Promise<express.Application> {
 
   app.use(passport.initialize());
 
-  app.use('/health', healthCheck());
-
-  // Q: log info should include user info?
-  app.use('/', (req: Request, resp: Response, next: NextFunction) => {
-    resp.on('finish', () => {
-      if (resp.statusCode === 401) {
-        logger.error('401 Unauthorized, Please set valid token in request', `${JSON.stringify(req.query)}`);
-      } else if (resp.statusCode === 404) {
-        logger.error('404 Not Found, Please input valid request resource', `${JSON.stringify(req.query)}`);
-      }
-    });
-    logger.debug(`${req.method} ${req.path}`);
-    next();
-  });
-
   const realmService = createKeycloakRealmService({ logger, KEYCLOAK_ROOT_URL: environment.KEYCLOAK_ROOT_URL });
   applyTenantMiddleware(app, {
     ...repositories,
@@ -106,8 +91,6 @@ async function initializeApp(): Promise<express.Application> {
 
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
-
-  let swagger = null;
 
   app.get('/', async (req, res) => {
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
@@ -122,6 +105,9 @@ async function initializeApp(): Promise<express.Application> {
     });
   });
 
+  app.use('/health', healthCheck());
+
+  let swagger = null;
   app.use('/swagger/docs/v1', (_req, res) => {
     if (swagger) {
       res.json(swagger);
