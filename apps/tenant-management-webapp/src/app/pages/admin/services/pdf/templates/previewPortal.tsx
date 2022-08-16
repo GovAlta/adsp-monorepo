@@ -10,6 +10,7 @@ interface PreviewPortalProps {
 export const PreviewPortal: FunctionComponent<PreviewPortalProps> = ({ className, title, html }) => {
   return (
     <iframe
+      sandbox=""
       className={className}
       title={title}
       srcDoc={sanitizeHtml(html, { WHOLE_DOCUMENT: true, ADD_TAGS: ['style'] })}
