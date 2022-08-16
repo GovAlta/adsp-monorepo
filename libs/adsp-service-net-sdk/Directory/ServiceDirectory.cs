@@ -41,7 +41,7 @@ internal class ServiceDirectory : IServiceDirectory, IDisposable
     if (!cached)
     {
       var entries = await RetrieveDirectory(serviceId.Namespace);
-      if (entries.ContainsKey(serviceId))
+      if (entries.TryGetValue(serviceId, out url))
       {
         url = entries[serviceId];
       }
