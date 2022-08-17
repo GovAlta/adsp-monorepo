@@ -136,15 +136,30 @@ And('the user views contact information of {string}, {string} and {string}', fun
   subscriptionManagementObj.preferredNotificationChannelDisplay().should('have.value', channel);
 });
 
-Then('the user views the checked {string} icon for {string}', function (subscription, channel) {
-  switch (channel) {
-    case 'SMS':
-      subscriptionManagementObj.availableChannelSmsIcon(subscription).should('be.checked');
-      break;
+Then('the user views the checked {string} icon for {string}', function (channel, subscriptionName) {
+  switch (channel.toLowerCase()) {
     case 'email':
-      subscriptionManagementObj.availableChannelSmsIcon(subscription).should('be.checked');
+      subscriptionManagementObj
+        .availableChannel(subscriptionName)
+        .get('[data-testid="' + channel.slice(1, channel.length) + '-icon"]')
+        .should('exist');
+      subscriptionManagementObj.availableChannelEmailIcon(subscriptionName).should('exist');
+      break;
+    case 'sms':
+      subscriptionManagementObj
+        .availableChannel(subscriptionName)
+        .get('[data-testid="' + channel + '-icon"]')
+        .should('exist');
+      subscriptionManagementObj.availableChannelSmsIcon(subscriptionName).should('exist');
+      break;
+    case 'bot':
+      subscriptionManagementObj
+        .availableChannel(subscriptionName)
+        .get('[data-testid="' + channel + '-icon"]')
+        .should('exist');
+      subscriptionManagementObj.availableChannelBotIcon(subscriptionName).should('exist');
       break;
     default:
-      expect(channel).to.be.oneOf(['SMS', 'email']);
+      expect(channel).to.be.oneOf(['sms', 'email', 'bot']);
   }
 });

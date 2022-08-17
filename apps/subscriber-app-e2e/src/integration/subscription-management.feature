@@ -45,12 +45,12 @@ Feature: Subscription management
 
   @TEST_CS-1413 @REQ_CS-1240 @regression
   Scenario: As a subscriber, I can see the supported channels of a notification type in the subscriber app, so I know what's available.
-    When an authenticated user is in the subscriber app
+    When an authenticated user with "auto.contact" and "autotest" is in the subscriber app
     Then the user views subscription management page
     When the user clicks edit contact information button
     Then the user enters "auto.contact.test@gmail.com" as email, "7801001234" as phone number and "sms" as preferred channel
     And the user clicks Save button in contact information
-    Then the user views the checked "SMS" icon for "Application health check change"
+    Then the user views the checked "sms" icon for "Application health check change"
     When the user clicks edit contact information button
     Then the user enters "auto.contact.test@gmail.com" as email, "7801001234" as phone number and "email" as preferred channel
     And the user clicks Save button in contact information

@@ -92,10 +92,27 @@ class SubscriptionManagementPage {
   calloutMessage() {
     return cy.xpath('//*[@role="notification"]//*[@class="message"]');
   }
-  availableChannelSmsIcon(subscriptionName) {
-    // return cy.get('[data-testid="sms-icon"]');
+  availableChannel(subscriptionName) {
     return cy.xpath(
-      `//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]/following-sibling::td/[data-testid="sms-icon"]`
+      `//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]/following-sibling::td[2]`
+    );
+  }
+
+  availableChannelEmailIcon(subscriptionName) {
+    return cy.xpath(
+      `//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]/following-sibling::td[2]//div/div[@class="icon-checked-0"]`
+    );
+  }
+
+  availableChannelSmsIcon(subscriptionName) {
+    return cy.xpath(
+      `//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]/following-sibling::td[2]//div/div[@class="icon-checked-1"]`
+    );
+  }
+
+  availableChannelBotIcon(subscriptionName) {
+    return cy.xpath(
+      `//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]/following-sibling::td[2]//div/div[@class="icon-checked-2"]`
     );
   }
 }
