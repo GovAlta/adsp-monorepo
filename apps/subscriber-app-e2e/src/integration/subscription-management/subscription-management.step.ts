@@ -135,3 +135,16 @@ And('the user views contact information of {string}, {string} and {string}', fun
   }
   subscriptionManagementObj.preferredNotificationChannelDisplay().should('have.value', channel);
 });
+
+Then('the user views the checked {string} icon for {string}', function (subscription, channel) {
+  switch (channel) {
+    case 'SMS':
+      subscriptionManagementObj.availableChannelSmsIcon(subscription).should('be.checked');
+      break;
+    case 'email':
+      subscriptionManagementObj.availableChannelSmsIcon(subscription).should('be.checked');
+      break;
+    default:
+      expect(channel).to.be.oneOf(['SMS', 'email']);
+  }
+});

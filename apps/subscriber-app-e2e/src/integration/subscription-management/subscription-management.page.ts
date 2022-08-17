@@ -92,6 +92,12 @@ class SubscriptionManagementPage {
   calloutMessage() {
     return cy.xpath('//*[@role="notification"]//*[@class="message"]');
   }
+  availableChannelSmsIcon(subscriptionName) {
+    // return cy.get('[data-testid="sms-icon"]');
+    return cy.xpath(
+      `//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]/following-sibling::td/[data-testid="sms-icon"]`
+    );
+  }
 }
 
 export default SubscriptionManagementPage;
