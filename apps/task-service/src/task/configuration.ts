@@ -6,36 +6,41 @@ export const configurationSchema = {
     },
     queues: {
       type: 'object',
-      additionalProperties: {
-        type: 'object',
-        properties: {
-          namespace: {
-            type: 'string',
-          },
-          name: {
-            type: 'string',
-          },
-          context: {
-            type: 'object',
-            additionalProperties: {
-              oneOf: [{ type: 'string' }, { type: 'number' }, { type: 'boolean' }],
-            },
-          },
-          assignerRoles: {
-            type: 'array',
-            items: {
+      patternProperties: {
+        '^[a-zA-Z0-9-_ ]{1,50}:[a-zA-Z0-9-_ ]{1,50}$': {
+          type: 'object',
+          properties: {
+            namespace: {
               type: 'string',
+              pattern: '^[a-zA-Z0-9-_ ]{1,50}$',
             },
-          },
-          workerRoles: {
-            type: 'array',
-            items: {
+            name: {
               type: 'string',
+              pattern: '^[a-zA-Z0-9-_ ]{1,50}$',
+            },
+            context: {
+              type: 'object',
+              additionalProperties: {
+                oneOf: [{ type: 'string' }, { type: 'number' }, { type: 'boolean' }],
+              },
+            },
+            assignerRoles: {
+              type: 'array',
+              items: {
+                type: 'string',
+              },
+            },
+            workerRoles: {
+              type: 'array',
+              items: {
+                type: 'string',
+              },
             },
           },
+          required: ['namespace', 'name', 'context', 'assignerRoles', 'workerRoles'],
         },
-        required: ['namespace', 'name', 'context', 'assignerRoles', 'workerRoles'],
       },
+      additionalProperties: false,
     },
   },
 };

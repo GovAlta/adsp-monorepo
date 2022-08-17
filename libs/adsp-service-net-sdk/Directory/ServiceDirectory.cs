@@ -14,7 +14,8 @@ internal class ServiceDirectory : IServiceDirectory, IDisposable
   private readonly RestClient _client;
   private readonly AsyncPolicy _retryPolicy;
 
-  public ServiceDirectory(ILogger<ServiceDirectory> logger, IMemoryCache cache, IOptions<AdspOptions> options)
+  public ServiceDirectory(ILogger<ServiceDirectory> logger, IMemoryCache cache, IOptions<AdspOptions> options, RestClient? client = null
+)
   {
     if (options.Value.DirectoryUrl == null)
     {
@@ -23,7 +24,7 @@ internal class ServiceDirectory : IServiceDirectory, IDisposable
 
     _logger = logger;
     _cache = cache;
-    _client = new RestClient(options.Value.DirectoryUrl);
+    _client = client ?? new RestClient(options.Value.DirectoryUrl);
     _retryPolicy = Policy.Handle<Exception>().WaitAndRetryAsync(
       10,
       retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
@@ -40,7 +41,10 @@ internal class ServiceDirectory : IServiceDirectory, IDisposable
     if (!cached)
     {
       var entries = await RetrieveDirectory(serviceId.Namespace);
-      url = entries[serviceId];
+      if (!entries.TryGetValue(serviceId, out url))
+      {
+        throw new ArgumentException($"No service url for {serviceId}");
+      }
     }
 
     return url;

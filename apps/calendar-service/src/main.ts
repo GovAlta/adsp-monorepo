@@ -5,7 +5,7 @@ import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -42,34 +42,45 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, tenantStrategy, configurationHandler, eventService, directory, healthCheck } =
-    await initializePlatform(
-      {
-        serviceId,
-        displayName: 'Calendar service',
-        description: 'Service that provides calendar date information, events, and scheduling.',
-        roles: [
-          {
-            role: CalendarServiceRoles.Admin,
-            description: 'Administrator account for calendars.',
-          },
-        ],
-        events: [CalendarEventCreatedDefinition, CalendarEventUpdatedDefinition, CalendarEventDeletedDefinition],
-        clientSecret: environment.CLIENT_SECRET,
-        configurationSchema,
-        configurationConverter: (config: CalendarServiceConfiguration, tenandId) =>
-          Object.entries(config).reduce(
-            (entities, [key, value]) => ({
-              ...entities,
-              [key]: new CalendarEntity(repositories.calendarRepository, tenandId, value),
-            }),
-            {}
-          ),
-        accessServiceUrl,
-        directoryUrl: new URL(environment.DIRECTORY_URL),
-      },
-      { logger }
-    );
+  const {
+    coreStrategy,
+    tenantStrategy,
+    tenantService,
+    tenantHandler,
+    configurationHandler,
+    metricsHandler,
+    eventService,
+    directory,
+    healthCheck,
+  } = await initializePlatform(
+    {
+      serviceId,
+      displayName: 'Calendar service',
+      description: 'Service that provides calendar date information, events, and scheduling.',
+      roles: [
+        {
+          role: CalendarServiceRoles.Admin,
+          description: 'Administrator account for calendars.',
+        },
+      ],
+      events: [CalendarEventCreatedDefinition, CalendarEventUpdatedDefinition, CalendarEventDeletedDefinition],
+      clientSecret: environment.CLIENT_SECRET,
+      configurationSchema,
+      configurationConverter: (config: CalendarServiceConfiguration, tenantId) =>
+        Object.entries(config).reduce(
+          (entities, [key, value]) => ({
+            ...entities,
+            [key]: new CalendarEntity(repositories.calendarRepository, tenantId, value),
+          }),
+          {}
+        ),
+      enableConfigurationInvalidation: true,
+      accessServiceUrl,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+      values: [ServiceMetricsValueDefinition],
+    },
+    { logger }
+  );
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
@@ -86,11 +97,13 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(passport.initialize());
   app.use(
     '/calendar',
+    metricsHandler,
     passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }),
+    tenantHandler,
     configurationHandler
   );
 
-  applyCalendarMiddleware(app, { serviceId, logger, eventService, directory, ...repositories });
+  applyCalendarMiddleware(app, { serviceId, logger, eventService, directory, tenantService, ...repositories });
 
   let swagger = null;
   app.use('/swagger/docs/v1', (_req, res) => {
