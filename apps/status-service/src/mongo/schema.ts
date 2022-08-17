@@ -134,7 +134,23 @@ export const configurationSchema = {
         contactEmail: { type: 'string' },
       },
     },
+    applications: {
+      type: 'array',
+      items: {
+        type: 'object',
+        description: 'The set of applications subjected to status checks',
+        properties: {
+          id: { type: 'string', description: 'The application ID' },
+          name: { type: 'string', description: 'Name of the application' },
+          url: { type: 'string', description: 'URL to be checked' },
+          description: { type: 'string', description: 'Tell us about your application' },
+        },
+        required: ['id', 'name', 'url'],
+        additionalProperties: false,
+      },
+    },
   },
+  additionalProperties: false,
 };
 
 noticeApplicationSchema.index({ createdAt: 1 });
