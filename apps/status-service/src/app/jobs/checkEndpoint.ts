@@ -28,7 +28,7 @@ export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
     const { getEndpointResponse } = props;
     // run all endpoint tests
     const statusEntry = await checkEndpoint(getEndpointResponse, props.url, props.applicationId, props.logger);
-    await doSave(props, statusEntry);
+    await saveStatus(props, statusEntry);
   };
 }
 
@@ -89,7 +89,7 @@ export const getNewEndpointStatus = (
   return current;
 };
 
-async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStatusEntry) {
+async function saveStatus(props: CreateCheckEndpointProps, statusEntry: EndpointStatusEntry) {
   const { url, serviceStatusRepository, endpointStatusEntryRepository, eventService, logger } = props;
   // create endpoint status entry before determining if the state is changed
 
