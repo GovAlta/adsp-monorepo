@@ -958,7 +958,17 @@ Then(
           });
       })
       .then(() => {
-        expect(isFound).to.equal(true);
+        expect(isFound).to.equal(
+          true,
+          'Failed to find service role of ' +
+            roleName +
+            ', ' +
+            roleDesc +
+            ', ' +
+            isInAdminRole +
+            ' under ' +
+            serviceName
+        );
       });
   }
 );
