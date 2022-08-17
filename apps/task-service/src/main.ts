@@ -4,7 +4,7 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
+import { AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -40,46 +40,55 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, configurationHandler, eventService, tenantHandler, tenantStrategy, healthCheck } =
-    await initializePlatform(
-      {
-        serviceId,
-        displayName: 'Task service',
-        description: 'Service that provides a model for tasks and work queues.',
-        roles: [
-          {
-            role: TaskServiceRoles.Admin,
-            description: 'Administrator role for tasks, definitions, and queues.',
-            inTenantAdmin: true,
-          },
-          {
-            role: TaskServiceRoles.TaskReader,
-            description: 'Reader role for access tasks.',
-          },
-          {
-            role: TaskServiceRoles.TaskWriter,
-            description: 'Writer role for creating and updating tasks.',
-          },
-        ],
-        events: [
-          TaskCreatedDefinition,
-          TaskUpdatedDefinition,
-          TaskPrioritySetDefinition,
-          TaskAssignedDefinition,
-          TaskStartedDefinition,
-          TaskCompletedDefinition,
-          TaskCancelledDefinition,
-        ],
-        configurationSchema,
-        configurationConverter: ({ queues }: TaskServiceConfiguration) => ({
-          queues: Object.entries(queues || {}).reduce((qs, [k, q]) => ({ ...qs, [k]: new QueueEntity(q) }), {}),
-        }),
-        clientSecret: environment.CLIENT_SECRET,
-        accessServiceUrl,
-        directoryUrl: new URL(environment.DIRECTORY_URL),
-      },
-      { logger }
-    );
+  const {
+    coreStrategy,
+    configurationHandler,
+    eventService,
+    metricsHandler,
+    tenantHandler,
+    tenantStrategy,
+    healthCheck,
+  } = await initializePlatform(
+    {
+      serviceId,
+      displayName: 'Task service',
+      description: 'Service that provides a model for tasks and work queues.',
+      roles: [
+        {
+          role: TaskServiceRoles.Admin,
+          description: 'Administrator role for tasks, definitions, and queues.',
+          inTenantAdmin: true,
+        },
+        {
+          role: TaskServiceRoles.TaskReader,
+          description: 'Reader role for access tasks.',
+        },
+        {
+          role: TaskServiceRoles.TaskWriter,
+          description: 'Writer role for creating and updating tasks.',
+        },
+      ],
+      events: [
+        TaskCreatedDefinition,
+        TaskUpdatedDefinition,
+        TaskPrioritySetDefinition,
+        TaskAssignedDefinition,
+        TaskStartedDefinition,
+        TaskCompletedDefinition,
+        TaskCancelledDefinition,
+      ],
+      configurationSchema,
+      configurationConverter: ({ queues }: TaskServiceConfiguration) => ({
+        queues: Object.entries(queues || {}).reduce((qs, [k, q]) => ({ ...qs, [k]: new QueueEntity(q) }), {}),
+      }),
+      enableConfigurationInvalidation: true,
+      clientSecret: environment.CLIENT_SECRET,
+      accessServiceUrl,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+      values: [ServiceMetricsValueDefinition],
+    },
+    { logger }
+  );
 
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
@@ -93,7 +102,13 @@ const initializeApp = async (): Promise<express.Application> => {
   });
 
   app.use(passport.initialize());
-  app.use('/task', passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler, configurationHandler);
+  app.use(
+    '/task',
+    metricsHandler,
+    passport.authenticate(['core', 'tenant'], { session: false }),
+    tenantHandler,
+    configurationHandler
+  );
 
   const repositories = await createRepositories({ logger, ...environment });
   applyTaskMiddleware(app, {
