@@ -54,4 +54,4 @@ export const activeRevisionSchema = new Schema({
   },
 });
 
-activeRevisionSchema.index({ namespace: 1, name: 1, tenant: 1, active: 1 }, { unique: true });
+activeRevisionSchema.index({ namespace: 1, name: 1, tenant: 1 }, { unique: true });

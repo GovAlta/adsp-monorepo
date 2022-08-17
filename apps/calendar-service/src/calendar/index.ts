@@ -1,4 +1,4 @@
-import { AdspId, EventService, ServiceDirectory } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, ServiceDirectory, TenantService } from '@abgov/adsp-service-sdk';
 import { Application } from 'express';
 import { Logger } from 'winston';
 import { CalendarRepository } from './repository';
@@ -17,6 +17,7 @@ interface CalendarMiddlewareProps {
   calendarRepository: CalendarRepository;
   eventService: EventService;
   directory: ServiceDirectory;
+  tenantService: TenantService;
 }
 
 export const applyCalendarMiddleware = (
