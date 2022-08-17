@@ -65,6 +65,13 @@ describe('calendar router', () => {
     getResourceUrl: jest.fn(),
   };
 
+  const tenantServiceMock = {
+    getTenants: jest.fn(),
+    getTenant: jest.fn(),
+    getTenantByName: jest.fn(),
+    getTenantByRealm: jest.fn(),
+  };
+
   const calendar: Calendar = {
     name: 'test',
     displayName: 'Test',
@@ -101,6 +108,7 @@ describe('calendar router', () => {
       repository: repositoryMock,
       eventService: eventServiceMock,
       directory: directoryMock,
+      tenantService: tenantServiceMock,
     });
 
     expect(router).toBeTruthy();
@@ -127,6 +135,11 @@ describe('calendar router', () => {
   });
 
   describe('getCalendar', () => {
+    it('can create handler', () => {
+      const handler = getCalendar(tenantServiceMock);
+      expect(handler).toBeTruthy();
+    });
+
     it('can get calendar', async () => {
       const req = {
         user: {
@@ -146,7 +159,8 @@ describe('calendar router', () => {
           test: calendar,
         },
       ]);
-      await getCalendar(req as unknown as Request, res as unknown as Response, next);
+      const handler = getCalendar(tenantServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(req['calendar']).toMatchObject(calendar);
       expect(next).toHaveBeenCalledWith();
       expect(res.send).not.toHaveBeenCalled();
@@ -164,7 +178,8 @@ describe('calendar router', () => {
       const next = jest.fn();
 
       req.getConfiguration.mockResolvedValueOnce([{}]);
-      await getCalendar(req as unknown as Request, res as unknown as Response, next);
+      const handler = getCalendar(tenantServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
       expect(res.send).not.toBeCalled();
     });
@@ -173,7 +188,7 @@ describe('calendar router', () => {
       const req = {
         getConfiguration: jest.fn(),
         params: { name: 'test' },
-        query: { tenant: '123' },
+        query: { tenant: 'Test' },
       };
       const res = {
         send: jest.fn(),
@@ -185,8 +200,13 @@ describe('calendar router', () => {
           test: calendar,
         },
       ]);
-      await getCalendar(req as unknown as Request, res as unknown as Response, next);
-      expect(req.getConfiguration).toHaveBeenCalledWith(expect.any(AdspId));
+
+      const requestTenant = adspId`urn:ads:platform:tenant-service:v2:/tenants/test2`;
+      tenantServiceMock.getTenantByName.mockResolvedValueOnce({ id: requestTenant });
+
+      const handler = getCalendar(tenantServiceMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(req.getConfiguration).toHaveBeenCalledWith(requestTenant);
       expect(req['calendar']).toMatchObject(calendar);
       expect(next).toHaveBeenCalledWith();
       expect(res.send).not.toHaveBeenCalled();
