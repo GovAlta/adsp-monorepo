@@ -52,5 +52,7 @@ Feature: Subscription management
     And the user enters "auto.contact.test@gmail.com" as email, "7801001234" as phone number and "sms" as preferred channel
     And the user clicks Save button in contact information
     Then the user views the checked "sms" icon for "Application health check change"
-    And the user views the subscription of "Application health check change" and its description
-    And the user views the support link for the subscription of "Application health check change"
+    When the user clicks edit contact information button
+    And the user enters "auto.contact.test@gmail.com" as email, "7801001234" as phone number and "email" as preferred channel
+    And the user clicks Save button in contact information
+    Then the user views the checked "email" icon for "Application health check change"
