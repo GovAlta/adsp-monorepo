@@ -126,8 +126,7 @@ class eventsPage {
       `//*[@data-testid="Platform-stream-table"]//tbody/tr/td[text()="${streamName}"]/following-sibling::td//button[@data-testid="toggle-stream-visibility"]`
     );
   }
-
-  streamDetailsTable(streamName) {
+  streamTableDetails(streamName) {
     return cy.xpath(
       `//*[@data-testid="Platform-stream-table"]//tbody/tr/td[text()="${streamName}"]/parent::*/following-sibling::tr//*[contains(@data-testid, "details")]`
     );
@@ -211,8 +210,8 @@ class eventsPage {
     );
   }
 
-  streamDetails() {
-    return cy.get('[data-testid="stream-details"]');
+  streamDetails(streamName) {
+    return cy.get(`[data-testid="stream-details" and contains(text(), "${streamName}")]`);
   }
 
   streamEditBtn(name) {

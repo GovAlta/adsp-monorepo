@@ -171,7 +171,7 @@ When('the user clicks eye icon of {string} under Core streams', function (stream
 
 Then('the user views the details of {string} under Core streams', function (streamName) {
   eventsObj
-    .streamDetailsTable(streamName)
+    .streamTableDetails(streamName)
     .invoke('text')
     .should('contain', '"name": "' + streamName + '"');
 });
@@ -328,16 +328,16 @@ Then('the user {string} the stream of {string}, {string}', function (viewOrNot, 
 Then(
   'the user views the stream details of {string}, {string}, {string}, {string}',
   function (streamName, description, event, role) {
-    eventsObj.streamDetails().should('contain', streamName);
-    eventsObj.streamDetails().should('contain', description);
-    if (role == 'public') eventsObj.streamDetails().should('contain', '"publicSubscribe": true');
+    eventsObj.streamDetails(streamName).should('contain', streamName);
+    eventsObj.streamDetails(streamName).should('contain', description);
+    if (role == 'public') eventsObj.streamDetails(streamName).should('contain', '"publicSubscribe": true');
     else {
-      eventsObj.streamDetails().should('contain', '"publicSubscribe": false');
+      eventsObj.streamDetails(streamName).should('contain', '"publicSubscribe": false');
     }
     const roles = role.split(',');
     for (let i = 0; i < roles.length; i++) {
       eventsObj
-        .streamDetails()
+        .streamDetails(streamName)
         .invoke('text')
         .then((roleDetails) => {
           const subscriberRoles = roles[i].split(',')[0].trim();
@@ -347,7 +347,7 @@ Then(
     const events = event.split(',');
     for (let i = 0; i < events.length; i++) {
       eventsObj
-        .streamDetails()
+        .streamDetails(streamName)
         .invoke('text')
         .then((eventDetails) => {
           const namespace = events[i].split(':')[0].trim();
