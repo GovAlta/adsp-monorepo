@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { GoAButton, GoACallout } from '@abgov/react-components';
-import { GoACard, GoAIcon, GoAInput } from '@abgov/react-components/experimental';
+import { GoACard } from '@abgov/react-components/experimental';
 import { Link } from 'react-router-dom';
 import ReactTooltip from 'react-tooltip';
 import { Grid, GridItem } from '@components/Grid';
@@ -9,58 +9,6 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import CopyIcon from '@icons/copy-outline.svg';
-import { GoAButton as GoAButtonV2, GoAChip } from '@abgov/react-components-new';
-
-interface ExternalLink {
-  link: string;
-  name: string;
-}
-
-const ExternalLink = ({ link, name }: ExternalLink): JSX.Element => {
-  return (
-    <ExternalLinkWrapper>
-      <a href={link} rel="noopener noreferrer" target="_blank">
-        {name}
-      </a>
-    </ExternalLinkWrapper>
-  );
-};
-
-interface LinkCopyComponentProps {
-  link: string;
-}
-
-const LinkCopyComponentWrapper = styled.div`
-  input {
-    width: 80%;
-    height: 48px;
-    border-width: 2px 2px 2px 0px;
-  }
-`;
-
-const LinkCopyComponent = ({ link }: LinkCopyComponentProps): JSX.Element => {
-  const [isCopied, setIsCopied] = useState<boolean>(false);
-
-  return (
-    <LinkCopyComponentWrapper>
-      {isCopied && <GoAChip content="Link copied to clipboard" leadingIcon="checkmark-circle" />}
-      <GoAButtonV2
-        type="tertiary"
-        leadingIcon="open"
-        onClick={() => {
-          navigator.clipboard.writeText(link);
-          setIsCopied(true);
-        }}
-      >
-        Copy link
-      </GoAButtonV2>
-    </LinkCopyComponentWrapper>
-  );
-};
-
-interface StaticLinkInputProps {
-  link: string;
-}
 
 const Dashboard = (): JSX.Element => {
   const tenantAdminRole = 'tenant-admin';
@@ -207,25 +155,33 @@ const Dashboard = (): JSX.Element => {
             <p>To give another user limited access to your realm:</p>
 
             <p>
-              <ListWrapper>
-                <li>
-                  Share the login URL below and have your user <ExternalLink link={loginUrl} name="login" /> once to
-                  create their account.
-                </li>
-                <li>
-                  Add the 'tenant-admin' role to the user's assigned roles from{' '}
-                  <ExternalLink link={getKeycloakAdminPortalUsers()} name="here" />
-                  <br />
-                  (Role Mapping › Client Roles › urn:ads:platform:tenant-service › Add selected)
-                </li>
-                <li>
-                  Once granted the role, the user can access tenant admin using the URL below.
-                  <br />
-                  <LinkCopyComponent link={loginUrl} />
-                </li>
-              </ListWrapper>
+              1. Add the 'tenant-admin' role to the user's assigned roles from{' '}
+              <a href={getKeycloakAdminPortalUsers()} rel="noopener noreferrer" target="_blank">
+                here
+              </a>
             </p>
-            <br />
+            <div className="small-font mt-2">
+              (Role Mapping &#8250; Client Roles &#8250; urn:ads:platform:tenant-service &#8250; Add selected)
+            </div>
+
+            <p>2. Share the following URL to complete the process.</p>
+
+            <div className="copy-url">
+              <a target="_blank" href={loginUrl} rel="noreferrer">
+                {loginUrl}
+              </a>
+            </div>
+            <GoAButton data-tip="Copied!" data-for="registerTipUrl">
+              Click to copy
+            </GoAButton>
+            <ReactTooltip
+              id="registerTipUrl"
+              place="top"
+              event="click"
+              eventOff="blur"
+              effect="solid"
+              afterShow={() => _afterShow(loginUrl)}
+            />
           </DashboardAside>
         </Page>
         <footer>
@@ -272,7 +228,7 @@ const DashboardAside = styled(Aside)`
   padding-top: 1.6em;
 
   .copy-url {
-    font - size: var(--fs-sm);
+            font - size: var(--fs-sm);
     background-color: var(--color-gray-100);
     border: 1px solid var(--color-gray-300);
     border-radius: 1px;
@@ -288,7 +244,7 @@ const DashboardAside = styled(Aside)`
   }
 
   .mt-2 {
-    margin - top: 2em;
+            margin - top: 2em;
   }
 `;
 const DashboardDiv = styled.div`
@@ -298,19 +254,4 @@ const DashboardDiv = styled.div`
     }
   }
   margin-bottom: 2.5rem;
-`;
-
-const ExternalLinkWrapper = styled.div`
-  display: inline-block;
-  .goa-icon {
-    display: inline !important;
-  }
-`;
-
-const ListWrapper = styled.ul`
-  list-style-type: value;
-  margin-left: 1rem;
-  li {
-    margin-bottom: 0.5rem;
-  }
 `;

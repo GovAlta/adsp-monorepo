@@ -3,6 +3,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Adsp.Sdk.Tenancy;
 using RestSharp;
 
 namespace Adsp.Sdk.Access;
@@ -14,7 +15,7 @@ internal class TenantKeyProvider : ITenantKeyProvider, IDisposable
   private readonly IIssuerCache _issuerCache;
   private readonly RestClient _client;
 
-  public TenantKeyProvider(ILogger<TenantKeyProvider> logger, IMemoryCache cache, IIssuerCache issuerCache, IOptions<AdspOptions> options)
+  public TenantKeyProvider(ILogger<TenantKeyProvider> logger, IMemoryCache cache, IIssuerCache issuerCache, IOptions<AdspOptions> options, RestClient? client = null)
   {
     if (options.Value.AccessServiceUrl == null)
     {
@@ -24,7 +25,7 @@ internal class TenantKeyProvider : ITenantKeyProvider, IDisposable
     _logger = logger;
     _cache = cache;
     _issuerCache = issuerCache;
-    _client = new RestClient(options.Value.AccessServiceUrl);
+    _client = client ?? new RestClient(options.Value.AccessServiceUrl);
   }
 
   public async Task<SecurityKey?> ResolveSigningKey(string issuer, string kid)
@@ -42,6 +43,7 @@ internal class TenantKeyProvider : ITenantKeyProvider, IDisposable
   {
     SecurityKey? result = null;
     var tenant = await _issuerCache.GetTenantByIssuer(issuer);
+
     if (tenant != null)
     {
       try
