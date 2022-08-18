@@ -98,19 +98,19 @@ class SubscriptionManagementPage {
     );
   }
 
-  availableChannelEmailIcon(subscriptionName) {
+  emailChannelCheckedIcon(subscriptionName) {
     return cy.xpath(
       `//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]/following-sibling::td[2]//div/div[@class="icon-checked-0"]`
     );
   }
 
-  availableChannelSmsIcon(subscriptionName) {
+  smsChannelCheckedIcon(subscriptionName) {
     return cy.xpath(
       `//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]/following-sibling::td[2]//div/div[@class="icon-checked-1"]`
     );
   }
 
-  availableChannelBotIcon(subscriptionName) {
+  botChannelCheckedIcon(subscriptionName) {
     return cy.xpath(
       `//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]/following-sibling::td[2]//div/div[@class="icon-checked-2"]`
     );
