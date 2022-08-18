@@ -28,4 +28,13 @@ public class ServiceRegistration
   /// payload schemas.
   /// </summary>
   public IEnumerable<DomainEventDefinition>? Events { get; set; }
+  /// <summary>
+  /// Optional definitions of event streams used by the service.
+  /// </summary>
+  public IEnumerable<StreamDefinition>? EventStreams { get; set; }
+  /// <summary>
+  /// Optional definitions of file types used by the service. Set this property to describe file types and their read and
+  /// update roles.
+  /// </summary>
+  public IEnumerable<FileType>? FileTypes { get; set; }
 }

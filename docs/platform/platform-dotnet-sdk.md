@@ -287,7 +287,9 @@ Use the second generic parameter of `GetConfiguration` for the type of the combi
 The SDK allows services to register configuration for some platform services.
 
 - `Roles` defines the client roles of the service. New tenant realms are created with a client that includes the roles specified here.
-- `Events` defines the domain events of the service.
+- `Events` defines the domain events of the service signalled for domain significant changes.
+- `EventsStreams` defines the event streams of the service that allow clients to access events via the push service.
+- `FileTypes` defines the file types of the service.
 
 Defining configuration for other platform services:
 ```csharp
@@ -307,6 +309,19 @@ Defining configuration for other platform services:
           "Signalled when hello world is executed."
         )
       };
+      options.EventStreams = new[] {
+        new StreamDefinition("hello-updates", "Hello updates") {
+          SubscriberRoles = new[] {
+            $"{serviceId}:{ServiceRoles.HelloWorlder}" // prefix the role since it is verified by push service.
+          },
+          Events = new[] {
+            new StreamDefinitionEvent(serviceId.Service, HelloWorldExecuted.EventName)
+          }
+        }
+      }
+      options.FileTypes = new[] {
+        new FileType("hello-files", "Hello files")
+      }
     }
   );
 ```
