@@ -8,6 +8,7 @@ class PuppeteerPdfService implements PdfService {
     let page: puppeteer.Page;
     try {
       page = await this.browser.newPage();
+      await page.setJavaScriptEnabled(false);
       await page.setContent(content, { waitUntil: 'load', timeout: 2 * 60 * 1000 });
       return await page.pdf({ printBackground: true });
     } finally {
