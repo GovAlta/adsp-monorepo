@@ -44,16 +44,13 @@ Feature: Subscription management
     And the user views contact information of "auto.contact.test@gmail.com", "EMPTY" and "email"
 
   @TEST_CS-1413 @REQ_CS-1240 @regression
+  # prior the test authenticated user should have subscription to Application health check change
   Scenario: As a subscriber, I can see the supported channels of a notification type in the subscriber app, so I know what's available.
     When an authenticated user with "auto.contact" and "autotest" is in the subscriber app
     Then the user views subscription management page
     When the user clicks edit contact information button
-    Then the user enters "auto.contact.test@gmail.com" as email, "7801001234" as phone number and "sms" as preferred channel
+    And the user enters "auto.contact.test@gmail.com" as email, "7801001234" as phone number and "sms" as preferred channel
     And the user clicks Save button in contact information
     Then the user views the checked "sms" icon for "Application health check change"
-    When the user clicks edit contact information button
-    Then the user enters "auto.contact.test@gmail.com" as email, "7801001234" as phone number and "email" as preferred channel
-    And the user clicks Save button in contact information
-    Then the user views the checked "Email" icon for "Application health check change"
     And the user views the subscription of "Application health check change" and its description
     And the user views the support link for the subscription of "Application health check change"
