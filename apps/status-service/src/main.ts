@@ -36,8 +36,6 @@ app.use(compression());
 app.use(helmet());
 app.use(express.json({ limit: '1mb' }));
 
-logger.debug(`Environment variables: ${util.inspect(environment)}`);
-
 (async () => {
   const createRepoJob = createRepositories({ ...environment, logger });
   const [repositories] = [await createRepoJob];
