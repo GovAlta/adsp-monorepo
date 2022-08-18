@@ -29,5 +29,6 @@ export interface ServiceMetricsState {
   intervalMax: Date;
   isLoading: boolean;
   responseTimes: MetricValue[];
+  responseTimeComponents: Record<string, MetricValue[]>;
   counts: MetricValue[];
 }
