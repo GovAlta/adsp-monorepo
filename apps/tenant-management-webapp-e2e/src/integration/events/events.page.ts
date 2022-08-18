@@ -126,9 +126,10 @@ class eventsPage {
       `//*[@data-testid="Platform-stream-table"]//tbody/tr/td[text()="${streamName}"]/following-sibling::td//button[@data-testid="toggle-stream-visibility"]`
     );
   }
-  streamTableDetails(streamName) {
+
+  streamDetails(streamName) {
     return cy.xpath(
-      `//*[@data-testid="Platform-stream-table"]//tbody/tr/td[text()="${streamName}"]/parent::*/following-sibling::tr//*[contains(@data-testid, "details")]`
+      `//tbody/tr/td[text()="${streamName}"]/parent::*/following-sibling::tr//*[contains(@data-testid, "details")]`
     );
   }
 
@@ -208,10 +209,6 @@ class eventsPage {
     return cy.xpath(
       `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="icon-eye-off"]`
     );
-  }
-
-  streamDetails(streamName) {
-    return cy.get(`[data-testid="stream-details" and contains(text(), "${streamName}")]`);
   }
 
   streamEditBtn(name) {
