@@ -421,15 +421,10 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
    * @returns
    */
   function getStatusEntries(endpoint: ServiceStatusEndpoint): EndpointStatusEntry[] {
-    // Get the last 30 entries (one is generated per minute)
+    // Get the last "displayCount" entries (one is generated per minute)
+    const t0 = Date.now() - displayCount * millisecondsPerMinute;
     const timePeriodEntries =
-      endpoint.statusEntries
-        ?.filter((entry) => entry.timestamp > Date.now() - 30 * millisecondsPerMinute)
-        .sort((a, b) => a.timestamp - b.timestamp) || [];
-
-    if (timePeriodEntries.length >= displayCount) {
-      return timePeriodEntries;
-    }
+      endpoint.statusEntries?.filter((entry) => entry.timestamp > t0).sort((a, b) => a.timestamp - b.timestamp) || [];
 
     const statusBar = new StatusBar(endpoint, timePeriodEntries);
     return statusBar.getEntries();
