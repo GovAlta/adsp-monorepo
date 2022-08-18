@@ -39,6 +39,7 @@ export interface FetchServiceMetricsSuccessAction {
   intervalMin: Date;
   intervalMax: Date;
   responseTimes: MetricValue[];
+  responseTimeComponents: Record<string, MetricValue[]>;
   counts: MetricValue[];
 }
 
@@ -79,11 +80,13 @@ export const fetchServiceMetricsSuccess = (
   intervalMin: Date,
   intervalMax: Date,
   responseTimes: MetricValue[],
+  responseTimeComponents: Record<string, MetricValue[]>,
   counts: MetricValue[]
 ): FetchServiceMetricsSuccessAction => ({
   type: FETCH_SERVICE_METRICS_SUCCESS_ACTION,
   intervalMin,
   intervalMax,
   responseTimes,
+  responseTimeComponents,
   counts,
 });
