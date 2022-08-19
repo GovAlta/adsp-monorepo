@@ -910,7 +910,7 @@ Then(
     let isFound = false;
     let tenantOrCore;
     cy.wait(5000); // Wait for the service roles to show up
-    // For each row of the , check if name, desc, isInAdminRole are matched. If all 3 cells are matched, it's a found
+    // For each row of service roles, check if name, desc, isInAdminRole are matched. If all 3 cells are matched, it's a found
     if (serviceName.includes('urn:ads:platform')) {
       tenantOrCore = 'core';
     } else {
