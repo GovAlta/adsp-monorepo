@@ -126,5 +126,11 @@ class TenantAdminPage {
   eventTableNameSpaceCells() {
     return cy.get('td[headers="namespace"]');
   }
+
+  serviceRoleTableBody(tenantOrCore, serviceName) {
+    return cy.xpath(
+      `//*[contains(@data-testid,"${tenantOrCore}-service-role-id") and text()="${serviceName}"]/following-sibling::div//table[@data-testid="service-role-table"]/tbody`
+    );
+  }
 }
 export default TenantAdminPage;

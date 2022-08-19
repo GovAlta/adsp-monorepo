@@ -902,3 +902,73 @@ Then(
       });
   }
 );
+
+Then(
+  'the user views {string}, {string}, {string} under {string}',
+  function (roleName, roleDesc, isInAdminRole, serviceName) {
+    let matchCount = 0;
+    let isFound = false;
+    let tenantOrCore;
+    cy.wait(5000); // Wait for the service roles to show up
+    // For each row of service roles, check if name, desc, isInAdminRole are matched. If all 3 cells are matched, it's a found
+    if (serviceName.includes('urn:ads:platform')) {
+      tenantOrCore = 'core';
+    } else {
+      tenantOrCore = 'tenant';
+    }
+    tenantAdminObj
+      .serviceRoleTableBody(tenantOrCore, serviceName)
+      .find('tr')
+      .each((row) => {
+        cy.wrap(row)
+          .find('td')
+          .eq(0)
+          .invoke('text')
+          .then((firstCell) => {
+            if (firstCell == roleName) {
+              matchCount = matchCount + 1;
+            }
+          })
+          .then(() => {
+            cy.wrap(row)
+              .find('td')
+              .eq(1)
+              .invoke('text')
+              .then((secondCell) => {
+                if (secondCell == roleDesc) {
+                  matchCount = matchCount + 1;
+                }
+              });
+          })
+          .then(() => {
+            cy.wrap(row)
+              .find('td')
+              .eq(2)
+              .invoke('text')
+              .then((thirdCell) => {
+                if (thirdCell == isInAdminRole) {
+                  matchCount = matchCount + 1;
+                }
+              });
+          })
+          .then(() => {
+            if (matchCount == 3) {
+              isFound = true;
+            }
+          });
+      })
+      .then(() => {
+        expect(isFound).to.equal(
+          true,
+          'Failed to find service role of ' +
+            roleName +
+            ', ' +
+            roleDesc +
+            ', ' +
+            isInAdminRole +
+            ' under ' +
+            serviceName
+        );
+      });
+  }
+);
