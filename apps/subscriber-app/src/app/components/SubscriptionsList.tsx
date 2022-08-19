@@ -77,7 +77,7 @@ const AvailableChannels = ({ channels, effectiveChannel }: AvailableChannelsProp
               return (
                 <div>
                   <div className={`icon-${index}`}>{ChannelIcons[chn]}</div>
-                  <div className={`icon-checked-${index}`}>
+                  <div data-testid="icon-checked" className={`icon-checked-${index}`}>
                     <Checkmark />
                   </div>
                 </div>
