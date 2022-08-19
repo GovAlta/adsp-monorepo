@@ -9,7 +9,6 @@ import { createRepositories } from './mongo';
 import { bindEndpoints, ServiceUserRoles } from './app';
 import * as cors from 'cors';
 import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
-import * as util from 'util';
 import type { User } from '@abgov/adsp-service-sdk';
 import { configurationSchema } from './mongo/schema';
 import {
@@ -35,8 +34,6 @@ app.use(cors());
 app.use(compression());
 app.use(helmet());
 app.use(express.json({ limit: '1mb' }));
-
-logger.debug(`Environment variables: ${util.inspect(environment)}`);
 
 (async () => {
   const createRepoJob = createRepositories({ ...environment, logger });
@@ -102,9 +99,7 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
     // clear the health status database every midnight
     const scheduleDataReset = async () => {
       scheduleJob('0 0 * * *', async () => {
-        logger.info('Start to delete the old application status.');
         await repositories.endpointStatusEntryRepository.deleteOldUrlStatus();
-        logger.info('Completed the old application status deletion.');
       });
 
       const healthCheckController = new HealthCheckController(

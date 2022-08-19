@@ -61,7 +61,6 @@ export class HealthCheckJobScheduler {
   // We can get rid of this method all together by handling update and delete health check jobs
   // in the HealthCheckController.
   reloadCache = (applications: ServiceStatusApplicationEntity[]): void => {
-    this.#logger.info(`Sync Job queue with database`);
     const cachedIds = this.#jobCache.getApplicationIds();
     const idsToRemove = [];
     const idsToAdd = [];
