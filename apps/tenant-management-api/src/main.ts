@@ -4,9 +4,9 @@ import * as cors from 'cors';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
 import * as express from 'express';
-import { Request, Response, NextFunction } from 'express';
 import * as healthCheck from 'express-healthcheck';
-import * as fs from 'fs';
+import { readFile } from 'fs';
+import { promisify } from 'util';
 import * as passport from 'passport';
 import { environment } from './environments/environment';
 import { createRepositories, disconnect } from './mongo';
@@ -107,21 +107,11 @@ async function initializeApp(): Promise<express.Application> {
 
   app.use('/health', healthCheck());
 
-  let swagger = null;
+  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {
-    if (swagger) {
-      res.json(swagger);
-    } else {
-      fs.readFile(`${__dirname}/swagger.json`, 'utf8', (err, data) => {
-        if (err) {
-          res.sendStatus(404);
-        } else {
-          swagger = JSON.parse(data);
-          res.json(swagger);
-        }
-      });
-    }
+    res.json(swagger);
   });
+
   return app;
 }
 
