@@ -203,16 +203,12 @@ When(
     const events = event.split(',');
     eventsObj.streamModalNameInput().scrollIntoView().clear().type(name);
     eventsObj.streamModalDescriptionInput().scrollIntoView().clear().type(description);
-    if (event == 'n/a') {
-      eventsObj.streamModalEventDropdown().should('exist');
-    } else {
-      eventsObj.streamModalEventDropdown().click();
-      eventsObj.streamModalEventDropdownItems().then(() => {
-        for (let i = 0; i < events.length; i++) {
-          eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
-        }
-      });
-    }
+    eventsObj.streamModalEventDropdown().click();
+    eventsObj.streamModalEventDropdownItems().then(() => {
+      for (let i = 0; i < events.length; i++) {
+        eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
+      }
+    });
     eventsObj.streamModalEventDropdownBackground().click({ force: true }); // To collapse the event dropdown
     //Role(s) selection of roles including public
     if (role == 'public') {
@@ -319,7 +315,7 @@ Then(
         .streamDetails(streamName)
         .invoke('text')
         .then((roleDetails) => {
-          const subscriberRoles = roles[i].split(',')[0].trim();
+          const subscriberRoles = roles[i].trim();
           expect(roleDetails).to.contain(subscriberRoles);
         });
     }
@@ -395,9 +391,8 @@ Then('the user enters {string}, {string}, {string} in Edit stream modal', functi
           eventsObj.streamModalPublicCheckbox().click();
         }
       });
-    if (role == 'n/a') {
-      eventsObj.streamModalRolesCheckboxes().should('exist');
-    }
+  } else if (role == 'n/a') {
+    eventsObj.streamModalRolesCheckboxes().should('exist');
   } else {
     const roles = role.split(',');
     eventsObj
