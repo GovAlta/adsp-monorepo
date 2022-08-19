@@ -137,3 +137,11 @@ Feature: Tenant admin
     Then the user views delete "event definition" confirmation modal for "Autotest-eventDefinition"
     And the user clicks Delete button in delete confirmation modal
     Then the user "should not view" an event definition of "Autotest-eventDefinition" and "event log testing" under "Autotest"
+
+  @TEST_CS-1494 @REQ_CS-1443 @regression
+  Scenario: As a tenant admin, I can see service roles registered by services, so that I can see expected services and roles
+    Given a tenant admin user is on tenant admin page
+    When the user selects the "Access" menu item
+    And the user selects "Service roles" tab for "Access"
+    Then the user views "autotest-role2", "role 2 for automated test", "No" under "urn:ads:autotest:autotest-service"
+    And the user views "file-service-admin", "Administrator role for the file service.", "Yes" under "urn:ads:platform:file-service"
