@@ -1,4 +1,6 @@
 import * as express from 'express';
+import { readFile } from 'fs';
+import { promisify } from 'util';
 import * as passport from 'passport';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
@@ -139,6 +141,11 @@ app.use(express.json({ limit: '1mb' }));
     logger.info(`Job instance, skip the api binding.`);
   }
   // non-service endpoints
+  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
+  app.use('/swagger/docs/v1', (_req, res) => {
+    res.json(swagger);
+  });
+
   app.get('/health', (_req, res) => {
     res.json({
       db: repositories.isConnected(),
