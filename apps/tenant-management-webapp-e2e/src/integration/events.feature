@@ -110,7 +110,7 @@ Feature: Events
     # Add a stream
     When the user clicks Add stream button
     Then the user views Add stream modal
-    When the user enters "autotest-addEditDelete-stream", "autotest-stream-desc", "status-service:application-healthy, file-service:file-deleted", "public" in stream modal
+    When the user enters "autotest-addEditDelete-stream", "autotest-stream-desc", "status-service:application-healthy, file-service:file-deleted", "public" in Add stream modal
     And the user clicks Save button in Stream modal
     Then the user "views" the stream of "autotest-addEditDelete-stream", "Public"
     When the user clicks "Eye" button of "autotest-addEditDelete-stream"
@@ -119,8 +119,8 @@ Feature: Events
     # Edit a stream
     When the user clicks "Edit" button of "autotest-addEditDelete-stream"
     Then the user views Edit stream modal
-    When the user removes event chips of "status-service:application-healthy" in stream modal
-    And the user enters "autotest-stream-desc2", "auto-test-role3, beta-tester" in stream modal
+    When the user removes event chips of "status-service:application-healthy" in Edit stream modal
+    And the user enters "autotest-stream-desc2", "n/a", "auto-test-role3, beta-tester" in Edit stream modal
     And the user clicks Save button in Stream modal
     Then the user "views" the stream of "autotest-addEditDelete-stream", "auto-test-role3, beta-tester"
     When the user clicks "Eye" button of "autotest-addEditDelete-stream"

@@ -171,7 +171,7 @@ When('the user clicks eye icon of {string} under Core streams', function (stream
 
 Then('the user views the details of {string} under Core streams', function (streamName) {
   eventsObj
-    .streamTableDetails(streamName)
+    .streamDetails(streamName)
     .invoke('text')
     .should('contain', '"name": "' + streamName + '"');
 });
@@ -197,56 +197,34 @@ Then('the user views Add stream modal', function () {
 });
 
 When(
-  'the user enters {string}, {string}, {string}, {string} in stream modal',
+  'the user enters {string}, {string}, {string}, {string} in Add stream modal',
   function (name, description, event, role) {
     const events = event.split(',');
-
     eventsObj.streamModalNameInput().scrollIntoView().clear().type(name);
     eventsObj.streamModalDescriptionInput().scrollIntoView().clear().type(description);
-    eventsObj.streamModalEventDropdown().click();
-    eventsObj
-      .streamModalEventDropdownItems()
-      .then((elements) => {
-        for (let i = 0; i < elements.length; i++) {
-          if (elements[i].className.includes('goa-dropdown0-option--selected')) {
-            elements[i].click();
-          }
-        }
-      })
-      .then(() => {
+    if (event == 'n/a') {
+      eventsObj.streamModalEventDropdown().should('exist');
+    } else {
+      eventsObj.streamModalEventDropdown().click();
+      eventsObj.streamModalEventDropdownItems().then(() => {
         for (let i = 0; i < events.length; i++) {
           eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
         }
       });
+    }
     eventsObj.streamModalEventDropdownBackground().click({ force: true }); // To collapse the event dropdown
     //Roles deselection, selection of roles including public
     if (role == 'public') {
-      eventsObj
-        .streamModalPublicCheckbox()
-        .invoke('attr', 'class')
-        .then((classAttr) => {
-          if (classAttr?.includes('-selected')) {
-            cy.log('Make stream public is already checked off.');
-          } else {
-            eventsObj.streamModalPublicCheckbox().click();
-          }
-        });
+      eventsObj.streamModalPublicCheckbox().click();
+    } else if (event == 'n/a') {
+      eventsObj.streamModalRolesCheckboxes().should('exist');
     } else {
       const roles = role.split(',');
-      eventsObj
-        .streamModalRolesCheckboxes()
-        .then((elements) => {
-          for (let i = 0; i < elements.length; i++) {
-            if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
-              elements[i].click();
-            }
-          }
-        })
-        .then(() => {
-          for (let i = 0; i < roles.length; i++) {
-            eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
-          }
-        });
+      eventsObj.streamModalRolesCheckboxes().then(() => {
+        for (let i = 0; i < roles.length; i++) {
+          eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
+        }
+      });
     }
   }
 );
@@ -382,8 +360,28 @@ Then('the user views Edit stream modal', function () {
   eventsObj.streamModalTitle().invoke('text').should('eq', 'Edit stream');
 });
 
-Then('the user enters {string}, {string} in stream modal', function (description, role) {
+Then('the user enters {string}, {string}, {string} in Edit stream modal', function (description, event, role) {
   eventsObj.streamModalDescriptionInput().clear().type(description);
+  if (event == 'n/a') {
+    eventsObj.streamModalEventDropdown().should('exist');
+  } else {
+    const events = event.split(',');
+    eventsObj.streamModalEventDropdown().click();
+    eventsObj
+      .streamModalEventDropdownItems()
+      .then((elements) => {
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].className.includes('goa-dropdown0-option--selected')) {
+            elements[i].click();
+          }
+        }
+      })
+      .then(() => {
+        for (let i = 0; i < events.length; i++) {
+          eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
+        }
+      });
+  }
   if (role == 'public') {
     eventsObj
       .streamModalPublicCheckbox()
@@ -395,6 +393,9 @@ Then('the user enters {string}, {string} in stream modal', function (description
           eventsObj.streamModalPublicCheckbox().click();
         }
       });
+    if (role == 'n/a') {
+      eventsObj.streamModalRolesCheckboxes().should('exist');
+    }
   } else {
     const roles = role.split(',');
     eventsObj
@@ -422,7 +423,7 @@ Then('the user enters {string}, {string} in stream modal', function (description
   }
 });
 
-When('the user removes event chips of {string} in stream modal', function (event) {
+When('the user removes event chips of {string} in Edit stream modal', function (event) {
   const eventChip = event.split(',');
   for (let i = 0; i < eventChip.length; i++) {
     eventsObj.streamModalEventChips().shadow().get(`[content="${eventChip}"]`).click();
