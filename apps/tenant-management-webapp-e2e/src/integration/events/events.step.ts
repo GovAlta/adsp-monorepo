@@ -196,6 +196,7 @@ Then('the user views Add stream modal', function () {
   eventsObj.streamModalTitle().invoke('text').should('eq', 'Add stream');
 });
 
+//User can use "n/a" as input for event or role in case there is no selection of the event or role
 When(
   'the user enters {string}, {string}, {string}, {string} in Add stream modal',
   function (name, description, event, role) {
@@ -213,7 +214,7 @@ When(
       });
     }
     eventsObj.streamModalEventDropdownBackground().click({ force: true }); // To collapse the event dropdown
-    //Roles deselection, selection of roles including public
+    //Role(s) selection of roles including public
     if (role == 'public') {
       eventsObj.streamModalPublicCheckbox().click();
     } else if (event == 'n/a') {
@@ -360,6 +361,7 @@ Then('the user views Edit stream modal', function () {
   eventsObj.streamModalTitle().invoke('text').should('eq', 'Edit stream');
 });
 
+//User can use "n/a" as input for event or role in case there is no selection of the event or role
 Then('the user enters {string}, {string}, {string} in Edit stream modal', function (description, event, role) {
   eventsObj.streamModalDescriptionInput().clear().type(description);
   if (event == 'n/a') {
