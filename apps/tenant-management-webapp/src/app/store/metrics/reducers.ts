@@ -18,6 +18,7 @@ const defaultState: ServiceMetricsState = {
   intervalMin: null,
   intervalMax: null,
   responseTimes: [],
+  responseTimeComponents: {},
   counts: [],
 };
 
@@ -59,6 +60,7 @@ export default function (
         intervalMin: action.intervalMin,
         intervalMax: action.intervalMax,
         responseTimes: action.responseTimes,
+        responseTimeComponents: action.responseTimeComponents,
         counts: action.counts,
       };
     default:

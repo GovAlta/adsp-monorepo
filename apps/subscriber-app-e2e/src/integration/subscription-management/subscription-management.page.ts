@@ -92,6 +92,29 @@ class SubscriptionManagementPage {
   calloutMessage() {
     return cy.xpath('//*[@role="notification"]//*[@class="message"]');
   }
+  availableChannel(subscriptionName) {
+    return cy.xpath(
+      `//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]/following-sibling::td[2]`
+    );
+  }
+
+  emailChannelCheckedIcon(subscriptionName) {
+    return cy.xpath(
+      `//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]/following-sibling::td[2]//div/div[@class="icon-checked-0"]`
+    );
+  }
+
+  smsChannelCheckedIcon(subscriptionName) {
+    return cy.xpath(
+      `//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]/following-sibling::td[2]//div/div[@class="icon-checked-1"]`
+    );
+  }
+
+  botChannelCheckedIcon(subscriptionName) {
+    return cy.xpath(
+      `//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]/following-sibling::td[2]//div/div[@class="icon-checked-2"]`
+    );
+  }
 }
 
 export default SubscriptionManagementPage;

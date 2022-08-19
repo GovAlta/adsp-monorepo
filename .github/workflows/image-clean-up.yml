@@ -14,7 +14,7 @@ jobs:
       - name: Delete ADSP containers older than a week
         uses: snok/container-retention-policy@v1
         with:
-          image-names: tenant-management-webapp, tenant-management-api, file-service, notification-service, status-app, subscriber-app, push-service, status-service, calendar-service, event-service, task-service, configuration-service, value-service, api-docs-app, verify-service, form-service
+          image-names: tenant-management-webapp, tenant-management-api, file-service, notification-service, status-app, subscriber-app, push-service, status-service, calendar-service, event-service, task-service, configuration-service, value-service, api-docs-app, verify-service, form-service, script-service, pdf-service, subscriber-gateway, directory-service
           cut-off: 1 week ago UTC
           account-type: org
           org-name: GovAlta
