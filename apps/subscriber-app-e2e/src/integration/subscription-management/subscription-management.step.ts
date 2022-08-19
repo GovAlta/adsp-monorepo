@@ -140,15 +140,15 @@ Then('the user views the checked {string} icon for {string}', function (channel,
   switch (channel.toLowerCase()) {
     case 'email':
       subscriptionManagementObj.availableChannel(subscriptionName).get('[data-testid="mail-icon"]').should('exist');
-      subscriptionManagementObj.emailChannelCheckedIcon(subscriptionName).should('exist');
+      subscriptionManagementObj.channelCheckedIcon(subscriptionName).should('exist');
       break;
     case 'sms':
       subscriptionManagementObj.availableChannel(subscriptionName).get('[data-testid="sms-icon"]').should('exist');
-      subscriptionManagementObj.smsChannelCheckedIcon(subscriptionName).should('exist');
+      subscriptionManagementObj.channelCheckedIcon(subscriptionName).should('exist');
       break;
     case 'bot':
       subscriptionManagementObj.availableChannel(subscriptionName).get('[data-testid="bot-icon"]').should('exist');
-      subscriptionManagementObj.botChannelCheckedIcon(subscriptionName).should('exist');
+      subscriptionManagementObj.channelCheckedIcon(subscriptionName).should('exist');
       break;
     default:
       expect(channel).to.be.oneOf(['sms', 'email', 'bot']);
