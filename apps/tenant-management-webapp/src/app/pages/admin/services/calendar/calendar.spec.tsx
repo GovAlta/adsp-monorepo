@@ -11,8 +11,7 @@ describe('Calendar list Page', () => {
     calendarService: {
       calendars: [
         {
-          id: '',
-          name: 'DDI-Calendar',
+          name: 'ddi-calendar',
           displayName: '',
           description: '',
           readRoles: ['auto-test-role1', 'stream-listener'],

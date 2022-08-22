@@ -1,4 +1,6 @@
 import * as express from 'express';
+import { readFile } from 'fs';
+import { promisify } from 'util';
 import * as passport from 'passport';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
@@ -9,7 +11,6 @@ import { createRepositories } from './mongo';
 import { bindEndpoints, ServiceUserRoles } from './app';
 import * as cors from 'cors';
 import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
-import * as util from 'util';
 import type { User } from '@abgov/adsp-service-sdk';
 import { configurationSchema } from './mongo/schema';
 import {
@@ -35,8 +36,6 @@ app.use(cors());
 app.use(compression());
 app.use(helmet());
 app.use(express.json({ limit: '1mb' }));
-
-logger.debug(`Environment variables: ${util.inspect(environment)}`);
 
 (async () => {
   const createRepoJob = createRepositories({ ...environment, logger });
@@ -102,9 +101,7 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
     // clear the health status database every midnight
     const scheduleDataReset = async () => {
       scheduleJob('0 0 * * *', async () => {
-        logger.info('Start to delete the old application status.');
         await repositories.endpointStatusEntryRepository.deleteOldUrlStatus();
-        logger.info('Completed the old application status deletion.');
       });
 
       const healthCheckController = new HealthCheckController(
@@ -144,6 +141,11 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
     logger.info(`Job instance, skip the api binding.`);
   }
   // non-service endpoints
+  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
+  app.use('/swagger/docs/v1', (_req, res) => {
+    res.json(swagger);
+  });
+
   app.get('/health', (_req, res) => {
     res.json({
       db: repositories.isConnected(),

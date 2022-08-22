@@ -6,10 +6,16 @@ export const IdField = styled.div`
 
 export const TableDiv = styled.div`
   & td:first-child {
-    width: 100px;
-    white-space: nowrap;
+    width: 120px;
     overflow-x: hidden;
     text-overflow: ellipsis;
+    word-wrap: break-word;
+  }
+  & td:nth-child(2) {
+    word-wrap: break-word;
+  }
+  & td:nth-child(3) {
+    word-wrap: break-word;
   }
 
   & td:last-child {

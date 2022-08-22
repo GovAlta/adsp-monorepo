@@ -12,6 +12,8 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
   private static readonly AdspId CONFIGURATION_SERVICE_ID = AdspId.Parse("urn:ads:platform:configuration-service");
   private static readonly AdspId TENANT_SERVICE_ID = AdspId.Parse("urn:ads:platform:tenant-service");
   private static readonly AdspId EVENT_SERVICE_ID = AdspId.Parse("urn:ads:platform:event-service");
+  private static readonly AdspId PUSH_SERVICE_ID = AdspId.Parse("urn:ads:platform:push-service");
+  private static readonly AdspId FILE_SERVICE_ID = AdspId.Parse("urn:ads:platform:file-service");
 
   private const string ContextServiceKey = "service";
 
@@ -107,6 +109,27 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
       {
         _eventDefinitions.Add(eventDefinition.Name, eventDefinition);
       }
+    }
+
+    if (registration.EventStreams != null)
+    {
+      await UpdateConfiguration(
+        PUSH_SERVICE_ID,
+        new
+        {
+          operation = "UPDATE",
+          update = registration.EventStreams.ToDictionary(definition => definition.Id)
+        }
+      );
+    }
+
+    if (registration.FileTypes != null)
+    {
+      await UpdateConfiguration(FILE_SERVICE_ID, new
+      {
+        operation = "UPDATE",
+        update = registration.FileTypes.ToDictionary(type => type.Id)
+      });
     }
 
     _logger.LogInformation("Completed registration for {Service}.", _serviceId.Service);

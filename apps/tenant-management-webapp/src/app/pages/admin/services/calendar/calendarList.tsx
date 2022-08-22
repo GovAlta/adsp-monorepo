@@ -10,7 +10,7 @@ interface CalendarItemProps {
   onDelete?: (service: CalendarItem) => void;
 }
 
-const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({ calendar }) => {
+const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({ calendar }: CalendarItemProps) => {
   return (
     <>
       <tr key={calendar.name}>

@@ -103,3 +103,30 @@ Feature: Events
     Then the user views Core streams section
     When the user clicks eye icon of "PDF generation updates" under Core streams
     Then the user views the details of "PDF generation updates" under Core streams
+
+  @TEST_CS-1480 @REQ_CS-1352 @regression
+  Scenario: As a tenant admin, I can add, edit and delete an event stream
+    Given a tenant admin user is on event streams page
+    # Add a stream
+    When the user clicks Add stream button
+    Then the user views Add stream modal
+    When the user enters "autotest-addEditDelete-stream", "autotest-stream-desc", "status-service:application-healthy, file-service:file-deleted", "public" in Add stream modal
+    And the user clicks Save button in Stream modal
+    Then the user "views" the stream of "autotest-addEditDelete-stream", "Public"
+    When the user clicks "Eye" button of "autotest-addEditDelete-stream"
+    Then the user views the stream details of "autotest-addEditDelete-stream", "autotest-stream-desc", "status-service:application-healthy, file-service:file-deleted", "public"
+    And the user clicks "Eye-Off" button of "autotest-addEditDelete-stream"
+    # Edit a stream
+    When the user clicks "Edit" button of "autotest-addEditDelete-stream"
+    Then the user views Edit stream modal
+    When the user removes event chips of "status-service:application-healthy" in Edit stream modal
+    And the user enters "autotest-stream-desc2", "n/a", "auto-test-role3, beta-tester" in Edit stream modal
+    And the user clicks Save button in Stream modal
+    Then the user "views" the stream of "autotest-addEditDelete-stream", "auto-test-role3, beta-tester"
+    When the user clicks "Eye" button of "autotest-addEditDelete-stream"
+    Then the user views the stream details of "autotest-addEditDelete-stream", "autotest-stream-desc2", "file-service:file-deleted", "auto-test-role3, beta-tester"
+    # Delete a stream
+    When the user clicks "Delete" button of "autotest-addEditDelete-stream"
+    Then the user views delete "stream" confirmation modal for "autotest-addEditDelete-stream"
+    When the user clicks Delete button in delete confirmation modal
+    Then the user "should not view" the stream of "autotest-addEditDelete-stream"

@@ -100,6 +100,15 @@ function* fetchServiceMetrics(action: FetchServiceMetricsAction): SagaIterator {
           data['total:response-time']?.values
             ?.map(({ interval, avg }) => ({ interval: moment(interval), value: parseFloat(avg) }))
             .reduce(addIntervalBreaks(chartInterval === '15 mins' ? 1 : 5), []) || [],
+          Object.values(data || {}).reduce((times, { name, values }) => {
+            if (name !== 'total:response-time' && name?.startsWith('total:') && name.endsWith('-time')) {
+              times[name.substring(6)] =
+                values
+                  ?.map(({ interval, avg }) => ({ interval: moment(interval), value: parseFloat(avg) }))
+                  .reduce(addIntervalBreaks(chartInterval === '15 mins' ? 1 : 5), []) || [];
+            }
+            return times;
+          }, {}),
           data['total:count']?.values
             ?.map(({ interval, sum }) => ({
               interval: moment(interval),
