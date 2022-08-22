@@ -78,9 +78,10 @@ const initializeApp = async (): Promise<express.Application> => {
   passport.deserializeUser(function (user, done) {
     done(null, user as User);
   });
-  applyDirectoryV2Middleware(app, { ...repositories, logger, tenantService, eventService });
+
   app.use(passport.initialize());
   app.use('/directory', metricsHandler, passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }));
+  applyDirectoryV2Middleware(app, { ...repositories, logger, tenantService, eventService });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {
