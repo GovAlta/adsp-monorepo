@@ -150,7 +150,7 @@ export const configurationSchema = {
       },
     },
   },
-  additionalProperties: false,
+  additionalProperties: true,
 };
 
 noticeApplicationSchema.index({ createdAt: 1 });
