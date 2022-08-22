@@ -32,10 +32,11 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
 
   const title = isNew ? 'Add calendar' : 'Edit calendar';
 
+
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
   const duplicateCalendarCheck = (ids: string[]): Validator => {
     return (id: string) => {
-      return ids.includes(id)
+      return ids.map((n) => n.toLowerCase().replace(/ /g, '-')).includes(name.toLowerCase().replace(/ /g, '-'))
         ? `Duplicated calendar id ${id}, Please use a different name to get a unique Calendar ID`
         : '';
     };
