@@ -31,19 +31,18 @@ interface LinkCopyComponentProps {
 }
 
 const LinkCopyComponentWrapper = styled.div`
-  input {
-    width: 80%;
-    height: 48px;
-    border-width: 2px 2px 2px 0px;
-  }
 `;
+
+const CustomGoAChip = styled(GoAChip)`
+    border: 0px !important;
+`
 
 const LinkCopyComponent = ({ link }: LinkCopyComponentProps): JSX.Element => {
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
   return (
     <LinkCopyComponentWrapper>
-      {isCopied && <GoAChip content="Link copied to clipboard" leadingIcon="checkmark-circle" />}
+      {isCopied && <CustomGoAChip content="Link copied to clipboard" leadingIcon="checkmark-circle" />}
       <GoAButtonV2
         type="tertiary"
         leadingIcon="open"
