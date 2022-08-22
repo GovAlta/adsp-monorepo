@@ -91,7 +91,7 @@ components:
     description: Retrieves a specific calendar.
     parameters:
       - name: tenant
-        description: ID of the tenant.
+        description: Name of the tenant.
         in: query
         required: false
         schema:
@@ -117,7 +117,7 @@ components:
     description: Retrieves export of calendar and events.
     parameters:
       - name: tenant
-        description: ID of the tenant.
+        description: Name of the tenant.
         in: query
         required: false
         schema:
@@ -172,7 +172,7 @@ components:
     description: Retrieves calendar events.
     parameters:
       - name: tenant
-        description: ID of the tenant.
+        description: Name of the tenant.
         in: query
         required: false
         schema:
@@ -269,7 +269,7 @@ components:
       - Calendar
     parameters:
       - name: tenant
-        description: ID of the tenant.
+        description: Name of the tenant.
         in: query
         required: false
         schema:

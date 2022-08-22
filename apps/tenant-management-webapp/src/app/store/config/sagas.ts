@@ -10,8 +10,8 @@ export function* fetchConfig(): SagaIterator {
 
   try {
     if (!state.config?.keycloakApi?.realm) {
-      const config = yield call(axios.get, `/config/config.json?v=2`);
-      const directoryServiceUrl = config.data.serviceUrls.directoryServiceApiUrl;
+      const { data } = yield call(axios.get, `/config/config.json?v=2`);
+      const directoryServiceUrl = data.serviceUrls.directoryServiceApiUrl;
       const url = `${directoryServiceUrl}/directory/v2/namespaces/platform/entries`;
       const entries = (yield call(axios.get, url)).data;
       const entryMapping = {};
@@ -51,19 +51,19 @@ export function* fetchConfig(): SagaIterator {
           tenantManagementApi: entryMapping['tenant-service'],
           subscriberWebApp: entryMapping['subscriber-app'],
           accessManagementApi: `${entryMapping['access-service']}/auth`,
-          uiComponentUrl: entryMapping['ui-component'],
           fileApi: entryMapping['file-service'],
           serviceStatusApiUrl: entryMapping['status-service'],
           valueServiceApiUrl: entryMapping['value-service'],
           serviceStatusAppUrl: entryMapping['status-app'],
           docServiceApiUrl: entryMapping['api-doc-service'],
-          chatServiceApiUrl: entryMapping['chat-service'],
           configurationServiceApiUrl: entryMapping['configuration-service'],
           directoryServiceApiUrl: entryMapping['directory-service'],
           pdfServiceApiUrl: entryMapping['pdf-service'],
           pushServiceApiUrl: entryMapping['push-service'],
           tenantManagementWebApp: entryMapping['tenant-app'],
           calendarServiceApiUrl: entryMapping['calendar-service'],
+          uiComponentUrl: data.serviceUrls.uiComponentUrl,
+          chatServiceApiUrl: data.serviceUrls.chatServiceApiUrl,
         },
       };
       const action: FetchConfigSuccessAction = {

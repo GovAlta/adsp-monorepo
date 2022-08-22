@@ -105,7 +105,7 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
             <GoAInput
               type="text"
               name="name"
-              value={calendar.name}
+              value={calendar.displayName}
               data-testid={`calendar-modal-name-input`}
               aria-label="name"
               onChange={(name, value) => {
@@ -118,13 +118,13 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
                 }
                 validators.checkAll(validations);
                 const calendarId = toKebabName(value);
-                setCalendar({ ...calendar, name: value, id: calendarId });
+                setCalendar({ ...calendar, displayName: value, name: calendarId });
               }}
             />
           </GoAFormItem>
           <GoAFormItem>
             <label>Calendar ID</label>
-            <IdField>{calendar.id}</IdField>
+            <IdField>{calendar.name}</IdField>
           </GoAFormItem>
           <GoAFormItem>
             <label>Description</label>
@@ -165,12 +165,12 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
           data-testid="calendar-modal-save"
           onClick={(e) => {
             const validations = {
-              name: calendar.name,
+              name: calendar.displayName,
             };
 
             if (isNew) {
-              calendar.id = calendar.name.toLowerCase();
-              validations['duplicated'] = calendar.name;
+              calendar.name = calendar.displayName.toLowerCase();
+              validations['duplicated'] = calendar.displayName;
 
               if (!validators.checkAll(validations)) {
                 return;

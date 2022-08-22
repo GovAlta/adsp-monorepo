@@ -1,4 +1,4 @@
-import { adspId, AdspId, EventService, ServiceDirectory } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, ServiceDirectory, TenantService } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { checkSchema, param } from 'express-validator';
@@ -17,6 +17,7 @@ interface DateRouterProps {
   repository: CalendarRepository;
   eventService: EventService;
   directory: ServiceDirectory;
+  tenantService: TenantService;
 }
 
 function mapCalendar(entity: CalendarEntity) {
@@ -68,27 +69,32 @@ export const getCalendars: RequestHandler = async (req, res, next) => {
 
 const CALENDAR_KEY = 'calendar';
 const { TIME_ZONE } = environment;
-export const getCalendar: RequestHandler = async (req, _res, next) => {
-  try {
-    const { name } = req.params;
-    const { tenant } = req.query;
+export function getCalendar(tenantService: TenantService): RequestHandler {
+  return async (req, _res, next) => {
+    try {
+      const { name } = req.params;
+      const { tenant } = req.query;
 
-    const tenantId = tenant
-      ? adspId`urn:ads:platform:tenant-service:v2:/tenants/${tenant as string}`
-      : req.user?.tenantId;
-    const [calendars] = await req.getConfiguration<CalendarServiceConfiguration>(tenantId);
+      // Calendar service permits cross-tenant access for tenant and anonymous users to get public events.
+      if (tenant) {
+        req.tenant = await tenantService.getTenantByName(tenant as string);
+      }
 
-    const calendar = calendars?.[name];
-    if (!calendar) {
-      throw new NotFoundError('Calendar', name);
+      const tenantId = req.tenant?.id;
+      const [calendars] = await req.getConfiguration<CalendarServiceConfiguration>(tenantId);
+
+      const calendar = calendars?.[name];
+      if (!calendar) {
+        throw new NotFoundError('Calendar', name);
+      }
+
+      req[CALENDAR_KEY] = calendar;
+      next();
+    } catch (err) {
+      next(err);
     }
-
-    req[CALENDAR_KEY] = calendar;
-    next();
-  } catch (err) {
-    next(err);
-  }
-};
+  };
+}
 
 export const exportCalendar =
   (serviceId: AdspId, directory: ServiceDirectory): RequestHandler =>
@@ -346,6 +352,7 @@ export const createCalendarRouter = ({
   serviceId,
   eventService,
   directory,
+  tenantService,
 }: DateRouterProps): Router => {
   const router = Router();
 
@@ -385,25 +392,25 @@ export const createCalendarRouter = ({
   );
 
   router.get('/calendars', getCalendars);
-  router.get('/calendars/:name', validateNameHandler, getCalendar, (req, res) =>
+  router.get('/calendars/:name', validateNameHandler, getCalendar(tenantService), (req, res) =>
     res.send(mapCalendar(req[CALENDAR_KEY]))
   );
 
-  router.get('/calendars/:name/export', validateNameHandler, getCalendar, exportCalendar(serviceId, directory));
+  router.get('/calendars/:name/export', validateNameHandler, getCalendar(tenantService), exportCalendar(serviceId, directory));
 
-  router.get('/calendars/:name/events', validateNameHandler, getCalendar, getCalendarEvents);
+  router.get('/calendars/:name/events', validateNameHandler, getCalendar(tenantService), getCalendarEvents);
   router.post(
     '/calendars/:name/events',
     validateNameHandler,
     validateCalendarEventHandler,
-    getCalendar,
+    getCalendar(tenantService),
     createCalendarEvent(eventService)
   );
 
   router.get(
     '/calendars/:name/events/:id',
     validateNameAndEventIdHandler,
-    getCalendar,
+    getCalendar(tenantService),
     getCalendarEvent,
     retrieveCalendarEvent
   );
@@ -411,14 +418,14 @@ export const createCalendarRouter = ({
     '/calendars/:name/events/:id',
     validateNameAndEventIdHandler,
     validateCalendarEventHandler,
-    getCalendar,
+    getCalendar(tenantService),
     getCalendarEvent,
     updateCalendarEvent(eventService)
   );
   router.delete(
     '/calendars/:name/events/:id',
     validateNameAndEventIdHandler,
-    getCalendar,
+    getCalendar(tenantService),
     getCalendarEvent,
     deleteCalendarEvent(eventService)
   );
@@ -426,7 +433,7 @@ export const createCalendarRouter = ({
   router.get(
     '/calendars/:name/events/:id/attendees',
     validateNameAndEventIdHandler,
-    getCalendar,
+    getCalendar(tenantService),
     getCalendarEvent,
     getEventAttendees
   );
@@ -434,7 +441,7 @@ export const createCalendarRouter = ({
     '/calendars/:name/events/:id/attendees',
     validateNameAndEventIdHandler,
     validateAttendeeHandler,
-    getCalendar,
+    getCalendar(tenantService),
     getCalendarEvent,
     addEventAttendee(eventService)
   );
@@ -442,7 +449,7 @@ export const createCalendarRouter = ({
   router.get(
     '/calendars/:name/events/:id/attendees/:attendeeId',
     validateNameEventIdAndAttendeeIdHandler,
-    getCalendar,
+    getCalendar(tenantService),
     getCalendarEvent,
     getEventAttendee
   );
@@ -450,14 +457,14 @@ export const createCalendarRouter = ({
     '/calendars/:name/events/:id/attendees/:attendeeId',
     validateNameEventIdAndAttendeeIdHandler,
     validateAttendeeHandler,
-    getCalendar,
+    getCalendar(tenantService),
     getCalendarEvent,
     setEventAttendee(eventService)
   );
   router.delete(
     '/calendars/:name/events/:id/attendees/:attendeeId',
     validateNameEventIdAndAttendeeIdHandler,
-    getCalendar,
+    getCalendar(tenantService),
     getCalendarEvent,
     deleteEventAttendee(eventService)
   );

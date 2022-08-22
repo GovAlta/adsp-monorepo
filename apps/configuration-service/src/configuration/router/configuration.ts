@@ -248,18 +248,13 @@ export const createConfigurationRevision =
           throw new InvalidOperationError(`The selected revision does not exist`);
         }
 
+        const oldRevision = configuration.active;
+
         const updated = await configuration.setActiveRevision(user, currentRevision.revision);
 
         res.send(mapActiveRevision(updated));
         eventService.send(
-          activeRevisionSet(
-            user,
-            updated.tenantId,
-            updated.namespace,
-            updated.name,
-            updated.active,
-            configuration.active
-          )
+          activeRevisionSet(user, updated.tenantId, updated.namespace, updated.name, updated.active, oldRevision)
         );
 
         logger.info(

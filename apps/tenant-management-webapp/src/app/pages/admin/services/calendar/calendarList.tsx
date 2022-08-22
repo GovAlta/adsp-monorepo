@@ -10,15 +10,15 @@ interface CalendarItemProps {
   onDelete?: (service: CalendarItem) => void;
 }
 
-const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({ calendar }) => {
+const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({ calendar }: CalendarItemProps) => {
   return (
     <>
       <tr key={calendar.name}>
         <td headers="calendar-name" data-testid="calendar-name">
-          {calendar.name}
+          {calendar.displayName}
         </td>
         <td headers="calendar-id" data-testid="calendar-id">
-          {calendar.id}
+          {calendar.name}
         </td>
         <td headers="calendar-description" data-testid="calendar-description">
           {calendar.description}

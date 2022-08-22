@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 import { Application, RequestHandler } from 'express';
 import { Logger } from 'winston';
 import { Repositories } from './repository';
@@ -23,22 +22,4 @@ export const bindEndpoints = (app: Application, props: HealthMiddlewareProps): v
   app.use('/status/v1', [props.authenticate], createServiceStatusRouter(props));
   app.use('/public_status/v1', createPublicServiceStatusRouter(props));
   app.use('/notice/v1', [props.authenticate], createNoticeRouter(props));
-
-  // api docs
-  let swagger = null;
-  app.use('/swagger/docs/v1', (req, res) => {
-    if (swagger) {
-      res.json(swagger);
-      return;
-    }
-
-    fs.readFile(`${__dirname}/swagger.json`, 'utf8', (err, data) => {
-      if (err) {
-        res.sendStatus(404);
-        return;
-      }
-      swagger = JSON.parse(data);
-      res.json(swagger);
-    });
-  });
 };

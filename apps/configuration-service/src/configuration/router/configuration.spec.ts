@@ -384,6 +384,7 @@ describe('router', () => {
 
       handler(req, res as unknown as Response, jest.fn());
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ latest: null, namespace, name }));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
   });
 
@@ -427,6 +428,9 @@ describe('router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
       expect(entity.update).toHaveBeenCalledWith(req.user, expect.objectContaining({ ...req.body.update, old: 'old' }));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot({
+        latest: { lastUpdated: expect.any(Date) },
+      });
     });
 
     it('can handle no existing revision on update', async () => {
@@ -569,6 +573,9 @@ describe('router', () => {
         expect.objectContaining<{ value: string }>(req.body.configuration)
       );
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot({
+        latest: { lastUpdated: expect.any(Date) },
+      });
     });
 
     it('can return error for replace without value', async () => {
@@ -633,6 +640,9 @@ describe('router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
       expect(entity.update).toHaveBeenCalledWith(req.user, expect.not.objectContaining({ old: 'old' }));
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot({
+        latest: { lastUpdated: expect.any(Date) },
+      });
     });
 
     it('can handle no existing revision on delete', async () => {
@@ -800,6 +810,9 @@ describe('router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
       expect(entity.createRevision).toHaveBeenCalledTimes(1);
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot({
+        latest: { created: expect.any(Date) },
+      });
     });
 
     it('can create first revision', async () => {
@@ -966,6 +979,7 @@ describe('router', () => {
       );
       expect(entity.setActiveRevision).toHaveBeenCalledTimes(1);
       expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
   });
 
@@ -1056,6 +1070,7 @@ describe('router', () => {
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({ namespace: namespace, name: name, revision: activeRevision, data: { a: 42 } })
       );
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
   });
 
@@ -1096,6 +1111,7 @@ describe('router', () => {
       await handler(req, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(result);
       expect(entity.getRevisions).toHaveBeenCalledWith(12, '123', {});
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
   });
 });

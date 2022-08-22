@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 import type { Application } from 'express';
 import { createEventRouter } from './router';
 import type { DomainEventService } from './service';
@@ -21,22 +20,6 @@ export const applyEventMiddleware = (
   const eventRouter = createEventRouter({ eventService, logger });
 
   app.use('/event/v1', eventRouter);
-
-  let swagger = null;
-  app.use('/swagger/docs/v1', (req, res) => {
-    if (swagger) {
-      res.json(swagger);
-    } else {
-      fs.readFile(`${__dirname}/swagger.json`, 'utf8', (err, data) => {
-        if (err) {
-          res.sendStatus(404);
-        } else {
-          swagger = JSON.parse(data);
-          res.json(swagger);
-        }
-      });
-    }
-  });
 
   createJobs({
     serviceId,

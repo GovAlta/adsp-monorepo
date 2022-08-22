@@ -129,7 +129,107 @@ class eventsPage {
 
   streamDetails(streamName) {
     return cy.xpath(
-      `//*[@data-testid="Platform-stream-table"]//tbody/tr/td[text()="${streamName}"]/parent::*/following-sibling::tr//*[contains(@data-testid, "details")]`
+      `//tbody/tr/td[text()="${streamName}"]/parent::*/following-sibling::tr//*[contains(@data-testid, "details")]`
+    );
+  }
+
+  addStreamBtn() {
+    return cy.get('[data-testid="add-stream"]');
+  }
+
+  streamModal() {
+    return cy.get('[data-testid="stream-form"]');
+  }
+
+  streamModalTitle() {
+    return cy.xpath('//*[@data-testid="stream-form" and @data-state="visible"]//div[@class="modal-title"]');
+  }
+
+  streamModalNameInput() {
+    return cy.xpath('//*[@data-testid="stream-form" and @data-state="visible"]//*[@data-testid="stream-name"]');
+  }
+
+  streamModalDescriptionInput() {
+    return cy.xpath('//*[@data-testid="stream-form" and @data-state="visible"]//*[@data-testid="stream-description"]');
+  }
+
+  streamModalSaveButton() {
+    return cy.xpath('//*[@data-testid="stream-form" and @data-state="visible"]//*[@data-testid="form-save"]');
+  }
+
+  streamModalEventDropdown() {
+    return cy.xpath(
+      '//*[@data-testid="stream-form" and @data-state="visible"]/*[@class="modal"]//*[@data-testid="streamEvents-dropdown"]'
+    );
+  }
+
+  streamModalEventDropdownItem(text) {
+    return cy.xpath(
+      `//*[@data-testid="stream-form" and @data-state="visible"]/*[@class="modal"]//*[@data-testid="streamEvents-dropdown"]/following-sibling::*//*[contains(text(), "${text}")]`
+    );
+  }
+
+  streamModalEventDropdownItems() {
+    return cy.xpath(
+      '//*[@data-testid="stream-form" and @data-state="visible"]/*[@class="modal"]//*[@data-testid="streamEvents-dropdown"]/following-sibling::*//li'
+    );
+  }
+
+  streamModalEventDropdownBackground() {
+    return cy.xpath('//*[@data-testid="streamEvents-dropdown-background"]');
+  }
+
+  streamModalRoleCheckbox(roleLabel) {
+    return cy.xpath(
+      `//*[@data-testid="stream-form"]//tbody/tr/td[@class="role-label" and text()="${roleLabel}"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]`
+    );
+  }
+
+  streamModalRolesCheckboxes() {
+    return cy.xpath(
+      '//*[@data-testid="stream-form"]//tbody/tr/td[@class="role-label"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]'
+    );
+  }
+
+  streamNameList() {
+    return cy.get('[data-testid="stream-name"]');
+  }
+
+  streamTableBody() {
+    return cy.xpath('//table[@data-testid="autotest-stream-table"]//tbody');
+  }
+
+  streamDetailsEyeIcon(name) {
+    return cy.xpath(
+      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="toggle-stream-visibility"]`
+    );
+  }
+
+  streamDetailsEyeOffIcon(name) {
+    return cy.xpath(
+      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="icon-eye-off"]`
+    );
+  }
+
+  streamEditBtn(name) {
+    return cy.xpath(
+      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="edit-stream"]`
+    );
+  }
+
+  streamDeleteBtn(name) {
+    return cy.xpath(
+      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="delete-stream"]`
+    );
+  }
+
+  streamModalEventChips() {
+    return cy.get('goa-chip');
+  }
+
+  streamModalPublicCheckbox() {
+    return cy.xpath(
+      '//*[@data-testid="stream-form"]//input[@name="stream-anonymousRead-checkbox"]/parent::*[contains(@class, "goa-checkbox-container")]'
     );
   }
 }
