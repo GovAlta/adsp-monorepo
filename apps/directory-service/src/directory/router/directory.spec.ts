@@ -1,4 +1,4 @@
-import { adspId, User } from '@abgov/adsp-service-sdk';
+import { adspId, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { Request, Response } from 'express';
 import { Logger } from 'winston';
 import { DirectoryEntity } from '../model';
@@ -9,7 +9,7 @@ import {
   getDirectoriesByNamespace,
   getEntriesForService,
   getDirectoryEntryForApi,
-  createNameSpace,
+  createNamespace,
   addService,
   addServiceApi,
   updateService,
@@ -17,10 +17,13 @@ import {
   deleteService,
   deleteApi,
   getServiceData,
+  resolveNamespaceTenant,
+  validateNamespaceEndpointsPermission,
 } from './directory';
 import axios from 'axios';
 import { DirectoryRepository } from '../../directory/repository';
 import { getEntriesForServiceImpl } from './directory';
+import { InvalidValueError, NotFoundError } from '@core-services/core-common';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -470,13 +473,14 @@ describe('router', () => {
     });
   });
 
-  describe('createNameSpace', () => {
+  describe('createNamespace', () => {
     it('can create handler', () => {
-      const handler = createNameSpace(repositoryMock, tenantServiceMock, loggerMock as Logger);
+      const handler = createNamespace(repositoryMock, tenantServiceMock, loggerMock as Logger);
       expect(handler).toBeTruthy();
     });
+
     it('can create namespace by post', async () => {
-      const handler = createNameSpace(repositoryMock, tenantServiceMock, loggerMock as Logger);
+      const handler = createNamespace(repositoryMock, tenantServiceMock, loggerMock as Logger);
       const tenantId = adspId`urn:ads:test:tenant-service:v2:/tenants/test`;
       const req = {
         tenant: { id: tenantId },
@@ -493,8 +497,9 @@ describe('router', () => {
       await handler(req, res as unknown as Response, next);
       expect(res.sendStatus).toHaveBeenCalledWith(HttpStatusCodes.CREATED);
     });
-    it('createNameSpace can call next with not found', async () => {
-      const handler = createNameSpace(repositoryMock, tenantServiceMock, loggerMock as Logger);
+
+    it('createNamespace can call next with invalid operation', async () => {
+      const handler = createNamespace(repositoryMock, tenantServiceMock, loggerMock as Logger);
       const testDirectory = {
         name: 'platform',
         services: null,
@@ -517,7 +522,28 @@ describe('router', () => {
       repositoryMock.getDirectories.mockResolvedValueOnce(entity);
 
       await handler(req, res as unknown as Response, next);
-      expect(next).toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidValueError));
+    });
+
+    it('createNamespace can call next with unauthorized', async () => {
+      const handler = createNamespace(repositoryMock, tenantServiceMock, loggerMock as Logger);
+
+      const req = {
+        tenant: { id: tenantId },
+        user: { isCore: false, roles: [], tenantId } as User,
+        params: { namespace },
+        query: {},
+        body: {
+          namespace: namespace,
+        },
+      } as unknown as Request;
+      const res = {
+        json: jest.fn(),
+      };
+      const next = jest.fn();
+
+      await handler(req, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });
 
@@ -852,6 +878,122 @@ describe('router', () => {
 
       await handler(req, res as unknown as Response, next);
       expect(next).toHaveBeenCalled();
+    });
+  });
+
+  describe('resolveNamespaceTenant', () => {
+    it('can create handler', () => {
+      const handler = resolveNamespaceTenant(loggerMock as Logger, tenantServiceMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can get tenant by name', async () => {
+      const req = {
+        user: { isCore: false, roles: [ServiceRoles.DirectoryAdmin], tenantId } as User,
+        params: { namespace: 'test-tenant' },
+      } as unknown as Request;
+      const res = {
+        json: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const tenant = { id: tenantId };
+      tenantServiceMock.getTenantByName.mockResolvedValueOnce(tenant);
+      const handler = resolveNamespaceTenant(loggerMock as Logger, tenantServiceMock);
+      await handler(req, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith();
+      expect(req.tenant).toBe(tenant);
+      expect(tenantServiceMock.getTenantByName).toHaveBeenCalledWith('test tenant');
+    });
+
+    it('can call next with not found if no tenant', async () => {
+      const req = {
+        user: { isCore: false, roles: [ServiceRoles.DirectoryAdmin], tenantId } as User,
+        params: { namespace: 'test-tenant' },
+      } as unknown as Request;
+      const res = {
+        json: jest.fn(),
+      };
+      const next = jest.fn();
+
+      tenantServiceMock.getTenantByName.mockResolvedValueOnce(null);
+      const handler = resolveNamespaceTenant(loggerMock as Logger, tenantServiceMock);
+      await handler(req, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+    });
+
+    it('can call next with get tenant error.', async () => {
+      const req = {
+        user: { isCore: false, roles: [ServiceRoles.DirectoryAdmin], tenantId } as User,
+        params: { namespace: 'test-tenant' },
+      } as unknown as Request;
+      const res = {
+        json: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const error = new Error('oh noes!');
+      tenantServiceMock.getTenantByName.mockRejectedValueOnce(error);
+      const handler = resolveNamespaceTenant(loggerMock as Logger, tenantServiceMock);
+      await handler(req, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(error);
+    });
+  });
+
+  describe('validateNamespaceEndpointsPermission', () => {
+    it('can pass for user of tenant with role', () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { isCore: false, roles: [ServiceRoles.DirectoryAdmin], tenantId } as User,
+        query: {},
+        body: {
+          namespace: namespace,
+        },
+      } as unknown as Request;
+      const res = {
+        json: jest.fn(),
+      };
+      const next = jest.fn();
+      validateNamespaceEndpointsPermission(req, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith();
+    });
+
+    it('can call next with unauthorized for user without role', () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: { isCore: false, roles: [], tenantId } as User,
+        query: {},
+        body: {
+          namespace: namespace,
+        },
+      } as unknown as Request;
+      const res = {
+        json: jest.fn(),
+      };
+      const next = jest.fn();
+      validateNamespaceEndpointsPermission(req, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+
+    it('can call next with unauthorized for user of wrong tenant.', () => {
+      const req = {
+        tenant: { id: tenantId },
+        user: {
+          isCore: false,
+          roles: [ServiceRoles.DirectoryAdmin],
+          tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test2`,
+        } as User,
+        query: {},
+        body: {
+          namespace: namespace,
+        },
+      } as unknown as Request;
+      const res = {
+        json: jest.fn(),
+      };
+      const next = jest.fn();
+      validateNamespaceEndpointsPermission(req, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });
 });
