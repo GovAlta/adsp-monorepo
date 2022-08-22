@@ -35,7 +35,9 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
   const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
   const duplicateCalendarCheck = (names: string[]): Validator => {
     return (name: string) => {
-      return names.includes(name) ? `Duplicated file type name ${name}.` : '';
+      return names.map((n) => n.toLowerCase().replace(/ /g, '-')).includes(name.toLowerCase().replace(/ /g, '-'))
+        ? `Duplicated file type name ${name}.`
+        : '';
     };
   };
   const descriptionCheck = (): Validator => (description: string) =>
