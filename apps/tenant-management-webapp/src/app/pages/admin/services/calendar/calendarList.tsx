@@ -15,10 +15,10 @@ const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({ calendar 
     <>
       <tr key={calendar.name}>
         <td headers="calendar-name" data-testid="calendar-name">
-          {calendar.displayName}
+          {calendar.name}
         </td>
         <td headers="calendar-id" data-testid="calendar-id">
-          {calendar.name}
+          {calendar.id}
         </td>
         <td headers="calendar-description" data-testid="calendar-description">
           {calendar.description}

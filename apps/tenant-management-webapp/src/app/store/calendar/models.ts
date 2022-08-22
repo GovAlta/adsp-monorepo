@@ -1,7 +1,8 @@
 import { ActionState } from '@store/session/models';
 export interface CalendarItem {
-  name?: string;
-  displayName: string;
+  id?: string;
+  name: string;
+  displayName?: string;
   description?: string;
   readRoles: string[];
   updateRoles: string[];
@@ -11,6 +12,7 @@ export interface CalendarService {
   indicator?: Indicator;
 }
 export const defaultCalendar: CalendarItem = {
+  id: '',
   name: '',
   displayName: '',
   description: '',
