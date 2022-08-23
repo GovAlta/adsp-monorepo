@@ -22,7 +22,7 @@ export const configurationSchema = {
     },
   },
   patternProperties: {
-    '^[a-zA-Z0-9-_ ]{1,50}$': {
+    '^(?!contact)[a-zA-Z0-9-_ ]{1,50}$': {
       type: 'object',
       properties: {
         id: { type: 'string', pattern: '^[a-zA-Z0-9-_ ]{1,50}$' },
