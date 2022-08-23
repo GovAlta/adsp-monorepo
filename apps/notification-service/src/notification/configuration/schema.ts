@@ -21,48 +21,51 @@ export const configurationSchema = {
       },
     },
   },
-  additionalProperties: {
-    type: 'object',
-    properties: {
-      id: { type: 'string', pattern: '^[a-zA-Z0-9-_ ]{1,50}$' },
-      name: { type: 'string' },
-      description: { type: ['string', 'null'] },
-      publicSubscribe: { type: 'boolean' },
-      manageSubscribe: { type: 'boolean' },
-      channels: {
-        type: 'array',
-        items: {
-          type: 'string',
-          enum: Object.values(Channel),
+  patternProperties: {
+    '^[a-zA-Z0-9-_ ]{1,50}$': {
+      type: 'object',
+      properties: {
+        id: { type: 'string', pattern: '^[a-zA-Z0-9-_ ]{1,50}$' },
+        name: { type: 'string' },
+        description: { type: ['string', 'null'] },
+        publicSubscribe: { type: 'boolean' },
+        manageSubscribe: { type: 'boolean' },
+        channels: {
+          type: 'array',
+          items: {
+            type: 'string',
+            enum: Object.values(Channel),
+          },
         },
-      },
-      subscriberRoles: {
-        type: 'array',
-        items: { type: 'string' },
-      },
-      events: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            namespace: { type: 'string', pattern: '^[a-zA-Z0-9-_ ]{1,50}$' },
-            name: { type: 'string', pattern: '^[a-zA-Z0-9-_ ]{1,50}$' },
-            templates: {
-              type: 'object',
-              properties: {
-                email: templateSchema,
-                sms: templateSchema,
-                mail: templateSchema,
-                bot: templateSchema,
+        subscriberRoles: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+        events: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              namespace: { type: 'string', pattern: '^[a-zA-Z0-9-_ ]{1,50}$' },
+              name: { type: 'string', pattern: '^[a-zA-Z0-9-_ ]{1,50}$' },
+              templates: {
+                type: 'object',
+                properties: {
+                  email: templateSchema,
+                  sms: templateSchema,
+                  mail: templateSchema,
+                  bot: templateSchema,
+                },
               },
             },
+            required: ['namespace', 'name', 'templates'],
           },
-          required: ['namespace', 'name', 'templates'],
         },
       },
+      required: ['id', 'name', 'publicSubscribe', 'subscriberRoles', 'events'],
     },
-    required: ['id', 'name', 'publicSubscribe', 'subscriberRoles', 'events'],
   },
+  additionalProperties: false,
 };
 
 export interface SupportContact {
