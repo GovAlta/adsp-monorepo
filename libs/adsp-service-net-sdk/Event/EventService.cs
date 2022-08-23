@@ -23,7 +23,8 @@ internal class EventService : IEventService, IDisposable
     IServiceRegistrar registrar,
     IServiceDirectory serviceDirectory,
     ITokenProvider tokenProvider,
-    IOptions<AdspOptions> options
+    IOptions<AdspOptions> options,
+    RestClient? client = null
   )
   {
     if (options.Value.ServiceId == null)
@@ -36,7 +37,7 @@ internal class EventService : IEventService, IDisposable
     _serviceDirectory = serviceDirectory;
     _tokenProvider = tokenProvider;
     _namespace = options.Value.ServiceId.Namespace;
-    _client = new RestClient();
+    _client = client ?? new RestClient();
   }
 
   public async Task Send<TPayload>(DomainEvent<TPayload> @event, AdspId? tenantId = null) where TPayload : class
