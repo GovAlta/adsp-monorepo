@@ -106,7 +106,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   applyCalendarMiddleware(app, { serviceId, logger, eventService, directory, tenantService, ...repositories });
 
-  const swagger = await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8');
+  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {
     res.json(swagger);
   });
