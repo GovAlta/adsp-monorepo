@@ -7,7 +7,8 @@ import {
   createAmqpConfigUpdateService,
 } from '@core-services/core-common';
 import * as express from 'express';
-import * as fs from 'fs';
+import { readFile } from 'fs';
+import { promisify } from 'util';
 import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
@@ -162,20 +163,9 @@ async function initializeApp() {
     providers,
   });
 
-  let swagger = null;
+  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {
-    if (swagger) {
-      res.json(swagger);
-    } else {
-      fs.readFile(`${__dirname}/swagger.json`, 'utf8', (err, data) => {
-        if (err) {
-          res.sendStatus(404);
-        } else {
-          swagger = JSON.parse(data);
-          res.json(swagger);
-        }
-      });
-    }
+    res.json(swagger);
   });
 
   app.get('/health', async (_req, res) => {

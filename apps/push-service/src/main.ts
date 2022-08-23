@@ -9,12 +9,14 @@ import { createAdapter as createIoAdapter } from '@socket.io/redis-adapter';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as express from 'express';
+import { readFile } from 'fs';
 import * as helmet from 'helmet';
 import { createServer, Server } from 'http';
 import * as passport from 'passport';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import { createClient as createRedisClient } from 'redis';
 import { Server as IoServer, Socket } from 'socket.io';
+import { promisify } from 'util';
 import { createAmqpEventService } from './amqp';
 import { environment } from './environments/environment';
 import { applyPushMiddleware, configurationSchema, PushServiceRoles, Stream, StreamEntity } from './push';
@@ -126,6 +128,11 @@ const initializeApp = async (): Promise<Server> => {
   const eventService = await createAmqpEventService({ ...environment, logger });
 
   applyPushMiddleware(app, [defaultIo, io], { logger, eventService, tenantService });
+
+  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
+  app.use('/swagger/docs/v1', (_req, res) => {
+    res.json(swagger);
+  });
 
   app.get('/health', async (_req, res) => {
     const platform = await healthCheck();

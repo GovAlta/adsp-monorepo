@@ -11,7 +11,7 @@ export class StatusBar {
   constructor(endpoint: ServiceStatusEndpoint, entries: EndpointStatusEntry[]) {
     this.#entries = entries;
     this.#endpoint = endpoint;
-    this.#t0 = StatusBar.toMinute(new Date().getTime()) - barLength;
+    this.#t0 = StatusBar.toMinute(Date.now()) - barLength * millisecondsPerMinute;
   }
 
   getEntries = (): EndpointStatusEntry[] => {
@@ -38,10 +38,10 @@ export class StatusBar {
   });
 
   #getBucketIndex = (timestamp: number): number => {
-    return StatusBar.toMinute(timestamp) - this.#t0 - 1;
+    return (StatusBar.toMinute(timestamp) - this.#t0) / millisecondsPerMinute - 1;
   };
 
   private static toMinute = (timestamp: number): number => {
-    return Math.floor(timestamp / (1000 * 60));
+    return timestamp - (timestamp % millisecondsPerMinute);
   };
 }

@@ -1,7 +1,7 @@
 import { ActionState } from '@store/session/models';
 export interface CalendarItem {
-  name?: string;
-  displayName: string;
+  name: string;
+  displayName?: string;
   description?: string;
   readRoles: string[];
   updateRoles: string[];
