@@ -36,7 +36,7 @@ export const CalendarsView = ({ activeEdit }: AddCalendarProps): JSX.Element => 
   const { fetchCalendarState } = useSelector((state: RootState) => ({
     fetchCalendarState: state.calendarService.indicator?.details[FETCH_CALENDARS_ACTION] || '',
   }));
-  const idArray = calendars ? calendars.map((a) => a.id) : [];
+  const nameArray = calendars ? calendars.map((a) => a.name) : [];
 
   useEffect(() => {
     if (activeEdit) {
@@ -92,7 +92,7 @@ export const CalendarsView = ({ activeEdit }: AddCalendarProps): JSX.Element => 
           onCancel={() => {
             reset();
           }}
-          calendarIds={idArray}
+          calendarNames={nameArray}
         />
       )}
     </>
