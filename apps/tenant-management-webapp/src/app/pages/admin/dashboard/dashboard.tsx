@@ -55,6 +55,7 @@ const CopyLinkToolTipWrapper = styled.div`
     width: 12rem;
     height: 2.2rem;
     top: 0.2rem;
+    left: 3rem;
   }
 
   p:before {
