@@ -26,6 +26,7 @@ interface ConfigurationServiceOptions {
   converter: ConfigurationConverter;
   combine: CombineConfiguration;
   enableConfigurationInvalidation?: boolean;
+  useLongConfigurationCacheTTL?: boolean;
 }
 
 export const createConfigurationService = ({
@@ -35,8 +36,15 @@ export const createConfigurationService = ({
   converter,
   combine,
   enableConfigurationInvalidation,
+  useLongConfigurationCacheTTL,
 }: ConfigurationServiceOptions): ConfigurationServiceImpl => {
-  const service = new ConfigurationServiceImpl(logger, directory, converter, combine);
+  const service = new ConfigurationServiceImpl(
+    logger,
+    directory,
+    converter,
+    combine,
+    useLongConfigurationCacheTTL ? 36000 : 900
+  );
   if (enableConfigurationInvalidation) {
     handleConfigurationUpdates(logger, directory, tokenProvider, service);
   }
