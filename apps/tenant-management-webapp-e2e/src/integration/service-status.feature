@@ -242,3 +242,14 @@ Feature: Service status
     And the user enters "test@gov.ab.ca" in Edit contact information modal
     And the user clicks Save button on contact information modal
     Then the user views "test@gov.ab.ca" as the email of contact information
+
+  @TEST_CS-333 @REQ_CS-163 @ServiceStatus
+  Scenario: As a tenant admin user, I can update the status of my service/app, so it is available to the public
+    Given a tenant admin user is on status applications page
+    When the user clicks Change status button for "autotest-DO-NOT-DELETE"
+    And the user changes status to the first unused status
+    When the user clicks Save button in Manual status change modal
+    Then the user views the status of "autotest-DO-NOT-DELETE" changed to the first unused status
+    Given a user is on the public service status page for "autotest"
+    Then the user views the status of "autotest-DO-NOT-DELETE" being the first unused status
+    And the user views the timestamp of "autotest-DO-NOT-DELETE" being updated

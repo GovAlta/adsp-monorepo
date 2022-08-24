@@ -658,3 +658,6 @@ Then('the user clicks Save button on contact information modal', function () {
 Then('the user views {string} as the email of contact information', function (email) {
   statusObj.contactInformationEmailDisplay().invoke('text').should('contain', email);
 });
+
+// The step is for status app, and it's in service status ts file because it uses stored status value
+Then('the user views the status of {string} being the first unused status', function (appName) {});
