@@ -21,6 +21,7 @@ export async function initializePlatform(
     configurationConverter,
     combineConfiguration,
     enableConfigurationInvalidation,
+    useLongConfigurationCacheTTL,
     ...registration
   }: PlatformOptions,
   logOptions: Logger | LogOptions,
@@ -70,6 +71,7 @@ export async function initializePlatform(
       converter: configurationConverter,
       combine: combineConfiguration,
       enableConfigurationInvalidation,
+      useLongConfigurationCacheTTL,
     });
     configurationService = configServiceImpl;
 
