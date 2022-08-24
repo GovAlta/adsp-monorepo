@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { GoAButton, GoACallout } from '@abgov/react-components';
-import { GoACard, GoAIcon, GoAInput } from '@abgov/react-components/experimental';
+import { GoACallout } from '@abgov/react-components';
+import { GoACard } from '@abgov/react-components/experimental';
 import { Link } from 'react-router-dom';
 import ReactTooltip from 'react-tooltip';
 import { Grid, GridItem } from '@components/Grid';
@@ -9,14 +9,15 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import CopyIcon from '@icons/copy-outline.svg';
-import { GoAButton as GoAButtonV2, GoAChip } from '@abgov/react-components-new';
+import { GoAButton as GoAButtonV2 } from '@abgov/react-components-new';
+import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
 
-interface ExternalLink {
+interface ExternalLinkProps {
   link: string;
   name: string;
 }
 
-const ExternalLink = ({ link, name }: ExternalLink): JSX.Element => {
+const ExternalLink = ({ link, name }: ExternalLinkProps): JSX.Element => {
   return (
     <ExternalLinkWrapper>
       <a href={link} rel="noopener noreferrer" target="_blank">
@@ -30,19 +31,62 @@ interface LinkCopyComponentProps {
   link: string;
 }
 
-const LinkCopyComponentWrapper = styled.div`
-`;
+const LinkCopyComponentWrapper = styled.div``;
 
-const CustomGoAChip = styled(GoAChip)`
-    border: 0px !important;
-`
+const CopyLinkToolTipWrapper = styled.div`
+  .checkmark-icon {
+    display: inline-block;
+    margin-top: 0.5rem;
+    margin-left: 0.5rem;
+  }
+  .message {
+    font-size: 0.875rem;
+    display: inline;
+    position: absolute;
+    top: 0.3rem;
+    left: 2rem;
+  }
+  p {
+    position: relative;
+    background: var(--color-gray-100);
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 30px;
+    width: 12rem;
+    height: 2.2rem;
+    top: 0.2rem;
+  }
+
+  p:before {
+    content: '';
+    position: absolute;
+    top: 2rem;
+    left: 20px;
+    z-index: 1;
+    border: solid 15px transparent;
+    border-right-color: var(--color-gray-100);
+    border-top: 15px solid var(--color-gray-100);
+    border-right: 10px solid transparent;
+    border-left: 10px solid transparent;
+    border-bottom: none;
+  }
+`;
 
 const LinkCopyComponent = ({ link }: LinkCopyComponentProps): JSX.Element => {
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
   return (
     <LinkCopyComponentWrapper>
-      {isCopied && <CustomGoAChip content="Link copied to clipboard" leadingIcon="checkmark-circle" />}
+      {isCopied && (
+        <CopyLinkToolTipWrapper>
+          <p>
+            <div className="checkmark-icon">
+              <GreenCircleCheckMark />
+            </div>
+            <div className="message">Link copied to clipboard</div>
+          </p>
+        </CopyLinkToolTipWrapper>
+      )}
       <GoAButtonV2
         type="tertiary"
         leadingIcon="open"
@@ -56,10 +100,6 @@ const LinkCopyComponent = ({ link }: LinkCopyComponentProps): JSX.Element => {
     </LinkCopyComponentWrapper>
   );
 };
-
-interface StaticLinkInputProps {
-  link: string;
-}
 
 const Dashboard = (): JSX.Element => {
   const tenantAdminRole = 'tenant-admin';
