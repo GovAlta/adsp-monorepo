@@ -67,6 +67,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
 
   if (initialValue) {
     dropDownOptions = Object.keys(eventDefinitions)
+      .sort((a, b) => (a < b ? -1 : 1))
       .filter((def) => {
         return !existingEventList.map((events) => `${events.namespace}:${events.name}`).includes(def);
       })
