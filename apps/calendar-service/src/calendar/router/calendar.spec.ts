@@ -86,8 +86,8 @@ describe('calendar router', () => {
     description: 'Test 1 2 3',
     isPublic: false,
     isAllDay: false,
-    start: DateTime.fromISO('2021-03-03T13:30:00'),
-    end: DateTime.fromISO('2021-03-03T15:30:00'),
+    start: DateTime.fromISO('2021-03-03T13:30:00-07:00'),
+    end: DateTime.fromISO('2021-03-03T15:30:00-07:00'),
   };
 
   beforeEach(() => {
@@ -551,7 +551,7 @@ describe('calendar router', () => {
         params: { name: 'test' },
         query: {},
         calendar: calendarEntity,
-        body: { start: '2020-03-05T13:30:45', name: 'test', description: 'Test 1 2 3' },
+        body: { start: '2020-03-05T13:30:45-07:00', name: 'test', description: 'Test 1 2 3' },
       };
       const res = {
         send: jest.fn(),
@@ -662,7 +662,7 @@ describe('calendar router', () => {
         query: {},
         calendar: calendarEntity,
         event: entity,
-        body: { name: 'test 2', start: '2020-03-05T11:00:00' },
+        body: { name: 'test 2', start: '2020-03-05T11:00:00-07:00' },
       };
       const res = {
         send: jest.fn(),
