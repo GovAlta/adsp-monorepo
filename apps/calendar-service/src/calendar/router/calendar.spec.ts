@@ -1,4 +1,4 @@
-import { AdspId, adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { adspId, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { ICalCalendar } from 'ical-generator';
@@ -86,8 +86,8 @@ describe('calendar router', () => {
     description: 'Test 1 2 3',
     isPublic: false,
     isAllDay: false,
-    start: DateTime.fromISO('2021-03-03T13:30:00'),
-    end: DateTime.fromISO('2021-03-03T15:30:00'),
+    start: DateTime.fromISO('2021-03-03T13:30:00-07:00'),
+    end: DateTime.fromISO('2021-03-03T15:30:00-07:00'),
   };
 
   beforeEach(() => {
@@ -131,6 +131,7 @@ describe('calendar router', () => {
       ]);
       await getCalendars(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining(calendar)]));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
   });
 
@@ -242,6 +243,7 @@ describe('calendar router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getCalendarEvents).toHaveBeenCalledWith(entity, 10, undefined, null);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ name: calendar.displayName }));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can export public events for anonymous', async () => {
@@ -389,6 +391,7 @@ describe('calendar router', () => {
       await getCalendarEvents(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getCalendarEvents).toHaveBeenCalledWith(entity, 10, undefined, null);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can get public events for anonymous', async () => {
@@ -548,7 +551,7 @@ describe('calendar router', () => {
         params: { name: 'test' },
         query: {},
         calendar: calendarEntity,
-        body: { start: '2020-03-05T13:30:45', name: 'test', description: 'Test 1 2 3' },
+        body: { start: '2020-03-05T13:30:45-07:00', name: 'test', description: 'Test 1 2 3' },
       };
       const res = {
         send: jest.fn(),
@@ -560,7 +563,9 @@ describe('calendar router', () => {
       const handler = createCalendarEvent(eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'test', description: 'Test 1 2 3' }));
-      expect(res.send.mock.calls[0][0].start.valueOf()).toBe(DateTime.fromISO('2020-03-05T13:30:45').valueOf());
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot({
+        start: DateTime.fromISO('2020-03-05T13:30:45-07:00'),
+      });
     });
 
     it('can call next with unauthorized', async () => {
@@ -612,6 +617,10 @@ describe('calendar router', () => {
 
       await retrieveCalendarEvent(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining(calendarEvent));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot({
+        start: DateTime.fromISO('2021-03-03T13:30:00-07:00'),
+        end: DateTime.fromISO('2021-03-03T15:30:00-07:00'),
+      });
     });
 
     it('can retrieve event with attendees', async () => {
@@ -657,7 +666,7 @@ describe('calendar router', () => {
         query: {},
         calendar: calendarEntity,
         event: entity,
-        body: { name: 'test 2', start: '2020-03-05T11:00:00' },
+        body: { name: 'test 2', start: '2020-03-05T11:00:00-07:00' },
       };
       const res = {
         send: jest.fn(),
@@ -669,7 +678,10 @@ describe('calendar router', () => {
       const handler = updateCalendarEvent(eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'test 2' }));
-      expect(res.send.mock.calls[0][0].start.valueOf()).toBe(DateTime.fromISO('2020-03-05T11:00:00').valueOf());
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot({
+        start: DateTime.fromISO('2020-03-05T11:00:00-07:00'),
+        end: DateTime.fromISO('2021-03-03T15:30:00-07:00'),
+      });
     });
 
     it('can call next with unauthorized', async () => {
@@ -728,6 +740,7 @@ describe('calendar router', () => {
       const handler = deleteCalendarEvent(eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can call next with unauthorized', async () => {
@@ -780,6 +793,7 @@ describe('calendar router', () => {
 
       await getEventAttendees(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith([]);
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can call next with unauthorized', async () => {
@@ -836,6 +850,7 @@ describe('calendar router', () => {
       const handler = addEventAttendee(eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining(req.body));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can call next with unauthorized', async () => {
@@ -893,6 +908,7 @@ describe('calendar router', () => {
       const handler = setEventAttendee(eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ ...req.body, id: 23 }));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can call next with unauthorized', async () => {
@@ -949,6 +965,7 @@ describe('calendar router', () => {
       const handler = deleteEventAttendee(eventServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can call next with unauthorized', async () => {
@@ -999,6 +1016,7 @@ describe('calendar router', () => {
 
       await getEventAttendee(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining(attendee));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can call next with unauthorized', async () => {
