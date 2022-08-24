@@ -1,4 +1,6 @@
 import * as express from 'express';
+import { readFile } from 'fs';
+import { promisify } from 'util';
 import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
@@ -143,6 +145,11 @@ const initializeApp = async (): Promise<express.Application> => {
     tokenProvider,
     configurationService,
     eventService,
+  });
+
+  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
+  app.use('/swagger/docs/v1', (_req, res) => {
+    res.json(swagger);
   });
 
   app.get('/health', async (_req, res) => {
