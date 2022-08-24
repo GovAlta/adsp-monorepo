@@ -41,7 +41,6 @@ export class TenantKeyProvider {
       const client = new JwksClient({
         jwksUri: data.jwks_uri,
         cache: true,
-        strictSsl: true,
       });
 
       this.#clientCache.set(iss, client);
