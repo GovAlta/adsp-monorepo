@@ -4,12 +4,9 @@ import StatusAppPage from './status-app.page';
 const statusAppObj = new StatusAppPage();
 
 Given('a user is on the public service status page for {string}', function (tenant) {
-  if (tenant == 'Platform') {
-    cy.visit('/');
-  } else {
-    cy.visit('/' + tenant);
-  }
-  cy.wait(2000); // Wait all the redirects to settle down
+  const urlToTenantLogin = Cypress.env().statusAppUrl + '/' + tenant;
+  cy.visit(urlToTenantLogin);
+  cy.wait(3000);
 });
 
 Then(
@@ -34,4 +31,24 @@ Then(
   }
 );
 
-Then('the user views the timestamp of {string} being updated', function (appName) {});
+Then('the user views the timestamp of {string} being updated', function (appName) {
+  const localTimeString = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+  statusAppObj
+    .applicationStatusUpdatedTimestamp(appName)
+    .invoke('text')
+    .then((text) => {
+      expect(text).to.contain(localTimeString);
+    });
+});
+
+Then('the user views the status of {string} being the first unused status', function (appName) {
+  statusAppObj
+    .applicationStatus(appName.trim())
+    .invoke('text')
+    .then((text) => {
+      // expect(text.toLowerCase()).to.equal(newStatus.toLowerCase());
+      cy.task('getNewAppStatus').then((appStatus) => {
+        expect(text.toLowerCase()).to.equal(appStatus);
+      });
+    });
+});
