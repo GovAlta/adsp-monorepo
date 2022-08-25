@@ -131,11 +131,26 @@ describe('Service router', () => {
     },
   ];
 
+  const configurationMock = [
+    {
+      [applicationsMock[0]._id]: {
+        name: applicationsMock[0].name,
+        url: applicationsMock[0].endpoint.url,
+        description: applicationsMock[0].description,
+      },
+      [applicationsMock[1]._id]: {
+        name: applicationsMock[1].name,
+        url: applicationsMock[1].endpoint.url,
+        description: applicationsMock[1].description,
+      },
+    },
+  ];
+
   const entriesMock = [
     {
       repository: { opts: { limit: 200, everyMilliseconds: 60000 } },
       ok: true,
-      url: 'https://www.yahoo.com',
+      url: applicationsMock[0].endpoint.url,
       timestamp: 1649277360004,
       responseTime: 685,
       status: '200',
@@ -143,7 +158,7 @@ describe('Service router', () => {
     {
       repository: { opts: { limit: 200, everyMilliseconds: 60000 } },
       ok: true,
-      url: 'https://www.yahoo.com',
+      url: applicationsMock[1].endpoint.url,
       timestamp: 1649277300002,
       responseTime: 514,
       status: '200',
@@ -197,6 +212,7 @@ describe('Service router', () => {
   describe('Can get applications', () => {
     it('Can get all applications', async () => {
       const getApplicationsHandler = getApplications(loggerMock, statusRepositoryMock);
+      const getConfigurationMock = jest.fn();
       expect(getApplicationsHandler).toBeTruthy();
       const req: Request = {
         user: {
@@ -204,11 +220,12 @@ describe('Service router', () => {
           id: 'test',
           roles: ['test-updater'],
         },
-        getConfiguration: jest.fn(),
+        getConfiguration: getConfigurationMock,
         params: {},
       } as unknown as Request;
 
       statusRepositoryMock.find.mockResolvedValueOnce(applicationsMock);
+      getConfigurationMock.mockReturnValueOnce(configurationMock);
       await getApplicationsHandler(req, resMock as unknown as Response, nextMock);
 
       expect(resMock.json).toHaveBeenCalledWith(expect.arrayContaining(applicationsMock));
@@ -218,6 +235,7 @@ describe('Service router', () => {
       statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
       endpointRepositoryMock.findRecentByUrlAndApplicationId.mockResolvedValueOnce(entriesMock);
       const handler = getApplicationEntries(loggerMock, statusRepositoryMock, endpointRepositoryMock);
+      const getConfigurationMock = jest.fn();
 
       const req: Request = {
         user: {
@@ -225,12 +243,13 @@ describe('Service router', () => {
           id: 'test',
           roles: ['test-updater'],
         },
-        getConfiguration: jest.fn(),
+        getConfiguration: getConfigurationMock,
         query: { topValue: 1 },
         params: {
-          applicationId: statusRepositoryMock[1],
+          applicationId: applicationsMock[1]._id,
         },
       } as unknown as Request;
+      getConfigurationMock.mockReturnValueOnce(configurationMock);
       await handler(req, resMock, nextMock);
       expect(resMock.send).toHaveBeenCalledWith(expect.arrayContaining([entriesMock[1]]));
     });
