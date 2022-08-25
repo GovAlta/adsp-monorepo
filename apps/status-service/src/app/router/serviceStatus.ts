@@ -9,7 +9,6 @@ import { PublicServiceStatusType } from '../types';
 import { TenantService, EventService } from '@abgov/adsp-service-sdk';
 import { applicationStatusToStarted, applicationStatusToStopped, applicationStatusChange } from '../events';
 import axios from 'axios';
-import * as e from 'express';
 
 export interface ServiceStatusRouterProps {
   logger: Logger;
@@ -200,11 +199,14 @@ export const updateApplication =
   };
 
 export const deleteApplication =
-  (logger: Logger, serviceStatusRepository: ServiceStatusRepository): RequestHandler =>
+  (
+    logger: Logger,
+    tokenProvider: TokenProvider,
+    directory: ServiceDirectory,
+    serviceStatusRepository: ServiceStatusRepository
+  ): RequestHandler =>
   async (req, res, next) => {
     try {
-      logger.info(`${req.method} - ${req.url}`);
-
       const user = req.user as User;
       const { id } = req.params;
       const application = await serviceStatusRepository.get(id);
@@ -214,13 +216,34 @@ export const deleteApplication =
       }
 
       await application.delete({ ...user } as User);
-
+      deleteConfigurationApp(id, directory, tokenProvider, user.tenantId);
       res.sendStatus(204);
     } catch (err) {
       logger.error(`Failed to delete application: ${err.message}`);
       next(err);
     }
   };
+
+const deleteConfigurationApp = async (
+  id: string,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  tenantId: AdspId
+) => {
+  const baseUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
+  const token = await tokenProvider.getAccessToken();
+  const configUrl = new URL(`/configuration/v2/configuration/platform/status-service?tenantId=${tenantId}`, baseUrl);
+  await axios.patch(
+    configUrl.href,
+    {
+      operation: 'DELETE',
+      property: id,
+    },
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+};
 
 export const updateApplicationStatus =
   (logger: Logger, serviceStatusRepository: ServiceStatusRepository, eventService: EventService): RequestHandler =>
@@ -362,7 +385,11 @@ export function createServiceStatusRouter({
     assertAuthenticatedHandler,
     updateApplication(logger, tokenProvider, directory, serviceStatusRepository)
   );
-  router.delete('/applications/:id', assertAuthenticatedHandler, deleteApplication(logger, serviceStatusRepository));
+  router.delete(
+    '/applications/:id',
+    assertAuthenticatedHandler,
+    deleteApplication(logger, tokenProvider, directory, serviceStatusRepository)
+  );
   router.patch(
     '/applications/:id/status',
     assertAuthenticatedHandler,

@@ -42,7 +42,7 @@ app.use(express.json({ limit: '1mb' }));
   const [repositories] = [await createRepoJob];
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, tenantStrategy, tenantService, eventService, tokenProvider, directory } =
+  const { configurationHandler, coreStrategy, tenantStrategy, tenantService, eventService, tokenProvider, directory } =
     await initializePlatform(
       {
         serviceId,
@@ -162,7 +162,7 @@ app.use(express.json({ limit: '1mb' }));
   });
 
   const errorHandler = createErrorHandler(logger);
-  app.use(errorHandler);
+  app.use(errorHandler, configurationHandler);
   // start service
   const port = environment.PORT || 3338;
   const server = app.listen(port, () => {

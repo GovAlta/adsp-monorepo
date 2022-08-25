@@ -17,10 +17,8 @@ import * as eventFuncs from '../../events';
 import { DomainEvent } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { adspId } from '@abgov/adsp-service-sdk';
-import axios from 'axios';
 
 jest.mock('axios');
-const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('Service router', () => {
   afterEach(() => {
@@ -422,7 +420,7 @@ describe('Service router', () => {
     });
     it('Can delete application', async () => {
       statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
-      const handler = deleteApplication(loggerMock, statusRepositoryMock);
+      const handler = deleteApplication(loggerMock, tokenProviderMock, serviceDirectoryMock, statusRepositoryMock);
       const req: Request = {
         user: {
           tenantId,
