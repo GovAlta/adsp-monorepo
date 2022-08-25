@@ -2,13 +2,14 @@ import { adspId, AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/ad
 import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
-import { ServiceStatusApplicationEntity, ApplicationEntity } from '../model';
+import { ServiceStatusApplicationEntity, ApplicationEntity, StatusServiceConfiguration } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { PublicServiceStatusType } from '../types';
 import { TenantService, EventService } from '@abgov/adsp-service-sdk';
 import { applicationStatusToStarted, applicationStatusToStopped, applicationStatusChange } from '../events';
 import axios from 'axios';
+import * as e from 'express';
 
 export interface ServiceStatusRouterProps {
   logger: Logger;
@@ -23,7 +24,7 @@ export interface ServiceStatusRouterProps {
 export const getApplications = (logger: Logger, serviceStatusRepository: ServiceStatusRepository): RequestHandler => {
   return async (req, res, next) => {
     try {
-      logger.info(req.method, req.url);
+      const [configuration] = await req.getConfiguration<StatusServiceConfiguration>();
       const { tenantId } = req.user as User;
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
@@ -36,6 +37,10 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
           return {
             ...app,
             internalStatus: app.internalStatus,
+            // The following to be removed from the repository
+            name: configuration[app._id].name,
+            description: configuration[app._id].description,
+            endpoint: { ...app.endpoint, url: configuration[app._id].url },
           };
         })
       );
@@ -281,7 +286,7 @@ export const getApplicationEntries =
   ): RequestHandler =>
   async (req, res, next) => {
     try {
-      logger.info(req.method, req.url);
+      const [configuration] = await req.getConfiguration<StatusServiceConfiguration>();
       const { tenantId } = req.user as User;
       const { applicationId } = req.params;
       const { topValue } = req.query;
@@ -291,21 +296,29 @@ export const getApplicationEntries =
         throw new UnauthorizedError('missing tenant id');
       }
 
-      const application = await serviceStatusRepository.get(applicationId);
-
-      if (!application) {
+      const app = configuration[applicationId];
+      if (!app) {
         throw new NotFoundError('Status application', applicationId.toString());
       }
 
+      // TODO is there an easier way to test if the tenant is authorized to
+      // access this application?  It seems a bit of a waste to hit up
+      // the database just for this.
+      const application = await serviceStatusRepository.get(applicationId);
       if (tenantId?.toString() !== application.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
       }
-      const entries = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
-        application.endpoint.url,
-        applicationId,
-        top
+
+      const entries = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(app.url, applicationId, top);
+      res.send(
+        entries.map((e) => {
+          return {
+            ...e,
+            // URL will soon be removed from the repository
+            url: app.url,
+          };
+        })
       );
-      res.send(entries);
     } catch (err) {
       logger.error(`Failed to get application: ${err.message}`);
       next(err);
