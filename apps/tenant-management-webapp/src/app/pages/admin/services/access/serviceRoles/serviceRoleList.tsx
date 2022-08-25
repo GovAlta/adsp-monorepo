@@ -49,7 +49,7 @@ export const ServiceRoleList = ({ roles, clientId, addRoleFunc, inProcess }: Ser
             <tr>
               <th>Name</th>
               <th>Description</th>
-              <th>composite?</th>
+              <th>In tenant-admin</th>
               <th>Action</th>
             </tr>
           </thead>
