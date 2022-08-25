@@ -2,7 +2,7 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { AddEditPdfTemplate } from './AddEditPdfTemplates';
 import { GoAButton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
-import { getPdfTemplates, updatePdfTemplate } from '@store/pdf/action';
+import { getPdfTemplates, updatePdfTemplate, deletePdfTemplate } from '@store/pdf/action';
 import { RootState } from '@store/index';
 import { renderNoItem } from '@components/NoItem';
 import { PdfTemplatesTable } from './templatesList';
@@ -20,7 +20,7 @@ import { TemplateEditor } from './previewEditor/TemplateEditor';
 import { PreviewTemplate } from './previewEditor/PreviewTemplate';
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
-
+import { DeleteModal } from '@components/DeleteModal';
 interface PdfTemplatesProps {
   openAddTemplate: boolean;
 }
@@ -28,6 +28,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
   const [openAddPdfTemplate, setOpenAddPdfTemplate] = useState(false);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [bodyPreview, setBodyPreview] = useState('');
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const pdfTemplates = useSelector((state: RootState) => {
     return state?.pdf?.pdfTemplates;
   });
@@ -141,6 +142,23 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
               setShowTemplateForm(true);
               setCurrentTemplate(currentTemplate);
               setBody(currentTemplate.template);
+            }}
+            onDelete={(currentTemplate) => {
+              setShowDeleteConfirmation(true);
+              setCurrentTemplate(currentTemplate);
+            }}
+          />
+        )}
+        {/* Delete confirmation */}
+        {showDeleteConfirmation && (
+          <DeleteModal
+            isOpen={showDeleteConfirmation}
+            title="Delete Pdf Template"
+            content={`Delete ${currentTemplate?.id}`}
+            onCancel={() => setShowDeleteConfirmation(false)}
+            onDelete={() => {
+              setShowDeleteConfirmation(false);
+              dispatch(deletePdfTemplate(currentTemplate));
             }}
           />
         )}
