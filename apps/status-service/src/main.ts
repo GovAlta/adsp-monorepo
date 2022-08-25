@@ -42,34 +42,35 @@ app.use(express.json({ limit: '1mb' }));
   const [repositories] = [await createRepoJob];
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, tenantStrategy, tenantService, eventService } = await initializePlatform(
-    {
-      serviceId,
-      displayName: 'Status service',
-      description: 'Service for publishing service status information.',
-      roles: [
-        {
-          role: ServiceUserRoles.StatusAdmin,
-          description: 'Administrator role for the status service.',
-          inTenantAdmin: true,
-        },
-      ],
-      configurationSchema,
-      events: [
-        HealthCheckStartedDefinition,
-        HealthCheckStoppedDefinition,
-        HealthCheckUnhealthyDefinition,
-        HealthCheckHealthyDefinition,
-        ApplicationStatusChangedDefinition,
-        ApplicationNoticePublishedDefinition,
-      ],
-      notifications: [StatusApplicationHealthChange, StatusApplicationStatusChange],
-      clientSecret: environment.CLIENT_SECRET,
-      accessServiceUrl,
-      directoryUrl: new URL(environment.DIRECTORY_URL),
-    },
-    { logger }
-  );
+  const { coreStrategy, tenantStrategy, tenantService, eventService, tokenProvider, directory } =
+    await initializePlatform(
+      {
+        serviceId,
+        displayName: 'Status service',
+        description: 'Service for publishing service status information.',
+        roles: [
+          {
+            role: ServiceUserRoles.StatusAdmin,
+            description: 'Administrator role for the status service.',
+            inTenantAdmin: true,
+          },
+        ],
+        configurationSchema,
+        events: [
+          HealthCheckStartedDefinition,
+          HealthCheckStoppedDefinition,
+          HealthCheckUnhealthyDefinition,
+          HealthCheckHealthyDefinition,
+          ApplicationStatusChangedDefinition,
+          ApplicationNoticePublishedDefinition,
+        ],
+        notifications: [StatusApplicationHealthChange, StatusApplicationStatusChange],
+        clientSecret: environment.CLIENT_SECRET,
+        accessServiceUrl,
+        directoryUrl: new URL(environment.DIRECTORY_URL),
+      },
+      { logger }
+    );
 
   passport.use('jwt', coreStrategy);
   passport.use('jwt-tenant', tenantStrategy);
@@ -136,7 +137,15 @@ app.use(express.json({ limit: '1mb' }));
 
   // service endpoints
   if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.api)) {
-    bindEndpoints(app, { logger, tenantService, authenticate, eventService, ...repositories });
+    bindEndpoints(app, {
+      logger,
+      tenantService,
+      authenticate,
+      eventService,
+      tokenProvider,
+      directory,
+      ...repositories,
+    });
   } else {
     logger.info(`Job instance, skip the api binding.`);
   }

@@ -17,6 +17,11 @@ import * as eventFuncs from '../../events';
 import { DomainEvent } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { adspId } from '@abgov/adsp-service-sdk';
+import axios from 'axios';
+
+jest.mock('axios');
+const axiosMock = axios as jest.Mocked<typeof axios>;
+
 describe('Service router', () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -40,6 +45,15 @@ describe('Service router', () => {
 
   const eventServiceMock = {
     send: jest.fn(),
+  };
+
+  const tokenProviderMock = {
+    getAccessToken: jest.fn(() => Promise.resolve('Toot!')),
+  };
+
+  const serviceDirectoryMock = {
+    getServiceUrl: jest.fn(() => Promise.resolve(new URL('http:/localhost:80'))),
+    getResourceUrl: jest.fn(() => Promise.resolve(new URL('http:/localhost:80'))),
   };
 
   const endpointRepositoryMock = {
@@ -171,6 +185,8 @@ describe('Service router', () => {
         eventService: eventServiceMock,
         serviceStatusRepository: statusRepositoryMock,
         endpointStatusEntryRepository: endpointRepositoryMock,
+        tokenProvider: tokenProviderMock,
+        directory: serviceDirectoryMock,
       });
 
       expect(publicRouter).toBeTruthy();
@@ -320,7 +336,13 @@ describe('Service router', () => {
           endpoint: 'http://mock-test.com',
         },
       } as unknown as Request;
-      const handler = createNewApplication(loggerMock, tenantServiceMock, statusRepositoryMock);
+      const handler = createNewApplication(
+        loggerMock,
+        tenantServiceMock,
+        tokenProviderMock,
+        serviceDirectoryMock,
+        statusRepositoryMock
+      );
       await handler(req, resMock, nextMock);
       expect(resMock.status).toHaveBeenCalledWith(201);
     });
