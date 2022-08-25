@@ -72,6 +72,8 @@ app.use(express.json({ limit: '1mb' }));
       { logger }
     );
 
+  app.use('/applications', configurationHandler);
+
   passport.use('jwt', coreStrategy);
   passport.use('jwt-tenant', tenantStrategy);
   passport.use(new AnonymousStrategy());
@@ -162,7 +164,7 @@ app.use(express.json({ limit: '1mb' }));
   });
 
   const errorHandler = createErrorHandler(logger);
-  app.use(errorHandler, configurationHandler);
+  app.use(errorHandler);
   // start service
   const port = environment.PORT || 3338;
   const server = app.listen(port, () => {
