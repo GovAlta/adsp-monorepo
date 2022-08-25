@@ -2,14 +2,13 @@ import { adspId, AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/ad
 import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
-import { StatusServiceConfiguration, ServiceStatusApplicationEntity, ApplicationEntity } from '../model';
+import { ServiceStatusApplicationEntity, ApplicationEntity } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { PublicServiceStatusType } from '../types';
 import { TenantService, EventService } from '@abgov/adsp-service-sdk';
 import { applicationStatusToStarted, applicationStatusToStopped, applicationStatusChange } from '../events';
 import axios from 'axios';
-import { url } from 'inspector';
 
 export interface ServiceStatusRouterProps {
   logger: Logger;
