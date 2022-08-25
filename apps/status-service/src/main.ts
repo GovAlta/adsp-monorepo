@@ -72,7 +72,7 @@ app.use(express.json({ limit: '1mb' }));
       { logger }
     );
 
-  app.use('/applications', configurationHandler);
+  app.use('/status', configurationHandler);
 
   passport.use('jwt', coreStrategy);
   passport.use('jwt-tenant', tenantStrategy);
