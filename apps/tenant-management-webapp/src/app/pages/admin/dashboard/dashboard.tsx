@@ -1,5 +1,5 @@
-import React from 'react';
-import { GoAButton, GoACallout } from '@abgov/react-components';
+import React, { useState } from 'react';
+import { GoACallout } from '@abgov/react-components';
 import { GoACard } from '@abgov/react-components/experimental';
 import { Link } from 'react-router-dom';
 import ReactTooltip from 'react-tooltip';
@@ -9,6 +9,98 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import CopyIcon from '@icons/copy-outline.svg';
+import { GoAButton as GoAButtonV2 } from '@abgov/react-components-new';
+import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
+
+interface ExternalLinkProps {
+  link: string;
+  name: string;
+}
+
+const ExternalLink = ({ link, name }: ExternalLinkProps): JSX.Element => {
+  return (
+    <ExternalLinkWrapper>
+      <a href={link} rel="noopener noreferrer" target="_blank">
+        {name}
+      </a>
+    </ExternalLinkWrapper>
+  );
+};
+
+interface LinkCopyComponentProps {
+  link: string;
+}
+
+const LinkCopyComponentWrapper = styled.div``;
+
+const CopyLinkToolTipWrapper = styled.div`
+  .checkmark-icon {
+    display: inline-block;
+    margin-top: 0.5rem;
+    margin-left: 0.5rem;
+  }
+  .message {
+    font-size: 0.875rem;
+    display: inline;
+    position: absolute;
+    top: 0.3rem;
+    left: 2rem;
+  }
+  p {
+    position: relative;
+    background: var(--color-gray-100);
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 30px;
+    width: 12rem;
+    height: 2.2rem;
+    top: 0.2rem;
+    left: 3rem;
+  }
+
+  p:before {
+    content: '';
+    position: absolute;
+    top: 2rem;
+    left: 20px;
+    z-index: 1;
+    border: solid 15px transparent;
+    border-right-color: var(--color-gray-100);
+    border-top: 15px solid var(--color-gray-100);
+    border-right: 10px solid transparent;
+    border-left: 10px solid transparent;
+    border-bottom: none;
+  }
+`;
+
+const LinkCopyComponent = ({ link }: LinkCopyComponentProps): JSX.Element => {
+  const [isCopied, setIsCopied] = useState<boolean>(false);
+
+  return (
+    <LinkCopyComponentWrapper>
+      {isCopied && (
+        <CopyLinkToolTipWrapper>
+          <p>
+            <div className="checkmark-icon">
+              <GreenCircleCheckMark />
+            </div>
+            <div className="message">Link copied to clipboard</div>
+          </p>
+        </CopyLinkToolTipWrapper>
+      )}
+      <GoAButtonV2
+        type="tertiary"
+        leadingIcon="open"
+        onClick={() => {
+          navigator.clipboard.writeText(link);
+          setIsCopied(true);
+        }}
+      >
+        Copy link
+      </GoAButtonV2>
+    </LinkCopyComponentWrapper>
+  );
+};
 
 const Dashboard = (): JSX.Element => {
   const tenantAdminRole = 'tenant-admin';
@@ -155,33 +247,25 @@ const Dashboard = (): JSX.Element => {
             <p>To give another user limited access to your realm:</p>
 
             <p>
-              1. Add the 'tenant-admin' role to the user's assigned roles from{' '}
-              <a href={getKeycloakAdminPortalUsers()} rel="noopener noreferrer" target="_blank">
-                here
-              </a>
+              <ListWrapper>
+                <li>
+                  Share the login URL below and have your user <ExternalLink link={loginUrl} name="login" /> once to
+                  create their account.
+                </li>
+                <li>
+                  Add the 'tenant-admin' role to the user's assigned roles from{' '}
+                  <ExternalLink link={getKeycloakAdminPortalUsers()} name="here" />
+                  <br />
+                  (Role Mapping › Client Roles › urn:ads:platform:tenant-service › Add selected)
+                </li>
+                <li>
+                  Once granted the role, the user can access tenant admin using the URL below.
+                  <br />
+                  <LinkCopyComponent link={loginUrl} />
+                </li>
+              </ListWrapper>
             </p>
-            <div className="small-font mt-2">
-              (Role Mapping &#8250; Client Roles &#8250; urn:ads:platform:tenant-service &#8250; Add selected)
-            </div>
-
-            <p>2. Share the following URL to complete the process.</p>
-
-            <div className="copy-url">
-              <a target="_blank" href={loginUrl} rel="noreferrer">
-                {loginUrl}
-              </a>
-            </div>
-            <GoAButton data-tip="Copied!" data-for="registerTipUrl">
-              Click to copy
-            </GoAButton>
-            <ReactTooltip
-              id="registerTipUrl"
-              place="top"
-              event="click"
-              eventOff="blur"
-              effect="solid"
-              afterShow={() => _afterShow(loginUrl)}
-            />
+            <br />
           </DashboardAside>
         </Page>
         <footer>
@@ -228,7 +312,7 @@ const DashboardAside = styled(Aside)`
   padding-top: 1.6em;
 
   .copy-url {
-            font - size: var(--fs-sm);
+    font - size: var(--fs-sm);
     background-color: var(--color-gray-100);
     border: 1px solid var(--color-gray-300);
     border-radius: 1px;
@@ -244,7 +328,7 @@ const DashboardAside = styled(Aside)`
   }
 
   .mt-2 {
-            margin - top: 2em;
+    margin - top: 2em;
   }
 `;
 const DashboardDiv = styled.div`
@@ -254,4 +338,19 @@ const DashboardDiv = styled.div`
     }
   }
   margin-bottom: 2.5rem;
+`;
+
+const ExternalLinkWrapper = styled.div`
+  display: inline-block;
+  .goa-icon {
+    display: inline !important;
+  }
+`;
+
+const ListWrapper = styled.ul`
+  list-style-type: value;
+  margin-left: 1rem;
+  li {
+    margin-bottom: 0.5rem;
+  }
 `;
