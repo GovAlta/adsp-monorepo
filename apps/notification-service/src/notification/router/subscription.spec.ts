@@ -129,6 +129,7 @@ describe('subscription router', () => {
       );
       await getNotificationTypes(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining(notificationType)]));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
   });
 
@@ -206,6 +207,7 @@ describe('subscription router', () => {
       const handler = getTypeSubscriptions(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can handle query params', async () => {
@@ -310,6 +312,7 @@ describe('subscription router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.saveSubscriber).toHaveBeenCalledWith(expect.objectContaining({ addressAs: 'tester' }));
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can create user subscription', async () => {
@@ -487,6 +490,7 @@ describe('subscription router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.getSubscriber).toHaveBeenCalledWith(tenantId, 'subscriber', false);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can add subscription with criteria', async () => {
@@ -587,6 +591,7 @@ describe('subscription router', () => {
         })
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ typeId: 'test' }));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can call next with error', async () => {
@@ -671,6 +676,7 @@ describe('subscription router', () => {
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({ typeId: 'test', subscriber: expect.objectContaining({ id: 'subscriber' }) })
       );
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can call next for unauthorized', async () => {
@@ -738,6 +744,7 @@ describe('subscription router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.deleteSubscriptions).toHaveBeenCalledWith(tenantId, notificationType.id, 'subscriber');
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
   });
 
@@ -772,6 +779,7 @@ describe('subscription router', () => {
       const handler = getSubscribers(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can get subscribers with query params', async () => {
@@ -872,6 +880,7 @@ describe('subscription router', () => {
           addressAs: 'tester@test.com',
         })
       );
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can create user subscriber', async () => {
@@ -1225,6 +1234,7 @@ describe('subscription router', () => {
           ]),
         })
       );
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can get subscriber without subscriptions', async () => {
@@ -1294,6 +1304,7 @@ describe('subscription router', () => {
 
       await deleteSubscriber(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can call next with unauthorized', async () => {
@@ -1394,6 +1405,7 @@ describe('subscription router', () => {
       expect(res.json).toHaveBeenCalledWith(
         expect.arrayContaining([{ channel: 'email', address: 'tester@test.co', verified: false }])
       );
+      expect(res.json.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('will can ge empty channels', async () => {
@@ -1490,6 +1502,7 @@ describe('subscription router', () => {
       const handler = updateSubscriber(apiId);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining(req.body));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can call next with unauthorized', async () => {
@@ -1584,6 +1597,7 @@ describe('subscription router', () => {
       );
       expect(subscriber.channels[0].verifyKey).toBe('key');
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ sent: true }));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can check code', async () => {
@@ -1630,6 +1644,7 @@ describe('subscription router', () => {
       expect(verifyServiceMock.verifyCode).toHaveBeenCalledWith(subscriber.channels[0], '123');
       expect(subscriber.channels[0].verified).toBe(false);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ verified: true }));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can verify channel', async () => {
@@ -1677,6 +1692,7 @@ describe('subscription router', () => {
       expect(verifyServiceMock.verifyCode).toHaveBeenCalledWith(subscriber.channels[0], '123');
       expect(subscriber.channels[0].verified).toBe(true);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ verified: true }));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can call next with invalid operation for unrecognized operation', async () => {
@@ -1769,6 +1785,7 @@ describe('subscription router', () => {
       const handler = getSubscriberSubscriptions(apiId, repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can handle query params', async () => {
