@@ -21,6 +21,9 @@ import {
   STREAM_PDF_SOCKET_ACTION,
   SOCKET_CHANNEL,
   StreamPdfSocketAction,
+  DeletePdfTemplatesAction,
+  deletePdfTemplateSuccess,
+  DELETE_PDF_TEMPLATE_ACTION,
 } from './action';
 import { io } from 'socket.io-client';
 import { FETCH_FILE_LIST } from '@store/file/actions';
@@ -116,6 +119,34 @@ export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): Saga
       );
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));
+    }
+  }
+}
+
+export function* deletePdfTemplate({ template }: DeletePdfTemplatesAction): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const token: string = yield call(getAccessToken);
+
+  if (baseUrl && token) {
+    try {
+      const {
+        data: { latest },
+      } = yield call(
+        axios.patch,
+        `${baseUrl}/configuration/v2/configuration/platform/pdf-service`,
+        { operation: 'DELETE', property: template.id },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      yield put(
+        deletePdfTemplateSuccess({
+          ...latest.configuration,
+        })
+      );
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.response.data} - deleteFileTypes` }));
     }
   }
 }
@@ -270,4 +301,5 @@ export function* watchPdfSagas(): Generator {
   yield takeEvery(FETCH_PDF_METRICS_ACTION, fetchPdfMetrics);
   yield takeEvery(GENERATE_PDF_ACTION, generatePdf);
   yield takeEvery(STREAM_PDF_SOCKET_ACTION, streamPdfSocket);
+  yield takeEvery(DELETE_PDF_TEMPLATE_ACTION, deletePdfTemplate);
 }
