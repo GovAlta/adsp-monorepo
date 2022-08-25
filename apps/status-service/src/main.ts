@@ -72,8 +72,6 @@ app.use(express.json({ limit: '1mb' }));
       { logger }
     );
 
-  app.use('/status', configurationHandler);
-
   passport.use('jwt', coreStrategy);
   passport.use('jwt-tenant', tenantStrategy);
   passport.use(new AnonymousStrategy());
@@ -89,6 +87,7 @@ app.use(express.json({ limit: '1mb' }));
   });
 
   app.use(passport.initialize());
+  app.use('/status', configurationHandler);
 
   const healthCheckSchedulingProps = {
     logger,
