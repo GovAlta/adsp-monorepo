@@ -119,7 +119,7 @@ export const createNewApplication =
         }
       );
       const newApp: ApplicationEntity = { name: name, url: endpoint.url, description: description };
-      addToConfiguration(serviceDirectory, tokenProvider, tenant.id, app._id, newApp);
+      updateConfiguration(serviceDirectory, tokenProvider, tenant.id, app._id, newApp);
       res.status(201).json(app);
     } catch (err) {
       logger.error(`Failed to create new application: ${err.message}`);
@@ -127,7 +127,7 @@ export const createNewApplication =
     }
   };
 
-const addToConfiguration = async (
+const updateConfiguration = async (
   directory: ServiceDirectory,
   tokenProvider: TokenProvider,
   tenantId: AdspId,
@@ -152,7 +152,12 @@ const addToConfiguration = async (
 };
 
 export const updateApplication =
-  (logger: Logger, serviceStatusRepository: ServiceStatusRepository): RequestHandler =>
+  (
+    logger: Logger,
+    tokenProvider: TokenProvider,
+    serviceDirectory: ServiceDirectory,
+    serviceStatusRepository: ServiceStatusRepository
+  ): RequestHandler =>
   async (req, res, next) => {
     try {
       logger.info(`${req.method} - ${req.url}`);
@@ -177,6 +182,8 @@ export const updateApplication =
         description,
         endpoint,
       });
+      const update: ApplicationEntity = { name: name, url: endpoint.url, description: description };
+      updateConfiguration(serviceDirectory, tokenProvider, user.tenantId, id, update);
       res.json({
         ...updatedApplication,
         internalStatus: updatedApplication.internalStatus,
@@ -337,7 +344,11 @@ export function createServiceStatusRouter({
     assertAuthenticatedHandler,
     createNewApplication(logger, tenantService, tokenProvider, directory, serviceStatusRepository)
   );
-  router.put('/applications/:id', assertAuthenticatedHandler, updateApplication(logger, serviceStatusRepository));
+  router.put(
+    '/applications/:id',
+    assertAuthenticatedHandler,
+    updateApplication(logger, tokenProvider, directory, serviceStatusRepository)
+  );
   router.delete('/applications/:id', assertAuthenticatedHandler, deleteApplication(logger, serviceStatusRepository));
   router.patch(
     '/applications/:id/status',
