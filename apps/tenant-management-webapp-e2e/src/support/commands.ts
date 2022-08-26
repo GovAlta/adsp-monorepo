@@ -17,11 +17,6 @@ declare namespace Cypress {
     getConfig(): Chainable<Subject>;
   }
 }
-//
-// -- This is a parent command --
-Cypress.Commands.add('login', (email, password) => {
-  console.log('Custom command example: Login', email, password);
-});
 
 // Use POST request to get a token from keycloak and store in cypress environment variable for future api calls
 Cypress.Commands.add('postToken', () => {
