@@ -25,6 +25,8 @@ export interface PdfTemplate {
   name: string;
   description: string;
   template: string;
+  footer?: string;
+  header?: string;
 }
 
 export type PdfJobStatus = 'queued' | 'completed' | 'failed';

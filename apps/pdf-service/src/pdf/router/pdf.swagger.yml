@@ -11,6 +11,10 @@ components:
           type: string
         template:
           type: string
+        header:
+          type: string
+        footer:
+          type: string
     Job:
       type: object
       properties:
@@ -57,7 +61,7 @@ components:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/Template"
+                $ref: '#/components/schemas/Template'
 
 /pdf/v1/templates/{templateId}:
   get:
@@ -77,7 +81,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Template"
+              $ref: '#/components/schemas/Template'
 
 /pdf/v1/jobs:
   post:
@@ -90,18 +94,18 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: "#/components/schemas/GenerateOperation"
+              - $ref: '#/components/schemas/GenerateOperation'
             discriminator:
               propertyName: operation
               mapping:
-                generate: "#/components/schemas/GenerateOperation"
+                generate: '#/components/schemas/GenerateOperation'
     responses:
       200:
         description: Job successfully created.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Job"
+              $ref: '#/components/schemas/Job'
 
 /pdf/v1/jobs/{jobId}:
   get:
@@ -121,4 +125,4 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Job"
+              $ref: '#/components/schemas/Job'
