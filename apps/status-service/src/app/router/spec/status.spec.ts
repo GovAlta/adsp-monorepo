@@ -130,6 +130,20 @@ describe('Service router', () => {
   ];
 
   const configurationMock = [
+    // core
+    {
+      [applicationsMock[0]._id]: {
+        name: applicationsMock[0].name,
+        url: applicationsMock[0].endpoint.url,
+        description: applicationsMock[0].description,
+      },
+      [applicationsMock[1]._id]: {
+        name: applicationsMock[1].name,
+        url: applicationsMock[1].endpoint.url,
+        description: applicationsMock[1].description,
+      },
+    },
+    // tenant
     {
       [applicationsMock[0]._id]: {
         name: applicationsMock[0].name,

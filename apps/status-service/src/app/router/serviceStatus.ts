@@ -23,11 +23,11 @@ export interface ServiceStatusRouterProps {
 export const getApplications = (logger: Logger, serviceStatusRepository: ServiceStatusRepository): RequestHandler => {
   return async (req, res, next) => {
     try {
-      const [tenantConfig, coreConfig] = await req.getConfiguration<StatusServiceConfiguration>();
-      logger.debug('###############   ...and the tenant is:');
-      logger.debug(`${tenantConfig}`);
+      const [coreConfig, tenantConfig] = await req.getConfiguration<StatusServiceConfiguration>();
       logger.debug('###############   ...and the core config is:');
-      logger.debug(`${coreConfig}`);
+      logger.debug(JSON.stringify(coreConfig));
+      logger.debug('###############   ...and the tenant config is:');
+      logger.debug(JSON.stringify(tenantConfig));
       const { tenantId } = req.user as User;
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
@@ -38,6 +38,8 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
       res.json(
         applications.map((app) => {
           const config = tenantConfig[app._id] as ApplicationEntity;
+          logger.debug('########## App configuration is:');
+          logger.debug(JSON.stringify(config));
           return {
             ...app,
             internalStatus: app.internalStatus,
