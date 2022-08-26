@@ -1,0 +1,198 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`subscription router addOrUpdateTypeSubscription can add subscription 1`] = `
+Object {
+  "criteria": Object {},
+  "subscriber": Object {
+    "addressAs": "tester",
+    "channels": Array [],
+    "id": "subscriber",
+    "tenantId": "urn:ads:platform:tenant-service:v2:/tenants/test",
+    "urn": "urn:ads:platform:notification-service:v1:/subscribers/subscriber",
+    "userId": undefined,
+  },
+  "subscriberId": "subscriber",
+  "type": undefined,
+  "typeId": "test",
+}
+`;
+
+exports[`subscription router addOrUpdateTypeSubscription can update subscription criteria 1`] = `
+Object {
+  "criteria": Object {
+    "context": Object {},
+    "correlationId": "123",
+  },
+  "subscriber": Object {
+    "addressAs": "tester",
+    "channels": Array [],
+    "id": "subscriber",
+    "tenantId": "urn:ads:platform:tenant-service:v2:/tenants/test",
+    "urn": "urn:ads:platform:notification-service:v1:/subscribers/subscriber",
+    "userId": undefined,
+  },
+  "subscriberId": "subscriber",
+  "type": undefined,
+  "typeId": "test",
+}
+`;
+
+exports[`subscription router createSubscriber can create subscriber 1`] = `
+Object {
+  "addressAs": "tester@test.com",
+  "channels": Array [],
+  "id": "subscriber",
+  "tenantId": "urn:ads:platform:tenant-service:v2:/tenants/test",
+  "urn": "urn:ads:platform:notification-service:v1:/subscribers/subscriber",
+  "userId": undefined,
+}
+`;
+
+exports[`subscription router createTypeSubscription can create subscription 1`] = `
+Object {
+  "criteria": Object {},
+  "subscriber": Object {
+    "addressAs": "tester",
+    "channels": Array [],
+    "id": "subscriber",
+    "tenantId": "urn:ads:platform:tenant-service:v2:/tenants/test",
+    "urn": "urn:ads:platform:notification-service:v1:/subscribers/subscriber",
+    "userId": undefined,
+  },
+  "subscriberId": "subscriber",
+  "type": undefined,
+  "typeId": "test",
+}
+`;
+
+exports[`subscription router deleteSubscriber can delete subscriber 1`] = `
+Object {
+  "deleted": true,
+}
+`;
+
+exports[`subscription router deleteTypeSubscription can delete subscription 1`] = `
+Object {
+  "deleted": true,
+}
+`;
+
+exports[`subscription router getNotificationTypes can get types 1`] = `
+Array [
+  Object {
+    "channels": Array [],
+    "description": "testing 1 2 3",
+    "events": Array [],
+    "id": "test",
+    "manageSubscribe": false,
+    "name": "Test",
+    "publicSubscribe": false,
+    "subscriberRoles": Array [
+      "test-subscriber",
+    ],
+  },
+]
+`;
+
+exports[`subscription router getSubscriberDetails can get subscriber subscriptions 1`] = `
+Object {
+  "addressAs": "tester",
+  "channels": Array [],
+  "id": "subscriber",
+  "subscriptions": Array [
+    Object {
+      "criteria": Object {},
+      "subscriberId": "subscriber",
+      "type": Object {
+        "channels": Array [],
+        "description": "testing 1 2 3",
+        "id": "test",
+        "manageSubscribe": false,
+        "name": "Test",
+        "publicSubscribe": false,
+      },
+      "typeId": "test",
+    },
+  ],
+  "tenantId": "urn:ads:platform:tenant-service:v2:/tenants/test",
+  "urn": "urn:ads:platform:notification-service:v1:/subscribers/subscriber",
+  "userId": undefined,
+}
+`;
+
+exports[`subscription router getSubscriberSubscriptions can get subscriptions 1`] = `
+Object {
+  "page": Object {},
+  "results": Array [],
+}
+`;
+
+exports[`subscription router getSubscribers can get subscribers 1`] = `
+Object {
+  "page": Object {},
+  "results": Array [],
+}
+`;
+
+exports[`subscription router getSubscriptionChannels can get channels 1`] = `
+Array [
+  Object {
+    "address": "tester@test.co",
+    "channel": "email",
+    "verified": false,
+  },
+]
+`;
+
+exports[`subscription router getTypeSubscription can get subscription 1`] = `
+Object {
+  "criteria": Object {},
+  "subscriber": Object {
+    "addressAs": "tester",
+    "channels": Array [],
+    "id": "subscriber",
+    "tenantId": "urn:ads:platform:tenant-service:v2:/tenants/test",
+    "urn": "urn:ads:platform:notification-service:v1:/subscribers/subscriber",
+    "userId": undefined,
+  },
+  "subscriberId": "subscriber",
+  "type": undefined,
+  "typeId": "test",
+}
+`;
+
+exports[`subscription router getTypeSubscriptions can get subscriptions 1`] = `
+Object {
+  "page": Object {},
+  "results": Array [],
+}
+`;
+
+exports[`subscription router subscriberOperations can check code 1`] = `
+Object {
+  "verified": true,
+}
+`;
+
+exports[`subscription router subscriberOperations can send code 1`] = `
+Object {
+  "sent": true,
+}
+`;
+
+exports[`subscription router subscriberOperations can verify channel 1`] = `
+Object {
+  "verified": true,
+}
+`;
+
+exports[`subscription router updateSubscriber can delete subscriber 1`] = `
+Object {
+  "addressAs": "tester",
+  "channels": Array [],
+  "id": "subscriber",
+  "tenantId": "urn:ads:platform:tenant-service:v2:/tenants/test",
+  "urn": "urn:ads:platform:notification-service:v1:/subscribers/subscriber",
+  "userId": undefined,
+}
+`;

@@ -134,20 +134,18 @@ export const configurationSchema = {
         contactEmail: { type: 'string' },
       },
     },
-    applications: {
-      type: 'array',
-      items: {
-        type: 'object',
-        description: 'The set of applications subjected to status checks',
-        properties: {
-          id: { type: 'string', description: 'The application ID' },
-          name: { type: 'string', description: 'Name of the application' },
-          url: { type: 'string', description: 'URL to be checked' },
-          description: { type: 'string', description: 'Tell us about your application' },
-        },
-        required: ['id', 'name', 'url'],
-        additionalProperties: false,
+  },
+  patternProperties: {
+    // property key is the mongo _id (12 hex bytes) of the Application.
+    '^[a-fA-F0-9]{24}$': {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Name of the application' },
+        url: { type: 'string', description: 'URL to be checked' },
+        description: { type: 'string', description: 'Tell us about your application' },
       },
+      required: ['name', 'url'],
+      additionalProperties: false,
     },
   },
   additionalProperties: true,

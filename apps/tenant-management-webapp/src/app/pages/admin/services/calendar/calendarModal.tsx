@@ -22,7 +22,7 @@ interface CalendarModalProps {
   open: boolean;
   realmRoles: Role[];
   tenantClients: ServiceRoleConfig;
-  calendarIds?: string[];
+  calendarNames?: string[];
 }
 
 export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
@@ -32,20 +32,19 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
 
   const title = isNew ? 'Add calendar' : 'Edit calendar';
 
-
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
-  const duplicateCalendarCheck = (ids: string[]): Validator => {
-    return (id: string) => {
-      return ids.map((n) => n.toLowerCase().replace(/ /g, '-')).includes(id.toLowerCase().replace(/ /g, '-'))
-        ? `Duplicated calendar id ${id}, Please use a different name to get a unique Calendar ID`
+  const duplicateCalendarCheck = (names: string[]): Validator => {
+    return (name: string) => {
+      return names.map((n) => n.toLowerCase().replace(/ /g, '-')).includes(name.toLowerCase().replace(/ /g, '-'))
+        ? `Duplicated calendar name ${name}, Please use a different name to get a unique Calendar name`
         : '';
     };
   };
   const descriptionCheck = (): Validator => (description: string) =>
     description.length > 250 ? 'Description could not over 250 characters ' : '';
 
-  const { errors, validators } = useValidators('id', 'id', checkForBadChars, isNotEmptyCheck('name'))
-    .add('duplicated', 'id', duplicateCalendarCheck(props.calendarIds))
+  const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
+    .add('duplicated', 'name', duplicateCalendarCheck(props.calendarNames))
     .add('description', 'description', descriptionCheck())
     .build();
 
@@ -103,31 +102,31 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
       <GoAModalTitle>{title}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
-          <GoAFormItem error={errors?.['id']}>
+          <GoAFormItem error={errors?.['name']}>
             <label>Name</label>
             <GoAInput
               type="text"
               name="name"
-              value={calendar.name}
+              value={calendar.displayName}
               data-testid={`calendar-modal-name-input`}
               aria-label="name"
               onChange={(name, value) => {
                 const validations = {
-                  id: value,
+                  name: value,
                 };
-                validators.remove('id');
+                validators.remove('name');
                 if (isNew) {
                   validations['duplicated'] = value;
                 }
                 validators.checkAll(validations);
                 const calendarId = toKebabName(value);
-                setCalendar({ ...calendar, name: value, id: calendarId });
+                setCalendar({ ...calendar, name: calendarId, displayName: value });
               }}
             />
           </GoAFormItem>
           <GoAFormItem>
             <label>Calendar ID</label>
-            <IdField>{calendar.id}</IdField>
+            <IdField>{calendar.name}</IdField>
           </GoAFormItem>
           <GoAFormItem error={errors?.['description']}>
             <label>Description</label>
@@ -168,11 +167,11 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
           data-testid="calendar-modal-save"
           onClick={(e) => {
             const validations = {
-              id: calendar.id,
+              name: calendar.name,
             };
 
             if (isNew) {
-              validations['duplicated'] = calendar.id;
+              validations['duplicated'] = calendar.name;
 
               if (!validators.checkAll(validations)) {
                 return;

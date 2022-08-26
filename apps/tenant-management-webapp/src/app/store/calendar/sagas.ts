@@ -81,7 +81,6 @@ export function* createCalendar({ payload }: CreateCalendarAction): SagaIterator
           operation: 'UPDATE',
           update: {
             [payload.name]: {
-              id: payload.id,
               name: payload.name,
               displayName: payload.displayName,
               description: payload.description,

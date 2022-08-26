@@ -100,13 +100,7 @@ const EventDefinitionsListComponent: FunctionComponent<EventDefinitionsListCompo
             </thead>
             <tbody>
               {groupedDefinitions[group]
-                .sort((prev, next): number => {
-                  // in each group sort by alphabetic order
-                  if (prev.name > next.name) {
-                    return 1;
-                  }
-                  return -1;
-                })
+                .sort((a, b) => (a.name < b.name ? -1 : 1))
                 .map((definition) => (
                   <EventDefinitionComponent
                     onEdit={onEdit}

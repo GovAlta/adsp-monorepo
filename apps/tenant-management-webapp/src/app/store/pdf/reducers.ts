@@ -4,6 +4,7 @@ import {
   FETCH_PDF_TEMPLATES_SUCCESS_ACTION,
   PdfActionTypes,
   UPDATE_PDF_TEMPLATE_SUCCESS_ACTION,
+  DELETE_PDF_TEMPLATE_SUCCESS_ACTION,
   UPDATE_PDF_RESPONSE_ACTION,
   GENERATE_PDF_SUCCESS_ACTION,
   SOCKET_CHANNEL,
@@ -27,6 +28,13 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
         pdfTemplates: action.payload,
       };
     case UPDATE_PDF_TEMPLATE_SUCCESS_ACTION:
+      return {
+        ...state,
+        pdfTemplates: {
+          ...action.payload,
+        },
+      };
+    case DELETE_PDF_TEMPLATE_SUCCESS_ACTION:
       return {
         ...state,
         pdfTemplates: {

@@ -2,14 +2,15 @@ import React, { FunctionComponent } from 'react';
 import { PdfTemplate } from '@store/pdf/model';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import styled from 'styled-components';
-
+import { GoAIconButton } from '@abgov/react-components/experimental';
 import { GoABadge } from '@abgov/react-components/experimental';
 
 interface PdfTemplateItemProps {
   pdfTemplate: PdfTemplate;
   edit?: (PdfTemplate) => void;
+  onDelete?: (PdfTemplate) => void;
 }
-export const PdfTemplateItem: FunctionComponent<PdfTemplateItemProps> = ({ pdfTemplate, edit }) => {
+export const PdfTemplateItem: FunctionComponent<PdfTemplateItemProps> = ({ pdfTemplate, edit, onDelete }) => {
   return (
     <>
       <tr>
@@ -26,6 +27,13 @@ export const PdfTemplateItem: FunctionComponent<PdfTemplateItemProps> = ({ pdfTe
                 title="Edit"
                 onClick={() => edit(pdfTemplate)}
                 testId={`edit-subscription-item-${pdfTemplate.name}`}
+              />
+              <GoAIconButton
+                testId={`pdf-template-delete-${pdfTemplate.name}`}
+                title="Delete"
+                size="medium"
+                type="trash"
+                onClick={() => onDelete(pdfTemplate)}
               />
               <div className="badgePadding">
                 {pdfTemplate.template?.length === 0 && <GoABadge type="warning" content="Unfilled" icon="warning" />}
