@@ -9,6 +9,15 @@ import {
   EndpointToInternalStatusMapping,
 } from '../types';
 
+// Stored in the configuration service repository
+export type StatusServiceConfiguration = Record<string, unknown>;
+
+export interface ApplicationEntity {
+  name: string;
+  url: string;
+  description?: string;
+}
+
 export class ServiceStatusApplicationEntity implements ServiceStatusApplication {
   _id: string;
   description: string;

@@ -30,10 +30,7 @@ export interface ConfigurationService {
 export class ConfigurationServiceImpl implements ConfigurationService {
   private readonly LOG_CONTEXT = { context: 'ConfigurationService' };
 
-  #configuration = new NodeCache({
-    stdTTL: 900,
-    useClones: false,
-  });
+  #configuration: NodeCache;
 
   #converter: ConfigurationConverter = (value: unknown) => value;
 
@@ -43,8 +40,14 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     private readonly logger: Logger,
     private readonly directory: ServiceDirectory,
     converter: ConfigurationConverter = null,
-    combine: CombineConfiguration = null
+    combine: CombineConfiguration = null,
+    cacheTTL = 900
   ) {
+    this.#configuration = new NodeCache({
+      stdTTL: cacheTTL,
+      useClones: false,
+    });
+
     if (converter) {
       this.#converter = converter;
     }

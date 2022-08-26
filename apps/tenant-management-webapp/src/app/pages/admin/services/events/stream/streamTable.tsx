@@ -42,17 +42,19 @@ export const StreamTable = ({
 
           <tbody>
             {hasContent &&
-              Object.entries(streams).map(([id, stream]) => {
-                return (
-                  <StreamTableItem
-                    onDelete={onDelete}
-                    onEdit={onEdit}
-                    isTenantSpecificStream={isTenantSpecificStream}
-                    key={id}
-                    stream={stream}
-                  />
-                );
-              })}
+              Object.entries(streams)
+                .sort((a, b) => (a < b ? -1 : 1))
+                .map(([id, stream]) => {
+                  return (
+                    <StreamTableItem
+                      onDelete={onDelete}
+                      onEdit={onEdit}
+                      isTenantSpecificStream={isTenantSpecificStream}
+                      key={id}
+                      stream={stream}
+                    />
+                  );
+                })}
             {!hasContent && (
               <tr>
                 <td colSpan={3}>{renderNoItem('stream', true)}</td>

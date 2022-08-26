@@ -93,6 +93,7 @@ async function initializeApp() {
         },
       ],
       values: [ServiceMetricsValueDefinition],
+      useLongConfigurationCacheTTL: true,
     },
     { logger }
   );

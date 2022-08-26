@@ -76,7 +76,7 @@
     "http-status-codes": "^1.3.2",
     "ical-generator": "^3.0.0",
     "json-schema-faker": "0.5.0-rcv.42",
-    "jwks-rsa": "^1.8.1",
+    "jwks-rsa": "^2.1.4",
     "jwt-decode": "^3.1.2",
     "knex": "^0.95.11",
     "lodash": "^4.17.20",

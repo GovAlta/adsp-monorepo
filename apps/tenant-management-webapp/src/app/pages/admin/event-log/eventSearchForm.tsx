@@ -42,7 +42,8 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
     dispatch(getEventDefinitions());
   }, [dispatch]);
   const events = useSelector((state: RootState) => state.event.definitions);
-  const autoCompleteList = Object.keys(events);
+
+  const autoCompleteList = Object.keys(events).sort((a, b) => (a < b ? -1 : 1));
 
   const suggestionOnChange = (e) => {
     const userInput = e.target.value;

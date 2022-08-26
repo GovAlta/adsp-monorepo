@@ -340,167 +340,171 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
         </GoAButton>
       </Buttons>
       {nonCoreCopiedNotifications &&
-        Object.values(nonCoreCopiedNotifications).map((notificationType) => (
-          <div className="topBottomMargin" key={`notification-list-${notificationType.id}`}>
-            <GoACard
-              title={
-                <div>
-                  <div className="rowFlex">
-                    <h2 className="flex1">{notificationType.name}</h2>
-                    <MaxHeight height={30} className="rowFlex">
-                      <a
-                        className="flex1"
-                        data-testid="edit-notification-type"
-                        onClick={() => {
-                          setSelectedType(notificationType);
-                          setEditType(true);
-                          setFormTitle('Edit notification type');
-                        }}
-                      >
-                        <NotificationBorder className="smallPadding flex">
-                          <EditIcon size="small" />
-                        </NotificationBorder>
-                      </a>
-                      <a
-                        className="flex1"
-                        onClick={() => {
-                          setSelectedType(notificationType);
-                          setShowDeleteConfirmation(true);
-                        }}
-                        data-testid="delete-notification-type"
-                      >
-                        <NotificationBorder className="smallPadding">
-                          <GoAIcon type="trash" />
-                        </NotificationBorder>
-                      </a>
-                    </MaxHeight>
-                  </div>
-                  <div className="rowFlex smallFont">
-                    <div className="flex1">
-                      <div data-testid="type-id" className="minimumLineHeight">
-                        Type ID: {notificationType.id}
-                      </div>
-                      {notificationType?.subscriberRoles && (
-                        <div data-testid="tenant-subscriber-roles">
-                          Subscriber roles:{' '}
-                          <b>
-                            {!notificationType.publicSubscribe &&
-                              notificationType?.subscriberRoles
-                                .filter((value) => value !== 'anonymousRead')
-                                .map(
-                                  (roles, ix) =>
-                                    roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
-                                )}{' '}
-                          </b>
+        Object.values(nonCoreCopiedNotifications)
+          .sort((a, b) => (a.name < b.name ? -1 : 1))
+          .map((notificationType) => (
+            <div className="topBottomMargin" key={`notification-list-${notificationType.id}`}>
+              <GoACard
+                title={
+                  <div>
+                    <div className="rowFlex">
+                      <h2 className="flex1">{notificationType.name}</h2>
+                      <MaxHeight height={30} className="rowFlex">
+                        <a
+                          className="flex1"
+                          data-testid="edit-notification-type"
+                          onClick={() => {
+                            setSelectedType(notificationType);
+                            setEditType(true);
+                            setFormTitle('Edit notification type');
+                          }}
+                        >
+                          <NotificationBorder className="smallPadding flex">
+                            <EditIcon size="small" />
+                          </NotificationBorder>
+                        </a>
+                        <a
+                          className="flex1"
+                          onClick={() => {
+                            setSelectedType(notificationType);
+                            setShowDeleteConfirmation(true);
+                          }}
+                          data-testid="delete-notification-type"
+                        >
+                          <NotificationBorder className="smallPadding">
+                            <GoAIcon type="trash" />
+                          </NotificationBorder>
+                        </a>
+                      </MaxHeight>
+                    </div>
+                    <div className="rowFlex smallFont">
+                      <div className="flex1">
+                        <div data-testid="type-id" className="minimumLineHeight">
+                          Type ID: {notificationType.id}
                         </div>
-                      )}
-                    </div>
-                    <div>
-                      <div data-testid="tenant-public-subscription" className="minimumLineHeight">
-                        Public subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
+                        {notificationType?.subscriberRoles && (
+                          <div data-testid="tenant-subscriber-roles">
+                            Subscriber roles:{' '}
+                            <b>
+                              {!notificationType.publicSubscribe &&
+                                notificationType?.subscriberRoles
+                                  .filter((value) => value !== 'anonymousRead')
+                                  .map(
+                                    (roles, ix) =>
+                                      roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
+                                  )}{' '}
+                            </b>
+                          </div>
+                        )}
                       </div>
-                      <div data-testid="tenant-self-service">
-                        Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
+                      <div>
+                        <div data-testid="tenant-public-subscription" className="minimumLineHeight">
+                          Public subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
+                        </div>
+                        <div data-testid="tenant-self-service">
+                          Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              }
-              description={`Description: ${notificationType.description}`}
-            >
-              <h2>Events:</h2>
+                }
+                description={`Description: ${notificationType.description}`}
+              >
+                <h2>Events:</h2>
 
-              <Grid>
-                {notificationType.events.map((event, key) => (
-                  <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
-                    <EventBorder>
-                      <div className="flex columnFlex gridBoxHeight">
-                        <div className="rowFlex">
-                          <div className="flex1">
-                            {event.namespace}:{event.name}
-                          </div>
-                          <div className="rowFlex">
-                            <MaxHeight height={34}>
-                              <NotificationBorder className="smallPadding">
-                                <a
-                                  className="flex1 flex"
-                                  onClick={() => {
-                                    setSelectedEvent(event);
-                                    setSelectedType(notificationType);
-                                    setShowEventDeleteConfirmation(true);
-                                    setCoreEvent(false);
-                                  }}
-                                  data-testid="delete-event"
-                                >
-                                  <GoAIcon type="trash" />
-                                </a>
-                              </NotificationBorder>
-                            </MaxHeight>
-                          </div>
-                        </div>
-                        <div className="marginTopAuto">
-                          <div className="flex1 flex endAlign">
-                            <div className="flex3 endAlign">
-                              <div className="flex rowFlex">
-                                {notificationType.sortedChannels.map((channel) => (
-                                  <div
-                                    key={channel}
-                                    className="nonCoreIconPadding flex1"
-                                    data-testid={`tenant-${channel}-channel`}
-                                  >
-                                    {channelIcons[channel]}
-                                    {(event.templates[channel]?.subject?.length === 0 ||
-                                      event.templates[channel]?.body?.length === 0) && (
-                                      <div className="icon-badge" data-testid={`tenant-${channel}-channel-badge`}>
-                                        !
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
+                <Grid>
+                  {notificationType.events
+                    .sort((a, b) => (a.name < b.name ? -1 : 1))
+                    .map((event, key) => (
+                      <GridItem key={key} md={6} vSpacing={1} hSpacing={0.5}>
+                        <EventBorder>
+                          <div className="flex columnFlex gridBoxHeight">
+                            <div className="rowFlex">
+                              <div className="flex1">
+                                {event.namespace}:{event.name}
+                              </div>
+                              <div className="rowFlex">
+                                <MaxHeight height={34}>
+                                  <NotificationBorder className="smallPadding">
+                                    <a
+                                      className="flex1 flex"
+                                      onClick={() => {
+                                        setSelectedEvent(event);
+                                        setSelectedType(notificationType);
+                                        setShowEventDeleteConfirmation(true);
+                                        setCoreEvent(false);
+                                      }}
+                                      data-testid="delete-event"
+                                    >
+                                      <GoAIcon type="trash" />
+                                    </a>
+                                  </NotificationBorder>
+                                </MaxHeight>
                               </div>
                             </div>
-                            <div className="flex3 textAlignLastRight">
-                              <a
-                                data-testid="edit-event"
-                                onClick={() => {
-                                  setSelectedEvent(event);
-                                  setSelectedType(notificationType);
-                                  setEventTemplateFormState(editEventTemplateContent);
-                                  setShowTemplateForm(true);
-                                  setCoreEvent(false);
-                                  setCurrentChannel(notificationType.sortedChannels[0]);
-                                }}
-                              >
-                                Edit
-                              </a>
+                            <div className="marginTopAuto">
+                              <div className="flex1 flex endAlign">
+                                <div className="flex3 endAlign">
+                                  <div className="flex rowFlex">
+                                    {notificationType.sortedChannels.map((channel) => (
+                                      <div
+                                        key={channel}
+                                        className="nonCoreIconPadding flex1"
+                                        data-testid={`tenant-${channel}-channel`}
+                                      >
+                                        {channelIcons[channel]}
+                                        {(event.templates[channel]?.subject?.length === 0 ||
+                                          event.templates[channel]?.body?.length === 0) && (
+                                          <div className="icon-badge" data-testid={`tenant-${channel}-channel-badge`}>
+                                            !
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div className="flex3 textAlignLastRight">
+                                  <a
+                                    data-testid="edit-event"
+                                    onClick={() => {
+                                      setSelectedEvent(event);
+                                      setSelectedType(notificationType);
+                                      setEventTemplateFormState(editEventTemplateContent);
+                                      setShowTemplateForm(true);
+                                      setCoreEvent(false);
+                                      setCurrentChannel(notificationType.sortedChannels[0]);
+                                    }}
+                                  >
+                                    Edit
+                                  </a>
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
-                    </EventBorder>
+                        </EventBorder>
+                      </GridItem>
+                    ))}
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <NotificationBorder className="padding">
+                      <EventButtonWrapper>
+                        <GoAButton
+                          buttonType="secondary"
+                          data-testid="add-event"
+                          onClick={() => {
+                            setSelectedEvent(emptyEvent);
+                            manageEvents(notificationType);
+                          }}
+                        >
+                          + Select an event
+                        </GoAButton>
+                      </EventButtonWrapper>
+                      <div>Domain events represent key changes at a domain model level.</div>
+                    </NotificationBorder>
                   </GridItem>
-                ))}
-                <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                  <NotificationBorder className="padding">
-                    <EventButtonWrapper>
-                      <GoAButton
-                        buttonType="secondary"
-                        data-testid="add-event"
-                        onClick={() => {
-                          setSelectedEvent(emptyEvent);
-                          manageEvents(notificationType);
-                        }}
-                      >
-                        + Select an event
-                      </GoAButton>
-                    </EventButtonWrapper>
-                    <div>Domain events represent key changes at a domain model level.</div>
-                  </NotificationBorder>
-                </GridItem>
-              </Grid>
-            </GoACard>
-          </div>
-        ))}
+                </Grid>
+              </GoACard>
+            </div>
+          ))}
       <h2>Core notifications:</h2>
       {coreNotification &&
         Object.values(coreNotification).map((notificationType) => (

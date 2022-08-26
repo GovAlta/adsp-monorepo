@@ -17,6 +17,8 @@ export const configurationSchema = {
         template: {
           type: 'string',
         },
+        footer: { type: ['string', 'null'] },
+        header: { type: ['string', 'null'] },
       },
       required: ['id', 'name', 'template'],
     },
