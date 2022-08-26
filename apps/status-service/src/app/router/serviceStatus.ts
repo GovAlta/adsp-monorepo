@@ -9,7 +9,6 @@ import { PublicServiceStatusType } from '../types';
 import { TenantService, EventService } from '@abgov/adsp-service-sdk';
 import { applicationStatusToStarted, applicationStatusToStopped, applicationStatusChange } from '../events';
 import axios from 'axios';
-import { ForkOptions } from 'child_process';
 
 export interface ServiceStatusRouterProps {
   logger: Logger;
@@ -24,10 +23,11 @@ export interface ServiceStatusRouterProps {
 export const getApplications = (logger: Logger, serviceStatusRepository: ServiceStatusRepository): RequestHandler => {
   return async (req, res, next) => {
     try {
-      logger.debug('###############   getting status configuration...');
-      const [configuration] = await req.getConfiguration<StatusServiceConfiguration>();
-      logger.debug('###############   ...and the configuration is:');
-      logger.debug(`${configuration}`);
+      const [tenantConfig, coreConfig] = await req.getConfiguration<StatusServiceConfiguration>();
+      logger.debug('###############   ...and the tenant is:');
+      logger.debug(`${tenantConfig}`);
+      logger.debug('###############   ...and the core config is:');
+      logger.debug(`${coreConfig}`);
       const { tenantId } = req.user as User;
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
@@ -37,7 +37,7 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
 
       res.json(
         applications.map((app) => {
-          const config = configuration[app._id] as ApplicationEntity;
+          const config = tenantConfig[app._id] as ApplicationEntity;
           return {
             ...app,
             internalStatus: app.internalStatus,
