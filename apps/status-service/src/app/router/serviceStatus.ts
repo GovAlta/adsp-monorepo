@@ -27,19 +27,13 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
       }
-      const [tenantConfig, coreConfig] = await req.getConfiguration<StatusServiceConfiguration>(tenantId);
-      logger.debug('###############   ...and the core config is:');
-      logger.debug(JSON.stringify(coreConfig));
-      logger.debug('###############   ...and the tenant config is:');
-      logger.debug(JSON.stringify(tenantConfig));
+      const [tenantConfig] = await req.getConfiguration<StatusServiceConfiguration>(tenantId);
 
       const applications = await serviceStatusRepository.find({ tenantId: tenantId.toString() });
 
       res.json(
         applications.map((app) => {
           const config = tenantConfig[app._id] as ApplicationEntity;
-          logger.debug('########## App configuration is:');
-          logger.debug(JSON.stringify(config));
           return {
             ...app,
             internalStatus: app.internalStatus,
@@ -315,18 +309,18 @@ export const getApplicationEntries =
     endpointStatusEntryRepository: EndpointStatusEntryRepository
   ): RequestHandler =>
   async (req, res, next) => {
+    const { tenantId } = req.user as User;
+    if (!tenantId) {
+      throw new UnauthorizedError('missing tenant id');
+    }
+
     try {
-      const [configuration] = await req.getConfiguration<StatusServiceConfiguration>();
-      const { tenantId } = req.user as User;
+      const [tenantConfig] = await req.getConfiguration<StatusServiceConfiguration>(tenantId);
       const { applicationId } = req.params;
       const { topValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 200;
 
-      if (!tenantId) {
-        throw new UnauthorizedError('missing tenant id');
-      }
-
-      const app = configuration[applicationId] as ApplicationEntity;
+      const app = tenantConfig[applicationId] as ApplicationEntity;
       if (!app) {
         throw new NotFoundError('Status application', applicationId.toString());
       }
