@@ -38,6 +38,8 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
       res.json(
         applications.map((app) => {
           const config = tenantConfig[app._id] as ApplicationEntity;
+          logger.debug('########## App configuration is:');
+          logger.debug(JSON.stringify(config));
           return {
             ...app,
             internalStatus: app.internalStatus,
