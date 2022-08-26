@@ -23,15 +23,15 @@ export interface ServiceStatusRouterProps {
 export const getApplications = (logger: Logger, serviceStatusRepository: ServiceStatusRepository): RequestHandler => {
   return async (req, res, next) => {
     try {
-      const [coreConfig, tenantConfig] = await req.getConfiguration<StatusServiceConfiguration>();
-      logger.debug('###############   ...and the core config is:');
-      logger.debug(JSON.stringify(coreConfig));
-      logger.debug('###############   ...and the tenant config is:');
-      logger.debug(JSON.stringify(tenantConfig));
       const { tenantId } = req.user as User;
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
       }
+      const [tenantConfig, coreConfig] = await req.getConfiguration<StatusServiceConfiguration>(tenantId);
+      logger.debug('###############   ...and the core config is:');
+      logger.debug(JSON.stringify(coreConfig));
+      logger.debug('###############   ...and the tenant config is:');
+      logger.debug(JSON.stringify(tenantConfig));
 
       const applications = await serviceStatusRepository.find({ tenantId: tenantId.toString() });
 
