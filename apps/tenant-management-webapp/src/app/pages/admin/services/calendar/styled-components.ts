@@ -5,26 +5,18 @@ export const IdField = styled.div`
 `;
 
 export const TableDiv = styled.div`
-  & td:first-child {
-    width: 120px;
-    overflow-x: hidden;
-    text-overflow: ellipsis;
-    word-wrap: break-word;
-  }
-  & td:nth-child(2) {
-    word-wrap: break-word;
-  }
-  & td:nth-child(3) {
-    word-wrap: break-word;
+  word-wrap: break-word;
+  table-layout: fixed;
+  & th:nth-child(3) {
+    min-width: 160px;
   }
 
-  & td:last-child {
-    width: 40px;
-    white-space: nowrap;
-    overflow-x: hidden;
+  & td:nth-child(3) {
+    min-width: 160px;
+    overflow: hidden;
     text-overflow: ellipsis;
-    text-align: right;
   }
+
   & .meta {
     padding: 0;
   }
