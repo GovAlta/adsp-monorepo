@@ -10,7 +10,7 @@ import {
 } from '../types';
 
 // Stored in the configuration service repository
-export type StatusServiceConfiguration = Record<string, ApplicationEntity>;
+export type StatusServiceConfiguration = Record<string, unknown>;
 
 export interface ApplicationEntity {
   name: string;
