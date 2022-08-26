@@ -87,7 +87,6 @@ app.use(express.json({ limit: '1mb' }));
   });
 
   app.use(passport.initialize());
-  // where does this go?
   app.use('/status', configurationHandler);
 
   const healthCheckSchedulingProps = {
