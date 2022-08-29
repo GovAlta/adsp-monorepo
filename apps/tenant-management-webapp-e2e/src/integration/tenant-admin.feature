@@ -49,7 +49,8 @@ Feature: Tenant admin
     Then the user views the number of users in top 5 roles in its tenant realm
     And the number of users in roles from admin page should equal to the number of users in roles from the realm API
 
-  @accessibility @regression
+  # Ignore the accessibility test until https://github.com/GovAlta/ui-components/issues/844 is resolved
+  @accessibility @regression @ignore
   Scenario: As a service owner, I can use the tenant admin dashboard without any critical or serious accessibility issues
     Given a tenant admin user is on tenant admin page
     Then no critical or serious accessibility issues on "tenant admin dashboard page"

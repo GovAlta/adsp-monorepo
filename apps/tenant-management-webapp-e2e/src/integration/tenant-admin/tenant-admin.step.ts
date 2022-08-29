@@ -481,7 +481,7 @@ When('the user searches with {string}', function (namespaceName) {
   tenantAdminObj.eventLogSearchBox().type(namespaceName);
   tenantAdminObj.eventLogSearchBox().should('have.value', namespaceName);
   tenantAdminObj.eventLogSearchBtn().click();
-  cy.wait(2000);
+  cy.wait(5000);
 });
 
 Then('the user views the events matching the search filter of {string}', function (namespaceName) {
