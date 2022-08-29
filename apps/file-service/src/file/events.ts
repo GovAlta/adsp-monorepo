@@ -8,7 +8,7 @@ const fileSchema = {
   type: 'object',
   properties: {
     id: { type: 'string' },
-    recordId: { type: 'string' },
+    recordId: { oneOf: [{ type: 'string' }, { type: 'null' }] },
     filename: { type: 'string' },
     size: { type: 'number' },
     createdBy: {
