@@ -10,31 +10,36 @@ using Xunit;
 using Newtonsoft.Json.Linq;
 
 namespace Adsp.Sdk.Configuration;
-public class ConfigurationServiceTests
+public class ConfigurationUpdateTests
 {
   [Fact]
-  public void CanCreateConfigurationService()
+  public void ConfigurationUpdatePayloadClass()
   {
-    var logger = Mock.Of<ILogger<ConfigurationService>>();
-    var cache = Mock.Of<IMemoryCache>();
-    var serviceDirectory = Mock.Of<IServiceDirectory>();
-    var tokenProvider = Mock.Of<ITokenProvider>();
-    var ConfigurationService = Mock.Of<IConfigurationService>();
-    var requestDelegate = Mock.Of<RequestDelegate>();
-    var options = new Mock<IOptions<AdspOptions>>();
-    options
-      .Setup(o => o.Value)
-      .Returns(
-        new AdspOptions
-        {
-          ServiceId = AdspId.Parse("urn:ads:test:test-service"),
-        }
-      );
+    var payload = new ConfigurationUpdatePayload();
+    payload.Name = "test";
+    payload.Namespace = "testNamespace";
 
-    var service = new ConfigurationService(logger, cache, serviceDirectory, tokenProvider, options.Object);
-    service.Should().NotBeNull();
-    service.Dispose();
+    payload.Name.Should().Be("test");
+    payload.Namespace.Should().Be("testNamespace");
   }
+
+  [Fact]
+  public void ConfigurationUpdateClass()
+  {
+    var tenantId = AdspId.Parse("urn:ads:platform:tenant-service:v2:/tenants/test");
+    var service = new ConfigurationUpdate();
+    service.TenantId = tenantId;
+    var payload = new ConfigurationUpdatePayload();
+    payload.Name = "test";
+    payload.Namespace = "testNamespace";
+
+    service.Payload = payload;
+
+    service.TenantId.Should().Be(tenantId);
+    service.Payload.Name.Should().Be("test");
+    service.Payload.Namespace.Should().Be("testNamespace");
+  }
+
 
   [Fact]
   public async Task CanRetrieveConfiguration()

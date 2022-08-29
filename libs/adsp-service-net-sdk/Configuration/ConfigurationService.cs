@@ -8,7 +8,6 @@ namespace Adsp.Sdk.Configuration;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
 internal class ConfigurationService : IConfigurationService, IDisposable
 {
-  private const string Value = "bbbbbaaaaaaaaaaaaabbbbbbbb";
   private static readonly AdspId CONFIGURATION_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:configuration-service:v2");
   private readonly ILogger<ConfigurationService> _logger;
   private readonly IMemoryCache _cache;
@@ -49,48 +48,23 @@ internal class ConfigurationService : IConfigurationService, IDisposable
 
   public async Task<TC?> GetConfiguration<T, TC>(AdspId serviceId, AdspId? tenantId = null) where T : class
   {
-    System.Console.WriteLine(Value);
     var coreCached = _cache.TryGetValue<T>(serviceId, out T? coreConfiguration);
-    System.Console.WriteLine(coreCached);
-    System.Console.WriteLine("1");
     if (!coreCached)
     {
-      Console.WriteLine("aaaaaaaaaa");
       coreConfiguration = await RetrieveConfiguration<T>(serviceId);
     }
-
-    System.Console.WriteLine("2");
-
-    System.Console.WriteLine(coreConfiguration);
-
-    System.Console.WriteLine("3");
-
-    System.Console.WriteLine(tenantId);
 
     T? tenantConfiguration = default;
     if (tenantId != null)
     {
       var tenantCached = _cache.TryGetValue((serviceId, tenantId), out tenantConfiguration);
-      System.Console.WriteLine("4");
-      System.Console.WriteLine(tenantCached);
       if (!tenantCached)
       {
-        Console.WriteLine("bbbbbbbbbbbbb");
         tenantConfiguration = await RetrieveConfiguration<T>(serviceId, tenantId);
       }
     }
 
     var result = _combine != null ? _combine(tenantConfiguration, coreConfiguration) : (tenantConfiguration, coreConfiguration);
-    System.Console.WriteLine("4.5");
-    System.Console.WriteLine(tenantConfiguration);
-    System.Console.WriteLine("4.7");
-    System.Console.WriteLine(coreConfiguration);
-
-    System.Console.WriteLine("5");
-    System.Console.WriteLine(result);
-    System.Console.WriteLine("6");
-
-
     return (TC?)result;
   }
 
@@ -106,23 +80,15 @@ internal class ConfigurationService : IConfigurationService, IDisposable
     T? configuration = default;
     try
     {
-      Console.WriteLine("vvvvvv");
       var configurationServiceUrl = await _serviceDirectory.GetServiceUrl(CONFIGURATION_SERVICE_API_ID);
-      Console.WriteLine(configurationServiceUrl);
       var token = await _tokenProvider.GetAccessToken();
-      Console.WriteLine("-------xxxxxxxxxx");
       var requestUrl = new Uri(configurationServiceUrl, $"v2/configuration/{serviceId.Namespace}/{serviceId.Service}/latest");
-      Console.WriteLine(requestUrl);
-      Console.WriteLine("vvvxxxvv");
-      Console.WriteLine(tenantId);
       var request = new RestRequest(requestUrl.AbsoluteUri);
       if (tenantId != null)
       {
         request.AddQueryParameter("tenantId", tenantId.ToString());
       }
-
       request.AddHeader("Authorization", $"Bearer {token}");
-
       configuration = await _client.GetAsync<T>(request);
       request.AddHeader("Authorization", $"Bearer {token}");
       if (configuration != null)
@@ -143,9 +109,6 @@ internal class ConfigurationService : IConfigurationService, IDisposable
     {
       _logger.LogDebug(e, "Error encountered retrieving configuration for service {ServiceId}.", serviceId);
     }
-
-    Console.WriteLine(configuration);
-
 
     return configuration;
   }

@@ -18,7 +18,7 @@ internal sealed class ConfigurationUpdateClient : IConfigurationUpdateClient, IA
   private readonly IConfigurationService _configurationService;
   private readonly ITenantService _tenantService;
   private readonly string? _realm;
-  private SocketIO? _client;
+  public SocketIOWrapper? _client;
 
   public ConfigurationUpdateClient(
     ILogger<ConfigurationUpdateClient> logger,
@@ -26,7 +26,8 @@ internal sealed class ConfigurationUpdateClient : IConfigurationUpdateClient, IA
     ITokenProvider tokenProvider,
     IConfigurationService configurationService,
     ITenantService tenantService,
-    IOptions<AdspOptions> options
+    IOptions<AdspOptions> options,
+    SocketIOWrapper? client = null
   )
   {
     _logger = logger;
@@ -35,14 +36,12 @@ internal sealed class ConfigurationUpdateClient : IConfigurationUpdateClient, IA
     _configurationService = configurationService;
     _tenantService = tenantService;
     _realm = options.Value.Realm;
+    _client = client;
   }
 
   public async Task Connect()
   {
-    if (_client == null)
-    {
-      _client = await CreateSocketClient();
-    }
+    _client = await CreateSocketClient();
 
     try
     {
@@ -55,34 +54,39 @@ internal sealed class ConfigurationUpdateClient : IConfigurationUpdateClient, IA
     }
   }
 
-  private async Task<SocketIO> CreateSocketClient()
+  private async Task<SocketIOWrapper> CreateSocketClient()
   {
     var tenant = _realm != null ? await _tenantService.GetTenantByRealm(_realm) : null;
 
     var pushServiceUrl = await _serviceDirectory.GetServiceUrl(PushServiceId);
     var token = await _tokenProvider.GetAccessToken();
 
-    var client = new SocketIO(
-      pushServiceUrl,
-      new SocketIOOptions
-      {
-        Query = new Dictionary<string, string> { { "stream", StreamId } },
-        ExtraHeaders = new Dictionary<string, string> { { "Authorization", $"Bearer {token}" } }
-      }
-    );
-    client.OnConnected += (_s, _e) =>
+    if (_client == null)
+    {
+      _client = new SocketIOWrapper(
+        pushServiceUrl,
+        new SocketIOOptions
+        {
+          Query = new Dictionary<string, string> { { "stream", StreamId } },
+          ExtraHeaders = new Dictionary<string, string> { { "Authorization", $"Bearer {token}" } }
+        }
+      );
+    }
+
+    _client.socketIO.OnConnected += (_s, _e) =>
     {
       _logger.LogInformation("Connected to stream for configuration updates at: {Url}", pushServiceUrl);
     };
-    client.OnDisconnected += (_s, _e) =>
+    _client.socketIO.OnDisconnected += (_s, _e) =>
     {
       _logger.LogInformation("Disconnected from configuration update stream.");
     };
-    client.OnError += (_s, e) =>
+    _client.socketIO.OnError += (_s, e) =>
     {
       _logger.LogError("Error encountered in configuration update stream. {Msg}", e);
     };
-    client.On(ConfigurationUpdatedEvent, (response) =>
+
+    _client.On(ConfigurationUpdatedEvent, (response) =>
     {
       _logger.LogDebug("Received configuration update event from configuration updates stream.");
 
@@ -93,7 +97,7 @@ internal sealed class ConfigurationUpdateClient : IConfigurationUpdateClient, IA
       );
     });
 
-    return client;
+    return _client;
   }
 
   public async ValueTask DisposeAsync()
@@ -101,7 +105,7 @@ internal sealed class ConfigurationUpdateClient : IConfigurationUpdateClient, IA
     var client = _client;
     if (client != null)
     {
-      if (client.Connected)
+      if (client.Connected())
       {
         await client.DisconnectAsync();
       }

@@ -2,7 +2,6 @@ using Adsp.Sdk.Access;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Primitives;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
@@ -16,7 +15,6 @@ public class ConfigurationMiddlewareTests
     var logger = Mock.Of<ILogger<ConfigurationMiddleware>>();
     var ConfigurationService = Mock.Of<IConfigurationService>();
     var requestDelegate = Mock.Of<RequestDelegate>();
-    //var options = Mock.Of<IOptions<AdspOptions>>();
     var options = new Mock<IOptions<AdspOptions>>();
     options
       .Setup(o => o.Value)
@@ -26,15 +24,8 @@ public class ConfigurationMiddlewareTests
           ServiceId = AdspId.Parse("urn:ads:test:test-service"),
         }
       );
-    //var x = new AdspOptions();
-    //x.ServiceId = 42;
-    //options.Setup(x => x.Value).Returns(x);
-    // options.
-    // options.Setup(x => x.Value).Returns(true);
 
     var middleware = new ConfigurationMiddleware(logger, ConfigurationService, options.Object, requestDelegate);
-    Console.WriteLine("aaqa");
-    Console.WriteLine(middleware);
     middleware.Should().NotBeNull();
   }
 
@@ -44,7 +35,6 @@ public class ConfigurationMiddlewareTests
     var logger = Mock.Of<ILogger<ConfigurationMiddleware>>();
     var ConfigurationService = Mock.Of<IConfigurationService>();
     var requestDelegate = Mock.Of<RequestDelegate>();
-    //var options = Mock.Of<IOptions<AdspOptions>>();
     var options = new Mock<IOptions<AdspOptions>>();
     options
       .Setup(o => o.Value)
@@ -54,16 +44,8 @@ public class ConfigurationMiddlewareTests
           ServiceId = null,
         }
       );
-    //var x = new AdspOptions();
-    //x.ServiceId = 42;
-    //options.Setup(x => x.Value).Returns(x);
-    // options.
-    // options.Setup(x => x.Value).Returns(true);
 
     var middleware = () => new ConfigurationMiddleware(logger, ConfigurationService, options.Object, requestDelegate);
-    // Console.WriteLine("aaqa");
-    // Console.WriteLine(middleware);
-    //middleware.Should().NotBeNull();
     middleware.Should().Throw<ArgumentException>();
   }
 
