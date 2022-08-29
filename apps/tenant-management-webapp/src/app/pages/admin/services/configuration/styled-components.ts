@@ -73,33 +73,38 @@ export const ErrorStatusText = styled.div`
   margin-top: 1rem;
 `;
 
-export const ScrollPane = styled.div`
-  border: 1px solid black;
-  border-radius: 4px;
+// export const ScrollPane = styled.div`
+//   border: 1px solid black;
+//   border-radius: 4px;
 
-  .header-background {
-    background: #f1f1f1;
-    color: #000000;
-    padding: 5px 10px;
-    font-weight: 700;
-    margin-bottom: 0;
-  }
+//   .header-background {
+//     background: #f1f1f1;
+//     color: #000000;
+//     padding: 5px 10px;
+//     font-weight: 700;
+//     margin-bottom: 0;
+//   }
 
-  .main {
-    padding: 10px;
-    max-height: calc(100vh - 525px);
-    overflow-y: scroll;
-  }
+//   .main {
+//     padding: 10px;
+//     max-height: calc(100vh - 525px);
+//     overflow-y: scroll;
+//   }
 
-  .export-button {
-    padding: 10px;
-    text-align-last: end;
-  }
+//   .export-button {
+//     padding: 10px;
+//     text-align-last: end;
+//   }
 
-  h3 {
-    font-size: 18px;
-    font-weight: bold;
-  }
+//   h3 {
+//     font-size: 18px;
+//     font-weight: bold;
+//   }
+// `;
+
+export const SelectedExports = styled.div`
+  border: 1x solid #666666;
+  border-radius: 20px;
 `;
 
 export const FileTableStyles = styled.div`

@@ -13,7 +13,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getConfigurationDefinitions, getConfigurations, ServiceId } from '@store/configuration/action';
 import { PageIndicator } from '@components/Indicator';
 import { ConfigurationExportType, Service } from '@store/configuration/model';
-import { DescriptionDiv, ScrollPane } from '../styled-components';
+import { DescriptionDiv, SelectedExports } from '../styled-components';
 
 export const ConfigurationExport: FunctionComponent = () => {
   const { coreConfigDefinitions, tenantConfigDefinitions } = useSelector((state: RootState) => state.configuration);
@@ -41,6 +41,10 @@ export const ConfigurationExport: FunctionComponent = () => {
     }
   };
 
+  const unselectAll = () => {
+    setExportServices({});
+  };
+
   const getDescription = (namespace: string, name: string) => {
     const defs = { ...coreConfigDefinitions?.configuration, ...tenantConfigDefinitions?.configuration };
     if (defs[`${namespace}:${name}`]) {
@@ -59,6 +63,10 @@ export const ConfigurationExport: FunctionComponent = () => {
     }
   }, [exportState]);
 
+  const DisplayButton = (text) => {
+    return <SelectedExports>{text}</SelectedExports>;
+  };
+
   return (
     <div>
       <h2>Export</h2>
@@ -67,48 +75,74 @@ export const ConfigurationExport: FunctionComponent = () => {
         again later.
       </p>
       {indicator.show && <PageIndicator />}
-      <ScrollPane>
-        <h2 className="header-background">Export configuration list</h2>
-        <div className="main">
-          {Object.keys(sortedConfiguration.namespaces).map((namespace) => {
-            return (
-              <React.Fragment key={namespace}>
-                <h3>{namespace}</h3>
-                {sortedConfiguration.namespaces[namespace].map((name) => {
-                  const desc = getDescription(namespace, name);
-                  return (
-                    <div key={toServiceKey(namespace, name)}>
-                      <GoACheckbox
-                        name={name}
-                        checked={exportServices[toServiceKey(namespace, name)] || false}
-                        onChange={() => {
-                          toggleSelection(toServiceKey(namespace, name));
-                        }}
-                        data-testid={`${toServiceKey(namespace, name)}_id`}
-                      >
-                        {name}
-                      </GoACheckbox>
-                      {desc && <DescriptionDiv>{`Description: ${desc}`}</DescriptionDiv>}
-                    </div>
-                  );
-                })}
-              </React.Fragment>
-            );
-          })}
+      <h2 className="header-background">Export configuration list</h2>
+      <div style={{ display: 'flex', flexDirection: 'row' }}>
+        <div style={{ flex: '1' }}>
+          <div className="main">
+            {Object.keys(sortedConfiguration.namespaces).map((namespace) => {
+              return (
+                <React.Fragment key={namespace}>
+                  <h3>{namespace}</h3>
+                  {sortedConfiguration.namespaces[namespace].map((name) => {
+                    const desc = getDescription(namespace, name);
+                    return (
+                      <div key={toServiceKey(namespace, name)}>
+                        <GoACheckbox
+                          name={name}
+                          checked={exportServices[toServiceKey(namespace, name)] || false}
+                          onChange={() => {
+                            toggleSelection(toServiceKey(namespace, name));
+                          }}
+                          data-testid={`${toServiceKey(namespace, name)}_id`}
+                        >
+                          {name}
+                        </GoACheckbox>
+                        {desc && <DescriptionDiv>{`Description: ${desc}`}</DescriptionDiv>}
+                      </div>
+                    );
+                  })}
+                </React.Fragment>
+              );
+            })}
+          </div>
         </div>
-        <div className="export-button">
-          <GoAButton
-            data-testid="export-configuration-1"
-            disabled={Object.keys(exportServices).length < 1 || indicator.show}
-            onClick={(e) => {
-              e.preventDefault();
-              dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
-            }}
-          >
-            {'Export'}
-          </GoAButton>
+        <div style={{ flex: '1' }}>
+          Selected Configuration
+          <div>
+            {Object.keys(exportServices).map((exp) => {
+              console.log(JSON.stringify(exportServices[exp]) + '<exportServices[exp]');
+              console.log(JSON.stringify(exp) + '<exp');
+              return <DisplayButton text={exp} />;
+            })}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'row' }}>
+            <div style={{ flex: '1' }} className="export-button">
+              <GoAButton
+                data-testid="export-configuration-1"
+                buttonType="tertiary"
+                disabled={Object.keys(exportServices).length < 1 || indicator.show}
+                onClick={(e) => {
+                  unselectAll();
+                }}
+              >
+                {'Remove All'}
+              </GoAButton>
+            </div>
+            <div style={{ flex: '1' }} className="export-button">
+              <GoAButton
+                data-testid="export-configuration-1"
+                disabled={Object.keys(exportServices).length < 1 || indicator.show}
+                onClick={(e) => {
+                  e.preventDefault();
+                  dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
+                }}
+              >
+                {'Export'}
+              </GoAButton>
+            </div>
+          </div>
         </div>
-      </ScrollPane>
+      </div>
     </div>
   );
 };
