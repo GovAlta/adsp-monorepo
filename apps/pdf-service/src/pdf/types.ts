@@ -4,8 +4,14 @@ export interface TemplateService {
   getTemplateFunction(template: string): (context: unknown) => string;
 }
 
+export interface PdfServiceProps {
+  content: string;
+  footer?: string;
+  header?: string;
+}
+
 export interface PdfService {
-  generatePdf(content: string): Promise<Buffer>;
+  generatePdf({ content, footer, header }: PdfServiceProps): Promise<Buffer>;
 }
 
 export interface FileResult {
