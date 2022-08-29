@@ -68,7 +68,7 @@ class TenantAdminPage {
   }
 
   hereLinkForManageUsers() {
-    return cy.xpath('(//h3[contains(text(), "Sharing tenant access")]/following-sibling::p)[2]/a');
+    return cy.xpath('(//h3[contains(text(), "Sharing tenant access")]/following-sibling::p)[2]//a[text()="here"]');
   }
 
   dashboardCalloutContenth3Title() {
