@@ -1020,7 +1020,7 @@ describe('router', () => {
       const next = jest.fn();
 
       await handler(req, res as unknown as Response, next);
-      expect(next).toHaveBeenCalledWith(new NotFoundError('Active Revision'));
+      expect(next).toHaveBeenCalledWith(new NotFoundError('active revision'));
     });
 
     it('can get active revision', async () => {
@@ -1070,6 +1070,145 @@ describe('router', () => {
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({ namespace: namespace, name: name, revision: activeRevision, data: { a: 42 } })
       );
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+    });
+
+    it('can get active revision at revision 0', async () => {
+      const handler = getActiveRevision(loggerMock as Logger);
+
+      const activeRevision = 3;
+
+      const entity = {
+        tenantId,
+        namespace,
+        name,
+        createRevision: jest.fn(() => Promise.resolve(entity)),
+        getRevisions: jest.fn(),
+        latest: null,
+        active: 0,
+      };
+
+      const activeRevisionEntity = {
+        tenantId,
+        namespace,
+        name,
+        active: activeRevision,
+        get: jest.fn(),
+        setActiveRevision: jest.fn(),
+      };
+
+      const req = {
+        entity,
+        user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
+        params: { namespace, name },
+        activeRevisionEntity,
+        query: {},
+      } as unknown as Request;
+
+      entity.getRevisions.mockResolvedValueOnce({
+        results: [{ namespace: namespace, name: name, revision: activeRevision, data: { a: 42 } }],
+      });
+
+      const res = {
+        send: jest.fn(),
+      };
+
+      const next = jest.fn();
+
+      await handler(req, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({ namespace: namespace, name: name, revision: activeRevision, data: { a: 42 } })
+      );
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+    });
+
+    it('can fallback to latest for no active revision', async () => {
+      const handler = getActiveRevision(loggerMock as Logger);
+
+      const entity = {
+        tenantId,
+        namespace,
+        name,
+        createRevision: jest.fn(() => Promise.resolve(entity)),
+        getRevisions: jest.fn(),
+        latest: { namespace: namespace, name: name, revision: 12, data: { a: 42 } },
+      };
+
+      const activeRevisionEntity = {
+        tenantId,
+        namespace,
+        name,
+        active: null,
+        get: jest.fn(),
+        setActiveRevision: jest.fn(),
+      };
+
+      const req = {
+        entity,
+        user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
+        params: { namespace, name },
+        activeRevisionEntity,
+        query: { orLatest: 'true' },
+      } as unknown as Request;
+
+      const res = {
+        send: jest.fn(),
+      };
+
+      const next = jest.fn();
+
+      await handler(req, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith(entity.latest);
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+    });
+
+    // This differs from the above in that the active revision value is set but no result is found for it.
+    // Perhaps this should be an error since it means the persisted data is not consistent, but consumer would
+    // have no resolution for the issue.
+    it('can fallback to latest for active revision not found', async () => {
+      const handler = getActiveRevision(loggerMock as Logger);
+
+      const entity = {
+        tenantId,
+        namespace,
+        name,
+        createRevision: jest.fn(() => Promise.resolve(entity)),
+        getRevisions: jest.fn(),
+        latest: { namespace: namespace, name: name, revision: 12, data: { a: 42 } },
+      };
+
+      const activeRevisionEntity = {
+        tenantId,
+        namespace,
+        name,
+        active: 3,
+        get: jest.fn(),
+        setActiveRevision: jest.fn(),
+      };
+
+      const req = {
+        entity,
+        user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
+        params: { namespace, name },
+        activeRevisionEntity,
+        query: { orLatest: 'true' },
+      } as unknown as Request;
+
+      entity.getRevisions.mockResolvedValueOnce({
+        results: [],
+      });
+
+      const res = {
+        send: jest.fn(),
+      };
+
+      const next = jest.fn();
+
+      await handler(req, res as unknown as Response, next);
+
+      expect(res.send).toHaveBeenCalledWith(entity.latest);
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
   });
