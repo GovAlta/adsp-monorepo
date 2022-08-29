@@ -4,6 +4,7 @@ import { ActiveRevisionRepository } from '../configuration';
 import { activeRevisionSchema } from './schema';
 import { ActiveRevisionDoc } from './types';
 import { ConfigurationEntity } from '../configuration';
+import { InvalidOperationError } from '@core-services/core-common';
 
 export class MongoActiveRevisionRepository implements ActiveRevisionRepository {
   private activeRevisionModel: Model<ActiveRevisionDoc>;
@@ -26,10 +27,15 @@ export class MongoActiveRevisionRepository implements ActiveRevisionRepository {
   }
 
   async setActiveRevision<C>(entity: ConfigurationEntity<C>, active: number): Promise<ConfigurationEntity<C>> {
+    if (!(active >= 0)) {
+      throw new InvalidOperationError('Active revision value must be greater than or equal to 0.');
+    }
+
+    // TODO: This should verify that the active revision value actually corresponds to a real revision?
+
     const query: Record<string, unknown> = {
       namespace: entity.namespace,
       name: entity.name,
-      active: entity.active,
       tenant: entity.tenantId?.toString() || { $exists: false },
     };
 
@@ -45,11 +51,9 @@ export class MongoActiveRevisionRepository implements ActiveRevisionRepository {
       update.tenant = entity.tenantId.toString();
     }
 
-    const doc = await new Promise<ActiveRevisionDoc>((resolve, reject) => {
-      this.activeRevisionModel
-        .findOneAndUpdate(query, update, { upsert: true, new: true, lean: true })
-        .exec((err, res) => (err ? reject(err) : resolve(res as ActiveRevisionDoc)));
-    });
+    const doc = await this.activeRevisionModel
+      .findOneAndUpdate(query, update, { upsert: true, new: true, lean: true })
+      .exec();
 
     entity.active = doc.active;
 
