@@ -256,6 +256,7 @@ describe('Service router', () => {
   describe('Can get applications by name for public', () => {
     it('Can get applications by name', async () => {
       statusRepositoryMock.find.mockResolvedValueOnce([applicationsMock[1]]);
+      const getConfigurationMock = jest.fn();
       const handler = getApplicationsByName(loggerMock, tenantServiceMock, statusRepositoryMock);
       const reqMock = {
         user: {
@@ -266,8 +267,10 @@ describe('Service router', () => {
         params: {
           name: 'test-mock',
         },
+        getConfiguration: getConfigurationMock,
       } as unknown as Request;
 
+      getConfigurationMock.mockReturnValueOnce([]);
       await handler(reqMock, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.arrayContaining([

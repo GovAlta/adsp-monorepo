@@ -28,7 +28,40 @@ Object {
 }
 `;
 
+exports[`router getActiveRevision can fallback to latest for active revision not found 1`] = `
+Object {
+  "data": Object {
+    "a": 42,
+  },
+  "name": "test-service",
+  "namespace": "platform",
+  "revision": 12,
+}
+`;
+
+exports[`router getActiveRevision can fallback to latest for no active revision 1`] = `
+Object {
+  "data": Object {
+    "a": 42,
+  },
+  "name": "test-service",
+  "namespace": "platform",
+  "revision": 12,
+}
+`;
+
 exports[`router getActiveRevision can get active revision 1`] = `
+Object {
+  "data": Object {
+    "a": 42,
+  },
+  "name": "test-service",
+  "namespace": "platform",
+  "revision": 3,
+}
+`;
+
+exports[`router getActiveRevision can get active revision at revision 0 1`] = `
 Object {
   "data": Object {
     "a": 42,

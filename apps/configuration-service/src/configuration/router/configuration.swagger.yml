@@ -76,7 +76,7 @@ components:
                 name:
                   type: string
                 latest:
-                  $ref: '#/components/schemas/ConfigurationRevision'
+                  $ref: "#/components/schemas/ConfigurationRevision"
       401:
         description: User not authorized to retrieve configuration.
   patch:
@@ -90,15 +90,15 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: '#/components/schemas/ReplaceOperation'
-              - $ref: '#/components/schemas/UpdateOperation'
-              - $ref: '#/components/schemas/DeleteOperation'
+              - $ref: "#/components/schemas/ReplaceOperation"
+              - $ref: "#/components/schemas/UpdateOperation"
+              - $ref: "#/components/schemas/DeleteOperation"
             discriminator:
               propertyName: operation
               mapping:
-                REPLACE: '#/components/schemas/ReplaceOperation'
-                UPDATE: '#/components/schemas/UpdateOperation'
-                DELETE: '#/components/schemas/DeleteOperation'
+                REPLACE: "#/components/schemas/ReplaceOperation"
+                UPDATE: "#/components/schemas/UpdateOperation"
+                DELETE: "#/components/schemas/DeleteOperation"
     responses:
       200:
         description: Request completed successfully.
@@ -112,7 +112,7 @@ components:
                 name:
                   type: string
                 latest:
-                  $ref: '#/components/schemas/ConfigurationRevision'
+                  $ref: "#/components/schemas/ConfigurationRevision"
       401:
         description: User not authorized to update configuration.
   post:
@@ -143,7 +143,7 @@ components:
                 name:
                   type: string
                 latest:
-                  $ref: '#/components/schemas/ConfigurationRevision'
+                  $ref: "#/components/schemas/ConfigurationRevision"
       401:
         description: User not authorized to update configuration.
       400:
@@ -173,6 +173,12 @@ components:
         in: query
         required: false
         schema: {}
+      - name: orLatest
+        description: Flag indicating if latest configuration should be returned if no there is no active revision.
+        in: query
+        required: false
+        schema:
+          type: boolean
     responses:
       200:
         description: Request completed successfully.
@@ -182,7 +188,7 @@ components:
               type: object
               properties:
                 configuration:
-                  $ref: '#/components/schemas/ConfigurationRevision'
+                  $ref: "#/components/schemas/ConfigurationRevision"
                 revision:
                   type: number
       401:
@@ -264,7 +270,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: '#/components/schemas/ConfigurationRevision'
+                    $ref: "#/components/schemas/ConfigurationRevision"
                 page:
                   type: object
                   properties:

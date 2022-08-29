@@ -40,4 +40,17 @@ describe('PdfTemplateEntity', () => {
     expect(pdfServiceMock.generatePdf).toHaveBeenCalledWith('evaluated');
     expect(result).toBe(stream);
   });
+
+  it('can create entity with header and footer', async () => {
+    const entity = new PdfTemplateEntity(templateServiceMock, pdfServiceMock, {
+      tenantId,
+      id: 'test-template',
+      name: 'Test Template',
+      description: null,
+      template: 'template',
+      footer: 'footer',
+      header: 'header',
+    });
+    expect(entity).toBeTruthy();
+  });
 });
