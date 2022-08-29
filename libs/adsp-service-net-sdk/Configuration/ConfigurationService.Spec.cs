@@ -90,15 +90,16 @@ public class ConfigurationServiceTests
       }
     );
 
-    var service = () => new ConfigurationService(logger, cache.Object, serviceDirectory.Object, tokenProvider.Object, options.Object, client);
-
     var serviceId = AdspId.Parse("urn:ads:test:test-service");
     var tenantId = AdspId.Parse("urn:ads:platform:tenant-service:v2:/tenants/test");
 
-    var (tenant, core) = await service().GetConfiguration<object>(serviceId, tenantId);
+    
 
-    tenant.ToString().Should().BeEquivalentTo(mockedHttpResponse);
-    core.ToString().Should().BeEquivalentTo(mockedHttpResponse);
-    service().Dispose();
+    using(ConfigurationService service = new ConfigurationService(logger, cache.Object, serviceDirectory.Object, tokenProvider.Object, options.Object, client)) {
+      var (tenant, core) = await service.GetConfiguration<object>(serviceId, tenantId);
+
+      tenant.ToString().Should().BeEquivalentTo(mockedHttpResponse);
+      core.ToString().Should().BeEquivalentTo(mockedHttpResponse);
+     }
   }
 }
