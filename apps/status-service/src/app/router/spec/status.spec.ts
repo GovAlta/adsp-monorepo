@@ -270,7 +270,7 @@ describe('Service router', () => {
         getConfiguration: getConfigurationMock,
       } as unknown as Request;
 
-      getConfigurationMock.mockReturnValueOnce(configurationMock);
+      getConfigurationMock.mockReturnValueOnce([]);
       await handler(reqMock, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.arrayContaining([

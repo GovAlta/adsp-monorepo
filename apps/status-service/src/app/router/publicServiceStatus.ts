@@ -33,11 +33,11 @@ export const getApplicationsByName =
       });
       res.json(
         applications.map((a) => {
-          const config = tenantConfig[a._id] as ApplicationEntity;
+          const config = tenantConfig ? (tenantConfig[a._id] as ApplicationEntity) : null;
           return {
             id: a._id,
-            name: config.name,
-            description: config.description,
+            name: config?.name || name,
+            description: config?.description || '',
             status: a?.status,
             lastUpdated: a?.statusTimestamp ? new Date(a.statusTimestamp) : null,
           };
