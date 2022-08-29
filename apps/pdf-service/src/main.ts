@@ -88,6 +88,7 @@ const initializeApp = async (): Promise<express.Application> => {
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
       values: [ServiceMetricsValueDefinition],
+      useLongConfigurationCacheTTL: true,
     },
     { logger }
   );

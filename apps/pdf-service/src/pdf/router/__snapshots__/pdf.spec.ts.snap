@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`pdf generatePdf can generate pdf 1`] = `
+Object {
+  "id": "job1",
+  "result": null,
+  "status": undefined,
+  "urn": "urn:ads:platform:pdf-service:v1:/jobs/job1",
+}
+`;
+
+exports[`pdf getGeneratedFile can get file 1`] = `
+Object {
+  "id": "job1",
+  "result": null,
+  "status": "completed",
+  "urn": "urn:ads:platform:pdf-service:v1:/jobs/job1",
+}
+`;
+
+exports[`pdf getTemplates can get templates 1`] = `
+Array [
+  Object {
+    "description": "This is a test.",
+    "id": "test",
+    "name": "Test template",
+    "template": "",
+  },
+]
+`;
