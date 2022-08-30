@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GoACallout } from '@abgov/react-components';
 import { GoACard } from '@abgov/react-components/experimental';
 import { Link } from 'react-router-dom';
@@ -11,27 +11,15 @@ import styled from 'styled-components';
 import CopyIcon from '@icons/copy-outline.svg';
 import { GoAButton as GoAButtonV2 } from '@abgov/react-components-new';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
-
-interface ExternalLinkProps {
-  link: string;
-  name: string;
-}
-
-const ExternalLink = ({ link, name }: ExternalLinkProps): JSX.Element => {
-  return (
-    <ExternalLinkWrapper>
-      <a href={link} rel="noopener noreferrer" target="_blank">
-        {name}
-      </a>
-    </ExternalLinkWrapper>
-  );
-};
+import { ExternalLink } from '@components/icons/ExternalLink';
 
 interface LinkCopyComponentProps {
   link: string;
 }
 
-const LinkCopyComponentWrapper = styled.div``;
+const LinkCopyComponentWrapper = styled.div`
+  padding-top: 0.5rem;
+`;
 
 const CopyLinkToolTipWrapper = styled.div`
   .checkmark-icon {
@@ -76,6 +64,20 @@ const CopyLinkToolTipWrapper = styled.div`
 const LinkCopyComponent = ({ link }: LinkCopyComponentProps): JSX.Element => {
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
+  useEffect(() => {
+    let tooltipTimer = null;
+    if (isCopied === true) {
+      tooltipTimer = setTimeout(() => {
+        setIsCopied(false);
+      }, 8 * 1000);
+    }
+    return () => {
+      if (tooltipTimer !== null) {
+        clearTimeout(tooltipTimer);
+      }
+    };
+  }, [isCopied]);
+
   return (
     <LinkCopyComponentWrapper>
       {isCopied && (
@@ -89,14 +91,14 @@ const LinkCopyComponent = ({ link }: LinkCopyComponentProps): JSX.Element => {
         </CopyLinkToolTipWrapper>
       )}
       <GoAButtonV2
-        type="tertiary"
+        type="secondary"
         leadingIcon="open"
         onClick={() => {
           navigator.clipboard.writeText(link);
           setIsCopied(true);
         }}
       >
-        Copy link
+        Copy login link
       </GoAButtonV2>
     </LinkCopyComponentWrapper>
   );
@@ -249,12 +251,12 @@ const Dashboard = (): JSX.Element => {
             <p>
               <ListWrapper>
                 <li>
-                  Share the login URL below and have your user <ExternalLink link={loginUrl} name="login" /> once to
+                  Share the login URL below and have your user <ExternalLink link={loginUrl} text="login" /> once to
                   create their account.
                 </li>
                 <li>
                   Add the 'tenant-admin' role to the user's assigned roles from{' '}
-                  <ExternalLink link={getKeycloakAdminPortalUsers()} name="here" />
+                  <ExternalLink link={getKeycloakAdminPortalUsers()} text="here" />
                   <br />
                   (Role Mapping › Client Roles › urn:ads:platform:tenant-service › Add selected)
                 </li>
@@ -338,13 +340,6 @@ const DashboardDiv = styled.div`
     }
   }
   margin-bottom: 2.5rem;
-`;
-
-const ExternalLinkWrapper = styled.div`
-  display: inline-block;
-  .goa-icon {
-    display: inline !important;
-  }
 `;
 
 const ListWrapper = styled.ul`
