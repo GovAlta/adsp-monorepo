@@ -8,7 +8,6 @@ namespace Adsp.Sdk.Configuration;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
 internal sealed class ConfigurationUpdateClient : IConfigurationUpdateClient, IAsyncDisposable
 {
-  private static readonly AdspId PushServiceId = AdspId.Parse("urn:ads:platform:push-service");
   private const string StreamId = "configuration-updates";
   private const string ConfigurationUpdatedEvent = "configuration-service:configuration-updated";
 
@@ -59,7 +58,7 @@ internal sealed class ConfigurationUpdateClient : IConfigurationUpdateClient, IA
   {
     var tenant = _realm != null ? await _tenantService.GetTenantByRealm(_realm) : null;
 
-    var pushServiceUrl = await _serviceDirectory.GetServiceUrl(PushServiceId);
+    var pushServiceUrl = await _serviceDirectory.GetServiceUrl(AdspPlatformServices.PushServiceId);
     var token = await _tokenProvider.GetAccessToken();
 
     var client = new SocketIO(
