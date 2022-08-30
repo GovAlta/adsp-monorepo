@@ -14,6 +14,8 @@ import { getConfigurationDefinitions, getConfigurations, ServiceId } from '@stor
 import { PageIndicator } from '@components/Indicator';
 import { ConfigurationExportType, Service } from '@store/configuration/model';
 import { DescriptionDiv, SelectedExports } from '../styled-components';
+import { GoACard } from '@abgov/react-components/experimental';
+import { ReactComponent as Close } from '@assets/icons/close.svg';
 
 export const ConfigurationExport: FunctionComponent = () => {
   const { coreConfigDefinitions, tenantConfigDefinitions } = useSelector((state: RootState) => state.configuration);
@@ -63,8 +65,44 @@ export const ConfigurationExport: FunctionComponent = () => {
     }
   }, [exportState]);
 
-  const DisplayButton = (text) => {
-    return <SelectedExports>{text}</SelectedExports>;
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const [pageHeight, setPageHeight] = useState(500);
+  const handleScroll = () => {
+    const position = window.pageYOffset;
+    const height = window.innerHeight;
+    setScrollPosition(position);
+    setPageHeight(height);
+  };
+
+  console.log(JSON.stringify(scrollPosition) + '<>scrollPosition');
+  console.log(JSON.stringify(pageHeight) + '<>pageHeight');
+  console.log(
+    JSON.stringify(Math.min(scrollPosition, pageHeight - 200)) + '<>Math.min(scrollPosition, pageHeight - 200)'
+  );
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  const DisplayButton = ({ text }) => {
+    return (
+      <SelectedExports>
+        {text}
+        <div className="closePadding">
+          <div
+            onClick={() => {
+              toggleSelection(text);
+            }}
+          >
+            <Close />
+          </div>
+        </div>
+      </SelectedExports>
+    );
   };
 
   return (
@@ -106,42 +144,56 @@ export const ConfigurationExport: FunctionComponent = () => {
             })}
           </div>
         </div>
-        <div style={{ flex: '1' }}>
-          Selected Configuration
-          <div>
-            {Object.keys(exportServices).map((exp) => {
-              console.log(JSON.stringify(exportServices[exp]) + '<exportServices[exp]');
-              console.log(JSON.stringify(exp) + '<exp');
-              return <DisplayButton text={exp} />;
-            })}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
-            <div style={{ flex: '1' }} className="export-button">
-              <GoAButton
-                data-testid="export-configuration-1"
-                buttonType="tertiary"
-                disabled={Object.keys(exportServices).length < 1 || indicator.show}
-                onClick={(e) => {
-                  unselectAll();
-                }}
-              >
-                {'Remove All'}
-              </GoAButton>
+        {Object.keys(exportServices).length > 0 && (
+          <div style={{ flex: '1' }}>
+            <div
+              style={{
+                position: 'absolute',
+                marginTop: `${Math.max(scrollPosition - 330, 0)}px`,
+              }}
+            >
+              <h3>Selected Configuration</h3>
+              <GoACard type="primary">
+                <div
+                  style={{
+                    overflow: 'auto',
+                    maxHeight: `calc(100vh - 608px + ${Math.max(Math.min(scrollPosition, pageHeight - 550), 0)}px`,
+                  }}
+                >
+                  {Object.keys(exportServices).map((exp) => {
+                    return <DisplayButton text={exp} />;
+                  })}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'row-reverse' }}>
+                  <div style={{ textAlignLast: 'end', margin: '5px 3px 0 3px' }} className="export-button">
+                    <GoAButton
+                      data-testid="export-configuration-1"
+                      disabled={Object.keys(exportServices).length < 1 || indicator.show}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
+                      }}
+                    >
+                      {'Export'}
+                    </GoAButton>
+                  </div>
+                  <div style={{ textAlignLast: 'end', margin: '5px 3px 0 3px' }} className="export-button">
+                    <GoAButton
+                      data-testid="export-configuration-1"
+                      buttonType="tertiary"
+                      disabled={Object.keys(exportServices).length < 1 || indicator.show}
+                      onClick={(e) => {
+                        unselectAll();
+                      }}
+                    >
+                      {'Remove All'}
+                    </GoAButton>
+                  </div>
+                </div>
+              </GoACard>
             </div>
-            <div style={{ flex: '1' }} className="export-button">
-              <GoAButton
-                data-testid="export-configuration-1"
-                disabled={Object.keys(exportServices).length < 1 || indicator.show}
-                onClick={(e) => {
-                  e.preventDefault();
-                  dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
-                }}
-              >
-                {'Export'}
-              </GoAButton>
-            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
