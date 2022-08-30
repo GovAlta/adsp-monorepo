@@ -86,6 +86,35 @@ export const SelectedExports = styled.div`
   }
 `;
 
+export const Exports = styled.div`
+  .flex-row {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .flex-reverse-row {
+    display: flex;
+    flex-direction: row-reverse;
+  }
+
+  .flex-one {
+    flex: 1;
+  }
+
+  .button-style {
+    text-align-last: end;
+    margin: 5px 3px 0 3px;
+  }
+
+  .auto-overflow {
+    overflow: auto;
+  }
+
+  .absolute-position {
+    position: absolute;
+  }
+`;
+
 export const FileTableStyles = styled.div`
   .flex-horizontal {
     display: flex;

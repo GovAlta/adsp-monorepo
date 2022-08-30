@@ -13,7 +13,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getConfigurationDefinitions, getConfigurations, ServiceId } from '@store/configuration/action';
 import { PageIndicator } from '@components/Indicator';
 import { ConfigurationExportType, Service } from '@store/configuration/model';
-import { DescriptionDiv, SelectedExports } from '../styled-components';
+import { DescriptionDiv, SelectedExports, Exports } from '../styled-components';
 import { GoACard } from '@abgov/react-components/experimental';
 import { ReactComponent as Close } from '@assets/icons/close.svg';
 
@@ -74,12 +74,6 @@ export const ConfigurationExport: FunctionComponent = () => {
     setPageHeight(height);
   };
 
-  console.log(JSON.stringify(scrollPosition) + '<>scrollPosition');
-  console.log(JSON.stringify(pageHeight) + '<>pageHeight');
-  console.log(
-    JSON.stringify(Math.min(scrollPosition, pageHeight - 200)) + '<>Math.min(scrollPosition, pageHeight - 200)'
-  );
-
   useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
 
@@ -106,7 +100,7 @@ export const ConfigurationExport: FunctionComponent = () => {
   };
 
   return (
-    <div>
+    <Exports>
       <h2>Export</h2>
       <p>
         As a tenant admin, you can export the configuration to JSON, so that you could save, and potentially import them
@@ -114,8 +108,8 @@ export const ConfigurationExport: FunctionComponent = () => {
       </p>
       {indicator.show && <PageIndicator />}
       <h2 className="header-background">Export configuration list</h2>
-      <div style={{ display: 'flex', flexDirection: 'row' }}>
-        <div style={{ flex: '1' }}>
+      <div className="flex-row">
+        <div className="flex-one">
           <div className="main">
             {Object.keys(sortedConfiguration.namespaces).map((namespace) => {
               return (
@@ -145,18 +139,18 @@ export const ConfigurationExport: FunctionComponent = () => {
           </div>
         </div>
         {Object.keys(exportServices).length > 0 && (
-          <div style={{ flex: '1' }}>
+          <div className="flex-one">
             <div
+              className="absolute-position"
               style={{
-                position: 'absolute',
                 marginTop: `${Math.max(scrollPosition - 330, 0)}px`,
               }}
             >
               <h3>Selected Configuration</h3>
               <GoACard type="primary">
                 <div
+                  className="auto-overflow"
                   style={{
-                    overflow: 'auto',
                     maxHeight: `calc(100vh - 608px + ${Math.max(Math.min(scrollPosition, pageHeight - 550), 0)}px`,
                   }}
                 >
@@ -164,8 +158,8 @@ export const ConfigurationExport: FunctionComponent = () => {
                     return <DisplayButton text={exp} />;
                   })}
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'row-reverse' }}>
-                  <div style={{ textAlignLast: 'end', margin: '5px 3px 0 3px' }} className="export-button">
+                <div className="flex-reverse-row">
+                  <div className="button-style">
                     <GoAButton
                       data-testid="export-configuration-1"
                       disabled={Object.keys(exportServices).length < 1 || indicator.show}
@@ -177,7 +171,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                       {'Export'}
                     </GoAButton>
                   </div>
-                  <div style={{ textAlignLast: 'end', margin: '5px 3px 0 3px' }} className="export-button">
+                  <div className="button-style">
                     <GoAButton
                       data-testid="export-configuration-1"
                       buttonType="tertiary"
@@ -195,7 +189,7 @@ export const ConfigurationExport: FunctionComponent = () => {
           </div>
         )}
       </div>
-    </div>
+    </Exports>
   );
 };
 
