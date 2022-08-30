@@ -84,7 +84,7 @@ public class ConfigurationUpdateClientTests
       .ReturnsAsync(new Uri("https://tenant-service/tenants/v2"));
 
     tokenProvider.Setup((t) => t.GetAccessToken()).ReturnsAsync("token");
-    ConfigurationUpdateClient service = null;
+    ConfigurationUpdateClient? service = null;
     try
     {
       service = new ConfigurationUpdateClient(logger, serviceDirectory.Object, tokenProvider.Object, ConfigurationService, tenantService, options.Object,
@@ -153,7 +153,7 @@ public class ConfigurationUpdateClientTests
 
     tokenProvider.Setup((t) => t.GetAccessToken()).ReturnsAsync("token");
 
-    ConfigurationUpdateClient service = null;
+    ConfigurationUpdateClient? service = null;
     try
     {
       service = new ConfigurationUpdateClient(logger, serviceDirectory.Object, tokenProvider.Object, ConfigurationService, tenantService, options.Object, client.Object);
