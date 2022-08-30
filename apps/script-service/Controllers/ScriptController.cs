@@ -1,4 +1,3 @@
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using Adsp.Platform.ScriptService.Events;
 using Adsp.Platform.ScriptService.Model;
@@ -7,6 +6,7 @@ using Adsp.Sdk;
 using Adsp.Sdk.Errors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
 
 namespace Adsp.Platform.ScriptService.Controller;
 
@@ -15,6 +15,8 @@ namespace Adsp.Platform.ScriptService.Controller;
 [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
 public class ScriptController : ControllerBase
 {
+  private const int TOKEN_INDEX = 7;
+
   private readonly ILogger<ScriptController> _logger;
   private readonly ILuaScriptService _luaService;
   private readonly IEventService _evenService;
@@ -57,7 +59,7 @@ public class ScriptController : ControllerBase
 
   [HttpPost]
   [Route("scripts/{script?}")]
-  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant, Roles = ServiceRoles.ScriptRunner)]
+  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
   public async Task<IEnumerable<object>> RunScript(string? script, [FromBody] RunScriptRequest request)
   {
     if (String.IsNullOrWhiteSpace(script))
@@ -70,38 +72,23 @@ public class ScriptController : ControllerBase
       throw new RequestArgumentException("request body cannot be null");
     }
 
-    var user = HttpContext.GetAdspUser();
-
     var definitions = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, Dictionary<string, ScriptDefinition>>();
     if (definitions?.TryGetValue(script, out ScriptDefinition? definition) != true || definition == null)
     {
       throw new NotFoundException($"Script definition with ID '{script}' not found.");
     }
 
-    var luaInputs = request.Inputs.ToDictionary(
-      (input) => input.Key,
-      (input) =>
-      {
-        object? converted = null;
-        switch (input.Value.ValueKind)
-        {
-          case JsonValueKind.String:
-            converted = input.Value.GetString();
-            break;
-          case JsonValueKind.Number:
-            converted = input.Value.GetDecimal();
-            break;
-          case JsonValueKind.True:
-          case JsonValueKind.False:
-            converted = input.Value.GetBoolean();
-            break;
-        };
+    var user = HttpContext.GetAdspUser();
+    if (!definition.IsAllowedUser(user))
+    {
+      throw new NotAllowedRunnerException(user);
+    }
 
-        return converted;
-      }
-    );
+    var luaInputs = request.Inputs ?? new Dictionary<string, object?>();
 
-    var outputs = await _luaService.RunScript(definition, luaInputs);
+    var authorization = HttpContext.Request.Headers[HeaderNames.Authorization].First();
+    var outputs = await _luaService.RunScript(definition, luaInputs, authorization?[TOKEN_INDEX..]);
+
     var eventPayload = new ScriptExecuted { Definition = definition, ExecutedBy = user };
     if (definition.IncludeValuesInEvent == true)
     {

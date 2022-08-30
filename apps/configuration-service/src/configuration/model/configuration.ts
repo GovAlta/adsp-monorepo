@@ -156,7 +156,7 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
       throw new UnauthorizedUserError('modify configuration', user);
     }
 
-    this.active = await (await this.activeRevisionRepository.setActiveRevision(this, active)).active;
+    this.active = (await this.activeRevisionRepository.setActiveRevision(this, active)).active;
 
     return this;
   }

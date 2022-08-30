@@ -30,7 +30,7 @@ internal static class AccessExtensions
       accessIdentity.AddClaim(new Claim(AdspClaimTypes.Core, "true", ClaimValueTypes.Boolean));
     }
 
-    var realmAccessClaim = context.Principal?.Claims.FirstOrDefault(claim => claim.Type == "realm_access");
+    var realmAccessClaim = context.Principal!.Claims.FirstOrDefault(claim => claim.Type == "realm_access");
     if (realmAccessClaim != null)
     {
       var access = JsonSerializer.Deserialize<AccessClaimRoles>(
@@ -45,7 +45,7 @@ internal static class AccessExtensions
       }
     }
 
-    var resourceAccessClaim = context.Principal?.Claims.FirstOrDefault(claim => claim.Type == "resource_access");
+    var resourceAccessClaim = context.Principal!.Claims.FirstOrDefault(claim => claim.Type == "resource_access");
     if (resourceAccessClaim != null)
     {
       var clientsRoles = JsonSerializer.Deserialize<Dictionary<string, AccessClaimRoles>>(
@@ -73,7 +73,7 @@ internal static class AccessExtensions
       }
     }
 
-    context.Principal?.AddIdentity(accessIdentity);
+    context.Principal!.AddIdentity(accessIdentity);
 
     context.HttpContext.Items.Add(
       AccessConstants.AdspContextKey,
@@ -82,7 +82,8 @@ internal static class AccessExtensions
         tenant,
         subClaim.Value,
         usernameClaim?.Value,
-        emailClaim?.Value
+        emailClaim?.Value,
+        context.Principal!
       )
     );
 

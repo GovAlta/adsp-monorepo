@@ -29,6 +29,10 @@ export class PdfTemplateEntity implements PdfTemplate {
 
   generate(context: unknown): Promise<Buffer> {
     const content = this.evaluateTemplate(context);
-    return this.pdfService.generatePdf(content);
+    return this.pdfService.generatePdf({
+      content,
+      footer: this.footer,
+      header: this.header,
+    });
   }
 }
