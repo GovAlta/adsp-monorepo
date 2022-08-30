@@ -14,7 +14,7 @@ import Footer from '@components/Footer';
 interface privateAppProps {
   children: ReactNode;
 }
-export function PrivateApp({ children }: privateAppProps): JSX.Element {
+export const PrivateApp: React.FC<privateAppProps> = ({ children }: privateAppProps): JSX.Element => {
   const [title, setTitle] = useState<string>('Alberta Digital Service Platform - Subscription management');
   const dispatch = useDispatch();
   const realm = useParams()['realm'];
@@ -34,7 +34,7 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
       <Footer logoSrc={GoaLogo} />
     </HeaderCtx.Provider>
   );
-}
+};
 
 const PageLoader = (): JSX.Element => {
   return <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />;

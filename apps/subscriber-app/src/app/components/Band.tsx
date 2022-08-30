@@ -7,7 +7,7 @@ interface BandProps {
   title?: string;
   children?: ReactNode;
 }
-export function Band({ title, children }: BandProps): JSX.Element {
+export const Band: React.FC<BandProps> = ({ title, children }: BandProps): JSX.Element => {
   return (
     <div
       style={{
@@ -29,7 +29,7 @@ export function Band({ title, children }: BandProps): JSX.Element {
       </HeroBannerLayout>
     </div>
   );
-}
+};
 
 const HeroBannerLayout = styled.div`
   .goa-hero {
