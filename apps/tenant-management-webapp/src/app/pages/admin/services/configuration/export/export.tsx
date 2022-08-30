@@ -151,7 +151,10 @@ export const ConfigurationExport: FunctionComponent = () => {
                 <div
                   className="auto-overflow"
                   style={{
-                    maxHeight: `calc(100vh - 608px + ${Math.max(Math.min(scrollPosition, pageHeight - 550), 0)}px`,
+                    maxHeight: `calc(100vh - 608px + ${Math.max(
+                      Math.min(scrollPosition, Math.max(pageHeight - 550, 300)),
+                      0
+                    )}px`,
                   }}
                 >
                   {Object.keys(exportServices).map((exp) => {
