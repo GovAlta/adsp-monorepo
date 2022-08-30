@@ -32,12 +32,12 @@ Then(
 );
 
 Then('the user views the timestamp of {string} being updated', function (appName) {
-  const localTimeString = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
   statusAppObj
     .applicationStatusUpdatedTimestamp(appName)
     .invoke('text')
     .then((text) => {
-      expect(text).to.contain(localTimeString);
+      expect(text).to.contain('Today');
+      expect(text).to.match(/[0-9]{1,2}:[0-9]{2} [A|P]M/);
     });
 });
 
@@ -46,7 +46,6 @@ Then('the user views the status of {string} being the first unused status', func
     .applicationStatus(appName.trim())
     .invoke('text')
     .then((text) => {
-      // expect(text.toLowerCase()).to.equal(newStatus.toLowerCase());
       cy.task('getNewAppStatus').then((appStatus) => {
         expect(text.toLowerCase()).to.equal(appStatus);
       });
