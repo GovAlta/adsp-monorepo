@@ -73,32 +73,45 @@ export const ErrorStatusText = styled.div`
   margin-top: 1rem;
 `;
 
-export const ScrollPane = styled.div`
-  border: 1px solid black;
-  border-radius: 4px;
+export const SelectedExports = styled.div`
+  border: 1px solid #666666;
+  border-radius: 20px;
+  padding: 4px 6.25px;
+  font-size: 16px;
+  margin: 8px;
 
-  .header-background {
-    background: #f1f1f1;
-    color: #000000;
-    padding: 5px 10px;
-    font-weight: 700;
-    margin-bottom: 0;
+  .closePadding {
+    padding: 2px;
+    float: right;
+  }
+`;
+
+export const Exports = styled.div`
+  .flex-row {
+    display: flex;
+    flex-direction: row;
   }
 
-  .main {
-    padding: 10px;
-    max-height: calc(100vh - 525px);
-    overflow-y: scroll;
+  .flex-reverse-row {
+    display: flex;
+    flex-direction: row-reverse;
   }
 
-  .export-button {
-    padding: 10px;
+  .flex-one {
+    flex: 1;
+  }
+
+  .button-style {
     text-align-last: end;
+    margin: 5px 3px 0 3px;
   }
 
-  h3 {
-    font-size: 18px;
-    font-weight: bold;
+  .auto-overflow {
+    overflow: auto;
+  }
+
+  .absolute-position {
+    position: absolute;
   }
 `;
 
