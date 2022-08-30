@@ -91,14 +91,14 @@ const LinkCopyComponent = ({ link }: LinkCopyComponentProps): JSX.Element => {
         </CopyLinkToolTipWrapper>
       )}
       <GoAButtonV2
-        type="tertiary"
+        type="secondary"
         leadingIcon="open"
         onClick={() => {
           navigator.clipboard.writeText(link);
           setIsCopied(true);
         }}
       >
-        Copy link
+        Copy login link
       </GoAButtonV2>
     </LinkCopyComponentWrapper>
   );
