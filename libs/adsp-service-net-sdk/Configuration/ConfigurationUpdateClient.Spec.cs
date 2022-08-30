@@ -85,14 +85,19 @@ public class ConfigurationUpdateClientTests
 
     tokenProvider.Setup((t) => t.GetAccessToken()).ReturnsAsync("token");
     ConfigurationUpdateClient service = null;
-    try {
-      service =  new ConfigurationUpdateClient(logger, serviceDirectory.Object, tokenProvider.Object, ConfigurationService, tenantService, options.Object, client.Object);
-      
+    try
+    {
+      service = new ConfigurationUpdateClient(logger, serviceDirectory.Object, tokenProvider.Object, ConfigurationService, tenantService, options.Object,
+      client.Object);
+
       var connection = service.Connect();
       client.Verify((d) => d.ConnectAsync(), Times.Exactly(1));
       client.Verify((d) => d.On("configuration-service:configuration-updated", It.IsAny<Action<SocketIOResponse>>()), Times.Exactly(1));
-    } finally {
-       var connection2 = service.DisposeAsync();
+    }
+
+    finally
+    {
+      var connection2 = service.DisposeAsync();
     }
   }
 
@@ -149,10 +154,13 @@ public class ConfigurationUpdateClientTests
     tokenProvider.Setup((t) => t.GetAccessToken()).ReturnsAsync("token");
 
     ConfigurationUpdateClient service = null;
-    try {
-      service =  new ConfigurationUpdateClient(logger, serviceDirectory.Object, tokenProvider.Object, ConfigurationService, tenantService, options.Object, client.Object);
+    try
+    {
+      service = new ConfigurationUpdateClient(logger, serviceDirectory.Object, tokenProvider.Object, ConfigurationService, tenantService, options.Object, client.Object);
       var connection = service.Connect();
-    } finally {
+    }
+    finally
+    {
       var connection2 = service.DisposeAsync();
       client.Verify((d) => d.DisconnectAsync(), Times.Exactly(1));
     }
