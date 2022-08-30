@@ -1,14 +1,11 @@
 using System.Net;
 using Adsp.Sdk.Registration;
 using FluentAssertions;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Primitives;
 using Moq;
 using RestSharp;
 using RichardSzalay.MockHttp;
-using RichardSzalay.MockHttp.Matchers;
 using Xunit;
 
 

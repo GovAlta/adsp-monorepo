@@ -1,19 +1,9 @@
-
-using System.Net.Http.Headers;
-using System.Security.Claims;
-using System.Security.Principal;
 using System.Text;
-using Adsp.Sdk.Access;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Extensions;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Primitives;
 using Moq;
-using RestSharp;
-using RichardSzalay.MockHttp.Matchers;
 using Xunit;
 
 namespace Adsp.Sdk.Metadata;
