@@ -16,15 +16,16 @@ const ExternalLinkWrapper = styled.div`
     top: 3px;
     right: 2px;
     color: #0070c4;
+    margin-left: 4px;
   }
 `;
 export const ExternalLink = ({ text, testId, link }: ExternalLinkProps): JSX.Element => {
   return (
     <ExternalLinkWrapper data-testid={`${testId}`}>
-      <GoAIcon type="open" />
       <a href={link} rel="noopener noreferrer" target="_blank">
         {text}
       </a>
+      <GoAIcon type="open" />
     </ExternalLinkWrapper>
   );
 };
