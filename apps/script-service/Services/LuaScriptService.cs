@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Adsp.Platform.ScriptService.Model;
+using Adsp.Sdk;
 using Adsp.Sdk.Errors;
 using NLua;
 using NLua.Exceptions;
@@ -11,36 +12,44 @@ namespace Adsp.Platform.ScriptService.Services;
 internal class LuaScriptService : ILuaScriptService
 {
   private readonly ILogger<LuaScriptService> _logger;
-  public LuaScriptService(ILogger<LuaScriptService> logger)
+  private readonly IServiceDirectory _directory;
+
+  public LuaScriptService(ILogger<LuaScriptService> logger, IServiceDirectory directory)
   {
     _logger = logger;
+    _directory = directory;
   }
 
-  public async Task<IEnumerable<object>> RunScript(ScriptDefinition definition, IDictionary<string, object?> inputs)
+  public async Task<IEnumerable<object>> RunScript(ScriptDefinition definition, IDictionary<string, object?> inputs, string? token)
   {
-    try
+    return await Task.Run(() =>
     {
-      using var lua = new Lua();
-      lua.State.Encoding = Encoding.UTF8;
-      lua["script"] = definition.Script;
-      lua["inputs"] = inputs;
+      try
+      {
+        using var lua = new Lua();
+        lua.State.Encoding = Encoding.UTF8;
+        lua.RegisterFunctions(new ScriptFunctions(_directory, token));
 
-      return lua.DoString(@"
-        import = function () end
+        lua["script"] = definition.Script;
+        lua["inputs"] = inputs;
 
-        local sandbox = require 'scripts/sandbox'
-        return sandbox.run(script, { env = { inputs = inputs } })
-      ");
-    }
-    catch (LuaScriptException e)
-    {
-      _logger.LogError(e, "Lua error encountered running script {Id}.", definition.Id);
-      throw new ScriptRunException(e.Message, e);
-    }
-    catch (Exception e)
-    {
-      _logger.LogError(e, "Unrecognized error encountered running script {Id}.", definition.Id);
-      throw new InternalErrorException("Unrecognized error encountered running script.", e);
-    }
+        return lua.DoString(@"
+          import = function () end
+
+          local sandbox = require 'scripts/sandbox'
+          return sandbox.run(script, { env = { inputs = inputs, adsp = adsp } })
+        ");
+      }
+      catch (LuaScriptException e)
+      {
+        _logger.LogError(e, "Lua error encountered running script {Id}.", definition.Id);
+        throw new ScriptRunException(e.Message, e);
+      }
+      catch (Exception e)
+      {
+        _logger.LogError(e, "Unrecognized error encountered running script {Id}.", definition.Id);
+        throw new InternalErrorException("Unrecognized error encountered running script.", e);
+      }
+    });
   }
 }
