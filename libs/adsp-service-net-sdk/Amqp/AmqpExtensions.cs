@@ -1,7 +1,10 @@
+using System.Text;
+using System.Text.Json;
 using Adsp.Sdk.Events;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using RabbitMQ.Client;
 
 namespace Adsp.Sdk.Amqp;
 public static class AmqpExtensions
@@ -76,5 +79,31 @@ public static class AmqpExtensions
           ) == null
         )
       );
+  }
+
+  internal static T? GetHeaderValueOrDefault<T>(this IBasicProperties properties, string key, JsonSerializerOptions options)
+  {
+    T? result = default;
+    if (properties?.Headers.TryGetValue(key, out object? raw) == true)
+    {
+      if (raw is T typedValue)
+      {
+        result = typedValue;
+      }
+      else if (raw is byte[] bytes)
+      {
+        var stringValue = Encoding.UTF8.GetString(bytes);
+        if (typeof(T) == typeof(string))
+        {
+          result = (T)(object)stringValue;
+        }
+        else
+        {
+          result = (T?)JsonSerializer.Deserialize(stringValue, typeof(T), options);
+        }
+      }
+    }
+
+    return result;
   }
 }

@@ -48,7 +48,8 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
       DispatchConsumersAsync = true,
       HostName = options.Value.Hostname,
       UserName = options.Value.Username,
-      Password = options.Value.Password
+      Password = options.Value.Password,
+      VirtualHost = options.Value.Vhost,
     };
   }
 
@@ -123,17 +124,15 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
     var channel = ((IBasicConsumer)sender).Model;
     try
     {
-      var headers = new Dictionary<string, object>(args.BasicProperties.Headers);
-      headers.TryGetValue("correlationId", out object? correlationId);
-
-      var payload = ConvertMessage(headers, args.Body);
+      var payload = ConvertMessage(new Dictionary<string, object>(args.BasicProperties.Headers), args.Body);
       var received = new FullDomainEvent<TPayload>(
-        AdspId.Parse((string)headers["tenantId"]),
-        (string)headers["namespace"],
-        (string)headers["name"],
-        DateTime.Parse((string)headers["timestamp"], CultureInfo.InvariantCulture),
+        AdspId.Parse(args.BasicProperties.GetHeaderValueOrDefault<string>("tenantId", _serializerOptions)),
+        args.BasicProperties.GetHeaderValueOrDefault<string>("namespace", _serializerOptions)!,
+        args.BasicProperties.GetHeaderValueOrDefault<string>("name", _serializerOptions)!,
+        DateTime.Parse(args.BasicProperties.GetHeaderValueOrDefault<string>("timestamp", _serializerOptions)!, CultureInfo.InvariantCulture),
         payload,
-        correlationId as string
+        args.BasicProperties.GetHeaderValueOrDefault<string>("correlationId", _serializerOptions),
+        args.BasicProperties.GetHeaderValueOrDefault<IDictionary<string, object>>("context", _serializerOptions)
       );
 
       _logger.LogDebug("Signalling domain event {Namespace}:{Name} with delivery tag {Tag}...", received.Namespace, received.Name, args.DeliveryTag);
@@ -143,10 +142,10 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
       channel.BasicAck(args.DeliveryTag, false);
       _logger.LogInformation("Processed domain event {Namespace}:{Name} with delivery tag {Tag}.", received.Namespace, received.Name, args.DeliveryTag);
     }
-    catch (Exception)
+    catch (Exception e)
     {
       channel.BasicNack(args.DeliveryTag, false, !args.Redelivered);
-      _logger.LogWarning("Failed processing domain event with delivery tag {Tag} and requeue: {Requeue}.", args.DeliveryTag, !args.Redelivered);
+      _logger.LogWarning(e, "Failed processing domain event with delivery tag {Tag} and requeue: {Requeue}.", args.DeliveryTag, !args.Redelivered);
     }
   }
 
