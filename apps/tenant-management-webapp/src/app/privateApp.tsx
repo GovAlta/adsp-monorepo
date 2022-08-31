@@ -14,7 +14,7 @@ import { LogoutModal } from '@components/LogoutModal';
 interface privateAppProps {
   children: ReactNode;
 }
-export const PrivateApp: React.FC<privateAppProps> = ({ children }: privateAppProps): JSX.Element => {
+export function PrivateApp({ children }: privateAppProps): JSX.Element {
   const [title, setTitle] = useState<string>('');
   const dispatch = useDispatch();
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
@@ -58,19 +58,19 @@ export const PrivateApp: React.FC<privateAppProps> = ({ children }: privateAppPr
       </ScrollBarFixMain>
     </HeaderCtx.Provider>
   );
-};
+}
 
 const PageLoader = (): JSX.Element => {
   return <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />;
 };
 
 // eslint-disable-next-line
-export const PrivateRoute = ({ component: Component, ...rest }): JSX.Element => {
+export function PrivateRoute({ component: Component, ...rest }): JSX.Element {
   const userInfo = useSelector((state: RootState) => state.session?.userInfo);
   const ready = !!userInfo;
 
   return <Route {...rest} render={(props) => (ready ? <Component {...props} /> : <PageLoader />)} />;
-};
+}
 
 export default PrivateApp;
 

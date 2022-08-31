@@ -17,7 +17,7 @@ interface TabsProps {
   changeTabCallback?: (index: number) => void;
 }
 
-const Tabs: React.FC<TabsProps> = (props: TabsProps): JSX.Element => {
+function Tabs(props: TabsProps): JSX.Element {
   const [activeTabIndex, setActiveTabIndex] = useState(props.activeIndex ?? 0);
 
   function selectTab(index: number) {
@@ -53,17 +53,15 @@ const Tabs: React.FC<TabsProps> = (props: TabsProps): JSX.Element => {
       }
     </>
   );
-};
+}
 
 interface TabProps {
   label: ReactNode;
 }
-interface ChildrenProps {
-  children: ReactNode;
-}
-const Tab: React.FC<TabProps & ChildrenProps> = (props: TabProps & ChildrenProps): JSX.Element => {
+
+function Tab(props: TabProps & { children: ReactNode }): JSX.Element {
   return <TabContent>{props.children}</TabContent>;
-};
+}
 
 export { Tabs, Tab };
 
@@ -76,7 +74,7 @@ interface TabItemProps {
   active?: boolean;
 }
 
-const TabItem: React.FC<TabItemProps & ChildrenProps> = (props: TabItemProps & ChildrenProps) => {
+function TabItem(props: TabItemProps & { children: ReactNode }) {
   function selectTab() {
     props.onSelect();
   }
@@ -85,7 +83,7 @@ const TabItem: React.FC<TabItemProps & ChildrenProps> = (props: TabItemProps & C
       {props.children}
     </SCTab>
   );
-};
+}
 
 // *****************
 // Styled Components

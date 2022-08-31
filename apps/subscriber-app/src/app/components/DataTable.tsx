@@ -1,17 +1,14 @@
-import React, { ReactNode } from 'react';
+import React from 'react';
 import styled from 'styled-components';
-interface DateTableProps {
-  children?: ReactNode;
-  id?: string;
-}
+
 // eslint-disable-next-line
-const DataTable: React.FC<DateTableProps> = (props: DateTableProps): JSX.Element => {
+function DataTable({ children, ...props }): JSX.Element {
   return (
     <ScrollWrapper>
-      <Table {...props}>{props.children}</Table>
+      <Table {...props}>{children}</Table>
     </ScrollWrapper>
   );
-};
+}
 
 export default DataTable;
 

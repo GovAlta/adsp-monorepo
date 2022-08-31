@@ -11,7 +11,7 @@ import { useSelector } from 'react-redux';
 interface publicAppProps {
   children: ReactNode;
 }
-export const PublicApp: React.FC<publicAppProps> = ({ children }: publicAppProps): JSX.Element => {
+export function PublicApp({ children }: publicAppProps): JSX.Element {
   const recaptchaKey = useSelector((state: RootState) => state.config?.recaptchaKey);
 
   return (
@@ -23,7 +23,7 @@ export const PublicApp: React.FC<publicAppProps> = ({ children }: publicAppProps
       {recaptchaKey && <Recaptcha siteKey={recaptchaKey} />}
     </PublicCss>
   );
-};
+}
 
 export default PublicApp;
 

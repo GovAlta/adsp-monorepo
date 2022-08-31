@@ -6,7 +6,7 @@ import styled from 'styled-components';
 interface publicAppProps {
   children: ReactNode;
 }
-export const PublicApp: React.FC<publicAppProps> = ({ children }: publicAppProps): JSX.Element => {
+export function PublicApp({ children }: publicAppProps): JSX.Element {
   return (
     <PublicCss>
       <GoAHeader serviceHome="/" serviceLevel="beta" serviceName="" />
@@ -16,7 +16,7 @@ export const PublicApp: React.FC<publicAppProps> = ({ children }: publicAppProps
       </Container>
     </PublicCss>
   );
-};
+}
 
 export default PublicApp;
 

@@ -1,23 +1,18 @@
-import React, { ReactNode } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 
-interface DateTableProps {
-  children?: ReactNode;
-  noScroll?: boolean;
-  id?: string;
-}
 // eslint-disable-next-line
-const DataTable: React.FC<DateTableProps> = (props: DateTableProps): JSX.Element => {
+function DataTable({ children, ...props }): JSX.Element {
   if (props?.noScroll === true) {
-    return <Table {...props}>{props.children}</Table>;
+    return <Table {...props}>{children}</Table>;
   }
 
   return (
     <ScrollWrapper>
-      <Table {...props}>{props.children}</Table>
+      <Table {...props}>{children}</Table>
     </ScrollWrapper>
   );
-};
+}
 
 export default DataTable;
 
