@@ -22,6 +22,20 @@ public static class SocketExtensions
     return AddSocketSubscriber<TPayload, TSubscriber>(services, streamId, null);
   }
 
+  /// <summary>
+  /// Registers services needed to subscribe for events via the push service over socket.io. Note that this does not handle stream events with mapping / projection.
+  /// </summary>
+  /// <typeparam name="TSubscriber"></typeparam>
+  /// <typeparam name="TSubscriber">Type of the subscriber that handles event payload as a dictionary.</typeparam>
+  /// <param name="services">Service collection.</param>
+  /// <param name="streamId">ID of the push service stream to connect to.</param>
+  /// <returns>Service collection.</returns>
+  public static IServiceCollection AddSocketSubscriber<TSubscriber>(this IServiceCollection services, string streamId)
+    where TSubscriber : class, IEventSubscriber<IDictionary<string, object?>>
+  {
+    return AddSocketSubscriber<IDictionary<string, object?>, TSubscriber>(services, streamId);
+  }
+
   internal static IServiceCollection AddSocketSubscriber<TPayload, TSubscriber>(this IServiceCollection services, string streamId, Func<IServiceProvider, bool>? checkEnabled = null)
     where TPayload : class
     where TSubscriber : class, IEventSubscriber<TPayload>
