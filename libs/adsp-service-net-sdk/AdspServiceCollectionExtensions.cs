@@ -1,7 +1,7 @@
 using Adsp.Sdk.Access;
 using Adsp.Sdk.Configuration;
 using Adsp.Sdk.Directory;
-using Adsp.Sdk.Event;
+using Adsp.Sdk.Events;
 using Adsp.Sdk.Registration;
 using Adsp.Sdk.Tenancy;
 using Microsoft.AspNetCore.Authentication;
@@ -31,17 +31,19 @@ public static class AdspServiceCollectionExtensions
     return services;
   }
 
+  /// <summary>
+  /// Registers services needed to initialize ADSP platform service.
+  /// </summary>
+  /// <param name="services">Service collection.</param>
+  /// <param name="configureOptions">Configure options action.</param>
+  /// <param name="configureAuthentication">Configure authentication action.</param>
+  /// <returns>Service collection.</returns>
   public static IServiceCollection AddAdspForService(
     this IServiceCollection services,
     Action<AdspOptions>? configureOptions = null,
     Action<AuthenticationBuilder>? configureAuthentication = null
   )
   {
-    if (services == null)
-    {
-      throw new ArgumentNullException(nameof(services));
-    }
-
     services.AddAdspSdkServices(configureOptions);
 
     var providers = services.BuildServiceProvider();
@@ -57,17 +59,19 @@ public static class AdspServiceCollectionExtensions
     return services;
   }
 
+  /// <summary>
+  /// Registers services needed to initialize ADSP tenant service.
+  /// </summary>
+  /// <param name="services">Service collection.</param>
+  /// <param name="configureOptions">Configure options action.</param>
+  /// <param name="configureAuthentication">Configure authentication action.</param>
+  /// <returns>Service collection.</returns>
   public static IServiceCollection AddAdspForPlatformService(
     this IServiceCollection services,
     Action<AdspOptions>? configureOptions = null,
     Action<AuthenticationBuilder>? configureAuthentication = null
   )
   {
-    if (services == null)
-    {
-      throw new ArgumentNullException(nameof(services));
-    }
-
     services.AddAdspSdkServices(configureOptions);
 
     var providers = services.BuildServiceProvider();
