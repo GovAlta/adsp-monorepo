@@ -94,6 +94,7 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
     channel.QueueDeclare(
       $"undelivered-{_queueName}",
       autoDelete: false,
+      exclusive: false,
       arguments: new Dictionary<string, object> { { "x-queue-type", "quorum" } }
     );
     channel.QueueBind($"undelivered-{_queueName}", $"{_queueName}-dead-letter", "#");
@@ -101,6 +102,7 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
     channel.QueueDeclare(
       _queueName,
       autoDelete: false,
+      exclusive: false,
       arguments: new Dictionary<string, object> {
         { "x-queue-type", "quorum" },
         { "x-dead-letter-exchange", $"{_queueName}-dead-letter" }
