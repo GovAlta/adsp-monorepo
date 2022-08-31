@@ -72,8 +72,8 @@ public class ScriptController : ControllerBase
       throw new RequestArgumentException("request body cannot be null");
     }
 
-    var definitions = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, Dictionary<string, ScriptDefinition>>();
-    if (definitions?.TryGetValue(script, out ScriptDefinition? definition) != true || definition == null)
+    var configuration = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, ScriptConfiguration>();
+    if (configuration?.Definitions.TryGetValue(script, out ScriptDefinition? definition) != true || definition == null)
     {
       throw new NotFoundException($"Script definition with ID '{script}' not found.");
     }
@@ -87,7 +87,7 @@ public class ScriptController : ControllerBase
     var luaInputs = request.Inputs ?? new Dictionary<string, object?>();
 
     var authorization = HttpContext.Request.Headers[HeaderNames.Authorization].First();
-    var outputs = await _luaService.RunScript(definition, luaInputs, authorization?[TOKEN_INDEX..]);
+    var outputs = await _luaService.RunScript(user!.Tenant!.Id!, definition, luaInputs, authorization?[TOKEN_INDEX..]);
 
     var eventPayload = new ScriptExecuted { Definition = definition, ExecutedBy = user };
     if (definition.IncludeValuesInEvent == true)
@@ -101,7 +101,8 @@ public class ScriptController : ControllerBase
         ScriptExecuted.EventName,
         DateTime.Now,
         eventPayload,
-        request.CorrelationId
+        request.CorrelationId,
+        new Dictionary<string, object> { { "definitionId", script } }
       ),
       user!.Tenant!.Id
     );

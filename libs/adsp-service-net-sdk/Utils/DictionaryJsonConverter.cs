@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Adsp.Platform.ScriptService.Services.Util;
-internal class DictionaryJsonConverter : JsonConverter<IDictionary<string, object?>>
+namespace Adsp.Sdk.Util;
+public class DictionaryJsonConverter : JsonConverter<IDictionary<string, object?>>
 {
   private static readonly Type DictionaryType = typeof(IDictionary<string, object?>);
 
@@ -52,6 +52,6 @@ internal class DictionaryJsonConverter : JsonConverter<IDictionary<string, objec
 
   public override void Write(Utf8JsonWriter writer, IDictionary<string, object?> value, JsonSerializerOptions options)
   {
-    throw new NotImplementedException();
+    JsonSerializer.Serialize(writer, value, DictionaryType, options);
   }
 }

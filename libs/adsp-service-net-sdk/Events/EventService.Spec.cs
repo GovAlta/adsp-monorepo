@@ -9,7 +9,7 @@ using RichardSzalay.MockHttp;
 using Xunit;
 
 
-namespace Adsp.Sdk.Event;
+namespace Adsp.Sdk.Events;
 
 public class EventServiceTests
 {

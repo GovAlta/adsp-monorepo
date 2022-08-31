@@ -7,12 +7,14 @@ using RestSharp;
 namespace Adsp.Platform.ScriptService.Services;
 internal class ScriptFunctions
 {
+  private readonly AdspId _tenantId;
   private readonly IServiceDirectory _directory;
   private readonly string? _token;
   private readonly RestClient _client;
 
-  public ScriptFunctions(IServiceDirectory directory, string? token, RestClient? client = null)
+  public ScriptFunctions(AdspId tenantId, IServiceDirectory directory, string? token, RestClient? client = null)
   {
+    _tenantId = tenantId;
     _directory = directory;
     _token = token;
     _client = client ?? new RestClient();
@@ -24,6 +26,7 @@ internal class ScriptFunctions
     var requestUrl = new Uri(servicesUrl, "/pdf/v1/jobs");
 
     var request = new RestRequest(requestUrl, Method.Post);
+    request.AddQueryParameter("tenantId", _tenantId.ToString());
     request.AddHeader("Authorization", $"Bearer {_token}");
 
     var generationRequest = new PdfGenerationRequest
@@ -46,6 +49,7 @@ internal class ScriptFunctions
 
     var request = new RestRequest(requestUrl, Method.Get);
     request.AddQueryParameter("orLatest", "true");
+    request.AddQueryParameter("tenantId", _tenantId.ToString());
     request.AddHeader("Authorization", $"Bearer {_token}");
 
     var result = _client.GetAsync<ConfigurationResult>(request).Result;
