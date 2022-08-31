@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
-using Adsp.Platform.ScriptService.Services.Util;
+using Adsp.Sdk.Util;
 
 namespace Adsp.Platform.ScriptService.Controller;
 
