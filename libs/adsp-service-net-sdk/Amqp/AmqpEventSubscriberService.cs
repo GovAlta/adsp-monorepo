@@ -45,6 +45,7 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
 
     _connectionFactory = new ConnectionFactory
     {
+      DispatchConsumersAsync = true,
       HostName = options.Value.Hostname,
       UserName = options.Value.Username,
       Password = options.Value.Password
