@@ -1,11 +1,18 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import { TemplateEditorContainer, EditTemplateActions, MonacoDivBody } from './styled-components';
+import {
+  TemplateEditorContainerPdf,
+  EditTemplateActions,
+  MonacoDivBody,
+  MonacoDivHeader,
+  MonacoDivFooter,
+} from './styled-components';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
 import { PdfTemplate } from '@store/pdf/model';
 import { languages } from 'monaco-editor';
 import { buildSuggestions } from '@lib/autoComplete';
 import { GoAButton } from '@abgov/react-components';
+import { Tab, Tabs } from '@components/Tabs';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -13,7 +20,9 @@ interface TemplateEditorProps {
   subjectTitle: string;
   subjectEditorConfig?: EditorProps;
   onBodyChange: (value: string) => void;
-  setPreview: () => void;
+  onHeaderChange: (value: string) => void;
+  onFooterChange: (value: string) => void;
+  setPreview: (channel: string) => void;
   bodyEditorHintText: string;
   template: PdfTemplate;
   bodyTitle: string;
@@ -30,6 +39,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   subjectTitle,
   subjectEditorConfig,
   onBodyChange,
+  onHeaderChange,
+  onFooterChange,
   setPreview,
   bodyEditorHintText,
   template,
@@ -59,33 +70,93 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [monaco, suggestion]);
 
+  const [activeIndex, setActiveIndex] = useState(0);
+
   useEffect(() => {
-    setPreview();
+    setPreview('main');
+    onHeaderChange(template?.header);
+    onFooterChange(template?.footer);
   }, [template, modelOpen]);
 
+  const switchTabPreview = (value) => {
+    console.log(JSON.stringify(value) + '<vvvvalue');
+    onHeaderChange(template?.header);
+    onFooterChange(template?.footer);
+    setPreview(value);
+  };
+
+  useEffect(() => {
+    if (modelOpen) {
+      setActiveIndex(0);
+    } else {
+      setActiveIndex(-1);
+    }
+  }, [modelOpen]);
+
+  const channels = ['main', 'footer/header'];
+
   return (
-    <TemplateEditorContainer>
+    <TemplateEditorContainerPdf>
       <GoAForm>
         <GoAFormItem>
-          <h3 className="reduce-margin" data-testid="modal-title">
-            {`${template?.name}`}
-            <p>{`${mainTitle} template`}</p>
-          </h3>
+          <Tabs activeIndex={activeIndex} changeTabCallback={(index: number) => switchTabPreview(channels[index])}>
+            <Tab label="Main">
+              <h3 className="reduce-margin" data-testid="modal-title">
+                {`${template?.name}`}
+                <p>{`${mainTitle} template`}</p>
+              </h3>
 
-          <>
-            <GoAFormItem error={errors?.body ?? ''} helpText={bodyEditorHintText}>
-              <MonacoDivBody>
-                <MonacoEditor
-                  language={'handlebars'}
-                  value={template?.template}
-                  onChange={(value) => {
-                    onBodyChange(value);
-                  }}
-                  {...bodyEditorConfig}
-                />
-              </MonacoDivBody>
-            </GoAFormItem>
-          </>
+              <>
+                <GoAFormItem error={errors?.body ?? ''} helpText={bodyEditorHintText}>
+                  <MonacoDivBody>
+                    <MonacoEditor
+                      language={'handlebars'}
+                      value={template?.template}
+                      onChange={(value) => {
+                        onBodyChange(value);
+                      }}
+                      {...bodyEditorConfig}
+                    />
+                  </MonacoDivBody>
+                </GoAFormItem>
+              </>
+            </Tab>
+            <Tab label="Header/Footer">
+              <h3 className="reduce-margin" data-testid="modal-title">
+                {`${template?.name}`}
+                <p>{`${mainTitle} template`}</p>
+              </h3>
+
+              <>
+                <GoAFormItem error={errors?.body ?? ''}>
+                  <MonacoDivHeader>
+                    <MonacoEditor
+                      language={'handlebars'}
+                      value={template?.header}
+                      onChange={(value) => {
+                        onHeaderChange(value);
+                      }}
+                      {...bodyEditorConfig}
+                    />
+                  </MonacoDivHeader>
+                </GoAFormItem>
+              </>
+              <>
+                <GoAFormItem error={errors?.body ?? ''} helpText={bodyEditorHintText}>
+                  <MonacoDivFooter>
+                    <MonacoEditor
+                      language={'handlebars'}
+                      value={template?.footer}
+                      onChange={(value) => {
+                        onFooterChange(value);
+                      }}
+                      {...bodyEditorConfig}
+                    />
+                  </MonacoDivFooter>
+                </GoAFormItem>
+              </>
+            </Tab>
+          </Tabs>
         </GoAFormItem>
         <EditTemplateActions>
           {' '}
@@ -109,6 +180,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           </GoAButton>
         </EditTemplateActions>
       </GoAForm>
-    </TemplateEditorContainer>
+    </TemplateEditorContainerPdf>
   );
 };
