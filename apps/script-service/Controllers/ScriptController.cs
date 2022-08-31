@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using Adsp.Platform.ScriptService.Events;
 using Adsp.Platform.ScriptService.Model;
 using Adsp.Platform.ScriptService.Services;
 using Adsp.Sdk;
@@ -19,13 +18,11 @@ public class ScriptController : ControllerBase
 
   private readonly ILogger<ScriptController> _logger;
   private readonly ILuaScriptService _luaService;
-  private readonly IEventService _evenService;
 
-  public ScriptController(ILogger<ScriptController> logger, ILuaScriptService luaService, IEventService eventService)
+  public ScriptController(ILogger<ScriptController> logger, ILuaScriptService luaService)
   {
     _logger = logger;
     _luaService = luaService;
-    _evenService = eventService;
   }
 
   [HttpGet]
@@ -86,25 +83,9 @@ public class ScriptController : ControllerBase
 
     var luaInputs = request.Inputs ?? new Dictionary<string, object?>();
 
-    var authorization = HttpContext.Request.Headers[HeaderNames.Authorization].First();
-    var outputs = await _luaService.RunScript(user!.Tenant!.Id!, definition, luaInputs, authorization?[TOKEN_INDEX..]);
-
-    var eventPayload = new ScriptExecuted { Definition = definition, ExecutedBy = user };
-    if (definition.IncludeValuesInEvent == true)
-    {
-      eventPayload.Inputs = luaInputs;
-      eventPayload.Outputs = outputs;
-    }
-
-    await _evenService.Send(
-      new DomainEvent<ScriptExecuted>(
-        ScriptExecuted.EventName,
-        DateTime.Now,
-        eventPayload,
-        request.CorrelationId,
-        new Dictionary<string, object> { { "definitionId", script } }
-      ),
-      user!.Tenant!.Id
+    string authorization = HttpContext.Request.Headers[HeaderNames.Authorization].First();
+    var outputs = await _luaService.RunScript(
+      user!.Tenant!.Id!, definition, luaInputs, authorization[TOKEN_INDEX..], request.CorrelationId, user
     );
 
     return outputs;

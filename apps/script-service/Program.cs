@@ -49,10 +49,14 @@ internal class Program
             InTenantAdmin = true
           }
         };
-        options.Events = new[] {
+        options.Events = new DomainEventDefinition[] {
           new DomainEventDefinition<ScriptExecuted>(
             ScriptExecuted.EventName,
             "Signalled when a script is executed."
+          ),
+          new DomainEventDefinition<ScriptExecutionFailed>(
+            ScriptExecutionFailed.EventName,
+            "Signalled when a script execution fails."
           )
         };
         options.EnableConfigurationInvalidation = true;

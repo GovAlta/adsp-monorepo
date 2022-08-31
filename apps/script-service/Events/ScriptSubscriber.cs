@@ -8,12 +8,14 @@ using Microsoft.Extensions.Options;
 namespace Adsp.Platform.ScriptService.Events;
 internal class ScriptSubscriber : IEventSubscriber<IDictionary<string, object?>>
 {
+  private readonly ILogger<ScriptSubscriber> _logger;
   private readonly AdspId _serviceId;
   private readonly IConfigurationService _configurationService;
   private readonly ITokenProvider _tokenProvider;
   private readonly ILuaScriptService _scriptService;
 
   public ScriptSubscriber(
+    ILogger<ScriptSubscriber> logger,
     IConfigurationService configurationService,
     ITokenProvider tokenProvider,
     ILuaScriptService scriptService,
@@ -25,6 +27,7 @@ internal class ScriptSubscriber : IEventSubscriber<IDictionary<string, object?>>
       throw new ArgumentException("Provide options must include value for ServiceId.");
     }
 
+    _logger = logger;
     _serviceId = adspOptions.Value.ServiceId;
     _configurationService = configurationService;
     _tokenProvider = tokenProvider;
@@ -33,6 +36,8 @@ internal class ScriptSubscriber : IEventSubscriber<IDictionary<string, object?>>
 
   public async Task OnEvent(FullDomainEvent<IDictionary<string, object?>> received)
   {
+    _logger.LogDebug("Processing event {Namespace}:{Name}...", received.Namespace, received.Name);
+
     var configuration = await _configurationService.GetConfiguration<IDictionary<string, ScriptDefinition>, ScriptConfiguration>(
       _serviceId, received.TenantId
     );
@@ -42,8 +47,21 @@ internal class ScriptSubscriber : IEventSubscriber<IDictionary<string, object?>>
       value.Item1.IsMatch(received)
     )
     {
+
+      var definition = value.Item2;
+      _logger.LogDebug(
+        "Found triggered script definition {DefinitionId} for event {Namespace}:{Name}...",
+        definition.Id, received.Namespace, received.Name
+      );
+
+      var inputs = received.Payload ?? new Dictionary<string, object?>();
       var token = await _tokenProvider.GetAccessToken();
-      await _scriptService.RunScript(received.TenantId!, value.Item2, received.Payload ?? new Dictionary<string, object?>(), token);
+      await _scriptService.RunScript(received.TenantId!, definition, inputs, token, received.CorrelationId);
+
+      _logger.LogInformation(
+        "Triggered and completed execution of script definition {DefinitionId} for event {Namespace}:{Name}.",
+        definition.Id, received.Namespace, received.Name
+      );
     }
   }
 }

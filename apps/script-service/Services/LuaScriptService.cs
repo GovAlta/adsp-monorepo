@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using Adsp.Platform.ScriptService.Events;
 using Adsp.Platform.ScriptService.Model;
 using Adsp.Sdk;
 using Adsp.Sdk.Errors;
@@ -13,43 +14,88 @@ internal class LuaScriptService : ILuaScriptService
 {
   private readonly ILogger<LuaScriptService> _logger;
   private readonly IServiceDirectory _directory;
+  private readonly IEventService _eventService;
 
-  public LuaScriptService(ILogger<LuaScriptService> logger, IServiceDirectory directory)
+  public LuaScriptService(ILogger<LuaScriptService> logger, IServiceDirectory directory, IEventService eventService)
   {
     _logger = logger;
     _directory = directory;
+    _eventService = eventService;
   }
 
-  public async Task<IEnumerable<object>> RunScript(AdspId tenantId, ScriptDefinition definition, IDictionary<string, object?> inputs, string? token)
+  public async Task<IEnumerable<object>> RunScript(
+    AdspId tenantId,
+    ScriptDefinition definition,
+    IDictionary<string, object?> inputs,
+    string token,
+    string? correlationId = null,
+    UserIdentifier? user = null
+  )
   {
-    return await Task.Run(() =>
+    _logger.LogDebug("Running script definition {Id} for tenant {TenantId}...", definition.Id, tenantId);
+
+    try
     {
-      try
-      {
-        using var lua = new Lua();
-        lua.State.Encoding = Encoding.UTF8;
-        lua.RegisterFunctions(new ScriptFunctions(tenantId, _directory, token));
+      using var lua = new Lua();
+      lua.State.Encoding = Encoding.UTF8;
+      lua.RegisterFunctions(new ScriptFunctions(tenantId, _directory, token));
 
-        lua["script"] = definition.Script;
-        lua["inputs"] = inputs;
+      lua["script"] = definition.Script;
+      lua["inputs"] = inputs;
 
-        return lua.DoString(@"
-          import = function () end
+      var outputs = lua.DoString(@"
+        import = function () end
 
-          local sandbox = require 'scripts/sandbox'
-          return sandbox.run(script, { env = { inputs = inputs, adsp = adsp } })
-        ");
-      }
-      catch (LuaScriptException e)
+        local sandbox = require 'scripts/sandbox'
+        return sandbox.run(script, { env = { inputs = inputs, adsp = adsp } })
+      ");
+
+      var eventPayload = new ScriptExecuted { Definition = definition, ExecutedBy = user };
+      if (definition.IncludeValuesInEvent == true)
       {
-        _logger.LogError(e, "Lua error encountered running script {Id}.", definition.Id);
-        throw new ScriptRunException(e.Message, e);
+        eventPayload.Inputs = inputs;
+        eventPayload.Outputs = outputs;
       }
-      catch (Exception e)
+
+      await _eventService.Send(
+        new DomainEvent<ScriptExecuted>(
+          ScriptExecuted.EventName,
+          DateTime.Now,
+          eventPayload,
+          correlationId,
+          new Dictionary<string, object> { { "definitionId", definition.Id! } }
+        ),
+        tenantId
+      );
+
+      return outputs;
+    }
+    catch (LuaScriptException e)
+    {
+      _logger.LogError(e, "Lua error encountered running script {Id}.", definition.Id);
+
+      var eventPayload = new ScriptExecutionFailed { Definition = definition, Error = e.Message, ExecutedBy = user };
+      if (definition.IncludeValuesInEvent == true)
       {
-        _logger.LogError(e, "Unrecognized error encountered running script {Id}.", definition.Id);
-        throw new InternalErrorException("Unrecognized error encountered running script.", e);
+        eventPayload.Inputs = inputs;
       }
-    });
+
+      await _eventService.Send(new DomainEvent<ScriptExecutionFailed>(
+          ScriptExecutionFailed.EventName,
+          DateTime.Now,
+          eventPayload,
+          correlationId,
+          new Dictionary<string, object> { { "definitionId", definition.Id! } }
+        ),
+        tenantId
+      );
+
+      throw new ScriptRunException(e.Message, e);
+    }
+    catch (Exception e)
+    {
+      _logger.LogError(e, "Unrecognized error encountered running script {Id}.", definition.Id);
+      throw new InternalErrorException("Unrecognized error encountered running script.", e);
+    }
   }
 }
