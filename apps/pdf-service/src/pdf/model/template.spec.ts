@@ -23,7 +23,11 @@ describe('PdfTemplateEntity', () => {
 
   it('can generate', async () => {
     const template = jest.fn(() => 'evaluated');
-    templateServiceMock.getTemplateFunction.mockReturnValueOnce(template);
+    templateServiceMock.getTemplateFunction
+      .mockReturnValueOnce(template)
+      .mockReturnValueOnce(template)
+      .mockReturnValueOnce(template);
+
     const entity = new PdfTemplateEntity(templateServiceMock, pdfServiceMock, {
       tenantId,
       id: 'test-template',
@@ -39,8 +43,8 @@ describe('PdfTemplateEntity', () => {
     expect(template).toHaveBeenCalledWith(context);
     expect(pdfServiceMock.generatePdf).toHaveBeenCalledWith({
       content: 'evaluated',
-      footer: undefined,
-      header: undefined,
+      footer: 'evaluated',
+      header: 'evaluated',
     });
     expect(result).toBe(stream);
   });

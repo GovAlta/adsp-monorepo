@@ -22,8 +22,8 @@ handlebars.registerHelper('formatDate', function (value: unknown, { hash = {} }:
 });
 
 class HandlebarsTemplateService implements TemplateService {
-  getTemplateFunction(template: string) {
-    const styledTemplate = getTemplateBody(template, 'pdf', {});
+  getTemplateFunction(template: string, channel?: string) {
+    const styledTemplate = getTemplateBody(template, channel || 'pdf', {});
     return handlebars.compile(styledTemplate);
   }
 }
