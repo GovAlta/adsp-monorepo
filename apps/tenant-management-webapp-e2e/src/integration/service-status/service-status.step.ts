@@ -2,14 +2,9 @@ import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import commonlib from '../common/common-library';
 import common from '../common/common.page';
 import ServiceStatusPage from './service-status.page';
-import TenantAdminPage from '../tenant-admin/tenant-admin.page';
 
 const commonObj = new common();
 const statusObj = new ServiceStatusPage();
-const tenantAdminObj = new TenantAdminPage();
-
-let originalStatus;
-let newStatus;
 
 Given('a tenant admin user is on status overview page', function () {
   commonlib.tenantAdminDirectURLLogin(
@@ -544,8 +539,10 @@ Then('the user views current status for {string}', function (appName) {
     .applicationCardStatusBadge(appName)
     .invoke('text')
     .then((statusValue) => {
-      originalStatus = statusValue;
-      cy.log('Current Status: ' + originalStatus);
+      cy.task('setOriginalAppStatus', statusValue.toLowerCase());
+      cy.task('getOriginalAppStatus').then((appStatus) => {
+        cy.log('Current Status: ' + appStatus);
+      });
     });
 });
 
@@ -563,8 +560,10 @@ Then('the user changes status to the first unused status', function () {
       statusObj.manualStatusChangeModalRadioBtns().each(($item) => {
         if ($item.val() != checkedStatus) {
           $item.trigger('click');
-          newStatus = $item.val();
-          cy.log('New Status: ' + newStatus);
+          cy.task('setNewAppStatus', $item.val());
+          cy.task('getNewAppStatus').then((appStatus) => {
+            cy.log('New Status: ' + appStatus);
+          });
           return false;
         }
       });
@@ -583,60 +582,14 @@ Then('the user views the status of {string} changed to the first unused status',
     .then((statusValue) => {
       cy.log('Badge Status: ' + statusValue);
       const badgeValue = String(statusValue.toLowerCase());
-      expect(badgeValue).to.equal(newStatus);
-      expect(badgeValue).not.to.equal(originalStatus.toLowerCase());
+      cy.task('getNewAppStatus').then((appStatus) => {
+        expect(badgeValue).to.equal(appStatus);
+      });
+      cy.task('getOriginalAppStatus').then((appStatus) => {
+        expect(badgeValue).not.to.equal(appStatus);
+      });
     });
 });
-
-Then(
-  'the user views the event details of {string} application status changed from {string} to {string} for subscriber of {string}',
-  function (appName, orgStatus, newStatusInput, email) {
-    let isFound = false;
-    let orgStatusValidationString;
-    let newStatusValidationString;
-
-    if (orgStatus != '{original status}') {
-      orgStatusValidationString = orgStatus;
-    } else {
-      orgStatusValidationString = originalStatus.toLowerCase();
-    }
-    if (newStatusInput != '{new status}') {
-      newStatusValidationString = newStatusInput;
-    } else {
-      newStatusValidationString = newStatus.toLowerCase();
-    }
-
-    tenantAdminObj.eventToggleDetailsIcons().each(($element, $index, $full_array) => {
-      //clicking each eye-icon in the list to verify event details
-      cy.wrap($element).scrollIntoView().click({ force: true });
-      tenantAdminObj
-        .eventDetails()
-        .invoke('text')
-        .then((eventDetails) => {
-          // Check if event log details contains expected info
-          if (
-            eventDetails.includes('to": "' + email) &&
-            eventDetails.includes(appName + ' status changed to') &&
-            eventDetails.includes(
-              'from <b>' + orgStatusValidationString + '</b> to <b>' + newStatusValidationString + '</b>'
-            )
-          ) {
-            isFound = true;
-            cy.wrap($element).click({ force: true });
-          } else {
-            //clicking eye icon to close event details
-            cy.wrap($element).scrollIntoView().click({ force: true });
-          }
-          if (isFound == false && $index + 1 == $full_array.length) {
-            expect($index + 1).to.not.eq(
-              $full_array.length,
-              'No matching email found throughout list of event details'
-            );
-          }
-        });
-    });
-  }
-);
 
 When('the user clicks Edit button for contact information', function () {
   statusObj.contactInformationEditBtn().click();
