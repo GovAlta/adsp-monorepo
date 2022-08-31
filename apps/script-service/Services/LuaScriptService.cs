@@ -20,7 +20,7 @@ internal class LuaScriptService : ILuaScriptService
     _directory = directory;
   }
 
-  public async Task<IEnumerable<object>> RunScript(ScriptDefinition definition, IDictionary<string, object?> inputs, string? token)
+  public async Task<IEnumerable<object>> RunScript(AdspId tenantId, ScriptDefinition definition, IDictionary<string, object?> inputs, string? token)
   {
     return await Task.Run(() =>
     {
@@ -28,7 +28,7 @@ internal class LuaScriptService : ILuaScriptService
       {
         using var lua = new Lua();
         lua.State.Encoding = Encoding.UTF8;
-        lua.RegisterFunctions(new ScriptFunctions(_directory, token));
+        lua.RegisterFunctions(new ScriptFunctions(tenantId, _directory, token));
 
         lua["script"] = definition.Script;
         lua["inputs"] = inputs;
