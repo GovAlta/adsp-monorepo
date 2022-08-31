@@ -18,7 +18,8 @@ interface LinkCopyComponentProps {
 }
 
 const LinkCopyComponentWrapper = styled.div`
-  padding-top: 0.5rem;
+  position: relative;
+  padding-top: 1.5rem;
 `;
 
 const CopyLinkToolTipWrapper = styled.div`
@@ -34,23 +35,28 @@ const CopyLinkToolTipWrapper = styled.div`
     top: 0.3rem;
     left: 2rem;
   }
+  .URL-tooltip {
+    width: 30rem !important;
+    left: -5.5rem;
+    font-size: 10px;
+  }
   p {
-    position: relative;
+    position: absolute;
     background: var(--color-gray-100);
     -webkit-border-radius: 10px;
     -moz-border-radius: 10px;
     border-radius: 30px;
     width: 12rem;
     height: 2.2rem;
-    top: 0.2rem;
-    left: 3rem;
+    top: -1.5rem;
+    left: 1rem;
   }
 
   p:before {
     content: '';
     position: absolute;
     top: 2rem;
-    left: 20px;
+    left: 6rem;
     z-index: 1;
     border: solid 15px transparent;
     border-right-color: var(--color-gray-100);
@@ -63,6 +69,7 @@ const CopyLinkToolTipWrapper = styled.div`
 
 const LinkCopyComponent = ({ link }: LinkCopyComponentProps): JSX.Element => {
   const [isCopied, setIsCopied] = useState<boolean>(false);
+  const [isShowURL, setIsShowURL] = useState<boolean>(false);
 
   useEffect(() => {
     let tooltipTimer = null;
@@ -79,7 +86,14 @@ const LinkCopyComponent = ({ link }: LinkCopyComponentProps): JSX.Element => {
   }, [isCopied]);
 
   return (
-    <LinkCopyComponentWrapper>
+    <LinkCopyComponentWrapper
+      onMouseEnter={() => {
+        setIsShowURL(true);
+      }}
+      onMouseLeave={() => {
+        setIsShowURL(false);
+      }}
+    >
       {isCopied && (
         <CopyLinkToolTipWrapper>
           <p>
@@ -90,9 +104,17 @@ const LinkCopyComponent = ({ link }: LinkCopyComponentProps): JSX.Element => {
           </p>
         </CopyLinkToolTipWrapper>
       )}
+
+      {!isCopied && isShowURL && (
+        <CopyLinkToolTipWrapper>
+          <p className="URL-tooltip">
+            <div className="message">{link}</div>
+          </p>
+        </CopyLinkToolTipWrapper>
+      )}
       <GoAButtonV2
         type="secondary"
-        leadingIcon="open"
+        leadingIcon="link"
         onClick={() => {
           navigator.clipboard.writeText(link);
           setIsCopied(true);
