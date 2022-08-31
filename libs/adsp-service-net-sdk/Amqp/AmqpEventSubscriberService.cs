@@ -93,12 +93,14 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
     channel.ExchangeDeclare($"{_queueName}-dead-letter", "topic");
     channel.QueueDeclare(
       $"undelivered-{_queueName}",
+      autoDelete: false,
       arguments: new Dictionary<string, object> { { "x-queue-type", "quorum" } }
     );
     channel.QueueBind($"undelivered-{_queueName}", $"{_queueName}-dead-letter", "#");
 
     channel.QueueDeclare(
       _queueName,
+      autoDelete: false,
       arguments: new Dictionary<string, object> {
         { "x-queue-type", "quorum" },
         { "x-dead-letter-exchange", $"{_queueName}-dead-letter" }
