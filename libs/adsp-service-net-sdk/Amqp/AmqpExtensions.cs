@@ -10,7 +10,7 @@ public static class AmqpExtensions
   /// Registers services needed to receive events by AMQP.
   /// </summary>
   /// <typeparam name="TPayload">Type of the payload.</typeparam>
-  /// <typeparam name="TSubscriber"><Type of the subscriber./typeparam>
+  /// <typeparam name="TSubscriber">Type of the subscriber.</typeparam>
   /// <param name="services">Service collection.</param>
   /// <param name="queueName">Name of the queue to declare.</param>
   /// <returns>Service collection</returns>
@@ -34,6 +34,19 @@ public static class AmqpExtensions
     );
     services.TryAddSubscriberServices();
     return services;
+  }
+
+  /// <summary>
+  /// Registers services needed to receive events by AMQP.
+  /// </summary>
+  /// <typeparam name="TSubscriber">Type of the subscriber that handles event payload as a dictionary.</typeparam>
+  /// <param name="services">Service collection.</param>
+  /// <param name="queueName">Name of the queue to declare.</param>
+  /// <returns>Service collection</returns>
+  public static IServiceCollection AddQueueSubscriber<TSubscriber>(this IServiceCollection services, string queueName)
+    where TSubscriber : class, IEventSubscriber<IDictionary<string, object?>>
+  {
+    return AddQueueSubscriber<IDictionary<string, object?>, TSubscriber>(services, queueName);
   }
 
   /// <summary>

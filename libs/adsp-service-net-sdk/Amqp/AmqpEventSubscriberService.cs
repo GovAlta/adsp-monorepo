@@ -68,7 +68,7 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
     consumer.Received += HandleEvent;
 
     _channel.BasicConsume(_queueName, false, consumer);
-    _logger.LogInformation("Connected to {Hostname} for domain events.", _connectionFactory.HostName);
+    _logger.LogInformation("Connected to {Hostname} on queue {Queue} for domain events.", _connectionFactory.HostName, _queueName);
   }
 
   public void Disconnect()
@@ -85,7 +85,7 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
     {
       connection.Dispose();
     }
-    _logger.LogInformation("Disconnected from {Hostname}.", _connectionFactory.HostName);
+    _logger.LogInformation("Disconnected from {Hostname} and queue {Queue}.", _connectionFactory.HostName, _queueName);
   }
 
   protected void DeclareQueueConfiguration(IModel channel)

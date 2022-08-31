@@ -1,9 +1,12 @@
 
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 using Adsp.Sdk.Events;
+using Adsp.Sdk.Util;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SocketIOClient;
+using SocketIOClient.JsonSerializer;
 
 namespace Adsp.Sdk.Socket;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
@@ -99,21 +102,33 @@ internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISub
         ExtraHeaders = new Dictionary<string, string> { { "Authorization", $"Bearer {token}" } }
       }
     );
+
+    if (client.JsonSerializer is SystemTextJsonSerializer jsonSerializer)
+    {
+      // Set the dictionary converter for the default case where payload is just generically deserialized.
+      jsonSerializer.OptionsProvider = () =>
+      {
+        var options = new JsonSerializerOptions();
+        options.Converters.Add(new DictionaryJsonConverter());
+        return options;
+      };
+    }
+
     client.OnConnected += (_s, _e) =>
     {
-      _logger.LogInformation("Connected to stream for events at: {Url}", pushServiceUrl);
+      _logger.LogInformation("Connected to stream {StreamId} for events at: {Url}", _streamId, pushServiceUrl);
     };
     client.OnDisconnected += (_s, _e) =>
     {
-      _logger.LogInformation("Disconnected from stream.");
+      _logger.LogInformation("Disconnected from stream {StreamId}.", _streamId);
     };
     client.OnError += (_s, e) =>
     {
-      _logger.LogError("Error encountered in stream. {Msg}", e);
+      _logger.LogError("Error encountered in stream {StreamId}. {Msg}", _streamId, e);
     };
     client.OnAny((name, response) =>
     {
-      _logger.LogDebug("Received event {Name} from stream.", name);
+      _logger.LogDebug("Received event {Name} from stream {StreamId}.", name, _streamId);
 
       var received = response.GetValue<FullDomainEvent<TPayload>>();
       if (received.TenantId == null && tenant != null)
