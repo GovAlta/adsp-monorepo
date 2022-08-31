@@ -1,36 +1,39 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
+using Adsp.Sdk.Util;
+
 namespace Adsp.Sdk;
+
+[SuppressMessage("Usage", "CA2227: Collection properties should be read only", Justification = "Data transfer object")]
 public class DomainEvent<TPayload> where TPayload : class
 {
-  private readonly string _name;
-  private readonly DateTime _timestamp;
-  private readonly string? _correlationId;
-  private readonly TPayload _payload;
+  [JsonPropertyName("name")]
+  public string Name { get; set; } = "";
 
-  public string Name
+  [JsonPropertyName("timestamp")]
+  public DateTime Timestamp { get; set; }
+
+  [JsonPropertyName("correlationId")]
+  public string? CorrelationId { get; set; }
+
+  [JsonPropertyName("context")]
+  [JsonConverter(typeof(DictionaryJsonConverter))]
+  public IDictionary<string, object>? Context { get; set; }
+
+  [JsonPropertyName("payload")]
+  public TPayload? Payload { get; set; }
+
+  [JsonConstructor]
+  public DomainEvent()
   {
-    get { return _name; }
   }
 
-  public DateTime Timestamp
+  public DomainEvent(string name, DateTime timestamp, TPayload? payload, string? correlationId = null, IDictionary<string, object>? context = null)
   {
-    get { return _timestamp; }
-  }
-
-  public string? CorrelationId
-  {
-    get { return _correlationId; }
-  }
-
-  public TPayload Payload
-  {
-    get { return _payload; }
-  }
-
-  public DomainEvent(string name, DateTime timestamp, TPayload payload, string? correlationId = null)
-  {
-    _name = name;
-    _timestamp = timestamp;
-    _correlationId = correlationId;
-    _payload = payload;
+    Name = name;
+    Timestamp = timestamp;
+    CorrelationId = correlationId;
+    Payload = payload;
+    Context = context;
   }
 }

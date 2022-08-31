@@ -33,7 +33,7 @@ public abstract class ConfigurationDefinition
 
 public class ConfigurationDefinition<TConfiguration> : ConfigurationDefinition where TConfiguration : class
 {
-  public ConfigurationDefinition(string description, Func<object?, object?, TConfiguration?>? combineConfiguration = null) :
+  public ConfigurationDefinition(string description, Func<object?, object?, object?>? combineConfiguration = null) :
     base(description, JsonSchema.FromType<TConfiguration>(SchemaSettings), combineConfiguration)
   {
   }
