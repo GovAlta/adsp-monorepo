@@ -90,7 +90,7 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
 
   protected void DeclareQueueConfiguration(IModel channel)
   {
-    channel.ExchangeDeclare($"{_queueName}-dead-letter", "topic");
+    channel.ExchangeDeclare($"{_queueName}-dead-letter", "topic", durable: true, autoDelete: false);
     channel.QueueDeclare(
       $"undelivered-{_queueName}",
       autoDelete: false,
@@ -111,7 +111,7 @@ internal class AmqpEventSubscriberService<TPayload, TSubscriber> : ISubscriberSe
       }
     );
 
-    channel.ExchangeDeclare("domain-events", "topic");
+    channel.ExchangeDeclare("domain-events", "topic", durable: true, autoDelete: false);
     channel.QueueBind(_queueName, "domain-events", "#");
   }
 
