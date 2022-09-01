@@ -63,7 +63,7 @@ internal class ScriptSubscriber : IEventSubscriber<IDictionary<string, object?>>
         token,
         received.CorrelationId,
         null,
-        new EventIdentity(received.Name, received.Name)
+        new EventIdentity(received.Namespace, received.Name)
       );
 
       _logger.LogInformation(
