@@ -65,6 +65,10 @@ app.use(express.json({ limit: '1mb' }));
         },
       ],
       configurationSchema,
+      combineConfiguration: (tenant: Record<string, unknown>, core: Record<string, unknown>) => ({
+        ...core,
+        ...tenant,
+      }),
       events: [
         HealthCheckStartedDefinition,
         HealthCheckStoppedDefinition,
