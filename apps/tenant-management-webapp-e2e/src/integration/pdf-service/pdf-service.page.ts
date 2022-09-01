@@ -1,2 +1,2 @@
-class PdfServicePage {}
-export default PdfServicePage;
+class PDFServicePage {}
+export default PDFServicePage;
