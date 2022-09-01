@@ -90,7 +90,7 @@ internal class ConfigurationService : IConfigurationService, IDisposable
       }
       request.AddHeader("Authorization", $"Bearer {token}");
       configuration = await _client.GetAsync<T>(request);
-      request.AddHeader("Authorization", $"Bearer {token}");
+
       if (configuration != null)
       {
         if (tenantId != null)
