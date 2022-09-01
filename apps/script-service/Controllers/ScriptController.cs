@@ -17,11 +17,13 @@ public class ScriptController : ControllerBase
   private const int TOKEN_INDEX = 7;
 
   private readonly ILogger<ScriptController> _logger;
+  private readonly ITokenProvider _tokenProvider;
   private readonly ILuaScriptService _luaService;
 
-  public ScriptController(ILogger<ScriptController> logger, ILuaScriptService luaService)
+  public ScriptController(ILogger<ScriptController> logger, ITokenProvider tokenProvider, ILuaScriptService luaService)
   {
     _logger = logger;
+    _tokenProvider = tokenProvider;
     _luaService = luaService;
   }
 
@@ -83,9 +85,12 @@ public class ScriptController : ControllerBase
 
     var luaInputs = request.Inputs ?? new Dictionary<string, object?>();
 
-    string authorization = HttpContext.Request.Headers[HeaderNames.Authorization].First();
+    string token = definition.UseServiceAccount == true ?
+      await _tokenProvider.GetAccessToken() :
+      HttpContext.Request.Headers[HeaderNames.Authorization].First()[TOKEN_INDEX..];
+
     var outputs = await _luaService.RunScript(
-      user!.Tenant!.Id!, definition, luaInputs, authorization[TOKEN_INDEX..], request.CorrelationId, user
+      user!.Tenant!.Id!, definition, luaInputs, token, request.CorrelationId, user
     );
 
     return outputs;

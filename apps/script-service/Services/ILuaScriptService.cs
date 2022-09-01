@@ -10,6 +10,7 @@ public interface ILuaScriptService
     IDictionary<string, object?> inputs,
     string token,
     string? correlationId = null,
-    UserIdentifier? user = null
+    UserIdentifier? user = null,
+    EventIdentity? trigger = null
   );
 }

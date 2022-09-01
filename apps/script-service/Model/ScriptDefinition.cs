@@ -13,6 +13,8 @@ public class ScriptDefinition
   public string? Script { get; set; }
   [JsonPropertyName("includeValuesInEvent")]
   public bool? IncludeValuesInEvent { get; set; } = false;
+  [JsonPropertyName("useServiceAccount")]
+  public bool? UseServiceAccount { get; set; } = false;
   [JsonPropertyName("runnerRoles")]
   public IEnumerable<string> RunnerRoles { get; set; } = Enumerable.Empty<string>();
   [JsonPropertyName("triggerEvents")]

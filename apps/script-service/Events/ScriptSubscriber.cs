@@ -56,7 +56,15 @@ internal class ScriptSubscriber : IEventSubscriber<IDictionary<string, object?>>
 
       var inputs = received.Payload ?? new Dictionary<string, object?>();
       var token = await _tokenProvider.GetAccessToken();
-      await _scriptService.RunScript(received.TenantId!, definition, inputs, token, received.CorrelationId);
+      await _scriptService.RunScript(
+        received.TenantId!,
+        definition,
+        inputs,
+        token,
+        received.CorrelationId,
+        null,
+        new EventIdentity(received.Name, received.Name)
+      );
 
       _logger.LogInformation(
         "Triggered and completed execution of script definition {DefinitionId} for event {Namespace}:{Name}.",

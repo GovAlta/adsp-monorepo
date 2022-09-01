@@ -29,7 +29,8 @@ internal class LuaScriptService : ILuaScriptService
     IDictionary<string, object?> inputs,
     string token,
     string? correlationId = null,
-    UserIdentifier? user = null
+    UserIdentifier? user = null,
+    EventIdentity? trigger = null
   )
   {
     _logger.LogDebug("Running script definition {Id} for tenant {TenantId}...", definition.Id, tenantId);
@@ -50,7 +51,7 @@ internal class LuaScriptService : ILuaScriptService
         return sandbox.run(script, { env = { inputs = inputs, adsp = adsp } })
       ");
 
-      var eventPayload = new ScriptExecuted { Definition = definition, ExecutedBy = user };
+      var eventPayload = new ScriptExecuted { Definition = definition, ExecutedBy = user, TriggeredBy = trigger };
       if (definition.IncludeValuesInEvent == true)
       {
         eventPayload.Inputs = inputs;
@@ -74,7 +75,13 @@ internal class LuaScriptService : ILuaScriptService
     {
       _logger.LogError(e, "Lua error encountered running script {Id}.", definition.Id);
 
-      var eventPayload = new ScriptExecutionFailed { Definition = definition, Error = e.Message, ExecutedBy = user };
+      var eventPayload = new ScriptExecutionFailed
+      {
+        Definition = definition,
+        Error = e.Message,
+        ExecutedBy = user,
+        TriggeredBy = trigger
+      };
       if (definition.IncludeValuesInEvent == true)
       {
         eventPayload.Inputs = inputs;
