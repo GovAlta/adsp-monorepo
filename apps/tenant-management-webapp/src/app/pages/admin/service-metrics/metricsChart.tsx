@@ -6,7 +6,6 @@ import {
   LineElement,
   PointElement,
   LinearScale,
-  Title,
   TimeScale,
   Tooltip,
 } from 'chart.js';
@@ -78,7 +77,12 @@ const responseTimeComponentsDataSelector = createSelector(
           pointHoverRadius: 6,
           fill: true,
         },
-      ].sort((x, y) => (x.data[0]?.y || 0) - (y.data[0]?.y || 0)),
+      ].sort(
+        // Sort by the sum of the values so we generally get the larger values first;
+        // this doesn't really work with sparse samples for certain response time components.
+        (x, y) =>
+          x.data.reduce((sum, { y }) => (y ? sum + y : sum), 0) - y.data.reduce((sum, { y }) => (y ? sum + y : sum), 0)
+      ),
     };
   }
 );
