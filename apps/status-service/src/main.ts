@@ -28,6 +28,7 @@ import { AMQPCredentials } from '@core-services/core-common';
 import { HealthCheckController } from './app/amqp';
 import { HealthCheckJobScheduler } from './app/jobs';
 import { getScheduler } from './app/jobs/SchedulerFactory';
+import { ApplicationManager } from './app/model/applicationManager';
 
 const logger = createLogger('status-service', environment?.LOG_LEVEL || 'info');
 const app = express();
@@ -42,35 +43,47 @@ app.use(express.json({ limit: '1mb' }));
   const [repositories] = [await createRepoJob];
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { configurationHandler, coreStrategy, tenantStrategy, tenantService, eventService, tokenProvider, directory } =
-    await initializePlatform(
-      {
-        serviceId,
-        displayName: 'Status service',
-        description: 'Service for publishing service status information.',
-        roles: [
-          {
-            role: ServiceUserRoles.StatusAdmin,
-            description: 'Administrator role for the status service.',
-            inTenantAdmin: true,
-          },
-        ],
-        configurationSchema,
-        events: [
-          HealthCheckStartedDefinition,
-          HealthCheckStoppedDefinition,
-          HealthCheckUnhealthyDefinition,
-          HealthCheckHealthyDefinition,
-          ApplicationStatusChangedDefinition,
-          ApplicationNoticePublishedDefinition,
-        ],
-        notifications: [StatusApplicationHealthChange, StatusApplicationStatusChange],
-        clientSecret: environment.CLIENT_SECRET,
-        accessServiceUrl,
-        directoryUrl: new URL(environment.DIRECTORY_URL),
-      },
-      { logger }
-    );
+  const {
+    configurationHandler,
+    configurationService,
+    coreStrategy,
+    tenantStrategy,
+    tenantService,
+    eventService,
+    tokenProvider,
+    directory,
+  } = await initializePlatform(
+    {
+      serviceId,
+      displayName: 'Status service',
+      description: 'Service for publishing service status information.',
+      roles: [
+        {
+          role: ServiceUserRoles.StatusAdmin,
+          description: 'Administrator role for the status service.',
+          inTenantAdmin: true,
+        },
+      ],
+      configurationSchema,
+      combineConfiguration: (tenant: Record<string, unknown>, core: Record<string, unknown>) => ({
+        ...core,
+        ...tenant,
+      }),
+      events: [
+        HealthCheckStartedDefinition,
+        HealthCheckStoppedDefinition,
+        HealthCheckUnhealthyDefinition,
+        HealthCheckHealthyDefinition,
+        ApplicationStatusChangedDefinition,
+        ApplicationNoticePublishedDefinition,
+      ],
+      notifications: [StatusApplicationHealthChange, StatusApplicationStatusChange],
+      clientSecret: environment.CLIENT_SECRET,
+      accessServiceUrl,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+    },
+    { logger }
+  );
 
   passport.use('jwt', coreStrategy);
   passport.use('jwt-tenant', tenantStrategy);
@@ -101,6 +114,16 @@ app.use(express.json({ limit: '1mb' }));
 
   // start the endpoint checking jobs
   if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.job)) {
+    // TODO: do data conversion once, then remove.
+    const applicationManager = new ApplicationManager(
+      tokenProvider,
+      configurationService,
+      serviceId,
+      repositories.serviceStatusRepository,
+      directory
+    );
+    applicationManager.convertData(logger);
+
     // clear the health status database every midnight
     const scheduleDataReset = async () => {
       scheduleJob('0 0 * * *', async () => {

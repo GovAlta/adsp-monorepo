@@ -3,7 +3,7 @@ import { createMockData } from '@core-services/core-common/mongo';
 import { connect, disconnect, model } from 'mongoose';
 import { MongoFileRepository } from './file';
 import { FileType, FileCriteria, FileTypeEntity, FileEntity, FileStorageProvider, FileTypeRepository } from '../file';
-import { It, Mock } from 'moq.ts';
+import { Mock } from 'moq.ts';
 
 describe('Mongo: FileEntity', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;

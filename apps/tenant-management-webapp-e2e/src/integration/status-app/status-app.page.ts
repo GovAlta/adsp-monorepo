@@ -10,5 +10,17 @@ class StatusAppPage {
   statusNotificationSignupDescription() {
     return cy.xpath('//h3[text()="Sign up for notifications"]/following-sibling::div/a');
   }
+
+  applicationStatus(appName) {
+    return cy.xpath(
+      `//b[contains(text(),"${appName}")]/parent::div/following-sibling::div/div[@class="status-button"]/div`
+    );
+  }
+
+  applicationStatusUpdatedTimestamp(appName) {
+    return cy.xpath(
+      `//b[contains(text(),"${appName}")]/ancestor::div[@class="flex-column"]//*[@data-testid="service-created-date"]`
+    );
+  }
 }
 export default StatusAppPage;

@@ -2,13 +2,15 @@ import { adspId, AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/ad
 import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
-import { ServiceStatusApplicationEntity, ApplicationEntity, StatusServiceConfiguration } from '../model';
+import { ServiceStatusApplicationEntity, StaticApplicationData, StatusServiceConfiguration } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { PublicServiceStatusType } from '../types';
 import { TenantService, EventService } from '@abgov/adsp-service-sdk';
 import { applicationStatusToStarted, applicationStatusToStopped, applicationStatusChange } from '../events';
 import axios from 'axios';
+import { StatusApplications } from '../model/statusApplications';
+import { config } from 'dotenv';
 
 export interface ServiceStatusRouterProps {
   logger: Logger;
@@ -27,20 +29,22 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
       }
-      const [tenantConfig] = await req.getConfiguration<StatusServiceConfiguration>(tenantId);
+      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
+        tenantId
+      );
+      const applications = new StatusApplications(configuration);
 
-      const applications = await serviceStatusRepository.find({ tenantId: tenantId.toString() });
+      const statuses = await serviceStatusRepository.find({ tenantId: tenantId.toString() });
 
       res.json(
-        applications.map((app) => {
-          const config = tenantConfig[app._id] as ApplicationEntity;
+        statuses.map((s) => {
+          const app = applications.get(s._id);
           return {
-            ...app,
-            internalStatus: app.internalStatus,
-            // The following to be removed from the repository
-            name: config.name,
-            description: config.description,
-            endpoint: { ...app.endpoint, url: config.url },
+            ...s,
+            internalStatus: s.internalStatus,
+            name: app?.name || 'unknown',
+            description: app?.description || '',
+            endpoint: { ...s.endpoint, url: app?.url || '' },
           };
         })
       );
@@ -123,7 +127,7 @@ export const createNewApplication =
           enabled: false,
         }
       );
-      const newApp: ApplicationEntity = { name: name, url: endpoint.url, description: description };
+      const newApp: StaticApplicationData = { name: name, url: endpoint.url, description: description };
       updateConfiguration(serviceDirectory, tokenProvider, tenant.id, app._id, newApp);
       res.status(201).json(app);
     } catch (err) {
@@ -132,12 +136,12 @@ export const createNewApplication =
     }
   };
 
-const updateConfiguration = async (
+export const updateConfiguration = async (
   directory: ServiceDirectory,
   tokenProvider: TokenProvider,
   tenantId: AdspId,
   applicationId: string,
-  newApp: ApplicationEntity
+  newApp: StaticApplicationData
 ) => {
   const baseUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
   const token = await tokenProvider.getAccessToken();
@@ -187,7 +191,7 @@ export const updateApplication =
         description,
         endpoint,
       });
-      const update: ApplicationEntity = { name: name, url: endpoint.url, description: description };
+      const update: StaticApplicationData = { name: name, url: endpoint.url, description: description };
       updateConfiguration(serviceDirectory, tokenProvider, user.tenantId, id, update);
       res.json({
         ...updatedApplication,
@@ -315,12 +319,15 @@ export const getApplicationEntries =
     }
 
     try {
-      const [tenantConfig] = await req.getConfiguration<StatusServiceConfiguration>(tenantId);
+      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
+        tenantId
+      );
+      const applications = new StatusApplications(configuration);
       const { applicationId } = req.params;
       const { topValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 200;
 
-      const app = tenantConfig[applicationId] as ApplicationEntity;
+      const app = applications.get(applicationId);
       if (!app) {
         throw new NotFoundError('Status application', applicationId.toString());
       }
@@ -328,8 +335,8 @@ export const getApplicationEntries =
       // TODO is there an easier way to test if the tenant is authorized to
       // access this application?  It seems a bit of a waste to hit up
       // the database just for this.
-      const application = await serviceStatusRepository.get(applicationId);
-      if (tenantId?.toString() !== application.tenantId) {
+      const appStatus = await serviceStatusRepository.get(applicationId);
+      if (tenantId?.toString() !== appStatus.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
       }
 
@@ -338,7 +345,6 @@ export const getApplicationEntries =
         entries.map((e) => {
           return {
             ...e,
-            // URL will soon be removed from the repository
             url: app.url,
           };
         })

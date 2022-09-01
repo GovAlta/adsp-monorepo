@@ -129,20 +129,18 @@ describe('Service router', () => {
     },
   ];
 
-  const configurationMock = [
-    {
-      [applicationsMock[0]._id]: {
-        name: applicationsMock[0].name,
-        url: applicationsMock[0].endpoint.url,
-        description: applicationsMock[0].description,
-      },
-      [applicationsMock[1]._id]: {
-        name: applicationsMock[1].name,
-        url: applicationsMock[1].endpoint.url,
-        description: applicationsMock[1].description,
-      },
+  const configurationMock = {
+    [applicationsMock[0]._id]: {
+      name: applicationsMock[0].name,
+      url: applicationsMock[0].endpoint.url,
+      description: applicationsMock[0].description,
     },
-  ];
+    [applicationsMock[1]._id]: {
+      name: applicationsMock[1].name,
+      url: applicationsMock[1].endpoint.url,
+      description: applicationsMock[1].description,
+    },
+  };
 
   const entriesMock = [
     {
@@ -270,11 +268,23 @@ describe('Service router', () => {
         getConfiguration: getConfigurationMock,
       } as unknown as Request;
 
-      getConfigurationMock.mockReturnValueOnce([]);
+      getConfigurationMock.mockReturnValueOnce({
+        ['624365fe3367d200110e17c5']: {
+          name: 'test-mock',
+          url: 'https://www.yahoo.com',
+          description: 'Woof',
+        },
+      });
       await handler(reqMock, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.arrayContaining([
-          { description: '', id: '624365fe3367d200110e17c5', lastUpdated: null, name: 'test-mock', status: 'offline' },
+          {
+            description: 'Woof',
+            id: '624365fe3367d200110e17c5',
+            lastUpdated: null,
+            name: 'test-mock',
+            status: 'offline',
+          },
         ])
       );
     });

@@ -151,7 +151,7 @@ const FileList = (): JSX.Element => {
             }}
           >
             {getFileTypesValues().map((item, key) => (
-              <GoADropdownOption label={item.name} value={item.name} key={key} data-testid={item.id} />
+              <GoADropdownOption label={item.name} value={item.id} key={key} data-testid={item.id} />
             ))}
           </GoADropdown>
         </FileTypeDropdown>

@@ -1,12 +1,11 @@
-using System.Text.Json;
 using System.Text.Json.Serialization;
-using Adsp.Platform.ScriptService.Events;
 using Adsp.Platform.ScriptService.Model;
 using Adsp.Platform.ScriptService.Services;
 using Adsp.Sdk;
 using Adsp.Sdk.Errors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
 
 namespace Adsp.Platform.ScriptService.Controller;
 
@@ -15,15 +14,17 @@ namespace Adsp.Platform.ScriptService.Controller;
 [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
 public class ScriptController : ControllerBase
 {
-  private readonly ILogger<ScriptController> _logger;
-  private readonly ILuaScriptService _luaService;
-  private readonly IEventService _evenService;
+  private const int TOKEN_INDEX = 7;
 
-  public ScriptController(ILogger<ScriptController> logger, ILuaScriptService luaService, IEventService eventService)
+  private readonly ILogger<ScriptController> _logger;
+  private readonly ITokenProvider _tokenProvider;
+  private readonly ILuaScriptService _luaService;
+
+  public ScriptController(ILogger<ScriptController> logger, ITokenProvider tokenProvider, ILuaScriptService luaService)
   {
     _logger = logger;
+    _tokenProvider = tokenProvider;
     _luaService = luaService;
-    _evenService = eventService;
   }
 
   [HttpGet]
@@ -57,7 +58,7 @@ public class ScriptController : ControllerBase
 
   [HttpPost]
   [Route("scripts/{script?}")]
-  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant, Roles = ServiceRoles.ScriptRunner)]
+  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
   public async Task<IEnumerable<object>> RunScript(string? script, [FromBody] RunScriptRequest request)
   {
     if (String.IsNullOrWhiteSpace(script))
@@ -70,53 +71,26 @@ public class ScriptController : ControllerBase
       throw new RequestArgumentException("request body cannot be null");
     }
 
-    var user = HttpContext.GetAdspUser();
-
-    var definitions = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, Dictionary<string, ScriptDefinition>>();
-    if (definitions?.TryGetValue(script, out ScriptDefinition? definition) != true || definition == null)
+    var configuration = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, ScriptConfiguration>();
+    if (configuration?.Definitions.TryGetValue(script, out ScriptDefinition? definition) != true || definition == null)
     {
       throw new NotFoundException($"Script definition with ID '{script}' not found.");
     }
 
-    var luaInputs = request.Inputs.ToDictionary(
-      (input) => input.Key,
-      (input) =>
-      {
-        object? converted = null;
-        switch (input.Value.ValueKind)
-        {
-          case JsonValueKind.String:
-            converted = input.Value.GetString();
-            break;
-          case JsonValueKind.Number:
-            converted = input.Value.GetDecimal();
-            break;
-          case JsonValueKind.True:
-          case JsonValueKind.False:
-            converted = input.Value.GetBoolean();
-            break;
-        };
-
-        return converted;
-      }
-    );
-
-    var outputs = await _luaService.RunScript(definition, luaInputs);
-    var eventPayload = new ScriptExecuted { Definition = definition, ExecutedBy = user };
-    if (definition.IncludeValuesInEvent == true)
+    var user = HttpContext.GetAdspUser();
+    if (!definition.IsAllowedUser(user))
     {
-      eventPayload.Inputs = luaInputs;
-      eventPayload.Outputs = outputs;
+      throw new NotAllowedRunnerException(user);
     }
 
-    await _evenService.Send(
-      new DomainEvent<ScriptExecuted>(
-        ScriptExecuted.EventName,
-        DateTime.Now,
-        eventPayload,
-        request.CorrelationId
-      ),
-      user!.Tenant!.Id
+    var luaInputs = request.Inputs ?? new Dictionary<string, object?>();
+
+    string token = definition.UseServiceAccount == true ?
+      await _tokenProvider.GetAccessToken() :
+      HttpContext.Request.Headers[HeaderNames.Authorization].First()[TOKEN_INDEX..];
+
+    var outputs = await _luaService.RunScript(
+      user!.Tenant!.Id!, definition, luaInputs, token, request.CorrelationId, user
     );
 
     return outputs;
