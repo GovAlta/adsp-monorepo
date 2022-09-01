@@ -1,4 +1,5 @@
 import { passportJwtSecret } from 'jwks-rsa';
+import jwtDecode from 'jwt-decode';
 import type { Strategy } from 'passport';
 import { ExtractJwt, Strategy as JwtStrategy, VerifyCallbackWithRequest } from 'passport-jwt';
 import type { Logger } from 'winston';
@@ -46,16 +47,26 @@ export const createRealmStrategy = async ({
 
     done(null, user);
   };
-
+  const jwksHandler = passportJwtSecret({
+    jwksUri: realmJwks,
+    cache: true,
+  });
   const strategy = new JwtStrategy(
     {
       jwtFromRequest: ExtractJwt.fromExtractors([ExtractJwt.fromAuthHeaderAsBearerToken()]),
       secretOrKeyProvider: (req, token, done) => {
-        passportJwtSecret({
-          jwksUri: realmJwks,
-          cache: true,
-          strictSsl: true,
-        })(req, token, done);
+        try {
+          // Decode the header and check against expected issuer.
+          // This is necessary because jwks-rsa does not cache the no key result and will make a remote request each time.
+          const { iss } = jwtDecode<{ iss: string }>(token);
+          if (iss !== realmIss) {
+            done(null, null);
+          } else {
+            jwksHandler(req, token, done);
+          }
+        } catch (err) {
+          done(err);
+        }
       },
       passReqToCallback: true,
       audience: !ignoreServiceAud ? serviceAud : null,

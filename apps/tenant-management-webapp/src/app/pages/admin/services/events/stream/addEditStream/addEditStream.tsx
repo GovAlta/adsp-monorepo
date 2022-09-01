@@ -135,14 +135,16 @@ export const AddEditStream = ({
                   });
                 }}
               >
-                {eventOptions.map((item) => (
-                  <GoADropdownOption
-                    label={item.label}
-                    value={item.value}
-                    key={item.key}
-                    data-testid={item.dataTestId}
-                  />
-                ))}
+                {eventOptions
+                  .sort((a, b) => (a.name < b.name ? -1 : 1))
+                  .map((item) => (
+                    <GoADropdownOption
+                      label={item.label}
+                      value={item.value}
+                      key={item.key}
+                      data-testid={item.dataTestId}
+                    />
+                  ))}
               </GoADropdown>
             </GoAFormItem>
             <ChipsWrapper>

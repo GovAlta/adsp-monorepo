@@ -3,6 +3,9 @@ import { PdfMetrics, PdfTemplate, PdfGenerationResponse, PdfGenerationPayload, U
 export const FETCH_PDF_TEMPLATES_ACTION = 'pdf/FETCH_PDF_TEMPLATES_ACTION';
 export const FETCH_PDF_TEMPLATES_SUCCESS_ACTION = 'pdf/FETCH_PDF_TEMPLATES_SUCCESS_ACTION';
 
+export const DELETE_PDF_TEMPLATE_ACTION = 'pdf/DELETE_PDF_TEMPLATE_ACTION';
+export const DELETE_PDF_TEMPLATE_SUCCESS_ACTION = 'pdf/DELETE_PDF_TEMPLATE_SUCCESS_ACTION';
+
 export const UPDATE_PDF_TEMPLATE_ACTION = 'pdf/UPDATE_PDF_TEMPLATE_ACTION';
 export const UPDATE_PDF_TEMPLATE_SUCCESS_ACTION = 'pdf/UPDATE_PDF_TEMPLATE_SUCCESS_ACTION';
 
@@ -71,6 +74,16 @@ export interface UpdatePdfTemplatesSuccessAction {
   payload: Record<string, PdfTemplate>;
 }
 
+export interface DeletePdfTemplatesAction {
+  type: typeof DELETE_PDF_TEMPLATE_ACTION;
+  template: PdfTemplate;
+}
+
+export interface DeletePdfTemplatesSuccessAction {
+  type: typeof DELETE_PDF_TEMPLATE_SUCCESS_ACTION;
+  payload: Record<string, PdfTemplate>;
+}
+
 export interface FetchPdfMetricsAction {
   type: typeof FETCH_PDF_METRICS_ACTION;
 }
@@ -85,6 +98,8 @@ export type PdfActionTypes =
   | FetchPdfTemplatesAction
   | UpdatePdfTemplatesAction
   | UpdatePdfTemplatesSuccessAction
+  | DeletePdfTemplatesAction
+  | DeletePdfTemplatesSuccessAction
   | FetchPdfMetricsAction
   | FetchPdfMetricsSuccessAction
   | FetchPdfMetricsSuccessAction
@@ -100,6 +115,16 @@ export const updatePdfTemplate = (template: PdfTemplate): UpdatePdfTemplatesActi
 
 export const updatePdfTemplateSuccess = (template: Record<string, PdfTemplate>): UpdatePdfTemplatesSuccessAction => ({
   type: UPDATE_PDF_TEMPLATE_SUCCESS_ACTION,
+  payload: template,
+});
+
+export const deletePdfTemplate = (template: PdfTemplate): DeletePdfTemplatesAction => ({
+  type: DELETE_PDF_TEMPLATE_ACTION,
+  template,
+});
+
+export const deletePdfTemplateSuccess = (template: Record<string, PdfTemplate>): DeletePdfTemplatesSuccessAction => ({
+  type: DELETE_PDF_TEMPLATE_SUCCESS_ACTION,
   payload: template,
 });
 

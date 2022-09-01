@@ -66,7 +66,10 @@ const initializeApp = async (): Promise<express.Application> => {
       ],
       events: [CalendarEventCreatedDefinition, CalendarEventUpdatedDefinition, CalendarEventDeletedDefinition],
       clientSecret: environment.CLIENT_SECRET,
-      configurationSchema,
+      configuration: {
+        description: 'Calendars including configuration of the roles allowed to read or modify events in the calendar',
+        schema: configurationSchema,
+      },
       configurationConverter: (config: CalendarServiceConfiguration, tenantId) =>
         Object.entries(config).reduce(
           (entities, [key, value]) => ({
@@ -106,7 +109,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   applyCalendarMiddleware(app, { serviceId, logger, eventService, directory, tenantService, ...repositories });
 
-  const swagger = await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8');
+  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {
     res.json(swagger);
   });

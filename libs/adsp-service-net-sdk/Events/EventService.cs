@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RestSharp;
 
-namespace Adsp.Sdk.Event;
+namespace Adsp.Sdk.Events;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
 internal class EventService : IEventService, IDisposable
 {
@@ -23,7 +23,8 @@ internal class EventService : IEventService, IDisposable
     IServiceRegistrar registrar,
     IServiceDirectory serviceDirectory,
     ITokenProvider tokenProvider,
-    IOptions<AdspOptions> options
+    IOptions<AdspOptions> options,
+    RestClient? client = null
   )
   {
     if (options.Value.ServiceId == null)
@@ -36,7 +37,7 @@ internal class EventService : IEventService, IDisposable
     _serviceDirectory = serviceDirectory;
     _tokenProvider = tokenProvider;
     _namespace = options.Value.ServiceId.Namespace;
-    _client = new RestClient();
+    _client = client ?? new RestClient();
   }
 
   public async Task Send<TPayload>(DomainEvent<TPayload> @event, AdspId? tenantId = null) where TPayload : class
@@ -55,7 +56,7 @@ internal class EventService : IEventService, IDisposable
     var token = await _tokenProvider.GetAccessToken();
     var request = new RestRequest(requestUrl, Method.Post);
     request.AddHeader("Authorization", $"Bearer {token}");
-    request.AddJsonBody(new EventRequestBody<TPayload>(_namespace, @event, tenantId));
+    request.AddJsonBody(new FullDomainEvent<TPayload>(_namespace, @event, tenantId));
 
     var response = await _client.ExecuteAsync(request);
     if (response.StatusCode != HttpStatusCode.OK)

@@ -9,11 +9,7 @@ namespace Adsp.Sdk.Registration;
 internal class ServiceRegistrar : IServiceRegistrar, IDisposable
 {
   private static readonly AdspId CONFIGURATION_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:configuration-service:v2");
-  private static readonly AdspId CONFIGURATION_SERVICE_ID = AdspId.Parse("urn:ads:platform:configuration-service");
-  private static readonly AdspId TENANT_SERVICE_ID = AdspId.Parse("urn:ads:platform:tenant-service");
-  private static readonly AdspId EVENT_SERVICE_ID = AdspId.Parse("urn:ads:platform:event-service");
-  private static readonly AdspId PUSH_SERVICE_ID = AdspId.Parse("urn:ads:platform:push-service");
-  private static readonly AdspId FILE_SERVICE_ID = AdspId.Parse("urn:ads:platform:file-service");
+
 
   private const string ContextServiceKey = "service";
 
@@ -58,7 +54,7 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
     if (registration.Configuration != null)
     {
       await UpdateConfiguration(
-        CONFIGURATION_SERVICE_ID,
+        AdspPlatformServices.ConfigurationServiceId,
         new
         {
           operation = "UPDATE",
@@ -72,7 +68,7 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
     if (registration.Roles != null)
     {
       await UpdateConfiguration(
-        TENANT_SERVICE_ID,
+        AdspPlatformServices.TenantServiceId,
         new
         {
           operation = "UPDATE",
@@ -87,7 +83,7 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
     if (registration.Events != null)
     {
       await UpdateConfiguration(
-        EVENT_SERVICE_ID,
+        AdspPlatformServices.EventServiceId,
         new
         {
           operation = "UPDATE",
@@ -114,7 +110,7 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
     if (registration.EventStreams != null)
     {
       await UpdateConfiguration(
-        PUSH_SERVICE_ID,
+        AdspPlatformServices.PushServiceId,
         new
         {
           operation = "UPDATE",
@@ -125,11 +121,13 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
 
     if (registration.FileTypes != null)
     {
-      await UpdateConfiguration(FILE_SERVICE_ID, new
-      {
-        operation = "UPDATE",
-        update = registration.FileTypes.ToDictionary(type => type.Id)
-      });
+      await UpdateConfiguration(
+        AdspPlatformServices.FileServiceId,
+        new
+        {
+          operation = "UPDATE",
+          update = registration.FileTypes.ToDictionary(type => type.Id)
+        });
     }
 
     _logger.LogInformation("Completed registration for {Service}.", _serviceId.Service);

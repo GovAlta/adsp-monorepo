@@ -1,3 +1,4 @@
+using System.Security.Principal;
 using Adsp.Sdk.Access;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
@@ -26,6 +27,7 @@ public class TenantMiddlewareTests
     var logger = Mock.Of<ILogger<TenantMiddleware>>();
     var tenantService = Mock.Of<ITenantService>();
     var requestDelegate = Mock.Of<RequestDelegate>();
+    var principal = Mock.Of<IPrincipal>();
 
     var middleware = new TenantMiddleware(logger, tenantService, requestDelegate);
 
@@ -34,7 +36,7 @@ public class TenantMiddlewareTests
     {
       {
         AccessConstants.AdspContextKey,
-        new User(false, new Tenant { Id = tenantId }, "tester", "tester", null)
+        new User(false, new Tenant { Id = tenantId }, "tester", "tester", null, principal)
       }
     };
     var context = new Mock<HttpContext>();
@@ -51,6 +53,7 @@ public class TenantMiddlewareTests
     var logger = Mock.Of<ILogger<TenantMiddleware>>();
     var tenantService = Mock.Of<ITenantService>();
     var requestDelegate = Mock.Of<RequestDelegate>();
+    var principal = Mock.Of<IPrincipal>();
 
     var middleware = new TenantMiddleware(logger, tenantService, requestDelegate);
 
@@ -59,7 +62,7 @@ public class TenantMiddlewareTests
     {
       {
         AccessConstants.AdspContextKey,
-        new User(true, null, "tester", "tester", null)
+        new User(true, null, "tester", "tester", null, principal)
       }
     };
     var context = new Mock<HttpContext>();
@@ -79,6 +82,7 @@ public class TenantMiddlewareTests
     var logger = Mock.Of<ILogger<TenantMiddleware>>();
     var tenantService = Mock.Of<ITenantService>();
     var requestDelegate = Mock.Of<RequestDelegate>();
+    var principal = Mock.Of<IPrincipal>();
 
     var middleware = new TenantMiddleware(logger, tenantService, requestDelegate);
 
@@ -88,7 +92,7 @@ public class TenantMiddlewareTests
     {
       {
         AccessConstants.AdspContextKey,
-        new User(false, new Tenant { Id = tenantId }, "tester", "tester", null)
+        new User(false, new Tenant { Id = tenantId }, "tester", "tester", null, principal)
       }
     };
     var context = new Mock<HttpContext>();

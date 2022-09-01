@@ -1,6 +1,6 @@
 import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
-import { ServiceStatusApplicationEntity } from '../model';
+import { ApplicationEntity, StatusServiceConfiguration } from '../model';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { environment } from '../../environments/environment';
 import { TenantService } from '@abgov/adsp-service-sdk';
@@ -9,16 +9,6 @@ export interface ServiceStatusRouterProps {
   logger: Logger;
   tenantService: TenantService;
   serviceStatusRepository: ServiceStatusRepository;
-}
-
-export function mapApplication(entity: ServiceStatusApplicationEntity): unknown {
-  return {
-    id: entity._id,
-    name: entity.name,
-    description: entity.description,
-    status: entity?.status,
-    lastUpdated: entity?.statusTimestamp ? new Date(entity.statusTimestamp) : null,
-  };
 }
 
 export const getApplicationsByName =
@@ -36,10 +26,23 @@ export const getApplicationsByName =
         throw new NotFoundError('tenant', name);
       }
 
+      const [tenantConfig] = await req.getConfiguration<StatusServiceConfiguration>(tenantId);
+
       const applications = await serviceStatusRepository.find({
         tenantId: tenantId.toString(),
       });
-      res.json(applications.map(mapApplication));
+      res.json(
+        applications.map((a) => {
+          const config = tenantConfig ? (tenantConfig[a._id] as ApplicationEntity) : null;
+          return {
+            id: a._id,
+            name: config?.name || name,
+            description: config?.description || '',
+            status: a?.status,
+            lastUpdated: a?.statusTimestamp ? new Date(a.statusTimestamp) : null,
+          };
+        })
+      );
     } catch (err) {
       const errMessage = `Error getting applications: ${err.message}`;
       logger.error(errMessage);

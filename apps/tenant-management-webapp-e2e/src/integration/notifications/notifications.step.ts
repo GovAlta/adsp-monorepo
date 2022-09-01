@@ -622,7 +622,7 @@ When(
     if (editedEmail == null) {
       emailInput = email;
     } else {
-      emailInput = (rand_str + email).replace('rnd{', '').replace('}', '');
+      emailInput = (rand_str + email).replace(/rnd{/g, '').replace(/}/g, '');
     }
     const editedPhone = phone.match(/(?<=rnd{)[^{}]+(?=})/g);
     if (editedPhone == null) {
@@ -634,7 +634,7 @@ When(
     if (editedInstructions == null) {
       instructionsInput = instructions;
     } else {
-      instructionsInput = (rand_str + instructions).replace('rnd{', '').replace('}', '');
+      instructionsInput = (rand_str + instructions).replace(/rnd{/g, '').replace(/}/g, '');
     }
     notificationsObj.editContactModalEmail().clear().type(emailInput);
     notificationsObj.editContactModalPhone().clear().type(phoneInput);

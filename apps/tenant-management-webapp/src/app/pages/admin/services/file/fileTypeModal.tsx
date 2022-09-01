@@ -134,7 +134,9 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
 
   const duplicateFileTypeCheck = (names: string[]): Validator => {
     return (name: string) => {
-      return names.includes(name) ? `Duplicated file type name ${name}.` : '';
+      return names.map((n) => n.toLowerCase().replace(/ /g, '-')).includes(name.toLowerCase().replace(/ /g, '-'))
+        ? `Duplicated file type name ${name}.`
+        : '';
     };
   };
 

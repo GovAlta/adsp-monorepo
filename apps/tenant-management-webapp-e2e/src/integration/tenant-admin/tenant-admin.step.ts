@@ -481,7 +481,7 @@ When('the user searches with {string}', function (namespaceName) {
   tenantAdminObj.eventLogSearchBox().type(namespaceName);
   tenantAdminObj.eventLogSearchBox().should('have.value', namespaceName);
   tenantAdminObj.eventLogSearchBtn().click();
-  cy.wait(2000);
+  cy.wait(5000);
 });
 
 Then('the user views the events matching the search filter of {string}', function (namespaceName) {
@@ -970,5 +970,63 @@ Then(
             serviceName
         );
       });
+  }
+);
+
+Then(
+  'the user views the event details of {string} application status changed from {string} to {string} for subscriber of {string}',
+  function (appName, orgStatus, newStatusInput, email) {
+    let isFound = false;
+    let orgStatusValidationString;
+    let newStatusValidationString;
+
+    if (orgStatus != '{original status}') {
+      orgStatusValidationString = orgStatus;
+    } else {
+      cy.task('getOriginalAppStatus').then((appStatus) => {
+        orgStatusValidationString = appStatus;
+      });
+    }
+    if (newStatusInput != '{new status}') {
+      newStatusValidationString = newStatusInput;
+    } else {
+      cy.task('getNewAppStatus').then((appStatus) => {
+        newStatusValidationString = appStatus;
+      });
+    }
+
+    tenantAdminObj.eventToggleDetailsIcons().each(($element, $index, $full_array) => {
+      //clicking each eye-icon in the list to verify event details
+      cy.wrap($element).scrollIntoView().click({ force: true });
+      tenantAdminObj
+        .eventDetails()
+        .invoke('text')
+        .then((eventDetails) => {
+          // Check if event log details contains expected info
+          if (
+            eventDetails.includes('to": "' + email) &&
+            eventDetails.includes(appName + ' status changed to') &&
+            eventDetails.includes(
+              'from <b>' +
+                orgStatusValidationString.toLowerCase() +
+                '</b> to <b>' +
+                newStatusValidationString.toLowerCase() +
+                '</b>'
+            )
+          ) {
+            isFound = true;
+            cy.wrap($element).click({ force: true });
+          } else {
+            //clicking eye icon to close event details
+            cy.wrap($element).scrollIntoView().click({ force: true });
+          }
+          if (isFound == false && $index + 1 == $full_array.length) {
+            expect($index + 1).to.not.eq(
+              $full_array.length,
+              'No matching email found throughout list of event details'
+            );
+          }
+        });
+    });
   }
 );

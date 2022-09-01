@@ -6,8 +6,9 @@ import { PdfTemplate } from '@store/pdf/model';
 export interface PdfTemplatesTableProps {
   templates: Record<string, PdfTemplate>;
   edit?: (PdfTemplate) => void;
+  onDelete?: (PdfTemplate) => void;
 }
-export const PdfTemplatesTable: FunctionComponent<PdfTemplatesTableProps> = ({ templates, edit }) => {
+export const PdfTemplatesTable: FunctionComponent<PdfTemplatesTableProps> = ({ templates, edit, onDelete }) => {
   return (
     <>
       <DataTable data-testid="pdf-templates-table">
@@ -27,7 +28,14 @@ export const PdfTemplatesTable: FunctionComponent<PdfTemplatesTableProps> = ({ t
         </thead>
         <tbody>
           {Object.keys(templates).map((templateName) => {
-            return <PdfTemplateItem key={templateName} pdfTemplate={templates[templateName]} edit={edit} />;
+            return (
+              <PdfTemplateItem
+                key={templateName}
+                pdfTemplate={templates[templateName]}
+                edit={edit}
+                onDelete={onDelete}
+              />
+            );
           })}
         </tbody>
       </DataTable>

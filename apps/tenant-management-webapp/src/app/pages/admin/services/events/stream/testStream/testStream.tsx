@@ -177,14 +177,16 @@ export const TestStream = (): JSX.Element => {
                   setSelectedStreamId(streamId);
                 }}
               >
-                {Object.keys(streams).map((streamId) => (
-                  <GoADropdownOption
-                    label={streams[streamId].name}
-                    value={streamId}
-                    key={streamId}
-                    data-testid={streamId}
-                  />
-                ))}
+                {Object.keys(streams)
+                  .sort((a, b) => (a < b ? -1 : 1))
+                  .map((streamId) => (
+                    <GoADropdownOption
+                      label={streams[streamId].name}
+                      value={streamId}
+                      key={streamId}
+                      data-testid={streamId}
+                    />
+                  ))}
               </GoADropdown>
             </StreamsDropdown>
             {socketStatus()}

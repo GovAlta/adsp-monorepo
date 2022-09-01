@@ -59,7 +59,7 @@ function addIntervalBreaks(intervalMins: number) {
   return (results: MetricValue[], current: MetricValue, idx: number, array: MetricValue[]) => {
     if (array[idx - 1] && array[idx - 1].interval.diff(current.interval, 'minutes') > intervalMins) {
       results.push({
-        interval: current.interval.clone().subtract(intervalMins, 'minutes'),
+        interval: current.interval.clone().add(intervalMins, 'minutes'),
         value: NaN,
       });
     }

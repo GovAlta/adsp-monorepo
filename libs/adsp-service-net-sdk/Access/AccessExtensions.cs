@@ -8,7 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace Adsp.Sdk.Access;
 internal static class AccessExtensions
 {
-  private static TokenValidatedContext AddAdspContext(this TokenValidatedContext context, AdspId serviceId, bool isCore, Tenant? tenant)
+  internal static TokenValidatedContext AddAdspContext(this TokenValidatedContext context, AdspId serviceId, bool isCore, Tenant? tenant)
   {
     var subClaim = context.Principal?.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier);
     var usernameClaim = context.Principal?.Claims.FirstOrDefault(claim => claim.Type == "preferred_username");
@@ -30,7 +30,7 @@ internal static class AccessExtensions
       accessIdentity.AddClaim(new Claim(AdspClaimTypes.Core, "true", ClaimValueTypes.Boolean));
     }
 
-    var realmAccessClaim = context.Principal?.Claims.FirstOrDefault(claim => claim.Type == "realm_access");
+    var realmAccessClaim = context.Principal!.Claims.FirstOrDefault(claim => claim.Type == "realm_access");
     if (realmAccessClaim != null)
     {
       var access = JsonSerializer.Deserialize<AccessClaimRoles>(
@@ -45,7 +45,7 @@ internal static class AccessExtensions
       }
     }
 
-    var resourceAccessClaim = context.Principal?.Claims.FirstOrDefault(claim => claim.Type == "resource_access");
+    var resourceAccessClaim = context.Principal!.Claims.FirstOrDefault(claim => claim.Type == "resource_access");
     if (resourceAccessClaim != null)
     {
       var clientsRoles = JsonSerializer.Deserialize<Dictionary<string, AccessClaimRoles>>(
@@ -73,7 +73,7 @@ internal static class AccessExtensions
       }
     }
 
-    context.Principal?.AddIdentity(accessIdentity);
+    context.Principal!.AddIdentity(accessIdentity);
 
     context.HttpContext.Items.Add(
       AccessConstants.AdspContextKey,
@@ -82,7 +82,8 @@ internal static class AccessExtensions
         tenant,
         subClaim.Value,
         usernameClaim?.Value,
-        emailClaim?.Value
+        emailClaim?.Value,
+        context.Principal!
       )
     );
 
@@ -96,6 +97,7 @@ internal static class AccessExtensions
     AdspOptions options
   )
   {
+
     if (options.AccessServiceUrl == null)
     {
       throw new ArgumentException("Provided options must include value for AccessServiceUrl.", nameof(options));
@@ -103,7 +105,7 @@ internal static class AccessExtensions
 
     if (options.ServiceId == null)
     {
-      throw new ArgumentException("Provided options must include value for AccessServiceUrl.", nameof(options));
+      throw new ArgumentException("Provided options must include value for ServiceId.", nameof(options));
     }
 
     if (
@@ -115,6 +117,7 @@ internal static class AccessExtensions
     }
     var isCore = String.Equals(AdspAuthenticationSchemes.Core, authenticationScheme, StringComparison.Ordinal);
     var realm = isCore ? AccessConstants.CoreRealm : options.Realm;
+
 
     builder.AddJwtBearer(
       authenticationScheme,
@@ -154,7 +157,7 @@ internal static class AccessExtensions
   {
     if (options.ServiceId == null)
     {
-      throw new ArgumentException("Provided options must include value for AccessServiceUrl.", nameof(options));
+      throw new ArgumentException("Provided options must include value for ServiceId.", nameof(options));
     }
 
     builder.AddJwtBearer(authenticationScheme, jwt =>

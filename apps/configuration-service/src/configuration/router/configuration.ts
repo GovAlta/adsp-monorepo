@@ -204,16 +204,30 @@ export const getActiveRevision =
   async (req, res, next) => {
     try {
       benchmark(req, 'operation-handler-time');
+
       const user = req.user;
+      const { orLatest: orLatestValue } = req.query;
+      const orLatest = orLatestValue === 'true';
       const configuration: ConfigurationEntity = req[ENTITY_KEY];
 
-      if (!configuration.active) {
-        throw new NotFoundError('Active Revision');
+      const revisions =
+        configuration.active >= 0
+          ? await configuration.getRevisions(1, null, { revision: configuration.active })
+          : { results: [] };
+
+      let {
+        results: [result],
+      } = revisions;
+
+      if (!result) {
+        if (orLatest) {
+          result = configuration.latest;
+        } else {
+          throw new NotFoundError('active revision');
+        }
       }
 
-      const revision = await configuration.getRevisions(1, null, { revision: configuration.active });
-
-      res.send(revision.results[0]);
+      res.send(result);
 
       logger.info(`Active revision ${configuration.active} ` + `retrieved by ${user.name} (ID: ${user.id}).`, {
         tenant: configuration.tenantId?.toString(),

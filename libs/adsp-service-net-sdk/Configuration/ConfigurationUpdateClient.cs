@@ -1,115 +1,46 @@
 
 using System.Diagnostics.CodeAnalysis;
+using Adsp.Sdk.Events;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using SocketIOClient;
 
 namespace Adsp.Sdk.Configuration;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
-internal sealed class ConfigurationUpdateClient : IConfigurationUpdateClient, IAsyncDisposable
+internal sealed class ConfigurationUpdateClient : IEventSubscriber<ConfigurationUpdate>
 {
-  private static readonly AdspId PushServiceId = AdspId.Parse("urn:ads:platform:push-service");
-  private const string StreamId = "configuration-updates";
-  private const string ConfigurationUpdatedEvent = "configuration-service:configuration-updated";
+  private const string ConfigurationEventNamespace = "configuration-service";
+  private const string ConfigurationUpdatedEvent = "configuration-updated";
 
   private readonly ILogger<ConfigurationUpdateClient> _logger;
-  private readonly IServiceDirectory _serviceDirectory;
-  private readonly ITokenProvider _tokenProvider;
   private readonly IConfigurationService _configurationService;
-  private readonly ITenantService _tenantService;
-  private readonly string? _realm;
-  public SocketIOWrapper? _client;
 
-  public ConfigurationUpdateClient(
-    ILogger<ConfigurationUpdateClient> logger,
-    IServiceDirectory serviceDirectory,
-    ITokenProvider tokenProvider,
-    IConfigurationService configurationService,
-    ITenantService tenantService,
-    IOptions<AdspOptions> options,
-    SocketIOWrapper? client = null
-  )
+  public ConfigurationUpdateClient(ILogger<ConfigurationUpdateClient> logger, IConfigurationService configurationService)
   {
     _logger = logger;
-    _serviceDirectory = serviceDirectory;
-    _tokenProvider = tokenProvider;
     _configurationService = configurationService;
-    _tenantService = tenantService;
-    _realm = options.Value.Realm;
-    _client = client;
   }
 
-  public async Task Connect()
+  public Task OnEvent(FullDomainEvent<ConfigurationUpdate> received)
   {
-    _client = await CreateSocketClient();
-
-    try
+    Console.WriteLine("adsp00");
+    Console.WriteLine(received.Payload);
+    Console.WriteLine("adsp001");
+    Console.WriteLine(received.Payload!.Namespace);
+    Console.WriteLine("adsp002");
+    Console.WriteLine(AdspId.Parse($"urn:ads:{received.Payload!.Namespace}:{received.Payload!.Name}"));
+      Console.WriteLine("adsp0");
+    if (
+      String.Equals(ConfigurationEventNamespace, received.Namespace, StringComparison.Ordinal) &&
+      String.Equals(ConfigurationUpdatedEvent, received.Name, StringComparison.Ordinal)
+    )
     {
-      await _client.ConnectAsync();
-    }
-    catch (Exception e)
-    {
-      _logger.LogError(e, "Error encountered connecting to socket.");
-      throw;
-    }
-  }
-
-  private async Task<SocketIOWrapper> CreateSocketClient()
-  {
-    var tenant = _realm != null ? await _tenantService.GetTenantByRealm(_realm) : null;
-
-    var pushServiceUrl = await _serviceDirectory.GetServiceUrl(PushServiceId);
-    var token = await _tokenProvider.GetAccessToken();
-
-    if (_client == null)
-    {
-      _client = new SocketIOWrapper(
-        pushServiceUrl,
-        new SocketIOOptions
-        {
-          Query = new Dictionary<string, string> { { "stream", StreamId } },
-          ExtraHeaders = new Dictionary<string, string> { { "Authorization", $"Bearer {token}" } }
-        }
-      );
-    }
-
-    _client.socketIO.OnConnected += (_s, _e) =>
-    {
-      _logger.LogInformation("Connected to stream for configuration updates at: {Url}", pushServiceUrl);
-    };
-    _client.socketIO.OnDisconnected += (_s, _e) =>
-    {
-      _logger.LogInformation("Disconnected from configuration update stream.");
-    };
-    _client.socketIO.OnError += (_s, e) =>
-    {
-      _logger.LogError("Error encountered in configuration update stream. {Msg}", e);
-    };
-
-    _client.On(ConfigurationUpdatedEvent, (response) =>
-    {
-      _logger.LogDebug("Received configuration update event from configuration updates stream.");
-
-      var update = response.GetValue<ConfigurationUpdate>();
+      Console.WriteLine(AdspId.Parse($"urn:ads:{received.Payload!.Namespace}:{received.Payload!.Name}"));
+      Console.WriteLine("adsp");
       _configurationService.ClearCached(
-        AdspId.Parse($"urn:ads:{update.Payload!.Namespace}:{update.Payload!.Name}"),
-        update.TenantId ?? tenant?.Id
+        AdspId.Parse($"urn:ads:{received.Payload!.Namespace}:{received.Payload!.Name}"),
+        received.TenantId
       );
-    });
-
-    return _client;
-  }
-
-  public async ValueTask DisposeAsync()
-  {
-    var client = _client;
-    if (client != null)
-    {
-      if (client.Connected())
-      {
-        await client.DisconnectAsync();
-      }
-      client.Dispose();
     }
+
+    return Task.CompletedTask;
   }
 }
