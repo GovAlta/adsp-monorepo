@@ -144,7 +144,7 @@ public class EventServiceTests
     {
       using var middleware = new EventService(logger.Object, registrar.Object, serviceDirectory.Object, tokenProvider.Object, options.Object);
     });
-    ex.Message.Should().Contain("Provided options must include value for ServiceId.");
+    ex.Message.Should().Contain("Provided options must ADSP service URN value for ServiceId.");
   }
 
 }
