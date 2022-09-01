@@ -48,6 +48,7 @@ const initializeApp = async (): Promise<express.Application> => {
     tokenProvider,
     configurationService,
     configurationHandler,
+    coreStrategy,
     healthCheck,
   } = await initializePlatform(
     {
@@ -80,6 +81,7 @@ const initializeApp = async (): Promise<express.Application> => {
           (defs, [id, def]) => ({ ...defs, [id]: new FormDefinitionEntity(tenantId, def) }),
           {}
         ),
+      enableConfigurationInvalidation: true,
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
@@ -87,6 +89,7 @@ const initializeApp = async (): Promise<express.Application> => {
     { logger }
   );
 
+  passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
 
   passport.serializeUser(function (user, done) {
@@ -98,7 +101,7 @@ const initializeApp = async (): Promise<express.Application> => {
   });
 
   app.use(passport.initialize());
-  app.use('/form', passport.authenticate(['tenant'], { session: false }), configurationHandler);
+  app.use('/form', passport.authenticate(['core', 'tenant'], { session: false }), configurationHandler);
 
   const notificationService = createNotificationService(logger, directory, tokenProvider);
   const fileService = createFileService(logger, directory, tokenProvider);
