@@ -1,6 +1,6 @@
 import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
-import { ApplicationEntity, StatusServiceConfiguration } from '../model';
+import { StaticApplicationData, StatusServiceConfiguration } from '../model';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { environment } from '../../environments/environment';
 import { TenantService } from '@abgov/adsp-service-sdk';
@@ -33,7 +33,7 @@ export const getApplicationsByName =
       });
       res.json(
         applications.map((a) => {
-          const config = tenantConfig ? (tenantConfig[a._id] as ApplicationEntity) : null;
+          const config = tenantConfig ? (tenantConfig[a._id] as StaticApplicationData) : null;
           return {
             id: a._id,
             name: config?.name || name,

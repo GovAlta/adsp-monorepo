@@ -2,7 +2,7 @@ import { adspId, AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/ad
 import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
-import { ServiceStatusApplicationEntity, ApplicationEntity, StatusServiceConfiguration } from '../model';
+import { ServiceStatusApplicationEntity, StaticApplicationData, StatusServiceConfiguration } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { PublicServiceStatusType } from '../types';
@@ -33,7 +33,7 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
 
       res.json(
         applications.map((app) => {
-          const config = tenantConfig[app._id] as ApplicationEntity;
+          const config = tenantConfig[app._id] as StaticApplicationData;
           return {
             ...app,
             internalStatus: app.internalStatus,
@@ -123,7 +123,7 @@ export const createNewApplication =
           enabled: false,
         }
       );
-      const newApp: ApplicationEntity = { name: name, url: endpoint.url, description: description };
+      const newApp: StaticApplicationData = { name: name, url: endpoint.url, description: description };
       updateConfiguration(serviceDirectory, tokenProvider, tenant.id, app._id, newApp);
       res.status(201).json(app);
     } catch (err) {
@@ -132,12 +132,12 @@ export const createNewApplication =
     }
   };
 
-const updateConfiguration = async (
+export const updateConfiguration = async (
   directory: ServiceDirectory,
   tokenProvider: TokenProvider,
   tenantId: AdspId,
   applicationId: string,
-  newApp: ApplicationEntity
+  newApp: StaticApplicationData
 ) => {
   const baseUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
   const token = await tokenProvider.getAccessToken();
@@ -187,7 +187,7 @@ export const updateApplication =
         description,
         endpoint,
       });
-      const update: ApplicationEntity = { name: name, url: endpoint.url, description: description };
+      const update: StaticApplicationData = { name: name, url: endpoint.url, description: description };
       updateConfiguration(serviceDirectory, tokenProvider, user.tenantId, id, update);
       res.json({
         ...updatedApplication,
@@ -320,7 +320,7 @@ export const getApplicationEntries =
       const { topValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 200;
 
-      const app = tenantConfig[applicationId] as ApplicationEntity;
+      const app = tenantConfig[applicationId] as StaticApplicationData;
       if (!app) {
         throw new NotFoundError('Status application', applicationId.toString());
       }
