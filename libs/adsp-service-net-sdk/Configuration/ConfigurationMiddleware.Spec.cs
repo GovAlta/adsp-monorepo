@@ -70,12 +70,12 @@ public class ConfigurationMiddlewareTests
 
     var context = new Mock<HttpContext>();
 
-
+    var principal = Mock.Of<System.Security.Principal.IPrincipal>();
     var contextItems = new Dictionary<object, object?>
     {
       {
         AccessConstants.AdspContextKey,
-        new User(false, new Tenant { Id = seviceId }, "tester", "tester", null)
+        new User(false, new Tenant { Id = seviceId }, "tester", "tester", null, principal)
       }
     };
 

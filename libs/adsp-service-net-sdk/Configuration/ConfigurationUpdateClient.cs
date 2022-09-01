@@ -21,20 +21,11 @@ internal sealed class ConfigurationUpdateClient : IEventSubscriber<Configuration
 
   public Task OnEvent(FullDomainEvent<ConfigurationUpdate> received)
   {
-    Console.WriteLine("adsp00");
-    Console.WriteLine(received.Payload);
-    Console.WriteLine("adsp001");
-    Console.WriteLine(received.Payload!.Namespace);
-    Console.WriteLine("adsp002");
-    Console.WriteLine(AdspId.Parse($"urn:ads:{received.Payload!.Namespace}:{received.Payload!.Name}"));
-      Console.WriteLine("adsp0");
     if (
       String.Equals(ConfigurationEventNamespace, received.Namespace, StringComparison.Ordinal) &&
       String.Equals(ConfigurationUpdatedEvent, received.Name, StringComparison.Ordinal)
     )
     {
-      Console.WriteLine(AdspId.Parse($"urn:ads:{received.Payload!.Namespace}:{received.Payload!.Name}"));
-      Console.WriteLine("adsp");
       _configurationService.ClearCached(
         AdspId.Parse($"urn:ads:{received.Payload!.Namespace}:{received.Payload!.Name}"),
         received.TenantId
