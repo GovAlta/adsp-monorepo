@@ -17,6 +17,9 @@ const resolve = require('resolve');
 const clipboardy = require('clipboardy');
 import { createHtmlReport } from 'axe-html-reporter';
 
+let newAppStatus = '';
+let originalAppStatus = '';
+
 module.exports = (on, config) => {
   const options = {
     ...browserify.defaultOptions,
@@ -51,6 +54,22 @@ module.exports = (on, config) => {
       createHtmlReport({ results: { violations: violations }, options: axeHtmlReporterOptions });
 
       return null;
+    },
+    // Set new application status
+    setNewAppStatus: (val) => {
+      return (newAppStatus = val);
+    },
+    // Get new application status
+    getNewAppStatus: () => {
+      return newAppStatus;
+    },
+    // Set original application status
+    setOriginalAppStatus: (val) => {
+      return (originalAppStatus = val);
+    },
+    // Get original application status
+    getOriginalAppStatus: () => {
+      return originalAppStatus;
     },
   });
 };

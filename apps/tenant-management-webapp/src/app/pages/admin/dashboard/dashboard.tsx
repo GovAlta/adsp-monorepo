@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GoACallout } from '@abgov/react-components';
 import { GoACard } from '@abgov/react-components/experimental';
 import { Link } from 'react-router-dom';
@@ -11,27 +11,16 @@ import styled from 'styled-components';
 import CopyIcon from '@icons/copy-outline.svg';
 import { GoAButton as GoAButtonV2 } from '@abgov/react-components-new';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
-
-interface ExternalLinkProps {
-  link: string;
-  name: string;
-}
-
-const ExternalLink = ({ link, name }: ExternalLinkProps): JSX.Element => {
-  return (
-    <ExternalLinkWrapper>
-      <a href={link} rel="noopener noreferrer" target="_blank">
-        {name}
-      </a>
-    </ExternalLinkWrapper>
-  );
-};
+import { ExternalLink } from '@components/icons/ExternalLink';
 
 interface LinkCopyComponentProps {
   link: string;
 }
 
-const LinkCopyComponentWrapper = styled.div``;
+const LinkCopyComponentWrapper = styled.div`
+  position: relative;
+  padding-top: 1.5rem;
+`;
 
 const CopyLinkToolTipWrapper = styled.div`
   .checkmark-icon {
@@ -46,23 +35,28 @@ const CopyLinkToolTipWrapper = styled.div`
     top: 0.3rem;
     left: 2rem;
   }
+  .URL-tooltip {
+    width: 30rem !important;
+    left: -5.5rem;
+    font-size: 10px;
+  }
   p {
-    position: relative;
+    position: absolute;
     background: var(--color-gray-100);
     -webkit-border-radius: 10px;
     -moz-border-radius: 10px;
     border-radius: 30px;
     width: 12rem;
     height: 2.2rem;
-    top: 0.2rem;
-    left: 3rem;
+    top: -1.5rem;
+    left: 1rem;
   }
 
   p:before {
     content: '';
     position: absolute;
     top: 2rem;
-    left: 20px;
+    left: 6rem;
     z-index: 1;
     border: solid 15px transparent;
     border-right-color: var(--color-gray-100);
@@ -75,9 +69,31 @@ const CopyLinkToolTipWrapper = styled.div`
 
 const LinkCopyComponent = ({ link }: LinkCopyComponentProps): JSX.Element => {
   const [isCopied, setIsCopied] = useState<boolean>(false);
+  const [isShowURL, setIsShowURL] = useState<boolean>(false);
+
+  useEffect(() => {
+    let tooltipTimer = null;
+    if (isCopied === true) {
+      tooltipTimer = setTimeout(() => {
+        setIsCopied(false);
+      }, 8 * 1000);
+    }
+    return () => {
+      if (tooltipTimer !== null) {
+        clearTimeout(tooltipTimer);
+      }
+    };
+  }, [isCopied]);
 
   return (
-    <LinkCopyComponentWrapper>
+    <LinkCopyComponentWrapper
+      onMouseEnter={() => {
+        setIsShowURL(true);
+      }}
+      onMouseLeave={() => {
+        setIsShowURL(false);
+      }}
+    >
       {isCopied && (
         <CopyLinkToolTipWrapper>
           <p>
@@ -88,15 +104,23 @@ const LinkCopyComponent = ({ link }: LinkCopyComponentProps): JSX.Element => {
           </p>
         </CopyLinkToolTipWrapper>
       )}
+
+      {!isCopied && isShowURL && (
+        <CopyLinkToolTipWrapper>
+          <p className="URL-tooltip">
+            <div className="message">{link}</div>
+          </p>
+        </CopyLinkToolTipWrapper>
+      )}
       <GoAButtonV2
-        type="tertiary"
-        leadingIcon="open"
+        type="secondary"
+        leadingIcon="link"
         onClick={() => {
           navigator.clipboard.writeText(link);
           setIsCopied(true);
         }}
       >
-        Copy link
+        Copy login link
       </GoAButtonV2>
     </LinkCopyComponentWrapper>
   );
@@ -191,36 +215,25 @@ const Dashboard = (): JSX.Element => {
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                     <GoACard type="primary">
                       <h2>
+                        <Link to="/admin/services/event">Event</Link>
+                      </h2>
+                      <div>
+                        The event service provides tenant applications with the ability to send domain events.
+                        Applications are able to leverage additional capabilities as side effects through these events.
+                      </div>
+                      <div>&nbsp;</div>
+                      <div>&nbsp;</div>
+                    </GoACard>
+                  </GridItem>
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <h2>
                         <Link to="/admin/services/file">File</Link>
                       </h2>
                       <div>
                         The file service provides the capability to upload and download files. Consumers are registered
                         with their own space (tenant) containing file types that include role based access policy, and
                         can associate files to domain records.
-                      </div>
-                    </GoACard>
-                  </GridItem>
-                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoACard type="primary">
-                      <h2>
-                        <Link to="/admin/services/status">Status</Link>
-                      </h2>
-                      <div>
-                        The status service allows for easy monitoring of application downtime. Each application should
-                        represent a service that is useful to the end user by itself, such as child care subsidy and
-                        child care certification.
-                        <div>&nbsp;</div>
-                      </div>
-                    </GoACard>
-                  </GridItem>
-                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoACard type="primary">
-                      <h2>
-                        <Link to="/admin/services/event">Event</Link>
-                      </h2>
-                      <div>
-                        The event service provides tenant applications with the ability to send domain events.
-                        Applications are able to leverage additional capabilities as side effects through these events.
                       </div>
                     </GoACard>
                   </GridItem>
@@ -235,7 +248,29 @@ const Dashboard = (): JSX.Element => {
                       </div>
                       <div>&nbsp;</div>
                       <div>&nbsp;</div>
-                      <div>&nbsp;</div>
+                    </GoACard>
+                  </GridItem>
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <h2>
+                        <Link to="/admin/services/pdf">PDF</Link>
+                      </h2>
+                      <div>
+                        The PDF service provides PDF operations like generating new PDFs from templates. It runs
+                        operations as asynchronous jobs and uploads the output PDF files to the file service.
+                      </div>
+                    </GoACard>
+                  </GridItem>
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <h2>
+                        <Link to="/admin/services/status">Status</Link>
+                      </h2>
+                      <div>
+                        The status service allows for easy monitoring of application downtime. Each application should
+                        represent a service that is useful to the end user by itself, such as child care subsidy and
+                        child care certification.
+                      </div>
                     </GoACard>
                   </GridItem>
                 </Grid>
@@ -249,12 +284,12 @@ const Dashboard = (): JSX.Element => {
             <p>
               <ListWrapper>
                 <li>
-                  Share the login URL below and have your user <ExternalLink link={loginUrl} name="login" /> once to
+                  Share the login URL below and have your user <ExternalLink link={loginUrl} text="login" /> once to
                   create their account.
                 </li>
                 <li>
                   Add the 'tenant-admin' role to the user's assigned roles from{' '}
-                  <ExternalLink link={getKeycloakAdminPortalUsers()} name="here" />
+                  <ExternalLink link={getKeycloakAdminPortalUsers()} text="here" />
                   <br />
                   (Role Mapping › Client Roles › urn:ads:platform:tenant-service › Add selected)
                 </li>
@@ -338,13 +373,6 @@ const DashboardDiv = styled.div`
     }
   }
   margin-bottom: 2.5rem;
-`;
-
-const ExternalLinkWrapper = styled.div`
-  display: inline-block;
-  .goa-icon {
-    display: inline !important;
-  }
 `;
 
 const ListWrapper = styled.ul`

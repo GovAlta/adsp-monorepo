@@ -19,12 +19,7 @@ export function* fetchConfig(): SagaIterator {
         entryMapping[entry.service] = entry.url;
       });
       const tenantWebConfig = {
-        keycloakApi: {
-          realm: 'core',
-          url: `${entryMapping['access-service']}/auth`,
-          clientId: 'urn:ads:platform:tenant-admin-app',
-          checkLoginIframe: false,
-        },
+        keycloakApi: data.keycloakApi,
         tenantApi: {
           host: entryMapping['tenant-service'],
           endpoints: {

@@ -120,7 +120,7 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
               </NavLink>
               <NavLink to="/admin/services/pdf" activeClassName="current" title="Pdf" data-testid="menu-pdf">
                 <GoAIcon type="document" />
-                <span>Pdf</span>
+                <span>PDF</span>
               </NavLink>
               <NavLink to="/admin/services/status" activeClassName="current" title="Status" data-testid="menu-status">
                 <img src={FitnessIcon} width="16" alt="Status Service" />

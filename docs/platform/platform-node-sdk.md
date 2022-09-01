@@ -33,6 +33,19 @@ npx nx workspace-generator adsp-service
 
 The generate output includes sub-project structure and initial files under `/apps` as well as deployment manifests under `.openshift/managed` and `.compose`.
 
+## Setting up a service account
+The SDK requires credentials for a service account and uses this account for accessing platform capabilities. Fine grained configuration is possible and principle of least privilege should be applied.
+
+In order to create the service account.
+1. Create a confidential Client with a client ID in the format: `urn:ads:{tenant}:{service}` . The SDK does not authenticate end users and so all authentication grant types can be disabled.
+2. Enable service account for the client.
+3. In Service Account Roles, add the appropriate Client Roles for the capabilities that will be accessed:
+   1. Client `urn:ads:platform:tenant-service ` role `platform-service` is required.
+   2. Client `urn:ads:platform:configuration-service` role `configured-service` is needed for registration and accessing service specific configuration
+   3. Client `urn:ads:platform:event-service` role `event-sender` is needed for sending domain events.
+4. Additional audiences in the service account access token are required for some capabilities:
+   1. Client `urn:ads:platform:push-service` needs to be include via an audience mapper for socket based configuration cache invalidation.
+
 ## Initializing the SDK
 SDK capabilities are access via either the `initializePlatform` or the `initializeService` function. It takes service metadata as inputs and returns an object with the initialized platform interfaces and utilities.
 

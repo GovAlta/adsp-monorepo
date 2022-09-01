@@ -11,6 +11,8 @@ export class PdfTemplateEntity implements PdfTemplate {
   footer?: string;
 
   private evaluateTemplate: (context: unknown) => string;
+  private evaluateFooterTemplate: (context: unknown) => string;
+  private evaluateHeaderTemplate: (context: unknown) => string;
 
   constructor(
     templateService: TemplateService,
@@ -25,14 +27,18 @@ export class PdfTemplateEntity implements PdfTemplate {
     this.header = header;
     this.footer = footer;
     this.evaluateTemplate = templateService.getTemplateFunction(template);
+    this.evaluateFooterTemplate = templateService.getTemplateFunction(footer, 'pdf-footer');
+    this.evaluateHeaderTemplate = templateService.getTemplateFunction(header, 'pdf-header');
   }
 
   generate(context: unknown): Promise<Buffer> {
     const content = this.evaluateTemplate(context);
+    const footer = this.evaluateFooterTemplate(context);
+    const header = this.evaluateHeaderTemplate(context);
     return this.pdfService.generatePdf({
       content,
-      footer: this.footer,
-      header: this.header,
+      footer,
+      header,
     });
   }
 }
