@@ -27,16 +27,16 @@ internal class EventService : IEventService, IDisposable
     RestClient? client = null
   )
   {
-    if (options.Value.ServiceId == null)
+    if (options.Value.ServiceId?.Service == null)
     {
-      throw new ArgumentException("Provided options must include value for ServiceId.");
+      throw new ArgumentException("Provided options must ADSP service URN value for ServiceId.");
     }
 
     _logger = logger;
     _registrar = registrar;
     _serviceDirectory = serviceDirectory;
     _tokenProvider = tokenProvider;
-    _namespace = options.Value.ServiceId.Namespace;
+    _namespace = options.Value.ServiceId.Service;
     _client = client ?? new RestClient();
   }
 
