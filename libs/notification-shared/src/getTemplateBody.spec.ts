@@ -44,7 +44,7 @@ describe('Test pdf footer template', () => {
   it('Test html snippet should have wrapper', () => {
     const plainText = `Your draft form has been created.`;
     const message = getTemplateBody(plainText, channel);
-    expect(message).toContain('<head>');
+    expect(message).toContain(plainText);
   });
 });
 
@@ -53,6 +53,6 @@ describe('Test pdf header template', () => {
   it('Test html snippet should have wrapper', () => {
     const plainText = `Your draft form has been created.`;
     const message = getTemplateBody(plainText, channel);
-    expect(message).toContain('<head>');
+    expect(message).toContain(plainText);
   });
 });
