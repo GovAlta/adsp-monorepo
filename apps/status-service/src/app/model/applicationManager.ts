@@ -29,7 +29,7 @@ export class ApplicationManager {
     this.#directory = directory;
   }
 
-  getActiveApps = async () => {
+  getActiveApps = async (): Promise<Record<string, ApplicationData>> => {
     const statuses = await this.#getActiveApplicationStatus();
     const tenants = this.#getActiveTenants(statuses);
     const configurations = await this.#getConfigurations(tenants);
@@ -37,7 +37,7 @@ export class ApplicationManager {
     return appData;
   };
 
-  #getActiveApplicationStatus = async () => {
+  #getActiveApplicationStatus = async (): Promise<ServiceStatusApplicationEntity[]> => {
     return this.#repository.findEnabledApplications();
   };
 
@@ -49,7 +49,7 @@ export class ApplicationManager {
     return tenants;
   };
 
-  #getConfigurations = async (tenants: Set<AdspId>) => {
+  #getConfigurations = async (tenants: Set<AdspId>): Promise<StatusServiceConfiguration> => {
     const promises: Promise<StatusServiceConfiguration>[] = [];
     tenants.forEach((t) => {
       promises.push(this.#configurationFinder(t));
