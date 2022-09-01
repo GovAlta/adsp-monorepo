@@ -374,18 +374,17 @@ Then('the user views the release info and DIO contact info', function () {
     });
 });
 
-Then('the user views the login link with a copy button', function () {
-  tenantAdminObj
-    .tenantAutoLoginUrl()
-    .should('contain.text', Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/login');
-  tenantAdminObj.clickToCopyButton().then((button) => {
-    expect(button.length).to.be.gt(0); // button element exists
-  });
+When('the user clicks Copy login link', function () {
+  tenantAdminObj.copyLoginLinkButton().shadow().find('button').scrollIntoView().click({ force: true });
 });
 
-When('the user clicks click to copy button', function () {
-  tenantAdminObj.clickToCopyButton().click();
-  cy.wait(2000);
+Then('the user views the message of {string} from clicking Copy login link', function (message) {
+  tenantAdminObj
+    .copyLoginLinkButtonMessage()
+    .invoke('text')
+    .then((msg) => {
+      expect(msg).to.contain(message);
+    });
 });
 
 Then('the login link is copied to the clipboard', function () {
