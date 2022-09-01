@@ -1,6 +1,5 @@
 import * as puppeteer from 'puppeteer';
 import { PdfService, PdfServiceProps } from './pdf';
-import { types } from 'util';
 
 class PuppeteerPdfService implements PdfService {
   constructor(private browser: puppeteer.Browser) {}
