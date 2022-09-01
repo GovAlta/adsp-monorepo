@@ -50,6 +50,7 @@ const initializeApp = async (): Promise<express.Application> => {
     clearCached,
     configurationHandler,
     configurationService,
+    coreStrategy,
     directory,
     eventService,
     healthCheck,
@@ -93,6 +94,7 @@ const initializeApp = async (): Promise<express.Application> => {
     { logger }
   );
 
+  passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
 
   passport.serializeUser(function (user, done) {
@@ -117,7 +119,7 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(
     '/pdf',
     metricsHandler,
-    passport.authenticate(['tenant'], { session: false }),
+    passport.authenticate(['core', 'tenant'], { session: false }),
     tenantHandler,
     configurationHandler
   );
