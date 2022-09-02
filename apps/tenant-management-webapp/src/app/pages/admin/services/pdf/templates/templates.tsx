@@ -46,7 +46,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     return state?.session?.indicator;
   });
 
-  const channelNames = { main: 'PDF preview', 'header/footer': 'Header / Footer preview' };
+  const channelNames = { main: 'PDF preview', header: 'Header Preview', footer: 'Footer preview' };
 
   const webappUrl = useSelector((state: RootState) => {
     return state.config.serviceUrls.tenantManagementWebApp;

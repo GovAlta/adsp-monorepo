@@ -1,6 +1,5 @@
 import React, { FunctionComponent } from 'react';
-import { PreviewContainer, BodyPreview, SubjectPreview } from './styled-components';
-import { sanitizeHtml } from '../utils';
+import { PreviewContainer, BodyPreview } from './styled-components';
 
 interface PreviewTemplateProps {
   channelTitle: string;
@@ -17,29 +16,19 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
   footerPreviewContent,
   channel,
 }) => {
-  const PdfPreview = () => {
+  const PdfPreview = ({ title, html }) => {
     return (
       <>
-        <h3>{channelTitle}</h3>
-        <BodyPreview title={channelTitle} html={bodyPreviewContent}></BodyPreview>
-      </>
-    );
-  };
-
-  const HeaderFooterPreview = () => {
-    return (
-      <>
-        <h3>Header</h3>
-        <BodyPreview data-testid="header-preview-subject" title="Header" html={headerPreviewContent}></BodyPreview>
-        <h3>Footer</h3>
-        <BodyPreview data-testid="footer-preview-subject" title="Footer" html={footerPreviewContent}></BodyPreview>
+        <h3>{title}</h3>
+        <BodyPreview title={title} html={html}></BodyPreview>
       </>
     );
   };
 
   const previewByType = {
-    main: <PdfPreview />,
-    'footer/header': <HeaderFooterPreview />,
+    main: <PdfPreview title={channelTitle} html={bodyPreviewContent} />,
+    header: <PdfPreview title={'Header'} html={headerPreviewContent} />,
+    footer: <PdfPreview title={'Footer'} html={footerPreviewContent} />,
   };
 
   return <PreviewContainer>{previewByType[channel]}</PreviewContainer>;

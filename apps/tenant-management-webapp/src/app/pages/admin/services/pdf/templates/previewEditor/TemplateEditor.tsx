@@ -92,7 +92,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [modelOpen]);
 
-  const channels = ['main', 'footer/header'];
+  const channels = ['main', 'header', 'footer'];
 
   return (
     <TemplateEditorContainerPdf>
@@ -120,15 +120,15 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 </GoAFormItem>
               </>
             </Tab>
-            <Tab label="Header/Footer">
+            <Tab label="Header">
               <h3 className="reduce-margin" data-testid="modal-title">
                 {`${template?.name}`}
                 <p>{`${mainTitle} template`}</p>
               </h3>
 
               <>
-                <GoAFormItem error={errors?.body ?? ''}>
-                  <MonacoDivHeader>
+                <GoAFormItem error={errors?.body ?? ''} helpText={bodyEditorHintText}>
+                  <MonacoDivBody>
                     <MonacoEditor
                       language={'handlebars'}
                       value={template?.header}
@@ -137,12 +137,18 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                       }}
                       {...bodyEditorConfig}
                     />
-                  </MonacoDivHeader>
+                  </MonacoDivBody>
                 </GoAFormItem>
               </>
+            </Tab>
+            <Tab label="Footer">
+              <h3 className="reduce-margin" data-testid="modal-title">
+                {`${template?.name}`}
+                <p>{`${mainTitle} template`}</p>
+              </h3>
               <>
                 <GoAFormItem error={errors?.body ?? ''} helpText={bodyEditorHintText}>
-                  <MonacoDivFooter>
+                  <MonacoDivBody>
                     <MonacoEditor
                       language={'handlebars'}
                       value={template?.footer}
@@ -151,7 +157,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                       }}
                       {...bodyEditorConfig}
                     />
-                  </MonacoDivFooter>
+                  </MonacoDivBody>
                 </GoAFormItem>
               </>
             </Tab>
