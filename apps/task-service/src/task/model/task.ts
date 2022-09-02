@@ -34,7 +34,7 @@ export class TaskEntity implements Task {
   endedOn: Date;
   assignment: TaskAssignment;
 
-  @AssertRole('create task', [TaskServiceRoles.Admin, TaskServiceRoles.TaskWriter])
+  @AssertRole('create task', [TaskServiceRoles.Admin, TaskServiceRoles.TaskWriter], null, true)
   static create(_user: User, repository: TaskRepository, queue: QueueEntity, task: NewTask): Promise<TaskEntity> {
     if (!task.name) {
       throw new InvalidOperationError('Task must have a name.');
