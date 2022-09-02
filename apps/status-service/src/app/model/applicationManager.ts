@@ -29,14 +29,15 @@ export class ApplicationManager {
     this.#directory = directory;
   }
 
-  getActiveApps = async () => {
-    const apps = await this.#getActiveApplications();
-    const tenants = this.#getActiveTenants(apps);
-    const configs = await this.#getConfigurations(tenants);
-    return this.#merge(apps, configs);
+  getActiveApps = async (): Promise<Record<string, ApplicationData>> => {
+    const statuses = await this.#getActiveApplicationStatus();
+    const tenants = this.#getActiveTenants(statuses);
+    const configurations = await this.#getConfigurations(tenants);
+    const appData = this.#merge(statuses, configurations);
+    return appData;
   };
 
-  #getActiveApplications = async () => {
+  #getActiveApplicationStatus = async (): Promise<ServiceStatusApplicationEntity[]> => {
     return this.#repository.findEnabledApplications();
   };
 
@@ -48,16 +49,16 @@ export class ApplicationManager {
     return tenants;
   };
 
-  #getConfigurations = async (tenants: Set<AdspId>) => {
+  #getConfigurations = async (tenants: Set<AdspId>): Promise<StatusServiceConfiguration> => {
     const promises: Promise<StatusServiceConfiguration>[] = [];
     tenants.forEach((t) => {
       promises.push(this.#configurationFinder(t));
     });
-    const configSet = await Promise.all(promises);
-    return configSet.reduce((p, c) => {
+    const configurations = await Promise.all(promises);
+    return configurations.reduce((p, c) => {
       if (c) {
         const appKeys = Object.keys(c).filter((k) => {
-          return /[a-zA-Z0-9]{12}/gi.test(k);
+          return /^[a-zA-Z0-9]{24}$/gi.test(k);
         });
         appKeys.forEach((k) => {
           p[k] = c[k];
@@ -70,37 +71,41 @@ export class ApplicationManager {
   #getConfigurationFinder = (tokenProvider: TokenProvider, service: ConfigurationService, serviceId: AdspId) => {
     return async (tenantId: AdspId): Promise<StatusServiceConfiguration> => {
       const token = await tokenProvider.getAccessToken();
-      const [config] = await service.getConfiguration<StatusServiceConfiguration>(serviceId, token, tenantId);
+      const config = await service.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
+        serviceId,
+        token,
+        tenantId
+      );
       return config;
     };
   };
 
   #merge = (
-    apps: ServiceStatusApplicationEntity[],
-    configs: Record<string, unknown>
+    statuses: ServiceStatusApplicationEntity[],
+    apps: Record<string, unknown>
   ): Record<string, ApplicationData> => {
     const appData: Record<string, ApplicationData> = {};
-    apps.forEach((a) => {
-      const config = configs[a._id] as StaticApplicationData;
-      if (config) {
-        appData[a._id] = { ...a, ...config };
+    statuses.forEach((status) => {
+      const app = apps[status._id] as StaticApplicationData;
+      if (app) {
+        appData[status._id] = { ...status, ...app };
       } else {
-        // There should always be a configuration associated with
-        // the repository app, but in case of a data glitch.
-        // TODO remove this code when the app no longer has the
-        // needed properties for this.  Its too late then.
-        appData[a._id] = { ...a, url: a.endpoint.url };
-        this.#saveConfiguration(a);
+        // There should always be an app associated with
+        // the status, but...
+        appData[status._id] = { ...status, url: status.endpoint.url };
+        this.#saveConfiguration(status);
       }
     });
     return appData;
   };
 
-  #saveConfiguration = async (app: ServiceStatusApplicationEntity) => {
-    await updateConfiguration(this.#directory, this.#tokenProvider, AdspId.parse(app.tenantId), app._id, {
-      name: app.name,
-      url: app.endpoint.url,
-      description: app.description,
+  // TODO remove this code when the status no longer has the
+  // needed properties for this.  Its too late then.
+  #saveConfiguration = async (status: ServiceStatusApplicationEntity) => {
+    await updateConfiguration(this.#directory, this.#tokenProvider, AdspId.parse(status.tenantId), status._id, {
+      name: status.name,
+      url: status.endpoint.url,
+      description: status.description,
     });
   };
 
@@ -112,12 +117,12 @@ export class ApplicationManager {
    * @param logger - its a logger.
    */
   convertData = async (logger: Logger) => {
-    const savedApps = await this.#repository.find({});
-    const tenants = this.#getActiveTenants(savedApps);
-    const configuredApps = this.#getConfigurations(tenants);
+    const statuses = await this.#repository.find({});
+    const tenants = this.#getActiveTenants(statuses);
+    const apps = this.#getConfigurations(tenants);
     // Add configuration if it is missing
-    savedApps.forEach(async (a) => {
-      if (!configuredApps[a._id]) {
+    statuses.forEach(async (a) => {
+      if (!apps[a._id]) {
         logger.info(`##########  Adding configuration for app ${a.name} in ${a.tenantName} tenant`);
         await this.#saveConfiguration(a);
       }

@@ -6,7 +6,7 @@ import { ScanProps } from './index';
 
 interface ClamScan {
   scanStream: (stream: Stream) => Promise<{
-    is_infected: boolean;
+    isInfected: boolean;
     file: string;
     viruses: string[];
   }>;
@@ -32,7 +32,7 @@ export const createClamScan = ({ host, port }: ScanProps): ScanService => {
 
       return {
         scanned: true,
-        infected: scan.is_infected,
+        infected: scan.isInfected,
       };
     },
   };
