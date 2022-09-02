@@ -21,7 +21,8 @@ internal class ConfigurationService : IConfigurationService, IDisposable
     IMemoryCache cache,
     IServiceDirectory serviceDirectory,
     ITokenProvider tokenProvider,
-    IOptions<AdspOptions> options
+    IOptions<AdspOptions> options,
+    RestClient? client = null
   )
   {
     _logger = logger;
@@ -29,7 +30,7 @@ internal class ConfigurationService : IConfigurationService, IDisposable
     _serviceDirectory = serviceDirectory;
     _tokenProvider = tokenProvider;
     _combine = options.Value.Configuration?.CombineConfiguration;
-    _client = new RestClient();
+    _client = client ?? new RestClient();
   }
 
   public void ClearCached(AdspId serviceId, AdspId? tenantId = null)
@@ -81,17 +82,15 @@ internal class ConfigurationService : IConfigurationService, IDisposable
     {
       var configurationServiceUrl = await _serviceDirectory.GetServiceUrl(CONFIGURATION_SERVICE_API_ID);
       var token = await _tokenProvider.GetAccessToken();
-
       var requestUrl = new Uri(configurationServiceUrl, $"v2/configuration/{serviceId.Namespace}/{serviceId.Service}/latest");
       var request = new RestRequest(requestUrl.AbsoluteUri);
       if (tenantId != null)
       {
         request.AddQueryParameter("tenantId", tenantId.ToString());
       }
-
       request.AddHeader("Authorization", $"Bearer {token}");
-
       configuration = await _client.GetAsync<T>(request);
+
       if (configuration != null)
       {
         if (tenantId != null)
