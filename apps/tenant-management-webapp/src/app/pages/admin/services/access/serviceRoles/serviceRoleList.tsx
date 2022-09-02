@@ -24,7 +24,6 @@ export const selectKeycloakServiceRoles = createSelector(
 );
 
 const isRoleExisted = (kcRoleConfig: ServiceRoleConfig, clientId: string, roleName: string) => {
-  console.log(clientId + '<clientId' + roleName + '< roleName');
   if (clientId in kcRoleConfig) {
     const role = kcRoleConfig[clientId].roles.find((role) => {
       return role.role === roleName;

@@ -79,7 +79,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   }, [template, modelOpen]);
 
   const switchTabPreview = (value) => {
-    console.log(JSON.stringify(value) + '<vvvvalue');
     onHeaderChange(template?.header);
     onFooterChange(template?.footer);
     setPreview(value);

@@ -174,14 +174,11 @@ export function* fetchKeycloakServiceRoles(action: FetchKeycloakServiceRolesActi
         });
 
       for (const [index, id] of keycloakRoleIds.entries()) {
-        console.log(JSON.stringify(id) + ' <idid');
-        console.log(JSON.stringify(realm) + ' <realm');
         const url = `${keycloakBaseUrl}/auth/admin/realms/${realm}/clients/${id}/roles`;
 
         const { data } = yield call(axios.get, url, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log(JSON.stringify(data) + ' <data');
         keycloakRoles[keycloakRoleNames[index]] = {
           roles: KeycloakRoleToServiceRole(data),
         };
@@ -270,8 +267,6 @@ export function* createKeycloakClient(action: CreateKeycloakRoleAction): SagaIte
     }).id;
 
     if (roleName) {
-      console.log(JSON.stringify(clientIdInDB) + ' <clientIdInDB');
-      console.log(JSON.stringify(realm) + ' <realm');
       const url = `${keycloakBaseUrl}/auth/admin/realms/${realm}/clients/${clientIdInDB}/roles`;
       const roleConfig = (clientConfig as ConfigServiceRole).roles.find((role) => {
         return role.role === roleName;
