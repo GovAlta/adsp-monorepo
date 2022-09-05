@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { Role } from '@store/tenant/models';
 import { GoAButton } from '@abgov/react-components';
@@ -15,6 +15,8 @@ import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { ConfigServiceRole } from '@store/access/models';
 import { useValidators } from '@lib/useValidators';
+import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
+import { ActionState } from '@store/session/models';
 import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
 interface FileTypeModalProps {
   fileType?: FileTypeItem;
@@ -128,11 +130,13 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   const isNew = props.type === 'new';
   const [fileType, setFileType] = useState(props.fileType);
   const title = isNew ? 'Add file type' : 'Edit file type';
-  const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
+  const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
 
   const duplicateFileTypeCheck = (names: string[]): Validator => {
     return (name: string) => {
-      return names.includes(name) ? `Duplicated file type name ${name}.` : '';
+      return names.map((n) => n.toLowerCase().replace(/ /g, '-')).includes(name.toLowerCase().replace(/ /g, '-'))
+        ? `Duplicated file type name ${name}.`
+        : '';
     };
   };
 
@@ -147,6 +151,12 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   const dispatch = useDispatch();
 
   const keycloakClientRoles = useSelector(selectServiceKeycloakRoles);
+
+  const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
+    fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
+  }));
+  //eslint-disable-next-line
+  useEffect(() => {}, [fetchKeycloakRolesState]);
 
   const ClientRole = ({ roleNames, clientId }) => {
     return (
@@ -247,7 +257,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
             return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
           })}
 
-          {Object.entries(keycloakClientRoles).length === 0 && (
+          {fetchKeycloakRolesState === ActionState.inProcess && (
             <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
           )}
         </GoAModalContent>

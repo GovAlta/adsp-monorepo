@@ -1,4 +1,6 @@
 import * as express from 'express';
+import { readFile } from 'fs';
+import { promisify } from 'util';
 import * as passport from 'passport';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
@@ -9,7 +11,6 @@ import { createRepositories } from './mongo';
 import { bindEndpoints, ServiceUserRoles } from './app';
 import * as cors from 'cors';
 import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
-import * as util from 'util';
 import type { User } from '@abgov/adsp-service-sdk';
 import { configurationSchema } from './mongo/schema';
 import {
@@ -27,6 +28,7 @@ import { AMQPCredentials } from '@core-services/core-common';
 import { HealthCheckController } from './app/amqp';
 import { HealthCheckJobScheduler } from './app/jobs';
 import { getScheduler } from './app/jobs/SchedulerFactory';
+import { ApplicationManager } from './app/model/applicationManager';
 
 const logger = createLogger('status-service', environment?.LOG_LEVEL || 'info');
 const app = express();
@@ -36,14 +38,21 @@ app.use(compression());
 app.use(helmet());
 app.use(express.json({ limit: '1mb' }));
 
-logger.debug(`Environment variables: ${util.inspect(environment)}`);
-
 (async () => {
   const createRepoJob = createRepositories({ ...environment, logger });
   const [repositories] = [await createRepoJob];
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, tenantStrategy, tenantService, eventService } = await initializePlatform(
+  const {
+    configurationHandler,
+    configurationService,
+    coreStrategy,
+    tenantStrategy,
+    tenantService,
+    eventService,
+    tokenProvider,
+    directory,
+  } = await initializePlatform(
     {
       serviceId,
       displayName: 'Status service',
@@ -56,6 +65,10 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
         },
       ],
       configurationSchema,
+      combineConfiguration: (tenant: Record<string, unknown>, core: Record<string, unknown>) => ({
+        ...core,
+        ...tenant,
+      }),
       events: [
         HealthCheckStartedDefinition,
         HealthCheckStoppedDefinition,
@@ -87,6 +100,8 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
   });
 
   app.use(passport.initialize());
+  app.use('/status', configurationHandler);
+  app.use('/public_status', configurationHandler);
 
   const healthCheckSchedulingProps = {
     logger,
@@ -99,12 +114,20 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
 
   // start the endpoint checking jobs
   if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.job)) {
+    // TODO: do data conversion once, then remove.
+    const applicationManager = new ApplicationManager(
+      tokenProvider,
+      configurationService,
+      serviceId,
+      repositories.serviceStatusRepository,
+      directory
+    );
+    applicationManager.convertData(logger);
+
     // clear the health status database every midnight
     const scheduleDataReset = async () => {
       scheduleJob('0 0 * * *', async () => {
-        logger.info('Start to delete the old application status.');
         await repositories.endpointStatusEntryRepository.deleteOldUrlStatus();
-        logger.info('Completed the old application status deletion.');
       });
 
       const healthCheckController = new HealthCheckController(
@@ -139,11 +162,24 @@ logger.debug(`Environment variables: ${util.inspect(environment)}`);
 
   // service endpoints
   if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.api)) {
-    bindEndpoints(app, { logger, tenantService, authenticate, eventService, ...repositories });
+    bindEndpoints(app, {
+      logger,
+      tenantService,
+      authenticate,
+      eventService,
+      tokenProvider,
+      directory,
+      ...repositories,
+    });
   } else {
     logger.info(`Job instance, skip the api binding.`);
   }
   // non-service endpoints
+  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
+  app.use('/swagger/docs/v1', (_req, res) => {
+    res.json(swagger);
+  });
+
   app.get('/health', (_req, res) => {
     res.json({
       db: repositories.isConnected(),

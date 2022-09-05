@@ -81,6 +81,7 @@ describe('pdf', () => {
       await getTemplates(req as unknown as Request, res as unknown as Response, next);
 
       expect(res.send).toHaveBeenCalledWith(expect.arrayContaining([configuration.test]));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can call next for error', async () => {
@@ -208,6 +209,7 @@ describe('pdf', () => {
         expect.objectContaining({ tenantId, name: PDF_GENERATION_QUEUED })
       );
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'job1' }));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can call next with invalid operation', async () => {
@@ -304,6 +306,7 @@ describe('pdf', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: req.params.jobId, status: 'completed' }));
       expect(next).not.toHaveBeenCalled();
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
 
     it('can call next with not found', async () => {

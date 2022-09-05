@@ -9,6 +9,33 @@ import {
   EndpointToInternalStatusMapping,
 } from '../types';
 
+// Stored in the configuration service repository
+export type StatusServiceConfiguration = Record<string, unknown>;
+
+// The application bits that rarely change (so not quite static)
+// and are stored as part of the status-service
+// configuration.
+
+export interface StaticApplicationData {
+  name: string;
+  url: string;
+  description?: string;
+}
+// Application data, including the static
+// and dynamic bits
+export interface ApplicationData {
+  name: string;
+  url: string;
+  description?: string;
+  status: PublicServiceStatusType;
+  metadata: unknown;
+  statusTimestamp: number;
+  tenantName: string;
+  tenantRealm: string;
+  tenantId: string;
+  enabled: boolean;
+}
+
 export class ServiceStatusApplicationEntity implements ServiceStatusApplication {
   _id: string;
   description: string;

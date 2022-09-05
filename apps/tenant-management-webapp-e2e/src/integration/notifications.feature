@@ -6,20 +6,20 @@ Feature: Notifications
     Given a tenant admin user is on notification overview page
     When the user clicks Add notification type button
     Then the user views Add notification type modal
-    When the user enters "autotest-addNotificationType", "autotest notification desc", "Anyone (Anonymous)", "no", "no", "yes" on notification type modal
+    When the user enters "autotest-addNotificationType", "autotest notification desc", "public", "no", "no", "yes" on notification type modal
     And the user clicks save button in notification type modal
-    Then the user "views" the notification type card of "autotest-addNotificationType", "autotest notification desc", "Anyone (Anonymous)", "yes", "yes"
+    Then the user "views" the notification type card of "autotest-addNotificationType", "autotest notification desc", "public", "yes", "yes"
     # Verify there is Add notification button on the notification type page as well after saving a new notification type
     And the user views Add notification type button on Notification types page
     When the user clicks "edit" button for the notification type card of "autotest-addNotificationType"
     Then the user views Edit notification type modal for "autotest-addNotificationType"
-    When the user enters "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no", "no" on notification type modal
+    When the user enters "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, urn:ads:platform:file-service:file-service-admin", "no", "no", "no" on notification type modal
     And the user clicks save button in notification type modal
-    Then the user "views" the notification type card of "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no"
+    Then the user "views" the notification type card of "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, urn:ads:platform:file-service:file-service-admin", "no", "no"
     When the user clicks "delete" button for the notification type card of "autotest-editNotificationType"
     Then the user views delete "notification type" confirmation modal for "autotest-editNotificationType"
     When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the notification type card of "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no"
+    Then the user "should not view" the notification type card of "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, urn:ads:platform:file-service:file-service-admin", "no", "no"
 
   # TEST DATA: a precreated notification type named "autotest-notificationType"
   @TEST_CS-949 @REQ_CS-277 @regression
@@ -31,7 +31,7 @@ Feature: Notifications
     When the user selects "tenant-service:tenant-created" in the event dropdown
     And the user clicks Next button on Select an event page
     Then the user views Add an email template page
-    When the user enters "autotest subject" as subject and "autotest body" as body "email" template page
+    When the user enters "autotest subject" as subject and "autotest body" as body on "email" template page
     And the user clicks Add button in Add an email template page
     Then the user "views" the event of "tenant-service:tenant-created" in "autotest-notificationType"
     When the user clicks Select event button for "autotest-notificationType"
@@ -201,19 +201,19 @@ Feature: Notifications
     # Add a notification type
     When the user clicks Add notification type button on Notification type page
     Then the user views Add notification type modal
-    When the user enters "autotest-add-multi-channels", "autotest notification desc", "Anyone (Anonymous)", "yes", "yes", "yes" on notification type modal
+    When the user enters "autotest-add-multi-channels", "autotest notification desc", "public", "yes", "yes", "yes" on notification type modal
     Then the user views that email channel is greyed out
     And the user clicks save button in notification type modal
-    Then the user "views" the notification type card of "autotest-add-multi-channels", "autotest notification desc", "Anyone (Anonymous)", "yes", "yes"
+    Then the user "views" the notification type card of "autotest-add-multi-channels", "autotest notification desc", "public", "yes", "yes"
     # Add an event
     When the user clicks Select event button for "autotest-add-multi-channels"
     Then the user views Select an event modal
     When the user selects "form-service:form-submitted" in the event dropdown
     And the user clicks Next button on Select an event page
     Then the user views Add an email template page
-    When the user enters "autotest subject" as subject and "autotest body" as body "email" template page
+    When the user enters "autotest subject" as subject and "autotest body" as body on "email" template page
     Then the user selects "SMS" tab on the event template
-    When the user enters "autotest subject" as subject and "autotest body" as body "SMS" template page
+    When the user enters "autotest subject" as subject and "autotest body" as body on "SMS" template page
     And the user clicks Add button in Add an email template page
     Then the user "views" the event of "form-service:form-submitted" in "autotest-add-multi-channels"
     And the user "views" "email template indicator" for the event of "form-service:form-submitted" in "autotest-add-multi-channels" on tenant events
@@ -223,9 +223,9 @@ Feature: Notifications
     When the user clicks "edit" button for the notification type card of "autotest-add-multi-channels"
     Then the user views Edit notification type modal for "autotest-add-multi-channels"
     And the user views that email channel is greyed out
-    When the user enters "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no", "no" on notification type modal
+    When the user enters "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1", "no", "no", "no" on notification type modal
     And the user clicks save button in notification type modal
-    Then the user "views" the notification type card of "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no"
+    Then the user "views" the notification type card of "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1", "no", "no"
     And the user "views" "email template indicator" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
     And the user "should not view" "sms template indicator" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
     And the user "should not view" "bot template indicator" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
@@ -241,7 +241,7 @@ Feature: Notifications
     When the user clicks "delete" button for the notification type card of "autotest-edit-multi-channels"
     Then the user views delete "notification type" confirmation modal for "autotest-edit-multi-channels"
     When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the notification type card of "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1, file-service-admin", "no", "no"
+    Then the user "should not view" the notification type card of "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role2, beta-tester", "no", "no"
 
   @TEST_CS-1157 @REQ_CS-1070 @regression
   Scenario: As a tenant admin, I can preview the rendered notification message, so I know what my subscribers will receive.
@@ -250,5 +250,27 @@ Feature: Notifications
     Then the user views an email template modal title for "Autotest:autotest-eventDefinition"
     And the user views the email subject "Autotest"
     And the user views the email body "Autotest"
-    When the user clicks Close button in an email template modal
-    Then Preview an email template modal is closed
+    When the user clicks Close button in event template modal
+    Then Preview event template modal is closed
+
+  @TEST_CS-1289 @REQ_CS-1269 @regression
+  Scenario: As a tenant admin, I can access subscription management from the notification email preview.
+    Given a tenant admin user is on notification types page
+    Then the user "views" the event of "status-service:health-check-started" in "Application health check change"
+    When the user clicks "edit" button for "status-service:health-check-started" in "Application health check change"
+    Then the user views the link for managing email subscription
+    When the user clicks Close button in event template modal
+    Then Preview event template modal is closed
+
+  @TEST_CS-1170 @REQ_CS-1074 @regression
+  Scenario: As a tenant admin, I can override the email template for a platform notification type, so that I can customize the notification that is sent
+    Given a tenant admin user is on notification types page
+    When the user clicks "edit" button for "status-service:application-status-changed" in "Application status update"
+    Then the user views an email template modal title for "status-service:application-status-changed"
+    When the user enters "autotest subject" as subject and "autotest body" as body on "email" template page
+    And the user clicks Save all button in template modal
+    Then the user "views" Reset button for "status-service:application-status-changed" in "Application status update"
+    When the user clicks "Reset" button for "status-service:application-status-changed" in "Application status update"
+    Then the user views Reset email template modal
+    When the user clicks Delete button in Reset email template modal
+    Then the user "should not view" Reset button for "status-service:application-status-changed" in "Application status update"

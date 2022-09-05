@@ -7,11 +7,16 @@ import {
   InvalidValueError,
   InvalidOperationError,
   createValidationHandler,
-  UnauthorizedError,
+  NotFoundError,
 } from '@core-services/core-common';
-import { TenantService, toKebabName, EventService } from '@abgov/adsp-service-sdk';
+import {
+  TenantService,
+  toKebabName,
+  EventService,
+  isAllowedUser,
+  UnauthorizedUserError,
+} from '@abgov/adsp-service-sdk';
 
-import * as passport from 'passport';
 import { ServiceRoles } from '../roles';
 import axios from 'axios';
 import { Service, Links, DirectoryEntry } from '../types/directory';
@@ -21,7 +26,6 @@ import { entryUpdated, entryDeleted } from '../events';
 
 const TIME_OUT = 10000;
 
-const passportMiddleware = passport.authenticate(['core', 'tenant'], { session: false });
 interface DirectoryRouterProps {
   logger?: Logger;
   directoryRepository: DirectoryRepository;
@@ -29,56 +33,52 @@ interface DirectoryRouterProps {
   eventService: EventService;
 }
 
-const validateNamespaceEndpointsPermission =
-  (tenantService: TenantService): RequestHandler =>
-  async (req, res, next) => {
-    const roles = req.user.roles;
+export const resolveNamespaceTenant =
+  (logger: Logger, tenantService: TenantService): RequestHandler =>
+  async (req, _res, next) => {
+    const { namespace } = req.params;
     try {
-      if (!roles.includes(ServiceRoles.DirectoryAdmin)) {
-        throw new UnauthorizedError('Missing roles');
-      }
-      const tenant = await tenantService.getTenant(req.user?.tenantId);
-
+      const tenant = await tenantService.getTenantByName(namespace?.replace(/-/g, ' '));
       if (!tenant) {
-        throw new UnauthorizedError();
-      } else {
-        /**
-         * Notice, please do not use the tenant.namespace here
-         * This middleware can be only applied to path has parameter 'namespace'
-         * */
-        const isNamespaceMatch = toKebabName(tenant.name) === req.params?.namespace;
-        if (isNamespaceMatch) {
-          next();
-        } else {
-          throw new UnauthorizedError('Wrong namespace?');
-        }
+        throw new NotFoundError('directory namespace', namespace);
       }
+      req.tenant = tenant;
+      next();
     } catch (err) {
+      logger.debug(`Error encountered resolving tenant for namespace: ${namespace}. ${err}`);
       next(err);
     }
   };
+
+export const validateNamespaceEndpointsPermission: RequestHandler = async (req, _res, next) => {
+  try {
+    if (!isAllowedUser(req.user, req.tenant.id, ServiceRoles.DirectoryAdmin)) {
+      throw new UnauthorizedUserError('updated directory', req.user);
+    }
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
 
 const directoryCache = new NodeCache({ stdTTL: 300 });
 
 export const getDirectoriesByNamespace =
   (directoryRepository: DirectoryRepository): RequestHandler =>
-  async (req, res, _next) => {
+  async (req, res, next) => {
     let entries = [];
     try {
       const { namespace } = req.params;
       entries = await getNamespaceEntries(directoryRepository, namespace);
-      if (entries.length === 0) {
-        return res.sendStatus(HttpStatusCodes.NOT_FOUND);
-      }
       res.json(entries);
     } catch (err) {
-      _next(err);
+      next(err);
     }
   };
 
 export const getEntriesForService =
   (directoryRepository: DirectoryRepository): RequestHandler =>
-  async (req, res, _next) => {
+  async (req, res, next) => {
     try {
       const { namespace, service } = req.params;
       const result = await getEntriesForServiceImpl(namespace, service, directoryRepository);
@@ -87,7 +87,7 @@ export const getEntriesForService =
       }
       return res.json(result);
     } catch (err) {
-      _next(err);
+      next(err);
     }
   };
 
@@ -120,7 +120,7 @@ export const getEntriesForServiceImpl = async (
 
 export const getDirectoryEntryForApi =
   (directoryRepository: DirectoryRepository): RequestHandler =>
-  async (req, res, _next) => {
+  async (req, res, next) => {
     let result = null;
     try {
       const { namespace, service, api } = req.params;
@@ -131,16 +131,22 @@ export const getDirectoryEntryForApi =
       }
       res.json(result);
     } catch (err) {
-      _next(err);
+      next(err);
     }
   };
 
-export const createNameSpace =
+export const createNamespace =
   (directoryRepository: DirectoryRepository, tenantService: TenantService, logger: Logger): RequestHandler =>
-  async (req, res, _next) => {
+  async (req, res, next) => {
     try {
+      const user = req.user;
       const tenant = await tenantService.getTenant(req.user?.tenantId);
+      req.tenant = tenant;
       const namespace = toKebabName(tenant.name);
+      if (!isAllowedUser(user, tenant.id, ServiceRoles.DirectoryAdmin)) {
+        throw new UnauthorizedUserError('create namespace', user);
+      }
+
       const result = await directoryRepository.getDirectories(namespace);
       if (result) {
         throw new InvalidValueError('Create new namespace', `namespace ${namespace} exists`);
@@ -151,13 +157,13 @@ export const createNameSpace =
       }
     } catch (err) {
       logger.error(`Failed creating new directory namespace`);
-      _next(err);
+      next(err);
     }
   };
 
 export const addService =
   (directoryRepository: DirectoryRepository, eventService: EventService, logger: Logger): RequestHandler =>
-  async (req, res, _next) => {
+  async (req, res, next) => {
     const { namespace } = req.params;
     const user = req.user;
     const { service, url } = req.body;
@@ -172,13 +178,13 @@ export const addService =
       return res.status(HttpStatusCodes.CREATED).json(result);
     } catch (err) {
       logger.error(`Failed creating directory for namespace: ${namespace} with error ${err.message}`);
-      _next(err);
+      next(err);
     }
   };
 
 export const addServiceApi =
   (directoryRepository: DirectoryRepository, eventService: EventService, logger: Logger): RequestHandler =>
-  async (req, res, _next) => {
+  async (req, res, next) => {
     const { namespace, service } = req.params;
     const user = req.user;
     const { api, url } = req.body;
@@ -192,7 +198,7 @@ export const addServiceApi =
       return res.status(HttpStatusCodes.CREATED).json(result);
     } catch (err) {
       logger.error(`Failed creating directory for namespace: ${namespace} with error ${err.message}`);
-      _next(err);
+      next(err);
     }
   };
 
@@ -233,7 +239,7 @@ const addEntry = async (
 
 export const updateService =
   (directoryRepository: DirectoryRepository, eventService: EventService, logger: Logger): RequestHandler =>
-  async (req, res, _next) => {
+  async (req, res, next) => {
     const { namespace, service } = req.params;
     const user = req.user;
     const { url } = req.body;
@@ -253,13 +259,13 @@ export const updateService =
       }
     } catch (err) {
       logger.error(`Failed updating directory for namespace: ${namespace} with error ${err.message}`);
-      _next(err);
+      next(err);
     }
   };
 
 export const updateApi =
   (directoryRepository: DirectoryRepository, eventService: EventService, logger: Logger): RequestHandler =>
-  async (req, res, _next) => {
+  async (req, res, next) => {
     const { namespace, service, api } = req.params;
     const user = req.user;
     const { url } = req.body;
@@ -280,7 +286,7 @@ export const updateApi =
       }
     } catch (err) {
       logger.error(`Failed updating directory for namespace: ${namespace} with error ${err.message}`);
-      _next(err);
+      next(err);
     }
   };
 
@@ -306,7 +312,7 @@ const updateEntry = async (
 
 export const deleteService =
   (directoryRepository: DirectoryRepository, eventService: EventService, logger: Logger): RequestHandler =>
-  async (req, res, _next) => {
+  async (req, res, next) => {
     const { namespace, service } = req.params;
     const user = req.user;
 
@@ -319,13 +325,13 @@ export const deleteService =
       return res.sendStatus(HttpStatusCodes.OK);
     } catch (err) {
       logger.error(`Failed deleting directory for namespace: ${namespace} with error ${err.message}`);
-      _next(err);
+      next(err);
     }
   };
 
 export const deleteApi =
   (directoryRepository: DirectoryRepository, eventService: EventService, logger: Logger): RequestHandler =>
-  async (req, res, _next) => {
+  async (req, res, next) => {
     const { namespace, service, api } = req.params;
     const user = req.user;
 
@@ -338,7 +344,7 @@ export const deleteApi =
       return res.sendStatus(HttpStatusCodes.OK);
     } catch (err) {
       logger.error(`Failed deleting directory for namespace: ${namespace} with error ${err.message}`);
-      _next(err);
+      next(err);
     }
   };
 
@@ -368,7 +374,7 @@ const deleteEntry = async (
 
 export const getServiceData =
   (directoryRepository: DirectoryRepository, logger: Logger): RequestHandler =>
-  async (req, res, _next) => {
+  async (req, res, next) => {
     const { namespace, service } = req.params;
     // check cache if data exist
     const services: Service[] = directoryCache.get(`directory-${namespace}`);
@@ -412,7 +418,7 @@ export const getServiceData =
       return res.json(filteredService);
     } catch (err) {
       logger.error(`Failed get service for namespace: ${namespace} with error ${err.message}`);
-      _next(err);
+      next(err);
     }
   };
 
@@ -438,6 +444,7 @@ export const createDirectoryRouter = ({
         ['params']
       )
     ),
+    resolveNamespaceTenant(logger, tenantService),
     getDirectoriesByNamespace(directoryRepository)
   );
 
@@ -454,6 +461,7 @@ export const createDirectoryRouter = ({
         ['params']
       )
     ),
+    resolveNamespaceTenant(logger, tenantService),
     getEntriesForService(directoryRepository)
   );
 
@@ -470,20 +478,22 @@ export const createDirectoryRouter = ({
         ['params']
       )
     ),
+    resolveNamespaceTenant(logger, tenantService),
     getDirectoryEntryForApi(directoryRepository)
   );
 
   /**
    * Create new namespace.
    */
-  directoryRouter.post('/namespaces', passportMiddleware, createNameSpace(directoryRepository, tenantService, logger));
+  directoryRouter.post('/namespaces', createNamespace(directoryRepository, tenantService, logger));
 
   /**
    * Add a service to a namespace.
    */
   directoryRouter.post(
     '/namespaces/:namespace/services',
-    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
+    resolveNamespaceTenant(logger, tenantService),
+    validateNamespaceEndpointsPermission,
     addService(directoryRepository, eventService, logger)
   );
 
@@ -494,7 +504,8 @@ export const createDirectoryRouter = ({
    */
   directoryRouter.post(
     '/namespaces/:namespace/services/:service/apis',
-    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
+    resolveNamespaceTenant(logger, tenantService),
+    validateNamespaceEndpointsPermission,
     addServiceApi(directoryRepository, eventService, logger)
   );
 
@@ -503,7 +514,8 @@ export const createDirectoryRouter = ({
    */
   directoryRouter.patch(
     '/namespaces/:namespace/services/:service',
-    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
+    resolveNamespaceTenant(logger, tenantService),
+    validateNamespaceEndpointsPermission,
     updateService(directoryRepository, eventService, logger)
   );
 
@@ -512,7 +524,8 @@ export const createDirectoryRouter = ({
    */
   directoryRouter.patch(
     '/namespaces/:namespace/services/:service/apis/:api',
-    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
+    resolveNamespaceTenant(logger, tenantService),
+    validateNamespaceEndpointsPermission,
     updateApi(directoryRepository, eventService, logger)
   );
 
@@ -521,7 +534,8 @@ export const createDirectoryRouter = ({
    */
   directoryRouter.delete(
     '/namespaces/:namespace/services/:service',
-    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
+    resolveNamespaceTenant(logger, tenantService),
+    validateNamespaceEndpointsPermission,
     deleteService(directoryRepository, eventService, logger)
   );
 
@@ -530,7 +544,8 @@ export const createDirectoryRouter = ({
    */
   directoryRouter.delete(
     '/namespaces/:namespace/services/:service/apis/:api',
-    [passportMiddleware, validateNamespaceEndpointsPermission(tenantService)],
+    resolveNamespaceTenant(logger, tenantService),
+    validateNamespaceEndpointsPermission,
     deleteApi(directoryRepository, eventService, logger)
   );
 
@@ -548,6 +563,7 @@ export const createDirectoryRouter = ({
         ['params']
       )
     ),
+    resolveNamespaceTenant(logger, tenantService),
     getServiceData(directoryRepository, logger)
   );
 

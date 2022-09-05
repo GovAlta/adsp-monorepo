@@ -3,7 +3,8 @@ export interface PdfTemplate {
   name: string;
   description: string;
   template: string;
-  useWrapper: boolean;
+  header: string;
+  footer: string;
 }
 
 export interface PdfGenerationResponse {
@@ -97,5 +98,6 @@ export const defaultPdfTemplate: PdfTemplate = {
   name: '',
   description: '',
   template: '',
-  useWrapper: false,
+  header: '',
+  footer: '',
 };

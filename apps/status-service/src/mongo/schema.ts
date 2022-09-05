@@ -135,6 +135,20 @@ export const configurationSchema = {
       },
     },
   },
+  patternProperties: {
+    // property key is the mongo _id (12 hex bytes) of the Application.
+    '^[a-fA-F0-9]{24}$': {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Name of the application' },
+        url: { type: 'string', description: 'URL to be checked' },
+        description: { type: 'string', description: 'Tell us about your application' },
+      },
+      required: ['name', 'url'],
+      additionalProperties: false,
+    },
+  },
+  additionalProperties: true,
 };
 
 noticeApplicationSchema.index({ createdAt: 1 });

@@ -374,18 +374,17 @@ Then('the user views the release info and DIO contact info', function () {
     });
 });
 
-Then('the user views the login link with a copy button', function () {
-  tenantAdminObj
-    .tenantAutoLoginUrl()
-    .should('contain.text', Cypress.config().baseUrl + '/' + Cypress.env('realm') + '/login');
-  tenantAdminObj.clickToCopyButton().then((button) => {
-    expect(button.length).to.be.gt(0); // button element exists
-  });
+When('the user clicks Copy login link', function () {
+  tenantAdminObj.copyLoginLinkButton().shadow().find('button').scrollIntoView().click({ force: true });
 });
 
-When('the user clicks click to copy button', function () {
-  tenantAdminObj.clickToCopyButton().click();
-  cy.wait(2000);
+Then('the user views the message of {string} from clicking Copy login link', function (message) {
+  tenantAdminObj
+    .copyLoginLinkButtonMessage()
+    .invoke('text')
+    .then((msg) => {
+      expect(msg).to.contain(message);
+    });
 });
 
 Then('the login link is copied to the clipboard', function () {
@@ -393,18 +392,20 @@ Then('the login link is copied to the clipboard', function () {
 });
 
 Then(
-  'the user views introductions and links for {string}, {string}, {string}, {string}, {string}, {string} and {string}',
-  function (access, directory, file, status, events, notification, configuration) {
+  'the user views introductions and links for {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string} and {string}',
+  function (access, calendar, configuration, directory, events, file, notification, pdf, status) {
     const cardTextArray = [
       'Access allows',
-      'The directory service is',
-      'The file service provides',
-      'The status service allows',
-      'The event service provides',
-      'The notifications service provides',
+      'The calendar service provides',
       'The configuration service provides',
+      'The directory service is',
+      'The event service provides',
+      'The file service provides',
+      'The notifications service provides',
+      'The PDF service provides',
+      'The status service allows',
     ];
-    const cardTitleArray = [access, directory, file, status, events, notification, configuration];
+    const cardTitleArray = [access, calendar, configuration, directory, events, file, notification, pdf, status];
     tenantAdminObj.goaCardTexts().should('have.length', cardTextArray.length);
     tenantAdminObj.goaCardTitles().should('have.length', cardTitleArray.length);
     tenantAdminObj.goaCardTexts().each((element, index) => {
@@ -480,7 +481,7 @@ When('the user searches with {string}', function (namespaceName) {
   tenantAdminObj.eventLogSearchBox().type(namespaceName);
   tenantAdminObj.eventLogSearchBox().should('have.value', namespaceName);
   tenantAdminObj.eventLogSearchBtn().click();
-  cy.wait(2000);
+  cy.wait(5000);
 });
 
 Then('the user views the events matching the search filter of {string}', function (namespaceName) {
@@ -868,5 +869,164 @@ Then(
         expect(eventDetails).to.contain('"namespace": ' + '"' + namespace + '"');
         expect(eventDetails).to.contain('"name": ' + '"' + username + '"');
       });
+  }
+);
+
+Then(
+  'the user views event details of {string}, {string} of application-notice-published for status-service',
+  function (noticeDesc, appName) {
+    const regex_notice_description = '"notice": {(.|\n)*"description": "' + noticeDesc + '"';
+    const regex_notice_endTimestamp = '"notice": {(.|\n)*"endTimestamp": ".+Z"';
+    const regex_notice_startTimestamp = '"notice": {(.|\n)*"startTimestamp": ".+Z"';
+    const regex_postedBy_userId = '"postedBy": {(.|\n)*"userId": ".+"';
+    const regex_postedBy_userName = '"postedBy": {(.|\n)*"userName": ".+"';
+    const regex_application_id = '"application": {(.|\n)*"id": ".+"';
+    const regex_application_name = '"application": {(.|\n)*"name": "' + appName + '"';
+    const regex_application_description = '"application": {(.|\n)*"description": ".*"';
+    tenantAdminObj.eventDetails().then((elements) => {
+      expect(elements.length).to.equal(1);
+    });
+    tenantAdminObj
+      .eventDetails()
+      .invoke('text')
+      .then((eventDetails) => {
+        // Verify all required information showing in event details including notice description and application name.
+        expect(eventDetails).to.match(new RegExp(regex_notice_description));
+        expect(eventDetails).to.match(new RegExp(regex_notice_endTimestamp));
+        expect(eventDetails).to.match(new RegExp(regex_notice_startTimestamp));
+        expect(eventDetails).to.match(new RegExp(regex_postedBy_userId));
+        expect(eventDetails).to.match(new RegExp(regex_postedBy_userName));
+        expect(eventDetails).to.match(new RegExp(regex_application_id));
+        expect(eventDetails).to.match(new RegExp(regex_application_name));
+        expect(eventDetails).to.match(new RegExp(regex_application_description));
+      });
+  }
+);
+
+Then(
+  'the user views {string}, {string}, {string} under {string}',
+  function (roleName, roleDesc, isInAdminRole, serviceName) {
+    let matchCount = 0;
+    let isFound = false;
+    let tenantOrCore;
+    cy.wait(5000); // Wait for the service roles to show up
+    // For each row of service roles, check if name, desc, isInAdminRole are matched. If all 3 cells are matched, it's a found
+    if (serviceName.includes('urn:ads:platform')) {
+      tenantOrCore = 'core';
+    } else {
+      tenantOrCore = 'tenant';
+    }
+    tenantAdminObj
+      .serviceRoleTableBody(tenantOrCore, serviceName)
+      .find('tr')
+      .each((row) => {
+        cy.wrap(row)
+          .find('td')
+          .eq(0)
+          .invoke('text')
+          .then((firstCell) => {
+            if (firstCell == roleName) {
+              matchCount = matchCount + 1;
+            }
+          })
+          .then(() => {
+            cy.wrap(row)
+              .find('td')
+              .eq(1)
+              .invoke('text')
+              .then((secondCell) => {
+                if (secondCell == roleDesc) {
+                  matchCount = matchCount + 1;
+                }
+              });
+          })
+          .then(() => {
+            cy.wrap(row)
+              .find('td')
+              .eq(2)
+              .invoke('text')
+              .then((thirdCell) => {
+                if (thirdCell == isInAdminRole) {
+                  matchCount = matchCount + 1;
+                }
+              });
+          })
+          .then(() => {
+            if (matchCount == 3) {
+              isFound = true;
+            }
+          });
+      })
+      .then(() => {
+        expect(isFound).to.equal(
+          true,
+          'Failed to find service role of ' +
+            roleName +
+            ', ' +
+            roleDesc +
+            ', ' +
+            isInAdminRole +
+            ' under ' +
+            serviceName
+        );
+      });
+  }
+);
+
+Then(
+  'the user views the event details of {string} application status changed from {string} to {string} for subscriber of {string}',
+  function (appName, orgStatus, newStatusInput, email) {
+    let isFound = false;
+    let orgStatusValidationString;
+    let newStatusValidationString;
+
+    if (orgStatus != '{original status}') {
+      orgStatusValidationString = orgStatus;
+    } else {
+      cy.task('getOriginalAppStatus').then((appStatus) => {
+        orgStatusValidationString = appStatus;
+      });
+    }
+    if (newStatusInput != '{new status}') {
+      newStatusValidationString = newStatusInput;
+    } else {
+      cy.task('getNewAppStatus').then((appStatus) => {
+        newStatusValidationString = appStatus;
+      });
+    }
+
+    tenantAdminObj.eventToggleDetailsIcons().each(($element, $index, $full_array) => {
+      //clicking each eye-icon in the list to verify event details
+      cy.wrap($element).scrollIntoView().click({ force: true });
+      tenantAdminObj
+        .eventDetails()
+        .invoke('text')
+        .then((eventDetails) => {
+          // Check if event log details contains expected info
+          if (
+            eventDetails.includes('to": "' + email) &&
+            eventDetails.includes(appName + ' status changed to') &&
+            eventDetails.includes(
+              'from <b>' +
+                orgStatusValidationString.toLowerCase() +
+                '</b> to <b>' +
+                newStatusValidationString.toLowerCase() +
+                '</b>'
+            )
+          ) {
+            isFound = true;
+            cy.wrap($element).click({ force: true });
+          } else {
+            //clicking eye icon to close event details
+            cy.wrap($element).scrollIntoView().click({ force: true });
+          }
+          if (isFound == false && $index + 1 == $full_array.length) {
+            expect($index + 1).to.not.eq(
+              $full_array.length,
+              'No matching email found throughout list of event details'
+            );
+          }
+        });
+    });
   }
 );

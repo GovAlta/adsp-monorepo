@@ -25,4 +25,5 @@ export interface CalendarDateCriteria {
   isWeekend?: boolean;
   isHoliday?: boolean;
   isBusinessDay?: boolean;
+  isInLieuOfDay?: boolean;
 }

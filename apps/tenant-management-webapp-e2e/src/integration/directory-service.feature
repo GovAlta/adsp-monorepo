@@ -5,7 +5,7 @@ Feature: Directory-service
   Scenario Outline: As a tenant admin, I can see the Directory service overview and service entries
     Given a tenant admin user is on tenant admin page
     When the user selects the "Directory" menu item
-    Then the user views the Directory service overview content "The directory service is a register of services and their APIs"
+    Then the user views the "Directory service" overview content "The directory service is a register of services and their APIs"
     Then the user views the aside item "Support" with the aside item link "Get support"
     When the user selects "Entries" tab for "Directory"
     Then the user views the service entry of "<Directory Name>" and "<URL>"
@@ -122,3 +122,8 @@ Feature: Directory-service
     Then the user views the events matching the search filter of "directory-service:entry-deleted"
     When the user clicks Show details button for the latest event of "entry-deleted" for "directory-service"
     Then the user views the event details of "autotest-test-event", "v1", "https://myServiceEntry-2.ca/v1", "autotest", "Auto Test"
+
+  @TEST_CS-1241 @REQ_CS-1094 @regression @api
+  Scenario:  As a developer, I can access the directory via its API, so I can lookup specific service URLs.
+    When the user sends an anonymous request to directory service to get all "autotest" tenant service entries
+    Then the user receives response with all services and their URLs for "autotest"

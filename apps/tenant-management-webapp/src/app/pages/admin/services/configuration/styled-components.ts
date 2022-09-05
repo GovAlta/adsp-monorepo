@@ -64,11 +64,72 @@ export const StatusIcon = styled.div`
 `;
 export const DescriptionDiv = styled.div`
   margin-left: 2rem;
-  font-size: 12px;
+  font-size: 16px;
 `;
 export const ErrorStatusText = styled.div`
   font-size: var(--fs-sm);
   line-height: calc(var(--fs-sm) + 0.5rem);
   color: var(--color-red);
   margin-top: 1rem;
+`;
+
+export const SelectedExports = styled.div`
+  border: 1px solid #666666;
+  border-radius: 20px;
+  padding: 4px 6.25px;
+  font-size: 16px;
+  margin: 8px;
+
+  .closePadding {
+    padding: 2px;
+    float: right;
+  }
+`;
+
+export const Exports = styled.div`
+  .flex-row {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .flex-reverse-row {
+    display: flex;
+    flex-direction: row-reverse;
+  }
+
+  .flex-one {
+    flex: 1;
+  }
+
+  .button-style {
+    text-align-last: end;
+    margin: 5px 3px 0 3px;
+  }
+
+  .auto-overflow {
+    overflow: auto;
+  }
+
+  .absolute-position {
+    position: absolute;
+  }
+`;
+
+export const FileTableStyles = styled.div`
+  .flex-horizontal {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .flex {
+    flex: 1;
+  }
+
+  .mt-1 {
+    margin-top: 2px;
+  }
+
+  .mt-2 {
+    margin-top: 4px;
+  }
 `;

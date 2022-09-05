@@ -79,11 +79,19 @@ export class MongoDirectoryRepository implements DirectoryRepository {
   }
 
   update(directory: Directory): Promise<boolean> {
-    return new Promise<boolean>((resolve, reject) =>
-      this.directoryModel.findOneAndUpdate({ name: directory.name }, directory, { upsert: true }, (err, doc) =>
+    return new Promise<boolean>((resolve, reject) => {
+      const uniqueServices = [];
+      directory.services.forEach((entry) => {
+        if (!uniqueServices.map((uniqueService) => uniqueService.service).includes(entry.service)) {
+          uniqueServices.push(entry);
+        }
+      });
+      directory.services = uniqueServices;
+
+      return this.directoryModel.findOneAndUpdate({ name: directory.name }, directory, { upsert: true }, (err, doc) =>
         err ? reject(err) : resolve(!!doc)
-      )
-    );
+      );
+    });
   }
 
   async exists(name: string): Promise<boolean> {

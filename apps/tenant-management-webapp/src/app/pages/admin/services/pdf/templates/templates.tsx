@@ -2,7 +2,7 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { AddEditPdfTemplate } from './AddEditPdfTemplates';
 import { GoAButton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
-import { getPdfTemplates, updatePdfTemplate } from '@store/pdf/action';
+import { getPdfTemplates, updatePdfTemplate, deletePdfTemplate } from '@store/pdf/action';
 import { RootState } from '@store/index';
 import { renderNoItem } from '@components/NoItem';
 import { PdfTemplatesTable } from './templatesList';
@@ -20,29 +20,33 @@ import { TemplateEditor } from './previewEditor/TemplateEditor';
 import { PreviewTemplate } from './previewEditor/PreviewTemplate';
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
-
+import { DeleteModal } from '@components/DeleteModal';
 interface PdfTemplatesProps {
   openAddTemplate: boolean;
 }
 export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemplate }) => {
   const [openAddPdfTemplate, setOpenAddPdfTemplate] = useState(false);
-  const [selectedPdfTemplate, setSelectedPdfTemplate] = useState(defaultPdfTemplate);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [bodyPreview, setBodyPreview] = useState('');
+  const [headerPreview, setHeaderPreview] = useState('');
+  const [footerPreview, setFooterPreview] = useState('');
+  const [currentChannel, setCurrentChannel] = useState('main');
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const pdfTemplates = useSelector((state: RootState) => {
     return state?.pdf?.pdfTemplates;
   });
 
   const [currentTemplate, setCurrentTemplate] = useState(defaultPdfTemplate);
-  const [templateEditErrors, setTemplateEditErrors] = useState({
-    body: '',
-  });
   const [body, setBody] = useState('');
+  const [footer, setFooter] = useState('');
+  const [header, setHeader] = useState('');
 
   const [isEdit, setIsEdit] = useState(false);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+
+  const channelNames = { main: 'PDF preview', 'header/footer': 'Header / Footer preview' };
 
   const webappUrl = useSelector((state: RootState) => {
     return state.config.serviceUrls.tenantManagementWebApp;
@@ -70,10 +74,6 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
             {
               label: 'template',
               insertText: 'template',
-            },
-            {
-              label: 'useWrapper',
-              insertText: 'useWrapper',
             },
           ],
         },
@@ -107,11 +107,11 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     dispatch(getPdfTemplates());
   }, []);
 
-  const savePdfTemplate = (useWrapper) => {
+  const savePdfTemplate = () => {
     const saveObject = JSON.parse(JSON.stringify(currentTemplate));
     saveObject.template = body;
-    saveObject.useWrapper = useWrapper;
-
+    saveObject.header = header;
+    saveObject.footer = footer;
     dispatch(updatePdfTemplate(saveObject));
 
     reset();
@@ -137,7 +137,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
             open={openAddPdfTemplate}
             isEdit={isEdit}
             onClose={reset}
-            initialValue={selectedPdfTemplate}
+            initialValue={defaultPdfTemplate}
             onSave={(definition) => {
               dispatch(updatePdfTemplate(definition));
             }}
@@ -151,6 +151,23 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
               setShowTemplateForm(true);
               setCurrentTemplate(currentTemplate);
               setBody(currentTemplate.template);
+            }}
+            onDelete={(currentTemplate) => {
+              setShowDeleteConfirmation(true);
+              setCurrentTemplate(currentTemplate);
+            }}
+          />
+        )}
+        {/* Delete confirmation */}
+        {showDeleteConfirmation && (
+          <DeleteModal
+            isOpen={showDeleteConfirmation}
+            title="Delete PDF Template"
+            content={`Delete ${currentTemplate?.id}?`}
+            onCancel={() => setShowDeleteConfirmation(false)}
+            onDelete={() => {
+              setShowDeleteConfirmation(false);
+              dispatch(deletePdfTemplate(currentTemplate));
             }}
           />
         )}
@@ -167,13 +184,49 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                 template={currentTemplate}
                 subjectEditorConfig={subjectEditorConfig}
                 bodyTitle="Body"
-                onBodyChange={(value, channel) => {
+                onBodyChange={(value) => {
                   setBody(value);
 
                   try {
                     setBodyPreview(
                       generateMessage(
-                        getTemplateBody(value, channel === 'Snippet' ? 'pdfWithWrapper' : 'pdf', {
+                        getTemplateBody(value, 'pdf', {
+                          data: currentTemplate,
+                          serviceUrl: webappUrl,
+                          today: new Date().toDateString(),
+                        }),
+                        { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() }
+                      )
+                    );
+                  } catch (e) {
+                    console.error('error: ' + e.message);
+                  }
+                }}
+                onHeaderChange={(value) => {
+                  setHeader(value);
+
+                  try {
+                    setHeaderPreview(
+                      generateMessage(
+                        getTemplateBody(value, 'pdf', {
+                          data: currentTemplate,
+                          serviceUrl: webappUrl,
+                          today: new Date().toDateString(),
+                        }),
+                        { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() }
+                      )
+                    );
+                  } catch (e) {
+                    console.error('error: ' + e.message);
+                  }
+                }}
+                onFooterChange={(value) => {
+                  setFooter(value);
+
+                  try {
+                    setFooterPreview(
+                      generateMessage(
+                        getTemplateBody(value, 'pdf', {
                           data: currentTemplate,
                           serviceUrl: webappUrl,
                           today: new Date().toDateString(),
@@ -189,7 +242,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                   try {
                     setBodyPreview(
                       generateMessage(
-                        getTemplateBody(body, channel === 'Snippet' ? 'pdfWithWrapper' : 'pdf', {
+                        getTemplateBody(body, 'pdf', {
                           data: currentTemplate,
                           serviceUrl: webappUrl,
                           today: new Date().toDateString(),
@@ -200,16 +253,26 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                   } catch (e) {
                     console.error('error: ' + e.message);
                   }
+
+                  setCurrentChannel(channel);
                 }}
+                bodyEditorHintText={
+                  "*GOA default styles are applied if the template doesn't include proper <html> opening and closing tags"
+                }
                 suggestion={getSuggestion()}
                 bodyEditorConfig={bodyEditorConfig}
-                errors={templateEditErrors}
-                saveCurrentTemplate={(useWrapper) => savePdfTemplate(useWrapper)}
+                saveCurrentTemplate={() => savePdfTemplate()}
                 cancel={() => reset()}
               />
 
               <PreviewTemplateContainer>
-                <PreviewTemplate channelTitle={`PDF preview`} bodyPreviewContent={bodyPreview} />
+                <PreviewTemplate
+                  channelTitle={channelNames[currentChannel]}
+                  bodyPreviewContent={bodyPreview}
+                  headerPreviewContent={headerPreview}
+                  footerPreviewContent={footerPreview}
+                  channel={currentChannel}
+                />
               </PreviewTemplateContainer>
             </NotificationTemplateEditorContainer>
           </ModalContent>

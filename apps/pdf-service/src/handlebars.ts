@@ -1,6 +1,7 @@
 import * as handlebars from 'handlebars';
 import { DateTime } from 'luxon';
 import { TemplateService } from './pdf';
+import { getTemplateBody } from '@core-services/notification-shared';
 
 const TIME_ZONE = 'America/Edmonton';
 handlebars.registerHelper('formatDate', function (value: unknown, { hash = {} }: { hash: Record<string, string> }) {
@@ -21,8 +22,9 @@ handlebars.registerHelper('formatDate', function (value: unknown, { hash = {} }:
 });
 
 class HandlebarsTemplateService implements TemplateService {
-  getTemplateFunction(template: string) {
-    return handlebars.compile(template);
+  getTemplateFunction(template: string, channel?: string) {
+    const styledTemplate = getTemplateBody(template, channel || 'pdf', {});
+    return handlebars.compile(styledTemplate);
   }
 }
 

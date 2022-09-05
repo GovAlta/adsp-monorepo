@@ -31,9 +31,10 @@ Cypress.on('uncaught:exception', (err) => {
   if (
     err.message.includes('Cannot read properties of null') || // App error on event definition modal save
     err.message.includes("Failed to execute 'importScripts' on 'WorkerGlobalScope'") || // App error on event definition modal save
-    err.message.includes('expected 0 to') || // App error for clicking Published filtering radio button on notices page
     err.message.includes("Cannot read property 'getText' of null") || // App error for saving notification templates
-    err.message.includes("Cannot read properties of undefined (reading 'map')") // App error for saving file types
+    err.message.includes("Cannot read properties of undefined (reading 'map')") || // App error for saving file types
+    err.message.includes('Document is not focused') || // Copy login link button
+    err.message.includes('Write permission denied') // Copy login link button
   ) {
     return false;
   }

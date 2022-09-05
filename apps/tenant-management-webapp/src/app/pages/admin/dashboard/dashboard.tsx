@@ -1,5 +1,5 @@
-import React from 'react';
-import { GoAButton, GoACallout } from '@abgov/react-components';
+import React, { useState, useEffect } from 'react';
+import { GoACallout } from '@abgov/react-components';
 import { GoACard } from '@abgov/react-components/experimental';
 import { Link } from 'react-router-dom';
 import ReactTooltip from 'react-tooltip';
@@ -9,6 +9,122 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import CopyIcon from '@icons/copy-outline.svg';
+import { GoAButton as GoAButtonV2 } from '@abgov/react-components-new';
+import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
+import { ExternalLink } from '@components/icons/ExternalLink';
+
+interface LinkCopyComponentProps {
+  link: string;
+}
+
+const LinkCopyComponentWrapper = styled.div`
+  position: relative;
+  padding-top: 1.5rem;
+`;
+
+const CopyLinkToolTipWrapper = styled.div`
+  .checkmark-icon {
+    display: inline-block;
+    margin-top: 0.5rem;
+    margin-left: 0.5rem;
+  }
+  .message {
+    font-size: 0.875rem;
+    display: inline;
+    position: absolute;
+    top: 0.3rem;
+    left: 2rem;
+  }
+  .URL-tooltip {
+    width: 30rem !important;
+    left: -5.5rem;
+    font-size: 10px;
+  }
+  p {
+    position: absolute;
+    background: var(--color-gray-100);
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 30px;
+    width: 12rem;
+    height: 2.2rem;
+    top: -1.5rem;
+    left: 1rem;
+  }
+
+  p:before {
+    content: '';
+    position: absolute;
+    top: 2rem;
+    left: 6rem;
+    z-index: 1;
+    border: solid 15px transparent;
+    border-right-color: var(--color-gray-100);
+    border-top: 15px solid var(--color-gray-100);
+    border-right: 10px solid transparent;
+    border-left: 10px solid transparent;
+    border-bottom: none;
+  }
+`;
+
+const LinkCopyComponent = ({ link }: LinkCopyComponentProps): JSX.Element => {
+  const [isCopied, setIsCopied] = useState<boolean>(false);
+  const [isShowURL, setIsShowURL] = useState<boolean>(false);
+
+  useEffect(() => {
+    let tooltipTimer = null;
+    if (isCopied === true) {
+      tooltipTimer = setTimeout(() => {
+        setIsCopied(false);
+      }, 8 * 1000);
+    }
+    return () => {
+      if (tooltipTimer !== null) {
+        clearTimeout(tooltipTimer);
+      }
+    };
+  }, [isCopied]);
+
+  return (
+    <LinkCopyComponentWrapper
+      onMouseEnter={() => {
+        setIsShowURL(true);
+      }}
+      onMouseLeave={() => {
+        setIsShowURL(false);
+      }}
+    >
+      {isCopied && (
+        <CopyLinkToolTipWrapper>
+          <p>
+            <div className="checkmark-icon">
+              <GreenCircleCheckMark />
+            </div>
+            <div className="message">Link copied to clipboard</div>
+          </p>
+        </CopyLinkToolTipWrapper>
+      )}
+
+      {!isCopied && isShowURL && (
+        <CopyLinkToolTipWrapper>
+          <p className="URL-tooltip">
+            <div className="message">{link}</div>
+          </p>
+        </CopyLinkToolTipWrapper>
+      )}
+      <GoAButtonV2
+        type="secondary"
+        leadingIcon="link"
+        onClick={() => {
+          navigator.clipboard.writeText(link);
+          setIsCopied(true);
+        }}
+      >
+        Copy login link
+      </GoAButtonV2>
+    </LinkCopyComponentWrapper>
+  );
+};
 
 const Dashboard = (): JSX.Element => {
   const tenantAdminRole = 'tenant-admin';
@@ -55,7 +171,31 @@ const Dashboard = (): JSX.Element => {
                         Access allows you to add a secure sign in to your application and services with minimum effort
                         and configuration. No need to deal with storing or authenticating users. It's all available out
                         of the box.
-                        <div>&nbsp;</div>
+                      </div>
+                      <div>&nbsp;</div>
+                    </GoACard>
+                  </GridItem>
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <h2>
+                        <Link to="/admin/services/calendar">Calendar</Link>
+                      </h2>
+                      <div>
+                        The calendar service provides information about dates, a model of calendars, calendar events and
+                        scheduling. This service manages dates and times in a particular timezone (America/Edmonton)
+                        rather than UTC or a particular UTC offset.
+                      </div>
+                    </GoACard>
+                  </GridItem>
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <h2>
+                        <Link to="/admin/services/configuration">Configuration</Link>
+                      </h2>
+                      <div>
+                        The configuration service provides a generic json document store for storage and revisioning of
+                        infrequently changing configuration. Store configuration against namespace and name keys, and
+                        optionally define configuration schemas for write validation.
                       </div>
                     </GoACard>
                   </GridItem>
@@ -69,6 +209,20 @@ const Dashboard = (): JSX.Element => {
                         directory to lookup URLs for service from a common directory API. Add entries for your own
                         services so they can be found using the directory for service discovery.
                       </div>
+                      <div>&nbsp;</div>
+                    </GoACard>
+                  </GridItem>
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <h2>
+                        <Link to="/admin/services/event">Event</Link>
+                      </h2>
+                      <div>
+                        The event service provides tenant applications with the ability to send domain events.
+                        Applications are able to leverage additional capabilities as side effects through these events.
+                      </div>
+                      <div>&nbsp;</div>
+                      <div>&nbsp;</div>
                     </GoACard>
                   </GridItem>
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
@@ -80,30 +234,6 @@ const Dashboard = (): JSX.Element => {
                         The file service provides the capability to upload and download files. Consumers are registered
                         with their own space (tenant) containing file types that include role based access policy, and
                         can associate files to domain records.
-                      </div>
-                    </GoACard>
-                  </GridItem>
-                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoACard type="primary">
-                      <h2>
-                        <Link to="/admin/services/status">Status</Link>
-                      </h2>
-                      <div>
-                        The status service allows for easy monitoring of application downtime. Each application should
-                        represent a service that is useful to the end user by itself, such as child care subsidy and
-                        child care certification.
-                        <div>&nbsp;</div>
-                      </div>
-                    </GoACard>
-                  </GridItem>
-                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoACard type="primary">
-                      <h2>
-                        <Link to="/admin/services/event">Event</Link>
-                      </h2>
-                      <div>
-                        The event service provides tenant applications with the ability to send domain events.
-                        Applications are able to leverage additional capabilities as side effects through these events.
                       </div>
                     </GoACard>
                   </GridItem>
@@ -123,13 +253,23 @@ const Dashboard = (): JSX.Element => {
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                     <GoACard type="primary">
                       <h2>
-                        <Link to="/admin/services/configuration">Configuration</Link>
+                        <Link to="/admin/services/pdf">PDF</Link>
                       </h2>
                       <div>
-                        The configuration service provides a generic json document store for storage and revisioning of
-                        infrequently changing configuration. Store configuration against namespace and name keys, and
-                        optionally define configuration schemas for write validation.
-                        <div>&nbsp;</div>
+                        The PDF service provides PDF operations like generating new PDFs from templates. It runs
+                        operations as asynchronous jobs and uploads the output PDF files to the file service.
+                      </div>
+                    </GoACard>
+                  </GridItem>
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <h2>
+                        <Link to="/admin/services/status">Status</Link>
+                      </h2>
+                      <div>
+                        The status service allows for easy monitoring of application downtime. Each application should
+                        represent a service that is useful to the end user by itself, such as child care subsidy and
+                        child care certification.
                       </div>
                     </GoACard>
                   </GridItem>
@@ -142,33 +282,25 @@ const Dashboard = (): JSX.Element => {
             <p>To give another user limited access to your realm:</p>
 
             <p>
-              1. Add the 'tenant-admin' role to the user's assigned roles from{' '}
-              <a href={getKeycloakAdminPortalUsers()} rel="noopener noreferrer" target="_blank">
-                here
-              </a>
+              <ListWrapper>
+                <li>
+                  Share the login URL below and have your user <ExternalLink link={loginUrl} text="login" /> once to
+                  create their account.
+                </li>
+                <li>
+                  Add the 'tenant-admin' role to the user's assigned roles from{' '}
+                  <ExternalLink link={getKeycloakAdminPortalUsers()} text="here" />
+                  <br />
+                  (Role Mapping › Client Roles › urn:ads:platform:tenant-service › Add selected)
+                </li>
+                <li>
+                  Once granted the role, the user can access tenant admin using the URL below.
+                  <br />
+                  <LinkCopyComponent link={loginUrl} />
+                </li>
+              </ListWrapper>
             </p>
-            <div className="small-font mt-2">
-              (Role Mapping &#8250; Client Roles &#8250; urn:ads:platform:tenant-service &#8250; Add selected)
-            </div>
-
-            <p>2. Share the following URL to complete the process.</p>
-
-            <div className="copy-url">
-              <a target="_blank" href={loginUrl} rel="noreferrer">
-                {loginUrl}
-              </a>
-            </div>
-            <GoAButton data-tip="Copied!" data-for="registerTipUrl">
-              Click to copy
-            </GoAButton>
-            <ReactTooltip
-              id="registerTipUrl"
-              place="top"
-              event="click"
-              eventOff="blur"
-              effect="solid"
-              afterShow={() => _afterShow(loginUrl)}
-            />
+            <br />
           </DashboardAside>
         </Page>
         <footer>
@@ -215,7 +347,7 @@ const DashboardAside = styled(Aside)`
   padding-top: 1.6em;
 
   .copy-url {
-            font - size: var(--fs-sm);
+    font - size: var(--fs-sm);
     background-color: var(--color-gray-100);
     border: 1px solid var(--color-gray-300);
     border-radius: 1px;
@@ -231,7 +363,7 @@ const DashboardAside = styled(Aside)`
   }
 
   .mt-2 {
-            margin - top: 2em;
+    margin - top: 2em;
   }
 `;
 const DashboardDiv = styled.div`
@@ -241,4 +373,12 @@ const DashboardDiv = styled.div`
     }
   }
   margin-bottom: 2.5rem;
+`;
+
+const ListWrapper = styled.ul`
+  list-style-type: value;
+  margin-left: 1rem;
+  li {
+    margin-bottom: 0.5rem;
+  }
 `;

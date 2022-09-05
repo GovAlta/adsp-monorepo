@@ -19,10 +19,14 @@ export interface ServiceUrls {
   docServiceApiUrl?: string;
   configurationServiceApiUrl?: string;
 }
-
+export interface RecaptchaService {
+  execute(siteKey: string, options: { action: string }): Promise<string>;
+}
 export interface ConfigState {
   keycloakApi?: KeycloakApi;
   serviceUrls?: ServiceUrls;
+  recaptchaKey?: string;
+  grecaptcha?: RecaptchaService;
 }
 
 export const CONFIG_INIT: ConfigState = {};

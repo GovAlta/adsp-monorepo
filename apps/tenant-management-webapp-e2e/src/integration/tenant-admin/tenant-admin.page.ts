@@ -43,8 +43,12 @@ class TenantAdminPage {
     return cy.xpath('//div[@class="copy-url"]');
   }
 
-  clickToCopyButton() {
-    return cy.get('button:contains("Click to copy")');
+  copyLoginLinkButton() {
+    return cy.xpath('//goa-button[@leadingicon="link"]');
+  }
+
+  copyLoginLinkButtonMessage() {
+    return cy.xpath('//goa-button[@leadingicon="link"]/preceding-sibling::div//*[@class="message"]');
   }
 
   goaCardTitles() {
@@ -68,7 +72,7 @@ class TenantAdminPage {
   }
 
   hereLinkForManageUsers() {
-    return cy.xpath('(//h3[contains(text(), "Sharing tenant access")]/following-sibling::p)[2]/a');
+    return cy.xpath('(//h3[contains(text(), "Sharing tenant access")]/following-sibling::p)[2]//a[text()="here"]');
   }
 
   dashboardCalloutContenth3Title() {
@@ -125,6 +129,12 @@ class TenantAdminPage {
 
   eventTableNameSpaceCells() {
     return cy.get('td[headers="namespace"]');
+  }
+
+  serviceRoleTableBody(tenantOrCore, serviceName) {
+    return cy.xpath(
+      `//*[contains(@data-testid,"${tenantOrCore}-service-role-id") and text()="${serviceName}"]/following-sibling::div//table[@data-testid="service-role-table"]/tbody`
+    );
   }
 }
 export default TenantAdminPage;

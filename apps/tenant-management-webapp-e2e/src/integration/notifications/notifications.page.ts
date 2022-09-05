@@ -21,22 +21,24 @@ class NotificationsPage {
     return cy.get('[data-testid="form-description"]');
   }
 
-  notificationTypeModalSubscriberRolesDropdown() {
-    return cy.get('[data-testid="subscriberRoles-dropdown"]');
+  notificationTypeModalPublicCheckbox() {
+    return cy.xpath('//input[@name="anonymousRead-checkbox"]/parent::div');
   }
 
-  notificationTypeModalSubscriberRolesDropdownItem(text) {
+  notificationTypeModalRolesCheckboxes() {
     return cy.xpath(
-      `//*[@data-testid="subscriberRoles-dropdown"]/following-sibling::*//*[contains(text(), "${text}")]`
+      '//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-label"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]'
     );
   }
 
-  notificationTypeModalSubscriberRolesDropdownItems() {
-    return cy.xpath('//*[@data-testid="subscriberRoles-dropdown"]/following-sibling::*//li');
+  notificationTypeModalRolesCheckbox(roleLabel) {
+    return cy.xpath(
+      `//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-label" and text()="${roleLabel}"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]`
+    );
   }
 
-  notificationTypeModalSubscriberRolesDropdownBackground() {
-    return cy.get('[data-testid="subscriberRoles-dropdown-background"]');
+  notificationTypeModalClientRoleCheckbox(clientRole) {
+    return cy.xpath(`//input[@type="checkbox" and @value="${clientRole}"]/parent::div`);
   }
 
   notificationChannelCheckbox(channelName) {
@@ -474,6 +476,24 @@ class NotificationsPage {
 
   editTemplateModalCloseBtn() {
     return cy.get('[data-testid="template-form-close"]');
+  }
+
+  editTemplateModalSaveallBtn() {
+    return cy.get('[data-testid="template-form-save"]');
+  }
+
+  notificationTypeEventResetBtn(cardTitle, eventName) {
+    return cy.xpath(
+      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="reset-button"]`
+    );
+  }
+
+  resetEmailTemplateModalTitle() {
+    return cy.xpath('//*[@data-testid="delete-confirmation"]//*[@class="modal-title"]');
+  }
+
+  resetEmailTemplateModalDeleteBtn() {
+    return cy.xpath('//*[@data-testid="delete-confirmation"]//*[@data-testid="delete-confirm"]');
   }
 }
 export default NotificationsPage;

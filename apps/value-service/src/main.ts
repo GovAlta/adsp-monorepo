@@ -1,4 +1,6 @@
 import * as express from 'express';
+import { readFile } from 'fs';
+import { promisify } from 'util';
 import * as passport from 'passport';
 import * as compression from 'compression';
 import * as helmet from 'helmet';
@@ -51,7 +53,10 @@ const initializeApp = async () => {
             description: 'Writer role for writing new values.',
           },
         ],
-        configurationSchema,
+        configuration: {
+          description: 'Definitions for values including write schema and option to enable write events.',
+          schema: configurationSchema,
+        },
         events: [ValueWrittenDefinition],
         clientSecret: environment.CLIENT_SECRET,
         directoryUrl: new URL(environment.DIRECTORY_URL),
@@ -107,8 +112,10 @@ const initializeApp = async () => {
 
   applyValuesMiddleware(app, { logger, repository: repositories.valueRepository, eventService });
 
-  const errorHandler = createErrorHandler(logger);
-  app.use(errorHandler);
+  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
+  app.use('/swagger/docs/v1', (_req, res) => {
+    res.json(swagger);
+  });
 
   app.use('/health', async (_req, res) => {
     const platform = await healthCheck();
@@ -131,6 +138,9 @@ const initializeApp = async () => {
       },
     });
   });
+
+  const errorHandler = createErrorHandler(logger);
+  app.use(errorHandler);
 
   return app;
 };

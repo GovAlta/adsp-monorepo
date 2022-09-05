@@ -1,25 +1,27 @@
 export const configurationSchema = {
   type: 'object',
-  additionalProperties: {
-    type: 'object',
-    properties: {
-      id: {
-        type: 'string',
-        pattern: '^[a-zA-Z0-9-_ ]{1,50}$',
+  patternProperties: {
+    '^[a-zA-Z0-9-_ ]{1,50}$': {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          pattern: '^[a-zA-Z0-9-_ ]{1,50}$',
+        },
+        name: {
+          type: 'string',
+        },
+        description: {
+          type: 'string',
+        },
+        template: {
+          type: 'string',
+        },
+        footer: { type: ['string', 'null'] },
+        header: { type: ['string', 'null'] },
       },
-      name: {
-        type: 'string',
-      },
-      description: {
-        type: 'string',
-      },
-      template: {
-        type: 'string',
-      },
-      useWrapper: {
-        type: 'boolean',
-      },
+      required: ['id', 'name', 'template'],
     },
-    required: ['id', 'name', 'template'],
   },
+  additionalProperties: false,
 };

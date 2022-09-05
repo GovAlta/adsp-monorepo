@@ -8,10 +8,10 @@ This monorepo uses the [Nx](https://nx.dev) toolstack.
 [![Nightly Regression](https://github.com/GovAlta/adsp-monorepo/actions/workflows/nightly.yml/badge.svg)](https://github.com/GovAlta/adsp-monorepo/actions/workflows/nightly.yml)
 
 ## Development using ADSP
-See the [ADSP Development Guide](https://glowing-parakeet-0563ab2e.pages.github.io)
+See the [ADSP Development Guide](https://govalta.github.io/adsp-monorepo)
 
 ## Setting up a deployment
-See the [Deployment - ADSP Development Guide](https://glowing-parakeet-0563ab2e.pages.github.io/platform/deployment.html)
+See the [Deployment - ADSP Development Guide](https://govalta.github.io/adsp-monorepo/platform/deployment.html)
 
 
 ## To run in Docker Compose

@@ -7,24 +7,38 @@ export class PdfTemplateEntity implements PdfTemplate {
   name: string;
   description: string;
   template: string;
+  header?: string;
+  footer?: string;
 
   private evaluateTemplate: (context: unknown) => string;
+  private evaluateFooterTemplate: (context: unknown) => string;
+  private evaluateHeaderTemplate: (context: unknown) => string;
 
   constructor(
     templateService: TemplateService,
     private readonly pdfService: PdfService,
-    { tenantId, id, name, description, template }: PdfTemplate
+    { tenantId, id, name, description, template, header, footer }: PdfTemplate
   ) {
     this.tenantId = tenantId;
     this.id = id;
     this.name = name;
     this.description = description;
     this.template = template;
+    this.header = header;
+    this.footer = footer;
     this.evaluateTemplate = templateService.getTemplateFunction(template);
+    this.evaluateFooterTemplate = templateService.getTemplateFunction(footer, 'pdf-footer');
+    this.evaluateHeaderTemplate = templateService.getTemplateFunction(header, 'pdf-header');
   }
 
   generate(context: unknown): Promise<Buffer> {
     const content = this.evaluateTemplate(context);
-    return this.pdfService.generatePdf(content);
+    const footer = this.evaluateFooterTemplate(context);
+    const header = this.evaluateHeaderTemplate(context);
+    return this.pdfService.generatePdf({
+      content,
+      footer,
+      header,
+    });
   }
 }

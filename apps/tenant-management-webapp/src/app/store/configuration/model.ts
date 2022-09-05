@@ -1,5 +1,6 @@
 export interface ConfigurationDefinition {
   configurationSchema: Record<string, SchemaType>;
+  description: string;
 }
 export interface ConfigurationDefinitionTypes {
   core: ServiceSchemas;
@@ -9,7 +10,9 @@ export interface ConfigurationDefinitionState {
   coreConfigDefinitions: ServiceSchemas;
   tenantConfigDefinitions: ServiceSchemas;
   isAddedFromOverviewPage: boolean;
-  importedConfigurationError: string[];
+  importedConfigurationError: { name: string; error: string }[];
+  //previousImportCount: number;
+  imports: ServiceConfiguration[];
 }
 
 export interface ConfigDefinition {
@@ -55,6 +58,8 @@ export interface ServiceConfiguration {
   name: string;
   description?: string;
   latest: ServiceSchemas;
+  success?: boolean;
+  error?: string;
 }
 
 export interface ServiceConfigurationTypes {

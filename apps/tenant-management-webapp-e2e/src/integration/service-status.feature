@@ -2,14 +2,14 @@
 Feature: Service status
 
   @TEST_CS-528 @REQ_CS-283 @regression
-  Scenario: Test As a developer, I can access recommendations about health check, so I can add an appropriate health check to my app
-    Given a service owner user is on service status page
+  Scenario: Test a tenant admin, I can access recommendations about health check, so I can add an appropriate health check to my app
+    Given a tenant admin user is on status overview page
     Then the user views the health check guidelines
 
   # TEST DATA: need 2 applications named "Autotest" and "File Service"
   @TEST_CS-781 @REQ_CS-667 @regression
-  Scenario Outline: As a service owner, I can add, edit and delete a notice
-    Given a service owner user is on status notices page
+  Scenario Outline: As a tenant admin, I can add, edit and delete a notice
+    Given a tenant admin user is on status notices page
     When the user clicks Add notice button
     Then the user views Add notice dialog
     When the user enters "<Description>", "<Application>", "<Start Date>", "<Start Time>", "<End Date>", "<End Time>" on notice dialog
@@ -32,20 +32,28 @@ Feature: Service status
       | Autotest-NewNotice | Autotest    | Today      | 02:00 pm   | Today    | 11:00 pm | Autotest-ModifiedNotice | File Service | Today        | 10:00 am     | Today      | 02:00 pm   |
 
   # TEST DATA: "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
-  @TEST_CS-782 @REQ_CS-667 @regression
-  Scenario: As a service owner, I can publish and un-publish a notice
-    Given a service owner user is on status notices page
-    When the user clicks "publish" menu for the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+  @TEST_CS-782 @REQ_CS-667 @REQ_CS-977 @regression
+  Scenario: As a tenant admin, I can publish and un-publish a notice, and see the notice published event
+    Given a tenant admin user is on status notices page
+    When the user clicks "Publish" menu for the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
     And the user selects "Published" filter by status radio button
     Then the user "views" the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
-    When the user clicks "unpublish" menu for the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
+    When the user waits "20" seconds
+    And the user selects the "Event log" menu item
+    Then the "Event log" landing page is displayed
+    When the user searches with "status-service:application-notice-published", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
+    And the user clicks Show details button for the latest event of "application-notice-published" for "status-service"
+    Then the user views event details of "Drafted notice - AUTOMATED TEST ONLY", "Autotest" of application-notice-published for status-service
+    When the user selects the "Status" menu item
+    And the user selects "Notices" tab for "Status"
+    And the user clicks "Unpublish" menu for the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
     And the user selects "Draft" filter by status radio button
     Then the user "views" the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
 
   # TEST DATA: an application named "Autotest"
   @TEST_CS-783 @REQ_CS-667 @regression
-  Scenario: As a service owner, I can add, publish and archive a notice
-    Given a service owner user is on status notices page
+  Scenario: As a tenant admin, I can add, publish and archive a notice
+    Given a tenant admin user is on status notices page
     When the user clicks Add notice button
     Then the user views Add notice dialog
     When the user enters "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm" on notice dialog
@@ -63,8 +71,8 @@ Feature: Service status
     And the user should not view "gear icon" for the "Archived" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
 
   @TEST_CS-784 @REQ_CS-667 @regression
-  Scenario: As a service owner, I can filter notices by status
-    Given a service owner user is on status notices page
+  Scenario: As a tenant admin, I can filter notices by status
+    Given a tenant admin user is on status notices page
     When the user selects "Draft" filter by status radio button
     Then the user views "Draft" notices
     When the user selects "Published" filter by status radio button
@@ -96,8 +104,8 @@ Feature: Service status
     Then the user views the subscribe checkbox is "checked"
 
   @TEST_CS-835 @REQ_CS-792 @regression
-  Scenario Outline: As a service owner, I can add, edit, publish, unpublish and delete a tenant level notice
-    Given a service owner user is on status notices page
+  Scenario Outline: As a tenant admin, I can add, edit, publish, unpublish and delete a tenant level notice
+    Given a tenant admin user is on status notices page
     When the user clicks Add notice button
     # Add a notice for the tenant
     Then the user views Add notice dialog
@@ -218,3 +226,31 @@ Feature: Service status
     When the user searches with "notification-service:notification-sent", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
     Then the user views the events matching the search filter of "notification-service:notification-sent"
     And the user views the event details of "autotest-DO-NOT-DELETE" application status changed from "{original status}" to "{new status}" for subscriber of "auto.test@abc.com"
+
+  @TEST_CS-1287 @REQ_CS-1261 @REQ_CS-1262 @regression
+  Scenario: As a tenant admin user I can modify tenant support email for status page so that users know where to report the issues.
+    Given a tenant admin user is on status overview page
+    When the user clicks Edit button for contact information
+    Then the user views Edit contact information modal on the status overview page
+    When the user enters "autotest-status-admin@gov.ab.ca" in Edit contact information modal
+    And the user clicks Save button on contact information modal
+    Then the user views "autotest-status-admin@gov.ab.ca" as the email of contact information
+    # Visiting public status page
+    Then the user should be able to view "autotest-status-admin@gov.ab.ca" as support email in the status app for "Autotest" tenant
+    Given a tenant admin user is on status overview page
+    When the user clicks Edit button for contact information
+    And the user enters "test@gov.ab.ca" in Edit contact information modal
+    And the user clicks Save button on contact information modal
+    Then the user views "test@gov.ab.ca" as the email of contact information
+
+  @TEST_CS-333 @REQ_CS-163 @regression
+  Scenario: As a tenant admin user, I can update the status of my service/app, so it is available to the public
+    Given a tenant admin user is on status applications page
+    Then the user views current status for "autotest-DO-NOT-DELETE"
+    When the user clicks Change status button for "autotest-DO-NOT-DELETE"
+    And the user changes status to the first unused status
+    When the user clicks Save button in Manual status change modal
+    Then the user views the status of "autotest-DO-NOT-DELETE" changed to the first unused status
+    Given a user is on the public service status page for "autotest"
+    Then the user views the status of "autotest-DO-NOT-DELETE" being the first unused status
+    And the user views the timestamp of "autotest-DO-NOT-DELETE" being updated

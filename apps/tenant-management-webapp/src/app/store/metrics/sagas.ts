@@ -1,6 +1,6 @@
 import { SagaIterator } from '@redux-saga/core';
 import axios from 'axios';
-import moment from 'moment';
+import moment, { Moment } from 'moment';
 import { select, call, put, takeLatest } from 'redux-saga/effects';
 import {
   FetchServiceMetricsAction,
@@ -11,7 +11,7 @@ import {
 } from './actions';
 import { RootState } from '../index';
 import { ErrorNotification } from '../notifications/actions';
-import { ChartInterval, MetricValue, ValueMetric } from './models';
+import { ChartInterval, ValueMetric, ValueMetricFields } from './models';
 import { getAccessToken } from '@store/tenant/sagas';
 
 function* fetchServices() {
@@ -53,21 +53,38 @@ const intervalDelta: Record<ChartInterval, number> = {
   '5 hours': 5,
 };
 
-// Results from value service metrics are sparse, so we need to introduce breaks when the values don't represent contiguous values.
-// The results range from newest to oldest, so we add an extra break value interval minutes older than the current value.
-function addIntervalBreaks(intervalMins: number) {
-  return (results: MetricValue[], current: MetricValue, idx: number, array: MetricValue[]) => {
-    if (array[idx - 1] && array[idx - 1].interval.diff(current.interval, 'minutes') > intervalMins) {
-      results.push({
-        interval: current.interval.clone().subtract(intervalMins, 'minutes'),
-        value: NaN,
-      });
-    }
+function* generateSampleIntervals(
+  intervalMin: Moment,
+  intervalMax: Moment,
+  interval: ChartInterval
+): Generator<Moment> {
+  const intervalMinutes = interval === '15 mins' ? 1 : 5;
+  let value: Moment = intervalMax
+    .clone()
+    .subtract(intervalMax.minutes() % intervalMinutes, 'minutes')
+    .seconds(0)
+    .milliseconds(0);
+  while (value > intervalMin) {
+    yield value;
+    value = value.clone().subtract(intervalMinutes, 'minutes');
+  }
+}
 
-    results.push(current);
+function mapMetricValuesToSamples(
+  metric: ValueMetric,
+  samples: Moment[],
+  getValue = (fields: Omit<ValueMetricFields, 'interval'>) => parseFloat(fields.avg)
+) {
+  const values: Record<string, { interval: Moment; value: number }> =
+    metric?.values?.reduce(
+      (sampleValues, { interval, ...fields }) => ({
+        ...sampleValues,
+        [interval]: { interval: moment(interval), value: getValue(fields) },
+      }),
+      {}
+    ) || {};
 
-    return results;
-  };
+  return samples.map((sample) => values[sample.toISOString()] || { interval: sample, value: NaN });
 }
 
 function* fetchServiceMetrics(action: FetchServiceMetricsAction): SagaIterator {
@@ -78,6 +95,7 @@ function* fetchServiceMetrics(action: FetchServiceMetricsAction): SagaIterator {
   const chartInterval = action.chartInterval;
   const intervalMax = now.add(5 - (now.minutes() % 5), 'minutes');
   const intervalMin = intervalMax.clone().subtract(intervalDelta[chartInterval], 'hours');
+  const samples = Array.from(generateSampleIntervals(intervalMin, intervalMax, chartInterval));
 
   const metricsUrl = `${baseUrl}/value/v1/${action.service}/values/service-metrics/metrics?interval=${
     chartInterval === '15 mins' ? 'one_minute' : 'five_minutes'
@@ -97,15 +115,15 @@ function* fetchServiceMetrics(action: FetchServiceMetricsAction): SagaIterator {
         fetchServiceMetricsSuccess(
           intervalMin.toDate(),
           intervalMax.toDate(),
-          data['total:response-time']?.values
-            ?.map(({ interval, avg }) => ({ interval: moment(interval), value: parseFloat(avg) }))
-            .reduce(addIntervalBreaks(chartInterval === '15 mins' ? 1 : 5), []) || [],
-          data['total:count']?.values
-            ?.map(({ interval, sum }) => ({
-              interval: moment(interval),
-              value: parseInt(sum),
-            }))
-            .reduce(addIntervalBreaks(chartInterval === '15 mins' ? 1 : 5), []) || []
+          mapMetricValuesToSamples(data['total:response-time'], samples),
+          Object.values(data || {}).reduce((times, metric) => {
+            const { name } = metric;
+            if (name !== 'total:response-time' && name?.startsWith('total:') && name.endsWith('-time')) {
+              times[name.substring(6)] = mapMetricValuesToSamples(metric, samples);
+            }
+            return times;
+          }, {}),
+          mapMetricValuesToSamples(data['total:count'], samples, ({ sum }) => parseInt(sum))
         )
       );
     } catch (err) {

@@ -29,3 +29,30 @@ describe('Test email template', () => {
     expect(message).toContain('<footer>');
   });
 });
+
+describe('Test pdf template', () => {
+  const channel = 'pdf';
+  it('Test html snippet should have wrapper', () => {
+    const plainText = `Your draft form has been created.`;
+    const message = getTemplateBody(plainText, channel);
+    expect(message).toContain('<head>');
+  });
+});
+
+describe('Test pdf footer template', () => {
+  const channel = 'pdf-footer';
+  it('Test html snippet should have wrapper', () => {
+    const plainText = `Your draft form has been created.`;
+    const message = getTemplateBody(plainText, channel);
+    expect(message).toContain(plainText);
+  });
+});
+
+describe('Test pdf header template', () => {
+  const channel = 'pdf-header';
+  it('Test html snippet should have wrapper', () => {
+    const plainText = `Your draft form has been created.`;
+    const message = getTemplateBody(plainText, channel);
+    expect(message).toContain(plainText);
+  });
+});

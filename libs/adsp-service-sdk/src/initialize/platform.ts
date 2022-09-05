@@ -20,6 +20,8 @@ export async function initializePlatform(
     ignoreServiceAud,
     configurationConverter,
     combineConfiguration,
+    enableConfigurationInvalidation,
+    useLongConfigurationCacheTTL,
     ...registration
   }: PlatformOptions,
   logOptions: Logger | LogOptions,
@@ -65,8 +67,11 @@ export async function initializePlatform(
     const configServiceImpl = createConfigurationService({
       logger,
       directory,
+      tokenProvider,
       converter: configurationConverter,
       combine: combineConfiguration,
+      enableConfigurationInvalidation,
+      useLongConfigurationCacheTTL,
     });
     configurationService = configServiceImpl;
 

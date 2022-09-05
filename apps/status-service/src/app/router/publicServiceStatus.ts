@@ -1,24 +1,15 @@
 import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
-import { ServiceStatusApplicationEntity } from '../model';
+import { StaticApplicationData, StatusServiceConfiguration } from '../model';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { environment } from '../../environments/environment';
 import { TenantService } from '@abgov/adsp-service-sdk';
 import { NotFoundError } from '@core-services/core-common';
+import { StatusApplications } from '../model/statusApplications';
 export interface ServiceStatusRouterProps {
   logger: Logger;
   tenantService: TenantService;
   serviceStatusRepository: ServiceStatusRepository;
-}
-
-export function mapApplication(entity: ServiceStatusApplicationEntity): unknown {
-  return {
-    id: entity._id,
-    name: entity.name,
-    description: entity.description,
-    status: entity?.status,
-    lastUpdated: entity?.statusTimestamp ? new Date(entity.statusTimestamp) : null,
-  };
 }
 
 export const getApplicationsByName =
@@ -36,10 +27,24 @@ export const getApplicationsByName =
         throw new NotFoundError('tenant', name);
       }
 
-      const applications = await serviceStatusRepository.find({
+      const config = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(tenantId);
+      const apps = new StatusApplications(config);
+
+      const appStatuses = await serviceStatusRepository.find({
         tenantId: tenantId.toString(),
       });
-      res.json(applications.map(mapApplication));
+      res.json(
+        appStatuses.map((s) => {
+          const app = apps.get(s._id);
+          return {
+            id: s._id,
+            name: app?.name || `unknown: ${s.name}`,
+            description: app?.description || `blank: ${s.description}`,
+            status: s.status,
+            lastUpdated: s.statusTimestamp ? new Date(s.statusTimestamp) : null,
+          };
+        })
+      );
     } catch (err) {
       const errMessage = `Error getting applications: ${err.message}`;
       logger.error(errMessage);

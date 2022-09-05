@@ -6,15 +6,21 @@ import {
   ConfigurationEntity,
   ConfigurationRevision,
   RevisionCriteria,
+  ActiveRevisionRepository,
 } from '../configuration';
+import { renamePrefixProperties } from './prefix';
 import { revisionSchema } from './schema';
 import { ConfigurationRevisionDoc } from './types';
 
 export class MongoConfigurationRepository implements ConfigurationRepository {
   private revisionModel: Model<ConfigurationRevisionDoc>;
+  private activeRevisionRepository: ActiveRevisionRepository;
 
-  constructor(private validationService: ValidationService) {
+  private readonly META_PREFIX = 'META_';
+
+  constructor(private validationService: ValidationService, activeRevisionRepository: ActiveRevisionRepository) {
     this.revisionModel = model<ConfigurationRevisionDoc>('revision', revisionSchema);
+    this.activeRevisionRepository = activeRevisionRepository;
   }
 
   async get<C>(
@@ -32,16 +38,22 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         .limit(1)
         .exec((err, results: ConfigurationRevisionDoc[]) => (err ? reject(err) : resolve(results[0])));
     });
-    const latest = latestDoc
-      ? {
-          revision: latestDoc.revision,
-          created: latestDoc.created,
-          lastUpdated: latestDoc.lastUpdated,
-          configuration: latestDoc.configuration as C,
-        }
-      : null;
+    const latest = this.fromDoc<C>(latestDoc);
+    let activeRevisionDoc = { active: null };
+    activeRevisionDoc = await this.activeRevisionRepository.get(namespace, name, tenantId);
 
-    return new ConfigurationEntity<C>(namespace, name, this, this.validationService, latest, tenantId, schema);
+    return new ConfigurationEntity<C>(
+      namespace,
+      name,
+      this,
+      this.validationService,
+      latest,
+      tenantId,
+      schema,
+      null,
+      this.activeRevisionRepository,
+      activeRevisionDoc?.active
+    );
   }
 
   async getRevisions<C>(
@@ -70,12 +82,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         .exec((err, results: ConfigurationRevisionDoc[]) => (err ? reject(err) : resolve(results)));
     });
     return {
-      results: docs.map((doc) => ({
-        revision: doc.revision,
-        created: doc.created,
-        lastUpdated: doc.lastUpdated,
-        configuration: doc.configuration as C,
-      })),
+      results: docs.map((doc) => this.fromDoc<C>(doc)),
       page: {
         after,
         next: encodeNext(docs.length, top, skip),
@@ -112,7 +119,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
           query,
           {
             ...update,
-            configuration: revision.configuration,
+            configuration: renamePrefixProperties(revision.configuration, '$', this.META_PREFIX),
           },
           { upsert: true, new: true, lean: true }
         )
@@ -124,5 +131,16 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       created: doc.created,
       configuration: doc.configuration,
     };
+  }
+
+  private fromDoc<C>(doc: ConfigurationRevisionDoc): ConfigurationRevision<C> {
+    return doc
+      ? {
+          revision: doc.revision,
+          created: doc.created,
+          lastUpdated: doc.lastUpdated,
+          configuration: renamePrefixProperties(doc.configuration, this.META_PREFIX, '$') as C,
+        }
+      : null;
   }
 }

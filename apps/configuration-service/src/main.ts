@@ -1,5 +1,6 @@
 import * as express from 'express';
-import * as fs from 'fs';
+import { readFile } from 'fs';
+import { promisify } from 'util';
 import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
@@ -12,8 +13,10 @@ import { createRepositories } from './mongo';
 import {
   applyConfigurationMiddleware,
   RevisionCreatedDefinition,
+  ActiveRevisionSetDefinition,
   ConfigurationServiceRoles,
   ConfigurationUpdatedDefinition,
+  ConfigurationUpdatesStream,
 } from './configuration';
 
 const logger = createLogger('configuration-service', environment.LOG_LEVEL);
@@ -52,7 +55,8 @@ const initializeApp = async (): Promise<express.Application> => {
             description: 'Service role that grants service accounts access to configuration.',
           },
         ],
-        events: [ConfigurationUpdatedDefinition, RevisionCreatedDefinition],
+        events: [ConfigurationUpdatedDefinition, RevisionCreatedDefinition, ActiveRevisionSetDefinition],
+        eventStreams: [ConfigurationUpdatesStream],
         clientSecret: environment.CLIENT_SECRET,
         accessServiceUrl: new URL(environment.KEYCLOAK_ROOT_URL),
         directoryUrl: new URL(environment.DIRECTORY_URL),
@@ -86,20 +90,9 @@ const initializeApp = async (): Promise<express.Application> => {
   const repositories = await createRepositories({ ...environment, validationService, logger });
   await applyConfigurationMiddleware(app, { ...repositories, eventService, serviceId, logger });
 
-  let swagger = null;
+  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {
-    if (swagger) {
-      res.json(swagger);
-    } else {
-      fs.readFile(`${__dirname}/swagger.json`, 'utf8', (err, data) => {
-        if (err) {
-          res.sendStatus(404);
-        } else {
-          swagger = JSON.parse(data);
-          res.json(swagger);
-        }
-      });
-    }
+    res.json(swagger);
   });
 
   app.get('/health', async (_req, res) => {

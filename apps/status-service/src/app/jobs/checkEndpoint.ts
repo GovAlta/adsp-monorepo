@@ -28,7 +28,7 @@ export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
     const { getEndpointResponse } = props;
     // run all endpoint tests
     const statusEntry = await checkEndpoint(getEndpointResponse, props.url, props.applicationId, props.logger);
-    await doSave(props, statusEntry);
+    await saveStatus(props, statusEntry);
   };
 }
 
@@ -89,7 +89,7 @@ export const getNewEndpointStatus = (
   return current;
 };
 
-async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStatusEntry) {
+async function saveStatus(props: CreateCheckEndpointProps, statusEntry: EndpointStatusEntry) {
   const { url, serviceStatusRepository, endpointStatusEntryRepository, eventService, logger } = props;
   // create endpoint status entry before determining if the state is changed
 
@@ -110,27 +110,18 @@ async function doSave(props: CreateCheckEndpointProps, statusEntry: EndpointStat
   }
 
   const oldStatus = application.endpoint.status;
-  logger.debug(
-    `Evaluating status for ${application.name} (ID: ${application._id} ) with previous status of ${oldStatus}`
-  );
 
   const newStatus = getNewEndpointStatus(oldStatus, recentHistory);
-  logger.debug(`Endpoint ${props.url} new status evaluated as: ${newStatus}`);
 
   // set the application status based on the endpoints
   if (newStatus !== oldStatus) {
     application.endpoint.status = newStatus;
-    if (newStatus === 'pending') {
-      logger.info(`Application ${application.name} (ID: ${application._id}) status changed to pending.`);
-    }
 
     if (newStatus === 'online') {
-      logger.info(`Application ${application.name} (ID: ${application._id}) status changed to healthy.`);
       eventService.send(applicationStatusToHealthy(application));
     }
 
     if (newStatus === 'offline') {
-      logger.info(`Application ${application.name} (ID: ${application._id}) status changed to unhealthy.`);
       const errMessage = `The application ${application.name} (ID: ${application._id}) is unhealthy.`;
       eventService.send(applicationStatusToUnhealthy(application, errMessage));
     }

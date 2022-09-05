@@ -208,6 +208,7 @@ const EntryDetail = styled.div`
   font-size: 12px;
   line-height: 16px;
   text-align: left;
+  padding: 16px;
 `;
 
 const TableDiv = styled.div`

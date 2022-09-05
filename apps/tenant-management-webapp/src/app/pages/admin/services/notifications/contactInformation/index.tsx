@@ -74,19 +74,32 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
         <Grid>
           <GridItem data-testid="email" className="word-break contact-border" md={8} vSpacing={1} hSpacing={0.5}>
             <h4>Contact email</h4>
-            {contact?.contactEmail ?? <GoASkeletonGridColumnContent rows={1}></GoASkeletonGridColumnContent>}
+            {contact?.contactEmail === undefined ? (
+              <GoASkeletonGridColumnContent key="email" rows={1}></GoASkeletonGridColumnContent>
+            ) : (
+              ''
+            )}
+            {contact?.contactEmail}
           </GridItem>
           <GridItem data-testid="phone" className="contact-border" md={4} vSpacing={1} hSpacing={0.5}>
             <h4>Phone number</h4>
-            {phoneWrapper(contact?.phoneNumber) ?? (
-              <GoASkeletonGridColumnContent rows={1}></GoASkeletonGridColumnContent>
+            {contact?.phoneNumber === undefined ? (
+              <GoASkeletonGridColumnContent key="Phone" rows={1}></GoASkeletonGridColumnContent>
+            ) : (
+              ''
             )}
+            {phoneWrapper(contact?.phoneNumber)}
           </GridItem>
         </Grid>
         <Grid>
           <GridItem data-testid="support-instructions" className="contact-border" md={12} vSpacing={1} hSpacing={0}>
             <h4>Support instructions</h4>
-            {contact?.supportInstructions ?? <GoASkeletonGridColumnContent rows={2}></GoASkeletonGridColumnContent>}
+            {contact?.supportInstructions === undefined ? (
+              <GoASkeletonGridColumnContent key="instructions" rows={1}></GoASkeletonGridColumnContent>
+            ) : (
+              ''
+            )}
+            {contact?.supportInstructions}
           </GridItem>
         </Grid>
         <ContactInformationModalForm

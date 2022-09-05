@@ -17,11 +17,6 @@ declare namespace Cypress {
     getConfig(): Chainable<Subject>;
   }
 }
-//
-// -- This is a parent command --
-Cypress.Commands.add('login', (email, password) => {
-  console.log('Custom command example: Login', email, password);
-});
 
 // Use POST request to get a token from keycloak and store in cypress environment variable for future api calls
 Cypress.Commands.add('postToken', () => {
@@ -108,16 +103,10 @@ Cypress.Commands.add('getConfig', () => {
       name: 'fileApi: ',
       message: response.body.serviceUrls.fileApi,
     });
+    Cypress.env('directoryServiceApiUrl', response.body.serviceUrls.directoryServiceApiUrl);
+    Cypress.log({
+      name: 'directoryServiceApiUrl: ',
+      message: response.body.serviceUrls.directoryServiceApiUrl,
+    });
   });
 });
-//
-// -- This is a child command --
-// Cypress.Commands.add("drag", { prevSubject: 'element'}, (subject, options) => { ... })
-//
-//
-// -- This is a dual command --
-// Cypress.Commands.add("dismiss", { prevSubject: 'optional'}, (subject, options) => { ... })
-//
-//
-// -- This will overwrite an existing command --
-// Cypress.Commands.overwrite("visit", (originalFn, url, options) => { ... })

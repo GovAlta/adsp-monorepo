@@ -1,5 +1,6 @@
 import * as express from 'express';
-import * as fs from 'fs';
+import { readFile } from 'fs';
+import { promisify } from 'util';
 import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
@@ -49,6 +50,7 @@ const initializeApp = async (): Promise<express.Application> => {
     clearCached,
     configurationHandler,
     configurationService,
+    coreStrategy,
     directory,
     eventService,
     healthCheck,
@@ -61,7 +63,10 @@ const initializeApp = async (): Promise<express.Application> => {
       serviceId,
       displayName: 'PDF service',
       description: 'Provides utility PDF capabilities.',
-      configurationSchema,
+      configuration: {
+        description: 'Templates for PDF generation.',
+        schema: configurationSchema,
+      },
       configurationConverter: (config: Record<string, Omit<PdfTemplate, 'tenantId'>>, tenantId) =>
         Object.entries(config).reduce(
           (templates, [templateId, template]) => ({
@@ -84,10 +89,12 @@ const initializeApp = async (): Promise<express.Application> => {
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
       values: [ServiceMetricsValueDefinition],
+      useLongConfigurationCacheTTL: true,
     },
     { logger }
   );
 
+  passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
 
   passport.serializeUser(function (user, done) {
@@ -112,7 +119,7 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(
     '/pdf',
     metricsHandler,
-    passport.authenticate(['tenant'], { session: false }),
+    passport.authenticate(['core', 'tenant'], { session: false }),
     tenantHandler,
     configurationHandler
   );
@@ -130,20 +137,9 @@ const initializeApp = async (): Promise<express.Application> => {
     eventService,
   });
 
-  let swagger = null;
+  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {
-    if (swagger) {
-      res.json(swagger);
-    } else {
-      fs.readFile(`${__dirname}/swagger.json`, 'utf8', (err, data) => {
-        if (err) {
-          res.sendStatus(404);
-        } else {
-          swagger = JSON.parse(data);
-          res.json(swagger);
-        }
-      });
-    }
+    res.json(swagger);
   });
 
   app.get('/health', async (_req, res) => {

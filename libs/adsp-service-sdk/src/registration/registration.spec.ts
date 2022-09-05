@@ -63,6 +63,10 @@ describe('ServiceRegistrar', () => {
       displayName: 'Test service',
       description: 'This is a test service.',
       configurationSchema: {},
+      configuration: {
+        schema: {},
+        description: 'This is a description.',
+      },
       events: [
         {
           name: 'test-event',
@@ -74,8 +78,8 @@ describe('ServiceRegistrar', () => {
       ],
     });
 
-    expect(axiosMock.patch).toHaveBeenCalledTimes(2);
-    expect(axiosMock.patch.mock.calls[1][1].update).toHaveProperty('test-service');
+    expect(axiosMock.patch).toHaveBeenCalledTimes(3);
+    expect(axiosMock.patch.mock.calls[2][1].update).toHaveProperty('test-service');
   });
 
   it('can register roles', async () => {

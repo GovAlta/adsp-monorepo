@@ -29,7 +29,7 @@ import {
 } from './directory/sagas';
 import { watchNotificationSagas } from './notification/sagas';
 import { watchSubscriptionSagas } from './subscription/sagas';
-
+import { watchCalendarSagas } from './calendar/sagas';
 // Actions
 import {
   FETCH_ACCESS_ACTION,
@@ -109,5 +109,7 @@ export function* watchSagas() {
     watchPdfSagas(),
     // service metrics
     watchServiceMetricsSagas(),
+    //Calendar
+    watchCalendarSagas(),
   ]);
 }

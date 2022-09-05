@@ -175,3 +175,254 @@ Then('the user views the details of {string} under Core streams', function (stre
     .invoke('text')
     .should('contain', '"name": "' + streamName + '"');
 });
+
+Given('a tenant admin user is on event streams page', function () {
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+  commonObj.adminMenuItem('menu-event').click();
+  commonObj.serviceTab('Event', 'Streams').click();
+  cy.wait(2000);
+});
+
+When('the user clicks Add stream button', function () {
+  eventsObj.addStreamBtn().click();
+});
+
+Then('the user views Add stream modal', function () {
+  eventsObj.streamModalTitle().invoke('text').should('eq', 'Add stream');
+});
+
+//User can use "n/a" as input for event or role in case there is no selection of the event or role
+When(
+  'the user enters {string}, {string}, {string}, {string} in Add stream modal',
+  function (name, description, event, role) {
+    const events = event.split(',');
+    eventsObj.streamModalNameInput().scrollIntoView().clear().type(name);
+    eventsObj.streamModalDescriptionInput().scrollIntoView().clear().type(description);
+    eventsObj.streamModalEventDropdown().click();
+    eventsObj.streamModalEventDropdownItems().then(() => {
+      for (let i = 0; i < events.length; i++) {
+        eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
+      }
+    });
+    eventsObj.streamModalEventDropdownBackground().click({ force: true }); // To collapse the event dropdown
+    //Role(s) selection of roles including public
+    if (role == 'public') {
+      eventsObj.streamModalPublicCheckbox().click();
+    } else if (event == 'n/a') {
+      eventsObj.streamModalRolesCheckboxes().should('exist');
+    } else {
+      const roles = role.split(',');
+      eventsObj.streamModalRolesCheckboxes().then(() => {
+        for (let i = 0; i < roles.length; i++) {
+          eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
+        }
+      });
+    }
+  }
+);
+
+Then('the user clicks Save button in Stream modal', function () {
+  eventsObj.streamModalSaveButton().click();
+  cy.wait(2000);
+});
+
+Then('the user {string} the stream of {string}', function (viewOrNot, streamName) {
+  if (viewOrNot == 'views') {
+    eventsObj.streamNameList().should('contain', streamName);
+  } else if (viewOrNot == 'should not view') {
+    eventsObj.streamNameList().should('not.contain', streamName);
+  } else {
+    expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
+
+//Find stream  with name, Subscriber role(s)
+//Input: stream name, role(s) in a string separated with comma
+//Return: row number if the stream is found; zero if the stream isn't found
+function findStream(streamName, role) {
+  return new Cypress.Promise((resolve, reject) => {
+    try {
+      let rowNumber = 0;
+      const subscriberRoles = role.split(',');
+
+      const targetedNumber = subscriberRoles.length + 1; // Name, roles need to match to find the stream
+      eventsObj
+        .streamTableBody()
+        .find('tr')
+        .then((rows) => {
+          rows.toArray().forEach((rowElement) => {
+            let counter = 0;
+            if (rowElement.cells[0].innerHTML.includes(streamName)) {
+              counter = counter + 1;
+            }
+            subscriberRoles.forEach((sRole) => {
+              if (rowElement.cells[1].innerHTML.includes(sRole.trim())) {
+                counter = counter + 1;
+              }
+            });
+            Cypress.log({
+              name: 'Number of matched items for row# ' + rowElement.rowIndex + ': ',
+              message: String(String(counter)),
+            });
+            if (counter == targetedNumber) {
+              rowNumber = rowElement.rowIndex;
+            }
+          });
+          Cypress.log({
+            name: 'Row number for the found file type: ',
+            message: String(rowNumber),
+          });
+          resolve(rowNumber);
+        });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+Then('the user {string} the stream of {string}, {string}', function (viewOrNot, streamName, role) {
+  findStream(streamName, role).then((rowNumber) => {
+    switch (viewOrNot) {
+      case 'views':
+        expect(rowNumber).to.be.greaterThan(0, 'Stream of ' + streamName + ', ' + role + ' has row #' + rowNumber);
+        break;
+      case 'should not view':
+        expect(rowNumber).to.equal(0, 'Stream of ' + streamName + ', ' + role + ' has row #' + rowNumber);
+        break;
+      default:
+        expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+    }
+  });
+});
+
+Then(
+  'the user views the stream details of {string}, {string}, {string}, {string}',
+  function (streamName, description, event, role) {
+    eventsObj.streamDetails(streamName).should('contain', streamName);
+    eventsObj.streamDetails(streamName).should('contain', description);
+    if (role == 'public') eventsObj.streamDetails(streamName).should('contain', '"publicSubscribe": true');
+    else {
+      eventsObj.streamDetails(streamName).should('contain', '"publicSubscribe": false');
+    }
+    const roles = role.split(',');
+    for (let i = 0; i < roles.length; i++) {
+      eventsObj
+        .streamDetails(streamName)
+        .invoke('text')
+        .then((roleDetails) => {
+          const subscriberRoles = roles[i].trim();
+          expect(roleDetails).to.contain(subscriberRoles);
+        });
+    }
+    const events = event.split(',');
+    for (let i = 0; i < events.length; i++) {
+      eventsObj
+        .streamDetails(streamName)
+        .invoke('text')
+        .then((eventDetails) => {
+          const namespace = events[i].split(':')[0].trim();
+          const name = events[i].split(':')[1].trim();
+          expect(eventDetails).to.contain('"namespace": ' + '"' + namespace + '"');
+          expect(eventDetails).to.contain('"name": ' + '"' + name + '"');
+        });
+    }
+  }
+);
+
+When('the user clicks {string} button of {string}', function (button, streamName) {
+  switch (button) {
+    case 'Eye':
+      eventsObj.streamDetailsEyeIcon(streamName).click();
+      break;
+    case 'Eye-Off':
+      eventsObj.streamDetailsEyeOffIcon(streamName).click();
+      break;
+    case 'Edit':
+      eventsObj.streamEditBtn(streamName).click();
+      break;
+    case 'Delete':
+      eventsObj.streamDeleteBtn(streamName).click();
+      break;
+    default:
+      expect(button).to.be.oneOf(['Eye', 'Edit', 'Delete']);
+  }
+});
+
+Then('the user views Edit stream modal', function () {
+  eventsObj.streamModalTitle().invoke('text').should('eq', 'Edit stream');
+});
+
+//User can use "n/a" as input for event or role in case there is no selection of the event or role
+Then('the user enters {string}, {string}, {string} in Edit stream modal', function (description, event, role) {
+  eventsObj.streamModalDescriptionInput().clear().type(description);
+  if (event == 'n/a') {
+    eventsObj.streamModalEventDropdown().should('exist');
+  } else {
+    const events = event.split(',');
+    eventsObj.streamModalEventDropdown().click();
+    eventsObj
+      .streamModalEventDropdownItems()
+      .then((elements) => {
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].className.includes('goa-dropdown0-option--selected')) {
+            elements[i].click();
+          }
+        }
+      })
+      .then(() => {
+        for (let i = 0; i < events.length; i++) {
+          eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
+        }
+      });
+  }
+  if (role == 'public') {
+    eventsObj
+      .streamModalPublicCheckbox()
+      .invoke('attr', 'class')
+      .then((classAttr) => {
+        if (classAttr?.includes('-selected')) {
+          cy.log('Make stream public is already checked off.');
+        } else {
+          eventsObj.streamModalPublicCheckbox().click();
+        }
+      });
+  } else if (role == 'n/a') {
+    eventsObj.streamModalRolesCheckboxes().should('exist');
+  } else {
+    const roles = role.split(',');
+    eventsObj
+      .streamModalPublicCheckbox()
+      .invoke('attr', 'class')
+      .then((classAttr) => {
+        if (classAttr?.includes('-selected')) {
+          eventsObj.streamModalPublicCheckbox().click();
+        }
+      });
+    eventsObj
+      .streamModalRolesCheckboxes()
+      .then((elements) => {
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
+            elements[i].click();
+          }
+        }
+      })
+      .then(() => {
+        for (let i = 0; i < roles.length; i++) {
+          eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
+        }
+      });
+  }
+});
+
+When('the user removes event chips of {string} in Edit stream modal', function (event) {
+  const eventChip = event.split(',');
+  for (let i = 0; i < eventChip.length; i++) {
+    eventsObj.streamModalEventChips().shadow().get(`[content="${eventChip}"]`).click();
+  }
+});

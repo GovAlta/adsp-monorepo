@@ -1,4 +1,6 @@
 import * as express from 'express';
+import { readFile } from 'fs';
+import { promisify } from 'util';
 import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
@@ -55,7 +57,10 @@ const initializeApp = async (): Promise<express.Application> => {
       displayName: 'Event service',
       description: 'Service for sending of domain events.',
       roles: [EventServiceRoles.sender],
-      configurationSchema,
+      configuration: {
+        description: 'Definitions of events including payload schema.',
+        schema: configurationSchema,
+      },
       configurationConverter: (config: Record<string, Namespace>, tenantId) => {
         return config
           ? Object.getOwnPropertyNames(config).reduce(
@@ -74,7 +79,21 @@ const initializeApp = async (): Promise<express.Application> => {
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
-      values: [ServiceMetricsValueDefinition],
+      values: [
+        ServiceMetricsValueDefinition,
+        {
+          id: 'event',
+          name: 'Event log',
+          description: 'Values representing entries in the event log.',
+          jsonSchema: {
+            type: 'object',
+            properties: {
+              payload: { type: 'object' },
+            },
+            required: ['payload'],
+          },
+        },
+      ],
     },
     { logger }
   );
@@ -126,6 +145,11 @@ const initializeApp = async (): Promise<express.Application> => {
     tokenProvider,
     configurationService,
     eventService,
+  });
+
+  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
+  app.use('/swagger/docs/v1', (_req, res) => {
+    res.json(swagger);
   });
 
   app.get('/health', async (_req, res) => {

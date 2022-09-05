@@ -15,9 +15,13 @@
   "npmScope": "core-services",
   "tasksRunnerOptions": {
     "default": {
-      "runner": "@nrwl/workspace/tasks-runners/default",
+      "runner": "nx/tasks-runners/default",
       "options": {
-        "cacheableOperations": ["build", "lint", "test"],
+        "cacheableOperations": [
+          "build",
+          "lint",
+          "test"
+        ],
         "parallel": 1
       }
     }
@@ -98,5 +102,8 @@
         "linter": "eslint"
       }
     }
-  }
+  },
+  "plugins": [
+    "@nx-dotnet/core"
+  ]
 }

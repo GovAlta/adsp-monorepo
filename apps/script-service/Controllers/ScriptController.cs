@@ -1,0 +1,98 @@
+using System.Text.Json.Serialization;
+using Adsp.Platform.ScriptService.Model;
+using Adsp.Platform.ScriptService.Services;
+using Adsp.Sdk;
+using Adsp.Sdk.Errors;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
+
+namespace Adsp.Platform.ScriptService.Controller;
+
+[ApiController]
+[Route("/script/v1")]
+[JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
+public class ScriptController : ControllerBase
+{
+  private const int TOKEN_INDEX = 7;
+
+  private readonly ILogger<ScriptController> _logger;
+  private readonly ITokenProvider _tokenProvider;
+  private readonly ILuaScriptService _luaService;
+
+  public ScriptController(ILogger<ScriptController> logger, ITokenProvider tokenProvider, ILuaScriptService luaService)
+  {
+    _logger = logger;
+    _tokenProvider = tokenProvider;
+    _luaService = luaService;
+  }
+
+  [HttpGet]
+  [Route("scripts")]
+  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
+  public async Task<IEnumerable<ScriptDefinition>> GetScripts()
+  {
+    var definitions = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, Dictionary<string, ScriptDefinition>>();
+
+    return definitions?.Values ?? Enumerable.Empty<ScriptDefinition>();
+  }
+
+  [HttpGet]
+  [Route("scripts/{script?}")]
+  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
+  public async Task<ScriptDefinition> GetScript(string? script)
+  {
+    if (String.IsNullOrWhiteSpace(script))
+    {
+      throw new RequestArgumentException("script parameter cannot be null or empty.");
+    }
+
+    var definitions = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, Dictionary<string, ScriptDefinition>>();
+    if (definitions?.TryGetValue(script, out ScriptDefinition? definition) != true)
+    {
+      throw new NotFoundException($"Script definition with ID '{script}' not found.");
+    }
+
+    return definition!;
+  }
+
+  [HttpPost]
+  [Route("scripts/{script?}")]
+  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
+  public async Task<IEnumerable<object>> RunScript(string? script, [FromBody] RunScriptRequest request)
+  {
+    if (String.IsNullOrWhiteSpace(script))
+    {
+      throw new RequestArgumentException("script parameter cannot be null or empty.");
+    }
+
+    if (request == null)
+    {
+      throw new RequestArgumentException("request body cannot be null");
+    }
+
+    var configuration = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, ScriptConfiguration>();
+    if (configuration?.Definitions.TryGetValue(script, out ScriptDefinition? definition) != true || definition == null)
+    {
+      throw new NotFoundException($"Script definition with ID '{script}' not found.");
+    }
+
+    var user = HttpContext.GetAdspUser();
+    if (!definition.IsAllowedUser(user))
+    {
+      throw new NotAllowedRunnerException(user);
+    }
+
+    var luaInputs = request.Inputs ?? new Dictionary<string, object?>();
+
+    string token = definition.UseServiceAccount == true ?
+      await _tokenProvider.GetAccessToken() :
+      HttpContext.Request.Headers[HeaderNames.Authorization].First()[TOKEN_INDEX..];
+
+    var outputs = await _luaService.RunScript(
+      user!.Tenant!.Id!, definition, luaInputs, token, request.CorrelationId, user
+    );
+
+    return outputs;
+  }
+}

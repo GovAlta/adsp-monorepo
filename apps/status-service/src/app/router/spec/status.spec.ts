@@ -17,6 +17,9 @@ import * as eventFuncs from '../../events';
 import { DomainEvent } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { adspId } from '@abgov/adsp-service-sdk';
+
+jest.mock('axios');
+
 describe('Service router', () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -40,6 +43,15 @@ describe('Service router', () => {
 
   const eventServiceMock = {
     send: jest.fn(),
+  };
+
+  const tokenProviderMock = {
+    getAccessToken: jest.fn(() => Promise.resolve('Toot!')),
+  };
+
+  const serviceDirectoryMock = {
+    getServiceUrl: jest.fn(() => Promise.resolve(new URL('http:/localhost:80'))),
+    getResourceUrl: jest.fn(() => Promise.resolve(new URL('http:/localhost:80'))),
   };
 
   const endpointRepositoryMock = {
@@ -117,11 +129,24 @@ describe('Service router', () => {
     },
   ];
 
+  const configurationMock = {
+    [applicationsMock[0]._id]: {
+      name: applicationsMock[0].name,
+      url: applicationsMock[0].endpoint.url,
+      description: applicationsMock[0].description,
+    },
+    [applicationsMock[1]._id]: {
+      name: applicationsMock[1].name,
+      url: applicationsMock[1].endpoint.url,
+      description: applicationsMock[1].description,
+    },
+  };
+
   const entriesMock = [
     {
       repository: { opts: { limit: 200, everyMilliseconds: 60000 } },
       ok: true,
-      url: 'https://www.yahoo.com',
+      url: applicationsMock[0].endpoint.url,
       timestamp: 1649277360004,
       responseTime: 685,
       status: '200',
@@ -129,7 +154,7 @@ describe('Service router', () => {
     {
       repository: { opts: { limit: 200, everyMilliseconds: 60000 } },
       ok: true,
-      url: 'https://www.yahoo.com',
+      url: applicationsMock[1].endpoint.url,
       timestamp: 1649277300002,
       responseTime: 514,
       status: '200',
@@ -171,6 +196,8 @@ describe('Service router', () => {
         eventService: eventServiceMock,
         serviceStatusRepository: statusRepositoryMock,
         endpointStatusEntryRepository: endpointRepositoryMock,
+        tokenProvider: tokenProviderMock,
+        directory: serviceDirectoryMock,
       });
 
       expect(publicRouter).toBeTruthy();
@@ -181,6 +208,7 @@ describe('Service router', () => {
   describe('Can get applications', () => {
     it('Can get all applications', async () => {
       const getApplicationsHandler = getApplications(loggerMock, statusRepositoryMock);
+      const getConfigurationMock = jest.fn();
       expect(getApplicationsHandler).toBeTruthy();
       const req: Request = {
         user: {
@@ -188,11 +216,12 @@ describe('Service router', () => {
           id: 'test',
           roles: ['test-updater'],
         },
-        getConfiguration: jest.fn(),
+        getConfiguration: getConfigurationMock,
         params: {},
       } as unknown as Request;
 
       statusRepositoryMock.find.mockResolvedValueOnce(applicationsMock);
+      getConfigurationMock.mockReturnValueOnce(configurationMock);
       await getApplicationsHandler(req, resMock as unknown as Response, nextMock);
 
       expect(resMock.json).toHaveBeenCalledWith(expect.arrayContaining(applicationsMock));
@@ -202,6 +231,7 @@ describe('Service router', () => {
       statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
       endpointRepositoryMock.findRecentByUrlAndApplicationId.mockResolvedValueOnce(entriesMock);
       const handler = getApplicationEntries(loggerMock, statusRepositoryMock, endpointRepositoryMock);
+      const getConfigurationMock = jest.fn();
 
       const req: Request = {
         user: {
@@ -209,12 +239,13 @@ describe('Service router', () => {
           id: 'test',
           roles: ['test-updater'],
         },
-        getConfiguration: jest.fn(),
+        getConfiguration: getConfigurationMock,
         query: { topValue: 1 },
         params: {
-          applicationId: statusRepositoryMock[1],
+          applicationId: applicationsMock[1]._id,
         },
       } as unknown as Request;
+      getConfigurationMock.mockReturnValueOnce(configurationMock);
       await handler(req, resMock, nextMock);
       expect(resMock.send).toHaveBeenCalledWith(expect.arrayContaining([entriesMock[1]]));
     });
@@ -223,6 +254,7 @@ describe('Service router', () => {
   describe('Can get applications by name for public', () => {
     it('Can get applications by name', async () => {
       statusRepositoryMock.find.mockResolvedValueOnce([applicationsMock[1]]);
+      const getConfigurationMock = jest.fn();
       const handler = getApplicationsByName(loggerMock, tenantServiceMock, statusRepositoryMock);
       const reqMock = {
         user: {
@@ -233,12 +265,26 @@ describe('Service router', () => {
         params: {
           name: 'test-mock',
         },
+        getConfiguration: getConfigurationMock,
       } as unknown as Request;
 
+      getConfigurationMock.mockReturnValueOnce({
+        ['624365fe3367d200110e17c5']: {
+          name: 'test-mock',
+          url: 'https://www.yahoo.com',
+          description: 'Woof',
+        },
+      });
       await handler(reqMock, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.arrayContaining([
-          { description: '', id: '624365fe3367d200110e17c5', lastUpdated: null, name: 'test-mock', status: 'offline' },
+          {
+            description: 'Woof',
+            id: '624365fe3367d200110e17c5',
+            lastUpdated: null,
+            name: 'test-mock',
+            status: 'offline',
+          },
         ])
       );
     });
@@ -320,7 +366,13 @@ describe('Service router', () => {
           endpoint: 'http://mock-test.com',
         },
       } as unknown as Request;
-      const handler = createNewApplication(loggerMock, tenantServiceMock, statusRepositoryMock);
+      const handler = createNewApplication(
+        loggerMock,
+        tenantServiceMock,
+        tokenProviderMock,
+        serviceDirectoryMock,
+        statusRepositoryMock
+      );
       await handler(req, resMock, nextMock);
       expect(resMock.status).toHaveBeenCalledWith(201);
     });
@@ -328,7 +380,7 @@ describe('Service router', () => {
 
   describe('Can update application', () => {
     it('Can update application', async () => {
-      const handler = updateApplication(loggerMock, statusRepositoryMock);
+      const handler = updateApplication(loggerMock, tokenProviderMock, serviceDirectoryMock, statusRepositoryMock);
       const req: Request = {
         user: {
           tenantId,
@@ -381,7 +433,7 @@ describe('Service router', () => {
     });
     it('Can delete application', async () => {
       statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
-      const handler = deleteApplication(loggerMock, statusRepositoryMock);
+      const handler = deleteApplication(loggerMock, tokenProviderMock, serviceDirectoryMock, statusRepositoryMock);
       const req: Request = {
         user: {
           tenantId,

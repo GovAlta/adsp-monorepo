@@ -32,11 +32,6 @@ export const DirectoryService: FunctionComponent = () => {
     return state?.session?.indicator;
   });
 
-  // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
-  // eslint-disable-next-line
-  useEffect(() => {}, [tenantName]);
-
   const reset = () => {
     setEditEntry(false);
     setSelectedEntry(defaultService);

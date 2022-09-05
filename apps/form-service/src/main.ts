@@ -1,5 +1,6 @@
 import * as express from 'express';
-import * as fs from 'fs';
+import { readFile } from 'fs';
+import { promisify } from 'util';
 import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
@@ -42,11 +43,13 @@ const initializeApp = async (): Promise<express.Application> => {
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
   const {
     tenantStrategy,
+    tenantHandler,
     eventService,
     directory,
     tokenProvider,
     configurationService,
     configurationHandler,
+    coreStrategy,
     healthCheck,
   } = await initializePlatform(
     {
@@ -70,12 +73,16 @@ const initializeApp = async (): Promise<express.Application> => {
         FormStatusSubmittedDefinition,
       ],
       notifications: [FormStatusNotificationType],
-      configurationSchema,
+      configuration: {
+        description: 'Definitions of forms with configuration of roles allowed to submit and assess.',
+        schema: configurationSchema,
+      },
       configurationConverter: (config: Record<string, FormDefinition>, tenantId) =>
         Object.entries(config).reduce(
           (defs, [id, def]) => ({ ...defs, [id]: new FormDefinitionEntity(tenantId, def) }),
           {}
         ),
+      enableConfigurationInvalidation: true,
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
@@ -83,6 +90,7 @@ const initializeApp = async (): Promise<express.Application> => {
     { logger }
   );
 
+  passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
 
   passport.serializeUser(function (user, done) {
@@ -94,7 +102,7 @@ const initializeApp = async (): Promise<express.Application> => {
   });
 
   app.use(passport.initialize());
-  app.use('/form', passport.authenticate(['tenant'], { session: false }), configurationHandler);
+  app.use('/form', passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler, configurationHandler);
 
   const notificationService = createNotificationService(logger, directory, tokenProvider);
   const fileService = createFileService(logger, directory, tokenProvider);
@@ -109,20 +117,9 @@ const initializeApp = async (): Promise<express.Application> => {
 
   applyFormMiddleware(app, { ...repositories, serviceId, logger, eventService, notificationService, fileService });
 
-  let swagger = null;
+  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {
-    if (swagger) {
-      res.json(swagger);
-    } else {
-      fs.readFile(`${__dirname}/swagger.json`, 'utf8', (err, data) => {
-        if (err) {
-          res.sendStatus(404);
-        } else {
-          swagger = JSON.parse(data);
-          res.json(swagger);
-        }
-      });
-    }
+    res.json(swagger);
   });
 
   app.get('/health', async (_req, res) => {

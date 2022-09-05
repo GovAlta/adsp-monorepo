@@ -1,15 +1,17 @@
 import { Moment } from 'moment';
 
+export interface ValueMetricFields {
+  interval: string;
+  sum: string;
+  avg: string;
+  min: string;
+  max: string;
+  count: string;
+}
+
 export interface ValueMetric {
   name: string;
-  values: {
-    interval: string;
-    sum: string;
-    avg: string;
-    min: string;
-    max: string;
-    count: string;
-  }[];
+  values: ValueMetricFields[];
 }
 
 export interface MetricValue {
@@ -29,5 +31,6 @@ export interface ServiceMetricsState {
   intervalMax: Date;
   isLoading: boolean;
   responseTimes: MetricValue[];
+  responseTimeComponents: Record<string, MetricValue[]>;
   counts: MetricValue[];
 }

@@ -87,6 +87,8 @@ export class KeycloakRealmServiceImpl implements RealmService {
       enabled: true,
     };
     const user = await client.users.create(adminUser);
+    this.logger.debug(`Created realm admin user with ID: ${user.id}`, LOG_CONTEXT);
+
     // Add realm admin roles
     const realmManagementClient = (
       await client.clients.find({
@@ -99,6 +101,7 @@ export class KeycloakRealmServiceImpl implements RealmService {
       id: realmManagementClient.id,
       realm: realm,
     });
+    this.logger.debug('Retrieved realm-management roles.', LOG_CONTEXT);
 
     const roleMapping = {
       realm: realm,
@@ -108,15 +111,22 @@ export class KeycloakRealmServiceImpl implements RealmService {
     };
 
     for (const role of roles) {
+      // Note: there appears to be some issue with accessing the composite realm-admin role from master realm client context.
+      // Add all the roles except for roles that are not default granted to the master realm service account with create-realm role.
+      if (role.name === 'realm-admin' || role.name === 'impersonation') {
+        continue;
+      }
+
       roleMapping.roles.push({
         id: role.id,
         name: role.name,
       });
     }
 
-    this.logger.debug(`Add realm management roles to user: ${util.inspect(roleMapping)}`, LOG_CONTEXT);
+    this.logger.debug(`Adding realm management roles to user: ${util.inspect(roleMapping)}`, LOG_CONTEXT);
     await client.users.addClientRoleMappings(roleMapping);
 
+    this.logger.debug(`Adding tenant admin role to user.`, LOG_CONTEXT);
     await client.users.addClientRoleMappings({
       id: user.id,
       realm: realm,

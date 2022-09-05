@@ -33,25 +33,41 @@ When(
     const roles = role.split(',');
     notificationsObj.notificationTypeModalNameField().clear().type(name);
     notificationsObj.notificationTypeModalDescriptionField().clear().type(description);
-    notificationsObj.notificationTypeModalSubscriberRolesDropdown().click({ force: true });
-    // Deselect all previously selected roles and then select roles
+    // Public or select roles
     notificationsObj
-      .notificationTypeModalSubscriberRolesDropdownItems()
-      .each((element) => {
-        cy.wrap(element)
-          .invoke('attr', 'class')
-          .then((classAttr) => {
-            if (classAttr?.includes('-selected')) {
-              cy.wrap(element).click();
-            }
-          });
-      })
-      .then(() => {
-        for (let i = 0; i < roles.length; i++) {
-          notificationsObj.notificationTypeModalSubscriberRolesDropdownItem(roles[i].trim()).click({ force: true });
+      .notificationTypeModalPublicCheckbox()
+      .invoke('attr', 'class')
+      .then((publicCheckboxClassName) => {
+        if (role.toLowerCase() == 'public') {
+          if (!publicCheckboxClassName?.includes('--selected')) {
+            notificationsObj.notificationTypeModalPublicCheckbox().click();
+          }
+        } else {
+          if (publicCheckboxClassName?.includes('--selected')) {
+            notificationsObj.notificationTypeModalPublicCheckbox().click();
+          }
+          // Deselect all previously selected roles and then select new roles
+          notificationsObj
+            .notificationTypeModalRolesCheckboxes()
+            .then((elements) => {
+              for (let i = 0; i < elements.length; i++) {
+                if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
+                  elements[i].click();
+                }
+              }
+            })
+            .then(() => {
+              for (let i = 0; i < roles.length; i++) {
+                if (roles[i].includes(':')) {
+                  notificationsObj.notificationTypeModalClientRoleCheckbox(roles[i].trim()).click();
+                } else {
+                  notificationsObj.notificationTypeModalRolesCheckbox(roles[i].trim()).click();
+                }
+              }
+            });
         }
       });
-    notificationsObj.notificationTypeModalSubscriberRolesDropdownBackground().click({ force: true }); // To collapse the dropdown after selection
+
     //bot checkbox
     notificationsObj
       .notificationChannelCheckbox('bot')
@@ -155,7 +171,7 @@ Then('the user clicks save button in notification type modal', function () {
 Then(
   'the user {string} the notification type card of {string}, {string}, {string}, {string}, {string}',
   function (viewOrNot, name, desc, roles, publicOrNot, selfService) {
-    roles = roles.replace('Anyone (Anonymous)', '');
+    roles = roles.replace('public', '');
     if (viewOrNot == 'views') {
       notificationsObj.notificationTypeCardTitle(name).should('exist');
       notificationsObj.notificationTypeCardDesc(name).invoke('text').should('contain', desc);
@@ -269,15 +285,19 @@ Then('the user {string} the event of {string} in {string}', function (viewOrNot,
 });
 
 When('the user clicks {string} button for {string} in {string}', function (buttonName, event, cardTitle) {
-  switch (buttonName) {
+  switch (buttonName.toLowerCase()) {
     case 'edit':
       notificationsObj.notificationTypeEventEditButton(cardTitle, event).click();
+      cy.wait(2000);
       break;
     case 'delete':
       notificationsObj.eventDeleteIcon(cardTitle, event).click();
       break;
+    case 'reset':
+      notificationsObj.notificationTypeEventResetBtn(cardTitle, event).click();
+      break;
     default:
-      expect(buttonName).to.be.oneOf(['edit', 'delete']);
+      expect(buttonName.toLowerCase()).to.be.oneOf(['edit', 'delete', 'reset']);
   }
 });
 
@@ -344,7 +364,7 @@ When('the user clicks Close button in Preview an email template modal', function
   notificationsObj.eventTemplatePreviewModalCloseBtn().click();
 });
 
-Then('Preview an email template modal is closed', function () {
+Then('Preview event template modal is closed', function () {
   notificationsObj.eventTemplatePreviewModal().should('not.exist');
 });
 
@@ -602,7 +622,7 @@ When(
     if (editedEmail == null) {
       emailInput = email;
     } else {
-      emailInput = (rand_str + email).replace('rnd{', '').replace('}', '');
+      emailInput = (rand_str + email).replace(/rnd{/g, '').replace(/}/g, '');
     }
     const editedPhone = phone.match(/(?<=rnd{)[^{}]+(?=})/g);
     if (editedPhone == null) {
@@ -614,7 +634,7 @@ When(
     if (editedInstructions == null) {
       instructionsInput = instructions;
     } else {
-      instructionsInput = (rand_str + instructions).replace('rnd{', '').replace('}', '');
+      instructionsInput = (rand_str + instructions).replace(/rnd{/g, '').replace(/}/g, '');
     }
     notificationsObj.editContactModalEmail().clear().type(emailInput);
     notificationsObj.editContactModalPhone().clear().type(phoneInput);
@@ -782,8 +802,9 @@ When('the user selects {string} tab on the event template', function (tab) {
 });
 
 When(
-  'the user enters {string} as subject and {string} as body {string} template page',
+  'the user enters {string} as subject and {string} as body on {string} template page',
   function (subjectText, bodyText, channel) {
+    cy.wait(1000); // Wait for the template editor elements to show
     notificationsObj.addTemplateModalSubject(channel).type(subjectText);
     notificationsObj.addTemplateModalBody(channel).type(bodyText);
   }
@@ -806,7 +827,54 @@ Then('the user views the email body {string}', function (emailBody) {
   });
 });
 
-When('the user clicks Close button in an email template modal', function () {
+When('the user clicks Close button in event template modal', function () {
   cy.scrollTo('bottom');
   notificationsObj.editTemplateModalCloseBtn().click();
+});
+
+When('the user views the link for managing email subscription', function () {
+  notificationsObj
+    .editContactModalBodyEmailPreviewPane()
+    .its('0.contentDocument.body')
+    .find('footer')
+    .contains('Please do not reply to this email. Manage your subscription here.');
+
+  const urlSubscriptionLogin = Cypress.env('subscriptionUrl') + '/' + Cypress.env('realm') + '/login';
+  cy.log(urlSubscriptionLogin);
+  notificationsObj
+    .editContactModalBodyEmailPreviewPane()
+    .its('0.contentDocument.body')
+    .find('footer')
+    .find('[class="goa-footer-event"]')
+    .find('a[href]')
+    .invoke('attr', 'href')
+    .should('contain', urlSubscriptionLogin);
+});
+
+When('the user clicks Save all button in template modal', function () {
+  cy.wait(2000);
+  notificationsObj.editTemplateModalSaveallBtn().click();
+  cy.wait(5000);
+});
+
+Then('the user {string} Reset button for {string} in {string}', function (viewOrNot, eventName, typeName) {
+  switch (viewOrNot) {
+    case 'views':
+      notificationsObj.notificationTypeEventResetBtn(typeName, eventName).should('exist');
+      break;
+    case 'should not view':
+      notificationsObj.notificationTypeEventResetBtn(typeName, eventName).should('not.exist');
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
+
+Then('the user views Reset email template modal', function () {
+  notificationsObj.resetEmailTemplateModalTitle().should('have.text', 'Reset email template');
+});
+
+When('the user clicks Delete button in Reset email template modal', function () {
+  notificationsObj.resetEmailTemplateModalDeleteBtn().click();
+  cy.wait(2000); // Wait for the modal and reset button to go away
 });

@@ -14,6 +14,7 @@ import FitnessIcon from '@icons/fitness-outline.svg';
 import MegaphoneIcon from '@icons/megaphone-outline.svg';
 import NotificationsIcon from '@icons/notifications-outline.svg';
 import DirectoryIcon from '@icons/list-outline.svg';
+import CalendarIcon from '@icons/calendar-symbol-svgrepo-com.svg';
 import { GoAIcon } from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
 import { TenantAdminLogin, TenantLogout, FetchTenant } from '@store/tenant/actions';
@@ -74,6 +75,15 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
                 <span>Access</span>
               </NavLink>
               <NavLink
+                to="/admin/services/calendar"
+                activeClassName="current"
+                title="Calendar"
+                data-testid="menu-calendar"
+              >
+                <img src={CalendarIcon} width="16" alt="Calendar Service " />
+                <span>Calendar</span>
+              </NavLink>
+              <NavLink
                 to="/admin/services/configuration"
                 activeClassName="current"
                 title="Configuration"
@@ -110,7 +120,7 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
               </NavLink>
               <NavLink to="/admin/services/pdf" activeClassName="current" title="Pdf" data-testid="menu-pdf">
                 <GoAIcon type="document" />
-                <span>Pdf</span>
+                <span>PDF</span>
               </NavLink>
               <NavLink to="/admin/services/status" activeClassName="current" title="Status" data-testid="menu-status">
                 <img src={FitnessIcon} width="16" alt="Status Service" />

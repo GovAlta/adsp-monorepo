@@ -1,4 +1,6 @@
 import * as express from 'express';
+import { readFile } from 'fs';
+import { promisify } from 'util';
 import * as passport from 'passport';
 import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import * as compression from 'compression';
@@ -10,6 +12,7 @@ import {
   applyFileMiddleware,
   configurationSchema,
   FileDeletedDefinition,
+  FileScannedDefinition,
   FileType,
   FileTypeEntity,
   FileUploadedDefinition,
@@ -17,7 +20,6 @@ import {
 } from './file';
 import { createRepositories } from './mongo';
 import * as cors from 'cors';
-import * as fs from 'fs';
 import type { User } from '@abgov/adsp-service-sdk';
 import { FileSystemStorageProvider } from './storage/file-system';
 import { createScanService } from './scan';
@@ -63,13 +65,16 @@ async function initializeApp(): Promise<express.Application> {
           inTenantAdmin: true,
         },
       ],
-      configurationSchema,
+      configuration: {
+        description: 'File types including configuration of the roles allowed to read or modify files of the type.',
+        schema: configurationSchema,
+      },
       combineConfiguration: (tenant: Record<string, FileType>, core: Record<string, FileType>, tenantId) =>
         Object.entries({
           ...tenant,
           ...core,
         }).reduce((types, [id, type]) => ({ ...types, [id]: new FileTypeEntity({ ...type, tenantId }) }), {}),
-      events: [FileUploadedDefinition, FileDeletedDefinition],
+      events: [FileUploadedDefinition, FileDeletedDefinition, FileScannedDefinition],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
@@ -141,20 +146,9 @@ async function initializeApp(): Promise<express.Application> {
     ...repositories,
   });
 
-  let swagger = null;
+  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {
-    if (swagger) {
-      res.json(swagger);
-    } else {
-      fs.readFile(`${__dirname}/swagger.json`, 'utf8', (err, data) => {
-        if (err) {
-          res.sendStatus(404);
-        } else {
-          swagger = JSON.parse(data);
-          res.json(swagger);
-        }
-      });
-    }
+    res.json(swagger);
   });
 
   app.get('/health', async (_req, res) => {

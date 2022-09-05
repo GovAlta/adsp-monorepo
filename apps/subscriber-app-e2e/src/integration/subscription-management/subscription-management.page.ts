@@ -92,6 +92,17 @@ class SubscriptionManagementPage {
   calloutMessage() {
     return cy.xpath('//*[@role="notification"]//*[@class="message"]');
   }
+  availableChannel(subscriptionName) {
+    return cy.xpath(
+      `//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]/following-sibling::td[2]`
+    );
+  }
+
+  channelCheckedIcon(subscriptionName) {
+    return cy.xpath(
+      `//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]/following-sibling::td[2]//div/div[@data-testid="icon-checked"]`
+    );
+  }
 }
 
 export default SubscriptionManagementPage;

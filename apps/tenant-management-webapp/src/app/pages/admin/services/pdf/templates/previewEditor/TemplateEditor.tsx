@@ -1,24 +1,33 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import { TemplateEditorContainer, EditTemplateActions, MonacoDivBody } from './styled-components';
+import {
+  TemplateEditorContainerPdf,
+  EditTemplateActions,
+  MonacoDivBody,
+  MonacoDivHeader,
+  MonacoDivFooter,
+} from './styled-components';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
 import { PdfTemplate } from '@store/pdf/model';
 import { languages } from 'monaco-editor';
 import { buildSuggestions } from '@lib/autoComplete';
-import { GoARadio, GoARadioGroup } from '@abgov/react-components';
 import { GoAButton } from '@abgov/react-components';
+import { Tab, Tabs } from '@components/Tabs';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
   mainTitle: string;
   subjectTitle: string;
   subjectEditorConfig?: EditorProps;
-  onBodyChange: (value: string, channel: string) => void;
+  onBodyChange: (value: string) => void;
+  onHeaderChange: (value: string) => void;
+  onFooterChange: (value: string) => void;
   setPreview: (channel: string) => void;
+  bodyEditorHintText: string;
   template: PdfTemplate;
   bodyTitle: string;
   bodyEditorConfig?: EditorProps;
-  saveCurrentTemplate?: (useWrapper: boolean) => void;
+  saveCurrentTemplate?: () => void;
   errors?: any;
   suggestion?: any;
   cancel: () => void;
@@ -30,7 +39,10 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   subjectTitle,
   subjectEditorConfig,
   onBodyChange,
+  onHeaderChange,
+  onFooterChange,
   setPreview,
+  bodyEditorHintText,
   template,
   bodyTitle,
   bodyEditorConfig,
@@ -58,68 +70,92 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [monaco, suggestion]);
 
-  const [htmlType, setHtmlType] = useState('Html');
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
-    setPreview(template?.useWrapper ? 'Snippet' : 'Html');
-    setHtmlType(template?.useWrapper ? 'Snippet' : 'Html');
+    setPreview('main');
+    onHeaderChange(template?.header);
+    onFooterChange(template?.footer);
   }, [template, modelOpen]);
 
-  let radioOptions = [];
+  const switchTabPreview = (value) => {
+    onHeaderChange(template?.header);
+    onFooterChange(template?.footer);
+    setPreview(value);
+  };
 
-  const validChannels = ['Html', 'Snippet'];
+  useEffect(() => {
+    if (modelOpen) {
+      setActiveIndex(0);
+    } else {
+      setActiveIndex(-1);
+    }
+  }, [modelOpen]);
 
-  radioOptions = validChannels.map((eventKey, index) => {
-    return {
-      name: eventKey,
-      display: eventKey,
-      body: template?.template,
-      label: eventKey,
-      key: index,
-      dataTestId: `${eventKey}-radio-button`,
-    };
-  });
-
-  const item = radioOptions.find((channel) => channel.name === htmlType);
+  const channels = ['main', 'footer/header'];
 
   return (
-    <TemplateEditorContainer>
+    <TemplateEditorContainerPdf>
       <GoAForm>
         <GoAFormItem>
-          <GoARadioGroup
-            name="status"
-            value={htmlType}
-            onChange={(_name, value) => {
-              setHtmlType(value);
-              setPreview(value);
-            }}
-            orientation="horizontal"
-          >
-            {radioOptions.map((item, key) => (
-              <GoARadio key={key} value={item.name}>
-                {item.display}
-              </GoARadio>
-            ))}
-          </GoARadioGroup>
-          <h3 className="reduce-margin" data-testid="modal-title">
-            {`${template?.name}`}
-            <p>{`${mainTitle} template`}</p>
-          </h3>
+          <Tabs activeIndex={activeIndex} changeTabCallback={(index: number) => switchTabPreview(channels[index])}>
+            <Tab label="Main">
+              <h3 className="reduce-margin" data-testid="modal-title">
+                {`${template?.name}`}
+                <p>{`${mainTitle} template`}</p>
+              </h3>
 
-          <>
-            <GoAFormItem error={errors['body'] ?? ''} helpText={''}>
-              <MonacoDivBody>
-                <MonacoEditor
-                  language={'handlebars'}
-                  value={item.body}
-                  onChange={(value) => {
-                    onBodyChange(value, item.name);
-                  }}
-                  {...bodyEditorConfig}
-                />
-              </MonacoDivBody>
-            </GoAFormItem>
-          </>
+              <>
+                <GoAFormItem error={errors?.body ?? ''} helpText={bodyEditorHintText}>
+                  <MonacoDivBody>
+                    <MonacoEditor
+                      language={'handlebars'}
+                      value={template?.template}
+                      onChange={(value) => {
+                        onBodyChange(value);
+                      }}
+                      {...bodyEditorConfig}
+                    />
+                  </MonacoDivBody>
+                </GoAFormItem>
+              </>
+            </Tab>
+            <Tab label="Header/Footer">
+              <h3 className="reduce-margin" data-testid="modal-title">
+                {`${template?.name}`}
+                <p>{`${mainTitle} template`}</p>
+              </h3>
+
+              <>
+                <GoAFormItem error={errors?.body ?? ''}>
+                  <MonacoDivHeader>
+                    <MonacoEditor
+                      language={'handlebars'}
+                      value={template?.header}
+                      onChange={(value) => {
+                        onHeaderChange(value);
+                      }}
+                      {...bodyEditorConfig}
+                    />
+                  </MonacoDivHeader>
+                </GoAFormItem>
+              </>
+              <>
+                <GoAFormItem error={errors?.body ?? ''} helpText={bodyEditorHintText}>
+                  <MonacoDivFooter>
+                    <MonacoEditor
+                      language={'handlebars'}
+                      value={template?.footer}
+                      onChange={(value) => {
+                        onFooterChange(value);
+                      }}
+                      {...bodyEditorConfig}
+                    />
+                  </MonacoDivFooter>
+                </GoAFormItem>
+              </>
+            </Tab>
+          </Tabs>
         </GoAFormItem>
         <EditTemplateActions>
           {' '}
@@ -134,7 +170,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             Cancel
           </GoAButton>
           <GoAButton
-            onClick={() => saveCurrentTemplate(htmlType === 'Snippet')}
+            onClick={() => saveCurrentTemplate()}
             buttonType="primary"
             data-testid="template-form-save"
             type="submit"
@@ -143,6 +179,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           </GoAButton>
         </EditTemplateActions>
       </GoAForm>
-    </TemplateEditorContainer>
+    </TemplateEditorContainerPdf>
   );
 };

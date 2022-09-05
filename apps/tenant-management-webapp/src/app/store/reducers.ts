@@ -11,6 +11,7 @@ import Tenant from './tenant/reducers';
 import ServiceStatus from './status/reducers';
 import Event from './event/reducers';
 import Notice from './notice/reducers';
+import Calendar from './calendar/reducers';
 import Configuration, { ConfigurationExport } from './configuration/reducers';
 import Stream from './stream/reducers';
 import Pdf from './pdf/reducers';
@@ -22,6 +23,7 @@ export const rootReducer = combineReducers({
   session: Session,
   config: Config,
   pdf: Pdf,
+  calendarService: Calendar,
   configuration: Configuration,
   configurationExport: ConfigurationExport,
   access: Access,

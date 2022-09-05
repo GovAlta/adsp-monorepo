@@ -78,6 +78,26 @@ export interface PlatformOptions extends ServiceRegistration {
    * @memberof PlatformOptions
    */
   combineConfiguration?: CombineConfiguration;
+  /**
+   * Enable configuration invalidation: Flag indicating if websocket connection should be used to
+   * invalidate configuration cache on configuration updates.
+   *
+   * @type {boolean}
+   * @memberof PlatformOptions
+   */
+  enableConfigurationInvalidation?: boolean;
+  /**
+   * Use long configuration TTL: Flag indicating if configuration should be cached with a long
+   * TTL (10 hrs instead of 15 mins). Set to true to reduce time spent retrieving configuration.
+   *
+   * Note that this does not default to true when 'enableConfigurationInvalidation' is true.
+   * Websocket invalidation can miss updates if it is disconnected at the time of the update, so
+   * services should make design decision based on severity of stale configuration in context.
+   *
+   * @type {boolean}
+   * @memberof PlatformOptions
+   */
+  useLongConfigurationCacheTTL?: boolean;
 }
 
 export interface PlatformServices {

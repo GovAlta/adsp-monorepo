@@ -6,7 +6,6 @@ import { HealthCheckControllerWorkItem } from './HealthCheckControllerWorkItem';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { AMQPCredentials, getConnectionProps } from '@core-services/core-common';
 import { HealthCheckQueueService } from './HealthCheckQueueService';
-import { getScheduler } from '../jobs/SchedulerFactory';
 import { JobScheduler } from '../jobs/JobScheduler';
 
 interface HealthCheckControllerProps {
@@ -39,21 +38,18 @@ export class HealthCheckController {
 
   subscribe = (queueService: WorkQueueService<HealthCheckControllerWorkItem>): void => {
     queueService.getItems().subscribe(({ item, done }) => {
-      if (item?.work) {
-        switch (item.work) {
-          case 'start':
-            this.startApplicationHealthChecks(item);
-            done();
-            break;
-          case 'stop':
-            this.stopApplicationHealthChecks(item);
-            done();
-            break;
-          default: {
-            this.#logger.warn(`Received unrecognized status controller job '${item.work}'.`);
-            done();
-            break;
-          }
+      switch (item?.work) {
+        case 'start':
+          this.startApplicationHealthChecks(item);
+          done();
+          break;
+        case 'stop':
+          this.stopApplicationHealthChecks(item);
+          done();
+          break;
+        default: {
+          done();
+          break;
         }
       }
     });

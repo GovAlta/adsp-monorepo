@@ -224,5 +224,25 @@ class StatusServicePage {
       '//*[@class="modal-root" and @data-state="visible"]//*[@class="goa-form-item"]//div/*[@class="goa-radio"]//input[@type="radio"]'
     );
   }
+
+  contactInformationEditBtn() {
+    return cy.xpath('//*[@data-testid="edit-contact-info"]//*[contains(@class, "goa-icon-button")]');
+  }
+
+  editContactInformationModal() {
+    return cy.xpath('//*[@data-testid="notification-types-form"]//*[@class="modal-title"]');
+  }
+
+  editContactInformationEmail() {
+    return cy.get('[data-testid="form-email"]');
+  }
+
+  editContactInformationEmailSaveBtn() {
+    return cy.get('[data-testid="form-save"]');
+  }
+
+  contactInformationEmailDisplay() {
+    return cy.get('[data-testid="email"]');
+  }
 }
 export default StatusServicePage;
