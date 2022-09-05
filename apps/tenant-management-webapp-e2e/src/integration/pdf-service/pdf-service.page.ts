@@ -1,4 +1,4 @@
-class PdfServicePage {
+class PDFServicePage {
   pdfOverviewContent() {
     return cy.xpath('//h1[text()="PDF service"]/parent::main//p');
   }
@@ -57,4 +57,4 @@ class PdfServicePage {
     );
   }
 }
-export default PdfServicePage;
+export default PDFServicePage;

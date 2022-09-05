@@ -1,8 +1,8 @@
 import { Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
-import PdfServicePage from './pdf-service.page';
+import PDFServicePage from './pdf-service.page';
 import commonlib from '../common/common-library';
 
-const pdfServiceObj = new PdfServicePage();
+const pdfServiceObj = new PDFServicePage();
 
 Given('a tenant admin user is on PDF service overview page', function () {
   commonlib.tenantAdminDirectURLLogin(
