@@ -33,10 +33,27 @@ class PdfServicePage {
 
   pdfTempate(name, templateId, description) {
     return cy.xpath(
-      `//*[@data-testid="pdf-templates-table"]//table/div/tbody//td[contains(text(), "${name}")]/following-sibling::*[contains(text(), "${templateId}")/following-sibling::*[contains(text(), "${description}")]/parent::*`
+      `//*[@data-testid="pdf-templates-table"]//tbody/tr/td[@data-testid="pdf-templates-name" and text()="${name}"]/following-sibling::td[@data-testid="pdf-templates-template-id" and text()="${templateId}"]/following-sibling::td[@data-testid="pdf-templates-description"]/div[text()="${description}"]/ancestor::tr`
+    );
+  }
 
-      // [data-testid=pdf-templates-table-header-name]
-      // [data-testid=pdf-templates-table-header-description]
+  pdfTemplateDeleteBtn(name) {
+    return cy.xpath(
+      `//*[@data-testid="pdf-templates-table"]//tbody/tr/td[@data-testid="pdf-templates-name" and text()="${name}"]/following-sibling::td[@data-testid="pdf-templates-action"]//button[@title="Delete"]`
+    );
+  }
+
+  pdfTemplateDeleteConfirmationModalTitle() {
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//div[@class="modal-title"]');
+  }
+
+  pdfTemplateDeleteConfirmationModalContent() {
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//div[@class="goa-scrollable"]');
+  }
+
+  pdfTemplateDeleteConfirmationModalDeleteBtn() {
+    return cy.xpath(
+      '//*[@data-testid="delete-confirmation" and @data-state="visible"]//button[@data-testid="delete-confirm"]'
     );
   }
 }

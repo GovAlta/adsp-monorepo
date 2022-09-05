@@ -11,15 +11,13 @@ Feature: PDF service
 
   @TEST_CS-1414 @REQ_CS-1360 @regression
   Scenario: As a tenant admin, I can see a list of templates and add templates for PDF generation, so I can define PDF templates
-    Given a tenant admin user is on Pdf service overview page
+    Given a tenant admin user is on PDF service overview page
     When the user clicks Add template button
     Then the user views Add template modal
     When the user enters "autotest-addtemplate" as name, "autotest template desc" as description in pdf template modal
     And the user clicks Save button in Add template modal
-    Then the user views name "autotest-addtemplate", template id "autotest-addtemplate" and description "autotest template desc" on pdf templates'
-# Waiting for Delete function implementation to finish
-# When the user clicks Delete icon related to "autotest-addtemplate" template name
-# Then the user views Delete pdf modal modal
-# And the user views the Delete confirmation message of "autotest-addtemplate"
-# When the user clicks Confirm button on Delete pdf template modal
-# Then the user "should not view" the template of "autotest-addtemplate"
+    Then the user "views" the PDF template of "autotest-addtemplate", "autotest-addtemplate" and "autotest template desc"
+    When the user clicks Delete icon of "autotest-addtemplate"
+    Then the user views Delete PDF Template modal for "autotest-addtemplate"
+    When the user clicks Confirm button in Delete PDF Template modal
+    Then the user "should not view" the PDF template of "autotest-addtemplate", "autotest-addtemplate" and "autotest template desc"
