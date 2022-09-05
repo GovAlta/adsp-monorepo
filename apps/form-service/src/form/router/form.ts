@@ -151,9 +151,8 @@ const FORM = 'form';
 export function getForm(repository: FormRepository): RequestHandler {
   return async (req, _res, next) => {
     try {
-      const user = req.user;
       const { formId } = req.params;
-      const form = await repository.get(user.tenantId, formId);
+      const form = await repository.get(req.tenant.id, formId);
       if (!form) {
         throw new NotFoundError('form', formId);
       }

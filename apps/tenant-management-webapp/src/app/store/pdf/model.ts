@@ -3,6 +3,8 @@ export interface PdfTemplate {
   name: string;
   description: string;
   template: string;
+  header: string;
+  footer: string;
 }
 
 export interface PdfGenerationResponse {
@@ -96,4 +98,6 @@ export const defaultPdfTemplate: PdfTemplate = {
   name: '',
   description: '',
   template: '',
+  header: '',
+  footer: '',
 };
