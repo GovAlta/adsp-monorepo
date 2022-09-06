@@ -74,6 +74,7 @@ async function initializeApp(): Promise<express.Application> {
           ...tenant,
           ...core,
         }).reduce((types, [id, type]) => ({ ...types, [id]: new FileTypeEntity({ ...type, tenantId }) }), {}),
+      useLongConfigurationCacheTTL: true,
       events: [FileUploadedDefinition, FileDeletedDefinition, FileScannedDefinition],
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
