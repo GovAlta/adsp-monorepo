@@ -8,7 +8,7 @@ public interface ILuaScriptService
     AdspId tenantId,
     ScriptDefinition definition,
     IDictionary<string, object?> inputs,
-    string token,
+    Func<Task<string>> getToken,
     string? correlationId = null,
     UserIdentifier? user = null,
     EventIdentity? trigger = null
