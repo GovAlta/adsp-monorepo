@@ -26,10 +26,10 @@ export const PdfTemplateItem: FunctionComponent<PdfTemplateItemProps> = ({ pdfTe
                 type="create"
                 title="Edit"
                 onClick={() => edit(pdfTemplate)}
-                testId={`edit-subscription-item-${pdfTemplate.name}`}
+                testId={`edit-subscription-item`}
               />
               <GoAIconButton
-                testId={`pdf-template-delete-${pdfTemplate.name}`}
+                testId={`pdf-template-delete`}
                 title="Delete"
                 size="medium"
                 type="trash"

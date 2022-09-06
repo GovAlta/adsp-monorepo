@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { fetchCalendars, FETCH_CALENDARS_ACTION } from '@store/calendar/actions';
+import { fetchCalendars, UpdateCalendar, FETCH_CALENDARS_ACTION } from '@store/calendar/actions';
 import { CalendarItem, defaultCalendar } from '@store/calendar/models';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
@@ -14,10 +14,10 @@ import { fetchEventStreams } from '@store/stream/actions';
 import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 import { ActionState } from '@store/session/models';
 
-interface AddCalendarProps {
+interface AddEditCalendarProps {
   activeEdit: boolean;
 }
-export const CalendarsView = ({ activeEdit }: AddCalendarProps): JSX.Element => {
+export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element => {
   const dispatch = useDispatch();
   const [modalType, setModalType] = useState('');
   const [editCalendar, setEditCalendar] = useState(false);
@@ -36,7 +36,6 @@ export const CalendarsView = ({ activeEdit }: AddCalendarProps): JSX.Element => 
   const { fetchCalendarState } = useSelector((state: RootState) => ({
     fetchCalendarState: state.calendarService.indicator?.details[FETCH_CALENDARS_ACTION] || '',
   }));
-  const nameArray = calendars ? calendars.map((a) => a.name) : [];
 
   useEffect(() => {
     if (activeEdit) {
@@ -53,8 +52,8 @@ export const CalendarsView = ({ activeEdit }: AddCalendarProps): JSX.Element => 
     setOpenAddCalendar(false);
   };
 
-  const onEdit = (service) => {
-    setSelectedCalendar(service);
+  const onEdit = (calendar) => {
+    setSelectedCalendar(calendar);
     setModalType('edit');
     setEditCalendar(true);
   };
@@ -78,21 +77,21 @@ export const CalendarsView = ({ activeEdit }: AddCalendarProps): JSX.Element => 
       {fetchCalendarState === ActionState.completed && !calendars && renderNoItem('calendar')}
       {fetchCalendarState === ActionState.completed && calendars && (
         <div>
-          <CalendarTableComponent calendars={calendars} onDelete={reset} onEdit={onEdit} />
+          <CalendarTableComponent calendars={calendars} onEdit={onEdit} />
         </div>
       )}
 
       {(editCalendar || openAddCalendar) && (
         <CalendarModal
           open={true}
-          calendar={selectedCalendar}
+          initialValue={selectedCalendar}
           type={modalType}
           realmRoles={tenant.realmRoles}
           tenantClients={tenant.tenantClients ? tenant.tenantClients : {}}
           onCancel={() => {
             reset();
           }}
-          calendarNames={nameArray}
+          onSave={(calendar) => dispatch(UpdateCalendar(calendar))}
         />
       )}
     </>

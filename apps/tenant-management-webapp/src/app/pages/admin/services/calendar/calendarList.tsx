@@ -7,14 +7,18 @@ import { TableDiv } from './styled-components';
 import { GoAIconButton } from '@abgov/react-components/experimental';
 import { DeleteModal } from '@components/DeleteModal';
 import { DeleteCalendar } from '@store/calendar/actions';
-
+import { GoAContextMenuIcon } from '@components/ContextMenu';
 interface CalendarItemProps {
   calendar: CalendarItem;
-  onEdit?: (service: CalendarItem) => void;
-  onDelete?: (service: CalendarItem) => void;
+  onEdit?: (calendar: CalendarItem) => void;
+  onDelete?: (calendar: CalendarItem) => void;
 }
 
-const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({ calendar, onDelete }: CalendarItemProps) => {
+const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({
+  calendar,
+  onDelete,
+  onEdit,
+}: CalendarItemProps) => {
   return (
     <>
       <tr key={calendar.name}>
@@ -45,35 +49,47 @@ const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({ calendar,
             );
           })}
         </td>
-        {onDelete && (
-          <td headers="calendar-actions" data-testid="calendar-actions">
-            <GoAIconButton
-              data-testid="delete-icon"
-              size="medium"
-              type="trash"
-              onClick={() => {
-                onDelete(calendar);
-              }}
-            />
-          </td>
-        )}
+
+        <td headers="calendar-actions" data-testid="calendar-actions">
+          {onDelete && (
+            <div style={{ display: 'flex' }}>
+              <GoAContextMenuIcon
+                type="create"
+                title="Edit"
+                testId={`calendar-edit-${calendar.name}`}
+                onClick={() => {
+                  onEdit(calendar);
+                }}
+              />
+
+              <GoAIconButton
+                data-testid="delete-icon"
+                size="medium"
+                type="trash"
+                onClick={() => {
+                  onDelete(calendar);
+                }}
+              />
+            </div>
+          )}
+        </td>
       </tr>
     </>
   );
 };
 
 interface calendarTableProps {
-  calendars: CalendarItem[];
+  calendars: Record<string, CalendarItem>;
   onEdit?: (calendar: CalendarItem) => void;
   onDelete?: (calendar: CalendarItem) => void;
 }
 
-export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ calendars, onEdit, onDelete }) => {
+export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ calendars, onEdit }) => {
   const [selectedDeleteCalendar, setSelectedDeleteCalendar] = useState(null);
 
   const dispatch = useDispatch();
 
-  const onDeleteModal = (calendar) => {
+  const onDelete = (calendar) => {
     setSelectedDeleteCalendar(calendar);
   };
 
@@ -104,8 +120,8 @@ export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ 
         </thead>
 
         <tbody key="calendar-detail">
-          {calendars.map((calendar: CalendarItem) => (
-            <CalendarItemComponent calendar={calendar} onEdit={onEdit} onDelete={onDeleteModal} />
+          {Object.keys(calendars).map((calendarName) => (
+            <CalendarItemComponent calendar={calendars[calendarName]} onEdit={onEdit} onDelete={onDelete} />
           ))}
         </tbody>
       </DataTable>
@@ -151,7 +167,7 @@ export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ 
         onDelete={() => {
           dispatch(DeleteCalendar(selectedDeleteCalendar?.name));
           setSelectedDeleteCalendar(null);
-          onDelete();
+          //onDelete();
         }}
       />
       <br />
