@@ -14,7 +14,8 @@ export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => 
       return { ...state, calendars: action.payload.calendars };
     }
     case DELETE_CALENDAR_SUCCESS_ACTION: {
-      return { ...state };
+      const remainingCalendars = state.calendars.filter((calendar) => calendar.name !== action.calendarId);
+      return { ...state, calendars: remainingCalendars };
     }
     case UPDATE_CALENDAR_SUCCESS_ACTION: {
       return { ...state };

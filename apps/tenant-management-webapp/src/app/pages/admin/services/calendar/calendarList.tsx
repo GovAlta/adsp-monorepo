@@ -1,8 +1,12 @@
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useState } from 'react';
 import { CalendarItem } from '@store/calendar/models';
 import { GoABadge } from '@abgov/react-components/experimental';
+import { useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
 import { TableDiv } from './styled-components';
+import { GoAIconButton } from '@abgov/react-components/experimental';
+import { DeleteModal } from '@components/DeleteModal';
+import { DeleteCalendar } from '@store/calendar/actions';
 
 interface CalendarItemProps {
   calendar: CalendarItem;
@@ -10,7 +14,7 @@ interface CalendarItemProps {
   onDelete?: (service: CalendarItem) => void;
 }
 
-const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({ calendar }: CalendarItemProps) => {
+const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({ calendar, onDelete }: CalendarItemProps) => {
   return (
     <>
       <tr key={calendar.name}>
@@ -41,6 +45,18 @@ const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({ calendar 
             );
           })}
         </td>
+        {onDelete && (
+          <td headers="calendar-actions" data-testid="calendar-actions">
+            <GoAIconButton
+              data-testid="delete-icon"
+              size="medium"
+              type="trash"
+              onClick={() => {
+                onDelete(calendar);
+              }}
+            />
+          </td>
+        )}
       </tr>
     </>
   );
@@ -53,6 +69,14 @@ interface calendarTableProps {
 }
 
 export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ calendars, onEdit, onDelete }) => {
+  const [selectedDeleteCalendar, setSelectedDeleteCalendar] = useState(null);
+
+  const dispatch = useDispatch();
+
+  const onDeleteModal = (calendar) => {
+    setSelectedDeleteCalendar(calendar);
+  };
+
   return (
     <TableDiv key="calendar">
       <DataTable data-testid="calendar-table">
@@ -73,15 +97,63 @@ export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ 
             <th id="calendar-update-roles" data-testid="calendar-table-header-update-roles">
               Update roles
             </th>
+            <th id="actions" data-testid="calendar-table-header-actions">
+              Actions
+            </th>
           </tr>
         </thead>
 
         <tbody key="calendar-detail">
           {calendars.map((calendar: CalendarItem) => (
-            <CalendarItemComponent calendar={calendar} onEdit={onEdit} onDelete={onDelete} />
+            <CalendarItemComponent calendar={calendar} onEdit={onEdit} onDelete={onDeleteModal} />
           ))}
         </tbody>
       </DataTable>
+      <DeleteModal
+        title="Delete calendar"
+        isOpen={selectedDeleteCalendar !== null}
+        onCancel={() => {
+          setSelectedDeleteCalendar(null);
+        }}
+        content={
+          <div>
+            <div>Are you sure you want the delete the following calendar?</div>
+            {selectedDeleteCalendar ? (
+              <DataTable>
+                <thead>
+                  <tr>
+                    <th id="calendar-name" data-testid="calendar-table-header-name">
+                      Name
+                    </th>
+                    <th id="calendar-id" data-testid="calendar-table-header-id">
+                      ID
+                    </th>
+                    <th id="calendar-description" data-testid="calendar-table-header-description">
+                      Description
+                    </th>
+                    <th id="calendar-read-roles" data-testid="calendar-table-header-read-roles">
+                      Read roles
+                    </th>
+                    <th id="calendar-update-roles" data-testid="calendar-table-header-update-roles">
+                      Update roles
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <CalendarItemComponent calendar={selectedDeleteCalendar} onEdit={onEdit} onDelete={null} />
+                </tbody>
+              </DataTable>
+            ) : (
+              ''
+            )}
+          </div>
+        }
+        onDelete={() => {
+          dispatch(DeleteCalendar(selectedDeleteCalendar?.name));
+          setSelectedDeleteCalendar(null);
+          onDelete();
+        }}
+      />
       <br />
     </TableDiv>
   );

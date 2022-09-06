@@ -33,10 +33,11 @@ export interface UpdateCalendarSuccessAction {
 
 export interface DeleteCalendarAction {
   type: typeof DELETE_CALENDAR_ACTION;
-  name: string;
+  calendarId: string;
 }
 export interface DeleteCalendarSuccessAction {
   type: typeof DELETE_CALENDAR_SUCCESS_ACTION;
+  calendarId: string;
 }
 export interface CreateCalendarAction {
   type: typeof CREATE_CALENDAR_ACTION;
@@ -84,13 +85,14 @@ export const UpdateCalendarSuccess = (calendar: CalendarItem): UpdateCalendarSuc
   calendar: calendar,
 });
 
-export const DeleteCalendar = (name: string): DeleteCalendarAction => ({
+export const DeleteCalendar = (calendarId: string): DeleteCalendarAction => ({
   type: DELETE_CALENDAR_ACTION,
-  name: name,
+  calendarId: calendarId,
 });
 
-export const DeleteCalendarSuccess = (): DeleteCalendarSuccessAction => ({
+export const DeleteCalendarSuccess = (calendarId: string): DeleteCalendarSuccessAction => ({
   type: DELETE_CALENDAR_SUCCESS_ACTION,
+  calendarId: calendarId,
 });
 
 export const CreateCalendar = (payload: CalendarItem): CreateCalendarAction => ({
