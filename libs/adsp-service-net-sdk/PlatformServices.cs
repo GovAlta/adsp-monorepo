@@ -7,4 +7,6 @@ public static class AdspPlatformServices
   public static readonly AdspId PushServiceId = AdspId.Parse("urn:ads:platform:push-service");
   public static readonly AdspId FileServiceId = AdspId.Parse("urn:ads:platform:file-service");
   public static readonly AdspId PdfServiceId = AdspId.Parse("urn:ads:platform:pdf-service");
+  public static readonly AdspId FormServiceId = AdspId.Parse("urn:ads:platform:form-service");
+  public static readonly AdspId TaskServiceId = AdspId.Parse("urn:ads:platform:task-service");
 }
