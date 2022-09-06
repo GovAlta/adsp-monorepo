@@ -76,6 +76,7 @@ const initializeApp = async (): Promise<express.Application> => {
         ...tenantConfig,
         ...coreConfig,
       }),
+      useLongConfigurationCacheTTL: true,
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),

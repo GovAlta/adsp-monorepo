@@ -55,12 +55,12 @@ internal class ScriptSubscriber : IEventSubscriber<IDictionary<string, object?>>
       );
 
       var inputs = received.Payload ?? new Dictionary<string, object?>();
-      var token = await _tokenProvider.GetAccessToken();
+      var getToken = () => _tokenProvider.GetAccessToken();
       await _scriptService.RunScript(
         received.TenantId!,
         definition,
         inputs,
-        token,
+        getToken,
         received.CorrelationId,
         null,
         new EventIdentity(received.Namespace, received.Name)

@@ -47,6 +47,11 @@ internal class Program
             Role = ServiceRoles.ScriptRunner,
             Description = "Script runner role that allows execution of scripts.",
             InTenantAdmin = true
+          },
+          new ServiceRole {
+            Role = ServiceRoles.ScriptService,
+            Description =
+              "Script service role assigned to the service account. Use this role to grant scripts permission in other services."
           }
         };
         options.Events = new DomainEventDefinition[] {
