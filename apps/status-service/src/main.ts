@@ -24,7 +24,7 @@ import {
 
 import { StatusApplicationHealthChange, StatusApplicationStatusChange } from './app/notificationTypes';
 import { scheduleJob } from 'node-schedule';
-import { AMQPCredentials } from '@core-services/core-common';
+import { AMQPCredentials, createAmqpConfigUpdateService } from '@core-services/core-common';
 import { HealthCheckController } from './app/amqp';
 import { HealthCheckJobScheduler } from './app/jobs';
 import { getScheduler } from './app/jobs/SchedulerFactory';
@@ -50,6 +50,7 @@ app.use(express.json({ limit: '1mb' }));
     tenantStrategy,
     tenantService,
     eventService,
+    clearCached,
     tokenProvider,
     directory,
   } = await initializePlatform(
@@ -69,6 +70,7 @@ app.use(express.json({ limit: '1mb' }));
         ...core,
         ...tenant,
       }),
+      useLongConfigurationCacheTTL: true,
       events: [
         HealthCheckStartedDefinition,
         HealthCheckStoppedDefinition,
@@ -159,6 +161,16 @@ app.use(express.json({ limit: '1mb' }));
 
     scheduler.loadHealthChecks(getScheduler(healthCheckSchedulingProps), scheduleDataReset, scheduleCacheReload);
   }
+
+  const configurationSync = await createAmqpConfigUpdateService({
+    ...environment,
+    logger,
+  });
+
+  configurationSync.getItems().subscribe(({ item, done }) => {
+    clearCached(item.tenantId, item.serviceId);
+    done();
+  });
 
   // service endpoints
   if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.api)) {
