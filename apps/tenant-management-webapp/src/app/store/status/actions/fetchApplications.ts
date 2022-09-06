@@ -1,4 +1,4 @@
-import { EndpointStatusEntry, ServiceStatusApplication } from '../models';
+import { EndpointStatusEntry, ApplicationStatus } from '../models';
 
 export const FETCH_SERVICE_STATUS_APPS_ACTION = 'status/FETCH_SERVICE_STATUS_APPS';
 export const FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION = 'status/FETCH_SERVICE_STATUS_APPS_SUCCESS';
@@ -12,7 +12,7 @@ export interface FetchServiceStatusApps {
 
 export interface FetchServiceStatusAppsSuccessAction {
   type: typeof FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION;
-  payload: ServiceStatusApplication[];
+  payload: ApplicationStatus[];
 }
 
 export interface FetchServiceStatusAppHealthAction {
@@ -35,9 +35,7 @@ export const fetchServiceStatusApps = (): FetchServiceStatusApps => ({
   type: FETCH_SERVICE_STATUS_APPS_ACTION,
 });
 
-export const fetchServiceStatusAppsSuccess = (
-  payload: ServiceStatusApplication[]
-): FetchServiceStatusAppsSuccessAction => ({
+export const fetchServiceStatusAppsSuccess = (payload: ApplicationStatus[]): FetchServiceStatusAppsSuccessAction => ({
   type: FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION,
   payload,
 });

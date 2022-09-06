@@ -1,4 +1,4 @@
-import { ServiceStatusApplication } from '../models';
+import { ApplicationStatus } from '../models';
 
 interface Params {
   tenantId: string;
@@ -15,7 +15,7 @@ export interface ToggleApplicationStatusAction {
 
 export interface ToggleApplicationStatusSuccessAction {
   type: typeof TOGGLE_APPLICATION_SUCCESS_STATUS_ACTION;
-  payload: ServiceStatusApplication;
+  payload: ApplicationStatus;
 }
 
 export const toggleApplicationStatus = (payload: Params): ToggleApplicationStatusAction => ({
@@ -23,9 +23,7 @@ export const toggleApplicationStatus = (payload: Params): ToggleApplicationStatu
   payload,
 });
 
-export const toggleApplicationStatusSuccess = (
-  payload: ServiceStatusApplication
-): ToggleApplicationStatusSuccessAction => ({
+export const toggleApplicationStatusSuccess = (payload: ApplicationStatus): ToggleApplicationStatusSuccessAction => ({
   type: 'status/TOGGLE_APPLICATION_STATUS_SUCCESS',
   payload,
 });
