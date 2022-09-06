@@ -13,15 +13,20 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getConfigurationDefinitions, getConfigurations, ServiceId } from '@store/configuration/action';
 import { PageIndicator } from '@components/Indicator';
 import { ConfigurationExportType, Service } from '@store/configuration/model';
-import { DescriptionDiv, SelectedExports, Exports } from '../styled-components';
+import { SelectedExports, Exports } from '../styled-components';
 import { GoACard } from '@abgov/react-components/experimental';
 import { ReactComponent as Close } from '@assets/icons/close.svg';
+import { ReactComponent as SmallClose } from '@assets/icons/x.svg';
+import { ReactComponent as Triangle } from '@assets/icons/triangle.svg';
+import { ReactComponent as Rectangle } from '@assets/icons/rectangle.svg';
+import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
 
 export const ConfigurationExport: FunctionComponent = () => {
   const { coreConfigDefinitions, tenantConfigDefinitions } = useSelector((state: RootState) => state.configuration);
   const exportState = useSelector((state: RootState) => state.configurationExport);
   const indicator = useSelector((state: RootState) => state?.session?.indicator);
   const [exportServices, setExportServices] = useState<Record<string, boolean>>({});
+  const [infoView, setInfoView] = useState<Record<string, boolean>>({});
 
   const sortedConfiguration = useMemo(() => {
     const schemas = toSchemaMap(tenantConfigDefinitions, coreConfigDefinitions);
@@ -38,6 +43,19 @@ export const ConfigurationExport: FunctionComponent = () => {
     } else {
       setExportServices({
         ...exportServices,
+        [key]: true,
+      });
+    }
+  };
+
+  const toggleInfo = (key: string) => {
+    if (infoView[key]) {
+      const temp = { ...infoView };
+      delete temp[key];
+      setInfoView(temp);
+    } else {
+      setInfoView({
+        ...infoView,
         [key]: true,
       });
     }
@@ -85,9 +103,10 @@ export const ConfigurationExport: FunctionComponent = () => {
   const DisplayButton = ({ text }) => {
     return (
       <SelectedExports>
-        {text}
+        <div>{text}</div>
         <div className="closePadding">
           <div
+            className="height-20"
             onClick={() => {
               toggleSelection(text);
             }}
@@ -106,11 +125,11 @@ export const ConfigurationExport: FunctionComponent = () => {
         As a tenant admin, you can export the configuration to JSON, so that you could save, and potentially import them
         again later.
       </p>
-      {indicator.show && <PageIndicator />}
       <h2 className="header-background">Export configuration list</h2>
+      {indicator.show && <PageIndicator />}
       <div className="flex-row">
         <div className="flex-one">
-          <div className="main">
+          <div style={{ width: `calc(100% - ${Object.keys(exportServices).length > 0 ? '10px' : '260px'})` }}>
             {Object.keys(sortedConfiguration.namespaces).map((namespace) => {
               return (
                 <React.Fragment key={namespace}>
@@ -118,18 +137,67 @@ export const ConfigurationExport: FunctionComponent = () => {
                   {sortedConfiguration.namespaces[namespace].map((name) => {
                     const desc = getDescription(namespace, name);
                     return (
-                      <div key={toServiceKey(namespace, name)}>
-                        <GoACheckbox
-                          name={name}
-                          checked={exportServices[toServiceKey(namespace, name)] || false}
-                          onChange={() => {
-                            toggleSelection(toServiceKey(namespace, name));
-                          }}
-                          data-testid={`${toServiceKey(namespace, name)}_id`}
-                        >
-                          {name}
-                        </GoACheckbox>
-                        {desc && <DescriptionDiv>{`Description: ${desc}`}</DescriptionDiv>}
+                      <div>
+                        <div key={toServiceKey(namespace, name)} className="flex-row">
+                          <div>
+                            <GoACheckbox
+                              name={name}
+                              checked={exportServices[toServiceKey(namespace, name)] || false}
+                              onChange={() => {
+                                toggleSelection(toServiceKey(namespace, name));
+                              }}
+                              data-testid={`${toServiceKey(namespace, name)}_id`}
+                            >
+                              {name}
+                            </GoACheckbox>
+                          </div>
+                          <div
+                            className="info-circle"
+                            onClick={() => {
+                              toggleInfo(toServiceKey(namespace, name));
+                            }}
+                          >
+                            {desc && (
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  marginTop: '10px',
+                                }}
+                              >
+                                <InfoCircle />
+                                <div style={{ width: '30px' }}>
+                                  {infoView[toServiceKey(namespace, name)] && (
+                                    <div className="bubble-helper">
+                                      <div className="triangle">
+                                        <Triangle />
+                                      </div>
+                                      <Rectangle />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          {infoView[toServiceKey(namespace, name)] && (
+                            <div className="full-width">
+                              <div className="overflow-wrap bubble-border">
+                                {desc}
+                                <div
+                                  className="small-close-button"
+                                  onClick={() => {
+                                    toggleInfo(toServiceKey(namespace, name));
+                                  }}
+                                >
+                                  <SmallClose />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -139,55 +207,59 @@ export const ConfigurationExport: FunctionComponent = () => {
           </div>
         </div>
         {Object.keys(exportServices).length > 0 && (
-          <div className="flex-one">
+          <div>
             <div
-              className="absolute-position"
               style={{
                 marginTop: `${Math.max(scrollPosition - 330, 0)}px`,
               }}
             >
-              <h3>Selected Configuration</h3>
-              <GoACard type="primary">
-                <div
-                  className="auto-overflow"
-                  style={{
-                    maxHeight: `calc(100vh - 608px + ${Math.max(
-                      Math.min(scrollPosition, Math.max(pageHeight - 550, 300)),
-                      0
-                    )}px`,
-                  }}
-                >
-                  {Object.keys(exportServices).map((exp) => {
-                    return <DisplayButton text={exp} />;
-                  })}
-                </div>
-                <div className="flex-reverse-row">
-                  <div className="button-style">
-                    <GoAButton
-                      data-testid="export-configuration-1"
-                      disabled={Object.keys(exportServices).length < 1 || indicator.show}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
-                      }}
-                    >
-                      {'Export'}
-                    </GoAButton>
+              <div className="configuration-selector">
+                <GoACard type="primary">
+                  <div
+                    className="auto-overflow"
+                    style={{
+                      maxHeight: `calc(100vh - 608px + ${Math.max(
+                        Math.min(scrollPosition, Math.max(pageHeight - 550, 300)),
+                        0
+                      )}px`,
+                      minHeight: '100px',
+                    }}
+                  >
+                    <h3>Selected Configuration</h3>
+                    <div className="button-wrapper">
+                      {Object.keys(exportServices).map((exp) => {
+                        return <DisplayButton text={exp} />;
+                      })}
+                    </div>
                   </div>
-                  <div className="button-style">
-                    <GoAButton
-                      data-testid="export-configuration-1"
-                      buttonType="tertiary"
-                      disabled={Object.keys(exportServices).length < 1 || indicator.show}
-                      onClick={(e) => {
-                        unselectAll();
-                      }}
-                    >
-                      {'Remove All'}
-                    </GoAButton>
+                  <div className="flex-reverse-row">
+                    <div className="button-style">
+                      <GoAButton
+                        data-testid="export-configuration-1"
+                        disabled={Object.keys(exportServices).length < 1 || indicator.show}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
+                        }}
+                      >
+                        {'Export'}
+                      </GoAButton>
+                    </div>
+                    <div className="button-style">
+                      <GoAButton
+                        data-testid="export-configuration-1"
+                        buttonType="tertiary"
+                        disabled={Object.keys(exportServices).length < 1 || indicator.show}
+                        onClick={(e) => {
+                          unselectAll();
+                        }}
+                      >
+                        {'Remove All'}
+                      </GoAButton>
+                    </div>
                   </div>
-                </div>
-              </GoACard>
+                </GoACard>
+              </div>
             </div>
           </div>
         )}
