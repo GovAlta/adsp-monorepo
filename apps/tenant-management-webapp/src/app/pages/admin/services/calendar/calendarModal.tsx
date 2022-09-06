@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { FunctionComponent, useState } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAButton } from '@abgov/react-components';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { CalendarItem } from '@store/calendar/models';
-import { useDispatch } from 'react-redux';
-import { CreateCalendar } from '@store/calendar/actions';
+import { useSelector } from 'react-redux';
 import { Role } from '@store/tenant/models';
 import { ClientRoleTable } from '@components/ClientRoleTable';
 import { ConfigServiceRole } from '@store/access/models';
@@ -14,28 +13,41 @@ import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
 import { IdField } from './styled-components';
 import { ServiceRoleConfig } from '@store/access/models';
+import { RootState } from '@store/index';
 
 interface CalendarModalProps {
-  calendar?: CalendarItem;
+  initialValue?: CalendarItem;
   type: string;
   onCancel?: () => void;
+  onSave: (calendar: CalendarItem) => void;
   open: boolean;
   realmRoles: Role[];
   tenantClients: ServiceRoleConfig;
-  calendarNames?: string[];
 }
 
-export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
-  const isNew = props.type === 'new' || props.open;
+export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
+  initialValue,
+  type,
+  onCancel,
+  onSave,
+  open,
+  realmRoles,
+  tenantClients,
+}: CalendarModalProps): JSX.Element => {
+  const isNew = type === 'new';
 
-  const [calendar, setCalendar] = useState(props.calendar);
+  const [calendar, setCalendar] = useState<CalendarItem>(initialValue);
+
+  const calendars = useSelector((state: RootState) => {
+    return state?.calendarService?.calendars;
+  });
 
   const title = isNew ? 'Add calendar' : 'Edit calendar';
 
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
-  const duplicateCalendarCheck = (names: string[]): Validator => {
+  const duplicateCalendarCheck = (): Validator => {
     return (name: string) => {
-      return names.map((n) => n.toLowerCase().replace(/ /g, '-')).includes(name.toLowerCase().replace(/ /g, '-'))
+      return calendars[calendar.name]
         ? `Duplicated calendar name ${name}, Please use a different name to get a unique Calendar name`
         : '';
     };
@@ -44,21 +56,20 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
     description.length > 250 ? 'Description could not over 250 characters ' : '';
 
   const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
-    .add('duplicated', 'name', duplicateCalendarCheck(props.calendarNames))
+    .add('duplicated', 'name', duplicateCalendarCheck())
     .add('description', 'description', descriptionCheck())
     .build();
 
-  const roleNames = props.realmRoles.map((role) => {
+  const roleNames = realmRoles.map((role) => {
     return role.name;
   });
-  const dispatch = useDispatch();
 
   let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
 
   const clientElements =
-    props.tenantClients &&
-    Object.entries(props.tenantClients).length > 0 &&
-    Object.entries(props.tenantClients)
+    tenantClients &&
+    Object.entries(tenantClients).length > 0 &&
+    Object.entries(tenantClients)
       .filter(([clientId, config]) => {
         return (config as ConfigServiceRole).roles.length > 0;
       })
@@ -71,6 +82,23 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
       });
   elements = elements.concat(clientElements);
 
+  const validationCheck = () => {
+    const validations = {
+      name: calendar.name,
+    };
+
+    if (isNew) {
+      validations['duplicated'] = calendar.name;
+
+      if (!validators.checkAll(validations)) {
+        return;
+      }
+    }
+    onSave(calendar);
+
+    onCancel();
+    validators.clear();
+  };
   const ClientRole = ({ roleNames, clientId }) => {
     return (
       <>
@@ -98,7 +126,7 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
   };
 
   return (
-    <GoAModal testId="add-calendar-modal" isOpen={props.open}>
+    <GoAModal testId="add-calendar-modal" isOpen={open}>
       <GoAModalTitle>{title}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
@@ -110,6 +138,7 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
               value={calendar.displayName}
               data-testid={`calendar-modal-name-input`}
               aria-label="name"
+              disabled={!isNew}
               onChange={(name, value) => {
                 const validations = {
                   name: value,
@@ -143,11 +172,11 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
               }}
             />
           </GoAFormItem>
-          {props.tenantClients &&
+          {tenantClients &&
             elements.map((e, key) => {
               return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
             })}
-          {Object.entries(props.tenantClients).length === 0 && (
+          {Object.entries(tenantClients).length === 0 && (
             <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>
           )}
         </GoAForm>
@@ -157,7 +186,7 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
           buttonType="secondary"
           data-testid="calendar-modal-cancel"
           onClick={() => {
-            props.onCancel();
+            onCancel();
           }}
         >
           Cancel
@@ -166,20 +195,7 @@ export const CalendarModal = (props: CalendarModalProps): JSX.Element => {
           buttonType="primary"
           data-testid="calendar-modal-save"
           onClick={(e) => {
-            const validations = {
-              name: calendar.name,
-            };
-
-            if (isNew) {
-              validations['duplicated'] = calendar.name;
-
-              if (!validators.checkAll(validations)) {
-                return;
-              }
-              dispatch(CreateCalendar(calendar));
-            }
-            props.onCancel();
-            validators.clear();
+            validationCheck();
           }}
         >
           Save

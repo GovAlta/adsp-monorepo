@@ -8,13 +8,13 @@ import { ErrorNotification } from '@store/notifications/actions';
 import { getAccessToken } from '@store/tenant/sagas';
 import {
   FetchCalendarsAction,
-  CreateCalendarAction,
+  UpdateCalendarAction,
   fetchCalendarSuccess,
-  CreateCalendarSuccess,
+  UpdateCalendarSuccess,
   FETCH_CALENDARS_ACTION,
-  CREATE_CALENDAR_ACTION,
+  UPDATE_CALENDAR_ACTION,
 } from './actions';
-import { CalendarItem } from './models';
+
 import { ActionState } from '@store/session/models';
 
 export function* fetchCalendars(action: FetchCalendarsAction): SagaIterator {
@@ -38,8 +38,7 @@ export function* fetchCalendars(action: FetchCalendarsAction): SagaIterator {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      const calendars: CalendarItem[] = Object.values(data);
-      yield put(fetchCalendarSuccess(calendars));
+      yield put(fetchCalendarSuccess(data));
 
       details[action.type] = ActionState.completed;
       yield put(
@@ -59,14 +58,8 @@ export function* fetchCalendars(action: FetchCalendarsAction): SagaIterator {
   }
 }
 
-export function* createCalendar({ payload }: CreateCalendarAction): SagaIterator {
-  const details = {};
-  details[CREATE_CALENDAR_ACTION] = ActionState.inProcess;
-  yield put(
-    UpdateIndicator({
-      details,
-    })
-  );
+export function* updateCalendar({ payload }: UpdateCalendarAction): SagaIterator {
+  const calendar = { [payload.name]: { ...payload } };
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
@@ -74,45 +67,31 @@ export function* createCalendar({ payload }: CreateCalendarAction): SagaIterator
 
   if (configBaseUrl && token) {
     try {
-      yield call(
+      const {
+        data: { latest },
+      } = yield call(
         axios.patch,
         `${configBaseUrl}/configuration/v2/configuration/platform/calendar-service`,
         {
           operation: 'UPDATE',
-          update: {
-            [payload.name]: {
-              name: payload.name,
-              displayName: payload.displayName,
-              description: payload.description,
-              readRoles: payload.readRoles,
-              updateRoles: payload.updateRoles,
-            },
-          },
+          update: { ...calendar },
         },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      yield put(CreateCalendarSuccess(payload));
-      details[CREATE_CALENDAR_ACTION] = ActionState.completed;
       yield put(
-        UpdateIndicator({
-          details,
+        UpdateCalendarSuccess({
+          ...latest.configuration,
         })
       );
     } catch (e) {
-      details[CREATE_CALENDAR_ACTION] = ActionState.error;
-      yield put(
-        UpdateIndicator({
-          details,
-        })
-      );
-      yield put(ErrorNotification({ message: `${e.message} - createCalendar` }));
+      yield put(ErrorNotification({ message: `${e.message} - updateCalendar` }));
     }
   }
 }
 
 export function* watchCalendarSagas(): Generator {
   yield takeEvery(FETCH_CALENDARS_ACTION, fetchCalendars);
-  yield takeEvery(CREATE_CALENDAR_ACTION, createCalendar);
+  yield takeEvery(UPDATE_CALENDAR_ACTION, updateCalendar);
 }

@@ -3,14 +3,14 @@ import { CalendarItem } from '@store/calendar/models';
 import { GoABadge } from '@abgov/react-components/experimental';
 import DataTable from '@components/DataTable';
 import { TableDiv } from './styled-components';
-
+import { GoAContextMenuIcon } from '@components/ContextMenu';
 interface CalendarItemProps {
   calendar: CalendarItem;
-  onEdit?: (service: CalendarItem) => void;
-  onDelete?: (service: CalendarItem) => void;
+  onEdit?: (calendar: CalendarItem) => void;
+  onDelete?: (calendar: CalendarItem) => void;
 }
 
-const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({ calendar }: CalendarItemProps) => {
+const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({ calendar, onEdit }: CalendarItemProps) => {
   return (
     <>
       <tr key={calendar.name}>
@@ -41,13 +41,23 @@ const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({ calendar 
             );
           })}
         </td>
+        <td>
+          <GoAContextMenuIcon
+            type="create"
+            title="Edit"
+            testId={`calendar-edit-${calendar.name}`}
+            onClick={() => {
+              onEdit(calendar);
+            }}
+          />
+        </td>
       </tr>
     </>
   );
 };
 
 interface calendarTableProps {
-  calendars: CalendarItem[];
+  calendars: Record<string, CalendarItem>;
   onEdit?: (calendar: CalendarItem) => void;
   onDelete?: (calendar: CalendarItem) => void;
 }
@@ -73,12 +83,15 @@ export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ 
             <th id="calendar-update-roles" data-testid="calendar-table-header-update-roles">
               Update roles
             </th>
+            <th id="calendar-actions" data-testid="calendar-actions">
+              Action
+            </th>
           </tr>
         </thead>
 
         <tbody key="calendar-detail">
-          {calendars.map((calendar: CalendarItem) => (
-            <CalendarItemComponent calendar={calendar} onEdit={onEdit} onDelete={onDelete} />
+          {Object.keys(calendars).map((calendarName) => (
+            <CalendarItemComponent calendar={calendars[calendarName]} onEdit={onEdit} onDelete={onDelete} />
           ))}
         </tbody>
       </DataTable>

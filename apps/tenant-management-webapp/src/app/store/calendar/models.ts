@@ -7,7 +7,7 @@ export interface CalendarItem {
   updateRoles: string[];
 }
 export interface CalendarService {
-  calendars: Array<CalendarItem>;
+  calendars: Record<string, CalendarItem>;
   indicator?: Indicator;
 }
 export const defaultCalendar: CalendarItem = {

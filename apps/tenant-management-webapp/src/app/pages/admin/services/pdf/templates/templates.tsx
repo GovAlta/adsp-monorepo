@@ -162,7 +162,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
         {showDeleteConfirmation && (
           <DeleteModal
             isOpen={showDeleteConfirmation}
-            title="Delete PDF Template"
+            title="Delete PDF template"
             content={`Delete ${currentTemplate?.id}?`}
             onCancel={() => setShowDeleteConfirmation(false)}
             onDelete={() => {
