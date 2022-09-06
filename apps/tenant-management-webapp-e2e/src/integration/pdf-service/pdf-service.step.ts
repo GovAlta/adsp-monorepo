@@ -61,8 +61,8 @@ When('the user clicks Delete icon of {string}', function (templateName) {
   pdfServiceObj.pdfTemplateDeleteBtn(templateName).click();
 });
 
-Then('the user views Delete PDF Template modal for {string}', function (templateName) {
-  pdfServiceObj.pdfTemplateDeleteConfirmationModalTitle().invoke('text').should('eq', 'Delete PDF Template');
+Then('the user views Delete PDF template modal for {string}', function (templateName) {
+  pdfServiceObj.pdfTemplateDeleteConfirmationModalTitle().invoke('text').should('eq', 'Delete PDF template');
   pdfServiceObj
     .pdfTemplateDeleteConfirmationModalContent()
     .invoke('text')
