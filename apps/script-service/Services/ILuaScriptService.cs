@@ -5,6 +5,7 @@ namespace Adsp.Platform.ScriptService.Services;
 public interface ILuaScriptService
 {
   Task<IEnumerable<object>> RunScript(
+    Guid jobId,
     AdspId tenantId,
     ScriptDefinition definition,
     IDictionary<string, object?> inputs,

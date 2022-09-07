@@ -38,6 +38,15 @@ internal class ScriptSubscriber : IEventSubscriber<IDictionary<string, object?>>
   {
     _logger.LogDebug("Processing event {Namespace}:{Name}...", received.Namespace, received.Name);
 
+    if (String.Equals(_serviceId.Service, received.Namespace, StringComparison.Ordinal))
+    {
+      _logger.LogDebug(
+        "Skipping processing of event {Namespace}:{Name} from the {Service} namespace to prevent circular execution.",
+        received.Namespace, received.Name, _serviceId.Service
+      );
+      return;
+    }
+
     var configuration = await _configurationService.GetConfiguration<IDictionary<string, ScriptDefinition>, ScriptConfiguration>(
       _serviceId, received.TenantId
     );
@@ -57,6 +66,7 @@ internal class ScriptSubscriber : IEventSubscriber<IDictionary<string, object?>>
       var inputs = received.Payload ?? new Dictionary<string, object?>();
       var getToken = () => _tokenProvider.GetAccessToken();
       await _scriptService.RunScript(
+        Guid.NewGuid(),
         received.TenantId!,
         definition,
         inputs,
