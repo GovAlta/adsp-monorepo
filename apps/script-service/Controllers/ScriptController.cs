@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using Adsp.Platform.ScriptService.Events;
 using Adsp.Platform.ScriptService.Model;
 using Adsp.Platform.ScriptService.Services;
 using Adsp.Sdk;
@@ -18,14 +17,14 @@ public class ScriptController : ControllerBase
   private const int TOKEN_INDEX = 7;
 
   private readonly ILogger<ScriptController> _logger;
+  private readonly ITokenProvider _tokenProvider;
   private readonly ILuaScriptService _luaService;
-  private readonly IEventService _evenService;
 
-  public ScriptController(ILogger<ScriptController> logger, ILuaScriptService luaService, IEventService eventService)
+  public ScriptController(ILogger<ScriptController> logger, ITokenProvider tokenProvider, ILuaScriptService luaService)
   {
     _logger = logger;
+    _tokenProvider = tokenProvider;
     _luaService = luaService;
-    _evenService = eventService;
   }
 
   [HttpGet]
@@ -72,8 +71,8 @@ public class ScriptController : ControllerBase
       throw new RequestArgumentException("request body cannot be null");
     }
 
-    var definitions = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, Dictionary<string, ScriptDefinition>>();
-    if (definitions?.TryGetValue(script, out ScriptDefinition? definition) != true || definition == null)
+    var configuration = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, ScriptConfiguration>();
+    if (configuration?.Definitions.TryGetValue(script, out ScriptDefinition? definition) != true || definition == null)
     {
       throw new NotFoundException($"Script definition with ID '{script}' not found.");
     }
@@ -86,24 +85,12 @@ public class ScriptController : ControllerBase
 
     var luaInputs = request.Inputs ?? new Dictionary<string, object?>();
 
-    var authorization = HttpContext.Request.Headers[HeaderNames.Authorization].First();
-    var outputs = await _luaService.RunScript(definition, luaInputs, authorization?[TOKEN_INDEX..]);
+    Func<Task<string>> getToken = definition.UseServiceAccount == true ?
+      () => _tokenProvider.GetAccessToken() :
+      () => Task.FromResult(HttpContext.Request.Headers[HeaderNames.Authorization].First()[TOKEN_INDEX..]);
 
-    var eventPayload = new ScriptExecuted { Definition = definition, ExecutedBy = user };
-    if (definition.IncludeValuesInEvent == true)
-    {
-      eventPayload.Inputs = luaInputs;
-      eventPayload.Outputs = outputs;
-    }
-
-    await _evenService.Send(
-      new DomainEvent<ScriptExecuted>(
-        ScriptExecuted.EventName,
-        DateTime.Now,
-        eventPayload,
-        request.CorrelationId
-      ),
-      user!.Tenant!.Id
+    var outputs = await _luaService.RunScript(
+      Guid.NewGuid(), user!.Tenant!.Id!, definition, luaInputs, getToken, request.CorrelationId, user
     );
 
     return outputs;

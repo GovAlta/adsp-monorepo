@@ -28,6 +28,9 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
   const [openAddPdfTemplate, setOpenAddPdfTemplate] = useState(false);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [bodyPreview, setBodyPreview] = useState('');
+  const [headerPreview, setHeaderPreview] = useState('');
+  const [footerPreview, setFooterPreview] = useState('');
+  const [currentChannel, setCurrentChannel] = useState('main');
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const pdfTemplates = useSelector((state: RootState) => {
     return state?.pdf?.pdfTemplates;
@@ -35,11 +38,15 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
 
   const [currentTemplate, setCurrentTemplate] = useState(defaultPdfTemplate);
   const [body, setBody] = useState('');
+  const [footer, setFooter] = useState('');
+  const [header, setHeader] = useState('');
 
   const [isEdit, setIsEdit] = useState(false);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+
+  const channelNames = { main: 'PDF preview', 'header/footer': 'Header / Footer preview' };
 
   const webappUrl = useSelector((state: RootState) => {
     return state.config.serviceUrls.tenantManagementWebApp;
@@ -103,6 +110,8 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
   const savePdfTemplate = () => {
     const saveObject = JSON.parse(JSON.stringify(currentTemplate));
     saveObject.template = body;
+    saveObject.header = header;
+    saveObject.footer = footer;
     dispatch(updatePdfTemplate(saveObject));
 
     reset();
@@ -153,8 +162,8 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
         {showDeleteConfirmation && (
           <DeleteModal
             isOpen={showDeleteConfirmation}
-            title="Delete Pdf Template"
-            content={`Delete ${currentTemplate?.id}`}
+            title="Delete PDF template"
+            content={`Delete ${currentTemplate?.id}?`}
             onCancel={() => setShowDeleteConfirmation(false)}
             onDelete={() => {
               setShowDeleteConfirmation(false);
@@ -193,7 +202,43 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                     console.error('error: ' + e.message);
                   }
                 }}
-                setPreview={() => {
+                onHeaderChange={(value) => {
+                  setHeader(value);
+
+                  try {
+                    setHeaderPreview(
+                      generateMessage(
+                        getTemplateBody(value, 'pdf', {
+                          data: currentTemplate,
+                          serviceUrl: webappUrl,
+                          today: new Date().toDateString(),
+                        }),
+                        { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() }
+                      )
+                    );
+                  } catch (e) {
+                    console.error('error: ' + e.message);
+                  }
+                }}
+                onFooterChange={(value) => {
+                  setFooter(value);
+
+                  try {
+                    setFooterPreview(
+                      generateMessage(
+                        getTemplateBody(value, 'pdf', {
+                          data: currentTemplate,
+                          serviceUrl: webappUrl,
+                          today: new Date().toDateString(),
+                        }),
+                        { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() }
+                      )
+                    );
+                  } catch (e) {
+                    console.error('error: ' + e.message);
+                  }
+                }}
+                setPreview={(channel) => {
                   try {
                     setBodyPreview(
                       generateMessage(
@@ -208,6 +253,8 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                   } catch (e) {
                     console.error('error: ' + e.message);
                   }
+
+                  setCurrentChannel(channel);
                 }}
                 bodyEditorHintText={
                   "*GOA default styles are applied if the template doesn't include proper <html> opening and closing tags"
@@ -219,7 +266,13 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
               />
 
               <PreviewTemplateContainer>
-                <PreviewTemplate channelTitle={`PDF preview`} bodyPreviewContent={bodyPreview} />
+                <PreviewTemplate
+                  channelTitle={channelNames[currentChannel]}
+                  bodyPreviewContent={bodyPreview}
+                  headerPreviewContent={headerPreview}
+                  footerPreviewContent={footerPreview}
+                  channel={currentChannel}
+                />
               </PreviewTemplateContainer>
             </NotificationTemplateEditorContainer>
           </ModalContent>

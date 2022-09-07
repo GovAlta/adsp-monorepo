@@ -23,11 +23,11 @@ const axiosMock = axios as jest.Mocked<typeof axios>;
 describe('queue', () => {
   const KEYCLOAK_ROOT_URL = 'http://localhost:8080';
   const apiId = adspId`urn:ads:platform:task-service:v1`;
-  const loggerMock = ({
+  const loggerMock = {
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
-  } as unknown) as Logger;
+  } as unknown as Logger;
 
   const eventServiceMock = {
     send: jest.fn(),
@@ -109,7 +109,7 @@ describe('queue', () => {
       };
       const next = jest.fn();
 
-      verifyQueuedTask((req as unknown) as Request, (res as unknown) as Response, next);
+      verifyQueuedTask(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith();
     });
 
@@ -124,7 +124,7 @@ describe('queue', () => {
       };
       const next = jest.fn();
 
-      verifyQueuedTask((req as unknown) as Request, (res as unknown) as Response, next);
+      verifyQueuedTask(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
     });
   });
@@ -142,7 +142,7 @@ describe('queue', () => {
 
       getConfigurationMock.mockResolvedValueOnce([{ queues }]);
 
-      await getQueues((req as unknown) as Request, (res as unknown) as Response, next);
+      await getQueues(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalled();
     });
   });
@@ -161,7 +161,7 @@ describe('queue', () => {
 
       getConfigurationMock.mockResolvedValueOnce([{ queues }]);
 
-      await getQueue((req as unknown) as Request, (res as unknown) as Response, next);
+      await getQueue(req as unknown as Request, res as unknown as Response, next);
       expect(req['queue']).toBe(queue);
       expect(next).toHaveBeenCalledWith();
     });
@@ -179,7 +179,7 @@ describe('queue', () => {
 
       getConfigurationMock.mockResolvedValueOnce([{ queues }]);
 
-      await getQueue((req as unknown) as Request, (res as unknown) as Response, next);
+      await getQueue(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
     });
   });
@@ -209,7 +209,7 @@ describe('queue', () => {
       const result = { results: [], page: {} };
       req.queue.getTasks.mockResolvedValueOnce(result);
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(req.queue.getTasks).toHaveBeenCalledWith(req.user, repositoryMock, 10, undefined);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page: result.page }));
     });
@@ -231,7 +231,7 @@ describe('queue', () => {
       const result = { results: [], page: {} };
       req.queue.getTasks.mockResolvedValueOnce(result);
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(req.queue.getTasks).toHaveBeenCalledWith(req.user, repositoryMock, 100, undefined);
     });
 
@@ -252,7 +252,7 @@ describe('queue', () => {
       const result = { results: [], page: {} };
       req.queue.getTasks.mockResolvedValueOnce(result);
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(req.queue.getTasks).toHaveBeenCalledWith(req.user, repositoryMock, 10, '3i9s');
     });
   });
@@ -268,6 +268,7 @@ describe('queue', () => {
     it('can handle create task request', async () => {
       const req = {
         user: { tenantId, id: 'user-1', roles: [TaskServiceRoles.TaskWriter] },
+        tenant: { id: tenantId },
         queue,
         body: { name: 'test' },
       };
@@ -276,7 +277,7 @@ describe('queue', () => {
       };
       const next = jest.fn();
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining(req.body));
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'task-created' }));
     });
@@ -284,6 +285,7 @@ describe('queue', () => {
     it('can handle create task request with priority', async () => {
       const req = {
         user: { tenantId, id: 'user-1', roles: [TaskServiceRoles.TaskWriter] },
+        tenant: { id: tenantId },
         queue,
         body: { name: 'test', priority: 'High' },
       };
@@ -292,7 +294,7 @@ describe('queue', () => {
       };
       const next = jest.fn();
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining(req.body));
       expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'task-created' }));
     });
@@ -300,6 +302,7 @@ describe('queue', () => {
     it('can call next with unauthorized user error', async () => {
       const req = {
         user: { tenantId, id: 'user-1', roles: [] },
+        tenant: { id: tenantId },
         queue,
         body: { name: 'test', priority: 'High' },
       };
@@ -308,7 +311,7 @@ describe('queue', () => {
       };
       const next = jest.fn();
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });
@@ -338,7 +341,7 @@ describe('queue', () => {
           { id: 'user-2', username: 'user-2' },
         ],
       });
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledTimes(1);
       expect(next).toHaveBeenCalledTimes(0);
     });
@@ -357,7 +360,7 @@ describe('queue', () => {
       axiosMock.get.mockResolvedValueOnce({
         data: [{ id: 'user-1', firstName: 'Testy', lastName: 'McTester', email: 'user-1@test.co' }],
       });
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
 
@@ -377,7 +380,7 @@ describe('queue', () => {
       axiosMock.get.mockRejectedValueOnce(error);
       axiosMock.isAxiosError.mockReturnValueOnce(true);
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
 
@@ -397,7 +400,7 @@ describe('queue', () => {
       axiosMock.get.mockRejectedValueOnce(error);
       axiosMock.isAxiosError.mockReturnValueOnce(true);
 
-      await handler((req as unknown) as Request, (res as unknown) as Response, next);
+      await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith([]);
       expect(next).toHaveBeenCalledTimes(0);
     });

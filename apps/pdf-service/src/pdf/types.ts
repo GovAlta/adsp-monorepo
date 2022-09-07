@@ -1,7 +1,7 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 
 export interface TemplateService {
-  getTemplateFunction(template: string): (context: unknown) => string;
+  getTemplateFunction(template: string, channel?: string): (context: unknown) => string;
 }
 
 export interface PdfServiceProps {

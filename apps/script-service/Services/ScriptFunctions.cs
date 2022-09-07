@@ -7,31 +7,47 @@ using RestSharp;
 namespace Adsp.Platform.ScriptService.Services;
 internal class ScriptFunctions
 {
+  private readonly AdspId _tenantId;
   private readonly IServiceDirectory _directory;
-  private readonly string? _token;
+  private readonly Func<Task<string>> _getToken;
   private readonly RestClient _client;
 
-  public ScriptFunctions(IServiceDirectory directory, string? token, RestClient? client = null)
+  public ScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken, RestClient? client = null)
   {
+    _tenantId = tenantId;
     _directory = directory;
-    _token = token;
-    _client = client ?? new RestClient();
+    _getToken = getToken;
+    _client = client ?? new RestClient(new RestClientOptions { ThrowOnAnyError = true });
   }
 
-  public string? GeneratePdf(string templateId, string filename, LuaTable values)
+  public string? GeneratePdf(string templateId, string filename, object values)
   {
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.PdfServiceId).Result;
     var requestUrl = new Uri(servicesUrl, "/pdf/v1/jobs");
 
+    var token = _getToken().Result;
     var request = new RestRequest(requestUrl, Method.Post);
-    request.AddHeader("Authorization", $"Bearer {_token}");
+    request.AddQueryParameter("tenantId", _tenantId.ToString());
+    request.AddHeader("Authorization", $"Bearer {token}");
 
     var generationRequest = new PdfGenerationRequest
     {
       TemplateId = templateId,
-      FileName = filename,
-      Data = values.ToDictionary(),
+      FileName = filename
     };
+
+    if (values is LuaTable table)
+    {
+      generationRequest.Data = table.ToDictionary();
+    }
+    else if (values is IDictionary<string, object> dictionary)
+    {
+      generationRequest.Data = dictionary;
+    }
+    else
+    {
+      throw new ArgumentException("values is not a recognized type.");
+    }
 
     request.AddJsonBody(generationRequest);
 
@@ -44,11 +60,54 @@ internal class ScriptFunctions
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.ConfigurationServiceId).Result;
     var requestUrl = new Uri(servicesUrl, $"/configuration/v2/configuration/{@namespace}/{name}/active");
 
+    var token = _getToken().Result;
     var request = new RestRequest(requestUrl, Method.Get);
     request.AddQueryParameter("orLatest", "true");
-    request.AddHeader("Authorization", $"Bearer {_token}");
+    request.AddQueryParameter("tenantId", _tenantId.ToString());
+    request.AddHeader("Authorization", $"Bearer {token}");
 
     var result = _client.GetAsync<ConfigurationResult>(request).Result;
     return result?.Configuration;
+  }
+
+  public FormDataResult? GetFormData(string formId)
+  {
+    var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.FormServiceId).Result;
+    var requestUrl = new Uri(servicesUrl, $"/form/v1/forms/{formId}/data");
+
+    var token = _getToken().Result;
+    var request = new RestRequest(requestUrl, Method.Get);
+    request.AddQueryParameter("tenantId", _tenantId.ToString());
+    request.AddHeader("Authorization", $"Bearer {token}");
+
+    var result = _client.GetAsync<FormDataResult>(request).Result;
+    return result;
+  }
+
+  public string? CreateTask(
+    string queueNamespace, string queueName, string name,
+    string? description = null, string? recordId = null, string? priority = null, LuaTable? context = null
+  )
+  {
+    var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.TaskServiceId).Result;
+    var requestUrl = new Uri(servicesUrl, $"/task/v1/queues/{queueNamespace}/{queueName}/tasks");
+
+    var token = _getToken().Result;
+    var request = new RestRequest(requestUrl, Method.Get);
+    request.AddQueryParameter("tenantId", _tenantId.ToString());
+    request.AddHeader("Authorization", $"Bearer {token}");
+
+    var generationRequest = new TaskCreationRequest
+    {
+      Name = name,
+      Description = description,
+      RecordId = recordId,
+      Priority = priority,
+      Context = context?.ToDictionary()
+    };
+    request.AddJsonBody(generationRequest);
+
+    var result = _client.PostAsync<TaskCreationResult>(request).Result;
+    return result?.Id;
   }
 }

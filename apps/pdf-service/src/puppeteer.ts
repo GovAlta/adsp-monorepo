@@ -1,6 +1,5 @@
 import * as puppeteer from 'puppeteer';
 import { PdfService, PdfServiceProps } from './pdf';
-import { types } from 'util';
 
 class PuppeteerPdfService implements PdfService {
   constructor(private browser: puppeteer.Browser) {}
@@ -18,6 +17,7 @@ class PuppeteerPdfService implements PdfService {
           footerTemplate: _footer,
           headerTemplate: _header,
           printBackground: true,
+          displayHeaderFooter: true,
         });
       } else {
         return await page.pdf({ printBackground: true });

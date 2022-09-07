@@ -6,9 +6,6 @@ export const FETCH_CALENDARS_SUCCESS_ACTION = 'calendar/FETCH_CALENDAR_SUCCESS_A
 export const DELETE_CALENDAR_ACTION = 'calendar/DELETE_CALENDAR_ACTION';
 export const DELETE_CALENDAR_SUCCESS_ACTION = 'calendar/DELETE_CALENDAR_ACTION_SUCCESS';
 
-export const CREATE_CALENDAR_ACTION = 'calendar/CREATE_CALENDAR_ACTION';
-export const CREATE_CALENDAR_SUCCESS_ACTION = 'calendar/CREATE_CALENDAR_ACTION_SUCCESS';
-
 export const UPDATE_CALENDAR_ACTION = 'calendar/UPDATE_CALENDAR_ACTION';
 export const UPDATE_CALENDAR_SUCCESS_ACTION = 'calendar/UPDATE_CALENDAR_SUCCESS_ACTION';
 
@@ -19,7 +16,7 @@ export interface FetchCalendarsAction {
 }
 export interface FetchCalendarsSuccessAction {
   type: typeof FETCH_CALENDARS_SUCCESS_ACTION;
-  payload: { calendars: CalendarItem[] };
+  payload: Record<string, CalendarItem>;
 }
 
 export interface UpdateCalendarAction {
@@ -28,25 +25,16 @@ export interface UpdateCalendarAction {
 }
 export interface UpdateCalendarSuccessAction {
   type: typeof UPDATE_CALENDAR_SUCCESS_ACTION;
-  calendar: CalendarItem;
+  payload: Record<string, CalendarItem>;
 }
 
 export interface DeleteCalendarAction {
   type: typeof DELETE_CALENDAR_ACTION;
-  name: string;
+  calendarId: string;
 }
 export interface DeleteCalendarSuccessAction {
   type: typeof DELETE_CALENDAR_SUCCESS_ACTION;
-}
-export interface CreateCalendarAction {
-  type: typeof CREATE_CALENDAR_ACTION;
-  payload: CalendarItem;
-}
-export interface CreateCalendarSuccessAction {
-  type: typeof CREATE_CALENDAR_SUCCESS_ACTION;
-  payload: {
-    calendar: CalendarItem;
-  };
+  calendarId: string;
 }
 
 export interface UpdateIndicatorAction {
@@ -61,17 +49,15 @@ export type ActionTypes =
   | UpdateCalendarSuccessAction
   | DeleteCalendarAction
   | DeleteCalendarSuccessAction
-  | CreateCalendarAction
-  | CreateCalendarSuccessAction
   | UpdateIndicatorAction;
 
 export const fetchCalendars = (): FetchCalendarsAction => ({
   type: FETCH_CALENDARS_ACTION,
 });
 
-export const fetchCalendarSuccess = (calendars: CalendarItem[]): FetchCalendarsSuccessAction => ({
+export const fetchCalendarSuccess = (calendars: Record<string, CalendarItem>): FetchCalendarsSuccessAction => ({
   type: FETCH_CALENDARS_SUCCESS_ACTION,
-  payload: { calendars: calendars },
+  payload: calendars,
 });
 
 export const UpdateCalendar = (payload: CalendarItem): UpdateCalendarAction => ({
@@ -79,28 +65,19 @@ export const UpdateCalendar = (payload: CalendarItem): UpdateCalendarAction => (
   payload,
 });
 
-export const UpdateCalendarSuccess = (calendar: CalendarItem): UpdateCalendarSuccessAction => ({
+export const UpdateCalendarSuccess = (calendar: Record<string, CalendarItem>): UpdateCalendarSuccessAction => ({
   type: UPDATE_CALENDAR_SUCCESS_ACTION,
-  calendar: calendar,
+  payload: calendar,
 });
 
-export const DeleteCalendar = (name: string): DeleteCalendarAction => ({
+export const DeleteCalendar = (calendarId: string): DeleteCalendarAction => ({
   type: DELETE_CALENDAR_ACTION,
-  name: name,
+  calendarId: calendarId,
 });
 
-export const DeleteCalendarSuccess = (): DeleteCalendarSuccessAction => ({
+export const DeleteCalendarSuccess = (calendarId: string): DeleteCalendarSuccessAction => ({
   type: DELETE_CALENDAR_SUCCESS_ACTION,
-});
-
-export const CreateCalendar = (payload: CalendarItem): CreateCalendarAction => ({
-  type: CREATE_CALENDAR_ACTION,
-  payload: payload,
-});
-
-export const CreateCalendarSuccess = (calendar: CalendarItem): CreateCalendarSuccessAction => ({
-  type: CREATE_CALENDAR_SUCCESS_ACTION,
-  payload: { calendar },
+  calendarId: calendarId,
 });
 
 export const UpdateIndicator = (indicator: Indicator): UpdateIndicatorAction => ({

@@ -12,10 +12,29 @@ import {
 // Stored in the configuration service repository
 export type StatusServiceConfiguration = Record<string, unknown>;
 
-export interface ApplicationEntity {
+// The application bits that rarely change (so not quite static)
+// and are stored as part of the status-service
+// configuration.
+
+export interface StaticApplicationData {
   name: string;
   url: string;
   description?: string;
+}
+// Application data, including the static
+// and dynamic bits
+export interface ApplicationData {
+  _id: string;
+  name: string;
+  url: string;
+  description?: string;
+  status: PublicServiceStatusType;
+  metadata: unknown;
+  statusTimestamp: number;
+  tenantName: string;
+  tenantRealm: string;
+  tenantId: string;
+  enabled: boolean;
 }
 
 export class ServiceStatusApplicationEntity implements ServiceStatusApplication {

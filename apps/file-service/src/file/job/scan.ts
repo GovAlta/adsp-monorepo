@@ -1,6 +1,7 @@
-import { AdspId } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
-import { File } from '..';
+import { fileScanned } from '../events';
+import { File } from '../types';
 import { FileRepository } from '../repository';
 import { ScanService } from '../scan';
 
@@ -8,11 +9,13 @@ interface ScanJobProps {
   logger: Logger;
   scanService: ScanService;
   fileRepository: FileRepository;
+  eventService: EventService;
 }
 
 export const createScanJob =
-  ({ logger, scanService, fileRepository }: ScanJobProps) =>
-  async (tenantId: AdspId, { id, filename }: File, done: (err?: Error) => void): Promise<void> => {
+  ({ logger, scanService, fileRepository, eventService }: ScanJobProps) =>
+  async (tenantId: AdspId, file: File, done: (err?: Error) => void): Promise<void> => {
+    const { id, filename } = file;
     try {
       logger.debug(`Scanning file ${filename} (ID: ${id})...`, {
         context: 'FileScanJob',
@@ -34,6 +37,7 @@ export const createScanJob =
               tenant: tenantId?.toString(),
             });
           }
+          eventService.send(fileScanned(tenantId, file, infected));
         }
       }
       done();

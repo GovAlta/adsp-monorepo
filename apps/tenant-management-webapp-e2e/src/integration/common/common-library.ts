@@ -47,7 +47,7 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
     case 'Configuration':
       menuItemTestid = 'menu-configuration';
       break;
-    case 'Pdf':
+    case 'PDF':
       menuItemTestid = 'menu-pdf';
       break;
     case 'Calendar':
@@ -64,7 +64,7 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
         'Directory',
         'Dashboard',
         'Event log',
-        'Pdf',
+        'PDF',
         'Calendar',
       ]);
   }

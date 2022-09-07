@@ -67,11 +67,11 @@ Feature: Tenant admin
     Then the user views the tenant name of "autotest"
     And the user views the release info and DIO contact info
     And the user views an instruction of role requirement indicating user needs tenant-admin
+    When the user clicks Copy login link
+    Then the user views the message of "Link copied to clipboard" from clicking Copy login link
     # Getting content from clipboard doesn't work on build agent. Commented out this validation.
-    # And the user views the login link with a copy button
-    # When the user clicks click to copy button
     # Then the login link is copied to the clipboard
-    And the user views introductions and links for "Access", "Calendar", "Directory", "File", "Status", "Event", "Notification" and "Configuration"
+    And the user views introductions and links for "Access", "Calendar", "Configuration", "Directory", "Event", "File", "Notification", "PDF" and "Status"
     When the user clicks "Access" link
     Then the user is directed to "Access service" page
     When the user selects the "Dashboard" menu item
@@ -86,6 +86,9 @@ Feature: Tenant admin
     When the user selects the "Dashboard" menu item
     And the user clicks "Event" link
     Then the user is directed to "Event service" page
+    When the user selects the "Dashboard" menu item
+    And the user clicks "PDF" link
+    Then the user is directed to "PDF service" page
     When the user selects the "Dashboard" menu item
     And the user clicks "Configuration" link
     Then the user is directed to "Configuration service" page

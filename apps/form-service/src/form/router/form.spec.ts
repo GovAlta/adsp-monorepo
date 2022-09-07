@@ -313,6 +313,7 @@ describe('form router', () => {
       };
       const req = {
         user,
+        tenant: { id: tenantId },
         params: { formId: 'test-form' },
       };
       const res = { send: jest.fn() };
@@ -333,6 +334,7 @@ describe('form router', () => {
       };
       const req = {
         user,
+        tenant: { id: tenantId },
         params: { formId: 'test-form' },
       };
       const res = { send: jest.fn() };

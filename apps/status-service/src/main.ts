@@ -24,10 +24,11 @@ import {
 
 import { StatusApplicationHealthChange, StatusApplicationStatusChange } from './app/notificationTypes';
 import { scheduleJob } from 'node-schedule';
-import { AMQPCredentials } from '@core-services/core-common';
+import { AMQPCredentials, createAmqpConfigUpdateService } from '@core-services/core-common';
 import { HealthCheckController } from './app/amqp';
 import { HealthCheckJobScheduler } from './app/jobs';
 import { getScheduler } from './app/jobs/SchedulerFactory';
+import { ApplicationManager } from './app/model/applicationManager';
 
 const logger = createLogger('status-service', environment?.LOG_LEVEL || 'info');
 const app = express();
@@ -42,35 +43,49 @@ app.use(express.json({ limit: '1mb' }));
   const [repositories] = [await createRepoJob];
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { configurationHandler, coreStrategy, tenantStrategy, tenantService, eventService, tokenProvider, directory } =
-    await initializePlatform(
-      {
-        serviceId,
-        displayName: 'Status service',
-        description: 'Service for publishing service status information.',
-        roles: [
-          {
-            role: ServiceUserRoles.StatusAdmin,
-            description: 'Administrator role for the status service.',
-            inTenantAdmin: true,
-          },
-        ],
-        configurationSchema,
-        events: [
-          HealthCheckStartedDefinition,
-          HealthCheckStoppedDefinition,
-          HealthCheckUnhealthyDefinition,
-          HealthCheckHealthyDefinition,
-          ApplicationStatusChangedDefinition,
-          ApplicationNoticePublishedDefinition,
-        ],
-        notifications: [StatusApplicationHealthChange, StatusApplicationStatusChange],
-        clientSecret: environment.CLIENT_SECRET,
-        accessServiceUrl,
-        directoryUrl: new URL(environment.DIRECTORY_URL),
-      },
-      { logger }
-    );
+  const {
+    configurationHandler,
+    configurationService,
+    coreStrategy,
+    tenantStrategy,
+    tenantService,
+    eventService,
+    clearCached,
+    tokenProvider,
+    directory,
+  } = await initializePlatform(
+    {
+      serviceId,
+      displayName: 'Status service',
+      description: 'Service for publishing service status information.',
+      roles: [
+        {
+          role: ServiceUserRoles.StatusAdmin,
+          description: 'Administrator role for the status service.',
+          inTenantAdmin: true,
+        },
+      ],
+      configurationSchema,
+      combineConfiguration: (tenant: Record<string, unknown>, core: Record<string, unknown>) => ({
+        ...core,
+        ...tenant,
+      }),
+      useLongConfigurationCacheTTL: true,
+      events: [
+        HealthCheckStartedDefinition,
+        HealthCheckStoppedDefinition,
+        HealthCheckUnhealthyDefinition,
+        HealthCheckHealthyDefinition,
+        ApplicationStatusChangedDefinition,
+        ApplicationNoticePublishedDefinition,
+      ],
+      notifications: [StatusApplicationHealthChange, StatusApplicationStatusChange],
+      clientSecret: environment.CLIENT_SECRET,
+      accessServiceUrl,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+    },
+    { logger }
+  );
 
   passport.use('jwt', coreStrategy);
   passport.use('jwt-tenant', tenantStrategy);
@@ -90,11 +105,20 @@ app.use(express.json({ limit: '1mb' }));
   app.use('/status', configurationHandler);
   app.use('/public_status', configurationHandler);
 
+  const applicationManager = new ApplicationManager(
+    tokenProvider,
+    configurationService,
+    serviceId,
+    repositories.serviceStatusRepository,
+    directory
+  );
+
   const healthCheckSchedulingProps = {
     logger,
     eventService,
     serviceStatusRepository: repositories.serviceStatusRepository,
     endpointStatusEntryRepository: repositories.endpointStatusEntryRepository,
+    applicationManager,
   };
 
   const scheduler = new HealthCheckJobScheduler(healthCheckSchedulingProps);
@@ -129,13 +153,22 @@ app.use(express.json({ limit: '1mb' }));
     // reload the cache every 5 minutes
     const scheduleCacheReload = async () => {
       scheduleJob('*/5 * * * *', async () => {
-        const applications = await repositories.serviceStatusRepository.findEnabledApplications();
-        scheduler.reloadCache(applications);
+        scheduler.reloadCache(applicationManager);
       });
     };
 
     scheduler.loadHealthChecks(getScheduler(healthCheckSchedulingProps), scheduleDataReset, scheduleCacheReload);
   }
+
+  const configurationSync = await createAmqpConfigUpdateService({
+    ...environment,
+    logger,
+  });
+
+  configurationSync.getItems().subscribe(({ item, done }) => {
+    clearCached(item.tenantId, item.serviceId);
+    done();
+  });
 
   // service endpoints
   if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.api)) {

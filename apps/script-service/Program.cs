@@ -2,6 +2,7 @@ using Adsp.Platform.ScriptService.Events;
 using Adsp.Platform.ScriptService.Model;
 using Adsp.Platform.ScriptService.Services;
 using Adsp.Sdk;
+using Adsp.Sdk.Amqp;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Swagger;
 
@@ -28,6 +29,9 @@ internal class Program
 
     var adspConfiguration = builder.Configuration.GetSection("Adsp");
     builder.Services.Configure<AdspOptions>(adspConfiguration);
+    var amqpConfiguration = builder.Configuration.GetSection("Amqp");
+    builder.Services.Configure<AmqpConnectionOptions>(amqpConfiguration);
+
     builder.Services.AddAdspForPlatformService(
       options =>
       {
@@ -36,44 +40,34 @@ internal class Program
         options.Description = "Service that execute configured scripts.";
         options.Configuration = new ConfigurationDefinition<Dictionary<string, ScriptDefinition>>(
           "Definitions of the scripts available to run.",
-          (tenant, core) =>
-          {
-            var combined = new Dictionary<string, ScriptDefinition>();
-            if (tenant is IDictionary<string, ScriptDefinition> tenantDefinitions)
-            {
-              foreach (var entry in tenantDefinitions)
-              {
-                combined[entry.Key] = entry.Value;
-              }
-            }
-
-            if (core is IDictionary<string, ScriptDefinition> coreDefinitions)
-            {
-              foreach (var entry in coreDefinitions)
-              {
-                combined[entry.Key] = entry.Value;
-              }
-            }
-
-            return combined;
-          }
+          (tenant, core) => new ScriptConfiguration(tenant, core)
         );
         options.Roles = new[] {
           new ServiceRole {
             Role = ServiceRoles.ScriptRunner,
             Description = "Script runner role that allows execution of scripts.",
             InTenantAdmin = true
+          },
+          new ServiceRole {
+            Role = ServiceRoles.ScriptService,
+            Description =
+              "Script service role assigned to the service account. Use this role to grant scripts permission in other services."
           }
         };
-        options.Events = new[] {
+        options.Events = new DomainEventDefinition[] {
           new DomainEventDefinition<ScriptExecuted>(
             ScriptExecuted.EventName,
             "Signalled when a script is executed."
+          ),
+          new DomainEventDefinition<ScriptExecutionFailed>(
+            ScriptExecutionFailed.EventName,
+            "Signalled when a script execution fails."
           )
         };
         options.EnableConfigurationInvalidation = true;
       }
     );
+    builder.Services.AddQueueSubscriber<IDictionary<string, object?>, ScriptSubscriber>("event-script-runs");
     builder.Services.AddSingleton<ILuaScriptService, LuaScriptService>();
 
     var app = builder.Build();

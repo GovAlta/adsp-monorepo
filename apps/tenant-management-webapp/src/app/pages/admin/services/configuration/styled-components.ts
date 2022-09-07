@@ -15,7 +15,7 @@ export const EntryDetail = styled.div`
   white-space: pre-wrap;
   font-family: monospace;
   font-size: 12px;
-  line-height: 16px;
+  line-height: 12px;
   padding: 16px;
   text-align: left;
 `;
@@ -75,14 +75,19 @@ export const ErrorStatusText = styled.div`
 
 export const SelectedExports = styled.div`
   border: 1px solid #666666;
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 4px 6.25px;
   font-size: 16px;
-  margin: 8px;
+  display: flex;
+  margin: 8px 8px 0 0;
+  width: fit-content;
 
   .closePadding {
-    padding: 2px;
-    float: right;
+    padding: 2px 0 0 2px;
+  }
+
+  .height-20 {
+    height: 20px;
   }
 `;
 
@@ -101,17 +106,72 @@ export const Exports = styled.div`
     flex: 1;
   }
 
+  .info-circle {
+    margin: 5px 0 0 5px;
+  }
+
   .button-style {
     text-align-last: end;
-    margin: 5px 3px 0 3px;
+    margin: 29px 3px 0 3px;
+  }
+
+  .bubble-helper {
+    margin-bottom: -11px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .triangle {
+    margin-top: 5px;
+    margin-bottom: -10px;
+  }
+
+  .small-close-button {
+    width: 10px;
+    margin-left: auto;
+    margin-top: -10px;
   }
 
   .auto-overflow {
     overflow: auto;
   }
 
+  .full-width: {
+    width: 100%;
+  }
+
+  .configuration-selector {
+    width: 250px;
+  }
+
   .absolute-position {
     position: absolute;
+  }
+
+  .button-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .overflow-wrap {
+    overflow-wrap: anywhere;
+  }
+
+  .bubble-border {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 10px 12px 8px 12px;
+    gap: 8px;
+
+    width: 281px;
+    height: 100%;
+    left: 0px;
+    top: 42px;
+
+    background: #ffffff;
+    box-shadow: 0px -1px 6px rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
   }
 `;
 

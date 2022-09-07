@@ -13,7 +13,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   ServiceStatusType,
   PublicServiceStatusTypes,
-  ServiceStatusApplication,
+  ApplicationStatus,
   ServiceStatusEndpoint,
   EndpointStatusEntry,
 } from '@store/status/models';
@@ -233,7 +233,7 @@ function Status(): JSX.Element {
   );
 }
 
-function Application(app: ServiceStatusApplication) {
+function Application(app: ApplicationStatus) {
   const dispatch = useDispatch();
   const entries = useSelector((state: RootState) =>
     state.serviceStatus.endpointHealth[app._id] && state.serviceStatus.endpointHealth[app._id].url === app.endpoint?.url
@@ -394,7 +394,7 @@ export default Status;
 // ==================
 
 interface AppEndpointProps {
-  app: ServiceStatusApplication;
+  app: ApplicationStatus;
   displayCount: number;
 }
 
@@ -431,7 +431,7 @@ function HealthBar({ app, displayCount }: AppEndpointProps) {
   }
 
   const statusEntries = app.endpoint ? getStatusEntries(app.endpoint) : null;
-  const getStatus = (app: ServiceStatusApplication): string => {
+  const getStatus = (app: ApplicationStatus): string => {
     if (!app.enabled) {
       return 'stopped';
     }

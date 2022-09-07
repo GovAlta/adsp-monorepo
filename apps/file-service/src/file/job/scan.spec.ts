@@ -1,4 +1,4 @@
-import { adspId } from '@abgov/adsp-service-sdk';
+import { adspId, EventService } from '@abgov/adsp-service-sdk';
 import { Mock, It, Times } from 'moq.ts';
 import { Logger } from 'winston';
 import { FileEntity } from '../model';
@@ -15,10 +15,12 @@ describe('Scan Job', () => {
   } as unknown as Logger;
   let repositoryMock: Mock<FileRepository> = null;
   let scanServiceMock: Mock<ScanService> = null;
+  let eventServiceMock: Mock<EventService> = null;
 
   beforeEach(() => {
     repositoryMock = new Mock<FileRepository>();
     scanServiceMock = new Mock<ScanService>();
+    eventServiceMock = new Mock<EventService>();
   });
 
   it('can be created', () => {
@@ -26,6 +28,7 @@ describe('Scan Job', () => {
       logger,
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
+      eventService: eventServiceMock.object(),
     });
 
     expect(scanJob).toBeTruthy();
@@ -36,6 +39,7 @@ describe('Scan Job', () => {
       logger,
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
+      eventService: eventServiceMock.object(),
     });
 
     const fileEntityMock = new Mock<FileEntity>();
@@ -50,6 +54,8 @@ describe('Scan Job', () => {
 
     repositoryMock.setup((instance) => instance.get(It.IsAny())).returns(Promise.resolve(fileEntityMock.object()));
 
+    eventServiceMock.setup((instance) => instance.send(It.Is((event) => !!event))).returns();
+
     const done = jest.fn();
     await scanJob(tenantId, fileEntityMock.object(), done);
     expect(done).toHaveBeenCalledWith();
@@ -61,6 +67,7 @@ describe('Scan Job', () => {
       logger,
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
+      eventService: eventServiceMock.object(),
     });
 
     const fileEntityMock = new Mock<FileEntity>();
@@ -79,6 +86,7 @@ describe('Scan Job', () => {
       logger,
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
+      eventService: eventServiceMock.object(),
     });
 
     const fileEntityMock = new Mock<FileEntity>();
@@ -97,6 +105,7 @@ describe('Scan Job', () => {
       logger,
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
+      eventService: eventServiceMock.object(),
     });
 
     const fileEntityMock = new Mock<FileEntity>();
@@ -118,6 +127,7 @@ describe('Scan Job', () => {
       logger,
       scanService: scanServiceMock.object(),
       fileRepository: repositoryMock.object(),
+      eventService: eventServiceMock.object(),
     });
 
     const fileEntityMock = new Mock<FileEntity>();

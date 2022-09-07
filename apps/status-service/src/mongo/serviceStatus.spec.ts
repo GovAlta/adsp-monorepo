@@ -33,23 +33,6 @@ describe('Service status mongo repository', () => {
     return new mongoose.Types.ObjectId().toHexString();
   }
 
-  async function generateDeletedIds(count: number): Promise<string[]> {
-    const apps: Partial<ServiceStatusApplicationEntity>[] = [];
-    for (let i = 0; i < count; i++) {
-      apps.push({
-        name: 'deleted app',
-        status: 'operational',
-        tenantId: '99',
-      });
-    }
-    const createdApps = await insertMockData(apps);
-    for (const createdApp of createdApps) {
-      await repo.delete(createdApp);
-    }
-
-    return createdApps.map((a) => a._id);
-  }
-
   it('should contain the mock data', async () => {
     const applications = await insertMockData([
       { name: 'app 1', enabled: true, status: 'operational', tenantId: '99' },

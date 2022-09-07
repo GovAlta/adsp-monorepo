@@ -12,8 +12,9 @@ export interface ServiceStatusMetrics {
 }
 
 export interface ServiceStatus {
-  applications: ServiceStatusApplication[];
-  currentFormData: ServiceStatusApplication;
+  applications: ApplicationStatus[];
+  editedApps: Record<string, ApplicationDescription>;
+  currentFormData: ApplicationStatus;
   endpointHealth: Record<string, { url: string; entries: EndpointStatusEntry[] }>;
   metrics: ServiceStatusMetrics;
   contact: ContactInformation;
@@ -33,7 +34,7 @@ export interface ContactInformation {
   contactEmail?: string;
 }
 
-export interface ServiceStatusApplication {
+export interface ApplicationStatus {
   _id?: string;
   tenantId: string;
   name: string;
@@ -44,6 +45,13 @@ export interface ServiceStatusApplication {
   status?: ServiceStatusType;
   internalStatus?: InternalServiceStatusType;
   endpoint?: ServiceStatusEndpoint;
+}
+
+export interface ApplicationDescription {
+  _id: string;
+  name: string;
+  description?: string;
+  url: string;
 }
 
 export interface ServiceStatusEndpoint {
