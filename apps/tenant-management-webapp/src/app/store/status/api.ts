@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import addAuthTokenInterceptor from './authTokenInterceptor';
-import { EndpointStatusEntry, ServiceStatusApplication } from './models';
+import { EndpointStatusEntry, ApplicationStatus } from './models';
 
 export class StatusApi {
   private http: AxiosInstance;
@@ -9,7 +9,7 @@ export class StatusApi {
     addAuthTokenInterceptor(this.http, token);
   }
 
-  async getApplications(): Promise<ServiceStatusApplication[]> {
+  async getApplications(): Promise<ApplicationStatus[]> {
     const res = await this.http.get(`/applications`);
     return res.data;
   }
@@ -21,7 +21,7 @@ export class StatusApi {
     return res.data;
   }
 
-  async saveApplication(props: ServiceStatusApplication): Promise<ServiceStatusApplication> {
+  async saveApplication(props: ApplicationStatus): Promise<ApplicationStatus> {
     if (props._id) {
       const res = await this.http.put(`/applications/${props._id}`, props);
       return res.data;
@@ -35,12 +35,12 @@ export class StatusApi {
     await this.http.delete(`/applications/${applicationId}`);
   }
 
-  async setStatus(applicationId: string, status: string): Promise<ServiceStatusApplication> {
+  async setStatus(applicationId: string, status: string): Promise<ApplicationStatus> {
     const res = await this.http.patch(`/applications/${applicationId}/status`, { status });
     return res.data;
   }
 
-  async toggleApplication(applicationId: string, enabled: boolean): Promise<ServiceStatusApplication> {
+  async toggleApplication(applicationId: string, enabled: boolean): Promise<ApplicationStatus> {
     const res = await this.http.patch(`/applications/${applicationId}/toggle`, { enabled });
     return res.data;
   }
