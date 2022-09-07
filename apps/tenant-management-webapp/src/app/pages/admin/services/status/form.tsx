@@ -2,7 +2,7 @@ import React, { FC, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { saveApplication } from '@store/status/actions';
 import { fetchDirectory, fetchDirectoryDetailByURNs } from '@store/directory/actions';
-import { ServiceStatusApplication } from '@store/status/models';
+import { ApplicationStatus } from '@store/status/models';
 import { GoAButton, GoADropdownOption } from '@abgov/react-components';
 import {
   GoAForm,
@@ -20,7 +20,7 @@ import styled from 'styled-components';
 interface Props {
   isOpen: boolean;
   title: string;
-  defaultApplication: ServiceStatusApplication;
+  defaultApplication: ApplicationStatus;
   onCancel?: () => void;
   onSave?: () => void;
 }
@@ -55,7 +55,7 @@ const healthEndpointsSelector = createSelector(
 
 export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSave, defaultApplication }: Props) => {
   const dispatch = useDispatch();
-  const [application, setApplication] = useState<ServiceStatusApplication>({ ...defaultApplication });
+  const [application, setApplication] = useState<ApplicationStatus>({ ...defaultApplication });
   const tenantServiceUrns = useSelector(tenantServiceURNSelector);
   const healthEndpoints = useSelector(healthEndpointsSelector);
   const [openDropdown, setOpenDropdown] = useState<boolean>(false);

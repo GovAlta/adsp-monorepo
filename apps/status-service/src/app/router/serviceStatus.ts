@@ -10,7 +10,6 @@ import { TenantService, EventService } from '@abgov/adsp-service-sdk';
 import { applicationStatusToStarted, applicationStatusToStopped, applicationStatusChange } from '../events';
 import axios from 'axios';
 import { StatusApplications } from '../model/statusApplications';
-import { config } from 'dotenv';
 
 export interface ServiceStatusRouterProps {
   logger: Logger;

@@ -2,6 +2,7 @@ import { AdspId, ConfigurationService, ServiceDirectory, TokenProvider } from '@
 import { Logger } from 'winston';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { updateConfiguration } from '../router/serviceStatus';
+import { ApplicationList } from './ApplicationList';
 import ServiceStatusApplicationEntity, {
   ApplicationData,
   StaticApplicationData,
@@ -29,21 +30,21 @@ export class ApplicationManager {
     this.#directory = directory;
   }
 
-  getActiveApps = async (): Promise<Record<string, ApplicationData>> => {
+  getActiveApps = async () => {
     const statuses = await this.#getActiveApplicationStatus();
     const tenants = this.#getActiveTenants(statuses);
     const configurations = await this.#getConfigurations(tenants);
-    const appData = this.#merge(statuses, configurations);
-    return appData;
+    const applications = this.#merge(statuses, configurations);
+    return new ApplicationList(applications);
   };
 
   #getActiveApplicationStatus = async (): Promise<ServiceStatusApplicationEntity[]> => {
     return this.#repository.findEnabledApplications();
   };
 
-  #getActiveTenants = (apps: ServiceStatusApplicationEntity[]): Set<AdspId> => {
+  #getActiveTenants = (statuses: ServiceStatusApplicationEntity[]): Set<AdspId> => {
     const tenants = new Set<AdspId>();
-    apps.forEach((a) => {
+    statuses.forEach((a) => {
       tenants.add(AdspId.parse(a.tenantId));
     });
     return tenants;
@@ -111,9 +112,9 @@ export class ApplicationManager {
 
   /**
    * This should be run once by main, to update the service configuration
-   * with any apps in the database that are not yet in the configuration.
-   * Once all the apps have been added, the call to this method can
-   * be removed.
+   * with any apps in the database that are not yet there.
+   * Once all the apps have been added the call, and this method, can
+   * be removed.  Sept 1, 2022.
    * @param logger - its a logger.
    */
   convertData = async (logger: Logger) => {

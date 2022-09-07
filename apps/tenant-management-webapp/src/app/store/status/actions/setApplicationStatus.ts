@@ -1,4 +1,4 @@
-import { ServiceStatusApplication, ServiceStatusType } from '../models';
+import { ApplicationStatus, ServiceStatusType } from '../models';
 
 interface Params {
   tenantId: string;
@@ -16,14 +16,14 @@ export interface SetApplicationStatusAction {
 
 export interface SetApplicationStatusSuccessAction {
   type: typeof SET_APPLICATION_SUCCESS_STATUS_ACTION;
-  payload: ServiceStatusApplication;
+  payload: ApplicationStatus;
 }
 
 export const setApplicationStatus = (payload: Params): SetApplicationStatusAction => ({
   type: 'status/SET_APPLICATION_STATUS',
   payload,
 });
-export const setApplicationStatusSuccess = (payload: ServiceStatusApplication): SetApplicationStatusSuccessAction => ({
+export const setApplicationStatusSuccess = (payload: ApplicationStatus): SetApplicationStatusSuccessAction => ({
   type: 'status/SET_APPLICATION_STATUS_SUCCESS',
   payload,
 });
