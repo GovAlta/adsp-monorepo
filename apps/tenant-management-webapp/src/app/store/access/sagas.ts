@@ -13,9 +13,8 @@ import {
 } from './actions';
 import { KeycloakApi } from './api';
 import { Role } from './models';
-import { UpdateIndicator, UpdateLoadingState } from '@store/session/actions';
+import { UpdateIndicator, UpdateLoadingState, UpdateResourceAccess } from '@store/session/actions';
 import { ActionState } from '@store/session/models';
-
 import { SagaIterator } from '@redux-saga/core';
 import axios from 'axios';
 import {
@@ -273,15 +272,23 @@ export function* createKeycloakClient(action: CreateKeycloakRoleAction): SagaIte
       });
 
       // Create the new role
-      yield call(
-        axios.post,
-        url,
-        {
-          name: roleConfig.role,
-          description: roleConfig.description,
-        },
-        headers
-      );
+
+      try {
+        yield call(
+          axios.post,
+          url,
+          {
+            name: roleConfig.role,
+            description: roleConfig.description,
+          },
+          headers
+        );
+      } catch (e) {
+        // 409 indicates the role is created, which is expected in some cases.
+        if (e.status !== 409) {
+          console.error(e.response);
+        }
+      }
 
       // Start to add the role to the tenant-admin composite role
 
@@ -308,10 +315,10 @@ export function* createKeycloakClient(action: CreateKeycloakRoleAction): SagaIte
         addCompositeRolePayload,
         headers
       );
+      yield put(UpdateResourceAccess(clientId, roleName));
     }
 
     yield put(createKeycloakRoleSuccess(clientId, clientIdInDB, roleName));
-
     yield put(
       UpdateLoadingState({
         name: Events.update,
