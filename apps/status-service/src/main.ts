@@ -105,27 +105,26 @@ app.use(express.json({ limit: '1mb' }));
   app.use('/status', configurationHandler);
   app.use('/public_status', configurationHandler);
 
+  const applicationManager = new ApplicationManager(
+    tokenProvider,
+    configurationService,
+    serviceId,
+    repositories.serviceStatusRepository,
+    directory
+  );
+
   const healthCheckSchedulingProps = {
     logger,
     eventService,
     serviceStatusRepository: repositories.serviceStatusRepository,
     endpointStatusEntryRepository: repositories.endpointStatusEntryRepository,
+    applicationManager,
   };
 
   const scheduler = new HealthCheckJobScheduler(healthCheckSchedulingProps);
 
   // start the endpoint checking jobs
   if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.job)) {
-    // TODO: do data conversion once, then remove.
-    const applicationManager = new ApplicationManager(
-      tokenProvider,
-      configurationService,
-      serviceId,
-      repositories.serviceStatusRepository,
-      directory
-    );
-    applicationManager.convertData(logger);
-
     // clear the health status database every midnight
     const scheduleDataReset = async () => {
       scheduleJob('0 0 * * *', async () => {
@@ -154,8 +153,7 @@ app.use(express.json({ limit: '1mb' }));
     // reload the cache every 5 minutes
     const scheduleCacheReload = async () => {
       scheduleJob('*/5 * * * *', async () => {
-        const applications = await repositories.serviceStatusRepository.findEnabledApplications();
-        scheduler.reloadCache(applications);
+        scheduler.reloadCache(applicationManager);
       });
     };
 

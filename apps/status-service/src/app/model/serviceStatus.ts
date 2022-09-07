@@ -24,6 +24,7 @@ export interface StaticApplicationData {
 // Application data, including the static
 // and dynamic bits
 export interface ApplicationData {
+  _id: string;
   name: string;
   url: string;
   description?: string;
