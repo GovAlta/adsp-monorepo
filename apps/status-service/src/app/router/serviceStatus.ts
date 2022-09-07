@@ -24,7 +24,10 @@ export interface ServiceStatusRouterProps {
 export const getApplications = (logger: Logger, serviceStatusRepository: ServiceStatusRepository): RequestHandler => {
   return async (req, res, next) => {
     try {
+      logger.debug('#############  getApplications request object');
+      logger.debug(JSON.stringify(req));
       const { tenantId } = req.user as User;
+      logger.debug(`#############  tenant ID is ${tenantId}`);
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
       }
