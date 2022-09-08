@@ -23,24 +23,47 @@ export const selectKeycloakServiceRoles = createSelector(
   }
 );
 
-const isRoleExisted = (kcRoleConfig: ServiceRoleConfig, clientId: string, roleName: string) => {
+const isConfigRoleExisted = (
+  kcRoleConfig: ServiceRoleConfig,
+  tenantAdminRoles: Record<string, { roles: string[] }>,
+  isInTenantAdmin,
+  clientId: string,
+  roleName: string
+) => {
   if (clientId in kcRoleConfig) {
-    const role = kcRoleConfig[clientId].roles.find((role) => {
+    const isRoleInClient = kcRoleConfig[clientId].roles.find((role) => {
       return role.role === roleName;
     });
 
-    if (role) {
-      return true;
+    const isRoleInTenantAdmin =
+      tenantAdminRoles[clientId] !== undefined &&
+      tenantAdminRoles[clientId].roles.find((role) => {
+        return role === roleName;
+      });
+
+    // Case one, we can not find the corresponding keycloak client
+    if (!isRoleInClient) {
+      return false;
     }
+
+    // Case two, if the role is expected to be a composite role in tenant admin role, we cannot find the role mapping.
+    if (isInTenantAdmin && !isRoleInTenantAdmin) {
+      return false;
+    }
+
+    return true;
+  } else {
+    return false;
   }
-  return false;
 };
 
 export const ServiceRoleList = ({ roles, clientId, addRoleFunc, inProcess }: ServiceRoleListProps): JSX.Element => {
   const keycloakRoles = useSelector(selectKeycloakServiceRoles);
-
+  const { tenantAdminRoles } = useSelector((state: RootState) => ({
+    tenantAdminRoles: state.session?.resourceAccess,
+  }));
   // eslint-disable-next-line
-  useEffect(() => {}, [keycloakRoles]);
+  useEffect(() => {}, [keycloakRoles, tenantAdminRoles]);
   return (
     <div>
       <TableDiv key={`${clientId}-list-table`}>
@@ -65,7 +88,13 @@ export const ServiceRoleList = ({ roles, clientId, addRoleFunc, inProcess }: Ser
                     {keycloakRoles !== null &&
                       Object.entries(keycloakRoles).length > 0 &&
                       !isInProcess &&
-                      !isRoleExisted(keycloakRoles, clientId, role.role) && (
+                      !isConfigRoleExisted(
+                        keycloakRoles,
+                        tenantAdminRoles,
+                        role?.inTenantAdmin,
+                        clientId,
+                        role.role
+                      ) && (
                         <GoAIconButton
                           type="add-circle"
                           onClick={() => {

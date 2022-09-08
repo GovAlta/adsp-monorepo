@@ -68,6 +68,23 @@ export default function (state: Session = SESSION_INIT, action: ActionType): Ses
       return state;
     }
 
+    case 'session/resourceAccess/update': {
+      const { clientId, role } = action.payload;
+      state.resourceAccess = {
+        ...state.resourceAccess,
+      };
+      if (!(clientId in state.resourceAccess)) {
+        state.resourceAccess[clientId] = {
+          roles: [role],
+        };
+      } else {
+        if (!state.resourceAccess[clientId].roles.includes(role)) {
+          state.resourceAccess[clientId].roles.push(role);
+        }
+      }
+      return state;
+    }
+
     case SET_SESSION_EXPIRED:
       return {
         ...state,
