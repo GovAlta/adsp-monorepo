@@ -44,12 +44,12 @@ export class HealthCheckJobScheduler {
     scheduleDataReset();
   };
 
-  startHealthChecks = (app: ServiceStatusApplicationEntity, scheduler: JobScheduler): void => {
-    if (!this.#jobCache.exists(app._id)) {
-      this.#jobCache.add(app._id, app.endpoint.url, scheduler);
-      this.#logger.info(`Added job for url: ${app.endpoint.url}`);
+  startHealthChecks = (appId: string, url: string, scheduler: JobScheduler): void => {
+    if (!this.#jobCache.exists(appId)) {
+      this.#jobCache.add(appId, url, scheduler);
+      this.#logger.info(`Added job for url: ${url}`);
     } else {
-      this.#logger.warn(`Asked to start a job already in the cache #${app._id}`);
+      this.#logger.warn(`Asked to start a job already in the cache #${appId}`);
     }
   };
 

@@ -127,7 +127,7 @@ describe('JobScheduler', () => {
   it('can start individual health check jobs', () => {
     jobCache.clear(jest.fn());
     const scheduler = jest.fn();
-    jobScheduler.startHealthChecks(statusMock[0], getScheduler(props, scheduler));
+    jobScheduler.startHealthChecks(statusMock[0]._id, statusMock[0].endpoint.url, getScheduler(props, scheduler));
     expect(scheduler).toHaveBeenCalledTimes(1);
     expect(jobCache.getApplicationIds().length).toEqual(1);
     const app = jobCache.get(statusMock[0]._id);
@@ -137,7 +137,7 @@ describe('JobScheduler', () => {
 
   it('can stop individual health check jobs', () => {
     jobCache.clear(jest.fn());
-    jobScheduler.startHealthChecks(statusMock[0], getScheduler(props, jest.fn()));
+    jobScheduler.startHealthChecks(statusMock[0]._id, statusMock[0].endpoint.url, getScheduler(props, jest.fn()));
     const cancelJob = jest.fn();
     jobScheduler.stopHealthChecks(statusMock[0]._id, cancelJob);
     expect(cancelJob).toBeCalledTimes(1);
