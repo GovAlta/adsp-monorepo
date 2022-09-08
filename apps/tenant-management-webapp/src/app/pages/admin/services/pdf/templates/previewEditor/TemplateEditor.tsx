@@ -128,6 +128,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
               <>
                 <GoAFormItem error={errors?.body ?? ''}>
+                  <h4>Header</h4>
                   <MonacoDivHeader>
                     <MonacoEditor
                       language={'handlebars'}
@@ -142,6 +143,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               </>
               <>
                 <GoAFormItem error={errors?.body ?? ''} helpText={bodyEditorHintText}>
+                  <h4>Footer</h4>
                   <MonacoDivFooter>
                     <MonacoEditor
                       language={'handlebars'}
