@@ -38,6 +38,11 @@ export class ApplicationManager {
     return new ApplicationList(applications);
   };
 
+  getApp = async (appId: string, tenantId: AdspId): Promise<StaticApplicationData> => {
+    const config = await this.#configurationFinder(tenantId);
+    return config[appId] as StaticApplicationData;
+  };
+
   #getActiveApplicationStatus = async (): Promise<ServiceStatusApplicationEntity[]> => {
     return this.#repository.findEnabledApplications();
   };

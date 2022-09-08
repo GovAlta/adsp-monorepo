@@ -133,7 +133,7 @@ app.use(express.json({ limit: '1mb' }));
 
       const healthCheckController = new HealthCheckController(
         {
-          serviceStatusRepository: repositories.serviceStatusRepository,
+          applicationManager: applicationManager,
           healthCheckScheduler: scheduler,
           logger: logger,
         },
