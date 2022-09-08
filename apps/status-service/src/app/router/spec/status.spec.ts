@@ -332,16 +332,19 @@ describe('Service router', () => {
 
     it('Can toggle application', async () => {
       const handler = toggleApplication(loggerMock, statusRepositoryMock, eventServiceMock);
+      const getConfigurationMock = jest.fn();
       const req: Request = {
         user: {
           tenantId,
-          id: 'test',
+          id: 'tester',
           roles: ['test-updater'],
         },
-        params: {},
+        getConfiguration: getConfigurationMock,
+        params: { id: applicationsMock[1]._id },
       } as unknown as Request;
 
       statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
+      getConfigurationMock.mockReturnValueOnce(configurationMock);
       await handler(req, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({

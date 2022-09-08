@@ -59,7 +59,7 @@ export class HealthCheckController {
     this.#logger.info(`Starting health checks for application ${startEvent.applicationId} at ${startEvent.url}`);
     const app = await this.#applicationManager.getApp(startEvent.applicationId, startEvent.tenantId);
     if (app) {
-      this.#healthCheckJobScheduler.startHealthChecks(startEvent.applicationId, app.name, app.url, this.#scheduler);
+      this.#healthCheckJobScheduler.startHealthChecks(app, this.#scheduler);
     }
   };
 

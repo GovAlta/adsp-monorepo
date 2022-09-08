@@ -7,6 +7,7 @@ import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry
 import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
 import { EventService } from '@abgov/adsp-service-sdk';
 import { applicationStatusToHealthy, applicationStatusToUnhealthy } from '../events';
+import { StaticApplicationData } from '../model';
 
 const ENTRY_SAMPLE_SIZE = 5;
 const HEALTHY_MAX_FAIL_COUNT = 0;
@@ -15,9 +16,7 @@ const UNHEALTHY_MIN_FAIL_COUNT = 3;
 type GetEndpointResponse = (url: string) => Promise<{ status: number | string }>;
 export interface CreateCheckEndpointProps {
   logger?: Logger;
-  url: string;
-  applicationId: string;
-  applicationName: string;
+  app: StaticApplicationData;
   serviceStatusRepository: ServiceStatusRepository;
   endpointStatusEntryRepository: EndpointStatusEntryRepository;
   eventService: EventService;
@@ -28,7 +27,7 @@ export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
   return async (): Promise<void> => {
     const { getEndpointResponse } = props;
     // run all endpoint tests
-    const statusEntry = await checkEndpoint(getEndpointResponse, props.url, props.applicationId, props.logger);
+    const statusEntry = await checkEndpoint(getEndpointResponse, props.app.url, props.app._id, props.logger);
     await saveStatus(props, statusEntry);
   };
 }
@@ -91,46 +90,46 @@ export const getNewEndpointStatus = (
 };
 
 async function saveStatus(props: CreateCheckEndpointProps, statusEntry: EndpointStatusEntry) {
-  const { url, serviceStatusRepository, endpointStatusEntryRepository, eventService, logger } = props;
+  const { app, serviceStatusRepository, endpointStatusEntryRepository, eventService, logger } = props;
   // create endpoint status entry before determining if the state is changed
 
   await EndpointStatusEntryEntity.create(endpointStatusEntryRepository, statusEntry);
   // verify that in the last [ENTRY_SAMPLE_SIZE] minutes, at least [MIN_OK_COUNT] are ok
 
   const recentHistory = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
-    url,
-    props.applicationId,
+    app.url,
+    app._id,
     ENTRY_SAMPLE_SIZE
   );
 
-  const application = await serviceStatusRepository.get(props.applicationId);
+  const status = await serviceStatusRepository.get(app._id);
 
   // Make sure the application existed
-  if (!application) {
+  if (!status) {
     return;
   }
 
-  const oldStatus = application.endpoint.status;
+  const oldStatus = status.endpoint.status;
 
   const newStatus = getNewEndpointStatus(oldStatus, recentHistory);
 
   // set the application status based on the endpoints
   if (newStatus !== oldStatus) {
-    application.endpoint.status = newStatus;
+    status.endpoint.status = newStatus;
 
     if (newStatus === 'online') {
-      eventService.send(applicationStatusToHealthy(application));
+      eventService.send(applicationStatusToHealthy(app, status.tenantId));
     }
 
     if (newStatus === 'offline') {
-      const errMessage = `The application ${props.applicationName} (ID: ${application._id}) is unhealthy.`;
-      eventService.send(applicationStatusToUnhealthy(application, errMessage));
+      const errMessage = `The application ${app.name} (ID: ${app._id}) is unhealthy.`;
+      eventService.send(applicationStatusToUnhealthy(app, status.tenantId, errMessage));
     }
 
     try {
-      await serviceStatusRepository.save(application);
+      await serviceStatusRepository.save(status);
     } catch (err) {
-      logger.info(`Failed to updated application ${props.applicationName} (ID: ${application._id}) status.`);
+      logger.info(`Failed to updated application ${app.name} (ID: ${app._id}) status.`);
     }
   }
 }

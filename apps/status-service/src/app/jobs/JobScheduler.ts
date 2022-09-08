@@ -8,6 +8,7 @@ import { HealthCheckJob } from './HealthCheckJob';
 import { getScheduler } from './SchedulerFactory';
 import { ApplicationManager } from '../model/applicationManager';
 import { ApplicationList } from '../model/ApplicationList';
+import { StaticApplicationData } from '../model';
 
 export interface HealthCheckSchedulingProps {
   logger: Logger;
@@ -17,7 +18,7 @@ export interface HealthCheckSchedulingProps {
   applicationManager: ApplicationManager;
 }
 export interface JobScheduler {
-  schedule: (applicationId: string, name: string, url: string) => Job;
+  schedule: (app: StaticApplicationData) => Job;
 }
 export class HealthCheckJobScheduler {
   #props: HealthCheckSchedulingProps;
@@ -43,12 +44,12 @@ export class HealthCheckJobScheduler {
     scheduleDataReset();
   };
 
-  startHealthChecks = (appId: string, name: string, url: string, scheduler: JobScheduler): void => {
-    if (!this.#jobCache.exists(appId)) {
-      this.#jobCache.add(appId, name, url, scheduler);
-      this.#logger.info(`Added job for url: ${url}`);
+  startHealthChecks = (app: StaticApplicationData, scheduler: JobScheduler): void => {
+    if (!this.#jobCache.exists(app._id)) {
+      this.#jobCache.add(app, scheduler);
+      this.#logger.info(`Added job for url: ${app.url}`);
     } else {
-      this.#logger.warn(`Asked to start a job already in the cache #${appId}`);
+      this.#logger.warn(`Asked to start a job already in the cache #${app._id}`);
     }
   };
 
