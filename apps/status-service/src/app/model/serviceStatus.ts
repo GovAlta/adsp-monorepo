@@ -17,6 +17,7 @@ export type StatusServiceConfiguration = Record<string, unknown>;
 // configuration.
 
 export interface StaticApplicationData {
+  _id: string;
   name: string;
   url: string;
   description?: string;

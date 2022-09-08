@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Job, scheduleJob } from 'node-schedule';
+import { StaticApplicationData } from '../model';
 import { createCheckEndpointJob, CreateCheckEndpointProps } from './checkEndpoint';
 import { HealthCheckSchedulingProps, JobScheduler } from './JobScheduler';
 
@@ -13,12 +14,10 @@ export const getScheduler = (
   schedule: (action: () => Promise<void>) => Job = cronScheduler
 ): JobScheduler => {
   return {
-    schedule: (id: string, name: string, url: string): Job => {
+    schedule: (app: StaticApplicationData): Job => {
       const cceProps: CreateCheckEndpointProps = {
         ...props,
-        applicationId: id,
-        applicationName: name,
-        url: url,
+        app: app,
         getEndpointResponse: async (url: string) => {
           return await axios.get(url, { timeout: REQUEST_TIMEOUT });
         },

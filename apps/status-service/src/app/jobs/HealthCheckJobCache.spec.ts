@@ -56,7 +56,7 @@ describe('HealthCheckJobCache', () => {
       endpoint: { url: 'https://application/1' },
     } as undefined as ServiceStatusApplicationEntity;
 
-    cache.add(newApp._id, newApp.name, newApp.endpoint.url, { schedule: jest.fn() });
+    cache.add({ _id: newApp._id, name: newApp.name, url: newApp.endpoint.url }, { schedule: jest.fn() });
     expect(cache.getApplicationIds().length).toEqual(3);
     expect(cache.get('application 1').getUrl()).toEqual('https://application/1');
   });
