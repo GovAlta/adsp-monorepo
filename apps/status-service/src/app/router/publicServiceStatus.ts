@@ -38,8 +38,8 @@ export const getApplicationsByName =
           const app = apps.get(s._id);
           return {
             id: s._id,
-            name: app?.name || `unknown: ${s.name}`,
-            description: app?.description || `blank: ${s.description}`,
+            name: app?.name || 'unknown',
+            description: app?.description || '',
             status: s.status,
             lastUpdated: s.statusTimestamp ? new Date(s.statusTimestamp) : null,
           };

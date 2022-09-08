@@ -41,6 +41,7 @@ describe('checkEndpoint', () => {
       const job = createCheckEndpointJob({
         url: 'https//test.co',
         applicationId: '123',
+        applicationName: 'bob',
         getEndpointResponse: jest.fn(),
         logger: loggerMock,
         serviceStatusRepository: statusRepositoryMock,
@@ -56,6 +57,7 @@ describe('checkEndpoint', () => {
       const job = createCheckEndpointJob({
         url: 'https//test.co',
         applicationId: '123',
+        applicationName: 'bobs balloons',
         getEndpointResponse: jest.fn(),
         logger: loggerMock,
         serviceStatusRepository: statusRepositoryMock,
