@@ -13,10 +13,11 @@ export const getScheduler = (
   schedule: (action: () => Promise<void>) => Job = cronScheduler
 ): JobScheduler => {
   return {
-    schedule: (applicationId: string, url: string): Job => {
+    schedule: (id: string, name: string, url: string): Job => {
       const cceProps: CreateCheckEndpointProps = {
         ...props,
-        applicationId: applicationId,
+        applicationId: id,
+        applicationName: name,
         url: url,
         getEndpointResponse: async (url: string) => {
           return await axios.get(url, { timeout: REQUEST_TIMEOUT });

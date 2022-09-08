@@ -16,11 +16,6 @@ describe('JobScheduler', () => {
     warn: jest.fn(),
   } as unknown as Logger;
 
-  const directoryMock = {
-    getServiceUrl: jest.fn(() => Promise.resolve(new URL('http:/localhost:80'))),
-    getResourceUrl: jest.fn(() => Promise.resolve(new URL('http:/localhost:80'))),
-  };
-
   const tokenProviderMock = {
     getAccessToken: jest.fn(() => Promise.resolve('Toot!')),
   };
@@ -57,7 +52,7 @@ describe('JobScheduler', () => {
       configurationServiceMock,
       adspId`${service}`,
       statusRepoMock,
-      directoryMock
+      loggerMock
     );
   };
 
@@ -107,6 +102,9 @@ describe('JobScheduler', () => {
     const healthCheckScheduler = { schedule: jest.fn() };
     const dataResetScheduler = jest.fn();
     const cacheReloadScheduler = jest.fn();
+    const app0 = appMock[0][statusMock[0]._id];
+    const app1 = appMock[1][statusMock[1]._id];
+    const app2 = appMock[2][statusMock[2]._id];
     configurationServiceMock.getConfiguration
       .mockResolvedValueOnce(appMock[0])
       .mockResolvedValueOnce(appMock[1])
@@ -117,9 +115,9 @@ describe('JobScheduler', () => {
     expect(dataResetScheduler).toHaveBeenCalledTimes(1);
     expect(cacheReloadScheduler).toHaveBeenCalledTimes(1);
     expect(healthCheckScheduler.schedule).toHaveBeenCalledTimes(3);
-    expect(healthCheckScheduler.schedule).toHaveBeenCalledWith(statusMock[0]._id, 'https://www.yahoo.com');
-    expect(healthCheckScheduler.schedule).toHaveBeenCalledWith(statusMock[1]._id, 'https://www.google.com');
-    expect(healthCheckScheduler.schedule).toHaveBeenCalledWith(statusMock[2]._id, 'https://www.boogie.com');
+    expect(healthCheckScheduler.schedule).toHaveBeenCalledWith(statusMock[0]._id, app0.name, app0.url);
+    expect(healthCheckScheduler.schedule).toHaveBeenCalledWith(statusMock[1]._id, app1.name, app1.url);
+    expect(healthCheckScheduler.schedule).toHaveBeenCalledWith(statusMock[2]._id, app2.name, app2.url);
     expect(jobCache.getApplicationIds().length).toEqual(3);
     expect(jobCache.exists('application 1')).not.toBeNull;
   });
@@ -127,7 +125,8 @@ describe('JobScheduler', () => {
   it('can start individual health check jobs', () => {
     jobCache.clear(jest.fn());
     const scheduler = jest.fn();
-    jobScheduler.startHealthChecks(statusMock[0]._id, statusMock[0].endpoint.url, getScheduler(props, scheduler));
+    const app0 = appMock[0][statusMock[0]._id];
+    jobScheduler.startHealthChecks(statusMock[0]._id, app0.name, app0.url, getScheduler(props, scheduler));
     expect(scheduler).toHaveBeenCalledTimes(1);
     expect(jobCache.getApplicationIds().length).toEqual(1);
     const app = jobCache.get(statusMock[0]._id);
@@ -137,7 +136,8 @@ describe('JobScheduler', () => {
 
   it('can stop individual health check jobs', () => {
     jobCache.clear(jest.fn());
-    jobScheduler.startHealthChecks(statusMock[0]._id, statusMock[0].endpoint.url, getScheduler(props, jest.fn()));
+    const app0 = appMock[0][statusMock[0]._id];
+    jobScheduler.startHealthChecks(statusMock[0]._id, app0.name, app0.url, getScheduler(props, jest.fn()));
     const cancelJob = jest.fn();
     jobScheduler.stopHealthChecks(statusMock[0]._id, cancelJob);
     expect(cancelJob).toBeCalledTimes(1);

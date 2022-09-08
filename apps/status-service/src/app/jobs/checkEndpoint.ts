@@ -17,6 +17,7 @@ export interface CreateCheckEndpointProps {
   logger?: Logger;
   url: string;
   applicationId: string;
+  applicationName: string;
   serviceStatusRepository: ServiceStatusRepository;
   endpointStatusEntryRepository: EndpointStatusEntryRepository;
   eventService: EventService;
@@ -122,14 +123,14 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
     }
 
     if (newStatus === 'offline') {
-      const errMessage = `The application ${application.name} (ID: ${application._id}) is unhealthy.`;
+      const errMessage = `The application ${props.applicationName} (ID: ${application._id}) is unhealthy.`;
       eventService.send(applicationStatusToUnhealthy(application, errMessage));
     }
 
     try {
       await serviceStatusRepository.save(application);
     } catch (err) {
-      logger.info(`Failed to updated application ${application.name} (ID: ${application._id}) status.`);
+      logger.info(`Failed to updated application ${props.applicationName} (ID: ${application._id}) status.`);
     }
   }
 }

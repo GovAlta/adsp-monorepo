@@ -5,7 +5,6 @@ import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { EventService } from '@abgov/adsp-service-sdk';
 import { HealthCheckJobCache } from './HealthCheckJobCache';
 import { HealthCheckJob } from './HealthCheckJob';
-import { ServiceStatusApplicationEntity } from '../model';
 import { getScheduler } from './SchedulerFactory';
 import { ApplicationManager } from '../model/applicationManager';
 import { ApplicationList } from '../model/ApplicationList';
@@ -18,7 +17,7 @@ export interface HealthCheckSchedulingProps {
   applicationManager: ApplicationManager;
 }
 export interface JobScheduler {
-  schedule: (applicationId: string, url: string) => Job;
+  schedule: (applicationId: string, name: string, url: string) => Job;
 }
 export class HealthCheckJobScheduler {
   #props: HealthCheckSchedulingProps;
@@ -44,9 +43,9 @@ export class HealthCheckJobScheduler {
     scheduleDataReset();
   };
 
-  startHealthChecks = (appId: string, url: string, scheduler: JobScheduler): void => {
+  startHealthChecks = (appId: string, name: string, url: string, scheduler: JobScheduler): void => {
     if (!this.#jobCache.exists(appId)) {
-      this.#jobCache.add(appId, url, scheduler);
+      this.#jobCache.add(appId, name, url, scheduler);
       this.#logger.info(`Added job for url: ${url}`);
     } else {
       this.#logger.warn(`Asked to start a job already in the cache #${appId}`);
