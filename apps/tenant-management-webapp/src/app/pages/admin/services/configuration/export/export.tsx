@@ -174,7 +174,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                               {desc && (
                                 <div className="info-circle-padding">
                                   <InfoCircle />
-                                  <div style={{ width: '30px' }}>
+                                  <div className="triangle-width">
                                     {infoView[toServiceKey(namespace, name)] && (
                                       <div className="bubble-helper">
                                         <div className="triangle">

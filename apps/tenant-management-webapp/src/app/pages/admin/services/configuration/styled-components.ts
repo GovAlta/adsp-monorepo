@@ -143,6 +143,10 @@ export const Exports = styled.div`
     margin-top: -10px;
   }
 
+  .triangle-width {
+    width: 30px;
+  }
+
   .auto-overflow {
     overflow: auto;
   }
