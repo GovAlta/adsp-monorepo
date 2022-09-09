@@ -3,9 +3,33 @@ class ConfigurationServicePage {
     return cy.xpath(`//*[text()="${text}"]`);
   }
 
-  configurationDefinition(name) {
+  configurationDefinitionWithName(name) {
     return cy.xpath(
       `//*[@data-testid="configuration-table"]//tbody/tr/td/parent::*/following-sibling::tr//*[@data-testid="configuration-name" and contains(text(), "${name}")]`
+    );
+  }
+
+  configurationDefinition(namespace, name, desc) {
+    return cy.xpath(
+      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="configuration-table"]/tbody/tr/td[@data-testid="configuration-name" and text()="${name}"]/following-sibling::td[@data-testid="configuration-description" and text()="${desc}"]/parent::tr`
+    );
+  }
+
+  configurationDefinitionEditBtn(namespace, name, desc) {
+    return cy.xpath(
+      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="configuration-table"]/tbody/tr/td[@data-testid="configuration-name" and text()="${name}"]/following-sibling::td[@data-testid="configuration-description" and text()="${desc}"]/following-sibling::td//button[@data-testid="edit-details"]`
+    );
+  }
+
+  configurationDefinitionDeleteBtn(namespace, name, desc) {
+    return cy.xpath(
+      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="configuration-table"]/tbody/tr/td[@data-testid="configuration-name" and text()="${name}"]/following-sibling::td[@data-testid="configuration-description" and text()="${desc}"]/following-sibling::td//button[@data-testid="delete-config"]`
+    );
+  }
+
+  configurationDefinitionEyeBtn(namespace, name, desc) {
+    return cy.xpath(
+      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="configuration-table"]/tbody/tr/td[@data-testid="configuration-name" and text()="${name}"]/following-sibling::td[@data-testid="configuration-description" and text()="${desc}"]/following-sibling::td//button[@data-testid="configuration-toggle-details-visibility"]`
     );
   }
 
@@ -25,6 +49,54 @@ class ConfigurationServicePage {
     return cy.xpath(
       `//*[@data-testid="configuration-name" and contains(text(), "${name}")]/parent::tr/following-sibling::tr//*[@data-testid="configuration-details"]`
     );
+  }
+
+  configurationDefinitionDetails(namespace, name, desc) {
+    return cy.xpath(
+      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="configuration-table"]/tbody/tr/td[@data-testid="configuration-name" and text()="${name}"]/following-sibling::td[@data-testid="configuration-description" and text()="${desc}"]/parent::tr/following-sibling::tr//*[@data-testid="configuration-details"]`
+    );
+  }
+
+  addConfigurationDefinitionBtn() {
+    return cy.get('[data-testid="add-definition"]');
+  }
+
+  configurationDefinitionModalTitle() {
+    return cy.xpath(
+      '//*[@data-testid="definition-form" and @data-state="visible"]//*[@data-testid="definition-form-title"]'
+    );
+  }
+
+  addConfigurationDefinitionModalNamespaceField() {
+    return cy.get('input[data-testid="form-namespace"]');
+  }
+
+  addConfigurationDefinitionModalNameField() {
+    return cy.get('input[data-testid="form-name"]');
+  }
+
+  addConfigurationDefinitionModalDescField() {
+    return cy.get('input[data-testid="form-description"]');
+  }
+
+  addConfigurationDefinitionModalNamespaceErrorMsg() {
+    return cy.xpath(
+      '//*[@data-testid="definition-form"]//label[text()="Namespace"]/following-sibling::div[@class="error-msg"]'
+    );
+  }
+
+  addConfigurationDefinitionModalNameErrorMsg() {
+    return cy.xpath(
+      '//*[@data-testid="definition-form"]//label[text()="Name"]/following-sibling::div[@class="error-msg"]'
+    );
+  }
+
+  configurationDefinitionModalSaveBtn() {
+    return cy.xpath('//*[@data-testid="definition-form"]//button[@data-testid="form-save"]');
+  }
+
+  configurationDefinitionModalPayloadEditor() {
+    return cy.xpath('//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea');
   }
 }
 export default ConfigurationServicePage;
