@@ -3,7 +3,8 @@ import { AmqpWorkQueueService } from '@core-services/core-common';
 import { AmqpConnectionManager } from 'amqp-connection-manager';
 import { ConfirmChannel, ConsumeMessage } from 'amqplib';
 import type { Logger } from 'winston';
-import { ApplicationEvent, healthCheckStartedEvent, healthCheckStoppedEvent } from '../events';
+import { healthCheckStartedEvent, healthCheckStoppedEvent } from '../events';
+import { StaticApplicationData } from '../model';
 import { HealthCheckControllerJobType, HealthCheckControllerWorkItem } from './HealthCheckControllerWorkItem';
 
 const queueName = 'health-check-started-request';
@@ -16,7 +17,7 @@ export class HealthCheckQueueService extends AmqpWorkQueueService<HealthCheckCon
   protected convertMessage(msg: ConsumeMessage): HealthCheckControllerWorkItem {
     const { timestamp, tenantId, name } = msg.properties.headers;
     this.logger.info(`status service received event ${msg.content.toString()}`);
-    const { application }: { application: ApplicationEvent } = JSON.parse(msg.content.toString());
+    const { application }: { application: StaticApplicationData } = JSON.parse(msg.content.toString());
     switch (name) {
       case healthCheckStartedEvent:
         return this.#getWorkItem('start', application, timestamp, tenantId);
@@ -29,14 +30,14 @@ export class HealthCheckQueueService extends AmqpWorkQueueService<HealthCheckCon
 
   #getWorkItem = (
     work: HealthCheckControllerJobType,
-    event: ApplicationEvent,
+    event: StaticApplicationData,
     timestamp: string,
     tenantId: string
   ): HealthCheckControllerWorkItem => {
     return {
       work: work,
       url: event.url,
-      applicationId: event.id,
+      applicationId: event._id,
       timestamp: new Date(timestamp),
       tenantId: AdspId.parse(`${tenantId}`),
     };

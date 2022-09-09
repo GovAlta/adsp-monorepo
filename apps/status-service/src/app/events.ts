@@ -25,13 +25,6 @@ const userSchema = {
   },
 };
 
-export interface ApplicationEvent {
-  id: string;
-  name: string;
-  description: string;
-  url: string;
-}
-
 interface ApplicationNotificationEvent {
   description: string;
   startTimestamp: Date;
