@@ -99,10 +99,6 @@ export class ApplicationManager {
       if (app) {
         appData[status._id] = { ...status, ...app };
       } else {
-        // There should always be an app associated with
-        // the status, but...
-        appData[status._id] = { ...status, url: status.endpoint.url };
-        this.#saveConfiguration(status);
         this.#logger.warn(`could not find application configuration associated with id ${status._id}`);
       }
     });

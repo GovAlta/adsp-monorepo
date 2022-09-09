@@ -259,25 +259,26 @@ export const applicationStatusToHealthy = (app: StaticApplicationData, tenantId:
 });
 
 export const applicationStatusChange = (
-  application: ServiceStatusApplication,
+  app: StaticApplicationData,
+  newStatus: string,
   originalStatus: string,
   user: User
 ): DomainEvent => ({
   name: 'application-status-changed',
   timestamp: new Date(),
-  tenantId: AdspId.parse(application.tenantId),
-  correlationId: `${application._id}`,
+  tenantId: user.tenantId,
+  correlationId: `${app._id}`,
   context: {
-    applicationId: `${application._id}`,
-    applicationName: application.name,
+    applicationId: `${app._id}`,
+    applicationName: app.name,
   },
   payload: {
     application: {
-      id: application._id,
-      name: application.name,
-      description: application.description,
+      id: app._id,
+      name: app.name,
+      description: app.description,
       originalStatus: originalStatus,
-      newStatus: application.status,
+      newStatus: newStatus,
       updatedBy: {
         userId: user.id,
         userName: user.name,
