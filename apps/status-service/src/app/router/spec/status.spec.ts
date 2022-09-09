@@ -411,6 +411,7 @@ describe('Service router', () => {
 
     it('Can update application status', async () => {
       statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
+      const getConfigurationMock = jest.fn();
       jest.spyOn(eventFuncs, 'applicationStatusChange').mockReturnValue({} as unknown as DomainEvent);
 
       const handler = updateApplicationStatus(loggerMock, statusRepositoryMock, eventServiceMock);
@@ -420,6 +421,7 @@ describe('Service router', () => {
           id: 'test',
           roles: ['test-updater'],
         },
+        getConfiguration: getConfigurationMock,
         params: {
           id: applicationsMock[1]._id,
         },
@@ -427,6 +429,7 @@ describe('Service router', () => {
           status: 'online',
         },
       } as unknown as Request;
+      getConfigurationMock.mockReturnValueOnce(configurationMock);
       await handler(req, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
