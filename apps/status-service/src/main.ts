@@ -126,9 +126,6 @@ app.use(express.json({ limit: '1mb' }));
 
   // start the endpoint checking jobs
   if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.job)) {
-    // TODO: do data conversion once, then remove.
-    applicationManager.convertData(logger);
-
     // clear the health status database every midnight
     const scheduleDataReset = async () => {
       scheduleJob('0 0 * * *', async () => {
