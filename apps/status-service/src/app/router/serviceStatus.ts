@@ -131,7 +131,6 @@ export const createNewApplication =
         serviceStatusRepository,
         {
           name,
-          description,
           tenantId: tenant.id.toString(),
           tenantName,
           tenantRealm,
@@ -207,7 +206,6 @@ export const updateApplication =
 
       const updatedApplication = await applicationStatus.update({ ...user } as User, {
         name,
-        description,
         endpoint,
       });
       const update: StaticApplicationData = { _id: id, name: name, url: endpoint.url, description: description };

@@ -112,7 +112,7 @@ export class ApplicationManager {
       _id: status._id,
       name: status.name,
       url: status.endpoint.url,
-      description: status.description,
+      //     description: status.description,
     });
   };
 

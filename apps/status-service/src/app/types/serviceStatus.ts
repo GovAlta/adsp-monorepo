@@ -14,7 +14,6 @@ export const EndpointToInternalStatusMapping = {
 };
 export interface ServiceStatusApplication {
   _id?: string;
-  description: string;
   endpoint: ServiceStatusEndpoint;
   status?: PublicServiceStatusType;
   internalStatus?: InternalServiceStatusType;
