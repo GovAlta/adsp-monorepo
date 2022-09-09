@@ -38,12 +38,25 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
       res.json(
         statuses.map((s) => {
           const app = applications.get(s._id);
+          const { metadata, statusTimestamp, tenantId, tenantName, tenantRealm, status } = s;
+          Object.keys(s.endpoint).map((endpoint) => {
+            const currentEndpoint = JSON.parse(JSON.stringify(s.endpoint[endpoint]));
+            delete currentEndpoint._id;
+            if (currentEndpoint) {
+              s.endpoint[endpoint] = currentEndpoint;
+            }
+          });
           return {
-            ...s,
             internalStatus: s.internalStatus,
             name: app?.name || 'unknown',
             description: app?.description || '',
             endpoint: { ...s.endpoint, url: app?.url || '' },
+            metadata,
+            statusTimestamp,
+            tenantId,
+            tenantName,
+            tenantRealm,
+            status,
           };
         })
       );
