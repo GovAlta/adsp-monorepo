@@ -17,6 +17,7 @@ import { ImportModal } from './importModal';
 import { isValidJSONCheck, jsonSchemaCheck } from '@lib/checkInput';
 import { ErrorStatusText } from '../styled-components';
 import JobList from './jobList';
+import { Import } from '../styled-components';
 
 const exportSchema = {
   type: 'string',
@@ -137,11 +138,11 @@ export const ConfigurationImport: FunctionComponent = () => {
   }, [imports]);
 
   return (
-    <div>
+    <Import>
       {
         <div>
           <h2>Import</h2>
-          <p>
+          <p className="pb3">
             As a tenant admin, you can import configuration from JSON file, so that you can apply previously exported
             configuration.
           </p>
@@ -162,7 +163,11 @@ export const ConfigurationImport: FunctionComponent = () => {
                   element.value = '';
                 }}
               />
-              <button data-testid="import-input-button" onClick={() => fileName.current.click()}>
+              <button
+                className="choose-button"
+                data-testid="import-input-button"
+                onClick={() => fileName.current.click()}
+              >
                 {' Choose a file'}
               </button>
 
@@ -196,6 +201,6 @@ export const ConfigurationImport: FunctionComponent = () => {
       {openImportModal && (
         <ImportModal importArray={importNameList} onCancel={onImportCancel} onConfirm={onImportConfirm} />
       )}
-    </div>
+    </Import>
   );
 };

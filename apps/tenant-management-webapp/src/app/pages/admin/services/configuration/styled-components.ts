@@ -40,6 +40,17 @@ export const TableDiv = styled.div`
   }
 `;
 
+export const Import = styled.div`
+  .pb3 {
+    padding-bottom: 1rem;
+  }
+
+  .choose-button {
+    border-radius: 4px;
+    background-color: f1f1f1;
+  }
+`;
+
 export const IconDiv = styled.div`
   width: 100%;
   display: flex;
@@ -73,24 +84,6 @@ export const ErrorStatusText = styled.div`
   margin-top: 1rem;
 `;
 
-export const SelectedExports = styled.div`
-  border: 1px solid #666666;
-  border-radius: 16px;
-  padding: 4px 6.25px;
-  font-size: 16px;
-  display: flex;
-  margin: 8px 8px 0 0;
-  width: fit-content;
-
-  .closePadding {
-    padding: 2px 0 0 2px;
-  }
-
-  .height-20 {
-    height: 20px;
-  }
-`;
-
 export const Exports = styled.div`
   .flex-row {
     display: flex;
@@ -106,12 +99,23 @@ export const Exports = styled.div`
     flex: 1;
   }
 
+  .goa-checkbox {
+    align-items: start;
+    margin-top: 10px;
+    margin-bottom: -10px;
+  }
+
+  .middle-align {
+    margin-top: 10px;
+  }
+
   .info-circle {
     margin: 5px 0 0 5px;
   }
 
   .button-style {
     text-align-last: end;
+    font-size: 18px;
     margin: 29px 3px 0 3px;
   }
 
@@ -126,10 +130,21 @@ export const Exports = styled.div`
     margin-bottom: -10px;
   }
 
+  .info-circle-padding {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10px;
+  }
+
   .small-close-button {
     width: 10px;
     margin-left: auto;
     margin-top: -10px;
+  }
+
+  .triangle-width {
+    width: 30px;
   }
 
   .auto-overflow {
@@ -141,7 +156,7 @@ export const Exports = styled.div`
   }
 
   .configuration-selector {
-    width: 250px;
+    width: 256px;
   }
 
   .absolute-position {
@@ -164,7 +179,7 @@ export const Exports = styled.div`
     padding: 10px 12px 8px 12px;
     gap: 8px;
 
-    width: 281px;
+    width: 272px;
     height: 100%;
     left: 0px;
     top: 42px;
@@ -172,6 +187,10 @@ export const Exports = styled.div`
     background: #ffffff;
     box-shadow: 0px -1px 6px rgba(0, 0, 0, 0.25);
     border-radius: 4px;
+  }
+
+  .goa-checkbox-container: hover {
+    border: 2px solid #004f84;
   }
 `;
 
