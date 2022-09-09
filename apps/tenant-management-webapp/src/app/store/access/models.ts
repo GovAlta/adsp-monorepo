@@ -51,6 +51,13 @@ export interface ServiceRoleState {
 
 export type ServiceRoles = ServiceRole[];
 
+export const enum ServiceRoleSyncStatus {
+  missingClient,
+  missingClientRole,
+  notInTenantAdmin,
+  matched,
+}
+
 export const SERVICE_ROLES_INIT: ServiceRoleState = {
   tenant: null,
   core: null,

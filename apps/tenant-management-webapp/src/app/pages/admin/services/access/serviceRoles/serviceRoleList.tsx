@@ -6,14 +6,14 @@ import { TextLoadingIndicator } from '@components/Indicator';
 import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
-import { ServiceRoleConfig } from '@store/access/models';
+import { ServiceRoleConfig, ServiceRoleSyncStatus } from '@store/access/models';
 import { GoAIconButton } from '@abgov/react-components/experimental';
 
 interface ServiceRoleListProps {
   roles: ServiceRoles;
   clientId: string;
   inProcess: Record<string, string> | null;
-  addRoleFunc: (clientId: string, role: string) => void;
+  addRoleFunc: (clientId: string, role: string, status: ServiceRoleSyncStatus) => void;
 }
 
 export const selectKeycloakServiceRoles = createSelector(
@@ -43,17 +43,17 @@ const isConfigRoleExisted = (
 
     // Case one, we can not find the corresponding keycloak client
     if (!isRoleInClient) {
-      return false;
+      return ServiceRoleSyncStatus.missingClientRole;
     }
 
     // Case two, if the role is expected to be a composite role in tenant admin role, we cannot find the role mapping.
     if (isInTenantAdmin && !isRoleInTenantAdmin) {
-      return false;
+      return ServiceRoleSyncStatus.notInTenantAdmin;
     }
 
-    return true;
+    return ServiceRoleSyncStatus.matched;
   } else {
-    return false;
+    return ServiceRoleSyncStatus.missingClient;
   }
 };
 
@@ -79,6 +79,13 @@ export const ServiceRoleList = ({ roles, clientId, addRoleFunc, inProcess }: Ser
           <tbody>
             {roles.map((role): JSX.Element => {
               const isInProcess = inProcess !== null && inProcess.clientId === clientId && inProcess.role === role.role;
+              const status = isConfigRoleExisted(
+                keycloakRoles,
+                tenantAdminRoles,
+                role?.inTenantAdmin,
+                clientId,
+                role.role
+              );
               return (
                 <tr key={`${role.role}`}>
                   <td>{role.role}</td>
@@ -88,17 +95,11 @@ export const ServiceRoleList = ({ roles, clientId, addRoleFunc, inProcess }: Ser
                     {keycloakRoles !== null &&
                       Object.entries(keycloakRoles).length > 0 &&
                       !isInProcess &&
-                      !isConfigRoleExisted(
-                        keycloakRoles,
-                        tenantAdminRoles,
-                        role?.inTenantAdmin,
-                        clientId,
-                        role.role
-                      ) && (
+                      status !== ServiceRoleSyncStatus.matched && (
                         <GoAIconButton
                           type="add-circle"
                           onClick={() => {
-                            addRoleFunc(clientId, role.role);
+                            addRoleFunc(clientId, role.role, status);
                           }}
                         />
                       )}
