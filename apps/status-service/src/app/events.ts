@@ -1,6 +1,7 @@
 import { AdspId, DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
 import { ServiceStatusApplication } from './types';
 import { NoticeApplicationEntity } from './model/notice';
+import { StaticApplicationData } from './model';
 
 const ApplicationDefinition = {
   type: 'object',
@@ -23,13 +24,6 @@ const userSchema = {
     },
   },
 };
-
-export interface ApplicationEvent {
-  id: string;
-  name: string;
-  description: string;
-  url: string;
-}
 
 interface ApplicationNotificationEvent {
   description: string;
@@ -178,15 +172,6 @@ export const ApplicationStatusChangedDefinition: DomainEventDefinition = {
   },
 };
 
-const mapApplication = (application: ServiceStatusApplication): ApplicationEvent => {
-  return {
-    id: application._id,
-    name: application.name,
-    description: application.description,
-    url: application.endpoint.url,
-  };
-};
-
 const mapNotice = (notice: NoticeApplicationEntity): ApplicationNotificationEvent => {
   return {
     description: notice.message,
@@ -196,17 +181,21 @@ const mapNotice = (notice: NoticeApplicationEntity): ApplicationNotificationEven
   };
 };
 
-export const applicationStatusToStarted = (application: ServiceStatusApplication, user: User): DomainEvent => ({
+export const applicationStatusToStarted = (
+  app: StaticApplicationData,
+  status: ServiceStatusApplication,
+  user: User
+): DomainEvent => ({
   name: healthCheckStartedEvent,
   timestamp: new Date(),
-  tenantId: AdspId.parse(application.tenantId),
-  correlationId: `${application._id}`,
+  tenantId: AdspId.parse(status.tenantId),
+  correlationId: `${status._id}`,
   context: {
-    applicationId: `${application._id}`,
-    applicationName: application.name,
+    applicationId: `${status._id}`,
+    applicationName: app.name,
   },
   payload: {
-    application: mapApplication(application),
+    application: app,
     startedBy: {
       id: user.id,
       name: user.name,
@@ -214,17 +203,21 @@ export const applicationStatusToStarted = (application: ServiceStatusApplication
   },
 });
 
-export const applicationStatusToStopped = (application: ServiceStatusApplication, user: User): DomainEvent => ({
+export const applicationStatusToStopped = (
+  app: StaticApplicationData,
+  status: ServiceStatusApplication,
+  user: User
+): DomainEvent => ({
   name: healthCheckStoppedEvent,
   timestamp: new Date(),
-  tenantId: AdspId.parse(application.tenantId),
-  correlationId: `${application._id}`,
+  tenantId: AdspId.parse(status.tenantId),
+  correlationId: `${status._id}`,
   context: {
-    applicationId: `${application._id}`,
-    applicationName: application.name,
+    applicationId: `${status._id}`,
+    applicationName: app.name,
   },
   payload: {
-    application: mapApplication(application),
+    application: app,
     stoppedBy: {
       id: user.id,
       name: user.name,
@@ -232,55 +225,60 @@ export const applicationStatusToStopped = (application: ServiceStatusApplication
   },
 });
 
-export const applicationStatusToUnhealthy = (application: ServiceStatusApplication, error: string): DomainEvent => ({
+export const applicationStatusToUnhealthy = (
+  app: StaticApplicationData,
+  tenantId: string,
+  error: string
+): DomainEvent => ({
   name: 'application-unhealthy',
   timestamp: new Date(),
-  tenantId: AdspId.parse(application.tenantId),
-  correlationId: `${application._id}`,
+  tenantId: AdspId.parse(tenantId),
+  correlationId: `${app._id}`,
   context: {
-    applicationId: `${application._id}`,
-    applicationName: application.name,
+    applicationId: `${app._id}`,
+    applicationName: app.name,
   },
   payload: {
-    application: mapApplication(application),
+    application: app,
     error,
   },
 });
 
-export const applicationStatusToHealthy = (application: ServiceStatusApplication): DomainEvent => ({
+export const applicationStatusToHealthy = (app: StaticApplicationData, tenantId: string): DomainEvent => ({
   name: 'application-healthy',
   timestamp: new Date(),
-  tenantId: AdspId.parse(application.tenantId),
-  correlationId: `${application._id}`,
+  tenantId: AdspId.parse(tenantId),
+  correlationId: `${app._id}`,
   context: {
-    applicationId: `${application._id}`,
-    applicationName: application.name,
+    applicationId: `${app._id}`,
+    applicationName: app.name,
   },
   payload: {
-    application: mapApplication(application),
+    application: app,
   },
 });
 
 export const applicationStatusChange = (
-  application: ServiceStatusApplication,
+  app: StaticApplicationData,
+  newStatus: string,
   originalStatus: string,
   user: User
 ): DomainEvent => ({
   name: 'application-status-changed',
   timestamp: new Date(),
-  tenantId: AdspId.parse(application.tenantId),
-  correlationId: `${application._id}`,
+  tenantId: user.tenantId,
+  correlationId: `${app._id}`,
   context: {
-    applicationId: `${application._id}`,
-    applicationName: application.name,
+    applicationId: `${app._id}`,
+    applicationName: app.name,
   },
   payload: {
     application: {
-      id: application._id,
-      name: application.name,
-      description: application.description,
+      id: app._id,
+      name: app.name,
+      description: app.description,
       originalStatus: originalStatus,
-      newStatus: application.status,
+      newStatus: newStatus,
       updatedBy: {
         userId: user.id,
         userName: user.name,

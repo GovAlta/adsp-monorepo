@@ -24,10 +24,7 @@ export interface ServiceStatusRouterProps {
 export const getApplications = (logger: Logger, serviceStatusRepository: ServiceStatusRepository): RequestHandler => {
   return async (req, res, next) => {
     try {
-      logger.debug('#############  getApplications request object');
-      logger.debug(JSON.stringify(req));
       const { tenantId } = req.user as User;
-      logger.debug(`#############  tenant ID is ${tenantId}`);
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
       }
@@ -41,12 +38,26 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
       res.json(
         statuses.map((s) => {
           const app = applications.get(s._id);
+          const { metadata, statusTimestamp, tenantId, tenantName, tenantRealm, status } = s;
+          Object.keys(s.endpoint).map((endpoint) => {
+            const currentEndpoint = JSON.parse(JSON.stringify(s.endpoint[endpoint]));
+            delete currentEndpoint._id;
+            if (currentEndpoint) {
+              s.endpoint[endpoint] = currentEndpoint;
+            }
+          });
           return {
-            ...s,
+            _id: app._id,
             internalStatus: s.internalStatus,
             name: app?.name || 'unknown',
             description: app?.description || '',
             endpoint: { ...s.endpoint, url: app?.url || '' },
+            metadata,
+            statusTimestamp,
+            tenantId,
+            tenantName,
+            tenantRealm,
+            status,
           };
         })
       );
@@ -114,7 +125,7 @@ export const createNewApplication =
     try {
       const tenantName = tenant.name;
       const tenantRealm = tenant.realm;
-      const app: ServiceStatusApplicationEntity = await ServiceStatusApplicationEntity.create(
+      const status: ServiceStatusApplicationEntity = await ServiceStatusApplicationEntity.create(
         { ...(req.user as User) },
         serviceStatusRepository,
         {
@@ -129,9 +140,14 @@ export const createNewApplication =
           enabled: false,
         }
       );
-      const newApp: StaticApplicationData = { name: name, url: endpoint.url, description: description };
-      updateConfiguration(serviceDirectory, tokenProvider, tenant.id, app._id, newApp);
-      res.status(201).json(app);
+      const newApp: StaticApplicationData = {
+        _id: status._id,
+        name: name,
+        url: endpoint.url,
+        description: description,
+      };
+      updateConfiguration(serviceDirectory, tokenProvider, tenant.id, status._id, newApp);
+      res.status(201).json(status);
     } catch (err) {
       logger.error(`Failed to create new application: ${err.message}`);
       next(err);
@@ -183,22 +199,19 @@ export const updateApplication =
       }
 
       // TODO: this needs to be moved to a service
-      const application = await serviceStatusRepository.get(id);
-      if (tenantId !== application.tenantId) {
+      const applicationStatus = await serviceStatusRepository.get(id);
+      if (tenantId !== applicationStatus.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
       }
 
-      const updatedApplication = await application.update({ ...user } as User, {
+      const updatedApplication = await applicationStatus.update({ ...user } as User, {
         name,
         description,
         endpoint,
       });
-      const update: StaticApplicationData = { name: name, url: endpoint.url, description: description };
+      const update: StaticApplicationData = { _id: id, name: name, url: endpoint.url, description: description };
       updateConfiguration(serviceDirectory, tokenProvider, user.tenantId, id, update);
-      res.json({
-        ...updatedApplication,
-        internalStatus: updatedApplication.internalStatus,
-      });
+      res.json(updatedApplication);
     } catch (err) {
       logger.error(`Failed to update application: ${err.message}`);
       next(err);
@@ -261,19 +274,20 @@ export const updateApplicationStatus =
       const user = req.user as User;
       const { id } = req.params;
       const { status } = req.body;
-      const application = await serviceStatusRepository.get(id);
-      const applicationStatus = application.status;
+      const applicationStatus = await serviceStatusRepository.get(id);
+      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
+        user.tenantId
+      );
+      const apps = new StatusApplications(configuration);
+      const app = apps.get(applicationStatus._id);
 
-      if (user.tenantId?.toString() !== application.tenantId) {
+      if (user.tenantId?.toString() !== applicationStatus.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
       }
 
-      const updatedApplication = await application.setStatus(user, status as PublicServiceStatusType);
-      eventService.send(applicationStatusChange(updatedApplication, applicationStatus, user));
-      res.json({
-        ...updatedApplication,
-        internalStatus: updatedApplication.internalStatus,
-      });
+      const updatedStatus = await applicationStatus.setStatus(user, status as PublicServiceStatusType);
+      eventService.send(applicationStatusChange(app, status, applicationStatus.status, user));
+      res.json(updatedStatus);
     } catch (err) {
       logger.error(`Failed to update application: ${err.message}`);
       next(err);
@@ -284,23 +298,25 @@ export const toggleApplication =
   (logger: Logger, serviceStatusRepository: ServiceStatusRepository, eventService: EventService): RequestHandler =>
   async (req, res, next) => {
     try {
-      logger.info(`${req.method} - ${req.url}`);
-
       const user = req.user as User;
       const { id } = req.params;
-      const application = await serviceStatusRepository.get(id);
+      const status = await serviceStatusRepository.get(id);
 
-      if (!application.enabled) {
-        eventService.send(applicationStatusToStarted(application, user));
+      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
+        user.tenantId
+      );
+      const apps = new StatusApplications(configuration);
+      if (!status.enabled) {
+        eventService.send(applicationStatusToStarted(apps.get(id), status, user));
       } else {
-        eventService.send(applicationStatusToStopped(application, user));
+        eventService.send(applicationStatusToStopped(apps.get(id), status, user));
       }
 
-      if (user.tenantId?.toString() !== application.tenantId) {
+      if (user.tenantId?.toString() !== status.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
       }
 
-      const updatedApplication = application.enabled ? await application.disable(user) : await application.enable(user);
+      const updatedApplication = status.enabled ? await status.disable(user) : await status.enable(user);
       res.json(updatedApplication);
     } catch (err) {
       logger.error(`Failed to toggle application: ${err.message}`);

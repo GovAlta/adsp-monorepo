@@ -92,20 +92,14 @@ describe('Application Manager', () => {
     });
   });
 
-  it('Can convert data', async () => {
-    const appManager = appManagerFactory('urn:ads:mock-tenant:mock-service');
-    repositoryMock.find.mockResolvedValueOnce(statusMock);
-    configurationServiceMock.getConfiguration.mockResolvedValueOnce([]).mockResolvedValueOnce([]); // i.e. mock it twice
-    await appManager.convertData(loggerMock);
-  });
-
   const appManagerFactory = (service: string): ApplicationManager => {
     return new ApplicationManager(
       tokenProviderMock,
       configurationServiceMock,
       adspId`${service}`,
       repositoryMock,
-      directoryMock
+      directoryMock,
+      loggerMock
     );
   };
 });

@@ -14,6 +14,7 @@ type ConfigurationFinder = (tenantId: AdspId) => Promise<StatusServiceConfigurat
 export class ApplicationManager {
   #configurationFinder: ConfigurationFinder;
   #repository: ServiceStatusRepository;
+  #logger: Logger;
   #tokenProvider: TokenProvider;
   #directory: ServiceDirectory;
 
@@ -22,10 +23,12 @@ export class ApplicationManager {
     service: ConfigurationService,
     serviceId: AdspId,
     repository: ServiceStatusRepository,
-    directory: ServiceDirectory
+    directory: ServiceDirectory,
+    logger: Logger
   ) {
     this.#configurationFinder = this.#getConfigurationFinder(tokenProvider, service, serviceId);
     this.#repository = repository;
+    this.#logger = logger;
     this.#tokenProvider = tokenProvider;
     this.#directory = directory;
   }
@@ -36,6 +39,11 @@ export class ApplicationManager {
     const configurations = await this.#getConfigurations(tenants);
     const applications = this.#merge(statuses, configurations);
     return new ApplicationList(applications);
+  };
+
+  getApp = async (appId: string, tenantId: AdspId): Promise<StaticApplicationData> => {
+    const config = await this.#configurationFinder(tenantId);
+    return config[appId] as StaticApplicationData;
   };
 
   #getActiveApplicationStatus = async (): Promise<ServiceStatusApplicationEntity[]> => {
@@ -91,19 +99,17 @@ export class ApplicationManager {
       if (app) {
         appData[status._id] = { ...status, ...app };
       } else {
-        // There should always be an app associated with
-        // the status, but...
-        appData[status._id] = { ...status, url: status.endpoint.url };
-        this.#saveConfiguration(status);
+        this.#logger.warn(`could not find application configuration associated with id ${status._id}`);
       }
     });
     return appData;
   };
 
   // TODO remove this code when the status no longer has the
-  // needed properties for this.  Its too late then.
+  // needed properties for this.
   #saveConfiguration = async (status: ServiceStatusApplicationEntity) => {
     await updateConfiguration(this.#directory, this.#tokenProvider, AdspId.parse(status.tenantId), status._id, {
+      _id: status._id,
       name: status.name,
       url: status.endpoint.url,
       description: status.description,
