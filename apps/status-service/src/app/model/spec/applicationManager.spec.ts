@@ -20,6 +20,11 @@ const loggerMock = {
   info: jest.fn((msg) => console.log(msg)),
 } as unknown as Logger;
 
+const directoryMock = {
+  getServiceUrl: jest.fn(() => Promise.resolve(new URL('http:/localhost:80'))),
+  getResourceUrl: jest.fn(() => Promise.resolve(new URL('http:/localhost:80'))),
+};
+
 const tokenProviderMock = {
   getAccessToken: jest.fn(() => Promise.resolve('Toot!')),
 };
@@ -93,6 +98,7 @@ describe('Application Manager', () => {
       configurationServiceMock,
       adspId`${service}`,
       repositoryMock,
+      directoryMock,
       loggerMock
     );
   };

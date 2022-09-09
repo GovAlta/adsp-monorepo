@@ -16,6 +16,11 @@ describe('JobScheduler', () => {
     warn: jest.fn(),
   } as unknown as Logger;
 
+  const directoryMock = {
+    getServiceUrl: jest.fn(() => Promise.resolve(new URL('http:/localhost:80'))),
+    getResourceUrl: jest.fn(() => Promise.resolve(new URL('http:/localhost:80'))),
+  };
+
   const tokenProviderMock = {
     getAccessToken: jest.fn(() => Promise.resolve('Toot!')),
   };
@@ -52,6 +57,7 @@ describe('JobScheduler', () => {
       configurationServiceMock,
       adspId`${service}`,
       statusRepoMock,
+      directoryMock,
       loggerMock
     );
   };
