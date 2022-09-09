@@ -18,7 +18,6 @@ export interface ServiceStatusApplication {
   status?: PublicServiceStatusType;
   internalStatus?: InternalServiceStatusType;
   metadata: unknown;
-  name: string;
   statusTimestamp: number;
   tenantId: string;
   tenantName: string;

@@ -99,7 +99,6 @@ describe('checkEndpoint', () => {
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             tenantId: tenantId.toString(),
             _id: 'test-app',
-            name: 'test-app',
             endpoint: { status: 'n/a' },
           } as ServiceStatusApplication)
         );
@@ -141,7 +140,6 @@ describe('checkEndpoint', () => {
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             tenantId: tenantId.toString(),
             _id: 'test-app',
-            name: 'test-app',
             endpoint: { status: 'online' },
           } as ServiceStatusApplication)
         );
@@ -180,7 +178,6 @@ describe('checkEndpoint', () => {
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             tenantId: tenantId.toString(),
             _id: 'test-app',
-            name: 'test-app',
             endpoint: { status: 'offline' },
           } as ServiceStatusApplication)
         );

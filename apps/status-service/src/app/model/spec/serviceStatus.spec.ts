@@ -22,7 +22,6 @@ describe('ServiceStatusApplicationEntity', () => {
 
   const applicationEntityMock = {
     metadata: '',
-    name: 'mock-test-application-entity',
     description: 'for mock test ',
     statusTimestamp: 0,
     tenantId: 'urn:ads:mock-tenant:mock-service:/tenants/mock-tenant-id',
@@ -51,7 +50,7 @@ describe('ServiceStatusApplicationEntity', () => {
       await ServiceStatusApplicationEntity.create(userMock, repositoryMock, applicationEntityMock);
       expect(repositoryMock.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: applicationEntityMock.name,
+          tenantName: applicationEntityMock.tenantName,
         })
       );
     });
@@ -75,7 +74,7 @@ describe('ServiceStatusApplicationEntity', () => {
       entity.enable(userMock);
       expect(repositoryMock.enable).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: applicationEntityMock.name,
+          tenantName: applicationEntityMock.tenantName,
         })
       );
     });
@@ -85,7 +84,7 @@ describe('ServiceStatusApplicationEntity', () => {
       entity.disable(userMock);
       expect(repositoryMock.disable).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: applicationEntityMock.name,
+          tenantName: applicationEntityMock.tenantName,
         })
       );
     });
@@ -111,7 +110,7 @@ describe('ServiceStatusApplicationEntity', () => {
       await entity.delete(userMock);
       expect(repositoryMock.delete).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: applicationEntityMock.name,
+          tenantName: applicationEntityMock.tenantName,
         })
       );
     });
