@@ -47,6 +47,7 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
             }
           });
           return {
+            _id: app._id,
             internalStatus: s.internalStatus,
             name: app?.name || 'unknown',
             description: app?.description || '',
