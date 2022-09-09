@@ -5,9 +5,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ServiceRoleList } from './serviceRoleList';
 import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
-import { NoItem, ServiceRoleListContainer } from '../styled-component';
+import { ServiceRoleListContainer } from '../styled-component';
 import { PageIndicator } from '@components/Indicator';
 import { ConfirmationModal } from './addRoleModal';
+import { ServiceRoleSyncStatus } from '@store/access/models';
 
 export const selectServiceTenantRoles = createSelector(
   (state: RootState) => state.serviceRoles,
@@ -30,14 +31,6 @@ export const selectKeycloakServiceRoles = createSelector(
   }
 );
 
-const RenderNoItem = (): JSX.Element => {
-  return (
-    <NoItem>
-      <p>No client found</p>
-    </NoItem>
-  );
-};
-
 export const ServiceRoles = (): JSX.Element => {
   const dispatch = useDispatch();
   const tenantRoles = useSelector(selectServiceTenantRoles);
@@ -47,6 +40,7 @@ export const ServiceRoles = (): JSX.Element => {
   });
   const [newClientId, setNewClientId] = useState<string>(null);
   const [newRole, setNewRole] = useState<string>(null);
+  const [serviceRoleSyncStatus, setServiceRoleSyncStatus] = useState<ServiceRoleSyncStatus>(null);
   const updateState: Record<string, string> | null = useSelector((state: RootState) => {
     const loadingStates = state?.session?.loadingStates;
 
@@ -81,6 +75,7 @@ export const ServiceRoles = (): JSX.Element => {
           onCancel={() => {
             setNewClientId(null);
           }}
+          status={serviceRoleSyncStatus}
         />
       )}
       {!indicator.show && tenantRoles !== null && (
@@ -108,16 +103,16 @@ export const ServiceRoles = (): JSX.Element => {
                       roles={roles}
                       clientId={clientId}
                       inProcess={updateState}
-                      addRoleFunc={(clientId, role: string) => {
+                      addRoleFunc={(clientId, role: string, status) => {
                         setNewClientId(clientId);
                         setNewRole(role);
+                        setServiceRoleSyncStatus(status);
                       }}
                     />
                   </ServiceRoleListContainer>
                 );
               })}
           <h2>Core service roles:</h2>
-          {coreRoles !== null && Object.entries(coreRoles).length === 0 && <RenderNoItem />}
           {Object.entries(coreRoles).length > 0 &&
             Object.entries(coreRoles)
               .filter(([clientId, config]) => {
@@ -141,9 +136,10 @@ export const ServiceRoles = (): JSX.Element => {
                       roles={roles}
                       inProcess={updateState}
                       clientId={clientId}
-                      addRoleFunc={(clientId, role: string) => {
+                      addRoleFunc={(clientId, role: string, status) => {
                         setNewClientId(clientId);
                         setNewRole(role);
+                        setServiceRoleSyncStatus(status);
                       }}
                     />
                   </ServiceRoleListContainer>
