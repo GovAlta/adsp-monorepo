@@ -86,11 +86,13 @@ interface calendarTableProps {
 
 export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ calendars, onEdit }) => {
   const [selectedDeleteCalendar, setSelectedDeleteCalendar] = useState(null);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   const dispatch = useDispatch();
 
   const onDelete = (calendar) => {
     setSelectedDeleteCalendar(calendar);
+    setShowDeleteConfirmation(true);
   };
 
   return (
@@ -127,47 +129,18 @@ export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ 
       </DataTable>
       <DeleteModal
         title="Delete calendar"
-        isOpen={selectedDeleteCalendar !== null}
+        isOpen={showDeleteConfirmation}
         onCancel={() => {
-          setSelectedDeleteCalendar(null);
+          setShowDeleteConfirmation(false);
         }}
         content={
           <div>
-            <div>Are you sure you want the delete the following calendar?</div>
-            {selectedDeleteCalendar ? (
-              <DataTable>
-                <thead>
-                  <tr>
-                    <th id="calendar-name" data-testid="calendar-table-header-name">
-                      Name
-                    </th>
-                    <th id="calendar-id" data-testid="calendar-table-header-id">
-                      ID
-                    </th>
-                    <th id="calendar-description" data-testid="calendar-table-header-description">
-                      Description
-                    </th>
-                    <th id="calendar-read-roles" data-testid="calendar-table-header-read-roles">
-                      Read roles
-                    </th>
-                    <th id="calendar-update-roles" data-testid="calendar-table-header-update-roles">
-                      Update roles
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <CalendarItemComponent calendar={selectedDeleteCalendar} onEdit={onEdit} onDelete={null} />
-                </tbody>
-              </DataTable>
-            ) : (
-              ''
-            )}
+            <div>Delete {selectedDeleteCalendar?.name}?</div>
           </div>
         }
         onDelete={() => {
+          setShowDeleteConfirmation(false);
           dispatch(DeleteCalendar(selectedDeleteCalendar?.name));
-          setSelectedDeleteCalendar(null);
-          //onDelete();
         }}
       />
       <br />
