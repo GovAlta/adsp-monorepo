@@ -94,14 +94,7 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     this.metadata = update.metadata ?? this.metadata;
     this.name = update.name ?? this.name;
     this.statusTimestamp = update.statusTimestamp ?? this.statusTimestamp;
-    if (update?.endpoint?.url && this.endpoint?.url !== update.endpoint.url) {
-      this.endpoint = {
-        ...update.endpoint,
-        status: 'n/a',
-      };
-    } else {
-      this.endpoint = update.endpoint ?? this.endpoint;
-    }
+    this.endpoint = update.endpoint ?? this.endpoint;
     this.status = update.status ?? this.status;
     this.enabled = update.enabled ?? this.enabled;
 

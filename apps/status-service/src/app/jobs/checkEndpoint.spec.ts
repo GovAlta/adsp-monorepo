@@ -100,7 +100,7 @@ describe('checkEndpoint', () => {
             tenantId: tenantId.toString(),
             _id: 'test-app',
             name: 'test-app',
-            endpoint: { url: 'https://test.co', status: 'n/a' },
+            endpoint: { status: 'n/a' },
           } as ServiceStatusApplication)
         );
         statusRepositoryMock.save.mockImplementationOnce((entity) => entity);
@@ -142,7 +142,7 @@ describe('checkEndpoint', () => {
             tenantId: tenantId.toString(),
             _id: 'test-app',
             name: 'test-app',
-            endpoint: { url: 'https://test.co', status: 'online' },
+            endpoint: { status: 'online' },
           } as ServiceStatusApplication)
         );
         statusRepositoryMock.save.mockImplementationOnce((entity) => entity);
@@ -159,21 +159,18 @@ describe('checkEndpoint', () => {
         endpointRepositoryMock.findRecentByUrlAndApplicationId.mockReturnValueOnce([
           {
             ok: false,
-            url: 'https//test.co',
             status: 500,
             timestamp: new Date(),
             responseTime: 250,
           },
           {
             ok: false,
-            url: 'https//test.co',
             status: 500,
             timestamp: new Date(),
             responseTime: 250,
           },
           {
             ok: false,
-            url: 'https//test.co',
             status: 500,
             timestamp: new Date(),
             responseTime: 250,
@@ -184,7 +181,7 @@ describe('checkEndpoint', () => {
             tenantId: tenantId.toString(),
             _id: 'test-app',
             name: 'test-app',
-            endpoint: { url: 'https://test.co', status: 'offline' },
+            endpoint: { status: 'offline' },
           } as ServiceStatusApplication)
         );
         statusRepositoryMock.save.mockImplementationOnce((entity) => entity);

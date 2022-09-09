@@ -16,7 +16,6 @@ describe('ServiceStatusApplicationEntity', () => {
   };
   const endpointMock = {
     status: 'offline' as EndpointStatusType,
-    url: 'https://www.mock-test.com',
     id: '12345',
     statusEntries: [],
   };
@@ -58,8 +57,8 @@ describe('ServiceStatusApplicationEntity', () => {
     });
   });
 
-  describe('Can update entity with existed url', () => {
-    it('Can update entity with existed url', async () => {
+  describe('Can update entity', () => {
+    it('Can update entity', async () => {
       const entity = new ServiceStatusApplicationEntity(repositoryMock, applicationEntityMock);
       entity.update(userMock, applicationEntityMock);
       expect(repositoryMock.save).toHaveBeenLastCalledWith(
@@ -68,24 +67,8 @@ describe('ServiceStatusApplicationEntity', () => {
         })
       );
     });
-
-    it('Can update entity with new url', async () => {
-      const entity = new ServiceStatusApplicationEntity(repositoryMock, applicationEntityMock);
-      const entityToBeUpdate = {
-        ...applicationEntityMock,
-        endpoint: {
-          ...endpointMock,
-          url: 'https://www.mock-test-new.com',
-        },
-      };
-      entity.update(userMock, entityToBeUpdate);
-      expect(repositoryMock.save).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          endpoint: { ...entityToBeUpdate.endpoint, status: 'n/a' },
-        })
-      );
-    });
   });
+
   describe('Can toggle entity', () => {
     it('Can enable entity', async () => {
       const entity = new ServiceStatusApplicationEntity(repositoryMock, applicationEntityMock);
