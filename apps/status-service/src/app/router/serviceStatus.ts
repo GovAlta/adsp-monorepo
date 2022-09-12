@@ -38,7 +38,7 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
       res.json(
         statuses.map((s) => {
           const app = applications.get(s._id);
-          const { metadata, statusTimestamp, tenantId, tenantName, tenantRealm, status } = s;
+          const { metadata, statusTimestamp, tenantId, tenantName, tenantRealm, status, enabled } = s;
           Object.keys(s.endpoint).map((endpoint) => {
             const currentEndpoint = JSON.parse(JSON.stringify(s.endpoint[endpoint]));
             delete currentEndpoint._id;
@@ -48,16 +48,17 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
           });
           return {
             _id: app._id,
-            internalStatus: s.internalStatus,
+            tenantId,
             name: app?.name || 'unknown',
             description: app?.description || '',
-            endpoint: { ...s.endpoint, url: app?.url || '' },
             metadata,
+            enabled: enabled,
             statusTimestamp,
-            tenantId,
+            status,
+            internalStatus: s.internalStatus,
+            endpoint: { ...s.endpoint, url: app?.url || '' },
             tenantName,
             tenantRealm,
-            status,
           };
         })
       );
