@@ -32,7 +32,7 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
   }, [initialValue]);
 
   function emailErrors(email) {
-    if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
+    if (!/^\w+(?:[.-]\w+)*@\w+(?:[.-]\w+)*(?:\.\w{2,3})+$/.test(email)) {
       return { email: 'You must enter a valid email' };
     }
   }

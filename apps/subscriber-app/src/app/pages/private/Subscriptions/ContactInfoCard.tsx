@@ -64,7 +64,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
   useEffect(() => {}, [indicator]);
 
   const isValidEmail = (email: string): boolean => {
-    return /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email);
+    return /^\w+(?:[.-]\w+)*@\w+(?:[.-]\w+)*(?:\.\w{2,3})+$/.test(email);
   };
 
   const isValidSMS = (sms: string): boolean => {
