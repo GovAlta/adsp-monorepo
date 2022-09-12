@@ -3,13 +3,14 @@ import emailWrapper from './templates/email-wrapper.hbs';
 import pdfWrapper from './templates/pdf-wrapper.hbs';
 import pdfFooterWrapper from './templates/pdf-footer-wrapper.hbs';
 import pdfHeaderWrapper from './templates/pdf-header-wrapper.hbs';
+import { htmlSanitized } from './xssSanitized';
 
 const emailWrapperTemplate = handlebars.compile(emailWrapper, { noEscape: true });
 const pdfWrapperTemplate = handlebars.compile(pdfWrapper, { noEscape: true });
 const pdfFooterTemplate = handlebars.compile(pdfFooterWrapper, { noEscape: true });
 const pdfHeaderTemplate = handlebars.compile(pdfHeaderWrapper, { noEscape: true });
 
-const hasProperHtmlWrapper = (content: string): boolean => {
+export const hasProperHtmlWrapper = (content: string): boolean => {
   const hasHtmlOpeningTag = /<html[^>]*>/g.test(content) || /<HTML[^>]*>/g.test(content);
   const hasHtmlClosingTag = /<\/html[^>]*>/g.test(content) || /<\/HTML[^>]*>/g.test(content);
   return hasHtmlOpeningTag && hasHtmlClosingTag;

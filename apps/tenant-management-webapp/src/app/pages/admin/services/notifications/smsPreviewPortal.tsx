@@ -1,6 +1,6 @@
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
-import { sanitizeHtml } from './utils';
+import { sanitizeHtml } from '@core-services/notification-shared';
 
 interface SmsPreviewPortalProps {
   body: string;

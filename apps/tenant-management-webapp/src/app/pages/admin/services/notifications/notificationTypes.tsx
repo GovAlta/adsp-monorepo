@@ -12,7 +12,7 @@ import { GoAIcon } from '@abgov/react-components/experimental';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { isDuplicatedNotificationName } from './validation';
 import { generateMessage } from '@lib/handlebarHelper';
-import { getTemplateBody } from '@core-services/notification-shared';
+import { getTemplateBody, hasXSS, sanitizeHtml } from '@core-services/notification-shared';
 import { ReactComponent as Mail } from '@assets/icons/mail.svg';
 import { ReactComponent as Slack } from '@assets/icons/slack.svg';
 import { ReactComponent as Chat } from '@assets/icons/chat.svg';
@@ -83,7 +83,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     body: '',
   });
   const TEMPALTE_RENDER_DEBOUNCE_TIMER = 500; // ms
+  const XSS_CHECK_RENDER_DEBOUNCE_TIMER = 2000; //ms
   const syntaxErrorMessage = 'Cannot render the code, please fix the syntax error in the input field';
+  const xssErrorMessage = 'There is XSS error, please fix it in the input field';
   const notification = useSelector((state: RootState) => state.notification);
   const coreNotification = useSelector((state: RootState) => state.notification.core);
   const [formTitle, setFormTitle] = useState<string>('');
@@ -94,6 +96,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [savedTemplates, setSavedTemplates] = useState<Template>(baseTemplate);
   const debouncedRenderSubject = useDebounce(subject, TEMPALTE_RENDER_DEBOUNCE_TIMER);
   const debouncedRenderBody = useDebounce(body, TEMPALTE_RENDER_DEBOUNCE_TIMER);
+  const debouncedXssCheckRenderSubject = useDebounce(subject, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
+  const debouncedXssCheckRenderBody = useDebounce(body, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
 
   const [subjectPreview, setSubjectPreview] = useState('');
   const [bodyPreview, setBodyPreview] = useState('');
@@ -133,7 +137,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     // if an event is selected for editing
     if (selectedEvent) {
       setTemplates(selectedEvent?.templates);
-      setSavedTemplates(JSON.parse(JSON.stringify(selectedEvent?.templates)));
+      setSavedTemplates(JSON.parse(sanitizeHtml(JSON.stringify(selectedEvent?.templates))));
 
       // try to render preview of subject and body.
       // Will only load if the subject and body is a valid handlebar template
@@ -141,7 +145,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
       try {
         setSubjectPreview('');
-        const bodyPreview = generateMessage(getTemplateBody(template?.body, currentChannel, htmlPayload), htmlPayload);
+        const bodyPreview = generateMessage(
+          sanitizeHtml(getTemplateBody(template?.body, currentChannel, htmlPayload)),
+          htmlPayload
+        );
         setBodyPreview(bodyPreview);
         setTemplateEditErrors({
           ...templateEditErrors,
@@ -209,6 +216,24 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   useEffect(() => {
     renderBodyPreview(debouncedRenderBody);
   }, [debouncedRenderBody]);
+
+  useEffect(() => {
+    if (hasXSS(debouncedXssCheckRenderBody)) {
+      setTemplateEditErrors({
+        ...templateEditErrors,
+        body: xssErrorMessage,
+      });
+    }
+  }, [debouncedXssCheckRenderBody]);
+
+  useEffect(() => {
+    if (hasXSS(debouncedXssCheckRenderSubject)) {
+      setTemplateEditErrors({
+        ...templateEditErrors,
+        subject: xssErrorMessage,
+      });
+    }
+  }, [debouncedXssCheckRenderSubject]);
 
   useEffect(() => {
     renderSubjectPreview(debouncedRenderSubject);
@@ -307,7 +332,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     try {
       handlebars.parse(body);
       handlebars.parse(subject);
-      return true;
+      const xssTemplate = templateEditErrors?.subject !== '' || templateEditErrors?.body !== '';
+      return true && !xssTemplate;
     } catch (e) {
       console.error(e);
       return false;

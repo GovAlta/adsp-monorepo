@@ -2,6 +2,7 @@ import { getTemplateBody } from './getTemplateBody';
 
 describe('Test email template', () => {
   const channel = 'email';
+
   it('Test PlainTest should have wrapper', () => {
     const plainText = ` Your draft form has been created.`;
     const message = getTemplateBody(plainText, channel);
