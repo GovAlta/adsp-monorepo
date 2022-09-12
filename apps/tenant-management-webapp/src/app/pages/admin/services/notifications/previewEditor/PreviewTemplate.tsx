@@ -1,7 +1,7 @@
 import React, { FunctionComponent } from 'react';
 import { phoneWrapper } from '../utils';
 import { PreviewContainer, SubjectPreview, BodyPreview, SlackPreview, SMSBodyPreview } from './styled-components';
-import { sanitizeHtml } from '@core-services/notification-shared';
+import { sanitizeHtml } from '@lib/sanitize';
 interface PreviewTemplateProps {
   channelTitle: string;
   subjectPreviewContent: string;

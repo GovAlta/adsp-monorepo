@@ -3,7 +3,6 @@ import emailWrapper from './templates/email-wrapper.hbs';
 import pdfWrapper from './templates/pdf-wrapper.hbs';
 import pdfFooterWrapper from './templates/pdf-footer-wrapper.hbs';
 import pdfHeaderWrapper from './templates/pdf-header-wrapper.hbs';
-import { htmlSanitized } from './xssSanitized';
 
 const emailWrapperTemplate = handlebars.compile(emailWrapper, { noEscape: true });
 const pdfWrapperTemplate = handlebars.compile(pdfWrapper, { noEscape: true });
@@ -17,18 +16,21 @@ export const hasProperHtmlWrapper = (content: string): boolean => {
 };
 
 export const getTemplateBody = (body: string, channel: string, context?: Record<string, unknown>): string => {
-  if (!hasProperHtmlWrapper(body)) {
-    if (channel === 'email') {
-      return emailWrapperTemplate({ content: body, ...context });
-    } else if (channel === 'pdf') {
-      return pdfWrapperTemplate({ content: body, ...context });
-    } else if (channel === 'pdf-footer') {
-      return pdfFooterTemplate({ content: body, ...context });
-    } else if (channel === 'pdf-header') {
-      return pdfHeaderTemplate({ content: body, ...context });
-    } else {
-      return body;
+  if (channel === 'pdf-footer') {
+    return pdfFooterTemplate({ content: body, ...context });
+  } else if (channel === 'pdf-header') {
+    return pdfHeaderTemplate({ content: body, ...context });
+  } else {
+    if (!hasProperHtmlWrapper(body)) {
+      if (channel === 'email') {
+        return emailWrapperTemplate({ content: body, ...context });
+      } else if (channel === 'pdf') {
+        return pdfWrapperTemplate({ content: body, ...context });
+      } else {
+        return body;
+      }
     }
   }
+
   return body;
 };

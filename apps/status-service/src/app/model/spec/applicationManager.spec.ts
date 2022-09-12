@@ -33,7 +33,7 @@ const configurationServiceMock = {
   getConfiguration: jest.fn(),
 };
 
-const applicationsMock = [
+const statusMock = [
   {
     _id: '620ae946ddd181001195caad',
     name: 'temp app name 1',
@@ -62,16 +62,16 @@ const applicationsMock = [
   },
 ];
 
-const configurationMock = [
+const appMock = [
   {
-    [applicationsMock[0]._id]: {
+    [statusMock[0]._id]: {
       name: 'MyApp 1',
       url: 'https://www.yahoo.com',
       description: 'MyApp goes to Hollywood',
     },
   },
   {
-    [applicationsMock[1]._id]: {
+    [statusMock[1]._id]: {
       name: 'MyApp 2',
       url: 'https://www.google.com',
       description: 'MyApp - the sequel',
@@ -83,22 +83,13 @@ describe('Application Manager', () => {
   it('Can get Active Applications', async () => {
     const appManager = appManagerFactory('urn:ads:mock-tenant:mock-service');
 
-    repositoryMock.findEnabledApplications.mockResolvedValueOnce(applicationsMock);
-    configurationServiceMock.getConfiguration
-      .mockResolvedValueOnce([configurationMock[0]])
-      .mockResolvedValueOnce([configurationMock[1]]);
+    repositoryMock.findEnabledApplications.mockResolvedValueOnce(statusMock);
+    configurationServiceMock.getConfiguration.mockResolvedValueOnce(appMock[0]).mockResolvedValueOnce(appMock[1]);
     const apps = await appManager.getActiveApps();
-    expect(apps[applicationsMock[1]._id]).toEqual({
-      ...applicationsMock[1],
-      ...configurationMock[1][applicationsMock[1]._id],
+    expect(apps[statusMock[1]._id]).toEqual({
+      ...statusMock[1],
+      ...appMock[1][statusMock[1]._id],
     });
-  });
-
-  it('Can convert data', async () => {
-    const appManager = appManagerFactory('urn:ads:mock-tenant:mock-service');
-    repositoryMock.find.mockResolvedValueOnce(applicationsMock);
-    configurationServiceMock.getConfiguration.mockResolvedValueOnce([]).mockResolvedValueOnce([]); // i.e. mock it twice
-    await appManager.convertData(loggerMock);
   });
 
   const appManagerFactory = (service: string): ApplicationManager => {
@@ -107,7 +98,8 @@ describe('Application Manager', () => {
       configurationServiceMock,
       adspId`${service}`,
       repositoryMock,
-      directoryMock
+      directoryMock,
+      loggerMock
     );
   };
 });

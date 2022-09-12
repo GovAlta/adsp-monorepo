@@ -1,214 +1,88 @@
-<html class="full-document-container">
-  <head>
-    <style>
-      @font-face {
-        font-family: 'Helvetica Neue LT Std';
-        src: url('https://use.typekit.net/af/3f7b4d/00000000000000003b9acb2d/27/l?subset_id=1&fvd=n4&v=3')
-            format('woff2'),
-          url('https://use.typekit.net/af/3f7b4d/00000000000000003b9acb2d/27/d?subset_id=1&fvd=n4&v=3') format('woff'),
-          url('https://use.typekit.net/af/3f7b4d/00000000000000003b9acb2d/27/a?subset_id=1&fvd=n4&v=3')
-            format('opentype');
-        font-style: normal;
-        font-weight: 400;
-      }
-
-      @font-face {
-        font-family: 'Helvetica Neue LT Std';
-        src: url('https://use.typekit.net/af/761912/00000000000000003b9acb2e/27/l?subset_id=1&fvd=i4&v=3')
-            format('woff2'),
-          url('https://use.typekit.net/af/761912/00000000000000003b9acb2e/27/d?subset_id=1&fvd=i4&v=3') format('woff'),
-          url('https://use.typekit.net/af/761912/00000000000000003b9acb2e/27/a?subset_id=1&fvd=i4&v=3')
-            format('opentype');
-        font-style: italic;
-        font-weight: 400;
-      }
-
-      @font-face {
-        font-family: 'Helvetica Neue LT Std';
-        src: url('https://use.typekit.net/af/ee7f3d/00000000000000003b9acb33/27/l?subset_id=1&fvd=n7&v=3')
-            format('woff2'),
-          url('https://use.typekit.net/af/ee7f3d/00000000000000003b9acb33/27/d?subset_id=1&fvd=n7&v=3') format('woff'),
-          url('https://use.typekit.net/af/ee7f3d/00000000000000003b9acb33/27/a?subset_id=1&fvd=n7&v=3')
-            format('opentype');
-        font-style: normal;
-        font-weight: 700;
-      }
-
-      @font-face {
-        font-family: 'Helvetica Neue LT Std';
-        src: url('https://use.typekit.net/af/503f80/00000000000000003b9acb34/27/l?subset_id=1&fvd=i7&v=3')
-            format('woff2'),
-          url('https://use.typekit.net/af/503f80/00000000000000003b9acb34/27/d?subset_id=1&fvd=i7&v=3') format('woff'),
-          url('https://use.typekit.net/af/503f80/00000000000000003b9acb34/27/a?subset_id=1&fvd=i7&v=3')
-            format('opentype');
-        font-style: italic;
-        font-weight: 700;
-      }
-
-      @font-face {
-        font-family: 'Helvetica Neue LT Std';
-        src: url('https://use.typekit.net/af/e60e87/00000000000000003b9acb31/27/l?subset_id=1&fvd=n6&v=3')
-            format('woff2'),
-          url('https://use.typekit.net/af/e60e87/00000000000000003b9acb31/27/d?subset_id=1&fvd=n6&v=3') format('woff'),
-          url('https://use.typekit.net/af/e60e87/00000000000000003b9acb31/27/a?subset_id=1&fvd=n6&v=3')
-            format('opentype');
-        font-style: normal;
-        font-weight: 600;
-      }
-      body {
-        font-family: 'Helvetica Neue LT Std';
-        --light-grey: #f1f1f1;
-        --grey: #dcdcdc;
-        --dark-grey: #666666;
-        --black: #333333;
-        color: #333333;
-        background-color: white;
-        margin: auto;
-        font-size: 9px;
-        line-height: 12px;
-      }
-
-      p {
-        margin: 0.5rem 0 0.5rem 0 ;
-      }
-
-      ul {
-        margin: 0.75rem 0 0.75rem 0;
-        padding-left: 1rem;
-      }
-
-      h1 {
-        margin: 32px 0 16px 0;
-        padding: 0;
-        line-height: 19px;
-        font-size: 16px;
-        font-weight: 700;
-        color: #333333;
-      }
-
-      h2 {
-        margin: 24px 0 16px;
-        padding: 0;
-        line-height: 12px;
-        color: #333333;
-        font-size: 12px;
-        font-weight: bold;
-      }
-
-      h3 {
-        margin: 16px 0 8px 0;
-        padding: 0;
-        line-height: 12px;
-        color: #333333;
-        font-size: 10px;
-        font-weight: bold;
-      }
-
-      h4 {
-        margin: 23px 0 0;
-        padding: 0;
-        line-height: 12px;
-        color: #333333;
-        font-size: 9px;
-        font-weight: bold;
-      }
-
-      h5 {
-        margin: 23px 0 0;
-        padding: 0;
-        line-height: 12px;
-        color: #333333;
-        font-size: 8px;
-        font-weight: bold;
-      }
-
-      h6 {
-        margin: 23px 0 0;
-        padding: 0;
-        line-height: 12px;
-        color: #333333;
-        font-size: 7px;
-        font-weight: bold;
-      }
-
-      caption {
-        font-size: 7px;
-      }
-      .goa-header-event-template {
-        display: flex;
-      }
-      #goa-callout-custom {
-        background-color: #0081a2 !important;
-        color: #ffffff;
-        padding-left: 7.5rem;
-        padding-top: 1.5rem;
-        padding-bottom: 1.5rem;
-      }
-      #goa-callout-custom .title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        letter-spacing: 0em;
-        text-align: left;
-        line-height: 3rem;
-      }
-      .goa-footer-event {
-        background-color: #f1f1f1;
-        padding-top: 2.5rem;
-        padding-left: 3rem;
-        padding-right: 2rem;
-        padding-bottom: 3rem;
-      }
-      .goa-footer-event .link {
-        padding-left: 4.5rem;
-        padding-bottom: 1.5rem;
-      }
-      .footer-link-border {
-        border-top: 1px solid #dcdcdc;
-      }
-      .goa-footer-event .logo {
-        margin-left: auto;
-        padding-right: 6.75rem;
-      }
-      .goa-footer-event .footer-disclaimer {
-        margin-left: 4.5rem;
-        margin-right: 5.5rem;
-        color: #666666;
-        padding-top: 1.75rem;
-        font-size: 14px;
-        text-align: justify;
-      }
-      .pdf-content {
-        background-color: white;
-      }
-      .goa-header-right {
-        flex: 1;
-        text-align-last: end;
-      }
-      .goa-large-font {
-        font-weight: 700;
-        font-size: 1rem;
-        line-height: 19px;
-        font-family: 'Helvetica Neue LT Std';
-        margin-bottom: .5rem;
-      }
-      .goa-small-font {
-        font-weight: 400;
-        line-height: 12px;
-        font-size: 0.5625rem;
-        font-family: 'Helvetica Neue LT Std';
-      }
-      .full-width {
-        width: 100%;
-        margin: 8px 0 8px 0;
-      }
-      .full-document-container {
-        margin: 1.5rem;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="pdf-content">
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8" />
+      <style>
+         @font-face {
+         font-family: 'acumin-pro-semi-condensed';
+         src: url("https://use.typekit.net/af/3f7b4d/00000000000000003b9acb2d/27/l?subset_id=1&fvd=n4&v=3") format("woff2"), url("https://use.typekit.net/af/3f7b4d/00000000000000003b9acb2d/27/d?subset_id=1&fvd=n4&v=3") format("woff"), url("https://use.typekit.net/af/3f7b4d/00000000000000003b9acb2d/27/a?subset_id=1&fvd=n4&v=3") format("opentype");
+         font-style: normal;
+         font-weight: 400; }
+         @font-face {
+         font-family: 'acumin-pro-semi-condensed';
+         src: url("https://use.typekit.net/af/761912/00000000000000003b9acb2e/27/l?subset_id=1&fvd=i4&v=3") format("woff2"), url("https://use.typekit.net/af/761912/00000000000000003b9acb2e/27/d?subset_id=1&fvd=i4&v=3") format("woff"), url("https://use.typekit.net/af/761912/00000000000000003b9acb2e/27/a?subset_id=1&fvd=i4&v=3") format("opentype");
+         font-style: italic;
+         font-weight: 400; }
+         @font-face {
+         font-family: 'acumin-pro-semi-condensed';
+         src: url("https://use.typekit.net/af/ee7f3d/00000000000000003b9acb33/27/l?subset_id=1&fvd=n7&v=3") format("woff2"), url("https://use.typekit.net/af/ee7f3d/00000000000000003b9acb33/27/d?subset_id=1&fvd=n7&v=3") format("woff"), url("https://use.typekit.net/af/ee7f3d/00000000000000003b9acb33/27/a?subset_id=1&fvd=n7&v=3") format("opentype");
+         font-style: normal;
+         font-weight: 700; }
+         @font-face {
+         font-family: 'acumin-pro-semi-condensed';
+         src: url("https://use.typekit.net/af/503f80/00000000000000003b9acb34/27/l?subset_id=1&fvd=i7&v=3") format("woff2"), url("https://use.typekit.net/af/503f80/00000000000000003b9acb34/27/d?subset_id=1&fvd=i7&v=3") format("woff"), url("https://use.typekit.net/af/503f80/00000000000000003b9acb34/27/a?subset_id=1&fvd=i7&v=3") format("opentype");
+         font-style: italic;
+         font-weight: 700; }
+         @font-face {
+         font-family: 'acumin-pro-semi-condensed';
+         src: url("https://use.typekit.net/af/e60e87/00000000000000003b9acb31/27/l?subset_id=1&fvd=n6&v=3") format("woff2"), url("https://use.typekit.net/af/e60e87/00000000000000003b9acb31/27/d?subset_id=1&fvd=n6&v=3") format("woff"), url("https://use.typekit.net/af/e60e87/00000000000000003b9acb31/27/a?subset_id=1&fvd=n6&v=3") format("opentype");
+         font-style: normal;
+         font-weight: 600; }
+         @page {
+         size: letter;
+         margin: 25mm 20mm 25mm 20mm;
+         }
+         html, body {
+         width: 210mm;
+         font-size: 16px;
+         font-family: 'acumin-pro-semi-condensed', sans-serif;
+         }
+         h1 {
+         margin: 0;
+         padding: 0;
+         line-height: 3.5em;
+         font-size: 3em;
+         }
+         h2 {
+         margin: 1.5em 0 0;
+         padding: 0;
+         line-height: 2.75em;
+         color: #333;
+         font-size: 2.5em;
+         font-weight: 400;
+         }
+         h3 {
+         margin: 1.5em 0 0;
+         padding: 0;
+         line-height: 2em;
+         color: #333;
+         font-size: 1.5em;
+         font-weight: 400;
+         }
+         h4 {
+         margin: 1.5em 0 0;
+         padding: 0;
+         line-height: 1.75em;
+         color: #333;
+         font-size: 1.125em;
+         font-weight: 700;
+         }
+         h5 {
+         margin: 1.5em 0 0;
+         padding: 0;
+         line-height: 1.75em;
+         color: #333;
+         font-size: 1.125em;
+         font-weight: 700;
+         }
+         p {
+         margin: 1.5em 0 0;
+         font-size: 1.125em;
+         line-height: 1.75em;
+         }
+      </style>
+   </head>
+   <body>
       {{content}}
-    </div>
-  </body>
+   </body>
 </html>

@@ -17,13 +17,15 @@ export type StatusServiceConfiguration = Record<string, unknown>;
 // configuration.
 
 export interface StaticApplicationData {
+  _id: string;
   name: string;
   url: string;
   description?: string;
 }
-// Application data, including the static
+// Application data, combines the static
 // and dynamic bits
 export interface ApplicationData {
+  _id: string;
   name: string;
   url: string;
   description?: string;

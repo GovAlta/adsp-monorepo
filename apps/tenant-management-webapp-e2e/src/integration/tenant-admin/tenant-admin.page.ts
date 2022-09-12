@@ -43,8 +43,12 @@ class TenantAdminPage {
     return cy.xpath('//div[@class="copy-url"]');
   }
 
-  clickToCopyButton() {
-    return cy.get('button:contains("Click to copy")');
+  copyLoginLinkButton() {
+    return cy.xpath('//goa-button[@leadingicon="link"]');
+  }
+
+  copyLoginLinkButtonMessage() {
+    return cy.xpath('//goa-button[@leadingicon="link"]/preceding-sibling::div//*[@class="message"]');
   }
 
   goaCardTitles() {

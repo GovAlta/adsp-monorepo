@@ -102,7 +102,7 @@ export const createTask =
   async (req, res, next) => {
     try {
       const user = req.user;
-      const tenantId = req.user.tenantId;
+      const tenantId = req.tenant.id;
       const { priority, ...task } = req.body;
 
       const queue: QueueEntity = req[QUEUE_KEY];

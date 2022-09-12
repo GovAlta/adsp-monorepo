@@ -8,20 +8,27 @@ import {
   toServiceName,
   toNamespace,
 } from './ServiceConfiguration';
-import { GoAButton, GoACheckbox } from '@abgov/react-components';
+import { GoACheckbox } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { getConfigurationDefinitions, getConfigurations, ServiceId } from '@store/configuration/action';
 import { PageIndicator } from '@components/Indicator';
 import { ConfigurationExportType, Service } from '@store/configuration/model';
-import { DescriptionDiv, SelectedExports, Exports } from '../styled-components';
+import { Exports } from '../styled-components';
 import { GoACard } from '@abgov/react-components/experimental';
-import { ReactComponent as Close } from '@assets/icons/close.svg';
+import { ReactComponent as SmallClose } from '@assets/icons/x.svg';
+import { ReactComponent as Triangle } from '@assets/icons/triangle.svg';
+import { ReactComponent as Rectangle } from '@assets/icons/rectangle.svg';
+import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
+import { GoAChip } from '@abgov/react-components-new';
+import { GoAButton } from '@abgov/react-components-new';
 
 export const ConfigurationExport: FunctionComponent = () => {
   const { coreConfigDefinitions, tenantConfigDefinitions } = useSelector((state: RootState) => state.configuration);
   const exportState = useSelector((state: RootState) => state.configurationExport);
   const indicator = useSelector((state: RootState) => state?.session?.indicator);
   const [exportServices, setExportServices] = useState<Record<string, boolean>>({});
+  const [selectAll, setSelectAll] = useState(false);
+  const [infoView, setInfoView] = useState<Record<string, boolean>>({});
 
   const sortedConfiguration = useMemo(() => {
     const schemas = toSchemaMap(tenantConfigDefinitions, coreConfigDefinitions);
@@ -31,13 +38,43 @@ export const ConfigurationExport: FunctionComponent = () => {
   const dispatch = useDispatch();
 
   const toggleSelection = (key: string) => {
-    if (exportServices[key]) {
+    if (key === 'select-all') {
+      const checkedExportKeys = Object.keys(exportServices).length;
+      let totalExportKeys = 0;
+      const temp = { ...exportServices };
+      Object.keys(sortedConfiguration.namespaces).map((namespace) => {
+        sortedConfiguration.namespaces[namespace].map((name) => {
+          temp[toServiceKey(namespace, name)] = true;
+          totalExportKeys++;
+        });
+      });
+      if (checkedExportKeys === totalExportKeys) {
+        setExportServices({});
+        setSelectAll(false);
+      } else {
+        setExportServices(temp);
+        setSelectAll(true);
+      }
+    } else if (exportServices[key]) {
       const temp = { ...exportServices };
       delete temp[key];
       setExportServices(temp);
     } else {
       setExportServices({
         ...exportServices,
+        [key]: true,
+      });
+    }
+  };
+
+  const toggleInfo = (key: string) => {
+    if (infoView[key]) {
+      const temp = { ...infoView };
+      delete temp[key];
+      setInfoView(temp);
+    } else {
+      setInfoView({
+        ...infoView,
         [key]: true,
       });
     }
@@ -50,8 +87,10 @@ export const ConfigurationExport: FunctionComponent = () => {
   const getDescription = (namespace: string, name: string) => {
     const defs = { ...coreConfigDefinitions?.configuration, ...tenantConfigDefinitions?.configuration };
     if (defs[`${namespace}:${name}`]) {
-      const schema = defs[`${namespace}:${name}`]['configurationSchema'];
-      return schema['description'] || '';
+      const description =
+        defs[`${namespace}:${name}`]['configurationSchema']['description'] ||
+        defs[`${namespace}:${name}`]['description'];
+      return description || '';
     }
   };
 
@@ -82,23 +121,6 @@ export const ConfigurationExport: FunctionComponent = () => {
     };
   }, []);
 
-  const DisplayButton = ({ text }) => {
-    return (
-      <SelectedExports>
-        {text}
-        <div className="closePadding">
-          <div
-            onClick={() => {
-              toggleSelection(text);
-            }}
-          >
-            <Close />
-          </div>
-        </div>
-      </SelectedExports>
-    );
-  };
-
   return (
     <Exports>
       <h2>Export</h2>
@@ -106,92 +128,158 @@ export const ConfigurationExport: FunctionComponent = () => {
         As a tenant admin, you can export the configuration to JSON, so that you could save, and potentially import them
         again later.
       </p>
-      {indicator.show && <PageIndicator />}
       <h2 className="header-background">Export configuration list</h2>
-      <div className="flex-row">
-        <div className="flex-one">
-          <div className="main">
-            {Object.keys(sortedConfiguration.namespaces).map((namespace) => {
-              return (
-                <React.Fragment key={namespace}>
-                  <h3>{namespace}</h3>
-                  {sortedConfiguration.namespaces[namespace].map((name) => {
-                    const desc = getDescription(namespace, name);
-                    return (
-                      <div key={toServiceKey(namespace, name)}>
-                        <GoACheckbox
-                          name={name}
-                          checked={exportServices[toServiceKey(namespace, name)] || false}
-                          onChange={() => {
-                            toggleSelection(toServiceKey(namespace, name));
-                          }}
-                          data-testid={`${toServiceKey(namespace, name)}_id`}
-                        >
-                          {name}
-                        </GoACheckbox>
-                        {desc && <DescriptionDiv>{`Description: ${desc}`}</DescriptionDiv>}
-                      </div>
-                    );
-                  })}
-                </React.Fragment>
-              );
-            })}
-          </div>
-        </div>
-        {Object.keys(exportServices).length > 0 && (
+      {indicator.show && <PageIndicator />}
+      {!indicator.show && Object.keys(sortedConfiguration.namespaces).length > 0 && (
+        <div className="flex-row">
           <div className="flex-one">
-            <div
-              className="absolute-position"
-              style={{
-                marginTop: `${Math.max(scrollPosition - 330, 0)}px`,
-              }}
-            >
-              <h3>Selected Configuration</h3>
-              <GoACard type="primary">
-                <div
-                  className="auto-overflow"
-                  style={{
-                    maxHeight: `calc(100vh - 608px + ${Math.max(
-                      Math.min(scrollPosition, Math.max(pageHeight - 550, 300)),
-                      0
-                    )}px`,
+            <div style={{ width: `calc(100% - ${Object.keys(exportServices).length > 0 ? '10px' : '260px'})` }}>
+              <div className="flex-row">
+                <GoACheckbox
+                  name="Select all"
+                  checked={selectAll}
+                  onChange={() => {
+                    toggleSelection('select-all');
                   }}
-                >
-                  {Object.keys(exportServices).map((exp) => {
-                    return <DisplayButton text={exp} />;
-                  })}
-                </div>
-                <div className="flex-reverse-row">
-                  <div className="button-style">
-                    <GoAButton
-                      data-testid="export-configuration-1"
-                      disabled={Object.keys(exportServices).length < 1 || indicator.show}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
-                      }}
-                    >
-                      {'Export'}
-                    </GoAButton>
-                  </div>
-                  <div className="button-style">
-                    <GoAButton
-                      data-testid="export-configuration-1"
-                      buttonType="tertiary"
-                      disabled={Object.keys(exportServices).length < 1 || indicator.show}
-                      onClick={(e) => {
-                        unselectAll();
-                      }}
-                    >
-                      {'Remove All'}
-                    </GoAButton>
-                  </div>
-                </div>
-              </GoACard>
+                  data-testid={'select-all-id'}
+                ></GoACheckbox>
+                <div className="middle-align">Select all</div>
+              </div>
+              {Object.keys(sortedConfiguration.namespaces).map((namespace) => {
+                return (
+                  <React.Fragment key={namespace}>
+                    <h3>{namespace}</h3>
+                    {sortedConfiguration.namespaces[namespace].map((name) => {
+                      const desc = getDescription(namespace, name);
+                      return (
+                        <div>
+                          <div key={toServiceKey(namespace, name)} className="flex-row">
+                            <div className="flex-row">
+                              <GoACheckbox
+                                name={name}
+                                checked={exportServices[toServiceKey(namespace, name)] || false}
+                                onChange={() => {
+                                  toggleSelection(toServiceKey(namespace, name));
+                                }}
+                                data-testid={`${toServiceKey(namespace, name)}_id`}
+                              ></GoACheckbox>
+                              <div className="middle-align">{name}</div>
+                            </div>
+                            <div
+                              className="info-circle"
+                              onClick={() => {
+                                toggleInfo(toServiceKey(namespace, name));
+                              }}
+                            >
+                              {desc && (
+                                <div className="info-circle-padding">
+                                  <InfoCircle />
+                                  <div className="triangle-width">
+                                    {infoView[toServiceKey(namespace, name)] && (
+                                      <div className="bubble-helper">
+                                        <div className="triangle">
+                                          <Triangle />
+                                        </div>
+                                        <Rectangle />
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div>
+                            {infoView[toServiceKey(namespace, name)] && (
+                              <div className="full-width">
+                                <div className="overflow-wrap bubble-border">
+                                  {desc}
+                                  <div
+                                    className="small-close-button"
+                                    onClick={() => {
+                                      toggleInfo(toServiceKey(namespace, name));
+                                    }}
+                                  >
+                                    <SmallClose />
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </React.Fragment>
+                );
+              })}
             </div>
           </div>
-        )}
-      </div>
+          {Object.keys(exportServices).length > 0 && (
+            <div>
+              <div
+                style={{
+                  marginTop: `${Math.max(scrollPosition - 330, 0)}px`,
+                }}
+              >
+                <div className="configuration-selector">
+                  <GoACard type="primary">
+                    <div
+                      className="auto-overflow"
+                      style={{
+                        maxHeight: `calc(100vh - 608px + ${Math.max(
+                          Math.min(scrollPosition, Math.max(pageHeight - 550, 300)),
+                          0
+                        )}px`,
+                        minHeight: '100px',
+                      }}
+                    >
+                      <h3>Selected Configuration</h3>
+                      <div className="button-wrapper">
+                        {Object.keys(exportServices).map((exp) => {
+                          const shortExp = exp.substring(0, 19) + '...';
+                          return (
+                            <GoAChip
+                              key={exp}
+                              deletable={true}
+                              content={shortExp}
+                              onClick={() => toggleSelection(exp)}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="flex-reverse-row">
+                      <div className="button-style">
+                        <GoAButton
+                          data-testid="export-configuration-1"
+                          disabled={Object.keys(exportServices).length < 1 || indicator.show}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
+                          }}
+                        >
+                          Export
+                        </GoAButton>
+                      </div>
+                      <div className="button-style">
+                        <GoAButton
+                          type="secondary"
+                          disabled={Object.keys(exportServices).length < 1 || indicator.show}
+                          onClick={(e) => {
+                            unselectAll();
+                            setSelectAll(false);
+                          }}
+                        >
+                          Remove all
+                        </GoAButton>
+                      </div>
+                    </div>
+                  </GoACard>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </Exports>
   );
 };

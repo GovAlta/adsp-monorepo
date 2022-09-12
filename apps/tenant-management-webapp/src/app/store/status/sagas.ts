@@ -21,16 +21,13 @@ import {
 } from './actions';
 import { ConfigState } from '@store/config/models';
 import { SetApplicationStatusAction, setApplicationStatusSuccess } from './actions/setApplicationStatus';
-import { EndpointStatusEntry, ServiceStatusApplication } from './models';
+import { EndpointStatusEntry, ApplicationStatus } from './models';
 import { SagaIterator } from '@redux-saga/core';
 import moment from 'moment';
 import axios from 'axios';
 import { getAccessToken } from '@store/tenant/sagas';
 
-export function* fetchServiceStatusAppHealthEffect(
-  api: StatusApi,
-  application: ServiceStatusApplication
-): SagaIterator {
+export function* fetchServiceStatusAppHealthEffect(api: StatusApi, application: ApplicationStatus): SagaIterator {
   // This is so application state knows there is an incremental load.
   yield put(fetchServiceStatusAppHealth(application._id));
 
@@ -48,7 +45,7 @@ export function* fetchServiceStatusApps(): SagaIterator {
 
   try {
     const api = new StatusApi(baseUrl, token);
-    const applications: ServiceStatusApplication[] = yield call([api, api.getApplications]);
+    const applications: ApplicationStatus[] = yield call([api, api.getApplications]);
 
     for (const application of applications) {
       if (application.endpoint?.url) {
@@ -101,7 +98,7 @@ export function* setApplicationStatus(action: SetApplicationStatusAction): SagaI
 
   try {
     const api = new StatusApi(baseUrl, token);
-    const data: ServiceStatusApplication = yield call(
+    const data: ApplicationStatus = yield call(
       [api, api.setStatus],
       action.payload.applicationId,
       action.payload.status
@@ -128,7 +125,7 @@ export function* toggleApplicationStatus(action: ToggleApplicationStatusAction):
 
   try {
     const api = new StatusApi(baseUrl, token);
-    const data: ServiceStatusApplication = yield call(
+    const data: ApplicationStatus = yield call(
       [api, api.toggleApplication],
       action.payload.applicationId,
       action.payload.enabled
@@ -157,12 +154,9 @@ export function* fetchStatusMetrics(): SagaIterator {
   const token: string = yield call(getAccessToken);
 
   yield take(FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION);
-  const apps: Record<string, ServiceStatusApplication> = (yield select(
+  const apps: Record<string, ApplicationStatus> = (yield select(
     (state: RootState) => state.serviceStatus.applications
-  )).reduce(
-    (apps: Record<string, ServiceStatusApplication>, app: ServiceStatusApplication) => ({ ...apps, [app._id]: app }),
-    {}
-  );
+  )).reduce((apps: Record<string, ApplicationStatus>, app: ApplicationStatus) => ({ ...apps, [app._id]: app }), {});
 
   if (baseUrl && token) {
     try {

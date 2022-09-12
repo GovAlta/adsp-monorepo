@@ -23,5 +23,35 @@ Feature: Configuration-service
     When the user clicks eye-off icon of "file-service" under Platform to close the schema
     Then the user "should not view" of the schema for "file-service" and validates "readRoles" in the details
 
+  @TEST_CS-1377 @REQ_CS-1126 @REQ_CS-1545 @regression
+  Scenario: As a tenant admin, I can add/edit/delete configuration definitions for the configuration service
+    Given a tenant admin user is on configuration overview page
+    When the user clicks Add definition button on configuration overview page
+    Then the user views Add definition modal
+    # Invalid data
+    When the user enters "platform" in namespace field in configuration definition modal
+    Then the user views the error message of "Cannot use the word platform as namespace" on namespace in configuration definition modal
+    When the user enters "auto-test-1-$" in namespace field in configuration definition modal
+    Then the user views the error message of "Allowed characters are: a-z, A-Z, 0-9, -" on namespace in configuration definition modal
+    When the user enters "auto-test-1-$" in name field in configuration definition modal
+    Then the user views the error message of "Allowed characters are: a-z, A-Z, 0-9, -" on name in configuration definition modal
+    # Validate data
+    When the user enters "autotest" in namespace and "autotest-addEditDeleteConfiguration" in name, "autotest desc" in description in configuration definition modal
+    And the user clicks Save button in configuration definition modal
+    Then the user "views" the configuration definition of "autotest-addEditDeleteConfiguration", "autotest desc" under "autotest"
+    # Edit
+    When the user clicks "Edit" button for the configuration definition of "autotest-addEditDeleteConfiguration", "autotest desc" under "autotest"
+    Then the user views Edit definition modal
+    And the user views disabled namespace and name fields in configuration definition modal
+    When the user enters "autotest desc modified" in description in configuration definition modal
+    And the user enters "{{}\"test\": \"\"}" in payload schema in configuration definition modal
+    And the user clicks Save button in configuration definition modal
+    And the user clicks "eye" button for the configuration definition of "autotest-addEditDeleteConfiguration", "autotest desc modified" under "autotest"
+    Then the user views the payload schema containing "\"test\": \"\"" for "autotest-addEditDeleteConfiguration", "autotest desc modified" under "autotest"
+    # Delete
+    When the user clicks "Delete" button for the configuration definition of "autotest-addEditDeleteConfiguration", "autotest desc modified" under "autotest"
+    Then the user views delete "configuration definition" confirmation modal for "autotest-addEditDeleteConfiguration"
+    And the user clicks Delete button in delete confirmation modal
+    Then the user "should not view" the configuration definition of "autotest-addEditDeleteConfiguration", "autotest desc modified" under "autotest"
 
 

@@ -9,6 +9,10 @@ namespace Adsp.Platform.ScriptService.Events;
 [SuppressMessage("Usage", "CA2227: Collection properties should be read only", Justification = "Data transfer object")]
 public abstract class ScriptEvent
 {
+  [JsonPropertyName("jobId")]
+  [Required]
+  public Guid? JobId { get; set; }
+
   [JsonPropertyName("definition")]
   [Required]
   public ScriptDefinition? Definition { get; set; }

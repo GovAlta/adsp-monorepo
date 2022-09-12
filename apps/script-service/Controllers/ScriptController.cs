@@ -85,12 +85,12 @@ public class ScriptController : ControllerBase
 
     var luaInputs = request.Inputs ?? new Dictionary<string, object?>();
 
-    string token = definition.UseServiceAccount == true ?
-      await _tokenProvider.GetAccessToken() :
-      HttpContext.Request.Headers[HeaderNames.Authorization].First()[TOKEN_INDEX..];
+    Func<Task<string>> getToken = definition.UseServiceAccount == true ?
+      () => _tokenProvider.GetAccessToken() :
+      () => Task.FromResult(HttpContext.Request.Headers[HeaderNames.Authorization].First()[TOKEN_INDEX..]);
 
     var outputs = await _luaService.RunScript(
-      user!.Tenant!.Id!, definition, luaInputs, token, request.CorrelationId, user
+      Guid.NewGuid(), user!.Tenant!.Id!, definition, luaInputs, getToken, request.CorrelationId, user
     );
 
     return outputs;

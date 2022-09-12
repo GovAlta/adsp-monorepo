@@ -1,4 +1,4 @@
-import { AdspId } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService } from '@abgov/adsp-service-sdk';
 import { WorkQueueService } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { FileRepository } from '../repository';
@@ -19,6 +19,7 @@ interface FileJobProps {
   fileRepository: FileRepository;
   scanService: ScanService;
   queueService: WorkQueueService<FileServiceWorkItem>;
+  eventService: EventService;
 }
 
 export const createFileJobs = (props: FileJobProps): void => {

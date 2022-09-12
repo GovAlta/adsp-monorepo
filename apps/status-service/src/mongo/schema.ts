@@ -140,6 +140,7 @@ export const configurationSchema = {
     '^[a-fA-F0-9]{24}$': {
       type: 'object',
       properties: {
+        _id: { type: 'string', description: 'Reference to application status' },
         name: { type: 'string', description: 'Name of the application' },
         url: { type: 'string', description: 'URL to be checked' },
         description: { type: 'string', description: 'Tell us about your application' },

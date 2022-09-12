@@ -113,8 +113,10 @@ export function getSubscriber(tokenProvider: TokenProvider, directory: ServiceDi
       const notificationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:notification-service`);
       const token = await tokenProvider.getAccessToken();
 
+      const filteredSubscriberId = subscriberId.replace(/[^a-zA-Z0-9 ]/g, '');
+
       const subscribersUrl = new URL(
-        `/subscription/v1/subscribers/${subscriberId}?includeSubscriptions=true`,
+        `/subscription/v1/subscribers/${filteredSubscriberId}?includeSubscriptions=true`,
         notificationServiceUrl
       );
       const { data } = await axios.get(subscribersUrl.href, {
@@ -134,9 +136,11 @@ export function getSubscriptionChannels(tokenProvider: TokenProvider, directory:
 
       const notificationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:notification-service`);
       const token = await tokenProvider.getAccessToken();
+      const filteredSubscriber = subscriber.replace(/[^a-zA-Z0-9 ]/g, '');
+      const filteredType = type.replace(/[^a-zA-Z0-9 ]/g, '');
 
       const subscribersUrl = new URL(
-        `/subscription/v1/subscribers/${subscriber}/${type}/:type/channels`,
+        `/subscription/v1/subscribers/${filteredSubscriber}/${filteredType}/:type/channels`,
         notificationServiceUrl
       );
 
@@ -154,13 +158,20 @@ export function unsubscribe(tokenProvider: TokenProvider, directory: ServiceDire
   return async (req, res, next) => {
     try {
       const { type, id } = req.params;
-      const { tenantId } = req.query;
+      const tenantId = req.query.tenantId as string;
 
       const notificationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:notification-service`);
       const token = await tokenProvider.getAccessToken();
 
+      const filteredTenantId = tenantId.replace(/[^a-zA-Z0-9-:/ ]/g, '');
+      const tenantIOParts = filteredTenantId.split('/');
+      const newTenantId = tenantIOParts[0] + '/tenants/' + tenantIOParts[tenantIOParts.length - 1];
+
+      const filteredId = id.replace(/[^a-zA-Z0-9 ]/g, '');
+      const filteredType = type.replace(/[^a-zA-Z0-9- ]/g, '');
+
       const subscribersUrl = new URL(
-        `/subscription/v1/types/${type}/subscriptions/${id}?tenantId=${tenantId}`,
+        `/subscription/v1/types/${filteredType}/subscriptions/${filteredId}?tenantId=${newTenantId}`,
         notificationServiceUrl
       );
 

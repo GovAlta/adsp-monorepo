@@ -39,6 +39,36 @@ export const TemplateEditorContainer = styled.div`
     }
   }
 `;
+
+export const TemplateEditorContainerPdf = styled.div`
+  padding-right: 1rem;
+  flex: auto;
+  margin-top: 0.5rem;
+  overflow: hidden;
+  &:hover {
+    overflow: auto;
+  }
+
+  .reduce-margin {
+    margin-top: 5px;
+  }
+
+  @media (min-width: 1279px) {
+    .mobile {
+      display: none;
+    }
+  }
+
+  @media (max-width: 1280px) {
+    .desktop {
+      display: none;
+    }
+
+    .mobile > div {
+      padding: 2px 0 2px 3px;
+    }
+  }
+`;
 export const Modal = styled.div<{ open: boolean }>`
   display: ${(props) => (props.open ? `block` : `none`)};
   position: fixed;
@@ -80,6 +110,20 @@ export const MonacoDivBody = styled.div`
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
   height: calc(100vh - 310px);
+`;
+export const MonacoDivHeader = styled.div`
+  display: flex;
+  border: 1px solid var(--color-gray-700);
+  border-radius: 3px;
+  padding: 0.15rem 0.15rem;
+  height: calc(50vh - 200px);
+`;
+export const MonacoDivFooter = styled.div`
+  display: flex;
+  border: 1px solid var(--color-gray-700);
+  border-radius: 3px;
+  padding: 0.15rem 0.15rem;
+  height: calc(50vh - 200px);
 `;
 export const EditTemplateActions = styled.div`
   display: flex;

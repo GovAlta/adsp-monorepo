@@ -9,8 +9,9 @@ class PlatformFileService implements FileService {
 
   async typeExists(tenantId: AdspId, typeId: string): Promise<boolean> {
     try {
+      const filteredTypeId = typeId.replace(/[^a-zA-Z0-9- ]/g, '');
       const fileServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:file-service`);
-      const filesUrl = new URL(`/file/v1/types/${typeId}`, fileServiceUrl);
+      const filesUrl = new URL(`/file/v1/types/${filteredTypeId}`, fileServiceUrl);
       const token = await this.tokenProvider.getAccessToken();
 
       const { data } = await axios.get<{ id: string }>(filesUrl.href, {

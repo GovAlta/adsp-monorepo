@@ -30,10 +30,11 @@ export interface UpdateCalendarSuccessAction {
 
 export interface DeleteCalendarAction {
   type: typeof DELETE_CALENDAR_ACTION;
-  name: string;
+  calendarId: string;
 }
 export interface DeleteCalendarSuccessAction {
   type: typeof DELETE_CALENDAR_SUCCESS_ACTION;
+  calendarId: string;
 }
 
 export interface UpdateIndicatorAction {
@@ -69,13 +70,14 @@ export const UpdateCalendarSuccess = (calendar: Record<string, CalendarItem>): U
   payload: calendar,
 });
 
-export const DeleteCalendar = (name: string): DeleteCalendarAction => ({
+export const DeleteCalendar = (calendarId: string): DeleteCalendarAction => ({
   type: DELETE_CALENDAR_ACTION,
-  name: name,
+  calendarId: calendarId,
 });
 
-export const DeleteCalendarSuccess = (): DeleteCalendarSuccessAction => ({
+export const DeleteCalendarSuccess = (calendarId: string): DeleteCalendarSuccessAction => ({
   type: DELETE_CALENDAR_SUCCESS_ACTION,
+  calendarId: calendarId,
 });
 
 export const UpdateIndicator = (indicator: Indicator): UpdateIndicatorAction => ({

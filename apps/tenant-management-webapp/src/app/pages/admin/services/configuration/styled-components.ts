@@ -15,7 +15,7 @@ export const EntryDetail = styled.div`
   white-space: pre-wrap;
   font-family: monospace;
   font-size: 12px;
-  line-height: 16px;
+  line-height: 12px;
   padding: 16px;
   text-align: left;
 `;
@@ -37,6 +37,17 @@ export const TableDiv = styled.div`
     overflow-x: hidden;
     text-overflow: ellipsis;
     text-align: right;
+  }
+`;
+
+export const Import = styled.div`
+  .pb3 {
+    padding-bottom: 1rem;
+  }
+
+  .choose-button {
+    border-radius: 4px;
+    background-color: f1f1f1;
   }
 `;
 
@@ -73,19 +84,6 @@ export const ErrorStatusText = styled.div`
   margin-top: 1rem;
 `;
 
-export const SelectedExports = styled.div`
-  border: 1px solid #666666;
-  border-radius: 20px;
-  padding: 4px 6.25px;
-  font-size: 16px;
-  margin: 8px;
-
-  .closePadding {
-    padding: 2px;
-    float: right;
-  }
-`;
-
 export const Exports = styled.div`
   .flex-row {
     display: flex;
@@ -101,17 +99,98 @@ export const Exports = styled.div`
     flex: 1;
   }
 
+  .goa-checkbox {
+    align-items: start;
+    margin-top: 10px;
+    margin-bottom: -10px;
+  }
+
+  .middle-align {
+    margin-top: 10px;
+  }
+
+  .info-circle {
+    margin: 5px 0 0 5px;
+  }
+
   .button-style {
     text-align-last: end;
-    margin: 5px 3px 0 3px;
+    font-size: 18px;
+    margin: 29px 3px 0 3px;
+  }
+
+  .bubble-helper {
+    margin-bottom: -11px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .triangle {
+    margin-top: 5px;
+    margin-bottom: -10px;
+  }
+
+  .info-circle-padding {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10px;
+  }
+
+  .small-close-button {
+    width: 10px;
+    margin-left: auto;
+    margin-top: -10px;
+  }
+
+  .triangle-width {
+    width: 30px;
   }
 
   .auto-overflow {
     overflow: auto;
   }
 
+  .full-width: {
+    width: 100%;
+  }
+
+  .configuration-selector {
+    width: 256px;
+  }
+
   .absolute-position {
     position: absolute;
+  }
+
+  .button-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .overflow-wrap {
+    overflow-wrap: anywhere;
+  }
+
+  .bubble-border {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 10px 12px 8px 12px;
+    gap: 8px;
+
+    width: 272px;
+    height: 100%;
+    left: 0px;
+    top: 42px;
+
+    background: #ffffff;
+    box-shadow: 0px -1px 6px rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+  }
+
+  .goa-checkbox-container: hover {
+    border: 2px solid #004f84;
   }
 `;
 

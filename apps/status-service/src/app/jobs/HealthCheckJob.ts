@@ -1,26 +1,25 @@
 import { Job } from 'node-schedule';
+import { StaticApplicationData } from '../model';
 import { JobScheduler } from './JobScheduler';
 
 export class HealthCheckJob {
-  #url: string;
-  #applicationId: string;
+  #app: StaticApplicationData;
   #action?: Job;
 
-  constructor(url: string, applicationId: string) {
-    this.#url = url;
-    this.#applicationId = applicationId;
+  constructor(app: StaticApplicationData) {
+    this.#app = app;
     this.#action = null;
   }
 
   getUrl = (): string => {
-    return this.#url;
+    return this.#app.url;
   };
 
   isScheduled = (): boolean => {
     return this.#action !== null;
   };
   schedule = (scheduler: JobScheduler): void => {
-    this.#action = scheduler.schedule(this.#applicationId, this.#url);
+    this.#action = scheduler.schedule(this.#app);
   };
   cancel = (): void => {
     if (this.#action !== null) {
