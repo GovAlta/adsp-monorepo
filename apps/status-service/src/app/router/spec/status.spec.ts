@@ -131,11 +131,13 @@ describe('Service router', () => {
 
   const configurationMock = {
     [applicationsMock[0]._id]: {
+      _id: applicationsMock[0]._id,
       name: applicationsMock[0].name,
       url: applicationsMock[0].endpoint.url,
       description: applicationsMock[0].description,
     },
     [applicationsMock[1]._id]: {
+      _id: applicationsMock[1]._id,
       name: applicationsMock[1].name,
       url: applicationsMock[1].endpoint.url,
       description: applicationsMock[1].description,
@@ -209,6 +211,7 @@ describe('Service router', () => {
     it('Can get all applications', async () => {
       const returnMock = [
         {
+          _id: '620ae946ddd181001195caad',
           endpoint: { status: 'online', url: 'https://www.yahoo.com' },
           metadata: '',
           name: 'MyApp 1',
@@ -219,8 +222,10 @@ describe('Service router', () => {
           tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
           status: 'operational',
           internalStatus: 'healthy',
+          enabled: true,
         },
         {
+          _id: '624365fe3367d200110e17c5',
           endpoint: { status: 'offline', url: 'https://localhost.com' },
           metadata: '',
           name: 'test-mock',
@@ -231,6 +236,7 @@ describe('Service router', () => {
           tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
           status: 'offline',
           internalStatus: 'stopped',
+          enabled: false,
         },
       ];
 
