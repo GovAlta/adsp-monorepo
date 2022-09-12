@@ -116,14 +116,14 @@ export const MonacoDivHeader = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(50vh - 211px);
+  height: calc(50vh - 200px);
 `;
 export const MonacoDivFooter = styled.div`
   display: flex;
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(50vh - 211px);
+  height: calc(50vh - 200px);
 `;
 export const EditTemplateActions = styled.div`
   display: flex;
