@@ -256,9 +256,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
 
                   setCurrentChannel(channel);
                 }}
-                bodyEditorHintText={
-                  "*GOA default styles are applied if the template doesn't include proper <html> opening and closing tags"
-                }
+                bodyEditorHintText={''}
                 suggestion={getSuggestion()}
                 bodyEditorConfig={bodyEditorConfig}
                 saveCurrentTemplate={() => savePdfTemplate()}
