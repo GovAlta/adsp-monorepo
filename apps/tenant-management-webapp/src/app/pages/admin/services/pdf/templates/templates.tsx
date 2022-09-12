@@ -256,7 +256,6 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
 
                   setCurrentChannel(channel);
                 }}
-                bodyEditorHintText={''}
                 suggestion={getSuggestion()}
                 bodyEditorConfig={bodyEditorConfig}
                 saveCurrentTemplate={() => savePdfTemplate()}

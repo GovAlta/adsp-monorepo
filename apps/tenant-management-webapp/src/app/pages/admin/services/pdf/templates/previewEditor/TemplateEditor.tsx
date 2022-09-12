@@ -23,7 +23,7 @@ interface TemplateEditorProps {
   onHeaderChange: (value: string) => void;
   onFooterChange: (value: string) => void;
   setPreview: (channel: string) => void;
-  bodyEditorHintText: string;
+  bodyEditorHintText?: string;
   template: PdfTemplate;
   bodyTitle: string;
   bodyEditorConfig?: EditorProps;
@@ -106,18 +106,35 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               </h3>
 
               <>
-                <GoAFormItem error={errors?.body ?? ''} helpText={bodyEditorHintText}>
-                  <MonacoDivBody>
-                    <MonacoEditor
-                      language={'handlebars'}
-                      value={template?.template}
-                      onChange={(value) => {
-                        onBodyChange(value);
-                      }}
-                      {...bodyEditorConfig}
-                    />
-                  </MonacoDivBody>
-                </GoAFormItem>
+                {bodyEditorHintText && (
+                  <GoAFormItem error={errors?.body ?? ''} helpText={bodyEditorHintText}>
+                    <MonacoDivBody>
+                      <MonacoEditor
+                        language={'handlebars'}
+                        value={template?.template}
+                        onChange={(value) => {
+                          onBodyChange(value);
+                        }}
+                        {...bodyEditorConfig}
+                      />
+                    </MonacoDivBody>
+                  </GoAFormItem>
+                )}
+
+                {!bodyEditorHintText && (
+                  <GoAFormItem error={errors?.body ?? ''}>
+                    <MonacoDivBody>
+                      <MonacoEditor
+                        language={'handlebars'}
+                        value={template?.template}
+                        onChange={(value) => {
+                          onBodyChange(value);
+                        }}
+                        {...bodyEditorConfig}
+                      />
+                    </MonacoDivBody>
+                  </GoAFormItem>
+                )}
               </>
             </Tab>
             <Tab label="Header/Footer">
