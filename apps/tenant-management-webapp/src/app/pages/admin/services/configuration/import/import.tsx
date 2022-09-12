@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useState, useRef } from 'react';
 import { RootState } from '@store/index';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   getConfigurationDefinitions,
@@ -176,7 +176,7 @@ export const ConfigurationImport: FunctionComponent = () => {
               </div>
             </GoAFormItem>
             <GoAButton
-              type="submit"
+              type="primary"
               onClick={onUploadSubmit}
               disabled={selectedImportFile.length === 0}
               data-testid="import-input-button"

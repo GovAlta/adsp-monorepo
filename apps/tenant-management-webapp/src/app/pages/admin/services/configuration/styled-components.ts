@@ -47,7 +47,7 @@ export const Import = styled.div`
 
   .choose-button {
     border-radius: 4px;
-    background-color: f1f1f1;
+    background: #f1f1f1;
   }
 `;
 
@@ -191,6 +191,11 @@ export const Exports = styled.div`
 
   .goa-checkbox-container: hover {
     border: 2px solid #004f84;
+  }
+
+  .goa-checkbox--selected: hover {
+    background: #004f84;
+    border: 1px solid !important;
   }
 `;
 
