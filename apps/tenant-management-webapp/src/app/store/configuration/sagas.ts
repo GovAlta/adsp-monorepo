@@ -207,7 +207,7 @@ export function* setConfigurationRevision(action: SetConfigurationRevisionAction
         axios.post,
         `${baseUrl}/configuration/v2/configuration/${action.request.namespace}/${action.request.name}`,
         {
-          revision: true,
+          operation: 'CREATE-REVISION',
         },
         {
           headers: { Authorization: `Bearer ${token}` },

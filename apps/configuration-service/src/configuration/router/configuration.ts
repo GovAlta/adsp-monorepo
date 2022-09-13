@@ -14,7 +14,16 @@ import { configurationUpdated, revisionCreated, activeRevisionSet } from '../eve
 import { ConfigurationEntity } from '../model';
 import { ConfigurationRepository, Repositories } from '../repository';
 import { ConfigurationDefinition, ConfigurationDefinitions, ConfigurationRevision } from '../types';
-import { OPERATION_DELETE, OPERATION_REPLACE, OPERATION_UPDATE, PatchRequests, ConfigurationMap } from './types';
+import {
+  OPERATION_DELETE,
+  OPERATION_REPLACE,
+  OPERATION_UPDATE,
+  OPERATION_CREATE_REVISION,
+  OPERATION_SET_ACTIVE_REVISION,
+  PatchRequests,
+  PostRequests,
+  ConfigurationMap,
+} from './types';
 
 export interface ConfigurationRouterProps extends Repositories {
   serviceId: AdspId;
@@ -248,42 +257,12 @@ export const createConfigurationRevision =
       benchmark(req, 'operation-handler-time');
 
       const user = req.user;
-      const { revision = false, setActiveRevision } = req.body;
+      const request: PostRequests = req.body;
+      const configuration: ConfigurationEntity = req[ENTITY_KEY];
 
-      if (!revision && !setActiveRevision) {
-        throw new InvalidOperationError('Request operation not recognized.');
-      } else if (setActiveRevision) {
-        const configuration: ConfigurationEntity = req[ENTITY_KEY];
-        const revisions = await configuration.getRevisions(1, null, { revision: setActiveRevision });
-        const results = revisions.results;
-        const currentRevision = results[0];
-
-        if (!currentRevision) {
-          throw new InvalidOperationError(`The selected revision does not exist`);
-        }
-
-        const oldRevision = configuration.active;
-
-        const updated = await configuration.setActiveRevision(user, currentRevision.revision);
-
-        res.send(mapActiveRevision(updated));
-        eventService.send(
-          activeRevisionSet(user, updated.tenantId, updated.namespace, updated.name, updated.active, oldRevision)
-        );
-
-        logger.info(
-          `Active revision ${updated.namespace}:${updated.name}:${updated.active} changed to revision ${currentRevision.revision}` +
-            ` by ${user.name} (ID: ${user.id}).`,
-          {
-            tenant: updated.tenantId?.toString(),
-            context: 'configuration-router',
-            user: `${user.name} (ID: ${user.id})`,
-          }
-        );
-      } else {
-        const configuration: ConfigurationEntity = req[ENTITY_KEY];
+      if (request.operation === OPERATION_CREATE_REVISION) {
         const updated = await configuration.createRevision(user);
-        benchmark(req, 'operation-handler-time');
+
         res.send(mapConfiguration(updated));
         if (updated.tenantId) {
           eventService.send(
@@ -308,6 +287,38 @@ export const createConfigurationRevision =
           }
         );
       }
+
+      if (request.operation === OPERATION_SET_ACTIVE_REVISION) {
+        if (request?.setActiveRevision === undefined) {
+          throw new InvalidOperationError(`Set active revision request must include setActiveRevision property.`);
+        }
+        const revisions = await configuration.getRevisions(1, null, { revision: request.setActiveRevision });
+        const results = revisions.results;
+        const currentRevision = results[0];
+        if (!currentRevision) {
+          throw new InvalidOperationError(`The selected revision does not exist`);
+        }
+
+        const oldRevision = configuration.active;
+
+        const updated = await configuration.setActiveRevision(user, currentRevision.revision);
+
+        res.send(mapActiveRevision(updated));
+        eventService.send(
+          activeRevisionSet(user, updated.tenantId, updated.namespace, updated.name, updated.active, oldRevision)
+        );
+
+        logger.info(
+          `Active revision ${updated.namespace}:${updated.name}:${updated.active} changed to revision ${currentRevision.revision}` +
+            ` by ${user.name} (ID: ${user.id}).`,
+          {
+            tenant: updated.tenantId?.toString(),
+            context: 'configuration-router',
+            user: `${user.name} (ID: ${user.id})`,
+          }
+        );
+      }
+      benchmark(req, 'operation-handler-time');
     } catch (err) {
       next(err);
     }
@@ -383,7 +394,9 @@ export function createConfigurationRouter({
     '/configuration/:namespace/:name',
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
-    createValidationHandler(body('revision').isBoolean()),
+    createValidationHandler(
+      body('operation').isString().isIn([OPERATION_SET_ACTIVE_REVISION, OPERATION_CREATE_REVISION])
+    ),
     getConfigurationEntity(serviceId, configurationRepository),
     createConfigurationRevision(logger, eventService)
   );
