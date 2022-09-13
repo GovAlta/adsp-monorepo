@@ -17,6 +17,7 @@ describe('ServiceStatusApplicationEntity', () => {
   const endpointMock = {
     status: 'offline' as EndpointStatusType,
     id: '12345',
+    url: 'http://yahoo.com',
     statusEntries: [],
   };
 

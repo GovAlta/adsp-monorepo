@@ -2,6 +2,10 @@ import { Schema } from 'mongoose';
 
 export const serviceStatusEndpointSchema = new Schema(
   {
+    url: {
+      type: String,
+      required: false,
+    },
     status: {
       type: String,
       default: 'disabled',
@@ -47,6 +51,14 @@ export const serviceStatusApplicationSchema = new Schema(
     tenantName: {
       type: String,
       required: true,
+    },
+    name: {
+      type: String,
+      required: false,
+    },
+    description: {
+      type: String,
+      required: false,
     },
     metadata: {
       type: Schema.Types.Mixed,
