@@ -10,6 +10,7 @@ import { TenantService, EventService } from '@abgov/adsp-service-sdk';
 import { applicationStatusToStarted, applicationStatusToStopped, applicationStatusChange } from '../events';
 import axios from 'axios';
 import { StatusApplications } from '../model/statusApplications';
+import { ApplicationCache } from './ApplicationCache';
 
 export interface ServiceStatusRouterProps {
   logger: Logger;
@@ -20,6 +21,8 @@ export interface ServiceStatusRouterProps {
   tokenProvider: TokenProvider;
   directory: ServiceDirectory;
 }
+
+const applicationCache = new ApplicationCache();
 
 export const getApplications = (logger: Logger, serviceStatusRepository: ServiceStatusRepository): RequestHandler => {
   return async (req, res, next) => {
@@ -46,17 +49,20 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
               s.endpoint[endpoint] = currentEndpoint;
             }
           });
+          // Use the applicationCache for cases where a new or updated application
+          // has been saved, but the configuration-service cache has not yet updated.
+          // This should be relatively infrequent, but it occurs often enough.
           return {
             _id: s._id,
             tenantId,
-            name: app?.name || 'unknown',
-            description: app?.description || '',
+            name: app?.name || applicationCache.get(s._id)?.name || 'unknown',
+            description: app?.description || applicationCache.get(s._id)?.description || '',
             metadata,
             enabled: enabled,
             statusTimestamp,
             status,
             internalStatus: s.internalStatus,
-            endpoint: { ...s.endpoint, url: app?.url || '' },
+            endpoint: { ...s.endpoint, url: app?.url || applicationCache.get(s._id)?.name || '' },
             tenantName,
             tenantRealm,
           };
@@ -163,6 +169,7 @@ export const updateConfiguration = async (
   const baseUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
   const token = await tokenProvider.getAccessToken();
   const configUrl = new URL(`/configuration/v2/configuration/platform/status-service?tenantId=${tenantId}`, baseUrl);
+  applicationCache.put(applicationId, newApp);
   await axios.patch(
     configUrl.href,
     {
