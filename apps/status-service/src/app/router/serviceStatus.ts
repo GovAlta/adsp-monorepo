@@ -166,10 +166,10 @@ export const updateConfiguration = async (
   applicationId: string,
   newApp: StaticApplicationData
 ) => {
+  applicationCache.put(applicationId, newApp);
   const baseUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
   const token = await tokenProvider.getAccessToken();
   const configUrl = new URL(`/configuration/v2/configuration/platform/status-service?tenantId=${tenantId}`, baseUrl);
-  applicationCache.put(applicationId, newApp);
   await axios.patch(
     configUrl.href,
     {
