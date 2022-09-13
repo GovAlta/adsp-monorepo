@@ -34,7 +34,7 @@ export async function initializePlatform(
     createLogger(serviceId.toString(), (logOptions as LogOptions)?.logLevel);
 
   const tokenProvider = createTokenProvider({ logger, serviceId, clientSecret, accessServiceUrl, realm });
-  const directory = service?.directory || createDirectory({ logger, directoryUrl, tokenProvider });
+  const directory = service?.directory || createDirectory({ logger, directoryUrl });
 
   // Initialization is not dependent on registration, so registration completes asynchronously.
   const registrar = createServiceRegistrar({ logger, directory, tokenProvider });
