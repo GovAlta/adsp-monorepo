@@ -40,11 +40,9 @@ export interface ApplicationData {
 
 export class ServiceStatusApplicationEntity implements ServiceStatusApplication {
   _id: string;
-  description: string;
   endpoint: ServiceStatusEndpoint;
   status: PublicServiceStatusType;
   metadata: unknown;
-  name: string;
   statusTimestamp: number;
   tenantName: string;
   tenantRealm: string;
@@ -67,8 +65,6 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     this._id = application._id;
     this.endpoint = application.endpoint;
     this.metadata = application.metadata;
-    this.name = application.name;
-    this.description = application.description;
     this.statusTimestamp = application.statusTimestamp;
     this.tenantId = application.tenantId;
     this.tenantName = application.tenantName;
@@ -94,17 +90,8 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     }
 
     this.metadata = update.metadata ?? this.metadata;
-    this.name = update.name ?? this.name;
-    this.description = update.description ?? this.description;
     this.statusTimestamp = update.statusTimestamp ?? this.statusTimestamp;
-    if (update?.endpoint?.url && this.endpoint?.url !== update.endpoint.url) {
-      this.endpoint = {
-        ...update.endpoint,
-        status: 'n/a',
-      };
-    } else {
-      this.endpoint = update.endpoint ?? this.endpoint;
-    }
+    this.endpoint = update.endpoint ?? this.endpoint;
     this.status = update.status ?? this.status;
     this.enabled = update.enabled ?? this.enabled;
 

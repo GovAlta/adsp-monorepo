@@ -35,9 +35,9 @@ describe('Service status mongo repository', () => {
 
   it('should contain the mock data', async () => {
     const applications = await insertMockData([
-      { name: 'app 1', enabled: true, status: 'operational', tenantId: '99' },
-      { name: 'app 2', enabled: true, status: 'operational', tenantId: '99' },
-      { name: 'app 3', enabled: true, status: 'operational', tenantId: '99' },
+      { enabled: true, status: 'operational', tenantId: '99' },
+      { enabled: true, status: 'operational', tenantId: '99' },
+      { enabled: true, status: 'operational', tenantId: '99' },
     ]);
     const apps = await repo.find({});
     expect(apps.length).toEqual(applications.length);
@@ -46,25 +46,21 @@ describe('Service status mongo repository', () => {
   it('enables an application', async () => {
     const applications = await insertMockData([
       {
-        name: 'app 1',
         enabled: false,
         tenantId: '99',
         tenantName: 'Child Services',
         tenantRealm: '123123-123123-123123-123123',
         endpoint: {
-          url: 'http://mock-a.com',
           status: null,
           id: '12345',
         },
       },
       {
-        name: 'app 2',
         enabled: false,
         tenantId: '99',
         tenantName: 'Child Services',
         tenantRealm: '123123-123123-123123-123123',
         endpoint: {
-          url: 'http://mock-b.com',
           status: null,
           id: '12345',
         },
@@ -81,15 +77,13 @@ describe('Service status mongo repository', () => {
   it("disables an application and all it's endpoints", async () => {
     const applications = await insertMockData([
       {
-        name: 'app 1',
-        endpoint: { status: 'online', url: 'foo.com', id: '12345' },
+        endpoint: { status: 'online', id: '12345' },
         status: 'operational',
         tenantId: '99',
         tenantName: 'Child Services',
         tenantRealm: '123123-123123-123123-123123',
       },
       {
-        name: 'app 2',
         status: 'operational',
         tenantId: '99',
         tenantName: 'Child Services',
@@ -104,8 +98,8 @@ describe('Service status mongo repository', () => {
 
   it('deletes the application', async () => {
     const applications = await insertMockData([
-      { name: 'app 1', enabled: false, tenantId: '99' },
-      { name: 'app 2', enabled: false, tenantId: '99' },
+      { enabled: false, tenantId: '99' },
+      { enabled: false, tenantId: '99' },
     ]);
     await repo.delete(applications[0]);
     const apps = await repo.find({});
@@ -114,26 +108,25 @@ describe('Service status mongo repository', () => {
 
   it('gets an application by id', async () => {
     const applications = await insertMockData([
-      { name: 'app 1', enabled: false, tenantId: '99' },
-      { name: 'app 2', enabled: false, tenantId: '99' },
+      { enabled: false, tenantId: '20' },
+      { enabled: false, tenantId: '21' },
     ]);
     const app = await repo.get(applications[0]._id);
     expect(app).not.toBeNull();
-    expect(app.name).toEqual(applications[0].name);
+    expect(app.tenantId).toEqual(applications[0].tenantId);
   });
 
   it('saves the existing app', async () => {
     const applications = await insertMockData([
-      { name: 'app 1', enabled: false, tenantId: '99' },
-      { name: 'app 2', enabled: false, tenantId: '99' },
+      { enabled: false, tenantId: '20' },
+      { enabled: false, tenantId: '22' },
     ]);
     const editedApp = applications[0];
-    editedApp.name = 'edited app';
     await repo.save(editedApp);
 
     const appCheck = await repo.get(editedApp._id);
 
     expect(appCheck).not.toBeNull();
-    expect(appCheck.name).toEqual(editedApp.name);
+    expect(appCheck.tenantId).toEqual(editedApp.tenantId);
   });
 });

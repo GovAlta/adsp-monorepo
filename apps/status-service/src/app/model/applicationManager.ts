@@ -104,35 +104,4 @@ export class ApplicationManager {
     });
     return appData;
   };
-
-  // TODO remove this code when the status no longer has the
-  // needed properties for this.
-  #saveConfiguration = async (status: ServiceStatusApplicationEntity) => {
-    await updateConfiguration(this.#directory, this.#tokenProvider, AdspId.parse(status.tenantId), status._id, {
-      _id: status._id,
-      name: status.name,
-      url: status.endpoint.url,
-      description: status.description,
-    });
-  };
-
-  /**
-   * This should be run once by main, to update the service configuration
-   * with any apps in the database that are not yet there.
-   * Once all the apps have been added the call, and this method, can
-   * be removed.  Sept 1, 2022.
-   * @param logger - its a logger.
-   */
-  convertData = async (logger: Logger) => {
-    const statuses = await this.#repository.find({});
-    const tenants = this.#getActiveTenants(statuses);
-    const apps = this.#getConfigurations(tenants);
-    // Add configuration if it is missing
-    statuses.forEach(async (a) => {
-      if (!apps[a._id]) {
-        logger.info(`##########  Adding configuration for app ${a.name} in ${a.tenantName} tenant`);
-        await this.#saveConfiguration(a);
-      }
-    });
-  };
 }
