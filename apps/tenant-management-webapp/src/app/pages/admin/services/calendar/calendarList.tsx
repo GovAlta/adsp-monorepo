@@ -1,8 +1,12 @@
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useState } from 'react';
 import { CalendarItem } from '@store/calendar/models';
 import { GoABadge } from '@abgov/react-components/experimental';
+import { useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
 import { TableDiv } from './styled-components';
+import { GoAIconButton } from '@abgov/react-components/experimental';
+import { DeleteModal } from '@components/DeleteModal';
+import { DeleteCalendar } from '@store/calendar/actions';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 interface CalendarItemProps {
   calendar: CalendarItem;
@@ -10,7 +14,11 @@ interface CalendarItemProps {
   onDelete?: (calendar: CalendarItem) => void;
 }
 
-const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({ calendar, onEdit }: CalendarItemProps) => {
+const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({
+  calendar,
+  onDelete,
+  onEdit,
+}: CalendarItemProps) => {
   return (
     <>
       <tr key={calendar.name}>
@@ -41,15 +49,29 @@ const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({ calendar,
             );
           })}
         </td>
-        <td>
-          <GoAContextMenuIcon
-            type="create"
-            title="Edit"
-            testId={`calendar-edit-${calendar.name}`}
-            onClick={() => {
-              onEdit(calendar);
-            }}
-          />
+
+        <td headers="calendar-actions" data-testid="calendar-actions">
+          {onDelete && (
+            <div style={{ display: 'flex' }}>
+              <GoAContextMenuIcon
+                type="create"
+                title="Edit"
+                testId={`calendar-edit-${calendar.name}`}
+                onClick={() => {
+                  onEdit(calendar);
+                }}
+              />
+
+              <GoAIconButton
+                data-testid="delete-icon"
+                size="medium"
+                type="trash"
+                onClick={() => {
+                  onDelete(calendar);
+                }}
+              />
+            </div>
+          )}
         </td>
       </tr>
     </>
@@ -62,7 +84,17 @@ interface calendarTableProps {
   onDelete?: (calendar: CalendarItem) => void;
 }
 
-export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ calendars, onEdit, onDelete }) => {
+export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ calendars, onEdit }) => {
+  const [selectedDeleteCalendar, setSelectedDeleteCalendar] = useState(null);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+
+  const dispatch = useDispatch();
+
+  const onDelete = (calendar) => {
+    setSelectedDeleteCalendar(calendar);
+    setShowDeleteConfirmation(true);
+  };
+
   return (
     <TableDiv key="calendar">
       <DataTable data-testid="calendar-table">
@@ -83,8 +115,8 @@ export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ 
             <th id="calendar-update-roles" data-testid="calendar-table-header-update-roles">
               Update roles
             </th>
-            <th id="calendar-actions" data-testid="calendar-actions">
-              Action
+            <th id="actions" data-testid="calendar-table-header-actions">
+              Actions
             </th>
           </tr>
         </thead>
@@ -95,6 +127,22 @@ export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ 
           ))}
         </tbody>
       </DataTable>
+      <DeleteModal
+        title="Delete calendar"
+        isOpen={showDeleteConfirmation}
+        onCancel={() => {
+          setShowDeleteConfirmation(false);
+        }}
+        content={
+          <div>
+            <div>Delete {selectedDeleteCalendar?.name}?</div>
+          </div>
+        }
+        onDelete={() => {
+          setShowDeleteConfirmation(false);
+          dispatch(DeleteCalendar(selectedDeleteCalendar?.name));
+        }}
+      />
       <br />
     </TableDiv>
   );

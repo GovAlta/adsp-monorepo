@@ -4,7 +4,7 @@ export const serviceStatusEndpointSchema = new Schema(
   {
     url: {
       type: String,
-      required: true,
+      required: false,
     },
     status: {
       type: String,
@@ -54,7 +54,7 @@ export const serviceStatusApplicationSchema = new Schema(
     },
     name: {
       type: String,
-      required: true,
+      required: false,
     },
     description: {
       type: String,
@@ -140,6 +140,7 @@ export const configurationSchema = {
     '^[a-fA-F0-9]{24}$': {
       type: 'object',
       properties: {
+        _id: { type: 'string', description: 'Reference to application status' },
         name: { type: 'string', description: 'Name of the application' },
         url: { type: 'string', description: 'URL to be checked' },
         description: { type: 'string', description: 'Tell us about your application' },

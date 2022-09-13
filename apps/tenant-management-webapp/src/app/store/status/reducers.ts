@@ -15,7 +15,6 @@ import { ServiceStatus } from './models';
 
 const initialState: ServiceStatus = {
   applications: [],
-  editedApps: {},
   endpointHealth: {},
   currentFormData: {
     name: '',
@@ -35,32 +34,10 @@ const compareIds = (a: { _id?: string }, b: { _id?: string }): number => (a._id 
 export default function statusReducer(state: ServiceStatus = initialState, action: ActionTypes): ServiceStatus {
   switch (action.type) {
     case FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION: {
-      // Every now and then the configuration-service's cache doesn't refresh
-      // quickly enough, and the update we just saved comes back with the name
-      // being 'unknown'.  Since the front-end knows what the names should be
-      // we keep them in a redux state variable.
-      const localApps = { ...state.editedApps };
-      const cachedApps = action.payload
-        .map((cached) => {
-          const local = localApps[cached._id];
-          if (local && cached.name !== local.name) {
-            console.log(`cached name ${cached.name} and local name ${local.name} do not agree`);
-            cached.name = local.name;
-            cached.description = local.description;
-            cached.endpoint.url = local.url;
-          }
-          // If the names are identical then the configuration-service cache
-          // is all caught up and we can delete the local value
-          else if (local) {
-            delete localApps[cached._id];
-          }
-          return cached;
-        })
-        .sort(compareIds);
+      const cachedApps = action.payload.sort(compareIds);
       return {
         ...state,
         applications: cachedApps,
-        editedApps: localApps,
       };
     }
 
@@ -85,17 +62,7 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
       if (index !== -1) {
         state.applications[index] = action.payload;
       }
-      const id = action.payload._id;
-      const editedApps = { ...state.editedApps };
-      if (id) {
-        editedApps[id] = {
-          _id: id,
-          name: action.payload.name,
-          description: action.payload.description,
-          url: action.payload.endpoint.url,
-        };
-      }
-      return { ...state, editedApps: editedApps };
+      return { ...state };
     }
     case TOGGLE_APPLICATION_SUCCESS_STATUS_ACTION:
       return {

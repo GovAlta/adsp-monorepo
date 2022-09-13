@@ -77,7 +77,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
       {fetchCalendarState === ActionState.completed && !calendars && renderNoItem('calendar')}
       {fetchCalendarState === ActionState.completed && calendars && (
         <div>
-          <CalendarTableComponent calendars={calendars} onDelete={reset} onEdit={onEdit} />
+          <CalendarTableComponent calendars={calendars} onEdit={onEdit} />
         </div>
       )}
 

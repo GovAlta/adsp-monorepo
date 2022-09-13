@@ -1,6 +1,6 @@
 import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
-import { StaticApplicationData, StatusServiceConfiguration } from '../model';
+import { StatusServiceConfiguration } from '../model';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { environment } from '../../environments/environment';
 import { TenantService } from '@abgov/adsp-service-sdk';
@@ -38,8 +38,8 @@ export const getApplicationsByName =
           const app = apps.get(s._id);
           return {
             id: s._id,
-            name: app?.name || `unknown: ${s.name}`,
-            description: app?.description || `blank: ${s.description}`,
+            name: app?.name || 'unknown',
+            description: app?.description || '',
             status: s.status,
             lastUpdated: s.statusTimestamp ? new Date(s.statusTimestamp) : null,
           };

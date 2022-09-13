@@ -3,7 +3,6 @@ import * as NodeCache from 'node-cache';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const retry = require('promise-retry');
 import type { Logger } from 'winston';
-import { TokenProvider } from '../access';
 import { adspId, AdspId, assertAdspId } from '../utils';
 
 interface DirectoryEntry {
@@ -37,11 +36,7 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
     useClones: false,
   });
 
-  constructor(
-    private readonly logger: Logger,
-    private readonly directoryUrl: URL,
-    private readonly tokenProvider: TokenProvider
-  ) {}
+  constructor(private readonly logger: Logger, private readonly directoryUrl: URL) {}
 
   #getOverrideEnv = (urn: string): string => {
     try {
@@ -59,10 +54,7 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
   #tryRetrieveDirectory = async (requestUrl: URL, count: number): Promise<{ urn: string; serviceUrl: URL }[]> => {
     this.logger.debug(`Try ${count}: retrieve directory entries...`, this.LOG_CONTEXT);
 
-    const token = await this.tokenProvider.getAccessToken();
-    const { data } = await axios.get<DirectoryEntry[]>(requestUrl.href, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const { data } = await axios.get<DirectoryEntry[]>(requestUrl.href);
 
     return data
       .map(({ urn, url }) => {

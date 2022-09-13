@@ -32,7 +32,7 @@ export const GeneratePDF: FunctionComponent<GeneratePDFModalProps> = ({ onSave }
 
   return (
     <>
-      <h1 data-testid="definition-form-title">Generate PDF</h1>
+      <h2 data-testid="definition-form-title">Generate PDF</h2>
       <GoAForm>
         <GoAFormItem error={errors?.['namespace']}>
           <label>Select a PDF Template</label>

@@ -23,7 +23,7 @@ interface TemplateEditorProps {
   onHeaderChange: (value: string) => void;
   onFooterChange: (value: string) => void;
   setPreview: (channel: string) => void;
-  bodyEditorHintText: string;
+  bodyEditorHintText?: string;
   template: PdfTemplate;
   bodyTitle: string;
   bodyEditorConfig?: EditorProps;
@@ -106,18 +106,35 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               </h3>
 
               <>
-                <GoAFormItem error={errors?.body ?? ''} helpText={bodyEditorHintText}>
-                  <MonacoDivBody>
-                    <MonacoEditor
-                      language={'handlebars'}
-                      value={template?.template}
-                      onChange={(value) => {
-                        onBodyChange(value);
-                      }}
-                      {...bodyEditorConfig}
-                    />
-                  </MonacoDivBody>
-                </GoAFormItem>
+                {bodyEditorHintText && (
+                  <GoAFormItem error={errors?.body ?? ''} helpText={bodyEditorHintText}>
+                    <MonacoDivBody>
+                      <MonacoEditor
+                        language={'handlebars'}
+                        value={template?.template}
+                        onChange={(value) => {
+                          onBodyChange(value);
+                        }}
+                        {...bodyEditorConfig}
+                      />
+                    </MonacoDivBody>
+                  </GoAFormItem>
+                )}
+
+                {!bodyEditorHintText && (
+                  <GoAFormItem error={errors?.body ?? ''}>
+                    <MonacoDivBody>
+                      <MonacoEditor
+                        language={'handlebars'}
+                        value={template?.template}
+                        onChange={(value) => {
+                          onBodyChange(value);
+                        }}
+                        {...bodyEditorConfig}
+                      />
+                    </MonacoDivBody>
+                  </GoAFormItem>
+                )}
               </>
             </Tab>
             <Tab label="Header/Footer">
@@ -128,6 +145,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
               <>
                 <GoAFormItem error={errors?.body ?? ''}>
+                  <h4>Header</h4>
                   <MonacoDivHeader>
                     <MonacoEditor
                       language={'handlebars'}
@@ -141,7 +159,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 </GoAFormItem>
               </>
               <>
-                <GoAFormItem error={errors?.body ?? ''} helpText={bodyEditorHintText}>
+                <GoAFormItem error={errors?.body ?? ''}>
+                  <h4>Footer</h4>
                   <MonacoDivFooter>
                     <MonacoEditor
                       language={'handlebars'}

@@ -90,7 +90,7 @@ public class ScriptController : ControllerBase
       () => Task.FromResult(HttpContext.Request.Headers[HeaderNames.Authorization].First()[TOKEN_INDEX..]);
 
     var outputs = await _luaService.RunScript(
-      user!.Tenant!.Id!, definition, luaInputs, getToken, request.CorrelationId, user
+      Guid.NewGuid(), user!.Tenant!.Id!, definition, luaInputs, getToken, request.CorrelationId, user
     );
 
     return outputs;

@@ -39,8 +39,7 @@ describe('checkEndpoint', () => {
   describe('createCheckEndpointJob', () => {
     it('can create job', () => {
       const job = createCheckEndpointJob({
-        url: 'https//test.co',
-        applicationId: '123',
+        app: { url: 'https//test.co', _id: '123', name: 'bob' },
         getEndpointResponse: jest.fn(),
         logger: loggerMock,
         serviceStatusRepository: statusRepositoryMock,
@@ -54,8 +53,7 @@ describe('checkEndpoint', () => {
     describe('checkEndpointJob', () => {
       const getEndpointResponse = jest.fn();
       const job = createCheckEndpointJob({
-        url: 'https//test.co',
-        applicationId: '123',
+        app: { url: 'https//test.co', _id: '123', name: 'bobs balloons' },
         getEndpointResponse: jest.fn(),
         logger: loggerMock,
         serviceStatusRepository: statusRepositoryMock,
@@ -101,8 +99,7 @@ describe('checkEndpoint', () => {
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             tenantId: tenantId.toString(),
             _id: 'test-app',
-            name: 'test-app',
-            endpoint: { url: 'https://test.co', status: 'n/a' },
+            endpoint: { status: 'n/a' },
           } as ServiceStatusApplication)
         );
         statusRepositoryMock.save.mockImplementationOnce((entity) => entity);
@@ -143,8 +140,7 @@ describe('checkEndpoint', () => {
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             tenantId: tenantId.toString(),
             _id: 'test-app',
-            name: 'test-app',
-            endpoint: { url: 'https://test.co', status: 'online' },
+            endpoint: { status: 'online' },
           } as ServiceStatusApplication)
         );
         statusRepositoryMock.save.mockImplementationOnce((entity) => entity);
@@ -161,21 +157,18 @@ describe('checkEndpoint', () => {
         endpointRepositoryMock.findRecentByUrlAndApplicationId.mockReturnValueOnce([
           {
             ok: false,
-            url: 'https//test.co',
             status: 500,
             timestamp: new Date(),
             responseTime: 250,
           },
           {
             ok: false,
-            url: 'https//test.co',
             status: 500,
             timestamp: new Date(),
             responseTime: 250,
           },
           {
             ok: false,
-            url: 'https//test.co',
             status: 500,
             timestamp: new Date(),
             responseTime: 250,
@@ -185,8 +178,7 @@ describe('checkEndpoint', () => {
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             tenantId: tenantId.toString(),
             _id: 'test-app',
-            name: 'test-app',
-            endpoint: { url: 'https://test.co', status: 'offline' },
+            endpoint: { status: 'offline' },
           } as ServiceStatusApplication)
         );
         statusRepositoryMock.save.mockImplementationOnce((entity) => entity);

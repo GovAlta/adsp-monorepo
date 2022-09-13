@@ -3,25 +3,25 @@ import { connect } from 'amqp-connection-manager';
 import { Logger } from 'winston';
 import { HealthCheckJobScheduler } from '../jobs/';
 import { HealthCheckControllerWorkItem } from './HealthCheckControllerWorkItem';
-import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { AMQPCredentials, getConnectionProps } from '@core-services/core-common';
 import { HealthCheckQueueService } from './HealthCheckQueueService';
 import { JobScheduler } from '../jobs/JobScheduler';
+import { ApplicationManager } from '../model/applicationManager';
 
 interface HealthCheckControllerProps {
   healthCheckScheduler: HealthCheckJobScheduler;
-  serviceStatusRepository: ServiceStatusRepository;
+  applicationManager: ApplicationManager;
   logger: Logger;
 }
 export class HealthCheckController {
-  #serviceStatusRepository: ServiceStatusRepository;
+  #applicationManager: ApplicationManager;
   #healthCheckJobScheduler: HealthCheckJobScheduler;
   #scheduler: JobScheduler;
   #logger: Logger;
 
   constructor(props: HealthCheckControllerProps, scheduler: JobScheduler) {
     this.#logger = props.logger;
-    this.#serviceStatusRepository = props.serviceStatusRepository;
+    this.#applicationManager = props.applicationManager;
     this.#healthCheckJobScheduler = props.healthCheckScheduler;
     this.#scheduler = scheduler;
   }
@@ -57,8 +57,7 @@ export class HealthCheckController {
 
   startApplicationHealthChecks = async (startEvent: HealthCheckControllerWorkItem): Promise<void> => {
     this.#logger.info(`Starting health checks for application ${startEvent.applicationId} at ${startEvent.url}`);
-    const applications = await this.#serviceStatusRepository.findEnabledApplications();
-    const app = applications.find((app) => app._id == startEvent.applicationId);
+    const app = await this.#applicationManager.getApp(startEvent.applicationId, startEvent.tenantId);
     if (app) {
       this.#healthCheckJobScheduler.startHealthChecks(app, this.#scheduler);
     }

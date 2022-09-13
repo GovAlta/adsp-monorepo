@@ -13,7 +13,10 @@ export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => 
       return { ...state, calendars: action.payload };
     }
     case DELETE_CALENDAR_SUCCESS_ACTION: {
-      return { ...state };
+      const deletedCalendar = Object.keys(state.calendars).find((calendarName) => calendarName === action.calendarId);
+
+      delete state.calendars[deletedCalendar];
+      return { ...state, calendars: { ...state.calendars } };
     }
     case UPDATE_CALENDAR_SUCCESS_ACTION: {
       return {

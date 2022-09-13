@@ -52,7 +52,7 @@ export const TestGenerate: FunctionComponent = () => {
 
   return (
     <GeneratorStyling>
-      <h1>Test Generate</h1>
+      <h2>Test Generate</h2>
       <p>
         Here you can test generating new PDFs from templates. Operations are run as asynchronous jobs and the PDF files
         output to the file service.

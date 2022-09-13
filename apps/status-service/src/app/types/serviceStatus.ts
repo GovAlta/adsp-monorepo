@@ -14,12 +14,10 @@ export const EndpointToInternalStatusMapping = {
 };
 export interface ServiceStatusApplication {
   _id?: string;
-  description: string;
   endpoint: ServiceStatusEndpoint;
   status?: PublicServiceStatusType;
   internalStatus?: InternalServiceStatusType;
   metadata: unknown;
-  name: string;
   statusTimestamp: number;
   tenantId: string;
   tenantName: string;
@@ -49,9 +47,9 @@ export interface TenantCriteria {
 export type ServiceStatusApplicationModel = ServiceStatusApplication & Document;
 
 export interface ServiceStatusEndpoint {
-  url: string;
   id: string;
   status: EndpointStatusType;
+  url?: string;
 }
 
 export interface ServiceStatusNotifications {

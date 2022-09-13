@@ -24,6 +24,7 @@ internal class LuaScriptService : ILuaScriptService
   }
 
   public async Task<IEnumerable<object>> RunScript(
+    Guid jobId,
     AdspId tenantId,
     ScriptDefinition definition,
     IDictionary<string, object?> inputs,
@@ -37,6 +38,12 @@ internal class LuaScriptService : ILuaScriptService
 
     try
     {
+      // Use the jobId as the correlationId if no value is specified.
+      if (String.IsNullOrEmpty(correlationId))
+      {
+        correlationId = jobId.ToString();
+      }
+
       using var lua = new Lua();
       lua.State.Encoding = Encoding.UTF8;
       lua.RegisterFunctions(new ScriptFunctions(tenantId, _directory, getToken));
@@ -51,7 +58,14 @@ internal class LuaScriptService : ILuaScriptService
         return sandbox.run(script, { env = { inputs = inputs, adsp = adsp } })
       ");
 
-      var eventPayload = new ScriptExecuted { Definition = definition, ExecutedBy = user, TriggeredBy = trigger };
+      var eventPayload = new ScriptExecuted
+      {
+        JobId = jobId,
+        Definition = definition,
+        ExecutedBy = user,
+        TriggeredBy = trigger
+      };
+
       if (definition.IncludeValuesInEvent == true)
       {
         eventPayload.Inputs = inputs;
@@ -77,6 +91,7 @@ internal class LuaScriptService : ILuaScriptService
 
       var eventPayload = new ScriptExecutionFailed
       {
+        JobId = jobId,
         Definition = definition,
         Error = e.Message,
         ExecutedBy = user,

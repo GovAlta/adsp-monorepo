@@ -1,5 +1,5 @@
 import { Logger } from 'winston';
-import { ApplicationData, ServiceStatusApplicationEntity } from '../model';
+import { ApplicationData } from '../model';
 import { HealthCheckJobCache } from './HealthCheckJobCache';
 import { HealthCheckJob } from './HealthCheckJob';
 import { ApplicationList } from '../model/ApplicationList';
@@ -51,12 +51,7 @@ describe('HealthCheckJobCache', () => {
     cache.clear(jest.fn());
     cache.addBatch(ApplicationList.fromArray(mockApplications), { schedule: jest.fn() });
     cache.remove('application 1', jest.fn());
-    const newApp = {
-      _id: 'application 1',
-      endpoint: { url: 'https://application/1' },
-    } as undefined as ServiceStatusApplicationEntity;
-
-    cache.add(newApp._id, newApp.endpoint.url, { schedule: jest.fn() });
+    cache.add({ _id: 'application 1', name: 'application 1', url: 'https://application/1' }, { schedule: jest.fn() });
     expect(cache.getApplicationIds().length).toEqual(3);
     expect(cache.get('application 1').getUrl()).toEqual('https://application/1');
   });

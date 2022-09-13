@@ -25,20 +25,19 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
     ILogger<ServiceRegistrar> logger,
     IServiceDirectory serviceDirectory,
     ITokenProvider tokenProvider,
-    IOptions<AdspOptions> options
+    IOptions<AdspOptions> options,
+    RestClient? client = null
   )
   {
     if (options.Value.ServiceId == null)
     {
       throw new ArgumentException("Provided options must include value for ServiceId.");
     }
-
     _logger = logger;
     _serviceDirectory = serviceDirectory;
     _tokenProvider = tokenProvider;
     _serviceId = options.Value.ServiceId;
-
-    _client = new RestClient();
+    _client = client ?? new RestClient();
     _retryPolicy = Policy.Handle<Exception>().WaitAndRetryAsync(
       10,
       retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
@@ -64,7 +63,6 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
         }
       );
     }
-
     if (registration.Roles != null)
     {
       await UpdateConfiguration(
@@ -79,7 +77,6 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
         }
       );
     }
-
     if (registration.Events != null)
     {
       await UpdateConfiguration(
@@ -106,7 +103,6 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
         _eventDefinitions.Add(eventDefinition.Name, eventDefinition);
       }
     }
-
     if (registration.EventStreams != null)
     {
       await UpdateConfiguration(
@@ -118,7 +114,6 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
         }
       );
     }
-
     if (registration.FileTypes != null)
     {
       await UpdateConfiguration(
@@ -129,7 +124,6 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
           update = registration.FileTypes.ToDictionary(type => type.Id)
         });
     }
-
     _logger.LogInformation("Completed registration for {Service}.", _serviceId.Service);
   }
 
@@ -142,10 +136,8 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
   private async Task UpdateConfiguration<T>(AdspId serviceId, T update) where T : class
   {
     _logger.LogDebug("Updating registration configuration for {Service}...", serviceId.Service);
-
     var configurationServiceUrl = await _serviceDirectory.GetServiceUrl(CONFIGURATION_SERVICE_API_ID);
     var requestUrl = new Uri(configurationServiceUrl, $"v2/configuration/{serviceId.Namespace}/{serviceId.Service}");
-
     await _retryPolicy.ExecuteAsync(
       async (_ctx) =>
       {

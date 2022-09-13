@@ -20,11 +20,6 @@ const loggerMock = {
   info: jest.fn((msg) => console.log(msg)),
 } as unknown as Logger;
 
-const directoryMock = {
-  getServiceUrl: jest.fn(() => Promise.resolve(new URL('http:/localhost:80'))),
-  getResourceUrl: jest.fn(() => Promise.resolve(new URL('http:/localhost:80'))),
-};
-
 const tokenProviderMock = {
   getAccessToken: jest.fn(() => Promise.resolve('Toot!')),
 };
@@ -92,20 +87,13 @@ describe('Application Manager', () => {
     });
   });
 
-  it('Can convert data', async () => {
-    const appManager = appManagerFactory('urn:ads:mock-tenant:mock-service');
-    repositoryMock.find.mockResolvedValueOnce(statusMock);
-    configurationServiceMock.getConfiguration.mockResolvedValueOnce([]).mockResolvedValueOnce([]); // i.e. mock it twice
-    await appManager.convertData(loggerMock);
-  });
-
   const appManagerFactory = (service: string): ApplicationManager => {
     return new ApplicationManager(
       tokenProviderMock,
       configurationServiceMock,
       adspId`${service}`,
       repositoryMock,
-      directoryMock
+      loggerMock
     );
   };
 });

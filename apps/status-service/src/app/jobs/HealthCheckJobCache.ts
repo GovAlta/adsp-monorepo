@@ -1,9 +1,9 @@
 import * as NodeCache from 'node-cache';
-import { ApplicationData, ServiceStatusApplicationEntity } from '..';
 import { Logger } from 'winston';
+import { StaticApplicationData } from '../model';
+import { ApplicationList } from '../model/ApplicationList';
 import { HealthCheckJob } from './HealthCheckJob';
 import { JobScheduler } from './JobScheduler';
-import { ApplicationList } from '../model/ApplicationList';
 
 export class HealthCheckJobCache {
   static #activeHealthChecks = new NodeCache();
@@ -27,13 +27,13 @@ export class HealthCheckJobCache {
 
   addBatch = (applications: ApplicationList, scheduler: JobScheduler): void => {
     applications.forEach((app) => {
-      this.add(app._id, app.url, scheduler);
+      this.add(app, scheduler);
     });
   };
 
-  add = (appId: string, url: string, scheduler: JobScheduler): HealthCheckJob => {
-    const job: HealthCheckJob = new HealthCheckJob(url, appId);
-    HealthCheckJobCache.#activeHealthChecks.set(appId, job);
+  add = (app: StaticApplicationData, scheduler: JobScheduler): HealthCheckJob => {
+    const job: HealthCheckJob = new HealthCheckJob(app);
+    HealthCheckJobCache.#activeHealthChecks.set(app._id.toString(), job);
     job.schedule(scheduler);
     this.#logger.info(`Job Cache: scheduled app with url ${job.getUrl()}`);
     return job;
