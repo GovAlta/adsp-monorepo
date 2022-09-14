@@ -34,10 +34,10 @@ const compareIds = (a: { _id?: string }, b: { _id?: string }): number => (a._id 
 export default function statusReducer(state: ServiceStatus = initialState, action: ActionTypes): ServiceStatus {
   switch (action.type) {
     case FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION: {
-      const cachedApps = action.payload.sort(compareIds);
+      const apps = action.payload.sort(compareIds);
       return {
         ...state,
-        applications: cachedApps,
+        applications: apps,
       };
     }
 
