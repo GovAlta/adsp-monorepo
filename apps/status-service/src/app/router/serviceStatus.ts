@@ -282,6 +282,7 @@ export const updateApplicationStatus =
       const { id } = req.params;
       const { status } = req.body;
       const applicationStatus = await serviceStatusRepository.get(id);
+      const originalStatus = applicationStatus.status ?? 'n/a';
       const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
         user.tenantId
       );
@@ -293,7 +294,7 @@ export const updateApplicationStatus =
       }
 
       const updatedStatus = await applicationStatus.setStatus(user, status as PublicServiceStatusType);
-      eventService.send(applicationStatusChange(app, status, applicationStatus.status, user));
+      eventService.send(applicationStatusChange(app, status, originalStatus, user));
       res.json(updatedStatus);
     } catch (err) {
       logger.error(`Failed to update application: ${err.message}`);
