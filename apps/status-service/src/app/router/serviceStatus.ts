@@ -40,7 +40,10 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
 
       res.json(
         statuses.map((s) => {
-          const app = applications.get(s._id) || applicationCache.get(s._id);
+          // Check the local cache, then check the configuration, then give up.
+          const app = applicationCache.get(s._id) ??
+            applications.get(s._id) ?? { id: s._id, name: 'unknown', description: '', url: '' };
+
           const { metadata, statusTimestamp, tenantId, tenantName, tenantRealm, status, enabled } = s;
           Object.keys(s.endpoint).map((endpoint) => {
             const currentEndpoint = JSON.parse(JSON.stringify(s.endpoint[endpoint]));
@@ -55,14 +58,14 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
           return {
             _id: s._id,
             tenantId,
-            name: app?.name || 'unknown',
-            description: app?.description || '',
+            name: app.name,
+            description: app.description,
             metadata,
             enabled: enabled,
             statusTimestamp,
             status,
             internalStatus: s.internalStatus,
-            endpoint: { ...s.endpoint, url: app?.url || '' },
+            endpoint: { ...s.endpoint, url: app.url },
             tenantName,
             tenantRealm,
           };
@@ -166,7 +169,7 @@ export const updateConfiguration = async (
   applicationId: string,
   newApp: StaticApplicationData
 ) => {
-  applicationCache.put(applicationId, newApp);
+  applicationCache.put(newApp);
   const baseUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
   const token = await tokenProvider.getAccessToken();
   const configUrl = new URL(`/configuration/v2/configuration/platform/status-service?tenantId=${tenantId}`, baseUrl);

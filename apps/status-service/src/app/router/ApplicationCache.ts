@@ -13,7 +13,11 @@ export class ApplicationCache {
   #nodeCache: NodeCache;
 
   constructor() {
-    this.#nodeCache = new NodeCache();
+    this.#nodeCache = new NodeCache({
+      // after 10 minutes the configuration-service cache should be caught up.
+      stdTTL: 600,
+      checkperiod: 70,
+    });
   }
 
   get = (key: string): StaticApplicationData => {
@@ -21,8 +25,8 @@ export class ApplicationCache {
     return this.#nodeCache.get(key.toString()) as StaticApplicationData;
   };
 
-  put = (key: string, app: StaticApplicationData) => {
-    this.#nodeCache.set(key.toString(), app);
+  put = (app: StaticApplicationData) => {
+    this.#nodeCache.set(app._id.toString(), app);
   };
 
   contains = (key: string) => {
