@@ -8,7 +8,6 @@ export class StatusApplications {
   }
 
   get(id: string): StaticApplicationData {
-    const app = this.#statusConfiguration[id];
-    return app ? (app as StaticApplicationData) : null;
+    return (this.#statusConfiguration[id] as StaticApplicationData) ?? null;
   }
 }

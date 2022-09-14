@@ -65,7 +65,7 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
             statusTimestamp,
             status,
             internalStatus: s.internalStatus,
-            endpoint: { ...s.endpoint, url: app.url },
+            endpoint: { status: s.endpoint.status, url: app.url },
             tenantName,
             tenantRealm,
           };
