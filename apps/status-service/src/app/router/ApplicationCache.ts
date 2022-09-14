@@ -1,4 +1,5 @@
 import * as NodeCache from 'node-cache';
+import { Logger } from 'winston';
 import { StaticApplicationData } from '../model';
 
 /**
@@ -20,12 +21,19 @@ export class ApplicationCache {
     });
   }
 
-  get = (key: string): StaticApplicationData => {
+  get = (key: string, logger: Logger = null): StaticApplicationData => {
     // weird, but it needs to be cast.
-    return this.#nodeCache.get(key.toString()) as StaticApplicationData;
+    const app = this.#nodeCache.get(key.toString()) as StaticApplicationData;
+    if (logger) {
+      logger.info(`################## ApplicationCache: fetching app with key(${key}) ${app ? 'succeeded' : 'failed'}`);
+    }
+    return app;
   };
 
-  put = (app: StaticApplicationData) => {
+  put = (app: StaticApplicationData, logger: Logger = null) => {
+    if (logger) {
+      logger.info(`################## ApplicationCache: caching app with key(${app._id})}`);
+    }
     this.#nodeCache.set(app._id.toString(), app);
   };
 

@@ -41,7 +41,7 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
       res.json(
         statuses.map((s) => {
           // Check the local cache, then check the configuration, then give up.
-          const app = applicationCache.get(s._id) ??
+          const app = applicationCache.get(s._id, logger) ??
             applications.get(s._id) ?? { id: s._id, name: 'unknown', description: '', url: '' };
 
           const { metadata, statusTimestamp, tenantId, tenantName, tenantRealm, status, enabled } = s;
@@ -154,7 +154,7 @@ export const createNewApplication =
         url: endpoint.url,
         description: description,
       };
-      updateConfiguration(serviceDirectory, tokenProvider, tenant.id, status._id, newApp);
+      updateConfiguration(serviceDirectory, tokenProvider, tenant.id, status._id, newApp, logger);
       res.status(201).json(status);
     } catch (err) {
       logger.error(`Failed to create new application: ${err.message}`);
@@ -167,9 +167,10 @@ export const updateConfiguration = async (
   tokenProvider: TokenProvider,
   tenantId: AdspId,
   applicationId: string,
-  newApp: StaticApplicationData
+  newApp: StaticApplicationData,
+  logger: Logger
 ) => {
-  applicationCache.put(newApp);
+  applicationCache.put(newApp, logger);
   const baseUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
   const token = await tokenProvider.getAccessToken();
   const configUrl = new URL(`/configuration/v2/configuration/platform/status-service?tenantId=${tenantId}`, baseUrl);
@@ -217,7 +218,7 @@ export const updateApplication =
         endpoint,
       });
       const update: StaticApplicationData = { _id: id, name: name, url: endpoint.url, description: description };
-      updateConfiguration(serviceDirectory, tokenProvider, user.tenantId, id, update);
+      updateConfiguration(serviceDirectory, tokenProvider, user.tenantId, id, update, logger);
       res.json(updatedApplication);
     } catch (err) {
       logger.error(`Failed to update application: ${err.message}`);
