@@ -391,7 +391,7 @@ export function createServiceStatusRouter({
 }: ServiceStatusRouterProps): Router {
   const router = Router();
   // Get the service for the tenant
-  router.get('/applications', getApplications(logger, serviceStatusRepository));
+  router.get('/applications', assertAuthenticatedHandler, getApplications(logger, serviceStatusRepository));
 
   // Enable the service
   router.patch(
