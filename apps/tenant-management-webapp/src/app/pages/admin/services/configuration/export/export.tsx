@@ -133,7 +133,10 @@ export const ConfigurationExport: FunctionComponent = () => {
       {!indicator.show && Object.keys(sortedConfiguration.namespaces).length > 0 && (
         <div className="flex-row">
           <div className="flex-one">
-            <div style={{ width: `calc(100% - ${Object.keys(exportServices).length > 0 ? '10px' : '260px'})` }}>
+            <div
+              style={{ width: `calc(100% - ${Object.keys(exportServices).length > 0 ? '10px' : '260px'})` }}
+              className="pb-10"
+            >
               <div className="flex-row">
                 <GoACheckbox
                   name="Select all"

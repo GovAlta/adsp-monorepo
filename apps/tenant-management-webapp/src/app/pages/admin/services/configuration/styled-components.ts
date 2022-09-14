@@ -197,6 +197,10 @@ export const Exports = styled.div`
     background: #004f84;
     border: 1px solid !important;
   }
+
+  .pb-10 {
+    padding-bottom: 100px;
+  }
 `;
 
 export const FileTableStyles = styled.div`
