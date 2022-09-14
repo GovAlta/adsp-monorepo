@@ -264,6 +264,19 @@ const Dashboard = (): JSX.Element => {
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                     <GoACard type="primary">
                       <h2>
+                        <Link to="/admin/services/script">Script</Link>
+                      </h2>
+                      <div>
+                        This script service provides access to script triggers and script publishing. A service script,
+                        as defined in this study, is a detailed guide for front-line employees to follow during a
+                        service encounter.
+                      </div>
+                      <div>&nbsp;</div>
+                    </GoACard>
+                  </GridItem>
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <h2>
                         <Link to="/admin/services/status">Status</Link>
                       </h2>
                       <div>
