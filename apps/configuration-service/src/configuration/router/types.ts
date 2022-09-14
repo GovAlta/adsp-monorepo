@@ -4,7 +4,6 @@ export interface ReplaceRequest {
   configuration: Record<string, unknown>;
 }
 
-export const OPERATION_UPDATE = 'UPDATE';
 export interface UpdateRequest {
   operation: typeof OPERATION_UPDATE;
   update: Record<string, unknown>;
@@ -16,6 +15,20 @@ export interface DeleteRequest {
   property: string;
 }
 
+export interface CreateRevisionRequest {
+  operation: typeof OPERATION_CREATE_REVISION;
+}
+
+export interface SetActiveRevision {
+  operation: typeof OPERATION_SET_ACTIVE_REVISION;
+  setActiveRevision: number;
+}
+export type PostRequests = CreateRevisionRequest | SetActiveRevision;
+
+export const OPERATION_CREATE_REVISION = 'CREATE-REVISION';
+export const OPERATION_SET_ACTIVE_REVISION = 'SET-ACTIVE-REVISION';
+
+export const OPERATION_UPDATE = 'UPDATE';
 export type PatchRequests = ReplaceRequest | UpdateRequest | DeleteRequest;
 
 export interface ConfigurationMap {
