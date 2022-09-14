@@ -40,7 +40,7 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
 
       res.json(
         statuses.map((s) => {
-          const app = applications.get(s._id);
+          const app = applications.get(s._id) || applicationCache.get(s._id);
           const { metadata, statusTimestamp, tenantId, tenantName, tenantRealm, status, enabled } = s;
           Object.keys(s.endpoint).map((endpoint) => {
             const currentEndpoint = JSON.parse(JSON.stringify(s.endpoint[endpoint]));
@@ -55,14 +55,14 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
           return {
             _id: s._id,
             tenantId,
-            name: app?.name || applicationCache.get(s._id)?.name || 'unknown',
-            description: app?.description || applicationCache.get(s._id)?.description || '',
+            name: app?.name || 'unknown',
+            description: app?.description || '',
             metadata,
             enabled: enabled,
             statusTimestamp,
             status,
             internalStatus: s.internalStatus,
-            endpoint: { ...s.endpoint, url: app?.url || applicationCache.get(s._id)?.url || '' },
+            endpoint: { ...s.endpoint, url: app?.url || '' },
             tenantName,
             tenantRealm,
           };
