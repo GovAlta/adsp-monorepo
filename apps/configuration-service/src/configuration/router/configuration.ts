@@ -1,4 +1,4 @@
-import { AdspId, benchmark, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, startBenchmark, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
   createValidationHandler,
@@ -67,7 +67,7 @@ export const getConfigurationEntity =
   ): RequestHandler =>
   async (req, _res, next) => {
     try {
-      benchmark(req, 'get-entity-time');
+      const end = startBenchmark(req, 'get-entity-time');
 
       const user = req.user;
       const { namespace, name } = req.params;
@@ -83,7 +83,7 @@ export const getConfigurationEntity =
 
       req[ENTITY_KEY] = entity;
 
-      benchmark(req, 'get-entity-time');
+      end();
       next();
     } catch (err) {
       next(err);
@@ -128,7 +128,7 @@ export const patchConfigurationRevision =
   (logger: Logger, eventService: EventService): RequestHandler =>
   async (req, res, next) => {
     try {
-      benchmark(req, 'operation-handler-time');
+      const end = startBenchmark(req, 'operation-handler-time');
 
       const user = req.user;
       const request: PatchRequests = req.body;
@@ -173,12 +173,12 @@ export const patchConfigurationRevision =
           }
         );
 
-        benchmark(req, 'operation-handler-time');
+        end();
         res.send(mapConfiguration(entity));
       } else {
         const updated = await entity.update(user, update);
 
-        benchmark(req, 'operation-handler-time');
+        end();
         res.send(mapConfiguration(updated));
         if (updated.tenantId) {
           eventService.send(
@@ -212,7 +212,7 @@ export const getActiveRevision =
   (logger: Logger): RequestHandler =>
   async (req, res, next) => {
     try {
-      benchmark(req, 'operation-handler-time');
+      const end = startBenchmark(req, 'operation-handler-time');
 
       const user = req.user;
       const { orLatest: orLatestValue } = req.query;
@@ -236,6 +236,7 @@ export const getActiveRevision =
         }
       }
 
+      end();
       res.send(result);
 
       logger.info(`Active revision ${configuration.active} ` + `retrieved by ${user.name} (ID: ${user.id}).`, {
@@ -243,8 +244,6 @@ export const getActiveRevision =
         context: 'configuration-router',
         user: `${user.name} (ID: ${user.id})`,
       });
-
-      benchmark(req, 'operation-handler-time');
     } catch (err) {
       next(err);
     }
@@ -254,7 +253,7 @@ export const createConfigurationRevision =
   (logger: Logger, eventService: EventService): RequestHandler =>
   async (req, res, next) => {
     try {
-      benchmark(req, 'operation-handler-time');
+      const end = startBenchmark(req, 'operation-handler-time');
 
       const user = req.user;
       const request: PostRequests = req.body;
@@ -263,6 +262,7 @@ export const createConfigurationRevision =
       if (request.operation === OPERATION_CREATE_REVISION) {
         const updated = await configuration.createRevision(user);
 
+        end();
         res.send(mapConfiguration(updated));
         if (updated.tenantId) {
           eventService.send(
@@ -303,6 +303,7 @@ export const createConfigurationRevision =
 
         const updated = await configuration.setActiveRevision(user, currentRevision.revision);
 
+        end();
         res.send(mapActiveRevision(updated));
         eventService.send(
           activeRevisionSet(user, updated.tenantId, updated.namespace, updated.name, updated.active, oldRevision)
@@ -318,7 +319,6 @@ export const createConfigurationRevision =
           }
         );
       }
-      benchmark(req, 'operation-handler-time');
     } catch (err) {
       next(err);
     }
@@ -331,7 +331,7 @@ export const getRevisions =
   ): RequestHandler =>
   async (req, res, next) => {
     try {
-      benchmark(req, 'operation-handler-time');
+      const end = startBenchmark(req, 'operation-handler-time');
       const { top: topValue, after: afterValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 10;
       const after = afterValue as string;
@@ -340,7 +340,7 @@ export const getRevisions =
       const entity: ConfigurationEntity = req[ENTITY_KEY];
       const results = await entity.getRevisions(top, after, criteria);
 
-      benchmark(req, 'operation-handler-time');
+      end();
       res.send(mapResults(req, results));
     } catch (err) {
       next(err);

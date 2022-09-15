@@ -3,7 +3,7 @@ import { RequestHandler, Router } from 'express';
 import { checkSchema } from 'express-validator';
 import { Logger } from 'winston';
 import { NamespaceEntity } from '../model';
-import { AdspId, benchmark, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, startBenchmark, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import { DomainEventService } from '../service';
 import { EventServiceRoles } from '../role';
 
@@ -53,7 +53,7 @@ export const sendEvent =
       );
 
       logger.debug(`Processing sent event: ${namespace}:${name}...`);
-      benchmark(req, 'operation-handler-time');
+      const end = startBenchmark(req, 'operation-handler-time');
 
       if (!namespace || !name) {
         throw new InvalidOperationError('Event must include namespace and name of the event.');
@@ -76,7 +76,7 @@ export const sendEvent =
       }
       eventService.send(event);
 
-      benchmark(req, 'operation-handler-time');
+      end();
       res.sendStatus(200);
 
       logger.info(`Event ${namespace}:${name} sent by user ${user.name} (ID: ${user.id}).`, {
