@@ -1,4 +1,4 @@
-import { AdspId, ConfigurationService, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
+import { AdspId, ConfigurationService, TokenProvider } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { ApplicationList } from './ApplicationList';

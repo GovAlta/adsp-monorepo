@@ -17,6 +17,7 @@ import { Notifications } from './services/notifications';
 import { Configuration } from './services/configuration';
 import { Calendar } from './services/calendar';
 import { Pdf } from './services/pdf';
+import { Script } from './services/script';
 
 const TenantManagement = (): JSX.Element => {
   const { setTitle } = useContext(HeaderCtx);
@@ -61,6 +62,9 @@ const TenantManagement = (): JSX.Element => {
           </Route>
           <Route path="/admin/services/status">
             <Status />
+          </Route>
+          <Route path="/admin/services/script">
+            <Script />
           </Route>
           <Route path="/admin/services/event">
             <Events />

@@ -15,6 +15,7 @@ import MegaphoneIcon from '@icons/megaphone-outline.svg';
 import NotificationsIcon from '@icons/notifications-outline.svg';
 import DirectoryIcon from '@icons/list-outline.svg';
 import CalendarIcon from '@icons/calendar-symbol-svgrepo-com.svg';
+import ScriptIcon from '@icons/script.svg';
 import { GoAIcon } from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
 import { TenantAdminLogin, TenantLogout, FetchTenant } from '@store/tenant/actions';
@@ -121,6 +122,10 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
               <NavLink to="/admin/services/pdf" activeClassName="current" title="Pdf" data-testid="menu-pdf">
                 <GoAIcon type="document" />
                 <span>PDF</span>
+              </NavLink>
+              <NavLink to="/admin/services/script" activeClassName="current" title="Script" data-testid="menu-script">
+                <img src={ScriptIcon} width="16" alt="Script Service" />
+                <span>Script</span>
               </NavLink>
               <NavLink to="/admin/services/status" activeClassName="current" title="Status" data-testid="menu-status">
                 <img src={FitnessIcon} width="16" alt="Status Service" />

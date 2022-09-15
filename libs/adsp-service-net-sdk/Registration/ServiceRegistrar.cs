@@ -54,43 +54,42 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
     {
       await UpdateConfiguration(
         AdspPlatformServices.ConfigurationServiceId,
-        new
+        new ConfigurationUpdate<ConfigurationDefinition>
         {
-          operation = "UPDATE",
-          update = new Dictionary<string, object>() {
+          Update = new Dictionary<string, ConfigurationDefinition>() {
             { $"{_serviceId.Namespace}:{_serviceId.Service}", registration.Configuration }
           }
         }
       );
     }
+
     if (registration.Roles != null)
     {
       await UpdateConfiguration(
         AdspPlatformServices.TenantServiceId,
-        new
+        new ConfigurationUpdate<object>
         {
-          operation = "UPDATE",
-          update = new Dictionary<string, object>
+          Update = new Dictionary<string, object>
           {
             { _serviceId.ToString(), new { roles = registration.Roles } }
           }
         }
       );
     }
+
     if (registration.Events != null)
     {
       await UpdateConfiguration(
         AdspPlatformServices.EventServiceId,
-        new
+        new ConfigurationUpdate<object>
         {
-          operation = "UPDATE",
-          update = new Dictionary<string, object>
+          Update = new Dictionary<string, object>
           {
             {
               _serviceId.Service!,
               new
               {
-                name = _serviceId.Namespace,
+                name = _serviceId.Service,
                 definitions = registration.Events.ToDictionary(definition => definition.Name)
               }
             }
@@ -103,27 +102,49 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
         _eventDefinitions.Add(eventDefinition.Name, eventDefinition);
       }
     }
+
     if (registration.EventStreams != null)
     {
       await UpdateConfiguration(
         AdspPlatformServices.PushServiceId,
-        new
+        new ConfigurationUpdate<StreamDefinition>
         {
-          operation = "UPDATE",
-          update = registration.EventStreams.ToDictionary(definition => definition.Id)
+          Update = registration.EventStreams.ToDictionary(definition => definition.Id)
         }
       );
     }
+
     if (registration.FileTypes != null)
     {
       await UpdateConfiguration(
         AdspPlatformServices.FileServiceId,
-        new
+        new ConfigurationUpdate<FileType>
         {
-          operation = "UPDATE",
-          update = registration.FileTypes.ToDictionary(type => type.Id)
-        });
+          Update = registration.FileTypes.ToDictionary(type => type.Id)
+        }
+      );
     }
+
+    if (registration.Values != null)
+    {
+      await UpdateConfiguration(
+        AdspPlatformServices.ValueServiceId,
+        new ConfigurationUpdate<object>
+        {
+          Update = new Dictionary<string, object> {
+            {
+              _serviceId.Service!,
+              new
+              {
+                name = _serviceId.Service,
+                Definitions = registration.Values.ToDictionary(definition => definition.Id)
+              }
+            }
+          }
+        }
+      );
+    }
+
     _logger.LogInformation("Completed registration for {Service}.", _serviceId.Service);
   }
 

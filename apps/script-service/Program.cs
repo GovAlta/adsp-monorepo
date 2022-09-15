@@ -64,6 +64,9 @@ internal class Program
             "Signalled when a script execution fails."
           )
         };
+        options.Values = new ValueDefinition[] {
+          ServiceMetrics.Definition
+        };
         options.EnableConfigurationInvalidation = true;
       }
     );
@@ -71,6 +74,7 @@ internal class Program
     builder.Services.AddSingleton<ILuaScriptService, LuaScriptService>();
 
     var app = builder.Build();
+    app.UseAdspMetrics();
 
     app.UseSwagger(new SwaggerOptions { RouteTemplate = "docs/{documentName}/swagger.json" });
 

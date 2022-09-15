@@ -2,6 +2,7 @@ using Adsp.Sdk.Access;
 using Adsp.Sdk.Configuration;
 using Adsp.Sdk.Directory;
 using Adsp.Sdk.Events;
+using Adsp.Sdk.Metrics;
 using Adsp.Sdk.Registration;
 using Adsp.Sdk.Tenancy;
 using Microsoft.AspNetCore.Authentication;
@@ -25,6 +26,7 @@ public static class AdspServiceCollectionExtensions
     services.AddSingleton<IIssuerCache, IssuerCache>();
     services.AddSingleton<ITenantKeyProvider, TenantKeyProvider>();
     services.AddSingleton<IEventService, EventService>();
+    services.AddSingleton<IMetricsValueService, MetricsValueService>();
     services.AddConfiguration();
     services.AddRegistration();
 
