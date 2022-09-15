@@ -11,10 +11,11 @@ import {
   FETCH_STATUS_CONFIGURATION_SUCCEEDED,
   UPDATE_STATUS_CONTACT_INFORMATION,
 } from './actions';
-import { ServiceStatus } from './models';
+import { ApplicationDescription, ApplicationStatus, ServiceStatus } from './models';
 
 const initialState: ServiceStatus = {
   applications: [],
+  editedApps: {},
   endpointHealth: {},
   currentFormData: {
     name: '',
@@ -30,14 +31,39 @@ const initialState: ServiceStatus = {
 };
 
 const compareIds = (a: { _id?: string }, b: { _id?: string }): number => (a._id <= b._id ? 1 : -1);
+const compareApps = (a: ApplicationDescription, b: ApplicationStatus): boolean => {
+  return a.name !== b.name || a.description !== b.description || a.url !== b.endpoint?.url;
+};
 
 export default function statusReducer(state: ServiceStatus = initialState, action: ActionTypes): ServiceStatus {
   switch (action.type) {
     case FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION: {
-      const apps = action.payload.sort(compareIds);
+      // Every now and then the configuration-service's cache doesn't refresh
+      // quickly enough, and the update we just saved comes back with the name
+      // being 'unknown'.  Since the front-end knows what the names should be
+      // we keep them in a redux state variable.
+      const localApps = { ...state.editedApps };
+      const configurationApps = action.payload
+        .map((status) => {
+          const local = localApps[status._id];
+          if (local && !compareApps(local, status)) {
+            console.log(`server app ${status.name} and local app ${local.name} do not agree`);
+            status.name = local.name;
+            status.description = local.description;
+            status.endpoint.url = local.url;
+          }
+          // If the apps are identical then the configuration-service cache
+          // is all caught up and we can delete the local value
+          else if (local) {
+            delete localApps[status._id];
+          }
+          return status;
+        })
+        .sort(compareIds);
       return {
         ...state,
-        applications: apps,
+        applications: configurationApps,
+        editedApps: localApps,
       };
     }
 
@@ -62,7 +88,17 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
       if (index !== -1) {
         state.applications[index] = action.payload;
       }
-      return { ...state };
+      const id = action.payload._id;
+      const editedApps = { ...state.editedApps };
+      if (id) {
+        editedApps[id] = {
+          _id: id,
+          name: action.payload.name,
+          description: action.payload.description,
+          url: action.payload.endpoint.url,
+        };
+      }
+      return { ...state, editedApps: editedApps };
     }
     case TOGGLE_APPLICATION_SUCCESS_STATUS_ACTION:
       return {

@@ -13,6 +13,7 @@ export interface ServiceStatusMetrics {
 
 export interface ServiceStatus {
   applications: ApplicationStatus[];
+  editedApps: Record<string, ApplicationDescription>;
   currentFormData: ApplicationStatus;
   endpointHealth: Record<string, { url: string; entries: EndpointStatusEntry[] }>;
   metrics: ServiceStatusMetrics;

@@ -424,9 +424,9 @@ describe('Service router', () => {
           roles: ['test-updater'],
         },
         body: {
-          name: 'mock-application',
-          description: 'mock test application',
-          endpoint: 'http://mock-test.com',
+          name: 'updated-app',
+          description: 'mock 10',
+          endpoint: { url: 'http://mock-me.com' },
         },
         params: {
           id: tenantId.toString(),
@@ -438,6 +438,8 @@ describe('Service router', () => {
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'updated-app',
+          description: 'mock 10',
+          endpoint: { status: 'offline', url: 'http://mock-me.com' },
         })
       );
     });
