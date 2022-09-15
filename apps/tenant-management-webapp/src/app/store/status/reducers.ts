@@ -31,8 +31,8 @@ const initialState: ServiceStatus = {
 };
 
 const compareIds = (a: { _id?: string }, b: { _id?: string }): number => (a._id <= b._id ? 1 : -1);
-const compareApps = (a: ApplicationDescription, b: ApplicationStatus): boolean => {
-  return a.name !== b.name || a.description !== b.description || a.url !== b.endpoint?.url;
+const isUnchanged = (a: ApplicationDescription, b: ApplicationStatus): boolean => {
+  return a.name === b.name && a.description === b.description && a.url === b.endpoint?.url;
 };
 
 export default function statusReducer(state: ServiceStatus = initialState, action: ActionTypes): ServiceStatus {
@@ -46,7 +46,7 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
       const configurationApps = action.payload
         .map((status) => {
           const local = localApps[status._id];
-          if (local && !compareApps(local, status)) {
+          if (local && !isUnchanged(local, status)) {
             console.log(`server app ${status.name} and local app ${local.name} do not agree`);
             status.name = local.name;
             status.description = local.description;
@@ -60,11 +60,7 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
           return status;
         })
         .sort(compareIds);
-      return {
-        ...state,
-        applications: configurationApps,
-        editedApps: localApps,
-      };
+      return { ...state, applications: configurationApps, editedApps: localApps };
     }
 
     case FETCH_SERVICE_STATUS_APP_HEALTH_SUCCESS_ACTION:
@@ -89,16 +85,16 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
         state.applications[index] = action.payload;
       }
       const id = action.payload._id;
-      const editedApps = { ...state.editedApps };
+      const localApps = { ...state.editedApps };
       if (id) {
-        editedApps[id] = {
+        localApps[id] = {
           _id: id,
           name: action.payload.name,
           description: action.payload.description,
           url: action.payload.endpoint.url,
         };
       }
-      return { ...state, editedApps: editedApps };
+      return { ...state, editedApps: localApps };
     }
     case TOGGLE_APPLICATION_SUCCESS_STATUS_ACTION:
       return {
