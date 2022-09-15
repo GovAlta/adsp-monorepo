@@ -142,6 +142,12 @@ Authorize based on a role:
   }
 ```
 
+Accessing user information directly and checking for role:
+```csharp
+ var user = HttpContext.GetAdspUser();
+ var hasRole = user.IsInRole("other-service:other-user");
+```
+
 ## Determining tenancy
 Requests to platform services are in the context of a specific tenant with few exceptions. The context is implicit when a request is made with a tenant bearer token. It can be explicit in cases where an endpoint allows anonymous access or when a platform service makes a request to another platform service under a core service account.
 
@@ -367,6 +373,74 @@ Domain events can be sent using the event service which is available via depende
     }
   }
 ```
+
+## Connecting to push streams
+Services can receive events via push service streams over [Socket.IO](https://socket.io).
+
+Implement the `IEventSubscriber<TPayload>` interface to create a subscriber.
+```csharp
+  using Adsp.Sdk.Events;
+  public class MyEventSubscriber : IEventSubscriber<IDictionary<string, object?>>
+  {
+    public Task OnEvent(FullDomainEvent<IDictionary<string, object?>> received)
+    {
+      ...
+    }
+  }
+```
+
+Add the subscriber the service container via `AddSocketSubscriber` extension methods to connect on service startup.
+```csharp
+  using Adsp.Sdk.Socket;
+  ...
+  builder.Services.AddSocketSubscriber<MyEventSubscriber>("my-event-stream");
+```
+
+## Recording service metrics
+The SDK includes utilities for micro-benchmarking service operations and recording the results to the value service.
+
+Add the required middleware to the application builder to instrument the request handling. This middleware should be added early to account for the full operation duration.
+
+```csharp
+  var app = builder.Build();
+  app.UseAdspMetrics();
+  ...
+  app.UseAdsp();
+```
+
+Use the metrics extensions to benchmark specific sections of operations.
+```csharp
+  using Adsp.Sdk.Metrics;
+  public class HelloWorldController : ControllerBase
+  {
+    [HttpGet]
+    [Route("hello")]
+    public async Task<string> HelloWorld(string message)
+    {
+      using (HttpContext.Benchmark("hello-world-time"))
+      {
+        ...
+      }
+    }
+  }
+```
+
+Register the service metrics value definition to access metrics from tenant administration. Metrics with the `-time` suffix are stacked to show the components of the total response time.
+
+```csharp
+  builder.Services.AddAdspForPlatformService(
+    options =>
+    {
+      options.ServiceId = AdspId.Parse(adspConfiguration.GetValue<string>("ServiceId"));
+      ...
+      options.Values = new ValueDefinition[] {
+        ServiceMetrics.Definition
+      }
+    }
+  );
+```
+
+Raw metrics and values can be accessed via the value service API.
 
 ## Additional utilities
 The SDK provides several other useful utilities.
