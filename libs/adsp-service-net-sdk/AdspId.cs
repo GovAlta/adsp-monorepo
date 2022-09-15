@@ -4,7 +4,7 @@ using Adsp.Sdk.Utils;
 
 namespace Adsp.Sdk;
 [JsonConverter(typeof(AdspIdJsonConverter))]
-public class AdspId
+public class AdspId : IEquatable<AdspId>
 {
   private static readonly Regex UrnRegex = new(
     "^(?i:urn):ads(?<namespace>:[a-zA-Z0-9-]{1,50})?(?<service>:[a-zA-Z0-9-]{1,50})?(?<api>:[a-zA-Z0-9-]{1,50})?(?<resource>:[a-zA-Z0-9-_/ ]{1,1000})?$",
@@ -102,7 +102,7 @@ public class AdspId
       $"{(!String.IsNullOrEmpty(Resource) ? $":{Resource}" : "")}";
   }
 
-  public bool Equals(AdspId other)
+  public bool Equals(AdspId? other)
   {
     return other != null && (Type, Namespace, Service, Api, Resource).Equals(
       (other.Type, other.Namespace, other.Service, other.Api, other.Resource)

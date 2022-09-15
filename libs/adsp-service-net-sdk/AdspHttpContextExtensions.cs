@@ -1,5 +1,6 @@
 using Adsp.Sdk.Access;
 using Adsp.Sdk.Configuration;
+using Adsp.Sdk.Metrics;
 using Adsp.Sdk.Tenancy;
 using Microsoft.AspNetCore.Http;
 
@@ -40,15 +41,18 @@ public static class AdspHttpContextExtensions
       throw new ArgumentNullException(nameof(context));
     }
 
-    var hasService = context.Items.TryGetValue(TenantMiddleware.TenantContextKey, out object? items);
-    if (!hasService || items == null)
+    using (context.Benchmark("get-tenant-time"))
     {
-      throw new InvalidOperationException("Cannot get tenant from context without tenant middleware.");
+      var hasService = context.Items.TryGetValue(TenantMiddleware.TenantContextKey, out object? items);
+      if (!hasService || items == null)
+      {
+        throw new InvalidOperationException("Cannot get tenant from context without tenant middleware.");
+      }
+
+      var (tenantId, tenantService) = ((AdspId, ITenantService))items;
+
+      return await tenantService.GetTenant(tenantId);
     }
-
-    var (tenantId, tenantService) = ((AdspId, ITenantService))items;
-
-    return await tenantService.GetTenant(tenantId);
   }
 
   /// <summary>
@@ -71,16 +75,19 @@ public static class AdspHttpContextExtensions
       throw new ArgumentNullException(nameof(context));
     }
 
-    var hasService = context.Items.TryGetValue(ConfigurationMiddleware.ConfigurationContextKey, out object? items);
-    if (!hasService || items == null)
+    using (context.Benchmark("get-configuration-time"))
     {
-      throw new InvalidOperationException("Cannot get configuration from context without configuration middleware.");
+      var hasService = context.Items.TryGetValue(ConfigurationMiddleware.ConfigurationContextKey, out object? items);
+      if (!hasService || items == null)
+      {
+        throw new InvalidOperationException("Cannot get configuration from context without configuration middleware.");
+      }
+
+      var tenant = await context.GetTenant();
+      var (serviceId, configurationService) = ((AdspId, IConfigurationService))items;
+
+      return await configurationService.GetConfiguration<T, TC>(serviceId, tenant?.Id);
     }
-
-    var tenant = await context.GetTenant();
-    var (serviceId, configurationService) = ((AdspId, IConfigurationService))items;
-
-    return await configurationService.GetConfiguration<T, TC>(serviceId, tenant?.Id);
   }
 
   /// <summary>

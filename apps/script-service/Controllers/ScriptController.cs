@@ -3,6 +3,7 @@ using Adsp.Platform.ScriptService.Model;
 using Adsp.Platform.ScriptService.Services;
 using Adsp.Sdk;
 using Adsp.Sdk.Errors;
+using Adsp.Sdk.Metrics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
@@ -89,10 +90,13 @@ public class ScriptController : ControllerBase
       () => _tokenProvider.GetAccessToken() :
       () => Task.FromResult(HttpContext.Request.Headers[HeaderNames.Authorization].First()[TOKEN_INDEX..]);
 
-    var outputs = await _luaService.RunScript(
-      Guid.NewGuid(), user!.Tenant!.Id!, definition, luaInputs, getToken, request.CorrelationId, user
-    );
+    using (HttpContext.Benchmark("run-script-time"))
+    {
+      var outputs = await _luaService.RunScript(
+        Guid.NewGuid(), user!.Tenant!.Id!, definition, luaInputs, getToken, request.CorrelationId, user
+      );
 
-    return outputs;
+      return outputs;
+    }
   }
 }
