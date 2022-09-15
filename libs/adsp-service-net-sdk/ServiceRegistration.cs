@@ -37,4 +37,8 @@ public class ServiceRegistration
   /// update roles.
   /// </summary>
   public IEnumerable<FileType>? FileTypes { get; set; }
+  /// <summary>
+  /// Optional definitions of values used by the service.
+  /// </summary>
+  public IEnumerable<ValueDefinition>? Values { get; set; }
 }
