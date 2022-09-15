@@ -104,7 +104,7 @@ export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ 
               Name
             </th>
             <th id="calendar-id" data-testid="calendar-table-header-id">
-              ID
+              Calendar ID
             </th>
             <th id="calendar-description" data-testid="calendar-table-header-description">
               Description
