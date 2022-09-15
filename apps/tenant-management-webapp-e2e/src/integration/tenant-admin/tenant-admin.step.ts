@@ -855,11 +855,7 @@ Then(
       .eventDetails()
       .invoke('text')
       .then((eventDetails) => {
-        if (oldStatus.toLowerCase() == 'empty') {
-          expect(eventDetails).to.not.contain('originalStatus');
-        } else {
-          expect(eventDetails).to.contain('"originalStatus": ' + '"' + oldStatus.toLowerCase() + '"');
-        }
+        expect(eventDetails).to.contain('"originalStatus": ' + '"' + oldStatus.toLowerCase() + '"');
         expect(eventDetails).to.contain('"newStatus": ' + '"' + newStatus.toLowerCase() + '"');
       });
   }
