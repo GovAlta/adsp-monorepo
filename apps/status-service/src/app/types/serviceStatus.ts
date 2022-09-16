@@ -49,7 +49,6 @@ export type ServiceStatusApplicationModel = ServiceStatusApplication & Document;
 export interface ServiceStatusEndpoint {
   id: string;
   status: EndpointStatusType;
-  url?: string;
 }
 
 export interface ServiceStatusNotifications {

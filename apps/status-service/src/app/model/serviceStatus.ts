@@ -40,8 +40,6 @@ export interface ApplicationData {
 
 export class ServiceStatusApplicationEntity implements ServiceStatusApplication {
   _id: string;
-  name?: string;
-  description?: string;
   endpoint: ServiceStatusEndpoint;
   status: PublicServiceStatusType;
   metadata: unknown;
