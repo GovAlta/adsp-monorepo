@@ -425,7 +425,7 @@ Use the metrics extensions to benchmark specific sections of operations.
   }
 ```
 
-Register the service metrics value definition to access metrics from tenant administration. Metrics with the `-time` suffix are stacked to show the components of the total response time.
+Register the service metrics value definition to access metrics from tenant administration.
 
 ```csharp
   builder.Services.AddAdspForPlatformService(
@@ -440,7 +440,7 @@ Register the service metrics value definition to access metrics from tenant admi
   );
 ```
 
-Raw metrics and values can be accessed via the value service API.
+Metrics with the `-time` suffix are stacked to show the components of the total response time. Raw metrics and values can be accessed via the value service API.
 
 ## Additional utilities
 The SDK provides several other useful utilities.
