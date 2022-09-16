@@ -166,7 +166,7 @@ components:
       401:
         description: User not authorized to update configuration.
       400:
-        description: The revision selected in setRevision does not exist.
+        description: The selected revision does not exist
 
 /configuration/v2/configuration/{namespace}/{name}/active:
   parameters:

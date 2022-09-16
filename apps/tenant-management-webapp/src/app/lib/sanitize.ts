@@ -1,6 +1,5 @@
 import { addHook } from 'dompurify';
 import { sanitize as docPurified } from 'dompurify';
-import { hasProperHtmlWrapper } from '@core-services/notification-shared';
 import * as xss from 'xss';
 
 const options = {
