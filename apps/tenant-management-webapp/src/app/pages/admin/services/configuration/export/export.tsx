@@ -22,6 +22,12 @@ import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
 import { GoAChip } from '@abgov/react-components-new';
 import { GoAButton } from '@abgov/react-components-new';
 
+function getTextWidth(text) {
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  return context.measureText(text).width;
+}
+
 export const ConfigurationExport: FunctionComponent = () => {
   const { coreConfigDefinitions, tenantConfigDefinitions } = useSelector((state: RootState) => state.configuration);
   const exportState = useSelector((state: RootState) => state.configurationExport);
@@ -120,6 +126,8 @@ export const ConfigurationExport: FunctionComponent = () => {
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
+
+  const selectedNamespaces = [...new Set(Object.keys(exportServices).map((service) => service.split(':')[0]))];
 
   return (
     <Exports>
@@ -233,19 +241,35 @@ export const ConfigurationExport: FunctionComponent = () => {
                       }}
                     >
                       <h3>Selected Configuration</h3>
-                      <div className="button-wrapper">
-                        {Object.keys(exportServices).map((exp) => {
-                          const shortExp = exp.substring(0, 19) + '...';
-                          return (
-                            <GoAChip
-                              key={exp}
-                              deletable={true}
-                              content={shortExp}
-                              onClick={() => toggleSelection(exp)}
-                            />
-                          );
-                        })}
-                      </div>
+                      {selectedNamespaces.map((namespace) => {
+                        return (
+                          <div>
+                            <h4 className="mt-1 ellipsis-wrapper">{namespace}</h4>
+                            {Object.keys(exportServices).map((exp) => {
+                              const name = exp.split(':')[1];
+                              const namePixelWidth = getTextWidth(name);
+                              const acceptableBubbleTextPixelWidth = 93;
+
+                              const numberOfCharacters =
+                                acceptableBubbleTextPixelWidth / (namePixelWidth / name.length);
+                              const shortName =
+                                namePixelWidth > acceptableBubbleTextPixelWidth
+                                  ? name.substring(0, numberOfCharacters) + '...'
+                                  : name;
+                              if (exp.split(':')[0] === namespace) {
+                                return (
+                                  <GoAChip
+                                    key={exp}
+                                    deletable={true}
+                                    content={shortName}
+                                    onClick={() => toggleSelection(exp)}
+                                  />
+                                );
+                              }
+                            })}
+                          </div>
+                        );
+                      })}
                     </div>
                     <div className="flex-reverse-row">
                       <div className="button-style">

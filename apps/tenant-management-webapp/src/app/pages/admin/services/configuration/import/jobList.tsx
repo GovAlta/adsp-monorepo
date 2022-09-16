@@ -7,10 +7,12 @@ import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import InformationCircle from '@components/icons/InformationCircle';
 import { FileTableStyles } from '../styled-components';
+import { PageIndicator } from '@components/Indicator';
 
 const Imports: FunctionComponent = () => {
   const dispatch = useDispatch();
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
+  const indicator = useSelector((state: RootState) => state?.session?.indicator);
 
   useEffect(() => {
     dispatch(updatePdfResponse({ fileList: fileList }));
@@ -69,6 +71,7 @@ const Imports: FunctionComponent = () => {
                 })}
               </tbody>
             </DataTable>
+            {indicator.show && <PageIndicator />}
           </div>
         )}
       </FileTableStyles>

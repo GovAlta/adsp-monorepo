@@ -149,6 +149,7 @@ export const Exports = styled.div`
 
   .auto-overflow {
     overflow: auto;
+    overflow-x: hidden;
   }
 
   .full-width: {
@@ -163,9 +164,28 @@ export const Exports = styled.div`
     position: absolute;
   }
 
-  .button-wrapper {
-    display: flex;
+  .ellipsis-wrapper {
+    display: block;
     flex-wrap: wrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .text {
+    display: block !important;
+    flex-wrap: wrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .chip {
+    display: flex !important;
+  }
+
+  .mt-1 {
+    margin-top: 9px !important;
   }
 
   .overflow-wrap {
