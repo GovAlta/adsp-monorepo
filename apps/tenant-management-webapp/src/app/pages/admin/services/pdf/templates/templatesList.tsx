@@ -9,6 +9,8 @@ export interface PdfTemplatesTableProps {
   onDelete?: (PdfTemplate) => void;
 }
 export const PdfTemplatesTable: FunctionComponent<PdfTemplatesTableProps> = ({ templates, edit, onDelete }) => {
+  const newTemplates = JSON.parse(JSON.stringify(templates));
+
   return (
     <>
       <DataTable data-testid="pdf-templates-table">
@@ -27,11 +29,11 @@ export const PdfTemplatesTable: FunctionComponent<PdfTemplatesTableProps> = ({ t
           </tr>
         </thead>
         <tbody>
-          {Object.keys(templates).map((templateName) => {
+          {Object.keys(newTemplates).map((templateName) => {
             return (
               <PdfTemplateItem
                 key={templateName}
-                pdfTemplate={templates[templateName]}
+                pdfTemplate={newTemplates[templateName]}
                 edit={edit}
                 onDelete={onDelete}
               />
