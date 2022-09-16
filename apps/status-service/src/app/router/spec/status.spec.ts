@@ -65,61 +65,65 @@ describe('Service router', () => {
 
   const nextMock = jest.fn();
 
-  const applicationsMock = [
+  const bobsStatusId = '624365fe3367d200110e17c5';
+  const bobsApplicationStatus = {
+    _id: bobsStatusId,
+    tenantId: tenantId.toString(),
+    metadata: '',
+    enabled: 'false',
+    statusTimestamp: 0,
+    status: 'maintenance',
+    internalStatus: 'stopped',
+    endpoint: { status: 'offline' },
+    tenantName: 'platform',
+    tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
+  };
+
+  const myStatusId = '620ae946ddd181001195caad';
+  const myApplicationStatus = {
+    _id: myStatusId,
+    tenantId: tenantId.toString(),
+    metadata: '',
+    enabled: true,
+    statusTimestamp: 1648247257463,
+    status: 'operational',
+    internalStatus: 'healthy',
+    endpoint: { status: 'online' },
+    tenantName: 'Platform',
+    tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
+  };
+
+  const applicationStatusMock = [
     {
-      repository: {},
-      _id: '620ae946ddd181001195caad',
-      endpoint: { status: 'online', url: 'https://www.yahoo.com' },
-      metadata: '',
-      name: 'MyApp 1',
-      description: 'MyApp',
-      statusTimestamp: 1648247257463,
-      tenantId: tenantId.toString(),
-      tenantName: 'Platform',
-      tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
-      status: 'operational',
-      enabled: true,
-      internalStatus: 'healthy',
+      ...myApplicationStatus,
     },
     {
-      repository: {},
-      _id: '624365fe3367d200110e17c5',
-      endpoint: { status: 'offline', url: 'https://localhost.com' },
-      metadata: '',
-      name: 'test-mock',
-      description: '',
-      statusTimestamp: 0,
-      tennantServRef: '{}',
-      tenantId: tenantId.toString(),
-      tenantName: 'Platform',
-      tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
-      enabled: false,
-      internalStatus: 'stopped',
-      status: 'offline',
-      enable: jest.fn((app) => {
+      ...bobsApplicationStatus,
+
+      enable: jest.fn(() => {
         return {
-          ...app,
+          ...bobsApplicationStatus,
           enabled: true,
         };
       }),
 
-      disable: jest.fn((app) => {
+      disable: jest.fn(() => {
         return {
-          ...app,
+          ...bobsApplicationStatus,
           enabled: false,
         };
       }),
       setStatus: jest.fn(() =>
         Promise.resolve({
-          name: 'status-updated-app',
-          internalStatus: 'stopped',
+          ...bobsApplicationStatus,
+          status: 'maintenance',
         })
       ),
       update: jest.fn(() =>
         Promise.resolve({
+          ...bobsApplicationStatus,
           name: 'updated-app',
           internalStatus: 'stopped',
-          tennantServRef: '{}',
         })
       ),
       delete: jest.fn(() => Promise.resolve()),
@@ -130,17 +134,17 @@ describe('Service router', () => {
   ];
 
   const configurationMock = {
-    [applicationsMock[0]._id]: {
-      _id: applicationsMock[0]._id,
-      name: applicationsMock[0].name,
-      url: applicationsMock[0].endpoint.url,
-      description: applicationsMock[0].description,
+    [myStatusId]: {
+      _id: bobsStatusId,
+      name: 'MyApp 1',
+      url: 'http://localhost',
+      description: 'MyApp',
     },
-    [applicationsMock[1]._id]: {
-      _id: applicationsMock[1]._id,
-      name: applicationsMock[1].name,
-      url: applicationsMock[1].endpoint.url,
-      description: applicationsMock[1].description,
+    [bobsStatusId]: {
+      _id: bobsStatusId,
+      name: 'test-mock',
+      url: 'http://www.yahoo.com',
+      description: '',
     },
   };
 
@@ -148,7 +152,7 @@ describe('Service router', () => {
     {
       repository: { opts: { limit: 200, everyMilliseconds: 60000 } },
       ok: true,
-      url: applicationsMock[0].endpoint.url,
+      url: configurationMock[myStatusId].url,
       timestamp: 1649277360004,
       responseTime: 685,
       status: '200',
@@ -156,7 +160,7 @@ describe('Service router', () => {
     {
       repository: { opts: { limit: 200, everyMilliseconds: 60000 } },
       ok: true,
-      url: applicationsMock[1].endpoint.url,
+      url: configurationMock[bobsStatusId].url,
       timestamp: 1649277300002,
       responseTime: 514,
       status: '200',
@@ -211,32 +215,22 @@ describe('Service router', () => {
     it('Can get all applications', async () => {
       const returnMock = [
         {
-          _id: '620ae946ddd181001195caad',
-          endpoint: { status: 'online', url: 'https://www.yahoo.com' },
-          metadata: '',
-          name: 'MyApp 1',
-          description: 'MyApp',
-          statusTimestamp: 1648247257463,
-          tenantId: tenantId.toString(),
-          tenantName: 'Platform',
-          tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
-          status: 'operational',
-          internalStatus: 'healthy',
-          enabled: true,
+          ...myApplicationStatus,
+          name: configurationMock[myApplicationStatus._id].name,
+          description: configurationMock[myApplicationStatus._id].description,
+          endpoint: {
+            status: myApplicationStatus.endpoint.status,
+            url: configurationMock[myApplicationStatus._id].url,
+          },
         },
         {
-          _id: '624365fe3367d200110e17c5',
-          endpoint: { status: 'offline', url: 'https://localhost.com' },
-          metadata: '',
-          name: 'test-mock',
-          description: '',
-          statusTimestamp: 0,
-          tenantId: tenantId.toString(),
-          tenantName: 'Platform',
-          tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
-          status: 'offline',
-          internalStatus: 'stopped',
-          enabled: false,
+          ...bobsApplicationStatus,
+          name: configurationMock[bobsApplicationStatus._id].name,
+          description: configurationMock[bobsApplicationStatus._id].description,
+          endpoint: {
+            status: bobsApplicationStatus.endpoint.status,
+            url: configurationMock[bobsApplicationStatus._id].url,
+          },
         },
       ];
 
@@ -253,7 +247,7 @@ describe('Service router', () => {
         params: {},
       } as unknown as Request;
 
-      statusRepositoryMock.find.mockResolvedValueOnce(applicationsMock);
+      statusRepositoryMock.find.mockResolvedValueOnce(applicationStatusMock);
       getConfigurationMock.mockReturnValueOnce(configurationMock);
       await getApplicationsHandler(req, resMock as unknown as Response, nextMock);
 
@@ -261,7 +255,7 @@ describe('Service router', () => {
     });
 
     it('Can get application entries', async () => {
-      statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
+      statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
       endpointRepositoryMock.findRecentByUrlAndApplicationId.mockResolvedValueOnce(entriesMock);
       const handler = getApplicationEntries(loggerMock, statusRepositoryMock, endpointRepositoryMock);
       const getConfigurationMock = jest.fn();
@@ -275,7 +269,7 @@ describe('Service router', () => {
         getConfiguration: getConfigurationMock,
         query: { topValue: 1 },
         params: {
-          applicationId: applicationsMock[1]._id,
+          applicationId: bobsStatusId,
         },
       } as unknown as Request;
       getConfigurationMock.mockReturnValueOnce(configurationMock);
@@ -286,7 +280,7 @@ describe('Service router', () => {
 
   describe('Can get applications by name for public', () => {
     it('Can get applications by name', async () => {
-      statusRepositoryMock.find.mockResolvedValueOnce([applicationsMock[1]]);
+      statusRepositoryMock.find.mockResolvedValueOnce([applicationStatusMock[1]]);
       const getConfigurationMock = jest.fn();
       const handler = getApplicationsByName(loggerMock, tenantServiceMock, statusRepositoryMock);
       const reqMock = {
@@ -302,21 +296,17 @@ describe('Service router', () => {
       } as unknown as Request;
 
       getConfigurationMock.mockReturnValueOnce({
-        ['624365fe3367d200110e17c5']: {
-          name: 'test-mock',
-          url: 'https://www.yahoo.com',
-          description: 'Woof',
-        },
+        [bobsStatusId]: configurationMock[bobsStatusId],
       });
       await handler(reqMock, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.arrayContaining([
           {
-            description: 'Woof',
-            id: '624365fe3367d200110e17c5',
+            description: configurationMock[bobsStatusId].description,
+            id: bobsStatusId,
             lastUpdated: null,
-            name: 'test-mock',
-            status: 'offline',
+            name: configurationMock[bobsStatusId].name,
+            status: bobsApplicationStatus.status,
           },
         ])
       );
@@ -332,10 +322,10 @@ describe('Service router', () => {
           id: 'test',
           roles: ['test-updater'],
         },
-        params: {},
+        params: { id: bobsStatusId },
       } as unknown as Request;
 
-      statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
+      statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
       await handler(req, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -354,7 +344,7 @@ describe('Service router', () => {
         },
         params: {},
       } as unknown as Request;
-      statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
+      statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
       await handler(req, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -373,11 +363,11 @@ describe('Service router', () => {
           roles: ['test-updater'],
         },
         getConfiguration: getConfigurationMock,
-        params: { id: applicationsMock[1]._id },
+        params: { id: bobsStatusId },
       } as unknown as Request;
 
-      statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
-      getConfigurationMock.mockReturnValueOnce(configurationMock);
+      statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
+      getConfigurationMock.mockReturnValue(configurationMock);
       await handler(req, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -388,7 +378,7 @@ describe('Service router', () => {
   });
   describe('Can create application', () => {
     it('Can create new application', async () => {
-      const createMock = jest.fn().mockReturnValue(applicationsMock[1]);
+      const createMock = jest.fn().mockReturnValue(applicationStatusMock[1]);
       ServiceStatusApplicationEntity.create = createMock;
       const req: Request = {
         user: {
@@ -415,7 +405,7 @@ describe('Service router', () => {
   });
 
   describe('Can update application', () => {
-    it('Can update application', async () => {
+    it('Can update application properties', async () => {
       const handler = updateApplication(loggerMock, tokenProviderMock, serviceDirectoryMock, statusRepositoryMock);
       const req: Request = {
         user: {
@@ -429,23 +419,23 @@ describe('Service router', () => {
           endpoint: { url: 'http://mock-me.com' },
         },
         params: {
-          id: tenantId.toString(),
+          id: bobsStatusId,
         },
       } as unknown as Request;
-      statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
+      statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
 
       await handler(req, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'updated-app',
           description: 'mock 10',
-          endpoint: { status: 'offline', url: 'http://mock-me.com' },
+          endpoint: { status: bobsApplicationStatus.endpoint.status, url: 'http://mock-me.com' },
         })
       );
     });
 
     it('Can update application status', async () => {
-      statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
+      statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
       const getConfigurationMock = jest.fn();
       jest.spyOn(eventFuncs, 'applicationStatusChange').mockReturnValue({} as unknown as DomainEvent);
 
@@ -458,22 +448,22 @@ describe('Service router', () => {
         },
         getConfiguration: getConfigurationMock,
         params: {
-          id: applicationsMock[1]._id,
+          id: bobsStatusId,
         },
         body: {
-          status: 'online',
+          status: 'maintenance',
         },
       } as unknown as Request;
       getConfigurationMock.mockReturnValueOnce(configurationMock);
       await handler(req, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: 'status-updated-app',
+          status: 'maintenance',
         })
       );
     });
     it('Can delete application', async () => {
-      statusRepositoryMock.get.mockResolvedValueOnce(applicationsMock[1]);
+      statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
       const handler = deleteApplication(loggerMock, tokenProviderMock, serviceDirectoryMock, statusRepositoryMock);
       const req: Request = {
         user: {
@@ -482,7 +472,7 @@ describe('Service router', () => {
           roles: ['test-updater'],
         },
         params: {
-          id: applicationsMock[1]._id,
+          id: bobsStatusId,
         },
       } as unknown as Request;
       await handler(req, resMock, nextMock);
