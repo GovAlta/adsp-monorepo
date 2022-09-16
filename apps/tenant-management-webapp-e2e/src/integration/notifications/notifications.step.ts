@@ -805,8 +805,8 @@ When(
   'the user enters {string} as subject and {string} as body on {string} template page',
   function (subjectText, bodyText, channel) {
     cy.wait(1000); // Wait for the template editor elements to show
-    notificationsObj.addTemplateModalSubject(channel).type(subjectText);
-    notificationsObj.addTemplateModalBody(channel).type(bodyText);
+    notificationsObj.eventTemplateModalSubject(channel).click().focus().type('{ctrl}a').clear().type(subjectText);
+    notificationsObj.eventTemplateModalBody(channel).click().focus().type('{ctrl}a').clear().type(bodyText);
   }
 );
 

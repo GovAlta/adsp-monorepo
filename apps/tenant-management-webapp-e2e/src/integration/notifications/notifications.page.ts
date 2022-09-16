@@ -442,15 +442,15 @@ class NotificationsPage {
     );
   }
 
-  addTemplateModalSubject(channel) {
+  eventTemplateModalSubject(channel) {
     return cy.xpath(
-      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-subject"]`
+      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-subject"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea`
     );
   }
 
-  addTemplateModalBody(channel) {
+  eventTemplateModalBody(channel) {
     return cy.xpath(
-      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-body"]`
+      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-body"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea`
     );
   }
 
