@@ -47,7 +47,6 @@ export interface TenantCriteria {
 export type ServiceStatusApplicationModel = ServiceStatusApplication & Document;
 
 export interface ServiceStatusEndpoint {
-  id: string;
   status: EndpointStatusType;
 }
 
