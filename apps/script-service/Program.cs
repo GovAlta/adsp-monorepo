@@ -35,7 +35,8 @@ internal class Program
     builder.Services.AddAdspForPlatformService(
       options =>
       {
-        options.ServiceId = AdspId.Parse(adspConfiguration.GetValue<string>("ServiceId"));
+        var serviceId = AdspId.Parse(adspConfiguration.GetValue<string>("ServiceId"));
+        options.ServiceId = serviceId;
         options.DisplayName = "Script service";
         options.Description = "Service that execute configured scripts.";
         options.Configuration = new ConfigurationDefinition<Dictionary<string, ScriptDefinition>>(
@@ -63,6 +64,17 @@ internal class Program
             ScriptExecutionFailed.EventName,
             "Signalled when a script execution fails."
           )
+        };
+        options.EventStreams = new StreamDefinition[] {
+          new StreamDefinition("script-execution-updates", "Script execution updates") {
+            Description = "Provides update events for script execution.",
+            PublicSubscribe = false,
+            SubscriberRoles = new[] { $"{serviceId}:{ServiceRoles.ScriptRunner}" },
+            Events = new EventIdentity[] {
+              new EventIdentity(serviceId.Service!, ScriptExecuted.EventName),
+              new EventIdentity(serviceId.Service!, ScriptExecutionFailed.EventName),
+            }
+          }
         };
         options.Values = new ValueDefinition[] {
           ServiceMetrics.Definition

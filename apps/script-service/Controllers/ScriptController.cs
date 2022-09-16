@@ -30,7 +30,7 @@ public class ScriptController : ControllerBase
 
   [HttpGet]
   [Route("scripts")]
-  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
+  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant, Roles = ServiceRoles.ScriptRunner)]
   public async Task<IEnumerable<ScriptDefinition>> GetScripts()
   {
     var definitions = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, Dictionary<string, ScriptDefinition>>();
@@ -40,7 +40,7 @@ public class ScriptController : ControllerBase
 
   [HttpGet]
   [Route("scripts/{script?}")]
-  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
+  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant, Roles = ServiceRoles.ScriptRunner)]
   public async Task<ScriptDefinition> GetScript(string? script)
   {
     if (String.IsNullOrWhiteSpace(script))
