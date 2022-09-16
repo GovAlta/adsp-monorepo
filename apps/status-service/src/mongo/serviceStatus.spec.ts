@@ -52,7 +52,6 @@ describe('Service status mongo repository', () => {
         tenantRealm: '123123-123123-123123-123123',
         endpoint: {
           status: null,
-          id: '12345',
         },
       },
       {
@@ -62,7 +61,6 @@ describe('Service status mongo repository', () => {
         tenantRealm: '123123-123123-123123-123123',
         endpoint: {
           status: null,
-          id: '12345',
         },
       },
     ]);
@@ -77,7 +75,7 @@ describe('Service status mongo repository', () => {
   it("disables an application and all it's endpoints", async () => {
     const applications = await insertMockData([
       {
-        endpoint: { status: 'online', id: '12345' },
+        endpoint: { status: 'online' },
         status: 'operational',
         tenantId: '99',
         tenantName: 'Child Services',
