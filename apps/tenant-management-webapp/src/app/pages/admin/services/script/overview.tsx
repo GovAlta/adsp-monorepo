@@ -1,6 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
-export const ScriptOverview = (): JSX.Element => {
+import { GoAButton } from '@abgov/react-components';
+
+interface ScriptOverviewProps {
+  setActiveEdit: (boolean) => void;
+  setActiveIndex: (index: number) => void;
+}
+
+export const ScriptOverview = ({ setActiveEdit, setActiveIndex }: ScriptOverviewProps): JSX.Element => {
+  useEffect(() => {
+    setActiveEdit(false);
+    setActiveIndex(0);
+  }, []);
   return (
     <div>
       <section>
@@ -10,6 +21,14 @@ export const ScriptOverview = (): JSX.Element => {
           includes a predetermined set of specific words, phrases, and gestures, as well as other expectations for the
           employee to use during each step of the service process.
         </p>
+        <GoAButton
+          data-testid="add-script-btn"
+          onClick={() => {
+            setActiveEdit(true);
+          }}
+        >
+          Add script
+        </GoAButton>
       </section>
     </div>
   );

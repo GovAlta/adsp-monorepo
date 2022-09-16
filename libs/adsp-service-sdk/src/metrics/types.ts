@@ -4,3 +4,7 @@ export interface RequestBenchmark {
   timings: Record<string, [number, number]>;
   metrics: Record<string, number>;
 }
+
+export interface EndBenchmark {
+  (): void;
+}
