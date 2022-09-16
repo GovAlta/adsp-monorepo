@@ -316,6 +316,7 @@ describe('Service router', () => {
   describe('Can toggle application', () => {
     it('Can enable application', async () => {
       const handler = enableApplication(loggerMock, statusRepositoryMock);
+      const getConfigurationMock = jest.fn();
       const req: Request = {
         user: {
           tenantId,
@@ -323,32 +324,41 @@ describe('Service router', () => {
           roles: ['test-updater'],
         },
         params: { id: bobsStatusId },
+        getConfiguration: getConfigurationMock,
       } as unknown as Request;
 
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
+      getConfigurationMock.mockReturnValue(configurationMock);
       await handler(req, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
+          ...bobsApplicationStatus,
           enabled: true,
+          endpoint: { status: bobsApplicationStatus.endpoint.status, url: configurationMock[bobsStatusId].url },
         })
       );
     });
 
     it('Can disable application', async () => {
       const handler = disableApplication(loggerMock, statusRepositoryMock);
+      const getConfigurationMock = jest.fn();
+      getConfigurationMock.mockReturnValue(configurationMock);
       const req: Request = {
         user: {
           tenantId,
           id: 'test',
           roles: ['test-updater'],
         },
-        params: {},
+        params: { id: bobsStatusId },
+        getConfiguration: getConfigurationMock,
       } as unknown as Request;
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
       await handler(req, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
+          ...bobsApplicationStatus,
           enabled: false,
+          endpoint: { status: bobsApplicationStatus.endpoint.status, url: configurationMock[bobsStatusId].url },
         })
       );
     });

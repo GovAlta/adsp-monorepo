@@ -74,13 +74,18 @@ export const enableApplication =
       logger.info(req.method, req.url);
       const user = req.user as User;
       const { id } = req.params;
-      const application = await serviceStatusRepository.get(id);
+      const appStatus = await serviceStatusRepository.get(id);
+      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
+        user.tenantId
+      );
+      const applications = new StatusApplications(configuration);
+      const app = applications.get(id);
 
-      if (user.tenantId?.toString() !== application.tenantId) {
+      if (user.tenantId?.toString() !== appStatus.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
       }
-      const updatedApplication = await application.enable({ ...req.user } as User);
-      res.json(updatedApplication);
+      const updatedApplication = await appStatus.enable({ ...req.user } as User);
+      res.json(mergeApplicationData(app, updatedApplication));
     } catch (err) {
       logger.error(`Failed to enable application: ${err.message}`);
       next(err);
@@ -94,14 +99,19 @@ export const disableApplication =
       logger.info(req.method, req.url);
       const user = req.user as User;
       const { id } = req.params;
-      const application = await serviceStatusRepository.get(id);
+      const appStatus = await serviceStatusRepository.get(id);
+      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
+        user.tenantId
+      );
+      const applications = new StatusApplications(configuration);
+      const app = applications.get(id);
 
-      if (user.tenantId?.toString() !== application.tenantId) {
+      if (user.tenantId?.toString() !== appStatus.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
       }
 
-      const updatedApplication = await application.disable({ ...req.user } as User);
-      res.json(updatedApplication);
+      const updatedApplication = await appStatus.disable({ ...req.user } as User);
+      res.json(mergeApplicationData(app, updatedApplication));
     } catch (err) {
       logger.error(`Failed to disable application: ${err.message}`);
       next(err);
