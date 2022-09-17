@@ -186,6 +186,10 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                 bodyTitle="Body"
                 onBodyChange={(value) => {
                   setBody(value);
+                  if (currentTemplate) {
+                    currentTemplate.template = value;
+                  }
+                  setCurrentTemplate(currentTemplate);
 
                   try {
                     setBodyPreview(
@@ -205,6 +209,11 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                 onHeaderChange={(value) => {
                   setHeader(value);
 
+                  if (currentTemplate) {
+                    currentTemplate.header = value;
+                  }
+                  setCurrentTemplate(currentTemplate);
+
                   try {
                     setHeaderPreview(
                       generateMessage(
@@ -222,6 +231,11 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                 }}
                 onFooterChange={(value) => {
                   setFooter(value);
+
+                  if (currentTemplate) {
+                    currentTemplate.footer = value;
+                  }
+                  setCurrentTemplate(currentTemplate);
 
                   try {
                     setFooterPreview(
