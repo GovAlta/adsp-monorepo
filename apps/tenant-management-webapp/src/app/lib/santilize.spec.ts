@@ -17,6 +17,10 @@ describe('Check sanitize', () => {
     <li>{{ data.notAProperty }}</li>
     </ul>`;
 
+    const htmlWithBrTag = `<br></br>`;
+    const htmlWithITag = `<i></i>`;
+    const htmlWithBTag = `<b></b>`;
+
     expect(hasXSS(htmWithoutHtmlTag)).toEqual(false);
     expect(hasXSS(htmWithHtmlTag)).toEqual(false);
     expect(hasXSS(htmlWithTextBeforeHtmlTag)).toEqual(false);
@@ -26,6 +30,9 @@ describe('Check sanitize', () => {
     expect(hasXSS(htmlWithDivAndClass)).toEqual(false);
     expect(hasXSS(htmlTextOnly)).toEqual(false);
     expect(hasXSS(htmlWithLineTurn)).toEqual(false);
+    expect(hasXSS(htmlWithBrTag)).toEqual(false);
+    expect(hasXSS(htmlWithITag)).toEqual(false);
+    expect(hasXSS(htmlWithBTag)).toEqual(false);
   });
 
   it('Can return false for html with XSS risk', () => {

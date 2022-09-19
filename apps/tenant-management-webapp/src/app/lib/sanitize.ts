@@ -50,6 +50,9 @@ const options = {
     tt: [],
     u: [],
     ul: [],
+    br: [],
+    b: [],
+    option: [],
   },
 }; // Custom rules
 const xssFilter = new xss.FilterXSS(options);
