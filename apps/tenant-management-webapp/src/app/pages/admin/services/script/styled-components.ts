@@ -16,10 +16,6 @@ export const TableDiv = styled.div`
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
-  & .meta {
-    padding: 0;
-  }
 `;
 export const UseServiceAccountWrapper = styled.div`
   line-height: 2.5em;
@@ -55,15 +51,14 @@ export const DataTableWrapper = styled.div`
   }
 
   .role-name {
-    width: 40em;
+    width: 33em;
   }
 
   .role {
-    width: 3em;
+    width: 10em;
   }
 
   td {
-    // padding-left: 0em !important;
     padding: 0em !important;
   }
 

@@ -48,7 +48,7 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
     };
   };
   const descriptionCheck = (): Validator => (description: string) =>
-    description.length > 250 ? 'Description could not over 250 characters ' : '';
+    description.length > 250 ? 'Description should not exceed 250 characters' : '';
 
   const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
     .add('duplicated', 'name', duplicateScriptCheck())
