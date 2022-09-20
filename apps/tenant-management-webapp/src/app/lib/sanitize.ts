@@ -4,16 +4,22 @@ import * as xss from 'xss';
 
 const options = {
   whiteList: {
-    html: [],
+    html: ['lang'],
+    meta: ['name', 'content', 'charset'],
     div: ['style', 'class'],
     a: ['href', 'title', 'target', 'style', 'class'],
+    em: [],
     footer: ['style'],
     header: ['style'],
+    head: [],
     abbr: ['title', 'style'],
+    title: [],
     address: ['style'],
     area: ['shape', 'coords', 'href', 'alt', 'style'],
     article: [],
+    blockquote: [],
     aside: [],
+    details: [],
     h1: [],
     h2: [],
     h3: [],
@@ -37,7 +43,11 @@ const options = {
     sub: [],
     summary: [],
     sup: [],
+    select: [],
+    optgroup: [],
+    form: [],
     strong: [],
+    label: [],
     strike: [],
     table: ['width', 'border', 'align', 'valign', 'class', 'style'],
     tbody: ['align', 'valign', 'class', 'style'],
@@ -67,6 +77,11 @@ addHook('afterSanitizeAttributes', function (node) {
 });
 
 export function hasXSS(html) {
+  const wordsToEscape = ['<!DOCTYPE html>', '<!doctype html>'];
+  for (const word of wordsToEscape) {
+    html = html.replace(word, '');
+  }
+
   const sanitized = xssFilter.process(html);
 
   return sanitized !== html;
