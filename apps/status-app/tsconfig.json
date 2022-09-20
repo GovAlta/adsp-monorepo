@@ -13,6 +13,9 @@
       "@pages/*": [
         "app/pages/*"
       ],
+      "@lib/*": [
+        "app/lib/*"
+      ],
       "@store/*": [
         "app/store/*"
       ],
