@@ -61,8 +61,10 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
             setOpenAddScript(true);
           }}
         >
-          Add Script
+          Add script
         </GoAButton>
+        <br />
+        <br />
       </div>
       {fetchScriptState === ActionState.inProcess && <PageIndicator />}
       {fetchScriptState === ActionState.completed && !scripts && renderNoItem('script')}
