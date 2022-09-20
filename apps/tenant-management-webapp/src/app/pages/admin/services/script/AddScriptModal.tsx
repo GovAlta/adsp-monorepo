@@ -142,20 +142,6 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
             <label>Script ID</label>
             <IdField>{script.id}</IdField>
           </GoAFormItem>
-          <UseServiceAccountWrapper>
-            <GoACheckbox
-              checked={script.useServiceAccount}
-              name="script-use-service-account-checkbox"
-              data-testid="script-use-service-account-checkbox"
-              onChange={() => {
-                setScript({
-                  ...script,
-                  useServiceAccount: !script.useServiceAccount,
-                });
-              }}
-            />
-            Use service account
-          </UseServiceAccountWrapper>
 
           <GoAFormItem error={errors?.['description']}>
             <label>Description</label>
@@ -172,6 +158,21 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
               }}
             />
           </GoAFormItem>
+          <UseServiceAccountWrapper>
+            <GoACheckbox
+              checked={script.useServiceAccount}
+              name="script-use-service-account-checkbox"
+              data-testid="script-use-service-account-checkbox"
+              onChange={() => {
+                setScript({
+                  ...script,
+                  useServiceAccount: !script.useServiceAccount,
+                });
+              }}
+            />
+            Use service account
+          </UseServiceAccountWrapper>
+
           {tenantClients &&
             elements.map((e, key) => {
               return <RunnerRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
@@ -225,7 +226,7 @@ const RunnerRoleTable = (props: RunnerRoleTableProps): JSX.Element => {
               {props.clientId ? props.clientId + ' roles' : 'Roles'}
             </th>
             <th id="script-runner-role-action" className="role">
-              Runner roles
+              Runner
             </th>
           </tr>
         </thead>
@@ -236,7 +237,7 @@ const RunnerRoleTable = (props: RunnerRoleTableProps): JSX.Element => {
             return (
               <tr key={`add-script-role-row-${role}`}>
                 <td className="role-name">{role}</td>
-                <td className="role">
+                <td className="role-checkbox">
                   <GoACheckbox
                     name={`script-runner-role-checkbox-${role}`}
                     key={`script-runner-role-checkbox-${compositeRole}`}
