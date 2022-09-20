@@ -1,13 +1,18 @@
 import React, { useEffect } from 'react';
-
+import { useDispatch } from 'react-redux';
 import { GoAButton } from '@abgov/react-components';
-
+import { FetchRealmRoles } from '@store/tenant/actions';
 interface ScriptOverviewProps {
   setActiveEdit: (boolean) => void;
   setActiveIndex: (index: number) => void;
 }
 
 export const ScriptOverview = ({ setActiveEdit, setActiveIndex }: ScriptOverviewProps): JSX.Element => {
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(FetchRealmRoles());
+  }, []);
+
   useEffect(() => {
     setActiveEdit(false);
     setActiveIndex(0);
