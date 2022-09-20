@@ -10,6 +10,7 @@ import { SaveFormModal } from './saveModal';
 import { GoAInfoBadge, GoABadge } from '@abgov/react-components/experimental';
 import { Tab, Tabs } from '@components/Tabs';
 import { GoAButton } from '@abgov/react-components';
+
 interface TemplateEditorProps {
   modelOpen: boolean;
   mainTitle: string;
@@ -251,6 +252,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
         onCancel={() => {
           setSaveModal(false);
         }}
+        saveDisable={!validateEventTemplateFields()}
       />
     </TemplateEditorContainer>
   );

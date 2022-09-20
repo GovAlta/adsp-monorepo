@@ -27,7 +27,7 @@ interface TaskRouterProps {
 export const TASK_KEY = 'task';
 
 export const mapTask = (apiId: AdspId, entity: TaskEntity): unknown => ({
-  urn: adspId`${apiId}:/tasks/${entity.id}`,
+  urn: `${apiId}:/tasks/${entity.id}`,
   id: entity.id,
   name: entity.name,
   description: entity.description,

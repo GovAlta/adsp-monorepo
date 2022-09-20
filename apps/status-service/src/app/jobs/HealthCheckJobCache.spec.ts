@@ -1,5 +1,5 @@
 import { Logger } from 'winston';
-import { ApplicationData, ServiceStatusApplicationEntity } from '../model';
+import { ApplicationData } from '../model';
 import { HealthCheckJobCache } from './HealthCheckJobCache';
 import { HealthCheckJob } from './HealthCheckJob';
 import { ApplicationList } from '../model/ApplicationList';

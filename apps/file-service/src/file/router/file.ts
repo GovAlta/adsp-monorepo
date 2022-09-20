@@ -1,4 +1,4 @@
-import { adspId, AdspId, benchmark, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, benchmark, EventService, startBenchmark, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
   UnauthorizedError,
@@ -90,7 +90,7 @@ export function getType(_logger: Logger): RequestHandler {
 export function getFiles(apiId: AdspId, repository: FileRepository): RequestHandler {
   return async (req, res, next) => {
     try {
-      benchmark(req, 'operation-handler-time');
+      const end = startBenchmark(req, 'operation-handler-time');
 
       const user = req.user;
       const tenantId = req.tenant?.id;
@@ -108,7 +108,7 @@ export function getFiles(apiId: AdspId, repository: FileRepository): RequestHand
       };
       const files = await repository.find(tenantId, top, after as string, criteria);
 
-      benchmark(req, 'operation-handler-time');
+      end();
       res.send({
         page: files.page,
         results: files.results.filter((r) => r.canAccess(user)).map((f) => mapFile(apiId, f)),
@@ -161,7 +161,7 @@ export function uploadFile(apiId: AdspId, logger: Logger, eventService: EventSer
 export function getFile(repository: FileRepository): RequestHandler {
   return async (req, _res, next) => {
     try {
-      benchmark(req, 'get-entity-time');
+      const end = startBenchmark(req, 'get-entity-time');
 
       const user = req.user;
       const { fileId } = req.params;
@@ -178,7 +178,7 @@ export function getFile(repository: FileRepository): RequestHandler {
         req.tenant = { id: fileEntity.tenantId, name: null, realm: null };
       }
 
-      benchmark(req, 'get-entity-time');
+      end();
       next();
     } catch (err) {
       next(err);
@@ -197,7 +197,7 @@ function encodeRFC5987(value: string) {
 export function downloadFile(logger: Logger): RequestHandler {
   return async (req, res, next) => {
     try {
-      benchmark(req, 'operation-handler-time');
+      const end = startBenchmark(req, 'operation-handler-time');
 
       const user = req.user;
       const { unsafe, embed } = req.query;
@@ -208,7 +208,7 @@ export function downloadFile(logger: Logger): RequestHandler {
 
       const stream = await fileEntity.readFile(user);
 
-      benchmark(req, 'operation-handler-time');
+      end();
 
       res.status(200);
       res.setHeader('Content-Type', 'application/octet-stream');
@@ -239,7 +239,7 @@ export function downloadFile(logger: Logger): RequestHandler {
 export function deleteFile(logger: Logger, eventService: EventService): RequestHandler {
   return async (req, res, next) => {
     try {
-      benchmark(req, 'operation-handler-time');
+      const end = startBenchmark(req, 'operation-handler-time');
 
       const user = req.user;
       const fileEntity = req.fileEntity;
@@ -255,7 +255,7 @@ export function deleteFile(logger: Logger, eventService: EventService): RequestH
         }
       );
 
-      benchmark(req, 'operation-handler-time');
+      end();
       res.send({ deleted: fileEntity.deleted });
 
       eventService.send(

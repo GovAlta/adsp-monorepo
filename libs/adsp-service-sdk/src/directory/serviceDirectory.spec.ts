@@ -1,6 +1,5 @@
 import axios from 'axios';
 import type { Logger } from 'winston';
-import { TokenProvider } from '../access';
 import { adspId } from '../utils';
 import { ServiceDirectoryImpl } from './serviceDirectory';
 
@@ -23,24 +22,20 @@ describe('ServiceDirectory', () => {
     error: jest.fn(),
   } as unknown as Logger;
 
-  const tokenProvider: TokenProvider = {
-    getAccessToken: jest.fn(),
-  };
-
   beforeEach(() => {
     cacheMock.mockReset();
     cacheSetMock.mockReset();
   });
 
   it('can create ServiceDirectory', () => {
-    const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'), tokenProvider);
+    const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'));
     expect(directory).toBeTruthy();
   });
 
   it('can retrieve service URL from cache', async () => {
     const cached = 'https://test-service';
     const serviceId = adspId`urn:ads:test-sandbox:test-service`;
-    const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'), tokenProvider);
+    const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'));
 
     cacheMock.mockReturnValue(cached);
     const result = await directory.getServiceUrl(serviceId);
@@ -50,7 +45,7 @@ describe('ServiceDirectory', () => {
   it('can retrieve API URL from cache', async () => {
     const cached = 'https://test-service';
     const apiId = adspId`urn:ads:test-sandbox:test-service:v1`;
-    const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'), tokenProvider);
+    const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'));
 
     cacheMock.mockReturnValue(cached);
     const result = await directory.getServiceUrl(apiId);
@@ -61,7 +56,7 @@ describe('ServiceDirectory', () => {
     const apiId = adspId`urn:ads:test-sandbox:test-service:v1`;
     const apiUrl = 'https://test-service';
 
-    const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'), tokenProvider);
+    const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'));
 
     cacheMock.mockReturnValueOnce(null);
     cacheMock.mockReturnValueOnce(apiUrl);
@@ -69,10 +64,7 @@ describe('ServiceDirectory', () => {
     const result = await directory.getServiceUrl(apiId);
 
     expect(result).toBe(apiUrl);
-    expect(axiosMock.get).toHaveBeenCalledWith(
-      'https://directory/directory/v2/namespaces/test-sandbox/entries',
-      expect.any(Object)
-    );
+    expect(axiosMock.get).toHaveBeenCalledWith('https://directory/directory/v2/namespaces/test-sandbox/entries');
     expect(cacheSetMock).toHaveBeenCalledWith(apiId.toString(), expect.any(URL));
   });
 
@@ -84,7 +76,7 @@ describe('ServiceDirectory', () => {
     process.env['DIR_TEST_SANDBOX_TEST_SERVICE'] = serviceUrl;
     process.env['DIR_TEST_SANDBOX_TEST_SERVICE_V1'] = apiUrl;
 
-    const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'), tokenProvider);
+    const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'));
 
     cacheMock.mockReturnValueOnce(null);
     cacheMock.mockReturnValueOnce(serviceUrl);
@@ -108,7 +100,7 @@ describe('ServiceDirectory', () => {
   it('can throw for missing entry', async () => {
     const apiId = adspId`urn:ads:test-sandbox:test-service:v1`;
 
-    const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'), tokenProvider);
+    const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'));
 
     cacheMock.mockReturnValueOnce(null);
     cacheMock.mockReturnValueOnce(null);
@@ -122,7 +114,7 @@ describe('ServiceDirectory', () => {
     const resourceId = adspId`urn:ads:test-sandbox:test-service:v1:/tests/test`;
     const apiUrl = new URL('https://test-service/v1');
 
-    const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'), tokenProvider);
+    const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'));
 
     cacheMock.mockReturnValueOnce(null);
     cacheMock.mockReturnValueOnce(apiUrl);
@@ -137,7 +129,7 @@ describe('ServiceDirectory', () => {
     const resourceId = adspId`urn:ads:test-sandbox:test-service:v1:/tests/test`;
     const apiUrl = new URL('https://test-service/v1/');
 
-    const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'), tokenProvider);
+    const directory = new ServiceDirectoryImpl(logger, new URL('https://directory'));
 
     cacheMock.mockReturnValueOnce(null);
     cacheMock.mockReturnValueOnce(apiUrl);

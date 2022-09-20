@@ -184,7 +184,7 @@ Feature: Service status
     Then the "Event log" landing page is displayed
     When the user searches with "status-service:application-status-changed", "now-2mins" as minimum timestamp, "now+2mins" as maximum timestamp
     And the user clicks Show details button for the latest event of "application-status-changed" for "status-service"
-    Then the user views the event details with status changing from "Empty" to "Outage"
+    Then the user views the event details with status changing from "n/a" to "Outage"
     # Change status from outage to maintenance and verify the event
     When the user selects the "Status" menu item
     And the user selects "Applications" tab for "Status"

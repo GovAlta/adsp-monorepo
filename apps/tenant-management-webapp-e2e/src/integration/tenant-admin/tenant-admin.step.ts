@@ -392,8 +392,8 @@ Then('the login link is copied to the clipboard', function () {
 });
 
 Then(
-  'the user views introductions and links for {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string} and {string}',
-  function (access, calendar, configuration, directory, events, file, notification, pdf, status) {
+  'the user views introductions and links for {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string} and {string}',
+  function (access, calendar, configuration, directory, events, file, notification, pdf, script, status) {
     const cardTextArray = [
       'Access allows',
       'The calendar service provides',
@@ -403,9 +403,21 @@ Then(
       'The file service provides',
       'The notifications service provides',
       'The PDF service provides',
+      'This script service provides',
       'The status service allows',
     ];
-    const cardTitleArray = [access, calendar, configuration, directory, events, file, notification, pdf, status];
+    const cardTitleArray = [
+      access,
+      calendar,
+      configuration,
+      directory,
+      events,
+      file,
+      notification,
+      pdf,
+      script,
+      status,
+    ];
     tenantAdminObj.goaCardTexts().should('have.length', cardTextArray.length);
     tenantAdminObj.goaCardTitles().should('have.length', cardTitleArray.length);
     tenantAdminObj.goaCardTexts().each((element, index) => {
@@ -843,11 +855,7 @@ Then(
       .eventDetails()
       .invoke('text')
       .then((eventDetails) => {
-        if (oldStatus.toLowerCase() == 'empty') {
-          expect(eventDetails).to.not.contain('originalStatus');
-        } else {
-          expect(eventDetails).to.contain('"originalStatus": ' + '"' + oldStatus.toLowerCase() + '"');
-        }
+        expect(eventDetails).to.contain('"originalStatus": ' + '"' + oldStatus.toLowerCase() + '"');
         expect(eventDetails).to.contain('"newStatus": ' + '"' + newStatus.toLowerCase() + '"');
       });
   }

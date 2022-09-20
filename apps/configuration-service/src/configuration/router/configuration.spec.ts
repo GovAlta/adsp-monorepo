@@ -796,7 +796,7 @@ describe('router', () => {
         params: { namespace, name },
         query: {},
         body: {
-          revision: true,
+          operation: 'CREATE-REVISION',
         },
       } as unknown as Request;
 
@@ -831,7 +831,7 @@ describe('router', () => {
         params: { namespace, name },
         query: {},
         body: {
-          revision: true,
+          operation: 'CREATE-REVISION',
         },
       } as unknown as Request;
 
@@ -872,7 +872,7 @@ describe('router', () => {
         activeRevisionEntity,
         query: {},
         body: {
-          revision: true,
+          operation: 'SET-ACTIVE-REVISION',
           setActiveRevision: revisionValue,
         },
       } as unknown as Request;
@@ -908,7 +908,9 @@ describe('router', () => {
         user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
         params: { namespace, name },
         query: {},
-        body: {},
+        body: {
+          operation: 'SET-ACTIVE-REVISION',
+        },
       } as unknown as Request;
 
       const active = {
@@ -925,7 +927,9 @@ describe('router', () => {
       const next = jest.fn();
 
       await handler(req, res as unknown as Response, next);
-      expect(next).toHaveBeenCalledWith(new InvalidOperationError('Request operation not recognized.'));
+      expect(next).toHaveBeenCalledWith(
+        new InvalidOperationError('Set active revision request must include setActiveRevision property.')
+      );
     });
 
     it('can set the active revision', async () => {
@@ -949,7 +953,7 @@ describe('router', () => {
         params: { namespace, name },
         query: {},
         body: {
-          revision: true,
+          operation: 'SET-ACTIVE-REVISION',
           setActiveRevision: revisionValue,
         },
       } as unknown as Request;

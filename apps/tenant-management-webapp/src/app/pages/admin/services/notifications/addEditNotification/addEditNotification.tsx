@@ -1,7 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { NotificationItem } from '@store/notification/models';
-import { GoAButton, GoADropdownOption, GoASkeletonGridColumnContent } from '@abgov/react-components';
-import { useSelector } from 'react-redux';
+import { GoAButton, GoASkeletonGridColumnContent } from '@abgov/react-components';
 import {
   GoAModal,
   GoAModalActions,
@@ -10,8 +9,6 @@ import {
   GoAInput,
 } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
-import { GoADropdown } from '@abgov/react-components';
-import { RootState } from '@store/index';
 import { GoACallout } from '@abgov/react-components';
 import styled from 'styled-components';
 import { GoACheckbox } from '@abgov/react-components';
@@ -53,7 +50,6 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   realmRoles,
   tenantClients,
 }) => {
-  //const dispatch = useDispatch();
   const isEdit = !!initialValue?.id;
   const [type, setType] = useState(initialValue);
 

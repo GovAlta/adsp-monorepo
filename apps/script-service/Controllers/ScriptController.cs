@@ -3,6 +3,7 @@ using Adsp.Platform.ScriptService.Model;
 using Adsp.Platform.ScriptService.Services;
 using Adsp.Sdk;
 using Adsp.Sdk.Errors;
+using Adsp.Sdk.Metrics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
@@ -29,17 +30,17 @@ public class ScriptController : ControllerBase
 
   [HttpGet]
   [Route("scripts")]
-  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
+  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant, Roles = ServiceRoles.ScriptRunner)]
   public async Task<IEnumerable<ScriptDefinition>> GetScripts()
   {
-    var definitions = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, Dictionary<string, ScriptDefinition>>();
+    var configuration = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, ScriptConfiguration>();
 
-    return definitions?.Values ?? Enumerable.Empty<ScriptDefinition>();
+    return configuration?.Definitions.Values ?? Enumerable.Empty<ScriptDefinition>();
   }
 
   [HttpGet]
   [Route("scripts/{script?}")]
-  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
+  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant, Roles = ServiceRoles.ScriptRunner)]
   public async Task<ScriptDefinition> GetScript(string? script)
   {
     if (String.IsNullOrWhiteSpace(script))
@@ -47,8 +48,8 @@ public class ScriptController : ControllerBase
       throw new RequestArgumentException("script parameter cannot be null or empty.");
     }
 
-    var definitions = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, Dictionary<string, ScriptDefinition>>();
-    if (definitions?.TryGetValue(script, out ScriptDefinition? definition) != true)
+    var configuration = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, ScriptConfiguration>();
+    if (configuration?.Definitions.TryGetValue(script, out ScriptDefinition? definition) != true)
     {
       throw new NotFoundException($"Script definition with ID '{script}' not found.");
     }
@@ -89,10 +90,13 @@ public class ScriptController : ControllerBase
       () => _tokenProvider.GetAccessToken() :
       () => Task.FromResult(HttpContext.Request.Headers[HeaderNames.Authorization].First()[TOKEN_INDEX..]);
 
-    var outputs = await _luaService.RunScript(
-      Guid.NewGuid(), user!.Tenant!.Id!, definition, luaInputs, getToken, request.CorrelationId, user
-    );
+    using (HttpContext.Benchmark("run-script-time"))
+    {
+      var outputs = await _luaService.RunScript(
+        Guid.NewGuid(), user!.Tenant!.Id!, definition, luaInputs, getToken, request.CorrelationId, user
+      );
 
-    return outputs;
+      return outputs;
+    }
   }
 }

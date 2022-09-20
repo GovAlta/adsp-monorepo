@@ -20,17 +20,13 @@ interface ServiceRoleSyncStatusProps {
 
 const CreateConfirmationMessage = ({ status, clientId, role }: ServiceRoleSyncStatusProps): JSX.Element => {
   if (status === ServiceRoleSyncStatus.missingClient) {
-    return (
-      <span>
-        We will create <b>{clientId}</b> client and its related roles based on configuration.
-      </span>
-    );
+    return <span>We will create {clientId} client and its related roles based on configuration.</span>;
   }
 
   if (status === ServiceRoleSyncStatus.missingClientRole) {
     return (
       <span>
-        We will create <b>{role}</b> in {clientId} based on configuration.
+        We will create {role} in {clientId} based on configuration.
       </span>
     );
   }
@@ -38,11 +34,7 @@ const CreateConfirmationMessage = ({ status, clientId, role }: ServiceRoleSyncSt
   if (status === ServiceRoleSyncStatus.notInTenantAdmin) {
     return (
       <span>
-        We will add{' '}
-        <b>
-          {clientId}:{role}
-        </b>{' '}
-        to tenant-admin.
+        We will add {clientId}:{role} to tenant-admin role of the urn:adsp:platform:tenant-service client.
       </span>
     );
   }

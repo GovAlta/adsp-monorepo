@@ -59,6 +59,7 @@ import { saveNotice, getNotices, deleteNotice } from './notice/sagas';
 import { SET_APPLICATION_STATUS_ACTION } from './status/actions/setApplicationStatus';
 import { TOGGLE_APPLICATION_STATUS_ACTION } from './status/actions/toggleApplication';
 import { watchServiceMetricsSagas } from './metrics/sagas';
+import { watchScriptSagas } from './script/sagas';
 
 // eslint-disable-next-line  @typescript-eslint/explicit-module-boundary-types
 export function* watchSagas() {
@@ -111,5 +112,7 @@ export function* watchSagas() {
     watchServiceMetricsSagas(),
     //Calendar
     watchCalendarSagas(),
+    //Script
+    watchScriptSagas(),
   ]);
 }

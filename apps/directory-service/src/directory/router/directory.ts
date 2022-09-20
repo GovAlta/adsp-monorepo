@@ -15,6 +15,7 @@ import {
   EventService,
   isAllowedUser,
   UnauthorizedUserError,
+  startBenchmark,
 } from '@abgov/adsp-service-sdk';
 
 import { ServiceRoles } from '../roles';
@@ -38,11 +39,14 @@ export const resolveNamespaceTenant =
   async (req, _res, next) => {
     const { namespace } = req.params;
     try {
+      const end = startBenchmark(req, 'get-tenant-time');
       const tenant = await tenantService.getTenantByName(namespace?.replace(/-/g, ' '));
       if (!tenant) {
         throw new NotFoundError('directory namespace', namespace);
       }
       req.tenant = tenant;
+      end();
+
       next();
     } catch (err) {
       logger.debug(`Error encountered resolving tenant for namespace: ${namespace}. ${err}`);

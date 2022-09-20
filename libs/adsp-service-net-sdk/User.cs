@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using System.Security.Principal;
 
 namespace Adsp.Sdk;

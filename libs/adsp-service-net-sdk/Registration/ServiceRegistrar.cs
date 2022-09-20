@@ -25,20 +25,19 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
     ILogger<ServiceRegistrar> logger,
     IServiceDirectory serviceDirectory,
     ITokenProvider tokenProvider,
-    IOptions<AdspOptions> options
+    IOptions<AdspOptions> options,
+    RestClient? client = null
   )
   {
     if (options.Value.ServiceId == null)
     {
       throw new ArgumentException("Provided options must include value for ServiceId.");
     }
-
     _logger = logger;
     _serviceDirectory = serviceDirectory;
     _tokenProvider = tokenProvider;
     _serviceId = options.Value.ServiceId;
-
-    _client = new RestClient();
+    _client = client ?? new RestClient();
     _retryPolicy = Policy.Handle<Exception>().WaitAndRetryAsync(
       10,
       retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
@@ -55,10 +54,9 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
     {
       await UpdateConfiguration(
         AdspPlatformServices.ConfigurationServiceId,
-        new
+        new ConfigurationUpdate<ConfigurationDefinition>
         {
-          operation = "UPDATE",
-          update = new Dictionary<string, object>() {
+          Update = new Dictionary<string, ConfigurationDefinition>() {
             { $"{_serviceId.Namespace}:{_serviceId.Service}", registration.Configuration }
           }
         }
@@ -69,10 +67,9 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
     {
       await UpdateConfiguration(
         AdspPlatformServices.TenantServiceId,
-        new
+        new ConfigurationUpdate<object>
         {
-          operation = "UPDATE",
-          update = new Dictionary<string, object>
+          Update = new Dictionary<string, object>
           {
             { _serviceId.ToString(), new { roles = registration.Roles } }
           }
@@ -84,16 +81,15 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
     {
       await UpdateConfiguration(
         AdspPlatformServices.EventServiceId,
-        new
+        new ConfigurationUpdate<object>
         {
-          operation = "UPDATE",
-          update = new Dictionary<string, object>
+          Update = new Dictionary<string, object>
           {
             {
               _serviceId.Service!,
               new
               {
-                name = _serviceId.Namespace,
+                name = _serviceId.Service,
                 definitions = registration.Events.ToDictionary(definition => definition.Name)
               }
             }
@@ -111,10 +107,9 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
     {
       await UpdateConfiguration(
         AdspPlatformServices.PushServiceId,
-        new
+        new ConfigurationUpdate<StreamDefinition>
         {
-          operation = "UPDATE",
-          update = registration.EventStreams.ToDictionary(definition => definition.Id)
+          Update = registration.EventStreams.ToDictionary(definition => definition.Id)
         }
       );
     }
@@ -123,11 +118,31 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
     {
       await UpdateConfiguration(
         AdspPlatformServices.FileServiceId,
-        new
+        new ConfigurationUpdate<FileType>
         {
-          operation = "UPDATE",
-          update = registration.FileTypes.ToDictionary(type => type.Id)
-        });
+          Update = registration.FileTypes.ToDictionary(type => type.Id)
+        }
+      );
+    }
+
+    if (registration.Values != null)
+    {
+      await UpdateConfiguration(
+        AdspPlatformServices.ValueServiceId,
+        new ConfigurationUpdate<object>
+        {
+          Update = new Dictionary<string, object> {
+            {
+              _serviceId.Service!,
+              new
+              {
+                name = _serviceId.Service,
+                Definitions = registration.Values.ToDictionary(definition => definition.Id)
+              }
+            }
+          }
+        }
+      );
     }
 
     _logger.LogInformation("Completed registration for {Service}.", _serviceId.Service);
@@ -142,10 +157,8 @@ internal class ServiceRegistrar : IServiceRegistrar, IDisposable
   private async Task UpdateConfiguration<T>(AdspId serviceId, T update) where T : class
   {
     _logger.LogDebug("Updating registration configuration for {Service}...", serviceId.Service);
-
     var configurationServiceUrl = await _serviceDirectory.GetServiceUrl(CONFIGURATION_SERVICE_API_ID);
     var requestUrl = new Uri(configurationServiceUrl, $"v2/configuration/{serviceId.Namespace}/{serviceId.Service}");
-
     await _retryPolicy.ExecuteAsync(
       async (_ctx) =>
       {

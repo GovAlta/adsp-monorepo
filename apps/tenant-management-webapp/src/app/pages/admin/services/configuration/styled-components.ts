@@ -47,7 +47,7 @@ export const Import = styled.div`
 
   .choose-button {
     border-radius: 4px;
-    background-color: f1f1f1;
+    background: #f1f1f1;
   }
 `;
 
@@ -149,6 +149,7 @@ export const Exports = styled.div`
 
   .auto-overflow {
     overflow: auto;
+    overflow-x: hidden;
   }
 
   .full-width: {
@@ -163,9 +164,28 @@ export const Exports = styled.div`
     position: absolute;
   }
 
-  .button-wrapper {
-    display: flex;
+  .ellipsis-wrapper {
+    display: block;
     flex-wrap: wrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .text {
+    display: block !important;
+    flex-wrap: wrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .chip {
+    display: flex !important;
+  }
+
+  .mt-1 {
+    margin-top: 9px !important;
   }
 
   .overflow-wrap {
@@ -191,6 +211,11 @@ export const Exports = styled.div`
 
   .goa-checkbox-container: hover {
     border: 2px solid #004f84;
+  }
+
+  .goa-checkbox--selected: hover {
+    background: #004f84;
+    border: 1px solid !important;
   }
 `;
 

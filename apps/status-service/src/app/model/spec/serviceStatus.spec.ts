@@ -16,14 +16,13 @@ describe('ServiceStatusApplicationEntity', () => {
   };
   const endpointMock = {
     status: 'offline' as EndpointStatusType,
-    url: 'https://www.mock-test.com',
     id: '12345',
+    url: 'http://yahoo.com',
     statusEntries: [],
   };
 
   const applicationEntityMock = {
     metadata: '',
-    name: 'mock-test-application-entity',
     description: 'for mock test ',
     statusTimestamp: 0,
     tenantId: 'urn:ads:mock-tenant:mock-service:/tenants/mock-tenant-id',
@@ -52,14 +51,14 @@ describe('ServiceStatusApplicationEntity', () => {
       await ServiceStatusApplicationEntity.create(userMock, repositoryMock, applicationEntityMock);
       expect(repositoryMock.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: applicationEntityMock.name,
+          tenantName: applicationEntityMock.tenantName,
         })
       );
     });
   });
 
-  describe('Can update entity with existed url', () => {
-    it('Can update entity with existed url', async () => {
+  describe('Can update entity', () => {
+    it('Can update entity', async () => {
       const entity = new ServiceStatusApplicationEntity(repositoryMock, applicationEntityMock);
       entity.update(userMock, applicationEntityMock);
       expect(repositoryMock.save).toHaveBeenLastCalledWith(
@@ -68,31 +67,15 @@ describe('ServiceStatusApplicationEntity', () => {
         })
       );
     });
-
-    it('Can update entity with new url', async () => {
-      const entity = new ServiceStatusApplicationEntity(repositoryMock, applicationEntityMock);
-      const entityToBeUpdate = {
-        ...applicationEntityMock,
-        endpoint: {
-          ...endpointMock,
-          url: 'https://www.mock-test-new.com',
-        },
-      };
-      entity.update(userMock, entityToBeUpdate);
-      expect(repositoryMock.save).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          endpoint: { ...entityToBeUpdate.endpoint, status: 'n/a' },
-        })
-      );
-    });
   });
+
   describe('Can toggle entity', () => {
     it('Can enable entity', async () => {
       const entity = new ServiceStatusApplicationEntity(repositoryMock, applicationEntityMock);
       entity.enable(userMock);
       expect(repositoryMock.enable).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: applicationEntityMock.name,
+          tenantName: applicationEntityMock.tenantName,
         })
       );
     });
@@ -102,7 +85,7 @@ describe('ServiceStatusApplicationEntity', () => {
       entity.disable(userMock);
       expect(repositoryMock.disable).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: applicationEntityMock.name,
+          tenantName: applicationEntityMock.tenantName,
         })
       );
     });
@@ -128,7 +111,7 @@ describe('ServiceStatusApplicationEntity', () => {
       await entity.delete(userMock);
       expect(repositoryMock.delete).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: applicationEntityMock.name,
+          tenantName: applicationEntityMock.tenantName,
         })
       );
     });

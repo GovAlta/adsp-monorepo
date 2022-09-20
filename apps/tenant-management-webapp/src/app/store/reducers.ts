@@ -12,6 +12,7 @@ import ServiceStatus from './status/reducers';
 import Event from './event/reducers';
 import Notice from './notice/reducers';
 import Calendar from './calendar/reducers';
+import Script from './script/reducers';
 import Configuration, { ConfigurationExport } from './configuration/reducers';
 import Stream from './stream/reducers';
 import Pdf from './pdf/reducers';
@@ -38,4 +39,5 @@ export const rootReducer = combineReducers({
   stream: Stream,
   serviceRoles: ServiceRoles,
   serviceMetrics: ServiceMetrics,
+  scriptService: Script,
 });

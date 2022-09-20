@@ -9,7 +9,7 @@ const pdfWrapperTemplate = handlebars.compile(pdfWrapper, { noEscape: true });
 const pdfFooterTemplate = handlebars.compile(pdfFooterWrapper, { noEscape: true });
 const pdfHeaderTemplate = handlebars.compile(pdfHeaderWrapper, { noEscape: true });
 
-const hasProperHtmlWrapper = (content: string): boolean => {
+export const hasProperHtmlWrapper = (content: string): boolean => {
   const hasHtmlOpeningTag = /<html[^>]*>/g.test(content) || /<HTML[^>]*>/g.test(content);
   const hasHtmlClosingTag = /<\/html[^>]*>/g.test(content) || /<\/HTML[^>]*>/g.test(content);
   return hasHtmlOpeningTag && hasHtmlClosingTag;

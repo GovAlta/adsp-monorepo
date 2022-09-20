@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from 'react';
-import { sanitizeHtml } from './utils';
+import { sanitizeHtml } from '@lib/sanitize';
 
 interface PreviewPortalProps {
   title: string;

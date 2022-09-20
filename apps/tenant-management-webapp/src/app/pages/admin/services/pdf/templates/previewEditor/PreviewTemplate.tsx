@@ -1,6 +1,5 @@
 import React, { FunctionComponent } from 'react';
 import { PreviewContainer, BodyPreview, SubjectPreview } from './styled-components';
-import { sanitizeHtml } from '../utils';
 
 interface PreviewTemplateProps {
   channelTitle: string;

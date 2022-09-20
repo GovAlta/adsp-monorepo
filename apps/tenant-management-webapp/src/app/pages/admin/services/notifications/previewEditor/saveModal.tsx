@@ -8,9 +8,16 @@ interface NotificationTypeFormProps {
   onSave?: () => void;
   onDontSave?: () => void;
   open: boolean;
+  saveDisable?: boolean;
 }
 
-export const SaveFormModal: FunctionComponent<NotificationTypeFormProps> = ({ onCancel, onDontSave, onSave, open }) => {
+export const SaveFormModal: FunctionComponent<NotificationTypeFormProps> = ({
+  onCancel,
+  onDontSave,
+  onSave,
+  open,
+  saveDisable,
+}) => {
   return (
     <EditStyles>
       <GoAModal testId="notification-types-save-form" isOpen={open}>
@@ -23,7 +30,13 @@ export const SaveFormModal: FunctionComponent<NotificationTypeFormProps> = ({ on
           <GoAButton buttonType="tertiary" data-testid="form-dont-save" type="submit" onClick={(e) => onDontSave()}>
             Don't save
           </GoAButton>
-          <GoAButton buttonType="primary" data-testid="form-agree-save" type="submit" onClick={(e) => onSave()}>
+          <GoAButton
+            buttonType="primary"
+            data-testid="form-agree-save"
+            type="submit"
+            disabled={saveDisable}
+            onClick={(e) => onSave()}
+          >
             Save
           </GoAButton>
         </GoAModalActions>
