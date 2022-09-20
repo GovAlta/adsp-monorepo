@@ -878,3 +878,18 @@ When('the user clicks Delete button in Reset email template modal', function () 
   notificationsObj.resetEmailTemplateModalDeleteBtn().click();
   cy.wait(2000); // Wait for the modal and reset button to go away
 });
+
+When('the user clicks eye icon of {string}, {string} under {string}', function (addressAd, email, notificationType) {
+  notificationsObj.notificationRecordEyeIcon(notificationType, addressAd, email).click();
+});
+
+Then('the user views the details of {string}, {string} under {string}', function (addressAd, email, notificationType) {
+  notificationsObj
+    .notificationRecordDetailsCriteria(notificationType, addressAd, email)
+    .invoke('text')
+    .should('contains', 'correlationId');
+  notificationsObj
+    .notificationRecordDetailsCriteria(notificationType, addressAd, email)
+    .invoke('text')
+    .should('contains', 'context');
+});
