@@ -234,17 +234,19 @@ export const ConfigurationExport: FunctionComponent = () => {
                       className="auto-overflow"
                       style={{
                         maxHeight: `calc(100vh - 608px + ${Math.max(
-                          Math.min(scrollPosition, Math.max(pageHeight - 550, 300)),
+                          Math.min(scrollPosition, Math.max(pageHeight - 600, 300)),
                           0
                         )}px`,
                         minHeight: '100px',
                       }}
                     >
-                      <h3>Selected Configuration</h3>
+                      <h3>
+                        <b>Selected Configuration</b>
+                      </h3>
                       {selectedNamespaces.map((namespace) => {
                         return (
                           <div>
-                            <h4 className="mt-1 ellipsis-wrapper">{namespace}</h4>
+                            <h3 className="header-margin ellipsis-wrapper">{namespace}</h3>
                             {Object.keys(exportServices).map((exp) => {
                               const name = exp.split(':')[1];
                               const namePixelWidth = getTextWidth(name);
