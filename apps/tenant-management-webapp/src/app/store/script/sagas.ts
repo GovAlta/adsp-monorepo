@@ -13,6 +13,9 @@ import {
   FETCH_SCRIPTS_ACTION,
   FetchScriptsAction,
   fetchScriptsSuccess,
+  DeleteScriptAction,
+  DeleteScriptSuccess,
+  DELETE_SCRIPT_ACTION,
   UpdateIndicator,
 } from './actions';
 import { ActionState } from '@store/session/models';
@@ -89,7 +92,34 @@ export function* fetchScripts(action: FetchScriptsAction): SagaIterator {
     }
   }
 }
+
+function* deleteScript(action: DeleteScriptAction): SagaIterator {
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
+  const token: string = yield call(getAccessToken);
+  const scriptId = action.scriptId;
+
+  if (configBaseUrl && token) {
+    try {
+      yield call(
+        axios.patch,
+        `${configBaseUrl}/configuration/v2/configuration/platform/script-service`,
+        { operation: 'DELETE', property: scriptId },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      yield put(DeleteScriptSuccess(scriptId));
+    } catch (err) {
+      yield put(ErrorNotification({ message: `Script (delete script): ${err.message}` }));
+    }
+  }
+}
+
 export function* watchScriptSagas(): Generator {
   yield takeEvery(UPDATE_SCRIPT_ACTION, updateScript);
   yield takeEvery(FETCH_SCRIPTS_ACTION, fetchScripts);
+  yield takeEvery(DELETE_SCRIPT_ACTION, deleteScript);
 }
