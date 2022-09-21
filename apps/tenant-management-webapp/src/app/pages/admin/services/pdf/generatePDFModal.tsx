@@ -62,7 +62,7 @@ export const GeneratePDF: FunctionComponent<GeneratePDFModalProps> = ({ onSave }
           </GoADropdown>
         </GoAFormItem>
         <GoAFormItem>
-          <label>Payload schema</label>
+          <label>Payload</label>
           <EditorStyles>
             <Editor
               data-testid="form-schema"
