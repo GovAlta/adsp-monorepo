@@ -19,14 +19,24 @@ export const combineNotification = (
     const events = [];
     coreItem.events.forEach((coreEvent) => {
       const customEvent = tenantNotificationType[coreItem.id].events.find((ev) => ev.name === coreEvent.name);
+      const channels = coreItem.channels;
       if (!customEvent) {
         coreEvent.customized = false;
         events.push(coreEvent);
       } else {
         delete customEvent.customized;
-        const customized =
-          JSON.stringify(coreEvent?.templates?.email) !== JSON.stringify(customEvent?.templates?.email);
+        let customized = false;
+        for (const channel of channels) {
+          const isUpdated =
+            JSON.stringify(coreEvent?.templates?.[channel]) !== JSON.stringify(customEvent?.templates?.[channel]);
+          if (isUpdated) {
+            customized = true;
+            break;
+          }
+        }
+
         const returnEvent = customized ? customEvent : coreEvent;
+
         returnEvent.customized = customized;
         events.push(returnEvent);
       }
