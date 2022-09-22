@@ -21,6 +21,9 @@ import { PreviewTemplate } from './previewEditor/PreviewTemplate';
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
 import { DeleteModal } from '@components/DeleteModal';
+import { useDebounce } from '@lib/useDebounce';
+import { hasXSS } from '@lib/sanitize';
+
 interface PdfTemplatesProps {
   openAddTemplate: boolean;
 }
@@ -31,6 +34,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
   const [headerPreview, setHeaderPreview] = useState('');
   const [footerPreview, setFooterPreview] = useState('');
   const [currentChannel, setCurrentChannel] = useState('main');
+  const XSS_CHECK_RENDER_DEBOUNCE_TIMER = 2000;
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const pdfTemplates = useSelector((state: RootState) => {
     return state?.pdf?.pdfTemplates;
@@ -41,7 +45,20 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
   const [footer, setFooter] = useState('');
   const [header, setHeader] = useState('');
 
+  const debouncedXssCheckRenderBody = useDebounce(body, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
+  const debouncedXssCheckRenderFooter = useDebounce(footer, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
+  const debouncedXssCheckRenderHeader = useDebounce(header, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
+
   const [isEdit, setIsEdit] = useState(false);
+  const xssErrorMessage = 'There is XSS error, please fix it in the input field';
+  const editDefaultErrors = {
+    body: '',
+    footer: '',
+    header: '',
+  };
+
+  const [templateEditErrors, setTemplateEditErrors] = useState(editDefaultErrors);
+
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -90,6 +107,54 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     }
   }, [pdfTemplates]);
 
+  useEffect(() => {
+    if (hasXSS(debouncedXssCheckRenderBody)) {
+      setTemplateEditErrors({
+        ...templateEditErrors,
+        body: xssErrorMessage,
+      });
+    } else {
+      if (templateEditErrors.body !== '') {
+        setTemplateEditErrors({
+          ...templateEditErrors,
+          body: '',
+        });
+      }
+    }
+  }, [debouncedXssCheckRenderBody]);
+
+  useEffect(() => {
+    if (hasXSS(debouncedXssCheckRenderFooter)) {
+      setTemplateEditErrors({
+        ...templateEditErrors,
+        footer: xssErrorMessage,
+      });
+    } else {
+      if (templateEditErrors.footer !== '') {
+        setTemplateEditErrors({
+          ...templateEditErrors,
+          footer: '',
+        });
+      }
+    }
+  }, [debouncedXssCheckRenderFooter]);
+
+  useEffect(() => {
+    if (hasXSS(debouncedXssCheckRenderHeader)) {
+      setTemplateEditErrors({
+        ...templateEditErrors,
+        header: xssErrorMessage,
+      });
+    } else {
+      if (templateEditErrors.header !== '') {
+        setTemplateEditErrors({
+          ...templateEditErrors,
+          header: '',
+        });
+      }
+    }
+  }, [debouncedXssCheckRenderHeader]);
+
   const dispatch = useDispatch();
 
   const reset = () => {
@@ -97,7 +162,9 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     setShowTemplateForm(false);
     setOpenAddPdfTemplate(false);
     setCurrentTemplate(defaultPdfTemplate);
+    setTemplateEditErrors(editDefaultErrors);
   };
+
   useEffect(() => {
     if (openAddTemplate) {
       setOpenAddPdfTemplate(true);
@@ -115,6 +182,17 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     dispatch(updatePdfTemplate(saveObject));
 
     reset();
+  };
+
+  const validateEventTemplateFields = () => {
+    try {
+      const xssTemplate =
+        templateEditErrors?.header !== '' || templateEditErrors?.footer !== '' || templateEditErrors?.body !== '';
+      return true && !xssTemplate;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
   };
 
   return (
@@ -186,6 +264,10 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                 bodyTitle="Body"
                 onBodyChange={(value) => {
                   setBody(value);
+                  if (currentTemplate) {
+                    currentTemplate.template = value;
+                  }
+                  setCurrentTemplate(currentTemplate);
 
                   try {
                     setBodyPreview(
@@ -205,6 +287,11 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                 onHeaderChange={(value) => {
                   setHeader(value);
 
+                  if (currentTemplate) {
+                    currentTemplate.header = value;
+                  }
+                  setCurrentTemplate(currentTemplate);
+
                   try {
                     setHeaderPreview(
                       generateMessage(
@@ -222,6 +309,11 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                 }}
                 onFooterChange={(value) => {
                   setFooter(value);
+
+                  if (currentTemplate) {
+                    currentTemplate.footer = value;
+                  }
+                  setCurrentTemplate(currentTemplate);
 
                   try {
                     setFooterPreview(
@@ -260,6 +352,10 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                 bodyEditorConfig={bodyEditorConfig}
                 saveCurrentTemplate={() => savePdfTemplate()}
                 cancel={() => reset()}
+                errors={templateEditErrors}
+                validateEventTemplateFields={() => {
+                  return validateEventTemplateFields();
+                }}
               />
 
               <PreviewTemplateContainer>

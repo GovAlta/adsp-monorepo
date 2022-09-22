@@ -25,9 +25,11 @@ export const MetricsSearchForm: FunctionComponent<MetricsSearchFormProps> = ({ o
             onChange={(_n, [value]) => dispatch(setServiceCriteria(value))}
             multiSelect={false}
           >
-            {services.map((service) => (
-              <GoADropdownOption key={service} value={service} label={service} />
-            ))}
+            {services
+              .sort((a, b) => a.localeCompare(b))
+              .map((service) => (
+                <GoADropdownOption key={service} value={service} label={service} />
+              ))}
           </GoADropdown>
         </GoAFormItem>
         <GoAFormItem>

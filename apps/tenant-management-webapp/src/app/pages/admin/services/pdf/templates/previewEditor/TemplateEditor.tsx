@@ -31,6 +31,7 @@ interface TemplateEditorProps {
   errors?: any;
   suggestion?: any;
   cancel: () => void;
+  validateEventTemplateFields: () => boolean;
 }
 
 export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
@@ -50,6 +51,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   errors,
   suggestion,
   cancel,
+  validateEventTemplateFields,
 }) => {
   const monaco = useMonaco();
 
@@ -144,7 +146,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               </h3>
 
               <>
-                <GoAFormItem error={errors?.body ?? ''}>
+                <GoAFormItem error={errors?.header ?? ''}>
                   <h4>Header</h4>
                   <MonacoDivHeader>
                     <MonacoEditor
@@ -159,7 +161,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 </GoAFormItem>
               </>
               <>
-                <GoAFormItem error={errors?.body ?? ''}>
+                <GoAFormItem error={errors?.footer ?? ''}>
                   <h4>Footer</h4>
                   <MonacoDivFooter>
                     <MonacoEditor
@@ -189,6 +191,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             Cancel
           </GoAButton>
           <GoAButton
+            disabled={!validateEventTemplateFields()}
             onClick={() => saveCurrentTemplate()}
             buttonType="primary"
             data-testid="template-form-save"

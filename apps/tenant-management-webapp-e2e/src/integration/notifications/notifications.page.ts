@@ -244,6 +244,18 @@ class NotificationsPage {
     );
   }
 
+  notificationRecordEyeIcon(notificationType, addressAs, email) {
+    return cy.xpath(
+      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[@data-testid="addressAs" and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr/td[@data-testid="actions"]//div[@data-testid="icon-eye"]`
+    );
+  }
+
+  notificationRecordDetailsCriteria(notificationType, addressAs, email) {
+    return cy.xpath(
+      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[@data-testid="addressAs" and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr/following-sibling::tr//div[@data-testid="subscriber-criteria"]`
+    );
+  }
+
   deleteIconForNotificationRecord(notificationType, addressAs, email) {
     return cy.xpath(
       `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[@data-testid="addressAs" and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr//*[@data-testid="icon-trash"]`

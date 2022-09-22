@@ -1,7 +1,8 @@
 import styled from 'styled-components';
 
 export const IdField = styled.div`
-  min-height: 1.6rem;
+  min-height: 2.1rem;
+  background-color: #dcdcdc;
 `;
 
 export const TableDiv = styled.div`
@@ -15,10 +16,6 @@ export const TableDiv = styled.div`
     min-width: 160px;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-
-  & .meta {
-    padding: 0;
   }
 `;
 export const UseServiceAccountWrapper = styled.div`
@@ -55,15 +52,22 @@ export const DataTableWrapper = styled.div`
   }
 
   .role-name {
-    width: 40em;
+    width: 35em;
+  }
+  .role-label {
+    width: 29em;
+  }
+  .role-checkbox {
+    width: 4em;
+    text-align: center;
   }
 
   .role {
-    width: 3em;
+    width: 4em;
+    text-align: center;
   }
 
   td {
-    // padding-left: 0em !important;
     padding: 0em !important;
   }
 

@@ -30,17 +30,17 @@ public class ScriptController : ControllerBase
 
   [HttpGet]
   [Route("scripts")]
-  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
+  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant, Roles = ServiceRoles.ScriptRunner)]
   public async Task<IEnumerable<ScriptDefinition>> GetScripts()
   {
-    var definitions = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, Dictionary<string, ScriptDefinition>>();
+    var configuration = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, ScriptConfiguration>();
 
-    return definitions?.Values ?? Enumerable.Empty<ScriptDefinition>();
+    return configuration?.Definitions.Values ?? Enumerable.Empty<ScriptDefinition>();
   }
 
   [HttpGet]
   [Route("scripts/{script?}")]
-  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
+  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant, Roles = ServiceRoles.ScriptRunner)]
   public async Task<ScriptDefinition> GetScript(string? script)
   {
     if (String.IsNullOrWhiteSpace(script))
@@ -48,8 +48,8 @@ public class ScriptController : ControllerBase
       throw new RequestArgumentException("script parameter cannot be null or empty.");
     }
 
-    var definitions = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, Dictionary<string, ScriptDefinition>>();
-    if (definitions?.TryGetValue(script, out ScriptDefinition? definition) != true)
+    var configuration = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, ScriptConfiguration>();
+    if (configuration?.Definitions.TryGetValue(script, out ScriptDefinition? definition) != true)
     {
       throw new NotFoundException($"Script definition with ID '{script}' not found.");
     }

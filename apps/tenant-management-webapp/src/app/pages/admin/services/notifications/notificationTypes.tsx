@@ -13,7 +13,7 @@ import { FetchRealmRoles } from '@store/tenant/actions';
 import { isDuplicatedNotificationName } from './validation';
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
-import { hasXSS, sanitizeHtml } from '@lib/sanitize';
+import { hasXSS } from '@lib/sanitize';
 import { ReactComponent as Mail } from '@assets/icons/mail.svg';
 import { ReactComponent as Slack } from '@assets/icons/slack.svg';
 import { ReactComponent as Chat } from '@assets/icons/chat.svg';
@@ -138,7 +138,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     // if an event is selected for editing
     if (selectedEvent) {
       setTemplates(selectedEvent?.templates);
-      setSavedTemplates(JSON.parse(sanitizeHtml(JSON.stringify(selectedEvent?.templates))));
+      setSavedTemplates(JSON.parse(JSON.stringify(selectedEvent?.templates)));
 
       // try to render preview of subject and body.
       // Will only load if the subject and body is a valid handlebar template
@@ -146,10 +146,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
       try {
         setSubjectPreview('');
-        const bodyPreview = generateMessage(
-          sanitizeHtml(getTemplateBody(template?.body, currentChannel, htmlPayload)),
-          htmlPayload
-        );
+        const bodyPreview = generateMessage(getTemplateBody(template?.body, currentChannel, htmlPayload), htmlPayload);
         setBodyPreview(bodyPreview);
         setTemplateEditErrors({
           ...templateEditErrors,

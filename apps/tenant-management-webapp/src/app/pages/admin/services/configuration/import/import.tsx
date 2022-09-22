@@ -10,7 +10,6 @@ import {
   resetReplaceConfigurationListAction,
   resetImportsListAction,
 } from '@store/configuration/action';
-import { PageIndicator } from '@components/Indicator';
 import { ConfigDefinition } from '@store/configuration/model';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { ImportModal } from './importModal';
@@ -31,12 +30,12 @@ const exportSchema = {
 
 export const ConfigurationImport: FunctionComponent = () => {
   const imports = useSelector((state: RootState) => state.configuration.imports);
-  const indicator = useSelector((state: RootState) => state?.session?.indicator);
 
   const fileName = useRef() as React.MutableRefObject<HTMLInputElement>;
 
   const [selectedImportFile, setSelectedImportFile] = useState('');
   const [openImportModal, setOpenImportModal] = useState(false);
+  const [jobsInUse, setJobsInUse] = useState(false);
   const [importNameList, setImportNameList] = useState([]);
   const [importConfigJson, setImportConfigJson] = useState<ConfigDefinition>(null);
 
@@ -85,7 +84,6 @@ export const ConfigurationImport: FunctionComponent = () => {
     setImportConfigJson(importConfig);
     setImportNameList(configList);
     setOpenImportModal(true);
-    setSelectedImportFile('');
   };
 
   const onImportChange = (e) => {
@@ -105,6 +103,8 @@ export const ConfigurationImport: FunctionComponent = () => {
   };
   const onImportConfirm = () => {
     setOpenImportModal(false);
+    setSelectedImportFile('');
+    setJobsInUse(true);
 
     dispatch(resetImportsListAction());
 
@@ -190,14 +190,11 @@ export const ConfigurationImport: FunctionComponent = () => {
                 <br />
               </ErrorStatusText>
             )}
-            <section>
-              <JobList />
-            </section>
+            <section>{jobsInUse && <JobList />}</section>
           </GoAForm>
           <br />
         </div>
       }
-      {indicator.show && <PageIndicator />}
       {openImportModal && (
         <ImportModal importArray={importNameList} onCancel={onImportCancel} onConfirm={onImportConfirm} />
       )}
