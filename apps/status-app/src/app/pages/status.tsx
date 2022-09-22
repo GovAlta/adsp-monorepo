@@ -25,6 +25,7 @@ import moment from 'moment';
 import GoaLogo from '../../assets/goa-logo.svg';
 import { GoAButton } from '@abgov/react-components';
 import { GoAForm, GoAFormItem, GoAInputEmail, GoAFormActions } from '@abgov/react-components/experimental';
+import { emailError } from '@lib/inputValidation';
 
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
@@ -40,15 +41,17 @@ const ServiceStatusPage = (): JSX.Element => {
   const realm = location.pathname.slice(1) || config.platformTenantRealm;
   const dispatch = useDispatch();
 
-  const { tenantName, loaded, subscriber, applications, error, contact, indicator } = useSelector((state: RootState) => ({
-    tenantName: state.session?.tenant?.name,
-    loaded: state.session?.isLoadingReady,
-    subscriber: state.subscription.subscriber,
-    applications: state.application?.applications,
-    error: state.session?.notifications,
-    contact: state.configuration.contact,
-    indicator: state.session.indicator,
-  }));
+  const { tenantName, loaded, subscriber, applications, error, contact, indicator } = useSelector(
+    (state: RootState) => ({
+      tenantName: state.session?.tenant?.name,
+      loaded: state.session?.isLoadingReady,
+      subscriber: state.subscription.subscriber,
+      applications: state.application?.applications,
+      error: state.session?.notifications,
+      contact: state.configuration.contact,
+      indicator: state.session.indicator,
+    })
+  );
 
   const contactEmail = contact?.contactEmail || 'adsp@gov.ab.ca';
 
@@ -146,14 +149,8 @@ const ServiceStatusPage = (): JSX.Element => {
     }
   };
 
-  function emailErrors() {
-    if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
-      return { email: 'You must enter a valid email' };
-    }
-  }
-
   function formErrorsFunc() {
-    const validEmailSelectedConst = emailErrors();
+    const validEmailSelectedConst = emailError(email);
 
     return { ...validEmailSelectedConst };
   }
@@ -258,11 +255,7 @@ const ServiceStatusPage = (): JSX.Element => {
                   </GoAForm>
                   <GoAFormActionOverwrite>
                     <GoAFormActions alignment="left">
-                      <GoAButton
-                        buttonType="primary"
-                        data-testid="subscribe"
-                        onClick={save}
-                      >
+                      <GoAButton buttonType="primary" data-testid="subscribe" onClick={save}>
                         Submit
                       </GoAButton>
                     </GoAFormActions>

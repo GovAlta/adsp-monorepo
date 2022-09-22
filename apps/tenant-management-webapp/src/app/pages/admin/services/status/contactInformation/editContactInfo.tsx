@@ -4,6 +4,7 @@ import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
+import { emailError } from '@lib/inputValidation';
 
 import { GoAInputEmail } from '@abgov/react-components/experimental';
 
@@ -31,14 +32,8 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
     setContactInformation(JSON.parse(x));
   }, [initialValue]);
 
-  function emailErrors(email) {
-    if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
-      return { email: 'You must enter a valid email' };
-    }
-  }
-
   const trySave = (contactInformation) => {
-    const formErrorList = Object.assign({}, emailErrors(contactInformation.contactEmail));
+    const formErrorList = Object.assign({}, emailError(contactInformation.contactEmail));
     if (Object.keys(formErrorList).length === 0) {
       onSave(contactInformation);
       setFormErrors(null);
