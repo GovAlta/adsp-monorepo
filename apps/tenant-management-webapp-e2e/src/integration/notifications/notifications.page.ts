@@ -470,7 +470,7 @@ class NotificationsPage {
     return cy.get('[data-testid="templated-editor-body"]');
   }
 
-  editContactModalBodyEmailPreviewPane() {
+  editTemplateModalBodyEmailPreviewPane() {
     return cy.get('[data-testid="email-preview-body"]');
   }
 

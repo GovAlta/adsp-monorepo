@@ -821,7 +821,8 @@ Then('the user views the email subject {string}', function (subject) {
 
 Then('the user views the email body {string}', function (emailBody) {
   notificationsObj.editTemplateModalEmailBody().invoke('text').should('contain', emailBody);
-  notificationsObj.editContactModalBodyEmailPreviewPane().then(function ($iFrame) {
+  cy.wait(2000); // Wait 2 second for iFrame to show to avoid undefined element error
+  notificationsObj.editTemplateModalBodyEmailPreviewPane().then(function ($iFrame) {
     const iFrameContent = $iFrame.contents().find('body');
     cy.wrap(iFrameContent).find('[class*="email-content"]').invoke('text').should('contain', emailBody);
   });
@@ -834,7 +835,7 @@ When('the user clicks Close button in event template modal', function () {
 
 When('the user views the link for managing email subscription', function () {
   notificationsObj
-    .editContactModalBodyEmailPreviewPane()
+    .editTemplateModalBodyEmailPreviewPane()
     .its('0.contentDocument.body')
     .find('footer')
     .contains('Please do not reply to this email. Manage your subscription here.');
@@ -842,7 +843,7 @@ When('the user views the link for managing email subscription', function () {
   const urlSubscriptionLogin = Cypress.env('subscriptionUrl') + '/' + Cypress.env('realm') + '/login';
   cy.log(urlSubscriptionLogin);
   notificationsObj
-    .editContactModalBodyEmailPreviewPane()
+    .editTemplateModalBodyEmailPreviewPane()
     .its('0.contentDocument.body')
     .find('footer')
     .find('[class="goa-footer-event"]')
