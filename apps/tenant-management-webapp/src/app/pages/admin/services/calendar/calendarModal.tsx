@@ -47,7 +47,7 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
   const duplicateCalendarCheck = (): Validator => {
     return (name: string) => {
-      return calendars[calendar.name]
+      return calendars[name]
         ? `Duplicated calendar name ${name}, Please use a different name to get a unique Calendar name`
         : '';
     };
