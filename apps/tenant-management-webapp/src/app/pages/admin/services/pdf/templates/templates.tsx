@@ -22,8 +22,7 @@ import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
 import { DeleteModal } from '@components/DeleteModal';
 import { useDebounce } from '@lib/useDebounce';
-import { hasXSS, sanitizeHtml } from '@lib/sanitize';
-import * as handlebars from 'handlebars';
+import { hasXSS } from '@lib/sanitize';
 
 interface PdfTemplatesProps {
   openAddTemplate: boolean;
@@ -52,12 +51,13 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
 
   const [isEdit, setIsEdit] = useState(false);
   const xssErrorMessage = 'There is XSS error, please fix it in the input field';
-
-  const [templateEditErrors, setTemplateEditErrors] = useState({
+  const editDefaultErrors = {
     body: '',
     footer: '',
     header: '',
-  });
+  };
+
+  const [templateEditErrors, setTemplateEditErrors] = useState(editDefaultErrors);
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -162,7 +162,9 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     setShowTemplateForm(false);
     setOpenAddPdfTemplate(false);
     setCurrentTemplate(defaultPdfTemplate);
+    setTemplateEditErrors(editDefaultErrors);
   };
+
   useEffect(() => {
     if (openAddTemplate) {
       setOpenAddPdfTemplate(true);

@@ -7,6 +7,9 @@ export const UPDATE_SCRIPT_SUCCESS_ACTION = 'script/UPDATE_SCRIPT_SUCCESS_ACTION
 export const FETCH_SCRIPTS_ACTION = 'script/FETCH_SCRIPTS_ACTION';
 export const FETCH_SCRIPTS_SUCCESS_ACTION = 'script/FETCH_SCRIPTS_SUCCESS_ACTION';
 
+export const DELETE_SCRIPT_ACTION = 'script/DELETE_SCRIPT_ACTION';
+export const DELETE_SCRIPT_SUCCESS_ACTION = 'script/DELETE_SCRIPT_ACTION_SUCCESS';
+
 export interface UpdateScriptAction {
   type: typeof UPDATE_SCRIPT_ACTION;
   payload: ScriptItem;
@@ -14,6 +17,15 @@ export interface UpdateScriptAction {
 export interface UpdateScriptSuccessAction {
   type: typeof UPDATE_SCRIPT_SUCCESS_ACTION;
   payload: Record<string, ScriptItem>;
+}
+
+export interface DeleteScriptAction {
+  type: typeof DELETE_SCRIPT_ACTION;
+  scriptId: string;
+}
+export interface DeleteScriptSuccessAction {
+  type: typeof DELETE_SCRIPT_SUCCESS_ACTION;
+  scriptId: string;
 }
 export interface FetchScriptsAction {
   type: typeof FETCH_SCRIPTS_ACTION;
@@ -32,7 +44,9 @@ export type ActionTypes =
   | UpdateScriptSuccessAction
   | FetchScriptsAction
   | FetchScriptsSuccessAction
-  | UpdateIndicatorAction;
+  | UpdateIndicatorAction
+  | DeleteScriptAction
+  | DeleteScriptSuccessAction;
 
 export const UpdateScript = (payload: ScriptItem): UpdateScriptAction => ({
   type: UPDATE_SCRIPT_ACTION,
@@ -55,4 +69,14 @@ export const fetchScriptsSuccess = (scrips: Record<string, ScriptItem>): FetchSc
 export const UpdateIndicator = (indicator: Indicator): UpdateIndicatorAction => ({
   type: UPDATE_INDICATOR,
   payload: indicator,
+});
+
+export const DeleteScript = (scriptId: string): DeleteScriptAction => ({
+  type: DELETE_SCRIPT_ACTION,
+  scriptId: scriptId,
+});
+
+export const DeleteScriptSuccess = (scriptId: string): DeleteScriptSuccessAction => ({
+  type: DELETE_SCRIPT_SUCCESS_ACTION,
+  scriptId: scriptId,
 });

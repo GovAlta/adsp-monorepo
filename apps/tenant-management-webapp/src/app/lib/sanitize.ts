@@ -7,8 +7,10 @@ const options = {
     html: ['lang'],
     meta: ['name', 'content', 'charset'],
     div: ['style', 'class'],
+    style: [],
     a: ['href', 'title', 'target', 'style', 'class'],
     em: [],
+    main: [],
     footer: ['style'],
     header: ['style'],
     head: [],
@@ -39,7 +41,7 @@ const options = {
     s: [],
     section: [],
     small: [],
-    span: [],
+    span: ['class', 'style'],
     sub: [],
     summary: [],
     sup: [],
@@ -79,7 +81,7 @@ addHook('afterSanitizeAttributes', function (node) {
 export function hasXSS(html) {
   const wordsToEscape = ['<!DOCTYPE html>', '<!doctype html>'];
   for (const word of wordsToEscape) {
-    html = html.replace(word, '');
+    html = (html || '').replace(word, '');
   }
 
   const sanitized = xssFilter.process(html);

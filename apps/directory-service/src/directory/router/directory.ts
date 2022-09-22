@@ -110,14 +110,15 @@ export const getEntriesForServiceImpl = async (
     return null;
   }
 
+  const filteredService = service.replace(/[^a-zA-Z- ]/g, '');
+
   // regex matches the service name, exactly;
-  const serviceRe = new RegExp(`^${service}$`);
+  const serviceRe = new RegExp(`^${filteredService}$`);
   const serviceEntry = data.services.filter((x) => x.service.match(serviceRe)).map((s) => getEntry(namespace, s));
 
   // regex matches service:api
-  const apisRe = new RegExp(`^${service}:.+`);
+  const apisRe = new RegExp(`^${filteredService}:.+`);
   const apiEntries = data.services.filter((x) => x.service.match(apisRe)).map((s) => getEntry(namespace, s));
-
   const theService = serviceEntry.length > 0 ? serviceEntry[0] : null;
   return !theService && apiEntries.length == 0 ? null : { service: theService, apis: apiEntries };
 };

@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { SagaIterator } from '@redux-saga/core';
-import { DELETE_CALENDAR_ACTION, UpdateIndicator } from '@store/calendar/actions';
 import { RootState } from '..';
 import { select, call, put, takeEvery } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
@@ -15,6 +14,8 @@ import {
   UPDATE_CALENDAR_ACTION,
   DeleteCalendarAction,
   DeleteCalendarSuccess,
+  DELETE_CALENDAR_ACTION,
+  UpdateIndicator,
 } from './actions';
 
 import { ActionState } from '@store/session/models';
