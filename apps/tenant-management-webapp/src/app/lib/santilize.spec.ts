@@ -35,6 +35,7 @@ describe('Check sanitize', () => {
     expect(hasXSS(htmlWithITag)).toEqual(false);
     expect(hasXSS(htmlWithBTag)).toEqual(false);
     expect(hasXSS(htmlDocType)).toEqual(false);
+    expect(hasXSS(null)).toEqual(false);
   });
 
   it('Can return false for html with XSS risk', () => {
