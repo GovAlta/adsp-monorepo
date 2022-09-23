@@ -21,6 +21,7 @@ describe('Check sanitize', () => {
     const htmlWithITag = `<i></i>`;
     const htmlWithBTag = `<b></b>`;
     const htmlDocType = '<!DOCTYPE html>';
+    const htmlWithSpanTagAndClass = '<span class="test"></span>';
 
     expect(hasXSS(htmWithoutHtmlTag)).toEqual(false);
     expect(hasXSS(htmWithHtmlTag)).toEqual(false);
@@ -36,6 +37,7 @@ describe('Check sanitize', () => {
     expect(hasXSS(htmlWithBTag)).toEqual(false);
     expect(hasXSS(htmlDocType)).toEqual(false);
     expect(hasXSS(null)).toEqual(false);
+    expect(hasXSS(htmlWithSpanTagAndClass)).toEqual(false);
   });
 
   it('Can return false for html with XSS risk', () => {
