@@ -17,6 +17,7 @@ import { hasXSS } from '@lib/sanitize';
 import { ReactComponent as Mail } from '@assets/icons/mail.svg';
 import { ReactComponent as Slack } from '@assets/icons/slack.svg';
 import { ReactComponent as Chat } from '@assets/icons/chat.svg';
+import { XSSErrorMessage } from '@lib/sanitize';
 
 import {
   UpdateNotificationTypeService,
@@ -86,7 +87,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const TEMPALTE_RENDER_DEBOUNCE_TIMER = 500; // ms
   const XSS_CHECK_RENDER_DEBOUNCE_TIMER = 2000; //ms
   const syntaxErrorMessage = 'Cannot render the code, please fix the syntax error in the input field';
-  const xssErrorMessage = 'There is XSS error, please fix it in the input field';
   const notification = useSelector((state: RootState) => state.notification);
   const coreNotification = useSelector((state: RootState) => state.notification.core);
   const [formTitle, setFormTitle] = useState<string>('');
@@ -219,7 +219,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     if (hasXSS(debouncedXssCheckRenderBody)) {
       setTemplateEditErrors({
         ...templateEditErrors,
-        body: xssErrorMessage,
+        body: XSSErrorMessage,
       });
     }
   }, [debouncedXssCheckRenderBody]);
@@ -228,7 +228,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     if (hasXSS(debouncedXssCheckRenderSubject)) {
       setTemplateEditErrors({
         ...templateEditErrors,
-        subject: xssErrorMessage,
+        subject: XSSErrorMessage,
       });
     }
   }, [debouncedXssCheckRenderSubject]);
