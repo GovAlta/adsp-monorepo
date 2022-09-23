@@ -53,6 +53,9 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
     case 'Calendar':
       menuItemTestid = 'menu-calendar';
       break;
+    case 'Script':
+      menuItemTestid = 'menu-script';
+      break;
     default:
       expect(menuItem).to.be.oneOf([
         'File',
@@ -66,6 +69,7 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
         'Event log',
         'PDF',
         'Calendar',
+        'Script',
       ]);
   }
   commonObj.adminMenuItem(menuItemTestid).click();
