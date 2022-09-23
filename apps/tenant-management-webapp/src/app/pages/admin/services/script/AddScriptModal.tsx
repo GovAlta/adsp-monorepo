@@ -42,7 +42,7 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
   const duplicateScriptCheck = (): Validator => {
     return (name: string) => {
-      return scripts[script.name]
+      return scripts[name]
         ? `Duplicated script name ${name}, Please use a different name to get a unique script name`
         : '';
     };
@@ -125,10 +125,10 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
               data-testid={`script-modal-name-input`}
               aria-label="name"
               onChange={(name, value) => {
+                validators.remove('name');
                 const validations = {
                   name: value,
                 };
-                validators.remove('name');
 
                 validations['duplicated'] = value;
 
