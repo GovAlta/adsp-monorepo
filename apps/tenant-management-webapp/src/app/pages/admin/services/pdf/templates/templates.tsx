@@ -22,7 +22,7 @@ import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
 import { DeleteModal } from '@components/DeleteModal';
 import { useDebounce } from '@lib/useDebounce';
-import { hasXSS } from '@lib/sanitize';
+import { hasXSS, XSSErrorMessage } from '@lib/sanitize';
 
 interface PdfTemplatesProps {
   openAddTemplate: boolean;
@@ -50,7 +50,6 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
   const debouncedXssCheckRenderHeader = useDebounce(header, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
 
   const [isEdit, setIsEdit] = useState(false);
-  const xssErrorMessage = 'There is XSS error, please fix it in the input field';
   const editDefaultErrors = {
     body: '',
     footer: '',
@@ -111,7 +110,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     if (hasXSS(debouncedXssCheckRenderBody)) {
       setTemplateEditErrors({
         ...templateEditErrors,
-        body: xssErrorMessage,
+        body: XSSErrorMessage,
       });
     } else {
       if (templateEditErrors.body !== '') {
@@ -127,7 +126,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     if (hasXSS(debouncedXssCheckRenderFooter)) {
       setTemplateEditErrors({
         ...templateEditErrors,
-        footer: xssErrorMessage,
+        footer: XSSErrorMessage,
       });
     } else {
       if (templateEditErrors.footer !== '') {
@@ -143,7 +142,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     if (hasXSS(debouncedXssCheckRenderHeader)) {
       setTemplateEditErrors({
         ...templateEditErrors,
-        header: xssErrorMessage,
+        header: XSSErrorMessage,
       });
     } else {
       if (templateEditErrors.header !== '') {

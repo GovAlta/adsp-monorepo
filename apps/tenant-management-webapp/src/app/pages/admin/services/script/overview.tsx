@@ -21,10 +21,10 @@ export const ScriptOverview = ({ setActiveEdit, setActiveIndex }: ScriptOverview
     <div>
       <section>
         <p>
-          This script service provides access to script triggers and script publishing. A service script, as defined in
-          this study, is a detailed guide for front-line employees to follow during a service encounter. A script
-          includes a predetermined set of specific words, phrases, and gestures, as well as other expectations for the
-          employee to use during each step of the service process.
+          The script services provides the ability to execute configured Lua scripts. Applications can use this to
+          capture simple logic in configuration. For example, benefits calculations can be configured in a script and
+          executed via the script service API so that policy changes to the formula can implemented through
+          configuration change.
         </p>
         <GoAButton
           data-testid="add-script-btn"
