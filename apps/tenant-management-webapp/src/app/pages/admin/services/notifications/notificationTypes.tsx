@@ -80,10 +80,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [showEventDeleteConfirmation, setShowEventDeleteConfirmation] = useState(false);
   const [coreEvent, setCoreEvent] = useState(false);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
-  const [templateEditErrors, setTemplateEditErrors] = useState({
+  const templateDefaultError = {
     subject: '',
     body: '',
-  });
+  };
+  const [templateEditErrors, setTemplateEditErrors] = useState(templateDefaultError);
   const TEMPALTE_RENDER_DEBOUNCE_TIMER = 500; // ms
   const XSS_CHECK_RENDER_DEBOUNCE_TIMER = 2000; //ms
   const syntaxErrorMessage = 'Cannot render the code, please fix the syntax error in the input field';
@@ -192,6 +193,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     if (closeEventModal) {
       setEditEvent(null);
     }
+    setTemplateEditErrors(templateDefaultError);
     setSelectedType(emptyNotificationType);
     setErrors({});
   }

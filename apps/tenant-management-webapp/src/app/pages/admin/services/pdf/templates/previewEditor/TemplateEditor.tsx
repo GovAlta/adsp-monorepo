@@ -6,7 +6,7 @@ import {
   MonacoDivHeader,
   MonacoDivFooter,
 } from './styled-components';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem, GoABadge } from '@abgov/react-components/experimental';
 import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
 import { PdfTemplate } from '@store/pdf/model';
 import { languages } from 'monaco-editor';
@@ -101,7 +101,13 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
       <GoAForm>
         <GoAFormItem>
           <Tabs activeIndex={activeIndex} changeTabCallback={(index: number) => switchTabPreview(channels[index])}>
-            <Tab label="Main">
+            <Tab
+              label={
+                <div>
+                  Main {errors?.body && <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" />}
+                </div>
+              }
+            >
               <h3 className="reduce-margin" data-testid="modal-title">
                 {`${template?.name}`}
                 <p>{`${mainTitle} template`}</p>
@@ -139,7 +145,16 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 )}
               </>
             </Tab>
-            <Tab label="Header/Footer">
+            <Tab
+              label={
+                <div>
+                  Header/Footer{' '}
+                  {(errors?.footer || errors?.header) && (
+                    <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" />
+                  )}
+                </div>
+              }
+            >
               <h3 className="reduce-margin" data-testid="modal-title">
                 {`${template?.name}`}
                 <p>{`${mainTitle} template`}</p>
