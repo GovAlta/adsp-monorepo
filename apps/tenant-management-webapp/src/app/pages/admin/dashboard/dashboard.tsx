@@ -267,9 +267,10 @@ const Dashboard = (): JSX.Element => {
                         <Link to="/admin/services/script">Script</Link>
                       </h2>
                       <div>
-                        This script service provides access to script triggers and script publishing. A service script,
-                        as defined in this study, is a detailed guide for front-line employees to follow during a
-                        service encounter.
+                        The script services provides the ability to execute configured Lua scripts. Applications can use
+                        this to capture simple logic in configuration. For example, benefits calculations can be
+                        configured in a script and executed via the script service API so that policy changes to the
+                        formula can implemented through configuration change.
                       </div>
                       <div>&nbsp;</div>
                     </GoACard>
