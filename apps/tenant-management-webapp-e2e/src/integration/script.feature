@@ -18,3 +18,11 @@ Feature: Script
     Then the user views delete "script" confirmation modal for "autotest-adddeletescript"
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the script of "autotest-adddeletescript", "autotest script desc", "auto-test-role1, urn:ads:autotest:chat-service:chat-admin"
+
+  @TEST_CS-1739 @REQ_CS-1655 @regression
+  Scenario: As a tenant admin, I can see the overview for a script service, so I know about the service
+    Given a tenant admin user is on script service overview page
+    Then the user views the "Script service" overview content "The script services provides"
+    And the user views the link of API docs for "Script service"
+    And the user views the link of See the code for "script-service"
+    And the user views the link of "Get support" under Support
