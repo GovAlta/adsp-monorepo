@@ -11,9 +11,10 @@ import { GoAContextMenuIcon } from '@components/ContextMenu';
 interface ScriptItemProps {
   script: ScriptItem;
   onDelete?: (script: ScriptItem) => void;
+  onEdit?: (script: ScriptItem) => void;
 }
 
-const ScriptItemComponent: FunctionComponent<ScriptItemProps> = ({ script, onDelete }: ScriptItemProps) => {
+const ScriptItemComponent: FunctionComponent<ScriptItemProps> = ({ script, onDelete, onEdit }: ScriptItemProps) => {
   return (
     <>
       <tr key={script.name}>
@@ -39,6 +40,14 @@ const ScriptItemComponent: FunctionComponent<ScriptItemProps> = ({ script, onDel
         <td headers="script-actions" data-testid="script-actions">
           {onDelete && (
             <div style={{ display: 'flex' }}>
+              <GoAContextMenuIcon
+                type="create"
+                title="Edit"
+                testId={`script-edit-${script.name}`}
+                onClick={() => {
+                  onEdit(script);
+                }}
+              />
               <GoAIconButton
                 data-testid="delete-icon"
                 size="medium"
@@ -57,7 +66,7 @@ const ScriptItemComponent: FunctionComponent<ScriptItemProps> = ({ script, onDel
 
 interface scriptTableProps {
   scripts: Record<string, ScriptItem>;
-  onDelete?: (script: ScriptItem) => void;
+  onEdit?: (script: ScriptItem) => void;
 }
 
 export const ScriptTableComponent: FunctionComponent<scriptTableProps> = ({ scripts, onEdit }) => {
@@ -95,7 +104,7 @@ export const ScriptTableComponent: FunctionComponent<scriptTableProps> = ({ scri
 
         <tbody key="script-detail">
           {Object.keys(scripts).map((scriptName) => (
-            <ScriptItemComponent script={scripts[scriptName]} onDelete={onDelete} />
+            <ScriptItemComponent script={scripts[scriptName]} onDelete={onDelete} onEdit={onEdit} />
           ))}
         </tbody>
       </DataTable>
