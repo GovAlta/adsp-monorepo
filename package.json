@@ -115,9 +115,9 @@
   },
   "devDependencies": {
     "@abgov/core-css": "^1.7.0-beta.11",
-    "@abgov/nx-adsp": "^3.0.0",
-    "@abgov/nx-oc": "^3.0.0",
-    "@abgov/nx-release": "^3.0.1",
+    "@abgov/nx-adsp": "^3.2.0",
+    "@abgov/nx-oc": "^3.2.0",
+    "@abgov/nx-release": "^3.1.0",
     "@abgov/react-components": "^3.4.0-beta.65",
     "@abgov/react-components-new": "npm:@abgov/react-components@^4.0.0-alpha.23",
     "@abgov/semantic-release-nuget": "^1.0.0",
@@ -142,7 +142,7 @@
     "@nrwl/react": "14.7.16",
     "@nrwl/web": "14.7.16",
     "@nrwl/workspace": "14.7.16",
-    "@nx-dotnet/core": "1.11.0",
+    "@nx-dotnet/core": "1.13.4",
     "@redux-devtools/extension": "^3.2.2",
     "@reduxjs/toolkit": "1.8.4",
     "@shelf/jest-mongodb": "^2.1.0",
@@ -254,8 +254,6 @@
   },
   "overrides": {
     "@nrwl/devkit": "14.7.16",
-    "@nrwl/express": "14.7.16",
-    "@nrwl/react": "14.7.16",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   }
