@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-undef
 module.exports = {
-  process: content => "module.exports.default = " + JSON.stringify(content)
+  process: content => ({ code: "module.exports.default = " + JSON.stringify(content) })
 };

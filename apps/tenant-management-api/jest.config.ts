@@ -1,5 +1,6 @@
-module.exports = {
-  name: 'tenant-management-api',
+/* eslint-disable */
+export default {
+  displayName: 'tenant-management-api',
   preset: './jest.preset.js',
   globals: {
     'ts-jest': { tsconfig: '<rootDir>/tsconfig.spec.json' },

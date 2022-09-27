@@ -5,5 +5,12 @@
     "module": "commonjs",
     "types": ["jest", "node"]
   },
-  "include": ["**/*.spec.ts", "**/*.test.ts", "**/*.d.ts", "src/form/router/types.ts", "src/mongo/types.ts"]
+  "include": [
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/*.d.ts",
+    "src/form/router/types.ts",
+    "src/mongo/types.ts",
+    "jest.config.ts"
+  ]
 }

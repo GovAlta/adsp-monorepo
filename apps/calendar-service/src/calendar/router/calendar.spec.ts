@@ -3,7 +3,7 @@ import { NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { ICalCalendar } from 'ical-generator';
 import { DateTime } from 'luxon';
-import { mocked } from 'ts-jest/utils';
+import { mocked } from 'jest-mock';
 import { Logger } from 'winston';
 import { CalendarEntity, CalendarEventEntity } from '../model';
 import { Calendar, CalendarEvent } from '../types';

@@ -91,7 +91,7 @@ describe('Service statuses (2 of them)', () => {
   ];
 
   beforeAll(() => {
-    jest.useFakeTimers('modern');
+    jest.useFakeTimers();
     jest.setSystemTime(new Date(Date.UTC(2021, 6, 16)));
   });
   afterAll(() => {
