@@ -4,10 +4,12 @@ import {
   FETCH_SCRIPTS_SUCCESS_ACTION,
   UPDATE_INDICATOR,
   DELETE_SCRIPT_SUCCESS_ACTION,
+  RUN_SCRIPT_ACTION_SUCCESS,
 } from './actions';
 import { ScriptService, SCRIPT_INIT } from './models';
 
 export default (state = SCRIPT_INIT, action: ActionTypes): ScriptService => {
+  console.log(JSON.stringify(action.type) + '<action.ptye');
   switch (action.type) {
     case UPDATE_SCRIPT_SUCCESS_ACTION: {
       return {
@@ -24,6 +26,11 @@ export default (state = SCRIPT_INIT, action: ActionTypes): ScriptService => {
           ...action.payload,
         },
       };
+    }
+    case RUN_SCRIPT_ACTION_SUCCESS: {
+      const newStringResponses = state.scriptResponse;
+      newStringResponses.push(action.payload);
+      return { ...state, scriptResponse: newStringResponses };
     }
     case DELETE_SCRIPT_SUCCESS_ACTION: {
       const deletedScript = Object.keys(state.scripts).find((scriptName) => scriptName === action.scriptId);

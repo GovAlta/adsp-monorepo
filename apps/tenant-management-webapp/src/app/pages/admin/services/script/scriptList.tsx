@@ -15,6 +15,7 @@ interface ScriptItemProps {
 }
 
 const ScriptItemComponent: FunctionComponent<ScriptItemProps> = ({ script, onDelete, onEdit }: ScriptItemProps) => {
+  //console.log(JSON.stringify(script) + '<script');
   return (
     <>
       <tr key={script.name}>
@@ -79,6 +80,8 @@ export const ScriptTableComponent: FunctionComponent<scriptTableProps> = ({ scri
     setSelectedDeleteScript(script);
     setShowDeleteConfirmation(true);
   };
+  //console.log(JSON.stringify(scripts) + '<scripts');
+  console.log('wtf bbq');
   return (
     <TableDiv key="script">
       <DataTable data-testid="script-table">

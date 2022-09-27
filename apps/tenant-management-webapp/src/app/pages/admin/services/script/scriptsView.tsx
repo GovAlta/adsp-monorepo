@@ -142,30 +142,29 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
           onSave={saveScript}
         />
       )}
-      {
-        <Modal open={openEditScript} data-testid="script-edit-form">
-          {/* Hides body overflow when the modal is up */}
-          <BodyGlobalStyles hideOverflow={openEditScript} />
-          <ModalContent>
-            <ScriptPanelContainer>
-              <ScriptEditor
-                modelOpen={showTemplateForm}
-                editorConfig={scriptEditorConfig}
-                name={selectedScript.name}
-                description={selectedScript.description}
-                scriptStr={selectedScript.script}
-                currentScriptItem={selectedScript}
-                onNameChange={onNameChange}
-                onDescriptionChange={onDescriptionChange}
-                onScriptChange={onScriptChange}
-                errors={errors}
-                saveAndReset={saveAndReset}
-              />
-            </ScriptPanelContainer>
-            {/* Add preview section */}
-          </ModalContent>
-        </Modal>
-      }
+
+      <Modal open={openEditScript} data-testid="script-edit-form">
+        {/* Hides body overflow when the modal is up */}
+        <BodyGlobalStyles hideOverflow={openEditScript} />
+        <ModalContent>
+          <ScriptPanelContainer>
+            <ScriptEditor
+              modelOpen={showTemplateForm}
+              editorConfig={scriptEditorConfig}
+              name={selectedScript.name}
+              description={selectedScript.description}
+              scriptStr={selectedScript.script}
+              currentScriptItem={selectedScript}
+              onNameChange={onNameChange}
+              onDescriptionChange={onDescriptionChange}
+              onScriptChange={onScriptChange}
+              errors={errors}
+              saveAndReset={saveAndReset}
+            />
+          </ScriptPanelContainer>
+          {/* Add preview section */}
+        </ModalContent>
+      </Modal>
     </>
   );
 };

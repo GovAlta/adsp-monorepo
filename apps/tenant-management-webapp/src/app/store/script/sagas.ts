@@ -17,6 +17,8 @@ import {
   DeleteScriptSuccess,
   DELETE_SCRIPT_ACTION,
   UpdateIndicator,
+  RUN_SCRIPT_ACTION,
+  RunScriptAction,
 } from './actions';
 import { ActionState } from '@store/session/models';
 
@@ -93,6 +95,51 @@ export function* fetchScripts(action: FetchScriptsAction): SagaIterator {
   }
 }
 
+export function* runScript(action: RunScriptAction): SagaIterator {
+  console.log(JSON.stringify(action) + '<action');
+  const details = {};
+  details[action.type] = ActionState.inProcess;
+
+  yield put(
+    UpdateIndicator({
+      details,
+    })
+  );
+  console.log(JSON.stringify(details) + '<details');
+  const scriptUrl: string = yield select((state: RootState) => state.config.serviceUrls?.scriptServiceApiUrl);
+  const serviceUrls: string = yield select((state: RootState) => state.config.serviceUrls);
+  const token: string = yield call(getAccessToken);
+  console.log(JSON.stringify(scriptUrl) + '<scriptUrlxx');
+  console.log(JSON.stringify(serviceUrls) + '<serviceUrls');
+  console.log(JSON.stringify(token) + '<token');
+  if (scriptUrl && token) {
+    try {
+      console.log(JSON.stringify(scriptUrl) + '<scriptUrl');
+      console.log(JSON.stringify(action.payload) + '<action.payload');
+      const Response = yield call(axios.post, `${scriptUrl}/script/v1/scripts/${action.payload}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log(JSON.stringify(Response) + '<Response');
+      yield put(fetchScriptsSuccess(Response));
+
+      details[action.type] = ActionState.completed;
+      yield put(
+        UpdateIndicator({
+          details,
+        })
+      );
+    } catch (err) {
+      yield put(ErrorNotification({ message: err.message }));
+      details[action.type] = ActionState.error;
+      yield put(
+        UpdateIndicator({
+          details,
+        })
+      );
+    }
+  }
+}
+
 function* deleteScript(action: DeleteScriptAction): SagaIterator {
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
@@ -122,4 +169,5 @@ export function* watchScriptSagas(): Generator {
   yield takeEvery(UPDATE_SCRIPT_ACTION, updateScript);
   yield takeEvery(FETCH_SCRIPTS_ACTION, fetchScripts);
   yield takeEvery(DELETE_SCRIPT_ACTION, deleteScript);
+  yield takeEvery(RUN_SCRIPT_ACTION, runScript);
 }

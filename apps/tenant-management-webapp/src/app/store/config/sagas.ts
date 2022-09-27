@@ -11,6 +11,7 @@ export function* fetchConfig(): SagaIterator {
   try {
     if (!state.config?.keycloakApi?.realm) {
       const { data } = yield call(axios.get, `/config/config.json?v=2`);
+      console.log(JSON.stringify(data) + '<datadatadata');
       const directoryServiceUrl = data.serviceUrls.directoryServiceApiUrl;
       const url = `${directoryServiceUrl}/directory/v2/namespaces/platform/entries`;
       const entries = (yield call(axios.get, url)).data;
@@ -59,8 +60,11 @@ export function* fetchConfig(): SagaIterator {
           calendarServiceApiUrl: entryMapping['calendar-service'],
           uiComponentUrl: data.serviceUrls.uiComponentUrl,
           chatServiceApiUrl: data.serviceUrls.chatServiceApiUrl,
+          scriptServiceApiUrl: entryMapping['script-service'],
         },
       };
+
+      console.log(JSON.stringify(tenantWebConfig) + '<tenantWebConfig');
       const action: FetchConfigSuccessAction = {
         type: 'config/fetch-config-success',
         payload: tenantWebConfig,
