@@ -119,7 +119,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     <MonacoDivBody>
                       <MonacoEditor
                         language={'handlebars'}
-                        value={template?.template}
+                        defaultValue={template?.template}
                         onChange={(value) => {
                           onBodyChange(value);
                         }}
@@ -134,7 +134,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     <MonacoDivBody>
                       <MonacoEditor
                         language={'handlebars'}
-                        value={template?.template}
+                        defaultValue={template?.template}
                         onChange={(value) => {
                           onBodyChange(value);
                         }}
@@ -166,7 +166,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   <MonacoDivHeader>
                     <MonacoEditor
                       language={'handlebars'}
-                      value={template?.header}
+                      defaultValue={template?.header}
                       onChange={(value) => {
                         onHeaderChange(value);
                       }}
