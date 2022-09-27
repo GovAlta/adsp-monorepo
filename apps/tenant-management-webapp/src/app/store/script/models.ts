@@ -2,6 +2,7 @@ import { ActionState } from '@store/session/models';
 export interface ScriptItem {
   name: string;
   id?: string;
+  script: string;
   useServiceAccount: boolean;
   description?: string;
   runnerRoles: string[];
@@ -13,6 +14,7 @@ export interface ScriptService {
 export const defaultScript: ScriptItem = {
   name: '',
   id: '',
+  script: '',
   useServiceAccount: false,
   description: '',
   runnerRoles: [],
