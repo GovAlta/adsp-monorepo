@@ -1,4 +1,5 @@
-module.exports = {
+/* eslint-disable */
+export default {
   displayName: 'adsp-service-sdk',
   preset: '../../jest.preset.js',
   globals: {

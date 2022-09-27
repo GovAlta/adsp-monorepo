@@ -52,7 +52,7 @@
           "builder": "@nrwl/jest:jest",
           "outputs": ["coverage/libs/adsp-service-sdk"],
           "options": {
-            "jestConfig": "libs/adsp-service-sdk/jest.config.js",
+            "jestConfig": "libs/adsp-service-sdk/jest.config.ts",
             "passWithNoTests": true
           }
         },
@@ -82,13 +82,15 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/node:webpack",
+          "builder": "@nrwl/webpack:webpack",
           "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/apps/api-docs-app",
             "main": "apps/api-docs-app/src/main.ts",
             "tsConfig": "apps/api-docs-app/tsconfig.app.json",
-            "assets": ["apps/api-docs-app/src/assets"]
+            "assets": ["apps/api-docs-app/src/assets"],
+            "target": "node",
+            "compiler": "tsc"
           },
           "configurations": {
             "production": {
@@ -116,7 +118,7 @@
           "builder": "@nrwl/jest:jest",
           "outputs": ["coverage/apps/api-docs-app"],
           "options": {
-            "jestConfig": "apps/api-docs-app/jest.config.js",
+            "jestConfig": "apps/api-docs-app/jest.config.ts",
             "passWithNoTests": true
           }
         }
@@ -129,7 +131,7 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/node:webpack",
+          "builder": "@nrwl/webpack:webpack",
           "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/apps/calendar-service",
@@ -142,7 +144,9 @@
                 "output": "migrations"
               }
             ],
-            "webpackConfig": "apps/calendar-service/webpack.config.js"
+            "webpackConfig": "apps/calendar-service/webpack.config.js",
+            "target": "node",
+            "compiler": "tsc"
           },
           "configurations": {
             "production": {
@@ -171,7 +175,7 @@
           "builder": "@nrwl/jest:jest",
           "outputs": ["coverage/apps/calendar-service"],
           "options": {
-            "jestConfig": "apps/calendar-service/jest.config.js",
+            "jestConfig": "apps/calendar-service/jest.config.ts",
             "passWithNoTests": true
           }
         }
@@ -184,14 +188,16 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/node:webpack",
+          "builder": "@nrwl/webpack:webpack",
           "outputs": ["{options.outputPath}"],
           "options": {
             "webpackConfig": "apps/configuration-service/webpack.config.js",
             "outputPath": "dist/apps/configuration-service",
             "main": "apps/configuration-service/src/main.ts",
             "tsConfig": "apps/configuration-service/tsconfig.app.json",
-            "assets": []
+            "assets": [],
+            "target": "node",
+            "compiler": "tsc"
           },
           "configurations": {
             "production": {
@@ -219,7 +225,7 @@
           "builder": "@nrwl/jest:jest",
           "outputs": ["coverage/apps/configuration-service"],
           "options": {
-            "jestConfig": "apps/configuration-service/jest.config.js",
+            "jestConfig": "apps/configuration-service/jest.config.ts",
             "passWithNoTests": true
           }
         }
@@ -241,7 +247,7 @@
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
-            "jestConfig": "libs/core-common/jest.config.js",
+            "jestConfig": "libs/core-common/jest.config.ts",
             "passWithNoTests": true
           },
           "outputs": ["coverage/libs/core-common"]
@@ -255,14 +261,16 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/node:webpack",
+          "builder": "@nrwl/webpack:webpack",
           "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/apps/directory-service",
             "main": "apps/directory-service/src/main.ts",
             "tsConfig": "apps/directory-service/tsconfig.app.json",
             "assets": [],
-            "webpackConfig": "apps/directory-service/webpack.config.js"
+            "webpackConfig": "apps/directory-service/webpack.config.js",
+            "target": "node",
+            "compiler": "tsc"
           },
           "configurations": {
             "production": {
@@ -290,7 +298,7 @@
           "builder": "@nrwl/jest:jest",
           "outputs": ["coverage/apps/directory-service"],
           "options": {
-            "jestConfig": "apps/directory-service/jest.config.js",
+            "jestConfig": "apps/directory-service/jest.config.ts",
             "passWithNoTests": true
           }
         }
@@ -305,13 +313,15 @@
       "schematics": {},
       "architect": {
         "build": {
-          "builder": "@nrwl/node:webpack",
+          "builder": "@nrwl/webpack:webpack",
           "options": {
             "webpackConfig": "apps/event-service/webpack.config.js",
             "outputPath": "dist/apps/event-service",
             "main": "apps/event-service/src/main.ts",
             "tsConfig": "apps/event-service/tsconfig.app.json",
-            "assets": []
+            "assets": [],
+            "target": "node",
+            "compiler": "tsc"
           },
           "configurations": {
             "production": {
@@ -339,7 +349,7 @@
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
-            "jestConfig": "apps/event-service/jest.config.js",
+            "jestConfig": "apps/event-service/jest.config.ts",
             "passWithNoTests": true
           },
           "outputs": ["coverage/apps/event-service"]
@@ -355,13 +365,15 @@
       "schematics": {},
       "architect": {
         "build": {
-          "builder": "@nrwl/node:webpack",
+          "builder": "@nrwl/webpack:webpack",
           "options": {
             "webpackConfig": "apps/file-service/webpack.config.js",
             "outputPath": "dist/apps/file-service",
             "main": "apps/file-service/src/main.ts",
             "tsConfig": "apps/file-service/tsconfig.app.json",
-            "assets": []
+            "assets": [],
+            "target": "node",
+            "compiler": "tsc"
           },
           "configurations": {
             "production": {
@@ -389,7 +401,7 @@
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
-            "jestConfig": "apps/file-service/jest.config.js",
+            "jestConfig": "apps/file-service/jest.config.ts",
             "passWithNoTests": true,
             "runInBand": true
           },
@@ -404,14 +416,16 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/node:webpack",
+          "builder": "@nrwl/webpack:webpack",
           "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/apps/form-service",
             "main": "apps/form-service/src/main.ts",
             "tsConfig": "apps/form-service/tsconfig.app.json",
             "assets": [],
-            "webpackConfig": "apps/form-service/webpack.config.js"
+            "webpackConfig": "apps/form-service/webpack.config.js",
+            "target": "node",
+            "compiler": "tsc"
           },
           "configurations": {
             "production": {
@@ -440,7 +454,7 @@
           "builder": "@nrwl/jest:jest",
           "outputs": ["coverage/apps/form-service"],
           "options": {
-            "jestConfig": "apps/form-service/jest.config.js",
+            "jestConfig": "apps/form-service/jest.config.ts",
             "passWithNoTests": true
           }
         }
@@ -455,13 +469,15 @@
       "schematics": {},
       "architect": {
         "build": {
-          "builder": "@nrwl/node:webpack",
+          "builder": "@nrwl/webpack:webpack",
           "options": {
             "webpackConfig": "apps/notification-service/webpack.config.js",
             "outputPath": "dist/apps/notification-service",
             "main": "apps/notification-service/src/main.ts",
             "tsConfig": "apps/notification-service/tsconfig.app.json",
-            "assets": ["apps/notification-service/src/assets"]
+            "assets": ["apps/notification-service/src/assets"],
+            "target": "node",
+            "compiler": "tsc"
           },
           "configurations": {
             "production": {
@@ -489,7 +505,7 @@
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
-            "jestConfig": "apps/notification-service/jest.config.js",
+            "jestConfig": "apps/notification-service/jest.config.ts",
             "passWithNoTests": true
           },
           "outputs": ["coverage/apps/notification-service"]
@@ -513,7 +529,7 @@
           "builder": "@nrwl/jest:jest",
           "outputs": ["coverage/libs/notification-shared"],
           "options": {
-            "jestConfig": "libs/notification-shared/jest.config.js",
+            "jestConfig": "libs/notification-shared/jest.config.ts",
             "passWithNoTests": true
           }
         }
@@ -526,14 +542,16 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/node:webpack",
+          "builder": "@nrwl/webpack:webpack",
           "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/apps/pdf-service",
             "main": "apps/pdf-service/src/main.ts",
             "tsConfig": "apps/pdf-service/tsconfig.app.json",
             "assets": [],
-            "webpackConfig": "apps/pdf-service/webpack.config.js"
+            "webpackConfig": "apps/pdf-service/webpack.config.js",
+            "target": "node",
+            "compiler": "tsc"
           },
           "configurations": {
             "production": {
@@ -561,7 +579,7 @@
           "builder": "@nrwl/jest:jest",
           "outputs": ["coverage/apps/pdf-service"],
           "options": {
-            "jestConfig": "apps/pdf-service/jest.config.js",
+            "jestConfig": "apps/pdf-service/jest.config.ts",
             "passWithNoTests": true
           }
         }
@@ -576,13 +594,15 @@
       "schematics": {},
       "architect": {
         "build": {
-          "builder": "@nrwl/node:webpack",
+          "builder": "@nrwl/webpack:webpack",
           "options": {
             "webpackConfig": "apps/push-service/webpack.config.js",
             "outputPath": "dist/apps/push-service",
             "main": "apps/push-service/src/main.ts",
             "tsConfig": "apps/push-service/tsconfig.app.json",
-            "assets": []
+            "assets": [],
+            "target": "node",
+            "compiler": "tsc"
           },
           "configurations": {
             "production": {
@@ -610,7 +630,7 @@
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
-            "jestConfig": "apps/push-service/jest.config.js",
+            "jestConfig": "apps/push-service/jest.config.ts",
             "passWithNoTests": true
           },
           "outputs": ["coverage/apps/push-service"]
@@ -673,7 +693,7 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/web:webpack",
+          "builder": "@nrwl/webpack:webpack",
           "outputs": ["{options.outputPath}"],
           "defaultConfiguration": "production",
           "options": {
@@ -713,11 +733,17 @@
                   "maximumError": "5mb"
                 }
               ]
+            },
+            "development": {
+              "extractLicenses": false,
+              "optimization": false,
+              "sourceMap": true,
+              "vendorChunk": true
             }
           }
         },
         "serve": {
-          "builder": "@nrwl/web:dev-server",
+          "builder": "@nrwl/webpack:dev-server",
           "options": {
             "buildTarget": "status-app:build",
             "proxyConfig": "apps/status-app/proxy.conf.json"
@@ -725,8 +751,12 @@
           "configurations": {
             "production": {
               "buildTarget": "status-app:build:production"
+            },
+            "development": {
+              "buildTarget": "status-app:build:development"
             }
-          }
+          },
+          "defaultConfiguration": "development"
         },
         "lint": {
           "builder": "@nrwl/linter:eslint",
@@ -738,7 +768,7 @@
           "builder": "@nrwl/jest:jest",
           "outputs": ["coverage/apps/status-app"],
           "options": {
-            "jestConfig": "apps/status-app/jest.config.js",
+            "jestConfig": "apps/status-app/jest.config.ts",
             "passWithNoTests": true
           }
         }
@@ -781,13 +811,15 @@
       "schematics": {},
       "architect": {
         "build": {
-          "builder": "@nrwl/node:webpack",
+          "builder": "@nrwl/webpack:webpack",
           "options": {
             "webpackConfig": "apps/status-service/webpack.config.js",
             "outputPath": "dist/apps/status-service",
             "main": "apps/status-service/src/main.ts",
             "tsConfig": "apps/status-service/tsconfig.app.json",
-            "assets": ["apps/status-service/src/assets"]
+            "assets": ["apps/status-service/src/assets"],
+            "target": "node",
+            "compiler": "tsc"
           },
           "configurations": {
             "production": {
@@ -813,7 +845,7 @@
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
-            "jestConfig": "apps/status-service/jest.config.js",
+            "jestConfig": "apps/status-service/jest.config.ts",
             "passWithNoTests": true,
             "runInBand": true
           }
@@ -837,7 +869,7 @@
           "builder": "@nrwl/jest:jest",
           "outputs": ["coverage/libs/stylesheets/scss"],
           "options": {
-            "jestConfig": "libs/stylesheets/scss/jest.config.js",
+            "jestConfig": "libs/stylesheets/scss/jest.config.ts",
             "passWithNoTests": true
           }
         }
@@ -850,7 +882,7 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/web:webpack",
+          "builder": "@nrwl/webpack:webpack",
           "outputs": ["{options.outputPath}"],
           "defaultConfiguration": "production",
           "options": {
@@ -890,11 +922,17 @@
                   "maximumError": "5mb"
                 }
               ]
+            },
+            "development": {
+              "extractLicenses": false,
+              "optimization": false,
+              "sourceMap": true,
+              "vendorChunk": true
             }
           }
         },
         "serve": {
-          "builder": "@nrwl/web:dev-server",
+          "builder": "@nrwl/webpack:dev-server",
           "options": {
             "buildTarget": "subscriber-app:build",
             "proxyConfig": "apps/subscriber-app/proxy.conf.json",
@@ -904,8 +942,12 @@
             "production": {
               "buildTarget": "subscriber-app:build:production",
               "hmr": false
+            },
+            "development": {
+              "buildTarget": "subscriber-app:build:development"
             }
-          }
+          },
+          "defaultConfiguration": "development"
         },
         "lint": {
           "builder": "@nrwl/linter:eslint",
@@ -918,7 +960,7 @@
           "builder": "@nrwl/jest:jest",
           "outputs": ["coverage/apps/subscriber-app"],
           "options": {
-            "jestConfig": "apps/subscriber-app/jest.config.js",
+            "jestConfig": "apps/subscriber-app/jest.config.ts",
             "passWithNoTests": true
           }
         }
@@ -959,14 +1001,16 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/node:webpack",
+          "builder": "@nrwl/webpack:webpack",
           "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/apps/subscriber-gateway",
             "main": "apps/subscriber-gateway/src/main.ts",
             "tsConfig": "apps/subscriber-gateway/tsconfig.app.json",
             "assets": [],
-            "webpackConfig": "apps/subscriber-gateway/webpack.config.js"
+            "webpackConfig": "apps/subscriber-gateway/webpack.config.js",
+            "target": "node",
+            "compiler": "tsc"
           },
           "configurations": {
             "production": {
@@ -995,7 +1039,7 @@
           "builder": "@nrwl/jest:jest",
           "outputs": ["coverage/apps/subscriber-gateway"],
           "options": {
-            "jestConfig": "apps/subscriber-gateway/jest.config.js",
+            "jestConfig": "apps/subscriber-gateway/jest.config.ts",
             "passWithNoTests": true
           }
         }
@@ -1008,7 +1052,7 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/node:webpack",
+          "builder": "@nrwl/webpack:webpack",
           "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/apps/task-service",
@@ -1021,7 +1065,9 @@
                 "output": "migrations"
               }
             ],
-            "webpackConfig": "apps/task-service/webpack.config.js"
+            "webpackConfig": "apps/task-service/webpack.config.js",
+            "target": "node",
+            "compiler": "tsc"
           },
           "configurations": {
             "production": {
@@ -1049,7 +1095,7 @@
           "builder": "@nrwl/jest:jest",
           "outputs": ["coverage/apps/task-service"],
           "options": {
-            "jestConfig": "apps/task-service/jest.config.js",
+            "jestConfig": "apps/task-service/jest.config.ts",
             "passWithNoTests": true
           }
         }
@@ -1064,13 +1110,15 @@
       "schematics": {},
       "architect": {
         "build": {
-          "builder": "@nrwl/node:webpack",
+          "builder": "@nrwl/webpack:webpack",
           "options": {
             "outputPath": "dist/apps/tenant-management-api",
             "main": "apps/tenant-management-api/src/main.ts",
             "tsConfig": "apps/tenant-management-api/tsconfig.app.json",
             "assets": ["apps/tenant-management-api/src/assets"],
-            "webpackConfig": "apps/tenant-management-api/webpack.config.js"
+            "webpackConfig": "apps/tenant-management-api/webpack.config.js",
+            "target": "node",
+            "compiler": "tsc"
           },
           "configurations": {
             "production": {
@@ -1098,7 +1146,7 @@
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
-            "jestConfig": "apps/tenant-management-api/jest.config.js",
+            "jestConfig": "apps/tenant-management-api/jest.config.ts",
             "passWithNoTests": true,
             "runInBand": true
           },
@@ -1114,7 +1162,7 @@
       "schematics": {},
       "architect": {
         "build": {
-          "builder": "@nrwl/web:webpack",
+          "builder": "@nrwl/webpack:webpack",
           "options": {
             "outputPath": "dist/apps/tenant-management-webapp",
             "index": "apps/tenant-management-webapp/src/index.html",
@@ -1160,12 +1208,19 @@
                   "maximumError": "5mb"
                 }
               ]
+            },
+            "development": {
+              "extractLicenses": false,
+              "optimization": false,
+              "sourceMap": true,
+              "vendorChunk": true
             }
           },
-          "outputs": ["{options.outputPath}"]
+          "outputs": ["{options.outputPath}"],
+          "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@nrwl/web:dev-server",
+          "builder": "@nrwl/webpack:dev-server",
           "options": {
             "buildTarget": "tenant-management-webapp:build",
             "proxyConfig": "apps/tenant-management-webapp/proxy.conf.json"
@@ -1173,8 +1228,12 @@
           "configurations": {
             "production": {
               "buildTarget": "tenant-management-webapp:build:production"
+            },
+            "development": {
+              "buildTarget": "tenant-management-webapp:build:development"
             }
-          }
+          },
+          "defaultConfiguration": "development"
         },
         "lint": {
           "builder": "@nrwl/linter:eslint",
@@ -1185,7 +1244,7 @@
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
-            "jestConfig": "apps/tenant-management-webapp/jest.config.js",
+            "jestConfig": "apps/tenant-management-webapp/jest.config.ts",
             "passWithNoTests": true
           },
           "outputs": ["coverage/apps/tenant-management-webapp"]
@@ -1266,7 +1325,7 @@
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
-            "jestConfig": "tools/scripts/jest.config.js",
+            "jestConfig": "tools/scripts/jest.config.ts",
             "passWithNoTests": true
           },
           "outputs": ["coverage/tools/scripts"]
@@ -1282,7 +1341,7 @@
       "schematics": {},
       "architect": {
         "build": {
-          "builder": "@nrwl/node:webpack",
+          "builder": "@nrwl/webpack:webpack",
           "options": {
             "webpackConfig": "apps/value-service/webpack.config.js",
             "outputPath": "dist/apps/value-service",
@@ -1295,7 +1354,9 @@
                 "input": ".",
                 "output": "migrations"
               }
-            ]
+            ],
+            "target": "node",
+            "compiler": "tsc"
           },
           "configurations": {
             "production": {
@@ -1323,7 +1384,7 @@
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
-            "jestConfig": "apps/value-service/jest.config.js",
+            "jestConfig": "apps/value-service/jest.config.ts",
             "passWithNoTests": true
           },
           "outputs": ["coverage/apps/value-service"]
@@ -1337,14 +1398,16 @@
       "projectType": "application",
       "architect": {
         "build": {
-          "builder": "@nrwl/node:webpack",
+          "builder": "@nrwl/webpack:webpack",
           "outputs": ["{options.outputPath}"],
           "options": {
             "webpackConfig": "apps/verify-service/webpack.config.js",
             "outputPath": "dist/apps/verify-service",
             "main": "apps/verify-service/src/main.ts",
             "tsConfig": "apps/verify-service/tsconfig.app.json",
-            "assets": []
+            "assets": [],
+            "target": "node",
+            "compiler": "tsc"
           },
           "configurations": {
             "production": {
@@ -1371,12 +1434,13 @@
           "builder": "@nrwl/jest:jest",
           "outputs": ["coverage/apps/verify-service"],
           "options": {
-            "jestConfig": "apps/verify-service/jest.config.js",
+            "jestConfig": "apps/verify-service/jest.config.ts",
             "passWithNoTests": true
           }
         }
       },
       "tags": []
     }
-  }
+  },
+  "$schema": "./node_modules/nx/schemas/workspace-schema.json"
 }

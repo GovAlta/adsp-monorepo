@@ -1,5 +1,6 @@
-module.exports = {
-  name: 'core-common',
+/* eslint-disable */
+export default {
+  displayName: 'core-common',
   preset: '../../jest.preset.js',
   globals: {
     'ts-jest': { tsconfig: '<rootDir>/tsconfig.spec.json' },
