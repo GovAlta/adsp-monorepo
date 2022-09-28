@@ -122,10 +122,6 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
       setFooterPreview(
         generateMessage(template, { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() })
       );
-      if (currentTemplate) {
-        currentTemplate.footer = footer;
-      }
-      setCurrentTemplate(currentTemplate);
     } catch (e) {
       console.error('error: ' + e.message);
     }
@@ -141,10 +137,6 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
       setHeaderPreview(
         generateMessage(template, { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() })
       );
-      if (currentTemplate) {
-        currentTemplate.header = header;
-      }
-      setCurrentTemplate(currentTemplate);
     } catch (e) {
       console.error('error: ' + e.message);
     }
@@ -160,10 +152,6 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
       setBodyPreview(
         generateMessage(template, { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() })
       );
-      if (currentTemplate) {
-        currentTemplate.template = body;
-      }
-      setCurrentTemplate(currentTemplate);
     } catch (e) {
       console.error('error: ' + e.message);
     }
@@ -332,6 +320,9 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                 }}
                 onFooterChange={(value) => {
                   setFooter(value);
+                }}
+                updateTemplate={(template) => {
+                  setCurrentTemplate(template);
                 }}
                 setPreview={(channel) => {
                   try {
