@@ -816,13 +816,13 @@ Then('the user views an email template modal title for {string}', function (noti
 
 Then('the user views the email subject {string}', function (subject) {
   notificationsObj.editTemplateModalEmailSubject().invoke('text').should('contain', subject);
-  notificationsObj.editTemplateModalEmailSubjectPreviewPane().invoke('text').should('contain', subject);
+  notificationsObj.templateModalPreviewPaneEmailSubject().invoke('text').should('contain', subject);
 });
 
 Then('the user views the email body {string}', function (emailBody) {
   notificationsObj.editTemplateModalEmailBody().invoke('text').should('contain', emailBody);
   cy.wait(2000); // Wait 2 second for iFrame to show to avoid undefined element error
-  notificationsObj.editTemplateModalBodyEmailPreviewPane().then(function ($iFrame) {
+  notificationsObj.templateModalPreviewPaneEmailBody().then(function ($iFrame) {
     const iFrameContent = $iFrame.contents().find('body');
     cy.wrap(iFrameContent).find('[class*="email-content"]').invoke('text').should('contain', emailBody);
   });
@@ -835,7 +835,7 @@ When('the user clicks Close button in event template modal', function () {
 
 When('the user views the link for managing email subscription', function () {
   notificationsObj
-    .editTemplateModalBodyEmailPreviewPane()
+    .templateModalPreviewPaneEmailBody()
     .its('0.contentDocument.body')
     .find('footer')
     .contains('Please do not reply to this email. Manage your subscription here.');
@@ -843,7 +843,7 @@ When('the user views the link for managing email subscription', function () {
   const urlSubscriptionLogin = Cypress.env('subscriptionUrl') + '/' + Cypress.env('realm') + '/login';
   cy.log(urlSubscriptionLogin);
   notificationsObj
-    .editTemplateModalBodyEmailPreviewPane()
+    .templateModalPreviewPaneEmailBody()
     .its('0.contentDocument.body')
     .find('footer')
     .find('[class="goa-footer-event"]')
@@ -893,4 +893,13 @@ Then('the user views the details of {string}, {string} under {string}', function
     .notificationRecordDetailsCriteria(notificationType, addressAd, email)
     .invoke('text')
     .should('contains', 'context');
+});
+
+Then('the user views the email template preview of {string} as subject and {string} as body', function (subject, body) {
+  notificationsObj.templateModalPreviewPaneEmailSubject().invoke('text').should('contain', subject);
+  cy.wait(2000); // Wait 2 second for preview to show
+  notificationsObj.templateModalPreviewPaneEmailBody().then(function ($iFrame) {
+    const iFrameContent = $iFrame.contents().find('body');
+    cy.wrap(iFrameContent).find('[class*="email-content"]').invoke('text').should('contain', body);
+  });
 });
