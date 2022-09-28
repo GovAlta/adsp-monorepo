@@ -35,11 +35,9 @@ describe('App', () => {
   });
   it('should render successfully', () => {
     const { baseElement } = render(
-      <BrowserRouter>
-        <Provider store={store}>
-          <App />
-        </Provider>
-      </BrowserRouter>
+      <Provider store={store}>
+        <App />
+      </Provider>
     );
 
     expect(baseElement).toBeTruthy();

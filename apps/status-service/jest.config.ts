@@ -1,4 +1,5 @@
-module.exports = {
+/* eslint-disable */
+export default {
   displayName: 'status-service',
   preset: './jest.preset.js',
   globals: {
