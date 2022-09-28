@@ -179,7 +179,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   <MonacoDivFooter>
                     <MonacoEditor
                       language={'handlebars'}
-                      value={template?.footer}
+                      defaultValue={template?.footer}
                       onChange={(value) => {
                         onFooterChange(value);
                         if (tmpTemplate) {
