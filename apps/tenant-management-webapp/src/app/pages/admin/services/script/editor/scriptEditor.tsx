@@ -7,8 +7,6 @@ import { ScriptItem } from '@store/script/models';
 import { GoAButton } from '@abgov/react-components';
 
 interface ScriptEditorProps {
-  modelOpen: boolean;
-
   editorConfig?: EditorProps;
   name: string;
   description: string;
@@ -20,11 +18,10 @@ interface ScriptEditorProps {
   // eslint-disable-next-line
   errors?: any;
   saveAndReset: (closeEventModal?: boolean) => void;
+  onEditorCancel: () => void;
 }
 
 export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
-  modelOpen,
-
   editorConfig,
   name,
   description,
@@ -35,18 +32,22 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   onScriptChange,
   errors,
   saveAndReset,
+  onEditorCancel,
 }) => {
   const [saveModal, setSaveModal] = useState(false);
-  const oldScript = currentScriptItem;
+
   const resetSavedAction = () => {
-    name = oldScript.name;
-    description = oldScript.description;
-    scriptStr = oldScript.script;
+    onNameChange(currentScriptItem.name);
+    onDescriptionChange(currentScriptItem.description);
+    onScriptChange(currentScriptItem.script);
   };
   return (
     <ScriptEditorContainer>
       <GoAForm>
         <GoAFormItem error={errors?.['name']}>
+          <h3 className="reduce-margin" data-testid="modal-title">
+            {`Edit script ${name}`}
+          </h3>
           <label>Name</label>
           <GoAInput
             type="text"
@@ -54,7 +55,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             value={name}
             data-testid={`script-modal-name-input`}
             aria-label="script-name"
-            onChange={(value) => {
+            onChange={(name, value) => {
               onNameChange(value);
             }}
           />
@@ -68,14 +69,15 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             data-testid={`script-modal-description-input`}
             aria-label="script-description"
             onChange={(name, value) => {
-              onDescriptionChange(name, value);
+              onDescriptionChange(value);
             }}
           />
         </GoAFormItem>
         <GoAFormItem>
+          <label>Lua Script</label>
           <MonacoDivBody data-testid="templated-editor-body">
             <MonacoEditor
-              language={'lua'}
+              language="lua"
               value={scriptStr}
               {...editorConfig}
               onChange={(value) => {
@@ -88,7 +90,15 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
         <EditTemplateActions>
           <GoAButton
             onClick={() => {
-              setSaveModal(true);
+              if (
+                currentScriptItem.name !== name ||
+                currentScriptItem.description !== description ||
+                currentScriptItem.script !== scriptStr
+              ) {
+                setSaveModal(true);
+              } else {
+                onEditorCancel();
+              }
             }}
             data-testid="template-form-close"
             buttonType="secondary"
@@ -103,6 +113,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             buttonType="primary"
             data-testid="template-form-save"
             type="submit"
+            disabled={Object.keys(errors).length > 0}
           >
             Save
           </GoAButton>
@@ -114,13 +125,13 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
         onDontSave={() => {
           resetSavedAction();
           setSaveModal(false);
+          onEditorCancel();
         }}
         onSave={() => {
-          saveAndReset();
+          saveAndReset(true);
           setSaveModal(false);
         }}
         onCancel={() => {
-          resetSavedAction();
           setSaveModal(false);
         }}
       />
