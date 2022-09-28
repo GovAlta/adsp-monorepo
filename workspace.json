@@ -1176,6 +1176,11 @@
                 "glob": "nginx.conf",
                 "input": "./",
                 "output": "./"
+              },
+              {
+                "glob": "silent-check-sso.html",
+                "input": "apps/tenant-management-webapp/src/",
+                "output": "./"
               }
             ],
             "scripts": [],
