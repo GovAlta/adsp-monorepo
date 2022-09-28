@@ -321,6 +321,9 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                 onFooterChange={(value) => {
                   setFooter(value);
                 }}
+                updateTemplate={(template) => {
+                  setCurrentTemplate(template);
+                }}
                 setPreview={(channel) => {
                   try {
                     setBodyPreview(
