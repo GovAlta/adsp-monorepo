@@ -1,5 +1,6 @@
-module.exports = {
-  name: 'event-service',
+/* eslint-disable */
+export default {
+  displayName: 'event-service',
   preset: '../../jest.preset.js',
   globals: {
     'ts-jest': { tsconfig: '<rootDir>/tsconfig.spec.json' },

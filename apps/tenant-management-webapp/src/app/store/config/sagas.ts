@@ -19,7 +19,10 @@ export function* fetchConfig(): SagaIterator {
         entryMapping[entry.service] = entry.url;
       });
       const tenantWebConfig = {
-        keycloakApi: data.keycloakApi,
+        keycloakApi: {
+          ...data.keycloakApi,
+          silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+        },
         tenantApi: {
           host: entryMapping['tenant-service'],
           endpoints: {

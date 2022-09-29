@@ -90,6 +90,10 @@ export const Exports = styled.div`
     flex-direction: row;
   }
 
+  h3 {
+    overflow-wrap: anywhere;
+  }
+
   .flex-reverse-row {
     display: flex;
     flex-direction: row-reverse;
@@ -168,8 +172,7 @@ export const Exports = styled.div`
     display: block;
     flex-wrap: wrap;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
   }
 
   .text {
@@ -184,8 +187,9 @@ export const Exports = styled.div`
     display: flex !important;
   }
 
-  .mt-1 {
-    margin-top: 9px !important;
+  .header-margin {
+    margin-top: 1rem !important;
+    margin-bottom: 0.5rem !important;
   }
 
   .overflow-wrap {
@@ -197,6 +201,7 @@ export const Exports = styled.div`
     flex-direction: row;
     align-items: flex-start;
     padding: 10px 12px 8px 12px;
+    margin-right: 10px;
     gap: 8px;
 
     width: 272px;
@@ -211,6 +216,7 @@ export const Exports = styled.div`
 
   .goa-checkbox-container: hover {
     border: 2px solid #004f84;
+    background: white;
   }
 
   .goa-checkbox--selected: hover {

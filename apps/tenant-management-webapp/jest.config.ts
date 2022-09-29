@@ -1,7 +1,8 @@
+/* eslint-disable */
 const { resolve } = require('path');
 
-module.exports = {
-  name: 'tenant-management-webapp',
+export default {
+  displayName: 'tenant-management-webapp',
   preset: '../../jest.preset.js',
   transform: {
     '^(?!.*\\.(js|jsx|ts|tsx|css|json)$)': '@nrwl/react/plugins/jest',

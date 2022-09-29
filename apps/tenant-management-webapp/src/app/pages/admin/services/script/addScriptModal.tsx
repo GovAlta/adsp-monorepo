@@ -42,7 +42,7 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
   const duplicateScriptCheck = (): Validator => {
     return (name: string) => {
-      return scripts[script.name]
+      return scripts[name]
         ? `Duplicated script name ${name}, Please use a different name to get a unique script name`
         : '';
     };
@@ -52,6 +52,7 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
 
   const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
     .add('duplicated', 'name', duplicateScriptCheck())
+
     .add('description', 'description', descriptionCheck())
     .build();
 
@@ -79,17 +80,16 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
 
   const validationCheck = () => {
     const validations = {
-      name: script.name,
+      name: script.id,
     };
 
-    validations['duplicated'] = script.name;
+    validations['duplicated'] = script.id;
 
     if (!validators.checkAll(validations)) {
       return;
     }
 
     onSave(script);
-
     onCancel();
     validators.clear();
   };
@@ -125,15 +125,16 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
               data-testid={`script-modal-name-input`}
               aria-label="name"
               onChange={(name, value) => {
+                const scriptId = toKebabName(value);
+                validators.remove('name');
                 const validations = {
                   name: value,
                 };
-                validators.remove('name');
 
-                validations['duplicated'] = value;
+                validations['duplicated'] = scriptId;
 
                 validators.checkAll(validations);
-                const scriptId = toKebabName(value);
+
                 setScript({ ...script, name: value, id: scriptId });
               }}
             />

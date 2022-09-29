@@ -1,8 +1,9 @@
+/* eslint-disable */
 /* eslint @typescript-eslint/no-var-requires: "off" */
 const { resolve } = require('path');
 
-module.exports = {
-  name: 'status-app',
+export default {
+  displayName: 'status-app',
   preset: '../../jest.preset.js',
   transform: {
     '^(?!.*\\.(js|jsx|ts|tsx|css|json)$)': '@nrwl/react/plugins/jest',

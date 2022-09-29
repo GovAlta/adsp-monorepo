@@ -22,7 +22,7 @@ import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
 import { DeleteModal } from '@components/DeleteModal';
 import { useDebounce } from '@lib/useDebounce';
-import { hasXSS } from '@lib/sanitize';
+import { hasXSS, XSSErrorMessage } from '@lib/sanitize';
 
 interface PdfTemplatesProps {
   openAddTemplate: boolean;
@@ -34,7 +34,9 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
   const [headerPreview, setHeaderPreview] = useState('');
   const [footerPreview, setFooterPreview] = useState('');
   const [currentChannel, setCurrentChannel] = useState('main');
-  const XSS_CHECK_RENDER_DEBOUNCE_TIMER = 2000;
+  const XSS_CHECK_RENDER_DEBOUNCE_TIMER = 2000; // ms
+  const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
+
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const pdfTemplates = useSelector((state: RootState) => {
     return state?.pdf?.pdfTemplates;
@@ -45,12 +47,15 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
   const [footer, setFooter] = useState('');
   const [header, setHeader] = useState('');
 
+  const debouncedRenderBodyPreview = useDebounce(body, TEMPLATE_RENDER_DEBOUNCE_TIMER);
+  const debouncedRenderFooterPreview = useDebounce(footer, TEMPLATE_RENDER_DEBOUNCE_TIMER);
+  const debouncedRenderHeaderPreview = useDebounce(header, TEMPLATE_RENDER_DEBOUNCE_TIMER);
+
   const debouncedXssCheckRenderBody = useDebounce(body, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
   const debouncedXssCheckRenderFooter = useDebounce(footer, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
   const debouncedXssCheckRenderHeader = useDebounce(header, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
 
   const [isEdit, setIsEdit] = useState(false);
-  const xssErrorMessage = 'There is XSS error, please fix it in the input field';
   const editDefaultErrors = {
     body: '',
     footer: '',
@@ -108,10 +113,55 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
   }, [pdfTemplates]);
 
   useEffect(() => {
+    try {
+      const template = getTemplateBody(footer, 'pdf', {
+        data: currentTemplate,
+        serviceUrl: webappUrl,
+        today: new Date().toDateString(),
+      });
+      setFooterPreview(
+        generateMessage(template, { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() })
+      );
+    } catch (e) {
+      console.error('error: ' + e.message);
+    }
+  }, [debouncedRenderFooterPreview]);
+
+  useEffect(() => {
+    try {
+      const template = getTemplateBody(header, 'pdf', {
+        data: currentTemplate,
+        serviceUrl: webappUrl,
+        today: new Date().toDateString(),
+      });
+      setHeaderPreview(
+        generateMessage(template, { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() })
+      );
+    } catch (e) {
+      console.error('error: ' + e.message);
+    }
+  }, [debouncedRenderHeaderPreview]);
+
+  useEffect(() => {
+    try {
+      const template = getTemplateBody(body, 'pdf', {
+        data: currentTemplate,
+        serviceUrl: webappUrl,
+        today: new Date().toDateString(),
+      });
+      setBodyPreview(
+        generateMessage(template, { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() })
+      );
+    } catch (e) {
+      console.error('error: ' + e.message);
+    }
+  }, [debouncedRenderBodyPreview]);
+
+  useEffect(() => {
     if (hasXSS(debouncedXssCheckRenderBody)) {
       setTemplateEditErrors({
         ...templateEditErrors,
-        body: xssErrorMessage,
+        body: XSSErrorMessage,
       });
     } else {
       if (templateEditErrors.body !== '') {
@@ -127,7 +177,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     if (hasXSS(debouncedXssCheckRenderFooter)) {
       setTemplateEditErrors({
         ...templateEditErrors,
-        footer: xssErrorMessage,
+        footer: XSSErrorMessage,
       });
     } else {
       if (templateEditErrors.footer !== '') {
@@ -143,7 +193,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     if (hasXSS(debouncedXssCheckRenderHeader)) {
       setTemplateEditErrors({
         ...templateEditErrors,
-        header: xssErrorMessage,
+        header: XSSErrorMessage,
       });
     } else {
       if (templateEditErrors.header !== '') {
@@ -264,71 +314,15 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                 bodyTitle="Body"
                 onBodyChange={(value) => {
                   setBody(value);
-                  if (currentTemplate) {
-                    currentTemplate.template = value;
-                  }
-                  setCurrentTemplate(currentTemplate);
-
-                  try {
-                    setBodyPreview(
-                      generateMessage(
-                        getTemplateBody(value, 'pdf', {
-                          data: currentTemplate,
-                          serviceUrl: webappUrl,
-                          today: new Date().toDateString(),
-                        }),
-                        { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() }
-                      )
-                    );
-                  } catch (e) {
-                    console.error('error: ' + e.message);
-                  }
                 }}
                 onHeaderChange={(value) => {
                   setHeader(value);
-
-                  if (currentTemplate) {
-                    currentTemplate.header = value;
-                  }
-                  setCurrentTemplate(currentTemplate);
-
-                  try {
-                    setHeaderPreview(
-                      generateMessage(
-                        getTemplateBody(value, 'pdf', {
-                          data: currentTemplate,
-                          serviceUrl: webappUrl,
-                          today: new Date().toDateString(),
-                        }),
-                        { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() }
-                      )
-                    );
-                  } catch (e) {
-                    console.error('error: ' + e.message);
-                  }
                 }}
                 onFooterChange={(value) => {
                   setFooter(value);
-
-                  if (currentTemplate) {
-                    currentTemplate.footer = value;
-                  }
-                  setCurrentTemplate(currentTemplate);
-
-                  try {
-                    setFooterPreview(
-                      generateMessage(
-                        getTemplateBody(value, 'pdf', {
-                          data: currentTemplate,
-                          serviceUrl: webappUrl,
-                          today: new Date().toDateString(),
-                        }),
-                        { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() }
-                      )
-                    );
-                  } catch (e) {
-                    console.error('error: ' + e.message);
-                  }
+                }}
+                updateTemplate={(template) => {
+                  setCurrentTemplate(template);
                 }}
                 setPreview={(channel) => {
                   try {

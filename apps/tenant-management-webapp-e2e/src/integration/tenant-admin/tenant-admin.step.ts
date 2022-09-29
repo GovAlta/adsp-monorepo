@@ -403,7 +403,7 @@ Then(
       'The file service provides',
       'The notifications service provides',
       'The PDF service provides',
-      'This script service provides',
+      'The script services provides',
       'The status service allows',
     ];
     const cardTitleArray = [

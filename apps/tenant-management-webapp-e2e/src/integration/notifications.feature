@@ -284,3 +284,27 @@ Feature: Notifications
     Then the user "views" the subscription of "autotest-DO-NOT-DELETE", "test-criteria@gov.ab.ca" under "Application health check change"
     When the user clicks eye icon of "autotest-DO-NOT-DELETE", "test-criteria@gov.ab.ca" under "Application health check change"
     Then the user views the details of "autotest-DO-NOT-DELETE", "test-criteria@gov.ab.ca" under "Application health check change"
+
+  @TEST_CS-329 @REQ_CS-1087 @regression
+  Scenario: As a tenant admin, I can preview an email template as I edit, so I have an accurate preview of the notification.
+    Given a tenant admin user is on notification types page
+    # Preview in Add flow
+    When the user clicks Select event button for "autotest-notificationType"
+    Then the user views Select an event modal
+    When the user selects "tenant-service:tenant-deleted" in the event dropdown
+    And the user clicks Next button on Select an event page
+    Then the user views Add an email template page
+    When the user enters "autotest subject" as subject and "autotest body" as body on "email" template page
+    Then the user views the email template preview of "autotest subject" as subject and "autotest body" as body
+    And the user clicks Add button in Add an email template page
+    # Preview in Edit mode
+    When the user clicks "Edit" button for "tenant-service:tenant-deleted" in "autotest-notificationType"
+    Then the user views an email template modal title for "tenant-service:tenant-deleted"
+    When the user enters "autotest subject edited" as subject and "autotest body edited" as body on "email" template page
+    Then the user views the email template preview of "autotest subject edited" as subject and "autotest body edited" as body
+    When the user clicks Save all button in template modal
+    # Delete an event
+    And the user clicks "delete" button for "tenant-service:tenant-deleted" in "autotest-notificationType"
+    Then the user views delete "event" confirmation modal for "tenant-service:tenant-deleted"
+    When the user clicks Delete button in delete confirmation modal
+    Then the user "should not view" the event of "tenant-service:tenant-deleted" in "autotest-notificationType"

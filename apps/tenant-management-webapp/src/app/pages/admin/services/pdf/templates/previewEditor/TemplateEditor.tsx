@@ -6,7 +6,7 @@ import {
   MonacoDivHeader,
   MonacoDivFooter,
 } from './styled-components';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem, GoABadge } from '@abgov/react-components/experimental';
 import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
 import { PdfTemplate } from '@store/pdf/model';
 import { languages } from 'monaco-editor';
@@ -31,6 +31,7 @@ interface TemplateEditorProps {
   errors?: any;
   suggestion?: any;
   cancel: () => void;
+  updateTemplate: (template: PdfTemplate) => void;
   validateEventTemplateFields: () => boolean;
 }
 
@@ -51,6 +52,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   errors,
   suggestion,
   cancel,
+  updateTemplate,
   validateEventTemplateFields,
 }) => {
   const monaco = useMonaco();
@@ -95,51 +97,59 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   }, [modelOpen]);
 
   const channels = ['main', 'footer/header'];
+  const tmpTemplate = template;
 
   return (
     <TemplateEditorContainerPdf>
       <GoAForm>
         <GoAFormItem>
-          <Tabs activeIndex={activeIndex} changeTabCallback={(index: number) => switchTabPreview(channels[index])}>
-            <Tab label="Main">
+          <Tabs
+            activeIndex={activeIndex}
+            changeTabCallback={(index: number) => {
+              switchTabPreview(channels[index]);
+              updateTemplate(tmpTemplate);
+            }}
+          >
+            <Tab
+              label={
+                <div>
+                  Main {errors?.body && <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" />}
+                </div>
+              }
+            >
               <h3 className="reduce-margin" data-testid="modal-title">
                 {`${template?.name}`}
                 <p>{`${mainTitle} template`}</p>
               </h3>
 
               <>
-                {bodyEditorHintText && (
-                  <GoAFormItem error={errors?.body ?? ''} helpText={bodyEditorHintText}>
-                    <MonacoDivBody>
-                      <MonacoEditor
-                        language={'handlebars'}
-                        value={template?.template}
-                        onChange={(value) => {
-                          onBodyChange(value);
-                        }}
-                        {...bodyEditorConfig}
-                      />
-                    </MonacoDivBody>
-                  </GoAFormItem>
-                )}
-
-                {!bodyEditorHintText && (
-                  <GoAFormItem error={errors?.body ?? ''}>
-                    <MonacoDivBody>
-                      <MonacoEditor
-                        language={'handlebars'}
-                        value={template?.template}
-                        onChange={(value) => {
-                          onBodyChange(value);
-                        }}
-                        {...bodyEditorConfig}
-                      />
-                    </MonacoDivBody>
-                  </GoAFormItem>
-                )}
+                <GoAFormItem error={errors?.body ?? null} helpText={bodyEditorHintText}>
+                  <MonacoDivBody>
+                    <MonacoEditor
+                      language={'handlebars'}
+                      defaultValue={template?.template}
+                      onChange={(value) => {
+                        onBodyChange(value);
+                        if (tmpTemplate) {
+                          tmpTemplate.template = value;
+                        }
+                      }}
+                      {...bodyEditorConfig}
+                    />
+                  </MonacoDivBody>
+                </GoAFormItem>
               </>
             </Tab>
-            <Tab label="Header/Footer">
+            <Tab
+              label={
+                <div>
+                  Header/Footer{' '}
+                  {(errors?.footer || errors?.header) && (
+                    <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" />
+                  )}
+                </div>
+              }
+            >
               <h3 className="reduce-margin" data-testid="modal-title">
                 {`${template?.name}`}
                 <p>{`${mainTitle} template`}</p>
@@ -151,9 +161,12 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   <MonacoDivHeader>
                     <MonacoEditor
                       language={'handlebars'}
-                      value={template?.header}
+                      defaultValue={template?.header}
                       onChange={(value) => {
                         onHeaderChange(value);
+                        if (tmpTemplate) {
+                          tmpTemplate.header = value;
+                        }
                       }}
                       {...bodyEditorConfig}
                     />
@@ -166,9 +179,12 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   <MonacoDivFooter>
                     <MonacoEditor
                       language={'handlebars'}
-                      value={template?.footer}
+                      defaultValue={template?.footer}
                       onChange={(value) => {
                         onFooterChange(value);
+                        if (tmpTemplate) {
+                          tmpTemplate.footer = value;
+                        }
                       }}
                       {...bodyEditorConfig}
                     />
