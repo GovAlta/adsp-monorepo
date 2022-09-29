@@ -31,6 +31,7 @@ interface TemplateEditorProps {
   errors?: any;
   suggestion?: any;
   cancel: () => void;
+  updateTemplate: (template: PdfTemplate) => void;
   validateEventTemplateFields: () => boolean;
 }
 
@@ -51,6 +52,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   errors,
   suggestion,
   cancel,
+  updateTemplate,
   validateEventTemplateFields,
 }) => {
   const monaco = useMonaco();
@@ -95,12 +97,19 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   }, [modelOpen]);
 
   const channels = ['main', 'footer/header'];
+  const tmpTemplate = template;
 
   return (
     <TemplateEditorContainerPdf>
       <GoAForm>
         <GoAFormItem>
-          <Tabs activeIndex={activeIndex} changeTabCallback={(index: number) => switchTabPreview(channels[index])}>
+          <Tabs
+            activeIndex={activeIndex}
+            changeTabCallback={(index: number) => {
+              switchTabPreview(channels[index]);
+              updateTemplate(tmpTemplate);
+            }}
+          >
             <Tab
               label={
                 <div>
@@ -114,35 +123,21 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               </h3>
 
               <>
-                {bodyEditorHintText && (
-                  <GoAFormItem error={errors?.body ?? ''} helpText={bodyEditorHintText}>
-                    <MonacoDivBody>
-                      <MonacoEditor
-                        language={'handlebars'}
-                        value={template?.template}
-                        onChange={(value) => {
-                          onBodyChange(value);
-                        }}
-                        {...bodyEditorConfig}
-                      />
-                    </MonacoDivBody>
-                  </GoAFormItem>
-                )}
-
-                {!bodyEditorHintText && (
-                  <GoAFormItem error={errors?.body ?? ''}>
-                    <MonacoDivBody>
-                      <MonacoEditor
-                        language={'handlebars'}
-                        value={template?.template}
-                        onChange={(value) => {
-                          onBodyChange(value);
-                        }}
-                        {...bodyEditorConfig}
-                      />
-                    </MonacoDivBody>
-                  </GoAFormItem>
-                )}
+                <GoAFormItem error={errors?.body ?? null} helpText={bodyEditorHintText}>
+                  <MonacoDivBody>
+                    <MonacoEditor
+                      language={'handlebars'}
+                      defaultValue={template?.template}
+                      onChange={(value) => {
+                        onBodyChange(value);
+                        if (tmpTemplate) {
+                          tmpTemplate.template = value;
+                        }
+                      }}
+                      {...bodyEditorConfig}
+                    />
+                  </MonacoDivBody>
+                </GoAFormItem>
               </>
             </Tab>
             <Tab
@@ -166,9 +161,12 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   <MonacoDivHeader>
                     <MonacoEditor
                       language={'handlebars'}
-                      value={template?.header}
+                      defaultValue={template?.header}
                       onChange={(value) => {
                         onHeaderChange(value);
+                        if (tmpTemplate) {
+                          tmpTemplate.header = value;
+                        }
                       }}
                       {...bodyEditorConfig}
                     />
@@ -181,9 +179,12 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   <MonacoDivFooter>
                     <MonacoEditor
                       language={'handlebars'}
-                      value={template?.footer}
+                      defaultValue={template?.footer}
                       onChange={(value) => {
                         onFooterChange(value);
+                        if (tmpTemplate) {
+                          tmpTemplate.footer = value;
+                        }
                       }}
                       {...bodyEditorConfig}
                     />

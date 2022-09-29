@@ -124,7 +124,7 @@ export const ScriptTableComponent: FunctionComponent<scriptTableProps> = ({ scri
         }
         onDelete={() => {
           setShowDeleteConfirmation(false);
-          dispatch(DeleteScript(selectedDeleteScript?.name));
+          dispatch(DeleteScript(selectedDeleteScript?.id));
         }}
       />
       <br />

@@ -1,9 +1,10 @@
-module.exports = {
-  name: 'value-service',
+/* eslint-disable */
+export default {
+  displayName: 'push-service',
   preset: '../../jest.preset.js',
   globals: {
     'ts-jest': { tsconfig: '<rootDir>/tsconfig.spec.json' },
   },
-  coverageDirectory: '../../coverage/apps/value-service',
+  coverageDirectory: '../../coverage/apps/push-service',
   testEnvironment: 'node',
 };

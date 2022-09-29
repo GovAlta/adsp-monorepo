@@ -7,7 +7,7 @@ import { ScriptItem, defaultScript } from '@store/script/models';
 import { GoAButton } from '@abgov/react-components';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
-import { AddScriptModal } from './AddScriptModal';
+import { AddScriptModal } from './addScriptModal';
 
 import { fetchEventStreams } from '@store/stream/actions';
 import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
@@ -27,10 +27,9 @@ interface AddScriptProps {
 export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   const dispatch = useDispatch();
   const [openAddScript, setOpenAddScript] = useState(false);
-  const [openEditScript, setOpenEditScript] = useState(false);
-  const [showTemplateForm, setShowTemplateForm] = useState(false);
+  const [showScriptEditForm, setShowScriptEditForm] = useState(false);
   const [selectedScript, setSelectedScript] = useState<ScriptItem>(defaultScript);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [currentSavedScript, setCurrentSavedScript] = useState<ScriptItem>(defaultScript);
   const { fetchScriptState } = useSelector((state: RootState) => ({
     fetchScriptState: state.scriptService.indicator?.details[FETCH_SCRIPTS_ACTION] || '',
   }));
@@ -45,18 +44,10 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
 
   const { scripts } = useSelector((state: RootState) => state.scriptService);
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
-  const duplicateScriptCheck = (): Validator => {
-    return (name: string) => {
-      return scripts[name]
-        ? `Duplicated script name ${name}, Please use a different name to get a unique script name`
-        : '';
-    };
-  };
   const descriptionCheck = (): Validator => (description: string) =>
     description.length > 250 ? 'Description should not exceed 250 characters' : '';
 
-  const { validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
-    .add('duplicated', 'name', duplicateScriptCheck())
+  const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
     .add('description', 'description', descriptionCheck())
     .build();
 
@@ -69,22 +60,24 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
 
   // eslint-disable-next-line
 
-  const reset = (loseEventModal?: boolean) => {
+  const reset = () => {
     setSelectedScript(defaultScript);
     setOpenAddScript(false);
-    setErrors({});
-    setShowTemplateForm(false);
+    setShowScriptEditForm(false);
   };
+
   const saveScript = (script: ScriptItem) => {
     dispatch(UpdateScript(script));
   };
-  const saveAndReset = (closeEventModal?: boolean) => {
+  const saveAndReset = () => {
     saveScript(selectedScript);
-    reset(closeEventModal);
+    reset();
+    setShowScriptEditForm(false);
   };
   const onEdit = (script) => {
     setSelectedScript(script);
-    setOpenEditScript(true);
+    setCurrentSavedScript(Object.assign({}, script));
+    setShowScriptEditForm(true);
   };
   const onNameChange = (value) => {
     validators.remove('name');
@@ -92,19 +85,22 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
       name: value,
     };
 
-    validations['duplicated'] = value;
-
     validators.checkAll(validations);
-
-    setSelectedScript({ ...selectedScript, name: value });
+    const element: ScriptItem = selectedScript;
+    element.name = value;
+    setSelectedScript(element);
   };
   const onDescriptionChange = (value) => {
     validators.remove('description');
     validators['description'].check(value);
-    setSelectedScript({ ...selectedScript, description: value });
+    const element: ScriptItem = selectedScript;
+    element.description = value;
+    setSelectedScript(element);
   };
   const onScriptChange = (value) => {
-    setSelectedScript({ ...selectedScript, script: value });
+    const element: ScriptItem = selectedScript;
+    element.script = value;
+    setSelectedScript(element);
   };
   return (
     <>
@@ -142,29 +138,30 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
           onSave={saveScript}
         />
       )}
-
-      <Modal open={openEditScript} data-testid="script-edit-form">
-        {/* Hides body overflow when the modal is up */}
-        <BodyGlobalStyles hideOverflow={openEditScript} />
-        <ModalContent>
-          <ScriptPanelContainer>
-            <ScriptEditor
-              modelOpen={showTemplateForm}
-              editorConfig={scriptEditorConfig}
-              name={selectedScript.name}
-              description={selectedScript.description}
-              scriptStr={selectedScript.script}
-              currentScriptItem={selectedScript}
-              onNameChange={onNameChange}
-              onDescriptionChange={onDescriptionChange}
-              onScriptChange={onScriptChange}
-              errors={errors}
-              saveAndReset={saveAndReset}
-            />
-          </ScriptPanelContainer>
-          {/* Add preview section */}
-        </ModalContent>
-      </Modal>
+      {
+        <Modal open={showScriptEditForm} data-testid="script-edit-form">
+          {/* Hides body overflow when the modal is up */}
+          <BodyGlobalStyles hideOverflow={showScriptEditForm} />
+          <ModalContent>
+            <ScriptPanelContainer>
+              <ScriptEditor
+                editorConfig={scriptEditorConfig}
+                name={selectedScript.name}
+                description={selectedScript.description}
+                scriptStr={selectedScript.script}
+                currentScriptItem={currentSavedScript}
+                onNameChange={onNameChange}
+                onDescriptionChange={onDescriptionChange}
+                onScriptChange={onScriptChange}
+                errors={errors}
+                saveAndReset={saveAndReset}
+                onEditorCancel={reset}
+              />
+            </ScriptPanelContainer>
+            {/* Add preview section */}
+          </ModalContent>
+        </Modal>
+      }
     </>
   );
 };

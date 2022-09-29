@@ -10,8 +10,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 
 interface ScriptEditorProps {
-  modelOpen: boolean;
-
   editorConfig?: EditorProps;
   name: string;
   description: string;
@@ -23,11 +21,10 @@ interface ScriptEditorProps {
   // eslint-disable-next-line
   errors?: any;
   saveAndReset: (closeEventModal?: boolean) => void;
+  onEditorCancel: () => void;
 }
 
 export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
-  modelOpen,
-
   editorConfig,
   name,
   description,
@@ -38,15 +35,15 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   onScriptChange,
   errors,
   saveAndReset,
+  onEditorCancel,
 }) => {
   const dispatch = useDispatch();
   const [saveModal, setSaveModal] = useState(false);
-  const oldScript = currentScriptItem;
+
   const resetSavedAction = () => {
-    console.log(JSON.stringify('ressetting'));
-    name = oldScript.name;
-    description = oldScript.description;
-    scriptStr = oldScript.script;
+    onNameChange(currentScriptItem.name);
+    onDescriptionChange(currentScriptItem.description);
+    onScriptChange(currentScriptItem.script);
   };
 
   console.log(JSON.stringify(currentScriptItem) + '<currentScriptItemcurrentScriptItem');
@@ -60,102 +57,132 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   };
 
   return (
-    <div style={{ width: '100%', display: 'flex' }}>
-      <ScriptEditorContainer>
-        <GoAForm>
-          <GoAFormItem error={errors?.['name']}>
-            <label>Name</label>
-            <GoAInput
-              type="text"
-              name="name"
-              value={name}
-              data-testid={`script-modal-name-input`}
-              aria-label="script-name"
-              onChange={(value) => {
-                onNameChange(value);
-              }}
-            />
-          </GoAFormItem>
-          <GoAFormItem error={errors?.['description']}>
-            <label>Description</label>
-            <GoAInput
-              type="text"
-              name="description"
-              value={description}
-              data-testid={`script-modal-description-input`}
-              aria-label="script-description"
-              onChange={(name, value) => {
-                onDescriptionChange(name, value);
-              }}
-            />
-          </GoAFormItem>
-          <GoAFormItem>
-            <MonacoDivBody data-testid="templated-editor-body">
-              <MonacoEditor
-                language={'lua'}
-                value={scriptStr}
-                {...editorConfig}
-                onChange={(value) => {
-                  onScriptChange(value);
-                }}
-              />
-            </MonacoDivBody>
-          </GoAFormItem>
+    <ScriptEditorContainer>
+      <GoAForm>
+        <GoAFormItem error={errors?.['name']}>
+          <h3 className="reduce-margin" data-testid="modal-title">
+            {`Edit script ${name}`}
+          </h3>
+          <label>Name</label>
+          <GoAInput
+            type="text"
+            name="name"
+            value={name}
+            data-testid={`script-modal-name-input`}
+            aria-label="script-name"
+            onChange={(name, value) => {
+              onNameChange(value);
+            }}
+          />
+        </GoAFormItem>
+        <GoAFormItem error={errors?.['description']}>
+          <label>Description</label>
+          <GoAInput
+            type="text"
+            name="description"
+            value={description}
+            data-testid={`script-modal-description-input`}
+            aria-label="script-description"
+            onChange={(name, value) => {
+              onDescriptionChange(value);
+            }}
+          />
+        </GoAFormItem>
+        <GoAFormItem>
+          <label>Lua Script</label>
 
-          <EditTemplateActions>
-            <GoAButton
-              onClick={() => {
+          <MonacoEditor
+            language="lua"
+            value={scriptStr}
+            {...editorConfig}
+            onChange={(value) => {
+              onNameChange(value);
+            }}
+          />
+        </GoAFormItem>
+        <GoAFormItem error={errors?.['description']}>
+          <label>Description</label>
+          <GoAInput
+            type="text"
+            name="description"
+            value={description}
+            data-testid={`script-modal-description-input`}
+            aria-label="script-description"
+            onChange={(name, value) => {
+              onDescriptionChange(name, value);
+            }}
+          />
+        </GoAFormItem>
+        <GoAFormItem>
+          <MonacoDivBody data-testid="templated-editor-body">
+            <MonacoEditor
+              language={'lua'}
+              value={scriptStr}
+              {...editorConfig}
+              onChange={(value) => {
+                onScriptChange(value);
+              }}
+            />
+          </MonacoDivBody>
+        </GoAFormItem>
+        <EditTemplateActions>
+          <GoAButton
+            onClick={() => {
+              if (
+                currentScriptItem.name !== name ||
+                currentScriptItem.description !== description ||
+                currentScriptItem.script !== scriptStr
+              ) {
                 setSaveModal(true);
-              }}
-              data-testid="template-form-close"
-              buttonType="secondary"
-              type="button"
-            >
-              Cancel
-            </GoAButton>
-            <GoAButton
-              onClick={() => {
-                saveAndReset(true);
-              }}
-              buttonType="primary"
-              data-testid="template-form-save"
-              type="submit"
-            >
-              Save
-            </GoAButton>
-            <GoAButton
-              onClick={() => {
-                execute();
-              }}
-              buttonType="primary"
-              data-testid="template-form-save"
-              type="submit"
-            >
-              Execute
-            </GoAButton>
-          </EditTemplateActions>
-        </GoAForm>
-        {/* Form */}
-        <SaveFormModal
-          open={saveModal}
-          onDontSave={() => {
-            resetSavedAction();
-            setSaveModal(false);
-          }}
-          onSave={() => {
-            saveAndReset();
-            setSaveModal(false);
-          }}
-          onCancel={() => {
-            resetSavedAction();
-            setSaveModal(false);
-          }}
-        />
-      </ScriptEditorContainer>
-      <div style={{ width: '100%' }}>
-        <h3>Script Response</h3>
-        <div>{scriptResponse}</div>
-      </div>
-    </div>
+              } else {
+                onEditorCancel();
+              }
+            }}
+            data-testid="template-form-close"
+            buttonType="secondary"
+            type="button"
+          >
+            Cancel
+          </GoAButton>
+          <GoAButton
+            onClick={() => {
+              saveAndReset(true);
+            }}
+            buttonType="primary"
+            data-testid="template-form-save"
+            type="submit"
+            disabled={Object.keys(errors).length > 0}
+          >
+            Save
+          </GoAButton>
+          <GoAButton
+            onClick={() => {
+              execute();
+            }}
+            buttonType="primary"
+            data-testid="template-form-save"
+            type="submit"
+          >
+            Execute
+          </GoAButton>
+        </EditTemplateActions>
+      </GoAForm>
+      {/* Form */}
+      <SaveFormModal
+        open={saveModal}
+        onDontSave={() => {
+          resetSavedAction();
+          setSaveModal(false);
+          onEditorCancel();
+        }}
+        onSave={() => {
+          saveAndReset(true);
+          setSaveModal(false);
+        }}
+        onCancel={() => {
+          setSaveModal(false);
+        }}
+      />
+    </ScriptEditorContainer>
   );
 };
