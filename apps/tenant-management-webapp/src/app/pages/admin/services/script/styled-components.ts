@@ -133,6 +133,7 @@ export const ScriptEditorContainer = styled.div`
   width: 40%;
   padding-right: 1rem;
   margin-top: 4rem;
+  padding-left: 1rem;
   overflow: hidden;
   &:hover {
     overflow: auto;

@@ -27,7 +27,7 @@ export const SaveFormModal: FunctionComponent<SaveFormProps> = ({
           <GoAButton data-testid="form-cancel-modal" buttonType="tertiary" type="button" onClick={onCancel}>
             Cancel
           </GoAButton>
-          <GoAButton buttonType="tertiary" data-testid="form-dont-save" type="submit" onClick={(e) => onDontSave()}>
+          <GoAButton buttonType="secondary" data-testid="form-dont-save" type="submit" onClick={(e) => onDontSave()}>
             Don't save
           </GoAButton>
           <GoAButton

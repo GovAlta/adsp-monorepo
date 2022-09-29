@@ -104,7 +104,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             buttonType="secondary"
             type="button"
           >
-            Cancel
+            Close
           </GoAButton>
           <GoAButton
             onClick={() => {
