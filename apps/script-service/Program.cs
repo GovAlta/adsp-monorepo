@@ -11,7 +11,20 @@ internal class Program
 {
   private static void Main(string[] args)
   {
+    var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
     var builder = WebApplication.CreateBuilder(args);
+
+    builder.Services.AddCors(options =>
+      {
+        options.AddPolicy(name: MyAllowSpecificOrigins,
+          policy =>
+          {
+            policy.AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+          });
+      }
+    );
     builder.Logging.ClearProviders();
     builder.Logging.AddConsole();
 
@@ -87,7 +100,7 @@ internal class Program
 
     var app = builder.Build();
     app.UseAdspMetrics();
-
+    app.UseCors(MyAllowSpecificOrigins);
     app.UseSwagger(new SwaggerOptions { RouteTemplate = "docs/{documentName}/swagger.json" });
 
     app.UseAuthorization();
@@ -97,7 +110,6 @@ internal class Program
       SwaggerJsonPath = "docs/v1/swagger.json",
       ApiPath = "script/v1"
     });
-
     app.MapControllers();
 
     app.Run();
