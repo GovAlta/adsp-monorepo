@@ -110,7 +110,6 @@ internal class Program
       SwaggerJsonPath = "docs/v1/swagger.json",
       ApiPath = "script/v1"
     });
-    
     app.MapControllers();
 
     app.Run();
