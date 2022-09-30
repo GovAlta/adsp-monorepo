@@ -116,9 +116,14 @@ export function* runScript(action: RunScriptAction): SagaIterator {
     try {
       console.log(JSON.stringify(scriptUrl) + '<scriptUrl');
       console.log(JSON.stringify(action.payload) + '<action.payload');
-      const Response = yield call(axios.post, `${scriptUrl}/script/v1/scripts/${action.payload}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const Response = yield call(
+        axios.post,
+        `${scriptUrl}/script/v1/scripts/${action.payload}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       console.log(JSON.stringify(Response) + '<Response');
       yield put(fetchScriptsSuccess(Response));
 
