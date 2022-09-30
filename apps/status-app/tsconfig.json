@@ -21,7 +21,7 @@
       ],
       "@style/*": [
         "../../../libs/stylesheets/scss/src/lib/*"
-      ],
+      ]
     }
   },
   "files": [],

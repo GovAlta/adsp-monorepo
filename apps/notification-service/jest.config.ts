@@ -1,5 +1,6 @@
-module.exports = {
-  name: 'notification-service',
+/* eslint-disable */
+export default {
+  displayName: 'notification-service',
   preset: '../../jest.preset.js',
   globals: {
     'ts-jest': { tsconfig: '<rootDir>/tsconfig.spec.json' },
@@ -8,5 +9,5 @@ module.exports = {
   testEnvironment: 'node',
   transform: {
     '^.+\\.hbs$': '../../hbs-raw-loader.js',
-  }
+  },
 };

@@ -23,7 +23,7 @@ import {
 import { ActionState } from '@store/session/models';
 
 export function* updateScript({ payload }: UpdateScriptAction): SagaIterator {
-  const script = { [payload.name]: { ...payload } };
+  const script = { [payload.id]: { ...payload } };
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );

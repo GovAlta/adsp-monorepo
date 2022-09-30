@@ -216,6 +216,7 @@ export const Exports = styled.div`
 
   .goa-checkbox-container: hover {
     border: 2px solid #004f84;
+    background: white;
   }
 
   .goa-checkbox--selected: hover {

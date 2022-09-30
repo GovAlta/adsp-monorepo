@@ -112,7 +112,7 @@ export const MonacoDivBody = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(100vh - 310px);
+  height: calc(80vh - 310px);
 `;
 export const ScriptPanelContainer = styled.div`
   display: flex;

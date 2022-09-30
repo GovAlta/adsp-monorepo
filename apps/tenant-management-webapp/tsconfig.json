@@ -30,7 +30,7 @@
       ],
       "@core-services/notification-shared": [
         "../../../libs/notification-shared/src/index.ts"
-      ],
+      ]
     }
   },
   "files": [],

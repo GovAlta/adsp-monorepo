@@ -1,4 +1,5 @@
-module.exports = {
+/* eslint-disable */
+export default {
   displayName: 'verify-service',
   preset: '../../jest.preset.js',
   globals: {

@@ -1,4 +1,5 @@
-module.exports = {
+/* eslint-disable */
+export default {
   displayName: 'notification-shared',
   preset: '../../jest.preset.js',
   globals: {
