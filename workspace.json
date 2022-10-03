@@ -76,6 +76,47 @@
       },
       "tags": []
     },
+    "adsp-service-spring-sdk": {
+      "root": "libs/adsp-service-spring-sdk",
+      "sourceRoot": "libs/adsp-service-spring-sdk/src",
+      "projectType": "library",
+      "architect": {
+        "build": {
+          "builder": "@nxrocks/nx-spring-boot:build",
+          "options": {
+            "root": "libs/adsp-service-spring-sdk"
+          },
+          "dependsOn": [
+            "^install"
+          ],
+          "outputs": [
+            "libs/adsp-service-spring-sdk/target"
+          ]
+        },
+        "install": {
+          "builder": "@nxrocks/nx-spring-boot:install",
+          "options": {
+            "root": "libs/adsp-service-spring-sdk"
+          },
+          "outputs": [
+            "libs/adsp-service-spring-sdk/target"
+          ]
+        },
+        "test": {
+          "builder": "@nxrocks/nx-spring-boot:test",
+          "options": {
+            "root": "libs/adsp-service-spring-sdk"
+          }
+        },
+        "clean": {
+          "builder": "@nxrocks/nx-spring-boot:clean",
+          "options": {
+            "root": "libs/adsp-service-spring-sdk"
+          }
+        }
+      },
+      "tags": []
+    },
     "api-docs-app": {
       "root": "apps/api-docs-app",
       "sourceRoot": "apps/api-docs-app/src",

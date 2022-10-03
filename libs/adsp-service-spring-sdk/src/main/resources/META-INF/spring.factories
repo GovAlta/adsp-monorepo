@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+ca.ab.gov.alberta.adsp.sdk.AdspInitializer
