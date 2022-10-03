@@ -113,6 +113,12 @@
           "options": {
             "root": "libs/adsp-service-spring-sdk"
           }
+        },
+        "release": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "command": "npx semantic-release -e ./libs/adsp-service-spring-sdk/.releaserc.json"
+          }
         }
       },
       "tags": []
