@@ -5,6 +5,7 @@ import {
   MonacoDivBody,
   MonacoDivHeader,
   MonacoDivFooter,
+  PdfEditorLabelWrapper,
 } from './styled-components';
 import { GoAForm, GoAFormItem, GoABadge } from '@abgov/react-components/experimental';
 import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
@@ -112,9 +113,14 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           >
             <Tab
               label={
-                <div>
-                  Main {errors?.body && <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" />}
-                </div>
+                <PdfEditorLabelWrapper>
+                  Main
+                  <div className="badge">
+                    {errors?.body && (
+                      <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" icon="warning" />
+                    )}
+                  </div>
+                </PdfEditorLabelWrapper>
               }
             >
               <h3 className="reduce-margin" data-testid="modal-title">
@@ -142,12 +148,14 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             </Tab>
             <Tab
               label={
-                <div>
+                <PdfEditorLabelWrapper>
                   Header/Footer{' '}
-                  {(errors?.footer || errors?.header) && (
-                    <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" />
-                  )}
-                </div>
+                  <div className="badge">
+                    {(errors?.footer || errors?.header) && (
+                      <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" icon="warning" />
+                    )}
+                  </div>
+                </PdfEditorLabelWrapper>
               }
             >
               <h3 className="reduce-margin" data-testid="modal-title">
