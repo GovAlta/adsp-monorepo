@@ -117,7 +117,7 @@
     "@abgov/core-css": "^1.7.0-beta.11",
     "@abgov/nx-adsp": "^3.2.0",
     "@abgov/nx-oc": "^3.2.0",
-    "@abgov/nx-release": "^3.1.0",
+    "@abgov/nx-release": "^3.1.1",
     "@abgov/react-components": "^3.4.0-beta.65",
     "@abgov/react-components-new": "npm:@abgov/react-components@^4.0.0-alpha.23",
     "@abgov/semantic-release-nuget": "^1.0.0",
