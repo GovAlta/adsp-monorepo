@@ -10,7 +10,8 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpHeaders;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -19,7 +20,7 @@ import ca.ab.gov.alberta.adsp.sdk.access.TokenProvider;
 import ca.ab.gov.alberta.adsp.sdk.directory.ServiceDirectory;
 import reactor.core.publisher.Mono;
 
-@Service
+@Component
 @Scope("singleton")
 class DefaultTenantService implements TenantService {
 
@@ -56,6 +57,8 @@ class DefaultTenantService implements TenantService {
 
   @Override
   public Mono<Tenant> getTenant(AdspId tenantId) {
+    Assert.notNull(tenantId, "event cannot be null.");
+
     return Mono.fromCallable(() -> this.tenantCache.get(tenantId, Tenant.class))
         .switchIfEmpty(this.getTenants()
             .map(tenants -> this.tenantCache.get(tenantId, Tenant.class)));

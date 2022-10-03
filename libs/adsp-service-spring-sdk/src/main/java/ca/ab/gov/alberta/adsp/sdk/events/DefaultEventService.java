@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -50,9 +51,10 @@ class DefaultEventService implements EventService {
 
   @Override
   public <T> Mono<Void> send(DomainEvent<T> event) {
+    Assert.notNull(event, "event cannot be null.");
 
     return Mono.fromCallable(() -> {
-      event.setNamespace(this.serviceId.getNamespace());
+      event.setNamespace(this.serviceId.getService());
       if (!this.events.contains(event.getName())) {
         throw new IllegalArgumentException("Specified event has not been registered");
       }
@@ -67,8 +69,8 @@ class DefaultEventService implements EventService {
             .bodyValue(send)
             .retrieve()
             .bodyToMono(Void.class))
-        .doOnSuccess(_v -> this.logger.info("Sent domain event {}:{}"))
-        .doOnError(e -> this.logger.warn("Error encountered sending event {}:{}.", e)));
+        .doOnSuccess(_v -> this.logger.info("Sent domain event {}:{}", event.getNamespace(), event.getName()))
+        .doOnError(
+            e -> this.logger.warn("Error encountered sending event {}:{}.", event.getNamespace(), event.getName(), e)));
   }
-
 }

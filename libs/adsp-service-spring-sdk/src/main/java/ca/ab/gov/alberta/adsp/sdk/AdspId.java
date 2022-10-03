@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -19,10 +20,12 @@ public final class AdspId {
       "^(?i:urn):ads(?<namespace>:[a-zA-Z0-9-]{1,50})?(?<service>:[a-zA-Z0-9-]{1,50})?(?<api>:[a-zA-Z0-9-]{1,50})?(?<resource>:[a-zA-Z0-9-_/ ]{1,1000})?$");
 
   public static AdspId parse(String urn) {
+    Assert.hasLength(urn, "urn cannot be null or empty.");
+
     Matcher matcher = UrnPattern.matcher(urn);
 
     if (!matcher.find()) {
-      throw new RuntimeException("Specified urn is not an ADSP ID.");
+      throw new IllegalArgumentException("Specified urn is not an ADSP ID.");
     }
 
     var namespace = StringUtils.strip(matcher.group("namespace"), ":");
