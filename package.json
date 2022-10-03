@@ -143,6 +143,7 @@
     "@nrwl/web": "14.7.16",
     "@nrwl/workspace": "14.7.16",
     "@nx-dotnet/core": "1.13.4",
+    "@nxrocks/nx-spring-boot": "^5.0.2",
     "@redux-devtools/extension": "^3.2.2",
     "@reduxjs/toolkit": "1.8.4",
     "@shelf/jest-mongodb": "^2.1.0",

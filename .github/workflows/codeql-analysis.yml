@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ["javascript", "csharp"]
+        language: ["javascript", "java", "csharp"]
         # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
         # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
 
@@ -39,16 +39,16 @@ jobs:
         uses: actions/checkout@v3
       # Setup node and install npm dependencies if scanning csharp
       # This is counter intuitive; we use nx-dotnet/core and the project has msbuild task that requires the plugin.
-      - if: ${{ matrix.language == 'csharp' }}
+      - if: ${{ matrix.language != 'javascript' }}
         uses: actions/setup-node@v2
         with:
           node-version: 16
-      - if: ${{ matrix.language == 'csharp' }}
+      - if: ${{ matrix.language != 'javascript' }}
         uses: actions/cache@v2
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-      - if: ${{ matrix.language == 'csharp' }}
+      - if: ${{ matrix.language != 'javascript' }}
         run: npm ci
 
       # Initializes the CodeQL tools for scanning.
