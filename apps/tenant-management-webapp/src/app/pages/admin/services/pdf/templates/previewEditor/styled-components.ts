@@ -153,3 +153,11 @@ export const BodyPreview = styled(PreviewPortal)`
   flex-grow: 1;
   margin-bottom: 2rem;
 `;
+
+export const PdfEditorLabelWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+  .badge {
+    margin: 0px 0px 0px 3px;
+  }
+`;

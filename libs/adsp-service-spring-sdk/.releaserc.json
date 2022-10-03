@@ -1,0 +1,20 @@
+{
+  "extends": "../../.releaserc.json",
+  "tagFormat": "adsp-service-spring-sdk-v${version}",
+  "plugins": [
+    [
+      "@abgov/nx-release",
+      {
+        "project": "adsp-service-spring-sdk"
+      }
+    ],
+    "@conveyal/maven-semantic-release",
+    [
+      "@semantic-release/github",
+      {
+        "releasedLabels": false,
+        "successComment": false
+      }
+    ]
+  ]
+}
