@@ -477,6 +477,7 @@ When(
       notificationsObj.searchSubscriberPhone().clear().type(phoneNumber);
     }
     notificationsObj.notificationSearchBtn().click();
+    cy.wait(2000);
   }
 );
 

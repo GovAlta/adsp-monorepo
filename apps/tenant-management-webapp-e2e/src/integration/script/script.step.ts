@@ -12,7 +12,6 @@ Given('a tenant admin user is on script service overview page', function () {
     Cypress.env('password')
   );
   commonlib.tenantAdminMenuItem('Script', 4000);
-  cy.wait(2000);
 });
 
 When('the user clicks Add script button', function () {
@@ -25,22 +24,22 @@ Then('the user views Add script modal', function () {
 });
 
 When('the user enters {string} in name field in script modal', function (name) {
-  scriptObj.scriptModalNameField().clear().type(name);
+  scriptObj.addScriptModalNameField().clear().type(name);
 });
 
 Then('the user views the error message of {string} on namespace in script modal', function (errorMsg) {
-  scriptObj.scriptModalNameErrorMsg().invoke('text').should('contain', errorMsg);
+  scriptObj.addScriptModalNameErrorMsg().invoke('text').should('contain', errorMsg);
 });
 
 When(
   'the user enters {string}, {string}, {string}, {string} in Add script modal',
   function (name, desc, useServiceAcct, role) {
     const roles = role.split(',');
-    scriptObj.scriptModalNameField().clear().type(name);
-    scriptObj.scriptModalDescriptionField().clear().type(desc);
+    scriptObj.addScriptModalNameField().clear().type(name);
+    scriptObj.addScriptModalDescriptionField().clear().type(desc);
     switch (useServiceAcct) {
       case 'yes':
-        scriptObj.scriptModalUseServiceAccountCheckbox().click();
+        scriptObj.addScriptModalUseServiceAccountCheckbox().click();
         break;
       case 'no':
         break;
@@ -50,9 +49,9 @@ When(
     for (let i = 0; i < roles.length; i++) {
       if (roles[i].includes(':')) {
         const clientRoleStringArray = roles[i].split(':');
-        scriptObj.scriptModalRolesCheckbox(clientRoleStringArray[clientRoleStringArray.length - 1]).click();
+        scriptObj.addScriptModalRolesCheckbox(clientRoleStringArray[clientRoleStringArray.length - 1]).click();
       } else {
-        scriptObj.scriptModalRolesCheckbox(roles[i].trim()).click();
+        scriptObj.addScriptModalRolesCheckbox(roles[i].trim()).click();
       }
     }
   }
