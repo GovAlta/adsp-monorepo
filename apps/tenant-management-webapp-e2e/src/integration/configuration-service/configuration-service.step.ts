@@ -44,7 +44,6 @@ Given('a tenant admin user is on configuration overview page', function () {
     Cypress.env('password')
   );
   commonlib.tenantAdminMenuItem('Configuration', 4000);
-  cy.wait(2000);
 });
 
 When('the user clicks Add definition button on configuration overview page', function () {
