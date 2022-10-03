@@ -10,11 +10,31 @@
 		<!-- lookup parent from repository -->
 	</parent>
 
-	<groupId>ca.ab.gov.alberta</groupId>
+	<groupId>ca.ab.gov.alberta.adsp</groupId>
 	<artifactId>adsp-service-spring-sdk</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>adsp-service-spring-sdk</name>
-	<description>ADSP service SDK for Spring</description>
+	<description>ADSP service SDK for Spring Boot</description>
+	<url>https://github.com/GovAlta/adsp-monorepo</url>
+
+	<organization>
+		<name>Government of Alberta</name>
+		<url>https://alberta.ca</url>
+	</organization>
+
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<scm>
+		<connection>scm:git:https://github.com/GovAlta/adsp-monorepo.git</connection>
+		<developerConnection>scm:git:https://github.com/GovAlta/adsp-monorepo.git</developerConnection>
+		<url>https://github.com/GovAlta/adsp-monorepo</url>
+	</scm>
 
 	<properties>
 		<java.version>11</java.version>
@@ -76,6 +96,36 @@
 					<outputDirectory>../../dist/libs/adsp-service-spring-sdk</outputDirectory>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.2.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.4.1</version>
+				<configuration>
+					<show>public</show>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
+
+	<distributionManagement>
+		<repository>
+			<id>github</id>
+			<name>GitHub Packages</name>
+			<url>https://maven.pkg.github.com/GovAlta/adsp-monorepo</url>
+		</repository>
+	</distributionManagement>
 </project>
