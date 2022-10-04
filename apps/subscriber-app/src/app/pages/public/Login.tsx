@@ -7,7 +7,7 @@ import { TenantLogin } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 
 const LoginLanding = (): JSX.Element => {
-  let { realm } = useParams();
+  const { realm } = useParams();
 
   const keycloakConfig = useSelector((state: RootState) => state.config.keycloakApi);
   const dispatch = useDispatch();

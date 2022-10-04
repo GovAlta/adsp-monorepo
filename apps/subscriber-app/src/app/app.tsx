@@ -1,7 +1,7 @@
 import '@style/app.css';
 import '@style/colors.scss';
 import React, { useEffect } from 'react';
-import { Route, Routes, BrowserRouter as Router, Navigate } from 'react-router-dom-6';
+import { Route, Routes, BrowserRouter as Router } from 'react-router-dom-6';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { store, RootState } from '@store/index';
 import { PrivateApp } from './privateApp';

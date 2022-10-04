@@ -21,7 +21,7 @@ export function PublicApp(): JSX.Element {
       <Header serviceName="Alberta Digital Service Platform - Subscription management" />
       <NotificationBanner />
       <Routes>
-      <Route path="/" element={<Navigate to="/overview" /> } />} />
+        <Route path="/" element={<Navigate to="/overview" />} />
         <Route path="overview" element={<LandingPage />} />
         <Route path="logout-redirect" element={<LogoutRedirect />} />
         <Route path=":realm/login" element={<Login />} />
