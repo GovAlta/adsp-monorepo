@@ -185,6 +185,18 @@ class eventsPage {
     );
   }
 
+  streamModalClientRoleCheckbox(clientName, roleName) {
+    return cy.xpath(
+      `//*[@data-testid="stream-form"]//thead/tr/th[@class="role-name" and text()="${clientName}"]/ancestor::thead/following-sibling::tbody/tr/td[@class="role-label" and text()="${roleName}"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]`
+    );
+  }
+
+  streamModalRoleCheckboxes() {
+    return cy.xpath(
+      `//*[@data-testid="stream-form"]//tbody/tr/td[@class="role-label"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]`
+    );
+  }
+
   streamModalRolesCheckboxes() {
     return cy.xpath(
       '//*[@data-testid="stream-form"]//tbody/tr/td[@class="role-label"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]'
