@@ -12,7 +12,6 @@ Given('a tenant admin user is on PDF service overview page', function () {
     Cypress.env('password')
   );
   commonlib.tenantAdminMenuItem('PDF', 4000);
-  cy.wait(2000);
 });
 
 Then('the user views the Pdf service overview content {string}', function (paragraphText) {

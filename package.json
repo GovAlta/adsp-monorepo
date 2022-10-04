@@ -117,7 +117,7 @@
     "@abgov/core-css": "^1.7.0-beta.11",
     "@abgov/nx-adsp": "^3.2.0",
     "@abgov/nx-oc": "^3.2.0",
-    "@abgov/nx-release": "^3.1.0",
+    "@abgov/nx-release": "^3.1.2",
     "@abgov/react-components": "^3.4.0-beta.65",
     "@abgov/react-components-new": "npm:@abgov/react-components@^4.0.0-alpha.23",
     "@abgov/semantic-release-nuget": "^1.0.0",
@@ -126,6 +126,7 @@
     "@babel/preset-env": "7.9.6",
     "@babel/preset-react": "7.9.4",
     "@babel/preset-typescript": "7.9.0",
+    "@conveyal/maven-semantic-release": "^5.0.0",
     "@fortawesome/fontawesome-svg-core": "^1.2.32",
     "@fortawesome/free-solid-svg-icons": "^5.15.1",
     "@fortawesome/react-fontawesome": "^0.1.14",
@@ -143,6 +144,7 @@
     "@nrwl/web": "14.7.16",
     "@nrwl/workspace": "14.7.16",
     "@nx-dotnet/core": "1.13.4",
+    "@nxrocks/nx-spring-boot": "^5.0.2",
     "@redux-devtools/extension": "^3.2.2",
     "@reduxjs/toolkit": "1.8.4",
     "@shelf/jest-mongodb": "^2.1.0",
@@ -240,7 +242,6 @@
     "redux-saga": "1.1.3",
     "regenerator-runtime": "0.13.7",
     "reselect": "4.0.0",
-    "semantic-release": "~19.0.2",
     "styled-components": "5.3.5",
     "supertest": "^6.1.3",
     "swagger-jsdoc-webpack-plugin": "^1.0.0",
@@ -255,6 +256,7 @@
   "overrides": {
     "@nrwl/devkit": "14.7.16",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "semantic-release": "19.0.5"
   }
 }
