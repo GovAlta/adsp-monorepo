@@ -46,6 +46,7 @@ const ScriptItemComponent: FunctionComponent<ScriptItemProps> = ({ script, onDel
                 title="Edit"
                 testId={`script-edit-${script.name}`}
                 onClick={() => {
+                  console.log(JSON.stringify(script) + '<editScript');
                   onEdit(script);
                 }}
               />

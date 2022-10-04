@@ -130,7 +130,7 @@ export const EditTemplateActions = styled.div`
 `;
 
 export const ScriptEditorContainer = styled.div`
-  width: 100%;
+  width: 50%;
   padding-right: 1rem;
   margin-top: 4rem;
   overflow: hidden;
