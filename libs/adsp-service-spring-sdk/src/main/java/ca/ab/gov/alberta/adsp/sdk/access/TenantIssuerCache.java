@@ -59,7 +59,7 @@ class TenantIssuerCache {
             logger.debug("Cached issuer {} -> {} ({})", issuer, tenant.getName(), tenant.getId());
           });
         })
-        .block();
+        .blockOptional();
   }
 
   public Tenant getCached(String issuer) {

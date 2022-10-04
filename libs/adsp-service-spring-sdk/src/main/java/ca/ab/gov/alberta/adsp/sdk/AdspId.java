@@ -17,7 +17,7 @@ import ca.ab.gov.alberta.adsp.sdk.utils.AdspIdDeserializer;
 @JsonDeserialize(using = AdspIdDeserializer.class)
 public final class AdspId {
   private static final Pattern UrnPattern = Pattern.compile(
-      "^(?i:urn):ads(?<namespace>:[a-zA-Z0-9-]{1,50})?(?<service>:[a-zA-Z0-9-]{1,50})?(?<api>:[a-zA-Z0-9-]{1,50})?(?<resource>:[a-zA-Z0-9-_/ ]{1,1000})?$");
+      "^(?i:urn):ads(?<namespace>:[a-zA-Z0-9-]{1,50})(?<service>:[a-zA-Z0-9-]{1,50})?(?<api>:[a-zA-Z0-9-]{1,50})?(?<resource>:[a-zA-Z0-9-_/ ]{1,1000})?$");
 
   public static AdspId parse(String urn) {
     Assert.hasLength(urn, "urn cannot be null or empty.");
