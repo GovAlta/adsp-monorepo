@@ -21,6 +21,8 @@
   <servers>
     <server>
       <id>github</id>
+      <username>adsp-monorepo</username>
+      <password>TOKEN</password>
     </server>
   </servers>
 </settings>

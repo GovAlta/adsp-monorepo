@@ -26,6 +26,8 @@ runs:
     - name: Build
       shell: bash
       run: npx nx affected --configuration=production --target=build --base=${{ inputs.affected-base }}
+    - shell: bash
+      run: sed -i -r -e "s/TOKEN/${{ inputs.github_token }}/" libs/adsp-service-spring-sdk/maven-settings.xml
     - name: Release
       shell: bash
       env:
