@@ -72,7 +72,7 @@ public class ScriptController : ControllerBase
       throw new RequestArgumentException("request body cannot be null");
     }
 
-    var configuration = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, ScriptConfiguration>();
+    var configuration = await HttpContext.GetUnCachedConfiguration<Dictionary<string, ScriptDefinition>, ScriptConfiguration>();
     if (configuration?.Definitions.TryGetValue(script, out ScriptDefinition? definition) != true || definition == null)
     {
       throw new NotFoundException($"Script definition with ID '{script}' not found.");

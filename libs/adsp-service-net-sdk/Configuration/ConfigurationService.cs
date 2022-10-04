@@ -74,6 +74,25 @@ internal class ConfigurationService : IConfigurationService, IDisposable
   }
 
 
+  public async Task<TC?> GetUnCachedConfiguration<T, TC>(AdspId serviceId, AdspId? tenantId = null) where T : class
+  {
+    var coreConfiguration = await RetrieveConfiguration<T>(serviceId);
+
+    T? tenantConfiguration = default;
+    if (tenantId != null)
+    {
+      tenantConfiguration = await RetrieveConfiguration<T>(serviceId, tenantId);
+    }
+
+    var result = _combine != null ? _combine(tenantConfiguration, coreConfiguration) : (tenantConfiguration, coreConfiguration);
+    return (TC?)result;
+  }
+
+  public Task<(T?, T?)> GetUnCachedConfiguration<T>(AdspId serviceId, AdspId? tenantId = null) where T : class
+  {
+    return GetUnCachedConfiguration<T, (T?, T?)>(serviceId, tenantId);
+  }
+
   [SuppressMessage("Usage", "CA1031: Do not catch general exception types", Justification = "Default to returning null")]
   private async Task<T?> RetrieveConfiguration<T>(AdspId serviceId, AdspId? tenantId = null)
   {
