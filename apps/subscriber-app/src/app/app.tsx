@@ -1,55 +1,24 @@
 import '@style/app.css';
 import '@style/colors.scss';
 import React, { useEffect } from 'react';
-import { Route, BrowserRouter as Router, Switch, Redirect } from 'react-router-dom';
+import { Route, Routes, BrowserRouter as Router, Navigate } from 'react-router-dom-6';
 import { Provider, useDispatch, useSelector } from 'react-redux';
-
-import LandingPage from '@pages/public/Landing';
-import Login from '@pages/public/Login';
-import LogoutRedirect from '@pages/public/LogoutRedirect';
 import { store, RootState } from '@store/index';
-import { PrivateApp, PrivateRoute } from './privateApp';
+import { PrivateApp } from './privateApp';
 import { fetchConfig } from '@store/config/actions';
 import AuthContext from '@lib/authContext';
 
 import { ThemeProvider } from 'styled-components';
 import { theme } from 'theme';
 import PublicApp from './publicApp';
-import Subscriptions from '@pages/private/Subscriptions/Subscriptions';
-import PublicSubscriptions from '@pages/public/Subscriptions';
 
 const AppRouters = () => {
   return (
     <Router>
-      <Switch>
-        <Route exact path="/" render={() => <Redirect to="/overview" />} />
-
-        <Route path="/subscriptions/:realm">
-          <PrivateApp>
-            <PrivateRoute path="/subscriptions/:realm" component={Subscriptions} />
-          </PrivateApp>
-        </Route>
-
-        <PublicApp>
-          <Switch>
-            <Route exact path="/overview">
-              <LandingPage />
-            </Route>
-
-            <Route exact path="/logout-redirect">
-              <LogoutRedirect />
-            </Route>
-
-            <Route path="/:realm/login">
-              <Login />
-            </Route>
-
-            <Route exact path="/:subscriberId">
-              <Route path="/:subscriberId" component={PublicSubscriptions} />
-            </Route>
-          </Switch>
-        </PublicApp>
-      </Switch>
+      <Routes>
+        <Route path="/*" element={<PublicApp />} />
+        <Route path="/subscriptions" element={<PrivateApp />} />
+      </Routes>
     </Router>
   );
 };
