@@ -113,20 +113,47 @@ Feature: Events
     When the user enters "autotest-addEditDelete-stream", "autotest-stream-desc", "status-service:application-healthy, file-service:file-deleted", "public" in Add stream modal
     And the user clicks Save button in Stream modal
     Then the user "views" the stream of "autotest-addEditDelete-stream", "Public"
-    When the user clicks "Eye" button of "autotest-addEditDelete-stream"
+    When the user clicks "Eye" button for the stream of "autotest-addEditDelete-stream"
     Then the user views the stream details of "autotest-addEditDelete-stream", "autotest-stream-desc", "status-service:application-healthy, file-service:file-deleted", "public"
-    And the user clicks "Eye-Off" button of "autotest-addEditDelete-stream"
+    And the user clicks "Eye-Off" button for the stream of "autotest-addEditDelete-stream"
     # Edit a stream
-    When the user clicks "Edit" button of "autotest-addEditDelete-stream"
+    When the user clicks "Edit" button for the stream of "autotest-addEditDelete-stream"
     Then the user views Edit stream modal
     When the user removes event chips of "status-service:application-healthy" in Edit stream modal
     And the user enters "autotest-stream-desc2", "n/a", "auto-test-role3, beta-tester" in Edit stream modal
     And the user clicks Save button in Stream modal
     Then the user "views" the stream of "autotest-addEditDelete-stream", "auto-test-role3, beta-tester"
-    When the user clicks "Eye" button of "autotest-addEditDelete-stream"
+    When the user clicks "Eye" button for the stream of "autotest-addEditDelete-stream"
     Then the user views the stream details of "autotest-addEditDelete-stream", "autotest-stream-desc2", "file-service:file-deleted", "auto-test-role3, beta-tester"
     # Delete a stream
-    When the user clicks "Delete" button of "autotest-addEditDelete-stream"
+    When the user clicks "Delete" button for the stream of "autotest-addEditDelete-stream"
     Then the user views delete "stream" confirmation modal for "autotest-addEditDelete-stream"
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the stream of "autotest-addEditDelete-stream"
+
+  @TEST_CS-1596 @REQ_CS-1549 @regression
+  Scenario: As a tenant admin, I can select client roles for event stream subscriber roles, so I can allow users with certain client roles to subscribe
+    Given a tenant admin user is on event streams page
+    # Add a new stream with client roles
+    When the user clicks Add stream button
+    Then the user views Add stream modal
+    When the user enters "autotest-testclientroles", "autotest desc", "file-service:file-deleted", "urn:ads:autotest:my-service:my-role1, urn:ads:platform:file-service:file-service-admin" in Add stream modal
+    And the user clicks Save button in Stream modal
+    Then the user "views" the stream of "autotest-testclientroles", "urn:ads:autotest:my-service:my-role1, urn:ads:platform:file-service:file-service-admin"
+    # Modify the stream with public role
+    When the user clicks "Edit" button for the stream of "autotest-testclientroles"
+    Then the user views Edit stream modal
+    When the user "selects" Make stream public checkbox in Stream modal
+    And the user clicks Save button in Stream modal
+    Then the user "views" the stream of "autotest-testclientroles", "Public"
+    # Modify the stream to be non-public role. Un-selecting the public checkbox shows the previous selected roles
+    When the user clicks "Edit" button for the stream of "autotest-testclientroles"
+    Then the user views Edit stream modal
+    When the user "un-selects" Make stream public checkbox in Stream modal
+    And the user clicks Save button in Stream modal
+    Then the user "views" the stream of "autotest-testclientroles", "urn:ads:autotest:my-service:my-role1, urn:ads:platform:file-service:file-service-admin"
+    # Delete the stream
+    When the user clicks "Delete" button for the stream of "autotest-testclientroles"
+    Then the user views delete "stream" confirmation modal for "autotest-testclientroles"
+    When the user clicks Delete button in delete confirmation modal
+    Then the user "should not view" the stream of "autotest-testclientroles"
