@@ -22,7 +22,6 @@ public interface IConfigurationService
   /// <param name="serviceId">ADSP ID of the service to retrieve configuration for.</param>
   /// <param name="tenantId">ADSP ID of the tenant to retrieve configuration for.</param>
   /// <returns>Tuple including tenant configuration and core configuration.</returns>
-  ///
   Task<(T?, T?)> GetConfiguration<T>(AdspId serviceId, AdspId? tenantId = null) where T : class;
   /// <summary>
   /// Clears the cached configuration for a particular service and tenant.

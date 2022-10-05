@@ -73,6 +73,7 @@ internal class ConfigurationService : IConfigurationService, IDisposable
     return GetConfiguration<T, (T?, T?)>(serviceId, tenantId);
   }
 
+
   [SuppressMessage("Usage", "CA1031: Do not catch general exception types", Justification = "Default to returning null")]
   private async Task<T?> RetrieveConfiguration<T>(AdspId serviceId, AdspId? tenantId = null)
   {

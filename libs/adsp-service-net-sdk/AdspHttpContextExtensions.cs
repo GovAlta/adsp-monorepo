@@ -91,39 +91,6 @@ public static class AdspHttpContextExtensions
   }
 
   /// <summary>
-  /// Clears cache for the configuration for the current tenant context.
-  /// </summary>
-  /// <param name="context">Context to get configuration under.</param>
-  /// <returns></returns>
-  /// <exception cref="ArgumentNullException">Thrown if context is null.</exception>
-  /// <exception cref="InvalidOperationException">
-  ///   Thrown if ConfigurationMiddleware is not in the request pipeline.
-  /// </exception>
-  public static async Task ClearCache(this HttpContext context)
-  {
-    if (context == null)
-    {
-      throw new ArgumentNullException(nameof(context));
-    }
-
-    using (context.Benchmark("clear-cache-time"))
-    {
-      var hasService = context.Items.TryGetValue(ConfigurationMiddleware.ConfigurationContextKey, out object? items);
-      if (!hasService || items == null)
-      {
-        throw new InvalidOperationException("Cannot get configuration from context without configuration middleware.");
-      }
-
-      var tenant = await context.GetTenant();
-      var (serviceId, configurationService) = ((AdspId, IConfigurationService))items;
-
-      configurationService.ClearCached(serviceId, tenant?.Id);
-
-    }
-  }
-
-
-  /// <summary>
   /// Retrieves configuration for the service in the request context. Configuration is retrieved for the current
   /// context tenant.
   /// </summary>
