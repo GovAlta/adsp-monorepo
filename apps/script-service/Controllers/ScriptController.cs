@@ -58,6 +58,14 @@ public class ScriptController : ControllerBase
   }
 
   [HttpPost]
+  [Route("scripts/clearCache")]
+  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
+  public async Task ClearCache()
+  {
+    await HttpContext.ClearCache();
+  }
+
+  [HttpPost]
   [Route("scripts/{script?}")]
   [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
   public async Task<IEnumerable<object>> RunScript(string? script, [FromBody] RunScriptRequest request)
@@ -72,7 +80,7 @@ public class ScriptController : ControllerBase
       throw new RequestArgumentException("request body cannot be null");
     }
 
-    var configuration = await HttpContext.GetUnCachedConfiguration<Dictionary<string, ScriptDefinition>, ScriptConfiguration>();
+    var configuration = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, ScriptConfiguration>();
     if (configuration?.Definitions.TryGetValue(script, out ScriptDefinition? definition) != true || definition == null)
     {
       throw new NotFoundException($"Script definition with ID '{script}' not found.");

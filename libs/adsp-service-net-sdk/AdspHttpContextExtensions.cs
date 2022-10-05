@@ -91,26 +91,22 @@ public static class AdspHttpContextExtensions
   }
 
   /// <summary>
-  /// Retrieves configuration for the service in the request context. Configuration is retrieved for the current
-  /// context tenant. Note that AdspOptions.CombineConfiguration is called to merge the configuration and result
-  /// must be assignable to the specified combined configuration type.
+  /// Clears cache for the configuration for the current tenant context.
   /// </summary>
-  /// <typeparam name="T">Type of the configuration.</typeparam>
-  /// <typeparam name="TC">Type of the combined configuration</typeparam>
   /// <param name="context">Context to get configuration under.</param>
-  /// <returns>Tenant and core configuration combined.</returns>
+  /// <returns></returns>
   /// <exception cref="ArgumentNullException">Thrown if context is null.</exception>
   /// <exception cref="InvalidOperationException">
   ///   Thrown if ConfigurationMiddleware is not in the request pipeline.
   /// </exception>
-  public static async Task<TC?> GetUnCachedConfiguration<T, TC>(this HttpContext context) where T : class
+  public static async Task ClearCache(this HttpContext context)
   {
     if (context == null)
     {
       throw new ArgumentNullException(nameof(context));
     }
 
-    using (context.Benchmark("get-configuration-time"))
+    using (context.Benchmark("clear-cache-time"))
     {
       var hasService = context.Items.TryGetValue(ConfigurationMiddleware.ConfigurationContextKey, out object? items);
       if (!hasService || items == null)
@@ -121,7 +117,8 @@ public static class AdspHttpContextExtensions
       var tenant = await context.GetTenant();
       var (serviceId, configurationService) = ((AdspId, IConfigurationService))items;
 
-      return await configurationService.GetUnCachedConfiguration<T, TC>(serviceId, tenant?.Id);
+      configurationService.ClearCached(serviceId, tenant?.Id);
+
     }
   }
 
