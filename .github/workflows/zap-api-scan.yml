@@ -1,0 +1,24 @@
+name: zap-api-scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      API_SWAGGER:
+        description: url of swagger/WSDL for the  api to scan
+        required: true
+
+jobs:
+  zap_scan:
+    runs-on: ubuntu-latest
+    name: Scan the api
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: master
+      - name: ZAP Scan
+        uses: zaproxy/action-api-scan@v0.1.1
+        with:
+          format: openapi
+          target: ${{ inputs.API_SWAGGER }}
+          cmd_options: "-a  -r report_html"
