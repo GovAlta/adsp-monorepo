@@ -153,4 +153,8 @@ export const ScriptEditorContainer = styled.div`
       padding: 2px 0 2px 3px;
     }
   }
+
+  .spinner-room {
+    padding-right: 30px;
+  }
 `;

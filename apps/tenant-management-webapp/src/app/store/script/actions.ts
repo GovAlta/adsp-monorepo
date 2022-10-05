@@ -14,6 +14,7 @@ export const RUN_SCRIPT_ACTION = 'script/RUN_SCRIPT_ACTION';
 export const EXECUTE_SCRIPT_ACTION = 'script/EXECUTE_SCRIPT_ACTION';
 export const RUN_SCRIPT_ACTION_SUCCESS = 'script/RUN_SCRIPT_ACTION_SUCCESS';
 export const CLEAR_SCRIPTS_ACTION = 'script/CLEAR_SCRIPTS_ACTION';
+export const WIPE_CACHE_SCRIPT_ACTION = 'script/WIPE_CACHE_SCRIPT_ACTION';
 
 export interface UpdateScriptAction {
   type: typeof UPDATE_SCRIPT_ACTION;
@@ -39,6 +40,12 @@ export interface ExecuteScriptAction {
   type: typeof EXECUTE_SCRIPT_ACTION;
   payload: ScriptItem;
 }
+
+export interface WipeCacheAction {
+  type: typeof WIPE_CACHE_SCRIPT_ACTION;
+  payload: ScriptItem;
+}
+
 export interface UpdateScriptSuccessAction {
   type: typeof UPDATE_SCRIPT_SUCCESS_ACTION;
   payload: Record<string, ScriptItem>;
@@ -93,6 +100,11 @@ export const ClearScripts = (): ClearScriptsAction => ({
 
 export const ExecuteScript = (payload: ScriptItem): ExecuteScriptAction => ({
   type: EXECUTE_SCRIPT_ACTION,
+  payload,
+});
+
+export const WipeCache = (payload: ScriptItem): WipeCacheAction => ({
+  type: WIPE_CACHE_SCRIPT_ACTION,
   payload,
 });
 

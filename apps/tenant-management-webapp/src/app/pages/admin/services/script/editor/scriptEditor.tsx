@@ -49,9 +49,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   });
 
   const resetSavedAction = () => {
-    onNameChange(currentScriptItem?.name);
-    onDescriptionChange(currentScriptItem?.description);
-    onScriptChange(currentScriptItem?.script);
+    onNameChange(currentScriptItem?.name || '');
+    onDescriptionChange(currentScriptItem?.description || '');
+    onScriptChange(currentScriptItem?.script || '');
   };
 
   useEffect(() => {
@@ -139,6 +139,10 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                   currentScriptItem.description !== description ||
                   currentScriptItem.script !== scriptStr
                 ) {
+                  console.log(JSON.stringify(currentScriptItem) + ' <currentScriptItem');
+                  console.log(JSON.stringify(name) + ' <name');
+                  console.log(JSON.stringify(description) + ' <description');
+                  console.log(JSON.stringify(scriptStr) + ' <scriptStr');
                   setSaveModal(true);
                 } else {
                   onEditorCancel();
@@ -153,6 +157,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             </GoAButton>
             <GoAButton
               onClick={() => {
+                currentScriptItem.name = name;
+                currentScriptItem.description = description;
+                currentScriptItem.script = scriptStr;
                 saveAndReset(true);
               }}
               buttonType="primary"
@@ -160,7 +167,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               type="submit"
               disabled={Object.keys(errors).length > 0}
             >
-              Save
+              <div style={{ padding: '2px 0' }}>Save</div>
             </GoAButton>
             <GoAButton
               onClick={() => {
@@ -170,12 +177,16 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               data-testid="template-form-save"
               type="submit"
             >
-              Save and Execute
-              {loadingIndicator.show && (
-                <SpinnerPadding>
-                  <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
-                </SpinnerPadding>
-              )}
+              <div style={{ display: 'flex' }}>
+                Save and Execute
+                {loadingIndicator.show ? (
+                  <SpinnerPadding>
+                    <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
+                  </SpinnerPadding>
+                ) : (
+                  <ReplacePadding />
+                )}
+              </div>
             </GoAButton>
           </EditTemplateActions>
         </GoAForm>
@@ -209,8 +220,8 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
 };
 
 const SpinnerPadding = styled.div`
-  margin: 0 0 0 5px;
   float: right;
+  padding: 3px 0 0 4px;
 `;
 
 const ScriptPane = styled.div`
@@ -223,4 +234,8 @@ const ScriptPane = styled.div`
   padding: 24px;
   margin-bottom: 1rem;
   overflow: auto;
+`;
+
+const ReplacePadding = styled.div`
+  padding: 11px 11px 12px 11px;
 `;
