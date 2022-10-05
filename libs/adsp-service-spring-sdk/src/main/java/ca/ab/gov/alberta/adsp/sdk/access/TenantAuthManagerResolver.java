@@ -25,7 +25,8 @@ class TenantAuthManagerResolver implements AuthenticationManagerResolver<String>
   public AuthenticationManager resolve(String issuer) {
     var cached = this.issuerCache.getCached(issuer);
     if (cached == null) {
-      throw new IllegalArgumentException("Issuer not recognized");
+      // Returning null causes the framework to respond with 401.
+      return null;
     }
 
     var provider = providers.computeIfAbsent(issuer, iss -> {
