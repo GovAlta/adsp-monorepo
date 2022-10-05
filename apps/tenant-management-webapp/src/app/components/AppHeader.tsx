@@ -9,6 +9,7 @@ import MenuIcon from '@icons/menu-outline.svg';
 import CloseIcon from '@icons/close-outline.svg';
 import { ReactComponent as UserIcon } from '@icons/person-circle-outline.svg';
 import { TenantAdminLogin, TenantLogout } from '@store/tenant/actions';
+import { getIdpHint } from '@lib/keycloak';
 
 interface HeaderMenuProps {
   hasLoginLink: boolean;
@@ -58,7 +59,8 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
             <Link
               to={''}
               onClick={() => {
-                dispatch(TenantAdminLogin());
+                const idpHint = getIdpHint();
+                dispatch(TenantAdminLogin(idpHint));
               }}
             >
               Sign In

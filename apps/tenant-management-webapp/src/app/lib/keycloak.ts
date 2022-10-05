@@ -25,8 +25,20 @@ export const getOrCreateKeycloakAuth = async (config: KeycloakConfig, realm: str
   return authInstance;
 };
 
+export const getIdpHint = () => {
+  const location: string = window.location.href;
+  const skipSSO = location.indexOf('kc_idp_hint') > -1;
+  const urlParams = new URLSearchParams(window.location.search);
+  const idpFromUrl = urlParams.get('kc_idp_hint');
+  if (skipSSO) {
+    return idpFromUrl;
+  }
+
+  return null;
+};
+
 export interface KeycloakAuth {
-  loginByCore(type: string): Promise<void>;
+  loginByCore(type: string, idpHint: string | null): Promise<void>;
   loginByTenant(idp: string): Promise<void>;
   logout(): Promise<void>;
   checkSSO(): Promise<Session>;
@@ -53,23 +65,14 @@ class KeycloakAuthImpl implements KeycloakAuth {
     }
   }
 
-  async loginByCore(type: string) {
-    const location: string = window.location.href;
-    const skipSSO = location.indexOf('kc_idp_hint') > -1;
-    const urlParams = new URLSearchParams(window.location.search);
-    const idpFromUrl = urlParams.get('kc_idp_hint');
+  async loginByCore(type: string, idpHint: string | null) {
     let redirectUri = `${this.loginRedirect}?type=${type}&realm=core`;
-
     try {
-      if (skipSSO && !idpFromUrl) {
-        redirectUri += `&kc_idp_hint=`;
-        await this.keycloak.login({ idpHint: ' ', redirectUri });
-      } else {
-        if (idpFromUrl) {
-          redirectUri += `&kc_idp_hint=${idpFromUrl}`;
-        }
-
+      if (idpHint === null) {
         await this.keycloak.login({ redirectUri });
+      } else {
+        redirectUri += `&kc_idp_hint=${idpHint}`;
+        await this.keycloak.login({ idpHint: ' ', redirectUri });
       }
     } catch (e) {
       console.error(`Failed to login`, e);
@@ -82,7 +85,8 @@ class KeycloakAuthImpl implements KeycloakAuth {
 
   async checkSSO() {
     try {
-      const authenticated = this.keycloak.authenticated || (await this.keycloak.init({ ...this.config, onLoad: 'check-sso' }));
+      const authenticated =
+        this.keycloak.authenticated || (await this.keycloak.init({ ...this.config, onLoad: 'check-sso' }));
       if (authenticated) {
         return this.convertToSession(this.keycloak);
       } else {
@@ -95,31 +99,10 @@ class KeycloakAuthImpl implements KeycloakAuth {
   }
 
   async loginByTenant(idp: string) {
-    const location: string = window.location.href;
-    const skipSSO = location.indexOf('kc_idp_hint') > -1;
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const idpFromUrl = urlParams.get('kc_idp_hint');
-
     let redirectUri = `${this.loginRedirect}?realm=${this.keycloak.realm}&type=${LOGIN_TYPES.tenant}`;
     console.debug(`Keycloak redirect URL: ${redirectUri}`);
-
-    if (skipSSO && !idpFromUrl) {
-      // kc_idp_hint with empty value, skip checkSSO
-      redirectUri += `&kc_idp_hint=`;
-      await this.keycloak.login({ idpHint: ' ', redirectUri });
-    } else {
-      /**
-       * Paul Li - Tried to use keycloak.init().then(()=>{keycloak.login}). But, it does not work.
-       */
-
-      if (idpFromUrl) {
-        idp = idpFromUrl;
-        redirectUri += `&kc_idp_hint=${idp}`;
-      }
-
-      await this.keycloak.login({ idpHint: idp, redirectUri });
-    }
+    redirectUri += `&kc_idp_hint=${idp}`;
+    await this.keycloak.login({ idpHint: idp, redirectUri });
   }
 
   async refreshToken(): Promise<Session> {
