@@ -13,6 +13,8 @@ import { languages } from 'monaco-editor';
 import { buildSuggestions } from '@lib/autoComplete';
 import { GoAButton } from '@abgov/react-components';
 import { Tab, Tabs } from '@components/Tabs';
+import { SaveFormModal } from '@components/saveModal';
+import { templates } from 'handlebars';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -25,6 +27,7 @@ interface TemplateEditorProps {
   setPreview: (channel: string) => void;
   bodyEditorHintText?: string;
   template: PdfTemplate;
+  savedTemplate: PdfTemplate;
   bodyTitle: string;
   bodyEditorConfig?: EditorProps;
   saveCurrentTemplate?: () => void;
@@ -46,6 +49,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   setPreview,
   bodyEditorHintText,
   template,
+  savedTemplate,
   bodyTitle,
   bodyEditorConfig,
   saveCurrentTemplate,
@@ -56,7 +60,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   validateEventTemplateFields,
 }) => {
   const monaco = useMonaco();
-
+  const [saveModal, setSaveModal] = useState(false);
   useEffect(() => {
     if (monaco) {
       const provider = monaco.languages.registerCompletionItemProvider('handlebars', {
@@ -98,6 +102,11 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
   const channels = ['main', 'footer/header'];
   const tmpTemplate = template;
+  const resetSavedAction = () => {
+    onBodyChange(savedTemplate.template);
+    onHeaderChange(savedTemplate.header);
+    onFooterChange(savedTemplate.footer);
+  };
 
   return (
     <TemplateEditorContainerPdf>
@@ -198,13 +207,21 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           {' '}
           <GoAButton
             onClick={() => {
-              cancel();
+              if (
+                savedTemplate.template !== template.template ||
+                savedTemplate.header !== template.header ||
+                savedTemplate.footer !== template.footer
+              ) {
+                setSaveModal(true);
+              } else {
+                cancel();
+              }
             }}
             data-testid="template-form-close"
             buttonType="secondary"
             type="button"
           >
-            Cancel
+            Close
           </GoAButton>
           <GoAButton
             disabled={!validateEventTemplateFields()}
@@ -217,6 +234,21 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           </GoAButton>
         </EditTemplateActions>
       </GoAForm>
+      <SaveFormModal
+        open={saveModal}
+        onDontSave={() => {
+          setSaveModal(false);
+          resetSavedAction();
+          cancel();
+        }}
+        onSave={() => {
+          saveCurrentTemplate();
+          setSaveModal(false);
+        }}
+        onCancel={() => {
+          setSaveModal(false);
+        }}
+      />
     </TemplateEditorContainerPdf>
   );
 };
