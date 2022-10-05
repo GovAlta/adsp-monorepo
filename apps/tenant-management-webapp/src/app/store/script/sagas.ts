@@ -22,14 +22,13 @@ import {
   DeleteScriptAction,
   DeleteScriptSuccess,
   DELETE_SCRIPT_ACTION,
-  UpdateIndicator,
   RUN_SCRIPT_ACTION,
   RunScriptAction,
   UpdateScript,
+  UpdateIndicator,
 } from './actions';
 import { ActionState } from '@store/session/models';
-import { ScriptApi } from './api';
-import { TenantApi } from '../tenant/api';
+import { UpdateIndicator as UpdateIndicatorSession } from '@store/session/actions';
 
 const call: any = Effects.call;
 
@@ -120,8 +119,9 @@ export function* runScript(action: RunScriptAction): SagaIterator {
   details[action.type] = ActionState.inProcess;
 
   yield put(
-    UpdateIndicator({
-      details,
+    UpdateIndicatorSession({
+      show: true,
+      message: 'Loading...',
     })
   );
 
@@ -164,12 +164,12 @@ export function* executeScript(action: RunScriptAction): SagaIterator {
 
       console.log(JSON.stringify(response) + '<Response');
       console.log(JSON.stringify(response.response?.data) + '<Response2');
-      yield put(runScriptSuccess(response?.data));
+      yield put(runScriptSuccess(response?.data[0]));
 
       details[action.type] = ActionState.completed;
       yield put(
-        UpdateIndicator({
-          details,
+        UpdateIndicatorSession({
+          show: false,
         })
       );
     } catch (err) {
@@ -183,8 +183,8 @@ export function* executeScript(action: RunScriptAction): SagaIterator {
       }
 
       yield put(
-        UpdateIndicator({
-          details,
+        UpdateIndicatorSession({
+          show: false,
         })
       );
     }

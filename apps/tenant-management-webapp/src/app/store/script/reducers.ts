@@ -5,6 +5,7 @@ import {
   UPDATE_INDICATOR,
   DELETE_SCRIPT_SUCCESS_ACTION,
   RUN_SCRIPT_ACTION_SUCCESS,
+  CLEAR_SCRIPTS_ACTION,
 } from './actions';
 import { ScriptService, SCRIPT_INIT } from './models';
 
@@ -51,6 +52,12 @@ export default (state = SCRIPT_INIT, action: ActionTypes): ScriptService => {
       };
       return {
         ...state,
+      };
+    }
+    case CLEAR_SCRIPTS_ACTION: {
+      return {
+        ...state,
+        scriptResponse: null,
       };
     }
     default:

@@ -13,6 +13,7 @@ export const DELETE_SCRIPT_SUCCESS_ACTION = 'script/DELETE_SCRIPT_ACTION_SUCCESS
 export const RUN_SCRIPT_ACTION = 'script/RUN_SCRIPT_ACTION';
 export const EXECUTE_SCRIPT_ACTION = 'script/EXECUTE_SCRIPT_ACTION';
 export const RUN_SCRIPT_ACTION_SUCCESS = 'script/RUN_SCRIPT_ACTION_SUCCESS';
+export const CLEAR_SCRIPTS_ACTION = 'script/CLEAR_SCRIPTS_ACTION';
 
 export interface UpdateScriptAction {
   type: typeof UPDATE_SCRIPT_ACTION;
@@ -28,6 +29,10 @@ export interface RunScriptSuccessAction {
 export interface RunScriptAction {
   type: typeof RUN_SCRIPT_ACTION;
   payload: ScriptItem;
+}
+
+export interface ClearScriptsAction {
+  type: typeof CLEAR_SCRIPTS_ACTION;
 }
 
 export interface ExecuteScriptAction {
@@ -68,6 +73,7 @@ export type ActionTypes =
   | DeleteScriptAction
   | DeleteScriptSuccessAction
   | RunScriptAction
+  | ClearScriptsAction
   | RunScriptSuccessAction;
 
 export const UpdateScript = (payload: ScriptItem, executeOnCompletion: boolean): UpdateScriptAction => ({
@@ -79,6 +85,10 @@ export const UpdateScript = (payload: ScriptItem, executeOnCompletion: boolean):
 export const SaveAndExecuteScript = (payload: ScriptItem): RunScriptAction => ({
   type: RUN_SCRIPT_ACTION,
   payload,
+});
+
+export const ClearScripts = (): ClearScriptsAction => ({
+  type: CLEAR_SCRIPTS_ACTION,
 });
 
 export const ExecuteScript = (payload: ScriptItem): ExecuteScriptAction => ({

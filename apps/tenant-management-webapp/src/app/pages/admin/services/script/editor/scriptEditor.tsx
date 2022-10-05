@@ -4,7 +4,7 @@ import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experime
 import MonacoEditor, { EditorProps } from '@monaco-editor/react';
 import { SaveFormModal } from '@components/saveModal';
 import { ScriptItem } from '@store/script/models';
-import { SaveAndExecuteScript } from '@store/script/actions';
+import { SaveAndExecuteScript, ClearScripts } from '@store/script/actions';
 import { GoAButton, GoAElementLoader } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
@@ -142,6 +142,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                   setSaveModal(true);
                 } else {
                   onEditorCancel();
+                  dispatch(ClearScripts());
                 }
               }}
               data-testid="template-form-close"
@@ -172,7 +173,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               Save and Execute
               {loadingIndicator.show && (
                 <SpinnerPadding>
-                  Hello bitches
                   <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
                 </SpinnerPadding>
               )}
@@ -186,6 +186,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             resetSavedAction();
             setSaveModal(false);
             onEditorCancel();
+            dispatch(ClearScripts());
           }}
           onSave={() => {
             saveAndReset(true);
@@ -197,9 +198,11 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
         />
       </ScriptEditorContainer>
       <div style={{ width: '50%' }}>
-        <h3>Script Response</h3>
-        {/* <div>{JSON.stringify(scriptResponse)}</div> */}
-        <div>{scriptResponse && scriptResponse.map((response) => <div>{JSON.stringify(response)}</div>)}</div>
+        <ScriptPane>
+          <h3>Script Response</h3>
+          {/* <div>{JSON.stringify(scriptResponse)}</div> */}
+          <div>{scriptResponse && scriptResponse.map((response) => <div>{JSON.stringify(response)}</div>)}</div>
+        </ScriptPane>
       </div>
     </div>
   );
@@ -208,4 +211,16 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
 const SpinnerPadding = styled.div`
   margin: 0 0 0 5px;
   float: right;
+`;
+
+const ScriptPane = styled.div`
+  height: 100%;
+  background: #f3f3f3;
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 16px;
+  padding: 24px;
+  margin-bottom: 1rem;
+  overflow: auto;
 `;
