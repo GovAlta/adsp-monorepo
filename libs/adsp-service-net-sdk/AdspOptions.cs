@@ -1,5 +1,3 @@
-using Adsp.Sdk.Registration;
-
 namespace Adsp.Sdk;
 public class AdspOptions : ServiceRegistration
 {

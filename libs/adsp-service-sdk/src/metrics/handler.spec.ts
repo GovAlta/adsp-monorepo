@@ -20,7 +20,7 @@ describe('handler', () => {
   };
 
   const directoryMock = {
-    getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-directory'))),
+    getServiceUrl: jest.fn(() => Promise.resolve(new URL('https://value-service/value/v1'))),
     getResourceUrl: jest.fn(),
   };
 
@@ -47,7 +47,7 @@ describe('handler', () => {
         'metric-a': 123,
       };
       const time = 300;
-      await writeMetrics(loggerMock, tokenProviderMock, valueUrl.href, {
+      await writeMetrics(serviceId, directoryMock, loggerMock, tokenProviderMock, {
         [`${tenantId}`]: [
           {
             timestamp: new Date(),
@@ -110,7 +110,7 @@ describe('handler', () => {
 
       const method = 'GET';
       const path = '/abc/123';
-      await writeMetrics(loggerMock, tokenProviderMock, valueUrl.href, {
+      await writeMetrics(serviceId, directoryMock, loggerMock, tokenProviderMock, {
         [`${tenantId}`]: [
           {
             timestamp: new Date(),
@@ -180,7 +180,7 @@ describe('handler', () => {
         'metric-a': 123,
       };
       const time = 300;
-      await writeMetrics(loggerMock, tokenProviderMock, valueUrl.href, {
+      await writeMetrics(serviceId, directoryMock, loggerMock, tokenProviderMock, {
         [`${tenantId}`]: [
           {
             timestamp: new Date(),
