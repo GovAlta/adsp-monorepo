@@ -10,7 +10,7 @@ on:
 jobs:
   zap_scan:
     runs-on: ubuntu-latest
-    name: Scan the api
+    name: scan the api
     steps:
       - name: ZAP Scan
         uses: zaproxy/action-api-scan@v0.1.1
