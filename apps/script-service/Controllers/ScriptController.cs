@@ -61,7 +61,7 @@ public class ScriptController : ControllerBase
 
   [HttpPost]
   [Route("scripts/clearCache")]
-  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
+  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant, Roles = ServiceRoles.ScriptRunner)]
   public async Task ClearCache()
   {
     var tenant = await HttpContext.GetTenant();
