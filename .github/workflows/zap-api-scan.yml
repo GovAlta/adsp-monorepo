@@ -15,6 +15,5 @@ jobs:
       - name: ZAP Scan
         uses: zaproxy/action-api-scan@v0.1.1
         with:
-          format: openapi
           target: ${{ inputs.API_SWAGGER }}
-          cmd_options: "-a  -r report_html"
+          allow_issue_writing: false
