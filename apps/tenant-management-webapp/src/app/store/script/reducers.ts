@@ -10,10 +10,8 @@ import {
 import { ScriptService, SCRIPT_INIT } from './models';
 
 export default (state = SCRIPT_INIT, action: ActionTypes): ScriptService => {
-  console.log(JSON.stringify(action.type) + '<action.ptye');
   switch (action.type) {
     case UPDATE_SCRIPT_SUCCESS_ACTION: {
-      console.log(JSON.stringify(action.payload) + '<update payload');
       return {
         ...state,
         scripts: {
@@ -22,7 +20,6 @@ export default (state = SCRIPT_INIT, action: ActionTypes): ScriptService => {
       };
     }
     case FETCH_SCRIPTS_SUCCESS_ACTION: {
-      console.log(JSON.stringify(action.payload) + '<success payload');
       return {
         ...state,
         scripts: {
@@ -32,8 +29,6 @@ export default (state = SCRIPT_INIT, action: ActionTypes): ScriptService => {
     }
     case RUN_SCRIPT_ACTION_SUCCESS: {
       const newStringResponses = state.scriptResponse || [];
-      console.log(JSON.stringify(action.payload) + '<newStringResponses');
-      console.log(JSON.stringify(newStringResponses) + '<newStringResponses');
       newStringResponses.push(action.payload);
       return { ...state, scriptResponse: newStringResponses };
     }

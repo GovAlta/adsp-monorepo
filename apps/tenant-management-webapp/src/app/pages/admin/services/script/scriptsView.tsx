@@ -61,10 +61,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     }
   }, [activeEdit]);
 
-  // eslint-disable-next-line
-
   const reset = () => {
-    console.log('we are resetting');
     setSelectedScript(defaultScript);
     setOpenAddScript(false);
     setShowScriptEditForm(false);
@@ -81,14 +78,11 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     saveScript(selectedScript);
   };
   const onEdit = (script) => {
-    console.log(JSON.stringify(script) + '<editRoot');
     setSelectedScript(script);
     setCurrentSavedScript(Object.assign({}, script));
     setShowScriptEditForm(true);
   };
   const onNameChange = (value) => {
-    console.log('removing name');
-    console.log(value);
     validators.remove('name');
     const validations = {
       name: value,
@@ -102,9 +96,6 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     setDescription(value);
   };
   const onScriptChange = (value) => {
-    console.log('removing onScriptChange');
-    const element: ScriptItem = selectedScript;
-    console.log(JSON.stringify(selectedScript) + ',selectedScript');
     setScript(value);
   };
   return (
@@ -143,7 +134,6 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
           onSave={saveScript}
         />
       )}
-      {console.log(JSON.stringify(selectedScript) + '<selectedScript')}
 
       <Modal open={showScriptEditForm} data-testid="script-edit-form">
         {/* Hides body overflow when the modal is up */}

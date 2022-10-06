@@ -55,27 +55,18 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   };
 
   useEffect(() => {
-    console.log(JSON.stringify(currentScriptItem.name) + '<currentscriptItem.name');
     onNameChange(initialScript?.name || '');
     onDescriptionChange(initialScript?.description || '');
     onScriptChange(initialScript?.script || '');
   }, [initialScript]);
 
-  //console.log(JSON.stringify(currentScriptItem) + '<currentScriptItemcurrentScriptItem');
-
   const scriptResponse = useSelector((state: RootState) => state.scriptService.scriptResponse);
 
   const saveAndExecute = () => {
-    console.log(JSON.stringify('we are dispatching'));
-    console.log(JSON.stringify(currentScriptItem.id));
     currentScriptItem.name = name;
     currentScriptItem.description = description;
     currentScriptItem.script = scriptStr;
-    initialScript.name = name;
-    initialScript.description = description;
-    initialScript.script = scriptStr;
 
-    console.log(JSON.stringify(currentScriptItem) + '<currentScriptItemxxxxxxxxxxxxxxx');
     dispatch(SaveAndExecuteScript(currentScriptItem));
   };
 
@@ -120,7 +111,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 value={scriptStr}
                 {...editorConfig}
                 onChange={(value) => {
-                  console.log(JSON.stringify('we change script'));
                   onScriptChange(value);
                 }}
               />
@@ -134,10 +124,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                   currentScriptItem.description !== description ||
                   currentScriptItem.script !== scriptStr
                 ) {
-                  console.log(JSON.stringify(currentScriptItem) + ' <currentScriptItem');
-                  console.log(JSON.stringify(name) + ' <name');
-                  console.log(JSON.stringify(description) + ' <description');
-                  console.log(JSON.stringify(scriptStr) + ' <scriptStr');
                   setSaveModal(true);
                 } else {
                   onEditorCancel();
@@ -148,7 +134,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               buttonType="secondary"
               type="button"
             >
-              Cancel
+              Close
             </GoAButton>
             <GoAButton
               onClick={() => {
@@ -195,6 +181,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             dispatch(ClearScripts());
           }}
           onSave={() => {
+            currentScriptItem.name = name;
+            currentScriptItem.description = description;
+            currentScriptItem.script = scriptStr;
             saveAndReset(true);
             setSaveModal(false);
           }}
