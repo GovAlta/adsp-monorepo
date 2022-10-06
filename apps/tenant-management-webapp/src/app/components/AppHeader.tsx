@@ -56,15 +56,14 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
           )}
 
           {!authenticated && !props.admin && (
-            <Link
-              to={''}
+            <a
               onClick={() => {
                 const idpHint = getIdpHint();
                 dispatch(TenantAdminLogin(idpHint));
               }}
             >
               Sign In
-            </Link>
+            </a>
           )}
         </div>
       ) : null}
