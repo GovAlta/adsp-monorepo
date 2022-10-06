@@ -61,10 +61,12 @@ interface CreateTenantSuccessAction {
 }
 export interface TenantAdminLoginAction {
   type: typeof TENANT_ADMIN_LOGIN;
+  payload: string;
 }
 
 export interface TenantCreationLoginInitAction {
   type: typeof TENANT_CREATION_LOGIN_INIT;
+  payload: string;
 }
 
 export interface KeycloakCheckSSOAction {
@@ -141,12 +143,14 @@ export const IsTenantAdmin = (email: string): CheckIsTenantAdminAction => ({
   payload: email,
 });
 
-export const TenantAdminLogin = (): TenantAdminLoginAction => ({
+export const TenantAdminLogin = (idpHint: string): TenantAdminLoginAction => ({
   type: 'TENANT_ADMIN_LOGIN',
+  payload: idpHint,
 });
 
-export const TenantCreationLoginInit = (): TenantCreationLoginInitAction => ({
+export const TenantCreationLoginInit = (idpHint: string): TenantCreationLoginInitAction => ({
   type: 'TENANT_CREATION_LOGIN_INIT',
+  payload: idpHint,
 });
 
 export const TenantLogin = (realm: string): TenantLoginAction => ({

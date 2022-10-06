@@ -24,6 +24,8 @@ import {
   TENANT_LOGIN,
   TENANT_LOGOUT,
   TenantLogout,
+  TenantAdminLoginAction,
+  TenantCreationLoginInitAction,
 } from './actions';
 
 import { CredentialRefresh, SessionLoginSuccess, UpdateIndicator, SetSessionExpired } from '@store/session/actions';
@@ -32,6 +34,7 @@ import { TENANT_INIT } from './models';
 import { getOrCreateKeycloakAuth, KeycloakAuth, LOGIN_TYPES } from '@lib/keycloak';
 import { SagaIterator } from '@redux-saga/core';
 import { Credentials, Session } from '@store/session/models';
+import { getIdpHint } from '@lib/keycloak';
 
 export function* initializeKeycloakAuth(realm?: string): SagaIterator {
   const keycloakConfig = yield select((state: RootState) => state.config.keycloakApi);
@@ -81,19 +84,19 @@ export function* createTenant(action: CreateTenantAction): SagaIterator {
   }
 }
 
-export function* tenantAdminLogin(): SagaIterator {
+export function* tenantAdminLogin(action: TenantAdminLoginAction): SagaIterator {
   try {
     const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, 'core');
-    yield call([keycloakAuth, keycloakAuth.loginByCore], LOGIN_TYPES.tenantAdmin);
+    yield call([keycloakAuth, keycloakAuth.loginByCore], LOGIN_TYPES.tenantAdmin, action.payload);
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to login as admin: ${e.message}` }));
   }
 }
 
-export function* tenantCreationInitLogin(): SagaIterator {
+export function* tenantCreationInitLogin(action: TenantCreationLoginInitAction): SagaIterator {
   try {
     const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, 'core');
-    yield call([keycloakAuth, keycloakAuth.loginByCore], LOGIN_TYPES.tenantCreationInit);
+    yield call([keycloakAuth, keycloakAuth.loginByCore], LOGIN_TYPES.tenantCreationInit, action.payload);
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to first step of tenant creation: ${e.message}` }));
   }
@@ -138,7 +141,14 @@ export function* tenantLogin(action: TenantLoginAction): SagaIterator {
   try {
     const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, action.payload);
 
-    yield call([keycloakAuth, keycloakAuth.loginByTenant], 'core');
+    let idp = 'core';
+    const idpHint = getIdpHint();
+
+    if (idpHint !== null) {
+      idp = idpHint;
+    }
+
+    yield call([keycloakAuth, keycloakAuth.loginByTenant], idp);
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to tenant login: ${e.message}` }));
   }
