@@ -62,7 +62,7 @@ public class ScriptController : ControllerBase
   [HttpPost]
   [Route("scripts/{script?}")]
   [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
-  public async Task<IEnumerable<object>> RunScript(string? script, [FromBody] RunScriptRequest request, [FromQuery] Boolean? clearCache = false)
+  public async Task<IEnumerable<object>> RunScript(string? script, [FromBody] RunScriptRequest request, [FromQuery] bool? clearCache = false)
   {
     if (String.IsNullOrWhiteSpace(script))
     {
