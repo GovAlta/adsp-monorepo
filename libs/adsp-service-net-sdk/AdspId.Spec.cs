@@ -53,14 +53,14 @@ public class AdspIdTests
   }
 
   [Fact]
-  public void CanFailForWrongNid()
+  public void CanFailForWrongScheme()
   {
     var parse = () => AdspId.Parse("wrong:ads:test");
     parse.Should().Throw<ArgumentException>();
   }
 
   [Fact]
-  public void CanFailForWrongNss()
+  public void CanFailForWrongNid()
   {
     var parse = () => AdspId.Parse("urn:wrong:test");
     parse.Should().Throw<ArgumentException>();
@@ -70,6 +70,13 @@ public class AdspIdTests
   public void CanFailForMalformed()
   {
     var parse = () => AdspId.Parse("urn:ads:test:");
+    parse.Should().Throw<ArgumentException>();
+  }
+
+  [Fact]
+  public void CanFailForIncomplete()
+  {
+    var parse = () => AdspId.Parse("urn:ads:");
     parse.Should().Throw<ArgumentException>();
   }
 }

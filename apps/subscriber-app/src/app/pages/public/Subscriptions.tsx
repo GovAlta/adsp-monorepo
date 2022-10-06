@@ -201,7 +201,3 @@ const GoAModelTextWrapper = styled.div`
   padding: 0 1.5rem 0 1.75rem;
   max-width: 36rem;
 `;
-
-const LoaderPadding = styled.div`
-  padding: 3rem 0;
-`;

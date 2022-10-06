@@ -1,6 +1,6 @@
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Route, useParams } from 'react-router-dom';
+import { Route, useParams, Routes } from 'react-router-dom-6';
 import Header from '@components/AppHeader';
 import { HeaderCtx } from '@lib/headerContext';
 import { RootState } from '@store/index';
@@ -10,14 +10,14 @@ import { NotificationBanner } from './notificationBanner';
 import { UpdateConfigRealm } from '@store/config/actions';
 import GoaLogo from '../assets/goa-logo.svg';
 import Footer from '@components/Footer';
+import Subscriptions from '@pages/private/Subscriptions/Subscriptions';
 
-interface privateAppProps {
-  children: ReactNode;
-}
-export function PrivateApp({ children }: privateAppProps): JSX.Element {
+export function PrivateApp(): JSX.Element {
   const [title, setTitle] = useState<string>('Alberta Digital Service Platform - Subscription management');
   const dispatch = useDispatch();
-  const realm = useParams()['realm'];
+  const { realm } = useParams();
+
+  alert(`realm in private app ${realm}`);
   useEffect(() => {
     dispatch(UpdateConfigRealm(realm));
     setInterval(async () => {
@@ -26,11 +26,16 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
     dispatch(KeycloakCheckSSOWithLogout(realm));
   }, []);
 
+  const userInfo = useSelector((state: RootState) => state.session?.userInfo);
+  const ready = userInfo !== undefined;
+
   return (
     <HeaderCtx.Provider value={{ setTitle }}>
       <Header serviceName={title} />
       <NotificationBanner />
-      {children}
+      <Routes>
+        <Route path=":realm" element={ready ? <Subscriptions /> : <PageLoader />} />
+      </Routes>
       <Footer logoSrc={GoaLogo} />
     </HeaderCtx.Provider>
   );
@@ -39,13 +44,5 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
 const PageLoader = (): JSX.Element => {
   return <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />;
 };
-
-// eslint-disable-next-line
-export function PrivateRoute({ component: Component, ...rest }): JSX.Element {
-  const userInfo = useSelector((state: RootState) => state.session?.userInfo);
-
-  const ready = userInfo !== undefined;
-  return <Route {...rest} render={(props) => (ready ? <Component {...props} /> : <PageLoader />)} />;
-}
 
 export default PrivateApp;

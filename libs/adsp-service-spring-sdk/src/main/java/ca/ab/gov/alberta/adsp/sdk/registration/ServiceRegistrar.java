@@ -62,7 +62,7 @@ class ServiceRegistrar {
       var update = new HashMap<String, ConfigurationDefinition>();
       update.put(serviceId.getNamespace() + ":" + serviceId.getService(), configuration);
       this.updateServiceConfiguration(PlatformServices.ConfigurationServiceId, update)
-          .block();
+          .blockOptional();
     }
 
     var roles = registration.getRoles();
@@ -72,7 +72,7 @@ class ServiceRegistrar {
       var update = new HashMap<String, ServiceRoles>();
       update.put(serviceId.toString(), new ServiceRoles(roles));
       this.updateServiceConfiguration(PlatformServices.TenantServiceId, update)
-          .block();
+          .blockOptional();
     }
 
     var events = registration.getEvents();
@@ -89,7 +89,7 @@ class ServiceRegistrar {
       var update = new HashMap<String, EventNamespace>();
       update.put(serviceId.getService(), new EventNamespace(serviceId.getService(), definitions));
       this.updateServiceConfiguration(PlatformServices.EventServiceId, update)
-          .block();
+          .blockOptional();
     }
   }
 
