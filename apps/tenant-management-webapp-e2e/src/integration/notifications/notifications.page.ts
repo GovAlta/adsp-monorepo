@@ -507,5 +507,13 @@ class NotificationsPage {
   resetEmailTemplateModalDeleteBtn() {
     return cy.xpath('//*[@data-testid="delete-confirmation"]//*[@data-testid="delete-confirm"]');
   }
+
+  templateModalPreviewPaneSMSSubject() {
+    return cy.xpath('//*[@data-testid="sms-preview-body"]/div[1]');
+  }
+
+  templateModalPreviewPaneSMSBody() {
+    return cy.xpath('//*[@data-testid="sms-preview-body"]/div[@class="marginBottom"]');
+  }
 }
 export default NotificationsPage;
