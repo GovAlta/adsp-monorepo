@@ -29,7 +29,7 @@ export default (state = SCRIPT_INIT, action: ActionTypes): ScriptService => {
     }
     case RUN_SCRIPT_ACTION_SUCCESS: {
       const newStringResponses = state.scriptResponse || [];
-      newStringResponses.push(action.payload);
+      newStringResponses.unshift(action.payload);
       return { ...state, scriptResponse: newStringResponses };
     }
     case DELETE_SCRIPT_SUCCESS_ACTION: {
