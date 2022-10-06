@@ -8,6 +8,11 @@ public class ScriptDefinition
   [JsonPropertyName("id")]
   [Required]
   public string? Id { get; set; }
+  [JsonPropertyName("name")]
+  [Required]
+  public string? Name { get; set; }
+  [JsonPropertyName("description")]
+  public string? Description { get; set; }
   [JsonPropertyName("script")]
   [Required]
   public string? Script { get; set; }
