@@ -60,18 +60,9 @@ public class ScriptController : ControllerBase
   }
 
   [HttpPost]
-  [Route("clear-cache")]
-  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant, Roles = ServiceRoles.ScriptRunner)]
-  public async Task ClearCache()
-  {
-    var tenant = await HttpContext.GetTenant();
-    _configurationService.ClearCached(AdspId.Parse("urn:ads:platform:script-service"), tenant?.Id);
-  }
-
-  [HttpPost]
   [Route("scripts/{script?}")]
   [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
-  public async Task<IEnumerable<object>> RunScript(string? script, [FromBody] RunScriptRequest request)
+  public async Task<IEnumerable<object>> RunScript(string? script, [FromBody] RunScriptRequest request, [FromQuery] bool clearCache = false)
   {
     if (String.IsNullOrWhiteSpace(script))
     {
@@ -81,6 +72,12 @@ public class ScriptController : ControllerBase
     if (request == null)
     {
       throw new RequestArgumentException("request body cannot be null");
+    }
+
+    if (clearCache)
+    {
+      var tenant = await HttpContext.GetTenant();
+      _configurationService.ClearCached(AdspId.Parse("urn:ads:platform:script-service"), tenant?.Id);
     }
 
     var configuration = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, ScriptConfiguration>();
