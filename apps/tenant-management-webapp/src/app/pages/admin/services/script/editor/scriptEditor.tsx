@@ -15,9 +15,9 @@ interface ScriptEditorProps {
   name: string;
   description: string;
   scriptStr: string;
-  currentScriptItem: ScriptItem;
+  // currentScriptItem: ScriptItem;
   onNameChange: (value: string) => void;
-  initialScript: ScriptItem;
+  selectedScript: ScriptItem;
   onDescriptionChange: (value: string) => void;
   onScriptChange: (value: string) => void;
   // eslint-disable-next-line
@@ -31,9 +31,8 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   name,
   description,
   scriptStr,
-  currentScriptItem,
   onNameChange,
-  initialScript,
+  selectedScript,
   onDescriptionChange,
   onScriptChange,
   errors,
@@ -47,25 +46,28 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   });
 
   const resetSavedAction = () => {
-    onNameChange(currentScriptItem?.name || '');
-    onDescriptionChange(currentScriptItem?.description || '');
-    onScriptChange(currentScriptItem?.script || '');
+    onNameChange(selectedScript?.name || '');
+    onDescriptionChange(selectedScript?.description || '');
+    onScriptChange(selectedScript?.script || '');
   };
 
   useEffect(() => {
-    onNameChange(initialScript?.name || '');
-    onDescriptionChange(initialScript?.description || '');
-    onScriptChange(initialScript?.script || '');
-  }, [initialScript]);
+    onNameChange(selectedScript?.name || '');
+    onDescriptionChange(selectedScript?.description || '');
+    onScriptChange(selectedScript?.script || '');
+  }, [selectedScript]);
 
   const scriptResponse = useSelector((state: RootState) => state.scriptService.scriptResponse);
 
   const saveAndExecute = () => {
-    currentScriptItem.name = name;
-    currentScriptItem.description = description;
-    currentScriptItem.script = scriptStr;
+    dispatch(SaveAndExecuteScript(updateScript()));
+  };
 
-    dispatch(SaveAndExecuteScript(currentScriptItem));
+  const updateScript = () => {
+    selectedScript.name = name;
+    selectedScript.description = description;
+    selectedScript.script = scriptStr;
+    return selectedScript;
   };
 
   return (
@@ -118,9 +120,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             <GoAButton
               onClick={() => {
                 if (
-                  currentScriptItem.name !== name ||
-                  currentScriptItem.description !== description ||
-                  currentScriptItem.script !== scriptStr
+                  selectedScript.name !== name ||
+                  selectedScript.description !== description ||
+                  selectedScript.script !== scriptStr
                 ) {
                   setSaveModal(true);
                 } else {
@@ -136,9 +138,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             </GoAButton>
             <GoAButton
               onClick={() => {
-                currentScriptItem.name = name;
-                currentScriptItem.description = description;
-                currentScriptItem.script = scriptStr;
+                updateScript();
                 saveAndReset(true);
               }}
               buttonType="primary"
@@ -179,9 +179,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             dispatch(ClearScripts());
           }}
           onSave={() => {
-            currentScriptItem.name = name;
-            currentScriptItem.description = description;
-            currentScriptItem.script = scriptStr;
+            updateScript();
             saveAndReset(true);
             setSaveModal(false);
           }}

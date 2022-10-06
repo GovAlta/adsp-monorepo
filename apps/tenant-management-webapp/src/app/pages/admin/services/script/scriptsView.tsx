@@ -32,7 +32,6 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [script, setScript] = useState('');
-  const [currentSavedScript, setCurrentSavedScript] = useState<ScriptItem>(defaultScript);
   const { fetchScriptState } = useSelector((state: RootState) => ({
     fetchScriptState: state.scriptService.indicator?.details[FETCH_SCRIPTS_ACTION] || '',
   }));
@@ -67,19 +66,12 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     setShowScriptEditForm(false);
   };
 
-  const saveScript = (script: ScriptItem) => {
-    dispatch(UpdateScript(script, false));
+  const saveScript = () => {
+    dispatch(UpdateScript(selectedScript, false));
   };
-  const saveAndReset = () => {
-    selectedScript.name = name;
-    selectedScript.description = description;
-    selectedScript.script = script;
 
-    saveScript(selectedScript);
-  };
   const onEdit = (script) => {
     setSelectedScript(script);
-    setCurrentSavedScript(Object.assign({}, script));
     setShowScriptEditForm(true);
   };
   const onNameChange = (value) => {
@@ -144,17 +136,15 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
               name={name}
               description={description}
               scriptStr={script}
-              initialScript={selectedScript}
-              currentScriptItem={currentSavedScript}
+              selectedScript={selectedScript}
               onNameChange={onNameChange}
               onDescriptionChange={onDescriptionChange}
               onScriptChange={onScriptChange}
               errors={errors}
-              saveAndReset={saveAndReset}
+              saveAndReset={saveScript}
               onEditorCancel={reset}
             />
           </ScriptPanelContainer>
-          {/* Add preview section */}
         </ModalContent>
       </Modal>
     </>
