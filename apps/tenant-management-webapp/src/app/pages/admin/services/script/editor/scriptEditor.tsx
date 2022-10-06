@@ -64,7 +64,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   //console.log(JSON.stringify(currentScriptItem) + '<currentScriptItemcurrentScriptItem');
 
   const scriptResponse = useSelector((state: RootState) => state.scriptService.scriptResponse);
-  const scriptService = useSelector((state: RootState) => state.scriptService);
 
   const saveAndExecute = () => {
     console.log(JSON.stringify('we are dispatching'));
@@ -79,10 +78,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     console.log(JSON.stringify(currentScriptItem) + '<currentScriptItemxxxxxxxxxxxxxxx');
     dispatch(SaveAndExecuteScript(currentScriptItem));
   };
-
-  // useEffect(() => {
-
-  // }, [showScriptEditForm]);
 
   return (
     <div style={{ width: '100%', display: 'flex' }}>
@@ -211,7 +206,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
       <div style={{ width: '50%' }}>
         <ScriptPane>
           <h3>Script Response</h3>
-          {/* <div>{JSON.stringify(scriptResponse)}</div> */}
           <div>{scriptResponse && scriptResponse.map((response) => <div>{JSON.stringify(response)}</div>)}</div>
         </ScriptPane>
       </div>

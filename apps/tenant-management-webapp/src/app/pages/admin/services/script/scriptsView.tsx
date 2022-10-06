@@ -79,8 +79,6 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     selectedScript.script = script;
 
     saveScript(selectedScript);
-    // reset();
-    // setShowScriptEditForm(false);
   };
   const onEdit = (script) => {
     console.log(JSON.stringify(script) + '<editRoot');
@@ -97,28 +95,17 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     };
     validators.checkAll(validations);
     setName(value);
-    // const element: ScriptItem = selectedScript;
-    // element.name = value;
-    // setSelectedScript(element);
   };
   const onDescriptionChange = (value) => {
-    console.log('removing description');
     validators.remove('description');
     validators['description'].check(value);
     setDescription(value);
-    // const element: ScriptItem = selectedScript;
-    // element.description = value;
-    // setSelectedScript(element);
   };
   const onScriptChange = (value) => {
     console.log('removing onScriptChange');
     const element: ScriptItem = selectedScript;
     console.log(JSON.stringify(selectedScript) + ',selectedScript');
     setScript(value);
-    // element.script = value;
-    // console.log(JSON.stringify(value) + ',value');
-    // console.log(JSON.stringify(element) + ',element');
-    // setSelectedScript(element);
   };
   return (
     <>

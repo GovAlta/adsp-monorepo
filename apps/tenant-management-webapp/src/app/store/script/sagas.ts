@@ -139,24 +139,20 @@ export function* wipeCache(action: RunScriptAction): SagaIterator {
       console.log(JSON.stringify(scriptUrl) + '<scriptUrl');
       console.log(JSON.stringify(action.payload) + '<action.payload');
 
-      const response = yield call(
-        axios.post,
-        `${scriptUrl}/script/v1/clearCache`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = yield call(axios.get, `${scriptUrl}/script/v1/scripts/clearCache`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       console.log(JSON.stringify(response) + '<wipecacheresponse');
       console.log(JSON.stringify(response.response?.data) + '<Response2');
 
       yield put(ExecuteScript(action.payload));
     } catch (err) {
-      console.log(JSON.stringify(err) + '<err');
-      console.log(JSON.stringify(err?.response?.data.error) + '<err.message22');
-      if (err?.response?.data) {
-        yield put(runScriptSuccess(err?.response?.data.error));
+      console.log(JSON.stringify(err.message) + '<err');
+      console.log(JSON.stringify(err?.response?.data) + '<err.message22');
+      console.log(JSON.stringify(err?.response) + '<err.message23');
+      if (err.message) {
+        yield put(runScriptSuccess(err.message));
       } else {
         yield put(ErrorNotification({ message: err.message }));
         details[action.type] = ActionState.error;
@@ -180,21 +176,6 @@ export function* executeScript(action: RunScriptAction): SagaIterator {
   console.log(JSON.stringify(token) + '<token');
   if (scriptUrl && token) {
     try {
-      console.log(JSON.stringify(scriptUrl) + '<scriptUrl');
-      console.log(JSON.stringify(action.payload) + '<action.payload');
-      console.log(
-        JSON.stringify(`${scriptUrl}/script/v1/scripts/${action.payload?.id}`) +
-          '<`${scriptUrl}/script/v1/scripts/${action.payload}`'
-      );
-      //const state: RootState = yield select();
-      // const scriptId = action.payload;
-
-      // const api = new ScriptApi(`${scriptUrl}`, token);
-      //const tenantApi = new TenantApi(state.config.tenantApi, token);
-      //      const response = yield call([api, api.runScript], scriptId);
-
-      //const response2 = yield call([tenantApi, tenantApi.createTenant], scriptId);
-
       const response = yield call(
         axios.post,
         `${scriptUrl}/script/v1/scripts/${action.payload?.id}`,
