@@ -15,7 +15,7 @@ export interface ScriptService {
 export const defaultScript: ScriptItem = {
   name: '',
   id: '',
-  script: '',
+  script: ' ',
   useServiceAccount: false,
   description: '',
   runnerRoles: [],

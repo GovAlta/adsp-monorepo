@@ -72,10 +72,7 @@ const TenantManagement = (): JSX.Element => {
           <Route path="/admin/services/notification">
             <Notifications />
           </Route>
-
-          <Route path="*">
-            <Redirect to="/404" />
-          </Route>
+          <Route path="*" render={() => <Redirect to="/404" />} />
         </Switch>
       </Container>
     </AdminLayout>

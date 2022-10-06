@@ -134,7 +134,6 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
           onSave={saveScript}
         />
       )}
-
       <Modal open={showScriptEditForm} data-testid="script-edit-form">
         {/* Hides body overflow when the modal is up */}
         <BodyGlobalStyles hideOverflow={showScriptEditForm} />

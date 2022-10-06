@@ -203,25 +203,57 @@ When(
     const events = event.split(',');
     eventsObj.streamModalNameInput().scrollIntoView().clear().type(name);
     eventsObj.streamModalDescriptionInput().scrollIntoView().clear().type(description);
-    eventsObj.streamModalEventDropdown().click();
-    eventsObj.streamModalEventDropdownItems().then(() => {
-      for (let i = 0; i < events.length; i++) {
-        eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
-      }
-    });
-    eventsObj.streamModalEventDropdownBackground().click({ force: true }); // To collapse the event dropdown
-    //Role(s) selection of roles including public
-    if (role == 'public') {
-      eventsObj.streamModalPublicCheckbox().click();
-    } else if (event == 'n/a') {
-      eventsObj.streamModalRolesCheckboxes().should('exist');
-    } else {
-      const roles = role.split(',');
-      eventsObj.streamModalRolesCheckboxes().then(() => {
-        for (let i = 0; i < roles.length; i++) {
-          eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
+    if (event !== 'n/a') {
+      eventsObj.streamModalEventDropdown().click();
+      eventsObj.streamModalEventDropdownItems().then(() => {
+        for (let i = 0; i < events.length; i++) {
+          eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
         }
       });
+      eventsObj.streamModalEventDropdownBackground().click({ force: true }); // To collapse the event dropdown
+    }
+    //Role(s) selection of roles including public
+    if (role == 'public') {
+      eventsObj
+        .streamModalPublicCheckbox()
+        .invoke('attr', 'class')
+        .then((classAttr) => {
+          if (classAttr?.includes('selected')) {
+            cy.log('Make stream public checkbox is already checked. ');
+          } else {
+            eventsObj.streamModalPublicCheckbox().click();
+          }
+        });
+    } else if (role == 'n/a') {
+      // Do nothing
+    } else {
+      // Unselect all roles
+      eventsObj.streamModalRoleCheckboxes().then((elements) => {
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
+            elements[i].click();
+          }
+        }
+      });
+      // Select roles or client roles
+      const roles = role.split(',');
+      for (let i = 0; i < roles.length; i++) {
+        if (roles[i].includes(':')) {
+          const clientRoleStringArray = roles[i].split(':');
+          let clientName = '';
+          for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
+            if (j !== clientRoleStringArray.length - 2) {
+              clientName = clientName + clientRoleStringArray[j].trim() + ':';
+            } else {
+              clientName = clientName + clientRoleStringArray[j];
+            }
+          }
+          const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
+          eventsObj.streamModalClientRoleCheckbox(clientName, roleName).click();
+        } else {
+          eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
+        }
+      }
     }
   }
 );
@@ -334,7 +366,7 @@ Then(
   }
 );
 
-When('the user clicks {string} button of {string}', function (button, streamName) {
+When('the user clicks {string} button for the stream of {string}', function (button, streamName) {
   switch (button) {
     case 'Eye':
       eventsObj.streamDetailsEyeIcon(streamName).click();
@@ -425,4 +457,30 @@ When('the user removes event chips of {string} in Edit stream modal', function (
   for (let i = 0; i < eventChip.length; i++) {
     eventsObj.streamModalEventChips().shadow().get(`[content="${eventChip}"]`).click();
   }
+});
+
+When('the user {string} Make stream public checkbox in Stream modal', function (selectOrUnselect) {
+  eventsObj
+    .streamModalPublicCheckbox()
+    .invoke('attr', 'class')
+    .then((classAttr) => {
+      switch (selectOrUnselect) {
+        case 'selects':
+          if (classAttr?.includes('selected')) {
+            cy.log('Make stream public checkbox is already checked. ');
+          } else {
+            eventsObj.streamModalPublicCheckbox().click();
+          }
+          break;
+        case 'un-selects':
+          if (classAttr?.includes('selected')) {
+            eventsObj.streamModalPublicCheckbox().click();
+          } else {
+            cy.log('Make stream public checkbox is already un-selected. ');
+          }
+          break;
+        default:
+          expect(selectOrUnselect).to.be.oneOf(['selects', 'un-selects']);
+      }
+    });
 });

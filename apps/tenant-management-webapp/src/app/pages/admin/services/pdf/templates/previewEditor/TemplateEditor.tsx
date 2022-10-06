@@ -5,6 +5,7 @@ import {
   MonacoDivBody,
   MonacoDivHeader,
   MonacoDivFooter,
+  PdfEditorLabelWrapper,
 } from './styled-components';
 import { GoAForm, GoAFormItem, GoABadge } from '@abgov/react-components/experimental';
 import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
@@ -13,6 +14,7 @@ import { languages } from 'monaco-editor';
 import { buildSuggestions } from '@lib/autoComplete';
 import { GoAButton } from '@abgov/react-components';
 import { Tab, Tabs } from '@components/Tabs';
+import { SaveFormModal } from '@components/saveModal';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -25,6 +27,7 @@ interface TemplateEditorProps {
   setPreview: (channel: string) => void;
   bodyEditorHintText?: string;
   template: PdfTemplate;
+  savedTemplate: PdfTemplate;
   bodyTitle: string;
   bodyEditorConfig?: EditorProps;
   saveCurrentTemplate?: () => void;
@@ -46,6 +49,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   setPreview,
   bodyEditorHintText,
   template,
+  savedTemplate,
   bodyTitle,
   bodyEditorConfig,
   saveCurrentTemplate,
@@ -56,7 +60,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   validateEventTemplateFields,
 }) => {
   const monaco = useMonaco();
-
+  const [saveModal, setSaveModal] = useState(false);
   useEffect(() => {
     if (monaco) {
       const provider = monaco.languages.registerCompletionItemProvider('handlebars', {
@@ -112,9 +116,14 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           >
             <Tab
               label={
-                <div>
-                  Main {errors?.body && <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" />}
-                </div>
+                <PdfEditorLabelWrapper>
+                  Main
+                  <div className="badge">
+                    {errors?.body && (
+                      <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" icon="warning" />
+                    )}
+                  </div>
+                </PdfEditorLabelWrapper>
               }
             >
               <h3 className="reduce-margin" data-testid="modal-title">
@@ -142,12 +151,14 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             </Tab>
             <Tab
               label={
-                <div>
+                <PdfEditorLabelWrapper>
                   Header/Footer{' '}
-                  {(errors?.footer || errors?.header) && (
-                    <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" />
-                  )}
-                </div>
+                  <div className="badge">
+                    {(errors?.footer || errors?.header) && (
+                      <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" icon="warning" />
+                    )}
+                  </div>
+                </PdfEditorLabelWrapper>
               }
             >
               <h3 className="reduce-margin" data-testid="modal-title">
@@ -198,13 +209,21 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           {' '}
           <GoAButton
             onClick={() => {
-              cancel();
+              if (
+                savedTemplate.template !== template.template ||
+                savedTemplate.header !== template.header ||
+                savedTemplate.footer !== template.footer
+              ) {
+                setSaveModal(true);
+              } else {
+                cancel();
+              }
             }}
             data-testid="template-form-close"
             buttonType="secondary"
             type="button"
           >
-            Cancel
+            Close
           </GoAButton>
           <GoAButton
             disabled={!validateEventTemplateFields()}
@@ -217,6 +236,20 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           </GoAButton>
         </EditTemplateActions>
       </GoAForm>
+      <SaveFormModal
+        open={saveModal}
+        onDontSave={() => {
+          setSaveModal(false);
+          cancel();
+        }}
+        onSave={() => {
+          saveCurrentTemplate();
+          setSaveModal(false);
+        }}
+        onCancel={() => {
+          setSaveModal(false);
+        }}
+      />
     </TemplateEditorContainerPdf>
   );
 };

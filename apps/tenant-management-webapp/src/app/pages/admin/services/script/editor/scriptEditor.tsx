@@ -39,11 +39,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   errors,
   saveAndReset,
   onEditorCancel,
-  showScriptEditForm,
 }) => {
   const dispatch = useDispatch();
   const [saveModal, setSaveModal] = useState(false);
-
   const loadingIndicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });

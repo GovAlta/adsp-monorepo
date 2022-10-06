@@ -5,7 +5,7 @@ import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 import { buildSuggestions } from '@lib/autoComplete';
 import { Template } from '@store/notification/models';
-import { SaveFormModal } from './saveModal';
+import { SaveFormModal } from '@components/saveModal';
 
 import { GoAInfoBadge, GoABadge } from '@abgov/react-components/experimental';
 import { Tab, Tabs } from '@components/Tabs';
