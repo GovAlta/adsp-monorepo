@@ -6,7 +6,7 @@ Feature: Tenant management welcome page
         When the user goes to the tenant management welcome page
         Then the user views the tenant management welcome page title
 
-    @regression @ignore
+    @regression
     Scenario Outline: As a tenant management user, I can log in tenant management web app
         Given the user is on the tenant management welcome page
         When the user clicks the sign in button

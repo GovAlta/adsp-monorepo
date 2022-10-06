@@ -308,3 +308,21 @@ Feature: Notifications
     Then the user views delete "event" confirmation modal for "tenant-service:tenant-deleted"
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the event of "tenant-service:tenant-deleted" in "autotest-notificationType"
+
+  @TEST_CS-1375 @REQ_CS-1237 @regression
+  Scenario: As a tenant admin, I can configure an SMS message template for a notification type event, so I can provide SMS notifications.
+    Given a tenant admin user is on notification types page
+    When the user clicks Select event button for "autotest-notificationType"
+    Then the user views Select an event modal
+    When the user selects "status-service:application-status-changed" in the event dropdown
+    And the user clicks Next button on Select an event page
+    When the user selects "SMS" tab on the event template
+    And the user enters "{{event.payload.application.name}} status is changed" as subject and "{{event.payload.application.description}} status is changed" as body on "SMS" template page
+    Then the user views the SMS template preview of "{{event.payload.application.name}} status is changed" as subject and "{{event.payload.application.description}} status is changed" as body
+    When the user clicks Save all button in template modal
+    Then the user "views" "sms template indicator" for the event of "status-service:application-status-changed" in "autotest-notificationType" on tenant events
+    # Delete an event
+    When the user clicks "delete" button for "status-service:application-status-changed" in "autotest-notificationType"
+    Then the user views delete "event" confirmation modal for "status-service:application-status-changed"
+    When the user clicks Delete button in delete confirmation modal
+    Then the user "should not view" the event of "status-service:application-status-changed" in "autotest-notificationType"
