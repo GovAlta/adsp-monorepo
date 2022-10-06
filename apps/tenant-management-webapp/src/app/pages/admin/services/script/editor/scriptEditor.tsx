@@ -15,7 +15,6 @@ interface ScriptEditorProps {
   name: string;
   description: string;
   scriptStr: string;
-  // currentScriptItem: ScriptItem;
   onNameChange: (value: string) => void;
   selectedScript: ScriptItem;
   onDescriptionChange: (value: string) => void;

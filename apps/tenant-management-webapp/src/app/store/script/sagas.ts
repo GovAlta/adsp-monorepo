@@ -109,8 +109,6 @@ export function* fetchScripts(action: FetchScriptsAction): SagaIterator {
   }
 }
 
-const details = {};
-
 export function* runScript(action: RunScriptAction): SagaIterator {
   yield put(
     UpdateIndicatorSession({
@@ -136,8 +134,6 @@ export function* executeScript(action: RunScriptAction): SagaIterator {
       );
 
       yield put(runScriptSuccess(response?.data[0]));
-
-      details[action.type] = ActionState.completed;
       yield put(
         UpdateIndicatorSession({
           show: false,
@@ -148,7 +144,6 @@ export function* executeScript(action: RunScriptAction): SagaIterator {
         yield put(runScriptSuccess(err?.response?.data.error));
       } else {
         yield put(ErrorNotification({ message: err.message }));
-        details[action.type] = ActionState.error;
       }
 
       yield put(

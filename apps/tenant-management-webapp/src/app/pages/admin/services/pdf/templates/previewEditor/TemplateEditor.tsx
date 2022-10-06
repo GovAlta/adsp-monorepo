@@ -15,6 +15,7 @@ import { buildSuggestions } from '@lib/autoComplete';
 import { GoAButton } from '@abgov/react-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { SaveFormModal } from '@components/saveModal';
+import { templates } from 'handlebars';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -102,6 +103,11 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
   const channels = ['main', 'footer/header'];
   const tmpTemplate = template;
+  const resetSavedAction = () => {
+    onBodyChange(savedTemplate.template);
+    onHeaderChange(savedTemplate.header);
+    onFooterChange(savedTemplate.footer);
+  };
 
   return (
     <TemplateEditorContainerPdf>
@@ -240,6 +246,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
         open={saveModal}
         onDontSave={() => {
           setSaveModal(false);
+          resetSavedAction();
           cancel();
         }}
         onSave={() => {
