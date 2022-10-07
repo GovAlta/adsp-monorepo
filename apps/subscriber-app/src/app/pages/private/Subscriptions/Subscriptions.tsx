@@ -5,7 +5,6 @@ import DataTable from '@components/DataTable';
 import { GoAButton, GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { GoACallout } from '@abgov/react-components';
 import { FetchContactInfoService } from '@store/notification/actions';
-import { useParams } from 'react-router-dom';
 import { GoAModal, GoAModalActions, GoAModalTitle } from '@abgov/react-components/experimental';
 
 import SubscriptionsList from '@components/SubscriptionsList';
@@ -25,7 +24,11 @@ import {
 import { phoneWrapper } from '@lib/wrappers';
 import { ContactInfoCard } from './ContactInfoCard';
 
-const Subscriptions = (): JSX.Element => {
+interface SubscriptionsProps {
+  realm: string;
+}
+
+const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
   const dispatch = useDispatch();
   const { subscriber, hasSubscriberId } = useSelector((state: RootState) => ({
     subscriber: state.subscription.subscriber,
@@ -34,7 +37,6 @@ const Subscriptions = (): JSX.Element => {
   const contact = useSelector((state: RootState) => state.notification?.contactInfo);
   const [showUnSubscribeModal, setShowUnSubscribeModal] = useState(false);
   const [selectedUnsubscribeSub, setSelectedUnsubscribeSub] = useState<Subscription>();
-  const { realm } = useParams<{ realm: string }>();
 
   useEffect(() => {
     dispatch(getMySubscriberDetails());

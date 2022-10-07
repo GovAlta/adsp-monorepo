@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Route, useParams, Routes } from 'react-router-dom-6';
+import { useParams } from 'react-router-dom-6';
 import Header from '@components/AppHeader';
 import { HeaderCtx } from '@lib/headerContext';
 import { RootState } from '@store/index';
@@ -17,7 +17,6 @@ export function PrivateApp(): JSX.Element {
   const dispatch = useDispatch();
   const { realm } = useParams();
 
-  alert(`realm in private app ${realm}`);
   useEffect(() => {
     dispatch(UpdateConfigRealm(realm));
     setInterval(async () => {
@@ -33,9 +32,8 @@ export function PrivateApp(): JSX.Element {
     <HeaderCtx.Provider value={{ setTitle }}>
       <Header serviceName={title} />
       <NotificationBanner />
-      <Routes>
-        <Route path=":realm" element={ready ? <Subscriptions /> : <PageLoader />} />
-      </Routes>
+      {ready ? <Subscriptions realm={realm} /> : <PageLoader />}
+
       <Footer logoSrc={GoaLogo} />
     </HeaderCtx.Provider>
   );
