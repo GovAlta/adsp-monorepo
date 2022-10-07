@@ -317,8 +317,8 @@ Feature: Notifications
     When the user selects "status-service:application-status-changed" in the event dropdown
     And the user clicks Next button on Select an event page
     When the user selects "SMS" tab on the event template
-    And the user enters "{{event.payload.application.name}} status is changed" as subject and "{{event.payload.application.description}} status is changed" as body on "SMS" template page
-    Then the user views the SMS template preview of "{{event.payload.application.name}} status is changed" as subject and "{{event.payload.application.description}} status is changed" as body
+    And the user enters "{{event.payload.application.name}} status is changed" as subject and "{{event.payload.application.description}} status is changed body" as body on "SMS" template page
+    Then the user views the SMS template preview of "{{event.payload.application.name}} status is changed" as subject and "{{event.payload.application.description}} status is changed body" as body
     When the user clicks Save all button in template modal
     Then the user "views" "sms template indicator" for the event of "status-service:application-status-changed" in "autotest-notificationType" on tenant events
     # Delete an event
@@ -326,3 +326,21 @@ Feature: Notifications
     Then the user views delete "event" confirmation modal for "status-service:application-status-changed"
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the event of "status-service:application-status-changed" in "autotest-notificationType"
+
+  @TEST_CS-1392 @REQ_CS-1234 @regression
+  Scenario: As a tenant admin, I can configure a Bot message template for a notification type event, so I can provide slack/teams notifications.
+    Given a tenant admin user is on notification types page
+    When the user clicks Select event button for "autotest-notificationType"
+    Then the user views Select an event modal
+    When the user selects "status-service:application-notice-published" in the event dropdown
+    And the user clicks Next button on Select an event page
+    When the user selects "Bot" tab on the event template
+    And the user enters "{{event.payload.application.name}} has a notice published" as subject and "{{event.payload.application.name}} has a notice published body" as body on "bot" template page
+    Then the user views the Bot template preview of "{{event.payload.application.name}} has a notice published" as subject and "{{event.payload.application.name}} has a notice published body" as body
+    When the user clicks Save all button in template modal
+    Then the user "views" "bot template indicator" for the event of "status-service:application-notice-published" in "autotest-notificationType" on tenant events
+    # Delete an event
+    When the user clicks "delete" button for "status-service:application-notice-published" in "autotest-notificationType"
+    Then the user views delete "event" confirmation modal for "status-service:application-notice-published"
+    When the user clicks Delete button in delete confirmation modal
+    Then the user "should not view" the event of "status-service:application-notice-published" in "autotest-notificationType"
