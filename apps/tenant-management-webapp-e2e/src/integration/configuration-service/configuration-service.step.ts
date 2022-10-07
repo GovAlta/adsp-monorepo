@@ -14,10 +14,11 @@ Then('the user views a {string} under core-service configurations', function (de
 
 When('the user clicks eye icon of {string} under Platform to view the schema', function (definitionName) {
   configurationObj.configurationDetailsIcon(definitionName).click();
+  cy.wait(1000);
 });
 
 When('the user clicks eye-off icon of {string} under Platform to close the schema', function (definitionName) {
-  configurationObj.configurationHideDetailsIcon(definitionName).click();
+  configurationObj.configurationHideDetailsIcon(definitionName).scrollIntoView().click();
 });
 
 Then(
