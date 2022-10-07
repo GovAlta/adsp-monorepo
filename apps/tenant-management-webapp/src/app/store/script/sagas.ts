@@ -124,10 +124,12 @@ export function* executeScript(action: RunScriptAction): SagaIterator {
   const token: string = yield call(getAccessToken);
   if (scriptUrl && token) {
     try {
+      const { testInputs, ...script } = action.payload;
+
       const response = yield call(
         axios.post,
-        `${scriptUrl}/script/v1/scripts/${action.payload?.id}?clearCache=true`,
-        {},
+        `${scriptUrl}/script/v1/scripts/${script?.id}?clearCache=true`,
+        testInputs,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

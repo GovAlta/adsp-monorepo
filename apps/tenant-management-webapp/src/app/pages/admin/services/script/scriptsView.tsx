@@ -18,7 +18,7 @@ import { renderNoItem } from '@components/NoItem';
 import { ScriptEditor } from './editor/scriptEditor';
 import { Modal, BodyGlobalStyles, ModalContent, ScriptPanelContainer } from './styled-components';
 import { useValidators } from '@lib/useValidators';
-import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
+import { characterCheck, validationPattern, isNotEmptyCheck, Validator, isValidJSONCheck } from '@lib/checkInput';
 import { scriptEditorConfig } from './editor/config';
 
 interface AddScriptProps {
@@ -32,6 +32,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [script, setScript] = useState('');
+  const [testInput, setTestInput] = useState('');
   const { fetchScriptState } = useSelector((state: RootState) => ({
     fetchScriptState: state.scriptService.indicator?.details[FETCH_SCRIPTS_ACTION] || '',
   }));
@@ -51,6 +52,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
 
   const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
     .add('description', 'description', descriptionCheck())
+    .add('payloadSchema', 'payloadSchema', isValidJSONCheck('payloadSchema'))
     .build();
 
   useEffect(() => {
@@ -68,6 +70,17 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
 
   const saveScript = () => {
     dispatch(UpdateScript(selectedScript, false));
+  };
+
+  const testInputUpdate = (value: string) => {
+    validators.remove('payloadSchema');
+    const validations = {
+      payloadSchema: value,
+    };
+    if (value.length > 0) {
+      validators.checkAll(validations);
+    }
+    setTestInput(value);
   };
 
   const onEdit = (script) => {
@@ -137,6 +150,8 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
               description={description}
               scriptStr={script}
               selectedScript={selectedScript}
+              testInput={testInput}
+              testInputUpdate={testInputUpdate}
               onNameChange={onNameChange}
               onDescriptionChange={onDescriptionChange}
               onScriptChange={onScriptChange}

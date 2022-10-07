@@ -16,6 +16,8 @@ interface ScriptEditorProps {
   description: string;
   scriptStr: string;
   onNameChange: (value: string) => void;
+  testInput: string;
+  testInputUpdate: (value: string) => void;
   selectedScript: ScriptItem;
   onDescriptionChange: (value: string) => void;
   onScriptChange: (value: string) => void;
@@ -32,6 +34,8 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   scriptStr,
   onNameChange,
   selectedScript,
+  testInput,
+  testInputUpdate,
   onDescriptionChange,
   onScriptChange,
   errors,
@@ -40,6 +44,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
 }) => {
   const dispatch = useDispatch();
   const [saveModal, setSaveModal] = useState(false);
+
   const loadingIndicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -62,10 +67,16 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     dispatch(SaveAndExecuteScript(updateScript()));
   };
 
+  const setTestInput = (input: string) => {
+    testInputUpdate(input);
+  };
+
   const updateScript = () => {
     selectedScript.name = name;
     selectedScript.description = description;
     selectedScript.script = scriptStr;
+    selectedScript.testInputs = testInput.length > 0 ? { inputs: JSON.parse(testInput) } : {};
+
     return selectedScript;
   };
 
@@ -145,26 +156,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               type="submit"
               disabled={Object.keys(errors).length > 0}
             >
-              <div style={{ padding: '2px 0' }}>Save</div>
-            </GoAButton>
-            <GoAButton
-              onClick={() => {
-                saveAndExecute();
-              }}
-              buttonType="primary"
-              data-testid="template-form-save"
-              type="submit"
-            >
-              <div style={{ display: 'flex' }}>
-                Save and Execute
-                {loadingIndicator.show ? (
-                  <SpinnerPadding>
-                    <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
-                  </SpinnerPadding>
-                ) : (
-                  <ReplacePadding />
-                )}
-              </div>
+              Save
             </GoAButton>
           </EditTemplateActions>
         </GoAForm>
@@ -189,8 +181,59 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
       </ScriptEditorContainer>
       <div style={{ width: '50%' }}>
         <ScriptPane>
-          <h3>Script Response</h3>
-          <div>{scriptResponse && scriptResponse.map((response) => <div>{JSON.stringify(response)}</div>)}</div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ flex: 1 }}>
+              <GoAFormItem error={errors?.['payloadSchema']}>
+                <div style={{ display: 'flex' }}>
+                  <label style={{ paddingTop: '10px' }}>Test input</label>
+
+                  <div style={{ margin: '0 10px 10px 10px' }}>
+                    <GoAButton
+                      onClick={() => {
+                        saveAndExecute();
+                      }}
+                      buttonType="primary"
+                      disabled={errors?.['payloadSchema']}
+                      data-testid="template-form-save"
+                      type="submit"
+                    >
+                      <div style={{ display: 'flex' }}>
+                        <div style={{ paddingTop: '2px' }}>Save and Execute</div>
+                        {loadingIndicator.show ? (
+                          <SpinnerPadding>
+                            <GoAElementLoader
+                              visible={true}
+                              size="default"
+                              baseColour="#c8eef9"
+                              spinnerColour="#0070c4"
+                            />
+                          </SpinnerPadding>
+                        ) : (
+                          <ReplacePadding />
+                        )}
+                      </div>
+                    </GoAButton>
+                  </div>
+                </div>
+                <MonacoDivBody data-testid="templated-editor-test">
+                  <MonacoEditor
+                    language="json"
+                    value={testInput}
+                    {...editorConfig}
+                    onChange={(value) => {
+                      setTestInput(value);
+                    }}
+                  />
+                </MonacoDivBody>
+              </GoAFormItem>
+            </div>
+            <div style={{ flex: 1, height: '100%' }}>
+              <h4>Script Response</h4>
+              <div className="script-response">
+                {scriptResponse && scriptResponse.map((response) => <div>{JSON.stringify(response)}</div>)}
+              </div>
+            </div>
+          </div>
         </ScriptPane>
       </div>
     </div>
@@ -212,8 +255,16 @@ const ScriptPane = styled.div`
   padding: 24px;
   margin-bottom: 1rem;
   overflow: auto;
+
+  .script-response {
+    background: white;
+    padding: 10px;
+    border: 1px solid black;
+    height: 30vh;
+    overflow-y: auto;
+  }
 `;
 
 const ReplacePadding = styled.div`
-  padding: 11px 11px 12px 11px;
+  padding: 12px 11px 11px 11px;
 `;
