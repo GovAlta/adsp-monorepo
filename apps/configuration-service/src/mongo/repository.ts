@@ -57,7 +57,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
       this.validationService,
       latest,
       tenantId,
-      definition.configurationSchema,
+      definition?.configurationSchema,
       activeRevisionDoc?.active
     );
   }
