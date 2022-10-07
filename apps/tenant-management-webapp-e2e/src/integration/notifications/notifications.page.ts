@@ -515,5 +515,13 @@ class NotificationsPage {
   templateModalPreviewPaneSMSBody() {
     return cy.xpath('//*[@data-testid="sms-preview-body"]/div[@class="marginBottom"]');
   }
+
+  templateModalPreviewPaneBotSubject() {
+    return cy.xpath('//*[@data-testid="bot-preview"]/div/b/p');
+  }
+
+  templateModalPreviewPaneBotBody() {
+    return cy.xpath('//*[@data-testid="bot-preview"]/div/p');
+  }
 }
 export default NotificationsPage;
