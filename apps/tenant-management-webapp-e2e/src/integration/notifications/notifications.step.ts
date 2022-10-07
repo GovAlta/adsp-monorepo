@@ -806,8 +806,20 @@ When(
   'the user enters {string} as subject and {string} as body on {string} template page',
   function (subjectText, bodyText, channel) {
     cy.wait(1000); // Wait for the template editor elements to show
-    notificationsObj.eventTemplateModalSubject(channel).click().focus().type('{ctrl}a').clear().type(subjectText);
-    notificationsObj.eventTemplateModalBody(channel).click().focus().type('{ctrl}a').clear().type(bodyText);
+    notificationsObj
+      .eventTemplateModalSubject(channel)
+      .click()
+      .focus()
+      .type('{ctrl}a')
+      .clear()
+      .type(subjectText, { parseSpecialCharSequences: false });
+    notificationsObj
+      .eventTemplateModalBody(channel)
+      .click()
+      .focus()
+      .type('{ctrl}a')
+      .clear()
+      .type(bodyText, { parseSpecialCharSequences: false });
   }
 );
 
@@ -903,4 +915,14 @@ Then('the user views the email template preview of {string} as subject and {stri
     const iFrameContent = $iFrame.contents().find('body');
     cy.wrap(iFrameContent).find('[class*="email-content"]').invoke('text').should('contain', body);
   });
+});
+
+Then('the user views the SMS template preview of {string} as subject and {string} as body', function (subject, body) {
+  cy.wait(2000); // Wait 2 second for preview to show
+  const subjectWithoutVariables = subject.replace(/{{.+?}}/, '');
+  const bodyWithoutVariables = body.replace(/{{.+?}}/, '');
+  notificationsObj.templateModalPreviewPaneSMSSubject().invoke('text').should('not.contain', '{'); // {{variable}} should be replaced with random text
+  notificationsObj.templateModalPreviewPaneSMSSubject().invoke('text').should('contain', subjectWithoutVariables);
+  notificationsObj.templateModalPreviewPaneSMSBody().invoke('text').should('not.contain', '{'); // {{variable}} should be replaced with random text
+  notificationsObj.templateModalPreviewPaneSMSBody().invoke('text').should('contain', bodyWithoutVariables);
 });

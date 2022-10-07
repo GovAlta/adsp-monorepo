@@ -20,12 +20,14 @@ public class ScriptController : ControllerBase
   private readonly ILogger<ScriptController> _logger;
   private readonly ITokenProvider _tokenProvider;
   private readonly ILuaScriptService _luaService;
+  private readonly IConfigurationService _configurationService;
 
-  public ScriptController(ILogger<ScriptController> logger, ITokenProvider tokenProvider, ILuaScriptService luaService)
+  public ScriptController(ILogger<ScriptController> logger, ITokenProvider tokenProvider, ILuaScriptService luaService, IConfigurationService configurationService)
   {
     _logger = logger;
     _tokenProvider = tokenProvider;
     _luaService = luaService;
+    _configurationService = configurationService;
   }
 
   [HttpGet]
@@ -60,7 +62,7 @@ public class ScriptController : ControllerBase
   [HttpPost]
   [Route("scripts/{script?}")]
   [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant)]
-  public async Task<IEnumerable<object>> RunScript(string? script, [FromBody] RunScriptRequest request)
+  public async Task<IEnumerable<object>> RunScript(string? script, [FromBody] RunScriptRequest request, [FromQuery] bool clearCache = false)
   {
     if (String.IsNullOrWhiteSpace(script))
     {
@@ -70,6 +72,12 @@ public class ScriptController : ControllerBase
     if (request == null)
     {
       throw new RequestArgumentException("request body cannot be null");
+    }
+
+    if (clearCache)
+    {
+      var tenant = await HttpContext.GetTenant();
+      _configurationService.ClearCached(AdspId.Parse("urn:ads:platform:script-service"), tenant?.Id);
     }
 
     var configuration = await HttpContext.GetConfiguration<Dictionary<string, ScriptDefinition>, ScriptConfiguration>();

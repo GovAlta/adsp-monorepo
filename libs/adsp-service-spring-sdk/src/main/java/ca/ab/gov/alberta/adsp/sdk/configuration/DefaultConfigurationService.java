@@ -11,7 +11,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -21,7 +22,7 @@ import ca.ab.gov.alberta.adsp.sdk.access.TokenProvider;
 import ca.ab.gov.alberta.adsp.sdk.directory.ServiceDirectory;
 import reactor.core.publisher.Mono;
 
-@Service
+@Component
 @Scope("singleton")
 class DefaultConfigurationService implements ConfigurationService {
 
@@ -43,6 +44,10 @@ class DefaultConfigurationService implements ConfigurationService {
   @Override
   public <T> Mono<T> getConfiguration(AdspId serviceId, Optional<AdspId> tenantId,
       ParameterizedTypeReference<T> typeReference) {
+
+    Assert.notNull(serviceId, "serviceId cannot be null.");
+    Assert.notNull(tenantId, "tenantId cannot be null.");
+    Assert.notNull(typeReference, "typeReference cannot be null.");
 
     @SuppressWarnings("unchecked")
     Mono<T> configuration = tenantId.isPresent()
@@ -79,8 +84,11 @@ class DefaultConfigurationService implements ConfigurationService {
   }
 
   @Override
-  public void clearCached(AdspId serviceId, Optional<AdspId> tenantIdl) {
-    this.configurationCache.evict(this.getCacheKey(serviceId, tenantIdl));
+  public void clearCached(AdspId serviceId, Optional<AdspId> tenantId) {
+    Assert.notNull(serviceId, "serviceId cannot be null.");
+    Assert.notNull(tenantId, "tenantId cannot be null.");
+
+    this.configurationCache.evict(this.getCacheKey(serviceId, tenantId));
   }
 
   @Scheduled(timeUnit = TimeUnit.HOURS, fixedRate = 1)

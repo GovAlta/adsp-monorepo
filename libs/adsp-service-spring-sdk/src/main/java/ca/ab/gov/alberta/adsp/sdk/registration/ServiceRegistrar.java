@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -20,6 +21,7 @@ import ca.ab.gov.alberta.adsp.sdk.AdspId;
 import ca.ab.gov.alberta.adsp.sdk.PlatformServices;
 import ca.ab.gov.alberta.adsp.sdk.access.TokenProvider;
 import ca.ab.gov.alberta.adsp.sdk.directory.ServiceDirectory;
+import ca.ab.gov.alberta.adsp.sdk.events.DomainEventDefinition;
 import reactor.core.publisher.Mono;
 
 @Component
@@ -45,6 +47,9 @@ class ServiceRegistrar {
 
   @SuppressWarnings("rawtypes")
   public void register(AdspId serviceId, ServiceRegistration registration) {
+    Assert.notNull(serviceId, "serviceId cannot be null.");
+    Assert.notNull(registration, "registration cannot be null.");
+
     this.logger.debug("Registering configuration for service {}...", serviceId);
 
     var configuration = registration.getConfiguration();
@@ -57,7 +62,7 @@ class ServiceRegistrar {
       var update = new HashMap<String, ConfigurationDefinition>();
       update.put(serviceId.getNamespace() + ":" + serviceId.getService(), configuration);
       this.updateServiceConfiguration(PlatformServices.ConfigurationServiceId, update)
-          .block();
+          .blockOptional();
     }
 
     var roles = registration.getRoles();
@@ -67,22 +72,24 @@ class ServiceRegistrar {
       var update = new HashMap<String, ServiceRoles>();
       update.put(serviceId.toString(), new ServiceRoles(roles));
       this.updateServiceConfiguration(PlatformServices.TenantServiceId, update)
-          .block();
+          .blockOptional();
     }
 
     var events = registration.getEvents();
     if (events != null) {
       this.logger.debug("Registering event definitions for service {}...", serviceId);
 
+      var definitions = new HashMap<String, DomainEventDefinition>();
       events.forEach(event -> {
         var payloadSchema = this.generator.generateSchema(event.getPayloadClass());
         event.setPayloadSchema(payloadSchema);
+        definitions.put(event.getName(), event);
       });
 
       var update = new HashMap<String, EventNamespace>();
-      update.put(serviceId.getService(), new EventNamespace(serviceId.getService(), events));
+      update.put(serviceId.getService(), new EventNamespace(serviceId.getService(), definitions));
       this.updateServiceConfiguration(PlatformServices.EventServiceId, update)
-          .block();
+          .blockOptional();
     }
   }
 

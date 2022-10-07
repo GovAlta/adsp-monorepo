@@ -43,6 +43,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
   });
 
   const [currentTemplate, setCurrentTemplate] = useState(defaultPdfTemplate);
+  const [currentSavedTemplate, setCurrentSavedTemplate] = useState(defaultPdfTemplate);
   const [body, setBody] = useState('');
   const [footer, setFooter] = useState('');
   const [header, setHeader] = useState('');
@@ -278,7 +279,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
             edit={(currentTemplate) => {
               setShowTemplateForm(true);
               setCurrentTemplate(currentTemplate);
-              setBody(currentTemplate.template);
+              setCurrentSavedTemplate(Object.assign({}, currentTemplate));
             }}
             onDelete={(currentTemplate) => {
               setShowDeleteConfirmation(true);
@@ -310,6 +311,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                 mainTitle="PDF Generation"
                 subjectTitle="Subject"
                 template={currentTemplate}
+                savedTemplate={currentSavedTemplate}
                 subjectEditorConfig={subjectEditorConfig}
                 bodyTitle="Body"
                 onBodyChange={(value) => {

@@ -11,6 +11,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -41,6 +42,7 @@ class DefaultServiceDirectory implements ServiceDirectory {
 
   @Override
   public Mono<URI> getServiceUrl(AdspId serviceId) {
+    Assert.notNull(serviceId, "serviceId cannot be null.");
 
     return Mono.fromCallable(() -> this.directoryCache.get(serviceId, URI.class))
         .switchIfEmpty(this.client.get()

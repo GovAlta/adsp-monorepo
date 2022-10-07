@@ -82,7 +82,6 @@ export function* tenantLogin(action: TenantLoginAction): SagaIterator {
     const loginRedirectUrl = `${window.location.origin}/subscriptions`;
     const keycloakConfig = state.config.keycloakApi;
     createKeycloakAuth({ ...keycloakConfig }, loginRedirectUrl);
-
     keycloakAuth.loginByIdP('core', action.payload);
   } catch (e) {
     yield put(ErrorNotification({ message: `Failed to tenant login: ${e.message}` }));

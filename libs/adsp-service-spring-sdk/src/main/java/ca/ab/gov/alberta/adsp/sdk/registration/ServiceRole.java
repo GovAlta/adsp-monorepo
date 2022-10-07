@@ -1,5 +1,7 @@
 package ca.ab.gov.alberta.adsp.sdk.registration;
 
+import org.springframework.util.Assert;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ServiceRole {
@@ -23,6 +25,8 @@ public class ServiceRole {
   }
 
   public ServiceRole(String role, String description, boolean inTenantAdmin) {
+    Assert.hasLength(role, "role cannot be null or empty.");
+
     this.role = role;
     this.description = description;
     this.inTenantAdmin = inTenantAdmin;

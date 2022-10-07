@@ -5,6 +5,7 @@ import { Page, Main } from '@components/Html';
 import GoALinkButton from '@components/LinkButton';
 import { TenantCreationLoginInit } from '@store/tenant/actions';
 import { GoAFormActions } from '@abgov/react-components/experimental';
+import { getIdpHint } from '@lib/keycloak';
 
 const GetStarted = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -21,7 +22,8 @@ const GetStarted = (): JSX.Element => {
           <GoAButton
             buttonType="primary"
             onClick={() => {
-              dispatch(TenantCreationLoginInit());
+              const idpHint = getIdpHint();
+              dispatch(TenantCreationLoginInit(idpHint));
             }}
           >
             Sign in

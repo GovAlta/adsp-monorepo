@@ -3,6 +3,7 @@ package ca.ab.gov.alberta.adsp.sdk;
 import java.util.Optional;
 
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.util.Assert;
 
 import ca.ab.gov.alberta.adsp.sdk.configuration.ConfigurationService;
 import reactor.core.publisher.Mono;
@@ -23,6 +24,8 @@ public final class AdspRequestContext {
   }
 
   public <T> Mono<T> getConfiguration(ParameterizedTypeReference<T> typeReference) {
+    Assert.notNull(typeReference, "typeReference cannot be null.");
+
     return this.configurationService.getConfiguration(this.serviceId,
         user.getTenant() != null ? Optional.of(user.getTenant().getId()) : Optional.empty(), typeReference);
   }

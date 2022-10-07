@@ -2,6 +2,8 @@ package ca.ab.gov.alberta.adsp.sdk.events;
 
 import java.time.Instant;
 
+import org.springframework.util.Assert;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class DomainEvent<T> {
@@ -57,6 +59,10 @@ public class DomainEvent<T> {
   }
 
   public DomainEvent(String name, Instant timestamp, T payload) {
+    Assert.hasLength(name, "name cannot be null or empty.");
+    Assert.notNull(timestamp, "timestamp cannot be null.");
+    Assert.notNull(payload, "payload cannot be null.");
+
     this.name = name;
     this.timestamp = timestamp;
     this.payload = payload;

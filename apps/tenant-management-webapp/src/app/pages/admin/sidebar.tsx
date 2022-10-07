@@ -19,6 +19,7 @@ import ScriptIcon from '@icons/script.svg';
 import { GoAIcon } from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
 import { TenantAdminLogin, TenantLogout, FetchTenant } from '@store/tenant/actions';
+import { getIdpHint } from '@lib/keycloak';
 
 interface SidebarProps {
   type: 'mobile' | 'desktop';
@@ -150,7 +151,14 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
                 Sign out
               </span>
             ) : (
-              <span onClick={() => dispatch(TenantAdminLogin())}>Sign In</span>
+              <span
+                onClick={() => {
+                  const idpHint = getIdpHint();
+                  dispatch(TenantAdminLogin(idpHint));
+                }}
+              >
+                Sign In
+              </span>
             )}
           </LogoutWrapper>
         </SignOutLink>

@@ -1,23 +1,27 @@
 package ca.ab.gov.alberta.adsp.sdk.registration;
 
-import java.util.List;
+import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import ca.ab.gov.alberta.adsp.sdk.events.DomainEventDefinition;
 
 @SuppressWarnings("rawtypes")
 class EventNamespace {
+  @JsonProperty
   private final String name;
-  private final List<DomainEventDefinition> definitions;
+  @JsonProperty
+  private final Map<String, DomainEventDefinition> definitions;
 
   public String getName() {
     return name;
   }
 
-  public List<DomainEventDefinition> getDefinitions() {
+  public Map<String, DomainEventDefinition> getDefinitions() {
     return definitions;
   }
 
-  public EventNamespace(String name, List<DomainEventDefinition> definitions) {
+  public EventNamespace(String name, Map<String, DomainEventDefinition> definitions) {
     this.name = name;
     this.definitions = definitions;
   }

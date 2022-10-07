@@ -117,7 +117,8 @@
         "release": {
           "builder": "@nrwl/workspace:run-commands",
           "options": {
-            "command": "npx semantic-release -e ./libs/adsp-service-spring-sdk/.releaserc.json"
+            "command": "npx semantic-release -e ./.releaserc.json",
+            "cwd": "libs/adsp-service-spring-sdk"
           }
         }
       },

@@ -9,18 +9,22 @@ import { adspId, AdspId } from '../utils';
 import { RequestBenchmark, REQ_BENCHMARK } from './types';
 
 export async function writeMetrics(
+  serviceId: AdspId,
+  directory: ServiceDirectory,
   logger: Logger,
   tokenProvider: TokenProvider,
-  valueUrl: string,
   buffer: Record<string, unknown[]>
 ): Promise<void> {
+  const valueServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:value-service:v1`);
+  const valueUrl = new URL(`v1/${serviceId.service}/values/service-metrics`, valueServiceUrl);
+
   // Value service write does not handle writing a batch of values of mixed tenancy, so group by tenant then write.
   for (const tenantId of Object.getOwnPropertyNames(buffer)) {
     try {
       const values = buffer[tenantId]?.splice(0) || [];
       if (values.length > 0) {
         const token = await tokenProvider.getAccessToken();
-        await axios.post(valueUrl, values, {
+        await axios.post(valueUrl.href, values, {
           headers: { Authorization: `Bearer ${token}` },
           params: { tenantId },
           timeout: 30000,
@@ -48,8 +52,6 @@ export async function createMetricsHandler(
   directory: ServiceDirectory,
   defaultTenantId?: AdspId
 ): Promise<RequestHandler> {
-  const valueServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:value-service:v1`);
-  const valueUrl = new URL(`v1/${serviceId.service}/values/service-metrics`, valueServiceUrl);
   const valuesBuffer: Record<string, unknown[]> = {};
   const writeBuffer = throttle(writeMetrics, WRITE_THROTTLE_MS, { leading: false });
   const responseTimeHandler = responseTime((req: Request, _res: Response, time) => {
@@ -98,7 +100,7 @@ export async function createMetricsHandler(
         valuesBuffer[value.tenantId] = [];
       }
       valuesBuffer[value.tenantId].push(value);
-      writeBuffer(logger, tokenProvider, valueUrl.href, valuesBuffer);
+      writeBuffer(serviceId, directory, logger, tokenProvider, valuesBuffer);
     }
   });
 

@@ -1,5 +1,16 @@
 {
-  "extends": "../../.releaserc.json",
+  "branches": [
+    "+([0-9])?(.{+([0-9]),x}).x",
+    "main",
+    {
+      "name": "beta",
+      "prerelease": true
+    },
+    {
+      "name": "alpha",
+      "prerelease": true
+    }
+  ],
   "tagFormat": "adsp-service-spring-sdk-v${version}",
   "plugins": [
     [
