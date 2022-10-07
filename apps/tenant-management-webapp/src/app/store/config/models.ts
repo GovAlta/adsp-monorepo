@@ -35,6 +35,7 @@ export interface ServiceUrls {
   directoryServiceApiUrl?: string;
   pdfServiceApiUrl?: string;
   calendarServiceApiUrl?: string;
+  scriptServiceApiUrl?: string;
 }
 
 export interface ConfigState {
