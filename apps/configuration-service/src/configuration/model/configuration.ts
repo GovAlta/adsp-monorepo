@@ -1,10 +1,9 @@
 import { AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, Results, ValidationService, createLogger } from '@core-services/core-common';
+import { InvalidOperationError, Results, ValidationService } from '@core-services/core-common';
 import { ConfigurationRepository, ActiveRevisionRepository } from '../repository';
 import { ConfigurationServiceRoles } from '../roles';
 import { ConfigurationRevision, Configuration, RevisionCriteria } from '../types';
 import type { Logger } from 'winston';
-import { environment } from './../../environments/environment';
 
 /**
  * Represents an aggregate context for configuration revisions.
@@ -18,13 +17,13 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
   constructor(
     public namespace: string,
     public name: string,
+    private logger: Logger,
     public repository: ConfigurationRepository,
+    private activeRevisionRepository: ActiveRevisionRepository,
     public validationService: ValidationService,
     public latest?: ConfigurationRevision<C>,
     public tenantId?: AdspId,
     private schema?: Record<string, unknown>,
-    private logger?: Logger,
-    private activeRevisionRepository?: ActiveRevisionRepository,
     public active?: number
   ) {
     if (!namespace || !name) {
@@ -35,15 +34,11 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
       throw new InvalidOperationError(`Configuration and namespace and name cannot contain ':'.`);
     }
 
-    if (!logger) {
-      logger = createLogger('configuration-service-modal', environment.LOG_LEVEL);
-    }
-
     try {
       validationService.setSchema(this.getSchemaKey(), schema);
       return;
     } catch {
-      logger.warn(`JSON schema of ${namespace}:${name} is invalid. An empty JSON schema {} will be used.`);
+      this.logger.warn(`JSON schema of ${namespace}:${name} is invalid. An empty JSON schema {} will be used.`);
     }
 
     /**
@@ -70,12 +65,11 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
   }
 
   public canModify(user: User): boolean {
-    return isAllowedUser(
-      user,
-      this.tenantId,
-      [ConfigurationServiceRoles.ConfiguredService, ConfigurationServiceRoles.ConfigurationAdmin],
-      true
-    );
+    return isAllowedUser(user, this.tenantId, ConfigurationServiceRoles.ConfigurationAdmin, true);
+  }
+
+  public canRegister(user: User): boolean {
+    return isAllowedUser(user, this.tenantId, ConfigurationServiceRoles.ConfiguredService, true);
   }
 
   public mergeUpdate(update: Partial<C>): C {
@@ -99,7 +93,7 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
   }
 
   public async update(user: User, configuration: C): Promise<ConfigurationEntity<C>> {
-    if (!this.canModify(user)) {
+    if (!this.canModify(user) && !this.canRegister(user)) {
       throw new UnauthorizedUserError('modify configuration', user);
     }
 

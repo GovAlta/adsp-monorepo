@@ -76,7 +76,7 @@ export const getConfigurationEntity =
 
       const definition = await getDefinition(configurationServiceId, repository, namespace, name, tenantId);
 
-      const entity = await repository.get(namespace, name, getCore ? null : tenantId, definition?.configurationSchema);
+      const entity = await repository.get(namespace, name, getCore ? null : tenantId, definition);
       if (!entity.canAccess(user)) {
         throw new UnauthorizedUserError('access configuration', user);
       }

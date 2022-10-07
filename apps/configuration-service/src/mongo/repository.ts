@@ -1,12 +1,14 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
 import { decodeAfter, encodeNext, Results, ValidationService } from '@core-services/core-common';
 import { model, Model } from 'mongoose';
+import { Logger } from 'winston';
 import {
   ConfigurationRepository,
   ConfigurationEntity,
   ConfigurationRevision,
   RevisionCriteria,
   ActiveRevisionRepository,
+  ConfigurationDefinition,
 } from '../configuration';
 import { renamePrefixProperties } from './prefix';
 import { revisionSchema } from './schema';
@@ -18,7 +20,11 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
 
   private readonly META_PREFIX = 'META_';
 
-  constructor(private validationService: ValidationService, activeRevisionRepository: ActiveRevisionRepository) {
+  constructor(
+    private logger: Logger,
+    private validationService: ValidationService,
+    activeRevisionRepository: ActiveRevisionRepository
+  ) {
     this.revisionModel = model<ConfigurationRevisionDoc>('revision', revisionSchema);
     this.activeRevisionRepository = activeRevisionRepository;
   }
@@ -27,7 +33,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     namespace: string,
     name: string,
     tenantId?: AdspId,
-    schema?: Record<string, unknown>
+    definition?: ConfigurationDefinition,
   ): Promise<ConfigurationEntity<C>> {
     const tenant = tenantId?.toString() || { $exists: false };
     const query = { namespace, name, tenant };
@@ -45,13 +51,13 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
     return new ConfigurationEntity<C>(
       namespace,
       name,
+      this.logger,
       this,
+      this.activeRevisionRepository,
       this.validationService,
       latest,
       tenantId,
-      schema,
-      null,
-      this.activeRevisionRepository,
+      definition.configurationSchema,
       activeRevisionDoc?.active
     );
   }
