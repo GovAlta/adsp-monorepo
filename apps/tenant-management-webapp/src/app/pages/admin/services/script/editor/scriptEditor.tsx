@@ -81,7 +81,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   };
 
   return (
-    <div style={{ width: '100%', display: 'flex' }}>
+    <EditModalStyle>
       <ScriptEditorContainer>
         <GoAForm>
           <GoAFormItem error={errors?.['name']}>
@@ -179,15 +179,15 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
           }}
         />
       </ScriptEditorContainer>
-      <div style={{ width: '50%' }}>
+      <div className="half-width">
         <ScriptPane>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ flex: 1 }}>
+          <div className="flex-column">
+            <div className="flex-one">
               <GoAFormItem error={errors?.['payloadSchema']}>
-                <div style={{ display: 'flex' }}>
-                  <label style={{ paddingTop: '10px' }}>Test input</label>
+                <div className="flex">
+                  <label className="mt-2">Test input</label>
 
-                  <div style={{ margin: '0 10px 10px 10px' }}>
+                  <div className="execute-button">
                     <GoAButton
                       onClick={() => {
                         saveAndExecute();
@@ -197,8 +197,8 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                       data-testid="template-form-save"
                       type="submit"
                     >
-                      <div style={{ display: 'flex' }}>
-                        <div style={{ paddingTop: '2px' }}>Save and Execute</div>
+                      <div className="flex">
+                        <div className="pt-1">Save and Execute</div>
                         {loadingIndicator.show ? (
                           <SpinnerPadding>
                             <GoAElementLoader
@@ -227,7 +227,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 </MonacoDivBody>
               </GoAFormItem>
             </div>
-            <div style={{ flex: 1, height: '100%' }}>
+            <div className="flex-one full-height">
               <h4>Script Response</h4>
               <div className="script-response">
                 {scriptResponse && scriptResponse.map((response) => <div>{JSON.stringify(response)}</div>)}
@@ -236,9 +236,48 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
           </div>
         </ScriptPane>
       </div>
-    </div>
+    </EditModalStyle>
   );
 };
+
+const EditModalStyle = styled.div`
+  width: 100%;
+  display: fl ex;
+
+  .half-width {
+    width: 50%;
+    display: flex;
+  }
+
+  .flex-column {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .flex-one {
+    flex: 1;
+  }
+
+  .full-height {
+    height: 100%;
+  }
+
+  .flex {
+    display: flex;
+  }
+
+  .mt-2 {
+    padding-top: 10px;
+  }
+
+  .execute-button {
+    margin: 0 10px 10px 10px;
+  }
+
+  .pt-1 {
+    padding-top: 2px;
+  }
+`;
 
 const SpinnerPadding = styled.div`
   float: right;
@@ -247,6 +286,7 @@ const SpinnerPadding = styled.div`
 
 const ScriptPane = styled.div`
   height: 100%;
+  width: 100%;
   background: #f3f3f3;
   white-space: pre-wrap;
   font-family: monospace;
