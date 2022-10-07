@@ -33,25 +33,32 @@ describe('ConfigurationEntity', () => {
   });
 
   it('can be created', () => {
-    const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock);
+    const entity = new ConfigurationEntity(
+      namespace,
+      name,
+      loggerMock,
+      repositoryMock,
+      activeRevisionMock,
+      validationMock
+    );
     expect(entity).toBeTruthy();
   });
 
   it('can throw for missing namespace', () => {
     expect(() => {
-      new ConfigurationEntity(null, name, repositoryMock, validationMock);
+      new ConfigurationEntity(null, name, loggerMock, repositoryMock, activeRevisionMock, validationMock);
     }).toThrow(/Configuration must have a namespace and name./);
   });
 
   it('can throw for missing name', () => {
     expect(() => {
-      new ConfigurationEntity(namespace, null, repositoryMock, validationMock);
+      new ConfigurationEntity(namespace, null, loggerMock, repositoryMock, activeRevisionMock, validationMock);
     }).toThrow(/Configuration must have a namespace and name./);
   });
 
   it('can throw for invalid namespace', () => {
     expect(() => {
-      new ConfigurationEntity(':value', name, repositoryMock, validationMock);
+      new ConfigurationEntity(':value', name, loggerMock, repositoryMock, activeRevisionMock, validationMock);
     }).toThrow(/Configuration and namespace and name cannot contain ':'./);
   });
 
@@ -61,7 +68,17 @@ describe('ConfigurationEntity', () => {
     validationMock.setSchema.mockImplementationOnce(() => {
       throw new Error('');
     });
-    new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, null, schema, loggerMock);
+    new ConfigurationEntity(
+      namespace,
+      name,
+      loggerMock,
+      repositoryMock,
+      activeRevisionMock,
+      validationMock,
+      null,
+      null,
+      schema
+    );
     expect(loggerMock.warn).toBeCalledWith(
       'JSON schema of platform:test-service is invalid. An empty JSON schema {} will be used.'
     );
@@ -69,61 +86,139 @@ describe('ConfigurationEntity', () => {
 
   describe('canAccess', () => {
     it('can return false for null user', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
       const result = entity.canAccess(null);
       expect(result).toBeFalsy();
     });
 
     it('can return false for core user with null role', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
       const result = entity.canAccess({ isCore: true, roles: null } as User);
       expect(result).toBeFalsy();
     });
 
     it('can return false for core user without role', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
       const result = entity.canAccess({ isCore: true, roles: [] } as User);
       expect(result).toBeFalsy();
     });
 
     it('can return true for core service user accessing core context', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
       const result = entity.canAccess({ isCore: true, roles: [ConfigurationServiceRoles.ConfiguredService] } as User);
       expect(result).toBeTruthy();
     });
 
     it('can return true for core reader user accessing core context', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
       const result = entity.canAccess({ isCore: true, roles: [ConfigurationServiceRoles.Reader] } as User);
       expect(result).toBeTruthy();
     });
 
     it('can return true for core admin user accessing core context', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
       const result = entity.canAccess({ isCore: true, roles: [ConfigurationServiceRoles.ConfigurationAdmin] } as User);
       expect(result).toBeTruthy();
     });
 
     it('can return true for core service user accessing tenant context', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
       const result = entity.canAccess({ isCore: true, roles: [ConfigurationServiceRoles.ConfiguredService] } as User);
       expect(result).toBeTruthy();
     });
 
     it('can return true for core reader user accessing tenant context', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
       const result = entity.canAccess({ isCore: true, roles: [ConfigurationServiceRoles.Reader] } as User);
       expect(result).toBeTruthy();
     });
 
     it('can return true for core admin user accessing tenant context', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
       const result = entity.canAccess({ isCore: true, roles: [ConfigurationServiceRoles.ConfigurationAdmin] } as User);
       expect(result).toBeTruthy();
     });
 
     it('can return true for tenant service user accessing tenant context', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
       const result = entity.canAccess({
         isCore: false,
         tenantId,
@@ -133,7 +228,16 @@ describe('ConfigurationEntity', () => {
     });
 
     it('can return true for tenant reader user accessing tenant context', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
       const result = entity.canAccess({
         isCore: false,
         tenantId,
@@ -143,7 +247,16 @@ describe('ConfigurationEntity', () => {
     });
 
     it('can return true for tenant admin user accessing tenant context', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
       const result = entity.canAccess({
         isCore: false,
         tenantId,
@@ -153,7 +266,16 @@ describe('ConfigurationEntity', () => {
     });
 
     it('can return false for tenant user accessing different tenant context', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
       const result = entity.canAccess({
         isCore: false,
         tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test2`,
@@ -165,59 +287,128 @@ describe('ConfigurationEntity', () => {
 
   describe('canModify', () => {
     it('can return false for null user', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
       const result = entity.canModify(null);
       expect(result).toBeFalsy();
     });
 
     it('can return false for core user with null role', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
       const result = entity.canModify({ isCore: true, roles: null } as User);
       expect(result).toBeFalsy();
     });
 
     it('can return false for core user without role', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
       const result = entity.canModify({ isCore: true, roles: [] } as User);
       expect(result).toBeFalsy();
     });
 
     it('can return true for core service user modifying core context', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock);
-      const result = entity.canModify({ isCore: true, roles: [ConfigurationServiceRoles.ConfiguredService] } as User);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
+      const result = entity.canModify({ isCore: true, roles: [ConfigurationServiceRoles.ConfigurationAdmin] } as User);
       expect(result).toBeTruthy();
     });
 
     it('can return false for core reader user modifying core context', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
       const result = entity.canModify({ isCore: true, roles: [ConfigurationServiceRoles.Reader] } as User);
       expect(result).toBeFalsy();
     });
 
     it('can return true for core admin user modifying core context', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
       const result = entity.canModify({ isCore: true, roles: [ConfigurationServiceRoles.ConfigurationAdmin] } as User);
       expect(result).toBeTruthy();
     });
 
     it('can return true for core user modifying tenant context', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
-      const result = entity.canModify({ isCore: true, roles: [ConfigurationServiceRoles.ConfiguredService] } as User);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
+      const result = entity.canModify({ isCore: true, roles: [ConfigurationServiceRoles.ConfigurationAdmin] } as User);
       expect(result).toBeTruthy();
     });
 
     it('can return true for tenant service user modifying tenant context', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
       const result = entity.canModify({
         isCore: false,
         tenantId,
-        roles: [ConfigurationServiceRoles.ConfiguredService],
+        roles: [ConfigurationServiceRoles.ConfigurationAdmin],
       } as User);
       expect(result).toBeTruthy();
     });
 
     it('can return true for tenant admin user modifying tenant context', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
       const result = entity.canModify({
         isCore: false,
         tenantId,
@@ -227,11 +418,90 @@ describe('ConfigurationEntity', () => {
     });
 
     it('can return false for tenant user modifying different tenant context', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
       const result = entity.canModify({
         isCore: false,
         tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test2`,
-        roles: [ConfigurationServiceRoles.ConfiguredService],
+        roles: [ConfigurationServiceRoles.ConfigurationAdmin],
+      } as User);
+      expect(result).toBeFalsy();
+    });
+  });
+
+  describe('canRegister', () => {
+    it('can return false for null user', () => {
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
+      const result = entity.canRegister(null);
+      expect(result).toBeFalsy();
+    });
+
+    it('can return false for core user with null role', () => {
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
+      const result = entity.canRegister({ isCore: true, roles: null } as User);
+      expect(result).toBeFalsy();
+    });
+
+    it('can return false for core user without role', () => {
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
+      const result = entity.canRegister({ isCore: true, roles: [] } as User);
+      expect(result).toBeFalsy();
+    });
+
+    it('can return true for user with role', () => {
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
+      const result = entity.canRegister({ isCore: true, roles: [ConfigurationServiceRoles.ConfiguredService] } as User);
+      expect(result).toBeTruthy();
+    });
+
+    it('can return false for user with wrong role', () => {
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
+      const result = entity.canRegister({
+        isCore: true,
+        roles: [ConfigurationServiceRoles.ConfigurationAdmin],
       } as User);
       expect(result).toBeFalsy();
     });
@@ -239,10 +509,18 @@ describe('ConfigurationEntity', () => {
 
   describe('mergeUpdate', () => {
     it('can merge update with latest revision without schema', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
-        revision: 2,
-        configuration: {} as unknown,
-      });
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        {
+          revision: 2,
+          configuration: {} as unknown,
+        }
+      );
 
       const result = entity.mergeUpdate({ a: '123' });
       expect(result).toMatchObject({ a: '123' });
@@ -252,7 +530,9 @@ describe('ConfigurationEntity', () => {
       const entity = new ConfigurationEntity(
         namespace,
         name,
+        loggerMock,
         repositoryMock,
+        activeRevisionMock,
         validationMock,
         {
           revision: 2,
@@ -270,7 +550,9 @@ describe('ConfigurationEntity', () => {
       const entity = new ConfigurationEntity(
         namespace,
         name,
+        loggerMock,
         repositoryMock,
+        activeRevisionMock,
         validationMock,
         {
           revision: 2,
@@ -287,7 +569,14 @@ describe('ConfigurationEntity', () => {
 
   describe('update', () => {
     it('can update first revision', async () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
 
       repositoryMock.saveRevision.mockImplementationOnce((_entity, rev) => rev);
 
@@ -302,10 +591,18 @@ describe('ConfigurationEntity', () => {
     });
 
     it('can update revision', async () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
-        revision: 2,
-        configuration: {} as unknown,
-      });
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        {
+          revision: 2,
+          configuration: {} as unknown,
+        }
+      );
 
       repositoryMock.saveRevision.mockImplementationOnce((_entity, rev) => rev);
 
@@ -320,10 +617,18 @@ describe('ConfigurationEntity', () => {
     });
 
     it('can throw for null configuration', async () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
-        revision: 2,
-        configuration: {} as unknown,
-      });
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        {
+          revision: 2,
+          configuration: {} as unknown,
+        }
+      );
 
       await expect(
         entity.update({ isCore: true, roles: [ConfigurationServiceRoles.ConfiguredService] } as User, null)
@@ -331,10 +636,18 @@ describe('ConfigurationEntity', () => {
     });
 
     it('can throw for unauthorized user', async () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
-        revision: 2,
-        configuration: {} as unknown,
-      });
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        {
+          revision: 2,
+          configuration: {} as unknown,
+        }
+      );
 
       await expect(entity.update({ id: 'test', name: 'test' } as User, {})).rejects.toThrow(
         /User test \(ID: test\) not permitted to modify configuration./
@@ -342,10 +655,18 @@ describe('ConfigurationEntity', () => {
     });
 
     it('can throw for invalid configuration', async () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
-        revision: 2,
-        configuration: {} as unknown,
-      });
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        {
+          revision: 2,
+          configuration: {} as unknown,
+        }
+      );
 
       validationMock.validate.mockImplementationOnce(() => {
         throw new Error(`Provided configuration is not valid for 'platform:test-service'`);
@@ -359,39 +680,62 @@ describe('ConfigurationEntity', () => {
 
   describe('createRevision', () => {
     it('can create first revision', async () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock
+      );
 
       repositoryMock.saveRevision.mockImplementationOnce((_entity, rev) => rev);
 
       const updated = await entity.createRevision({
         isCore: true,
-        roles: [ConfigurationServiceRoles.ConfiguredService],
+        roles: [ConfigurationServiceRoles.ConfigurationAdmin],
       } as User);
       expect(updated.latest.revision).toBe(0);
       expect(updated.latest.configuration).toBeTruthy();
     });
 
     it('can create new revision', async () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
-        revision: 2,
-        configuration: { value: 'value' } as unknown,
-      });
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        {
+          revision: 2,
+          configuration: { value: 'value' } as unknown,
+        }
+      );
 
       repositoryMock.saveRevision.mockImplementationOnce((_entity, rev) => rev);
 
       const updated = await entity.createRevision({
         isCore: true,
-        roles: [ConfigurationServiceRoles.ConfiguredService],
+        roles: [ConfigurationServiceRoles.ConfigurationAdmin],
       } as User);
       expect(updated.latest.revision).toBe(3);
       expect(updated.latest.configuration['value']).toBe('value');
     });
 
     it('can throw for unauthorized user', async () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
-        revision: 2,
-        configuration: {} as unknown,
-      });
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        {
+          revision: 2,
+          configuration: {} as unknown,
+        }
+      );
 
       await expect(entity.createRevision({ id: 'test', name: 'test' } as User)).rejects.toThrow(
         /User test \(ID: test\) not permitted to modify configuration./
@@ -401,10 +745,18 @@ describe('ConfigurationEntity', () => {
 
   describe('getRevisions', () => {
     it('can get revisions', async () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
-        revision: 2,
-        configuration: {} as unknown,
-      });
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        {
+          revision: 2,
+          configuration: {} as unknown,
+        }
+      );
 
       const revisions = {};
       repositoryMock.getRevisions.mockResolvedValueOnce(revisions);
@@ -420,10 +772,18 @@ describe('ConfigurationEntity', () => {
     });
 
     it('can get revisions with default args', async () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
-        revision: 2,
-        configuration: {} as unknown,
-      });
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        {
+          revision: 2,
+          configuration: {} as unknown,
+        }
+      );
 
       const revisions = {};
       repositoryMock.getRevisions.mockResolvedValueOnce(revisions);
@@ -437,10 +797,18 @@ describe('ConfigurationEntity', () => {
 
   describe('setActiveRevision', () => {
     it('can be created', () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
-        revision: 2,
-        configuration: {} as unknown,
-      });
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        {
+          revision: 2,
+          configuration: {} as unknown,
+        }
+      );
       expect(entity).toBeTruthy();
     });
 
@@ -448,16 +816,14 @@ describe('ConfigurationEntity', () => {
       const entity = new ConfigurationEntity(
         namespace,
         name,
+        loggerMock,
         repositoryMock,
+        activeRevisionMock,
         validationMock,
         {
           revision: 1,
           configuration: {} as unknown,
-        },
-        null,
-        null,
-        null,
-        activeRevisionMock
+        }
       );
       const active = 2;
 
@@ -468,7 +834,7 @@ describe('ConfigurationEntity', () => {
       const activeRevisionResponse = await entity.setActiveRevision(
         {
           isCore: true,
-          roles: [ConfigurationServiceRoles.ConfiguredService],
+          roles: [ConfigurationServiceRoles.ConfigurationAdmin],
         } as User,
         active
       );
@@ -476,10 +842,18 @@ describe('ConfigurationEntity', () => {
     });
 
     it('can throw for unauthorized user', async () => {
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, {
-        revision: 2,
-        configuration: {} as unknown,
-      });
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        {
+          revision: 2,
+          configuration: {} as unknown,
+        }
+      );
 
       const active = 2;
 

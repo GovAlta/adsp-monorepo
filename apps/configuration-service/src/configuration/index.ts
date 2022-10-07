@@ -36,12 +36,9 @@ export const applyConfigurationMiddleware = async (
     additionalProperties: false,
   };
 
-  const entity = await configuration.get<ConfigurationDefinitions>(
-    serviceId.namespace,
-    serviceId.service,
-    null,
-    schema
-  );
+  const entity = await configuration.get<ConfigurationDefinitions>(serviceId.namespace, serviceId.service, null, {
+    configurationSchema: schema,
+  });
 
   const serviceConfiguration = {
     description: 'Definitions of configuration with description and schema.',

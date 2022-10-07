@@ -37,7 +37,11 @@ export const createRepositories = ({
           reject(err);
         } else {
           const activeRevisionRepository = new MongoActiveRevisionRepository();
-          const configurationRepository = new MongoConfigurationRepository(validationService, activeRevisionRepository);
+          const configurationRepository = new MongoConfigurationRepository(
+            logger,
+            validationService,
+            activeRevisionRepository
+          );
           resolve({
             configuration: configurationRepository,
             // NOTE: Typescript seems to have issues with exported enums where enum is null at runtime.

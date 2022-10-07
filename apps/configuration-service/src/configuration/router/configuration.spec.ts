@@ -79,7 +79,9 @@ describe('router', () => {
         new ConfigurationEntity(
           configurationServiceId.namespace,
           configurationServiceId.service,
+          loggerMock as Logger,
           repositoryMock,
+          activeRevisionMock,
           validationMock
         )
       );
@@ -93,14 +95,25 @@ describe('router', () => {
         new ConfigurationEntity(
           configurationServiceId.namespace,
           configurationServiceId.service,
+          loggerMock as Logger,
           repositoryMock,
+          activeRevisionMock,
           validationMock,
           null,
           tenantId
         )
       );
 
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock as Logger,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
       repositoryMock.get.mockResolvedValueOnce(entity);
 
       const req = {
@@ -111,8 +124,12 @@ describe('router', () => {
       } as unknown as Request;
 
       handler(req, null, () => {
-        expect(req['entity']).toBe(entity);
-        done();
+        try {
+          expect(req['entity']).toBe(entity);
+          done();
+        } catch (err) {
+          done(err);
+        }
       });
     });
 
@@ -124,7 +141,9 @@ describe('router', () => {
         new ConfigurationEntity(
           configurationServiceId.namespace,
           configurationServiceId.service,
+          loggerMock as Logger,
           repositoryMock,
+          activeRevisionMock,
           validationMock
         )
       );
@@ -138,14 +157,25 @@ describe('router', () => {
         new ConfigurationEntity(
           configurationServiceId.namespace,
           configurationServiceId.service,
+          loggerMock as Logger,
           repositoryMock,
+          activeRevisionMock,
           validationMock,
           null,
           tenantId
         )
       );
 
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock as Logger,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
       repositoryMock.get.mockResolvedValueOnce(entity);
 
       const req = {
@@ -156,9 +186,13 @@ describe('router', () => {
       } as unknown as Request;
 
       handler(req, null, () => {
-        expect(req['entity']).toBe(entity);
-        expect(repositoryMock.get.mock.calls[2][2].toString()).toEqual(tenantId.toString());
-        done();
+        try {
+          expect(req['entity']).toBe(entity);
+          expect(repositoryMock.get.mock.calls[2][2].toString()).toEqual(tenantId.toString());
+          done();
+        } catch (err) {
+          done(err);
+        }
       });
     });
 
@@ -170,7 +204,9 @@ describe('router', () => {
         new ConfigurationEntity(
           configurationServiceId.namespace,
           configurationServiceId.service,
+          loggerMock as Logger,
           repositoryMock,
+          activeRevisionMock,
           validationMock
         )
       );
@@ -185,14 +221,25 @@ describe('router', () => {
         new ConfigurationEntity(
           configurationServiceId.namespace,
           configurationServiceId.service,
+          loggerMock as Logger,
           repositoryMock,
+          activeRevisionMock,
           validationMock,
           null,
           tenantId
         )
       );
 
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock as Logger,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
       repositoryMock.get.mockResolvedValueOnce(entity);
 
       const req = {
@@ -203,8 +250,12 @@ describe('router', () => {
       } as unknown as Request;
 
       handler(req, null, (err) => {
-        expect(err).toBeTruthy();
-        done();
+        try {
+          expect(err).toBeTruthy();
+          done();
+        } catch (err) {
+          done(err);
+        }
       });
     });
 
@@ -217,7 +268,9 @@ describe('router', () => {
         new ConfigurationEntity(
           configurationServiceId.namespace,
           configurationServiceId.service,
+          loggerMock as Logger,
           repositoryMock,
+          activeRevisionMock,
           validationMock,
           {
             revision: 1,
@@ -235,7 +288,16 @@ describe('router', () => {
         active: 2,
       });
 
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock as Logger,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
       repositoryMock.get.mockResolvedValueOnce(entity);
 
       const req = {
@@ -246,9 +308,13 @@ describe('router', () => {
       } as unknown as Request;
 
       handler(req, null, () => {
-        expect(req['entity']).toBe(entity);
-        expect(repositoryMock.get.mock.calls[1][3]).toBe(configurationSchema);
-        done();
+        try {
+          expect(req['entity']).toBe(entity);
+          expect(repositoryMock.get.mock.calls[1][3]).toEqual(expect.objectContaining({ configurationSchema }));
+          done();
+        } catch (err) {
+          done(err);
+        }
       });
     });
 
@@ -260,7 +326,9 @@ describe('router', () => {
         new ConfigurationEntity(
           configurationServiceId.namespace,
           configurationServiceId.service,
+          loggerMock as Logger,
           repositoryMock,
+          activeRevisionMock,
           validationMock
         )
       );
@@ -276,7 +344,9 @@ describe('router', () => {
         new ConfigurationEntity(
           configurationServiceId.namespace,
           configurationServiceId.service,
+          loggerMock as Logger,
           repositoryMock,
+          activeRevisionMock,
           validationMock,
           {
             revision: 1,
@@ -289,7 +359,16 @@ describe('router', () => {
         )
       );
 
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock as Logger,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
       repositoryMock.get.mockResolvedValueOnce(entity);
 
       const req = {
@@ -300,9 +379,13 @@ describe('router', () => {
       } as unknown as Request;
 
       handler(req, null, () => {
-        expect(req['entity']).toBe(entity);
-        expect(repositoryMock.get.mock.calls[2][3]).toBe(configurationSchema);
-        done();
+        try {
+          expect(req['entity']).toBe(entity);
+          expect(repositoryMock.get.mock.calls[2][3]).toEqual(expect.objectContaining({ configurationSchema }));
+          done();
+        } catch (err) {
+          done(err);
+        }
       });
     });
 
@@ -314,7 +397,9 @@ describe('router', () => {
         new ConfigurationEntity(
           configurationServiceId.namespace,
           configurationServiceId.service,
+          loggerMock as Logger,
           repositoryMock,
+          activeRevisionMock,
           validationMock
         )
       );
@@ -330,7 +415,9 @@ describe('router', () => {
         new ConfigurationEntity(
           configurationServiceId.namespace,
           configurationServiceId.service,
+          loggerMock as Logger,
           repositoryMock,
+          activeRevisionMock,
           validationMock,
           {
             revision: 1,
@@ -342,7 +429,16 @@ describe('router', () => {
         )
       );
 
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock as Logger,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
       repositoryMock.get.mockResolvedValueOnce(entity);
 
       const req = {
@@ -353,9 +449,13 @@ describe('router', () => {
       } as unknown as Request;
 
       handler(req, null, () => {
-        expect(req['entity']).toBe(entity);
-        expect(repositoryMock.get.mock.calls[2][3]).toBe(configurationSchema);
-        done();
+        try {
+          expect(req['entity']).toBe(entity);
+          expect(repositoryMock.get.mock.calls[2][3]).toEqual(expect.objectContaining({ configurationSchema }));
+          done();
+        } catch (err) {
+          done(err);
+        }
       });
     });
   });
@@ -369,7 +469,16 @@ describe('router', () => {
     it('can get configuration', () => {
       const handler = getConfiguration();
 
-      const entity = new ConfigurationEntity(namespace, name, repositoryMock, validationMock, null, tenantId);
+      const entity = new ConfigurationEntity(
+        namespace,
+        name,
+        loggerMock as Logger,
+        repositoryMock,
+        activeRevisionMock,
+        validationMock,
+        null,
+        tenantId
+      );
 
       const req = {
         entity,
