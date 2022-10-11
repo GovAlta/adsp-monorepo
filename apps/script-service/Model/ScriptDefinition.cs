@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Adsp.Sdk;
 
+//script definitions
 namespace Adsp.Platform.ScriptService.Model;
 public class ScriptDefinition
 {
