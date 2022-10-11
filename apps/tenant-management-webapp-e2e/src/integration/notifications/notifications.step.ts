@@ -806,15 +806,30 @@ When(
   'the user enters {string} as subject and {string} as body on {string} template page',
   function (subjectText, bodyText, channel) {
     cy.wait(1000); // Wait for the template editor elements to show
+    // Use proper casing no matter what cases used by the passed in parameter
+    let channelNameInTitle;
+    switch (channel.toLowerCase()) {
+      case 'email':
+        channelNameInTitle = 'email';
+        break;
+      case 'sms':
+        channelNameInTitle = 'SMS';
+        break;
+      case 'bot':
+        channelNameInTitle = 'bot';
+        break;
+      default:
+        expect(channel.toLowerCase()).to.be.oneOf(['email', 'sms', 'bot']);
+    }
     notificationsObj
-      .eventTemplateModalSubject(channel.toLowerCase())
+      .eventTemplateModalSubject(channelNameInTitle)
       .click()
       .focus()
       .type('{ctrl}a')
       .clear()
       .type(subjectText, { parseSpecialCharSequences: false });
     notificationsObj
-      .eventTemplateModalBody(channel.toLowerCase())
+      .eventTemplateModalBody(channelNameInTitle)
       .click()
       .focus()
       .type('{ctrl}a')
