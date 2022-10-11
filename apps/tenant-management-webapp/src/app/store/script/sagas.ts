@@ -2,7 +2,10 @@ import axios from 'axios';
 import { SagaIterator } from '@redux-saga/core';
 
 import { RootState } from '..';
-import { select, call, put, takeEvery } from 'redux-saga/effects';
+import { select, put, takeEvery } from 'redux-saga/effects';
+
+import * as Effects from 'redux-saga/effects';
+
 import { ErrorNotification } from '@store/notifications/actions';
 
 import { getAccessToken } from '@store/tenant/sagas';
@@ -11,16 +14,25 @@ import {
   UpdateScriptSuccess,
   UPDATE_SCRIPT_ACTION,
   FETCH_SCRIPTS_ACTION,
+  EXECUTE_SCRIPT_ACTION,
   FetchScriptsAction,
   fetchScriptsSuccess,
+  runScriptSuccess,
+  ExecuteScript,
   DeleteScriptAction,
   DeleteScriptSuccess,
   DELETE_SCRIPT_ACTION,
+  RUN_SCRIPT_ACTION,
+  RunScriptAction,
+  UpdateScript,
   UpdateIndicator,
 } from './actions';
 import { ActionState } from '@store/session/models';
+import { UpdateIndicator as UpdateIndicatorSession } from '@store/session/actions';
 
-export function* updateScript({ payload }: UpdateScriptAction): SagaIterator {
+const call: any = Effects.call;
+
+export function* updateScript({ payload, executeOnCompletion }: UpdateScriptAction): SagaIterator {
   const script = { [payload.id]: { ...payload } };
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
@@ -42,11 +54,15 @@ export function* updateScript({ payload }: UpdateScriptAction): SagaIterator {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      yield put(
-        UpdateScriptSuccess({
-          ...latest.configuration,
-        })
-      );
+      if (executeOnCompletion) {
+        yield put(ExecuteScript(payload));
+      } else {
+        yield put(
+          UpdateScriptSuccess({
+            ...latest.configuration,
+          })
+        );
+      }
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - updateScript` }));
     }
@@ -93,6 +109,54 @@ export function* fetchScripts(action: FetchScriptsAction): SagaIterator {
   }
 }
 
+export function* runScript(action: RunScriptAction): SagaIterator {
+  yield put(
+    UpdateIndicatorSession({
+      show: true,
+      message: 'Loading...',
+    })
+  );
+  yield put(UpdateScript(action.payload, true));
+}
+
+export function* executeScript(action: RunScriptAction): SagaIterator {
+  const scriptUrl: string = yield select((state: RootState) => state.config.serviceUrls?.scriptServiceApiUrl);
+  const token: string = yield call(getAccessToken);
+  if (scriptUrl && token) {
+    try {
+      const { testInputs, ...script } = action.payload;
+
+      const response = yield call(
+        axios.post,
+        `${scriptUrl}/script/v1/scripts/${script?.id}?clearCache=true`,
+        testInputs,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      yield put(runScriptSuccess(response?.data[0]));
+      yield put(
+        UpdateIndicatorSession({
+          show: false,
+        })
+      );
+    } catch (err) {
+      if (err?.response?.data) {
+        yield put(runScriptSuccess(err?.response?.data.error));
+      } else {
+        yield put(ErrorNotification({ message: err.message }));
+      }
+
+      yield put(
+        UpdateIndicatorSession({
+          show: false,
+        })
+      );
+    }
+  }
+}
+
 function* deleteScript(action: DeleteScriptAction): SagaIterator {
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
@@ -122,4 +186,6 @@ export function* watchScriptSagas(): Generator {
   yield takeEvery(UPDATE_SCRIPT_ACTION, updateScript);
   yield takeEvery(FETCH_SCRIPTS_ACTION, fetchScripts);
   yield takeEvery(DELETE_SCRIPT_ACTION, deleteScript);
+  yield takeEvery(RUN_SCRIPT_ACTION, runScript);
+  yield takeEvery(EXECUTE_SCRIPT_ACTION, executeScript);
 }

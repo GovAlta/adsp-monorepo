@@ -16,8 +16,8 @@ const AppRouters = () => {
   return (
     <Router>
       <Routes>
+        <Route path="/subscriptions/:realm" element={<PrivateApp />} />
         <Route path="/*" element={<PublicApp />} />
-        <Route path="/subscriptions" element={<PrivateApp />} />
       </Routes>
     </Router>
   );

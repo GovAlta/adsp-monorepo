@@ -18,7 +18,7 @@ import { renderNoItem } from '@components/NoItem';
 import { ScriptEditor } from './editor/scriptEditor';
 import { Modal, BodyGlobalStyles, ModalContent, ScriptPanelContainer } from './styled-components';
 import { useValidators } from '@lib/useValidators';
-import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
+import { characterCheck, validationPattern, isNotEmptyCheck, Validator, isValidJSONCheck } from '@lib/checkInput';
 import { scriptEditorConfig } from './editor/config';
 
 interface AddScriptProps {
@@ -29,7 +29,10 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   const [openAddScript, setOpenAddScript] = useState(false);
   const [showScriptEditForm, setShowScriptEditForm] = useState(false);
   const [selectedScript, setSelectedScript] = useState<ScriptItem>(defaultScript);
-  const [currentSavedScript, setCurrentSavedScript] = useState<ScriptItem>(defaultScript);
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [script, setScript] = useState('');
+  const [testInput, setTestInput] = useState('');
   const { fetchScriptState } = useSelector((state: RootState) => ({
     fetchScriptState: state.scriptService.indicator?.details[FETCH_SCRIPTS_ACTION] || '',
   }));
@@ -49,6 +52,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
 
   const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
     .add('description', 'description', descriptionCheck())
+    .add('payloadSchema', 'payloadSchema', isValidJSONCheck('payloadSchema'))
     .build();
 
   useEffect(() => {
@@ -58,25 +62,29 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     }
   }, [activeEdit]);
 
-  // eslint-disable-next-line
-
   const reset = () => {
     setSelectedScript(defaultScript);
     setOpenAddScript(false);
     setShowScriptEditForm(false);
   };
 
-  const saveScript = (script: ScriptItem) => {
-    dispatch(UpdateScript(script));
+  const saveScript = () => {
+    dispatch(UpdateScript(selectedScript, false));
   };
-  const saveAndReset = () => {
-    saveScript(selectedScript);
-    reset();
-    setShowScriptEditForm(false);
+
+  const testInputUpdate = (value: string) => {
+    validators.remove('payloadSchema');
+    const validations = {
+      payloadSchema: value,
+    };
+    if (value.length > 0) {
+      validators.checkAll(validations);
+    }
+    setTestInput(value);
   };
+
   const onEdit = (script) => {
     setSelectedScript(script);
-    setCurrentSavedScript(Object.assign({}, script));
     setShowScriptEditForm(true);
   };
   const onNameChange = (value) => {
@@ -84,23 +92,16 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     const validations = {
       name: value,
     };
-
     validators.checkAll(validations);
-    const element: ScriptItem = selectedScript;
-    element.name = value;
-    setSelectedScript(element);
+    setName(value);
   };
   const onDescriptionChange = (value) => {
     validators.remove('description');
     validators['description'].check(value);
-    const element: ScriptItem = selectedScript;
-    element.description = value;
-    setSelectedScript(element);
+    setDescription(value);
   };
   const onScriptChange = (value) => {
-    const element: ScriptItem = selectedScript;
-    element.script = value;
-    setSelectedScript(element);
+    setScript(value);
   };
   return (
     <>
@@ -138,30 +139,29 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
           onSave={saveScript}
         />
       )}
-      {
-        <Modal open={showScriptEditForm} data-testid="script-edit-form">
-          {/* Hides body overflow when the modal is up */}
-          <BodyGlobalStyles hideOverflow={showScriptEditForm} />
-          <ModalContent>
-            <ScriptPanelContainer>
-              <ScriptEditor
-                editorConfig={scriptEditorConfig}
-                name={selectedScript.name}
-                description={selectedScript.description}
-                scriptStr={selectedScript.script}
-                currentScriptItem={currentSavedScript}
-                onNameChange={onNameChange}
-                onDescriptionChange={onDescriptionChange}
-                onScriptChange={onScriptChange}
-                errors={errors}
-                saveAndReset={saveAndReset}
-                onEditorCancel={reset}
-              />
-            </ScriptPanelContainer>
-            {/* Add preview section */}
-          </ModalContent>
-        </Modal>
-      }
+      <Modal open={showScriptEditForm} data-testid="script-edit-form">
+        {/* Hides body overflow when the modal is up */}
+        <BodyGlobalStyles hideOverflow={showScriptEditForm} />
+        <ModalContent>
+          <ScriptPanelContainer>
+            <ScriptEditor
+              editorConfig={scriptEditorConfig}
+              name={name}
+              description={description}
+              scriptStr={script}
+              selectedScript={selectedScript}
+              testInput={testInput}
+              testInputUpdate={testInputUpdate}
+              onNameChange={onNameChange}
+              onDescriptionChange={onDescriptionChange}
+              onScriptChange={onScriptChange}
+              errors={errors}
+              saveAndReset={saveScript}
+              onEditorCancel={reset}
+            />
+          </ScriptPanelContainer>
+        </ModalContent>
+      </Modal>
     </>
   );
 };

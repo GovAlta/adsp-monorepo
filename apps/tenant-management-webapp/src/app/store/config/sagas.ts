@@ -62,8 +62,10 @@ export function* fetchConfig(): SagaIterator {
           calendarServiceApiUrl: entryMapping['calendar-service'],
           uiComponentUrl: data.serviceUrls.uiComponentUrl,
           chatServiceApiUrl: data.serviceUrls.chatServiceApiUrl,
+          scriptServiceApiUrl: entryMapping['script-service'],
         },
       };
+
       const action: FetchConfigSuccessAction = {
         type: 'config/fetch-config-success',
         payload: tenantWebConfig,
