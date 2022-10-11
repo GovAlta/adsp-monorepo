@@ -40,12 +40,44 @@ export function* fetchServiceStatusAppHealthEffect(api: StatusApi, application: 
 export function* fetchServiceStatusApps(): SagaIterator {
   const currentState: RootState = yield select();
 
-  const baseUrl = getServiceStatusUrl(currentState.config);
+  const statusServiceUrl = getServiceStatusUrl(currentState.config);
+
+  const configServiceBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
   const token = yield call(getAccessToken);
 
   try {
-    const api = new StatusApi(baseUrl, token);
-    const applications: ApplicationStatus[] = yield call([api, api.getApplications]);
+    const api = new StatusApi(statusServiceUrl, token);
+    /*
+     * The applications var stores the data from the status service database.
+     * When we update the status service configuration in the configuration service,
+     * the new configuration can be fetched from the configuration service immediately.
+     * However, the data in the status service database might not be out of date.
+     * In this case, we need to find a way of sync the data from the two resources in the frontend to avoid confusion.
+     * Here, we remove the applications which its id in the application, but not in the most recent configuration.
+     */
+    let applications: ApplicationStatus[] = yield call([api, api.getApplications]);
+
+    const { data: configuration } = yield call(
+      axios.get,
+      `${configServiceBaseUrl}/configuration/v2/configuration/platform/status-service`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    const statusInfo = configuration.latest && configuration.latest.configuration;
+
+    for (const name of ['contact', 'applications']) {
+      if (name in statusInfo) {
+        delete statusInfo[name];
+      }
+    }
+
+    applications = applications.filter((application) => {
+      return Object.keys(statusInfo).includes(application?._id);
+    });
 
     for (const application of applications) {
       if (application.endpoint?.url) {
@@ -255,6 +287,7 @@ export function* fetchStatusConfiguration(): SagaIterator {
         }
       );
       const statusInfo = configuration.latest && configuration.latest.configuration;
+
       yield put(FetchStatusConfigurationSucceededService(statusInfo));
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - fetchStatusConfiguration` }));
