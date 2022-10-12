@@ -4,7 +4,6 @@ import { GoAButton } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   getConfigurationDefinitions,
-  setConfigurationRevisionAction,
   replaceConfigurationDataAction,
   getReplaceConfigurationErrorAction,
   resetReplaceConfigurationListAction,
@@ -111,11 +110,6 @@ export const ConfigurationImport: FunctionComponent = () => {
     for (const config in importConfigJson) {
       for (const name in importConfigJson[config]) {
         if (importConfigJson[config][name] !== null && importConfigJson[config][name].configuration) {
-          // Import creates a new revision so there is a snapshot of pre-import revision.
-          const setConfig = dispatch(setConfigurationRevisionAction({ namespace: config, name: name }));
-
-          //Import configuration replaces (REPLACE operation in PATCH) the configuration stored in latest revision
-          if (setConfig) {
             dispatch(
               replaceConfigurationDataAction({
                 namespace: config,
@@ -123,7 +117,6 @@ export const ConfigurationImport: FunctionComponent = () => {
                 configuration: importConfigJson[config][name].configuration,
               })
             );
-          }
         }
       }
     }
