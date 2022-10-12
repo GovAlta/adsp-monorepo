@@ -128,6 +128,7 @@ function Status(): JSX.Element {
             }}
             defaultApplication={{
               name: '',
+              appKey: '',
               tenantId: '',
               enabled: false,
               description: '',

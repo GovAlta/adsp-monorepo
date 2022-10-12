@@ -48,6 +48,10 @@ export const serviceStatusApplicationSchema = new Schema(
       type: String,
       required: true,
     },
+    appKey: {
+      type: String,
+      required: true,
+    },
     metadata: {
       type: Schema.Types.Mixed,
     },
@@ -129,6 +133,7 @@ export const configurationSchema = {
       type: 'object',
       properties: {
         _id: { type: 'string', description: 'Reference to application status' },
+        appKey: { type: 'string', description: 'A unique identifier for the application' },
         name: { type: 'string', description: 'Name of the application' },
         url: { type: 'string', description: 'URL to be checked' },
         description: { type: 'string', description: 'Tell us about your application' },
