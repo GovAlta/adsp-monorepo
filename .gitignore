@@ -44,6 +44,7 @@ Thumbs.db
 
 # env file
 **/.env
+**/.local.env
 
 # oc env configuration
 /.openshift/configuration/*.encoded.yml
