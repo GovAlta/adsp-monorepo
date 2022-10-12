@@ -226,7 +226,7 @@ let replaceErrorConfiguration = [];
 export function* replaceConfigurationData(action: ReplaceConfigurationDataAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const token: string = yield call(getAccessToken);
-
+  
   if (baseUrl && token) {
     if (action.configuration.configuration) {
       try {
@@ -259,7 +259,21 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
           });
           return;
         }
+        // Import creates a new revision so there is a snapshot of pre-import revision.
+        const revision = yield call(
+          axios.post,
+          `${baseUrl}/configuration/v2/configuration/${action.configuration.namespace}/${action.configuration.name}`,
+          {
+            operation: 'CREATE-REVISION',
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+  
+        yield put(setConfigurationRevisionSuccessAction(revision));
         // Send request to replace configuration
+        //Import configuration replaces (REPLACE operation in PATCH) the configuration stored in latest revision
         yield call(
           axios.patch,
           `${baseUrl}/configuration/v2/configuration/${action.configuration.namespace}/${action.configuration.name}`,
@@ -268,7 +282,7 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
             headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           }
         );
-
+      
         yield put(replaceConfigurationDataSuccessAction());
       } catch (err) {
         replaceErrorConfiguration.push({
