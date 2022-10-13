@@ -70,7 +70,7 @@ public class AdspConfiguration {
     this.registration = builder.getRegistration();
   }
 
-  public static class Builder {
+  public static final class Builder {
 
     private final URI accessServiceUrl;
     private final URI directoryUrl;
