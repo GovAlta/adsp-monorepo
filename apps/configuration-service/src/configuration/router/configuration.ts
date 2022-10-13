@@ -157,7 +157,7 @@ export const patchConfigurationRevision =
           if (!request.property) {
             //Remove invalid entries which are otherwise inaccessible
             Object.keys(update).forEach((key) => {
-              if (update[key].id === '' || update[key].id === undefined) {
+              if (update[key].id && (update[key].id === '' || update[key].id === undefined)) {
                 deleteCount += 1;
                 delete update[key];
               }
