@@ -69,7 +69,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   };
 
   const saveScript = (script) => {
-    dispatch(UpdateScript(typeof script==='object'?script:selectedScript, false));
+    dispatch(UpdateScript(script, false));
   };
 
   const testInputUpdate = (value: string) => {
