@@ -76,7 +76,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     selectedScript.description = description;
     selectedScript.script = scriptStr;
     selectedScript.testInputs = testInput.length > 0 ? { inputs: JSON.parse(testInput) } : {};
-
     return selectedScript;
   };
 
@@ -150,6 +149,8 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               onClick={() => {
                 updateScript();
                 saveAndReset(selectedScript);
+                setSaveModal(false);
+                onEditorCancel();
               }}
               buttonType="primary"
               data-testid="template-form-save"
@@ -173,6 +174,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             updateScript();
             saveAndReset(selectedScript);
             setSaveModal(false);
+            onEditorCancel();
           }}
           onCancel={() => {
             setSaveModal(false);
