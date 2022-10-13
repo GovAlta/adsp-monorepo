@@ -21,7 +21,7 @@ public class AdspConfigurationSupport {
   @Value("${adsp.tenantRealm}")
   private String realm;
 
-  @Bean
+  @Bean("adsp.configure")
   @ConditionalOnMissingBean
   public AdspConfiguration configure() {
     try {
