@@ -5,6 +5,39 @@ export const IdField = styled.div`
   background-color: #dcdcdc;
 `;
 
+export const Modal = styled.div<{ open: boolean }>`
+  display: ${(props) => (props.open ? `block` : `none`)};
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 10000;
+  width: 100%;
+`;
+
+export const BodyGlobalStyles = createGlobalStyle<{ hideOverflow: boolean }>`
+  body {
+    overflow:  ${(props) => (props.hideOverflow ? `hidden` : `auto`)};
+  }
+`;
+
+export const ModalContent = styled.div`
+  background: white;
+`;
+
+export const MonacoDiv = styled.div`
+  display: flex;
+  border: 1px solid var(--color-gray-700);
+  border-radius: 3px;
+  padding: 0.15rem 0.15rem;
+`;
+
+export const EditTemplateActions = styled.div`
+  display: flex;
+  justify-content: right;
+  gap: 1rem;
+`;
+
 export const TableDiv = styled.div`
   word-wrap: break-word;
   table-layout: fixed;
@@ -84,29 +117,7 @@ export const DataTableWrapper = styled.div`
     padding-top: 1.25rem;
   }
 `;
-export const BodyGlobalStyles = createGlobalStyle<{ hideOverflow: boolean }>`
-  body {
-    overflow:  ${(props) => (props.hideOverflow ? `hidden` : `auto`)};
-  }
-`;
-export const Modal = styled.div<{ open: boolean }>`
-  display: ${(props) => (props.open ? `block` : `none`)};
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  z-index: 10000;
-  width: 100%;
-`;
-export const ModalContent = styled.div`
-  background: white;
-`;
-export const MonacoDiv = styled.div`
-  display: flex;
-  border: 1px solid var(--color-gray-700);
-  border-radius: 3px;
-  padding: 0.15rem 0.15rem;
-`;
+
 export const MonacoDivBody = styled.div`
   display: flex;
   border: 1px solid var(--color-gray-700);
@@ -122,11 +133,6 @@ export const ScriptPanelContainer = styled.div`
   height: 100vh;
   overflow: hidden;
   box-sizing: border-box;
-`;
-export const EditTemplateActions = styled.div`
-  display: flex;
-  justify-content: right;
-  gap: 1rem;
 `;
 
 export const ScriptEditorContainer = styled.div`

@@ -68,8 +68,8 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     setShowScriptEditForm(false);
   };
 
-  const saveScript = () => {
-    dispatch(UpdateScript(selectedScript, false));
+  const saveScript = (script) => {
+    dispatch(UpdateScript(script, false));
   };
 
   const testInputUpdate = (value: string) => {
