@@ -454,6 +454,10 @@ class NotificationsPage {
     );
   }
 
+  eventTemplateModal() {
+    return cy.xpath('//*[@data-testid="template-form" and @open]');
+  }
+
   eventTemplateModalSubject(channel) {
     return cy.xpath(
       `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-subject"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea`
@@ -522,6 +526,10 @@ class NotificationsPage {
 
   templateModalPreviewPaneBotBody() {
     return cy.xpath('//*[@data-testid="bot-preview"]/div/p');
+  }
+
+  templateModalHelpText() {
+    return cy.get('#helpText');
   }
 }
 export default NotificationsPage;
