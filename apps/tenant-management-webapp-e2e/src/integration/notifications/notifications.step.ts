@@ -951,3 +951,39 @@ Then('the user views the Bot template preview of {string} as subject and {string
   notificationsObj.templateModalPreviewPaneBotBody().invoke('text').should('not.contain', '{'); // {{variable}} should be replaced with random text
   notificationsObj.templateModalPreviewPaneBotBody().invoke('text').should('contain', bodyWithoutVariables);
 });
+
+Then('Event template modal is closed', function () {
+  notificationsObj.eventTemplateModal().should('not.exist');
+});
+
+Then('the user views the hint text for GoA wrapper in event template modal', function () {
+  notificationsObj
+    .templateModalHelpText()
+    .invoke('text')
+    .should(
+      'contain',
+      "*GOA default header and footer wrapper is applied if the template doesn't include proper <html> opening and closing tags"
+    );
+});
+
+Then('the user {string} GoA header and footer in the email preview', function (viewOrNot) {
+  cy.wait(2000); // Wait 2 second for preview to show
+  switch (viewOrNot) {
+    case 'views':
+      notificationsObj.templateModalPreviewPaneEmailBody().then(function ($iFrame) {
+        const iFrameContent = $iFrame.contents().find('body');
+        cy.wrap(iFrameContent).find('[class*="goa-header-event-template"]').should('exist');
+        cy.wrap(iFrameContent).find('[class*="goa-footer-event"]').should('exist');
+      });
+      break;
+    case 'should not view':
+      notificationsObj.templateModalPreviewPaneEmailBody().then(function ($iFrame) {
+        const iFrameContent = $iFrame.contents().find('body');
+        cy.wrap(iFrameContent).find('[class*="goa-header-event-template"]').should('not.exist');
+        cy.wrap(iFrameContent).find('[class*="goa-footer-event"]').should('not.exist');
+      });
+      break;
+    default:
+      expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
+  }
+});
