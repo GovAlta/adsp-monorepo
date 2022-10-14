@@ -23,6 +23,7 @@
  *
  */
 import Ajv from 'ajv';
+import * as schemaMigration from 'json-schema-migrate';
 
 export interface ValidInput {
   pattern: RegExp;
@@ -122,13 +123,15 @@ export const errorLogger: ValidationAction = {
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const nonAction: ValidationAction = { onFailure: () => {} };
 
+// eslint-disable-next-line
 export const jsonSchemaCheck = (schema: Record<string, unknown>, value: unknown): boolean | PromiseLike<any> => {
-  // eslint-disable-next-line no-prototype-builtins
-  if (schema.hasOwnProperty('$schema')) {
-    delete schema['$schema'];
+  const ajv = new Ajv();
+  const draft4SchemaId = 'http://json-schema.org/draft-04/schema#';
+
+  if (schema?.$schema === draft4SchemaId) {
+    schemaMigration.draft7(schema);
   }
 
-  const ajv = new Ajv();
   ajv.compile(schema);
   return ajv.validate(schema, value);
 };
