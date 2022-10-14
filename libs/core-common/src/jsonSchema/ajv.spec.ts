@@ -2,11 +2,11 @@ import { Logger } from 'winston';
 import { AjvValidationService } from './ajv';
 
 describe('ValidationService', () => {
-  const logger: Logger = ({
+  const logger: Logger = {
     debug: jest.fn(),
     info: jest.fn(),
     error: jest.fn(),
-  } as unknown) as Logger;
+  } as unknown as Logger;
 
   it('can be created', () => {
     const service = new AjvValidationService(logger);
@@ -39,5 +39,98 @@ describe('ValidationService', () => {
     expect(() =>
       service.setSchema('test', { $async: true, type: 'object', properties: { valueA: { type: 'string' } } })
     ).toThrow();
+  });
+
+  it('can set draft-04 json schema', () => {
+    const service = new AjvValidationService(logger);
+    const schema = {
+      $schema: 'http://json-schema.org/draft-04/schema#',
+      title: 'DictionaryOfStringAndScriptDefinition',
+      type: 'object',
+      additionalProperties: {
+        $ref: '#/definitions/ScriptDefinition',
+      },
+      definitions: {
+        ScriptDefinition: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['id', 'name', 'script'],
+          properties: {
+            id: {
+              type: 'string',
+              minLength: 1,
+            },
+            name: {
+              type: 'string',
+              minLength: 1,
+            },
+            description: {
+              type: ['null', 'string'],
+            },
+            script: {
+              type: 'string',
+              minLength: 1,
+            },
+            includeValuesInEvent: {
+              type: ['boolean', 'null'],
+            },
+            useServiceAccount: {
+              type: ['boolean', 'null'],
+            },
+            runnerRoles: {
+              type: 'array',
+              items: {
+                type: 'string',
+              },
+            },
+            triggerEvents: {
+              type: 'array',
+              items: {
+                $ref: '#/definitions/EventIdentity',
+              },
+            },
+          },
+        },
+        EventIdentity: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['namespace', 'name'],
+          properties: {
+            namespace: {
+              type: 'string',
+              minLength: 1,
+            },
+            name: {
+              type: 'string',
+              minLength: 1,
+            },
+            criteria: {
+              oneOf: [
+                {
+                  type: 'null',
+                },
+                {
+                  $ref: '#/definitions/EventIdentityCriteria',
+                },
+              ],
+            },
+          },
+        },
+        EventIdentityCriteria: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            correlationId: {
+              type: ['null', 'string'],
+            },
+            context: {
+              type: ['null', 'object'],
+              additionalProperties: {},
+            },
+          },
+        },
+      },
+    };
+    service.setSchema('test', schema);
   });
 });
