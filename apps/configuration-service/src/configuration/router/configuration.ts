@@ -134,7 +134,7 @@ export const patchConfigurationRevision =
       const request: PatchRequests = req.body;
       const entity: ConfigurationEntity = req[ENTITY_KEY];
 
-      let update: Record<string, any> = null;
+      let update: Record<string, unknown> = null;
       let updateData = null;
       switch (request.operation) {
         case OPERATION_REPLACE:
@@ -151,26 +151,14 @@ export const patchConfigurationRevision =
           update = entity.mergeUpdate(request.update);
           updateData = request.update;
           break;
-        case OPERATION_DELETE: {
-          update = { ...entity.latest?.configuration };
-          let deleteCount = 0;
+        case OPERATION_DELETE:
           if (!request.property) {
-            //Remove invalid entries which are otherwise inaccessible
-            Object.keys(update).forEach((key) => {
-              if (update[key].id && (update[key].id === '' || update[key].id === undefined)) {
-                deleteCount += 1;
-                delete update[key];
-              }
-            });
-
-            if (deleteCount === 0) {
-              throw new InvalidOperationError(`Delete request must include 'property' property.`);
-            }
+            throw new InvalidOperationError(`Delete request must include 'property' property.`);
           }
+          update = { ...entity.latest?.configuration };
           updateData = request.property;
           delete update[request.property];
           break;
-        }
         default:
           throw new InvalidOperationError('Request does not include recognized operation.');
       }
