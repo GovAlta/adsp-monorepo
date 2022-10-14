@@ -23,7 +23,7 @@ interface ScriptEditorProps {
   onScriptChange: (value: string) => void;
   // eslint-disable-next-line
   errors?: any;
-  saveAndReset: (closeEventModal?: boolean) => void;
+  saveAndReset: (script: ScriptItem) => void;
   onEditorCancel: () => void;
 }
 
@@ -76,7 +76,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     selectedScript.description = description;
     selectedScript.script = scriptStr;
     selectedScript.testInputs = testInput.length > 0 ? { inputs: JSON.parse(testInput) } : {};
-
     return selectedScript;
   };
 
@@ -149,7 +148,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             <GoAButton
               onClick={() => {
                 updateScript();
-                saveAndReset(true);
+                saveAndReset(selectedScript);
+                setSaveModal(false);
+                onEditorCancel();
               }}
               buttonType="primary"
               data-testid="template-form-save"
@@ -171,8 +172,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
           }}
           onSave={() => {
             updateScript();
-            saveAndReset(true);
+            saveAndReset(selectedScript);
             setSaveModal(false);
+            onEditorCancel();
           }}
           onCancel={() => {
             setSaveModal(false);

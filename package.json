@@ -49,6 +49,7 @@
     "@socket.io/redis-adapter": "^7.1.0",
     "ajv": "^6.12.6",
     "amqp-connection-manager": "^3.7.0",
+    "json-schema-migrate": "2.0.0",
     "amqplib": "^0.8.0",
     "app-root-path": "^3.0.0",
     "async-es": "^3.2.0",
