@@ -3,7 +3,7 @@ package ca.ab.gov.alberta.adsp.sdk;
 import ca.ab.gov.alberta.adsp.sdk.tenant.Tenant;
 
 public interface User {
-  boolean getIsCore();
+  boolean isCore();
 
   Tenant getTenant();
 
@@ -12,4 +12,6 @@ public interface User {
   String getName();
 
   String getEmail();
+
+  boolean isInRole(String role);
 }

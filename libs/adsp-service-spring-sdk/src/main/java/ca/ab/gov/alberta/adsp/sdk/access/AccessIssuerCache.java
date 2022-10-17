@@ -14,12 +14,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import ca.ab.gov.alberta.adsp.sdk.AdspConfiguration;
-import ca.ab.gov.alberta.adsp.sdk.tenant.Tenant;
 import ca.ab.gov.alberta.adsp.sdk.tenant.TenantService;
 
 @Component
 @Scope("singleton")
-class TenantIssuerCache {
+class AccessIssuerCache {
 
   private final Logger logger = LoggerFactory.getLogger(ServiceAccountTokenProvider.class);
 
@@ -27,12 +26,21 @@ class TenantIssuerCache {
   private final URI accessServiceUrl;
   private final TenantService tenantService;
   private final Cache issuers;
+  private final UriComponentsBuilder issuerUrlBuilder;
 
-  public TenantIssuerCache(AdspConfiguration configuration, TenantService tenantService, CacheManager cacheManager) {
+  public AccessIssuerCache(AdspConfiguration configuration, TenantService tenantService, CacheManager cacheManager) {
     this.realm = configuration.getRealm();
     this.accessServiceUrl = configuration.getAccessServiceUrl();
     this.tenantService = tenantService;
     this.issuers = cacheManager.getCache("adsp.issuers");
+    this.issuerUrlBuilder = UriComponentsBuilder.fromUri(this.accessServiceUrl).path("/auth/realms/{realm}");
+
+    if (configuration.getAllowCoreUser()) {
+      var issuer = issuerUrlBuilder.build(AccessConstants.CoreRealm);
+      this.issuers.put(issuer.toString(), new AccessIssuer(true, null));
+
+      this.logger.info("Including core issuer at {}", issuer);
+    }
   }
 
   @Scheduled(timeUnit = TimeUnit.HOURS, fixedDelay = 5, initialDelay = 0)
@@ -52,17 +60,16 @@ class TenantIssuerCache {
               return;
             }
 
-            var issuer = UriComponentsBuilder.fromUri(this.accessServiceUrl).path("/auth/realms/{realm}")
-                .build(tenant.getRealm());
+            var issuer = issuerUrlBuilder.build(tenant.getRealm());
 
-            this.issuers.put(issuer.toString(), tenant);
+            this.issuers.put(issuer.toString(), new AccessIssuer(false, tenant));
             logger.debug("Cached issuer {} -> {} ({})", issuer, tenant.getName(), tenant.getId());
           });
         })
         .blockOptional();
   }
 
-  public Tenant getCached(String issuer) {
-    return this.issuers.get(issuer, Tenant.class);
+  public AccessIssuer getCached(String issuer) {
+    return this.issuers.get(issuer, AccessIssuer.class);
   }
 }

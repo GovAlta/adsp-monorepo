@@ -19,12 +19,12 @@ import ca.ab.gov.alberta.adsp.sdk.metadata.ApiDocsMetadata;
 class AccessReactiveSecurityConfiguration {
   private AdspId serviceId;
   private String[] apiAntPatterns;
-  private TenantIssuerCache issuerCache;
+  private AccessIssuerCache issuerCache;
 
   @Autowired(required = false)
   private ApiDocsMetadata docsMetadata;
 
-  public AccessReactiveSecurityConfiguration(AdspConfiguration configuration, TenantIssuerCache issuerCache) {
+  public AccessReactiveSecurityConfiguration(AdspConfiguration configuration, AccessIssuerCache issuerCache) {
     this.serviceId = configuration.getServiceId();
     this.apiAntPatterns = configuration.getApiAntPatterns();
     this.issuerCache = issuerCache;

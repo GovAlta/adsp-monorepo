@@ -14,9 +14,9 @@ class TenantAuthManagerResolver implements AuthenticationManagerResolver<String>
 
   private final ConcurrentHashMap<String, JwtAuthenticationProvider> providers = new ConcurrentHashMap<>();
   private final AdspId serviceId;
-  private final TenantIssuerCache issuerCache;
+  private final AccessIssuerCache issuerCache;
 
-  public TenantAuthManagerResolver(AdspId serviceId, TenantIssuerCache issuerCache) {
+  public TenantAuthManagerResolver(AdspId serviceId, AccessIssuerCache issuerCache) {
     this.serviceId = serviceId;
     this.issuerCache = issuerCache;
   }
@@ -33,9 +33,9 @@ class TenantAuthManagerResolver implements AuthenticationManagerResolver<String>
       var newProvider = new JwtAuthenticationProvider(JwtDecoders.fromIssuerLocation(iss.toString()));
 
       var jwtConverter = new JwtAuthenticationConverter();
-      jwtConverter.setJwtGrantedAuthoritiesConverter(new AccessJwtGrantedAuthoritiesConverter(this.serviceId));
+      jwtConverter.setJwtGrantedAuthoritiesConverter(new AccessJwtGrantedAuthoritiesConverter(this.serviceId, cached));
       newProvider.setJwtAuthenticationConverter(
-          jwtConverter.andThen(new AccessJwtAuthenticationConverter(false, cached)));
+          jwtConverter.andThen(new AccessJwtAuthenticationConverter(cached)));
       return newProvider;
     });
 

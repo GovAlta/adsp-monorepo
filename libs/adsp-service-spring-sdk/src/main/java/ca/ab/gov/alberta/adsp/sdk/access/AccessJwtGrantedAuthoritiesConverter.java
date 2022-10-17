@@ -21,15 +21,18 @@ class AccessJwtGrantedAuthoritiesConverter implements Converter<Jwt, Collection<
 
   private final JwtGrantedAuthoritiesConverter jwtConverter = new JwtGrantedAuthoritiesConverter();
   private final String serviceId;
+  private final AccessIssuer issuer;
 
-  public AccessJwtGrantedAuthoritiesConverter(AdspId serviceId) {
+  public AccessJwtGrantedAuthoritiesConverter(AdspId serviceId, AccessIssuer issuer) {
     this.serviceId = serviceId.toString();
+    this.issuer = issuer;
   }
 
   @Override
   @Nullable
   public Collection<GrantedAuthority> convert(Jwt source) {
     Collection<GrantedAuthority> authorities = this.jwtConverter.convert(source);
+    authorities.add((new AccessTenancyAuthority(this.issuer)));
 
     JSONObject realmAccess = source.getClaim(REALM_ACCESS_ROLES_CLAIM);
     var realmRoles = (JSONArray) realmAccess.get("roles");
@@ -44,7 +47,8 @@ class AccessJwtGrantedAuthoritiesConverter implements Converter<Jwt, Collection<
       var clientRoles = (JSONArray) clientAccess.get("roles");
       if (clientRoles != null) {
         clientRoles.forEach(role -> authorities.add(
-            new SimpleGrantedAuthority(ROLE_AUTHORITY_PREFIX + (key.equals(this.serviceId) ? role : (key + ":" + role)))));
+            new SimpleGrantedAuthority(
+                ROLE_AUTHORITY_PREFIX + (key.equals(this.serviceId) ? role : (key + ":" + role)))));
       }
     }
 
