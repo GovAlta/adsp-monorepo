@@ -75,7 +75,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     selectedScript.name = name;
     selectedScript.description = description;
     selectedScript.script = scriptStr;
-    selectedScript.testInputs = testInput.length > 0 ? { inputs: JSON.parse(testInput) } : {};
     return selectedScript;
   };
 
