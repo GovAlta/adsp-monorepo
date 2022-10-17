@@ -98,5 +98,17 @@ class ConfigurationServicePage {
   configurationDefinitionModalPayloadEditor() {
     return cy.xpath('//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea');
   }
+
+  exportServiceInfoIcon(namespace, name) {
+    return cy.xpath(
+      `//h3[text()="${namespace}"]/following-sibling::div//div[text()="${name}"]/parent::*/following-sibling::div[@class="info-circle"]`
+    );
+  }
+
+  exportServiceInfoBubble(namespace, name) {
+    return cy.xpath(
+      `//h3[text()="${namespace}"]/following-sibling::div//div[text()="${name}"]/parent::div/parent::div/following-sibling::div//div[@class="overflow-wrap bubble-border"]`
+    );
+  }
 }
 export default ConfigurationServicePage;
