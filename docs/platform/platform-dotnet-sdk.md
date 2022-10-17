@@ -28,19 +28,18 @@ Use a `nuget.config` file in your project to configure installing from the GitHu
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
-    <packageSources>
-        <clear />
-        <add key="github" value="https://nuget.pkg.github.com/GovAlta/index.json" />
-    </packageSources>
-    <packageSourceCredentials>
-        <github>
-            <add key="Username" value="{github username}" />
-            <add key="ClearTextPassword" value="{personal access token}" />
-        </github>
-    </packageSourceCredentials>
+  <packageSources>
+    <clear />
+    <add key="github" value="https://nuget.pkg.github.com/GovAlta/index.json" />
+  </packageSources>
+  <packageSourceCredentials>
+    <github>
+      <add key="Username" value="{github username}" />
+      <add key="ClearTextPassword" value="{personal access token}" />
+    </github>
+  </packageSourceCredentials>
 </configuration>
 ```
-Note that the personal access token must be authorized for accessing the enterprise GitHub organization.
 
 ## Setting up a service account
 The SDK requires credentials for a service account and uses this account for accessing platform capabilities. Fine grained configuration is possible and principle of least privilege should be applied.
