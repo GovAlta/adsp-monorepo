@@ -28,6 +28,11 @@ const configurationServiceMock = {
   getConfiguration: jest.fn(),
 };
 
+const directoryServiceMock = {
+  getServiceUrl: jest.fn(),
+  getResourceUrl: jest.fn(),
+};
+
 const statusMock = [
   {
     _id: '620ae946ddd181001195caad',
@@ -93,6 +98,7 @@ describe('Application Manager', () => {
       configurationServiceMock,
       adspId`${service}`,
       repositoryMock,
+      directoryServiceMock,
       loggerMock
     );
   };

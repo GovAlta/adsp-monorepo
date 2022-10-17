@@ -57,7 +57,7 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
         statuses.map((s) => {
           // Sometimes the configuration cache hasn't refreshed; use a dummy app until it does.
           // The front end will have to account for this.
-          const app = applications.get(s._id) ?? {
+          const app = applications.get(s._id) || {
             _id: s._id,
             appKey: s.appKey,
             name: 'unknown',
