@@ -75,14 +75,20 @@ The SDK follows ASP.NET conventions of extension methods and options pattern. In
 
   var app = builder.Build();
   app.UseAdsp();
-  app.UseAdspMetadata(new AdspMetadataOptions
-  {
-    SwaggerJsonPath = "docs/v1/swagger.json",
-    ApiPath = "script/v1"
-  });
 
   // Use authorization middleware after ADSP in order to use default authentication scheme.
   app.UseAuthorization();
+```
+
+## Enabling service metadata
+The service directory aggregates service metadata from the root resource of services registered in the directory. This metadata is used to simplify configuration and for OpenAPI documentation aggregation at https://api.adsp.alberta.ca/{tenant}. SDK includes components for exposing the metadata endpoint.
+
+Enabling service metadata:
+```csharp
+  app.UseAdspMetadata(new AdspMetadataOptions
+  {
+    ApiPath = "hello-world/v1"
+  });
 ```
 
 ## Authorizing requests
@@ -173,9 +179,7 @@ Getting tenancy from the context:
   }
 ```
 
-The handler uses the tenant service client to retrieve tenant information. This is also available from the SDK for direct use.
-
-The tenant service is available via dependency injection.
+The handler uses the tenant service client to retrieve tenant information. This is also available from the SDK for direct use. The tenant service is available via dependency injection.
 
 Getting tenant information using the tenant service:
 ```csharp

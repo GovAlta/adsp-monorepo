@@ -29,7 +29,7 @@ Package [adsp-service-spring-sdk](https://github.com/GovAlta/adsp-monorepo/packa
 </dependency>
 ```
 
-Update maven `settings.xml` file to configure installing from the GitHub packages nuget source:
+Update maven `settings.xml` file to configure installing from the GitHub packages maven repository:
 
 ```xml
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
@@ -87,9 +87,22 @@ The SDK follows Spring conventions of using annotations to enable capabilities a
 
 By default properties of `AdspConfiguration` are fulfilled with application properties with an `adsp` prefix. (e.g. `adsp.accessServiceUrl`)
 
+## Enabling service metadata
+The service directory aggregates service metadata from the root resource of services registered in the directory. This metadata is used to simplify configuration and for OpenAPI documentation aggregation at https://api.adsp.alberta.ca/{tenant}. SDK includes components for exposing the metadata endpoint.
+
+Enabling service metadata:
+```java
+  @Configuration
+  public class HelloWorldMetadata extends AdspMetadataSupport {
+    @Override
+    protected Builder customize(Builder builder) {
+      return builder.withApiPath("/hello-world/v1");
+    }
+  }
+```
 
 ## Authorizing requests
-The SDK provides the `SecurityFilterChain` bean for verifying JWT bearer tokens in tenant requests. By default, the authentication is applied with an ant pattern of `**/v?/**`, and services can modify the patterns on the `AdspConfiguration`.
+The SDK provides the `SecurityFilterChain` bean for verifying JWT bearer tokens in tenant requests. By default, the authentication is applied with an ant pattern of `**/v?/**`, and services can modify the patterns on `AdspConfiguration`.
 
 ### Role-based authorization
 The SDK maps Keycloak access token `realm_access` and `resource_access` roles to granted role authorities to allow for use of authorization annotations.
@@ -146,9 +159,7 @@ Getting tenancy from the context:
   }
 ```
 
-The handler uses the tenant service client to retrieve tenant information. This is also available from the SDK for direct use.
-
-The tenant service is available via dependency injection.
+The handler uses the tenant service client to retrieve tenant information. This is also available from the SDK for direct use. The tenant service is available via dependency injection.
 
 Getting tenant information using the tenant service:
 ```java
@@ -315,8 +326,3 @@ The SDK provides several other useful utilities.
 
 ### ADSP ID
 Utilities for handling ADSP URNs.
-
-### Platform health check
-
-### Errors and error handler
-
