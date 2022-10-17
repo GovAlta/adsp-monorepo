@@ -15,6 +15,8 @@ public class AdspConfiguration {
   private final String displayName;
   private final String description;
   private final String[] apiAntPatterns;
+  private final boolean allowCoreUser;
+
   private final ServiceRegistration registration;
 
   public static Builder builder(URI accessServiceUrl, URI directoryUrl, AdspId serviceId, String clientSecret) {
@@ -53,6 +55,10 @@ public class AdspConfiguration {
     return apiAntPatterns;
   }
 
+  public boolean getAllowCoreUser() {
+    return allowCoreUser;
+  }
+
   public ServiceRegistration getRegistration() {
     return registration;
   }
@@ -67,6 +73,8 @@ public class AdspConfiguration {
     this.displayName = builder.getDisplayName();
     this.description = builder.getDescription();
     this.apiAntPatterns = builder.getApiAntPatterns();
+    this.allowCoreUser = builder.getAllowCoreUser();
+
     this.registration = builder.getRegistration();
   }
 
@@ -83,6 +91,8 @@ public class AdspConfiguration {
     private String description;
 
     private String[] apiAntPatterns = { "/**/v?/**" };
+    private boolean allowCoreUser;
+
     private ServiceRegistration registration;
 
     public URI getAccessServiceUrl() {
@@ -117,6 +127,10 @@ public class AdspConfiguration {
       return apiAntPatterns;
     }
 
+    public boolean getAllowCoreUser() {
+      return allowCoreUser;
+    }
+
     public ServiceRegistration getRegistration() {
       return registration;
     }
@@ -148,6 +162,12 @@ public class AdspConfiguration {
 
     public Builder withApiAntPattern(String... patterns) {
       this.apiAntPatterns = patterns;
+
+      return this;
+    }
+
+    public Builder allowsCoreUser(boolean allowCoreUser) {
+      this.allowCoreUser = allowCoreUser;
 
       return this;
     }

@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 import ca.ab.gov.alberta.adsp.sdk.configuration.ConfigurationService;
 import ca.ab.gov.alberta.adsp.sdk.metadata.AdspMetadataSupport;
+import ca.ab.gov.alberta.adsp.sdk.tenant.TenantService;
 
 @ConditionalOnWebApplication
 @Configuration
@@ -17,8 +18,10 @@ import ca.ab.gov.alberta.adsp.sdk.metadata.AdspMetadataSupport;
 @EnableCaching
 @EnableScheduling
 public class AdspInitializer {
-  public AdspInitializer(AdspConfiguration configuration, ConfigurationService configurationService) {
+  public AdspInitializer(AdspConfiguration configuration, TenantService tenantService,
+      ConfigurationService configurationService) {
     AdspRequestContextHolder.setConfiguration(configuration);
+    AdspRequestContextHolder.setTenantService(tenantService);
     AdspRequestContextHolder.setConfigurationService(configurationService);
   }
 }

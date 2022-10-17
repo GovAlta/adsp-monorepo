@@ -8,17 +8,14 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
 import ca.ab.gov.alberta.adsp.sdk.AdspRequestContextHolder;
-import ca.ab.gov.alberta.adsp.sdk.tenant.Tenant;
 import reactor.core.publisher.Mono;
 
 class AccessJwtAuthenticationConverter implements Converter<AbstractAuthenticationToken, AbstractAuthenticationToken> {
 
-  private final boolean isCore;
-  private final Tenant tenant;
+  private final AccessIssuer issuer;
 
-  public AccessJwtAuthenticationConverter(boolean isCore, Tenant tenant) {
-    this.isCore = isCore;
-    this.tenant = tenant;
+  public AccessJwtAuthenticationConverter(AccessIssuer issuer) {
+    this.issuer = issuer;
   }
 
   @Override
@@ -30,7 +27,7 @@ class AccessJwtAuthenticationConverter implements Converter<AbstractAuthenticati
     var id = token.getSubject();
     var name = token.getClaimAsString("preferred_username");
 
-    var user = new AdspUser(this.isCore, this.tenant, id, name, email, target);
+    var user = new AdspUser(this.issuer, id, name, email, target);
     var attributes = RequestContextHolder.getRequestAttributes();
     if (attributes != null) {
       attributes.setAttribute(AdspRequestContextHolder.USER_REQUEST_ATTRIBUTE, user, RequestAttributes.SCOPE_REQUEST);
