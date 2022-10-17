@@ -28,12 +28,12 @@ class AccessSecurityConfiguration {
 
   private final AdspId serviceId;
   private final String[] apiAntPatterns;
-  private final TenantIssuerCache issuerCache;
+  private final AccessIssuerCache issuerCache;
 
   @Autowired(required = false)
   private ApiDocsMetadata docsMetadata;
 
-  public AccessSecurityConfiguration(AdspConfiguration configuration, TenantIssuerCache issuerCache) {
+  public AccessSecurityConfiguration(AdspConfiguration configuration, AccessIssuerCache issuerCache) {
     this.serviceId = configuration.getServiceId();
     this.apiAntPatterns = configuration.getApiAntPatterns();
     this.issuerCache = issuerCache;

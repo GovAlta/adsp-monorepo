@@ -18,9 +18,9 @@ import com.nimbusds.jwt.proc.JWTClaimsSetAwareJWSKeySelector;
 class TenantJWSKeySelector implements JWTClaimsSetAwareJWSKeySelector<SecurityContext> {
 
   private final ConcurrentHashMap<String, JWSKeySelector<SecurityContext>> selectors = new ConcurrentHashMap<>();
-  private final TenantIssuerCache issuerCache;
+  private final AccessIssuerCache issuerCache;
 
-  public TenantJWSKeySelector(TenantIssuerCache issuerCache) {
+  public TenantJWSKeySelector(AccessIssuerCache issuerCache) {
     this.issuerCache = issuerCache;
   }
 
