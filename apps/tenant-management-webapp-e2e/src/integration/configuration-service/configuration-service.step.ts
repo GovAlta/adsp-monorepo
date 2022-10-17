@@ -1,7 +1,9 @@
 import { Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
 import ConfigurationServicePage from './configuration-service.page';
 import commonlib from '../common/common-library';
+import common from '../common/common.page';
 
+const commonObj = new common();
 const configurationObj = new ConfigurationServicePage();
 
 Then('the user views a heading of {string} namespace', function (namespace) {
@@ -155,5 +157,28 @@ Then(
   'the user views the payload schema containing {string} for {string}, {string} under {string}',
   function (payload, name, desc, namespace) {
     configurationObj.configurationDefinitionDetails(namespace, name, desc).invoke('text').should('contain', payload);
+  }
+);
+
+Given('a tenant admin user is on configuration export page', function () {
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+  commonlib.tenantAdminMenuItem('Configuration', 4000);
+  commonObj.serviceTab('Configuration', 'Export').click();
+  cy.wait(2000);
+});
+
+When('the user clicks info icon of {string}, {string} on configuration export page', function (namespace, name) {
+  configurationObj.exportServiceInfoIcon(namespace, name).click();
+});
+
+Then(
+  'the user views the description of {string} for {string}, {string} on configuration export page',
+  function (desc, namespace, name) {
+    configurationObj.exportServiceInfoBubble(namespace, name).invoke('text').should('contain', desc);
   }
 );
