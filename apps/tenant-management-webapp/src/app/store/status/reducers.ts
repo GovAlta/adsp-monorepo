@@ -19,6 +19,7 @@ const initialState: ServiceStatus = {
   endpointHealth: {},
   currentFormData: {
     name: '',
+    appKey: '',
     tenantId: '',
     enabled: false,
     description: '',

@@ -416,7 +416,13 @@ describe('Service router', () => {
 
   describe('Can update application', () => {
     it('Can update application properties', async () => {
-      const handler = updateApplication(loggerMock, tokenProviderMock, serviceDirectoryMock, statusRepositoryMock);
+      const handler = updateApplication(
+        loggerMock,
+        tenantServiceMock,
+        tokenProviderMock,
+        serviceDirectoryMock,
+        statusRepositoryMock
+      );
       const req: Request = {
         user: {
           tenantId,

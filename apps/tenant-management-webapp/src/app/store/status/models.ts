@@ -36,6 +36,7 @@ export interface ContactInformation {
 
 export interface ApplicationStatus {
   _id?: string;
+  appKey: string;
   tenantId: string;
   name: string;
   description: string;

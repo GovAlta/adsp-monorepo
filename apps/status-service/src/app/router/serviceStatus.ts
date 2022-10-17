@@ -24,6 +24,7 @@ export interface ServiceStatusRouterProps {
 const mergeApplicationData = (app: StaticApplicationData, status: ServiceStatusApplicationEntity) => {
   return {
     _id: status._id,
+    appKey: status.appKey,
     tenantId: status.tenantId,
     name: app.name,
     description: app.description,
@@ -56,7 +57,13 @@ export const getApplications = (logger: Logger, serviceStatusRepository: Service
         statuses.map((s) => {
           // Sometimes the configuration cache hasn't refreshed; use a dummy app until it does.
           // The front end will have to account for this.
-          const app = applications.get(s._id) ?? { _id: s._id, name: 'unknown', description: '', url: '' };
+          const app = applications.get(s._id) ?? {
+            _id: s._id,
+            appKey: s.appKey,
+            name: 'unknown',
+            description: '',
+            url: '',
+          };
           return mergeApplicationData(app, s);
         })
       );
@@ -134,10 +141,12 @@ export const createNewApplication =
     try {
       const tenantName = tenant.name;
       const tenantRealm = tenant.realm;
+      const appKey = getApplicationKey(tenant.name, name);
       const status: ServiceStatusApplicationEntity = await ServiceStatusApplicationEntity.create(
         { ...(req.user as User) },
         serviceStatusRepository,
         {
+          appKey: appKey,
           tenantId: tenant.id.toString(),
           tenantName,
           tenantRealm,
@@ -149,6 +158,7 @@ export const createNewApplication =
       );
       const newApp: StaticApplicationData = {
         _id: status._id,
+        appKey: appKey,
         name: name,
         url: endpoint.url,
         description: description,
@@ -160,6 +170,20 @@ export const createNewApplication =
       next(err);
     }
   };
+
+// create a unique key that can be used to access the application
+// status.  This algorithm assumes that the application name
+// will be unique within a tenant context.
+const getApplicationKey = (tenantName: string, appName: string): string => {
+  return `${toKebabCase(tenantName)}-${toKebabCase(appName)}`;
+};
+
+const toKebabCase = (s: string): string => {
+  return s
+    .replace(/([a-z])([A-Z])/g, '$1-$2')
+    .replace(/[\s_]+/g, '-')
+    .toLowerCase();
+};
 
 export const updateConfiguration = async (
   directory: ServiceDirectory,
@@ -188,6 +212,7 @@ export const updateConfiguration = async (
 export const updateApplication =
   (
     logger: Logger,
+    tenantService: TenantService,
     tokenProvider: TokenProvider,
     serviceDirectory: ServiceDirectory,
     serviceStatusRepository: ServiceStatusRepository
@@ -204,8 +229,9 @@ export const updateApplication =
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
       }
-
-      const update: StaticApplicationData = { _id: id, name, url: endpoint.url, description };
+      const tenant = await tenantService.getTenant(user.tenantId);
+      const appKey = getApplicationKey(tenant.name, name);
+      const update: StaticApplicationData = { _id: id, appKey, name, url: endpoint.url, description };
       updateConfiguration(serviceDirectory, tokenProvider, user.tenantId, id, update);
 
       const status = await serviceStatusRepository.get(id);
@@ -409,7 +435,7 @@ export function createServiceStatusRouter({
   router.put(
     '/applications/:id',
     assertAuthenticatedHandler,
-    updateApplication(logger, tokenProvider, directory, serviceStatusRepository)
+    updateApplication(logger, tenantService, tokenProvider, directory, serviceStatusRepository)
   );
   router.delete(
     '/applications/:id',

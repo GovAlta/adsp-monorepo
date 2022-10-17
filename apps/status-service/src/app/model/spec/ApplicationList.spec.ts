@@ -5,6 +5,7 @@ describe('ApplicationList', () => {
   const applications: Record<string, ApplicationData> = {
     ['620ae946ddd181001195caad']: {
       _id: '620ae946ddd181001195caad',
+      appKey: 'platform-app-0',
       name: 'temp app name 1',
       url: 'https://www.yahoo.com',
       description: 'Woof.',
@@ -18,6 +19,7 @@ describe('ApplicationList', () => {
     },
     ['620ae946ddd181001195cbbc']: {
       _id: '620ae946ddd181001195cbbc',
+      appKey: 'platform-app-1',
       name: 'temp app name 2',
       url: 'https://www.google.com',
       description: 'Toot!',
