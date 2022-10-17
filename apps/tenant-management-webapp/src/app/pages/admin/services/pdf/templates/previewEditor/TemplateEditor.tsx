@@ -15,7 +15,7 @@ import { buildSuggestions } from '@lib/autoComplete';
 import { GoAButton } from '@abgov/react-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { SaveFormModal } from '@components/saveModal';
-import { templates } from 'handlebars';
+import { PDFConfigForm } from './PDFConfigForm';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -62,6 +62,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 }) => {
   const monaco = useMonaco();
   const [saveModal, setSaveModal] = useState(false);
+
   useEffect(() => {
     if (monaco) {
       const provider = monaco.languages.registerCompletionItemProvider('handlebars', {
@@ -111,6 +112,14 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
   return (
     <TemplateEditorContainerPdf>
+      {template && (
+        <PDFConfigForm
+          template={template}
+          onChange={(_template) => {
+            updateTemplate({ ..._template });
+          }}
+        />
+      )}
       <GoAForm>
         <GoAFormItem>
           <Tabs
@@ -123,41 +132,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             <Tab
               label={
                 <PdfEditorLabelWrapper>
-                  Main
-                  <div className="badge">
-                    {errors?.body && (
-                      <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" icon="warning" />
-                    )}
-                  </div>
-                </PdfEditorLabelWrapper>
-              }
-            >
-              <h3 className="reduce-margin" data-testid="modal-title">
-                {`${template?.name}`}
-                <p>{`${mainTitle} template`}</p>
-              </h3>
-
-              <>
-                <GoAFormItem error={errors?.body ?? null} helpText={bodyEditorHintText}>
-                  <MonacoDivBody>
-                    <MonacoEditor
-                      language={'handlebars'}
-                      defaultValue={template?.template}
-                      onChange={(value) => {
-                        onBodyChange(value);
-                        if (tmpTemplate) {
-                          tmpTemplate.template = value;
-                        }
-                      }}
-                      {...bodyEditorConfig}
-                    />
-                  </MonacoDivBody>
-                </GoAFormItem>
-              </>
-            </Tab>
-            <Tab
-              label={
-                <PdfEditorLabelWrapper>
                   Header/Footer{' '}
                   <div className="badge">
                     {(errors?.footer || errors?.header) && (
@@ -167,11 +141,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 </PdfEditorLabelWrapper>
               }
             >
-              <h3 className="reduce-margin" data-testid="modal-title">
-                {`${template?.name}`}
-                <p>{`${mainTitle} template`}</p>
-              </h3>
-
               <>
                 <GoAFormItem error={errors?.header ?? ''}>
                   <h4>Header</h4>
@@ -206,6 +175,42 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                       {...bodyEditorConfig}
                     />
                   </MonacoDivFooter>
+                </GoAFormItem>
+              </>
+            </Tab>
+
+            <Tab
+              label={
+                <PdfEditorLabelWrapper>
+                  Body
+                  <div className="badge">
+                    {errors?.body && (
+                      <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" icon="warning" />
+                    )}
+                  </div>
+                </PdfEditorLabelWrapper>
+              }
+            >
+              <h3 className="reduce-margin" data-testid="modal-title">
+                {`${template?.name}`}
+                <p>{`${mainTitle} template`}</p>
+              </h3>
+
+              <>
+                <GoAFormItem error={errors?.body ?? null} helpText={bodyEditorHintText}>
+                  <MonacoDivBody>
+                    <MonacoEditor
+                      language={'handlebars'}
+                      defaultValue={template?.template}
+                      onChange={(value) => {
+                        onBodyChange(value);
+                        if (tmpTemplate) {
+                          tmpTemplate.template = value;
+                        }
+                      }}
+                      {...bodyEditorConfig}
+                    />
+                  </MonacoDivBody>
                 </GoAFormItem>
               </>
             </Tab>

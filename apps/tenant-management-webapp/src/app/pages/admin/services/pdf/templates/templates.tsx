@@ -277,9 +277,9 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
           <PdfTemplatesTable
             templates={pdfTemplates}
             edit={(currentTemplate) => {
-              setShowTemplateForm(true);
               setCurrentTemplate(currentTemplate);
               setCurrentSavedTemplate(Object.assign({}, currentTemplate));
+              setShowTemplateForm(true);
             }}
             onDelete={(currentTemplate) => {
               setShowDeleteConfirmation(true);
