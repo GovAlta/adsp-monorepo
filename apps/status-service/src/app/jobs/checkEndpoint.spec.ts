@@ -39,7 +39,7 @@ describe('checkEndpoint', () => {
   describe('createCheckEndpointJob', () => {
     it('can create job', () => {
       const job = createCheckEndpointJob({
-        app: { url: 'https//test.co', _id: '123', name: 'bob' },
+        app: { url: 'https//test.co', _id: '123', appKey: 'the-key', name: 'bob' },
         getEndpointResponse: jest.fn(),
         logger: loggerMock,
         serviceStatusRepository: statusRepositoryMock,
@@ -53,7 +53,7 @@ describe('checkEndpoint', () => {
     describe('checkEndpointJob', () => {
       const getEndpointResponse = jest.fn();
       const job = createCheckEndpointJob({
-        app: { url: 'https//test.co', _id: '123', name: 'bobs balloons' },
+        app: { url: 'https//test.co', _id: '123', name: 'bobs balloons', appKey: 'the-other-key' },
         getEndpointResponse: jest.fn(),
         logger: loggerMock,
         serviceStatusRepository: statusRepositoryMock,

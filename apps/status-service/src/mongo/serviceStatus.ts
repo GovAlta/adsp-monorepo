@@ -68,6 +68,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
   private toDoc(application: ServiceStatusApplicationEntity): Doc<ServiceStatusApplication> {
     return {
       _id: application._id,
+      appKey: application.appKey,
       endpoint: application.endpoint,
       metadata: application.metadata,
       statusTimestamp: application.statusTimestamp,
@@ -85,6 +86,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
     }
     return new ServiceStatusApplicationEntity(this, {
       _id: doc._id,
+      appKey: doc.appKey,
       endpoint: doc.endpoint,
       metadata: doc.metadata,
       statusTimestamp: doc.statusTimestamp,

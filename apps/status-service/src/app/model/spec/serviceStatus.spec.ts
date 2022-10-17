@@ -27,6 +27,7 @@ describe('ServiceStatusApplicationEntity', () => {
     statusTimestamp: 0,
     tenantId: 'urn:ads:mock-tenant:mock-service:/tenants/mock-tenant-id',
     tenantName: 'mock-tenant',
+    appKey: 'mock-tenant-app-0',
     tenantRealm: 'mock-realm',
     enabled: false,
     internalStatus: 'stopped' as InternalServiceStatusType,
