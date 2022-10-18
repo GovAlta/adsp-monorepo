@@ -62,11 +62,11 @@ export class MongoFileRepository implements FileRepository {
     );
   }
 
-  save(entity: FileEntity): Promise<FileEntity> {
+  save(entity: FileEntity, update?: Partial<FileEntity>): Promise<FileEntity> {
     return new Promise<FileEntity>((resolve, reject) =>
       this.model.findOneAndUpdate(
         { _id: entity.id },
-        this.toDoc(entity),
+        this.toDoc(update || entity),
         { upsert: true, new: true, lean: true, omitUndefined: true },
         (err, doc) => {
           if (err) {
