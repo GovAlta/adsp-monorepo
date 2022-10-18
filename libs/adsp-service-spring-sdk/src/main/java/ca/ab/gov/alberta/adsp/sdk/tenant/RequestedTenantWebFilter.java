@@ -33,23 +33,25 @@ class RequestedTenantWebFilter implements WebFilter {
   @Override
   public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
 
-    if (this.applyFilter) {
-      try {
-        var request = exchange.getRequest();
-        var queryParams = request.getQueryParams();
-        var tenantIdValues = queryParams.getOrDefault("tenantId", List.of());
+    return chain.filter(exchange)
+        .contextWrite(ctx -> {
+          if (this.applyFilter) {
+            try {
+              var request = exchange.getRequest();
+              var queryParams = request.getQueryParams();
+              var tenantIdValues = queryParams.getOrDefault("tenantId", List.of());
 
-        if (!tenantIdValues.isEmpty()) {
-          var tenantId = AdspId.parse(tenantIdValues.get(0));
-          var attributes = exchange.getAttributes();
-          attributes.put(AdspRequestContextHolder.TENANT_REQUEST_ATTRIBUTE, tenantId);
-        }
-      } catch (Exception e) {
-        this.logger.warn("Error encountered resolving requested tenant.", e);
-      }
-    }
+              if (!tenantIdValues.isEmpty()) {
+                var tenantId = AdspId.parse(tenantIdValues.get(0));
+                ctx.put(AdspRequestContextHolder.TENANT_REQUEST_ATTRIBUTE, tenantId);
+              }
+            } catch (Exception e) {
+              this.logger.warn("Error encountered resolving requested tenant.", e);
+            }
+          }
 
-    return chain.filter(exchange);
+          return ctx;
+        });
   }
 
 }

@@ -90,7 +90,7 @@ public class AdspConfiguration {
     private String displayName;
     private String description;
 
-    private String[] apiAntPatterns = { "/**/v?/**" };
+    private String[] apiAntPatterns = { "/*/v?/**" };
     private boolean allowCoreUser;
 
     private ServiceRegistration registration;

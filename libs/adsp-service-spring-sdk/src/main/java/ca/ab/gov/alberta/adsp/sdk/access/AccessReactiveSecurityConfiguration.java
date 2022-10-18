@@ -40,9 +40,10 @@ class AccessReactiveSecurityConfiguration {
         .authorizeExchange(
             exchanges -> {
               if (this.docsMetadata != null) {
-                exchanges.pathMatchers(HttpMethod.GET, this.docsMetadata.getOpenApiPath()).permitAll();
+                exchanges = exchanges.pathMatchers(HttpMethod.GET, this.docsMetadata.getOpenApiPath()).permitAll();
               }
-              exchanges.pathMatchers(apiAntPatterns).authenticated();
+              exchanges.pathMatchers(apiAntPatterns).authenticated()
+                  .anyExchange().permitAll();
             })
         .oauth2ResourceServer(
             oauth2 -> oauth2.authenticationManagerResolver(authenticationManagerResolver))
