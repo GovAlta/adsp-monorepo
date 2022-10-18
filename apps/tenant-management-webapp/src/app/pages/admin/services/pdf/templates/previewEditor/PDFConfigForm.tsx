@@ -25,7 +25,7 @@ export const PDFConfigForm = ({ template, onChange, setError }: PDFConfigFormPro
               type="text"
               name="name"
               value={name}
-              data-testid={`script-service-modal-name-input`}
+              data-testid={`pdf-service-modal-name-input`}
               aria-label="name"
               onChange={(key, name) => {
                 const error = validators['name'].check(name);
@@ -44,7 +44,7 @@ export const PDFConfigForm = ({ template, onChange, setError }: PDFConfigFormPro
               name="template-id"
               disabled={true}
               value={id}
-              data-testid={`script-service-modal-template-id-input`}
+              data-testid={`pdf-service-modal-template-id-input`}
               aria-label="template id"
               onChange={(key, id) => {
                 onChange({ ...template, id });
@@ -60,7 +60,7 @@ export const PDFConfigForm = ({ template, onChange, setError }: PDFConfigFormPro
             name="description"
             value={description}
             maxLength={512}
-            data-testid="script-service-modal-description-textarea"
+            data-testid="pdf-service-modal-description-textarea"
             aria-label="description"
             onChange={(e) => {
               onChange({ ...template, description: e.target.value });
