@@ -6,6 +6,9 @@ import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Domain event representing some domain significant occurrence
+ */
 public class DomainEvent<T> {
   @JsonProperty
   private String namespace;

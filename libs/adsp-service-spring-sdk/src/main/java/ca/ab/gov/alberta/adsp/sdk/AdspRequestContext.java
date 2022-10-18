@@ -10,6 +10,9 @@ import ca.ab.gov.alberta.adsp.sdk.tenant.Tenant;
 import ca.ab.gov.alberta.adsp.sdk.tenant.TenantService;
 import reactor.core.publisher.Mono;
 
+/**
+ * ADSP capabilities for the current request context.
+ */
 public final class AdspRequestContext {
   private final AdspId serviceId;
   private final ConfigurationService configurationService;
@@ -26,10 +29,28 @@ public final class AdspRequestContext {
     this.tenantId = tenantId;
   }
 
+  /**
+   * Get the user for the context.
+   *
+   * @return User if request is authenticated; otherwise null.
+   */
   public User getUser() {
     return user;
   }
 
+  /**
+   * <p>
+   * Get the tenant for the context.
+   * </p>
+   *
+   * <p>
+   * The tenant associated with the request is typically the tenant of the
+   * requesting user (principal). However, for a platform service (realm is not
+   * set), the SDK allows core users to specify the tenant via a query parameter,
+   * </p>
+   *
+   * @return Mono to subscribe to for the tenant
+   */
   public Mono<Tenant> getTenant() {
     Mono<Tenant> tenant = Mono.empty();
 
@@ -42,6 +63,20 @@ public final class AdspRequestContext {
     return tenant;
   }
 
+  /**
+   * <p>
+   * Get service configuration in the context.
+   * </p>
+   *
+   * <p>
+   * Service configuration is retrieved for the context tenant. Use
+   * ConfigurationService directly for more specific control.
+   * </p>
+   *
+   * @param <T>           Type of the configuration object
+   * @param typeReference Type reference for the configuration object
+   * @return Mono to subscribe to for the configuration object
+   */
   public <T> Mono<T> getConfiguration(ParameterizedTypeReference<T> typeReference) {
     Assert.notNull(typeReference, "typeReference cannot be null.");
 

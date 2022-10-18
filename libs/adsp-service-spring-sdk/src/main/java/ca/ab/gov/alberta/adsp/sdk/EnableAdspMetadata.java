@@ -9,6 +9,9 @@ import org.springframework.context.annotation.Import;
 
 import ca.ab.gov.alberta.adsp.sdk.metadata.AdspMetadataSupport;
 
+/**
+ * Enable ADSP metadata components.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Import(AdspMetadataSupport.class)

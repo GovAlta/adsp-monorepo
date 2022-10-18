@@ -13,6 +13,9 @@ import ca.ab.gov.alberta.adsp.sdk.tenant.TenantService;
 import reactor.core.publisher.Mono;
 import reactor.util.context.ContextView;
 
+/**
+ * Holder for statically accessing the ADSP context.
+ */
 public final class AdspRequestContextHolder {
   public static final String TENANT_REQUEST_ATTRIBUTE = "adsp.tenant";
 
@@ -46,6 +49,18 @@ public final class AdspRequestContextHolder {
         AdspRequestContextHolder.configurationService, user, tenantId);
   }
 
+  /**
+   * <p>
+   * Retrieves ADSP context using thread static contexts.
+   * </p>
+   *
+   * <p>
+   * Use this in servlet applications where each request is handled on a
+   * particular worker thread.
+   * </p>
+   *
+   * @return AdspRequestContext or null if context cannot be resolved
+   */
   public static AdspRequestContext current() {
     var attributes = RequestContextHolder.getRequestAttributes();
     var securityContext = SecurityContextHolder.getContext();
@@ -58,6 +73,17 @@ public final class AdspRequestContextHolder {
     }
   }
 
+  /**
+   * <p>
+   * Retrieves ADSP context using flux context view.
+   * </p>
+   *
+   * <p>
+   * Use this in reactive applications.
+   * </p>
+   *
+   * @return Mono to subscribe to for AdspRequestContext
+   */
   public static Mono<AdspRequestContext> getCurrent() {
     return Mono
         .zip(
