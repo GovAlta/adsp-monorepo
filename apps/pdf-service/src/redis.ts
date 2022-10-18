@@ -1,5 +1,4 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { NotFoundError } from '@core-services/core-common';
 import { createClient, RedisClient } from 'redis';
 import { v4 as uuid } from 'uuid';
 import { FileResult, PdfJob, PdfJobRepository, PdfJobStatus } from './pdf';
@@ -30,11 +29,8 @@ export class RedisJobRepository implements PdfJobRepository {
 
   async update(jobId: string, status: PdfJobStatus, result?: FileResult): Promise<PdfJob> {
     const job = await this.get(jobId);
-    if (!job) {
-      throw new NotFoundError('job', jobId);
-    }
 
-    return this.set(jobId, { ...job, status, result });
+    return job ? this.set(jobId, { ...job, status, result }) : null;
   }
 
   private set(key: string, job: PdfJob): Promise<PdfJob> {
