@@ -103,19 +103,19 @@ export class MongoFileRepository implements FileRepository {
       : null;
   }
   // eslint-disable-next-line
-  toDoc(entity: FileEntity): any {
+  toDoc(update: Partial<FileEntity>): any {
     return {
-      spaceId: entity.tenantId.toString(),
-      typeId: entity.type?.id || undefined,
-      recordId: entity.recordId,
-      filename: entity.filename,
-      size: entity.size,
-      createdBy: entity.createdBy,
-      created: entity.created,
-      lastAccessed: entity.lastAccessed,
-      scanned: entity.scanned,
-      infected: entity.infected,
-      deleted: entity.deleted,
+      spaceId: update.tenantId?.toString() || undefined,
+      typeId: update.type?.id || undefined,
+      recordId: update.recordId,
+      filename: update.filename,
+      size: update.size,
+      createdBy: update.createdBy,
+      created: update.created,
+      lastAccessed: update.lastAccessed,
+      scanned: update.scanned,
+      infected: update.infected,
+      deleted: update.deleted,
     };
   }
 
