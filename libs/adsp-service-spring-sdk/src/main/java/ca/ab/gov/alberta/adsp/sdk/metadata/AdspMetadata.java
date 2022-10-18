@@ -8,6 +8,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
+/**
+ * Metadata for the service to expose to the platform
+ */
 @JsonInclude(value = Include.NON_NULL)
 public class AdspMetadata {
   @JsonProperty("name")
@@ -51,6 +54,11 @@ public class AdspMetadata {
     return new AdspMetadata(this, root);
   }
 
+  /**
+   * Initializes a builder for AdspMetadata
+   *
+   * @return Builder
+   */
   public static Builder builder() {
     return new Builder();
   }
