@@ -61,9 +61,6 @@ export const createProcessEventJob =
     // This is a unique value to provide traceability of one execution of notification generation.
     const generationId = uuid();
     try {
-      const tenant = await tenantService.getTenant(tenantId);
-      const subscriberAppUrl = await directory.getServiceUrl(adspId`urn:ads:platform:subscriber-app`);
-
       const token = await tokenProvider.getAccessToken();
       const configuration = await configurationService.getConfiguration<
         NotificationConfiguration,
@@ -73,50 +70,55 @@ export const createProcessEventJob =
       const types = configuration?.getEventNotificationTypes(event) || [];
 
       let count = 0;
-      for (const type of types) {
-        // Page through all subscriptions and generate notifications.
-        const notifications: Notification[] = [];
-        let after: string = null;
-        do {
-          const { results, page } = await subscriptionRepository.getSubscriptions(
-            configuration,
-            tenantId,
-            1000,
-            after,
-            {
-              typeIdEquals: type.id,
-            }
-          );
-          const pageNotifications = type.generateNotifications(
-            logger,
-            templateService,
-            subscriberAppUrl,
-            event,
-            results,
-            {
-              tenant,
-            }
-          );
-          notifications.push(...pageNotifications);
-          after = page.next;
-        } while (after);
+      if (types.length > 0) {
+        const tenant = await tenantService.getTenant(tenantId);
+        const subscriberAppUrl = await directory.getServiceUrl(adspId`urn:ads:platform:subscriber-app`);
 
-        for (const notification of notifications) {
-          queueService.enqueue({ generationId, ...notification });
-        }
+        for (const type of types) {
+          // Page through all subscriptions and generate notifications.
+          const notifications: Notification[] = [];
+          let after: string = null;
+          do {
+            const { results, page } = await subscriptionRepository.getSubscriptions(
+              configuration,
+              tenantId,
+              1000,
+              after,
+              {
+                typeIdEquals: type.id,
+              }
+            );
+            const pageNotifications = type.generateNotifications(
+              logger,
+              templateService,
+              subscriberAppUrl,
+              event,
+              results,
+              {
+                tenant,
+              }
+            );
+            notifications.push(...pageNotifications);
+            after = page.next;
+          } while (after);
 
-        if (notifications.length > 0) {
-          eventService.send(notificationsGenerated(generationId, event, type, notifications.length));
-        }
-
-        count += notifications.length;
-        logger.debug(
-          `Generated ${notifications.length} notifications of type ${type.name} (ID: ${type.id}) for ${namespace}:${name} for tenant ${tenantId}.`,
-          {
-            ...LOG_CONTEXT,
-            tenant: tenantId?.toString(),
+          for (const notification of notifications) {
+            queueService.enqueue({ generationId, ...notification });
           }
-        );
+
+          if (notifications.length > 0) {
+            eventService.send(notificationsGenerated(generationId, event, type, notifications.length));
+          }
+
+          count += notifications.length;
+          logger.debug(
+            `Generated ${notifications.length} notifications of type ${type.name} (ID: ${type.id}) for ${namespace}:${name} for tenant ${tenantId}.`,
+            {
+              ...LOG_CONTEXT,
+              tenant: tenantId?.toString(),
+            }
+          );
+        }
       }
 
       if (count > 0) {
