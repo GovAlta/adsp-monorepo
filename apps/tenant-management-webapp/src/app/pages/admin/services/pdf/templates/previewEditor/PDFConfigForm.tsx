@@ -2,18 +2,24 @@ import React from 'react';
 import { PdfTemplate } from '@store/pdf/model';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { Grid, GridItem } from '@components/Grid';
+import { useValidators } from '@lib/useValidators';
+import { characterCheck, validationPattern, isNotEmptyCheck } from '@lib/checkInput';
 
 interface PDFConfigFormProps {
   template: PdfTemplate;
   onChange(template: PdfTemplate): void;
+  setError(hasError: boolean): void;
 }
-export const PDFConfigForm = ({ template, onChange }: PDFConfigFormProps) => {
+export const PDFConfigForm = ({ template, onChange, setError }: PDFConfigFormProps) => {
   const { id, name, description } = template;
+  const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
+  const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name')).build();
+
   return (
     <GoAForm>
       <Grid>
         <GridItem md={6} hSpacing={1}>
-          <GoAFormItem>
+          <GoAFormItem error={errors?.['name']}>
             <label>Name</label>
             <GoAInput
               type="text"
@@ -22,6 +28,8 @@ export const PDFConfigForm = ({ template, onChange }: PDFConfigFormProps) => {
               data-testid={`script-service-modal-name-input`}
               aria-label="name"
               onChange={(key, name) => {
+                const error = validators['name'].check(name);
+                setError(error && error.length > 0);
                 onChange({ ...template, name });
               }}
             />
@@ -51,6 +59,7 @@ export const PDFConfigForm = ({ template, onChange }: PDFConfigFormProps) => {
           <textarea
             name="description"
             value={description}
+            maxLength={512}
             data-testid="script-service-modal-description-textarea"
             aria-label="description"
             onChange={(e) => {

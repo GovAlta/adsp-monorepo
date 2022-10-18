@@ -32,7 +32,9 @@ interface TemplateEditorProps {
   bodyTitle: string;
   bodyEditorConfig?: EditorProps;
   saveCurrentTemplate?: () => void;
+  // eslint-disable-next-line
   errors?: any;
+  // eslint-disable-next-line
   suggestion?: any;
   cancel: () => void;
   updateTemplate: (template: PdfTemplate) => void;
@@ -62,6 +64,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 }) => {
   const monaco = useMonaco();
   const [saveModal, setSaveModal] = useState(false);
+  const [hasConfigError, setHasConfigError] = useState(false);
 
   useEffect(() => {
     if (monaco) {
@@ -115,6 +118,9 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
       {template && (
         <PDFConfigForm
           template={template}
+          setError={(hasError) => {
+            setHasConfigError(hasError);
+          }}
           onChange={(_template) => {
             updateTemplate({ ..._template });
           }}
@@ -237,7 +243,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             Close
           </GoAButton>
           <GoAButton
-            disabled={!validateEventTemplateFields()}
+            disabled={!validateEventTemplateFields() || hasConfigError}
             onClick={() => saveCurrentTemplate()}
             buttonType="primary"
             data-testid="template-form-save"

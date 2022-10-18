@@ -99,6 +99,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
                 name="pdf-template-description"
                 value={template.description}
                 disabled={isEdit}
+                maxLength={512}
                 className="goa-textarea"
                 data-testid="pdf-template-description"
                 aria-label="pdf-template-description"
