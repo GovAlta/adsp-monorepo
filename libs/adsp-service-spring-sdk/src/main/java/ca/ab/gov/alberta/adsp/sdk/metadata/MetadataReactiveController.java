@@ -22,7 +22,7 @@ class MetadataReactiveController {
     this.metadata = metadata;
   }
 
-  @GetMapping
+  @GetMapping("/")
   public Mono<AdspMetadata> getMetadata(ServerHttpRequest serverHttpRequest) {
     return Mono.just(serverHttpRequest.getURI()).map(root -> this.metadata.resolve(root));
   }
