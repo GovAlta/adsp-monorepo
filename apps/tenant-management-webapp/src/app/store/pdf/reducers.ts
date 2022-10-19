@@ -23,9 +23,17 @@ const defaultState: PdfState = {
 export default function (state: PdfState = defaultState, action: PdfActionTypes): PdfState {
   switch (action.type) {
     case FETCH_PDF_TEMPLATES_SUCCESS_ACTION:
+      // sort templates alphabetically and reduce them to objects in objects again
       return {
         ...state,
-        pdfTemplates: action.payload,
+        pdfTemplates: Object.entries(action.payload)
+          .sort((template1, template2) => {
+            return template1[1].name.localeCompare(template2[1].name);
+          })
+          .reduce((tempObj, [pdfTemplateId, pdfTemplateData]) => {
+            tempObj[pdfTemplateId] = pdfTemplateData;
+            return tempObj;
+          }, {}),
       };
     case UPDATE_PDF_TEMPLATE_SUCCESS_ACTION:
       return {
