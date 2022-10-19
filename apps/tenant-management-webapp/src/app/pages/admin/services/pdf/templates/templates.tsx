@@ -39,7 +39,14 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const pdfTemplates = useSelector((state: RootState) => {
-    return state?.pdf?.pdfTemplates;
+    return Object.entries(state?.pdf?.pdfTemplates)
+      .sort((template1, template2) => {
+        return template1[1].name.localeCompare(template2[1].name);
+      })
+      .reduce((tempObj, [pdfTemplateId, pdfTemplateData]) => {
+        tempObj[pdfTemplateId] = pdfTemplateData;
+        return tempObj;
+      }, {});
   });
 
   const [currentTemplate, setCurrentTemplate] = useState(defaultPdfTemplate);
@@ -105,13 +112,6 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     }
     return [];
   };
-
-  useEffect(() => {
-    if (pdfTemplates) {
-      const x = Object.keys(pdfTemplates)[0];
-      setCurrentTemplate(pdfTemplates[x]);
-    }
-  }, [pdfTemplates]);
 
   useEffect(() => {
     try {
