@@ -142,7 +142,7 @@ export class FileEntity implements File {
 
     const stream = await this.storageProvider.readFile(this);
     this.lastAccessed = new Date();
-    await this.repository.save(this);
+    await this.repository.save(this, { lastAccessed: this.lastAccessed });
 
     return stream;
   }
