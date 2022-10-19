@@ -136,6 +136,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             }}
           >
             <Tab
+              testId={`pdf-edit-header-footer`}
               label={
                 <PdfEditorLabelWrapper>
                   Header/Footer{' '}
@@ -149,7 +150,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             >
               <>
                 <GoAFormItem error={errors?.header ?? ''}>
-                  <h4>Header</h4>
+                  <div className="title">Header</div>
                   <MonacoDivHeader>
                     <MonacoEditor
                       language={'handlebars'}
@@ -167,7 +168,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               </>
               <>
                 <GoAFormItem error={errors?.footer ?? ''}>
-                  <h4>Footer</h4>
+                  <div className="title">Footer</div>
                   <MonacoDivFooter>
                     <MonacoEditor
                       language={'handlebars'}
@@ -186,6 +187,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             </Tab>
 
             <Tab
+              testId={`pdf-edit-body`}
               label={
                 <PdfEditorLabelWrapper>
                   Body
@@ -197,13 +199,9 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 </PdfEditorLabelWrapper>
               }
             >
-              <h3 className="reduce-margin" data-testid="modal-title">
-                {`${template?.name}`}
-                <p>{`${mainTitle} template`}</p>
-              </h3>
-
               <>
                 <GoAFormItem error={errors?.body ?? null} helpText={bodyEditorHintText}>
+                  <div className="title">Body</div>
                   <MonacoDivBody>
                     <MonacoEditor
                       language={'handlebars'}
