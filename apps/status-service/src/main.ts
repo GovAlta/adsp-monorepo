@@ -182,6 +182,7 @@ app.use(express.json({ limit: '1mb' }));
       eventService,
       tokenProvider,
       directory,
+      serviceId,
       ...repositories,
     });
   } else {

@@ -19,6 +19,7 @@ export interface ServiceStatusRouterProps {
   endpointStatusEntryRepository: EndpointStatusEntryRepository;
   tokenProvider: TokenProvider;
   directory: ServiceDirectory;
+  serviceId: AdspId;
 }
 
 const mergeApplicationData = (app: StaticApplicationData, status: ServiceStatusApplicationEntity) => {
@@ -39,32 +40,46 @@ const mergeApplicationData = (app: StaticApplicationData, status: ServiceStatusA
   };
 };
 
-export const getApplications = (logger: Logger, serviceStatusRepository: ServiceStatusRepository): RequestHandler => {
+const getStatusConfiguration = async (
+  tenantId: AdspId,
+  serviceId: AdspId,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider
+): Promise<StatusApplications> => {
+  const baseUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
+  const configUrl = new URL(
+    `/configuration/v2/configuration/${serviceId.namespace}/${serviceId.service}/latest?tenantId=${tenantId}`,
+    baseUrl
+  );
+  const token = await tokenProvider.getAccessToken();
+  const { data } = await axios.get<StatusServiceConfiguration>(configUrl.href, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return new StatusApplications(data);
+};
+
+export const getApplications = (
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  logger: Logger,
+  serviceId: AdspId,
+  serviceStatusRepository: ServiceStatusRepository
+): RequestHandler => {
   return async (req, res, next) => {
     try {
       const { tenantId } = req.user as User;
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
       }
-      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
-        tenantId
-      );
-      const applications = new StatusApplications(configuration);
-
+      const applications = await getStatusConfiguration(tenantId, serviceId, directory, tokenProvider);
       const statuses = await serviceStatusRepository.find({ tenantId: tenantId.toString() });
 
       res.json(
-        statuses.map((s) => {
-          // Sometimes the configuration cache hasn't refreshed; use a dummy app until it does.
-          // The front end will have to account for this.
-          const app = applications.get(s._id) || {
-            _id: s._id,
-            appKey: s.appKey,
-            name: 'unknown',
-            description: '',
-            url: '',
-          };
-          return mergeApplicationData(app, s);
+        applications.map((app) => {
+          const status = statuses.find((s) => {
+            return s._id == app._id;
+          });
+          return mergeApplicationData(app, status);
         })
       );
     } catch (err) {
@@ -408,10 +423,15 @@ export function createServiceStatusRouter({
   endpointStatusEntryRepository,
   tokenProvider,
   directory,
+  serviceId,
 }: ServiceStatusRouterProps): Router {
   const router = Router();
   // Get the service for the tenant
-  router.get('/applications', assertAuthenticatedHandler, getApplications(logger, serviceStatusRepository));
+  router.get(
+    '/applications',
+    assertAuthenticatedHandler,
+    getApplications(directory, tokenProvider, logger, serviceId, serviceStatusRepository)
+  );
 
   // Enable the service
   router.patch(
