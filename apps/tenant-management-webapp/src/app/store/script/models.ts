@@ -6,11 +6,12 @@ export interface ScriptItem {
   useServiceAccount: boolean;
   description?: string;
   runnerRoles: string[];
+  testInputs: Record<string, any>;
 }
 export interface ScriptService {
   scripts: Record<string, ScriptItem>;
   indicator?: Indicator;
-  scriptResponse?: string[];
+  scriptResponse?: ScriptResponse[];
 }
 export const defaultScript: ScriptItem = {
   name: '',
@@ -19,6 +20,7 @@ export const defaultScript: ScriptItem = {
   useServiceAccount: false,
   description: '',
   runnerRoles: [],
+  testInputs: { inputs: {} },
 };
 export const SCRIPT_INIT: ScriptService = {
   scripts: null,
@@ -29,4 +31,9 @@ export const SCRIPT_INIT: ScriptService = {
 };
 export interface Indicator {
   details?: Record<string, ActionState>;
+}
+export interface ScriptResponse {
+  timeToRun?: string;
+  inputs?: Record<string, any>;
+  result: string;
 }

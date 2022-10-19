@@ -127,6 +127,7 @@ export const EditTemplateActions = styled.div`
   display: flex;
   justify-content: right;
   gap: 1rem;
+  padding-top: 1rem;
 `;
 
 export const ScriptEditorContainer = styled.div`
