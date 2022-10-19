@@ -9,6 +9,7 @@ import { GoAButton, GoAElementLoader } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
+import DataTable from '@components/DataTable';
 
 interface ScriptEditorProps {
   editorConfig?: EditorProps;
@@ -75,6 +76,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     selectedScript.name = name;
     selectedScript.description = description;
     selectedScript.script = scriptStr;
+    selectedScript.testInputs = testInput.length > 0 ? { inputs: JSON.parse(testInput) } : {};
     return selectedScript;
   };
 
@@ -180,6 +182,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
           }}
         />
       </ScriptEditorContainer>
+      {/* Script execute right pane */}
       <div className="half-width">
         <ScriptPane>
           <div className="flex-column">
@@ -193,13 +196,13 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                       onClick={() => {
                         saveAndExecute();
                       }}
-                      buttonType="primary"
+                      buttonType="secondary"
                       disabled={errors?.['payloadSchema']}
                       data-testid="template-form-save"
                       type="submit"
                     >
                       <div className="flex">
-                        <div className="pt-1">Save and Execute</div>
+                        <div className="pt-1">Execute</div>
                         {loadingIndicator.show ? (
                           <SpinnerPadding>
                             <GoAElementLoader
@@ -218,7 +221,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 </div>
                 <MonacoDivBody data-testid="templated-editor-test">
                   <MonacoEditor
-                    language="json"
+                    language={'json'}
                     value={testInput}
                     {...editorConfig}
                     onChange={(value) => {
@@ -229,10 +232,27 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               </GoAFormItem>
             </div>
             <div className="flex-one full-height">
-              <h4>Script Response</h4>
-              <div className="script-response">
-                {scriptResponse && scriptResponse.map((response) => <div>{JSON.stringify(response)}</div>)}
-              </div>
+              <h4>Script response</h4>
+              {scriptResponse && (
+                <DataTable>
+                  <thead>
+                    <tr>
+                      <td>Time To Run</td>
+                      <td>Input</td>
+                      <td>Result</td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {scriptResponse.map((response) => (
+                      <tr>
+                        <td>{response.timeToRun}</td>
+                        <td>{JSON.stringify(response.inputs)}</td>
+                        <td>{response.result}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </DataTable>
+              )}
             </div>
           </div>
         </ScriptPane>
@@ -248,6 +268,7 @@ const EditModalStyle = styled.div`
   .half-width {
     width: 50%;
     display: flex;
+    height: 90%;
   }
 
   .flex-column {
@@ -265,6 +286,7 @@ const EditModalStyle = styled.div`
 
   .flex {
     display: flex;
+    justify-content: space-between;
   }
 
   .mt-2 {

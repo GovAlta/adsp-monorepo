@@ -1,4 +1,4 @@
-import { ScriptItem, Indicator } from './models';
+import { ScriptItem, ScriptResponse, Indicator } from './models';
 export const UPDATE_INDICATOR = 'calendar/indicator';
 
 export const UPDATE_SCRIPT_ACTION = 'script/UPDATE_SCRIPT_ACTION';
@@ -23,7 +23,7 @@ export interface UpdateScriptAction {
 
 export interface RunScriptSuccessAction {
   type: typeof RUN_SCRIPT_ACTION_SUCCESS;
-  payload: string;
+  payload: ScriptResponse;
 }
 
 export interface RunScriptAction {
@@ -97,7 +97,7 @@ export const ExecuteScript = (payload: ScriptItem): ExecuteScriptAction => ({
   payload,
 });
 
-export const runScriptSuccess = (response: string): RunScriptSuccessAction => ({
+export const runScriptSuccess = (response: ScriptResponse): RunScriptSuccessAction => ({
   type: RUN_SCRIPT_ACTION_SUCCESS,
   payload: response,
 });
