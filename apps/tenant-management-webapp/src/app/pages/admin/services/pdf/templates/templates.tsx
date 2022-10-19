@@ -33,7 +33,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
   const [bodyPreview, setBodyPreview] = useState('');
   const [headerPreview, setHeaderPreview] = useState('');
   const [footerPreview, setFooterPreview] = useState('');
-  const [currentChannel, setCurrentChannel] = useState('main');
+  const [currentChannel, setCurrentChannel] = useState('footer/header');
   const XSS_CHECK_RENDER_DEBOUNCE_TIMER = 2000; // ms
   const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
 

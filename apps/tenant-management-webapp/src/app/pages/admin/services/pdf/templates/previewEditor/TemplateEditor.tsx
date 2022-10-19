@@ -86,7 +86,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
-    setPreview('main');
+    setPreview('footer/header');
     onHeaderChange(template?.header);
     onFooterChange(template?.footer);
   }, [template, modelOpen]);
@@ -105,7 +105,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [modelOpen]);
 
-  const channels = ['main', 'footer/header'];
+  const channels = ['footer/header', 'main'];
   const tmpTemplate = template;
   const resetSavedAction = () => {
     onBodyChange(savedTemplate.template);
