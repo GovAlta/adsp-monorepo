@@ -59,6 +59,17 @@ export const TemplateEditorContainerPdf = styled.div`
     }
   }
 
+  .goa-form-item {
+    margin-bottom: 0rem !important;
+  }
+
+  .title {
+    font-size: var(--fs-base);
+    font-weight: var(--fw-bold);
+    padding-bottom: 12px;
+    padding-top: 8px;
+  }
+
   @media (max-width: 1280px) {
     .desktop {
       display: none;
@@ -109,7 +120,7 @@ export const MonacoDivBody = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(100vh - 310px);
+  height: calc(100vh - 60vh);
 `;
 export const MonacoDivHeader = styled.div`
   display: flex;
@@ -151,7 +162,7 @@ export const BodyPreview = styled(PreviewPortal)`
     overflow: auto;
   }
   flex-grow: 1;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 `;
 
 export const PdfEditorLabelWrapper = styled.div`
@@ -159,5 +170,11 @@ export const PdfEditorLabelWrapper = styled.div`
   flex-direction: row;
   .badge {
     margin: 0px 0px 0px 3px;
+  }
+`;
+
+export const PdfConfigFormWrapper = styled.div`
+  .goa-form-item {
+    margin-bottom: 0.2rem !important;
   }
 `;
