@@ -60,8 +60,8 @@ jobs:
       # Set build job outputs for subsequent jobs.
       - id: set_outputs
         run: |
-          echo ::set-output name=affected_apps::$(echo ${{ steps.production-build.outputs.affected-apps }})
-          echo ::set-output name=affected_apps_array::$(echo ${{ steps.production-build.outputs.affected-apps }} | sed -e "s/ /\",\"/g" -e "s/^/[\"/" -e "s/$/\"]/")
+          echo "affected_apps=${{ steps.production-build.outputs.affected-apps }}" >> $GITHUB_OUTPUT
+          echo "affected_apps_array=$(echo ${{ steps.production-build.outputs.affected-apps }} | sed -e "s/ /\",\"/g" -e "s/^/[\"/" -e "s/$/\"]/")" >> $GITHUB_OUTPUT
 
   buildContainers:
     runs-on: ubuntu-20.04
@@ -73,7 +73,7 @@ jobs:
         app: ${{ fromJson(needs.build.outputs.affected_apps_array) }}
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: build-dist
           path: ./
