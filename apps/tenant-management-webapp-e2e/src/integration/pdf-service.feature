@@ -10,7 +10,7 @@ Feature: PDF service
     And the user views the link of "Get support" under Support
 
   @TEST_CS-1461 @REQ_CS-1360 @REQ_CS-1361 @REQ_CS-1736 @regression
-  Scenario: Test As a tenant admin, I can edit and preview PDF templates, so that I can define the output PDF.
+  Scenario: As a tenant admin, I can add, edit, preview and delete a PDF template
     Given a tenant admin user is on PDF service overview page
     # Add a PDF template
     When the user clicks Add template button
