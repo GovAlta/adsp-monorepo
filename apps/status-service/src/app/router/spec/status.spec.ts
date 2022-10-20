@@ -17,8 +17,10 @@ import * as eventFuncs from '../../events';
 import { DomainEvent } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { adspId } from '@abgov/adsp-service-sdk';
+import axios from 'axios';
 
 jest.mock('axios');
+const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('Service router', () => {
   afterEach(() => {
@@ -26,6 +28,7 @@ describe('Service router', () => {
   });
 
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+  const serviceId = adspId`urn:ads:platform:status-service`;
 
   const loggerMock = {
     debug: jest.fn(),
@@ -68,6 +71,7 @@ describe('Service router', () => {
   const bobsStatusId = '624365fe3367d200110e17c5';
   const bobsApplicationStatus = {
     _id: bobsStatusId,
+    appKey: 'test-mock',
     tenantId: tenantId.toString(),
     metadata: '',
     enabled: 'false',
@@ -82,6 +86,7 @@ describe('Service router', () => {
   const myStatusId = '620ae946ddd181001195caad';
   const myApplicationStatus = {
     _id: myStatusId,
+    appKey: 'myapp-1',
     tenantId: tenantId.toString(),
     metadata: '',
     enabled: true,
@@ -135,13 +140,15 @@ describe('Service router', () => {
 
   const configurationMock = {
     [myStatusId]: {
-      _id: bobsStatusId,
+      _id: myStatusId,
+      appKey: 'myapp-1',
       name: 'MyApp 1',
       url: 'http://localhost',
       description: 'MyApp',
     },
     [bobsStatusId]: {
       _id: bobsStatusId,
+      appKey: 'test-mock',
       name: 'test-mock',
       url: 'http://www.yahoo.com',
       description: '',
@@ -204,6 +211,7 @@ describe('Service router', () => {
         endpointStatusEntryRepository: endpointRepositoryMock,
         tokenProvider: tokenProviderMock,
         directory: serviceDirectoryMock,
+        serviceId: serviceId,
       });
 
       expect(publicRouter).toBeTruthy();
@@ -234,8 +242,13 @@ describe('Service router', () => {
         },
       ];
 
-      const getApplicationsHandler = getApplications(loggerMock, statusRepositoryMock);
-      const getConfigurationMock = jest.fn();
+      const getApplicationsHandler = getApplications(
+        serviceDirectoryMock,
+        tokenProviderMock,
+        loggerMock,
+        serviceId,
+        statusRepositoryMock
+      );
       expect(getApplicationsHandler).toBeTruthy();
       const req: Request = {
         user: {
@@ -243,12 +256,12 @@ describe('Service router', () => {
           id: 'test',
           roles: ['test-updater'],
         },
-        getConfiguration: getConfigurationMock,
         params: {},
       } as unknown as Request;
 
       statusRepositoryMock.find.mockResolvedValueOnce(applicationStatusMock);
-      getConfigurationMock.mockReturnValueOnce(configurationMock);
+      serviceDirectoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://localhost'));
+      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
       await getApplicationsHandler(req, resMock as unknown as Response, nextMock);
 
       expect(resMock.json).toHaveBeenCalledWith(expect.arrayContaining(returnMock));

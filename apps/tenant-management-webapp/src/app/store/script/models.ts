@@ -11,7 +11,7 @@ export interface ScriptItem {
 export interface ScriptService {
   scripts: Record<string, ScriptItem>;
   indicator?: Indicator;
-  scriptResponse?: string[];
+  scriptResponse?: ScriptResponse[];
 }
 export const defaultScript: ScriptItem = {
   name: '',
@@ -31,4 +31,9 @@ export const SCRIPT_INIT: ScriptService = {
 };
 export interface Indicator {
   details?: Record<string, ActionState>;
+}
+export interface ScriptResponse {
+  timeToRun?: string;
+  inputs?: Record<string, any>;
+  result: string;
 }

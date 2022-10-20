@@ -8,6 +8,15 @@ import org.springframework.context.annotation.Configuration;
 
 import ca.ab.gov.alberta.adsp.sdk.AdspConfiguration;
 
+/**
+ * <p>
+ * Configuration support for ADSP metadata
+ * </p>
+ *
+ * <p>
+ * Extend and override customize or configure to change configuration.
+ * </p>
+ */
 @Configuration
 @ConditionalOnBean(AdspConfiguration.class)
 public class AdspMetadataSupport {

@@ -1,14 +1,20 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
-import { ScriptEditorContainer, EditTemplateActions, MonacoDivBody } from '../styled-components';
+import {
+  ScriptEditorContainer,
+  EditScriptActions,
+  MonacoDivBody,
+  EditModalStyle,
+  ScriptPane,
+} from '../styled-components';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import MonacoEditor, { EditorProps } from '@monaco-editor/react';
 import { SaveFormModal } from '@components/saveModal';
 import { ScriptItem } from '@store/script/models';
 import { SaveAndExecuteScript, ClearScripts } from '@store/script/actions';
-import { GoAButton, GoAElementLoader } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import styled from 'styled-components';
+import DataTable from '@components/DataTable';
 
 interface ScriptEditorProps {
   editorConfig?: EditorProps;
@@ -45,10 +51,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   const dispatch = useDispatch();
   const [saveModal, setSaveModal] = useState(false);
 
-  const loadingIndicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
-
   const resetSavedAction = () => {
     onNameChange(selectedScript?.name || '');
     onDescriptionChange(selectedScript?.description || '');
@@ -78,15 +80,16 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     selectedScript.testInputs = testInput.length > 0 ? { inputs: JSON.parse(testInput) } : {};
     return selectedScript;
   };
-
+  const hasChanged = () => {
+    return (
+      selectedScript.name !== name || selectedScript.description !== description || selectedScript.script !== scriptStr
+    );
+  };
   return (
     <EditModalStyle>
       <ScriptEditorContainer>
         <GoAForm>
           <GoAFormItem error={errors?.['name']}>
-            <h3 className="reduce-margin" data-testid="modal-title">
-              {`Edit script ${name}`}
-            </h3>
             <label>Name</label>
             <GoAInput
               type="text"
@@ -94,26 +97,27 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               value={name}
               data-testid={`script-modal-name-input`}
               aria-label="script-name"
-              onChange={(name, value) => {
-                onNameChange(value);
+              onChange={(key, value) => {
+                const name = value.substring(0, 32);
+                onNameChange(name);
               }}
             />
           </GoAFormItem>
           <GoAFormItem error={errors?.['description']}>
             <label>Description</label>
-            <GoAInput
-              type="text"
+            <textarea
               name="description"
               value={description}
               data-testid={`script-modal-description-input`}
               aria-label="script-description"
-              onChange={(name, value) => {
-                onDescriptionChange(value);
+              maxLength={512}
+              onChange={(e) => {
+                onDescriptionChange(e.target.value);
               }}
             />
           </GoAFormItem>
           <GoAFormItem>
-            <label>Lua Script</label>
+            <label>Lua script</label>
             <MonacoDivBody data-testid="templated-editor-body">
               <MonacoEditor
                 language={'lua'}
@@ -125,14 +129,10 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               />
             </MonacoDivBody>
           </GoAFormItem>
-          <EditTemplateActions>
+          <EditScriptActions>
             <GoAButton
               onClick={() => {
-                if (
-                  selectedScript.name !== name ||
-                  selectedScript.description !== description ||
-                  selectedScript.script !== scriptStr
-                ) {
+                if (hasChanged()) {
                   setSaveModal(true);
                 } else {
                   onEditorCancel();
@@ -155,11 +155,11 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               buttonType="primary"
               data-testid="template-form-save"
               type="submit"
-              disabled={Object.keys(errors).length > 0}
+              disabled={Object.keys(errors).length > 0 || !hasChanged()}
             >
               Save
             </GoAButton>
-          </EditTemplateActions>
+          </EditScriptActions>
         </GoAForm>
         {/* Form */}
         <SaveFormModal
@@ -180,46 +180,17 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             setSaveModal(false);
           }}
         />
-      </ScriptEditorContainer>
-      <div className="half-width">
+
         <ScriptPane>
           <div className="flex-column">
             <div className="flex-one">
               <GoAFormItem error={errors?.['payloadSchema']}>
                 <div className="flex">
                   <label className="mt-2">Test input</label>
-
-                  <div className="execute-button">
-                    <GoAButton
-                      onClick={() => {
-                        saveAndExecute();
-                      }}
-                      buttonType="primary"
-                      disabled={errors?.['payloadSchema']}
-                      data-testid="template-form-save"
-                      type="submit"
-                    >
-                      <div className="flex">
-                        <div className="pt-1">Save and Execute</div>
-                        {loadingIndicator.show ? (
-                          <SpinnerPadding>
-                            <GoAElementLoader
-                              visible={true}
-                              size="default"
-                              baseColour="#c8eef9"
-                              spinnerColour="#0070c4"
-                            />
-                          </SpinnerPadding>
-                        ) : (
-                          <ReplacePadding />
-                        )}
-                      </div>
-                    </GoAButton>
-                  </div>
                 </div>
                 <MonacoDivBody data-testid="templated-editor-test">
                   <MonacoEditor
-                    language="json"
+                    language={'json'}
                     value={testInput}
                     {...editorConfig}
                     onChange={(value) => {
@@ -229,84 +200,49 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 </MonacoDivBody>
               </GoAFormItem>
             </div>
+            <div className="execute-button">
+              <GoAButton
+                onClick={() => {
+                  saveAndExecute();
+                }}
+                buttonType="secondary"
+                disabled={errors?.['payloadSchema']}
+                data-testid="template-form-save"
+                type="submit"
+              >
+                <div className="flex">
+                  <div className="pt-1">Execute</div>
+                </div>
+              </GoAButton>
+            </div>
             <div className="flex-one full-height">
-              <h4>Script Response</h4>
-              <div className="script-response">
-                {scriptResponse && scriptResponse.map((response) => <div>{JSON.stringify(response)}</div>)}
-              </div>
+              {scriptResponse && (
+                <>
+                  <label className="responseLabel">Script response</label>
+                  <DataTable id="response-information">
+                    <thead>
+                      <tr>
+                        <th data-testid="response-header-time-to-run">Time to run</th>
+                        <th data-testid="response-header-input">Input</th>
+                        <th data-testid="response-header-result">Result</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {scriptResponse.map((response) => (
+                        <tr>
+                          <td data-testid="response-time-to-run">{response.timeToRun}</td>
+                          <td data-testid="response-inputs">{JSON.stringify(response.inputs)}</td>
+                          <td data-testid="response-result">{response.result}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </DataTable>
+                </>
+              )}
             </div>
           </div>
         </ScriptPane>
-      </div>
+      </ScriptEditorContainer>
     </EditModalStyle>
   );
 };
-
-const EditModalStyle = styled.div`
-  width: 100%;
-  display: fl ex;
-
-  .half-width {
-    width: 50%;
-    display: flex;
-  }
-
-  .flex-column {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .flex-one {
-    flex: 1;
-  }
-
-  .full-height {
-    height: 100%;
-  }
-
-  .flex {
-    display: flex;
-  }
-
-  .mt-2 {
-    padding-top: 10px;
-  }
-
-  .execute-button {
-    margin: 0 10px 10px 10px;
-  }
-
-  .pt-1 {
-    padding-top: 2px;
-  }
-`;
-
-const SpinnerPadding = styled.div`
-  float: right;
-  padding: 3px 0 0 4px;
-`;
-
-const ScriptPane = styled.div`
-  height: 100%;
-  width: 100%;
-  background: #f3f3f3;
-  white-space: pre-wrap;
-  font-family: monospace;
-  font-size: 12px;
-  line-height: 16px;
-  padding: 24px;
-  margin-bottom: 1rem;
-  overflow: auto;
-
-  .script-response {
-    background: white;
-    padding: 10px;
-    border: 1px solid black;
-    height: 30vh;
-    overflow-y: auto;
-  }
-`;
-
-const ReplacePadding = styled.div`
-  padding: 12px 11px 11px 11px;
-`;

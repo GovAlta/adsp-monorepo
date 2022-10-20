@@ -29,6 +29,12 @@ public abstract class ConfigurationDefinition<T> {
     this.configurationSchema = configurationSchema;
   }
 
+  /**
+   * Create an instance of configuration definition.
+   *
+   * @param description Description of what the configuration contains and is used
+   *                    for.
+   */
   @SuppressWarnings("unchecked")
   public ConfigurationDefinition(String description) {
 

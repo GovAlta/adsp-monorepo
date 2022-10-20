@@ -1,5 +1,4 @@
 import { adspId } from '@abgov/adsp-service-sdk';
-import { NotFoundError } from '@core-services/core-common';
 import { RedisClient } from 'redis';
 import { FileResult } from './pdf';
 import { RedisJobRepository } from './redis';
@@ -74,9 +73,10 @@ describe('RedisJobRepository', () => {
       expect(job.status).toBe('completed');
     });
 
-    it('can reject for not found job', async () => {
+    it('can return null for not found job', async () => {
       redisClient.get.mockImplementationOnce((_key, cb) => cb(null, null));
-      await expect(() => repository.update('job1', 'completed', {} as FileResult)).rejects.toThrow(NotFoundError);
+      const result = await repository.update('job1', 'completed', {} as FileResult);
+      expect(result).toBeFalsy();
     });
 
     it('can reject for redis err', async () => {

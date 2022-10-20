@@ -4,10 +4,7 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
 
-import ca.ab.gov.alberta.adsp.sdk.AdspRequestContextHolder;
 import reactor.core.publisher.Mono;
 
 class AccessJwtAuthenticationConverter implements Converter<AbstractAuthenticationToken, AbstractAuthenticationToken> {
@@ -28,12 +25,7 @@ class AccessJwtAuthenticationConverter implements Converter<AbstractAuthenticati
     var name = token.getClaimAsString("preferred_username");
 
     var user = new AdspUser(this.issuer, id, name, email, target);
-    var attributes = RequestContextHolder.getRequestAttributes();
-    if (attributes != null) {
-      attributes.setAttribute(AdspRequestContextHolder.USER_REQUEST_ATTRIBUTE, user, RequestAttributes.SCOPE_REQUEST);
-    }
-
-    return target;
+    return new AccessJwtAuthenticationToken((JwtAuthenticationToken) source, user);
   }
 
   public Reactive asReactive() {

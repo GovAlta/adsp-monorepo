@@ -19,13 +19,13 @@ jobs:
     outputs:
       affected_apps: ${{ steps.get-affected.outputs.affected_apps }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 16
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
@@ -42,7 +42,7 @@ jobs:
       - name: Get affected apps
         id: get-affected
         shell: bash
-        run: echo "::set-output name=affected_apps::$(npx nx affected:apps --plain --base=${{ steps.last_successful_commit.outputs.commit_hash }})"
+        run: echo "affected_apps=$(npx nx affected:apps --plain --base=${{ steps.last_successful_commit.outputs.commit_hash }})" >> $GITHUB_OUTPUT
 
   stagingRegression:
     runs-on: ubuntu-20.04
@@ -54,11 +54,11 @@ jobs:
       matrix:
         app: [tenant-management-webapp, status-app, subscriber-app]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: 16
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
@@ -84,7 +84,7 @@ jobs:
     environment:
       name: Production
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Oc login
         uses: redhat-actions/oc-login@v1
         with:
@@ -123,11 +123,11 @@ jobs:
       matrix:
         app: [tenant-management-webapp, status-app, subscriber-app]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: 16
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}

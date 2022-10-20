@@ -7,6 +7,6 @@ export interface FileRepository {
   find(tenantId: AdspId, top: number, after: string, criteria: FileCriteria): Promise<Results<FileEntity>>;
   get(id: string): Promise<FileEntity>;
 
-  save(entity: FileEntity): Promise<FileEntity>;
+  save(entity: FileEntity, update?: Partial<FileEntity>): Promise<FileEntity>;
   delete(entity: FileEntity): Promise<boolean>;
 }

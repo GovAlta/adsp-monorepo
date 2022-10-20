@@ -33,13 +33,20 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
   const [bodyPreview, setBodyPreview] = useState('');
   const [headerPreview, setHeaderPreview] = useState('');
   const [footerPreview, setFooterPreview] = useState('');
-  const [currentChannel, setCurrentChannel] = useState('main');
+  const [currentChannel, setCurrentChannel] = useState('footer/header');
   const XSS_CHECK_RENDER_DEBOUNCE_TIMER = 2000; // ms
   const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const pdfTemplates = useSelector((state: RootState) => {
-    return state?.pdf?.pdfTemplates;
+    return Object.entries(state?.pdf?.pdfTemplates)
+      .sort((template1, template2) => {
+        return template1[1].name.localeCompare(template2[1].name);
+      })
+      .reduce((tempObj, [pdfTemplateId, pdfTemplateData]) => {
+        tempObj[pdfTemplateId] = pdfTemplateData;
+        return tempObj;
+      }, {});
   });
 
   const [currentTemplate, setCurrentTemplate] = useState(defaultPdfTemplate);
@@ -105,13 +112,6 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     }
     return [];
   };
-
-  useEffect(() => {
-    if (pdfTemplates) {
-      const x = Object.keys(pdfTemplates)[0];
-      setCurrentTemplate(pdfTemplates[x]);
-    }
-  }, [pdfTemplates]);
 
   useEffect(() => {
     try {
@@ -277,9 +277,9 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
           <PdfTemplatesTable
             templates={pdfTemplates}
             edit={(currentTemplate) => {
-              setShowTemplateForm(true);
               setCurrentTemplate(currentTemplate);
               setCurrentSavedTemplate(Object.assign({}, currentTemplate));
+              setShowTemplateForm(true);
             }}
             onDelete={(currentTemplate) => {
               setShowDeleteConfirmation(true);
@@ -292,7 +292,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
           <DeleteModal
             isOpen={showDeleteConfirmation}
             title="Delete PDF template"
-            content={`Delete ${currentTemplate?.id}?`}
+            content={`Delete ${currentTemplate?.name} (ID: ${currentTemplate?.id})?`}
             onCancel={() => setShowDeleteConfirmation(false)}
             onDelete={() => {
               setShowDeleteConfirmation(false);

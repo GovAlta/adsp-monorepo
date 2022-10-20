@@ -57,10 +57,11 @@ function Tabs(props: TabsProps): JSX.Element {
 
 interface TabProps {
   label: ReactNode;
+  testId?: string;
 }
 
 function Tab(props: TabProps & { children: ReactNode }): JSX.Element {
-  return <TabContent>{props.children}</TabContent>;
+  return <TabContent data-testid={`${props.testId}`}>{props.children}</TabContent>;
 }
 
 export { Tabs, Tab };

@@ -5,6 +5,16 @@ import java.util.List;
 
 import ca.ab.gov.alberta.adsp.sdk.events.DomainEventDefinition;
 
+/**
+ * <p>
+ * Registrations for the service
+ * </p>
+ *
+ * <p>
+ * Registration configures platform capabilities with service defined elements
+ * such as domain events and configuration schema.
+ * </p>
+ */
 @SuppressWarnings("rawtypes")
 public class ServiceRegistration {
   private final ConfigurationDefinition configuration;
@@ -29,6 +39,11 @@ public class ServiceRegistration {
     this.events = builder.getEvents();
   }
 
+  /**
+   * Initialize a builder for ServiceRegistration.
+   *
+   * @return Builder for ServiceRegistration
+   */
   public static Builder builder() {
     return new Builder();
   }
@@ -42,6 +57,13 @@ public class ServiceRegistration {
       return configuration;
     }
 
+    /**
+     * Set the configuration definition to register
+     *
+     * @param <T>           Type of configuration object
+     * @param configuration Configuration definition to register
+     * @return Builder
+     */
     public <T> Builder withConfiguration(ConfigurationDefinition<T> configuration) {
       this.configuration = configuration;
       return this;
@@ -51,6 +73,12 @@ public class ServiceRegistration {
       return roles;
     }
 
+    /**
+     * Set the service role to register
+     *
+     * @param roles Service roles to register
+     * @return Builder
+     */
     public Builder withRoles(ServiceRole... roles) {
       this.roles = Arrays.asList(roles);
       return this;
@@ -60,6 +88,12 @@ public class ServiceRegistration {
       return events;
     }
 
+    /**
+     * Set the domain event definitions to register
+     *
+     * @param events Domain event definitions to register
+     * @return Builder
+     */
     public Builder withEvents(DomainEventDefinition... events) {
       this.events = Arrays.asList(events);
       return this;
@@ -68,6 +102,11 @@ public class ServiceRegistration {
     private Builder() {
     }
 
+    /**
+     * Build service registration
+     * 
+     * @return ServiceRegistration
+     */
     public ServiceRegistration build() {
       return new ServiceRegistration(this);
     }
