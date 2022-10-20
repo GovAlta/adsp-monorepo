@@ -17,6 +17,7 @@ import {
   isNotEmptyCheck,
   Validator,
   isValidJSONCheck,
+  wordMaxLengthCheck,
 } from '@lib/checkInput';
 import { useValidators } from '@lib/useValidators';
 import { updateEventDefinition } from '@store/event/actions';
@@ -48,6 +49,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
   const forbiddenWords = coreNamespaces.concat('platform');
   const checkForConflicts = wordCheck(forbiddenWords);
   const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
+  const wordLengthCheck = wordMaxLengthCheck(32);
 
   const duplicateEventCheck = (definitions: EventDefinition[]): Validator => {
     return (identifier: string) => {
@@ -68,9 +70,10 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
     'namespace',
     checkForConflicts,
     checkForBadChars,
+    wordLengthCheck,
     isNotEmptyCheck('namespace')
   )
-    .add('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
+    .add('name', 'name', checkForBadChars, wordLengthCheck, isNotEmptyCheck('name'))
     .add('duplicated', 'name', duplicateEventCheck(definitions))
     .add('payloadSchema', 'payloadSchema', isValidJSONCheck('payloadSchema'))
     .build();
@@ -122,6 +125,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
                 value={definition.description}
                 aria-label="description"
                 className="goa-textarea"
+                maxLength={512}
                 onChange={(e) => setDefinition({ ...definition, description: e.target.value })}
               />
             </GoAFormItem>
