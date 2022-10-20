@@ -1,4 +1,5 @@
-import { AdspId, ConfigurationService, TokenProvider } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, ConfigurationService, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
+import axios from 'axios';
 import { Logger } from 'winston';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { ApplicationList } from './ApplicationList';
@@ -14,17 +15,22 @@ export class ApplicationManager {
   #configurationFinder: ConfigurationFinder;
   #repository: ServiceStatusRepository;
   #logger: Logger;
+  #tokenProvider: TokenProvider;
+  #directory: ServiceDirectory;
 
   constructor(
     tokenProvider: TokenProvider,
     service: ConfigurationService,
     serviceId: AdspId,
     repository: ServiceStatusRepository,
+    directory: ServiceDirectory,
     logger: Logger
   ) {
     this.#configurationFinder = this.#getConfigurationFinder(tokenProvider, service, serviceId);
     this.#repository = repository;
     this.#logger = logger;
+    this.#tokenProvider = tokenProvider;
+    this.#directory = directory;
   }
 
   getActiveApps = async () => {
@@ -97,5 +103,26 @@ export class ApplicationManager {
       }
     });
     return appData;
+  };
+
+  /**
+   * This is only here because there is some orphaned status configuration
+   * data due to development, testing and bad planning.  So get rid of them.
+   * Once all the orphans have been removed the call, and this method, can
+   * be deleted.  Ideally it only needs to be run once.  Oct 17, 2022.
+   * @param logger - its a logger.
+   */
+  synchronizeData = async (logger: Logger) => {
+    const statuses = await this.#repository.find({});
+    const tenants = await this.#getActiveTenants(statuses);
+    const apps = await this.#getConfigurations(tenants);
+    // Remove application statuses that have no corresponding configurations.
+    statuses.forEach(async (a) => {
+      if (!apps[a._id]) {
+        logger.info(`##########  Deleting orphaned application status for app ${a.appKey} in ${a.tenantName} tenant`);
+        logger.info('toot!');
+        await this.#repository.delete(a);
+      }
+    });
   };
 }

@@ -24,6 +24,11 @@ describe('JobScheduler', () => {
     getConfiguration: jest.fn(),
   };
 
+  const directoryServiceMock = {
+    getServiceUrl: jest.fn(),
+    getResourceUrl: jest.fn(),
+  };
+
   const statusMock: ServiceStatusApplicationEntity[] = [
     {
       _id: '620ae946ddd181001195caad',
@@ -55,6 +60,7 @@ describe('JobScheduler', () => {
       configurationServiceMock,
       adspId`${service}`,
       statusRepoMock,
+      directoryServiceMock,
       loggerMock
     );
   };
