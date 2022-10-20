@@ -120,8 +120,7 @@ export class ApplicationManager {
     statuses.forEach(async (a) => {
       if (!apps[a._id]) {
         logger.info(`##########  Deleting orphaned application status for app ${a.appKey} in ${a.tenantName} tenant`);
-        logger.info('toot!');
-        await this.#repository.delete(a);
+        //        await this.#repository.delete(a);
       }
     });
   };
