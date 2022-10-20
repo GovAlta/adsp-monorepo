@@ -100,6 +100,16 @@ export const isValidJSONCheck = (label?: string): Validator => {
   };
 };
 
+export const wordMaxLengthCheck = (maxLen: number): Validator => {
+  return (input: string) => {
+    if (input && input.length > maxLen) {
+      return `The input exceeds the maximum allowed length ${maxLen}`;
+    } else {
+      return '';
+    }
+  };
+};
+
 export interface ValidationAction {
   // Action to take when a problem is detected
   onFailure(message: string): void;

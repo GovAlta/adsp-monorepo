@@ -97,21 +97,22 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               value={name}
               data-testid={`script-modal-name-input`}
               aria-label="script-name"
-              onChange={(name, value) => {
-                onNameChange(value);
+              onChange={(key, value) => {
+                const name = value.substring(0, 32);
+                onNameChange(name);
               }}
             />
           </GoAFormItem>
           <GoAFormItem error={errors?.['description']}>
             <label>Description</label>
-            <GoAInput
-              type="text"
+            <textarea
               name="description"
               value={description}
               data-testid={`script-modal-description-input`}
               aria-label="script-description"
-              onChange={(name, value) => {
-                onDescriptionChange(value);
+              maxLength={512}
+              onChange={(e) => {
+                onDescriptionChange(e.target.value);
               }}
             />
           </GoAFormItem>
