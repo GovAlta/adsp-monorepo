@@ -24,6 +24,13 @@ describe('JobScheduler', () => {
     getConfiguration: jest.fn(),
   };
 
+  const tenantServiceMock = {
+    getTenants: jest.fn(),
+    getTenantByName: jest.fn(),
+    getTenant: jest.fn(),
+    getTenantByRealm: jest.fn(),
+  };
+
   const directoryServiceMock = {
     getServiceUrl: jest.fn(),
     getResourceUrl: jest.fn(),
@@ -61,6 +68,7 @@ describe('JobScheduler', () => {
       adspId`${service}`,
       statusRepoMock,
       directoryServiceMock,
+      tenantServiceMock,
       loggerMock
     );
   };

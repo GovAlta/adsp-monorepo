@@ -77,7 +77,22 @@ export const getApplications = (
       res.json(
         applications.map((app) => {
           const status = statuses.find((s) => {
-            return s._id == app._id;
+            if (!s?._id) {
+              logger.error(`Application status for ${app?.name} has no ID`);
+              return false;
+            }
+            if (!app?._id) {
+              logger.error(`Application ${app?.name} has no ID`);
+              return false;
+            }
+            if (!s?.appKey) {
+              logger.error(`Application status for ${app?.name} has no key`);
+            }
+            if (!app?.appKey) {
+              logger.error(`Application ${app?.name} has no key`);
+            }
+            // FIXME do test on appKey
+            return s?._id == app?._id;
           });
           return mergeApplicationData(app, status);
         })
@@ -189,7 +204,7 @@ export const createNewApplication =
 // create a unique key that can be used to access the application
 // status.  This algorithm assumes that the application name
 // will be unique within a tenant context.
-const getApplicationKey = (tenantName: string, appName: string): string => {
+export const getApplicationKey = (tenantName: string, appName: string): string => {
   return `${toKebabCase(tenantName)}-${toKebabCase(appName)}`;
 };
 
