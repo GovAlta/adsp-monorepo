@@ -26,7 +26,7 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
   // to ensure it dosent re-calculate this value if value dosent change
   const memoizedSortedConfiguration = useMemo(() => {
     return Object.keys(definitions)
-      .sort()
+      .sort((a, b) => a.localeCompare(b))
       .reduce((obj, key) => {
         obj[key] = definitions[key];
         const nameSpace = key.split(':')[0];
