@@ -33,6 +33,13 @@ const directoryServiceMock = {
   getResourceUrl: jest.fn(),
 };
 
+const tenantServiceMock = {
+  getTenants: jest.fn(),
+  getTenantByName: jest.fn(),
+  getTenant: jest.fn(),
+  getTenantByRealm: jest.fn(),
+};
+
 const statusMock = [
   {
     _id: '620ae946ddd181001195caad',
@@ -99,6 +106,7 @@ describe('Application Manager', () => {
       adspId`${service}`,
       repositoryMock,
       directoryServiceMock,
+      tenantServiceMock,
       loggerMock
     );
   };

@@ -1,13 +1,22 @@
-import { adspId, AdspId, ConfigurationService, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
-import axios from 'axios';
+import {
+  AdspId,
+  ConfigurationService,
+  ServiceDirectory,
+  Tenant,
+  TenantService,
+  TokenProvider,
+} from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
+import { getApplicationKey, updateConfiguration } from '../router/serviceStatus';
+import { ServiceStatusApplication } from '../types';
 import { ApplicationList } from './ApplicationList';
 import ServiceStatusApplicationEntity, {
   ApplicationData,
   StaticApplicationData,
   StatusServiceConfiguration,
 } from './serviceStatus';
+import { StatusApplications } from './statusApplications';
 
 type ConfigurationFinder = (tenantId: AdspId) => Promise<StatusServiceConfiguration>;
 
@@ -17,6 +26,7 @@ export class ApplicationManager {
   #logger: Logger;
   #tokenProvider: TokenProvider;
   #directory: ServiceDirectory;
+  #tenantService: TenantService;
 
   constructor(
     tokenProvider: TokenProvider,
@@ -24,6 +34,7 @@ export class ApplicationManager {
     serviceId: AdspId,
     repository: ServiceStatusRepository,
     directory: ServiceDirectory,
+    tenantService: TenantService,
     logger: Logger
   ) {
     this.#configurationFinder = this.#getConfigurationFinder(tokenProvider, service, serviceId);
@@ -31,6 +42,7 @@ export class ApplicationManager {
     this.#logger = logger;
     this.#tokenProvider = tokenProvider;
     this.#directory = directory;
+    this.#tenantService = tenantService;
   }
 
   getActiveApps = async () => {
@@ -106,22 +118,61 @@ export class ApplicationManager {
   };
 
   /**
-   * This is only here because there is some orphaned status configuration
-   * data due to development, testing and bad planning.  So get rid of them.
-   * Once all the orphans have been removed the call, and this method, can
-   * be deleted.  Ideally it only needs to be run once.  Oct 17, 2022.
+   * This is here to convert status data to a new form.
+   * Ideally it only needs to be run once.  Oct 17, 2022.
    * @param logger - its a logger.
    */
   synchronizeData = async (logger: Logger) => {
     const statuses = await this.#repository.find({});
-    const tenants = await this.#getActiveTenants(statuses);
-    const apps = await this.#getConfigurations(tenants);
-    // Remove application statuses that have no corresponding configurations.
-    statuses.forEach(async (a) => {
-      if (!apps[a._id]) {
-        logger.info(`##########  Deleting orphaned application status for app ${a.appKey} in ${a.tenantName} tenant`);
-        //        await this.#repository.delete(a);
-      }
+    const tenants = await this.#tenantService.getTenants();
+    tenants.forEach(async (tenant: Tenant) => {
+      const config: StatusServiceConfiguration = await this.#configurationFinder(tenant.id);
+      const apps = new StatusApplications(config);
+      const ids = Object.keys(config);
+      ids.forEach((_id) => {
+        const app = apps.get(_id);
+        // some keys are not apps
+        if (app) {
+          const appKey = getApplicationKey(tenant.name, app.name);
+
+          const status = statuses.find((s) => s?._id == _id);
+          if (!status) {
+            // Recover from disaster and add back a new, default, status
+            const newStatus = new ServiceStatusApplicationEntity(
+              this.#repository,
+              getDefaultStatus(_id, appKey, tenant)
+            );
+            this.#repository.save(newStatus);
+            logger.info(`################# Adding status to ${app.name}`);
+          } else if (!status.appKey) {
+            // Add the appKey to the status
+            status.appKey = appKey;
+            this.#repository.save(status);
+            logger.info(`################# Adding status appKey ${app.name}`);
+          }
+          if (!app.appKey) {
+            // Add application key to old apps
+            app.appKey = getApplicationKey(tenant.name, app.name);
+            logger.info(`################# Adding app appKey ${app.name}`);
+            updateConfiguration(this.#directory, this.#tokenProvider, tenant.id, app._id, app);
+          }
+        }
+      });
     });
   };
 }
+
+const getDefaultStatus = (_id: string, appKey: string, tenant: Tenant): ServiceStatusApplication => {
+  return {
+    _id: _id,
+    appKey: appKey,
+    endpoint: { status: 'offline' },
+    metadata: '',
+    statusTimestamp: 0,
+    tenantId: tenant.id.toString(),
+    tenantName: tenant.name,
+    tenantRealm: tenant.realm,
+    status: 'operational',
+    enabled: false,
+  };
+};
