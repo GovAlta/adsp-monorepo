@@ -13,6 +13,7 @@ export interface ServiceStatusApplication {
   tenantId: string;
   tenantName: string;
   tenantRealm: string;
+  appKey: string;
   name: string;
   description: string;
   metadata?: unknown;

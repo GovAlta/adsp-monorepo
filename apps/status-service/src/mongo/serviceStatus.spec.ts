@@ -50,6 +50,7 @@ describe('Service status mongo repository', () => {
         tenantId: '99',
         tenantName: 'Child Services',
         tenantRealm: '123123-123123-123123-123123',
+        appKey: 'test-mock-app-0',
         endpoint: {
           status: null,
         },
@@ -59,6 +60,7 @@ describe('Service status mongo repository', () => {
         tenantId: '99',
         tenantName: 'Child Services',
         tenantRealm: '123123-123123-123123-123123',
+        appKey: 'test-mock-app-0',
         endpoint: {
           status: null,
         },
@@ -80,12 +82,14 @@ describe('Service status mongo repository', () => {
         tenantId: '99',
         tenantName: 'Child Services',
         tenantRealm: '123123-123123-123123-123123',
+        appKey: 'mock-test-app-0',
       },
       {
         status: 'operational',
         tenantId: '99',
         tenantName: 'Child Services',
         tenantRealm: '123123-123123-123123-123123',
+        appKey: 'mock-test-app-1',
       },
     ]);
     await repo.disable(applications[0]);

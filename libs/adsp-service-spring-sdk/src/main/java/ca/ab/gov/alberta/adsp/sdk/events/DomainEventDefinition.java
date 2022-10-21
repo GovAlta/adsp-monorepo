@@ -6,6 +6,9 @@ import org.springframework.util.Assert;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+/**
+ * Definition of a domain event
+ */
 public abstract class DomainEventDefinition<T> {
   @JsonIgnore
   private final Class<T> payloadClass;
@@ -34,6 +37,12 @@ public abstract class DomainEventDefinition<T> {
     this.payloadSchema = payloadSchema;
   }
 
+  /**
+   * Create an instance of domain event definition.
+   * 
+   * @param name        Name of the event definition
+   * @param description Description of the event definition
+   */
   @SuppressWarnings("unchecked")
   protected DomainEventDefinition(String name, String description) {
     Assert.hasLength(name, "name cannot be null or empty.");

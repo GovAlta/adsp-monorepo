@@ -24,19 +24,34 @@ describe('JobScheduler', () => {
     getConfiguration: jest.fn(),
   };
 
+  const tenantServiceMock = {
+    getTenants: jest.fn(),
+    getTenantByName: jest.fn(),
+    getTenant: jest.fn(),
+    getTenantByRealm: jest.fn(),
+  };
+
+  const directoryServiceMock = {
+    getServiceUrl: jest.fn(),
+    getResourceUrl: jest.fn(),
+  };
+
   const statusMock: ServiceStatusApplicationEntity[] = [
     {
       _id: '620ae946ddd181001195caad',
+      appKey: 'apps-mock-key-0',
       tenantId: 'urn:ads:mock-tenant:mock-service:bob:bobs-id',
       endpoint: { url: 'https://www.yahoo.com' },
     },
     {
       _id: '620ae946ddd181001195cbbc',
+      appKey: 'apps-mock-key-0',
       tenantId: 'urn:ads:mock-tenant:mock-service:bob:bobs-id',
       endpoint: { url: 'https://www.google.com' },
     },
     {
       _id: '620ae946eee181001195ca3d',
+      appKey: 'apps-mock-key-0',
       tenantId: 'urn:ads:mock-tenant:mock-service:bob:bobs-id',
       endpoint: { url: 'https://www.boogie.com' },
     },
@@ -52,6 +67,8 @@ describe('JobScheduler', () => {
       configurationServiceMock,
       adspId`${service}`,
       statusRepoMock,
+      directoryServiceMock,
+      tenantServiceMock,
       loggerMock
     );
   };
@@ -60,6 +77,7 @@ describe('JobScheduler', () => {
     {
       [statusMock[0]._id]: {
         _id: statusMock[0]._id,
+        appKey: statusMock[0].appKey,
         name: 'MyApp 1',
         url: 'https://www.yahoo.com',
         description: 'MyApp goes to Hollywood',
@@ -68,6 +86,7 @@ describe('JobScheduler', () => {
     {
       [statusMock[1]._id]: {
         _id: statusMock[1]._id,
+        appKey: statusMock[1].appKey,
         name: 'MyApp 2',
         url: 'https://www.google.com',
         description: 'MyApp - the sequel',
@@ -76,6 +95,7 @@ describe('JobScheduler', () => {
     {
       [statusMock[2]._id]: {
         _id: statusMock[2]._id,
+        appKey: statusMock[2].appKey,
         name: 'MyApp 3',
         url: 'https://www.boogie.com',
         description: 'MyApp - Going back in time',

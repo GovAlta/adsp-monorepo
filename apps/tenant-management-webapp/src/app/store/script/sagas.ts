@@ -29,10 +29,13 @@ import {
 } from './actions';
 import { ActionState } from '@store/session/models';
 import { UpdateIndicator as UpdateIndicatorSession } from '@store/session/actions';
+import { ScriptResponse } from './models';
 
 const call: any = Effects.call;
 
 export function* updateScript({ payload, executeOnCompletion }: UpdateScriptAction): SagaIterator {
+  const testInputs = payload['testInputs'] ? payload['testInputs'] : {};
+  delete payload['testInputs'];
   const script = { [payload.id]: { ...payload } };
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
@@ -55,6 +58,7 @@ export function* updateScript({ payload, executeOnCompletion }: UpdateScriptActi
         }
       );
       if (executeOnCompletion) {
+        payload['testInputs'] = testInputs;
         yield put(ExecuteScript(payload));
       } else {
         yield put(
@@ -122,10 +126,9 @@ export function* runScript(action: RunScriptAction): SagaIterator {
 export function* executeScript(action: RunScriptAction): SagaIterator {
   const scriptUrl: string = yield select((state: RootState) => state.config.serviceUrls?.scriptServiceApiUrl);
   const token: string = yield call(getAccessToken);
+  const { testInputs, ...script } = action.payload;
   if (scriptUrl && token) {
     try {
-      const { testInputs, ...script } = action.payload;
-
       const response = yield call(
         axios.post,
         `${scriptUrl}/script/v1/scripts/${script?.id}?clearCache=true`,
@@ -134,8 +137,12 @@ export function* executeScript(action: RunScriptAction): SagaIterator {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
-      yield put(runScriptSuccess(response?.data[0]));
+      const scriptResponse: ScriptResponse = {
+        timeToRun: new Date().toLocaleString(),
+        inputs: testInputs.inputs,
+        result: response?.data[0],
+      };
+      yield put(runScriptSuccess(scriptResponse));
       yield put(
         UpdateIndicatorSession({
           show: false,
@@ -143,7 +150,13 @@ export function* executeScript(action: RunScriptAction): SagaIterator {
       );
     } catch (err) {
       if (err?.response?.data) {
-        yield put(runScriptSuccess(err?.response?.data.error));
+        yield put(
+          runScriptSuccess({
+            timeToRun: new Date().toLocaleString(),
+            inputs: testInputs.inputs,
+            result: err?.response?.data.error,
+          })
+        );
       } else {
         yield put(ErrorNotification({ message: err.message }));
       }

@@ -39,7 +39,7 @@ class ServiceAccountTokenProvider implements TokenProvider {
   public ServiceAccountTokenProvider(AdspConfiguration configuration, WebClient.Builder clientBuilder) {
     this.authUrl = UriComponentsBuilder.fromUri(configuration.getAccessServiceUrl())
         .path("/auth/realms/{realm}/protocol/openid-connect/token")
-        .build(StringUtils.isNotEmpty(configuration.getRealm()) ? configuration.getRealm() : "core");
+        .build(StringUtils.isNotEmpty(configuration.getRealm()) ? configuration.getRealm() : AccessConstants.CoreRealm);
 
     this.clientId = configuration.getServiceId().toString();
     this.clientSecret = configuration.getClientSecret();

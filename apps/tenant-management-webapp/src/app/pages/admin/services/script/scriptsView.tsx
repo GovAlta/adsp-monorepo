@@ -32,7 +32,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [script, setScript] = useState('');
-  const [testInput, setTestInput] = useState('');
+  const [testInput, setTestInput] = useState(JSON.stringify({ testVariable: 'some data' }));
   const { fetchScriptState } = useSelector((state: RootState) => ({
     fetchScriptState: state.scriptService.indicator?.details[FETCH_SCRIPTS_ACTION] || '',
   }));
@@ -68,8 +68,8 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     setShowScriptEditForm(false);
   };
 
-  const saveScript = () => {
-    dispatch(UpdateScript(selectedScript, false));
+  const saveScript = (script) => {
+    dispatch(UpdateScript(script, false));
   };
 
   const testInputUpdate = (value: string) => {

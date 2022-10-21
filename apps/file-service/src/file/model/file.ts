@@ -96,12 +96,12 @@ export class FileEntity implements File {
     }
 
     this.deleted = true;
-    return this.repository.save(this);
+    return this.repository.save(this, { deleted: this.deleted });
   }
 
   setSize(size: number): Promise<FileEntity> {
     this.size = size;
-    return this.repository.save(this);
+    return this.repository.save(this, { size: this.size });
   }
 
   updateScanResult(infected: boolean): Promise<FileEntity> {
@@ -110,7 +110,7 @@ export class FileEntity implements File {
       this.infected = true;
     }
 
-    return this.repository.save(this);
+    return this.repository.save(this, { scanned: this.scanned, infected: this.infected });
   }
 
   async delete(immediate?: boolean): Promise<boolean> {
@@ -142,7 +142,7 @@ export class FileEntity implements File {
 
     const stream = await this.storageProvider.readFile(this);
     this.lastAccessed = new Date();
-    await this.repository.save(this);
+    await this.repository.save(this, { lastAccessed: this.lastAccessed });
 
     return stream;
   }

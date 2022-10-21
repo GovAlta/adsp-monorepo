@@ -7,6 +7,16 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * <p>
+ * Configuration support for ADSP SDK
+ * </p>
+ *
+ * <p>
+ * Extend and override customize or configure to change configuration. By
+ * default configuration values are bound to properties with an 'adsp' prefix.
+ * </p>
+ */
 @Configuration
 public class AdspConfigurationSupport {
 
@@ -21,7 +31,7 @@ public class AdspConfigurationSupport {
   @Value("${adsp.tenantRealm}")
   private String realm;
 
-  @Bean
+  @Bean("adsp.configure")
   @ConditionalOnMissingBean
   public AdspConfiguration configure() {
     try {

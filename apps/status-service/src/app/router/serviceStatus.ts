@@ -19,11 +19,13 @@ export interface ServiceStatusRouterProps {
   endpointStatusEntryRepository: EndpointStatusEntryRepository;
   tokenProvider: TokenProvider;
   directory: ServiceDirectory;
+  serviceId: AdspId;
 }
 
 const mergeApplicationData = (app: StaticApplicationData, status: ServiceStatusApplicationEntity) => {
   return {
     _id: status._id,
+    appKey: status.appKey,
     tenantId: status.tenantId,
     name: app.name,
     description: app.description,
@@ -38,26 +40,61 @@ const mergeApplicationData = (app: StaticApplicationData, status: ServiceStatusA
   };
 };
 
-export const getApplications = (logger: Logger, serviceStatusRepository: ServiceStatusRepository): RequestHandler => {
+const getStatusConfiguration = async (
+  tenantId: AdspId,
+  serviceId: AdspId,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider
+): Promise<StatusApplications> => {
+  const baseUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
+  const configUrl = new URL(
+    `/configuration/v2/configuration/${serviceId.namespace}/${serviceId.service}/latest?tenantId=${tenantId}`,
+    baseUrl
+  );
+  const token = await tokenProvider.getAccessToken();
+  const { data } = await axios.get<StatusServiceConfiguration>(configUrl.href, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return new StatusApplications(data);
+};
+
+export const getApplications = (
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  logger: Logger,
+  serviceId: AdspId,
+  serviceStatusRepository: ServiceStatusRepository
+): RequestHandler => {
   return async (req, res, next) => {
     try {
       const { tenantId } = req.user as User;
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
       }
-      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
-        tenantId
-      );
-      const applications = new StatusApplications(configuration);
-
+      const applications = await getStatusConfiguration(tenantId, serviceId, directory, tokenProvider);
       const statuses = await serviceStatusRepository.find({ tenantId: tenantId.toString() });
 
       res.json(
-        statuses.map((s) => {
-          // Sometimes the configuration cache hasn't refreshed; use a dummy app until it does.
-          // The front end will have to account for this.
-          const app = applications.get(s._id) ?? { _id: s._id, name: 'unknown', description: '', url: '' };
-          return mergeApplicationData(app, s);
+        applications.map((app) => {
+          const status = statuses.find((s) => {
+            if (!s?._id) {
+              logger.error(`Application status for ${app?.name} has no ID`);
+              return false;
+            }
+            if (!app?._id) {
+              logger.error(`Application ${app?.name} has no ID`);
+              return false;
+            }
+            if (!s?.appKey) {
+              logger.error(`Application status for ${app?.name} has no key`);
+            }
+            if (!app?.appKey) {
+              logger.error(`Application ${app?.name} has no key`);
+            }
+            // FIXME do test on appKey
+            return s?._id == app?._id;
+          });
+          return mergeApplicationData(app, status);
         })
       );
     } catch (err) {
@@ -134,10 +171,12 @@ export const createNewApplication =
     try {
       const tenantName = tenant.name;
       const tenantRealm = tenant.realm;
+      const appKey = getApplicationKey(tenant.name, name);
       const status: ServiceStatusApplicationEntity = await ServiceStatusApplicationEntity.create(
         { ...(req.user as User) },
         serviceStatusRepository,
         {
+          appKey: appKey,
           tenantId: tenant.id.toString(),
           tenantName,
           tenantRealm,
@@ -149,6 +188,7 @@ export const createNewApplication =
       );
       const newApp: StaticApplicationData = {
         _id: status._id,
+        appKey: appKey,
         name: name,
         url: endpoint.url,
         description: description,
@@ -160,6 +200,20 @@ export const createNewApplication =
       next(err);
     }
   };
+
+// create a unique key that can be used to access the application
+// status.  This algorithm assumes that the application name
+// will be unique within a tenant context.
+export const getApplicationKey = (tenantName: string, appName: string): string => {
+  return `${toKebabCase(tenantName)}-${toKebabCase(appName)}`;
+};
+
+const toKebabCase = (s: string): string => {
+  return s
+    .replace(/([a-z])([A-Z])/g, '$1-$2')
+    .replace(/[\s_]+/g, '-')
+    .toLowerCase();
+};
 
 export const updateConfiguration = async (
   directory: ServiceDirectory,
@@ -188,6 +242,7 @@ export const updateConfiguration = async (
 export const updateApplication =
   (
     logger: Logger,
+    tenantService: TenantService,
     tokenProvider: TokenProvider,
     serviceDirectory: ServiceDirectory,
     serviceStatusRepository: ServiceStatusRepository
@@ -204,8 +259,9 @@ export const updateApplication =
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
       }
-
-      const update: StaticApplicationData = { _id: id, name, url: endpoint.url, description };
+      const tenant = await tenantService.getTenant(user.tenantId);
+      const appKey = getApplicationKey(tenant.name, name);
+      const update: StaticApplicationData = { _id: id, appKey, name, url: endpoint.url, description };
       updateConfiguration(serviceDirectory, tokenProvider, user.tenantId, id, update);
 
       const status = await serviceStatusRepository.get(id);
@@ -382,10 +438,15 @@ export function createServiceStatusRouter({
   endpointStatusEntryRepository,
   tokenProvider,
   directory,
+  serviceId,
 }: ServiceStatusRouterProps): Router {
   const router = Router();
   // Get the service for the tenant
-  router.get('/applications', assertAuthenticatedHandler, getApplications(logger, serviceStatusRepository));
+  router.get(
+    '/applications',
+    assertAuthenticatedHandler,
+    getApplications(directory, tokenProvider, logger, serviceId, serviceStatusRepository)
+  );
 
   // Enable the service
   router.patch(
@@ -409,7 +470,7 @@ export function createServiceStatusRouter({
   router.put(
     '/applications/:id',
     assertAuthenticatedHandler,
-    updateApplication(logger, tokenProvider, directory, serviceStatusRepository)
+    updateApplication(logger, tenantService, tokenProvider, directory, serviceStatusRepository)
   );
   router.delete(
     '/applications/:id',

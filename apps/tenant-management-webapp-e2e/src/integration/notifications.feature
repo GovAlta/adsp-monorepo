@@ -344,3 +344,20 @@ Feature: Notifications
     Then the user views delete "event" confirmation modal for "status-service:application-notice-published"
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the event of "status-service:application-notice-published" in "autotest-notificationType"
+
+  @TEST_CS-1164 @REQ_CS-1072 @regression
+  Scenario: As a tenant admin, I can configure a notification email message template to use standard GoA email format, so that I can have a consistent look for emails.
+    Given a tenant admin user is on notification types page
+    # Preview an email without <html> or </html>
+    When the user clicks "edit" button for "form-service:form-locked" in "autotest-notificationType"
+    Then the user views an email template modal title for "form-service:form-locked"
+    And the user views the hint text for GoA wrapper in event template modal
+    And the user "views" GoA header and footer in the email preview
+    When the user clicks Close button in event template modal
+    Then Event template modal is closed
+    # Preview a html email with <html> and </html>
+    When the user clicks "edit" button for "form-service:form-unlocked" in "autotest-notificationType"
+    Then the user views an email template modal title for "form-service:form-unlocked"
+    And the user "should not view" GoA header and footer in the email preview
+    When the user clicks Close button in event template modal
+    Then Event template modal is closed

@@ -54,4 +54,11 @@ Feature: Configuration-service
     And the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the configuration definition of "autotest-addEditDeleteConfiguration", "autotest desc modified" under "autotest"
 
-
+  # TEST DATA: a precreated configuration definition named "autotest-export" under the namespace of "autotest"
+  @TEST_CS-1600 @REQ_CS-1544 @REQ_CS-1546 @regression
+  Scenario: As a tenant admin, I can see descriptions of configuration in the export, so that I know what export of that configuration includes
+    Given a tenant admin user is on configuration export page
+    When the user clicks info icon of "autotest", "autotest-export" on configuration export page
+    Then the user views the description of "autotest-export desc" for "autotest", "autotest-export" on configuration export page
+    When the user clicks info icon of "platform", "pdf-service" on configuration export page
+    Then the user views the description of "Templates for PDF generation." for "platform", "pdf-service" on configuration export page

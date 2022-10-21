@@ -44,6 +44,9 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
     };
   };
 
+  const MAX_NAME_LENGTH = 32;
+  const MAX_NAMESPACE_LENGTH = 32;
+
   const namespaceCheck = (): Validator => {
     return (namespace: string) => {
       return namespace === 'platform' ? 'Cannot use the word platform as namespace' : '';
@@ -113,10 +116,11 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
                   disabled={isEdit}
                   data-testid="form-namespace"
                   aria-label="nameSpace"
-                  onChange={(name, value) => {
+                  onChange={(key, value) => {
+                    const namespace = value.substring(0, MAX_NAMESPACE_LENGTH);
                     validators.remove('namespace');
-                    validators['namespace'].check(value);
-                    setDefinition({ ...definition, namespace: value });
+                    validators['namespace'].check(namespace);
+                    setDefinition({ ...definition, namespace });
                   }}
                 />
               </GoAFormItem>
@@ -129,25 +133,27 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
                   disabled={isEdit}
                   data-testid="form-name"
                   aria-label="name"
-                  onChange={(name, value) => {
+                  onChange={(key, value) => {
+                    const name = value.substring(0, MAX_NAME_LENGTH);
                     validators.remove('name');
-                    validators['name'].check(value);
-                    setDefinition({ ...definition, name: value });
+                    validators['name'].check(name);
+                    setDefinition({ ...definition, name });
                   }}
                 />
               </GoAFormItem>
               <GoAFormItem error={errors?.['description']}>
                 <label>Description</label>
-                <GoAInput
-                  type="text"
+                <textarea
                   name="description"
                   value={definition.description}
                   data-testid="form-description"
                   aria-label="description"
-                  onChange={(description, value) => {
+                  maxLength={512}
+                  onChange={(e) => {
+                    const description = e.target.value;
                     validators.remove('description');
-                    validators['description'].check(value);
-                    setDefinition({ ...definition, description: value });
+                    validators['description'].check(description);
+                    setDefinition({ ...definition, description });
                   }}
                 />
               </GoAFormItem>

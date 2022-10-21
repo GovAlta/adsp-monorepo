@@ -15,7 +15,7 @@ import { buildSuggestions } from '@lib/autoComplete';
 import { GoAButton } from '@abgov/react-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { SaveFormModal } from '@components/saveModal';
-import { templates } from 'handlebars';
+import { PDFConfigForm } from './PDFConfigForm';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -32,7 +32,9 @@ interface TemplateEditorProps {
   bodyTitle: string;
   bodyEditorConfig?: EditorProps;
   saveCurrentTemplate?: () => void;
+  // eslint-disable-next-line
   errors?: any;
+  // eslint-disable-next-line
   suggestion?: any;
   cancel: () => void;
   updateTemplate: (template: PdfTemplate) => void;
@@ -62,6 +64,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 }) => {
   const monaco = useMonaco();
   const [saveModal, setSaveModal] = useState(false);
+  const [hasConfigError, setHasConfigError] = useState(false);
+
   useEffect(() => {
     if (monaco) {
       const provider = monaco.languages.registerCompletionItemProvider('handlebars', {
@@ -82,7 +86,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
-    setPreview('main');
+    setPreview('footer/header');
     onHeaderChange(template?.header);
     onFooterChange(template?.footer);
   }, [template, modelOpen]);
@@ -101,7 +105,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [modelOpen]);
 
-  const channels = ['main', 'footer/header'];
+  const channels = ['footer/header', 'main'];
   const tmpTemplate = template;
   const resetSavedAction = () => {
     onBodyChange(savedTemplate.template);
@@ -111,6 +115,17 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
   return (
     <TemplateEditorContainerPdf>
+      {template && (
+        <PDFConfigForm
+          template={template}
+          setError={(hasError) => {
+            setHasConfigError(hasError);
+          }}
+          onChange={(_template) => {
+            updateTemplate({ ..._template });
+          }}
+        />
+      )}
       <GoAForm>
         <GoAFormItem>
           <Tabs
@@ -121,41 +136,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             }}
           >
             <Tab
-              label={
-                <PdfEditorLabelWrapper>
-                  Main
-                  <div className="badge">
-                    {errors?.body && (
-                      <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" icon="warning" />
-                    )}
-                  </div>
-                </PdfEditorLabelWrapper>
-              }
-            >
-              <h3 className="reduce-margin" data-testid="modal-title">
-                {`${template?.name}`}
-                <p>{`${mainTitle} template`}</p>
-              </h3>
-
-              <>
-                <GoAFormItem error={errors?.body ?? null} helpText={bodyEditorHintText}>
-                  <MonacoDivBody>
-                    <MonacoEditor
-                      language={'handlebars'}
-                      defaultValue={template?.template}
-                      onChange={(value) => {
-                        onBodyChange(value);
-                        if (tmpTemplate) {
-                          tmpTemplate.template = value;
-                        }
-                      }}
-                      {...bodyEditorConfig}
-                    />
-                  </MonacoDivBody>
-                </GoAFormItem>
-              </>
-            </Tab>
-            <Tab
+              testId={`pdf-edit-header-footer`}
               label={
                 <PdfEditorLabelWrapper>
                   Header/Footer{' '}
@@ -167,14 +148,9 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 </PdfEditorLabelWrapper>
               }
             >
-              <h3 className="reduce-margin" data-testid="modal-title">
-                {`${template?.name}`}
-                <p>{`${mainTitle} template`}</p>
-              </h3>
-
               <>
                 <GoAFormItem error={errors?.header ?? ''}>
-                  <h4>Header</h4>
+                  <div className="title">Header</div>
                   <MonacoDivHeader>
                     <MonacoEditor
                       language={'handlebars'}
@@ -192,7 +168,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               </>
               <>
                 <GoAFormItem error={errors?.footer ?? ''}>
-                  <h4>Footer</h4>
+                  <div className="title">Footer</div>
                   <MonacoDivFooter>
                     <MonacoEditor
                       language={'handlebars'}
@@ -206,6 +182,39 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                       {...bodyEditorConfig}
                     />
                   </MonacoDivFooter>
+                </GoAFormItem>
+              </>
+            </Tab>
+
+            <Tab
+              testId={`pdf-edit-body`}
+              label={
+                <PdfEditorLabelWrapper>
+                  Body
+                  <div className="badge">
+                    {errors?.body && (
+                      <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" icon="warning" />
+                    )}
+                  </div>
+                </PdfEditorLabelWrapper>
+              }
+            >
+              <>
+                <GoAFormItem error={errors?.body ?? null} helpText={bodyEditorHintText}>
+                  <div className="title">Body</div>
+                  <MonacoDivBody>
+                    <MonacoEditor
+                      language={'handlebars'}
+                      defaultValue={template?.template}
+                      onChange={(value) => {
+                        onBodyChange(value);
+                        if (tmpTemplate) {
+                          tmpTemplate.template = value;
+                        }
+                      }}
+                      {...bodyEditorConfig}
+                    />
+                  </MonacoDivBody>
                 </GoAFormItem>
               </>
             </Tab>
@@ -232,7 +241,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             Close
           </GoAButton>
           <GoAButton
-            disabled={!validateEventTemplateFields()}
+            disabled={!validateEventTemplateFields() || hasConfigError}
             onClick={() => saveCurrentTemplate()}
             buttonType="primary"
             data-testid="template-form-save"

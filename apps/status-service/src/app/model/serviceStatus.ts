@@ -18,6 +18,7 @@ export type StatusServiceConfiguration = Record<string, unknown>;
 
 export interface StaticApplicationData {
   _id: string;
+  appKey: string;
   name: string;
   url: string;
   description?: string;
@@ -26,6 +27,7 @@ export interface StaticApplicationData {
 // and dynamic bits
 export interface ApplicationData {
   _id: string;
+  appKey: string;
   name: string;
   url: string;
   description?: string;
@@ -46,6 +48,7 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
   statusTimestamp: number;
   tenantName: string;
   tenantRealm: string;
+  appKey: string;
   tenantId: string;
   enabled: boolean;
 
@@ -63,6 +66,7 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
 
   constructor(private repository: ServiceStatusRepository, application: NewOrExisting<ServiceStatusApplication>) {
     this._id = application._id;
+    this.appKey = application.appKey;
     this.endpoint = application.endpoint;
     this.metadata = application.metadata;
     this.statusTimestamp = application.statusTimestamp;

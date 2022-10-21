@@ -15,7 +15,7 @@ final class AdspUser implements User {
   private final JwtAuthenticationToken authentication;
 
   @Override
-  public boolean getIsCore() {
+  public boolean isCore() {
     return isCore;
   }
 
@@ -39,17 +39,18 @@ final class AdspUser implements User {
     return email;
   }
 
-  public AdspUser(boolean isCore, Tenant tenant, String id, String name, String email,
+  public AdspUser(AccessIssuer issuer, String id, String name, String email,
       JwtAuthenticationToken authentication) {
-    this.isCore = isCore;
-    this.tenant = tenant;
+    this.isCore = issuer.isCore();
+    this.tenant = issuer.getTenant();
     this.id = id;
     this.name = name;
     this.email = email;
     this.authentication = authentication;
   }
 
-  public boolean IsInRole(String role) {
+  @Override
+  public boolean isInRole(String role) {
     return this.authentication.getAuthorities()
         .stream()
         .anyMatch(authority -> authority.getAuthority()

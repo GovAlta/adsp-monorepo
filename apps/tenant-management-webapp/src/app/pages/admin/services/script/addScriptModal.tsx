@@ -9,7 +9,7 @@ import { ConfigServiceRole } from '@store/access/models';
 import { useValidators } from '@lib/useValidators';
 import { toKebabName } from '@lib/kebabName';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
-import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
+import { characterCheck, validationPattern, isNotEmptyCheck, Validator, wordMaxLengthCheck } from '@lib/checkInput';
 import { IdField } from './styled-components';
 import { ServiceRoleConfig } from '@store/access/models';
 import { RootState } from '@store/index';
@@ -40,6 +40,8 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
   });
 
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
+  const wordLengthCheck = wordMaxLengthCheck(32);
+
   const duplicateScriptCheck = (): Validator => {
     return (name: string) => {
       return scripts[name]
@@ -47,13 +49,15 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
         : '';
     };
   };
-  const descriptionCheck = (): Validator => (description: string) =>
-    description.length > 250 ? 'Description should not exceed 250 characters' : '';
 
-  const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
+  const { errors, validators } = useValidators(
+    'name',
+    'name',
+    checkForBadChars,
+    wordLengthCheck,
+    isNotEmptyCheck('name')
+  )
     .add('duplicated', 'name', duplicateScriptCheck())
-
-    .add('description', 'description', descriptionCheck())
     .build();
 
   const roleNames = realmRoles.map((role) => {
@@ -130,11 +134,8 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
                 const validations = {
                   name: value,
                 };
-
                 validations['duplicated'] = scriptId;
-
                 validators.checkAll(validations);
-
                 setScript({ ...script, name: value, id: scriptId });
               }}
             />
@@ -144,18 +145,18 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
             <IdField>{script.id}</IdField>
           </GoAFormItem>
 
-          <GoAFormItem error={errors?.['description']}>
+          <GoAFormItem>
             <label>Description</label>
-            <GoAInput
-              type="text"
+            <textarea
               name="description"
               value={script.description}
               data-testid={`script-modal-description-input`}
               aria-label="description"
-              onChange={(name, value) => {
-                validators.remove('description');
-                validators['description'].check(value);
-                setScript({ ...script, description: value });
+              maxLength={512}
+              className="goa-textarea"
+              onChange={(e) => {
+                const description = e.target.value;
+                setScript({ ...script, description });
               }}
             />
           </GoAFormItem>
@@ -196,6 +197,7 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
         <GoAButton
           buttonType="primary"
           data-testid="script-modal-save"
+          disabled={validators && validators.haveErrors()}
           onClick={(e) => {
             validationCheck();
           }}

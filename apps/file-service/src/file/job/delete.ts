@@ -17,9 +17,16 @@ export const createDeleteJob =
         tenant: tenantId?.toString(),
       });
       const result = await fileRepository.get(id);
-      const deleted = await result.delete();
-      if (deleted) {
-        logger.debug(`Deleted file ${filename} (ID: ${id}).`, {
+      if (result) {
+        const deleted = await result.delete();
+        if (deleted) {
+          logger.debug(`Deleted file ${filename} (ID: ${id}).`, {
+            context: 'FileDeleteJob',
+            tenant: tenantId?.toString(),
+          });
+        }
+      } else {
+        logger.warn(`Could not find file ${filename} (ID: ${id}) for delete.`, {
           context: 'FileDeleteJob',
           tenant: tenantId?.toString(),
         });

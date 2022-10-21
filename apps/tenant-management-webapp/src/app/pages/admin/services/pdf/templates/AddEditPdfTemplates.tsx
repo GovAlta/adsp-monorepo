@@ -6,7 +6,7 @@ import { PdfTemplate } from '@store/pdf/model';
 import { IdField } from '../styled-components';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/useValidators';
-import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
+import { characterCheck, validationPattern, isNotEmptyCheck, Validator, wordMaxLengthCheck } from '@lib/checkInput';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
@@ -61,8 +61,15 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
         : '';
     };
   };
+  const wordLengthCheck = wordMaxLengthCheck(32);
 
-  const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
+  const { errors, validators } = useValidators(
+    'name',
+    'name',
+    checkForBadChars,
+    wordLengthCheck,
+    isNotEmptyCheck('name')
+  )
     .add('duplicate', 'name', isDuplicateTemplateId())
     .build();
 
@@ -99,6 +106,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
                 name="pdf-template-description"
                 value={template.description}
                 disabled={isEdit}
+                maxLength={512}
                 className="goa-textarea"
                 data-testid="pdf-template-description"
                 aria-label="pdf-template-description"

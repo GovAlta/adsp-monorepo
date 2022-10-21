@@ -117,7 +117,7 @@ describe('File Entity', () => {
     typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);
     storageProviderMock.setup((m) => m.saveFile(It.IsAny(), contentMock.object())).returns(Promise.resolve(false));
     storageProviderMock.setup((m) => m.deleteFile(It.IsAny())).returns(Promise.resolve(true));
-    repositoryMock.setup((m) => m.save(It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
+    repositoryMock.setup((m) => m.save(It.IsAny(), It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
     repositoryMock.setup((m) => m.delete(It.IsAny())).returns(Promise.resolve(true));
 
     const file = {
@@ -194,7 +194,7 @@ describe('File Entity', () => {
 
       typeMock.setup((m) => m.canUpdateFile(user)).returns(true);
       storageProviderMock.setup((m) => m.saveFile(entity, contentMock.object())).returns(Promise.resolve(true));
-      repositoryMock.setup((m) => m.save(entity)).returns(Promise.resolve(entity));
+      repositoryMock.setup((m) => m.save(It.IsAny(), It.IsAny())).returns(Promise.resolve(entity));
     });
 
     it('can check user access for user with access to type', () => {
@@ -286,7 +286,7 @@ describe('File Entity', () => {
       const start = new Date();
       typeMock.setup((m) => m.canAccessFile(user)).returns(true);
       storageProviderMock.setup((m) => m.readFile(entity)).returns(Promise.resolve(contentMock.object()));
-      repositoryMock.setup((m) => m.save(entity)).returns(Promise.resolve(entity));
+      repositoryMock.setup((m) => m.save(It.IsAny(), It.IsAny())).returns(Promise.resolve(entity));
 
       entity.readFile(user).then((result) => {
         expect(result).toBe(contentMock.object());
@@ -370,7 +370,7 @@ describe('File Entity', () => {
     });
 
     it('can update scan result as infected', (done) => {
-      repositoryMock.setup((m) => m.save(entity)).returns(Promise.resolve(entity));
+      repositoryMock.setup((m) => m.save(It.IsAny(), It.IsAny())).returns(Promise.resolve(entity));
 
       entity.updateScanResult(true).then((result) => {
         expect(result.scanned).toBeTruthy();

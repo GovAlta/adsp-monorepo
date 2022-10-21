@@ -1,9 +1,11 @@
 package ca.ab.gov.alberta.adsp.sdk.access;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -18,6 +20,7 @@ import com.nimbusds.jwt.proc.JWTProcessor;
 
 import ca.ab.gov.alberta.adsp.sdk.AdspConfiguration;
 import ca.ab.gov.alberta.adsp.sdk.AdspId;
+import ca.ab.gov.alberta.adsp.sdk.metadata.ApiDocsMetadata;
 
 @Configuration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
@@ -25,9 +28,12 @@ class AccessSecurityConfiguration {
 
   private final AdspId serviceId;
   private final String[] apiAntPatterns;
-  private final TenantIssuerCache issuerCache;
+  private final AccessIssuerCache issuerCache;
 
-  public AccessSecurityConfiguration(AdspConfiguration configuration, TenantIssuerCache issuerCache) {
+  @Autowired(required = false)
+  private ApiDocsMetadata docsMetadata;
+
+  public AccessSecurityConfiguration(AdspConfiguration configuration, AccessIssuerCache issuerCache) {
     this.serviceId = configuration.getServiceId();
     this.apiAntPatterns = configuration.getApiAntPatterns();
     this.issuerCache = issuerCache;
@@ -41,7 +47,12 @@ class AccessSecurityConfiguration {
 
     return http
         .authorizeHttpRequests(
-            authorize -> authorize.antMatchers(this.apiAntPatterns).authenticated())
+            authorize -> {
+              if (this.docsMetadata != null) {
+                authorize = authorize.antMatchers(HttpMethod.GET, this.docsMetadata.getOpenApiPath()).permitAll();
+              }
+              authorize.antMatchers(this.apiAntPatterns).authenticated();
+            })
         .oauth2ResourceServer(
             oauth2 -> oauth2.authenticationManagerResolver(authenticationManagerResolver))
         .build();

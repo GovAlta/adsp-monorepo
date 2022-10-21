@@ -9,23 +9,22 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtRea
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverter;
 
 import ca.ab.gov.alberta.adsp.sdk.AdspId;
-import ca.ab.gov.alberta.adsp.sdk.tenant.Tenant;
 import reactor.core.publisher.Mono;
 
 class TenantReactiveAuthManagerResolver implements ReactiveAuthenticationManagerResolver<String> {
 
   private final ConcurrentHashMap<String, JwtReactiveAuthenticationManager> managers = new ConcurrentHashMap<>();
   private final AdspId serviceId;
-  private final TenantIssuerCache issuerCache;
+  private final AccessIssuerCache issuerCache;
 
-  public TenantReactiveAuthManagerResolver(AdspId serviceId, TenantIssuerCache issuerCache) {
+  public TenantReactiveAuthManagerResolver(AdspId serviceId, AccessIssuerCache issuerCache) {
     this.serviceId = serviceId;
     this.issuerCache = issuerCache;
   }
 
   @Override
   public Mono<ReactiveAuthenticationManager> resolve(String issuer) {
-    Tenant cached = this.issuerCache.getCached(issuer);
+    var cached = this.issuerCache.getCached(issuer);
     if (cached == null) {
       throw new IllegalArgumentException("Issuer not recognized");
     }
@@ -36,9 +35,10 @@ class TenantReactiveAuthManagerResolver implements ReactiveAuthenticationManager
 
       var jwtConverter = new ReactiveJwtAuthenticationConverter();
       jwtConverter
-          .setJwtGrantedAuthoritiesConverter(new AccessJwtGrantedAuthoritiesConverter(this.serviceId).asReactive());
+          .setJwtGrantedAuthoritiesConverter(
+              new AccessJwtGrantedAuthoritiesConverter(this.serviceId, cached).asReactive());
       newManager.setJwtAuthenticationConverter(
-          jwtConverter.andThen(new AccessJwtAuthenticationConverter(false, cached).asReactive()));
+          jwtConverter.andThen(new AccessJwtAuthenticationConverter(cached).asReactive()));
       return newManager;
     });
 

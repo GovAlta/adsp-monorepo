@@ -17,7 +17,7 @@ import { ConfigServiceRole } from '@store/access/models';
 import { useValidators } from '@lib/useValidators';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { ActionState } from '@store/session/models';
-import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
+import { characterCheck, validationPattern, isNotEmptyCheck, Validator, wordMaxLengthCheck } from '@lib/checkInput';
 interface FileTypeModalProps {
   fileType?: FileTypeItem;
   onCancel: () => void;
@@ -131,6 +131,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   const [fileType, setFileType] = useState(props.fileType);
   const title = isNew ? 'Add file type' : 'Edit file type';
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
+  const wordLengthCheck = wordMaxLengthCheck(32);
 
   const duplicateFileTypeCheck = (names: string[]): Validator => {
     return (name: string) => {
@@ -140,7 +141,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
     };
   };
 
-  const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
+  const { errors, validators } = useValidators('name', 'name', checkForBadChars, wordLengthCheck, isNotEmptyCheck('name'))
     .add('duplicated', 'name', duplicateFileTypeCheck(props.fileTypeNames))
     .build();
 
