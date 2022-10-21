@@ -103,7 +103,7 @@ export const isValidJSONCheck = (label?: string): Validator => {
 export const wordMaxLengthCheck = (maxLen: number): Validator => {
   return (input: string) => {
     if (input && input.length > maxLen) {
-      return `The input exceeds the maximum allowed length ${maxLen} characters`;
+      return `The input exceeds the maximum allowed length of ${maxLen} characters`;
     } else {
       return '';
     }
