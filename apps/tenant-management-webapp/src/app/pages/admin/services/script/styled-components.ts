@@ -112,7 +112,7 @@ export const MonacoDivBody = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(80vh - 310px);
+  height: calc(50vh - 310px);
 `;
 export const ScriptPanelContainer = styled.div`
   display: flex;
@@ -123,7 +123,7 @@ export const ScriptPanelContainer = styled.div`
   overflow: hidden;
   box-sizing: border-box;
 `;
-export const EditTemplateActions = styled.div`
+export const EditScriptActions = styled.div`
   display: flex;
   justify-content: right;
   gap: 1rem;
@@ -131,9 +131,8 @@ export const EditTemplateActions = styled.div`
 `;
 
 export const ScriptEditorContainer = styled.div`
-  width: 50%;
+  width: 100%;
   padding-right: 1rem;
-  margin-top: 4rem;
   padding-left: 1rem;
   overflow: hidden;
   &:hover {
@@ -154,5 +153,99 @@ export const ScriptEditorContainer = styled.div`
     .mobile > div {
       padding: 2px 0 2px 3px;
     }
+  }
+`;
+export const EditModalStyle = styled.div`
+  width: 100%;
+  display: fl ex;
+
+  .half-width {
+    width: 50%;
+    display: flex;
+    height: 90%;
+  }
+
+  .flex-column {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .flex-one {
+    flex: 1;
+  }
+
+  .full-height {
+    height: 100%;
+  }
+
+  .flex {
+    display: flex;
+  }
+
+  .mt-2 {
+    padding-top: 10px;
+  }
+
+  .execute-button {
+    margin: 0 10px 10px 10px;
+    display: flex;
+    justify-content: right;
+  }
+
+  .pt-1 {
+    padding-top: 2px;
+  }
+  .responseLabel {
+    display: block;
+    font-weight: bold;
+    color: #333;
+    font-size: var(--fs-base);
+    line-height: calc(var(--fs-base) + 1rem);
+  }
+`;
+
+export const SpinnerPadding = styled.div`
+  float: right;
+  padding: 3px 0 0 4px;
+`;
+
+export const ScriptPane = styled.div`
+  height: 100%;
+  width: 100%;
+
+  white-space: pre-wrap;
+
+  line-height: 16px;
+  margin-bottom: 1rem;
+  overflow: auto;
+
+  .script-response {
+    background: white;
+    padding: 10px;
+    border: 1px solid black;
+    height: 30vh;
+    overflow-y: auto;
+  }
+`;
+
+export const ReplacePadding = styled.div`
+  padding: 12px 11px 11px 11px;
+`;
+export const ResponseTableStyles = styled.div`
+  .flex-horizontal {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .flex {
+    flex: 1;
+  }
+
+  .mt-1 {
+    margin-top: 2px;
+  }
+
+  .mt-2 {
+    margin-top: 4px;
   }
 `;

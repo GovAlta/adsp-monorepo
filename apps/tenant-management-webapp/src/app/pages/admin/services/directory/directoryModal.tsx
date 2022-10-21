@@ -6,7 +6,7 @@ import { Service } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { createEntry, updateEntry, fetchEntryDetail } from '@store/directory/actions';
 import { RootState } from '@store/index';
-import { characterCheck, validationPattern, Validator, isNotEmptyCheck } from '@lib/checkInput';
+import { characterCheck, validationPattern, Validator, isNotEmptyCheck, wordMaxLengthCheck } from '@lib/checkInput';
 import { useValidators } from '@lib/useValidators';
 
 interface DirectoryModalProps {
@@ -47,6 +47,7 @@ const lowerCaseCheck = characterCheck(validationPattern.lowerKebabCase);
 const checkForBadUrl = characterCheck(validationPattern.validURL);
 const checkServiceExists = isNotEmptyCheck('service');
 const checkUrlExists = isNotEmptyCheck('URL');
+const wordLengthCheck = wordMaxLengthCheck(32);
 
 export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const isNew = props.type === 'new';
@@ -58,7 +59,13 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const { directory } = useSelector((state: RootState) => state.directory);
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const dispatch = useDispatch();
-  const { errors, validators } = useValidators('service', 'service', lowerCaseCheck, checkServiceExists)
+  const { errors, validators } = useValidators(
+    'service',
+    'service',
+    lowerCaseCheck,
+    checkServiceExists,
+    wordLengthCheck
+  )
     .add('api', 'api', lowerCaseCheck)
     .add('url', 'url', checkForBadUrl, checkUrlExists)
     .add('apiDuplicate', 'api', duplicateApiCheck(directory, tenantName, isNew))

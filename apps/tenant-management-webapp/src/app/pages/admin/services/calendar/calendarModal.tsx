@@ -10,7 +10,7 @@ import { ConfigServiceRole } from '@store/access/models';
 import { useValidators } from '@lib/useValidators';
 import { toKebabName } from '@lib/kebabName';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
-import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
+import { characterCheck, validationPattern, isNotEmptyCheck, Validator, wordMaxLengthCheck } from '@lib/checkInput';
 import { IdField } from './styled-components';
 import { ServiceRoleConfig } from '@store/access/models';
 import { RootState } from '@store/index';
@@ -43,6 +43,7 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
   });
 
   const title = isNew ? 'Add calendar' : 'Edit calendar';
+  const wordLengthCheck = wordMaxLengthCheck(32);
 
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
   const duplicateCalendarCheck = (): Validator => {
@@ -55,7 +56,13 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
   const descriptionCheck = (): Validator => (description: string) =>
     description.length > 250 ? 'Description could not over 250 characters ' : '';
 
-  const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
+  const { errors, validators } = useValidators(
+    'name',
+    'name',
+    checkForBadChars,
+    wordLengthCheck,
+    isNotEmptyCheck('name')
+  )
     .add('duplicated', 'name', duplicateCalendarCheck())
     .add('description', 'description', descriptionCheck())
     .build();
@@ -159,16 +166,17 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
           </GoAFormItem>
           <GoAFormItem error={errors?.['description']}>
             <label>Description</label>
-            <GoAInput
-              type="text"
+            <textarea
               name="description"
               value={calendar.description}
               data-testid={`calendar-modal-description-input`}
               aria-label="description"
-              onChange={(name, value) => {
+              maxLength={512}
+              onChange={(e) => {
+                const description = e.target.value;
                 validators.remove('description');
-                validators['description'].check(value);
-                setCalendar({ ...calendar, description: value });
+                validators['description'].check(description);
+                setCalendar({ ...calendar, description });
               }}
             />
           </GoAFormItem>
@@ -194,6 +202,7 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
         <GoAButton
           buttonType="primary"
           data-testid="calendar-modal-save"
+          disabled={validators.haveErrors()}
           onClick={(e) => {
             validationCheck();
           }}

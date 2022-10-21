@@ -126,10 +126,9 @@ export function* runScript(action: RunScriptAction): SagaIterator {
 export function* executeScript(action: RunScriptAction): SagaIterator {
   const scriptUrl: string = yield select((state: RootState) => state.config.serviceUrls?.scriptServiceApiUrl);
   const token: string = yield call(getAccessToken);
+  const { testInputs, ...script } = action.payload;
   if (scriptUrl && token) {
     try {
-      const { testInputs, ...script } = action.payload;
-
       const response = yield call(
         axios.post,
         `${scriptUrl}/script/v1/scripts/${script?.id}?clearCache=true`,
@@ -151,7 +150,13 @@ export function* executeScript(action: RunScriptAction): SagaIterator {
       );
     } catch (err) {
       if (err?.response?.data) {
-        yield put(runScriptSuccess(err?.response?.data.error));
+        yield put(
+          runScriptSuccess({
+            timeToRun: new Date().toLocaleString(),
+            inputs: testInputs.inputs,
+            result: err?.response?.data.error,
+          })
+        );
       } else {
         yield put(ErrorNotification({ message: err.message }));
       }

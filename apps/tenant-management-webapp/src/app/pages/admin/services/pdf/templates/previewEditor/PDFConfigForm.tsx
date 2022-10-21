@@ -3,7 +3,7 @@ import { PdfTemplate } from '@store/pdf/model';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { Grid, GridItem } from '@components/Grid';
 import { useValidators } from '@lib/useValidators';
-import { characterCheck, validationPattern, isNotEmptyCheck } from '@lib/checkInput';
+import { characterCheck, validationPattern, isNotEmptyCheck, wordMaxLengthCheck } from '@lib/checkInput';
 import { PdfConfigFormWrapper } from './styled-components';
 
 interface PDFConfigFormProps {
@@ -13,8 +13,16 @@ interface PDFConfigFormProps {
 }
 export const PDFConfigForm = ({ template, onChange, setError }: PDFConfigFormProps) => {
   const { id, name, description } = template;
+  const wordLengthCheck = wordMaxLengthCheck(32);
+
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
-  const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name')).build();
+  const { errors, validators } = useValidators(
+    'name',
+    'name',
+    checkForBadChars,
+    wordLengthCheck,
+    isNotEmptyCheck('name')
+  ).build();
 
   return (
     <PdfConfigFormWrapper>
