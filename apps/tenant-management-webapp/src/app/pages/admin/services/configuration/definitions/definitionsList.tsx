@@ -3,6 +3,7 @@ import { NameDiv, TableDiv } from '../styled-components';
 import DataTable from '@components/DataTable';
 import { ConfigurationDefinitionItemComponent } from './definitionListItem';
 import { ConfigDefinition } from '@store/configuration/model';
+import { sortConfigDefinitions } from '../utils';
 
 interface serviceTableProps {
   definitions: Record<string, unknown>;
@@ -24,25 +25,28 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
   }, [definitions]);
 
   // to ensure it dosent re-calculate this value if value dosent change
-  const memoizedSortedConfiguration = useMemo(() => {
-    return Object.keys(definitions)
-      .sort((a, b) => a.localeCompare(b))
-      .reduce((obj, key) => {
-        obj[key] = definitions[key];
-        const nameSpace = key.split(':')[0];
-        const name = key.split(':')[1];
-        if (nameSpaces[nameSpace]) {
-          nameSpaces[nameSpace].push(name);
-        } else {
-          nameSpaces[nameSpace] = [name];
-        }
-        return obj;
-      }, {});
+  const memoizedReducedConfiguration = useMemo(() => {
+    return Object.keys(definitions).reduce((obj, key) => {
+      obj[key] = definitions[key];
+      const nameSpace = key.split(':')[0];
+      const name = key.split(':')[1];
+      if (nameSpaces[nameSpace]) {
+        nameSpaces[nameSpace].push(name);
+      } else {
+        nameSpaces[nameSpace] = [name];
+      }
+      return obj;
+    }, {});
+  }, [definitions]);
+
+  // sorting data by namespaces and sort definition names under each namespace
+  const sortedNamespaces: Record<string, string[]> = useMemo(() => {
+    return sortConfigDefinitions(nameSpaces);
   }, [definitions]);
 
   return (
     <>
-      {Object.keys(nameSpaces).map((nameSpace) => {
+      {Object.keys(sortedNamespaces).map((nameSpace) => {
         return (
           <>
             <NameDiv>{nameSpace}</NameDiv>
@@ -60,8 +64,8 @@ export const ConfigurationDefinitionsTableComponent: FunctionComponent<serviceTa
                   </tr>
                 </thead>
                 <tbody>
-                  {nameSpaces[nameSpace].map((configName) => {
-                    const sortedConfig = memoizedSortedConfiguration[`${nameSpace}:${configName}`];
+                  {sortedNamespaces[nameSpace].map((configName) => {
+                    const sortedConfig = memoizedReducedConfiguration[`${nameSpace}:${configName}`];
                     return (
                       <ConfigurationDefinitionItemComponent
                         tenantName={tenantName}
