@@ -65,7 +65,10 @@ app.use(express.json({ limit: '1mb' }));
           inTenantAdmin: true,
         },
       ],
-      configurationSchema,
+      configuration: {
+        description: 'The status service allows for easy monitoring of application downtime.',
+        schema: configurationSchema,
+      },
       combineConfiguration: (tenant: Record<string, unknown>, core: Record<string, unknown>) => ({
         ...core,
         ...tenant,
