@@ -36,23 +36,23 @@ Feature: Configuration-service
     When the user enters "auto-test-1-$" in name field in configuration definition modal
     Then the user views the error message of "Allowed characters are: a-z, A-Z, 0-9, -" on name in configuration definition modal
     # Validate data
-    When the user enters "autotest" in namespace and "autotest-addEditDeleteConfiguration" in name, "autotest desc" in description in configuration definition modal
+    When the user enters "autotest" in namespace and "autotest-addEditDeleteConfig" in name, "autotest desc" in description in configuration definition modal
     And the user clicks Save button in configuration definition modal
-    Then the user "views" the configuration definition of "autotest-addEditDeleteConfiguration", "autotest desc" under "autotest"
+    Then the user "views" the configuration definition of "autotest-addEditDeleteConfig", "autotest desc" under "autotest"
     # Edit
-    When the user clicks "Edit" button for the configuration definition of "autotest-addEditDeleteConfiguration", "autotest desc" under "autotest"
+    When the user clicks "Edit" button for the configuration definition of "autotest-addEditDeleteConfig", "autotest desc" under "autotest"
     Then the user views Edit definition modal
     And the user views disabled namespace and name fields in configuration definition modal
     When the user enters "autotest desc modified" in description in configuration definition modal
     And the user enters "{{}\"test\": \"\"}" in payload schema in configuration definition modal
     And the user clicks Save button in configuration definition modal
-    And the user clicks "eye" button for the configuration definition of "autotest-addEditDeleteConfiguration", "autotest desc modified" under "autotest"
-    Then the user views the payload schema containing "\"test\": \"\"" for "autotest-addEditDeleteConfiguration", "autotest desc modified" under "autotest"
+    And the user clicks "eye" button for the configuration definition of "autotest-addEditDeleteConfig", "autotest desc modified" under "autotest"
+    Then the user views the payload schema containing "\"test\": \"\"" for "autotest-addEditDeleteConfig", "autotest desc modified" under "autotest"
     # Delete
-    When the user clicks "Delete" button for the configuration definition of "autotest-addEditDeleteConfiguration", "autotest desc modified" under "autotest"
-    Then the user views delete "configuration definition" confirmation modal for "autotest-addEditDeleteConfiguration"
+    When the user clicks "Delete" button for the configuration definition of "autotest-addEditDeleteConfig", "autotest desc modified" under "autotest"
+    Then the user views delete "configuration definition" confirmation modal for "autotest-addEditDeleteConfig"
     And the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the configuration definition of "autotest-addEditDeleteConfiguration", "autotest desc modified" under "autotest"
+    Then the user "should not view" the configuration definition of "autotest-addEditDeleteConfig", "autotest desc modified" under "autotest"
 
   # TEST DATA: a precreated configuration definition named "autotest-export" under the namespace of "autotest"
   @TEST_CS-1600 @REQ_CS-1544 @REQ_CS-1546 @regression

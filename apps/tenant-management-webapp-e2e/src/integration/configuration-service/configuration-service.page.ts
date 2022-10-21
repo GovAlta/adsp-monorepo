@@ -68,15 +68,15 @@ class ConfigurationServicePage {
   }
 
   addConfigurationDefinitionModalNamespaceField() {
-    return cy.get('input[data-testid="form-namespace"]');
+    return cy.get('[data-testid="form-namespace"]');
   }
 
   addConfigurationDefinitionModalNameField() {
-    return cy.get('input[data-testid="form-name"]');
+    return cy.get('[data-testid="form-name"]');
   }
 
   addConfigurationDefinitionModalDescField() {
-    return cy.get('input[data-testid="form-description"]');
+    return cy.get('[data-testid="form-description"]');
   }
 
   addConfigurationDefinitionModalNamespaceErrorMsg() {
