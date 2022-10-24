@@ -26,6 +26,8 @@ export class StatusApplications {
   };
 
   get(id: string): StaticApplicationData {
+    // Only mongo ObjectID's are acceptable.
+    if (!/^[a-zA-Z0-9]{24}$/gi.test(id)) return null;
     return (this.#statusConfiguration[id] as StaticApplicationData) ?? null;
   }
 }
