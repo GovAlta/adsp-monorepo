@@ -134,12 +134,15 @@ export class ApplicationManager {
         const app = apps.get(_id);
 
         // Fix up he app's configuration data
-        if (app && (!app._id || !app.appKey)) {
-          app._id = _id;
-          app.appKey = getApplicationKey(tenant.name, app.name);
+        if (app && !(app._id && app.appKey)) {
+          const appKey = getApplicationKey(tenant.name, app.name);
           logger.info(`#################### updating ${app.name}`);
           try {
-            await updateConfiguration(this.#directory, this.#tokenProvider, tenant.id, _id, app);
+            await updateConfiguration(this.#directory, this.#tokenProvider, tenant.id, _id, {
+              ...app,
+              _id: _id,
+              appKey: appKey,
+            });
           } catch (e) {
             logger.info(`################### Error updating configuration for ${app.name}...${e.message}`);
           }
