@@ -148,6 +148,7 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
                   value={definition.description}
                   data-testid="form-description"
                   aria-label="description"
+                  className="goa-textarea"
                   maxLength={250}
                   onChange={(e) => {
                     const description = e.target.value;

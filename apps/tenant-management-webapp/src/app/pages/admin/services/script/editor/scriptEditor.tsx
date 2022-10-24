@@ -111,6 +111,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               data-testid={`script-modal-description-input`}
               aria-label="script-description"
               maxLength={250}
+              className="goa-textarea"
               onChange={(e) => {
                 onDescriptionChange(e.target.value);
               }}
