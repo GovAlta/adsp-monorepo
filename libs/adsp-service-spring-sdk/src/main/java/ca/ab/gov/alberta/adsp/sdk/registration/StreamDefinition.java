@@ -4,11 +4,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 /**
  * Definition of a stream of events that can be accessed via push service
  */
+@JsonInclude(value = Include.NON_NULL)
 public class StreamDefinition {
 
   @JsonProperty
