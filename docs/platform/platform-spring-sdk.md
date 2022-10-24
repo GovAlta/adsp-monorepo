@@ -330,7 +330,7 @@ Create a POJO component / bean with the `SocketEventListener` annotation on an a
   @Component
   public class MyEventSubscriber {
     @SocketEventListener(streamId = "my-event-stream", payloadType = Map.class)
-    public void OnEvent(FullDomainEvent<Map<String, Object>> received) {
+    public void onEvent(FullDomainEvent<Map<String, Object>> received) {
       ...
     }
   }
