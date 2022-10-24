@@ -69,6 +69,7 @@ export const PDFConfigForm = ({ template, onChange, setError }: PDFConfigFormPro
               name="description"
               value={description}
               maxLength={250}
+              className="goa-textarea"
               data-testid="pdf-service-modal-description-textarea"
               aria-label="description"
               onChange={(e) => {
