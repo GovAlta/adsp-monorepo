@@ -18,7 +18,8 @@ public class AdspConfiguration {
   private final String displayName;
   private final String description;
   private final String[] apiAntPatterns;
-  private final boolean allowCoreUser;
+  private final boolean coreUserAllowed;
+  private final boolean configurationInvalidationEnabled;
 
   private final ServiceRegistration registration;
 
@@ -67,8 +68,12 @@ public class AdspConfiguration {
     return apiAntPatterns;
   }
 
-  public boolean getAllowCoreUser() {
-    return allowCoreUser;
+  public boolean isCoreUserAllowed() {
+    return coreUserAllowed;
+  }
+
+  public boolean isConfigurationInvalidationEnabled() {
+    return configurationInvalidationEnabled;
   }
 
   public ServiceRegistration getRegistration() {
@@ -85,7 +90,8 @@ public class AdspConfiguration {
     this.displayName = builder.getDisplayName();
     this.description = builder.getDescription();
     this.apiAntPatterns = builder.getApiAntPatterns();
-    this.allowCoreUser = builder.getAllowCoreUser();
+    this.coreUserAllowed = builder.isCoreUserAllowed();
+    this.configurationInvalidationEnabled = builder.isConfigurationInvalidationEnabled();
 
     this.registration = builder.getRegistration();
   }
@@ -103,7 +109,8 @@ public class AdspConfiguration {
     private String description;
 
     private String[] apiAntPatterns = { "/*/v?/**" };
-    private boolean allowCoreUser;
+    private boolean coreUserAllowed;
+    private boolean configurationInvalidationEnabled;
 
     private ServiceRegistration registration;
 
@@ -139,8 +146,12 @@ public class AdspConfiguration {
       return apiAntPatterns;
     }
 
-    public boolean getAllowCoreUser() {
-      return allowCoreUser;
+    public boolean isCoreUserAllowed() {
+      return coreUserAllowed;
+    }
+
+    public boolean isConfigurationInvalidationEnabled() {
+      return configurationInvalidationEnabled;
     }
 
     public ServiceRegistration getRegistration() {
@@ -224,7 +235,29 @@ public class AdspConfiguration {
      * @return Builder
      */
     public Builder allowsCoreUser(boolean allowCoreUser) {
-      this.allowCoreUser = allowCoreUser;
+      this.coreUserAllowed = allowCoreUser;
+
+      return this;
+    }
+
+    /**
+     * <p>
+     * Set a flag indicating if socket.io based configuration invalidation is
+     * enabled.
+     * </p>
+     *
+     * <p>
+     * When enabled, the service will connect to the push-service
+     * configuration-updates stream. The access token for the service account must
+     * include the urn:ads:platform:push-service in the audience; this
+     * can be configured using an Audience mapper in the associated Client.
+     * </p>
+     *
+     * @param enabled Flag indicating if configuration invalidation is enabled.
+     * @return Builder
+     */
+    public Builder enableConfigurationInvalidation(boolean enabled) {
+      this.configurationInvalidationEnabled = enabled;
 
       return this;
     }
