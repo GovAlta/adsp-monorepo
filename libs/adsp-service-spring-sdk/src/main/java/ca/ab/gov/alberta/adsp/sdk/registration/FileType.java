@@ -4,11 +4,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 /**
  * Type of file including roles allowed to read and/or update.
  */
+@JsonInclude(value = Include.NON_NULL)
 public class FileType {
   @JsonProperty
   private String id;
