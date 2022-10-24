@@ -158,7 +158,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
                 value={message}
                 className="goa-textarea"
                 onChange={setValue}
-                maxLength={280}
+                maxLength={250}
               />
             </GoAFormItem>
 
