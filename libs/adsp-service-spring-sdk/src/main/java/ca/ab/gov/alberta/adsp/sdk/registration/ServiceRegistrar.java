@@ -107,7 +107,8 @@ class ServiceRegistrar {
       this.logger.debug("Registering streams for service {}...", serviceId);
 
       var update = streams.stream().collect(Collectors.toMap(stream -> stream.getId(), stream -> stream));
-      this.updateServiceConfiguration(PlatformServices.PushServiceId, update);
+      this.updateServiceConfiguration(PlatformServices.PushServiceId, update)
+          .blockOptional();
     }
   }
 

@@ -39,6 +39,11 @@ public class EventIdentity {
     this.criteria = criteria;
   }
 
+  public EventIdentity withCriteria(EventIdentityCriteria criteria) {
+    this.setCriteria(criteria);
+    return this;
+  }
+
   public EventIdentity(String namespace, String name) {
     this.setNamespace(namespace);
     this.setName(name);
@@ -59,12 +64,22 @@ public class EventIdentity {
       this.correlationId = correlationId;
     }
 
+    public EventIdentityCriteria withCorrelationId(String correlationId) {
+      this.setCorrelationId(correlationId);
+      return this;
+    }
+
     public Map<String, Object> getContext() {
       return context;
     }
 
     public void setContext(Map<String, Object> context) {
       this.context = context;
+    }
+
+    public EventIdentityCriteria withContext(Map<String, Object> context) {
+      this.setContext(context);
+      return this;
     }
   }
 }
