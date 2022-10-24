@@ -73,30 +73,17 @@ export const getApplications = (
       }
       const applications = await getStatusConfiguration(tenantId, serviceId, directory, tokenProvider);
       const statuses = await serviceStatusRepository.find({ tenantId: tenantId.toString() });
-
-      res.json(
-        applications.map((app) => {
-          const status = statuses.find((s) => {
-            if (!s?._id) {
-              logger.error(`Application status for ${app?.name} has no ID`);
-              return false;
-            }
-            if (!app?._id) {
-              logger.error(`Application ${app?.name} has no ID`);
-              return false;
-            }
-            if (!s?.appKey) {
-              logger.error(`Application status for ${app?.name} has no key`);
-            }
-            if (!app?.appKey) {
-              logger.error(`Application ${app?.name} has no key`);
-            }
-            // FIXME do test on appKey
-            return s?._id == app?._id;
-          });
-          return mergeApplicationData(app, status);
+      const result = statuses
+        .map((status) => {
+          const app = applications.get(status._id);
+          if (app) {
+            return mergeApplicationData(app, status);
+          }
         })
-      );
+        // weed out orphaned statuses
+        .filter((a) => a);
+
+      res.json(result);
     } catch (err) {
       logger.error(`Failed to fetch applications: ${err.message}`);
       next(err);

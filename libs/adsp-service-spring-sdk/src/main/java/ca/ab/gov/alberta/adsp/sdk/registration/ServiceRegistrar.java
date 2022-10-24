@@ -1,6 +1,7 @@
 package ca.ab.gov.alberta.adsp.sdk.registration;
 
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,6 +91,23 @@ class ServiceRegistrar {
       update.put(serviceId.getService(), new EventNamespace(serviceId.getService(), definitions));
       this.updateServiceConfiguration(PlatformServices.EventServiceId, update)
           .blockOptional();
+    }
+
+    var fileTypes = registration.getFileTypes();
+    if (fileTypes != null) {
+      this.logger.debug("Registering file types for service {}...", serviceId);
+
+      var update = fileTypes.stream().collect(Collectors.toMap(type -> type.getId(), type -> type));
+      this.updateServiceConfiguration(PlatformServices.FileServiceId, update)
+          .blockOptional();
+    }
+
+    var streams = registration.getStreams();
+    if (streams != null) {
+      this.logger.debug("Registering streams for service {}...", serviceId);
+
+      var update = streams.stream().collect(Collectors.toMap(stream -> stream.getId(), stream -> stream));
+      this.updateServiceConfiguration(PlatformServices.PushServiceId, update);
     }
   }
 

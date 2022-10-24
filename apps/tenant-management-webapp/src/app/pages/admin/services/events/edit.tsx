@@ -125,7 +125,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
                 value={definition.description}
                 aria-label="description"
                 className="goa-textarea"
-                maxLength={512}
+                maxLength={250}
                 onChange={(e) => setDefinition({ ...definition, description: e.target.value })}
               />
             </GoAFormItem>

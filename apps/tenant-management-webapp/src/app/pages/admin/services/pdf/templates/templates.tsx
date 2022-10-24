@@ -214,6 +214,9 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     setOpenAddPdfTemplate(false);
     setCurrentTemplate(defaultPdfTemplate);
     setTemplateEditErrors(editDefaultErrors);
+    setBodyPreview('');
+    setFooterPreview('');
+    setHeaderPreview('');
   };
 
   useEffect(() => {
@@ -280,6 +283,9 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
               setCurrentTemplate(currentTemplate);
               setCurrentSavedTemplate(Object.assign({}, currentTemplate));
               setShowTemplateForm(true);
+              setBody(currentTemplate?.template || '');
+              setFooter(currentTemplate?.footer || '');
+              setHeader(currentTemplate?.header || '');
             }}
             onDelete={(currentTemplate) => {
               setShowDeleteConfirmation(true);

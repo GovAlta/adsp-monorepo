@@ -110,7 +110,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               value={description}
               data-testid={`script-modal-description-input`}
               aria-label="script-description"
-              maxLength={512}
+              maxLength={250}
               onChange={(e) => {
                 onDescriptionChange(e.target.value);
               }}
