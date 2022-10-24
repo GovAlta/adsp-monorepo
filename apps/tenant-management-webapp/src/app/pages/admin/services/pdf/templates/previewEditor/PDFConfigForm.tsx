@@ -14,7 +14,6 @@ interface PDFConfigFormProps {
 export const PDFConfigForm = ({ template, onChange, setError }: PDFConfigFormProps) => {
   const { id, name, description } = template;
   const wordLengthCheck = wordMaxLengthCheck(32);
-
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
   const { errors, validators } = useValidators(
     'name',
@@ -69,7 +68,8 @@ export const PDFConfigForm = ({ template, onChange, setError }: PDFConfigFormPro
             <textarea
               name="description"
               value={description}
-              maxLength={512}
+              maxLength={250}
+              className="goa-textarea"
               data-testid="pdf-service-modal-description-textarea"
               aria-label="description"
               onChange={(e) => {

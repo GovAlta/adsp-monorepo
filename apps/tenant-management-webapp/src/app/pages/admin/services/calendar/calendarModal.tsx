@@ -171,7 +171,8 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
               value={calendar.description}
               data-testid={`calendar-modal-description-input`}
               aria-label="description"
-              maxLength={512}
+              className="goa-textarea"
+              maxLength={250}
               onChange={(e) => {
                 const description = e.target.value;
                 validators.remove('description');
