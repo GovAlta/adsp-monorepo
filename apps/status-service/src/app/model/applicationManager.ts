@@ -123,43 +123,55 @@ export class ApplicationManager {
    * @param logger - its a logger.
    */
   synchronizeData = async (logger: Logger) => {
-    // const statuses = await this.#repository.find({});
-    // const tenants = await this.#tenantService.getTenants();
-    // tenants.forEach(async (tenant: Tenant) => {
-    //   const config: StatusServiceConfiguration = await this.#configurationFinder(tenant.id);
-    //   const apps = new StatusApplications(config);
-    //   const ids = Object.keys(config);
-    //   ids.forEach(async (_id) => {
-    //     logger.info(`################# Processing App with id: ${_id}`);
-    //     const app = apps.get(_id);
-    //     // some keys are not apps
-    //     if (app) {
-    //       const appKey = getApplicationKey(tenant.name, app.name);
-    //       const status = statuses.find((s) => s?._id == _id);
-    //       if (!status) {
-    //         // Recover from disaster and add back a new, default, status
-    //         const newStatus = new ServiceStatusApplicationEntity(
-    //           this.#repository,
-    //           getDefaultStatus(_id, appKey, tenant)
-    //         );
-    //         await this.#repository.save(newStatus);
-    //         logger.info(`################# Adding status to ${app.name}`);
-    //       } else if (!status.appKey) {
-    //         // Add the appKey to the status
-    //         status.appKey = appKey;
-    //         await this.#repository.save(status);
-    //         logger.info(`################# Adding status appKey ${app.name}`);
-    //       }
-    //       if (!app.appKey) {
-    //         // Add application key to old apps
-    //         app.appKey = getApplicationKey(tenant.name, app.name);
-    //         app._id = _id;
-    //         logger.info(`################# Adding appKey to ${app.name}`);
-    //         await updateConfiguration(this.#directory, this.#tokenProvider, tenant.id, app._id, app);
-    //       }
-    //     }
-    //   });
-    // });
+    const statuses = await this.#repository.find({});
+    const tenants = await this.#tenantService.getTenants();
+    tenants.forEach(async (tenant: Tenant) => {
+      const config: StatusServiceConfiguration = await this.#configurationFinder(tenant.id);
+      const apps = new StatusApplications(config);
+      const ids = Object.keys(config);
+      ids.forEach(async (_id) => {
+        logger.info(`################# Processing App with id: ${_id}`);
+        const app = apps.get(_id);
+
+        // Fix up he app's configuration data
+        if (app && (!app._id || !app.appKey)) {
+          app._id = _id;
+          app.appKey = getApplicationKey(tenant.name, app.name);
+          logger.info(`#################### updating ${app.name}`);
+          try {
+            await updateConfiguration(this.#directory, this.#tokenProvider, tenant.id, _id, app);
+          } catch (e) {
+            logger.info(`################### Error updating configuration for ${app.name}...${e.message}`);
+          }
+        }
+
+        // Ensure that status data exists for all apps
+        if (app) {
+          const status = statuses.find((s) => s?._id == _id);
+          const appKey = getApplicationKey(tenant.name, app.name);
+          if (!status) {
+            const newStatus = new ServiceStatusApplicationEntity(
+              this.#repository,
+              getDefaultStatus(_id, appKey, tenant)
+            );
+            try {
+              await this.#repository.save(newStatus);
+            } catch (e) {
+              logger.error(`################ cannot add status for app ${app.name}: ${e.message}`);
+            }
+            logger.info(`################# Adding status to ${app.name}`);
+          } else if (!status.appKey) {
+            status.appKey = appKey;
+            try {
+              await this.#repository.save(status);
+            } catch (e) {
+              logger.error(`################ cannot add appKey to status for app ${app.name}: ${e.message}`);
+            }
+            logger.info(`################# Adding status appKey ${app.name}`);
+          }
+        }
+      });
+    });
   };
 }
 

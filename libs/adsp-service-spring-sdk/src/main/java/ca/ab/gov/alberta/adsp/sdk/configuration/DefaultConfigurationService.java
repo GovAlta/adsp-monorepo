@@ -89,6 +89,8 @@ class DefaultConfigurationService implements ConfigurationService {
     Assert.notNull(tenantId, "tenantId cannot be null.");
 
     this.configurationCache.evict(this.getCacheKey(serviceId, tenantId));
+
+    this.logger.info("Cleared cached value for service {} of tenant {}.", serviceId, tenantId);
   }
 
   @Scheduled(timeUnit = TimeUnit.HOURS, fixedRate = 1)

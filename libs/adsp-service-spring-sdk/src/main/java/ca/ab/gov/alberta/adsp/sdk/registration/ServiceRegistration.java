@@ -20,6 +20,8 @@ public class ServiceRegistration {
   private final ConfigurationDefinition configuration;
   private final List<ServiceRole> roles;
   private final List<DomainEventDefinition> events;
+  private final List<FileType> fileTypes;
+  private final List<StreamDefinition> streams;
 
   public ConfigurationDefinition getConfiguration() {
     return configuration;
@@ -33,10 +35,20 @@ public class ServiceRegistration {
     return events;
   }
 
+  public List<FileType> getFileTypes() {
+    return fileTypes;
+  }
+
+  public List<StreamDefinition> getStreams() {
+    return streams;
+  }
+
   private ServiceRegistration(Builder builder) {
     this.configuration = builder.getConfiguration();
     this.roles = builder.getRoles();
     this.events = builder.getEvents();
+    this.fileTypes = builder.getFileTypes();
+    this.streams = builder.getStreams();
   }
 
   /**
@@ -52,6 +64,8 @@ public class ServiceRegistration {
     private ConfigurationDefinition configuration;
     private List<ServiceRole> roles;
     private List<DomainEventDefinition> events;
+    private List<FileType> fileTypes;
+    private List<StreamDefinition> streams;
 
     public ConfigurationDefinition getConfiguration() {
       return configuration;
@@ -99,12 +113,42 @@ public class ServiceRegistration {
       return this;
     }
 
+    public List<FileType> getFileTypes() {
+      return fileTypes;
+    }
+
+    /**
+     * Set the file types to register
+     *
+     * @param fileTypes File types to register
+     * @return Builder
+     */
+    public Builder withFileTypes(FileType... fileTypes) {
+      this.fileTypes = Arrays.asList(fileTypes);
+      return this;
+    }
+
+    public List<StreamDefinition> getStreams() {
+      return streams;
+    }
+
+    /**
+     * Set the stream definitions to register
+     * 
+     * @param streams Stream definitions to register
+     * @return Builder
+     */
+    public Builder withStreams(StreamDefinition... streams) {
+      this.streams = Arrays.asList(streams);
+      return this;
+    }
+
     private Builder() {
     }
 
     /**
      * Build service registration
-     * 
+     *
      * @return ServiceRegistration
      */
     public ServiceRegistration build() {
