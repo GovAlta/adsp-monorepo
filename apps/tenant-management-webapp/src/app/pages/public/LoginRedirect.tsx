@@ -30,9 +30,11 @@ const LoginRedirect = (props: LoginProps): JSX.Element => {
     const type = urlParams.get('type');
     const idpFromUrl = urlParams.get('kc_idp_hint');
     const location: string = window.location.href;
-    const skipSSO = location.indexOf('kc_idp_hint') > -1;
+    const skipSSO = location.indexOf('kc_idp_hint=') > -1;
 
-    localStorage.setItem('idpFromUrl', skipSSO ? 'true' : 'false');
+    if (skipSSO) {
+      localStorage.setItem('idpFromUrl', idpFromUrl);
+    }
 
     if (type === LOGIN_TYPES.tenantAdmin) {
       if (isTenantAdmin) {

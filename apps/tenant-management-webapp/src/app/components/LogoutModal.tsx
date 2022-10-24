@@ -23,9 +23,13 @@ export const LogoutModal = (): JSX.Element => {
         <GoAButton
           onClick={() => {
             const tenantRealm = localStorage.getItem('realm');
-            const idpFromUrl = localStorage.getItem('idpFromUrl') === 'true' ? '?kc_idp_hint=' : '';
+            const idpFromUrl = localStorage.getItem('idpFromUrl');
             localStorage.removeItem('realm');
-            window.location.replace(`${tenantRealm}/login${idpFromUrl}`);
+            if (idpFromUrl === null || idpFromUrl === 'core') {
+              window.location.replace(`${tenantRealm}/login`);
+            } else {
+              window.location.replace(`${tenantRealm}/login?kc_idp_hint=${idpFromUrl}`);
+            }
           }}
         >
           Login again
