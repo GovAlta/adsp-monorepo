@@ -152,7 +152,7 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
               value={script.description}
               data-testid={`script-modal-description-input`}
               aria-label="description"
-              maxLength={512}
+              maxLength={250}
               className="goa-textarea"
               onChange={(e) => {
                 const description = e.target.value;
