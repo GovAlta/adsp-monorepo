@@ -35,7 +35,7 @@ class AccessIssuerCache {
     this.issuers = cacheManager.getCache("adsp.issuers");
     this.issuerUrlBuilder = UriComponentsBuilder.fromUri(this.accessServiceUrl).path("/auth/realms/{realm}");
 
-    if (configuration.getAllowCoreUser()) {
+    if (configuration.isCoreUserAllowed()) {
       var issuer = issuerUrlBuilder.build(AccessConstants.CoreRealm);
       this.issuers.put(issuer.toString(), new AccessIssuer(true, null));
 
@@ -47,8 +47,6 @@ class AccessIssuerCache {
   public void updateIssuers() {
     this.tenantService.getTenants()
         .doOnNext(tenants -> {
-          // TODO: Include configuration to verify tokens from core issuer.
-
           // NOTE: This is currently additive. Tenant removal would need to be handled
           // here as well as in all dependent components.
           tenants.forEach(tenant -> {

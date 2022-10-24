@@ -321,6 +321,22 @@ Domain events can be sent using the event service which is available via depende
   }
 ```
 
+## Connecting to push streams
+Services can receive events via push service streams over [Socket.IO](https://socket.io).
+
+Create a POJO component / bean with the `SocketEventListener` annotation on an appropriate method.
+```java
+
+  @Component
+  public class MyEventSubscriber {
+    @SocketEventListener(streamId = "my-event-stream", payloadType = Map.class)
+    public void OnEvent(FullDomainEvent<Map<String, Object>> received) {
+      ...
+    }
+  }
+```
+
+
 ## Additional utilities
 The SDK provides several other useful utilities.
 

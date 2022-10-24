@@ -30,7 +30,7 @@ class RequestedTenantFilter implements Filter {
   public RequestedTenantFilter(AdspConfiguration configuration) {
     // No need to apply the filter if core users are not allowed or service is
     // tenant specific.
-    this.applyFilter = StringUtils.isBlank(configuration.getRealm()) && configuration.getAllowCoreUser();
+    this.applyFilter = StringUtils.isBlank(configuration.getRealm()) && configuration.isCoreUserAllowed();
   }
 
   @Override

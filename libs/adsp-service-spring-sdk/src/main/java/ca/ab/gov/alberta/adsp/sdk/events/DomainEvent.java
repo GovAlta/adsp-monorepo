@@ -23,7 +23,7 @@ public class DomainEvent<T> {
   private String correlationId;
 
   @JsonProperty
-  private final T payload;
+  private T payload;
 
   public String getName() {
     return name;
@@ -59,6 +59,10 @@ public class DomainEvent<T> {
 
   public T getPayload() {
     return payload;
+  }
+
+  public void setPayload(T payload) {
+    this.payload = payload;
   }
 
   public DomainEvent(String name, Instant timestamp, T payload) {
