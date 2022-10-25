@@ -26,10 +26,10 @@ export const LogoutModal = (): JSX.Element => {
             const idpFromUrl = localStorage.getItem('idpFromUrl');
             localStorage.removeItem('realm');
             if (idpFromUrl === null || idpFromUrl === 'core') {
-              const url = encodeURIComponent(`${tenantRealm}/login`);
+              const url = `${tenantRealm}/login`;
               window.location.replace(url);
             } else {
-              const url = encodeURIComponent(`${tenantRealm}/login?kc_idp_hint=${idpFromUrl}`);
+              const url = `${tenantRealm}/login?kc_idp_hint=${idpFromUrl}`;
               window.location.replace(url);
             }
           }}
