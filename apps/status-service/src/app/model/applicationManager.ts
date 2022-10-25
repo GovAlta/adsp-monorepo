@@ -130,13 +130,12 @@ export class ApplicationManager {
       const apps = new StatusApplications(config);
       const ids = Object.keys(config);
       ids.forEach(async (_id) => {
-        logger.info(`################# Processing App with id: ${_id}`);
         const app = apps.get(_id);
 
         // Fix up he app's configuration data
         if (app && !(app._id && app.appKey)) {
           const appKey = getApplicationKey(tenant.name, app.name);
-          logger.info(`#################### updating ${app.name}`);
+          logger.info(`updating ${app.name}`);
           try {
             await updateConfiguration(this.#directory, this.#tokenProvider, tenant.id, _id, {
               ...app,
@@ -144,7 +143,7 @@ export class ApplicationManager {
               appKey: appKey,
             });
           } catch (e) {
-            logger.info(`################### Error updating configuration for ${app.name}...${e.message}`);
+            logger.info(`Error updating configuration for ${app.name}...${e.message}`);
           }
         }
 
@@ -160,17 +159,17 @@ export class ApplicationManager {
             try {
               await this.#repository.save(newStatus);
             } catch (e) {
-              logger.error(`################ cannot add status for app ${app.name}: ${e.message}`);
+              logger.error(`cannot add status for app ${app.name}: ${e.message}`);
             }
-            logger.info(`################# Adding status to ${app.name}`);
+            logger.info(`Adding status to ${app.name}`);
           } else if (!status.appKey) {
             status.appKey = appKey;
             try {
               await this.#repository.save(status);
             } catch (e) {
-              logger.error(`################ cannot add appKey to status for app ${app.name}: ${e.message}`);
+              logger.error(`cannot add appKey to status for app ${app.name}: ${e.message}`);
             }
-            logger.info(`################# Adding status appKey ${app.name}`);
+            logger.info(`Adding status appKey ${app.name}`);
           }
         }
       });

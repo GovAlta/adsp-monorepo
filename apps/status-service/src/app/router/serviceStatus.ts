@@ -73,11 +73,13 @@ export const getApplications = (
       }
       const applications = await getStatusConfiguration(tenantId, serviceId, directory, tokenProvider);
       const statuses = await serviceStatusRepository.find({ tenantId: tenantId.toString() });
-      const result = statuses
-        .map((status) => {
-          const app = applications.get(status._id);
-          if (app) {
+      const result = applications
+        .map((app) => {
+          const status = statuses.find((s) => s.appKey == app.appKey);
+          if (status) {
             return mergeApplicationData(app, status);
+          } else {
+            logger.error(`cannot find status associated with app ${app.name}`);
           }
         })
         // weed out orphaned statuses
@@ -385,24 +387,24 @@ export const getApplicationEntries =
         tenantId
       );
       const applications = new StatusApplications(configuration);
-      const { applicationId } = req.params;
+      const { appKey } = req.params;
       const { topValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 200;
 
-      const app = applications.get(applicationId);
+      const app = applications.find(appKey);
       if (!app) {
-        throw new NotFoundError('Status application', applicationId.toString());
+        throw new NotFoundError('Status application', appKey);
       }
 
       // TODO is there an easier way to test if the tenant is authorized to
       // access this application?  It seems a bit of a waste to hit up
       // the database just for this.
-      const appStatus = await serviceStatusRepository.get(applicationId);
+      const appStatus = await serviceStatusRepository.get(app._id);
       if (tenantId?.toString() !== appStatus.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
       }
 
-      const entries = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(app.url, applicationId, top);
+      const entries = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(app.url, app._id, top);
       res.send(
         entries.map((e) => {
           return {
@@ -477,7 +479,7 @@ export function createServiceStatusRouter({
   );
 
   router.get(
-    '/applications/:applicationId/endpoint-status-entries',
+    '/applications/:appKey/endpoint-status-entries',
     getApplicationEntries(logger, serviceStatusRepository, endpointStatusEntryRepository)
   );
 
