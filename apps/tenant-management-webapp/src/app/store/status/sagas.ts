@@ -99,17 +99,10 @@ export function* setApplicationStatus(action: SetApplicationStatusAction): SagaI
 
   try {
     const api = new StatusApi(baseUrl, token);
-    const data: ApplicationStatus = yield call(
-      [api, api.setStatus],
-      action.payload.applicationId,
-      action.payload.status
-    );
+    const data: ApplicationStatus = yield call([api, api.setStatus], action.payload.appKey, action.payload.status);
 
     // status entries
-    const entryMap: EndpointStatusEntry[] = yield call(
-      [api, api.getEndpointStatusEntries],
-      action.payload.applicationId
-    );
+    const entryMap: EndpointStatusEntry[] = yield call([api, api.getEndpointStatusEntries], action.payload.appKey);
     data.endpoint.statusEntries = entryMap;
 
     yield put(setApplicationStatusSuccess(data));
@@ -128,7 +121,7 @@ export function* toggleApplicationStatus(action: ToggleApplicationStatusAction):
     const api = new StatusApi(baseUrl, token);
     const data: ApplicationStatus = yield call(
       [api, api.toggleApplication],
-      action.payload.applicationId,
+      action.payload.appKey,
       action.payload.enabled
     );
 

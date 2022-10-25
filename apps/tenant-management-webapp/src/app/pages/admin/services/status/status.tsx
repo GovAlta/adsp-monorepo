@@ -262,7 +262,7 @@ function Application(app: ApplicationStatus) {
   }
 
   function doManualStatusChange() {
-    dispatch(setApplicationStatus({ tenantId: app.tenantId, applicationId: app._id, status }));
+    dispatch(setApplicationStatus({ tenantId: app.tenantId, appKey: app.appKey, status }));
     setShowStatusForm(false);
   }
 
@@ -319,7 +319,7 @@ function Application(app: ApplicationStatus) {
             dispatch(
               toggleApplicationStatus({
                 tenantId: app.tenantId,
-                applicationId: app._id,
+                appKey: app.appKey,
                 enabled: !app.enabled,
               })
             );

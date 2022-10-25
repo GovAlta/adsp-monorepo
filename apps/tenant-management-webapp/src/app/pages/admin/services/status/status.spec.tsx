@@ -37,21 +37,21 @@ describe('ServiceStatus Page', () => {
         metrics: {},
         applications: [
           {
-            _id: '99',
+            appKey: '99',
             tenantId: '11',
             name: 'facebook',
             status: 'operational',
             endpoint: { url: 'https://facebook.com/api', status: 'online', statusEntries: [] },
           },
           {
-            _id: '33',
+            appKey: '33',
             tenantId: '11',
             name: 'twitter',
             status: 'operational',
             endpoint: { url: 'https://facebook.com/api', status: 'online', statusEntries: [] },
           },
           {
-            _id: '11',
+            appKey: '11',
             tenantId: '11',
             name: 'alberta.ca',
             status: 'operational',
@@ -132,7 +132,7 @@ describe('ServiceStatus Page', () => {
         metrics: {},
         applications: [
           {
-            _id: '11',
+            appKey: '11',
             tenantId: '11',
             name: 'alberta.ca',
             status: 'disabled',
@@ -170,8 +170,8 @@ describe('ServiceStatus Page', () => {
       );
 
       const state = store.getState() as RootState;
-      const { applicationId, status, tenantId } = toggleAction.payload;
-      expect(applicationId).toEqual('11');
+      const { appKey, status, tenantId } = toggleAction.payload;
+      expect(appKey).toEqual('11');
       expect(tenantId).toEqual('11');
       expect(status).toEqual(!state.serviceStatus.applications[0].status);
     });

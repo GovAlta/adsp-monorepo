@@ -30,7 +30,7 @@ const initialState: ServiceStatus = {
   },
 };
 
-const compareIds = (a: { _id?: string }, b: { _id?: string }): number => (a._id <= b._id ? 1 : -1);
+const compareIds = (a: { appKey?: string }, b: { appKey?: string }): number => (a.appKey <= b.appKey ? 1 : -1);
 
 export default function statusReducer(state: ServiceStatus = initialState, action: ActionTypes): ServiceStatus {
   switch (action.type) {
@@ -50,7 +50,7 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
     case DELETE_APPLICATION_SUCCESS_ACTION:
       return {
         ...state,
-        applications: [...state.applications.filter((app) => app._id !== action.payload)].sort(compareIds),
+        applications: [...state.applications.filter((app) => app.appKey !== action.payload)].sort(compareIds),
       };
     case SAVE_APPLICATION_SUCCESS_ACTION:
     case SET_APPLICATION_SUCCESS_STATUS_ACTION: {
@@ -67,7 +67,7 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
         ...state,
         applications: state.applications
           .map((app) =>
-            app._id !== action.payload._id
+            app.appKey !== action.payload.appKey
               ? { ...app }
               : { ...app, enabled: action.payload.enabled, internalStatus: action.payload.internalStatus }
           )

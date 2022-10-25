@@ -99,13 +99,17 @@ export const enableApplication =
     try {
       logger.info(req.method, req.url);
       const user = req.user as User;
-      const { id } = req.params;
-      const appStatus = await serviceStatusRepository.get(id);
+      const { appKey } = req.params;
       const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
         user.tenantId
       );
       const applications = new StatusApplications(configuration);
-      const app = applications.get(id);
+      const app = applications.find(appKey);
+      if (!app) {
+        throw new NotFoundError('Status application', appKey);
+      }
+
+      const appStatus = await serviceStatusRepository.get(app._id);
 
       if (user.tenantId?.toString() !== appStatus.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
@@ -124,13 +128,16 @@ export const disableApplication =
     try {
       logger.info(req.method, req.url);
       const user = req.user as User;
-      const { id } = req.params;
-      const appStatus = await serviceStatusRepository.get(id);
+      const { appKey } = req.params;
       const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
         user.tenantId
       );
       const applications = new StatusApplications(configuration);
-      const app = applications.get(id);
+      const app = applications.find(appKey);
+      if (!app) {
+        throw new NotFoundError('Status application', appKey);
+      }
+      const appStatus = await serviceStatusRepository.get(app._id);
 
       if (user.tenantId?.toString() !== appStatus.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
@@ -328,15 +335,20 @@ export const updateApplicationStatus =
       logger.info(`${req.method} - ${req.url}`);
 
       const user = req.user as User;
-      const { id } = req.params;
+      const { appKey } = req.params;
       const { status } = req.body;
-      const applicationStatus = await serviceStatusRepository.get(id);
-      const originalStatus = applicationStatus.status ?? 'n/a';
       const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
         user.tenantId
       );
       const apps = new StatusApplications(configuration);
-      const app = apps.get(applicationStatus._id);
+      const app = apps.find(appKey);
+
+      if (!app) {
+        throw new NotFoundError('Status Application', appKey);
+      }
+
+      const applicationStatus = await serviceStatusRepository.get(app._id);
+      const originalStatus = applicationStatus.status ?? 'n/a';
 
       if (user.tenantId?.toString() !== applicationStatus.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
@@ -356,14 +368,18 @@ export const toggleApplication =
   async (req, res, next) => {
     try {
       const user = req.user as User;
-      const { id } = req.params;
-      const appStatus = await serviceStatusRepository.get(id);
+      const { appKey } = req.params;
 
       const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
         user.tenantId
       );
       const apps = new StatusApplications(configuration);
-      const app = apps.get(id);
+      const app = apps.find(appKey);
+      if (!app) {
+        throw new NotFoundError('Status Application', appKey);
+      }
+
+      const appStatus = await serviceStatusRepository.get(app._id);
       if (!appStatus.enabled) {
         eventService.send(applicationStatusToStarted(app, appStatus, user));
       } else {
@@ -451,14 +467,14 @@ export function createServiceStatusRouter({
 
   // Enable the service
   router.patch(
-    '/applications/:id/enable',
+    '/applications/:appKey/enable',
     assertAuthenticatedHandler,
     enableApplication(logger, serviceStatusRepository)
   );
 
   // Disable the service
   router.patch(
-    '/applications/:id/disable',
+    '/applications/:appKey/disable',
     assertAuthenticatedHandler,
     disableApplication(logger, serviceStatusRepository)
   );
@@ -479,13 +495,13 @@ export function createServiceStatusRouter({
     deleteApplication(logger, tokenProvider, directory, serviceStatusRepository)
   );
   router.patch(
-    '/applications/:id/status',
+    '/applications/:appKey/status',
     assertAuthenticatedHandler,
     updateApplicationStatus(logger, serviceStatusRepository, eventService)
   );
 
   router.patch(
-    '/applications/:id/toggle',
+    '/applications/:appKey/toggle',
     assertAuthenticatedHandler,
     toggleApplication(logger, serviceStatusRepository, eventService)
   );
