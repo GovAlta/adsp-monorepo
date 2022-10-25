@@ -68,7 +68,7 @@ export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAc
         Promise.all([store.dispatch(SessionLoginSuccess(session))]);
       },
       () => {
-        const url = encodeURIComponent(`/${realm}/login`);
+        const url = `/${realm}/login`;
         window.location.replace(url);
       }
     );
@@ -98,7 +98,7 @@ export function* keycloakRefreshToken(realm?: string): SagaIterator {
           Promise.all([store.dispatch(SessionLoginSuccess(session))]);
         },
         () => {
-          const url = encodeURIComponent(`/${realm}/login`);
+          const url = `/${realm}/login`;
           window.location.replace(url);
         }
       );
