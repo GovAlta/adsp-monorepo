@@ -95,7 +95,7 @@ export const isValidJSONCheck = (label?: string): Validator => {
       JSON.parse(str);
       return '';
     } catch (err) {
-      return `${label} is invalid for JSON string`;
+      return `${capitalize(label)} is invalid for JSON string`;
     }
   };
 };
@@ -145,3 +145,5 @@ export const jsonSchemaCheck = (schema: Record<string, unknown>, value: unknown)
   ajv.compile(schema);
   return ajv.validate(schema, value);
 };
+
+const capitalize = (word) => (!word ? word : word[0].toUpperCase() + word.substr(1).toLowerCase());

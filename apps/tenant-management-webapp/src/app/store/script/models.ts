@@ -36,4 +36,5 @@ export interface ScriptResponse {
   timeToRun?: string;
   inputs?: Record<string, any>;
   result: string;
+  hasError?: boolean;
 }
