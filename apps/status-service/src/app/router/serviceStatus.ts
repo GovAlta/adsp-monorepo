@@ -231,7 +231,6 @@ export const updateConfiguration = async (
 export const updateApplication =
   (
     logger: Logger,
-    tenantService: TenantService,
     tokenProvider: TokenProvider,
     serviceDirectory: ServiceDirectory,
     serviceStatusRepository: ServiceStatusRepository
@@ -242,18 +241,25 @@ export const updateApplication =
 
       const user = req.user as User;
       const { name, description, endpoint } = req.body;
-      const { id } = req.params;
+      const { appKey } = req.params;
       const tenantId = user.tenantId?.toString() ?? '';
 
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
       }
-      const tenant = await tenantService.getTenant(user.tenantId);
-      const appKey = getApplicationKey(tenant.name, name);
-      const update: StaticApplicationData = { _id: id, appKey, name, url: endpoint.url, description };
-      updateConfiguration(serviceDirectory, tokenProvider, user.tenantId, id, update);
+      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
+        user.tenantId
+      );
+      const applications = new StatusApplications(configuration);
+      const app = applications.find(appKey);
+      if (!app) {
+        throw new NotFoundError('Status application', appKey);
+      }
 
-      const status = await serviceStatusRepository.get(id);
+      const update: StaticApplicationData = { _id: app._id, appKey, name, url: endpoint.url, description };
+      updateConfiguration(serviceDirectory, tokenProvider, user.tenantId, app._id, update);
+
+      const status = await serviceStatusRepository.get(app._id);
 
       res.json(mergeApplicationData(update, status));
     } catch (err) {
@@ -463,9 +469,9 @@ export function createServiceStatusRouter({
     createNewApplication(logger, tenantService, tokenProvider, directory, serviceStatusRepository)
   );
   router.put(
-    '/applications/:id',
+    '/applications/:appKey',
     assertAuthenticatedHandler,
-    updateApplication(logger, tenantService, tokenProvider, directory, serviceStatusRepository)
+    updateApplication(logger, tokenProvider, directory, serviceStatusRepository)
   );
   router.delete(
     '/applications/:appKey',
