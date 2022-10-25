@@ -18,14 +18,14 @@ export interface FetchServiceStatusAppsSuccessAction {
 export interface FetchServiceStatusAppHealthAction {
   type: typeof FETCH_SERVICE_STATUS_APP_HEALTH_ACTION;
   payload: {
-    applicationId: string;
+    appKey: string;
   };
 }
 
 export interface FetchServiceStatusAppHealthSuccessAction {
   type: typeof FETCH_SERVICE_STATUS_APP_HEALTH_SUCCESS_ACTION;
   payload: {
-    applicationId: string;
+    appKey: string;
     url: string;
     entries: EndpointStatusEntry[];
   };
@@ -40,19 +40,19 @@ export const fetchServiceStatusAppsSuccess = (payload: ApplicationStatus[]): Fet
   payload,
 });
 
-export const fetchServiceStatusAppHealth = (applicationId: string): FetchServiceStatusAppHealthAction => ({
+export const fetchServiceStatusAppHealth = (appKey: string): FetchServiceStatusAppHealthAction => ({
   type: FETCH_SERVICE_STATUS_APP_HEALTH_ACTION,
-  payload: { applicationId },
+  payload: { appKey },
 });
 
 export const fetchServiceStatusAppHealthSuccess = (
-  applicationId: string,
+  appKey: string,
   url: string,
   entries: EndpointStatusEntry[]
 ): FetchServiceStatusAppHealthSuccessAction => ({
   type: FETCH_SERVICE_STATUS_APP_HEALTH_SUCCESS_ACTION,
   payload: {
-    applicationId,
+    appKey,
     url,
     entries,
   },

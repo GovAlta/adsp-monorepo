@@ -44,7 +44,7 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
         ...state,
         endpointHealth: {
           ...state.endpointHealth,
-          [action.payload.applicationId]: { url: action.payload.url, entries: action.payload.entries || [] },
+          [action.payload.appKey]: { url: action.payload.url, entries: action.payload.entries || [] },
         },
       };
     case DELETE_APPLICATION_SUCCESS_ACTION:
