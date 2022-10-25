@@ -141,6 +141,7 @@ export function* executeScript(action: RunScriptAction): SagaIterator {
         timeToRun: new Date().toLocaleString(),
         inputs: testInputs.inputs,
         result: response?.data[0],
+        hasError: false,
       };
       yield put(runScriptSuccess(scriptResponse));
       yield put(
@@ -155,6 +156,7 @@ export function* executeScript(action: RunScriptAction): SagaIterator {
             timeToRun: new Date().toLocaleString(),
             inputs: testInputs.inputs,
             result: err?.response?.data.error,
+            hasError: true,
           })
         );
       } else {
