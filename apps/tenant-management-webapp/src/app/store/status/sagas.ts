@@ -83,9 +83,9 @@ export function* deleteApplication(action: DeleteApplicationAction): SagaIterato
 
   try {
     const api = new StatusApi(baseUrl, token);
-    yield call([api, api.deleteApplication], action.payload.applicationId);
+    yield call([api, api.deleteApplication], action.payload.appKey);
 
-    yield put(deleteApplicationSuccess(action.payload.applicationId));
+    yield put(deleteApplicationSuccess(action.payload.appKey));
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
   }
@@ -157,7 +157,7 @@ export function* fetchStatusMetrics(): SagaIterator {
   yield take(FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION);
   const apps: Record<string, ApplicationStatus> = (yield select(
     (state: RootState) => state.serviceStatus.applications
-  )).reduce((apps: Record<string, ApplicationStatus>, app: ApplicationStatus) => ({ ...apps, [app._id]: app }), {});
+  )).reduce((apps: Record<string, ApplicationStatus>, app: ApplicationStatus) => ({ ...apps, [app.appKey]: app }), {});
 
   if (baseUrl && token) {
     try {

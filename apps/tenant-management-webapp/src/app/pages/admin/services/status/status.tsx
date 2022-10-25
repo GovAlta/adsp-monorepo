@@ -253,7 +253,7 @@ function Application(app: ApplicationStatus) {
   const [status, setStatus] = useState<ServiceStatusType>(app.status);
 
   function doDelete() {
-    dispatch(deleteApplication({ tenantId: app.tenantId, applicationId: app._id }));
+    dispatch(deleteApplication({ tenantId: app.tenantId, appKey: app.appKey }));
     setShowDeleteConfirmation(false);
   }
 

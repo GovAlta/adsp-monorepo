@@ -1,6 +1,6 @@
 interface Params {
   tenantId: string;
-  applicationId: string;
+  appKey: string;
 }
 
 export const DELETE_APPLICATION_ACTION = 'status/DELETE_APPLICATION';

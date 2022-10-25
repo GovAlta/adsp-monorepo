@@ -55,7 +55,7 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
     case SAVE_APPLICATION_SUCCESS_ACTION:
     case SET_APPLICATION_SUCCESS_STATUS_ACTION: {
       const index = state.applications.findIndex((app) => {
-        return app._id === action.payload._id;
+        return app.appKey === action.payload.appKey;
       });
       if (index !== -1) {
         state.applications[index] = action.payload;

@@ -272,15 +272,21 @@ export const deleteApplication =
   async (req, res, next) => {
     try {
       const user = req.user as User;
-      const { id } = req.params;
-      const application = await serviceStatusRepository.get(id);
+      const { appKey } = req.params;
 
-      if (user.tenantId?.toString() !== application.tenantId) {
+      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
+        user.tenantId
+      );
+      const applications = new StatusApplications(configuration);
+      const app = applications.find(appKey);
+      const appStatus = await serviceStatusRepository.get(app._id);
+
+      if (user.tenantId?.toString() !== appStatus.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
       }
 
-      await application.delete({ ...user } as User);
-      deleteConfigurationApp(id, directory, tokenProvider, user.tenantId);
+      await appStatus.delete({ ...user } as User);
+      deleteConfigurationApp(app._id, directory, tokenProvider, user.tenantId);
       res.sendStatus(204);
     } catch (err) {
       logger.error(`Failed to delete application: ${err.message}`);
@@ -462,7 +468,7 @@ export function createServiceStatusRouter({
     updateApplication(logger, tenantService, tokenProvider, directory, serviceStatusRepository)
   );
   router.delete(
-    '/applications/:id',
+    '/applications/:appKey',
     assertAuthenticatedHandler,
     deleteApplication(logger, tokenProvider, directory, serviceStatusRepository)
   );
