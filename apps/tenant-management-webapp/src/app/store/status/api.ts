@@ -14,16 +14,16 @@ export class StatusApi {
     return res.data;
   }
 
-  async getEndpointStatusEntries(applicationId: string): Promise<EndpointStatusEntry[]> {
+  async getEndpointStatusEntries(appKey: string): Promise<EndpointStatusEntry[]> {
     // We show up to 30 right now.
     const limit = 35;
-    const res = await this.http.get(`/applications/${applicationId}/endpoint-status-entries?top=${limit}`);
+    const res = await this.http.get(`/applications/${appKey}/endpoint-status-entries?top=${limit}`);
     return res.data;
   }
 
   async saveApplication(props: ApplicationStatus): Promise<ApplicationStatus> {
-    if (props._id) {
-      const res = await this.http.put(`/applications/${props._id}`, props);
+    if (props.appKey) {
+      const res = await this.http.put(`/applications/${props.appKey}`, props);
       return res.data;
     } else {
       const res = await this.http.post(`/applications`, props);
@@ -31,8 +31,8 @@ export class StatusApi {
     }
   }
 
-  async deleteApplication(applicationId: string): Promise<void> {
-    await this.http.delete(`/applications/${applicationId}`);
+  async deleteApplication(appKey: string): Promise<void> {
+    await this.http.delete(`/applications/${appKey}`);
   }
 
   async setStatus(applicationId: string, status: string): Promise<ApplicationStatus> {

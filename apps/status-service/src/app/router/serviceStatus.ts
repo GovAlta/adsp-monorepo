@@ -73,11 +73,13 @@ export const getApplications = (
       }
       const applications = await getStatusConfiguration(tenantId, serviceId, directory, tokenProvider);
       const statuses = await serviceStatusRepository.find({ tenantId: tenantId.toString() });
-      const result = statuses
-        .map((status) => {
-          const app = applications.get(status._id);
-          if (app) {
+      const result = applications
+        .map((app) => {
+          const status = statuses.find((s) => s.appKey == app.appKey);
+          if (status) {
             return mergeApplicationData(app, status);
+          } else {
+            logger.error(`cannot find status associated with app ${app.name}`);
           }
         })
         // weed out orphaned statuses
@@ -97,13 +99,17 @@ export const enableApplication =
     try {
       logger.info(req.method, req.url);
       const user = req.user as User;
-      const { id } = req.params;
-      const appStatus = await serviceStatusRepository.get(id);
+      const { appKey } = req.params;
       const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
         user.tenantId
       );
       const applications = new StatusApplications(configuration);
-      const app = applications.get(id);
+      const app = applications.find(appKey);
+      if (!app) {
+        throw new NotFoundError('Status application', appKey);
+      }
+
+      const appStatus = await serviceStatusRepository.get(app._id);
 
       if (user.tenantId?.toString() !== appStatus.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
@@ -122,13 +128,16 @@ export const disableApplication =
     try {
       logger.info(req.method, req.url);
       const user = req.user as User;
-      const { id } = req.params;
-      const appStatus = await serviceStatusRepository.get(id);
+      const { appKey } = req.params;
       const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
         user.tenantId
       );
       const applications = new StatusApplications(configuration);
-      const app = applications.get(id);
+      const app = applications.find(appKey);
+      if (!app) {
+        throw new NotFoundError('Status application', appKey);
+      }
+      const appStatus = await serviceStatusRepository.get(app._id);
 
       if (user.tenantId?.toString() !== appStatus.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
@@ -229,7 +238,6 @@ export const updateConfiguration = async (
 export const updateApplication =
   (
     logger: Logger,
-    tenantService: TenantService,
     tokenProvider: TokenProvider,
     serviceDirectory: ServiceDirectory,
     serviceStatusRepository: ServiceStatusRepository
@@ -240,18 +248,25 @@ export const updateApplication =
 
       const user = req.user as User;
       const { name, description, endpoint } = req.body;
-      const { id } = req.params;
+      const { appKey } = req.params;
       const tenantId = user.tenantId?.toString() ?? '';
 
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
       }
-      const tenant = await tenantService.getTenant(user.tenantId);
-      const appKey = getApplicationKey(tenant.name, name);
-      const update: StaticApplicationData = { _id: id, appKey, name, url: endpoint.url, description };
-      updateConfiguration(serviceDirectory, tokenProvider, user.tenantId, id, update);
+      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
+        user.tenantId
+      );
+      const applications = new StatusApplications(configuration);
+      const app = applications.find(appKey);
+      if (!app) {
+        throw new NotFoundError('Status application', appKey);
+      }
 
-      const status = await serviceStatusRepository.get(id);
+      const update: StaticApplicationData = { _id: app._id, appKey, name, url: endpoint.url, description };
+      updateConfiguration(serviceDirectory, tokenProvider, user.tenantId, app._id, update);
+
+      const status = await serviceStatusRepository.get(app._id);
 
       res.json(mergeApplicationData(update, status));
     } catch (err) {
@@ -270,15 +285,21 @@ export const deleteApplication =
   async (req, res, next) => {
     try {
       const user = req.user as User;
-      const { id } = req.params;
-      const application = await serviceStatusRepository.get(id);
+      const { appKey } = req.params;
 
-      if (user.tenantId?.toString() !== application.tenantId) {
+      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
+        user.tenantId
+      );
+      const applications = new StatusApplications(configuration);
+      const app = applications.find(appKey);
+      const appStatus = await serviceStatusRepository.get(app._id);
+
+      if (user.tenantId?.toString() !== appStatus.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
       }
 
-      await application.delete({ ...user } as User);
-      deleteConfigurationApp(id, directory, tokenProvider, user.tenantId);
+      await appStatus.delete({ ...user } as User);
+      deleteConfigurationApp(app._id, directory, tokenProvider, user.tenantId);
       res.sendStatus(204);
     } catch (err) {
       logger.error(`Failed to delete application: ${err.message}`);
@@ -314,15 +335,20 @@ export const updateApplicationStatus =
       logger.info(`${req.method} - ${req.url}`);
 
       const user = req.user as User;
-      const { id } = req.params;
+      const { appKey } = req.params;
       const { status } = req.body;
-      const applicationStatus = await serviceStatusRepository.get(id);
-      const originalStatus = applicationStatus.status ?? 'n/a';
       const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
         user.tenantId
       );
       const apps = new StatusApplications(configuration);
-      const app = apps.get(applicationStatus._id);
+      const app = apps.find(appKey);
+
+      if (!app) {
+        throw new NotFoundError('Status Application', appKey);
+      }
+
+      const applicationStatus = await serviceStatusRepository.get(app._id);
+      const originalStatus = applicationStatus.status ?? 'n/a';
 
       if (user.tenantId?.toString() !== applicationStatus.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
@@ -342,14 +368,18 @@ export const toggleApplication =
   async (req, res, next) => {
     try {
       const user = req.user as User;
-      const { id } = req.params;
-      const appStatus = await serviceStatusRepository.get(id);
+      const { appKey } = req.params;
 
       const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
         user.tenantId
       );
       const apps = new StatusApplications(configuration);
-      const app = apps.get(id);
+      const app = apps.find(appKey);
+      if (!app) {
+        throw new NotFoundError('Status Application', appKey);
+      }
+
+      const appStatus = await serviceStatusRepository.get(app._id);
       if (!appStatus.enabled) {
         eventService.send(applicationStatusToStarted(app, appStatus, user));
       } else {
@@ -385,24 +415,24 @@ export const getApplicationEntries =
         tenantId
       );
       const applications = new StatusApplications(configuration);
-      const { applicationId } = req.params;
+      const { appKey } = req.params;
       const { topValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 200;
 
-      const app = applications.get(applicationId);
+      const app = applications.find(appKey);
       if (!app) {
-        throw new NotFoundError('Status application', applicationId.toString());
+        throw new NotFoundError('Status application', appKey);
       }
 
       // TODO is there an easier way to test if the tenant is authorized to
       // access this application?  It seems a bit of a waste to hit up
       // the database just for this.
-      const appStatus = await serviceStatusRepository.get(applicationId);
+      const appStatus = await serviceStatusRepository.get(app._id);
       if (tenantId?.toString() !== appStatus.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
       }
 
-      const entries = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(app.url, applicationId, top);
+      const entries = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(app.url, app._id, top);
       res.send(
         entries.map((e) => {
           return {
@@ -437,14 +467,14 @@ export function createServiceStatusRouter({
 
   // Enable the service
   router.patch(
-    '/applications/:id/enable',
+    '/applications/:appKey/enable',
     assertAuthenticatedHandler,
     enableApplication(logger, serviceStatusRepository)
   );
 
   // Disable the service
   router.patch(
-    '/applications/:id/disable',
+    '/applications/:appKey/disable',
     assertAuthenticatedHandler,
     disableApplication(logger, serviceStatusRepository)
   );
@@ -455,29 +485,29 @@ export function createServiceStatusRouter({
     createNewApplication(logger, tenantService, tokenProvider, directory, serviceStatusRepository)
   );
   router.put(
-    '/applications/:id',
+    '/applications/:appKey',
     assertAuthenticatedHandler,
-    updateApplication(logger, tenantService, tokenProvider, directory, serviceStatusRepository)
+    updateApplication(logger, tokenProvider, directory, serviceStatusRepository)
   );
   router.delete(
-    '/applications/:id',
+    '/applications/:appKey',
     assertAuthenticatedHandler,
     deleteApplication(logger, tokenProvider, directory, serviceStatusRepository)
   );
   router.patch(
-    '/applications/:id/status',
+    '/applications/:appKey/status',
     assertAuthenticatedHandler,
     updateApplicationStatus(logger, serviceStatusRepository, eventService)
   );
 
   router.patch(
-    '/applications/:id/toggle',
+    '/applications/:appKey/toggle',
     assertAuthenticatedHandler,
     toggleApplication(logger, serviceStatusRepository, eventService)
   );
 
   router.get(
-    '/applications/:applicationId/endpoint-status-entries',
+    '/applications/:appKey/endpoint-status-entries',
     getApplicationEntries(logger, serviceStatusRepository, endpointStatusEntryRepository)
   );
 
