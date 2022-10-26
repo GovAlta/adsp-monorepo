@@ -29,12 +29,12 @@ import { getAccessToken } from '@store/tenant/sagas';
 
 export function* fetchServiceStatusAppHealthEffect(api: StatusApi, application: ApplicationStatus): SagaIterator {
   // This is so application state knows there is an incremental load.
-  yield put(fetchServiceStatusAppHealth(application._id));
+  yield put(fetchServiceStatusAppHealth(application.appKey));
 
-  const entryMap: EndpointStatusEntry[] = yield call([api, api.getEndpointStatusEntries], application._id);
+  const entryMap: EndpointStatusEntry[] = yield call([api, api.getEndpointStatusEntries], application.appKey);
   application.endpoint.statusEntries = entryMap;
 
-  yield put(fetchServiceStatusAppHealthSuccess(application._id, application.endpoint.url, entryMap));
+  yield put(fetchServiceStatusAppHealthSuccess(application.appKey, application.endpoint.url, entryMap));
 }
 
 export function* fetchServiceStatusApps(): SagaIterator {
@@ -83,9 +83,9 @@ export function* deleteApplication(action: DeleteApplicationAction): SagaIterato
 
   try {
     const api = new StatusApi(baseUrl, token);
-    yield call([api, api.deleteApplication], action.payload.applicationId);
+    yield call([api, api.deleteApplication], action.payload.appKey);
 
-    yield put(deleteApplicationSuccess(action.payload.applicationId));
+    yield put(deleteApplicationSuccess(action.payload.appKey));
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
   }
@@ -99,17 +99,10 @@ export function* setApplicationStatus(action: SetApplicationStatusAction): SagaI
 
   try {
     const api = new StatusApi(baseUrl, token);
-    const data: ApplicationStatus = yield call(
-      [api, api.setStatus],
-      action.payload.applicationId,
-      action.payload.status
-    );
+    const data: ApplicationStatus = yield call([api, api.setStatus], action.payload.appKey, action.payload.status);
 
     // status entries
-    const entryMap: EndpointStatusEntry[] = yield call(
-      [api, api.getEndpointStatusEntries],
-      action.payload.applicationId
-    );
+    const entryMap: EndpointStatusEntry[] = yield call([api, api.getEndpointStatusEntries], action.payload.appKey);
     data.endpoint.statusEntries = entryMap;
 
     yield put(setApplicationStatusSuccess(data));
@@ -128,7 +121,7 @@ export function* toggleApplicationStatus(action: ToggleApplicationStatusAction):
     const api = new StatusApi(baseUrl, token);
     const data: ApplicationStatus = yield call(
       [api, api.toggleApplication],
-      action.payload.applicationId,
+      action.payload.appKey,
       action.payload.enabled
     );
 
@@ -157,7 +150,7 @@ export function* fetchStatusMetrics(): SagaIterator {
   yield take(FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION);
   const apps: Record<string, ApplicationStatus> = (yield select(
     (state: RootState) => state.serviceStatus.applications
-  )).reduce((apps: Record<string, ApplicationStatus>, app: ApplicationStatus) => ({ ...apps, [app._id]: app }), {});
+  )).reduce((apps: Record<string, ApplicationStatus>, app: ApplicationStatus) => ({ ...apps, [app.appKey]: app }), {});
 
   if (baseUrl && token) {
     try {

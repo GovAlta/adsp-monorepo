@@ -5,6 +5,7 @@ import {
   MonacoDivBody,
   EditModalStyle,
   ScriptPane,
+  ResponseTableStyles,
 } from '../styled-components';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import MonacoEditor, { EditorProps } from '@monaco-editor/react';
@@ -13,6 +14,8 @@ import { ScriptItem } from '@store/script/models';
 import { SaveAndExecuteScript, ClearScripts } from '@store/script/actions';
 import { GoAButton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
+import CheckmarkCircle from '@components/icons/CheckmarkCircle';
+import CloseCircle from '@components/icons/CloseCircle';
 import { RootState } from '@store/index';
 import DataTable from '@components/DataTable';
 
@@ -220,24 +223,31 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               {scriptResponse && (
                 <>
                   <label className="responseLabel">Script response</label>
-                  <DataTable id="response-information">
-                    <thead>
-                      <tr>
-                        <th data-testid="response-header-time-to-run">Time to run</th>
-                        <th data-testid="response-header-input">Input</th>
-                        <th data-testid="response-header-result">Result</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {scriptResponse.map((response) => (
+                  <ResponseTableStyles>
+                    <DataTable id="response-information">
+                      <thead>
                         <tr>
-                          <td data-testid="response-time-to-run">{response.timeToRun}</td>
-                          <td data-testid="response-inputs">{JSON.stringify(response.inputs)}</td>
-                          <td data-testid="response-result">{response.result}</td>
+                          <th data-testid="response-header-time-to-run">Time to run</th>
+                          <th data-testid="response-header-input">Input</th>
+                          <th data-testid="response-header-result">Result</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </DataTable>
+                      </thead>
+                      <tbody>
+                        {scriptResponse.map((response) => (
+                          <tr>
+                            <td data-testid="response-time-to-run">{response.timeToRun}</td>
+                            <td data-testid="response-inputs">{JSON.stringify(response.inputs)}</td>
+                            <td data-testid="response-result">
+                              <div className="flex-horizontal">
+                                {!response.hasError ? <CheckmarkCircle size="medium" /> : <CloseCircle size="medium" />}
+                                <div className="mt-3">{response.result}</div>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </DataTable>
+                  </ResponseTableStyles>
                 </>
               )}
             </div>

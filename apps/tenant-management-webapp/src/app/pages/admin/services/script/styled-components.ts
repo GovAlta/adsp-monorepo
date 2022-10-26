@@ -112,7 +112,7 @@ export const MonacoDivBody = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(50vh - 310px);
+  height: 200px;
 `;
 export const ScriptPanelContainer = styled.div`
   display: flex;
@@ -156,7 +156,7 @@ export const ScriptEditorContainer = styled.div`
   }
 `;
 export const EditModalStyle = styled.div`
-  width: 100%;
+  width: 80%;
   display: fl ex;
 
   .half-width {
@@ -247,5 +247,8 @@ export const ResponseTableStyles = styled.div`
 
   .mt-2 {
     margin-top: 4px;
+  }
+  .mt-3 {
+    margin-left: 1rem;
   }
 `;

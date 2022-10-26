@@ -3,10 +3,11 @@ package ca.ab.gov.alberta.adsp.sdk.registration;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(value = Include.NON_NULL)
 public class EventIdentity {
   @JsonProperty
   private String namespace;
@@ -49,7 +50,7 @@ public class EventIdentity {
     this.setName(name);
   }
 
-  @JsonIgnoreProperties(ignoreUnknown = true)
+  @JsonInclude(value = Include.NON_NULL)
   public static class EventIdentityCriteria {
     @JsonProperty
     private String correlationId;

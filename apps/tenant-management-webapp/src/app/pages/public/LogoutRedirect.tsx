@@ -5,6 +5,7 @@ const LogoutRedirect = (): JSX.Element => {
   const history = useHistory();
   useEffect(() => {
     localStorage.removeItem('realm');
+    localStorage.removeItem('idpFromUrl');
     history.push('/');
   }, []);
 

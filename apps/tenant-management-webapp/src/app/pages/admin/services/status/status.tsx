@@ -163,7 +163,7 @@ function Status(): JSX.Element {
             {applications.length === 0 && renderNoItem('application')}
             <ApplicationList>
               {applications.map((app) => (
-                <Application key={app._id} {...app} />
+                <Application key={app.appKey} {...app} />
               ))}
             </ApplicationList>
           </Tab>
@@ -237,8 +237,9 @@ function Status(): JSX.Element {
 function Application(app: ApplicationStatus) {
   const dispatch = useDispatch();
   const entries = useSelector((state: RootState) =>
-    state.serviceStatus.endpointHealth[app._id] && state.serviceStatus.endpointHealth[app._id].url === app.endpoint?.url
-      ? state.serviceStatus.endpointHealth[app._id].entries
+    state.serviceStatus.endpointHealth[app.appKey] &&
+    state.serviceStatus.endpointHealth[app.appKey].url === app.endpoint?.url
+      ? state.serviceStatus.endpointHealth[app.appKey].entries
       : []
   );
 
@@ -252,7 +253,7 @@ function Application(app: ApplicationStatus) {
   const [status, setStatus] = useState<ServiceStatusType>(app.status);
 
   function doDelete() {
-    dispatch(deleteApplication({ tenantId: app.tenantId, applicationId: app._id }));
+    dispatch(deleteApplication({ tenantId: app.tenantId, appKey: app.appKey }));
     setShowDeleteConfirmation(false);
   }
 
@@ -261,7 +262,7 @@ function Application(app: ApplicationStatus) {
   }
 
   function doManualStatusChange() {
-    dispatch(setApplicationStatus({ tenantId: app.tenantId, applicationId: app._id, status }));
+    dispatch(setApplicationStatus({ tenantId: app.tenantId, appKey: app.appKey, status }));
     setShowStatusForm(false);
   }
 
@@ -318,7 +319,7 @@ function Application(app: ApplicationStatus) {
             dispatch(
               toggleApplicationStatus({
                 tenantId: app.tenantId,
-                applicationId: app._id,
+                appKey: app.appKey,
                 enabled: !app.enabled,
               })
             );

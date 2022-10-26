@@ -47,13 +47,6 @@ export interface ApplicationStatus {
   endpoint?: ServiceStatusEndpoint;
 }
 
-export interface ApplicationDescription {
-  _id: string;
-  name: string;
-  description?: string;
-  url: string;
-}
-
 export interface ServiceStatusEndpoint {
   url: string;
   status: EndpointStatusType;
