@@ -62,3 +62,13 @@ Feature: Configuration-service
     Then the user views the description of "autotest-export desc" for "autotest", "autotest-export" on configuration export page
     When the user clicks info icon of "platform", "pdf-service" on configuration export page
     Then the user views the description of "Templates for PDF generation." for "platform", "pdf-service" on configuration export page
+
+  # TEST DATA: a configuration of autotest:test with revision 1 and 2 is created
+  @TEST_CS-997 @REQ_CS-1122 @regression
+  Scenario: As a developer, I can set an 'active' alias for a configuration key to a specific revision, so I can activate a specific revision
+    When the user sends a request to set active revision to "2" for "test" under "autotest"
+    And the user sends a request to set active revision to "1" for "test" under "autotest"
+    Then the user gets a response of active revision for "test" under "autotest" being "1"
+    Given an admin user is on event log page
+    When the user clicks Show details button for the latest event of "active-revision-set" for "configuration-service"
+    Then the user views event details of "autotest", "test", "2", "1" of active-revision-set for configuration-service

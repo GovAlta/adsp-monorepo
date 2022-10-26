@@ -1,5 +1,6 @@
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import tenantAdminPage from './tenant-admin.page';
+import commonlib from '../common/common-library';
 import dayjs = require('dayjs');
 
 const tenantAdminObj = new tenantAdminPage();
@@ -1036,5 +1037,61 @@ Then(
           }
         });
     });
+  }
+);
+
+Given('an admin user is on event log page', function () {
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+  commonlib.tenantAdminMenuItem('Event log', 4000);
+});
+
+When(
+  'the user sends a request to set active revision to {string} for {string} under {string}',
+  function (activeVersion, name, namespace) {
+    const requestURL =
+      Cypress.env('configurationServiceApiUrl') + '/configuration/v2/configuration/' + namespace + '/' + name;
+    cy.request({
+      method: 'POST',
+      url: requestURL,
+      auth: {
+        bearer: Cypress.env('autotest-admin-token'),
+      },
+      body: {
+        operation: 'SET-ACTIVE-REVISION',
+        setActiveRevision: parseInt(activeVersion),
+      },
+    }).then(function (response) {
+      responseObj = response;
+    });
+  }
+);
+
+Then(
+  'the user gets a response of active revision for {string} under {string} being {string}',
+  function (name, namespace, activeVersion) {
+    expect(responseObj.status).to.eq(200);
+    expect(responseObj.body).to.have.property('namespace').to.contain(namespace);
+    expect(responseObj.body).to.have.property('name').to.contain(name);
+    expect(responseObj.body).to.have.property('active').to.equal(parseInt(activeVersion));
+  }
+);
+
+Then(
+  'the user views event details of {string}, {string}, {string}, {string} of active-revision-set for configuration-service',
+  function (namespace, name, from, to) {
+    tenantAdminObj
+      .eventDetails()
+      .invoke('text')
+      .then((eventDetails) => {
+        expect(eventDetails).to.contain('"from": ' + parseInt(from));
+        expect(eventDetails).to.contain('"revision": ' + parseInt(to));
+        expect(eventDetails).to.contain('"namespace": ' + '"' + namespace + '"');
+        expect(eventDetails).to.contain('"name": ' + '"' + name + '"');
+      });
   }
 );
