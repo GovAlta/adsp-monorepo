@@ -76,11 +76,15 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     testInputUpdate(input);
   };
 
+  const getInput = (input: string) => {
+    return testInput.length > 0 ? { inputs: JSON.parse(testInput) } : {};
+  };
+
   const updateScript = () => {
     selectedScript.name = name;
     selectedScript.description = description;
     selectedScript.script = scriptStr;
-    selectedScript.testInputs = testInput.length > 0 ? { inputs: JSON.parse(testInput) } : {};
+    selectedScript.testInputs = getInput(testInput);
     return selectedScript;
   };
   const hasChanged = () => {
