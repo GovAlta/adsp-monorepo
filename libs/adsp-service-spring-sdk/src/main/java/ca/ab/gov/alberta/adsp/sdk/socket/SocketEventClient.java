@@ -55,17 +55,19 @@ class SocketEventClient {
                   .setQuery("stream=" + streamId)
                   .setSecure(true)
                   .setExtraHeaders(headers)
+                  // Setting transport to websocket since long polling seems to have issues.
+                  .setTransports(new String[] { "websocket" })
                   .build())
               .connect();
         }).doOnSuccess(socket -> {
           socket.on(Socket.EVENT_CONNECT, e -> {
-            this.logger.debug("Connected to stream {}.", this.streamId);
+            this.logger.info("Connected to stream {}.", this.streamId);
           });
           socket.on(Socket.EVENT_CONNECT_ERROR, e -> {
-            this.logger.debug("Error encountered connecting to stream {}: {}", this.streamId, e);
+            this.logger.warn("Error encountered connecting to stream {}: {}", this.streamId, e);
           });
           socket.on(Socket.EVENT_DISCONNECT, e -> {
-            this.logger.debug("Disconnected from stream {}.", this.streamId);
+            this.logger.info("Disconnected from stream {}.", this.streamId);
           });
           socket.onAnyIncoming((args) -> this.onIncoming((String) args[0], (JSONObject) args[1]));
           synchronized (this.socketLock) {

@@ -3,10 +3,11 @@ package ca.ab.gov.alberta.adsp.sdk.registration;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(value = Include.NON_NULL)
 public class EventIdentity {
   @JsonProperty
   private String namespace;
@@ -39,12 +40,17 @@ public class EventIdentity {
     this.criteria = criteria;
   }
 
+  public EventIdentity withCriteria(EventIdentityCriteria criteria) {
+    this.setCriteria(criteria);
+    return this;
+  }
+
   public EventIdentity(String namespace, String name) {
     this.setNamespace(namespace);
     this.setName(name);
   }
 
-  @JsonIgnoreProperties(ignoreUnknown = true)
+  @JsonInclude(value = Include.NON_NULL)
   public static class EventIdentityCriteria {
     @JsonProperty
     private String correlationId;
@@ -59,12 +65,22 @@ public class EventIdentity {
       this.correlationId = correlationId;
     }
 
+    public EventIdentityCriteria withCorrelationId(String correlationId) {
+      this.setCorrelationId(correlationId);
+      return this;
+    }
+
     public Map<String, Object> getContext() {
       return context;
     }
 
     public void setContext(Map<String, Object> context) {
       this.context = context;
+    }
+
+    public EventIdentityCriteria withContext(Map<String, Object> context) {
+      this.setContext(context);
+      return this;
     }
   }
 }

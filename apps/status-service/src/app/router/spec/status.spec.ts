@@ -69,6 +69,7 @@ describe('Service router', () => {
   const nextMock = jest.fn();
 
   const bobsStatusId = '624365fe3367d200110e17c5';
+  const bobsAppKey = 'test-mock';
   const bobsApplicationStatus = {
     _id: bobsStatusId,
     appKey: 'test-mock',
@@ -148,7 +149,7 @@ describe('Service router', () => {
     },
     [bobsStatusId]: {
       _id: bobsStatusId,
-      appKey: 'test-mock',
+      appKey: bobsAppKey,
       name: 'test-mock',
       url: 'http://www.yahoo.com',
       description: '',
@@ -282,7 +283,7 @@ describe('Service router', () => {
         getConfiguration: getConfigurationMock,
         query: { topValue: 1 },
         params: {
-          applicationId: bobsStatusId,
+          appKey: bobsAppKey,
         },
       } as unknown as Request;
       getConfigurationMock.mockReturnValueOnce(configurationMock);
@@ -336,7 +337,7 @@ describe('Service router', () => {
           id: 'test',
           roles: ['test-updater'],
         },
-        params: { id: bobsStatusId },
+        params: { appKey: bobsAppKey },
         getConfiguration: getConfigurationMock,
       } as unknown as Request;
 
@@ -362,7 +363,7 @@ describe('Service router', () => {
           id: 'test',
           roles: ['test-updater'],
         },
-        params: { id: bobsStatusId },
+        params: { appKey: bobsAppKey },
         getConfiguration: getConfigurationMock,
       } as unknown as Request;
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
@@ -386,7 +387,7 @@ describe('Service router', () => {
           roles: ['test-updater'],
         },
         getConfiguration: getConfigurationMock,
-        params: { id: bobsStatusId },
+        params: { appKey: bobsAppKey },
       } as unknown as Request;
 
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
@@ -429,13 +430,8 @@ describe('Service router', () => {
 
   describe('Can update application', () => {
     it('Can update application properties', async () => {
-      const handler = updateApplication(
-        loggerMock,
-        tenantServiceMock,
-        tokenProviderMock,
-        serviceDirectoryMock,
-        statusRepositoryMock
-      );
+      const handler = updateApplication(loggerMock, tokenProviderMock, serviceDirectoryMock, statusRepositoryMock);
+      const getConfigurationMock = jest.fn();
       const req: Request = {
         user: {
           tenantId,
@@ -447,11 +443,13 @@ describe('Service router', () => {
           description: 'mock 10',
           endpoint: { url: 'http://mock-me.com' },
         },
+        getConfiguration: getConfigurationMock,
         params: {
-          id: bobsStatusId,
+          appKey: bobsAppKey,
         },
       } as unknown as Request;
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
+      getConfigurationMock.mockReturnValueOnce(configurationMock);
 
       await handler(req, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
@@ -477,7 +475,7 @@ describe('Service router', () => {
         },
         getConfiguration: getConfigurationMock,
         params: {
-          id: bobsStatusId,
+          appKey: bobsAppKey,
         },
         body: {
           status: 'maintenance',
@@ -494,6 +492,7 @@ describe('Service router', () => {
     it('Can delete application', async () => {
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
       const handler = deleteApplication(loggerMock, tokenProviderMock, serviceDirectoryMock, statusRepositoryMock);
+      const getConfigurationMock = jest.fn();
       const req: Request = {
         user: {
           tenantId,
@@ -501,9 +500,11 @@ describe('Service router', () => {
           roles: ['test-updater'],
         },
         params: {
-          id: bobsStatusId,
+          appKey: bobsAppKey,
         },
+        getConfiguration: getConfigurationMock,
       } as unknown as Request;
+      getConfigurationMock.mockReturnValueOnce(configurationMock);
       await handler(req, resMock, nextMock);
       expect(resMock.sendStatus).toHaveBeenCalledWith(204);
     });

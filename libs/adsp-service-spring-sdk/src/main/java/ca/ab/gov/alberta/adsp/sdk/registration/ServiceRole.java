@@ -2,12 +2,15 @@ package ca.ab.gov.alberta.adsp.sdk.registration;
 
 import org.springframework.util.Assert;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 /**
  * Service role representing a domain specific role associated privileges in the
  * service
  */
+@JsonInclude(value = Include.NON_NULL)
 public class ServiceRole {
   @JsonProperty
   private final String role;

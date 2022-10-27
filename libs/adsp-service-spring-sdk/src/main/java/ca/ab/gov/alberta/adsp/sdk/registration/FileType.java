@@ -1,13 +1,17 @@
 package ca.ab.gov.alberta.adsp.sdk.registration;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 /**
  * Type of file including roles allowed to read and/or update.
  */
+@JsonInclude(value = Include.NON_NULL)
 public class FileType {
   @JsonProperty
   private String id;
@@ -44,6 +48,11 @@ public class FileType {
     this.anonymousRead = anonymousRead;
   }
 
+  public FileType allowAnonymousRead(boolean anonymousRead) {
+    this.setAnonymousRead(anonymousRead);
+    return this;
+  }
+
   public Collection<String> getReadRoles() {
     return readRoles;
   }
@@ -52,12 +61,22 @@ public class FileType {
     this.readRoles = readRoles;
   }
 
+  public FileType withReadRoles(String... readRoles) {
+    this.setReadRoles(Arrays.asList(readRoles));
+    return this;
+  }
+
   public Collection<String> getUpdateRoles() {
     return updateRoles;
   }
 
   public void setUpdateRoles(Collection<String> updateRoles) {
     this.updateRoles = updateRoles;
+  }
+
+  public FileType withUpdateRoles(String... updateRoles) {
+    this.setUpdateRoles(Arrays.asList(updateRoles));
+    return this;
   }
 
   public FileType(String id, String name) {

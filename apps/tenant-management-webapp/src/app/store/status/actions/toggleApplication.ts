@@ -2,7 +2,7 @@ import { ApplicationStatus } from '../models';
 
 interface Params {
   tenantId: string;
-  applicationId: string;
+  appKey: string;
   enabled: boolean;
 }
 

@@ -66,7 +66,8 @@ app.use(express.json({ limit: '1mb' }));
         },
       ],
       configuration: {
-        description: 'The status service allows for easy monitoring of application downtime.',
+        description:
+          'Service support contact information, and Applications including name, description, and URL. Application status, health check, and notices are not included.',
         schema: configurationSchema,
       },
       combineConfiguration: (tenant: Record<string, unknown>, core: Record<string, unknown>) => ({

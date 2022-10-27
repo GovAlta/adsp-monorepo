@@ -8,7 +8,9 @@ export class StatusApplications {
   }
 
   [Symbol.iterator]() {
-    return new AppIterator(this.#statusConfiguration, Object.keys(this.#statusConfiguration));
+    // Applications are keyed off of Mongo Object id's.
+    const keys = Object.keys(this.#statusConfiguration).filter((id) => /^[a-zA-Z0-9]{24}$/gi.test(id));
+    return new AppIterator(this.#statusConfiguration, keys);
   }
 
   forEach = (mapper: (app: ApplicationData) => void): void => {
@@ -26,8 +28,18 @@ export class StatusApplications {
   };
 
   get(id: string): StaticApplicationData {
+    if (!/^[a-zA-Z0-9]{24}$/gi.test(id)) return null;
     return (this.#statusConfiguration[id] as StaticApplicationData) ?? null;
   }
+
+  find = (appKey: string): StaticApplicationData => {
+    for (const a of this) {
+      if (a.appKey === appKey) {
+        return a;
+      }
+    }
+    return null;
+  };
 }
 
 class AppIterator {
