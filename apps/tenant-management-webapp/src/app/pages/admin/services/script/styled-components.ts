@@ -112,7 +112,7 @@ export const MonacoDivBody = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: 200px;
+  height: calc(80vh - 310px);
 `;
 export const ScriptPanelContainer = styled.div`
   display: flex;
@@ -131,7 +131,7 @@ export const EditScriptActions = styled.div`
 `;
 
 export const ScriptEditorContainer = styled.div`
-  width: 100%;
+  width: 50%;
   padding-right: 1rem;
   padding-left: 1rem;
   overflow: hidden;
@@ -156,9 +156,9 @@ export const ScriptEditorContainer = styled.div`
   }
 `;
 export const EditModalStyle = styled.div`
-  width: 80%;
-  display: fl ex;
-
+  width: 100%;
+  display: flex;
+  padding-top: 1rem;
   .half-width {
     width: 50%;
     display: flex;
@@ -214,18 +214,13 @@ export const ScriptPane = styled.div`
   width: 100%;
 
   white-space: pre-wrap;
-
+  font-family: monospace;
+  font-size: 12px;
   line-height: 16px;
+  padding-left: 24px;
+  padding-right: 24px;
   margin-bottom: 1rem;
   overflow: auto;
-
-  .script-response {
-    background: white;
-    padding: 10px;
-    border: 1px solid black;
-    height: 30vh;
-    overflow-y: auto;
-  }
 `;
 
 export const ReplacePadding = styled.div`

@@ -31,6 +31,7 @@ import { ActionState } from '@store/session/models';
 import { UpdateIndicator as UpdateIndicatorSession } from '@store/session/actions';
 import { ScriptResponse } from './models';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const call: any = Effects.call;
 
 export function* updateScript({ payload, executeOnCompletion }: UpdateScriptAction): SagaIterator {
