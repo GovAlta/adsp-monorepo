@@ -54,7 +54,7 @@ describe('Notice service', () => {
       name: 'test-mock',
       description: '',
       statusTimestamp: 0,
-      tennantServRef: '{}',
+      tennantServRef: '[]',
       tenantId: tenantId.toString(),
       tenantName: 'Platform',
       tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
@@ -114,7 +114,7 @@ describe('Notice service', () => {
 
   const statusNoticeMock = {
     message: 'test mock',
-    tennantServRef: '{}',
+    tennantServRef: [],
     startDate: '2022-04-07T16:00:00.000',
     endDate: '2022-04-07T20:00:00.000Z',
     isAllApplications: true,
@@ -125,7 +125,7 @@ describe('Notice service', () => {
     results: [
       {
         mode: 'active',
-        tennantServRef: '{}',
+        tennantServRef: '[]',
       },
     ],
   };
@@ -135,7 +135,7 @@ describe('Notice service', () => {
     message: 'test-mock',
     tennantServRef: [
       {
-        id: '624cbda156bd8200125eda68',
+        id: 'test-mock',
         name: 'mock-test',
       },
     ],
@@ -143,6 +143,27 @@ describe('Notice service', () => {
     endDate: '2022-04-07T20:00:00.000Z',
     isAllApplications: false,
   };
+
+  const bobsStatusId = '624365fe3367d200110e17c5';
+  const myStatusId = '620ae946ddd181001195caad';
+  const configurationMock = {
+    [myStatusId]: {
+      _id: bobsStatusId,
+      appKey: 'myapp-1',
+      name: 'MyApp 1',
+      url: 'http://localhost',
+      description: 'MyApp',
+    },
+    [bobsStatusId]: {
+      _id: bobsStatusId,
+      appKey: 'test-mock',
+      name: 'test-mock',
+      url: 'http://www.yahoo.com',
+      description: '',
+    },
+  };
+
+  const getConfigurationMock = jest.fn();
 
   describe('Can create notice router', () => {
     it('Create notice router', () => {
@@ -166,7 +187,9 @@ describe('Notice service', () => {
       const reqMock = {
         body: statusNoticeMock,
         user: { tenantId, id: 'test', roles: ['test-updater'] },
+        getConfiguration: getConfigurationMock,
       } as unknown as Request;
+      getConfigurationMock.mockReturnValueOnce(configurationMock);
       await handler(reqMock, resMock, nextMock);
       expect(resMock.status).toHaveBeenCalledWith(201);
     });
@@ -179,10 +202,12 @@ describe('Notice service', () => {
       const reqMock = {
         query: { top: 20, after: 0, mode: 'operation' },
         user: { tenantId, id: 'test', roles: ['status-admin'] },
+        getConfiguration: getConfigurationMock,
       } as unknown as Request;
+      getConfigurationMock.mockReturnValueOnce(configurationMock);
       await handler(reqMock, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
-        expect.objectContaining({ page: 1, results: [{ mode: 'published', tennantServRef: {} }] })
+        expect.objectContaining({ page: 1, results: [{ mode: 'published', tennantServRef: [] }] })
       );
     });
 
@@ -194,8 +219,10 @@ describe('Notice service', () => {
         params: {
           id: applicationsMock[1]._id,
         },
+        getConfiguration: getConfigurationMock,
       } as unknown as Request;
 
+      getConfigurationMock.mockReturnValueOnce(configurationMock);
       await handler(reqMock, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -235,7 +262,9 @@ describe('Notice service', () => {
         params: {
           id: 1,
         },
+        getConfiguration: getConfigurationMock,
       } as unknown as Request;
+      getConfigurationMock.mockReturnValueOnce(configurationMock);
       await handler(reqMock, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({

@@ -1,3 +1,4 @@
+import { appendFile } from 'fs';
 import { ApplicationData, StaticApplicationData, StatusServiceConfiguration } from './serviceStatus';
 
 export class StatusApplications {
@@ -33,12 +34,18 @@ export class StatusApplications {
   }
 
   find = (appKey: string): StaticApplicationData => {
-    for (const a of this) {
-      if (a.appKey === appKey) {
-        return a;
+    const apps = this.filter((a) => a.appKey === appKey);
+    return apps.length > 0 ? apps[0] : null;
+  };
+
+  filter = (filter: (a: ApplicationData) => boolean): StaticApplicationData[] => {
+    const results = [];
+    for (const app of this) {
+      if (filter(app)) {
+        results.push(app);
       }
     }
-    return null;
+    return results;
   };
 }
 
