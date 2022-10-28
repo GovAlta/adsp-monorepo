@@ -139,7 +139,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
 
   function onSelect(selected) {
     const parsedApplications = selected.map((s) => {
-      return { id: s._id, name: s.name };
+      return { id: s.appKey, name: s.name };
     });
     setSelectedApplications(parsedApplications);
   }
