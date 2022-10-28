@@ -6,6 +6,7 @@ export interface ScriptItem {
   useServiceAccount: boolean;
   description?: string;
   runnerRoles: string[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   testInputs: Record<string, any>;
 }
 export interface ScriptService {
@@ -34,6 +35,7 @@ export interface Indicator {
 }
 export interface ScriptResponse {
   timeToRun?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   inputs?: Record<string, any>;
   result: string;
   hasError?: boolean;

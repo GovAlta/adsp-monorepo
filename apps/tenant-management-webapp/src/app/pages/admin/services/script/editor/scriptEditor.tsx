@@ -18,6 +18,7 @@ import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import { RootState } from '@store/index';
 import DataTable from '@components/DataTable';
+import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 
 interface ScriptEditorProps {
   editorConfig?: EditorProps;
@@ -59,6 +60,10 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     onDescriptionChange(selectedScript?.description || '');
     onScriptChange(selectedScript?.script || '');
   };
+
+  const loadingIndicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
 
   useEffect(() => {
     onNameChange(selectedScript?.name || '');
@@ -169,26 +174,27 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             </GoAButton>
           </EditScriptActions>
         </GoAForm>
-        {/* Form */}
-        <SaveFormModal
-          open={saveModal}
-          onDontSave={() => {
-            resetSavedAction();
-            setSaveModal(false);
-            onEditorCancel();
-            dispatch(ClearScripts());
-          }}
-          onSave={() => {
-            updateScript();
-            saveAndReset(selectedScript);
-            setSaveModal(false);
-            onEditorCancel();
-          }}
-          onCancel={() => {
-            setSaveModal(false);
-          }}
-        />
-
+      </ScriptEditorContainer>
+      {/* Form */}
+      <SaveFormModal
+        open={saveModal}
+        onDontSave={() => {
+          resetSavedAction();
+          setSaveModal(false);
+          onEditorCancel();
+          dispatch(ClearScripts());
+        }}
+        onSave={() => {
+          updateScript();
+          saveAndReset(selectedScript);
+          setSaveModal(false);
+          onEditorCancel();
+        }}
+        onCancel={() => {
+          setSaveModal(false);
+        }}
+      />
+      <div className="half-width">
         <ScriptPane>
           <div className="flex-column">
             <div className="flex-one">
@@ -214,7 +220,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                   saveAndExecute();
                 }}
                 buttonType="secondary"
-                disabled={errors?.['payloadSchema']}
+                disabled={errors?.['payloadSchema'] || loadingIndicator.show}
                 data-testid="template-form-save"
                 type="submit"
               >
@@ -223,6 +229,10 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 </div>
               </GoAButton>
             </div>
+            {loadingIndicator.show && !scriptResponse && (
+              <GoASkeletonGridColumnContent key={1} rows={3}></GoASkeletonGridColumnContent>
+            )}
+
             <div className="flex-one full-height">
               {scriptResponse && (
                 <>
@@ -243,7 +253,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                             <td data-testid="response-inputs">{JSON.stringify(response.inputs)}</td>
                             <td data-testid="response-result">
                               <div className="flex-horizontal">
-                                {!response.hasError ? <CheckmarkCircle size="medium" /> : <CloseCircle size="medium" />}
+                                {!response.hasError ? <CheckmarkCircle size="large" /> : <CloseCircle size="large" />}
                                 <div className="mt-3">{response.result}</div>
                               </div>
                             </td>
@@ -251,13 +261,16 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                         ))}
                       </tbody>
                     </DataTable>
+                    {loadingIndicator.show && scriptResponse && (
+                      <GoASkeletonGridColumnContent key={1} rows={2}></GoASkeletonGridColumnContent>
+                    )}
                   </ResponseTableStyles>
                 </>
               )}
             </div>
           </div>
         </ScriptPane>
-      </ScriptEditorContainer>
+      </div>
     </EditModalStyle>
   );
 };
