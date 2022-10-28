@@ -29,7 +29,7 @@ function updateSpecifiedFileType(fileTypes, fileType) {
 
 function uploadFile(fileList, file) {
   const newFileList = fileList.map((x) => Object.assign({}, x));
-  newFileList.push(file);
+  newFileList.unshift(file);
   return newFileList;
 }
 
