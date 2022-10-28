@@ -18,6 +18,7 @@ import { DomainEvent } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { adspId } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
+import { InvalidValueError } from '@core-services/core-common';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -69,10 +70,10 @@ describe('Service router', () => {
   const nextMock = jest.fn();
 
   const bobsStatusId = '624365fe3367d200110e17c5';
-  const bobsAppKey = 'test-mock';
+  const bobsAppKey = 'test-test-mock';
   const bobsApplicationStatus = {
     _id: bobsStatusId,
-    appKey: 'test-mock',
+    appKey: bobsAppKey,
     tenantId: tenantId.toString(),
     metadata: '',
     enabled: 'false',
@@ -273,8 +274,14 @@ describe('Service router', () => {
     it('Can get application entries', async () => {
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
       endpointRepositoryMock.findRecentByUrlAndApplicationId.mockResolvedValueOnce(entriesMock);
-      const handler = getApplicationEntries(loggerMock, statusRepositoryMock, endpointRepositoryMock);
-      const getConfigurationMock = jest.fn();
+      const handler = getApplicationEntries(
+        serviceId,
+        loggerMock,
+        statusRepositoryMock,
+        endpointRepositoryMock,
+        serviceDirectoryMock,
+        tokenProviderMock
+      );
 
       const req: Request = {
         user: {
@@ -282,13 +289,12 @@ describe('Service router', () => {
           id: 'test',
           roles: ['test-updater'],
         },
-        getConfiguration: getConfigurationMock,
         query: { topValue: 1 },
         params: {
           appKey: bobsAppKey,
         },
       } as unknown as Request;
-      getConfigurationMock.mockReturnValueOnce(configurationMock);
+      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
       await handler(req, resMock, nextMock);
       expect(resMock.send).toHaveBeenCalledWith(expect.arrayContaining([entriesMock[1]]));
     });
@@ -331,8 +337,13 @@ describe('Service router', () => {
 
   describe('Can toggle application', () => {
     it('Can enable application', async () => {
-      const handler = enableApplication(loggerMock, statusRepositoryMock);
-      const getConfigurationMock = jest.fn();
+      const handler = enableApplication(
+        serviceId,
+        loggerMock,
+        statusRepositoryMock,
+        serviceDirectoryMock,
+        tokenProviderMock
+      );
       const req: Request = {
         user: {
           tenantId,
@@ -340,11 +351,10 @@ describe('Service router', () => {
           roles: ['test-updater'],
         },
         params: { appKey: bobsAppKey },
-        getConfiguration: getConfigurationMock,
       } as unknown as Request;
 
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
-      getConfigurationMock.mockReturnValue(configurationMock);
+      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
       await handler(req, resMock, nextMock);
       const { _id, ...expected } = bobsApplicationStatus;
       expect(resMock.json).toHaveBeenCalledWith(
@@ -357,9 +367,13 @@ describe('Service router', () => {
     });
 
     it('Can disable application', async () => {
-      const handler = disableApplication(loggerMock, statusRepositoryMock);
-      const getConfigurationMock = jest.fn();
-      getConfigurationMock.mockReturnValue(configurationMock);
+      const handler = disableApplication(
+        serviceId,
+        loggerMock,
+        statusRepositoryMock,
+        serviceDirectoryMock,
+        tokenProviderMock
+      );
       const req: Request = {
         user: {
           tenantId,
@@ -367,9 +381,9 @@ describe('Service router', () => {
           roles: ['test-updater'],
         },
         params: { appKey: bobsAppKey },
-        getConfiguration: getConfigurationMock,
       } as unknown as Request;
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
+      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
       await handler(req, resMock, nextMock);
       const { _id, ...expected } = bobsApplicationStatus;
       expect(resMock.json).toHaveBeenCalledWith(
@@ -382,20 +396,25 @@ describe('Service router', () => {
     });
 
     it('Can toggle application', async () => {
-      const handler = toggleApplication(loggerMock, statusRepositoryMock, eventServiceMock);
-      const getConfigurationMock = jest.fn();
+      const handler = toggleApplication(
+        serviceId,
+        loggerMock,
+        statusRepositoryMock,
+        eventServiceMock,
+        serviceDirectoryMock,
+        tokenProviderMock
+      );
       const req: Request = {
         user: {
           tenantId,
           id: 'tester',
           roles: ['test-updater'],
         },
-        getConfiguration: getConfigurationMock,
         params: { appKey: bobsAppKey },
       } as unknown as Request;
 
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
-      getConfigurationMock.mockReturnValue(configurationMock);
+      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
       await handler(req, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -421,21 +440,57 @@ describe('Service router', () => {
         },
       } as unknown as Request;
       const handler = createNewApplication(
+        serviceId,
         loggerMock,
         tenantServiceMock,
         tokenProviderMock,
         serviceDirectoryMock,
         statusRepositoryMock
       );
+      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
       await handler(req, resMock, nextMock);
       expect(resMock.status).toHaveBeenCalledWith(201);
+    });
+
+    it('Cant create duplicate application', async () => {
+      const createMock = jest.fn().mockReturnValue(applicationStatusMock[1]);
+      ServiceStatusApplicationEntity.create = createMock;
+      const req: Request = {
+        user: {
+          tenantId,
+          id: 'test',
+          roles: ['test-updater'],
+        },
+        body: {
+          name: 'test-mock',
+          description: 'mock test application',
+          endpoint: 'http://mock-test.com',
+        },
+      } as unknown as Request;
+      const handler = createNewApplication(
+        serviceId,
+        loggerMock,
+        tenantServiceMock,
+        tokenProviderMock,
+        serviceDirectoryMock,
+        statusRepositoryMock
+      );
+      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
+      await handler(req, resMock, nextMock);
+      expect(resMock.send).not.toHaveBeenCalled();
+      expect(nextMock).toBeCalledWith(expect.any(InvalidValueError));
     });
   });
 
   describe('Can update application', () => {
     it('Can update application properties', async () => {
-      const handler = updateApplication(loggerMock, tokenProviderMock, serviceDirectoryMock, statusRepositoryMock);
-      const getConfigurationMock = jest.fn();
+      const handler = updateApplication(
+        serviceId,
+        loggerMock,
+        tokenProviderMock,
+        serviceDirectoryMock,
+        statusRepositoryMock
+      );
       const req: Request = {
         user: {
           tenantId,
@@ -447,14 +502,13 @@ describe('Service router', () => {
           description: 'mock 10',
           endpoint: { url: 'http://mock-me.com' },
         },
-        getConfiguration: getConfigurationMock,
         params: {
           appKey: bobsAppKey,
         },
       } as unknown as Request;
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
-      getConfigurationMock.mockReturnValueOnce(configurationMock);
 
+      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
       await handler(req, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -467,17 +521,22 @@ describe('Service router', () => {
 
     it('Can update application status', async () => {
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
-      const getConfigurationMock = jest.fn();
       jest.spyOn(eventFuncs, 'applicationStatusChange').mockReturnValue({} as unknown as DomainEvent);
 
-      const handler = updateApplicationStatus(loggerMock, statusRepositoryMock, eventServiceMock);
+      const handler = updateApplicationStatus(
+        serviceId,
+        loggerMock,
+        statusRepositoryMock,
+        eventServiceMock,
+        serviceDirectoryMock,
+        tokenProviderMock
+      );
       const req: Request = {
         user: {
           tenantId,
           id: 'test',
           roles: ['test-updater'],
         },
-        getConfiguration: getConfigurationMock,
         params: {
           appKey: bobsAppKey,
         },
@@ -485,7 +544,7 @@ describe('Service router', () => {
           status: 'maintenance',
         },
       } as unknown as Request;
-      getConfigurationMock.mockReturnValueOnce(configurationMock);
+      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
       await handler(req, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -495,8 +554,13 @@ describe('Service router', () => {
     });
     it('Can delete application', async () => {
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
-      const handler = deleteApplication(loggerMock, tokenProviderMock, serviceDirectoryMock, statusRepositoryMock);
-      const getConfigurationMock = jest.fn();
+      const handler = deleteApplication(
+        serviceId,
+        loggerMock,
+        tokenProviderMock,
+        serviceDirectoryMock,
+        statusRepositoryMock
+      );
       const req: Request = {
         user: {
           tenantId,
@@ -506,9 +570,8 @@ describe('Service router', () => {
         params: {
           appKey: bobsAppKey,
         },
-        getConfiguration: getConfigurationMock,
       } as unknown as Request;
-      getConfigurationMock.mockReturnValueOnce(configurationMock);
+      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
       await handler(req, resMock, nextMock);
       expect(resMock.sendStatus).toHaveBeenCalledWith(204);
     });

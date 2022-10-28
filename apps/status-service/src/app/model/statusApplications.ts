@@ -1,4 +1,3 @@
-import { appendFile } from 'fs';
 import { ApplicationData, StaticApplicationData, StatusServiceConfiguration } from './serviceStatus';
 
 export class StatusApplications {
