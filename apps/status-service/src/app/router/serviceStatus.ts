@@ -1,5 +1,10 @@
 import { adspId, AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
-import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
+import {
+  assertAuthenticatedHandler,
+  InvalidValueError,
+  NotFoundError,
+  UnauthorizedError,
+} from '@core-services/core-common';
 import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
 import { ServiceStatusApplicationEntity, StaticApplicationData, StatusServiceConfiguration } from '../model';
@@ -167,6 +172,18 @@ export const createNewApplication =
       const tenantName = tenant.name;
       const tenantRealm = tenant.realm;
       const appKey = getApplicationKey(tenant.name, name);
+      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
+        user.tenantId
+      );
+      const applications = new StatusApplications(configuration);
+
+      if (applications.find(appKey)) {
+        throw new InvalidValueError(
+          'Status-service; Add application',
+          `An application with the name ${name} already exists`
+        );
+      }
+
       const status: ServiceStatusApplicationEntity = await ServiceStatusApplicationEntity.create(
         { ...(req.user as User) },
         serviceStatusRepository,
