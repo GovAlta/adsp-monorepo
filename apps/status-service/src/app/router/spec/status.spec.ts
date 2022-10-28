@@ -222,9 +222,11 @@ describe('Service router', () => {
 
   describe('Can get applications', () => {
     it('Can get all applications', async () => {
+      const { _id: _, ...myStatus } = myApplicationStatus;
+      const { _id: __, ...bobsStatus } = bobsApplicationStatus;
       const returnMock = [
         {
-          ...myApplicationStatus,
+          ...myStatus,
           name: configurationMock[myApplicationStatus._id].name,
           description: configurationMock[myApplicationStatus._id].description,
           endpoint: {
@@ -233,7 +235,7 @@ describe('Service router', () => {
           },
         },
         {
-          ...bobsApplicationStatus,
+          ...bobsStatus,
           name: configurationMock[bobsApplicationStatus._id].name,
           description: configurationMock[bobsApplicationStatus._id].description,
           endpoint: {
@@ -344,9 +346,10 @@ describe('Service router', () => {
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
       getConfigurationMock.mockReturnValue(configurationMock);
       await handler(req, resMock, nextMock);
+      const { _id, ...expected } = bobsApplicationStatus;
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          ...bobsApplicationStatus,
+          ...expected,
           enabled: true,
           endpoint: { status: bobsApplicationStatus.endpoint.status, url: configurationMock[bobsStatusId].url },
         })
@@ -368,9 +371,10 @@ describe('Service router', () => {
       } as unknown as Request;
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
       await handler(req, resMock, nextMock);
+      const { _id, ...expected } = bobsApplicationStatus;
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          ...bobsApplicationStatus,
+          ...expected,
           enabled: false,
           endpoint: { status: bobsApplicationStatus.endpoint.status, url: configurationMock[bobsStatusId].url },
         })

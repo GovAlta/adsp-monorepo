@@ -24,7 +24,6 @@ export interface ServiceStatusRouterProps {
 
 const mergeApplicationData = (app: StaticApplicationData, status: ServiceStatusApplicationEntity) => {
   return {
-    _id: status._id,
     appKey: status.appKey,
     tenantId: status.tenantId,
     name: app.name,

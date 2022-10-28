@@ -3,7 +3,6 @@ export interface Directory {
 }
 export interface Service {
   name?: string;
-  _id?: string;
   namespace: string;
   service?: string;
   api?: string;
@@ -24,13 +23,6 @@ export interface Links {
   docs?: { href: string };
   api?: { href: string };
   health?: { href: string };
-}
-
-export interface MetadataFetchResponse {
-  _id: string;
-  service: string;
-  host: string;
-  metadata: Metadata;
 }
 
 export const defaultService: Service = {
