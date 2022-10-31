@@ -114,11 +114,18 @@ export const MonacoDivBody = styled.div`
   padding: 0.15rem 0.15rem;
   height: calc(80vh - 310px);
 `;
+export const TestInputDivBody = styled.div`
+  display: flex;
+  border: 1px solid var(--color-gray-700);
+  border-radius: 3px;
+  padding: 0.15rem 0.15rem;
+  height: calc(55vh - 310px);
+`;
 export const ScriptPanelContainer = styled.div`
   display: flex;
   flex: auto;
   padding-left: 3rem;
-  width: 100%;
+  width: 90%;
   height: 100vh;
   overflow: hidden;
   box-sizing: border-box;
@@ -187,7 +194,7 @@ export const EditModalStyle = styled.div`
   }
 
   .execute-button {
-    margin: 0 10px 10px 10px;
+    margin: 0 0 10px 10px;
     display: flex;
     justify-content: right;
   }
@@ -214,9 +221,7 @@ export const ScriptPane = styled.div`
   width: 100%;
 
   white-space: pre-wrap;
-  font-family: monospace;
-  font-size: 12px;
-  line-height: 16px;
+
   padding-left: 24px;
   padding-right: 24px;
   margin-bottom: 1rem;
@@ -227,6 +232,9 @@ export const ReplacePadding = styled.div`
   padding: 12px 11px 11px 11px;
 `;
 export const ResponseTableStyles = styled.div`
+  height: calc(70vh - 310px);
+  overflow-y: scroll;
+  padding-top: 1.5rem;
   .flex-horizontal {
     display: flex;
     flex-direction: row;

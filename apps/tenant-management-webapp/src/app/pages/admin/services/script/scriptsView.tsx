@@ -32,7 +32,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [script, setScript] = useState('');
-  const [testInput, setTestInput] = useState(JSON.stringify({ testVariable: 'some data' }));
+  const [testInput, setTestInput] = useState(JSON.stringify({ testVariable: 'some data' }, null, 2));
   const { fetchScriptState } = useSelector((state: RootState) => ({
     fetchScriptState: state.scriptService.indicator?.details[FETCH_SCRIPTS_ACTION] || '',
   }));
