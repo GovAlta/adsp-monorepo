@@ -27,6 +27,8 @@ describe('ServiceStatus Page', () => {
         userInfo: {
           sub: 'test-user-123',
         },
+
+        loadingStates: [{ name: 'status/FETCH_STATUS_CONFIGURATION', state: 'completed' }],
       },
       config: {
         serviceUrls: {
@@ -122,6 +124,7 @@ describe('ServiceStatus Page', () => {
         userInfo: {
           sub: 'test-user-123',
         },
+        loadingStates: [{ name: 'status/FETCH_STATUS_CONFIGURATION', state: 'completed' }],
       },
       config: {
         serviceUrls: {
