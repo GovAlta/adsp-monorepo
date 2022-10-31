@@ -43,7 +43,6 @@ export const TemplateEditorContainer = styled.div`
 export const TemplateEditorContainerPdf = styled.div`
   padding-right: 1rem;
   flex: auto;
-  margin-top: 0.5rem;
   overflow: hidden;
   &:hover {
     overflow: auto;
@@ -177,4 +176,5 @@ export const PdfConfigFormWrapper = styled.div`
   .goa-form-item {
     margin-bottom: 0.2rem !important;
   }
+  padding-left: 3px;
 `;

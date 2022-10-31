@@ -119,7 +119,7 @@ export const TestInputDivBody = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(60vh - 310px);
+  height: calc(55vh - 310px);
 `;
 export const ScriptPanelContainer = styled.div`
   display: flex;
@@ -232,7 +232,10 @@ export const ReplacePadding = styled.div`
   padding: 12px 11px 11px 11px;
 `;
 export const ResponseTableStyles = styled.div`
-  padding-top: 1rem;
+  height: calc(70vh - 310px);
+  padding-top: 1.5rem;
+  overflow-x: hidden;
+  overflow: auto;
   .flex-horizontal {
     display: flex;
     flex-direction: row;
@@ -251,5 +254,6 @@ export const ResponseTableStyles = styled.div`
   }
   .mt-3 {
     margin-left: 1rem;
+    margin-right: 1rem;
   }
 `;

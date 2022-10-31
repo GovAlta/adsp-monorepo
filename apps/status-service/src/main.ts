@@ -108,6 +108,7 @@ app.use(express.json({ limit: '1mb' }));
   app.use(passport.initialize());
   app.use('/status', configurationHandler);
   app.use('/public_status', configurationHandler);
+  app.use('/notice', configurationHandler);
 
   const applicationManager = new ApplicationManager(
     tokenProvider,

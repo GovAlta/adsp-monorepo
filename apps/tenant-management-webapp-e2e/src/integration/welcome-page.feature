@@ -27,6 +27,19 @@ Feature: Tenant management welcome page
         And the user enters "env{email}" and "env{password}", and clicks login button
         Then the user views a message of cannot create another tenant
 
+    # TEST DATA: autotest tenant exists
+    @TEST_CS-332 @REQ_CS-791 @regression
+    Scenario: As a tenant management user, I cannot create a tenant having a name with special chars or the same as an existing name
+        Given the user is on the tenant management welcome page
+        When the user selects get started button
+        And the user clicks Sign in button
+        And the user enters "env{email2}" and "env{password2}", and clicks login button
+        Then the user views create tenant page
+        When the user enters "autotest!&%" as tenant name, clicks create tenant button and waits "2" seconds
+        Then the user views the error message of "Value not valid for Tenant name: Names cannot contain special characters (e.g. ! & %)." for tenant creation
+        When the user enters "autoTest" as tenant name, clicks create tenant button and waits "2" seconds
+        Then the user views the error message of "This tenant name has already been used" for tenant creation
+
     # TEST DATA: a user has beta-test role, but never created a tenant before
     # TEST DATA: the core api user needs tenant-service-admin role to delete a tenant
     @TEST_CS-297 @REQ_CS-370 @REQ-CS-193 @regression @tenant-signup
@@ -60,19 +73,6 @@ Feature: Tenant management welcome page
         Then the user views a message of cannot create a tenant without beta-tester role
         When the user clicks back to sign in page button
         Then the user views the tenant management welcome page title
-
-    # TEST DATA: autotest tenant exists
-    @TEST_CS-332 @REQ_CS-791 @regression
-    Scenario: As a tenant management user, I cannot create a tenant having a name with special chars or the same as an existing name
-        Given the user is on the tenant management welcome page
-        When the user selects get started button
-        And the user clicks Sign in button
-        And the user enters "env{email2}" and "env{password2}", and clicks login button
-        Then the user views create tenant page
-        When the user enters "autotest!&%" as tenant name, clicks create tenant button and waits "2" seconds
-        Then the user views the error message of "Value not valid for Tenant name: Names cannot contain special characters (e.g. ! & %)." for tenant creation
-        When the user enters "autoTest" as tenant name, clicks create tenant button and waits "2" seconds
-        Then the user views the error message of "This tenant name has already been used" for tenant creation
 
     @TEST_CS-1435 @REQ_CS-1384 @regression
     Scenario: As an interested service owner, I can see examples on the tenant admin landing page, so I can find and go to examples
