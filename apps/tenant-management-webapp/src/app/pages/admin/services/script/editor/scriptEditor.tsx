@@ -6,6 +6,7 @@ import {
   EditModalStyle,
   ScriptPane,
   ResponseTableStyles,
+  TestInputDivBody,
 } from '../styled-components';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import MonacoEditor, { EditorProps } from '@monaco-editor/react';
@@ -196,9 +197,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             <div className="flex-one">
               <GoAFormItem error={errors?.['payloadSchema']}>
                 <div className="flex">
-                  <label className="mt-2">Test input</label>
+                  <label>Test input</label>
                 </div>
-                <MonacoDivBody data-testid="templated-editor-test">
+                <TestInputDivBody data-testid="templated-editor-test">
                   <MonacoEditor
                     language={'json'}
                     value={testInput}
@@ -207,7 +208,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                       setTestInput(value);
                     }}
                   />
-                </MonacoDivBody>
+                </TestInputDivBody>
               </GoAFormItem>
             </div>
             <div className="execute-button">
@@ -220,49 +221,46 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 data-testid="template-form-save"
                 type="submit"
               >
-                <div className="flex">
-                  <div className="pt-1">Execute</div>
-                </div>
+                Execute
               </GoAButton>
             </div>
-            {loadingIndicator.show && !scriptResponse && (
-              <GoASkeletonGridColumnContent key={1} rows={3}></GoASkeletonGridColumnContent>
-            )}
 
             <div className="flex-one full-height">
-              {scriptResponse && (
-                <>
-                  <label className="responseLabel">Script response</label>
-                  <ResponseTableStyles>
-                    <DataTable id="response-information">
-                      <thead>
-                        <tr>
-                          <th data-testid="response-header-time-to-run">Time to run</th>
-                          <th data-testid="response-header-input">Input</th>
-                          <th data-testid="response-header-result">Result</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {scriptResponse.map((response) => (
-                          <tr>
-                            <td data-testid="response-time-to-run">{response.timeToRun}</td>
-                            <td data-testid="response-inputs">{JSON.stringify(response.inputs)}</td>
-                            <td data-testid="response-result">
-                              <div className="flex-horizontal">
-                                {!response.hasError ? <CheckmarkCircle size="large" /> : <CloseCircle size="large" />}
-                                <div className="mt-3">{response.result}</div>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </DataTable>
-                    {loadingIndicator.show && scriptResponse && (
-                      <GoASkeletonGridColumnContent key={1} rows={2}></GoASkeletonGridColumnContent>
+              <ResponseTableStyles>
+                <DataTable id="response-information">
+                  <thead>
+                    <tr>
+                      <th data-testid="response-header-time-to-run">Time to run</th>
+                      <th data-testid="response-header-input">Input</th>
+                      <th data-testid="response-header-result">Result</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {loadingIndicator.show && (
+                      <tr>
+                        <td colSpan={3}>
+                          <GoASkeletonGridColumnContent key={1} rows={1}></GoASkeletonGridColumnContent>
+                        </td>
+                      </tr>
                     )}
-                  </ResponseTableStyles>
-                </>
-              )}
+
+                    {scriptResponse &&
+                      scriptResponse.map((response) => (
+                        <tr>
+                          <td data-testid="response-time-to-run">{response.timeToRun}</td>
+                          <td data-testid="response-inputs">{JSON.stringify(response.inputs)}</td>
+                          <td data-testid="response-result">
+                            <div className="flex-horizontal">
+                              {!response.hasError ? <CheckmarkCircle size="medium" /> : <CloseCircle size="medium" />}
+                              <div className="mt-3">{response.result}</div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </DataTable>
+              </ResponseTableStyles>
             </div>
           </div>
         </ScriptPane>
