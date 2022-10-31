@@ -1,5 +1,5 @@
 import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
-import { EventService, TenantService } from '@abgov/adsp-service-sdk';
+import { adspId, EventService, TenantService } from '@abgov/adsp-service-sdk';
 import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
 import { NoticeApplicationEntity } from '../model/notice';
@@ -77,7 +77,7 @@ export const getNotices =
         filter
       );
       const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
-        user.tenantId
+        adspId`${filter.tenantId}`
       );
       const apps = new StatusApplications(configuration);
       res.json({
