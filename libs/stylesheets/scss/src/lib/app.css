@@ -160,6 +160,7 @@ input[type='submit'].goa-button:disabled.goa--tertiary {
   font-size: var(--input-font-size);
   font-family: var(--font-family);
   min-width: 100%;
+  resize: none;
 }
 
 /* == OVERRIDES END */

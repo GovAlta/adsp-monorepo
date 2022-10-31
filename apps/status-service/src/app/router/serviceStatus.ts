@@ -1,5 +1,10 @@
 import { adspId, AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
-import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
+import {
+  assertAuthenticatedHandler,
+  InvalidValueError,
+  NotFoundError,
+  UnauthorizedError,
+} from '@core-services/core-common';
 import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
 import { ServiceStatusApplicationEntity, StaticApplicationData, StatusServiceConfiguration } from '../model';
@@ -24,7 +29,6 @@ export interface ServiceStatusRouterProps {
 
 const mergeApplicationData = (app: StaticApplicationData, status: ServiceStatusApplicationEntity) => {
   return {
-    _id: status._id,
     appKey: status.appKey,
     tenantId: status.tenantId,
     name: app.name,
@@ -40,7 +44,14 @@ const mergeApplicationData = (app: StaticApplicationData, status: ServiceStatusA
   };
 };
 
-const getStatusConfiguration = async (
+/*
+ * Get apps from the configuration-service.  Because of the latency between
+ * creating a new app and the configuration-service cache being updated, even
+ * with the cache dirty flag being set, all API's need to use the configuration
+ * service directly, rather than $req.getConfiguration.  Users are faster than
+ * the above latency.
+ */
+const getAllApps = async (
   tenantId: AdspId,
   serviceId: AdspId,
   directory: ServiceDirectory,
@@ -71,7 +82,7 @@ export const getApplications = (
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
       }
-      const applications = await getStatusConfiguration(tenantId, serviceId, directory, tokenProvider);
+      const applications = await getAllApps(tenantId, serviceId, directory, tokenProvider);
       const statuses = await serviceStatusRepository.find({ tenantId: tenantId.toString() });
       const result = applications
         .map((app) => {
@@ -94,16 +105,19 @@ export const getApplications = (
 };
 
 export const enableApplication =
-  (logger: Logger, serviceStatusRepository: ServiceStatusRepository): RequestHandler =>
+  (
+    serviceId: AdspId,
+    logger: Logger,
+    serviceStatusRepository: ServiceStatusRepository,
+    serviceDirectory: ServiceDirectory,
+    tokenProvider: TokenProvider
+  ): RequestHandler =>
   async (req, res, next) => {
     try {
       logger.info(req.method, req.url);
       const user = req.user as User;
       const { appKey } = req.params;
-      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
-        user.tenantId
-      );
-      const applications = new StatusApplications(configuration);
+      const applications = await getAllApps(user.tenantId, serviceId, serviceDirectory, tokenProvider);
       const app = applications.find(appKey);
       if (!app) {
         throw new NotFoundError('Status application', appKey);
@@ -123,16 +137,19 @@ export const enableApplication =
   };
 
 export const disableApplication =
-  (logger: Logger, serviceStatusRepository: ServiceStatusRepository): RequestHandler =>
+  (
+    serviceId: AdspId,
+    logger: Logger,
+    serviceStatusRepository: ServiceStatusRepository,
+    serviceDirectory: ServiceDirectory,
+    tokenProvider: TokenProvider
+  ): RequestHandler =>
   async (req, res, next) => {
     try {
       logger.info(req.method, req.url);
       const user = req.user as User;
       const { appKey } = req.params;
-      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
-        user.tenantId
-      );
-      const applications = new StatusApplications(configuration);
+      const applications = await getAllApps(user.tenantId, serviceId, serviceDirectory, tokenProvider);
       const app = applications.find(appKey);
       if (!app) {
         throw new NotFoundError('Status application', appKey);
@@ -153,6 +170,7 @@ export const disableApplication =
 
 export const createNewApplication =
   (
+    serviceId: AdspId,
     logger: Logger,
     tenantService: TenantService,
     tokenProvider: TokenProvider,
@@ -168,6 +186,15 @@ export const createNewApplication =
       const tenantName = tenant.name;
       const tenantRealm = tenant.realm;
       const appKey = getApplicationKey(tenant.name, name);
+      const applications = await getAllApps(tenant.id, serviceId, serviceDirectory, tokenProvider);
+
+      if (applications.find(appKey)) {
+        throw new InvalidValueError(
+          'status-service',
+          `Cannot save application; an application with the name ${name} already exists`
+        );
+      }
+
       const status: ServiceStatusApplicationEntity = await ServiceStatusApplicationEntity.create(
         { ...(req.user as User) },
         serviceStatusRepository,
@@ -237,6 +264,7 @@ export const updateConfiguration = async (
 
 export const updateApplication =
   (
+    serviceId: AdspId,
     logger: Logger,
     tokenProvider: TokenProvider,
     serviceDirectory: ServiceDirectory,
@@ -254,10 +282,7 @@ export const updateApplication =
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
       }
-      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
-        user.tenantId
-      );
-      const applications = new StatusApplications(configuration);
+      const applications = await getAllApps(user.tenantId, serviceId, serviceDirectory, tokenProvider);
       const app = applications.find(appKey);
       if (!app) {
         throw new NotFoundError('Status application', appKey);
@@ -277,6 +302,7 @@ export const updateApplication =
 
 export const deleteApplication =
   (
+    serviceId: AdspId,
     logger: Logger,
     tokenProvider: TokenProvider,
     directory: ServiceDirectory,
@@ -287,10 +313,7 @@ export const deleteApplication =
       const user = req.user as User;
       const { appKey } = req.params;
 
-      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
-        user.tenantId
-      );
-      const applications = new StatusApplications(configuration);
+      const applications = await getAllApps(user.tenantId, serviceId, directory, tokenProvider);
       const app = applications.find(appKey);
       const appStatus = await serviceStatusRepository.get(app._id);
 
@@ -329,7 +352,14 @@ const deleteConfigurationApp = async (
 };
 
 export const updateApplicationStatus =
-  (logger: Logger, serviceStatusRepository: ServiceStatusRepository, eventService: EventService): RequestHandler =>
+  (
+    serviceId: AdspId,
+    logger: Logger,
+    serviceStatusRepository: ServiceStatusRepository,
+    eventService: EventService,
+    serviceDirectory: ServiceDirectory,
+    tokenProvider: TokenProvider
+  ): RequestHandler =>
   async (req, res, next) => {
     try {
       logger.info(`${req.method} - ${req.url}`);
@@ -337,10 +367,7 @@ export const updateApplicationStatus =
       const user = req.user as User;
       const { appKey } = req.params;
       const { status } = req.body;
-      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
-        user.tenantId
-      );
-      const apps = new StatusApplications(configuration);
+      const apps = await getAllApps(user.tenantId, serviceId, serviceDirectory, tokenProvider);
       const app = apps.find(appKey);
 
       if (!app) {
@@ -364,16 +391,20 @@ export const updateApplicationStatus =
   };
 
 export const toggleApplication =
-  (logger: Logger, serviceStatusRepository: ServiceStatusRepository, eventService: EventService): RequestHandler =>
+  (
+    serviceId: AdspId,
+    logger: Logger,
+    serviceStatusRepository: ServiceStatusRepository,
+    eventService: EventService,
+    serviceDirectory: ServiceDirectory,
+    tokenProvider: TokenProvider
+  ): RequestHandler =>
   async (req, res, next) => {
     try {
       const user = req.user as User;
       const { appKey } = req.params;
 
-      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
-        user.tenantId
-      );
-      const apps = new StatusApplications(configuration);
+      const apps = await getAllApps(user.tenantId, serviceId, serviceDirectory, tokenProvider);
       const app = apps.find(appKey);
       if (!app) {
         throw new NotFoundError('Status Application', appKey);
@@ -400,9 +431,12 @@ export const toggleApplication =
 
 export const getApplicationEntries =
   (
+    serviceId,
     logger: Logger,
     serviceStatusRepository: ServiceStatusRepository,
-    endpointStatusEntryRepository: EndpointStatusEntryRepository
+    endpointStatusEntryRepository: EndpointStatusEntryRepository,
+    serviceDirectory: ServiceDirectory,
+    tokenProvider: TokenProvider
   ): RequestHandler =>
   async (req, res, next) => {
     const { tenantId } = req.user as User;
@@ -411,10 +445,7 @@ export const getApplicationEntries =
     }
 
     try {
-      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
-        tenantId
-      );
-      const applications = new StatusApplications(configuration);
+      const applications = await getAllApps(tenantId, serviceId, serviceDirectory, tokenProvider);
       const { appKey } = req.params;
       const { topValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 200;
@@ -469,46 +500,53 @@ export function createServiceStatusRouter({
   router.patch(
     '/applications/:appKey/enable',
     assertAuthenticatedHandler,
-    enableApplication(logger, serviceStatusRepository)
+    enableApplication(serviceId, logger, serviceStatusRepository, directory, tokenProvider)
   );
 
   // Disable the service
   router.patch(
     '/applications/:appKey/disable',
     assertAuthenticatedHandler,
-    disableApplication(logger, serviceStatusRepository)
+    disableApplication(serviceId, logger, serviceStatusRepository, directory, tokenProvider)
   );
   // add application
   router.post(
     '/applications',
     assertAuthenticatedHandler,
-    createNewApplication(logger, tenantService, tokenProvider, directory, serviceStatusRepository)
+    createNewApplication(serviceId, logger, tenantService, tokenProvider, directory, serviceStatusRepository)
   );
   router.put(
     '/applications/:appKey',
     assertAuthenticatedHandler,
-    updateApplication(logger, tokenProvider, directory, serviceStatusRepository)
+    updateApplication(serviceId, logger, tokenProvider, directory, serviceStatusRepository)
   );
   router.delete(
     '/applications/:appKey',
     assertAuthenticatedHandler,
-    deleteApplication(logger, tokenProvider, directory, serviceStatusRepository)
+    deleteApplication(serviceId, logger, tokenProvider, directory, serviceStatusRepository)
   );
   router.patch(
     '/applications/:appKey/status',
     assertAuthenticatedHandler,
-    updateApplicationStatus(logger, serviceStatusRepository, eventService)
+    updateApplicationStatus(serviceId, logger, serviceStatusRepository, eventService, directory, tokenProvider)
   );
 
   router.patch(
     '/applications/:appKey/toggle',
     assertAuthenticatedHandler,
-    toggleApplication(logger, serviceStatusRepository, eventService)
+    toggleApplication(serviceId, logger, serviceStatusRepository, eventService, directory, tokenProvider)
   );
 
   router.get(
     '/applications/:appKey/endpoint-status-entries',
-    getApplicationEntries(logger, serviceStatusRepository, endpointStatusEntryRepository)
+    getApplicationEntries(
+      serviceId,
+      logger,
+      serviceStatusRepository,
+      endpointStatusEntryRepository,
+      directory,
+      tokenProvider
+    )
   );
 
   return router;
