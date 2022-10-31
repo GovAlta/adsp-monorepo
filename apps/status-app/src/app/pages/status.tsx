@@ -207,7 +207,7 @@ const ServiceStatusPage = (): JSX.Element => {
   return (
     <div>
       <GoAHeader
-        serviceLevel="beta"
+        serviceLevel="live"
         serviceName="Alberta Digital Service Platform - Status & Outages "
         serviceHome="/"
       />
