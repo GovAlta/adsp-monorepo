@@ -72,6 +72,7 @@ describe('NotificationTypes Page', () => {
     session: {
       realm: 'core',
       resourceAccess: { 'urn:ads:platform:configuration-service': { roles: ['configuration-admin'] } },
+      loadingStates: [{ name: 'status/FETCH_STATUS_CONFIGURATION', state: 'completed' }],
     },
     tenant: {
       realmRoles: ['uma_auth'],
