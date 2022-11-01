@@ -8,11 +8,20 @@ import { EventDefinitions } from './definitions';
 import { EventsOverview } from './overview';
 import { EventStreams } from './stream';
 import { TestStream } from './stream/testStream/testStream';
+import { EventDefinitionModalForm } from './edit';
+import { defaultEventDefinition, EventDefinition } from '@store/event/models';
 
 export const Events: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
   const [activeIndex, setActiveIndex] = useState<number>(0);
+  const definitions = useSelector((state: RootState) => state.event.definitions);
+  const coreNamespaces = useSelector((state: RootState) => {
+    return Object.values(state.event.definitions)
+      .filter((d: EventDefinition) => d.isCore)
+      .map((d: EventDefinition) => d.namespace);
+  });
+
   const [activateEditState, setActivateEditState] = useState<boolean>(false);
   const activateEdit = (edit: boolean) => {
     setActiveIndex(1);
@@ -43,6 +52,21 @@ export const Events: FunctionComponent = () => {
             <TestStream />
           </Tab>
         </Tabs>
+
+        {activateEditState && (
+          <EventDefinitionModalForm
+            open={true}
+            initialValue={defaultEventDefinition}
+            isEdit={false}
+            definitions={Object.entries(definitions).map(([id, definition]) => {
+              return definition;
+            })}
+            coreNamespaces={coreNamespaces}
+            onClose={() => {
+              setActivateEditState(false);
+            }}
+          />
+        )}
       </Main>
       <Aside>
         <>
