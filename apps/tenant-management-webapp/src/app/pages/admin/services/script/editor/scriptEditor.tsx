@@ -13,7 +13,7 @@ import MonacoEditor, { EditorProps } from '@monaco-editor/react';
 import { SaveFormModal } from '@components/saveModal';
 import { ScriptItem } from '@store/script/models';
 import { SaveAndExecuteScript, ClearScripts } from '@store/script/actions';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
@@ -154,25 +154,25 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 }
               }}
               data-testid="template-form-close"
-              buttonType="secondary"
-              type="button"
+              type="secondary"
             >
               Close
             </GoAButton>
-            <GoAButton
-              onClick={() => {
-                updateScript();
-                saveAndReset(selectedScript);
-                setSaveModal(false);
-                onEditorCancel();
-              }}
-              buttonType="primary"
-              data-testid="template-form-save"
-              type="submit"
-              disabled={Object.keys(errors).length > 0 || !hasChanged()}
-            >
-              Save
-            </GoAButton>
+            <div>
+              <GoAButton
+                onClick={() => {
+                  updateScript();
+                  saveAndReset(selectedScript);
+                  setSaveModal(false);
+                  onEditorCancel();
+                }}
+                data-testid="template-form-save"
+                type="primary"
+                disabled={Object.keys(errors).length > 0 || !hasChanged()}
+              >
+                Save
+              </GoAButton>
+            </div>
           </EditScriptActions>
         </GoAForm>
       </ScriptEditorContainer>
@@ -220,10 +220,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 onClick={() => {
                   saveAndExecute();
                 }}
-                buttonType="secondary"
                 disabled={errors?.['payloadSchema'] || loadingIndicator.show}
                 data-testid="template-form-save"
-                type="submit"
+                type="secondary"
               >
                 Execute
               </GoAButton>
@@ -256,8 +255,10 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                           <td data-testid="response-inputs">{JSON.stringify(response.inputs)}</td>
                           <td data-testid="response-result">
                             <div className="flex-horizontal">
-                              {!response.hasError ? <CheckmarkCircle size="medium" /> : <CloseCircle size="medium" />}
-                              <div className="mt-3">{response.result}</div>
+                              <div className="mt-1">
+                                {!response.hasError ? <CheckmarkCircle size="medium" /> : <CloseCircle size="medium" />}
+                              </div>
+                              <div className="mt-3">{response.hasError ? response.result : 'Success'}</div>
                             </div>
                           </td>
                         </tr>

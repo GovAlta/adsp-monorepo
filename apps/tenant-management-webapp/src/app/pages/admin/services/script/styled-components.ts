@@ -232,10 +232,36 @@ export const ReplacePadding = styled.div`
   padding: 12px 11px 11px 11px;
 `;
 export const ResponseTableStyles = styled.div`
-  height: calc(70vh - 310px);
+  height: calc(87vh - 310px);
+  table-layout: fixed;
+  word-wrap: break-word;
   padding-top: 1.5rem;
   overflow-x: hidden;
   overflow: auto;
+  & th:nth-child(3) {
+    min-width: 180px;
+    width: 50%;
+  }
+
+  & td:nth-child(3) {
+    min-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 50%;
+  }
+
+  & th:nth-child(2) {
+    min-width: 160px;
+    width: 30%;
+  }
+
+  & td:nth-child(2) {
+    min-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 30%;
+  }
+
   .flex-horizontal {
     display: flex;
     flex-direction: row;
