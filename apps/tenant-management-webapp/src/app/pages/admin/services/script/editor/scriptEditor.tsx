@@ -233,9 +233,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 <DataTable id="response-information">
                   <thead>
                     <tr>
-                      <th data-testid="response-header-time-to-run">Time to run</th>
-                      <th data-testid="response-header-input">Input</th>
                       <th data-testid="response-header-result">Result</th>
+                      <th data-testid="response-header-input">Input</th>
+                      <th data-testid="response-header-output">Output</th>
                     </tr>
                   </thead>
 
@@ -251,8 +251,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                     {scriptResponse &&
                       scriptResponse.map((response) => (
                         <tr>
-                          <td data-testid="response-time-to-run">{response.timeToRun}</td>
-                          <td data-testid="response-inputs">{JSON.stringify(response.inputs)}</td>
                           <td data-testid="response-result">
                             <div className="flex-horizontal">
                               <div className="mt-1">
@@ -261,6 +259,8 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                               <div className="mt-3">{response.hasError ? response.result : 'Success'}</div>
                             </div>
                           </td>
+                          <td data-testid="response-inputs">{JSON.stringify(response.inputs)}</td>
+                          <td data-testid="response-output">{!response.hasError ? response.result : ''}</td>
                         </tr>
                       ))}
                   </tbody>
