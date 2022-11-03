@@ -47,7 +47,7 @@ export const DataTableWrapper = styled.div`
   }
 
   tbody {
-    overflow-y: auto;
+    overflow-y: hidden;
     overflow-x: hidden;
   }
 
@@ -112,14 +112,14 @@ export const MonacoDivBody = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(80vh - 310px);
+  height: calc(92vh - 310px);
 `;
 export const TestInputDivBody = styled.div`
   display: flex;
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(55vh - 310px);
+  height: calc(60vh - 310px);
 `;
 export const ScriptPanelContainer = styled.div`
   display: flex;
@@ -169,7 +169,7 @@ export const EditModalStyle = styled.div`
   .half-width {
     width: 50%;
     display: flex;
-    height: 90%;
+    height: 100%;
   }
 
   .flex-column {
@@ -225,7 +225,7 @@ export const ScriptPane = styled.div`
   padding-left: 24px;
   padding-right: 24px;
   margin-bottom: 1rem;
-  overflow: auto;
+  overflow: hidden;
 `;
 
 export const ReplacePadding = styled.div`
@@ -236,18 +236,18 @@ export const ResponseTableStyles = styled.div`
   table-layout: fixed;
   word-wrap: break-word;
   padding-top: 1.5rem;
-  overflow-x: hidden;
-  overflow: auto;
+
+  overflow: hidden;
   & th:nth-child(3) {
     min-width: 180px;
-    width: 50%;
+    width: 20%;
   }
 
   & td:nth-child(3) {
     min-width: 180px;
     overflow: hidden;
     text-overflow: ellipsis;
-    width: 50%;
+    width: 20%;
   }
 
   & th:nth-child(2) {
