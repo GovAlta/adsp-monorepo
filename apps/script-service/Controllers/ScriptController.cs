@@ -134,8 +134,6 @@ public class ScriptController : ControllerBase
     using (HttpContext.Benchmark("run-script-time"))
     {
 
-      Console.WriteLine(request.ScriptDefinition);
-
       var outputs = await _luaService.RunScript(
         Guid.NewGuid(), user!.Tenant!.Id!, request.ScriptDefinition, request.Inputs, getToken, request.CorrelationId, user
       );
