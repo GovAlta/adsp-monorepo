@@ -99,7 +99,10 @@ describe('NotificationTypes Page', () => {
       },
     },
     user: { jwt: { token: '' } },
-    session: { realm: 'core' },
+    session: {
+      realm: 'core',
+      loadingStates: [{ name: 'tenant/notification-service/notificationConfig/fetch', state: 'completed' }],
+    },
     tenant: {
       realmRoles: [
         {

@@ -14,6 +14,7 @@ import {
   fetchServiceStatusAppHealth,
   fetchStatusMetricsSucceeded,
   FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION,
+  FETCH_STATUS_CONFIGURATION,
   UpdateStatusContactInformationAction,
   FetchStatusConfigurationService,
   FetchStatusConfigurationSucceededService,
@@ -26,6 +27,8 @@ import { SagaIterator } from '@redux-saga/core';
 import moment from 'moment';
 import axios from 'axios';
 import { getAccessToken } from '@store/tenant/sagas';
+
+import { UpdateLoadingState } from '@store/session/actions';
 
 export function* fetchServiceStatusAppHealthEffect(api: StatusApi, application: ApplicationStatus): SagaIterator {
   // This is so application state knows there is an incremental load.
@@ -239,6 +242,13 @@ export function* fetchStatusConfiguration(): SagaIterator {
   );
   const token: string = yield call(getAccessToken);
 
+  yield put(
+    UpdateLoadingState({
+      name: FETCH_STATUS_CONFIGURATION,
+      state: 'start',
+    })
+  );
+
   if (configBaseUrl && token) {
     try {
       const { data: configuration } = yield call(
@@ -251,8 +261,21 @@ export function* fetchStatusConfiguration(): SagaIterator {
       const statusInfo = configuration.latest && configuration.latest.configuration;
 
       yield put(FetchStatusConfigurationSucceededService(statusInfo));
+
+      yield put(
+        UpdateLoadingState({
+          name: FETCH_STATUS_CONFIGURATION,
+          state: 'completed',
+        })
+      );
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - fetchStatusConfiguration` }));
+      yield put(
+        UpdateLoadingState({
+          name: FETCH_STATUS_CONFIGURATION,
+          state: 'error',
+        })
+      );
     }
   }
 }

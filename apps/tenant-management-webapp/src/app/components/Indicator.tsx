@@ -36,6 +36,18 @@ const Center = styled.div`
   justify-content: center;
 `;
 
+export const useActionStateCheck = (actionName: string, stateToCheck = 'completed') => {
+  const loadingState = useSelector((state: RootState) => {
+    return state?.session?.loadingStates.find((state) => state.name === actionName);
+  });
+
+  if (loadingState === undefined) {
+    return false;
+  }
+
+  return loadingState.state === stateToCheck;
+};
+
 export const PageIndicator = (): JSX.Element => {
   // Using redux in component shall be limited.
   const indicator = useSelector((state: RootState) => {

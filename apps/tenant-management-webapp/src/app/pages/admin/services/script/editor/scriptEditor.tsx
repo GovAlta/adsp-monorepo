@@ -6,18 +6,20 @@ import {
   EditModalStyle,
   ScriptPane,
   ResponseTableStyles,
+  TestInputDivBody,
 } from '../styled-components';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import MonacoEditor, { EditorProps } from '@monaco-editor/react';
 import { SaveFormModal } from '@components/saveModal';
 import { ScriptItem } from '@store/script/models';
 import { SaveAndExecuteScript, ClearScripts } from '@store/script/actions';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import { RootState } from '@store/index';
 import DataTable from '@components/DataTable';
+import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 
 interface ScriptEditorProps {
   editorConfig?: EditorProps;
@@ -59,6 +61,10 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     onDescriptionChange(selectedScript?.description || '');
     onScriptChange(selectedScript?.script || '');
   };
+
+  const loadingIndicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
 
   useEffect(() => {
     onNameChange(selectedScript?.name || '');
@@ -148,55 +154,56 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 }
               }}
               data-testid="template-form-close"
-              buttonType="secondary"
-              type="button"
+              type="secondary"
             >
               Close
             </GoAButton>
-            <GoAButton
-              onClick={() => {
-                updateScript();
-                saveAndReset(selectedScript);
-                setSaveModal(false);
-                onEditorCancel();
-              }}
-              buttonType="primary"
-              data-testid="template-form-save"
-              type="submit"
-              disabled={Object.keys(errors).length > 0 || !hasChanged()}
-            >
-              Save
-            </GoAButton>
+            <div>
+              <GoAButton
+                onClick={() => {
+                  updateScript();
+                  saveAndReset(selectedScript);
+                  setSaveModal(false);
+                  onEditorCancel();
+                }}
+                data-testid="template-form-save"
+                type="primary"
+                disabled={Object.keys(errors).length > 0 || !hasChanged()}
+              >
+                Save
+              </GoAButton>
+            </div>
           </EditScriptActions>
         </GoAForm>
-        {/* Form */}
-        <SaveFormModal
-          open={saveModal}
-          onDontSave={() => {
-            resetSavedAction();
-            setSaveModal(false);
-            onEditorCancel();
-            dispatch(ClearScripts());
-          }}
-          onSave={() => {
-            updateScript();
-            saveAndReset(selectedScript);
-            setSaveModal(false);
-            onEditorCancel();
-          }}
-          onCancel={() => {
-            setSaveModal(false);
-          }}
-        />
-
+      </ScriptEditorContainer>
+      {/* Form */}
+      <SaveFormModal
+        open={saveModal}
+        onDontSave={() => {
+          resetSavedAction();
+          setSaveModal(false);
+          onEditorCancel();
+          dispatch(ClearScripts());
+        }}
+        onSave={() => {
+          updateScript();
+          saveAndReset(selectedScript);
+          setSaveModal(false);
+          onEditorCancel();
+        }}
+        onCancel={() => {
+          setSaveModal(false);
+        }}
+      />
+      <div className="half-width">
         <ScriptPane>
           <div className="flex-column">
             <div className="flex-one">
               <GoAFormItem error={errors?.['payloadSchema']}>
                 <div className="flex">
-                  <label className="mt-2">Test input</label>
+                  <label>Test input</label>
                 </div>
-                <MonacoDivBody data-testid="templated-editor-test">
+                <TestInputDivBody data-testid="templated-editor-test">
                   <MonacoEditor
                     language={'json'}
                     value={testInput}
@@ -205,7 +212,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                       setTestInput(value);
                     }}
                   />
-                </MonacoDivBody>
+                </TestInputDivBody>
               </GoAFormItem>
             </div>
             <div className="execute-button">
@@ -213,51 +220,56 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 onClick={() => {
                   saveAndExecute();
                 }}
-                buttonType="secondary"
-                disabled={errors?.['payloadSchema']}
+                disabled={errors?.['payloadSchema'] || loadingIndicator.show}
                 data-testid="template-form-save"
-                type="submit"
+                type="secondary"
               >
-                <div className="flex">
-                  <div className="pt-1">Execute</div>
-                </div>
+                Execute
               </GoAButton>
             </div>
+
             <div className="flex-one full-height">
-              {scriptResponse && (
-                <>
-                  <label className="responseLabel">Script response</label>
-                  <ResponseTableStyles>
-                    <DataTable id="response-information">
-                      <thead>
+              <ResponseTableStyles>
+                <DataTable id="response-information">
+                  <thead>
+                    <tr>
+                      <th data-testid="response-header-result">Result</th>
+                      <th data-testid="response-header-input">Input</th>
+                      <th data-testid="response-header-output">Output</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {loadingIndicator.show && (
+                      <tr>
+                        <td colSpan={3}>
+                          <GoASkeletonGridColumnContent key={1} rows={1}></GoASkeletonGridColumnContent>
+                        </td>
+                      </tr>
+                    )}
+
+                    {scriptResponse &&
+                      scriptResponse.map((response) => (
                         <tr>
-                          <th data-testid="response-header-time-to-run">Time to run</th>
-                          <th data-testid="response-header-input">Input</th>
-                          <th data-testid="response-header-result">Result</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {scriptResponse.map((response) => (
-                          <tr>
-                            <td data-testid="response-time-to-run">{response.timeToRun}</td>
-                            <td data-testid="response-inputs">{JSON.stringify(response.inputs)}</td>
-                            <td data-testid="response-result">
-                              <div className="flex-horizontal">
+                          <td data-testid="response-result">
+                            <div className="flex-horizontal">
+                              <div className="mt-1">
                                 {!response.hasError ? <CheckmarkCircle size="medium" /> : <CloseCircle size="medium" />}
-                                <div className="mt-3">{response.result}</div>
                               </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </DataTable>
-                  </ResponseTableStyles>
-                </>
-              )}
+                              <div className="mt-3">{response.hasError ? response.result : 'Success'}</div>
+                            </div>
+                          </td>
+                          <td data-testid="response-inputs">{JSON.stringify(response.inputs)}</td>
+                          <td data-testid="response-output">{!response.hasError ? response.result : ''}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </DataTable>
+              </ResponseTableStyles>
             </div>
           </div>
         </ScriptPane>
-      </ScriptEditorContainer>
+      </div>
     </EditModalStyle>
   );
 };

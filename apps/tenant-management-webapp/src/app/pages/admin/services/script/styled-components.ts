@@ -47,7 +47,7 @@ export const DataTableWrapper = styled.div`
   }
 
   tbody {
-    overflow-y: auto;
+    overflow-y: hidden;
     overflow-x: hidden;
   }
 
@@ -112,13 +112,20 @@ export const MonacoDivBody = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: 200px;
+  height: calc(92vh - 310px);
+`;
+export const TestInputDivBody = styled.div`
+  display: flex;
+  border: 1px solid var(--color-gray-700);
+  border-radius: 3px;
+  padding: 0.15rem 0.15rem;
+  height: calc(60vh - 310px);
 `;
 export const ScriptPanelContainer = styled.div`
   display: flex;
   flex: auto;
   padding-left: 3rem;
-  width: 100%;
+  width: 90%;
   height: 100vh;
   overflow: hidden;
   box-sizing: border-box;
@@ -131,7 +138,7 @@ export const EditScriptActions = styled.div`
 `;
 
 export const ScriptEditorContainer = styled.div`
-  width: 100%;
+  width: 50%;
   padding-right: 1rem;
   padding-left: 1rem;
   overflow: hidden;
@@ -156,13 +163,13 @@ export const ScriptEditorContainer = styled.div`
   }
 `;
 export const EditModalStyle = styled.div`
-  width: 80%;
-  display: fl ex;
-
+  width: 100%;
+  display: flex;
+  padding-top: 1rem;
   .half-width {
     width: 50%;
     display: flex;
-    height: 90%;
+    height: 100%;
   }
 
   .flex-column {
@@ -187,7 +194,7 @@ export const EditModalStyle = styled.div`
   }
 
   .execute-button {
-    margin: 0 10px 10px 10px;
+    margin: 0 0 10px 10px;
     display: flex;
     justify-content: right;
   }
@@ -215,23 +222,46 @@ export const ScriptPane = styled.div`
 
   white-space: pre-wrap;
 
-  line-height: 16px;
+  padding-left: 24px;
+  padding-right: 24px;
   margin-bottom: 1rem;
-  overflow: auto;
-
-  .script-response {
-    background: white;
-    padding: 10px;
-    border: 1px solid black;
-    height: 30vh;
-    overflow-y: auto;
-  }
+  overflow: hidden;
 `;
 
 export const ReplacePadding = styled.div`
   padding: 12px 11px 11px 11px;
 `;
 export const ResponseTableStyles = styled.div`
+  height: calc(87vh - 310px);
+  table-layout: fixed;
+  word-wrap: break-word;
+  padding-top: 1.5rem;
+
+  overflow: hidden;
+  & th:nth-child(3) {
+    min-width: 180px;
+    width: 20%;
+  }
+
+  & td:nth-child(3) {
+    min-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 20%;
+  }
+
+  & th:nth-child(2) {
+    min-width: 160px;
+    width: 30%;
+  }
+
+  & td:nth-child(2) {
+    min-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 30%;
+  }
+
   .flex-horizontal {
     display: flex;
     flex-direction: row;
@@ -250,5 +280,6 @@ export const ResponseTableStyles = styled.div`
   }
   .mt-3 {
     margin-left: 1rem;
+    margin-right: 1rem;
   }
 `;

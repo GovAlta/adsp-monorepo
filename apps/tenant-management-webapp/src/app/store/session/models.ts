@@ -48,6 +48,7 @@ export type LoadingStateType = 'start' | 'completed' | 'error';
 export interface LoadingState {
   name: string;
   state?: LoadingStateType;
+  id?: string;
   data?: Record<string, string>;
 }
 
