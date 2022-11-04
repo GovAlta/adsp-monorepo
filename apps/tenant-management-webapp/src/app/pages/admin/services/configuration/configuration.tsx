@@ -5,6 +5,7 @@ import { ConfigurationOverview } from './overview';
 import { ConfigurationImport } from './import/import';
 import { ConfigurationExport } from './export/export';
 import { ConfigurationDefinitions } from './definitions/definitions';
+import { ConfigurationRevisions } from './revisions/revisions';
 import SupportLinks from '@components/SupportLinks';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
@@ -36,6 +37,9 @@ export const Configuration: FunctionComponent = () => {
           </Tab>
           <Tab label="Definitions">
             <ConfigurationDefinitions activeEdit={activateEditState} />
+          </Tab>
+          <Tab label="Revisions">
+            <ConfigurationRevisions />
           </Tab>
           <Tab label="Import">
             <ConfigurationImport />
