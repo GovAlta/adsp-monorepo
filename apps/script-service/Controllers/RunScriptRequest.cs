@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Adsp.Sdk.Util;
+using Adsp.Platform.ScriptService.Model;
 
 namespace Adsp.Platform.ScriptService.Controller;
 
@@ -16,4 +17,8 @@ public class RunScriptRequest
 
   [JsonPropertyName("correlationId")]
   public string? CorrelationId { get; set; }
+
+  [JsonPropertyName("definition")]
+  public ScriptDefinition? ScriptDefinition { get; set; }
+
 }

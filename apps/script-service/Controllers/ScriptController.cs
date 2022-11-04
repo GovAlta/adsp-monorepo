@@ -107,4 +107,40 @@ public class ScriptController : ControllerBase
       return outputs;
     }
   }
+
+  [HttpPost]
+  [Route("scripts")]
+  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant, Roles = ServiceRoles.ScriptRunner)]
+  public async Task<IEnumerable<object>> TestScript([FromBody] RunScriptRequest request)
+  {
+
+    if (request == null)
+    {
+      throw new RequestArgumentException("request body cannot be null");
+    }
+
+    if (request.ScriptDefinition == null)
+    {
+      throw new RequestArgumentException("missing script attribute in the body");
+    }
+
+    if (request.Inputs == null)
+    {
+      throw new RequestArgumentException("missing inputs attribute in the body");
+    }
+    var user = HttpContext.GetAdspUser();
+
+    Func<Task<string>> getToken = () => Task.FromResult(HttpContext.Request.Headers[HeaderNames.Authorization].First()[TOKEN_INDEX..]);
+    using (HttpContext.Benchmark("run-script-time"))
+    {
+
+      Console.WriteLine(request.ScriptDefinition);
+
+      var outputs = await _luaService.RunScript(
+        Guid.NewGuid(), user!.Tenant!.Id!, request.ScriptDefinition, request.Inputs, getToken, request.CorrelationId, user
+      );
+
+      return outputs;
+    }
+  }
 }
