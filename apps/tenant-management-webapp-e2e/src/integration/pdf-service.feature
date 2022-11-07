@@ -36,3 +36,13 @@ Feature: PDF service
     Then the user views Delete PDF template modal for "autotest-pdf-templateNew"
     When the user clicks Confirm button in Delete PDF Template modal
     Then the user "should not view" the PDF template of "autotest-pdf-templateNew", "autotest-pdf-template" and "autotest PDF template new desc"
+
+  @accessibility @regression
+  Scenario: As a service admin, I can use PDF pages without any critical or serious accessibility issues
+    Given a tenant admin user is on PDF service overview page
+    Then no critical or serious accessibility issues on "PDF overview page"
+    When the user selects "Templates" tab for "PDF"
+    Then no critical or serious accessibility issues on "PDF templates page"
+# CS-1826 is pending for fix
+# When the user selects "Test generate" tab for "PDF"
+# Then no critical or serious accessibility issues on "PDF Test generate page"
