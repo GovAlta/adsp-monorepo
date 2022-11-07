@@ -14,4 +14,10 @@ public interface ILuaScriptService
     UserIdentifier? user = null,
     EventIdentity? trigger = null
   );
+
+  IEnumerable<object> TestScript(
+    IDictionary<string, object?> inputs,
+    string script,
+    AdspId tenantId
+  );
 }
