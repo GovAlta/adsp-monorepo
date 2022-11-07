@@ -14,7 +14,7 @@ public class TestScriptRequest
   [JsonConverter(typeof(DictionaryJsonConverter))]
   [Required]
   public IDictionary<string, object?> Inputs { get; set; } = new Dictionary<string, object?>();
-  
+
   [JsonPropertyName("script")]
   public string? Script { get; set; }
 }
