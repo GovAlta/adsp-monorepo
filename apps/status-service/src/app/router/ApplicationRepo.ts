@@ -100,7 +100,7 @@ export class ApplicationRepo {
       url: url,
       description: description,
     };
-    this.updateConfiguration(tenant.id, status._id, newApp);
+    await this.updateConfiguration(tenant.id, status._id, newApp);
     return this.mergeApplicationData(newApp, status);
   };
 

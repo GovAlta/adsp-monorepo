@@ -124,7 +124,7 @@ export const createNewApplication =
         }
       });
 
-      const newApp = applicationRepo.createApp(name, description, endpoint.url, tenant, user);
+      const newApp = await applicationRepo.createApp(name, description, endpoint.url, tenant, user);
       res.status(201).json(newApp);
     } catch (err) {
       logger.error(`Failed to create new application: ${err.message}`);
