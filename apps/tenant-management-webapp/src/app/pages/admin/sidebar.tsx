@@ -16,6 +16,7 @@ import NotificationsIcon from '@icons/notifications-outline.svg';
 import DirectoryIcon from '@icons/list-outline.svg';
 import CalendarIcon from '@icons/calendar-symbol-svgrepo-com.svg';
 import ScriptIcon from '@icons/script.svg';
+import BetaBadge from '@icons/beta-badge.svg';
 import { GoAIcon } from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
 import { TenantAdminLogin, TenantLogout, FetchTenant } from '@store/tenant/actions';
@@ -38,7 +39,13 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
         state.session?.resourceAccess?.['urn:ads:platform:tenant-service']?.roles?.includes(tenantAdminRole),
     };
   });
-
+  const betaBadge = () => {
+    return (
+      <BetaBadgeStyle>
+        <img src={BetaBadge} alt="Files Service" />
+      </BetaBadgeStyle>
+    );
+  };
   useEffect(() => {
     if (realm && authenticated) {
       dispatch(FetchTenant(realm));
@@ -84,6 +91,7 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
               >
                 <img src={CalendarIcon} width="16" alt="Calendar Service " />
                 <span>Calendar</span>
+                {betaBadge()}
               </NavLink>
               <NavLink
                 to="/admin/services/configuration"
@@ -127,6 +135,7 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
               <NavLink to="/admin/services/script" activeClassName="current" title="Script" data-testid="menu-script">
                 <img src={ScriptIcon} width="16" alt="Script Service" />
                 <span>Script</span>
+                {betaBadge()}
               </NavLink>
               <NavLink to="/admin/services/status" activeClassName="current" title="Status" data-testid="menu-status">
                 <img src={FitnessIcon} width="16" alt="Status Service" />
@@ -180,7 +189,9 @@ const SignOutLink = styled.div`
     display: none;
   }
 `;
-
+const BetaBadgeStyle = styled.span`
+  height: 20px;
+`;
 const Links = styled.div`
   padding: 0.5rem;
   a {

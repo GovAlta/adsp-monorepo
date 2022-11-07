@@ -113,7 +113,7 @@ describe('Service status mongo repository', () => {
       { enabled: false, tenantId: '20' },
       { enabled: false, tenantId: '21' },
     ]);
-    const app = await repo.get(applications[0]._id);
+    const app = await repo.get(applications[0].appKey);
     expect(app).not.toBeNull();
     expect(app.tenantId).toEqual(applications[0].tenantId);
   });
@@ -126,7 +126,7 @@ describe('Service status mongo repository', () => {
     const editedApp = applications[0];
     await repo.save(editedApp);
 
-    const appCheck = await repo.get(editedApp._id);
+    const appCheck = await repo.get(editedApp.appKey);
 
     expect(appCheck).not.toBeNull();
     expect(appCheck.tenantId).toEqual(editedApp.tenantId);

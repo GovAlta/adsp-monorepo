@@ -14,17 +14,7 @@ interface OverviewProps {
 }
 
 export const EventsOverview: FunctionComponent<OverviewProps> = (props) => {
-  const definitions = useSelector((state: RootState) => state.event.definitions);
-  const [coreNamespaces, setCoreNamespaces] = useState<string[]>([]);
-  const [openAddDefinition, setOpenAddDefinition] = useState(false);
   const { setActiveEdit, setActiveIndex } = props;
-
-  useEffect(() => {
-    const namespaces = Object.values(definitions)
-      .filter((d: EventDefinition) => d.isCore)
-      .map((d: EventDefinition) => d.namespace);
-    setCoreNamespaces(namespaces);
-  }, [definitions]);
 
   const dispatch = useDispatch();
   useEffect(() => {
@@ -45,10 +35,6 @@ export const EventsOverview: FunctionComponent<OverviewProps> = (props) => {
     dispatch(getEventDefinitions());
   }, []);
 
-  function reset() {
-    setOpenAddDefinition(false);
-  }
-
   return (
     <div>
       <section>
@@ -67,30 +53,13 @@ export const EventsOverview: FunctionComponent<OverviewProps> = (props) => {
         <GoAButton
           data-testid="add-definition"
           onClick={() => {
-            setOpenAddDefinition(true);
+            setActiveEdit(true);
           }}
         >
           Add definition
         </GoAButton>
       </section>
       <EventMetrics />
-
-      {openAddDefinition && (
-        <EventDefinitionModalForm
-          open={true}
-          coreNamespaces={coreNamespaces}
-          onClose={reset}
-          isEdit={false}
-          definitions={Object.entries(definitions).map(([id, definition]) => {
-            return definition;
-          })}
-          initialValue={defaultEventDefinition}
-          onSave={() => {
-            setActiveIndex(1);
-            setOpenAddDefinition(false);
-          }}
-        />
-      )}
     </div>
   );
 };

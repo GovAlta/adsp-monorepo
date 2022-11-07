@@ -133,17 +133,47 @@ When(
   'the user clicks {string} button for the script of {string}, {string}, {string}',
   function (button, name, desc, role) {
     findScript(name, desc, role).then((rowNumber) => {
-      switch (button) {
-        case 'Edit':
-          // TBD
+      expect(rowNumber).to.be.greaterThan(
+        0,
+        'Script of ' + name + ', ' + desc + ', ' + role + ' has row #' + rowNumber
+      );
+      cy.wait(1000); // Wait for buttons to show up
+      switch (button.toLowerCase()) {
+        case 'edit':
+          scriptObj.scriptEditButton(rowNumber).click();
           break;
-        case 'Delete':
-          cy.wait(1000); // Wait to avoid no modal showing up for delete button clicking
+          break;
+        case 'delete':
           scriptObj.scriptDeleteButton(rowNumber).click();
           break;
         default:
-          expect(button).to.be.oneOf(['Edit', 'Delete']);
+          expect(button).to.be.oneOf(['edit', 'delete']);
       }
     });
   }
 );
+
+Then('the user views Edit script modal', function () {
+  scriptObj.editScriptModal().should('exist');
+});
+
+When('the user enters {string} as name {string} as description in Edit script modal', function (name, description) {
+  scriptObj.editScriptModalNameField().clear().type(name);
+  scriptObj.editScriptModalDescriptionField().clear().type(description);
+});
+
+When('the user enters {string} as lua script', function (script) {
+  scriptObj
+    .editScriptModalLuaScriptEditor()
+    .click()
+    .focus()
+    .type('{ctrl}a')
+    .clear()
+    .type(script, { parseSpecialCharSequences: false });
+});
+
+When('the user clicks Save button in Edit script modal', function () {
+  cy.wait(1000); // Wait for the button to enable
+  scriptObj.editScriptModalSaveBtn().shadow().find('button').scrollIntoView().click({ force: true });
+  cy.wait(2000); // Wait for the save operation
+});

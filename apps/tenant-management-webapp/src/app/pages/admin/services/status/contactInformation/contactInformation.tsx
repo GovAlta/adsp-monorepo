@@ -3,12 +3,17 @@ import type { Subscriber } from '@store/subscription/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Grid, GridItem } from '@components/Grid';
-import { UpdateContactInformationService, FetchStatusConfigurationService } from '@store/status/actions';
+import {
+  UpdateContactInformationService,
+  FetchStatusConfigurationService,
+  FETCH_STATUS_CONFIGURATION,
+} from '@store/status/actions';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { ContactInformationModalForm } from './editContactInfo';
 import { ReactComponent as Edit } from '@icons/edit.svg';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
+import { useActionStateCheck } from '@components/Indicator';
 
 interface SubscribersProps {
   subscribers?: Subscriber[];
@@ -16,10 +21,15 @@ interface SubscribersProps {
 }
 
 export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
+  const isFetchConfigCompleted = useActionStateCheck(FETCH_STATUS_CONFIGURATION);
+
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(FetchStatusConfigurationService());
-  }, [dispatch]);
+  }, []);
+
+  // eslint-disable-next-line
+  useEffect(() => {}, [isFetchConfigCompleted]);
 
   const contact = useSelector((state: RootState) => state.serviceStatus.contact);
   const hasConfigurationAdminRole = useSelector((state: RootState) =>
@@ -71,7 +81,8 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
         <Grid>
           <GridItem data-testid="email" className="word-break contact-border" md={12} vSpacing={1} hSpacing={0.5}>
             <h4>Contact email</h4>
-            {contact?.contactEmail ?? <GoASkeletonGridColumnContent rows={1}></GoASkeletonGridColumnContent>}
+            {!isFetchConfigCompleted && <GoASkeletonGridColumnContent rows={1}></GoASkeletonGridColumnContent>}
+            {isFetchConfigCompleted && contact?.contactEmail}
           </GridItem>
         </Grid>
         <ContactInformationModalForm
