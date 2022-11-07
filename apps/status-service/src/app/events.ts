@@ -1,5 +1,4 @@
 import { AdspId, DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
-import { ServiceStatusApplication } from './types';
 import { NoticeApplicationEntity } from './model/notice';
 import { StaticApplicationData } from './model';
 
