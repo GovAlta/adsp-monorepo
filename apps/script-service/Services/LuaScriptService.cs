@@ -34,7 +34,7 @@ internal class LuaScriptService : ILuaScriptService
     try
     {
       using var lua = new Lua();
-
+      lua.RegisterFunctions(null);
       lua["script"] = script;
       lua["inputs"] = inputs;
 
