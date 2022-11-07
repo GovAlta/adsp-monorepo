@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { CalendarOverview } from './overview';
 import { CalendarsView } from './calendarsView';
+import React, { useState } from 'react';
 import SupportLinks from '@components/SupportLinks';
-
+import BetaBadge from '@icons/beta-badge.svg';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
+import { HeadingDiv } from './styled-components';
 
 export const Calendar = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -22,7 +23,11 @@ export const Calendar = (): JSX.Element => {
     <Page>
       <Main>
         <>
-          <h1 data-testid="calendar-title">Calendar service</h1>
+          <HeadingDiv>
+            <h1 data-testid="calendar-title">Calendar service</h1>
+            <img src={BetaBadge} alt="Files Service" />
+          </HeadingDiv>
+
           <Tabs activeIndex={activeIndex}>
             <Tab label="Overview">
               <CalendarOverview setActiveIndex={setActiveIndex} setActiveEdit={activateEdit} />
