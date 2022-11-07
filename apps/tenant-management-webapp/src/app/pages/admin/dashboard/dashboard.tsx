@@ -12,6 +12,8 @@ import CopyIcon from '@icons/copy-outline.svg';
 import { GoAButton as GoAButtonV2 } from '@abgov/react-components-new';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
 import { ExternalLink } from '@components/icons/ExternalLink';
+import BetaBadge from '@icons/beta-badge.svg';
+import { HeadingDiv } from './styled-components';
 
 interface LinkCopyComponentProps {
   link: string;
@@ -177,9 +179,12 @@ const Dashboard = (): JSX.Element => {
                   </GridItem>
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                     <GoACard type="primary">
-                      <h2>
-                        <Link to="/admin/services/calendar">Calendar</Link>
-                      </h2>
+                      <HeadingDiv>
+                        <h2>
+                          <Link to="/admin/services/calendar">Calendar</Link>
+                        </h2>
+                        <img src={BetaBadge} alt="Files Service" />
+                      </HeadingDiv>
                       <div>
                         The calendar service provides information about dates, a model of calendars, calendar events and
                         scheduling. This service manages dates and times in a particular timezone (America/Edmonton)
@@ -263,9 +268,12 @@ const Dashboard = (): JSX.Element => {
                   </GridItem>
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                     <GoACard type="primary">
-                      <h2>
-                        <Link to="/admin/services/script">Script</Link>
-                      </h2>
+                      <HeadingDiv>
+                        <h2>
+                          <Link to="/admin/services/script">Script</Link>
+                        </h2>
+                        <img src={BetaBadge} alt="Files Service" />
+                      </HeadingDiv>
                       <div>
                         The script services provides the ability to execute configured Lua scripts. Applications can use
                         this to capture simple logic in configuration. For example, benefits calculations can be

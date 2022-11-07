@@ -23,6 +23,15 @@ export const UseServiceAccountWrapper = styled.div`
   display: flex;
 `;
 
+export const HeadingDiv = styled.div`
+  display: flex;
+  column-gap: 0.6rem;
+
+  img {
+    margin-bottom: 4px;
+  }
+`;
+
 export const DataTableWrapper = styled.div`
   .goa-checkbox input[type='checkbox'] {
     display: none !important;
