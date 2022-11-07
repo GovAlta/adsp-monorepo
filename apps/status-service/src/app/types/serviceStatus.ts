@@ -28,12 +28,11 @@ export interface ServiceStatusApplication {
 
 export interface ServiceStatusApplicationFilter {
   _id?: string;
-  description: string;
+  appKey: string;
   endpoint: ServiceStatusEndpoint;
   status?: PublicServiceStatusType;
   internalStatus?: InternalServiceStatusType;
   metadata: unknown;
-  name: string;
   statusTimestamp: number;
   tenantId: string;
   tenantName: { $regex: string; $options: 'i' };

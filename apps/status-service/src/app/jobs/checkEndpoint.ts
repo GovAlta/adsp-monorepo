@@ -27,7 +27,7 @@ export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
   return async (): Promise<void> => {
     const { getEndpointResponse } = props;
     // run all endpoint tests
-    const statusEntry = await checkEndpoint(getEndpointResponse, props.app.url, props.app._id, props.logger);
+    const statusEntry = await checkEndpoint(getEndpointResponse, props.app.url, props.app.appKey, props.logger);
     await saveStatus(props, statusEntry);
   };
 }
@@ -35,7 +35,7 @@ export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
 async function checkEndpoint(
   getEndpointResponse: GetEndpointResponse,
   url: string,
-  applicationId: string,
+  appKey: string,
   logger: Logger
 ): Promise<EndpointStatusEntry> {
   const start = Date.now();
@@ -50,7 +50,7 @@ async function checkEndpoint(
       status,
       timestamp: start,
       responseTime: duration,
-      applicationId,
+      applicationId: appKey,
     };
   } catch (err) {
     const duration = Date.now() - start;
@@ -98,11 +98,11 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
 
   const recentHistory = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
     app.url,
-    app._id,
+    app.appKey,
     ENTRY_SAMPLE_SIZE
   );
 
-  const status = await serviceStatusRepository.get(app._id);
+  const status = await serviceStatusRepository.get(app.appKey);
 
   // Make sure the application existed
   if (!status) {
@@ -122,14 +122,14 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
     }
 
     if (newStatus === 'offline') {
-      const errMessage = `The application ${app.name} (ID: ${app._id}) is unhealthy.`;
+      const errMessage = `The application ${app.name} (ID: ${app.appKey}) is unhealthy.`;
       eventService.send(applicationStatusToUnhealthy(app, status.tenantId, errMessage));
     }
 
     try {
       await serviceStatusRepository.save(status);
     } catch (err) {
-      logger.info(`Failed to updated application ${app.name} (ID: ${app._id}) status.`);
+      logger.info(`Failed to updated application ${app.name} (ID: ${app.appKey}) status.`);
     }
   }
 }

@@ -35,7 +35,7 @@ export const getApplicationsByName =
       });
       res.json(
         appStatuses.map((s) => {
-          const app = apps.get(s._id);
+          const app = apps.find(s.appKey);
           return {
             id: s._id,
             name: app?.name || 'unknown',
