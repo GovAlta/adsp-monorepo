@@ -13,6 +13,11 @@ export interface ConfigurationDefinitionState {
   importedConfigurationError: { name: string; error: string }[];
   //previousImportCount: number;
   imports: ServiceConfiguration[];
+  configurationRevisions: {
+    service?: string;
+    revisions?: { result?: []; next?: string; active?: number; latest?: number };
+  };
+  serviceList: string[];
 }
 
 export interface ConfigDefinition {
@@ -80,6 +85,13 @@ export interface ConfigurationRevisionRequest {
 export interface ReplaceConfiguration {
   namespace: string;
   name: string;
-  configuration: Record<Service, SchemaType>;
+  configuration: Record<string, SchemaType>;
 }
 export type ConfigurationExportState = Record<Service, ConfigurationExportType>;
+
+export interface Revision {
+  revision: number;
+  lastUpdated: string;
+  created: string;
+  configuration: Record<string, SchemaType>;
+}

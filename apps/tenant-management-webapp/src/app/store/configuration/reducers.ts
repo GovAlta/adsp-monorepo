@@ -11,6 +11,8 @@ import {
   RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION,
   SET_CONFIGURATION_REVISION_SUCCESS_ACTION,
   RESET_IMPORTS_LIST_ACTION,
+  FETCH_CONFIGURATION_REVISIONS_SUCCESS_ACTION,
+  FETCH_CONFIGURATION_ACTIVE_REVISION_SUCCESS_ACTION,
 } from './action';
 import {
   ConfigurationDefinitionState,
@@ -25,6 +27,8 @@ const defaultState: ConfigurationDefinitionState = {
   isAddedFromOverviewPage: false,
   imports: [],
   importedConfigurationError: [],
+  configurationRevisions: {},
+  serviceList: [],
 };
 
 export default function (
@@ -43,6 +47,10 @@ export default function (
         coreConfigDefinitions: action.payload.core.latest,
         tenantConfigDefinitions: action.payload.tenant.latest,
         isAddedFromOverviewPage: false,
+        serviceList: [
+          ...Object.keys(action.payload.core.latest?.configuration),
+          ...Object.keys(action.payload.tenant.latest?.configuration),
+        ],
       };
     case UPDATE_CONFIGURATION_DEFINITION_SUCCESS_ACTION:
       return {
@@ -94,6 +102,32 @@ export default function (
       return {
         ...state,
         imports: stateImports,
+      };
+    }
+    case FETCH_CONFIGURATION_REVISIONS_SUCCESS_ACTION: {
+      if (state.configurationRevisions[action.service]) {
+        state.configurationRevisions[action.service].revisions.result = action.after
+          ? [...state.configurationRevisions[action.service].revisions.result, ...action.payload]
+          : action.payload;
+        state.configurationRevisions[action.service].revisions.next = action.next;
+      } else {
+        state.configurationRevisions[action.service] = {};
+        state.configurationRevisions[action.service]['revisions'] = {};
+        state.configurationRevisions[action.service]['revisions']['result'] = action.payload;
+        state.configurationRevisions[action.service]['revisions']['next'] = action.next;
+        const latest = state.configurationRevisions[action.service]['revisions']['result'][0].revision;
+        state.configurationRevisions[action.service]['revisions']['latest'] = latest;
+      }
+      return {
+        ...state,
+      };
+    }
+    case FETCH_CONFIGURATION_ACTIVE_REVISION_SUCCESS_ACTION: {
+      if (state.configurationRevisions[action.service] && action.payload) {
+        state.configurationRevisions[action.service]['revisions']['active'] = action.payload.revision;
+      }
+      return {
+        ...state,
       };
     }
     default:

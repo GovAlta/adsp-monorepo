@@ -45,11 +45,11 @@ export class HealthCheckJobScheduler {
   };
 
   startHealthChecks = (app: StaticApplicationData, scheduler: JobScheduler): void => {
-    if (!this.#jobCache.exists(app._id)) {
+    if (!this.#jobCache.exists(app.appKey)) {
       this.#jobCache.add(app, scheduler);
       this.#logger.info(`Added job for url: ${app.url}`);
     } else {
-      this.#logger.warn(`Asked to start a job already in the cache #${app._id}`);
+      this.#logger.warn(`Asked to start a job already in the cache #${app.appKey}`);
     }
   };
 
@@ -71,17 +71,17 @@ export class HealthCheckJobScheduler {
     const idsToRemove = [];
     const idsToAdd = [];
     const storedIds = apps.map((a): string => {
-      return a._id;
+      return a.appKey;
     });
 
     for (const app of apps) {
-      if (cachedIds.includes(app._id)) {
+      if (cachedIds.includes(app.appKey)) {
         // Update: kill it and add it back, in case the URL has changed.
-        idsToRemove.push(app._id);
-        idsToAdd.push(app._id);
+        idsToRemove.push(app.appKey);
+        idsToAdd.push(app.appKey);
       } else {
         // New Application
-        idsToAdd.push(app._id);
+        idsToAdd.push(app.appKey);
       }
     }
 
@@ -99,7 +99,7 @@ export class HealthCheckJobScheduler {
 
     // then add back.
     const appsToAdd = apps.filter((app) => {
-      return idsToAdd.includes(app._id);
+      return idsToAdd.includes(app.appKey);
     });
     this.#jobCache.addBatch(ApplicationList.fromArray(appsToAdd), getScheduler(this.#props));
   };

@@ -1,5 +1,4 @@
 import { AdspId, DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
-import { ServiceStatusApplication } from './types';
 import { NoticeApplicationEntity } from './model/notice';
 import { StaticApplicationData } from './model';
 
@@ -181,17 +180,13 @@ const mapNotice = (notice: NoticeApplicationEntity): ApplicationNotificationEven
   };
 };
 
-export const applicationStatusToStarted = (
-  app: StaticApplicationData,
-  status: ServiceStatusApplication,
-  user: User
-): DomainEvent => ({
+export const applicationStatusToStarted = (app: StaticApplicationData, user: User): DomainEvent => ({
   name: healthCheckStartedEvent,
   timestamp: new Date(),
-  tenantId: AdspId.parse(status.tenantId),
-  correlationId: `${status._id}`,
+  tenantId: AdspId.parse(user.tenantId.toString()),
+  correlationId: app.appKey,
   context: {
-    applicationId: `${status._id}`,
+    applicationId: app.appKey,
     applicationName: app.name,
   },
   payload: {
@@ -203,17 +198,13 @@ export const applicationStatusToStarted = (
   },
 });
 
-export const applicationStatusToStopped = (
-  app: StaticApplicationData,
-  status: ServiceStatusApplication,
-  user: User
-): DomainEvent => ({
+export const applicationStatusToStopped = (app: StaticApplicationData, user: User): DomainEvent => ({
   name: healthCheckStoppedEvent,
   timestamp: new Date(),
-  tenantId: AdspId.parse(status.tenantId),
-  correlationId: `${status._id}`,
+  tenantId: user.tenantId,
+  correlationId: app.appKey,
   context: {
-    applicationId: `${status._id}`,
+    applicationId: app.appKey,
     applicationName: app.name,
   },
   payload: {
@@ -233,9 +224,9 @@ export const applicationStatusToUnhealthy = (
   name: 'application-unhealthy',
   timestamp: new Date(),
   tenantId: AdspId.parse(tenantId),
-  correlationId: `${app._id}`,
+  correlationId: app.appKey,
   context: {
-    applicationId: `${app._id}`,
+    applicationId: app.appKey,
     applicationName: app.name,
   },
   payload: {
@@ -248,9 +239,9 @@ export const applicationStatusToHealthy = (app: StaticApplicationData, tenantId:
   name: 'application-healthy',
   timestamp: new Date(),
   tenantId: AdspId.parse(tenantId),
-  correlationId: `${app._id}`,
+  correlationId: app.appKey,
   context: {
-    applicationId: `${app._id}`,
+    applicationId: app.appKey,
     applicationName: app.name,
   },
   payload: {
@@ -267,14 +258,14 @@ export const applicationStatusChange = (
   name: 'application-status-changed',
   timestamp: new Date(),
   tenantId: user.tenantId,
-  correlationId: `${app._id}`,
+  correlationId: app.appKey,
   context: {
-    applicationId: `${app._id}`,
+    applicationId: app.appKey,
     applicationName: app.name,
   },
   payload: {
     application: {
-      id: app._id,
+      id: app.appKey,
       name: app.name,
       description: app.description,
       originalStatus: originalStatus,

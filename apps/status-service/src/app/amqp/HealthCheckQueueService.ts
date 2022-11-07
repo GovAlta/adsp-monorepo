@@ -37,7 +37,7 @@ export class HealthCheckQueueService extends AmqpWorkQueueService<HealthCheckCon
     return {
       work: work,
       url: event.url,
-      applicationId: event._id,
+      applicationId: event.appKey,
       timestamp: new Date(timestamp),
       tenantId: AdspId.parse(`${tenantId}`),
     };

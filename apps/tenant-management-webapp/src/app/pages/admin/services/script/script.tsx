@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { ScriptOverview } from './overview';
-
 import SupportLinks from '@components/SupportLinks';
-
+import BetaBadge from '@icons/beta-badge.svg';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { ScriptsView } from './scriptsView';
+import { HeadingDiv } from './styled-components';
 export const Script = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
@@ -22,7 +22,9 @@ export const Script = (): JSX.Element => {
     <Page>
       <Main>
         <>
-          <h1 data-testid="calendar-title">Script service</h1>
+          <HeadingDiv>
+            <h1 data-testid="calendar-title">Script service</h1> <img src={BetaBadge} alt="Files Service" />
+          </HeadingDiv>
           <Tabs activeIndex={activeIndex}>
             <Tab label="Overview">
               <ScriptOverview setActiveIndex={setActiveIndex} setActiveEdit={activateEdit} />

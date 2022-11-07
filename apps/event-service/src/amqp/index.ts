@@ -8,36 +8,45 @@ interface AmqpEventServiceProps {
   amqpHost: string;
   amqpUser: string;
   amqpPassword: string;
+  amqpUrl?: string;
   logger: Logger;
 }
 
-export const createEventService = async ({
-  amqpHost,
-  amqpUser,
-  amqpPassword,
-  logger,
-}: AmqpEventServiceProps): Promise<AmqpDomainEventService> => {
+export const createEventService = async (props: AmqpEventServiceProps): Promise<AmqpDomainEventService> => {
   const service = await retry(async (next, count) => {
-    logger.debug(`Try ${count}: connecting to RabbitMQ - ${amqpHost}...`, { context: 'AmqpDomainEventService' });
+    props.logger.debug(`Try ${count}: connecting to RabbitMQ - ${props.amqpHost}...`, {
+      context: 'AmqpDomainEventService',
+    });
 
     try {
-      const connection = await connect({
-        heartbeat: 160,
-        hostname: amqpHost,
-        username: amqpUser,
-        password: amqpPassword,
-      });
+      const connection = await connect(getConnectionParameters(props));
 
-      const service = new AmqpDomainEventService(logger, connection);
+      const service = new AmqpDomainEventService(props.logger, connection);
       await service.connect();
 
       return service;
     } catch (err) {
-      logger.debug(`Try ${count} failed with error. ${err}`, { context: 'createEventService' });
+      props.logger.debug(`Try ${count} failed with error. ${err}`, { context: 'createEventService' });
       next(err);
     }
   });
 
-  logger.info(`Connected to RabbitMQ at: ${amqpHost}`, { context: 'AmqpDomainEventService' });
+  props.logger.info(`Connected to RabbitMQ at: ${props.amqpHost}`, { context: 'AmqpDomainEventService' });
   return service;
+};
+
+const getConnectionParameters = (credentials: AmqpEventServiceProps) => {
+  return credentials.amqpUrl
+    ? // AMQP_URL is used for testing purposes, allowing us to
+      // connect to cloud AMQP, for example.
+      {
+        heartbeat: 160,
+        url: credentials.amqpUrl,
+      }
+    : {
+        heartbeat: 160,
+        hostname: credentials.amqpHost,
+        username: credentials.amqpUser,
+        password: credentials.amqpPassword,
+      };
 };

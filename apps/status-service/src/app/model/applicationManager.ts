@@ -8,7 +8,7 @@ import {
 } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
-import { getApplicationKey, updateConfiguration } from '../router/serviceStatus';
+import { ApplicationRepo } from '../router/ApplicationRepo';
 import { ServiceStatusApplication } from '../types';
 import { ApplicationList } from './ApplicationList';
 import ServiceStatusApplicationEntity, {
@@ -24,9 +24,8 @@ export class ApplicationManager {
   #configurationFinder: ConfigurationFinder;
   #repository: ServiceStatusRepository;
   #logger: Logger;
-  #tokenProvider: TokenProvider;
-  #directory: ServiceDirectory;
   #tenantService: TenantService;
+  #applicationRepo: ApplicationRepo;
 
   constructor(
     tokenProvider: TokenProvider,
@@ -40,9 +39,8 @@ export class ApplicationManager {
     this.#configurationFinder = this.#getConfigurationFinder(tokenProvider, service, serviceId);
     this.#repository = repository;
     this.#logger = logger;
-    this.#tokenProvider = tokenProvider;
-    this.#directory = directory;
     this.#tenantService = tenantService;
+    this.#applicationRepo = new ApplicationRepo(repository, serviceId, directory, tokenProvider);
   }
 
   getActiveApps = async () => {
@@ -53,9 +51,8 @@ export class ApplicationManager {
     return new ApplicationList(applications);
   };
 
-  getApp = async (appId: string, tenantId: AdspId): Promise<StaticApplicationData> => {
-    const config = await this.#configurationFinder(tenantId);
-    return config[appId] as StaticApplicationData;
+  getApp = async (appKey: string, tenantId: AdspId): Promise<StaticApplicationData> => {
+    return this.#applicationRepo.getApp(appKey, tenantId);
   };
 
   #getActiveApplicationStatus = async (): Promise<ServiceStatusApplicationEntity[]> => {
@@ -134,10 +131,10 @@ export class ApplicationManager {
 
         // Fix up he app's configuration data
         if (app && !(app._id && app.appKey)) {
-          const appKey = getApplicationKey(tenant.name, app.name);
+          const appKey = ApplicationRepo.getApplicationKey(tenant.name, app.name);
           logger.info(`updating ${app.name}`);
           try {
-            await updateConfiguration(this.#directory, this.#tokenProvider, tenant.id, _id, {
+            await this.#applicationRepo.updateConfiguration(tenant.id, _id, {
               ...app,
               _id: _id,
               appKey: appKey,
@@ -150,7 +147,7 @@ export class ApplicationManager {
         // Ensure that status data exists for all apps
         if (app) {
           const status = statuses.find((s) => s?._id == _id);
-          const appKey = getApplicationKey(tenant.name, app.name);
+          const appKey = ApplicationRepo.getApplicationKey(tenant.name, app.name);
           if (!status) {
             const newStatus = new ServiceStatusApplicationEntity(
               this.#repository,
