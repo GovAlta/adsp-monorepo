@@ -15,8 +15,9 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
     return docs.map((doc) => this.fromDoc(doc));
   }
 
-  async get(id: string): Promise<ServiceStatusApplicationEntity> {
-    const doc = await this.model.findById(id);
+  async get(appKey: string): Promise<ServiceStatusApplicationEntity> {
+    const docs = await this.model.find({ appKey: appKey });
+    const doc = docs.length > 0 ? docs[0] : null;
     return Promise.resolve(this.fromDoc(doc));
   }
 

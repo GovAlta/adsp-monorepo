@@ -33,7 +33,7 @@ export class HealthCheckJobCache {
 
   add = (app: StaticApplicationData, scheduler: JobScheduler): HealthCheckJob => {
     const job: HealthCheckJob = new HealthCheckJob(app);
-    HealthCheckJobCache.#activeHealthChecks.set(app._id.toString(), job);
+    HealthCheckJobCache.#activeHealthChecks.set(app.appKey, job);
     job.schedule(scheduler);
     this.#logger.info(`Job Cache: scheduled app with url ${job.getUrl()}`);
     return job;

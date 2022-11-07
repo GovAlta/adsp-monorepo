@@ -45,13 +45,13 @@ describe('JobScheduler', () => {
     },
     {
       _id: '620ae946ddd181001195cbbc',
-      appKey: 'apps-mock-key-0',
+      appKey: 'apps-mock-key-1',
       tenantId: 'urn:ads:mock-tenant:mock-service:bob:bobs-id',
       endpoint: { url: 'https://www.google.com' },
     },
     {
       _id: '620ae946eee181001195ca3d',
-      appKey: 'apps-mock-key-0',
+      appKey: 'apps-mock-key-2',
       tenantId: 'urn:ads:mock-tenant:mock-service:bob:bobs-id',
       endpoint: { url: 'https://www.boogie.com' },
     },
@@ -152,7 +152,7 @@ describe('JobScheduler', () => {
     jobScheduler.startHealthChecks(app0, getScheduler(props, scheduler));
     expect(scheduler).toHaveBeenCalledTimes(1);
     expect(jobCache.getApplicationIds().length).toEqual(1);
-    const app = jobCache.get(statusMock[0]._id);
+    const app = jobCache.get(statusMock[0].appKey);
     expect(app).not.toBeNull;
     expect(app.isScheduled).not.toBeNull;
   });
@@ -162,9 +162,9 @@ describe('JobScheduler', () => {
     const app0 = appMock[0][statusMock[0]._id];
     jobScheduler.startHealthChecks(app0, getScheduler(props, jest.fn()));
     const cancelJob = jest.fn();
-    jobScheduler.stopHealthChecks(statusMock[0]._id, cancelJob);
+    jobScheduler.stopHealthChecks(statusMock[0].appKey, cancelJob);
     expect(cancelJob).toBeCalledTimes(1);
-    const app = jobCache.get(statusMock[0]._id);
+    const app = jobCache.get(statusMock[0].appKey);
     expect(app).toBeNull;
   });
 });
