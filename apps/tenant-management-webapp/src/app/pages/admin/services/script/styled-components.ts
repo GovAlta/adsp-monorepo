@@ -113,6 +113,7 @@ export const MonacoDivBody = styled.div`
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
   height: calc(80vh - 310px);
+  min-height: 65px;
 `;
 export const TestInputDivBody = styled.div`
   display: flex;
@@ -120,6 +121,7 @@ export const TestInputDivBody = styled.div`
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
   height: calc(55vh - 310px);
+  min-height: 65px;
 `;
 export const ScriptPanelContainer = styled.div`
   display: flex;
@@ -236,6 +238,7 @@ export const ResponseTableStyles = styled.div`
   padding-top: 1.5rem;
   overflow-x: hidden;
   overflow: auto;
+  min-height: 100px;
   .flex-horizontal {
     display: flex;
     flex-direction: row;
