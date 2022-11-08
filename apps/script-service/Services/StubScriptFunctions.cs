@@ -1,8 +1,5 @@
 using Adsp.Platform.ScriptService.Services.Platform;
-using Adsp.Platform.ScriptService.Services.Util;
-using Adsp.Sdk;
 using NLua;
-using RestSharp;
 
 namespace Adsp.Platform.ScriptService.Services;
 
