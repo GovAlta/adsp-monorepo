@@ -121,6 +121,7 @@ export const MonacoDivBody = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
+  min-height: 65px;
   height: calc(92vh - 310px);
 `;
 export const TestInputDivBody = styled.div`
@@ -128,6 +129,7 @@ export const TestInputDivBody = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
+  min-height: 65px;
   height: calc(60vh - 310px);
 `;
 export const ScriptPanelContainer = styled.div`
@@ -245,7 +247,7 @@ export const ResponseTableStyles = styled.div`
   table-layout: fixed;
   word-wrap: break-word;
   padding-top: 1.5rem;
-
+  min-height: 100px;
   overflow: hidden;
   & th:nth-child(3) {
     min-width: 180px;
