@@ -161,11 +161,11 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
           {notice.tennantServRef &&
             notice.isAllApplications === false &&
             notice.tennantServRef.map((application) => {
-              const currentApplication = applications.find((app) => application.id === app.appKey);
+              const currentApplication = applications.find((app) => application?.id === app.appKey);
               return (
                 <ServiceHref
                   data-testid="notice-card-application"
-                  key={`notice-service-Href-${notice.id}-${application.id}`}
+                  key={`notice-service-Href-${notice.id}-${application?.id}`}
                 >
                   {currentApplication?.name}
                 </ServiceHref>
