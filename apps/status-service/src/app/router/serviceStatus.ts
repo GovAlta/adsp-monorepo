@@ -152,7 +152,7 @@ export const updateApplication =
       }
 
       const update: StaticApplicationData = { _id: app._id, appKey, name, url: endpoint.url, description };
-      applicationRepo.updateConfiguration(user.tenantId, app._id, update);
+      await applicationRepo.updateConfiguration(user.tenantId, app._id, update);
 
       const status = await applicationRepo.getStatus(appKey);
 
