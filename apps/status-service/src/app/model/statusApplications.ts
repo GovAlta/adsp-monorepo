@@ -54,6 +54,14 @@ export class StatusApplications {
     }
     return results;
   };
+
+  static fromArray = (apps: StaticApplicationData[]): StatusApplications => {
+    const result: StatusServiceConfiguration = {};
+    apps.forEach((a) => {
+      result[a._id] = a;
+    });
+    return new StatusApplications(result);
+  };
 }
 
 class AppIterator {

@@ -10,7 +10,7 @@ import {
 } from '../types';
 
 // Stored in the configuration service repository
-export type StatusServiceConfiguration = Record<string, unknown>;
+export type StatusServiceConfiguration = Record<string, StaticApplicationData>;
 
 // The application bits that rarely change (so not quite static)
 // and are stored as part of the status-service

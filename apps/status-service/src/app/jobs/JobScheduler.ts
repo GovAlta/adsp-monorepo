@@ -7,8 +7,8 @@ import { HealthCheckJobCache } from './HealthCheckJobCache';
 import { HealthCheckJob } from './HealthCheckJob';
 import { getScheduler } from './SchedulerFactory';
 import { ApplicationManager } from '../model/applicationManager';
-import { ApplicationList } from '../model/ApplicationList';
 import { StaticApplicationData } from '../model';
+import { StatusApplications } from '../model/statusApplications';
 
 export interface HealthCheckSchedulingProps {
   logger: Logger;
@@ -101,6 +101,6 @@ export class HealthCheckJobScheduler {
     const appsToAdd = apps.filter((app) => {
       return idsToAdd.includes(app.appKey);
     });
-    this.#jobCache.addBatch(ApplicationList.fromArray(appsToAdd), getScheduler(this.#props));
+    this.#jobCache.addBatch(StatusApplications.fromArray(appsToAdd), getScheduler(this.#props));
   };
 }

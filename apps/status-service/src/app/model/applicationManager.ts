@@ -10,7 +10,6 @@ import { Logger } from 'winston';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { ApplicationRepo } from '../router/ApplicationRepo';
 import { ServiceStatusApplication } from '../types';
-import { ApplicationList } from './ApplicationList';
 import ServiceStatusApplicationEntity, {
   ApplicationData,
   StaticApplicationData,
@@ -48,7 +47,7 @@ export class ApplicationManager {
     const tenants = this.#getActiveTenants(statuses);
     const configurations = await this.#getConfigurations(tenants);
     const applications = this.#merge(statuses, configurations);
-    return new ApplicationList(applications);
+    return new StatusApplications(applications);
   };
 
   getApp = async (appKey: string, tenantId: AdspId): Promise<StaticApplicationData> => {
