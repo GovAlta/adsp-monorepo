@@ -7,7 +7,6 @@ using Adsp.Sdk.Errors;
 using NLua;
 using NLua.Exceptions;
 
-
 namespace Adsp.Platform.ScriptService.Services;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
 [SuppressMessage("Usage", "CA1031: Do not catch general exception types", Justification = "WIP: script error handling")]
@@ -35,7 +34,7 @@ internal class LuaScriptService : ILuaScriptService
     {
       using var lua = new Lua();
       // TODO: create sub for RegisterFunctions
-      lua.RegisterFunctions(new ScriptFunctions(tenantId, _directory, () => Task.FromResult("mock token used in test script")));
+      lua.RegisterFunctions(new StubScriptFunctions());
       lua["script"] = script;
       lua["inputs"] = inputs;
 
