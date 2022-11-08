@@ -9,7 +9,7 @@ interface IScriptFunctions
   IDictionary<string, object?>? GetConfiguration(string @namespace, string name);
   FormDataResult? GetFormData(string formId);
   string? CreateTask(
-    string queueNamespace,string queueName, string name,
+    string queueNamespace, string queueName, string name,
     string? description = null, string? recordId = null, string? priority = null, LuaTable? context = null
   );
 }
