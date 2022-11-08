@@ -33,7 +33,6 @@ internal class LuaScriptService : ILuaScriptService
     try
     {
       using var lua = new Lua();
-      // TODO: create sub for RegisterFunctions
       lua.RegisterFunctions(new StubScriptFunctions());
       lua["script"] = script;
       lua["inputs"] = inputs;
