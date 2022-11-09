@@ -94,7 +94,7 @@ describe('Application Manager', () => {
 
     repositoryMock.findEnabledApplications.mockResolvedValueOnce(statusMock);
     configurationServiceMock.getConfiguration.mockResolvedValueOnce(appMock[0]).mockResolvedValueOnce(appMock[1]);
-    const apps = await appManager.getActiveApps();
+    const apps = await appManager.findEnabledApps();
     expect(apps.get(statusMock[1]._id)).toEqual({
       ...statusMock[1],
       ...appMock[1][statusMock[1]._id],

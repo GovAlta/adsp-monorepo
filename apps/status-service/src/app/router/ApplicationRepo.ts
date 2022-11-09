@@ -160,6 +160,10 @@ export class ApplicationRepo {
     return ApplicationRepo.toKebabCase(`${tenantName}-${appName}`);
   };
 
+  static getAppPropertyName = (appKey: string) => {
+    return `app_${appKey}`;
+  };
+
   private static toKebabCase = (s: string): string => {
     return s
       .replace(/([a-z])([A-Z])/g, '$1-$2')

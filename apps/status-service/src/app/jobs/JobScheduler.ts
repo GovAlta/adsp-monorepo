@@ -38,7 +38,7 @@ export class HealthCheckJobScheduler {
     scheduleDataReset: () => Promise<void>,
     scheduleCacheReload: () => Promise<void>
   ): Promise<void> => {
-    const applications = await this.#appManager.getActiveApps();
+    const applications = await this.#appManager.findEnabledApps();
     this.#jobCache.addBatch(applications, scheduleHealthChecks);
     scheduleCacheReload();
     scheduleDataReset();
@@ -66,7 +66,7 @@ export class HealthCheckJobScheduler {
   // We can get rid of this method all together by handling update and delete health check jobs
   // in the HealthCheckController.
   reloadCache = async (appManager: ApplicationManager): Promise<void> => {
-    const apps = await appManager.getActiveApps();
+    const apps = await appManager.findEnabledApps();
     const cachedIds = this.#jobCache.getApplicationIds();
     const idsToRemove = [];
     const idsToAdd = [];

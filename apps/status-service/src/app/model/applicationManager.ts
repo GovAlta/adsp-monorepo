@@ -7,6 +7,7 @@ import {
   TokenProvider,
 } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
+import { appPropertyRegex } from '../../mongo/schema';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { ApplicationRepo } from '../router/ApplicationRepo';
 import { ServiceStatusApplication } from '../types';
@@ -42,40 +43,40 @@ export class ApplicationManager {
     this.#applicationRepo = new ApplicationRepo(repository, serviceId, directory, tokenProvider);
   }
 
-  getActiveApps = async () => {
-    const statuses = await this.#getActiveApplicationStatus();
-    const tenants = this.#getActiveTenants(statuses);
-    const configurations = await this.#getConfigurations(tenants);
-    const applications = this.#merge(statuses, configurations);
-    return new StatusApplications(applications);
+  findEnabledApps = async () => {
+    const tenants = await this.#tenantService.getTenants();
+    const apps = await this.#getApps(tenants);
+    const statuses = await this.#getActiveApplicationStatuses();
+    const keys = Object.keys(apps);
+    const enabledApps = {};
+    keys.forEach((k) => {
+      const status = statuses.find((s) => s.appKey === apps[k].appKey);
+      if (status && status.enabled) {
+        enabledApps[k] = apps[k];
+      }
+    });
+    return new StatusApplications(enabledApps);
   };
 
   getApp = async (appKey: string, tenantId: AdspId): Promise<StaticApplicationData> => {
     return this.#applicationRepo.getApp(appKey, tenantId);
   };
 
-  #getActiveApplicationStatus = async (): Promise<ServiceStatusApplicationEntity[]> => {
+  #getActiveApplicationStatuses = async (): Promise<ServiceStatusApplicationEntity[]> => {
     return this.#repository.findEnabledApplications();
   };
 
-  #getActiveTenants = (statuses: ServiceStatusApplicationEntity[]): Set<AdspId> => {
-    const tenants = new Set<AdspId>();
-    statuses.forEach((a) => {
-      tenants.add(AdspId.parse(a.tenantId));
-    });
-    return tenants;
-  };
-
-  #getConfigurations = async (tenants: Set<AdspId>): Promise<StatusServiceConfiguration> => {
+  #getApps = async (tenants: Tenant[]): Promise<StatusServiceConfiguration> => {
     const promises: Promise<StatusServiceConfiguration>[] = [];
     tenants.forEach((t) => {
-      promises.push(this.#configurationFinder(t));
+      promises.push(this.#configurationFinder(t.id));
     });
     const configurations = await Promise.all(promises);
+    const regex = new RegExp(appPropertyRegex);
     return configurations.reduce((p, c) => {
       if (c) {
         const appKeys = Object.keys(c).filter((k) => {
-          return /^[a-zA-Z0-9]{24}$/gi.test(k);
+          return regex.test(k);
         });
         appKeys.forEach((k) => {
           p[k] = c[k];
@@ -95,22 +96,6 @@ export class ApplicationManager {
       );
       return config;
     };
-  };
-
-  #merge = (
-    statuses: ServiceStatusApplicationEntity[],
-    apps: Record<string, unknown>
-  ): Record<string, ApplicationData> => {
-    const appData: Record<string, ApplicationData> = {};
-    statuses.forEach((status) => {
-      const app = apps[status._id] as StaticApplicationData;
-      if (app) {
-        appData[status._id] = { ...status, ...app };
-      } else {
-        this.#logger.warn(`could not find application configuration associated with id ${status._id}`);
-      }
-    });
-    return appData;
   };
 
   /**
