@@ -248,7 +248,7 @@ export const ResponseTableStyles = styled.div`
   word-wrap: break-word;
   padding-top: 1.5rem;
   min-height: 100px;
-  overflow: hidden;
+  overflow: auto;
   & th:nth-child(3) {
     min-width: 180px;
     width: 20%;
