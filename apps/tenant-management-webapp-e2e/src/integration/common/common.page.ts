@@ -64,7 +64,7 @@ class Common {
   }
 
   serviceOverviewContent(serviceOverviewTitle) {
-    return cy.xpath(`//h1[text()="${serviceOverviewTitle}"]/parent::main//p`);
+    return cy.xpath(`//h1[text()="${serviceOverviewTitle}"]/ancestor::main//p`);
   }
 }
 export default Common;
