@@ -24,7 +24,12 @@ import { scriptEditorConfig } from './editor/config';
 interface AddScriptProps {
   activeEdit: boolean;
 }
+
 export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
+  const getDefaultTestInput = () => {
+    // Oct-27-2022 Paul: we might need to update the default input in the feature.
+    return JSON.stringify({ testVariable: 'some data' });
+  };
   const dispatch = useDispatch();
   const [openAddScript, setOpenAddScript] = useState(false);
   const [showScriptEditForm, setShowScriptEditForm] = useState(false);
@@ -32,7 +37,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [script, setScript] = useState('');
-  const [testInput, setTestInput] = useState(JSON.stringify({ testVariable: 'some data' }));
+  const [testInput, setTestInput] = useState(JSON.stringify({ testVariable: 'some data' }, null, 2));
   const { fetchScriptState } = useSelector((state: RootState) => ({
     fetchScriptState: state.scriptService.indicator?.details[FETCH_SCRIPTS_ACTION] || '',
   }));
@@ -63,6 +68,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   }, [activeEdit]);
 
   const reset = () => {
+    setTestInput(getDefaultTestInput());
     setSelectedScript(defaultScript);
     setOpenAddScript(false);
     setShowScriptEditForm(false);

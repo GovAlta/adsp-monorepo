@@ -9,9 +9,17 @@ export class StatusApplications {
 
   [Symbol.iterator]() {
     // Applications are keyed off of Mongo Object id's.
-    const keys = Object.keys(this.#statusConfiguration).filter((id) => /^[a-zA-Z0-9]{24}$/gi.test(id));
+    const keys = this.#keys();
     return new AppIterator(this.#statusConfiguration, keys);
   }
+
+  #keys = () => {
+    return Object.keys(this.#statusConfiguration).filter((id) => /^[a-zA-Z0-9]{24}$/gi.test(id));
+  };
+
+  size = (): number => {
+    return this.#keys().length;
+  };
 
   forEach = (mapper: (app: ApplicationData) => void): void => {
     for (const a of this) {
@@ -33,12 +41,18 @@ export class StatusApplications {
   }
 
   find = (appKey: string): StaticApplicationData => {
-    for (const a of this) {
-      if (a.appKey === appKey) {
-        return a;
+    const apps = this.filter((a) => a.appKey === appKey);
+    return apps.length > 0 ? apps[0] : null;
+  };
+
+  filter = (filter: (a: ApplicationData) => boolean): StaticApplicationData[] => {
+    const results = [];
+    for (const app of this) {
+      if (filter(app)) {
+        results.push(app);
       }
     }
-    return null;
+    return results;
   };
 }
 

@@ -22,6 +22,36 @@ internal class LuaScriptService : ILuaScriptService
     _directory = directory;
     _eventService = eventService;
   }
+  public IEnumerable<object> TestScript(
+    IDictionary<string, object?> inputs,
+    string script,
+    AdspId tenantId
+  )
+  {
+
+    _logger.LogDebug("Testing script for tenant {TenantId}...", tenantId);
+    try
+    {
+      using var lua = new Lua();
+      lua.RegisterFunctions(new StubScriptFunctions());
+      lua["script"] = script;
+      lua["inputs"] = inputs;
+
+      lua.State.Encoding = Encoding.UTF8;
+      var outputs = lua.DoString(@"
+        import = function () end
+        local sandbox = require 'scripts/sandbox'
+        return sandbox.run(script, { env = { inputs = inputs, adsp = adsp } })
+      ");
+      return outputs;
+    }
+    catch (LuaScriptException e)
+    {
+      _logger.LogError(e, "Lua error encountered testing script for tenant {TenantId}", tenantId);
+      throw new ScriptRunException(e.Message, e);
+    }
+  }
+
 
   public async Task<IEnumerable<object>> RunScript(
     Guid jobId,

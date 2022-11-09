@@ -21,7 +21,8 @@ import { RootState } from '../index';
 import axios from 'axios';
 import moment from 'moment';
 import { EventItem } from './models';
-import { UpdateIndicator } from '@store/session/actions';
+import { UpdateIndicator, UpdateLoadingState } from '@store/session/actions';
+
 import { getAccessToken } from '@store/tenant/sagas';
 
 export function* fetchNotificationTypes(): SagaIterator {
@@ -29,6 +30,13 @@ export function* fetchNotificationTypes(): SagaIterator {
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
   const token: string = yield call(getAccessToken);
+
+  yield put(
+    UpdateLoadingState({
+      name: FETCH_NOTIFICATION_CONFIGURATION,
+      state: 'start',
+    })
+  );
 
   if (configBaseUrl && token) {
     try {
@@ -44,8 +52,22 @@ export function* fetchNotificationTypes(): SagaIterator {
         const { contact, ...notificationTypeInfo } = configuration.latest.configuration;
         yield put(FetchNotificationConfigurationSucceededService({ data: notificationTypeInfo }, contact));
       }
+
+      yield put(
+        UpdateLoadingState({
+          name: FETCH_NOTIFICATION_CONFIGURATION,
+          state: 'completed',
+        })
+      );
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+
+      yield put(
+        UpdateLoadingState({
+          name: FETCH_NOTIFICATION_CONFIGURATION,
+          state: 'error',
+        })
+      );
     }
   }
 }

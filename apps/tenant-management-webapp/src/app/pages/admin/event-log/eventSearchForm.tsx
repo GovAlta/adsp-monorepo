@@ -134,9 +134,10 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
   return (
     <GoAForm>
       <GoAFlexRow gap="small">
-        <SearchBox style={{ flexBasis: '40%' }}>
-          <GoAFormItem helpText={!open && !error && message} error={error && message}>
+        <SearchBox>
+          <GoAFormItem helpText={!error && message} error={error && message}>
             <label>Search event namespace and name</label>
+
             <div className={open ? 'search search-open' : 'search'}>
               <input
                 type="text"
@@ -171,6 +172,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                 }}
               />
             </div>
+
             {open && autoCompleteList && (
               <ul className="suggestions">
                 {filteredSuggestions.map((suggestion, index) => {
@@ -242,6 +244,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
 };
 
 const SearchBox = styled.div`
+  position: relative;
   .search {
     display: flex;
     border: 1px solid var(--color-gray-700);
@@ -249,10 +252,10 @@ const SearchBox = styled.div`
     padding: 0.15rem;
   }
   .search-open {
-    border: 2px solid var(--color-orange);
+    border: 1px solid var(--color-orange);
   }
   .goa-state--error .search {
-    border: 2px solid var(--color-red);
+    border: 1px solid var(--color-red);
   }
   input {
     border-width: 0;
@@ -266,12 +269,19 @@ const SearchBox = styled.div`
     list-style: none;
     margin-top: 0;
     max-height: 15.5rem;
-    overflow-y: auto;
-    padding-left: 0;
     width: 100%;
+    position: absolute;
+
+    background: var(--color-white);
+    box-shadow: 0 8px 8px rgb(0 0 0 / 20%), 0 4px 4px rgb(0 0 0 / 10%);
+    z-index: 99;
+    padding-left: 0px;
+
+    overflow: hidden auto;
   }
   .suggestions li {
     padding: 0.5rem;
+    color: var(--color-gray-900);
   }
   .suggestion-active,
   .suggestions li:hover {

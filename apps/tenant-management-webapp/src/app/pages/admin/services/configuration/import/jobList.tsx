@@ -6,7 +6,7 @@ import { RootState } from '@store/index';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import InformationCircle from '@components/icons/InformationCircle';
-import { FileTableStyles } from '../styled-components';
+import { ConfigurationTableStyles } from '../styled-components';
 import { PageIndicator } from '@components/Indicator';
 
 const Imports: FunctionComponent = () => {
@@ -22,7 +22,7 @@ const Imports: FunctionComponent = () => {
 
   const RenderFileTable = () => {
     return (
-      <FileTableStyles>
+      <ConfigurationTableStyles>
         {imports.length > 0 && (
           <div>
             <h4>
@@ -74,7 +74,7 @@ const Imports: FunctionComponent = () => {
             {indicator.show && <PageIndicator />}
           </div>
         )}
-      </FileTableStyles>
+      </ConfigurationTableStyles>
     );
   };
 

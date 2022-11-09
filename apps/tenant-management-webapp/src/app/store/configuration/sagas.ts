@@ -23,6 +23,12 @@ import {
   ResetReplaceConfigurationListAction,
   resetReplaceConfigurationListSuccessAction,
   RESET_REPLACE_CONFIGURATION_LIST_ACTION,
+  FETCH_CONFIGURATION_REVISIONS_ACTION,
+  FetchConfigurationRevisionsAction,
+  FETCH_CONFIGURATION_ACTIVE_REVISION_ACTION,
+  getConfigurationRevisionsSuccess,
+  FetchConfigurationActionRevisionAction,
+  getConfigurationActiveSuccess,
   ServiceId,
 } from './action';
 import { SagaIterator } from '@redux-saga/core';
@@ -126,7 +132,59 @@ export function* fetchConfigurations(action: FetchConfigurationsAction): SagaIte
     }
   }
 }
+export function* fetchConfigurationRevisions(action: FetchConfigurationRevisionsAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading...',
+    })
+  );
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
+  const token: string = yield call(getAccessToken);
+  const service = action.service.split(':');
+  const url = `${configBaseUrl}/configuration/v2/configuration/${service[0]}/${service[1]}/revisions?top=10&after=${
+    action.after || ''
+  }`;
+  if (configBaseUrl && token) {
+    try {
+      const { data } = yield call(axios.get, url, { headers: { Authorization: `Bearer ${token}` } });
 
+      yield put(getConfigurationRevisionsSuccess(data.results, action.service, data.page.after, data.page.next));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    } catch (err) {
+      yield put(getConfigurationRevisionsSuccess([], action.service));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
+    }
+  }
+}
+
+export function* fetchConfigurationActiveRevision(action: FetchConfigurationActionRevisionAction): SagaIterator {
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
+  const token: string = yield call(getAccessToken);
+  const service = action.service.split(':');
+  const url = `${configBaseUrl}/configuration/v2/configuration/${service[0]}/${service[1]}/active`;
+  if (configBaseUrl && token) {
+    try {
+      const { data } = yield call(axios.get, url, { headers: { Authorization: `Bearer ${token}` } });
+
+      yield put(getConfigurationActiveSuccess(data, action.service));
+    } catch (err) {
+      yield put(getConfigurationActiveSuccess(null, action.service));
+    }
+  }
+}
 const getFetchUrls = (services: ServiceId[], configBaseUrl: string) => {
   const results: string[] = [];
   for (const service of services) {
@@ -226,7 +284,7 @@ let replaceErrorConfiguration = [];
 export function* replaceConfigurationData(action: ReplaceConfigurationDataAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const token: string = yield call(getAccessToken);
-  
+
   if (baseUrl && token) {
     if (action.configuration.configuration) {
       try {
@@ -270,7 +328,7 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-  
+
         yield put(setConfigurationRevisionSuccessAction(revision));
         // Send request to replace configuration
         //Import configuration replaces (REPLACE operation in PATCH) the configuration stored in latest revision
@@ -282,7 +340,7 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
             headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           }
         );
-      
+
         yield put(replaceConfigurationDataSuccessAction());
       } catch (err) {
         replaceErrorConfiguration.push({
@@ -318,4 +376,6 @@ export function* watchConfigurationSagas(): Generator {
   yield takeEvery(REPLACE_CONFIGURATION_DATA_ACTION, replaceConfigurationData);
   yield takeEvery(REPLACE_CONFIGURATION_ERROR_ACTION, getReplaceList);
   yield takeEvery(RESET_REPLACE_CONFIGURATION_LIST_ACTION, resetReplaceList);
+  yield takeEvery(FETCH_CONFIGURATION_REVISIONS_ACTION, fetchConfigurationRevisions);
+  yield takeEvery(FETCH_CONFIGURATION_ACTIVE_REVISION_ACTION, fetchConfigurationActiveRevision);
 }

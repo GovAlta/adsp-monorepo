@@ -42,14 +42,6 @@ export const EventDefinitions: FunctionComponent<ParentCompProps> = ({ activeEdi
     setSelectedDefinition(defaultEventDefinition);
   }
 
-  useEffect(() => {
-    if (activeEdit) {
-      setSelectedDefinition(defaultEventDefinition);
-      setIsEdit(false);
-      setEditDefinition(true);
-    }
-  }, [activeEdit]);
-
   return (
     <>
       <PageIndicator />

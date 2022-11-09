@@ -3,13 +3,18 @@ import type { Subscriber } from '@store/subscription/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Grid, GridItem } from '@components/Grid';
-import { UpdateContactInformationService, FetchNotificationConfigurationService } from '@store/notification/actions';
+import {
+  UpdateContactInformationService,
+  FetchNotificationConfigurationService,
+  FETCH_NOTIFICATION_CONFIGURATION,
+} from '@store/notification/actions';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { ContactInformationModalForm } from './edit';
 import { ReactComponent as Edit } from '@icons/edit.svg';
 import { phoneWrapper } from '@lib/wrappers';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
+import { useActionStateCheck } from '@components/Indicator';
 
 interface SubscribersProps {
   subscribers?: Subscriber[];
@@ -18,9 +23,14 @@ interface SubscribersProps {
 
 export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
   const dispatch = useDispatch();
+  const isFetchConfigCompleted = useActionStateCheck(FETCH_NOTIFICATION_CONFIGURATION);
+
   useEffect(() => {
     dispatch(FetchNotificationConfigurationService());
-  }, [dispatch]);
+  }, []);
+
+  // eslint-disable-next-line
+  useEffect(() => {}, [isFetchConfigCompleted]);
 
   const contact = useSelector((state: RootState) => state.notification.supportContact);
   const hasConfigurationAdminRole = useSelector((state: RootState) =>
@@ -74,32 +84,27 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
         <Grid>
           <GridItem data-testid="email" className="word-break contact-border" md={8} vSpacing={1} hSpacing={0.5}>
             <h4>Contact email</h4>
-            {contact?.contactEmail === undefined ? (
+            {!isFetchConfigCompleted && (
               <GoASkeletonGridColumnContent key="email" rows={1}></GoASkeletonGridColumnContent>
-            ) : (
-              ''
             )}
-            {contact?.contactEmail}
+            {isFetchConfigCompleted && contact?.contactEmail}
           </GridItem>
           <GridItem data-testid="phone" className="contact-border" md={4} vSpacing={1} hSpacing={0.5}>
             <h4>Phone number</h4>
-            {contact?.phoneNumber === undefined ? (
+            {!isFetchConfigCompleted && (
               <GoASkeletonGridColumnContent key="Phone" rows={1}></GoASkeletonGridColumnContent>
-            ) : (
-              ''
             )}
-            {phoneWrapper(contact?.phoneNumber)}
+
+            {isFetchConfigCompleted && phoneWrapper(contact?.phoneNumber)}
           </GridItem>
         </Grid>
         <Grid>
           <GridItem data-testid="support-instructions" className="contact-border" md={12} vSpacing={1} hSpacing={0}>
             <h4>Support instructions</h4>
-            {contact?.supportInstructions === undefined ? (
+            {!isFetchConfigCompleted && (
               <GoASkeletonGridColumnContent key="instructions" rows={1}></GoASkeletonGridColumnContent>
-            ) : (
-              ''
             )}
-            {contact?.supportInstructions}
+            {isFetchConfigCompleted && contact?.supportInstructions}
           </GridItem>
         </Grid>
         <ContactInformationModalForm

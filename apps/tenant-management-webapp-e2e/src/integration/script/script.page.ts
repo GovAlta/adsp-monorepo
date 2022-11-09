@@ -48,5 +48,31 @@ class ScriptPage {
   scriptDeleteButton(rowNumber) {
     return cy.xpath(`(//table[@data-testid="script-table"]//*[contains(@data-testid, "icon-trash")])[${rowNumber}]`);
   }
+
+  scriptEditButton(rowNumber) {
+    return cy.xpath(`(//table[@data-testid="script-table"]//*[contains(@data-testid, "icon-create")])[${rowNumber}]`);
+  }
+
+  editScriptModal() {
+    return cy.xpath('//*[@data-testid="script-edit-form" and @open]');
+  }
+
+  editScriptModalSaveBtn() {
+    return cy.xpath('//*[@data-testid="script-edit-form" and @open]//goa-button[@type="primary"]');
+  }
+
+  editScriptModalNameField() {
+    return cy.xpath('//*[@data-testid="script-edit-form" and @open]//*[@data-testid="script-modal-name-input"]');
+  }
+
+  editScriptModalDescriptionField() {
+    return cy.xpath('//*[@data-testid="script-edit-form" and @open]//*[@data-testid="script-modal-description-input"]');
+  }
+
+  editScriptModalLuaScriptEditor() {
+    return cy.xpath(
+      '//*[@data-testid="script-edit-form" and @open]//*[@data-testid="templated-editor-body"]//*[contains(@class, "monaco-editor") and @role="code"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea'
+    );
+  }
 }
 export default ScriptPage;

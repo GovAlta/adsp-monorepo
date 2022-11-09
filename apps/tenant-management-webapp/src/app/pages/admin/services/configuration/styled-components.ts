@@ -225,7 +225,7 @@ export const Exports = styled.div`
   }
 `;
 
-export const FileTableStyles = styled.div`
+export const ConfigurationTableStyles = styled.div`
   .flex-horizontal {
     display: flex;
     flex-direction: row;

@@ -5,6 +5,7 @@ import {
   ServiceConfiguration,
   ConfigurationRevisionRequest,
   ReplaceConfiguration,
+  Revision,
 } from './model';
 
 export const DELETE_CONFIGURATION_DEFINITION_ACTION = 'configuration/DELETE_CONFIGURATION_DEFINITION_ACTION';
@@ -21,6 +22,14 @@ export const FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION =
 
 export const FETCH_CONFIGURATIONS_ACTION = 'configuration/FETCH_CONFIGURATIONS_ACTION';
 export const FETCH_CONFIGURATIONS_SUCCESS_ACTION = 'configuration/FETCH_CONFIGURATIONS_SUCCESS_ACTION';
+
+export const FETCH_CONFIGURATION_REVISIONS_ACTION = 'configuration/FETCH_CONFIGURATION_REVISIONS_ACTION';
+export const FETCH_CONFIGURATION_REVISIONS_SUCCESS_ACTION =
+  'configuration/FETCH_CONFIGURATION_REVISIONS_SUCCESS_ACTION';
+
+export const FETCH_CONFIGURATION_ACTIVE_REVISION_ACTION = 'configuration/FETCH_CONFIGURATION_ACTIVE_REVISION_ACTION';
+export const FETCH_CONFIGURATION_ACTIVE_REVISION_SUCCESS_ACTION =
+  'configuration/FETCH_CONFIGURATION_ACTIVE_REVISION_SUCCESS_ACTION';
 
 export const SET_CONFIGURATION_REVISION_ACTION = 'configuration/SET_CONFIGURATION_REVISION_ACTION';
 export const SET_CONFIGURATION_REVISION_SUCCESS_ACTION = 'configuration/SET_CONFIGURATION_REVISION_SUCCESS_ACTION';
@@ -53,7 +62,30 @@ export interface FetchConfigurationDefinitionsSuccessAction {
   type: typeof FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION;
   payload: ServiceConfigurationTypes;
 }
+export interface FetchConfigurationRevisionsAction {
+  type: typeof FETCH_CONFIGURATION_REVISIONS_ACTION;
+  service: string;
+  after?: string;
+}
 
+export interface FetchConfigurationRevisionsSuccessAction {
+  type: typeof FETCH_CONFIGURATION_REVISIONS_SUCCESS_ACTION;
+  payload: Revision[];
+  service: string;
+  after: string;
+  next: string;
+}
+
+export interface FetchConfigurationActionRevisionAction {
+  type: typeof FETCH_CONFIGURATION_ACTIVE_REVISION_ACTION;
+  service: string;
+}
+
+export interface FetchConfigurationActiveRevisionSuccessAction {
+  type: typeof FETCH_CONFIGURATION_ACTIVE_REVISION_SUCCESS_ACTION;
+  payload: Revision;
+  service: string;
+}
 export interface UpdateConfigurationDefinitionAction {
   type: typeof UPDATE_CONFIGURATION_DEFINITION_ACTION;
   definition: ConfigDefinition;
@@ -120,7 +152,11 @@ export type ConfigurationDefinitionActionTypes =
   | GetReplaceConfigurationErrorSuccessAction
   | ResetReplaceConfigurationListAction
   | ResetReplaceConfigurationListSuccessAction
-  | ResetImportsListAction;
+  | ResetImportsListAction
+  | FetchConfigurationRevisionsAction
+  | FetchConfigurationRevisionsSuccessAction
+  | FetchConfigurationActionRevisionAction
+  | FetchConfigurationActiveRevisionSuccessAction;
 
 export type ServiceId = { namespace: string; service: string };
 export interface FetchConfigurationsAction {
@@ -173,7 +209,37 @@ export const getConfigurationDefinitionsSuccess = (
   type: FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION,
   payload: results,
 });
+export const getConfigurationRevisions = (service: string, after?: string): FetchConfigurationRevisionsAction => ({
+  type: FETCH_CONFIGURATION_REVISIONS_ACTION,
+  service,
+  after,
+});
 
+export const getConfigurationRevisionsSuccess = (
+  results: Revision[],
+  service: string,
+  after?: string,
+  next?: string
+): FetchConfigurationRevisionsSuccessAction => ({
+  type: FETCH_CONFIGURATION_REVISIONS_SUCCESS_ACTION,
+  payload: results,
+  service,
+  after,
+  next,
+});
+export const getConfigurationActive = (service: string): FetchConfigurationActionRevisionAction => ({
+  type: FETCH_CONFIGURATION_ACTIVE_REVISION_ACTION,
+  service,
+});
+
+export const getConfigurationActiveSuccess = (
+  payload: Revision,
+  service: string
+): FetchConfigurationActiveRevisionSuccessAction => ({
+  type: FETCH_CONFIGURATION_ACTIVE_REVISION_SUCCESS_ACTION,
+  payload: payload,
+  service: service,
+});
 export const setConfigurationRevisionAction = (
   request: ConfigurationRevisionRequest
 ): SetConfigurationRevisionAction => ({
