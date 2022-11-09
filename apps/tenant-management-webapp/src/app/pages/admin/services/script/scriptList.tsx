@@ -93,10 +93,10 @@ export const ScriptTableComponent: FunctionComponent<scriptTableProps> = ({ scri
             <th id="script-description" data-testid="script-table-header-description">
               Description
             </th>
-            <th id="script-read-roles" data-testid="script-table-header-read-roles">
+            <th id="script-runner-roles" data-testid="script-table-header-read-roles">
               Runner roles
             </th>
-            <th id="actions" data-testid="calendar-table-header-actions">
+            <th id="script-actions" data-testid="script-table-header-actions">
               Actions
             </th>
           </tr>
