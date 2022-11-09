@@ -107,4 +107,36 @@ public class ScriptController : ControllerBase
       return outputs;
     }
   }
+
+  [HttpPost]
+  [Route("scripts")]
+  [Authorize(AuthenticationSchemes = AdspAuthenticationSchemes.Tenant, Roles = ServiceRoles.ScriptRunner)]
+  public IEnumerable<object> TestScript([FromBody] TestScriptRequest request)
+  {
+
+    if (request == null)
+    {
+      throw new RequestArgumentException("request body cannot be null");
+    }
+
+    if (request.Script == null)
+    {
+      throw new RequestArgumentException("missing script attribute in the body");
+    }
+
+    if (request.Inputs == null)
+    {
+      throw new RequestArgumentException("missing inputs attribute in the body");
+    }
+    var user = HttpContext.GetAdspUser();
+
+    using (HttpContext.Benchmark("run-script-time"))
+    {
+      var outputs = _luaService.TestScript(
+        request.Inputs, request.Script, user!.Tenant!.Id!
+      );
+
+      return outputs;
+    }
+  }
 }
