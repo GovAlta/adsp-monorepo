@@ -158,7 +158,7 @@ export function* fetchConfigurationRevisions(action: FetchConfigurationRevisions
         })
       );
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(getConfigurationRevisionsSuccess([], action.service));
       yield put(
         UpdateIndicator({
           show: false,
