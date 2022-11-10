@@ -41,7 +41,7 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
             </div>
           </div>
         </td>
-        <td>{revision.lastUpdated}</td>
+        <td>{new Date(revision.lastUpdated).toLocaleString()}</td>
         <td>
           <GoAContextMenu>
             <GoAContextMenuIcon
@@ -125,11 +125,7 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
       </Visible>
       {indicator.show && <PageIndicator />}
       {!indicator.show && revisions && revisions.length === 0 && renderNoItem(`revisions`)}
-      {next && (
-        <GoAButton type="secondary" onClick={onNext}>
-          Load more...
-        </GoAButton>
-      )}
+      {next && <GoAButton onClick={onNext}>Load more...</GoAButton>}
     </>
   );
 };
@@ -153,6 +149,7 @@ export const RevisionTable = styled(RevisionTableComponent)`
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    padding-right: 2rem;
   }
 
   & .revision-details {
