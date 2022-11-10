@@ -30,18 +30,18 @@ export const getApplicationsByName =
       const config = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(tenantId);
       const apps = new StatusApplications(config);
 
-      const appStatuses = await serviceStatusRepository.find({
+      const statuses = await serviceStatusRepository.find({
         tenantId: tenantId.toString(),
       });
       res.json(
-        appStatuses.map((s) => {
-          const app = apps.find(s.appKey);
+        apps.map((app) => {
+          const status = statuses.find((s) => s.appKey === app.appKey);
           return {
-            id: s._id,
-            name: app?.name || 'unknown',
-            description: app?.description || '',
-            status: s.status,
-            lastUpdated: s.statusTimestamp ? new Date(s.statusTimestamp) : null,
+            id: app.appKey,
+            name: app.name,
+            description: app.description,
+            status: status?.status || 'operational',
+            lastUpdated: status?.statusTimestamp ? new Date(status.statusTimestamp) : null,
           };
         })
       );
