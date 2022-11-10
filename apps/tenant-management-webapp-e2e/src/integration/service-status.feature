@@ -254,3 +254,12 @@ Feature: Service status
     Given a user is on the public service status page for "autotest"
     Then the user views the status of "autotest-DO-NOT-DELETE" being the first unused status
     And the user views the timestamp of "autotest-DO-NOT-DELETE" being updated
+
+  @accessibility @regression
+  Scenario: As a service admin, I can use status pages without any critical or serious accessibility issues
+    Given a tenant admin user is on status overview page
+    Then no critical or serious accessibility issues on "status overview page"
+    When the user selects "Applications" tab for "Status"
+    Then no critical or serious accessibility issues on "status applications page"
+    When the user selects "Notices" tab for "Status"
+    Then no critical or serious accessibility issues on "status notices page"
