@@ -64,16 +64,16 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({
   return (
     <>
       <tr key={service.urn}>
-        <td headers="service" data-testid="service">
+        <td headers="directory-service" data-testid="service">
           {service.service}
         </td>
-        <td headers="api" data-testid="api">
+        <td headers="directory-api" data-testid="api">
           {service.api}
         </td>
-        <td headers="directory" data-testid="directory">
+        <td headers="directory-url" data-testid="directory">
           {service.url}
         </td>
-        <td>
+        <td headers="directory-actions">
           <IconDiv>
             <GoAContextMenu>
               {!service.isCore && service.metadata?._links?.api && !service.api && hasApi(service) && (
@@ -172,7 +172,7 @@ export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({
               API
             </th>
             <th id="directory-url">URL</th>
-            <th id="directory-action">Action</th>
+            <th id="directory-actions">Action</th>
           </tr>
         </thead>
 
