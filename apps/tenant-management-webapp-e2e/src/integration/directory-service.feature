@@ -127,3 +127,12 @@ Feature: Directory-service
   Scenario:  As a developer, I can access the directory via its API, so I can lookup specific service URLs.
     When the user sends an anonymous request to directory service to get all "autotest" tenant service entries
     Then the user receives response with all services and their URLs for "autotest"
+
+  @accessibility @regression
+  Scenario: As a service admin, I can use directory pages without any critical or serious accessibility issues
+    Given a tenant admin user is on tenant admin page
+    When the user selects the "Directory" menu item
+    Then no critical or serious accessibility issues on "directory overview page"
+# CS-1834 pending for fix
+# When the user selects "Entries" tab for "Directory"
+# Then no critical or serious accessibility issues on "directory entries page"
