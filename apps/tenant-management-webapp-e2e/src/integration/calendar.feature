@@ -15,6 +15,5 @@ Feature: Calendar
     Given a tenant admin user is on tenant admin page
     When the user selects the "Calendar" menu item
     Then no critical or serious accessibility issues on "calendar overview page"
-# CS-1827 pending for fix
-# When the user selects "Calendars" tab for "Calendar"
-# Then no critical or serious accessibility issues on "calendar calendars page"
+    When the user selects "Calendars" tab for "Calendar"
+    Then no critical or serious accessibility issues on "calendar calendars page"

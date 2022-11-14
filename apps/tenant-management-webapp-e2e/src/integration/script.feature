@@ -38,6 +38,5 @@ Feature: Script
   Scenario: As a service admin, I can use scripts page without any critical or serious accessibility issues
     Given a tenant admin user is on script service overview page
     Then no critical or serious accessibility issues on "script overview page"
-# CS-1823 pending for fix
-# When the user selects "Scripts" tab for "Script"
-# Then no critical or serious accessibility issues on "script scripts page"
+    When the user selects "Scripts" tab for "Script"
+    Then no critical or serious accessibility issues on "script scripts page"
