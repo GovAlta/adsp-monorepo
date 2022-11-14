@@ -41,7 +41,15 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
             </div>
           </div>
         </td>
-        <td>{new Date(revision.lastUpdated).toLocaleString()}</td>
+        <td>
+          {new Date(revision.lastUpdated).toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            year: 'numeric',
+          })}
+        </td>
         <td>
           <GoAContextMenu>
             <GoAContextMenuIcon
