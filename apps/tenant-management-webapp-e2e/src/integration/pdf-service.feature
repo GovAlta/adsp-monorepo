@@ -38,7 +38,7 @@ Feature: PDF service
     Then the user "should not view" the PDF template of "autotest-pdf-templateNew", "autotest-pdf-template" and "autotest PDF template new desc"
 
   @accessibility @regression
-  Scenario: As a service admin, I can use PDF pages without any critical or serious accessibility issues
+  Scenario: As a tenant admin, I can use PDF pages without any critical or serious accessibility issues
     Given a tenant admin user is on PDF service overview page
     Then no critical or serious accessibility issues on "PDF overview page"
     When the user selects "Templates" tab for "PDF"

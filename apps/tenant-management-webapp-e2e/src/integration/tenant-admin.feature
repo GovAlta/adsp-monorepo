@@ -2,13 +2,13 @@
 Feature: Tenant admin
 
   @TEST_CS-298 @REQ_CS-194 @dashboard @smoke-test @regression
-  Scenario: As a GoA service owner, I can access the Tenant management webapp
+  Scenario: As a tenant admin, I can access the Tenant management webapp
     Given the user goes to tenant management login link
     When the user enters credentials and clicks login button
     Then the tenant management admin page is displayed
 
   @TEST_CS-300 @REQ_CS-194 @regression
-  Scenario Outline: As a GoA service owner I can access "<Page Title>"
+  Scenario Outline: As a tenant admin, I can access "<Page Title>"
     Given a tenant admin user is on tenant admin page
     When the user selects the "<Menu>" menu item
     Then the "<Page Title>" landing page is displayed
@@ -19,7 +19,7 @@ Feature: Tenant admin
       | Event log | Event log      |
 
   @regression @smoke-test @api @ignore
-  Scenario Outline: As a GoA service owner I can get a list of "<Options>"
+  Scenario Outline: As a tenant admin, I can get a list of "<Options>"
     When the user sends a configuration service request to "<End Point>"
     Then the user gets a list of "<Options>"
     Examples:
@@ -29,21 +29,21 @@ Feature: Tenant admin
 
   # TEST DATA: the automation user needs to have realm management roles
   @TEST_CS-322 @regression
-  Scenario: As a GoA service owner, I can access the realm administration from the Access section of the tenant admin portal to manage users
+  Scenario: As a tenant admin, I can access the realm administration from the Access section of the tenant admin portal to manage users
     Given a tenant admin user is on tenant admin page
     When the user selects the "Access" menu item
     Then the user views a link for the Keycloak admin
     And the keycloak admin link can open tenant admin portal in a new tab
 
   @TEST_CS-318 @REQ_CS-261 @regression
-  Scenario: As a service owner, I can see the number of existing users and roles in my Access service tenant
+  Scenario: As a tenant admin, I can see the number of existing users and roles in my Access service tenant
     Given a tenant admin user is on tenant admin page
     When the user selects the "Access" menu item
     Then the user views the number of users in its tenant realm
     And the number of users from admin page should equal to the number of users from the realm API
 
   @TEST_CS-320 @REQ_CS-262 @regression
-  Scenario: As a service owner, I can see the number of users in roles in my Access service tenant
+  Scenario: As a tenant admin, I can see the number of users in roles in my Access service tenant
     Given a tenant admin user is on tenant admin page
     When the user selects the "Access" menu item
     Then the user views the number of users in top 5 roles in its tenant realm
@@ -51,12 +51,12 @@ Feature: Tenant admin
 
   # Ignore the accessibility test until https://github.com/GovAlta/ui-components/issues/844 is resolved
   @accessibility @regression @ignore
-  Scenario: As a service owner, I can use the tenant admin dashboard without any critical or serious accessibility issues
+  Scenario: As a tenant admin, I can use the tenant admin dashboard without any critical or serious accessibility issues
     Given a tenant admin user is on tenant admin page
     Then no critical or serious accessibility issues on "tenant admin dashboard page"
 
   @accessibility @regression
-  Scenario: As a service owner, I can use the tenant admin access page without any critical or serious accessibility issues
+  Scenario: As a tenant admin, I can use the tenant admin access page without any critical or serious accessibility issues
     Given a tenant admin user is on tenant admin page
     When the user selects the "Access" menu item
     Then no critical or serious accessibility issues on "tenant admin access overview page"
@@ -64,8 +64,20 @@ Feature: Tenant admin
     When the user waits "4" seconds
     Then no critical or serious accessibility issues on "tenant admin access service roles page"
 
+  @accessibility @regression
+  Scenario: As a tenant admin, I can use the event log page without any critical or serious accessibility issues
+    Given a tenant admin user is on tenant admin page
+    When the user selects the "Event log" menu item
+    Then no critical or serious accessibility issues on "event log page"
+
+  @accessibility @regression
+  Scenario: As a tenant admin, I can use the service metrics page without any critical or serious accessibility issues
+    Given a tenant admin user is on tenant admin page
+    When the user selects the "Service metrics" menu item
+    Then no critical or serious accessibility issues on "service metrics page"
+
   @TEST_CS-588 @TEST_CS-745 @dashboard @regression
-  Scenario: As a GoA admin user, I should be able to see useful information on the landing page
+  Scenario: As a tenant admin, I should be able to see useful information on the landing page
     Given a tenant admin user is on tenant admin page
     Then the user views the tenant name of "autotest"
     And the user views the release info and DIO contact info
@@ -108,7 +120,7 @@ Feature: Tenant admin
     Then the user should not have regular admin view
 
   @TEST_CS-715 @REQ_CS-254 @regression
-  Scenario: Test As a service owner, I can search the event log, so I can find events of interest
+  Scenario: As a tenant admin, I can search the event log, so I can find events of interest
     Given a tenant admin user is on tenant admin page
     #//First create an event definition under events it will be used to verify the event log
     When the user selects the "Event" menu item

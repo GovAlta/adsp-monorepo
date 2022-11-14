@@ -35,7 +35,7 @@ Feature: Script
     And the user views the link of "Get support" under Support
 
   @accessibility @regression
-  Scenario: As a service admin, I can use scripts page without any critical or serious accessibility issues
+  Scenario: As a tenant admin, I can use scripts page without any critical or serious accessibility issues
     Given a tenant admin user is on script service overview page
     Then no critical or serious accessibility issues on "script overview page"
 # CS-1823 pending for fix

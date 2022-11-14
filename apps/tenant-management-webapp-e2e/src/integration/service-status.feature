@@ -148,7 +148,7 @@ Feature: Service status
       | Autotest-NewAllNotice | All         | Today      | 12:00 am   | Today    | 12:00 am | Autotest-ModifiedAllNotice | Autotest     | Today        | 10:00 am     | Today      | 02:00 pm   |
 
   @TEST_CS-339 @REQ_CS-169 @regression
-  Scenario: As a tenant admin user, I can add/edit/delete an application
+  Scenario: As a tenant admin, I can add/edit/delete an application
     Given a tenant admin user is on status applications page
     When the user clicks Add application button
     Then the user views Add application modal
@@ -228,7 +228,7 @@ Feature: Service status
     And the user views the event details of "autotest-DO-NOT-DELETE" application status changed from "{original status}" to "{new status}" for subscriber of "auto.test@abc.com"
 
   @TEST_CS-1287 @REQ_CS-1261 @REQ_CS-1262 @regression
-  Scenario: As a tenant admin user I can modify tenant support email for status page so that users know where to report the issues.
+  Scenario: As a tenant admin, I can modify tenant support email for status page so that users know where to report the issues.
     Given a tenant admin user is on status overview page
     When the user clicks Edit button for contact information
     Then the user views Edit contact information modal on the status overview page
@@ -244,7 +244,7 @@ Feature: Service status
     Then the user views "test@gov.ab.ca" as the email of contact information
 
   @TEST_CS-333 @REQ_CS-163 @regression
-  Scenario: As a tenant admin user, I can update the status of my service/app, so it is available to the public
+  Scenario: As a tenant admin, I can update the status of my service/app, so it is available to the public
     Given a tenant admin user is on status applications page
     Then the user views current status for "autotest-DO-NOT-DELETE"
     When the user clicks Change status button for "autotest-DO-NOT-DELETE"
