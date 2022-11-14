@@ -319,7 +319,7 @@ describe('Service router', () => {
         expect.arrayContaining([
           {
             description: configurationMock[bobsStatusId].description,
-            id: bobsStatusId,
+            id: bobsAppKey,
             lastUpdated: null,
             name: configurationMock[bobsStatusId].name,
             status: bobsApplicationStatus.status,

@@ -361,3 +361,15 @@ Feature: Notifications
     And the user "should not view" GoA header and footer in the email preview
     When the user clicks Close button in event template modal
     Then Event template modal is closed
+
+  @accessibility @regression
+  Scenario: As a service admin, I can use notification pages without any critical or serious accessibility issues
+    Given a tenant admin user is on notification overview page
+    Then no critical or serious accessibility issues on "notification overview page"
+    When the user selects "Notification types" tab for "Notification"
+    Then no critical or serious accessibility issues on "notification notification types page"
+# CS-1835 pending for fix
+# When the user selects "Subscriptions" tab for "Notification"
+# Then no critical or serious accessibility issues on "notification subscriptions page"
+# When the user selects "Subscribers" tab for "Notification"
+# Then no critical or serious accessibility issues on "notification subscribers page"

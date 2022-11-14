@@ -115,7 +115,7 @@ export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ 
             <th id="calendar-update-roles" data-testid="calendar-table-header-update-roles">
               Update roles
             </th>
-            <th id="actions" data-testid="calendar-table-header-actions">
+            <th id="calendar-actions" data-testid="calendar-table-header-actions">
               Actions
             </th>
           </tr>
