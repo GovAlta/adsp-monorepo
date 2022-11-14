@@ -133,6 +133,5 @@ Feature: Directory-service
     Given a tenant admin user is on tenant admin page
     When the user selects the "Directory" menu item
     Then no critical or serious accessibility issues on "directory overview page"
-# CS-1834 pending for fix
-# When the user selects "Entries" tab for "Directory"
-# Then no critical or serious accessibility issues on "directory entries page"
+    When the user selects "Entries" tab for "Directory"
+    Then no critical or serious accessibility issues on "directory entries page"

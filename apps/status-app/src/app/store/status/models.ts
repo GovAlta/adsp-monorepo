@@ -131,7 +131,7 @@ export const bindApplicationsWithNotices = (
     const noticesOfApplication = notices.filter((notice) => {
       return (
         notice.isAllApplications !== true &&
-        notice.tennantServRef.find((applicationRef) => applicationRef.id === application.id)
+        notice.tennantServRef.find((applicationRef) => applicationRef?.id === application.id)
       );
     });
 

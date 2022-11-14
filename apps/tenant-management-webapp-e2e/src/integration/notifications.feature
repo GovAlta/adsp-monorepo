@@ -368,8 +368,7 @@ Feature: Notifications
     Then no critical or serious accessibility issues on "notification overview page"
     When the user selects "Notification types" tab for "Notification"
     Then no critical or serious accessibility issues on "notification notification types page"
-# CS-1835 pending for fix
-# When the user selects "Subscriptions" tab for "Notification"
-# Then no critical or serious accessibility issues on "notification subscriptions page"
-# When the user selects "Subscribers" tab for "Notification"
-# Then no critical or serious accessibility issues on "notification subscribers page"
+    When the user selects "Subscriptions" tab for "Notification"
+    Then no critical or serious accessibility issues on "notification subscriptions page"
+    When the user selects "Subscribers" tab for "Notification"
+    Then no critical or serious accessibility issues on "notification subscribers page"
