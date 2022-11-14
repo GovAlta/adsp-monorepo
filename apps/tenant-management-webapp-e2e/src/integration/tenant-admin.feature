@@ -49,32 +49,22 @@ Feature: Tenant admin
     Then the user views the number of users in top 5 roles in its tenant realm
     And the number of users in roles from admin page should equal to the number of users in roles from the realm API
 
-  # Ignore the accessibility test until https://github.com/GovAlta/ui-components/issues/844 is resolved
-  @accessibility @regression @ignore
-  Scenario: As a tenant admin, I can use the tenant admin dashboard without any critical or serious accessibility issues
-    Given a tenant admin user is on tenant admin page
-    Then no critical or serious accessibility issues on "tenant admin dashboard page"
-
   @accessibility @regression
-  Scenario: As a tenant admin, I can use the tenant admin access page without any critical or serious accessibility issues
+  Scenario: As a tenant admin, I can use tenant admin pages without any critical or serious accessibility issues
     Given a tenant admin user is on tenant admin page
     When the user selects the "Access" menu item
     Then no critical or serious accessibility issues on "tenant admin access overview page"
     When the user selects "Service roles" tab for "Access"
     When the user waits "4" seconds
     Then no critical or serious accessibility issues on "tenant admin access service roles page"
-
-  @accessibility @regression
-  Scenario: As a tenant admin, I can use the event log page without any critical or serious accessibility issues
-    Given a tenant admin user is on tenant admin page
     When the user selects the "Event log" menu item
-    Then no critical or serious accessibility issues on "event log page"
-
-  @accessibility @regression
-  Scenario: As a tenant admin, I can use the service metrics page without any critical or serious accessibility issues
-    Given a tenant admin user is on tenant admin page
-    When the user selects the "Service metrics" menu item
-    Then no critical or serious accessibility issues on "service metrics page"
+    Then no critical or serious accessibility issues on "tenant admin event log page"
+  #  CS-1839 is pending for fix
+  #  When the user selects the "Service metrics" menu item
+  #  Then no critical or serious accessibility issues on "tenant admin service metrics page"
+  #  CS-1838 is pending for fix
+  #   When the user selects the "Dashboard" menu item
+  #   Then no critical or serious accessibility issues on "tenant admin dashboard page"
 
   @TEST_CS-588 @TEST_CS-745 @dashboard @regression
   Scenario: As a tenant admin, I should be able to see useful information on the landing page

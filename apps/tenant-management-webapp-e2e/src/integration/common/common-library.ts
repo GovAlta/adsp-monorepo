@@ -56,6 +56,9 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
     case 'Script':
       menuItemTestid = 'menu-script';
       break;
+    case 'Service metrics':
+      menuItemTestid = 'menu-service-metrics';
+      break;
     default:
       expect(menuItem).to.be.oneOf([
         'File',
@@ -70,6 +73,7 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
         'PDF',
         'Calendar',
         'Script',
+        'Service metrics',
       ]);
   }
   commonObj.adminMenuItem(menuItemTestid).click();
