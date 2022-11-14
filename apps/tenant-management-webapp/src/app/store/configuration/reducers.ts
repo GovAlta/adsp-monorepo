@@ -50,7 +50,7 @@ export default function (
         serviceList: [
           ...Object.keys(action.payload.core.latest?.configuration),
           ...Object.keys(action.payload.tenant.latest?.configuration),
-        ],
+        ].sort((a, b) => (a < b ? -1 : 1)),
       };
     case UPDATE_CONFIGURATION_DEFINITION_SUCCESS_ACTION:
       return {

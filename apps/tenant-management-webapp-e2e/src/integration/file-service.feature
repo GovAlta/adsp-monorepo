@@ -64,11 +64,6 @@ Feature: File service
     When the user goes to the web link of the API docs
     Then the user views "File service" API documentation
 
-  @accessibility @regression
-  Scenario: As a service owner, I can manage files without any critical or serious accessibility issues
-    Given a service owner user is on Files overview page
-    Then no critical or serious accessibility issues on "file service overview page"
-
   @TEST_CS-315 @REQ_CS-196 @FileTypes @regression
   Scenario: As a GoA service admin, I can add, update and remove file types
     Given a service owner user is on Files overview page
@@ -100,11 +95,15 @@ Feature: File service
     And the user clicks Save button on file type modal
     Then the user views an error message for duplicated file name
 
-  @FileTypes @accessibility @regression
-  Scenario: As a service owner, I can manage file types without any critical or serious accessibility issues
+  @accessibility @regression
+  Scenario: As a service admin, I can use file pages without any critical or serious accessibility issues
     Given a service owner user is on Files overview page
+    Then no critical or serious accessibility issues on "file service overview page"
     When the user selects "File types" tab for "File"
     Then no critical or serious accessibility issues on "file types page"
+  # CS-1826 pending for fix
+  # When the user selects "Test files" tab for "File"
+  # Then no critical or serious accessibility issues on "file test files page"
 
   @TEST_CS-316 @REQ_CS-196 @FileTypes @regression
   Scenario: As a GoA service owner, I cannot remove an in-use file type

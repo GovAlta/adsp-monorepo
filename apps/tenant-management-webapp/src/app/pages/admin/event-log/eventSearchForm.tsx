@@ -135,7 +135,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
     <GoAForm>
       <GoAFlexRow gap="small">
         <SearchBox>
-          <GoAFormItem helpText={!open && !error && message} error={error && message}>
+          <GoAFormItem helpText={!error && message} error={error && message}>
             <label>Search event namespace and name</label>
 
             <div className={open ? 'search search-open' : 'search'}>
@@ -252,10 +252,10 @@ const SearchBox = styled.div`
     padding: 0.15rem;
   }
   .search-open {
-    border: 2px solid var(--color-orange);
+    border: 1px solid var(--color-orange);
   }
   .goa-state--error .search {
-    border: 2px solid var(--color-red);
+    border: 1px solid var(--color-red);
   }
   input {
     border-width: 0;
@@ -269,7 +269,7 @@ const SearchBox = styled.div`
     list-style: none;
     margin-top: 0;
     max-height: 15.5rem;
-
+    width: 100%;
     position: absolute;
 
     background: var(--color-white);

@@ -8,7 +8,13 @@ Feature: Subscription management
   @accessibility @regression
   Scenario: As a user, I can see the subscription management page without any critical and serious accessibility issues
     When a user goes to subscription management overview site
-    Then no critical or serious accessibility issues on "subscription management" page
+    Then no critical or serious accessibility issues on "subscription management overview" page
+
+  @accessibility @regression
+  Scenario: As a tenant admin, I can use subscription management page without any critical and serious accessibility issues
+    When an authenticated user with "auto.contact" and "autotest" is in the subscriber app
+    Then the user views subscription management page
+    And no critical or serious accessibility issues on "authenticated subscription management" page
 
   @TEST_CS-995 @REQ_CS-915 @TEST_CS-1248 @REQ_CS-1040 @REQ_CS-1502 @regression
   Scenario: As an authenticated stakeholder, I can login to see non-self-serve subscriptions

@@ -119,11 +119,11 @@ describe('Service status mongo repository', () => {
   });
 
   it('saves the existing app', async () => {
-    const applications = await insertMockData([
-      { enabled: false, tenantId: '20' },
-      { enabled: false, tenantId: '22' },
+    const apps = await insertMockData([
+      { enabled: false, tenantId: '20', appKey: 'app-0' },
+      { enabled: false, tenantId: '22', appKey: 'app-1' },
     ]);
-    const editedApp = applications[0];
+    const editedApp = apps[0];
     await repo.save(editedApp);
 
     const appCheck = await repo.get(editedApp.appKey);

@@ -19,14 +19,17 @@ export const ConfigurationRevisions = (): JSX.Element => {
     <div>
       <GoAForm>
         <GoAFormItem>
-          <label>Select configuration</label>
+          <label aria-label="select-configuration-label">Select definition</label>
           {serviceList?.length > 0 && (
             <GoADropdown
               name="Configurations"
               selectedValues={[selectedConfiguration]}
               onChange={(name, values) => {
                 setSelectedConfiguration(values[0]);
+                dispatch(getConfigurationRevisions(values[0]));
+                setShowTable(true);
               }}
+              aria-label="select-configuration-dropdown"
             >
               {serviceList.map((item) => (
                 <GoADropdownOption
@@ -39,19 +42,6 @@ export const ConfigurationRevisions = (): JSX.Element => {
             </GoADropdown>
           )}
         </GoAFormItem>
-        <GoAFormActions alignment="right">
-          {serviceList?.length > 0 && (
-            <GoAButton
-              title="Select"
-              onClick={() => {
-                dispatch(getConfigurationRevisions(selectedConfiguration));
-                setShowTable(true);
-              }}
-            >
-              Select
-            </GoAButton>
-          )}
-        </GoAFormActions>
       </GoAForm>
       {showTable && <RevisionTable service={selectedConfiguration} />}
     </div>

@@ -7,6 +7,7 @@ import styled from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { PageIndicator } from '@components/Indicator';
 import { GoAButton, GoABadge } from '@abgov/react-components-new';
+import { renderNoItem } from '@components/NoItem';
 import { getConfigurationRevisions, getConfigurationActive } from '@store/configuration/action';
 interface VisibleProps {
   visible: boolean;
@@ -31,13 +32,17 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
   return (
     <>
       <tr>
-        <td headers="revision">
-          {revision.revision}
-          {isLatest && <GoABadge type="information" content="latest" />}
-          {isActive && <GoABadge type="information" content="active" />}
+        <td>
+          <div className="number-badge">
+            {revision.revision}
+            <div>
+              {isLatest && <GoABadge type="information" content="latest" />}
+              {isActive && <GoABadge type="success" content="active" />}
+            </div>
+          </div>
         </td>
-        <td headers="date">{revision.lastUpdated}</td>
-        <td headers="action">
+        <td>{new Date(revision.lastUpdated).toLocaleString()}</td>
+        <td>
           <GoAContextMenu>
             <GoAContextMenuIcon
               title="Toggle details"
@@ -79,17 +84,20 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
   };
   // eslint-disable-next-line
   useEffect(() => {
-    dispatch(getConfigurationActive(service));
+    if (revisions?.length > 0) {
+      dispatch(getConfigurationActive(service));
+    }
   }, [indicator, revisions]);
   const latest = configurationRevisions[service]?.revisions?.latest;
   const active = configurationRevisions[service]?.revisions?.active;
+
   return (
     <>
-      <Visible visible={!indicator.show && revisions !== null && revisions && revisions?.length > 0}>
+      <Visible visible={!indicator.show && revisions && revisions.length > 0}>
         <div className={className}>
           <DataTable>
             <colgroup>
-              <col className="data-col" />
+              <col className="number-col" />
               <col className="data-col" />
               <col className="action-col" />
             </colgroup>
@@ -116,11 +124,8 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
         </div>
       </Visible>
       {indicator.show && <PageIndicator />}
-      {next && (
-        <GoAButton disabled={next === ''} onClick={onNext}>
-          Load more...
-        </GoAButton>
-      )}
+      {!indicator.show && revisions && revisions.length === 0 && renderNoItem(`revisions`)}
+      {next && <GoAButton onClick={onNext}>Load more...</GoAButton>}
     </>
   );
 };
@@ -130,15 +135,23 @@ export const RevisionTable = styled(RevisionTableComponent)`
   & table {
     table-layout: fixed;
   }
-  & .correlation-col {
-    width: 5%;
+  $ .number-col {
+    width: 30%;
   }
   & .data-col {
-    width: 28%;
+    width: 55%;
   }
   & .action-col {
-    width: 10%;
+    width: 15%;
   }
+  & .number-badge {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-right: 2rem;
+  }
+
   & .revision-details {
     div {
       background: #f3f3f3;

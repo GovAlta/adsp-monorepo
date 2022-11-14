@@ -59,7 +59,10 @@ Feature: Tenant admin
   Scenario: As a service owner, I can use the tenant admin access page without any critical or serious accessibility issues
     Given a tenant admin user is on tenant admin page
     When the user selects the "Access" menu item
-    Then no critical or serious accessibility issues on "tenant admin access page"
+    Then no critical or serious accessibility issues on "tenant admin access overview page"
+    When the user selects "Service roles" tab for "Access"
+    When the user waits "4" seconds
+    Then no critical or serious accessibility issues on "tenant admin access service roles page"
 
   @TEST_CS-588 @TEST_CS-745 @dashboard @regression
   Scenario: As a GoA admin user, I should be able to see useful information on the landing page

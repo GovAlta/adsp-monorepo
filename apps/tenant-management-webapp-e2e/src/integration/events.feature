@@ -48,11 +48,17 @@ Feature: Events
     Then the user "should not view" an event definition of "autotest-addEditDeleteEvent" and "autotest event desc2" under "Autotest"
 
   @accessibility @regression
-  Scenario: As a service admin, I can use event definitions page without any critical or serious accessibility issues
+  Scenario: As a service admin, I can use event pages without any critical or serious accessibility issues
     Given a tenant admin user is on tenant admin page
     When the user selects the "Event" menu item
-    And the user selects "Definitions" tab for "Event"
+    Then no critical or serious accessibility issues on "event overview page"
+    When the user selects "Definitions" tab for "Event"
     Then no critical or serious accessibility issues on "event definitions page"
+    When the user selects "Streams" tab for "Event"
+    Then no critical or serious accessibility issues on "event streams page"
+  # CS-1826 pending for fix
+  # When the user selects "Test stream" tab for "Event"
+  # Then no critical or serious accessibility issues on "event test stream page"
 
   @TEST_CS-739 @REQ_CS-250 @regression
   Scenario Outline: As a service owner, I cannot add event definitions with names or namespaces contains ":"
