@@ -85,7 +85,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
         <CalendarModal
           open={true}
           initialValue={selectedCalendar}
-          type={modalType}
+          type={openAddCalendar ? 'new' : modalType}
           realmRoles={tenant.realmRoles}
           tenantClients={tenant.tenantClients ? tenant.tenantClients : {}}
           onCancel={() => {
