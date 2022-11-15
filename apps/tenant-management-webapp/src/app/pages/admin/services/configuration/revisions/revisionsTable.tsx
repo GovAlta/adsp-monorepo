@@ -8,6 +8,7 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { PageIndicator } from '@components/Indicator';
 import { GoAButton, GoABadge } from '@abgov/react-components-new';
 import { renderNoItem } from '@components/NoItem';
+import { FormatDateTimeWithAt } from '@lib/timeUtil';
 import { getConfigurationRevisions, getConfigurationActive } from '@store/configuration/action';
 interface VisibleProps {
   visible: boolean;
@@ -41,15 +42,7 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
             </div>
           </div>
         </td>
-        <td>
-          {new Date(revision.lastUpdated).toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            year: 'numeric',
-          })}
-        </td>
+        <td>{FormatDateTimeWithAt(new Date(revision.lastUpdated))}</td>
         <td>
           <GoAContextMenu>
             <GoAContextMenuIcon
