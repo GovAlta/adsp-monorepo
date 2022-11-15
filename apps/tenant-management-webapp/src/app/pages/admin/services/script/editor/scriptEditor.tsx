@@ -18,7 +18,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import { RootState } from '@store/index';
-import DataTable from '@components/DataTable';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 
 interface ScriptEditorProps {
@@ -228,45 +227,43 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               </GoAButton>
             </div>
 
-            <div className="flex-one full-height">
-              <ResponseTableStyles>
-                <DataTable id="response-information">
-                  <thead>
+            <ResponseTableStyles>
+              <table id="response-information">
+                <thead>
+                  <tr>
+                    <th data-testid="response-header-result">Result</th>
+                    <th data-testid="response-header-input">Input</th>
+                    <th data-testid="response-header-output">Output</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {loadingIndicator.show && (
                     <tr>
-                      <th data-testid="response-header-result">Result</th>
-                      <th data-testid="response-header-input">Input</th>
-                      <th data-testid="response-header-output">Output</th>
+                      <td colSpan={3}>
+                        <GoASkeletonGridColumnContent key={1} rows={1}></GoASkeletonGridColumnContent>
+                      </td>
                     </tr>
-                  </thead>
+                  )}
 
-                  <tbody>
-                    {loadingIndicator.show && (
+                  {scriptResponse &&
+                    scriptResponse.map((response) => (
                       <tr>
-                        <td colSpan={3}>
-                          <GoASkeletonGridColumnContent key={1} rows={1}></GoASkeletonGridColumnContent>
-                        </td>
-                      </tr>
-                    )}
-
-                    {scriptResponse &&
-                      scriptResponse.map((response) => (
-                        <tr>
-                          <td data-testid="response-result">
-                            <div className="flex-horizontal">
-                              <div className="mt-1">
-                                {!response.hasError ? <CheckmarkCircle size="medium" /> : <CloseCircle size="medium" />}
-                              </div>
-                              <div className="mt-3">{response.hasError ? response.result : 'Success'}</div>
+                        <td data-testid="response-result">
+                          <div className="flex-horizontal">
+                            <div className="mt-1">
+                              {!response.hasError ? <CheckmarkCircle size="medium" /> : <CloseCircle size="medium" />}
                             </div>
-                          </td>
-                          <td data-testid="response-inputs">{JSON.stringify(response.inputs)}</td>
-                          <td data-testid="response-output">{!response.hasError ? response.result : ''}</td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </DataTable>
-              </ResponseTableStyles>
-            </div>
+                            <div className="mt-3">{response.hasError ? response.result : 'Success'}</div>
+                          </div>
+                        </td>
+                        <td data-testid="response-inputs">{JSON.stringify(response.inputs)}</td>
+                        <td data-testid="response-output">{!response.hasError ? response.result : ''}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </ResponseTableStyles>
           </div>
         </ScriptPane>
       </div>

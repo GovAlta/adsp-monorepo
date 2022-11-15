@@ -130,7 +130,7 @@ export const TestInputDivBody = styled.div`
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
   min-height: 65px;
-  height: calc(60vh - 310px);
+  height: calc(57vh - 310px);
 `;
 export const ScriptPanelContainer = styled.div`
   display: flex;
@@ -246,33 +246,63 @@ export const ResponseTableStyles = styled.div`
   height: calc(87vh - 310px);
   table-layout: fixed;
   word-wrap: break-word;
-  padding-top: 1.5rem;
-  min-height: 100px;
   overflow: auto;
-  & th:nth-child(3) {
-    min-width: 180px;
-    width: 20%;
-  }
+  position: relative;
+  min-height: 310px;
+  & table {
+    --color-row-border: var(--color-gray-300);
+    --color-header-border: var(--color-gray-300);
+    --color-row--selected: var(--color-gray-200);
+    --color-th: var(--color-gray-900);
 
-  & td:nth-child(3) {
-    min-width: 180px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    width: 20%;
+    border-collapse: collapse;
+    width: 100%;
   }
-
+  & table tbody {
+  }
   & th:nth-child(2) {
-    min-width: 160px;
     width: 30%;
   }
 
   & td:nth-child(2) {
-    min-width: 160px;
-    overflow: hidden;
     text-overflow: ellipsis;
     width: 30%;
   }
 
+  & th:nth-child(1) {
+    width: 40%;
+  }
+
+  & td:nth-child(1) {
+    text-overflow: ellipsis;
+    width: 40%;
+  }
+  td {
+    padding: 0.5rem;
+  }
+
+  tr + tr {
+    border-top: 1px solid var(--color-row-border);
+  }
+
+  tr.selected {
+    background-color: var(--color-row--selected);
+  }
+
+  th {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    border-bottom: 2px solid var(--color-header-border);
+    color: var(--color-th);
+    font-size: var(--fs-base);
+    font-weight: var(--fw-bold);
+    padding: 0.5rem;
+    text-align: left;
+    white-space: nowrap;
+    background: white;
+    z-index: 2;
+  }
   .flex-horizontal {
     display: flex;
     flex-direction: row;
