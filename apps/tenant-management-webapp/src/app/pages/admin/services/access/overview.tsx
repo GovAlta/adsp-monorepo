@@ -36,15 +36,15 @@ export const Overview = (): JSX.Element => {
 
   useEffect(() => {
     dispatch(fetchAccess());
-  }, []);
-
-  useEffect(() => {
     return function clean() {
       if (isReady(indicator, userCount)) {
         dispatch(accessReset());
       }
     };
-  }, [indicator]);
+  }, []);
+
+  // eslint-disable-next-line
+  useEffect(() => {}, [indicator]);
 
   return (
     <div>
