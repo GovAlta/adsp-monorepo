@@ -126,7 +126,11 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
       </Visible>
       {indicator.show && <PageIndicator />}
       {!indicator.show && revisions && revisions.length === 0 && renderNoItem(`revisions`)}
-      {next && <GoAButton onClick={onNext}>Load more...</GoAButton>}
+      {next && (
+        <GoAButton onClick={onNext} type="secondary">
+          Load more...
+        </GoAButton>
+      )}
     </>
   );
 };
