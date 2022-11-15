@@ -7,7 +7,7 @@ export class StatusApplications {
   constructor(statusConfiguration: StatusServiceConfiguration) {
     const regex = new RegExp(appPropertyRegex);
     // remove possible configuration entities that are NOT apps.
-    const keys = Object.keys(this.#apps).filter((id) => regex.test(id));
+    const keys = Object.keys(statusConfiguration).filter((id) => regex.test(id));
     const apps = {};
     keys.forEach((k) => {
       apps[k] = statusConfiguration[k];

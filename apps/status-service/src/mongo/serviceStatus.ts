@@ -59,6 +59,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
 
   async delete(entity: ServiceStatusApplicationEntity): Promise<boolean> {
     try {
+      const id = entity._id.toString();
       await this.model.findOneAndDelete({ _id: entity._id });
       return true;
     } catch (e) {
@@ -73,9 +74,6 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
       endpoint: application.endpoint,
       metadata: application.metadata,
       statusTimestamp: application.statusTimestamp,
-      tenantId: application.tenantId,
-      tenantName: application.tenantName,
-      tenantRealm: application.tenantRealm,
       status: application.status,
       enabled: application.enabled,
     };
@@ -91,9 +89,6 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
       endpoint: doc.endpoint,
       metadata: doc.metadata,
       statusTimestamp: doc.statusTimestamp,
-      tenantId: doc.tenantId,
-      tenantName: doc.tenantName,
-      tenantRealm: doc.tenantRealm,
       status: doc.status,
       enabled: doc.enabled,
     });
