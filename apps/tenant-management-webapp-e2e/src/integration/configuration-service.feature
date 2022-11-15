@@ -74,7 +74,7 @@ Feature: Configuration-service
     Then the user views event details of "autotest", "test", "2", "1" of active-revision-set for configuration-service
 
   @accessibility @regression
-  Scenario: As a service admin, I can use configuration pages without any critical or serious accessibility issues
+  Scenario: As a tenant admin, I can use configuration pages without any critical or serious accessibility issues
     Given a tenant admin user is on configuration overview page
     Then no critical or serious accessibility issues on "configuration overview page"
     When the user selects "Definitions" tab for "Configuration"

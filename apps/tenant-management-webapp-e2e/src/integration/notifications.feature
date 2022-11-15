@@ -2,7 +2,7 @@
 Feature: Notifications
 
   @TEST_CS-945 @REQ_CS-641 @REQ_CS-788 @REQ_CS-979 @REQ_CS-1068 @regression
-  Scenario: As a service owner, I can add/edit/delete Notification Types
+  Scenario: As a tenant admin, I can add/edit/delete Notification Types
     Given a tenant admin user is on notification overview page
     When the user clicks Add notification type button
     Then the user views Add notification type modal
@@ -23,7 +23,7 @@ Feature: Notifications
 
   # TEST DATA: a precreated notification type named "autotest-notificationType"
   @TEST_CS-949 @REQ_CS-277 @regression
-  Scenario: As a service owner, I can add and delete events of a notification type
+  Scenario: As a tenant admin, I can add and delete events of a notification type
     Given a tenant admin user is on notification types page
     # Add an event and verify the event can't be added again
     When the user clicks Select event button for "autotest-notificationType"
@@ -363,7 +363,7 @@ Feature: Notifications
     Then Event template modal is closed
 
   @accessibility @regression
-  Scenario: As a service admin, I can use notification pages without any critical or serious accessibility issues
+  Scenario: As a tenant admin, I can use notification pages without any critical or serious accessibility issues
     Given a tenant admin user is on notification overview page
     Then no critical or serious accessibility issues on "notification overview page"
     When the user selects "Notification types" tab for "Notification"

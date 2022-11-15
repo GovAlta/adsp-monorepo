@@ -1,13 +1,13 @@
 Feature: Events
 
   @regression
-  Scenario: As a service admin, I can see events overview
+  Scenario: As a tenant admin, I can see events overview
     Given a tenant admin user is on tenant admin page
     When the user selects the "Event" menu item
     Then the user views events overview page
 
   @regression
-  Scenario: As a service admin, I can see details of event definitions
+  Scenario: As a tenant admin, I can see details of event definitions
     Given a tenant admin user is on tenant admin page
     When the user selects the "Event" menu item
     And the user selects "Definitions" tab for "Event"
@@ -19,7 +19,7 @@ Feature: Events
 
   @regression @ignore
   # Ignore this test until CS-1134 is fixed
-  Scenario: As a service admin, I can see event service API docs
+  Scenario: As a tenant admin, I can see event service API docs
     Given a tenant admin user is on tenant admin page
     When the user selects the "Event" menu item
     Then the user views the link of API docs for "Event service"
@@ -28,7 +28,7 @@ Feature: Events
 
   # Test on Monaco editor for payload schema isn't included and will need to be tested in future
   @TEST_CS-735 @REQ_CS-250 @regression
-  Scenario: As a service admin, I can see add, edit and delete an event definition
+  Scenario: As a tenant admin, I can see add, edit and delete an event definition
     Given a tenant admin user is on tenant admin page
     When the user selects the "Event" menu item
     And the user selects "Definitions" tab for "Event"
@@ -48,7 +48,7 @@ Feature: Events
     Then the user "should not view" an event definition of "autotest-addEditDeleteEvent" and "autotest event desc2" under "Autotest"
 
   @accessibility @regression
-  Scenario: As a service admin, I can use event pages without any critical or serious accessibility issues
+  Scenario: As a tenant admin, I can use event pages without any critical or serious accessibility issues
     Given a tenant admin user is on tenant admin page
     When the user selects the "Event" menu item
     Then no critical or serious accessibility issues on "event overview page"
@@ -61,7 +61,7 @@ Feature: Events
   # Then no critical or serious accessibility issues on "event test stream page"
 
   @TEST_CS-739 @REQ_CS-250 @regression
-  Scenario Outline: As a service owner, I cannot add event definitions with names or namespaces contains ":"
+  Scenario Outline: As a tenant admin, I cannot add event definitions with names or namespaces contains ":"
     Given a service owner user is on event definitions page
     When the user clicks Add definition button
     And the user enters "<Namespace>" in Namespace, "<Name>" in Name, "<Description>" in Description
@@ -75,7 +75,7 @@ Feature: Events
       | autotest-namespace  | autotest-na:me | auto-test-desc | Allowed characters are: a-z, A-Z, 0-9, - | Name        |
 
   @TEST_CS-740 @REQ_CS-250 @regression
-  Scenario: As a service owner, I cannot add/modify/delete event definitions within platform service namespaces
+  Scenario: As a tenant admin, I cannot add/modify/delete event definitions within platform service namespaces
     Given a service owner user is on event definitions page
     Then the user only views show button for event definitions of "tenant-service, configuration-service, notification-service, value-service, file-service"
     When the user clicks Add definition button
