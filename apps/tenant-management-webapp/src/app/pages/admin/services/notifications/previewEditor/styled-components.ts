@@ -59,7 +59,7 @@ export const PreviewTemplateContainer = styled.div`
   margin-left: 2rem;
   padding-top: 4rem;
   padding-left: 2rem;
-  background-color: #00000075;
+  background-color: #c3c3c3;
   overflow: hidden;
   &:hover {
     overflow: auto;
