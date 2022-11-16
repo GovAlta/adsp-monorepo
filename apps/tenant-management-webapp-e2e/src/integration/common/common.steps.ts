@@ -66,6 +66,38 @@ Then('no critical or serious accessibility issues on {string}', function (pageNa
   });
 });
 
+// Only a list of elements with matching element names are supported
+Then('no critical or serious accessibility issues for {string} on {string}', function (elementName, pageName) {
+  injectAxe();
+  let elementIdentifier;
+  switch (elementName) {
+    case 'PDF template modal':
+      elementIdentifier = '[data-testid="template-form"]';
+      break;
+    case 'script edit modal':
+      elementIdentifier = '[data-testid="script-edit-form"]';
+      break;
+    case 'event template modal':
+      elementIdentifier = '[data-testid="template-form"]';
+      break;
+    default:
+      expect(elementName).to.be.oneOf(['PDF template modal', 'script edit modal', 'event template modal']);
+  }
+  // check all accessibility issues and generate a report without failing the step.
+  cy.checkA11y(
+    elementIdentifier,
+    {},
+    (violations) => {
+      htmlReport(violations, true, pageName + ' - ' + elementName + '-all');
+    },
+    true
+  );
+  // check critical and serious accessibility issues and generate a report. Fail the step if there are any.
+  cy.checkA11y(elementIdentifier, { includedImpacts: ['critical', 'serious'] }, (violations) => {
+    htmlReport(violations, true, pageName + ' - ' + elementName + '-critical&serious');
+  });
+});
+
 When('the user selects the {string} menu item', function (menuItem) {
   commonlib.tenantAdminMenuItem(menuItem, 2000);
 });

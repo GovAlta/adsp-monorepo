@@ -35,8 +35,11 @@ Feature: Script
     And the user views the link of "Get support" under Support
 
   @accessibility @regression
-  Scenario: As a service admin, I can use scripts page without any critical or serious accessibility issues
+  Scenario: As a tenant admin, I can use scripts page without any critical or serious accessibility issues
     Given a tenant admin user is on script service overview page
     Then no critical or serious accessibility issues on "script overview page"
     When the user selects "Scripts" tab for "Script"
     Then no critical or serious accessibility issues on "script scripts page"
+# CS-1845 is pending for fix
+# When the user clicks "Edit" button for the script of "autotest-execute-script", "DO NOT DELETE", "urn:ads:platform:tenant-service:tenant-admin"
+# And no critical or serious accessibility issues for "script edit modal" on "script scripts page"

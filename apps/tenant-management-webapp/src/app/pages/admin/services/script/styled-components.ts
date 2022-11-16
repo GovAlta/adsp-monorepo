@@ -2,7 +2,6 @@ import styled, { createGlobalStyle } from 'styled-components';
 
 export const IdField = styled.div`
   min-height: 2.1rem;
-  background-color: #dcdcdc;
 `;
 
 export const TableDiv = styled.div`
