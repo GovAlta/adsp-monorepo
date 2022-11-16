@@ -43,6 +43,10 @@ export const Overview = (): JSX.Element => {
     };
   }, []);
 
+  /**
+   * Paul Li Nov-16-2022: Please do not remove the following useEffect,
+   * it will affect the page clean up function in the previous useEffect function.
+   **/
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
 
