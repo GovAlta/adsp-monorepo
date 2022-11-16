@@ -52,7 +52,7 @@ describe('ServiceStatusApplicationEntity', () => {
       await ServiceStatusApplicationEntity.create(userMock, repositoryMock, applicationEntityMock);
       expect(repositoryMock.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          tenantName: applicationEntityMock.tenantName,
+          appKey: applicationEntityMock.appKey,
         })
       );
     });
@@ -76,7 +76,7 @@ describe('ServiceStatusApplicationEntity', () => {
       entity.enable(userMock);
       expect(repositoryMock.enable).toHaveBeenCalledWith(
         expect.objectContaining({
-          tenantName: applicationEntityMock.tenantName,
+          appKey: applicationEntityMock.appKey,
         })
       );
     });
@@ -86,7 +86,7 @@ describe('ServiceStatusApplicationEntity', () => {
       entity.disable(userMock);
       expect(repositoryMock.disable).toHaveBeenCalledWith(
         expect.objectContaining({
-          tenantName: applicationEntityMock.tenantName,
+          appKey: applicationEntityMock.appKey,
         })
       );
     });
@@ -112,7 +112,7 @@ describe('ServiceStatusApplicationEntity', () => {
       await entity.delete(userMock);
       expect(repositoryMock.delete).toHaveBeenCalledWith(
         expect.objectContaining({
-          tenantName: applicationEntityMock.tenantName,
+          appKey: applicationEntityMock.appKey,
         })
       );
     });

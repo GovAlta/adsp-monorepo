@@ -39,7 +39,7 @@ describe('checkEndpoint', () => {
   describe('createCheckEndpointJob', () => {
     it('can create job', () => {
       const job = createCheckEndpointJob({
-        app: { url: 'https//test.co', _id: '123', appKey: 'the-key', name: 'bob' },
+        app: { url: 'https//test.co', _id: '123', appKey: 'the-key', name: 'bob', tenantId: tenantId.toString() },
         getEndpointResponse: jest.fn(),
         logger: loggerMock,
         serviceStatusRepository: statusRepositoryMock,
@@ -53,7 +53,13 @@ describe('checkEndpoint', () => {
     describe('checkEndpointJob', () => {
       const getEndpointResponse = jest.fn();
       const job = createCheckEndpointJob({
-        app: { url: 'https//test.co', _id: '123', name: 'bobs balloons', appKey: 'the-other-key' },
+        app: {
+          url: 'https//test.co',
+          _id: '123',
+          name: 'bobs balloons',
+          appKey: 'the-other-key',
+          tenantId: tenantId.toString(),
+        },
         getEndpointResponse: jest.fn(),
         logger: loggerMock,
         serviceStatusRepository: statusRepositoryMock,
@@ -97,7 +103,6 @@ describe('checkEndpoint', () => {
         ]);
         statusRepositoryMock.get.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
-            tenantId: tenantId.toString(),
             _id: 'test-app',
             endpoint: { status: 'n/a' },
           } as ServiceStatusApplication)
@@ -138,7 +143,6 @@ describe('checkEndpoint', () => {
         ]);
         statusRepositoryMock.get.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
-            tenantId: tenantId.toString(),
             _id: 'test-app',
             endpoint: { status: 'online' },
           } as ServiceStatusApplication)
@@ -176,7 +180,6 @@ describe('checkEndpoint', () => {
         ]);
         statusRepositoryMock.get.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
-            tenantId: tenantId.toString(),
             _id: 'test-app',
             endpoint: { status: 'offline' },
           } as ServiceStatusApplication)

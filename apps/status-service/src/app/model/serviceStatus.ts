@@ -10,7 +10,7 @@ import {
 } from '../types';
 
 // Stored in the configuration service repository
-export type StatusServiceConfiguration = Record<string, unknown>;
+export type StatusServiceConfiguration = Record<string, StaticApplicationData>;
 
 // The application bits that rarely change (so not quite static)
 // and are stored as part of the status-service
@@ -22,6 +22,10 @@ export interface StaticApplicationData {
   name: string;
   url: string;
   description?: string;
+  // TODO make the tenant stuff mandatory (Nov, 2022)
+  tenantId?: string;
+  tenantName?: string;
+  tenantRealm?: string;
 }
 // Application data, combines the static
 // and dynamic bits
@@ -46,10 +50,7 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
   status: PublicServiceStatusType;
   metadata: unknown;
   statusTimestamp: number;
-  tenantName: string;
-  tenantRealm: string;
   appKey: string;
-  tenantId: string;
   enabled: boolean;
 
   static create(
@@ -70,9 +71,6 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     this.endpoint = application.endpoint;
     this.metadata = application.metadata;
     this.statusTimestamp = application.statusTimestamp;
-    this.tenantId = application.tenantId;
-    this.tenantName = application.tenantName;
-    this.tenantRealm = application.tenantRealm;
     this.status = application.status;
     this.enabled = application.enabled;
   }

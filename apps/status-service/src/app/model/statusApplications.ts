@@ -1,24 +1,28 @@
+import { appPropertyRegex } from '../../mongo/schema';
 import { ApplicationData, StaticApplicationData, StatusServiceConfiguration } from './serviceStatus';
 
 export class StatusApplications {
-  #statusConfiguration: StatusServiceConfiguration;
+  #apps: StatusServiceConfiguration;
 
   constructor(statusConfiguration: StatusServiceConfiguration) {
-    this.#statusConfiguration = statusConfiguration;
+    const regex = new RegExp(appPropertyRegex);
+    // remove possible configuration entities that are NOT apps.
+    const keys = Object.keys(statusConfiguration).filter((id) => regex.test(id));
+    const apps = {};
+    keys.forEach((k) => {
+      apps[k] = statusConfiguration[k];
+    });
+    this.#apps = apps;
   }
 
   [Symbol.iterator]() {
     // Applications are keyed off of Mongo Object id's.
-    const keys = this.#keys();
-    return new AppIterator(this.#statusConfiguration, keys);
+    const keys = Object.keys(this.#apps);
+    return new AppIterator(this.#apps, keys);
   }
 
-  #keys = () => {
-    return Object.keys(this.#statusConfiguration).filter((id) => /^[a-zA-Z0-9]{24}$/gi.test(id));
-  };
-
   size = (): number => {
-    return this.#keys().length;
+    return Object.keys(this.#apps).length;
   };
 
   forEach = (mapper: (app: ApplicationData) => void): void => {
@@ -36,8 +40,9 @@ export class StatusApplications {
   };
 
   get(id: string): StaticApplicationData {
-    if (!/^[a-zA-Z0-9]{24}$/gi.test(id)) return null;
-    return (this.#statusConfiguration[id] as StaticApplicationData) ?? null;
+    const regex = new RegExp(appPropertyRegex);
+    if (!regex.test(id)) return null;
+    return (this.#apps[id] as StaticApplicationData) ?? null;
   }
 
   find = (appKey: string): StaticApplicationData => {
@@ -53,6 +58,14 @@ export class StatusApplications {
       }
     }
     return results;
+  };
+
+  static fromArray = (apps: StaticApplicationData[]): StatusApplications => {
+    const result: StatusServiceConfiguration = {};
+    apps.forEach((a) => {
+      result[a._id] = a;
+    });
+    return new StatusApplications(result);
   };
 }
 

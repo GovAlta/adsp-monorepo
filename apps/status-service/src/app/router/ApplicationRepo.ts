@@ -1,6 +1,7 @@
 import { adspId, AdspId, ServiceDirectory, Tenant, TokenProvider, User } from '@abgov/adsp-service-sdk';
 import { NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import axios from 'axios';
+import mongoose from 'mongoose';
 import { ServiceStatusApplicationEntity, StaticApplicationData, StatusServiceConfiguration } from '../model';
 import { StatusApplications } from '../model/statusApplications';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
@@ -28,9 +29,27 @@ export class ApplicationRepo {
     this.#tokenProvider = tokenProvider;
   }
 
-  getStatus = async (appKey: string): Promise<ServiceStatusApplicationEntity> => {
+  /*
+   * The status is only created on an as needed basis.  The assumption
+   * is that this method is being called because the status is now needed.
+   */
+  getStatus = async (user: User, appKey: string): Promise<ServiceStatusApplicationEntity> => {
     const statuses = await this.#repository.find({ appKey: appKey });
-    return statuses[0] ?? null;
+    return statuses.length == 1
+      ? statuses[0]
+      : ServiceStatusApplicationEntity.create(user, this.#repository, {
+          appKey: appKey,
+          endpoint: { status: 'offline' },
+          metadata: '',
+          statusTimestamp: 0,
+          status: 'operational',
+          enabled: false,
+        });
+  };
+
+  findStatus = async (appKey: string): Promise<ServiceStatusApplicationEntity> => {
+    const statuses = await this.#repository.find({ appKey: appKey });
+    return statuses.length == 1 ? statuses[0] : null;
   };
 
   getApp = async (appKey: string, tenantId: AdspId): Promise<StaticApplicationData> => {
@@ -64,62 +83,64 @@ export class ApplicationRepo {
     return await this.#repository.find({ tenantId: tenantId.toString() });
   };
 
-  mergeApplicationData = (app: StaticApplicationData, status: ServiceStatusApplicationEntity) => {
+  mergeApplicationData = (app: StaticApplicationData, status?: ServiceStatusApplicationEntity) => {
     return {
-      appKey: status.appKey,
-      tenantId: status.tenantId,
+      appKey: app.appKey,
       name: app.name,
       description: app.description,
-      metadata: status.metadata,
-      enabled: status.enabled,
-      statusTimestamp: status.statusTimestamp,
-      status: status.status,
-      internalStatus: status.internalStatus,
-      endpoint: { status: status.endpoint.status, url: app.url },
-      tenantName: status.tenantName,
-      tenantRealm: status.tenantRealm,
+      tenantId: app.tenantId,
+      tenantName: app.tenantName,
+      tenantRealm: app.tenantRealm,
+      metadata: status?.metadata ?? '',
+      enabled: status?.enabled ?? false,
+      statusTimestamp: status?.statusTimestamp ?? null,
+      status: status?.status ?? 'operational',
+      internalStatus: status?.internalStatus ?? 'stopped',
+      endpoint: {
+        status: status?.endpoint.status ?? 'offline',
+        url: app.url,
+      },
     };
   };
 
-  createApp = async (appName: string, description: string, url: string, tenant: Tenant, user: User) => {
+  createApp = async (appName: string, description: string, url: string, tenant: Tenant) => {
     const appKey = ApplicationRepo.getApplicationKey(tenant.name, appName);
-    const status: ServiceStatusApplicationEntity = await ServiceStatusApplicationEntity.create(user, this.#repository, {
-      tenantId: tenant.id.toString(),
-      tenantName: tenant.name,
-      tenantRealm: tenant.realm,
-      appKey: appKey,
-      endpoint: { status: 'offline' },
-      metadata: '',
-      statusTimestamp: 0,
-      enabled: false,
-    });
-    const newApp: StaticApplicationData = {
-      _id: status._id,
+    const newApp = {
+      _id: null,
       appKey: appKey,
       name: appName,
       url: url,
       description: description,
+      tenantId: tenant.id.toString(),
+      tenantName: tenant.name,
+      tenantRealm: tenant.realm,
     };
-    await this.updateConfiguration(tenant.id, status._id, newApp);
-    return this.mergeApplicationData(newApp, status);
+    await this.updateApp(newApp);
+    const created = await this.getApp(appKey, tenant.id);
+    return this.mergeApplicationData(created);
   };
 
-  updateConfiguration = async (tenantId: AdspId, applicationId: string, newApp: StaticApplicationData) => {
+  updateApp = async (newApp: StaticApplicationData) => {
     const baseUrl = await this.#directoryService.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
     const token = await this.#tokenProvider.getAccessToken();
-    const configUrl = new URL(`/configuration/v2/configuration/platform/status-service?tenantId=${tenantId}`, baseUrl);
+    const configUrl = new URL(
+      `/configuration/v2/configuration/platform/status-service?tenantId=${newApp.tenantId}`,
+      baseUrl
+    );
+    const updated = newApp._id ? newApp : { ...newApp, _id: new mongoose.Types.ObjectId() };
     await axios.patch(
       configUrl.href,
       {
         operation: 'UPDATE',
         update: {
-          [applicationId]: newApp,
+          [updated._id.toString()]: updated,
         },
       },
       {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
+    return newApp._id;
   };
 
   deleteApp = async (appKey: string, user: User) => {
@@ -127,13 +148,14 @@ export class ApplicationRepo {
     if (!app) {
       throw new NotFoundError('Status application', appKey);
     }
-    const appStatus = await this.getStatus(appKey);
-
-    if (user.tenantId?.toString() !== appStatus.tenantId) {
+    if (user.tenantId?.toString() !== app.tenantId) {
       throw new UnauthorizedError('invalid tenant id');
     }
 
-    await appStatus.delete({ ...user } as User);
+    const appStatus = await this.getStatus(user, appKey);
+    if (appStatus) {
+      await appStatus.delete({ ...user } as User);
+    }
     this.#deleteConfigurationApp(app._id, user.tenantId);
   };
 
