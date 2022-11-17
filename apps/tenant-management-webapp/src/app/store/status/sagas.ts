@@ -19,6 +19,7 @@ import {
   FetchStatusConfigurationService,
   FetchStatusConfigurationSucceededService,
   toggleApplicationStatusSuccess,
+  FETCH_SERVICE_STATUS_APPS_ACTION,
 } from './actions';
 import { ConfigState } from '@store/config/models';
 import { SetApplicationStatusAction, setApplicationStatusSuccess } from './actions/setApplicationStatus';
@@ -43,8 +44,14 @@ export function* fetchServiceStatusAppHealthEffect(api: StatusApi, application: 
 export function* fetchServiceStatusApps(): SagaIterator {
   const currentState: RootState = yield select();
 
-  const statusServiceUrl = getServiceStatusUrl(currentState.config);
+  yield put(
+    UpdateLoadingState({
+      name: FETCH_SERVICE_STATUS_APPS_ACTION,
+      state: 'start',
+    })
+  );
 
+  const statusServiceUrl = getServiceStatusUrl(currentState.config);
   const token = yield call(getAccessToken);
 
   try {
@@ -58,8 +65,20 @@ export function* fetchServiceStatusApps(): SagaIterator {
     }
 
     yield put(fetchServiceStatusAppsSuccess(applications));
+    yield put(
+      UpdateLoadingState({
+        name: FETCH_SERVICE_STATUS_APPS_ACTION,
+        state: 'completed',
+      })
+    );
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
+    yield put(
+      UpdateLoadingState({
+        name: FETCH_SERVICE_STATUS_APPS_ACTION,
+        state: 'error',
+      })
+    );
   }
 }
 
