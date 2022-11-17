@@ -1,5 +1,5 @@
 import { appPropertyRegex } from '../../mongo/schema';
-import { ApplicationData, StaticApplicationData, StatusServiceConfiguration } from './serviceStatus';
+import { StaticApplicationData, StatusServiceConfiguration } from './serviceStatus';
 
 export class StatusApplications {
   #apps: StatusServiceConfiguration;
@@ -25,13 +25,13 @@ export class StatusApplications {
     return Object.keys(this.#apps).length;
   };
 
-  forEach = (mapper: (app: ApplicationData) => void): void => {
+  forEach = (mapper: (app: StaticApplicationData) => void): void => {
     for (const a of this) {
       mapper(a);
     }
   };
 
-  map = <T>(mapper: (app: ApplicationData) => T): Array<T> => {
+  map = <T>(mapper: (app: StaticApplicationData) => T): Array<T> => {
     const result: Array<T> = [];
     for (const a of this) {
       result.push(mapper(a));
@@ -50,7 +50,7 @@ export class StatusApplications {
     return apps.length > 0 ? apps[0] : null;
   };
 
-  filter = (filter: (a: ApplicationData) => boolean): StaticApplicationData[] => {
+  filter = (filter: (a: StaticApplicationData) => boolean): StaticApplicationData[] => {
     const results = [];
     for (const app of this) {
       if (filter(app)) {
@@ -85,6 +85,6 @@ class AppIterator {
       return { done: true, value: undefined };
     }
     const app = this.#apps[this.#keys[this.#current++]];
-    return { done: false, value: app as ApplicationData };
+    return { done: false, value: app as StaticApplicationData };
   }
 }
