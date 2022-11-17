@@ -94,7 +94,7 @@ export class ApplicationRepo {
       metadata: status?.metadata ?? '',
       enabled: status?.enabled ?? false,
       statusTimestamp: status?.statusTimestamp ?? null,
-      status: status?.status ?? 'operational',
+      status: status?.status ?? '',
       internalStatus: status?.internalStatus ?? 'stopped',
       endpoint: {
         status: status?.endpoint.status ?? 'offline',
