@@ -40,25 +40,25 @@ describe('JobScheduler', () => {
     {
       _id: '620ae946ddd181001195caad',
       appKey: 'apps-mock-key-0',
-      tenantId: 'urn:ads:mock-tenant:mock-service:bob:bobs-id',
       endpoint: { url: 'https://www.yahoo.com' },
+      enabled: true,
     },
     {
       _id: '620ae946ddd181001195cbbc',
       appKey: 'apps-mock-key-1',
-      tenantId: 'urn:ads:mock-tenant:mock-service:bob:bobs-id',
       endpoint: { url: 'https://www.google.com' },
+      enabled: true,
     },
     {
       _id: '620ae946eee181001195ca3d',
       appKey: 'apps-mock-key-2',
-      tenantId: 'urn:ads:mock-tenant:mock-service:bob:bobs-id',
       endpoint: { url: 'https://www.boogie.com' },
+      enabled: false,
     },
   ] as unknown as ServiceStatusApplicationEntity[];
 
   const statusRepoMock: ServiceStatusRepository = {
-    findEnabledApplications: jest.fn().mockReturnValueOnce(statusMock),
+    findEnabledApplications: jest.fn().mockReturnValue(statusMock),
   } as unknown as ServiceStatusRepository;
 
   const appManagerFactory = (service: string): ApplicationManager => {
@@ -81,6 +81,7 @@ describe('JobScheduler', () => {
         name: 'MyApp 1',
         url: 'https://www.yahoo.com',
         description: 'MyApp goes to Hollywood',
+        tenantId: 'urn:ads:mock-tenant:mock-service:bob:bobs-id',
       },
     },
     {
@@ -90,6 +91,7 @@ describe('JobScheduler', () => {
         name: 'MyApp 2',
         url: 'https://www.google.com',
         description: 'MyApp - the sequel',
+        tenantId: 'urn:ads:mock-tenant:mock-service:bob:bobs-id',
       },
     },
     {
@@ -99,6 +101,7 @@ describe('JobScheduler', () => {
         name: 'MyApp 3',
         url: 'https://www.boogie.com',
         description: 'MyApp - Going back in time',
+        tenantId: 'urn:ads:mock-tenant:mock-service:bob:bobs-id',
       },
     },
   ];
@@ -125,24 +128,30 @@ describe('JobScheduler', () => {
     const healthCheckScheduler = { schedule: jest.fn() };
     const dataResetScheduler = jest.fn();
     const cacheReloadScheduler = jest.fn();
+
     const app0 = appMock[0][statusMock[0]._id];
     const app1 = appMock[1][statusMock[1]._id];
     const app2 = appMock[2][statusMock[2]._id];
-    configurationServiceMock.getConfiguration
-      .mockResolvedValueOnce(appMock[0])
-      .mockResolvedValueOnce(appMock[1])
-      .mockResolvedValueOnce(appMock[2]);
+    const appConfig = {
+      ...appMock[0],
+      ...appMock[1],
+      ...appMock[2],
+    };
+
+    configurationServiceMock.getConfiguration.mockResolvedValueOnce(appConfig);
+    tenantServiceMock.getTenants.mockResolvedValueOnce([{ tenantId: app0.tenantId }]);
 
     jobCache.clear(jest.fn());
     await jobScheduler.loadHealthChecks(healthCheckScheduler, dataResetScheduler, cacheReloadScheduler);
     expect(dataResetScheduler).toHaveBeenCalledTimes(1);
     expect(cacheReloadScheduler).toHaveBeenCalledTimes(1);
-    expect(healthCheckScheduler.schedule).toHaveBeenCalledTimes(3);
+    expect(healthCheckScheduler.schedule).toHaveBeenCalledTimes(2);
     expect(healthCheckScheduler.schedule).toHaveBeenCalledWith(expect.objectContaining(app0));
     expect(healthCheckScheduler.schedule).toHaveBeenCalledWith(expect.objectContaining(app1));
-    expect(healthCheckScheduler.schedule).toHaveBeenCalledWith(expect.objectContaining(app2));
-    expect(jobCache.getApplicationIds().length).toEqual(3);
-    expect(jobCache.exists('application 1')).not.toBeNull;
+    expect(jobCache.getApplicationIds().length).toEqual(2);
+    expect(jobCache.exists(app0.appKey)).toBe(true);
+    expect(jobCache.exists(app1.appKey)).toBe(true);
+    expect(jobCache.exists(app2.appKey)).toBe(false);
   });
 
   it('can start individual health check jobs', () => {

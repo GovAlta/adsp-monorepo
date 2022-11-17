@@ -30,7 +30,7 @@ const initialState: ServiceStatus = {
   },
 };
 
-const compareIds = (a: { appKey?: string }, b: { appKey?: string }): number => (a.appKey <= b.appKey ? 1 : -1);
+const compareIds = (a: { appKey?: string }, b: { appKey?: string }): number => (a.appKey > b.appKey ? 1 : -1);
 
 export default function statusReducer(state: ServiceStatus = initialState, action: ActionTypes): ServiceStatus {
   switch (action.type) {

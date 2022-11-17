@@ -2,7 +2,7 @@ import { Logger } from 'winston';
 import { ApplicationData } from '../model';
 import { HealthCheckJobCache } from './HealthCheckJobCache';
 import { HealthCheckJob } from './HealthCheckJob';
-import { ApplicationList } from '../model/ApplicationList';
+import { StatusApplications } from '../model/statusApplications';
 
 describe('HealthCheckJobCache', () => {
   const loggerMock: Logger = {
@@ -13,17 +13,17 @@ describe('HealthCheckJobCache', () => {
 
   const mockApplications: ApplicationData[] = [
     {
-      _id: 'application 1',
+      _id: '111111111111111111111111',
       appKey: 'application-1',
       url: 'http://www.application1.com',
     },
     {
-      _id: 'application 2',
+      _id: '222222222222222222222222',
       appKey: 'application-2',
       url: 'http://www.application2.com',
     },
     {
-      _id: 'application 3',
+      _id: '333333333333333333333333',
       appKey: 'application-3',
       url: 'http://www.application3.com',
     },
@@ -31,7 +31,8 @@ describe('HealthCheckJobCache', () => {
 
   const cache = new HealthCheckJobCache(loggerMock);
   it('can add multiple application jobs', () => {
-    cache.addBatch(ApplicationList.fromArray(mockApplications), { schedule: jest.fn() });
+    const apps = StatusApplications.fromArray(mockApplications);
+    cache.addBatch(apps, { schedule: jest.fn() });
     expect(cache.getApplicationIds().length).toEqual(3);
     expect(cache.get('application-1').getUrl()).toEqual('http://www.application1.com');
     expect(cache.get('application-2').getUrl()).toEqual('http://www.application2.com');
@@ -52,7 +53,7 @@ describe('HealthCheckJobCache', () => {
 
   it('can update application jobs', () => {
     cache.clear(jest.fn());
-    cache.addBatch(ApplicationList.fromArray(mockApplications), { schedule: jest.fn() });
+    cache.addBatch(StatusApplications.fromArray(mockApplications), { schedule: jest.fn() });
     cache.remove('application 1', jest.fn());
     cache.add(
       { _id: 'application 1', name: 'application 1', url: 'https://application/1', appKey: 'application-1' },

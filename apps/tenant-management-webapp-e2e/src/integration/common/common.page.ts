@@ -26,7 +26,7 @@ class Common {
   }
 
   serviceTab(service, text) {
-    return cy.xpath(`//h1[contains(text(),"${service}")]/ancestor::main//div[contains(text(), "${text}")]`);
+    return cy.xpath(`//h1[contains(text(),"${service}")]/ancestor::main//div[text()="${text}"]`);
   }
 
   notificationMessage() {

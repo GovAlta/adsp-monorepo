@@ -104,7 +104,7 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
 
   const status = await serviceStatusRepository.get(app.appKey);
 
-  // Make sure the application existed
+  // Make sure the status exists
   if (!status) {
     return;
   }
@@ -118,12 +118,12 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
     status.endpoint.status = newStatus;
 
     if (newStatus === 'online') {
-      eventService.send(applicationStatusToHealthy(app, status.tenantId));
+      eventService.send(applicationStatusToHealthy(app, app.tenantId));
     }
 
     if (newStatus === 'offline') {
       const errMessage = `The application ${app.name} (ID: ${app.appKey}) is unhealthy.`;
-      eventService.send(applicationStatusToUnhealthy(app, status.tenantId, errMessage));
+      eventService.send(applicationStatusToUnhealthy(app, app.tenantId, errMessage));
     }
 
     try {

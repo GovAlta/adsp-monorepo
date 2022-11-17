@@ -35,17 +35,10 @@ export const getApplications = (logger: Logger, applicationRepo: ApplicationRepo
       }
       const applications = await applicationRepo.getTenantApps(tenantId);
       const statuses = await applicationRepo.getTenantStatuses(tenantId);
-      const result = applications
-        .map((app) => {
-          const status = statuses.find((s) => s.appKey == app.appKey);
-          if (status) {
-            return applicationRepo.mergeApplicationData(app, status);
-          } else {
-            logger.error(`cannot find status associated with app ${app.name}`);
-          }
-        })
-        // weed out orphaned statuses
-        .filter((a) => a);
+      const result = applications.map((app) => {
+        const status = statuses.find((s) => s.appKey == app.appKey) || null;
+        return applicationRepo.mergeApplicationData(app, status);
+      });
 
       res.json(result);
     } catch (err) {
@@ -62,18 +55,16 @@ export const enableApplication =
       logger.info(req.method, req.url);
       const user = req.user as User;
       const { appKey } = req.params;
-
       const app = await applicationRepo.getApp(appKey, user.tenantId);
       if (!app) {
         throw new NotFoundError('Status application', appKey);
       }
 
-      const appStatus = await applicationRepo.getStatus(appKey);
-
-      if (user.tenantId?.toString() !== appStatus.tenantId) {
+      if (user.tenantId?.toString() !== app.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
       }
 
+      const appStatus = await applicationRepo.getStatus(user, appKey);
       const updatedApplication = await appStatus.enable({ ...req.user } as User);
       res.json(applicationRepo.mergeApplicationData(app, updatedApplication));
     } catch (err) {
@@ -94,12 +85,12 @@ export const disableApplication =
       if (!app) {
         throw new NotFoundError('Status application', appKey);
       }
-      const appStatus = await applicationRepo.getStatus(appKey);
 
-      if (user.tenantId?.toString() !== appStatus.tenantId) {
+      if (user.tenantId?.toString() !== app.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
       }
 
+      const appStatus = await applicationRepo.getStatus(user, appKey);
       const updatedApplication = await appStatus.disable({ ...req.user } as User);
       res.json(applicationRepo.mergeApplicationData(app, updatedApplication));
     } catch (err) {
@@ -124,7 +115,7 @@ export const createNewApplication =
         }
       });
 
-      const newApp = await applicationRepo.createApp(name, description, endpoint.url, tenant, user);
+      const newApp = await applicationRepo.createApp(name, description, endpoint.url, tenant);
       res.status(201).json(newApp);
     } catch (err) {
       logger.error(`Failed to create new application: ${err.message}`);
@@ -133,7 +124,7 @@ export const createNewApplication =
   };
 
 export const updateApplication =
-  (logger: Logger, applicationRepo: ApplicationRepo): RequestHandler =>
+  (logger: Logger, applicationRepo: ApplicationRepo, tenantService: TenantService): RequestHandler =>
   async (req, res, next) => {
     try {
       logger.info(`${req.method} - ${req.url}`);
@@ -146,15 +137,25 @@ export const updateApplication =
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
       }
+      const tenant = await tenantService.getTenant(user.tenantId);
       const app = await applicationRepo.getApp(appKey, user.tenantId);
       if (!app) {
         throw new NotFoundError('Status application', appKey);
       }
 
-      const update: StaticApplicationData = { _id: app._id, appKey, name, url: endpoint.url, description };
-      await applicationRepo.updateConfiguration(user.tenantId, app._id, update);
+      const update: StaticApplicationData = {
+        _id: app._id,
+        appKey,
+        name,
+        url: endpoint.url,
+        description,
+        tenantId,
+        tenantName: tenant.name,
+        tenantRealm: tenant.realm,
+      };
+      await applicationRepo.updateApp(update);
 
-      const status = await applicationRepo.getStatus(appKey);
+      const status = await applicationRepo.findStatus(appKey);
 
       res.json(applicationRepo.mergeApplicationData(update, status));
     } catch (err) {
@@ -193,14 +194,14 @@ export const updateApplicationStatus =
         throw new NotFoundError('Status Application', appKey);
       }
 
-      const applicationStatus = await applicationRepo.getStatus(appKey);
-      const originalStatus = applicationStatus.status ?? 'n/a';
+      const appStatus = await applicationRepo.getStatus(user, appKey);
+      const originalStatus = appStatus.status;
 
-      if (user.tenantId?.toString() !== applicationStatus.tenantId) {
+      if (user.tenantId?.toString() !== app.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
       }
 
-      const updatedStatus = await applicationStatus.setStatus(user, status as PublicServiceStatusType);
+      const updatedStatus = await appStatus.setStatus(user, status as PublicServiceStatusType);
       eventService.send(applicationStatusChange(app, status, originalStatus, user));
       res.json(applicationRepo.mergeApplicationData(app, updatedStatus));
     } catch (err) {
@@ -221,14 +222,14 @@ export const toggleApplication =
         throw new NotFoundError('Status Application', appKey);
       }
 
-      const appStatus = await applicationRepo.getStatus(appKey);
+      const appStatus = await applicationRepo.getStatus(user, appKey);
       if (!appStatus.enabled) {
         eventService.send(applicationStatusToStarted(app, user));
       } else {
         eventService.send(applicationStatusToStopped(app, user));
       }
 
-      if (user.tenantId?.toString() !== appStatus.tenantId) {
+      if (user.tenantId?.toString() !== app.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
       }
 
@@ -262,11 +263,7 @@ export const getApplicationEntries =
         throw new NotFoundError('Status application', appKey);
       }
 
-      // TODO is there an easier way to test if the tenant is authorized to
-      // access this application?  It seems a bit of a waste to hit up
-      // the database just for this.
-      const appStatus = await applicationRepo.getStatus(appKey);
-      if (tenantId?.toString() !== appStatus.tenantId) {
+      if (tenantId?.toString() !== app.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
       }
 
@@ -317,7 +314,11 @@ export function createServiceStatusRouter({
     assertAuthenticatedHandler,
     createNewApplication(logger, applicationRepo, tenantService)
   );
-  router.put('/applications/:appKey', assertAuthenticatedHandler, updateApplication(logger, applicationRepo));
+  router.put(
+    '/applications/:appKey',
+    assertAuthenticatedHandler,
+    updateApplication(logger, applicationRepo, tenantService)
+  );
   router.delete('/applications/:appKey', assertAuthenticatedHandler, deleteApplication(logger, applicationRepo));
   router.patch(
     '/applications/:appKey/status',
