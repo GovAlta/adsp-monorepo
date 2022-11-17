@@ -20,6 +20,7 @@ import { adspId } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import { InvalidValueError } from '@core-services/core-common';
 import { ApplicationRepo } from '../ApplicationRepo';
+import { ServiceStatusApplication } from '../../types';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
@@ -72,33 +73,27 @@ describe('Service router', () => {
 
   const bobsStatusId = '624365fe3367d200110e17c5';
   const bobsAppKey = 'test-test-mock';
-  const bobsApplicationStatus = {
+  const bobsApplicationStatus: ServiceStatusApplication = {
     _id: bobsStatusId,
     appKey: bobsAppKey,
-    tenantId: tenantId.toString(),
     metadata: '',
-    enabled: 'false',
+    enabled: false,
     statusTimestamp: 0,
     status: 'maintenance',
     internalStatus: 'stopped',
     endpoint: { status: 'offline' },
-    tenantName: 'platform',
-    tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
   };
 
   const myStatusId = '620ae946ddd181001195caad';
-  const myApplicationStatus = {
+  const myApplicationStatus: ServiceStatusApplication = {
     _id: myStatusId,
     appKey: 'myapp-1',
-    tenantId: tenantId.toString(),
     metadata: '',
     enabled: true,
     statusTimestamp: 1648247257463,
     status: 'operational',
     internalStatus: 'healthy',
     endpoint: { status: 'online' },
-    tenantName: 'Platform',
-    tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
   };
 
   const applicationStatusMock = [
@@ -148,6 +143,9 @@ describe('Service router', () => {
       name: 'MyApp 1',
       url: 'http://localhost',
       description: 'MyApp',
+      tenantId: tenantId.toString(),
+      tenantName: 'platform',
+      tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
     },
     [bobsStatusId]: {
       _id: bobsStatusId,
@@ -155,6 +153,9 @@ describe('Service router', () => {
       name: 'test-mock',
       url: 'http://www.yahoo.com',
       description: '',
+      tenantId: tenantId.toString(),
+      tenantName: 'platform',
+      tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
     },
   };
 
@@ -188,6 +189,7 @@ describe('Service router', () => {
     save: jest.fn((entity) => Promise.resolve(entity)),
     delete: jest.fn(),
     setStatus: jest.fn(),
+    getStatus: jest.fn(),
   };
 
   const resMock = {
@@ -240,6 +242,9 @@ describe('Service router', () => {
             status: myApplicationStatus.endpoint.status,
             url: configurationMock[myApplicationStatus._id].url,
           },
+          tenantId: tenantId.toString(),
+          tenantName: 'platform',
+          tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
         },
         {
           ...bobsStatus,
@@ -249,6 +254,9 @@ describe('Service router', () => {
             status: bobsApplicationStatus.endpoint.status,
             url: configurationMock[bobsApplicationStatus._id].url,
           },
+          tenantId: tenantId.toString(),
+          tenantName: 'platform',
+          tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
         },
       ];
 
@@ -286,7 +294,6 @@ describe('Service router', () => {
 
       const handler = getApplicationEntries(loggerMock, applicationRepo, endpointRepositoryMock);
       axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
-      statusRepositoryMock.find.mockResolvedValueOnce([applicationStatusMock[0]]);
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[0]);
       endpointRepositoryMock.findRecentByUrlAndApplicationId.mockResolvedValueOnce([entriesMock[1]]);
       await handler(req, resMock, nextMock);
@@ -296,7 +303,6 @@ describe('Service router', () => {
 
   describe('Can get applications by name for public', () => {
     it('Can get applications by name', async () => {
-      statusRepositoryMock.find.mockResolvedValueOnce([applicationStatusMock[1]]);
       const getConfigurationMock = jest.fn();
       const handler = getApplicationsByName(loggerMock, tenantServiceMock, statusRepositoryMock);
       const reqMock = {
@@ -311,9 +317,10 @@ describe('Service router', () => {
         getConfiguration: getConfigurationMock,
       } as unknown as Request;
 
-      getConfigurationMock.mockReturnValueOnce({
+      getConfigurationMock.mockReturnValue({
         [bobsStatusId]: configurationMock[bobsStatusId],
       });
+      statusRepositoryMock.find.mockResolvedValueOnce([applicationStatusMock[0]]);
       await handler(reqMock, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.arrayContaining([
@@ -322,7 +329,7 @@ describe('Service router', () => {
             id: bobsAppKey,
             lastUpdated: null,
             name: configurationMock[bobsStatusId].name,
-            status: bobsApplicationStatus.status,
+            status: 'operational',
           },
         ])
       );
@@ -341,14 +348,20 @@ describe('Service router', () => {
         params: { appKey: bobsAppKey },
       } as unknown as Request;
 
-      statusRepositoryMock.find.mockResolvedValueOnce([applicationStatusMock[1]]);
+      statusRepositoryMock.find.mockResolvedValue([
+        new ServiceStatusApplicationEntity(statusRepositoryMock, bobsApplicationStatus),
+      ]);
+      statusRepositoryMock.enable.mockResolvedValueOnce(
+        new ServiceStatusApplicationEntity(statusRepositoryMock, { ...bobsApplicationStatus, enabled: true })
+      );
       axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
       await handler(req, resMock, nextMock);
-      const { _id, ...expected } = bobsApplicationStatus;
+      const { _id, ...almostExpected } = bobsApplicationStatus;
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          ...expected,
+          ...almostExpected,
           enabled: true,
+          internalStatus: 'unhealthy',
           endpoint: { status: bobsApplicationStatus.endpoint.status, url: configurationMock[bobsStatusId].url },
         })
       );
@@ -364,7 +377,12 @@ describe('Service router', () => {
         },
         params: { appKey: bobsAppKey },
       } as unknown as Request;
-      statusRepositoryMock.find.mockResolvedValueOnce([applicationStatusMock[1]]);
+      statusRepositoryMock.find.mockResolvedValueOnce([
+        new ServiceStatusApplicationEntity(statusRepositoryMock, bobsApplicationStatus),
+      ]);
+      statusRepositoryMock.disable.mockResolvedValueOnce(
+        new ServiceStatusApplicationEntity(statusRepositoryMock, { ...bobsApplicationStatus, enabled: false })
+      );
       axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
       await handler(req, resMock, nextMock);
       const { _id, ...expected } = bobsApplicationStatus;
@@ -389,7 +407,12 @@ describe('Service router', () => {
       } as unknown as Request;
 
       axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
-      statusRepositoryMock.find.mockResolvedValueOnce([applicationStatusMock[1]]);
+      statusRepositoryMock.find.mockResolvedValueOnce([
+        new ServiceStatusApplicationEntity(statusRepositoryMock, bobsApplicationStatus),
+      ]);
+      statusRepositoryMock.enable.mockResolvedValueOnce(
+        new ServiceStatusApplicationEntity(statusRepositoryMock, { ...bobsApplicationStatus, enabled: true })
+      );
       await handler(req, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -400,8 +423,8 @@ describe('Service router', () => {
   });
   describe('Can create application', () => {
     it('Can create new application', async () => {
-      const createMock = jest.fn().mockReturnValue(applicationStatusMock[1]);
-      ServiceStatusApplicationEntity.create = createMock;
+      // const createMock = jest.fn().mockReturnValue(applicationStatusMock[1]);
+      // ServiceStatusApplicationEntity.create = createMock;
       const req: Request = {
         user: {
           tenantId,
@@ -409,13 +432,23 @@ describe('Service router', () => {
           roles: ['test-updater'],
         },
         body: {
-          name: 'mock-application',
+          name: 'new-application',
           description: 'mock test application',
           endpoint: 'http://mock-test.com',
         },
       } as unknown as Request;
+      const expectedApp = {
+        appKey: 'test-new-application',
+        name: 'new-application',
+        url: 'localhost',
+        description: 'foo',
+        tenantId: tenantId,
+      };
       const handler = createNewApplication(loggerMock, applicationRepo, tenantServiceMock);
-      axiosMock.get.mockResolvedValueOnce({ data: configurationMock });
+      const randomId = '624365fe3367d200110e1321';
+      axiosMock.get
+        .mockResolvedValueOnce({ data: configurationMock })
+        .mockResolvedValueOnce({ data: { ...configurationMock, [randomId]: expectedApp } });
       statusRepositoryMock.find.mockResolvedValueOnce([applicationStatusMock[1]]);
       await handler(req, resMock, nextMock);
       expect(resMock.status).toHaveBeenCalledWith(201);
@@ -446,7 +479,7 @@ describe('Service router', () => {
 
   describe('Can update application', () => {
     it('Can update application properties', async () => {
-      const handler = updateApplication(loggerMock, applicationRepo);
+      const handler = updateApplication(loggerMock, applicationRepo, tenantServiceMock);
       const req: Request = {
         user: {
           tenantId,

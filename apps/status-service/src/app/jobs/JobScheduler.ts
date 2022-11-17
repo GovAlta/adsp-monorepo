@@ -7,8 +7,8 @@ import { HealthCheckJobCache } from './HealthCheckJobCache';
 import { HealthCheckJob } from './HealthCheckJob';
 import { getScheduler } from './SchedulerFactory';
 import { ApplicationManager } from '../model/applicationManager';
-import { ApplicationList } from '../model/ApplicationList';
 import { StaticApplicationData } from '../model';
+import { StatusApplications } from '../model/statusApplications';
 
 export interface HealthCheckSchedulingProps {
   logger: Logger;
@@ -38,7 +38,7 @@ export class HealthCheckJobScheduler {
     scheduleDataReset: () => Promise<void>,
     scheduleCacheReload: () => Promise<void>
   ): Promise<void> => {
-    const applications = await this.#appManager.getActiveApps();
+    const applications = await this.#appManager.findEnabledApps();
     this.#jobCache.addBatch(applications, scheduleHealthChecks);
     scheduleCacheReload();
     scheduleDataReset();
@@ -66,7 +66,7 @@ export class HealthCheckJobScheduler {
   // We can get rid of this method all together by handling update and delete health check jobs
   // in the HealthCheckController.
   reloadCache = async (appManager: ApplicationManager): Promise<void> => {
-    const apps = await appManager.getActiveApps();
+    const apps = await appManager.findEnabledApps();
     const cachedIds = this.#jobCache.getApplicationIds();
     const idsToRemove = [];
     const idsToAdd = [];
@@ -101,6 +101,6 @@ export class HealthCheckJobScheduler {
     const appsToAdd = apps.filter((app) => {
       return idsToAdd.includes(app.appKey);
     });
-    this.#jobCache.addBatch(ApplicationList.fromArray(appsToAdd), getScheduler(this.#props));
+    this.#jobCache.addBatch(StatusApplications.fromArray(appsToAdd), getScheduler(this.#props));
   };
 }

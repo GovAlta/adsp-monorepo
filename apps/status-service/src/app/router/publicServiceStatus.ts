@@ -33,18 +33,19 @@ export const getApplicationsByName =
       const statuses = await serviceStatusRepository.find({
         tenantId: tenantId.toString(),
       });
-      res.json(
-        apps.map((app) => {
-          const status = statuses.find((s) => s.appKey === app.appKey);
-          return {
-            id: app.appKey,
-            name: app.name,
-            description: app.description,
-            status: status?.status || 'operational',
-            lastUpdated: status?.statusTimestamp ? new Date(status.statusTimestamp) : null,
-          };
-        })
-      );
+
+      const results = apps.map((app) => {
+        const status = statuses.find((s) => s.appKey === app.appKey);
+        return {
+          id: app.appKey,
+          name: app.name,
+          description: app.description,
+          status: status?.status || 'operational',
+          lastUpdated: status?.statusTimestamp ? new Date(status.statusTimestamp) : null,
+        };
+      });
+
+      res.json(results);
     } catch (err) {
       const errMessage = `Error getting applications: ${err.message}`;
       logger.error(errMessage);

@@ -36,15 +36,19 @@ export const Overview = (): JSX.Element => {
 
   useEffect(() => {
     dispatch(fetchAccess());
-  }, []);
-
-  useEffect(() => {
     return function clean() {
       if (isReady(indicator, userCount)) {
         dispatch(accessReset());
       }
     };
-  }, [indicator]);
+  }, []);
+
+  /**
+   * Paul Li Nov-16-2022: Please do not remove the following useEffect,
+   * it will affect the page clean up function in the previous useEffect function.
+   **/
+  // eslint-disable-next-line
+  useEffect(() => {}, [indicator]);
 
   return (
     <div>

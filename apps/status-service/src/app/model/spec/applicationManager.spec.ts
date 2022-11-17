@@ -43,26 +43,20 @@ const tenantServiceMock = {
 const statusMock = [
   {
     _id: '620ae946ddd181001195caad',
-    name: 'temp app name 1',
+    appKey: 'temp-app-name-1',
     endpoint: { status: 'online' },
     metadata: '',
     statusTimestamp: 1648247257463,
-    tenantId: 'urn:ads:mock-tenant:mock-service:bob:bobs-id',
-    tenantName: 'Platform',
-    tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
     status: 'operational',
     enabled: true,
     internalStatus: 'healthy',
   },
   {
     _id: '620ae946ddd181001195cbbc',
-    name: 'temp app name 2',
+    appKey: 'temp-app-name-2',
     endpoint: { status: 'online' },
     metadata: '',
     statusTimestamp: 1648247257464,
-    tenantId: 'urn:ads:mock-tenant:mock-service:bill:bills-id',
-    tenantName: 'Platform',
-    tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
     status: 'operational',
     enabled: true,
     internalStatus: 'healthy',
@@ -72,16 +66,24 @@ const statusMock = [
 const appMock = [
   {
     [statusMock[0]._id]: {
-      name: 'MyApp 1',
+      appKey: 'temp-app-name-1',
+      name: 'temp app name 1',
       url: 'https://www.yahoo.com',
       description: 'MyApp goes to Hollywood',
+      tenantId: 'urn:ads:mock-tenant:mock-service:bob:bobs-id',
+      tenantName: 'Platform',
+      tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
     },
   },
   {
     [statusMock[1]._id]: {
-      name: 'MyApp 2',
+      appKey: 'temp-app-name-2',
+      name: 'temp app name 2',
       url: 'https://www.google.com',
       description: 'MyApp - the sequel',
+      tenantId: 'urn:ads:mock-tenant:mock-service:bill:bills-id',
+      tenantName: 'Platform',
+      tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
     },
   },
 ];
@@ -89,14 +91,15 @@ const appMock = [
 describe('Application Manager', () => {
   it('Can get Active Applications', async () => {
     const appManager = appManagerFactory('urn:ads:mock-tenant:mock-service');
-
+    tenantServiceMock.getTenants.mockResolvedValue([
+      { tenantId: appMock[0][statusMock[0]._id].tenantId },
+      { tenantId: appMock[1][statusMock[1]._id].tenantId },
+    ]);
     repositoryMock.findEnabledApplications.mockResolvedValueOnce(statusMock);
     configurationServiceMock.getConfiguration.mockResolvedValueOnce(appMock[0]).mockResolvedValueOnce(appMock[1]);
-    const apps = await appManager.getActiveApps();
-    expect(apps[statusMock[1]._id]).toEqual({
-      ...statusMock[1],
-      ...appMock[1][statusMock[1]._id],
-    });
+    const apps = await appManager.findEnabledApps();
+    const expected = apps.get(statusMock[1]._id);
+    expect(expected).toEqual(appMock[1][statusMock[1]._id]);
   });
 
   const appManagerFactory = (service: string): ApplicationManager => {

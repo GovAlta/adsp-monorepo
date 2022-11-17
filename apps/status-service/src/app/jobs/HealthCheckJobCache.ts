@@ -1,7 +1,7 @@
 import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
 import { StaticApplicationData } from '../model';
-import { ApplicationList } from '../model/ApplicationList';
+import { StatusApplications } from '../model/statusApplications';
 import { HealthCheckJob } from './HealthCheckJob';
 import { JobScheduler } from './JobScheduler';
 
@@ -25,7 +25,7 @@ export class HealthCheckJobCache {
     return HealthCheckJobCache.#activeHealthChecks.get(key);
   };
 
-  addBatch = (applications: ApplicationList, scheduler: JobScheduler): void => {
+  addBatch = (applications: StatusApplications, scheduler: JobScheduler): void => {
     applications.forEach((app) => {
       this.add(app, scheduler);
     });

@@ -36,18 +36,6 @@ export const endpointStatusEntrySchema = new Schema({
 
 export const serviceStatusApplicationSchema = new Schema(
   {
-    tenantId: {
-      type: String,
-      required: true,
-    },
-    tenantRealm: {
-      type: String,
-      required: true,
-    },
-    tenantName: {
-      type: String,
-      required: true,
-    },
     appKey: {
       type: String,
       required: true,
@@ -117,6 +105,8 @@ export const noticeApplicationSchema = new Schema(
   { timestamps: true }
 );
 
+export const appPropertyRegex = '^[a-fA-F0-9]{24}$';
+
 export const configurationSchema = {
   type: 'object',
   properties: {
@@ -128,16 +118,19 @@ export const configurationSchema = {
     },
   },
   patternProperties: {
-    // property key is the mongo _id (12 hex bytes) of the Application.
-    '^[a-fA-F0-9]{24}$': {
+    appPropertyRegex: {
       type: 'object',
       properties: {
-        _id: { type: 'string', description: 'Reference to application status' },
+        _id: { type: 'string' },
         appKey: { type: 'string', description: 'A unique identifier for the application' },
         name: { type: 'string', description: 'Name of the application' },
         url: { type: 'string', description: 'URL to be checked' },
         description: { type: 'string', description: 'Tell us about your application' },
+        tenantId: { type: String },
+        tenantRealm: { type: String },
+        tenantName: { type: String },
       },
+      // TODO tenant info will be required once data is fixed up (Nov, 2022)
       required: ['name', 'url'],
       additionalProperties: false,
     },
