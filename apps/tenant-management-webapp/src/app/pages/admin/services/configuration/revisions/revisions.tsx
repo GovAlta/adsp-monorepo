@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { getConfigurationDefinitions, getConfigurationRevisions } from '@store/configuration/action';
-import { GoAButton } from '@abgov/react-components-new';
-import { GoADropdownOption, GoADropdown } from '@abgov/react-components';
-import { GoAForm, GoAFormItem, GoAFormActions } from '@abgov/react-components/experimental';
+import { GoADropdownOption, GoADropdown } from '@abgov/react-components-new';
+import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { RevisionTable } from './revisionsTable';
 export const ConfigurationRevisions = (): JSX.Element => {
   const { serviceList } = useSelector((state: RootState) => state.configuration);
@@ -23,17 +22,17 @@ export const ConfigurationRevisions = (): JSX.Element => {
           {serviceList?.length > 0 && (
             <GoADropdown
               name="Configurations"
-              selectedValues={[selectedConfiguration]}
+              value={selectedConfiguration}
               onChange={(name, values) => {
-                setSelectedConfiguration(values[0]);
-                dispatch(getConfigurationRevisions(values[0]));
+                setSelectedConfiguration(values.toString());
+                dispatch(getConfigurationRevisions(values.toString()));
                 setShowTable(true);
               }}
               aria-label="select-configuration-dropdown"
             >
               {serviceList.map((item) => (
                 <GoADropdownOption
-                  key={item}
+                  name="Configurations"
                   label={item}
                   value={item}
                   data-testid={`${item}-get-configuration-options`}
