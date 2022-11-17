@@ -370,12 +370,11 @@ Feature: Notifications
     Then no critical or serious accessibility issues on "notification overview page"
     When the user selects "Notification types" tab for "Notification"
     Then no critical or serious accessibility issues on "notification notification types page"
-    # CS-1846 is pending for fix
-    # When the user clicks "edit" button for "Autotest:autotest-eventDefinition" in "autotest-notificationType"
-    # Then the user views an email template modal title for "Autotest:autotest-eventDefinition"
-    # And no critical or serious accessibility issues for "event template modal" on "notification types page"
-    # When the user clicks Close button in event template modal
-    # Then Preview event template modal is closed
+    When the user clicks "edit" button for "Autotest:autotest-eventDefinition" in "autotest-notificationType"
+    Then the user views an email template modal title for "Autotest:autotest-eventDefinition"
+    And no critical or serious accessibility issues for "event template modal" on "notification types page"
+    When the user clicks Close button in event template modal
+    Then Preview event template modal is closed
     When the user selects "Subscriptions" tab for "Notification"
     Then no critical or serious accessibility issues on "notification subscriptions page"
     When the user selects "Subscribers" tab for "Notification"

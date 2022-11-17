@@ -43,10 +43,9 @@ Feature: PDF service
     Then no critical or serious accessibility issues on "PDF overview page"
     When the user selects "Templates" tab for "PDF"
     Then no critical or serious accessibility issues on "PDF templates page"
-# CS-1826 is pending for fix
-# When the user selects "Test generate" tab for "PDF"
-# Then no critical or serious accessibility issues on "PDF Test generate page"
-# CS-1843 is pending for fix
-# When the user clicks "Edit" icon of "autotest-accessibility-test", "autotest-accessibility-test" and "DO-NOT-DELETE" on PDF templates page
-# Then the user views "autotest-accessibility-test", "autotest-accessibility-test" and "DO-NOT-DELETE" in PDF template modal
-# And no critical or serious accessibility issues for "PDF template modal" on "PDF templates page"
+    # CS-1826 is pending for fix
+    # When the user selects "Test generate" tab for "PDF"
+    # Then no critical or serious accessibility issues on "PDF Test generate page"
+    When the user clicks "Edit" icon of "autotest-accessibility-test", "autotest-accessibility-test" and "DO-NOT-DELETE" on PDF templates page
+    Then the user views "autotest-accessibility-test", "autotest-accessibility-test" and "DO-NOT-DELETE" in PDF template modal
+    And no critical or serious accessibility issues for "PDF template modal" on "PDF templates page"
