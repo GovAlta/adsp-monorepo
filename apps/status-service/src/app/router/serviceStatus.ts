@@ -195,7 +195,7 @@ export const updateApplicationStatus =
       }
 
       const appStatus = await applicationRepo.getStatus(user, appKey);
-      const originalStatus = appStatus.status;
+      const originalStatus = appStatus.status ?? 'n/a';
 
       if (user.tenantId?.toString() !== app.tenantId) {
         throw new UnauthorizedError('invalid tenant id');
