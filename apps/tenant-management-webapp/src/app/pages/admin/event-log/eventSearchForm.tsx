@@ -84,7 +84,9 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
   const onKeyDown = (e) => {
     setError(false);
     setOpen(true);
-    if (e.keyCode === 13) {
+    if (e.keyCode === 9) {
+      setOpen(false);
+    } else if (e.keyCode === 13) {
       setActiveSuggestionIndex(0);
       setOpen(false);
       selectSuggestion(filteredSuggestions[activeSuggestionIndex]);
@@ -155,22 +157,30 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                   }
                 }}
               />
-              <GoAIconButton
-                type={open ? 'close-circle' : 'chevron-down'}
-                size="medium"
-                testId="menu-open-close"
-                variant="tertiary"
-                onClick={() => {
-                  if (!open && searchBox.length === 0) {
-                    setFilteredSuggestions(autoCompleteList);
+              <div
+                onKeyDown={(e) => {
+                  if (e.keyCode === 9) {
+                    setOpen(false);
                   }
-                  if (open && searchBox.length > 0) {
-                    setSearchBox('');
-                    setSearchCriteria({ ...searchCriteria, namespace: '', name: '' });
-                  }
-                  setOpen(!open);
                 }}
-              />
+              >
+                <GoAIconButton
+                  type={open ? 'close-circle' : 'chevron-down'}
+                  size="medium"
+                  testId="menu-open-close"
+                  variant="tertiary"
+                  onClick={() => {
+                    if (!open && searchBox.length === 0) {
+                      setFilteredSuggestions(autoCompleteList);
+                    }
+                    if (open && searchBox.length > 0) {
+                      setSearchBox('');
+                      setSearchCriteria({ ...searchCriteria, namespace: '', name: '' });
+                    }
+                    setOpen(!open);
+                  }}
+                />
+              </div>
             </div>
 
             {open && autoCompleteList && (
