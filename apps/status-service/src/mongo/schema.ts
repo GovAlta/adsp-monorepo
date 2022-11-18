@@ -105,7 +105,10 @@ export const noticeApplicationSchema = new Schema(
   { timestamps: true }
 );
 
-export const appPropertyRegex = '^[a-fA-F0-9]{24}$';
+// The property key for the configuration schema is the appKey prefixed by "app_".
+// DEPRECATED It can also be a mongo _id (12 hex bytes), but this is
+// supported for legacy purposes only (Nov. 2022).  Do not use.
+export const appPropertyRegex = '(^[a-fA-F0-9]{24}$)|(^app_.+$)';
 
 export const configurationSchema = {
   type: 'object',
@@ -126,11 +129,7 @@ export const configurationSchema = {
         name: { type: 'string', description: 'Name of the application' },
         url: { type: 'string', description: 'URL to be checked' },
         description: { type: 'string', description: 'Tell us about your application' },
-        tenantId: { type: String },
-        tenantRealm: { type: String },
-        tenantName: { type: String },
       },
-      // TODO tenant info will be required once data is fixed up (Nov, 2022)
       required: ['name', 'url'],
       additionalProperties: false,
     },

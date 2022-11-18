@@ -40,7 +40,7 @@ export const getApplicationsByName =
           id: app.appKey,
           name: app.name,
           description: app.description,
-          status: status?.status || 'operational',
+          status: status?.status || '',
           lastUpdated: status?.statusTimestamp ? new Date(status.statusTimestamp) : null,
         };
       });

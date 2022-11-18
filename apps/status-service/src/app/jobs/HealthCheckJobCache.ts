@@ -1,3 +1,4 @@
+import { AdspId } from '@abgov/adsp-service-sdk';
 import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
 import { StaticApplicationData } from '../model';
