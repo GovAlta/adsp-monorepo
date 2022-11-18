@@ -1,6 +1,7 @@
 export type InternalServiceStatusType = 'stopped' | 'healthy' | 'unhealthy' | 'pending';
 
-export type PublicServiceStatusType = 'operational' | 'reported-issues' | 'maintenance' | 'outage';
+// The empty string represents the status when an application is first created.
+export type PublicServiceStatusType = 'operational' | 'reported-issues' | 'maintenance' | 'outage' | '';
 
 export type ServiceStatusType = InternalServiceStatusType | PublicServiceStatusType;
 
