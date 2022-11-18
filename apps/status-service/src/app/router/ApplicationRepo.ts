@@ -42,7 +42,7 @@ export class ApplicationRepo {
           endpoint: { status: 'offline' },
           metadata: '',
           statusTimestamp: 0,
-          status: 'operational',
+          status: '',
           enabled: false,
         });
   };
