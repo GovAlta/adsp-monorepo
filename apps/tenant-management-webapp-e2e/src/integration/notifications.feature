@@ -7,14 +7,14 @@ Feature: Notifications
     When the user clicks Add notification type button
     Then the user views Add notification type modal
     When the user enters "autotest-addNotificationType", "autotest notification desc", "public", "no", "no", "yes" on notification type modal
-    And the user clicks save button in notification type modal
+    And the user clicks Save button in notification type modal
     Then the user "views" the notification type card of "autotest-addNotificationType", "autotest notification desc", "public", "yes", "yes"
     # Verify there is Add notification button on the notification type page as well after saving a new notification type
     And the user views Add notification type button on Notification types page
     When the user clicks "edit" button for the notification type card of "autotest-addNotificationType"
     Then the user views Edit notification type modal for "autotest-addNotificationType"
     When the user enters "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, urn:ads:platform:file-service:file-service-admin", "no", "no", "no" on notification type modal
-    And the user clicks save button in notification type modal
+    And the user clicks Save button in notification type modal
     Then the user "views" the notification type card of "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, urn:ads:platform:file-service:file-service-admin", "no", "no"
     When the user clicks "delete" button for the notification type card of "autotest-editNotificationType"
     Then the user views delete "notification type" confirmation modal for "autotest-editNotificationType"
@@ -203,7 +203,7 @@ Feature: Notifications
     Then the user views Add notification type modal
     When the user enters "autotest-add-multi-channels", "autotest notification desc", "public", "yes", "yes", "yes" on notification type modal
     Then the user views that email channel is greyed out
-    And the user clicks save button in notification type modal
+    And the user clicks Save button in notification type modal
     Then the user "views" the notification type card of "autotest-add-multi-channels", "autotest notification desc", "public", "yes", "yes"
     # Add an event
     When the user clicks Select event button for "autotest-add-multi-channels"
@@ -224,7 +224,7 @@ Feature: Notifications
     Then the user views Edit notification type modal for "autotest-add-multi-channels"
     And the user views that email channel is greyed out
     When the user enters "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1", "no", "no", "no" on notification type modal
-    And the user clicks save button in notification type modal
+    And the user clicks Save button in notification type modal
     Then the user "views" the notification type card of "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role1", "no", "no"
     And the user "views" "email template indicator" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
     And the user "should not view" "sms template indicator" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
@@ -233,7 +233,7 @@ Feature: Notifications
     When the user clicks "edit" button for the notification type card of "autotest-edit-multi-channels"
     Then the user views Edit notification type modal for "autotest-edit-multi-channels"
     When the user enters "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role2, beta-tester", "yes", "yes", "no" on notification type modal
-    And the user clicks save button in notification type modal
+    And the user clicks Save button in notification type modal
     Then the user "views" the notification type card of "autotest-edit-multi-channels", "Edited notification type desc", "auto-test-role2, beta-tester", "no", "no"
     And the user "views" "sms template indicator" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
     And the user "views" "bot template indicator with warning" for the event of "form-service:form-submitted" in "autotest-edit-multi-channels" on tenant events
@@ -368,8 +368,21 @@ Feature: Notifications
   Scenario: As a tenant admin, I can use notification pages without any critical or serious accessibility issues
     Given a tenant admin user is on notification overview page
     Then no critical or serious accessibility issues on "notification overview page"
-    When the user selects "Notification types" tab for "Notification"
+    When the user clicks edit button for contact information
+    Then the user views Edit contact information modal
+    And no critical or serious accessibility issues for "contact information modal" on "notification overview page"
+    And the user clicks Cancel button in Edit contact information modal
+    When the user clicks Add notification type button
+    Then the user views Add notification type modal
+    ## CS-1833 is pending for fix
+    # And no critical or serious accessibility issues for "notification type modal" on "notification overview page"
+    When the user clicks Cancel button in notification type modal
     Then no critical or serious accessibility issues on "notification notification types page"
+    When the user clicks Select event button for "autotest-notificationType"
+    Then the user views Select an event modal
+    ## CS-1826 is pending for fix
+    # And no critical or serious accessibility issues for "select an event modal" on "notification notification types page"
+    When the user clicks Cancel button in Select an event modal
     When the user clicks "edit" button for "Autotest:autotest-eventDefinition" in "autotest-notificationType"
     Then the user views an email template modal title for "Autotest:autotest-eventDefinition"
     And no critical or serious accessibility issues for "event template modal" on "notification types page"

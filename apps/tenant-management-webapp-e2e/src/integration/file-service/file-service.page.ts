@@ -67,6 +67,10 @@ class FileServicePage {
     return cy.get('[data-testid="file-type-modal-save"]');
   }
 
+  fileTypeModalCancelButton() {
+    return cy.get('[data-testid="file-type-modal-cancel"]');
+  }
+
   fileTypeTableBody() {
     return cy.xpath('//table[@data-testid="file-types-table"]//tbody');
   }

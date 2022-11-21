@@ -95,6 +95,10 @@ class ConfigurationServicePage {
     return cy.xpath('//*[@data-testid="definition-form"]//button[@data-testid="form-save"]');
   }
 
+  configurationDefinitionModalCancelBtn() {
+    return cy.xpath('//*[@data-testid="definition-form"]//button[@data-testid="form-cancel"]');
+  }
+
   configurationDefinitionModalPayloadEditor() {
     return cy.xpath('//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea');
   }

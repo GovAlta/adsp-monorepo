@@ -75,6 +75,10 @@ class StatusServicePage {
     return cy.get('[data-testid=notice-form-submit]');
   }
 
+  noticeModalCancelButton() {
+    return cy.get('[data-testid=notice-form-cancel]');
+  }
+
   noticeList() {
     return cy.xpath('//*[@data-testid="notice-list"]/div/div');
   }
@@ -165,6 +169,10 @@ class StatusServicePage {
     return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//button[text()="Save"]');
   }
 
+  addApplicationCancelBtn() {
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//button[text()="Cancel"]');
+  }
+
   applicationCardTitle(appName) {
     return cy.xpath(`//*[@data-testid="application"]//div[contains(text(), "${appName}")]`);
   }
@@ -239,6 +247,10 @@ class StatusServicePage {
 
   editContactInformationEmailSaveBtn() {
     return cy.get('[data-testid="form-save"]');
+  }
+
+  editContactInformationEmailCancelBtn() {
+    return cy.get('[data-testid="form-cancel"]');
   }
 
   contactInformationEmailDisplay() {

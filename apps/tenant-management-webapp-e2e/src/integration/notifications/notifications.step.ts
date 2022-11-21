@@ -163,9 +163,14 @@ When(
   }
 );
 
-Then('the user clicks save button in notification type modal', function () {
+Then('the user clicks Save button in notification type modal', function () {
   notificationsObj.notificationTypeModalSaveBtn().click();
   cy.wait(2000);
+});
+
+Then('the user clicks Cancel button in notification type modal', function () {
+  notificationsObj.notificationTypeModalCancelBtn().click();
+  cy.wait(1000);
 });
 
 Then(
@@ -646,6 +651,11 @@ When(
 Then('the user clicks Save button in Edit contact information modal', function () {
   notificationsObj.editContactModalSaveBtn().click();
   cy.wait(2000);
+});
+
+Then('the user clicks Cancel button in Edit contact information modal', function () {
+  notificationsObj.editContactModalCancelBtn().click();
+  cy.wait(1000);
 });
 
 Then(
