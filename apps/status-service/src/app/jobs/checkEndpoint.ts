@@ -5,7 +5,7 @@ import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { EndpointStatusEntry, EndpointStatusType } from '../types';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
-import { EventService } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService } from '@abgov/adsp-service-sdk';
 import { applicationStatusToHealthy, applicationStatusToUnhealthy } from '../events';
 import { StaticApplicationData } from '../model';
 
@@ -28,7 +28,7 @@ export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
     const { getEndpointResponse } = props;
     // run all endpoint tests
     const statusEntry = await checkEndpoint(getEndpointResponse, props.app.url, props.app.appKey, props.logger);
-    await saveStatus(props, statusEntry);
+    await saveStatus(props, statusEntry, props.app.tenantId);
   };
 }
 
@@ -89,7 +89,7 @@ export const getNewEndpointStatus = (
   return current;
 };
 
-async function saveStatus(props: CreateCheckEndpointProps, statusEntry: EndpointStatusEntry) {
+async function saveStatus(props: CreateCheckEndpointProps, statusEntry: EndpointStatusEntry, tenantId: AdspId) {
   const { app, serviceStatusRepository, endpointStatusEntryRepository, eventService, logger } = props;
   // create endpoint status entry before determining if the state is changed
 
@@ -118,12 +118,12 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
     status.endpoint.status = newStatus;
 
     if (newStatus === 'online') {
-      eventService.send(applicationStatusToHealthy(app, app.tenantId));
+      eventService.send(applicationStatusToHealthy(app, tenantId.toString()));
     }
 
     if (newStatus === 'offline') {
       const errMessage = `The application ${app.name} (ID: ${app.appKey}) is unhealthy.`;
-      eventService.send(applicationStatusToUnhealthy(app, app.tenantId, errMessage));
+      eventService.send(applicationStatusToUnhealthy(app, tenantId.toString(), errMessage));
     }
 
     try {

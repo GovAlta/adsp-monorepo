@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { getConfigurationDefinitions, getConfigurationRevisions } from '@store/configuration/action';
-import { GoAButton } from '@abgov/react-components-new';
 import { GoADropdownOption, GoADropdown } from '@abgov/react-components';
-import { GoAForm, GoAFormItem, GoAFormActions } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { RevisionTable } from './revisionsTable';
 export const ConfigurationRevisions = (): JSX.Element => {
   const { serviceList } = useSelector((state: RootState) => state.configuration);
@@ -24,12 +23,13 @@ export const ConfigurationRevisions = (): JSX.Element => {
             <GoADropdown
               name="Configurations"
               selectedValues={[selectedConfiguration]}
-              onChange={(name, values) => {
-                setSelectedConfiguration(values[0]);
-                dispatch(getConfigurationRevisions(values[0]));
+              onChange={(name: string, selectedConfiguration: string | string[]) => {
+                setSelectedConfiguration(selectedConfiguration.toString());
+                dispatch(getConfigurationRevisions(selectedConfiguration.toString()));
                 setShowTable(true);
               }}
               aria-label="select-configuration-dropdown"
+              multiSelect={false}
             >
               {serviceList.map((item) => (
                 <GoADropdownOption

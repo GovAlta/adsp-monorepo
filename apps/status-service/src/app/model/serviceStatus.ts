@@ -1,4 +1,4 @@
-import type { User } from '@abgov/adsp-service-sdk';
+import type { AdspId, User } from '@abgov/adsp-service-sdk';
 import { NewOrExisting, Update, UnauthorizedError } from '@core-services/core-common';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import {
@@ -22,15 +22,13 @@ export interface StaticApplicationData {
   name: string;
   url: string;
   description?: string;
-  // TODO make the tenant stuff mandatory (Nov, 2022)
-  tenantId?: string;
-  tenantName?: string;
-  tenantRealm?: string;
+  // FIXME make this mandatory.  It is optional only for data conversion purposes,
+  // a run once operation. (Nov 18, 2022).
+  tenantId?: AdspId;
 }
 // Application data, combines the static
 // and dynamic bits
 export interface ApplicationData {
-  _id: string;
   appKey: string;
   name: string;
   url: string;
@@ -38,9 +36,6 @@ export interface ApplicationData {
   status: PublicServiceStatusType;
   metadata: unknown;
   statusTimestamp: number;
-  tenantName: string;
-  tenantRealm: string;
-  tenantId: string;
   enabled: boolean;
 }
 

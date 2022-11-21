@@ -42,7 +42,7 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
             </div>
           </div>
         </td>
-        <td>{FormatDateTimeWithAt(new Date(revision.lastUpdated))}</td>
+        <td>{revision.lastUpdated ? FormatDateTimeWithAt(new Date(revision.lastUpdated)) : ''}</td>
         <td>
           <GoAContextMenu>
             <GoAContextMenuIcon

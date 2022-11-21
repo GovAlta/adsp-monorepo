@@ -2,6 +2,7 @@ import { adspId, AdspId, ServiceDirectory, Tenant, TokenProvider, User } from '@
 import { NotFoundError, UnauthorizedError } from '@core-services/core-common';
 import axios from 'axios';
 import mongoose from 'mongoose';
+import { appPropertyRegex } from '../../mongo/schema';
 import { ServiceStatusApplicationEntity, StaticApplicationData, StatusServiceConfiguration } from '../model';
 import { StatusApplications } from '../model/statusApplications';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
@@ -42,7 +43,7 @@ export class ApplicationRepo {
           endpoint: { status: 'offline' },
           metadata: '',
           statusTimestamp: 0,
-          status: 'operational',
+          status: '',
           enabled: false,
         });
   };
@@ -76,21 +77,28 @@ export class ApplicationRepo {
     const { data } = await axios.get<StatusServiceConfiguration>(configUrl.href, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    return new StatusApplications(data);
+    const regex = new RegExp(appPropertyRegex);
+    const keys = Object.keys(data).filter((k) => {
+      return regex.test(k);
+    });
+    const apps = {};
+    // Add the tenantId in, cause its not part of the configuration.
+    keys.forEach((k) => {
+      apps[k] = { ...data[k], tenantId: tenantId };
+    });
+    return new StatusApplications(apps);
   };
 
   getTenantStatuses = async (tenantId: AdspId): Promise<ServiceStatusApplicationEntity[]> => {
     return await this.#repository.find({ tenantId: tenantId.toString() });
   };
 
-  mergeApplicationData = (app: StaticApplicationData, status?: ServiceStatusApplicationEntity) => {
+  mergeApplicationData = (tenantId: string, app: StaticApplicationData, status?: ServiceStatusApplicationEntity) => {
     return {
       appKey: app.appKey,
       name: app.name,
       description: app.description,
-      tenantId: app.tenantId,
-      tenantName: app.tenantName,
-      tenantRealm: app.tenantRealm,
+      tenantId: tenantId,
       metadata: status?.metadata ?? '',
       enabled: status?.enabled ?? false,
       statusTimestamp: status?.statusTimestamp ?? null,
@@ -111,13 +119,11 @@ export class ApplicationRepo {
       name: appName,
       url: url,
       description: description,
-      tenantId: tenant.id.toString(),
-      tenantName: tenant.name,
-      tenantRealm: tenant.realm,
+      tenantId: tenant.id,
     };
     await this.updateApp(newApp);
     const created = await this.getApp(appKey, tenant.id);
-    return this.mergeApplicationData(created);
+    return this.mergeApplicationData(tenant.id.toString(), created);
   };
 
   updateApp = async (newApp: StaticApplicationData) => {
@@ -128,6 +134,9 @@ export class ApplicationRepo {
       baseUrl
     );
     const updated = newApp._id ? newApp : { ...newApp, _id: new mongoose.Types.ObjectId() };
+    // Configuration must be tenantless, so it can be
+    // imported by other tenants.
+    delete updated.tenantId;
     await axios.patch(
       configUrl.href,
       {
@@ -140,16 +149,13 @@ export class ApplicationRepo {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
-    return newApp._id;
+    return newApp.appKey;
   };
 
   deleteApp = async (appKey: string, user: User) => {
     const app = await this.getApp(appKey, user.tenantId);
     if (!app) {
       throw new NotFoundError('Status application', appKey);
-    }
-    if (user.tenantId?.toString() !== app.tenantId) {
-      throw new UnauthorizedError('invalid tenant id');
     }
 
     const appStatus = await this.getStatus(user, appKey);

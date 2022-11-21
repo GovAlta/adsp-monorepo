@@ -1,3 +1,4 @@
+import { AdspId } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
 import { Job, scheduleJob } from 'node-schedule';
 import { StaticApplicationData } from '../model';

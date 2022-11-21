@@ -84,7 +84,9 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
   const onKeyDown = (e) => {
     setError(false);
     setOpen(true);
-    if (e.keyCode === 13) {
+    if (e.keyCode === 9) {
+      setOpen(false);
+    } else if (e.keyCode === 13) {
       setActiveSuggestionIndex(0);
       setOpen(false);
       selectSuggestion(filteredSuggestions[activeSuggestionIndex]);
@@ -137,57 +139,59 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
         <SearchBox>
           <GoAFormItem helpText={!error && message} error={error && message}>
             <label>Search event namespace and name</label>
+            <div onBlur={() => setOpen(false)}>
+              <div className={open ? 'search search-open' : 'search'}>
+                <input
+                  type="text"
+                  name="searchBox"
+                  value={searchBox}
+                  onChange={suggestionOnChange}
+                  onKeyDown={onKeyDown}
+                  aria-label="Search"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setError(false);
+                    setOpen(!open);
+                    if (!open && searchBox.length === 0) {
+                      setFilteredSuggestions(autoCompleteList);
+                    }
+                  }}
+                />
 
-            <div className={open ? 'search search-open' : 'search'}>
-              <input
-                type="text"
-                name="searchBox"
-                value={searchBox}
-                onChange={suggestionOnChange}
-                onKeyDown={onKeyDown}
-                aria-label="Search"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setError(false);
-                  setOpen(!open);
-                  if (!open && searchBox.length === 0) {
-                    setFilteredSuggestions(autoCompleteList);
-                  }
-                }}
-              />
-              <GoAIconButton
-                type={open ? 'close-circle' : 'chevron-down'}
-                size="medium"
-                testId="menu-open-close"
-                variant="tertiary"
-                onClick={() => {
-                  if (!open && searchBox.length === 0) {
-                    setFilteredSuggestions(autoCompleteList);
-                  }
-                  if (open && searchBox.length > 0) {
-                    setSearchBox('');
-                    setSearchCriteria({ ...searchCriteria, namespace: '', name: '' });
-                  }
-                  setOpen(!open);
-                }}
-              />
+                <GoAIconButton
+                  type={open ? 'close-circle' : 'chevron-down'}
+                  size="medium"
+                  testId="menu-open-close"
+                  variant="tertiary"
+                  onClick={() => {
+                    if (!open && searchBox.length === 0) {
+                      setFilteredSuggestions(autoCompleteList);
+                    }
+                    if (open && searchBox.length > 0) {
+                      setSearchBox('');
+                      setSearchCriteria({ ...searchCriteria, namespace: '', name: '' });
+                    }
+                    setOpen(!open);
+                  }}
+                />
+              </div>
+
+              {open && autoCompleteList && (
+                <ul className="suggestions">
+                  {filteredSuggestions.map((suggestion, index) => {
+                    let className;
+                    if (index === activeSuggestionIndex) {
+                      className = 'suggestion-active';
+                    }
+                    return (
+                      <li className={className} key={index} onClick={(e) => handleItemOnClick(e, suggestion)}>
+                        {renderHighlight(suggestion)}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
-
-            {open && autoCompleteList && (
-              <ul className="suggestions">
-                {filteredSuggestions.map((suggestion, index) => {
-                  let className;
-                  if (index === activeSuggestionIndex) {
-                    className = 'suggestion-active';
-                  }
-                  return (
-                    <li className={className} key={index} onClick={(e) => handleItemOnClick(e, suggestion)}>
-                      {renderHighlight(suggestion)}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
           </GoAFormItem>
         </SearchBox>
         <GoAFormItem>

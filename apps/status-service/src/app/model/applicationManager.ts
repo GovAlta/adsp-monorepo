@@ -91,7 +91,16 @@ export class ApplicationManager {
         token,
         tenantId
       );
-      return config;
+      const regex = new RegExp(appPropertyRegex);
+      const keys = Object.keys(config).filter((k) => {
+        return regex.test(k);
+      });
+      const apps = {};
+      // Add the tenantId in, cause its not part of the configuration.
+      keys.forEach((k) => {
+        apps[k] = { ...config[k], tenantId: tenantId };
+      });
+      return apps;
     };
   };
 
@@ -109,20 +118,19 @@ export class ApplicationManager {
       let needsUpdate = false;
       ids.forEach(async (_id) => {
         const app = apps.get(_id);
-        // Fix up he app's configuration data; we need to add the appKey,
-        // and the tenant information.  Also, there is a small chance that
+        // Fix up he app's configuration data; we need to add the appKey.
+        // Also, there is a small chance that
         // the application ID is missing (bad migration from earlier (Oct. 2022))
         // so ensure it is there.
-        if (app && !(app._id && app.appKey && app.tenantId)) {
+        if (app && !(app._id && app.appKey && !app.tenantId)) {
           needsUpdate = true;
           const appKey = ApplicationRepo.getApplicationKey(tenant.name, app.name);
           config[_id] = {
-            ...app,
+            name: app.name,
+            description: app.description,
+            url: app.url,
             _id: _id,
             appKey: appKey,
-            tenantId: tenant.id.toString(),
-            tenantName: tenant.name,
-            tenantRealm: tenant.realm,
           };
         }
       });
