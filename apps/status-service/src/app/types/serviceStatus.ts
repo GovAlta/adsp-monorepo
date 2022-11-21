@@ -26,15 +26,12 @@ export interface ServiceStatusApplication {
 
 export interface ServiceStatusApplicationFilter {
   _id?: string;
-  appKey: string;
+  appKey: string | { $in: Array<string> };
   endpoint: ServiceStatusEndpoint;
   status?: PublicServiceStatusType;
   internalStatus?: InternalServiceStatusType;
   metadata: unknown;
   statusTimestamp: number;
-  tenantId: string;
-  tenantName: { $regex: string; $options: 'i' };
-  tenantRealm: string;
   enabled: boolean;
 }
 

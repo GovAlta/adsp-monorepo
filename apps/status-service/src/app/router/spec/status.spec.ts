@@ -430,14 +430,14 @@ describe('Service router', () => {
         },
       } as unknown as Request;
       const expectedApp = {
-        appKey: 'test-new-application',
+        appKey: 'app_test-new-application',
         name: 'new-application',
         url: 'localhost',
         description: 'foo',
         tenantId: tenantId,
       };
       const handler = createNewApplication(loggerMock, applicationRepo, tenantServiceMock);
-      const randomId = '624365fe3367d200110e1321';
+      const randomId = 'app_do-not-mock-me';
       axiosMock.get
         .mockResolvedValueOnce({ data: configurationMock })
         .mockResolvedValueOnce({ data: { ...configurationMock, [randomId]: expectedApp } });

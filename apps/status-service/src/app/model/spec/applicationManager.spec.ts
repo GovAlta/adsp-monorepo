@@ -16,6 +16,13 @@ const repositoryMock = {
   save: jest.fn(),
 };
 
+const notificationRepositoryMock = {
+  find: jest.fn(),
+  delete: jest.fn(),
+  save: jest.fn(),
+  get: jest.fn(),
+};
+
 const loggerMock = {
   info: jest.fn((msg) => console.log(msg)),
 } as unknown as Logger;
@@ -106,6 +113,7 @@ describe('Application Manager', () => {
       repositoryMock,
       directoryServiceMock,
       tenantServiceMock,
+      notificationRepositoryMock,
       loggerMock
     );
   };
