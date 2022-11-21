@@ -2,72 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { GoACallout } from '@abgov/react-components';
 import { GoACard } from '@abgov/react-components/experimental';
 import { Link } from 'react-router-dom';
-import ReactTooltip from 'react-tooltip';
+
 import { Grid, GridItem } from '@components/Grid';
-import { Main, Aside, Page } from '@components/Html';
+import { Main, Page } from '@components/Html';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import styled from 'styled-components';
-import CopyIcon from '@icons/copy-outline.svg';
 import { GoAButton as GoAButtonV2 } from '@abgov/react-components-new';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
 import { ExternalLink } from '@components/icons/ExternalLink';
 import BetaBadge from '@icons/beta-badge.svg';
-import { HeadingDiv } from './styled-components';
+import {
+  CopyLinkToolTipWrapper,
+  DashboardAside,
+  DashboardDiv,
+  HeadingDiv,
+  LinkCopyComponentWrapper,
+  ListWrapper,
+} from './styled-components';
+import SupportLinks from '@components/SupportLinks';
 
 interface LinkCopyComponentProps {
   link: string;
 }
-
-const LinkCopyComponentWrapper = styled.div`
-  position: relative;
-  padding-top: 1.5rem;
-`;
-
-const CopyLinkToolTipWrapper = styled.div`
-  .checkmark-icon {
-    display: inline-block;
-    margin-top: 0.5rem;
-    margin-left: 0.5rem;
-  }
-  .message {
-    font-size: 0.875rem;
-    display: inline;
-    position: absolute;
-    top: 0.3rem;
-    left: 2rem;
-  }
-  .URL-tooltip {
-    width: 30rem !important;
-    left: -5.5rem;
-    font-size: 10px;
-  }
-  p {
-    position: absolute;
-    background: var(--color-gray-100);
-    -webkit-border-radius: 10px;
-    -moz-border-radius: 10px;
-    border-radius: 30px;
-    width: 12rem;
-    height: 2.2rem;
-    top: -1.5rem;
-    left: 1rem;
-  }
-
-  p:before {
-    content: '';
-    position: absolute;
-    top: 2rem;
-    left: 6rem;
-    z-index: 1;
-    border: solid 15px transparent;
-    border-right-color: var(--color-gray-100);
-    border-top: 15px solid var(--color-gray-100);
-    border-right: 10px solid transparent;
-    border-left: 10px solid transparent;
-    border-bottom: none;
-  }
-`;
 
 const LinkCopyComponent = ({ link }: LinkCopyComponentProps): JSX.Element => {
   const [isCopied, setIsCopied] = useState<boolean>(false);
@@ -144,10 +100,6 @@ const Dashboard = (): JSX.Element => {
     }
   );
   const loginUrl = `${tenantManagementWebApp}/${session.realm}/login`;
-
-  const _afterShow = (copyText) => {
-    navigator.clipboard.writeText(copyText);
-  };
 
   function getKeycloakAdminPortalUsers() {
     return session?.realm
@@ -300,6 +252,7 @@ const Dashboard = (): JSX.Element => {
             )}
           </Main>
           <DashboardAside>
+            <SupportLinks />
             <h3>Sharing tenant access</h3>
             <p>To give another user limited access to your realm:</p>
 
@@ -325,23 +278,6 @@ const Dashboard = (): JSX.Element => {
             <br />
           </DashboardAside>
         </Page>
-        <footer>
-          <div style={{ flex: 1 }} data-testid="beta-release">
-            This service is in <b>BETA</b> release. If you have any questions, please email{' '}
-            <a href="mailto: adsp@gov.ab.ca">adsp@gov.ab.ca</a>
-            <a data-tip="Copied!" data-delay-hide="1500" data-for="registerTipEmail">
-              <img src={CopyIcon} width="13" alt="Admin" />
-            </a>
-            <ReactTooltip
-              id="registerTipEmail"
-              place="top"
-              event="click"
-              eventOff="click"
-              effect="solid"
-              afterShow={() => _afterShow('adsp@gov.ab.ca')}
-            />
-          </div>
-        </footer>
       </DashboardDiv>
     );
   };
@@ -364,43 +300,3 @@ const Dashboard = (): JSX.Element => {
   return hasAdminRole ? adminDashboard() : calloutMessage();
 };
 export default Dashboard;
-
-const DashboardAside = styled(Aside)`
-  padding-top: 1.6em;
-
-  .copy-url {
-    font - size: var(--fs-sm);
-    background-color: var(--color-gray-100);
-    border: 1px solid var(--color-gray-300);
-    border-radius: 1px;
-    padding: 0.25rem;
-    margin-bottom: 1rem;
-    margin-top: 0.5rem;
-    line-height: normal;
-  }
-
-  .small-font {
-            font - size: var(--fs-sm);
-    line-height: normal;
-  }
-
-  .mt-2 {
-    margin - top: 2em;
-  }
-`;
-const DashboardDiv = styled.div`
-  a {
-    &:visited {
-      color: var(--color-primary);
-    }
-  }
-  margin-bottom: 2.5rem;
-`;
-
-const ListWrapper = styled.ul`
-  list-style-type: value;
-  margin-left: 1rem;
-  li {
-    margin-bottom: 0.5rem;
-  }
-`;
