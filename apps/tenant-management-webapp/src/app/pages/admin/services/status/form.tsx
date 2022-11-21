@@ -15,7 +15,8 @@ import {
 } from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
 import { createSelector } from 'reselect';
-import styled from 'styled-components';
+import { DropdownListContainer, DropdownList, IdField } from './styled-components';
+import { toKebabName } from '@lib/kebabName';
 
 interface Props {
   isOpen: boolean;
@@ -101,15 +102,20 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSav
               name="name"
               value={application?.name}
               onChange={(name, value) => {
+                const appKey = toKebabName(value);
                 setApplication({
                   ...application,
                   name: value,
+                  appKey,
                 });
               }}
               aria-label="name"
             />
           </GoAFormItem>
-
+          <GoAFormItem>
+            <label>application ID</label>
+            <IdField>{application.appKey}</IdField>
+          </GoAFormItem>
           <GoAFormItem>
             <label>Description</label>
             <textarea
@@ -190,22 +196,5 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSav
     </GoAModal>
   );
 };
-const DropdownListContainer = styled.div`
-  max-height: 10rem;
-  overflow: hidden auto;
-  padding: 0rem;
-  scroll-behavior: smooth;
-`;
-
-const DropdownList = styled.ul`
-  position: relative;
-  margin-top: 3px;
-  list-style-type: none;
-  background: var(--color-white);
-  border-radius: var(--input-border-radius);
-  box-shadow: 0 8px 8px rgb(0 0 0 / 20%), 0 4px 4px rgb(0 0 0 / 10%);
-  z-index: 99;
-  padding-left: 0rem !important;
-`;
 
 export default ApplicationFormModal;

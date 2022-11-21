@@ -22,13 +22,12 @@ export class StatusApi {
   }
 
   async saveApplication(props: ApplicationStatus): Promise<ApplicationStatus> {
-    if (props.appKey) {
-      const res = await this.http.put(`/applications/${props.appKey}`, props);
-      return res.data;
-    } else {
-      const res = await this.http.post(`/applications`, props);
-      return res.data;
-    }
+    const res = await this.http.post(`/applications`, props);
+    return res.data;
+  }
+  async updateApplication(props: ApplicationStatus): Promise<ApplicationStatus> {
+    const res = await this.http.put(`/applications/${props.appKey}`, props);
+    return res.data;
   }
 
   async deleteApplication(appKey: string): Promise<void> {

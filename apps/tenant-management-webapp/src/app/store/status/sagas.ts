@@ -84,12 +84,24 @@ export function* fetchServiceStatusApps(): SagaIterator {
 
 export function* saveApplication(action: SaveApplicationAction): SagaIterator {
   const currentState: RootState = yield select();
+  const statusApplications = currentState.serviceStatus.applications;
+  let existingApp = false;
 
+  for (const application of statusApplications) {
+    existingApp = application.appKey === action.payload.appKey;
+  }
+  console.log('currentState', currentState);
   const baseUrl = getServiceStatusUrl(currentState.config);
   const token = yield call(getAccessToken);
   try {
     const api = new StatusApi(baseUrl, token);
-    const data = yield call([api, api.saveApplication], action.payload);
+    let data;
+
+    if (existingApp) {
+      data = yield call([api, api.updateApplication], action.payload);
+    } else {
+      data = yield call([api, api.saveApplication], action.payload);
+    }
     yield put(saveApplicationSuccess(data));
     yield put(refreshServiceStatusApps());
   } catch (e) {
