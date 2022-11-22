@@ -119,6 +119,7 @@ function Status(): JSX.Element {
         {showAddApplicationModal && (
           <ApplicationFormModal
             isOpen={true}
+            testId={'add-application'}
             title="Add application"
             onCancel={() => {
               setShowAddApplicationModal(false);
@@ -379,6 +380,7 @@ function Application(app: ApplicationStatus) {
 
       <ApplicationFormModal
         isOpen={showEditModal}
+        testId={'edit-application'}
         title="Edit application"
         onCancel={() => {
           setShowEditModal(false);
