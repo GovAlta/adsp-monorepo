@@ -90,6 +90,11 @@ When('the user clicks Save button in configuration definition modal', function (
   cy.wait(2000); // Wait for the record to save and show in the grid
 });
 
+When('the user clicks Cancel button in configuration definition modal', function () {
+  configurationObj.configurationDefinitionModalSaveBtn().click();
+  cy.wait(1000); // Wait for the record to save and show in the grid
+});
+
 Then(
   'the user {string} the configuration definition of {string}, {string} under {string}',
   function (viewOrNot, name, desc, namespace) {

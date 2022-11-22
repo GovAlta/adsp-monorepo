@@ -41,7 +41,10 @@ Feature: PDF service
   Scenario: As a tenant admin, I can use PDF pages without any critical or serious accessibility issues
     Given a tenant admin user is on PDF service overview page
     Then no critical or serious accessibility issues on "PDF overview page"
-    When the user selects "Templates" tab for "PDF"
+    When the user clicks Add template button
+    Then the user views Add template modal
+    And no critical or serious accessibility issues for "add PDF template modal" on "PDF overview page"
+    When the user clicks Cancel button in Add template modal
     Then no critical or serious accessibility issues on "PDF templates page"
     # CS-1826 is pending for fix
     # When the user selects "Test generate" tab for "PDF"

@@ -21,8 +21,12 @@ class PDFServicePage {
     return cy.get('[data-testid="pdf-template-description"]');
   }
 
-  pdfAddTemplateModalSveBtn() {
+  pdfAddTemplateModalSaveBtn() {
     return cy.get('[data-testid="form-save"]');
+  }
+
+  pdfAddTemplateModalCancelBtn() {
+    return cy.get('[data-testid="form-cancel"]');
   }
 
   tabTemplate() {

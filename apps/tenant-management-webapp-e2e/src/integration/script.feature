@@ -38,8 +38,12 @@ Feature: Script
   Scenario: As a tenant admin, I can use scripts page without any critical or serious accessibility issues
     Given a tenant admin user is on script service overview page
     Then no critical or serious accessibility issues on "script overview page"
-    When the user selects "Scripts" tab for "Script"
+    When the user clicks Add script button
+    Then the user views Add script modal
+    ## CS-1833 is pending for fix
+    # And no critical or serious accessibility issues for "add script modal" on "script overview page"
+    When the user clicks Cancel button in Add script modal
     Then no critical or serious accessibility issues on "script scripts page"
-# CS-1845 is pending for fix
+## CS-1845 is pending for fix
 # When the user clicks "Edit" button for the script of "autotest-execute-script", "DO NOT DELETE", "urn:ads:platform:tenant-service:tenant-admin"
 # And no critical or serious accessibility issues for "script edit modal" on "script scripts page"
