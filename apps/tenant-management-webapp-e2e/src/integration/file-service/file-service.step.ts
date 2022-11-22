@@ -363,6 +363,7 @@ Then('the user views file types page', function () {
 
 When('the user clicks Add file type button on file types page', function () {
   fileServiceObj.addFileTypeButton().click();
+  cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
 Then('the user views {string} file type modal', function (addOrEdit) {

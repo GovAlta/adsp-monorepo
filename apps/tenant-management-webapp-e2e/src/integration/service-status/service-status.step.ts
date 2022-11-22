@@ -452,6 +452,7 @@ Then('the user views the subscribe checkbox is {string}', function (checkboxStat
 
 When('the user clicks Add application button', function () {
   statusObj.addApplicationButton().click();
+  cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
 Then('the user views Add application modal', function () {

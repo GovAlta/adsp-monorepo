@@ -51,6 +51,7 @@ Given('a tenant admin user is on configuration overview page', function () {
 
 When('the user clicks Add definition button on configuration overview page', function () {
   configurationObj.addConfigurationDefinitionBtn().click();
+  cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
 Then('the user views Add definition modal', function () {

@@ -20,6 +20,7 @@ Then('the user views the Pdf service overview content {string}', function (parag
 
 When('the user clicks Add template button', function () {
   pdfServiceObj.pdfAddTemplateBtn().click();
+  cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
 Then('the user views Add template modal', function () {

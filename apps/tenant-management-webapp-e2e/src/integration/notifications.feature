@@ -370,7 +370,7 @@ Feature: Notifications
     Then no critical or serious accessibility issues on "notification overview page"
     When the user clicks edit button for contact information
     Then the user views Edit contact information modal
-    And no critical or serious accessibility issues for "contact information modal" on "notification overview page"
+    And no critical or serious accessibility issues for "edit notification contact information modal" on "notification overview page"
     And the user clicks Cancel button in Edit contact information modal
     When the user clicks Add notification type button
     Then the user views Add notification type modal
