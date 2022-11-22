@@ -8,7 +8,7 @@ import { emailError } from '@lib/inputValidation';
 
 import { GoAInputEmail } from '@abgov/react-components/experimental';
 
-interface NotificationTypeFormProps {
+interface EditContactInformationFormProps {
   initialValue?: ContactInformation;
   onCancel?: () => void;
   onSave?: (type: ContactInformation) => void;
@@ -16,7 +16,7 @@ interface NotificationTypeFormProps {
   errors?: Record<string, string>;
 }
 
-export const ContactInformationModalForm: FunctionComponent<NotificationTypeFormProps> = ({
+export const ContactInformationModalForm: FunctionComponent<EditContactInformationFormProps> = ({
   initialValue,
   onCancel,
   onSave,
@@ -51,7 +51,7 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
 
   return (
     <EditStyles>
-      <GoAModal testId="notification-types-form" isOpen={open}>
+      <GoAModal testId="edit-contact-information-status" isOpen={open}>
         <GoAModalTitle>Edit contact information</GoAModalTitle>
         <GoAModalContent>
           <GoAForm>
