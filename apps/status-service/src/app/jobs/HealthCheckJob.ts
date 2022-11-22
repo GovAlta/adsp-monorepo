@@ -1,3 +1,4 @@
+import { AdspId } from '@abgov/adsp-service-sdk';
 import { Job } from 'node-schedule';
 import { StaticApplicationData } from '../model';
 import { JobScheduler } from './JobScheduler';
@@ -5,6 +6,7 @@ import { JobScheduler } from './JobScheduler';
 export class HealthCheckJob {
   #app: StaticApplicationData;
   #action?: Job;
+  #tenantId: AdspId;
 
   constructor(app: StaticApplicationData) {
     this.#app = app;

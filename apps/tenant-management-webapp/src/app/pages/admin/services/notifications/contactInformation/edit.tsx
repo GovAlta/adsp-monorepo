@@ -55,7 +55,7 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
 
   return (
     <EditStyles>
-      <GoAModal testId="notification-types-form" isOpen={open}>
+      <GoAModal testId="edit-contact-information-notification" isOpen={open}>
         <GoAModalTitle>Edit contact information</GoAModalTitle>
         <GoAModalContent>
           <GoAForm>

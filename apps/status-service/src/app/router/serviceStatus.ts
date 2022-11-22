@@ -1,4 +1,4 @@
-import { AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
   InvalidValueError,
@@ -33,11 +33,11 @@ export const getApplications = (logger: Logger, applicationRepo: ApplicationRepo
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
       }
-      const applications = await applicationRepo.getTenantApps(tenantId);
-      const statuses = await applicationRepo.getTenantStatuses(tenantId);
-      const result = applications.map((app) => {
+      const apps = await applicationRepo.getTenantApps(tenantId);
+      const statuses = await applicationRepo.findAllStatuses(apps);
+      const result = apps.map((app) => {
         const status = statuses.find((s) => s.appKey == app.appKey) || null;
-        return applicationRepo.mergeApplicationData(app, status);
+        return applicationRepo.mergeApplicationData(tenantId.toString(), app, status);
       });
 
       res.json(result);
@@ -60,13 +60,9 @@ export const enableApplication =
         throw new NotFoundError('Status application', appKey);
       }
 
-      if (user.tenantId?.toString() !== app.tenantId) {
-        throw new UnauthorizedError('invalid tenant id');
-      }
-
       const appStatus = await applicationRepo.getStatus(user, appKey);
       const updatedApplication = await appStatus.enable({ ...req.user } as User);
-      res.json(applicationRepo.mergeApplicationData(app, updatedApplication));
+      res.json(applicationRepo.mergeApplicationData(user.tenantId.toString(), app, updatedApplication));
     } catch (err) {
       logger.error(`Failed to enable application: ${err.message}`);
       next(err);
@@ -86,13 +82,9 @@ export const disableApplication =
         throw new NotFoundError('Status application', appKey);
       }
 
-      if (user.tenantId?.toString() !== app.tenantId) {
-        throw new UnauthorizedError('invalid tenant id');
-      }
-
       const appStatus = await applicationRepo.getStatus(user, appKey);
       const updatedApplication = await appStatus.disable({ ...req.user } as User);
-      res.json(applicationRepo.mergeApplicationData(app, updatedApplication));
+      res.json(applicationRepo.mergeApplicationData(user.tenantId.toString(), app, updatedApplication));
     } catch (err) {
       logger.error(`Failed to disable application: ${err.message}`);
       next(err);
@@ -124,7 +116,7 @@ export const createNewApplication =
   };
 
 export const updateApplication =
-  (logger: Logger, applicationRepo: ApplicationRepo, tenantService: TenantService): RequestHandler =>
+  (logger: Logger, applicationRepo: ApplicationRepo): RequestHandler =>
   async (req, res, next) => {
     try {
       logger.info(`${req.method} - ${req.url}`);
@@ -137,27 +129,23 @@ export const updateApplication =
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
       }
-      const tenant = await tenantService.getTenant(user.tenantId);
       const app = await applicationRepo.getApp(appKey, user.tenantId);
       if (!app) {
         throw new NotFoundError('Status application', appKey);
       }
 
       const update: StaticApplicationData = {
-        _id: app._id,
         appKey,
         name,
         url: endpoint.url,
         description,
-        tenantId,
-        tenantName: tenant.name,
-        tenantRealm: tenant.realm,
+        tenantId: app.tenantId,
       };
       await applicationRepo.updateApp(update);
 
       const status = await applicationRepo.findStatus(appKey);
 
-      res.json(applicationRepo.mergeApplicationData(update, status));
+      res.json(applicationRepo.mergeApplicationData(tenantId, update, status));
     } catch (err) {
       logger.error(`Failed to update application: ${err.message}`);
       next(err);
@@ -195,15 +183,11 @@ export const updateApplicationStatus =
       }
 
       const appStatus = await applicationRepo.getStatus(user, appKey);
-      const originalStatus = appStatus.status;
-
-      if (user.tenantId?.toString() !== app.tenantId) {
-        throw new UnauthorizedError('invalid tenant id');
-      }
+      const originalStatus = appStatus.status || 'n/a';
 
       const updatedStatus = await appStatus.setStatus(user, status as PublicServiceStatusType);
       eventService.send(applicationStatusChange(app, status, originalStatus, user));
-      res.json(applicationRepo.mergeApplicationData(app, updatedStatus));
+      res.json(applicationRepo.mergeApplicationData(user.tenantId.toString(), app, updatedStatus));
     } catch (err) {
       logger.error(`Failed to update application: ${err.message}`);
       next(err);
@@ -229,12 +213,8 @@ export const toggleApplication =
         eventService.send(applicationStatusToStopped(app, user));
       }
 
-      if (user.tenantId?.toString() !== app.tenantId) {
-        throw new UnauthorizedError('invalid tenant id');
-      }
-
       const updatedApplication = await (appStatus.enabled === true ? appStatus.disable(user) : appStatus.enable(user));
-      res.json(applicationRepo.mergeApplicationData(app, updatedApplication));
+      res.json(applicationRepo.mergeApplicationData(user.tenantId.toString(), app, updatedApplication));
     } catch (err) {
       logger.error(`Failed to toggle application: ${err.message}`);
       next(err);
@@ -261,10 +241,6 @@ export const getApplicationEntries =
       const app = await applicationRepo.getApp(appKey, tenantId);
       if (!app) {
         throw new NotFoundError('Status application', appKey);
-      }
-
-      if (tenantId?.toString() !== app.tenantId) {
-        throw new UnauthorizedError('invalid tenant id');
       }
 
       const entries = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(app.url, app.appKey, top);
@@ -314,11 +290,7 @@ export function createServiceStatusRouter({
     assertAuthenticatedHandler,
     createNewApplication(logger, applicationRepo, tenantService)
   );
-  router.put(
-    '/applications/:appKey',
-    assertAuthenticatedHandler,
-    updateApplication(logger, applicationRepo, tenantService)
-  );
+  router.put('/applications/:appKey', assertAuthenticatedHandler, updateApplication(logger, applicationRepo));
   router.delete('/applications/:appKey', assertAuthenticatedHandler, deleteApplication(logger, applicationRepo));
   router.patch(
     '/applications/:appKey/status',

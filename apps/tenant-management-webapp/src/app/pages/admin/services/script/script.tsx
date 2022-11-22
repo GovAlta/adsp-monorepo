@@ -23,7 +23,7 @@ export const Script = (): JSX.Element => {
       <Main>
         <>
           <HeadingDiv>
-            <h1 data-testid="calendar-title">Script service</h1> <img src={BetaBadge} alt="Files Service" />
+            <h1 data-testid="script-service-title">Script service</h1> <img src={BetaBadge} alt="Files Service" />
           </HeadingDiv>
           <Tabs activeIndex={activeIndex}>
             <Tab label="Overview">

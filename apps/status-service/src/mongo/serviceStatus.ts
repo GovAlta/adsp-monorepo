@@ -59,7 +59,6 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
 
   async delete(entity: ServiceStatusApplicationEntity): Promise<boolean> {
     try {
-      const id = entity._id.toString();
       await this.model.findOneAndDelete({ _id: entity._id });
       return true;
     } catch (e) {

@@ -6,6 +6,7 @@ import {
   fetchServiceStatusApps,
   fetchStatusMetrics,
   toggleApplicationStatus,
+  FETCH_SERVICE_STATUS_APPS_ACTION,
 } from '@store/status/actions';
 import { RootState } from '@store/index';
 import ReactTooltip from 'react-tooltip';
@@ -43,6 +44,7 @@ import { DeleteModal } from '@components/DeleteModal';
 import { createSelector } from 'reselect';
 import { StatusOverview } from './overview';
 import { StatusBar } from './StatusBar';
+import { useActionStateCheck } from '@components/Indicator';
 
 const userHealthSubscriptionSelector = createSelector(
   (state: RootState) => state.session.userInfo?.sub,
@@ -73,6 +75,7 @@ function Status(): JSX.Element {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [showAddApplicationModal, setShowAddApplicationModal] = useState<boolean>(false);
   const [showAddNoticeModal, setShowAddNoticeModal] = useState<boolean>(false);
+  const isApplicationsFetched = useActionStateCheck(FETCH_SERVICE_STATUS_APPS_ACTION);
 
   useEffect(() => {
     dispatch(fetchServiceStatusApps());
@@ -116,6 +119,7 @@ function Status(): JSX.Element {
         {showAddApplicationModal && (
           <ApplicationFormModal
             isOpen={true}
+            testId={'add-application'}
             title="Add application"
             onCancel={() => {
               setShowAddApplicationModal(false);
@@ -160,7 +164,7 @@ function Status(): JSX.Element {
             >
               I want to subscribe and receive notifications
             </GoACheckbox>
-            {applications.length === 0 && renderNoItem('application')}
+            {isApplicationsFetched === true && applications.length === 0 && renderNoItem('application')}
             <ApplicationList>
               {applications.map((app) => (
                 <Application key={app.appKey} {...app} />
@@ -376,6 +380,7 @@ function Application(app: ApplicationStatus) {
 
       <ApplicationFormModal
         isOpen={showEditModal}
+        testId={'edit-application'}
         title="Edit application"
         onCancel={() => {
           setShowEditModal(false);

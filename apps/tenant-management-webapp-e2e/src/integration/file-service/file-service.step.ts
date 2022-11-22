@@ -441,6 +441,11 @@ When('the user clicks Save button on file type modal', function () {
   cy.wait(2000); // Wait the file type list to refresh
 });
 
+When('the user clicks Cancel button on file type modal', function () {
+  fileServiceObj.fileTypeModalCancelButton().click();
+  cy.wait(1000); // Wait the file type list to refresh
+});
+
 Then('the user {string} the file type of {string}, {string}, {string}', function (action, name, readRole, updateRole) {
   findFileType(name, readRole, updateRole).then((rowNumber) => {
     switch (action) {

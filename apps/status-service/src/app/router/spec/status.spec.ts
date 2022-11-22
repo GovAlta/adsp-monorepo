@@ -143,9 +143,7 @@ describe('Service router', () => {
       name: 'MyApp 1',
       url: 'http://localhost',
       description: 'MyApp',
-      tenantId: tenantId.toString(),
-      tenantName: 'platform',
-      tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
+      tenantId: tenantId,
     },
     [bobsStatusId]: {
       _id: bobsStatusId,
@@ -153,9 +151,7 @@ describe('Service router', () => {
       name: 'test-mock',
       url: 'http://www.yahoo.com',
       description: '',
-      tenantId: tenantId.toString(),
-      tenantName: 'platform',
-      tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
+      tenantId: tenantId,
     },
   };
 
@@ -243,8 +239,6 @@ describe('Service router', () => {
             url: configurationMock[myApplicationStatus._id].url,
           },
           tenantId: tenantId.toString(),
-          tenantName: 'platform',
-          tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
         },
         {
           ...bobsStatus,
@@ -255,8 +249,6 @@ describe('Service router', () => {
             url: configurationMock[bobsApplicationStatus._id].url,
           },
           tenantId: tenantId.toString(),
-          tenantName: 'platform',
-          tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
         },
       ];
 
@@ -329,7 +321,7 @@ describe('Service router', () => {
             id: bobsAppKey,
             lastUpdated: null,
             name: configurationMock[bobsStatusId].name,
-            status: 'operational',
+            status: '',
           },
         ])
       );
@@ -438,14 +430,14 @@ describe('Service router', () => {
         },
       } as unknown as Request;
       const expectedApp = {
-        appKey: 'test-new-application',
+        appKey: 'app_test-new-application',
         name: 'new-application',
         url: 'localhost',
         description: 'foo',
         tenantId: tenantId,
       };
       const handler = createNewApplication(loggerMock, applicationRepo, tenantServiceMock);
-      const randomId = '624365fe3367d200110e1321';
+      const randomId = 'app_do-not-mock-me';
       axiosMock.get
         .mockResolvedValueOnce({ data: configurationMock })
         .mockResolvedValueOnce({ data: { ...configurationMock, [randomId]: expectedApp } });
@@ -479,7 +471,7 @@ describe('Service router', () => {
 
   describe('Can update application', () => {
     it('Can update application properties', async () => {
-      const handler = updateApplication(loggerMock, applicationRepo, tenantServiceMock);
+      const handler = updateApplication(loggerMock, applicationRepo);
       const req: Request = {
         user: {
           tenantId,

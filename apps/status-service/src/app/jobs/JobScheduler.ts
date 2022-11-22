@@ -2,7 +2,7 @@ import { Job } from 'node-schedule';
 import { Logger } from 'winston';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
-import { EventService } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, Tenant } from '@abgov/adsp-service-sdk';
 import { HealthCheckJobCache } from './HealthCheckJobCache';
 import { HealthCheckJob } from './HealthCheckJob';
 import { getScheduler } from './SchedulerFactory';
@@ -18,7 +18,7 @@ export interface HealthCheckSchedulingProps {
   applicationManager: ApplicationManager;
 }
 export interface JobScheduler {
-  schedule: (app: StaticApplicationData) => Job;
+  schedule: (StaticApplicationData) => Job;
 }
 export class HealthCheckJobScheduler {
   #props: HealthCheckSchedulingProps;

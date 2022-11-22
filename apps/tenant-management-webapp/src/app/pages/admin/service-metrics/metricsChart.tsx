@@ -98,9 +98,11 @@ export const MetricsChart: FunctionComponent = () => {
   return (
     <div>
       <h3>Response time and request count</h3>
+
       <Chart
         type="line"
         data={requestsAndTimesData}
+        aria-label="Response time and request count chart"
         options={{
           animation: false,
           spanGaps: false,
@@ -167,6 +169,7 @@ export const MetricsChart: FunctionComponent = () => {
       <Chart
         type="line"
         data={timeComponentsData}
+        aria-label="Response time breakdown chart"
         options={{
           animation: false,
           spanGaps: false,

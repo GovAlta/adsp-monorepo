@@ -1,6 +1,7 @@
 export type InternalServiceStatusType = 'stopped' | 'healthy' | 'unhealthy' | 'pending';
 
-export type PublicServiceStatusType = 'operational' | 'reported-issues' | 'maintenance' | 'outage';
+// The empty string represents the status when an application is first created.
+export type PublicServiceStatusType = 'operational' | 'reported-issues' | 'maintenance' | 'outage' | '';
 
 export type ServiceStatusType = InternalServiceStatusType | PublicServiceStatusType;
 
@@ -25,15 +26,12 @@ export interface ServiceStatusApplication {
 
 export interface ServiceStatusApplicationFilter {
   _id?: string;
-  appKey: string;
+  appKey: string | { $in: Array<string> };
   endpoint: ServiceStatusEndpoint;
   status?: PublicServiceStatusType;
   internalStatus?: InternalServiceStatusType;
   metadata: unknown;
   statusTimestamp: number;
-  tenantId: string;
-  tenantName: { $regex: string; $options: 'i' };
-  tenantRealm: string;
   enabled: boolean;
 }
 

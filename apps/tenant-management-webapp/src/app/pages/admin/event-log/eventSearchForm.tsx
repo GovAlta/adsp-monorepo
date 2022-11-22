@@ -84,7 +84,9 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
   const onKeyDown = (e) => {
     setError(false);
     setOpen(true);
-    if (e.keyCode === 13) {
+    if (e.keyCode === 9) {
+      setOpen(false);
+    } else if (e.keyCode === 13) {
       setActiveSuggestionIndex(0);
       setOpen(false);
       selectSuggestion(filteredSuggestions[activeSuggestionIndex]);
@@ -138,7 +140,14 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
           <GoAFormItem helpText={!error && message} error={error && message}>
             <label>Search event namespace and name</label>
 
-            <div className={open ? 'search search-open' : 'search'}>
+            <div
+              className={open ? 'search search-open' : 'search'}
+              onKeyDown={(e) => {
+                if (e.keyCode === 9) {
+                  setOpen(false);
+                }
+              }}
+            >
               <input
                 type="text"
                 name="searchBox"
@@ -155,6 +164,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
                   }
                 }}
               />
+
               <GoAIconButton
                 type={open ? 'close-circle' : 'chevron-down'}
                 size="medium"
@@ -199,6 +209,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
             aria-label="timestampMin"
             value={searchCriteria.timestampMin}
             onChange={(e) => setValue('timestampMin', e.target.value)}
+            onClick={() => setOpen(false)}
           />
         </GoAFormItem>
         <GoAFormItem>
@@ -210,6 +221,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
             aria-label="timestampMax"
             value={searchCriteria.timestampMax}
             onChange={(e) => setValue('timestampMax', e.target.value)}
+            onClick={() => setOpen(false)}
           />
         </GoAFormItem>
       </GoAFlexRow>

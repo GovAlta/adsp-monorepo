@@ -101,6 +101,10 @@ Feature: File service
     Then no critical or serious accessibility issues on "file service overview page"
     When the user selects "File types" tab for "File"
     Then no critical or serious accessibility issues on "file types page"
+  ## CS-1833 pending for fix
+  # When the user clicks Add file type button on file types page
+  # Then no critical or serious accessibility issues for "file type modal" on "file types page"
+  # When the user clicks Cancel button on file type modal
   # CS-1826 pending for fix
   # When the user selects "Test files" tab for "File"
   # Then no critical or serious accessibility issues on "file test files page"

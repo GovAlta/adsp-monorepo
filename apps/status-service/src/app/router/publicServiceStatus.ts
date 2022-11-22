@@ -29,10 +29,10 @@ export const getApplicationsByName =
 
       const config = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(tenantId);
       const apps = new StatusApplications(config);
-
-      const statuses = await serviceStatusRepository.find({
-        tenantId: tenantId.toString(),
+      const appKeys = apps.map((a) => {
+        return a.appKey;
       });
+      const statuses = await serviceStatusRepository.find({ appKey: { $in: appKeys } });
 
       const results = apps.map((app) => {
         const status = statuses.find((s) => s.appKey === app.appKey);
@@ -40,7 +40,7 @@ export const getApplicationsByName =
           id: app.appKey,
           name: app.name,
           description: app.description,
-          status: status?.status || 'operational',
+          status: status?.status || '',
           lastUpdated: status?.statusTimestamp ? new Date(status.statusTimestamp) : null,
         };
       });

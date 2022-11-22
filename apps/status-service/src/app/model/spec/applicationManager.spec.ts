@@ -16,6 +16,13 @@ const repositoryMock = {
   save: jest.fn(),
 };
 
+const notificationRepositoryMock = {
+  find: jest.fn(),
+  delete: jest.fn(),
+  save: jest.fn(),
+  get: jest.fn(),
+};
+
 const loggerMock = {
   info: jest.fn((msg) => console.log(msg)),
 } as unknown as Logger;
@@ -71,8 +78,6 @@ const appMock = [
       url: 'https://www.yahoo.com',
       description: 'MyApp goes to Hollywood',
       tenantId: 'urn:ads:mock-tenant:mock-service:bob:bobs-id',
-      tenantName: 'Platform',
-      tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
     },
   },
   {
@@ -82,8 +87,6 @@ const appMock = [
       url: 'https://www.google.com',
       description: 'MyApp - the sequel',
       tenantId: 'urn:ads:mock-tenant:mock-service:bill:bills-id',
-      tenantName: 'Platform',
-      tenantRealm: '1b0dbf9a-58be-4604-b995-18ff15dcdfd5',
     },
   },
 ];
@@ -92,8 +95,8 @@ describe('Application Manager', () => {
   it('Can get Active Applications', async () => {
     const appManager = appManagerFactory('urn:ads:mock-tenant:mock-service');
     tenantServiceMock.getTenants.mockResolvedValue([
-      { tenantId: appMock[0][statusMock[0]._id].tenantId },
-      { tenantId: appMock[1][statusMock[1]._id].tenantId },
+      { id: appMock[0][statusMock[0]._id].tenantId },
+      { id: appMock[1][statusMock[1]._id].tenantId },
     ]);
     repositoryMock.findEnabledApplications.mockResolvedValueOnce(statusMock);
     configurationServiceMock.getConfiguration.mockResolvedValueOnce(appMock[0]).mockResolvedValueOnce(appMock[1]);
@@ -110,6 +113,7 @@ describe('Application Manager', () => {
       repositoryMock,
       directoryServiceMock,
       tenantServiceMock,
+      notificationRepositoryMock,
       loggerMock
     );
   };

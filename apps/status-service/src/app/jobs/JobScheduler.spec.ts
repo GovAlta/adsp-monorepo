@@ -1,6 +1,6 @@
 import { Logger } from 'winston';
 import { HealthCheckJobScheduler, HealthCheckSchedulingProps } from './JobScheduler';
-import { ServiceStatusApplicationEntity } from '../model';
+import { ServiceStatusApplicationEntity, StaticApplicationData } from '../model';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { adspId, EventService } from '@abgov/adsp-service-sdk';
@@ -36,6 +36,13 @@ describe('JobScheduler', () => {
     getResourceUrl: jest.fn(),
   };
 
+  const notificationServiceMock = {
+    find: jest.fn(),
+    delete: jest.fn(),
+    save: jest.fn(),
+    get: jest.fn(),
+  };
+
   const statusMock: ServiceStatusApplicationEntity[] = [
     {
       _id: '620ae946ddd181001195caad',
@@ -69,9 +76,12 @@ describe('JobScheduler', () => {
       statusRepoMock,
       directoryServiceMock,
       tenantServiceMock,
+      notificationServiceMock,
       loggerMock
     );
   };
+
+  const tenantId = adspId`urn:ads:mock-tenant:mock-service:bob:bobs-id`;
 
   const appMock = [
     {
@@ -81,7 +91,7 @@ describe('JobScheduler', () => {
         name: 'MyApp 1',
         url: 'https://www.yahoo.com',
         description: 'MyApp goes to Hollywood',
-        tenantId: 'urn:ads:mock-tenant:mock-service:bob:bobs-id',
+        tenantId: tenantId,
       },
     },
     {
@@ -91,7 +101,7 @@ describe('JobScheduler', () => {
         name: 'MyApp 2',
         url: 'https://www.google.com',
         description: 'MyApp - the sequel',
-        tenantId: 'urn:ads:mock-tenant:mock-service:bob:bobs-id',
+        tenantId: tenantId,
       },
     },
     {
@@ -101,7 +111,7 @@ describe('JobScheduler', () => {
         name: 'MyApp 3',
         url: 'https://www.boogie.com',
         description: 'MyApp - Going back in time',
-        tenantId: 'urn:ads:mock-tenant:mock-service:bob:bobs-id',
+        tenantId: tenantId,
       },
     },
   ];
@@ -139,15 +149,19 @@ describe('JobScheduler', () => {
     };
 
     configurationServiceMock.getConfiguration.mockResolvedValueOnce(appConfig);
-    tenantServiceMock.getTenants.mockResolvedValueOnce([{ tenantId: app0.tenantId }]);
+    tenantServiceMock.getTenants.mockResolvedValueOnce([{ id: app0.tenantId }]);
 
     jobCache.clear(jest.fn());
     await jobScheduler.loadHealthChecks(healthCheckScheduler, dataResetScheduler, cacheReloadScheduler);
     expect(dataResetScheduler).toHaveBeenCalledTimes(1);
     expect(cacheReloadScheduler).toHaveBeenCalledTimes(1);
     expect(healthCheckScheduler.schedule).toHaveBeenCalledTimes(2);
-    expect(healthCheckScheduler.schedule).toHaveBeenCalledWith(expect.objectContaining(app0));
-    expect(healthCheckScheduler.schedule).toHaveBeenCalledWith(expect.objectContaining(app1));
+    expect(healthCheckScheduler.schedule).toHaveBeenCalledWith(
+      expect.objectContaining({ ...app0, tenantId: app0.tenantId })
+    );
+    expect(healthCheckScheduler.schedule).toHaveBeenCalledWith(
+      expect.objectContaining({ ...app1, tenantId: app1.tenantId })
+    );
     expect(jobCache.getApplicationIds().length).toEqual(2);
     expect(jobCache.exists(app0.appKey)).toBe(true);
     expect(jobCache.exists(app1.appKey)).toBe(true);
@@ -157,7 +171,7 @@ describe('JobScheduler', () => {
   it('can start individual health check jobs', () => {
     jobCache.clear(jest.fn());
     const scheduler = jest.fn();
-    const app0 = appMock[0][statusMock[0]._id];
+    const app0 = appMock[0][statusMock[0]._id] as StaticApplicationData;
     jobScheduler.startHealthChecks(app0, getScheduler(props, scheduler));
     expect(scheduler).toHaveBeenCalledTimes(1);
     expect(jobCache.getApplicationIds().length).toEqual(1);

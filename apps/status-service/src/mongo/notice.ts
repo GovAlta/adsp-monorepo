@@ -14,7 +14,7 @@ export default class MongoNoticeRepository implements NoticeRepository {
   async get(id: string, tenantId: string): Promise<NoticeApplicationEntity> {
     const doc = await this.model.findOne({ _id: id });
     if (tenantId && doc && doc.tenantId !== tenantId) {
-      return Promise.resolve(null)
+      return Promise.resolve(null);
     }
     return Promise.resolve(this.fromDoc(doc));
   }
@@ -31,11 +31,11 @@ export default class MongoNoticeRepository implements NoticeRepository {
     }
 
     if (filter?.tenantId) {
-      criteria = { ...criteria, tenantId: filter.tenantId }
+      criteria = { ...criteria, tenantId: filter.tenantId };
     }
 
     const total = await this.model.find(criteria, null, { lean: true }).count();
-    const next = (after + top) < total ? `after=${after + top}&top=${top}` : null
+    const next = after + top < total ? `after=${after + top}&top=${top}` : null;
     return new Promise<Results<NoticeApplicationEntity>>((resolve, reject) => {
       this.model
         .find(criteria, null, { lean: true })
@@ -46,14 +46,14 @@ export default class MongoNoticeRepository implements NoticeRepository {
           err
             ? reject(err)
             : resolve({
-              results: docs.map((doc) => this.fromDoc(doc)),
-              page: {
-                after,
-                next,
-                size: docs.length,
-                total
-              },
-            })
+                results: docs.map((doc) => this.fromDoc(doc)),
+                page: {
+                  after,
+                  next,
+                  size: docs.length,
+                  total,
+                },
+              })
         );
     });
   }
@@ -92,7 +92,7 @@ export default class MongoNoticeRepository implements NoticeRepository {
       created: application.created,
       tenantId: application.tenantId,
       isAllApplications: application.isAllApplications,
-      tenantName: application.tenantName
+      tenantName: application.tenantName,
     };
   }
 
