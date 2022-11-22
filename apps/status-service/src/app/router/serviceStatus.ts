@@ -33,9 +33,9 @@ export const getApplications = (logger: Logger, applicationRepo: ApplicationRepo
       if (!tenantId) {
         throw new UnauthorizedError('missing tenant id');
       }
-      const applications = await applicationRepo.getTenantApps(tenantId);
-      const statuses = await applicationRepo.getTenantStatuses(tenantId);
-      const result = applications.map((app) => {
+      const apps = await applicationRepo.getTenantApps(tenantId);
+      const statuses = await applicationRepo.findAllStatuses(apps);
+      const result = apps.map((app) => {
         const status = statuses.find((s) => s.appKey == app.appKey) || null;
         return applicationRepo.mergeApplicationData(tenantId.toString(), app, status);
       });
@@ -135,7 +135,6 @@ export const updateApplication =
       }
 
       const update: StaticApplicationData = {
-        _id: app._id,
         appKey,
         name,
         url: endpoint.url,

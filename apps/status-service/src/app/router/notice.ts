@@ -1,5 +1,5 @@
 import { assertAuthenticatedHandler, NotFoundError, UnauthorizedError } from '@core-services/core-common';
-import { adspId, EventService, TenantService } from '@abgov/adsp-service-sdk';
+import { EventService, TenantService } from '@abgov/adsp-service-sdk';
 import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
 import { NoticeApplicationEntity } from '../model/notice';
@@ -7,14 +7,7 @@ import { NoticeRepository } from '../repository/notice';
 import { ServiceUserRoles, NoticeModeType } from '../types';
 import { applicationNoticePublished } from '../events';
 import type { User } from '@abgov/adsp-service-sdk';
-import { StatusApplications } from '../model/statusApplications';
-import { StatusServiceConfiguration } from '../model';
 
-interface TenantServRef {
-  name: string;
-  // This is set to the appKey of a status-service application.
-  id: string;
-}
 export interface NoticeRouterProps {
   logger: Logger;
   noticeRepository: NoticeRepository;
@@ -27,17 +20,6 @@ interface NoticeFilter {
   tenantName?: string;
   tenantId?: string;
 }
-
-const stringifyTenantServRef = (tenantServRef?: string | TenantServRef[] | null): string => {
-  if (!tenantServRef) {
-    return JSON.stringify([]);
-  } else {
-    if (typeof tenantServRef !== 'string') {
-      return JSON.stringify(tenantServRef);
-    }
-  }
-  return tenantServRef;
-};
 
 export const getNotices =
   (logger: Logger, tenantService: TenantService, noticeRepository: NoticeRepository): RequestHandler =>
@@ -76,17 +58,13 @@ export const getNotices =
         parseInt(after?.toString()) || 0,
         filter
       );
-      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
-        adspId`${filter.tenantId}`
-      );
-      const apps = new StatusApplications(configuration);
       res.json({
         page: notices.page,
         results: notices.results.map((result) => ({
           ...result,
           // temporary to facilitate a rename from active to published
           mode: result.mode === 'active' ? 'published' : result.mode,
-          tennantServRef: toExternalRef(result.tennantServRef, apps),
+          tennantServRef: JSON.parse(result.tennantServRef),
         })),
       });
     } catch (err) {
@@ -110,11 +88,10 @@ export const getNoticeById =
       }
 
       if (notice.canAccessById(user, notice)) {
-        const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
-          user.tenantId
-        );
-        const apps = new StatusApplications(configuration);
-        res.json({ ...notice, tennantServRef: toExternalRef(notice.tennantServRef, apps) });
+        res.json({
+          ...notice,
+          tennantServRef: JSON.parse(notice.tennantServRef),
+        });
       } else {
         throw new UnauthorizedError('User not authorized to get subscribers');
       }
@@ -139,7 +116,10 @@ export const deleteNotice =
       }
 
       notice.delete(user);
-      res.json(notice);
+      res.json({
+        ...notice,
+        tennantServRef: JSON.parse(notice.tennantServRef),
+      });
     } catch (err) {
       const errMessage = `Error deleting notice: ${err.message}`;
       logger.error(errMessage);
@@ -155,17 +135,11 @@ export const createNotice =
     try {
       const { message, startDate, endDate, isAllApplications, tennantServRef } = req.body;
       const user = req.user as User;
-      const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
-        user.tenantId
-      );
-      const apps = new StatusApplications(configuration);
       const tenant = await tenantService.getTenant(user.tenantId);
-
-      const tenantServRef = toInternalRef(tennantServRef, apps);
 
       const notice = await NoticeApplicationEntity.create(user, noticeRepository, {
         message,
-        tennantServRef: tenantServRef,
+        tennantServRef: JSON.stringify(tennantServRef),
         startDate,
         endDate,
         tenantName: tenant.name,
@@ -175,7 +149,10 @@ export const createNotice =
         tenantId: user.tenantId.toString(),
       });
 
-      res.status(201).json({ ...notice, tennantServRef: toExternalRef(notice.tennantServRef, apps) });
+      res.status(201).json({
+        ...notice,
+        tennantServRef: JSON.parse(notice.tennantServRef),
+      });
     } catch (err) {
       const errMessage = `Error creating notice: ${err.message}`;
       logger.error(errMessage);
@@ -191,13 +168,7 @@ export const updateNotice =
     const { message, startDate, endDate, mode, isAllApplications } = req.body;
     const { id } = req.params;
     const user = req.user as User;
-
-    const configuration = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
-      user.tenantId
-    );
-    const apps = new StatusApplications(configuration);
-
-    const tenantServRef = toInternalRef(req.body.tennantServRef, apps);
+    const tenantServRef = req.body.tennantServRef;
 
     try {
       // TODO: this needs to be moved to a service
@@ -206,7 +177,7 @@ export const updateNotice =
         throw new NotFoundError('Service Notice', id);
       }
       const applicationMode = notice.mode;
-      const updatedApplication = await notice.update(user, {
+      const updatedNotice = await notice.update(user, {
         message,
         tennantServRef: tenantServRef,
         startDate,
@@ -220,8 +191,8 @@ export const updateNotice =
       }
 
       res.json({
-        ...updatedApplication,
-        tennantServRef: toExternalRef(tenantServRef, apps),
+        ...updatedNotice,
+        tennantServRef: JSON.parse(updatedNotice.tennantServRef),
       });
     } catch (err) {
       const errMessage = `Error updating notice: ${err.message}`;
@@ -249,32 +220,3 @@ export function createNoticeRouter({
 
   return router;
 }
-
-// Change the app _id to the appKey for communication with the outside world.
-const toExternalRef = (internalRef: string, applications: StatusApplications): TenantServRef[] => {
-  // the notice may reference zero or more applications.
-  const stringRefs = internalRef || '[]';
-  const refs: TenantServRef[] = JSON.parse(stringRefs);
-  const externalRefs = refs.map((r) => {
-    const apps = applications.filter((int) => int._id === r.id);
-    if (apps.length > 0) {
-      return { name: r.name, id: apps[0].appKey };
-    }
-  });
-  return externalRefs;
-};
-
-// Change the appKey to _id, for storage in the DB (to maintain backward compatibility)
-const toInternalRef = (externalRefs: TenantServRef[], applications: StatusApplications): string => {
-  const internalTenantServRef = externalRefs
-    .map((ex) => {
-      const apps = applications.filter((a) => a.appKey === ex.id);
-      if (apps.length > 0) {
-        return { name: ex.name, id: apps[0]._id };
-      } else {
-        return null;
-      }
-    })
-    .filter((r) => r !== null);
-  return stringifyTenantServRef(internalTenantServRef);
-};

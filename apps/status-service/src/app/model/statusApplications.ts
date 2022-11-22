@@ -1,4 +1,5 @@
 import { appPropertyRegex } from '../../mongo/schema';
+import { ApplicationRepo } from '../router/ApplicationRepo';
 import { StaticApplicationData, StatusServiceConfiguration } from './serviceStatus';
 
 export class StatusApplications {
@@ -16,7 +17,6 @@ export class StatusApplications {
   }
 
   [Symbol.iterator]() {
-    // Applications are keyed off of Mongo Object id's.
     const keys = Object.keys(this.#apps);
     return new AppIterator(this.#apps, keys);
   }
@@ -42,7 +42,7 @@ export class StatusApplications {
   get(id: string): StaticApplicationData {
     const regex = new RegExp(appPropertyRegex);
     if (!regex.test(id)) return null;
-    return (this.#apps[id] as StaticApplicationData) ?? null;
+    return this.#apps[id] ?? null;
   }
 
   find = (appKey: string): StaticApplicationData => {
@@ -63,7 +63,7 @@ export class StatusApplications {
   static fromArray = (apps: StaticApplicationData[]): StatusApplications => {
     const result: StatusServiceConfiguration = {};
     apps.forEach((a) => {
-      result[a._id] = a;
+      result[a.appKey] = a;
     });
     return new StatusApplications(result);
   };
