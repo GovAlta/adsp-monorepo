@@ -366,15 +366,6 @@ Then('the user views the tenant name of {string}', function (tenantName) {
   tenantAdminObj.tenantName().should('have.text', tenantName);
 });
 
-Then('the user views the release info and DIO contact info', function () {
-  tenantAdminObj
-    .releaseContactInfo()
-    .invoke('text')
-    .then((text) => {
-      expect(text).to.match(/This service is in .+ release.+ adsp@gov.ab.ca/g);
-    });
-});
-
 When('the user clicks Copy login link', function () {
   tenantAdminObj.copyLoginLinkButton().shadow().find('button').scrollIntoView().click({ force: true });
 });

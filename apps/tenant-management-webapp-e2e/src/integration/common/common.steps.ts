@@ -98,8 +98,8 @@ Then('no critical or serious accessibility issues for {string} on {string}', fun
     case 'select an event modal':
       elementIdentifier = '[data-testid="event-form"]';
       break;
-    case 'contact information modal':
-      elementIdentifier = '[data-testid="notification-types-form"]';
+    case 'edit notification contact information modal':
+      elementIdentifier = '[data-testid="edit-contact-information-notification"]';
       break;
     case 'add PDF template modal':
       elementIdentifier = '[data-testid="template-form"]';
@@ -107,11 +107,11 @@ Then('no critical or serious accessibility issues for {string} on {string}', fun
     case 'add script modal':
       elementIdentifier = '[data-testid="add-script-modal"]';
       break;
-    case 'edit contact information modal':
-      elementIdentifier = '[data-testid="notification-types-form"]';
+    case 'edit status contact information modal':
+      elementIdentifier = '[data-testid="edit-contact-information-status"]';
       break;
     case 'add application modal':
-      elementIdentifier = '.fade-in-start > .fade-out-init > .modal-root > .modal > .modal-container';
+      elementIdentifier = '[data-testid="add-application"]';
       break;
     case 'add notice modal':
       elementIdentifier = '[data-testid="notice-modal"]';

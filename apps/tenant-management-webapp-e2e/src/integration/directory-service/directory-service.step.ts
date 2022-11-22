@@ -36,6 +36,7 @@ Given('a tenant admin user is on directory entries page', function () {
 
 When('the user clicks Add entry button', function () {
   directoryObj.addEntryButton().click();
+  cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
 Then('the user {string} Add entry modal', function (viewOrNot) {
