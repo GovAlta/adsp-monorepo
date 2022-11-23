@@ -1,7 +1,6 @@
 import { adspId, AdspId, ServiceDirectory, Tenant, TokenProvider, User } from '@abgov/adsp-service-sdk';
-import { NotFoundError, UnauthorizedError } from '@core-services/core-common';
+import { NotFoundError } from '@core-services/core-common';
 import axios from 'axios';
-import mongoose from 'mongoose';
 import { appPropertyRegex } from '../../mongo/schema';
 import { ServiceStatusApplicationEntity, StaticApplicationData, StatusServiceConfiguration } from '../model';
 import { StatusApplications } from '../model/statusApplications';
@@ -58,6 +57,13 @@ export class ApplicationRepo {
     return applications.find(appKey);
   };
 
+  findAllStatuses = async (apps: StatusApplications) => {
+    const appIds = apps.map((a) => {
+      return a.appKey;
+    });
+    return await this.#repository.find({ appKey: { $in: appIds } });
+  };
+
   /*
    * Get apps from the configuration-service.  Because of the latency between
    * creating a new app and the configuration-service cache being updated, even
@@ -87,10 +93,6 @@ export class ApplicationRepo {
       apps[k] = { ...data[k], tenantId: tenantId };
     });
     return new StatusApplications(apps);
-  };
-
-  getTenantStatuses = async (tenantId: AdspId): Promise<ServiceStatusApplicationEntity[]> => {
-    return await this.#repository.find({ tenantId: tenantId.toString() });
   };
 
   mergeApplicationData = (tenantId: string, app: StaticApplicationData, status?: ServiceStatusApplicationEntity) => {
@@ -133,16 +135,15 @@ export class ApplicationRepo {
       `/configuration/v2/configuration/platform/status-service?tenantId=${newApp.tenantId}`,
       baseUrl
     );
-    const updated = newApp._id ? newApp : { ...newApp, _id: new mongoose.Types.ObjectId() };
     // Configuration must be tenantless, so it can be
     // imported by other tenants.
-    delete updated.tenantId;
+    delete newApp.tenantId;
     await axios.patch(
       configUrl.href,
       {
         operation: 'UPDATE',
         update: {
-          [updated._id.toString()]: updated,
+          [newApp.appKey]: newApp,
         },
       },
       {
@@ -162,7 +163,7 @@ export class ApplicationRepo {
     if (appStatus) {
       await appStatus.delete({ ...user } as User);
     }
-    this.#deleteConfigurationApp(app._id, user.tenantId);
+    this.#deleteConfigurationApp(appKey, user.tenantId);
   };
 
   #deleteConfigurationApp = async (id: string, tenantId: AdspId) => {
@@ -185,7 +186,9 @@ export class ApplicationRepo {
   // status.  This algorithm assumes that the application name
   // will be unique within a tenant context.
   static getApplicationKey = (tenantName: string, appName: string): string => {
-    return ApplicationRepo.toKebabCase(`${tenantName}-${appName}`);
+    // Its a verb: to kebab.
+    const kebabed = ApplicationRepo.toKebabCase(`${tenantName}-${appName}`);
+    return `app_${kebabed}`;
   };
 
   private static toKebabCase = (s: string): string => {

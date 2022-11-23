@@ -21,6 +21,7 @@ Given('a tenant admin user is on notification overview page', function () {
 
 When('the user clicks Add notification type button', function () {
   notificationsObj.addANotificationTypeButtonOnOverview().click();
+  cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
 Then('the user views Add notification type modal', function () {
@@ -163,9 +164,14 @@ When(
   }
 );
 
-Then('the user clicks save button in notification type modal', function () {
+Then('the user clicks Save button in notification type modal', function () {
   notificationsObj.notificationTypeModalSaveBtn().click();
   cy.wait(2000);
+});
+
+Then('the user clicks Cancel button in notification type modal', function () {
+  notificationsObj.notificationTypeModalCancelBtn().click();
+  cy.wait(1000);
 });
 
 Then(
@@ -222,6 +228,7 @@ Given('a tenant admin user is on notification types page', function () {
 
 When('the user clicks Select event button for {string}', function (cardTitle) {
   notificationsObj.notificationTypeSelectAnEventBtn(cardTitle).click({ force: true });
+  cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
 Then('the user views Select an event modal', function () {
@@ -606,6 +613,7 @@ When('the user clicks Delete button on Delete subscriber modal', function () {
 
 When('the user clicks edit button for contact information', function () {
   notificationsObj.contactInformationEdit().click();
+  cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
 Then('the user views Edit contact information modal', function () {
@@ -646,6 +654,11 @@ When(
 Then('the user clicks Save button in Edit contact information modal', function () {
   notificationsObj.editContactModalSaveBtn().click();
   cy.wait(2000);
+});
+
+Then('the user clicks Cancel button in Edit contact information modal', function () {
+  notificationsObj.editContactModalCancelBtn().click();
+  cy.wait(1000);
 });
 
 Then(

@@ -363,6 +363,7 @@ Then('the user views file types page', function () {
 
 When('the user clicks Add file type button on file types page', function () {
   fileServiceObj.addFileTypeButton().click();
+  cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
 Then('the user views {string} file type modal', function (addOrEdit) {
@@ -439,6 +440,11 @@ When('the user enters {string}, {string}, {string} on file type modal', function
 When('the user clicks Save button on file type modal', function () {
   fileServiceObj.fileTypeModalSaveButton().click();
   cy.wait(2000); // Wait the file type list to refresh
+});
+
+When('the user clicks Cancel button on file type modal', function () {
+  fileServiceObj.fileTypeModalCancelButton().click();
+  cy.wait(1000); // Wait the file type list to refresh
 });
 
 Then('the user {string} the file type of {string}, {string}, {string}', function (action, name, readRole, updateRole) {

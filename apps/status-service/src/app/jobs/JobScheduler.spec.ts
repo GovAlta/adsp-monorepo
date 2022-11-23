@@ -36,6 +36,13 @@ describe('JobScheduler', () => {
     getResourceUrl: jest.fn(),
   };
 
+  const notificationServiceMock = {
+    find: jest.fn(),
+    delete: jest.fn(),
+    save: jest.fn(),
+    get: jest.fn(),
+  };
+
   const statusMock: ServiceStatusApplicationEntity[] = [
     {
       _id: '620ae946ddd181001195caad',
@@ -69,6 +76,7 @@ describe('JobScheduler', () => {
       statusRepoMock,
       directoryServiceMock,
       tenantServiceMock,
+      notificationServiceMock,
       loggerMock
     );
   };

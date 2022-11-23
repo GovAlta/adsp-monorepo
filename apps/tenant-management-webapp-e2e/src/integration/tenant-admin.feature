@@ -70,7 +70,7 @@ Feature: Tenant admin
   Scenario: As a tenant admin, I should be able to see useful information on the landing page
     Given a tenant admin user is on tenant admin page
     Then the user views the tenant name of "autotest"
-    And the user views the release info and DIO contact info
+    And the user views the link of "Get support" under Support
     And the user views an instruction of role requirement indicating user needs tenant-admin
     When the user clicks Copy login link
     Then the user views the message of "Link copied to clipboard" from clicking Copy login link

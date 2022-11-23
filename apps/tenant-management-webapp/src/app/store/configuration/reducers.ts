@@ -13,6 +13,7 @@ import {
   RESET_IMPORTS_LIST_ACTION,
   FETCH_CONFIGURATION_REVISIONS_SUCCESS_ACTION,
   FETCH_CONFIGURATION_ACTIVE_REVISION_SUCCESS_ACTION,
+  REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION,
 } from './action';
 import {
   ConfigurationDefinitionState,
@@ -96,6 +97,15 @@ export default function (
     case RESET_IMPORTS_LIST_ACTION:
       return { ...state, imports: [] };
     case SET_CONFIGURATION_REVISION_SUCCESS_ACTION: {
+      state.configurationRevisions[action.service]?.revisions?.result?.unshift(action.payload.data?.latest);
+      const latest = state.configurationRevisions[action.service]?.revisions?.result[0]?.revision;
+      state.configurationRevisions[action.service].revisions.latest = latest;
+
+      return {
+        ...state,
+      };
+    }
+    case REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION: {
       const stateImports = JSON.parse(JSON.stringify(state.imports));
       action.payload.data.success = true;
       stateImports.unshift(action.payload.data);

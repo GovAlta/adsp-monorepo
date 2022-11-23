@@ -96,6 +96,11 @@ When('the user clicks Save as draft button', function () {
   cy.wait(2000);
 });
 
+When('the user clicks Cancel button in notice modal', function () {
+  statusObj.noticeModalCancelButton().click();
+  cy.wait(1000);
+});
+
 // Date time picker UI isn't finalized and dates are today only for now
 Then(
   'the user {string} the {string} notice of {string}, {string}, {string}, {string}, {string}, {string}',
@@ -447,6 +452,7 @@ Then('the user views the subscribe checkbox is {string}', function (checkboxStat
 
 When('the user clicks Add application button', function () {
   statusObj.addApplicationButton().click();
+  cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
 Then('the user views Add application modal', function () {
@@ -465,6 +471,11 @@ When(
 Then('the user clicks Save application button', function () {
   statusObj.addApplicationSaveBtn().click();
   cy.wait(4000);
+});
+
+Then('the user clicks Cancel application button', function () {
+  statusObj.addApplicationCancelBtn().click();
+  cy.wait(1000);
 });
 
 Then('the user {string} {string} in the application list', function (viewOrNot, appName) {
@@ -605,6 +616,11 @@ When('the user enters {string} in Edit contact information modal', function (ema
 
 Then('the user clicks Save button on contact information modal', function () {
   statusObj.editContactInformationEmailSaveBtn().click();
+  cy.wait(1000);
+});
+
+Then('the user clicks Cancel button on contact information modal', function () {
+  statusObj.editContactInformationEmailCancelBtn().click();
   cy.wait(1000);
 });
 

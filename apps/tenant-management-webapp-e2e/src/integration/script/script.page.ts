@@ -41,6 +41,10 @@ class ScriptPage {
     return cy.get('[data-testid="script-modal-save"]');
   }
 
+  scriptModalCancelButton() {
+    return cy.get('[data-testid="script-modal-cancel"]');
+  }
+
   scriptTableBody() {
     return cy.xpath('//table[@data-testid="script-table"]//tbody');
   }

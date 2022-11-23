@@ -62,6 +62,11 @@ When('the user clicks Save button in Add script modal', function () {
   cy.wait(2000);
 });
 
+When('the user clicks Cancel button in Add script modal', function () {
+  scriptObj.scriptModalCancelButton().click();
+  cy.wait(1000);
+});
+
 Then('the user {string} the script of {string}, {string}, {string}', function (viewOrNot, name, desc, role) {
   findScript(name, desc, role).then((rowNumber) => {
     switch (viewOrNot) {

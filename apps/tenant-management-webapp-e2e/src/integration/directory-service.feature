@@ -135,3 +135,8 @@ Feature: Directory-service
     Then no critical or serious accessibility issues on "directory overview page"
     When the user selects "Entries" tab for "Directory"
     Then no critical or serious accessibility issues on "directory entries page"
+    When the user clicks Add entry button
+    Then the user "views" Add entry modal
+    And no critical or serious accessibility issues for "directory entry modal" on "directory entries page"
+    When the user clicks Cancel button in Entry modal
+    Then the user "should not view" Add entry modal

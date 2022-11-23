@@ -20,6 +20,7 @@ Then('the user views the Pdf service overview content {string}', function (parag
 
 When('the user clicks Add template button', function () {
   pdfServiceObj.pdfAddTemplateBtn().click();
+  cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
 Then('the user views Add template modal', function () {
@@ -32,8 +33,13 @@ When('the user enters {string} as name, {string} as description in pdf template 
 });
 
 Then('the user clicks Save button in Add template modal', function () {
-  pdfServiceObj.pdfAddTemplateModalSveBtn().click();
+  pdfServiceObj.pdfAddTemplateModalSaveBtn().click();
   cy.wait(2000);
+});
+
+Then('the user clicks Cancel button in Add template modal', function () {
+  pdfServiceObj.pdfAddTemplateModalCancelBtn().click();
+  cy.wait(1000);
 });
 
 Then(

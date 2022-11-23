@@ -65,6 +65,10 @@ class NotificationsPage {
     return cy.get('[data-testid="form-save"]');
   }
 
+  notificationTypeModalCancelBtn() {
+    return cy.get('[data-testid="form-cancel"]');
+  }
+
   notificationTypeEditBtn(notificationTypeTitle) {
     return cy.xpath(
       `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/following-sibling::*//*[@data-testid="edit-notification-type"]`
@@ -368,6 +372,10 @@ class NotificationsPage {
 
   editContactModalSaveBtn() {
     return cy.get('[data-testid="form-save"]');
+  }
+
+  editContactModalCancelBtn() {
+    return cy.get('[data-testid="form-cancel"]');
   }
 
   contactInformationEmail() {

@@ -80,8 +80,59 @@ Then('no critical or serious accessibility issues for {string} on {string}', fun
     case 'event template modal':
       elementIdentifier = '[data-testid="template-form"]';
       break;
+    case 'configuration definition modal':
+      elementIdentifier = '[data-testid="definition-form"]';
+      break;
+    case 'directory entry modal':
+      elementIdentifier = '[data-testid="directory-modal"]';
+      break;
+    case 'event definition modal':
+      elementIdentifier = '[data-testid="definition-form"]';
+      break;
+    case 'file type modal':
+      elementIdentifier = '[data-testid="file-type-modal"]';
+      break;
+    case 'notification type modal':
+      elementIdentifier = '[data-testid="notification-types-form"]';
+      break;
+    case 'select an event modal':
+      elementIdentifier = '[data-testid="event-form"]';
+      break;
+    case 'edit notification contact information modal':
+      elementIdentifier = '[data-testid="edit-contact-information-notification"]';
+      break;
+    case 'add PDF template modal':
+      elementIdentifier = '[data-testid="template-form"]';
+      break;
+    case 'add script modal':
+      elementIdentifier = '[data-testid="add-script-modal"]';
+      break;
+    case 'edit status contact information modal':
+      elementIdentifier = '[data-testid="edit-contact-information-status"]';
+      break;
+    case 'add application modal':
+      elementIdentifier = '[data-testid="add-application"]';
+      break;
+    case 'add notice modal':
+      elementIdentifier = '[data-testid="notice-modal"]';
+      break;
     default:
-      expect(elementName).to.be.oneOf(['PDF template modal', 'script edit modal', 'event template modal']);
+      expect(elementName).to.be.oneOf([
+        'PDF template modal',
+        'script edit modal',
+        'event template modal',
+        'configuration definition modal',
+        'directory entry modal',
+        'event definition modal',
+        'file type modal',
+        'notification type modal',
+        'select an event modal',
+        'add PDF template modal',
+        'add script modal',
+        'edit contact information modal',
+        'add application modal',
+        'add notice modal',
+      ]);
   }
   // check all accessibility issues and generate a report without failing the step.
   cy.checkA11y(

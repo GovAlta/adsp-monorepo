@@ -21,6 +21,7 @@ import { toKebabName } from '@lib/kebabName';
 interface Props {
   isOpen: boolean;
   title: string;
+  testId: string;
   defaultApplication: ApplicationStatus;
   onCancel?: () => void;
   onSave?: () => void;
@@ -54,7 +55,14 @@ const healthEndpointsSelector = createSelector(
   }
 );
 
-export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSave, defaultApplication }: Props) => {
+export const ApplicationFormModal: FC<Props> = ({
+  isOpen,
+  title,
+  onCancel,
+  onSave,
+  testId,
+  defaultApplication,
+}: Props) => {
   const dispatch = useDispatch();
   const [application, setApplication] = useState<ApplicationStatus>({ ...defaultApplication });
   const tenantServiceUrns = useSelector(tenantServiceURNSelector);
@@ -90,7 +98,7 @@ export const ApplicationFormModal: FC<Props> = ({ isOpen, title, onCancel, onSav
   useEffect(() => {}, [healthEndpoints]);
 
   return (
-    <GoAModal isOpen={isOpen}>
+    <GoAModal isOpen={isOpen} testId={testId}>
       <GoAModalTitle>{title}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>

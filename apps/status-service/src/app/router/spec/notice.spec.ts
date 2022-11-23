@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import { NoticeApplicationEntity } from '../../model';
 import { Logger } from 'winston';
 import { adspId } from '@abgov/adsp-service-sdk';
+
 describe('Notice service', () => {
   afterEach(() => {
     jest.clearAllMocks();

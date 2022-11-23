@@ -17,13 +17,13 @@ export type StatusServiceConfiguration = Record<string, StaticApplicationData>;
 // configuration.
 
 export interface StaticApplicationData {
-  _id: string;
   appKey: string;
   name: string;
   url: string;
   description?: string;
   // FIXME make this mandatory.  It is optional only for data conversion purposes,
-  // a run once operation. (Nov 18, 2022).
+  // a run once operation. (Nov 18, 2022).  It can be made mandatory when
+  // the conversion has been run in production.
   tenantId?: AdspId;
 }
 // Application data, combines the static

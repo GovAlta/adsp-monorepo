@@ -10,9 +10,11 @@ import {
 import axios from 'axios';
 import { Logger } from 'winston';
 import { appPropertyRegex } from '../../mongo/schema';
+import { NoticeRepository } from '../repository/notice';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { ApplicationRepo } from '../router/ApplicationRepo';
-import { StaticApplicationData, StatusServiceConfiguration } from './serviceStatus';
+import { NoticeApplicationEntity } from './notice';
+import ServiceStatusApplicationEntity, { StaticApplicationData, StatusServiceConfiguration } from './serviceStatus';
 import { StatusApplications } from './statusApplications';
 
 type ConfigurationFinder = (tenantId: AdspId) => Promise<StatusServiceConfiguration>;
@@ -25,6 +27,7 @@ export class ApplicationManager {
   #applicationRepo: ApplicationRepo;
   #tokenProvider: TokenProvider;
   #directory: ServiceDirectory;
+  #noticeRepository: NoticeRepository;
 
   constructor(
     tokenProvider: TokenProvider,
@@ -33,6 +36,7 @@ export class ApplicationManager {
     repository: ServiceStatusRepository,
     directory: ServiceDirectory,
     tenantService: TenantService,
+    noticeRepository: NoticeRepository,
     logger: Logger
   ) {
     this.#configurationFinder = this.#getConfigurationFinder(tokenProvider, service, serviceId);
@@ -42,6 +46,7 @@ export class ApplicationManager {
     this.#applicationRepo = new ApplicationRepo(repository, serviceId, directory, tokenProvider);
     this.#tokenProvider = tokenProvider;
     this.#directory = directory;
+    this.#noticeRepository = noticeRepository;
   }
 
   findEnabledApps = async () => {
@@ -109,43 +114,73 @@ export class ApplicationManager {
    * Ideally it only needs to be run once.  Nov 15, 2022.
    * @param logger - its a logger.
    */
-  synchronizeData = async (logger: Logger) => {
+  synchronizeData = async () => {
     const tenants = await this.#tenantService.getTenants();
     tenants.forEach(async (tenant: Tenant) => {
-      const config: StatusServiceConfiguration = await this.#configurationFinder(tenant.id);
-      const apps = new StatusApplications(config);
-      const ids = Object.keys(config);
-      let needsUpdate = false;
-      ids.forEach(async (_id) => {
-        const app = apps.get(_id);
-        // Fix up he app's configuration data; we need to add the appKey.
-        // Also, there is a small chance that
-        // the application ID is missing (bad migration from earlier (Oct. 2022))
-        // so ensure it is there.
-        if (app && !(app._id && app.appKey && !app.tenantId)) {
-          needsUpdate = true;
-          const appKey = ApplicationRepo.getApplicationKey(tenant.name, app.name);
-          config[_id] = {
-            name: app.name,
-            description: app.description,
-            url: app.url,
-            _id: _id,
-            appKey: appKey,
-          };
-        }
-      });
+      this.#updateAppStatus(tenant);
+      this.#updateNoticeReferences(tenant);
+      this.#updateAppDefinition(tenant);
+    });
+  };
+
+  #updateNoticeReferences = async (tenant: Tenant) => {
+    const notices = await this.#noticeRepository.find(0, 0, { tenantId: tenant.id.toString() });
+    const config: StatusServiceConfiguration = await this.#configurationFinder(tenant.id);
+    const apps = new StatusApplications(config);
+    const oldKeyType = new RegExp('^[a-fA-F0-9]{24}$');
+    notices.results.forEach(async (notice) => {
+      const ref = notice.tennantServRef ? JSON.parse(notice.tennantServRef) : null;
+      const needsUpdate = ref?.length > 0 && oldKeyType.test(ref[0].id);
       if (needsUpdate) {
-        logger.info(`Updating status-service configuration for tenant ${tenant.name}`);
-        try {
-          await this.updateConfig(config, tenant);
-        } catch (e) {
-          logger.info(`Error updating configuration for tenant ${tenant.name}...${e.message}`);
+        const app = apps.get(ref[0].id);
+        if (app) {
+          const appKey = ApplicationRepo.getApplicationKey(tenant.name, app.name);
+          await this.#noticeRepository.save(
+            new NoticeApplicationEntity(this.#noticeRepository, {
+              ...notice,
+              tennantServRef: JSON.stringify([{ name: ref[0].name, id: appKey }]),
+            })
+          );
         }
       }
     });
   };
 
-  updateConfig = async (config: StatusServiceConfiguration, tenant: Tenant) => {
+  #updateAppDefinition = async (tenant: Tenant) => {
+    const config: StatusServiceConfiguration = await this.#configurationFinder(tenant.id);
+    const newKeyType = new RegExp('^app_.+$');
+    const apps = new StatusApplications(config);
+    const ids = Object.keys(config);
+    let needsUpdate = false;
+    ids.forEach(async (appId) => {
+      const app = apps.get(appId);
+      // Fix up he app's configuration data; we need to add the appKey.
+      const hasNewKeyType = newKeyType.test(appId);
+      if (app) {
+        needsUpdate = needsUpdate || !app.appKey || !hasNewKeyType;
+        const newId = ApplicationRepo.getApplicationKey(tenant.name, app.name);
+        config[newId] = {
+          appKey: newId,
+          name: app.name,
+          description: app.description,
+          url: app.url,
+        };
+        if (!hasNewKeyType) {
+          delete config[appId];
+        }
+      }
+    });
+    if (needsUpdate) {
+      this.#logger.info(`Updating status-service configuration for tenant ${tenant.name}`);
+      try {
+        await this.#updateConfig(config, tenant);
+      } catch (e) {
+        this.#logger.info(`Error updating configuration for tenant ${tenant.name}...${e.message}`);
+      }
+    }
+  };
+
+  #updateConfig = async (config: StatusServiceConfiguration, tenant: Tenant) => {
     const baseUrl = await this.#directory.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
     const token = await this.#tokenProvider.getAccessToken();
     const configUrl = new URL(`/configuration/v2/configuration/platform/status-service?tenantId=${tenant.id}`, baseUrl);
@@ -159,5 +194,23 @@ export class ApplicationManager {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
+  };
+
+  #updateAppStatus = async (tenant: Tenant) => {
+    const newKeyType = new RegExp('^app_.+$');
+    const config: StatusServiceConfiguration = await this.#configurationFinder(tenant.id);
+    const apps = new StatusApplications(config);
+    apps.forEach(async (app) => {
+      if (app && app.appKey && !newKeyType.test(app.appKey)) {
+        const status = await this.#repository.get(app.appKey);
+        if (status) {
+          const newStatus = new ServiceStatusApplicationEntity(this.#repository, {
+            ...status,
+            appKey: ApplicationRepo.getApplicationKey(tenant.name, app.name),
+          });
+          await this.#repository.save(newStatus);
+        }
+      }
+    });
   };
 }
