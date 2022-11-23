@@ -4,6 +4,9 @@ import { saveApplication } from '@store/status/actions';
 import { fetchDirectory, fetchDirectoryDetailByURNs } from '@store/directory/actions';
 import { ApplicationStatus } from '@store/status/models';
 import { GoAButton, GoADropdownOption } from '@abgov/react-components';
+import { useValidators } from '@lib/useValidators';
+import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
+
 import {
   GoAForm,
   GoAFormItem,
@@ -71,6 +74,39 @@ export const ApplicationFormModal: FC<Props> = ({
   const healthEndpoints = useSelector(healthEndpointsSelector);
   const [openDropdown, setOpenDropdown] = useState<boolean>(false);
   const { directory } = useSelector((state: RootState) => state.directory);
+  const { applications } = useSelector((state: RootState) => state.serviceStatus);
+  const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
+
+  const isDuplicateAppName = (): Validator => {
+    return (appName: string) => {
+      let existingApp = false;
+      console.log('appName', appName);
+
+      for (const application of applications) {
+        existingApp = application.name === appName;
+      }
+      return existingApp ? 'application name is duplicate, please use a different name' : '';
+    };
+  };
+  const isDuplicateAppKey = (): Validator => {
+    return (appKey: string) => {
+      let existingApp = false;
+      console.log('appKey', appKey);
+      for (const application of applications) {
+        existingApp = application.appKey === appKey;
+      }
+      return existingApp ? 'application key is duplicate, please use a different name' : '';
+    };
+  };
+  const { errors, validators } = useValidators(
+    'name',
+    'name',
+    checkForBadChars,
+    isNotEmptyCheck('name'),
+    isDuplicateAppName()
+  )
+    .add('appKeyDuplicate', 'appKey', isDuplicateAppKey())
+    .build();
 
   function isFormValid(): boolean {
     if (!application?.name) return false;
@@ -104,22 +140,31 @@ export const ApplicationFormModal: FC<Props> = ({
       <GoAModalTitle>{title}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
-          <GoAFormItem>
+          <GoAFormItem error={errors?.['name'] || errors?.['appKey']}>
             <label>Application name</label>
             <GoAInput
               type="text"
               name="name"
               value={application?.name}
               onChange={(name, value) => {
-                // should not update appKey during update
+                console.log('errors', errors);
+
+                // name should be unique
+                validators['name'].check(value);
                 if (!isEdit) {
+                  // check for duplicate appKey
                   const appKey = toKebabName(value);
+                  const validations = {
+                    appKeyDuplicate: appKey,
+                  };
+                  validators.checkAll(validations);
                   setApplication({
                     ...application,
                     name: value,
                     appKey,
                   });
                 } else {
+                  // should not update appKey during update
                   setApplication({
                     ...application,
                     name: value,

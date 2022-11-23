@@ -53,7 +53,7 @@ export const AddEditStream = ({
   };
 
   const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
-    .add('duplicate', 'name', isDuplicateStreamId())
+    .add('duplicateName', 'name', isDuplicateStreamId())
     .build();
 
   const streamEvents = useMemo(() => {
@@ -94,7 +94,8 @@ export const AddEditStream = ({
                 data-testid="stream-name"
                 aria-label="stream-name"
                 onChange={(name, value) => {
-                  validators['name'].check(value);
+                  validators['name'].checkAll(value);
+                  // validators['duplicate'].check(value);
                   const streamId = toKebabName(value);
                   setStream({ ...stream, name: value, id: streamId });
                 }}
