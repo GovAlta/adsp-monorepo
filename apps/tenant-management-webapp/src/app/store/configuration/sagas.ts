@@ -259,11 +259,12 @@ export function* setConfigurationRevision(action: SetConfigurationRevisionAction
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const token: string = yield call(getAccessToken);
 
+  const service = action.service.split(':');
   if (baseUrl && token) {
     try {
       const revision = yield call(
         axios.post,
-        `${baseUrl}/configuration/v2/configuration/${action.request.namespace}/${action.request.name}`,
+        `${baseUrl}/configuration/v2/configuration/${service[0]}/${service[1]}`,
         {
           operation: 'CREATE-REVISION',
         },
@@ -272,7 +273,7 @@ export function* setConfigurationRevision(action: SetConfigurationRevisionAction
         }
       );
 
-      yield put(setConfigurationRevisionSuccessAction(revision));
+      yield put(setConfigurationRevisionSuccessAction(action.service, revision));
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));
     }
@@ -284,7 +285,7 @@ let replaceErrorConfiguration = [];
 export function* replaceConfigurationData(action: ReplaceConfigurationDataAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const token: string = yield call(getAccessToken);
-
+  const service = `${action.configuration.namespace}:${action.configuration.name}`;
   if (baseUrl && token) {
     if (action.configuration.configuration) {
       try {
@@ -298,12 +299,12 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
           const coreConfig = yield select(
             (state: RootState) => state.configuration.coreConfigDefinitions.configuration
           );
-          definition = coreConfig[`${action.configuration.namespace}:${action.configuration.name}`];
+          definition = coreConfig[service];
         } else {
           const tenantConfig: string = yield select(
             (state: RootState) => state.configuration.tenantConfigDefinitions.configuration
           );
-          definition = tenantConfig[`${action.configuration.namespace}:${action.configuration.name}`];
+          definition = tenantConfig[service];
         }
         // Check if configuration item following definition
         const jsonSchemaValidation = jsonSchemaCheck(
@@ -312,7 +313,7 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
         );
         if (!jsonSchemaValidation) {
           replaceErrorConfiguration.push({
-            name: `${action.configuration.namespace}:${action.configuration.name}`,
+            name: service,
             error: 'JSON schema could not be validated',
           });
           return;
@@ -329,7 +330,7 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
           }
         );
 
-        yield put(setConfigurationRevisionSuccessAction(revision));
+        yield put(setConfigurationRevisionSuccessAction(service, revision));
         // Send request to replace configuration
         //Import configuration replaces (REPLACE operation in PATCH) the configuration stored in latest revision
         yield call(
@@ -341,17 +342,17 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
           }
         );
 
-        yield put(replaceConfigurationDataSuccessAction());
+        yield put(replaceConfigurationDataSuccessAction(revision));
       } catch (err) {
         replaceErrorConfiguration.push({
-          name: `${action.configuration.namespace}:${action.configuration.name}`,
+          name: service,
           error: err.message,
         });
         yield put(getReplaceConfigurationErrorSuccessAction(replaceErrorConfiguration));
       }
     } else {
       replaceErrorConfiguration.push({
-        name: `${action.configuration.namespace}:${action.configuration.name}`,
+        name: service,
         error: 'Configuration is not set',
       });
     }
