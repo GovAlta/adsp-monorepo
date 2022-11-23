@@ -44,12 +44,12 @@ export default function (
     case FETCH_CONFIGURATION_DEFINITIONS_SUCCESS_ACTION:
       return {
         ...state,
-        coreConfigDefinitions: action.payload.core.latest,
-        tenantConfigDefinitions: action.payload.tenant.latest,
+        coreConfigDefinitions: action.payload.core?.latest,
+        tenantConfigDefinitions: action.payload.tenant?.latest,
         isAddedFromOverviewPage: false,
         serviceList: [
-          ...Object.keys(action.payload.core.latest?.configuration),
-          ...Object.keys(action.payload.tenant.latest?.configuration),
+          ...Object.keys(action.payload.core?.latest?.configuration || {}),
+          ...Object.keys(action.payload.tenant?.latest?.configuration || {}),
         ].sort((a, b) => (a < b ? -1 : 1)),
       };
     case UPDATE_CONFIGURATION_DEFINITION_SUCCESS_ACTION:
