@@ -78,10 +78,6 @@ export interface ConfigurationExportType {
   description?: string;
 }
 
-export interface ConfigurationRevisionRequest {
-  name: string;
-  namespace: string;
-}
 export interface ReplaceConfiguration {
   namespace: string;
   name: string;

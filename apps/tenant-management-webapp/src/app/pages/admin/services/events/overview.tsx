@@ -1,10 +1,9 @@
-import React, { FunctionComponent, useState, useEffect } from 'react';
+import React, { FunctionComponent, useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components';
-import { RootState } from '@store/index';
-import { EventDefinition, defaultEventDefinition } from '@store/event/models';
+
 import { getEventDefinitions } from '@store/event/actions';
-import { useDispatch, useSelector } from 'react-redux';
-import { EventDefinitionModalForm } from './edit';
+import { useDispatch } from 'react-redux';
+
 import { EventMetrics } from './metrics';
 import { fetchEventMetrics } from '@store/event/actions';
 
