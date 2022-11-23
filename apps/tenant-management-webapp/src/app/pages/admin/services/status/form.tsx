@@ -22,6 +22,7 @@ interface Props {
   isOpen: boolean;
   title: string;
   testId: string;
+  isEdit: boolean;
   defaultApplication: ApplicationStatus;
   onCancel?: () => void;
   onSave?: () => void;
@@ -62,6 +63,7 @@ export const ApplicationFormModal: FC<Props> = ({
   onSave,
   testId,
   defaultApplication,
+  isEdit,
 }: Props) => {
   const dispatch = useDispatch();
   const [application, setApplication] = useState<ApplicationStatus>({ ...defaultApplication });
@@ -104,18 +106,25 @@ export const ApplicationFormModal: FC<Props> = ({
         <GoAForm>
           <GoAFormItem>
             <label>Application name</label>
-
             <GoAInput
               type="text"
               name="name"
               value={application?.name}
               onChange={(name, value) => {
-                const appKey = toKebabName(value);
-                setApplication({
-                  ...application,
-                  name: value,
-                  appKey,
-                });
+                // should not update appKey during update
+                if (!isEdit) {
+                  const appKey = toKebabName(value);
+                  setApplication({
+                    ...application,
+                    name: value,
+                    appKey,
+                  });
+                } else {
+                  setApplication({
+                    ...application,
+                    name: value,
+                  });
+                }
               }}
               aria-label="name"
             />

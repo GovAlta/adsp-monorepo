@@ -93,6 +93,7 @@ function Status(): JSX.Element {
           <ApplicationFormModal
             isOpen={true}
             testId={'add-application'}
+            isEdit={false}
             title="Add application"
             onCancel={() => {
               setShowAddApplicationModal(false);

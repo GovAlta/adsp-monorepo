@@ -166,6 +166,8 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
       <ApplicationFormModal
         isOpen={showEditModal}
         title="Edit application"
+        isEdit={true}
+        testId={'edit-application'}
         onCancel={() => {
           setShowEditModal(false);
         }}
