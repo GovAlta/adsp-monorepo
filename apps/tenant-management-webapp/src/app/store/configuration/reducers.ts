@@ -97,9 +97,11 @@ export default function (
     case RESET_IMPORTS_LIST_ACTION:
       return { ...state, imports: [] };
     case SET_CONFIGURATION_REVISION_SUCCESS_ACTION: {
-      state.configurationRevisions[action.service]?.revisions?.result?.unshift(action.payload.data?.latest);
-      const latest = state.configurationRevisions[action.service]?.revisions?.result[0]?.revision;
-      state.configurationRevisions[action.service].revisions.latest = latest;
+      if (state.configurationRevisions[action.service]?.revisions?.result) {
+        state.configurationRevisions[action.service]?.revisions?.result?.unshift(action.payload.data?.latest);
+        const latest = state.configurationRevisions[action.service]?.revisions?.result[0]?.revision;
+        state.configurationRevisions[action.service].revisions.latest = latest;
+      }
 
       return {
         ...state,

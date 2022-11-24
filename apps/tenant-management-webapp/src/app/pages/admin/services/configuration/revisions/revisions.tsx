@@ -5,7 +5,7 @@ import { getConfigurationDefinitions, getConfigurationRevisions } from '@store/c
 import { GoADropdownOption, GoADropdown } from '@abgov/react-components';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { RevisionTable } from './revisionsTable';
-import { PageIndicator } from '@components/Indicator';
+import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 
 export const ConfigurationRevisions = (): JSX.Element => {
   const { serviceList } = useSelector((state: RootState) => state.configuration);
@@ -21,10 +21,10 @@ export const ConfigurationRevisions = (): JSX.Element => {
 
   return (
     <div>
-      {indicator.show && <PageIndicator />}
       <GoAForm>
         <GoAFormItem>
           <label aria-label="select-configuration-label">Select definition</label>
+          {indicator.show && <GoASkeletonGridColumnContent key={1} rows={1}></GoASkeletonGridColumnContent>}
           {serviceList?.length > 0 && (
             <GoADropdown
               name="Configurations"
