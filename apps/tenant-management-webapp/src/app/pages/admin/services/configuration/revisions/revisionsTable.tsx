@@ -8,7 +8,7 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { PageIndicator } from '@components/Indicator';
 import { GoAButton, GoABadge, GoAButtonGroup, GoAModal } from '@abgov/react-components-new';
 import { renderNoItem } from '@components/NoItem';
-import { FormatDateTimeWithAt } from '@lib/timeUtil';
+import { FormatTimeWithAt } from '@lib/timeUtil';
 import {
   getConfigurationRevisions,
   getConfigurationActive,
@@ -50,7 +50,7 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
             </div>
           </div>
         </td>
-        <td>{revision.lastUpdated ? FormatDateTimeWithAt(new Date(revision.lastUpdated)) : ''}</td>
+        <td>{revision.lastUpdated ? FormatTimeWithAt(new Date(revision.lastUpdated)) : ''}</td>
         <td>
           <GoAContextMenu>
             <GoAContextMenuIcon
