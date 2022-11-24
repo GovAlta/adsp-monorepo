@@ -94,6 +94,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     );
   };
 
+  //eslint-disable-next-line
   const parseTestResult = (result: string | Record<string, any>) => {
     if (typeof result !== 'string') {
       return JSON.stringify(result);
