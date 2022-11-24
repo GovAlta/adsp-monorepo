@@ -12,7 +12,7 @@ import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experime
 import MonacoEditor, { EditorProps } from '@monaco-editor/react';
 import { SaveFormModal } from '@components/saveModal';
 import { ScriptItem } from '@store/script/models';
-import { SaveAndExecuteScript, ClearScripts } from '@store/script/actions';
+import { ClearScripts, ExecuteScript } from '@store/script/actions';
 import { GoAButton } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
@@ -73,10 +73,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
 
   const scriptResponse = useSelector((state: RootState) => state.scriptService.scriptResponse);
 
-  const saveAndExecute = () => {
-    dispatch(SaveAndExecuteScript(updateScript()));
-  };
-
   const setTestInput = (input: string) => {
     testInputUpdate(input);
   };
@@ -97,6 +93,14 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
       selectedScript.name !== name || selectedScript.description !== description || selectedScript.script !== scriptStr
     );
   };
+
+  const parseTestResult = (result: string | Record<string, any>) => {
+    if (typeof result !== 'string') {
+      return JSON.stringify(result);
+    }
+    return result;
+  };
+
   return (
     <EditModalStyle>
       <ScriptEditorContainer>
@@ -142,37 +146,33 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               />
             </MonacoDivBody>
           </GoAFormItem>
-          <EditScriptActions>
-            <GoAButton
-              onClick={() => {
-                if (hasChanged()) {
-                  setSaveModal(true);
-                } else {
-                  onEditorCancel();
-                  dispatch(ClearScripts());
-                }
-              }}
-              data-testid="template-form-close"
-              type="secondary"
-            >
-              Close
-            </GoAButton>
-            <div>
-              <GoAButton
-                onClick={() => {
-                  updateScript();
-                  saveAndReset(selectedScript);
-                  setSaveModal(false);
-                  onEditorCancel();
-                }}
-                data-testid="template-form-save"
-                type="primary"
-                disabled={Object.keys(errors).length > 0 || !hasChanged()}
-              >
-                Save
-              </GoAButton>
-            </div>
-          </EditScriptActions>
+          <GoAButton
+            onClick={() => {
+              if (hasChanged()) {
+                setSaveModal(true);
+              } else {
+                onEditorCancel();
+                dispatch(ClearScripts());
+              }
+            }}
+            data-testid="template-form-close"
+            type="secondary"
+          >
+            Close
+          </GoAButton>
+          <GoAButton
+            onClick={() => {
+              updateScript();
+              saveAndReset(selectedScript);
+              setSaveModal(false);
+              onEditorCancel();
+            }}
+            data-testid="template-form-save"
+            type="primary"
+            disabled={Object.keys(errors).length > 0 || !hasChanged()}
+          >
+            Save
+          </GoAButton>
         </GoAForm>
       </ScriptEditorContainer>
       {/* Form */}
@@ -217,7 +217,13 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             <div className="execute-button">
               <GoAButton
                 onClick={() => {
-                  saveAndExecute();
+                  const testItem: ScriptItem = {
+                    testInputs: {
+                      inputs: JSON.parse(testInput),
+                    },
+                    script: scriptStr,
+                  };
+                  dispatch(ExecuteScript(testItem));
                 }}
                 disabled={errors?.['payloadSchema'] || loadingIndicator.show}
                 data-testid="template-form-save"
@@ -258,7 +264,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                           </div>
                         </td>
                         <td data-testid="response-inputs">{JSON.stringify(response.inputs)}</td>
-                        <td data-testid="response-output">{!response.hasError ? response.result : ''}</td>
+                        <td data-testid="response-output">
+                          {!response.hasError ? parseTestResult(response.result) : ''}
+                        </td>
                       </tr>
                     ))}
                 </tbody>
