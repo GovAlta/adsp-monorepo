@@ -616,7 +616,7 @@ When('the user clicks edit button for contact information', function () {
   cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
-Then('the user views Edit contact information modal', function () {
+Then('the user views Edit contact information modal on notification overview page', function () {
   notificationsObj.editContactModal().should('exist');
 });
 

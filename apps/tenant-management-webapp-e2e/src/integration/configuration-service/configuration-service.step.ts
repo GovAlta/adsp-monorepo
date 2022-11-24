@@ -92,7 +92,7 @@ When('the user clicks Save button in configuration definition modal', function (
 });
 
 When('the user clicks Cancel button in configuration definition modal', function () {
-  configurationObj.configurationDefinitionModalSaveBtn().click();
+  configurationObj.configurationDefinitionModalCancelBtn().click();
   cy.wait(1000); // Wait for the record to save and show in the grid
 });
 

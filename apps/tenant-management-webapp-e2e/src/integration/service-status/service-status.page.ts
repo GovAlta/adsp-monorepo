@@ -238,7 +238,7 @@ class StatusServicePage {
   }
 
   editContactInformationModal() {
-    return cy.xpath('//*[@data-testid="notification-types-form"]//*[@class="modal-title"]');
+    return cy.xpath('//*[@data-testid="edit-contact-information-status"]//*[@class="modal-title"]');
   }
 
   editContactInformationEmail() {

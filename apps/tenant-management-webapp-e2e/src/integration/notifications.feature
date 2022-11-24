@@ -143,7 +143,7 @@ Feature: Notifications
   Scenario Outline: As a tenant admin, I can configure subscription management contact information on notifications overview page
     Given a tenant admin user is on notification overview page
     When the user clicks edit button for contact information
-    Then the user views Edit contact information modal
+    Then the user views Edit contact information modal on notification overview page
     When the user enters "<Email>", "<Phone>" and "<Instructions>" in Edit contact information modal
     And the user clicks Save button in Edit contact information modal
     Then the user views contact information of "<Email>", "<Phone>" and "<Instructions>" on notifications page
@@ -369,7 +369,7 @@ Feature: Notifications
     Given a tenant admin user is on notification overview page
     Then no critical or serious accessibility issues on "notification overview page"
     When the user clicks edit button for contact information
-    Then the user views Edit contact information modal
+    Then the user views Edit contact information modal on notification overview page
     And no critical or serious accessibility issues for "edit notification contact information modal" on "notification overview page"
     And the user clicks Cancel button in Edit contact information modal
     When the user clicks Add notification type button
