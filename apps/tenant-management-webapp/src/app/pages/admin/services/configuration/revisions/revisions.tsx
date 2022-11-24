@@ -5,6 +5,8 @@ import { getConfigurationDefinitions, getConfigurationRevisions } from '@store/c
 import { GoADropdownOption, GoADropdown } from '@abgov/react-components';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { RevisionTable } from './revisionsTable';
+import { PageIndicator } from '@components/Indicator';
+
 export const ConfigurationRevisions = (): JSX.Element => {
   const { serviceList } = useSelector((state: RootState) => state.configuration);
   const dispatch = useDispatch();
@@ -13,9 +15,13 @@ export const ConfigurationRevisions = (): JSX.Element => {
   useEffect(() => {
     dispatch(getConfigurationDefinitions());
   }, []);
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
 
   return (
     <div>
+      {indicator.show && <PageIndicator />}
       <GoAForm>
         <GoAFormItem>
           <label aria-label="select-configuration-label">Select definition</label>

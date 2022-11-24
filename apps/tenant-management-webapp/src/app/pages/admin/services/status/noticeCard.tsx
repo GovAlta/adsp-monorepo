@@ -10,7 +10,7 @@ import { RootState } from '@store/index';
 import { deleteNotice } from '@store/notice/actions';
 import { useDispatch } from 'react-redux';
 import { DeleteModal } from '@components/DeleteModal';
-import { FormatDateTimeWithAt } from '@lib/timeUtil';
+import { FormatTimeWithDateAt } from '@lib/timeUtil';
 
 const NoticeCardContainer = styled.div`
   border-radius: 0.25rem;
@@ -184,11 +184,11 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
         </CardContent>
         <div data-testid="notice-card-start-date">
           <span className="time-title">Start date: </span>
-          <span className="time">{FormatDateTimeWithAt(notice.startDate)}</span>
+          <span className="time">{FormatTimeWithDateAt(notice.startDate)}</span>
         </div>
         <div data-testid="notice-card-end-date">
           <span className="time-title">End date: </span>
-          <span className="time">{FormatDateTimeWithAt(notice.endDate)}</span>
+          <span className="time">{FormatTimeWithDateAt(notice.endDate)}</span>
         </div>
       </NoticeCardContainer>
       <DeleteModal

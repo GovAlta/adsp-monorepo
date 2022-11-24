@@ -116,9 +116,23 @@ export default function (
     }
     case FETCH_CONFIGURATION_REVISIONS_SUCCESS_ACTION: {
       if (state.configurationRevisions[action.service]) {
-        state.configurationRevisions[action.service].revisions.result = action.after
-          ? [...state.configurationRevisions[action.service].revisions.result, ...action.payload]
-          : action.payload;
+        if (action.after) {
+          const result = state.configurationRevisions[action.service].revisions.result;
+          const noDuplicate = [];
+          const cacheLength = result.length;
+          for (let i = 0; i < action.payload.length; i++) {
+            if (result[cacheLength - 1 - i].revision !== action.payload[i].revision) {
+              noDuplicate.push(action.payload[i]);
+            }
+          }
+          state.configurationRevisions[action.service].revisions.result = [
+            ...state.configurationRevisions[action.service].revisions.result,
+            ...noDuplicate,
+          ];
+        } else {
+          state.configurationRevisions[action.service].revisions.result = action.payload;
+        }
+
         state.configurationRevisions[action.service].revisions.next = action.next;
       } else {
         state.configurationRevisions[action.service] = {};
