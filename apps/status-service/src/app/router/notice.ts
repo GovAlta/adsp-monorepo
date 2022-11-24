@@ -179,7 +179,7 @@ export const updateNotice =
       const applicationMode = notice.mode;
       const updatedNotice = await notice.update(user, {
         message,
-        tennantServRef: tenantServRef,
+        tennantServRef: JSON.stringify(tenantServRef),
         startDate,
         endDate,
         mode,
