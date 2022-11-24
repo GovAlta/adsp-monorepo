@@ -119,21 +119,21 @@ export const MonacoDivBody = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(100vh - 60vh);
+  height: calc(100vh - 376px - 1.5rem);
 `;
 export const MonacoDivHeader = styled.div`
   display: flex;
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(50vh - 200px);
+  height: calc(50vh - 210px - 0.75rem);
 `;
 export const MonacoDivFooter = styled.div`
   display: flex;
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(50vh - 200px);
+  height: calc(50vh - 210px - 0.75rem);
 `;
 export const EditTemplateActions = styled.div`
   display: flex;
@@ -177,4 +177,5 @@ export const PdfConfigFormWrapper = styled.div`
     margin-bottom: 0.2rem !important;
   }
   padding-left: 3px;
+  padding-top: 1.5rem;
 `;
