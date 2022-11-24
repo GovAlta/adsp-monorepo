@@ -3,7 +3,6 @@ import {
   ConfigDefinition,
   ServiceSchemas,
   ServiceConfiguration,
-  ConfigurationRevisionRequest,
   ReplaceConfiguration,
   Revision,
 } from './model';
@@ -100,12 +99,13 @@ export interface UpdateConfigurationDefinitionSuccessAction {
 
 export interface SetConfigurationRevisionAction {
   type: typeof SET_CONFIGURATION_REVISION_ACTION;
-  request: ConfigurationRevisionRequest;
+  service: string;
 }
 
 export interface SetConfigurationRevisionSuccessAction {
   type: typeof SET_CONFIGURATION_REVISION_SUCCESS_ACTION;
   payload: { data: ServiceConfiguration };
+  service: string;
 }
 
 export interface ReplaceConfigurationDataAction {
@@ -115,6 +115,7 @@ export interface ReplaceConfigurationDataAction {
 
 export interface ReplaceConfigurationDataSuccessAction {
   type: typeof REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION;
+  payload: { data: ServiceConfiguration };
 }
 
 export interface GetReplaceConfigurationErrorAction {
@@ -240,16 +241,18 @@ export const getConfigurationActiveSuccess = (
   payload: payload,
   service: service,
 });
-export const setConfigurationRevisionAction = (
-  request: ConfigurationRevisionRequest
-): SetConfigurationRevisionAction => ({
+export const setConfigurationRevision = (service: string): SetConfigurationRevisionAction => ({
   type: SET_CONFIGURATION_REVISION_ACTION,
-  request,
+  service: service,
 });
-export const setConfigurationRevisionSuccessAction = (payload: {
-  data: ServiceConfiguration;
-}): SetConfigurationRevisionSuccessAction => ({
+export const setConfigurationRevisionSuccessAction = (
+  service: string,
+  payload: {
+    data: ServiceConfiguration;
+  }
+): SetConfigurationRevisionSuccessAction => ({
   type: SET_CONFIGURATION_REVISION_SUCCESS_ACTION,
+  service: service,
   payload,
 });
 
@@ -270,8 +273,11 @@ export const resetReplaceConfigurationListSuccessAction = (): ResetReplaceConfig
   type: RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION,
 });
 
-export const replaceConfigurationDataSuccessAction = (): ReplaceConfigurationDataSuccessAction => ({
+export const replaceConfigurationDataSuccessAction = (payload: {
+  data: ServiceConfiguration;
+}): ReplaceConfigurationDataSuccessAction => ({
   type: REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION,
+  payload,
 });
 
 export const getConfigurations = (services: ServiceId[]): FetchConfigurationsAction => ({

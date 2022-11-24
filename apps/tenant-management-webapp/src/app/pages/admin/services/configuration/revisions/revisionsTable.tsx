@@ -6,10 +6,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { PageIndicator } from '@components/Indicator';
-import { GoAButton, GoABadge } from '@abgov/react-components-new';
+import { GoAButton, GoABadge, GoAButtonGroup, GoAModal } from '@abgov/react-components-new';
 import { renderNoItem } from '@components/NoItem';
 import { FormatDateTimeWithAt } from '@lib/timeUtil';
-import { getConfigurationRevisions, getConfigurationActive } from '@store/configuration/action';
+import {
+  getConfigurationRevisions,
+  getConfigurationActive,
+  setConfigurationRevision,
+} from '@store/configuration/action';
+
 interface VisibleProps {
   visible: boolean;
 }
@@ -22,14 +27,17 @@ interface RevisionComponentProps {
   revision: Revision;
   isLatest?: boolean;
   isActive?: boolean;
+  createRevision?: (revision: Revision) => void;
 }
 
 const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
   revision,
   isLatest,
   isActive,
+  createRevision,
 }: RevisionComponentProps) => {
   const [showDetails, setShowDetails] = useState(false);
+
   return (
     <>
       <tr>
@@ -51,6 +59,14 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
               onClick={() => setShowDetails(!showDetails)}
               testId="toggle-details-visibility"
             />
+            {isLatest && (
+              <GoAContextMenuIcon
+                title="Add revision"
+                type="add"
+                onClick={() => createRevision(revision)}
+                testId="toggle-details-visibility"
+              />
+            )}
           </GoAContextMenu>
         </td>
       </tr>
@@ -73,7 +89,7 @@ interface RevisionTableComponentProps {
 const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = ({ className, service }) => {
   const configurationRevisions = useSelector((state: RootState) => state.configuration.configurationRevisions);
   const revisions = configurationRevisions[service]?.revisions?.result;
-
+  const [showCreateNewRevision, setShowCreateNewRevision] = useState(false);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -114,10 +130,11 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
                 revisions &&
                 revisions.map((revision) => (
                   <RevisionComponent
-                    key={`${revision.created}-${service}`}
+                    key={`${revision.created}-${service}-${revision.revision}`}
                     revision={revision}
                     isLatest={revision.revision === latest}
                     isActive={revision.revision === active}
+                    createRevision={() => setShowCreateNewRevision(true)}
                   />
                 ))}
             </tbody>
@@ -131,6 +148,25 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
           Load more...
         </GoAButton>
       )}
+      <GoAModal
+        open={showCreateNewRevision}
+        heading={`Create a revision for ${service} ?`}
+        actions={
+          <GoAButtonGroup alignment="end">
+            <GoAButton type="secondary" onClick={() => setShowCreateNewRevision(false)}>
+              Cancel
+            </GoAButton>
+            <GoAButton
+              onClick={() => {
+                setShowCreateNewRevision(false);
+                dispatch(setConfigurationRevision(service));
+              }}
+            >
+              Create
+            </GoAButton>
+          </GoAButtonGroup>
+        }
+      />
     </>
   );
 };
