@@ -146,33 +146,38 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               />
             </MonacoDivBody>
           </GoAFormItem>
-          <GoAButton
-            onClick={() => {
-              if (hasChanged()) {
-                setSaveModal(true);
-              } else {
-                onEditorCancel();
-                dispatch(ClearScripts());
-              }
-            }}
-            data-testid="template-form-close"
-            type="secondary"
-          >
-            Close
-          </GoAButton>
-          <GoAButton
-            onClick={() => {
-              updateScript();
-              saveAndReset(selectedScript);
-              setSaveModal(false);
-              onEditorCancel();
-            }}
-            data-testid="template-form-save"
-            type="primary"
-            disabled={Object.keys(errors).length > 0 || !hasChanged()}
-          >
-            Save
-          </GoAButton>
+
+          <EditScriptActions>
+            <GoAButton
+              onClick={() => {
+                if (hasChanged()) {
+                  setSaveModal(true);
+                } else {
+                  onEditorCancel();
+                  dispatch(ClearScripts());
+                }
+              }}
+              data-testid="template-form-close"
+              type="secondary"
+            >
+              Close
+            </GoAButton>
+            <div>
+              <GoAButton
+                onClick={() => {
+                  updateScript();
+                  saveAndReset(selectedScript);
+                  setSaveModal(false);
+                  onEditorCancel();
+                }}
+                data-testid="template-form-save"
+                type="primary"
+                disabled={Object.keys(errors).length > 0 || !hasChanged()}
+              >
+                Save
+              </GoAButton>
+            </div>
+          </EditScriptActions>
         </GoAForm>
       </ScriptEditorContainer>
       {/* Form */}
