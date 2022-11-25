@@ -120,6 +120,7 @@ export const MonacoDivBody = styled.div`
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
   height: calc(100vh - 376px - 1.5rem);
+  min-height: 2rem;
 `;
 export const MonacoDivHeader = styled.div`
   display: flex;
@@ -127,6 +128,7 @@ export const MonacoDivHeader = styled.div`
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
   height: calc(50vh - 210px - 0.75rem);
+  min-height: 2rem;
 `;
 export const MonacoDivFooter = styled.div`
   display: flex;
@@ -134,6 +136,7 @@ export const MonacoDivFooter = styled.div`
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
   height: calc(50vh - 210px - 0.75rem);
+  min-height: 2rem;
 `;
 export const EditTemplateActions = styled.div`
   display: flex;
