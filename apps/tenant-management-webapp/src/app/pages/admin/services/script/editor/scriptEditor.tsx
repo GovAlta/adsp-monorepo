@@ -69,6 +69,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     onNameChange(selectedScript?.name || '');
     onDescriptionChange(selectedScript?.description || '');
     onScriptChange(selectedScript?.script || '');
+    return () => {
+      dispatch(ClearScripts());
+    };
   }, [selectedScript]);
 
   const scriptResponse = useSelector((state: RootState) => state.scriptService.scriptResponse);
