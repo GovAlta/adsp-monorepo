@@ -74,6 +74,7 @@ export const createNxAdspCLIClientConfig = (id: string): ClientRepresentation =>
   const config: ClientRepresentation = {
     id,
     clientId: 'nx-adsp-cli',
+    enabled: false,
     publicClient: true,
     directAccessGrantsEnabled: false,
     redirectUris: ['http://localhost:3000/*'],
