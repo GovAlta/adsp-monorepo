@@ -30,7 +30,7 @@ export const createPlatformServiceConfig = (
   };
 };
 
-export const createWebappClientConfig = (id: string): ClientRepresentation => {
+export const createTenantAdminAppClientConfig = (id: string): ClientRepresentation => {
   const config: ClientRepresentation = {
     id,
     clientId: environment.TENANT_WEB_APP_CLIENT_ID,
@@ -56,7 +56,7 @@ export const createWebappClientConfig = (id: string): ClientRepresentation => {
   return config;
 };
 
-export const createSubscriberAppPublicClientConfig = (id: string): ClientRepresentation => {
+export const createSubscriberAppClientConfig = (id: string): ClientRepresentation => {
   const config: ClientRepresentation = {
     id,
     clientId: environment.SUBSCRIBER_APP_CLIENT_ID,
@@ -65,6 +65,21 @@ export const createSubscriberAppPublicClientConfig = (id: string): ClientReprese
     redirectUris: [`${environment.SUBSCRIBER_APP_HOST}/*`],
     webOrigins: [environment.SUBSCRIBER_APP_HOST],
     description: 'Client created by platform team to support the subscriber app. Please do not delete it',
+  };
+
+  return config;
+};
+
+export const createNxAdspCLIClientConfig = (id: string): ClientRepresentation => {
+  const config: ClientRepresentation = {
+    id,
+    clientId: 'nx-adsp-cli',
+    publicClient: true,
+    directAccessGrantsEnabled: false,
+    redirectUris: ['http://localhost:3000/*'],
+    webOrigins: ['+'],
+    description:
+      'Client created by platform team to support the @abgov/nx-adsp generators. You can remove if not using @abgov/nx-adsp.',
   };
 
   return config;

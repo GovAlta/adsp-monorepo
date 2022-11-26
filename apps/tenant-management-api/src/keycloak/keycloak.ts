@@ -10,9 +10,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'winston';
 import { RealmService, ServiceClient, Tenant, TenantServiceRoles } from '../tenant';
 import {
+  createNxAdspCLIClientConfig,
   createPlatformServiceConfig,
-  createSubscriberAppPublicClientConfig,
-  createWebappClientConfig,
+  createSubscriberAppClientConfig,
+  createTenantAdminAppClientConfig,
 } from './configuration';
 
 const LOG_CONTEXT = { context: 'RealmService' };
@@ -306,16 +307,18 @@ export class KeycloakRealmServiceImpl implements RealmService {
   async createRealm(serviceClients: ServiceClient[], { name, realm, adminEmail }: Omit<Tenant, 'id'>): Promise<void> {
     this.logger.info(`Creating realm '${realm}' for tenant '${name}'...`, LOG_CONTEXT);
     const brokerClientSecret = uuidv4();
-    const tenantPublicClientId = uuidv4();
-    const subscriberAppPublicClientId = uuidv4();
+    const tenantAdminAppClientId = uuidv4();
+    const subscriberAppClientId = uuidv4();
+    const nxAdspCLIClientId = uuidv4();
     const brokerClient = this.brokerClientName(realm);
 
     let client = await this.createAdminClient();
     await this.createBrokerClient(client, realm, brokerClientSecret, brokerClient);
 
     this.logger.debug(`Creating realm '${realm}' with base configuration...`, LOG_CONTEXT);
-    const publicClientConfig = createWebappClientConfig(tenantPublicClientId);
-    const subscriberAppPublicClientConfig = createSubscriberAppPublicClientConfig(subscriberAppPublicClientId);
+    const tenantAdminAppClientConfig = createTenantAdminAppClientConfig(tenantAdminAppClientId);
+    const subscriberAppClientConfig = createSubscriberAppClientConfig(subscriberAppClientId);
+    const nxAdspCLIClientConfig = createNxAdspCLIClientConfig(nxAdspCLIClientId);
 
     const clients = serviceClients.map((registeredClient) =>
       createPlatformServiceConfig(registeredClient.serviceId, ...registeredClient.roles)
@@ -328,7 +331,12 @@ export class KeycloakRealmServiceImpl implements RealmService {
       displayNameHtml: name,
       loginTheme: 'ads-theme',
       accountTheme: 'ads-theme',
-      clients: [subscriberAppPublicClientConfig, publicClientConfig, ...clients.map((c) => c.client)],
+      clients: [
+        subscriberAppClientConfig,
+        tenantAdminAppClientConfig,
+        nxAdspCLIClientConfig,
+        ...clients.map((c) => c.client),
+      ],
       roles: {
         client: clients.reduce((cs, c) => ({ ...cs, [c.client.clientId]: c.clientRoles }), {}),
       },
