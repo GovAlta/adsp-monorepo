@@ -343,7 +343,11 @@ export const getRevisions =
       end();
       res.send(mapResults(req, results));
     } catch (err) {
-      next(err);
+      if (err['codeName'] && err['codeName'].toString().trim() === 'BadValue') {
+        res.status(400).send('Bad request');
+      } else {
+        next(err);
+      }
     }
   };
 
