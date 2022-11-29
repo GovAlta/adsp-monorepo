@@ -22,6 +22,7 @@ export interface ServiceStatusApplication {
   metadata: unknown;
   statusTimestamp: number;
   enabled: boolean;
+  tenantId: string;
 }
 
 export interface ServiceStatusApplicationFilter {

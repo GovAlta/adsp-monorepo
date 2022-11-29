@@ -197,16 +197,16 @@ export class ApplicationManager {
   };
 
   #updateAppStatus = async (tenant: Tenant) => {
-    const newKeyType = new RegExp('^app_.+$');
     const config: StatusServiceConfiguration = await this.#configurationFinder(tenant.id);
     const apps = new StatusApplications(config);
     apps.forEach(async (app) => {
-      if (app && app.appKey && !newKeyType.test(app.appKey)) {
+      if (app && app.appKey) {
         const status = await this.#repository.get(app.appKey);
         if (status) {
           const newStatus = new ServiceStatusApplicationEntity(this.#repository, {
             ...status,
             appKey: ApplicationRepo.getApplicationKey(tenant.name, app.name),
+            tenantId: tenant.id.toString(),
           });
           await this.#repository.save(newStatus);
         }

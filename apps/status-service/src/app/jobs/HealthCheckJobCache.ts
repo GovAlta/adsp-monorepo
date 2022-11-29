@@ -1,4 +1,3 @@
-import { AdspId } from '@abgov/adsp-service-sdk';
 import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
 import { StaticApplicationData } from '../model';
@@ -26,8 +25,8 @@ export class HealthCheckJobCache {
     return HealthCheckJobCache.#activeHealthChecks.get(key);
   };
 
-  addBatch = (applications: StatusApplications, scheduler: JobScheduler): void => {
-    applications.forEach((app) => {
+  addBatch = (statuses: StatusApplications, scheduler: JobScheduler): void => {
+    statuses.forEach((app) => {
       this.add(app, scheduler);
     });
   };

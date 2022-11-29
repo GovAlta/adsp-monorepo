@@ -1,5 +1,4 @@
 import { appPropertyRegex } from '../../mongo/schema';
-import { ApplicationRepo } from '../router/ApplicationRepo';
 import { StaticApplicationData, StatusServiceConfiguration } from './serviceStatus';
 
 export class StatusApplications {

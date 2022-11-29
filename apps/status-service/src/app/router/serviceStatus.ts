@@ -1,4 +1,4 @@
-import { adspId, AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
+import { AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
   InvalidValueError,

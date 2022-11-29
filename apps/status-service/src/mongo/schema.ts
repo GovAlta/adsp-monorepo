@@ -52,6 +52,9 @@ export const serviceStatusApplicationSchema = new Schema(
     enabled: {
       type: Boolean,
     },
+    tenantId: {
+      type: String,
+    },
     endpoint: serviceStatusEndpointSchema,
   },
   { timestamps: true }

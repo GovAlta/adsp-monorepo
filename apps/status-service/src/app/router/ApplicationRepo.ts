@@ -44,6 +44,7 @@ export class ApplicationRepo {
           statusTimestamp: 0,
           status: '',
           enabled: false,
+          tenantId: user.tenantId.toString(),
         });
   };
 

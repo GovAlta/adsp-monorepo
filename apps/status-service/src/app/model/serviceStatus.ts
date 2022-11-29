@@ -47,6 +47,7 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
   statusTimestamp: number;
   appKey: string;
   enabled: boolean;
+  tenantId: string;
 
   static create(
     user: User,
@@ -68,6 +69,7 @@ export class ServiceStatusApplicationEntity implements ServiceStatusApplication 
     this.statusTimestamp = application.statusTimestamp;
     this.status = application.status;
     this.enabled = application.enabled;
+    this.tenantId = application.tenantId;
   }
 
   public get internalStatus(): InternalServiceStatusType {
