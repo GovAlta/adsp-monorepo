@@ -326,6 +326,7 @@ export const createConfigurationRevision =
 
 export const getRevisions =
   (
+    logger,
     getCriteria = (_req: Request) => ({}),
     mapResults = (_req: Request, results: Results<ConfigurationRevision>): unknown => results
   ): RequestHandler =>
@@ -343,6 +344,7 @@ export const getRevisions =
       end();
       res.send(mapResults(req, results));
     } catch (err) {
+      logger.error(`Error encountered : ${err} \n error code : ${err['codeName'] ? err['codeName'] : ''} `);
       if (err['codeName'] && err['codeName'].toString().trim() === 'BadValue') {
         res.status(400).send('Bad request');
       } else {
@@ -411,7 +413,7 @@ export function createConfigurationRouter({
     validateNamespaceNameHandler,
     createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
     getConfigurationEntity(serviceId, configurationRepository),
-    getRevisions()
+    getRevisions(logger)
   );
 
   router.get(
@@ -438,6 +440,7 @@ export function createConfigurationRouter({
     ),
     getConfigurationEntity(serviceId, configurationRepository),
     getRevisions(
+      logger,
       (req) => ({ revision: req.params.revision }),
       (req, { results }) => {
         if (results.length < 1) {
