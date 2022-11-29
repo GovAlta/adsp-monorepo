@@ -345,7 +345,7 @@ export const getRevisions =
       res.send(mapResults(req, results));
     } catch (err) {
       logger.error(`Error encountered : ${err} \n error code : ${err['codeName'] ? err['codeName'] : ''} `);
-      if (err['codeName'] && err['codeName'].toString().trim() === 'BadValue') {
+      if (err.toString().indexOf('MongoNetworkError') > -1) {
         res.status(400).send('Bad request');
       } else {
         next(err);
