@@ -5,6 +5,7 @@ import {
   InvalidOperationError,
   NotFoundError,
   Results,
+  decodeAfter,
 } from '@core-services/core-common';
 import { Request, RequestHandler, Router } from 'express';
 import { body, checkSchema, query } from 'express-validator';
@@ -326,7 +327,6 @@ export const createConfigurationRevision =
 
 export const getRevisions =
   (
-    logger,
     getCriteria = (_req: Request) => ({}),
     mapResults = (_req: Request, results: Results<ConfigurationRevision>): unknown => results
   ): RequestHandler =>
@@ -344,12 +344,7 @@ export const getRevisions =
       end();
       res.send(mapResults(req, results));
     } catch (err) {
-      logger.error(`Error encountered : ${err} \n error code : ${err['codeName'] ? err['codeName'] : ''} `);
-      if (err.toString().indexOf('MongoNetworkError') > -1) {
-        res.status(400).send('Bad request');
-      } else {
-        next(err);
-      }
+      next(err);
     }
   };
 
@@ -411,16 +406,33 @@ export function createConfigurationRouter({
     '/configuration/:namespace/:name/revisions',
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
-    createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
+    createValidationHandler(
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after')
+        .optional()
+        .isString()
+        .custom((val) => {
+          return !isNaN(decodeAfter(val));
+        })
+    ),
+
     getConfigurationEntity(serviceId, configurationRepository),
-    getRevisions(logger)
+    getRevisions()
   );
 
   router.get(
     '/configuration/:namespace/:name/active',
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
-    createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
+    createValidationHandler(
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after')
+        .optional()
+        .isString()
+        .custom((val) => {
+          return !isNaN(decodeAfter(val));
+        })
+    ),
     getConfigurationEntity(serviceId, configurationRepository),
     getActiveRevision(logger)
   );
@@ -440,7 +452,6 @@ export function createConfigurationRouter({
     ),
     getConfigurationEntity(serviceId, configurationRepository),
     getRevisions(
-      logger,
       (req) => ({ revision: req.params.revision }),
       (req, { results }) => {
         if (results.length < 1) {

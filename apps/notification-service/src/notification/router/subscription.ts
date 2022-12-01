@@ -1,7 +1,7 @@
 import { Request, RequestHandler, Response, Router } from 'express';
 import { Logger } from 'winston';
 import { adspId, AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
-import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { createValidationHandler, InvalidOperationError, NotFoundError, decodeAfter } from '@core-services/core-common';
 import { SubscriptionRepository } from '../repository';
 import { NotificationTypeEntity, SubscriberEntity } from '../model';
 import { mapSubscriber, mapSubscription, mapType } from './mappers';
@@ -525,7 +525,15 @@ export const createSubscriptionRouter = ({
   subscriptionRouter.get(
     '/types/:type/subscriptions',
     validateTypeHandler,
-    createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
+    createValidationHandler(
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after')
+        .optional()
+        .isString()
+        .custom((val) => {
+          return !isNaN(decodeAfter(val));
+        })
+    ),
     getNotificationType,
     getTypeSubscriptions(apiId, subscriptionRepository)
   );
@@ -580,7 +588,15 @@ export const createSubscriptionRouter = ({
 
   subscriptionRouter.get(
     '/subscribers',
-    createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
+    createValidationHandler(
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after')
+        .optional()
+        .isString()
+        .custom((val) => {
+          return !isNaN(decodeAfter(val));
+        })
+    ),
     getSubscribers(apiId, subscriptionRepository)
   );
   subscriptionRouter.post('/subscribers', createSubscriber(apiId, subscriptionRepository));
@@ -641,7 +657,15 @@ export const createSubscriptionRouter = ({
   subscriptionRouter.get(
     '/subscribers/:subscriber/subscriptions',
     validateSubscriberHandler,
-    createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
+    createValidationHandler(
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after')
+        .optional()
+        .isString()
+        .custom((val) => {
+          return !isNaN(decodeAfter(val));
+        })
+    ),
     getSubscriber(subscriptionRepository),
     getSubscriberSubscriptions(apiId, subscriptionRepository)
   );
