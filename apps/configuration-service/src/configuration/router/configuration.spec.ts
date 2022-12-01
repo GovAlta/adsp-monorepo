@@ -1328,12 +1328,12 @@ describe('router', () => {
 
   describe('getRevisions', () => {
     it('can create handler', () => {
-      const handler = getRevisions(loggerMock as Logger);
+      const handler = getRevisions();
       expect(handler).toBeTruthy();
     });
 
     it('can get revisions', async () => {
-      const handler = getRevisions(loggerMock as Logger);
+      const handler = getRevisions();
 
       const entity = {
         tenantId,
