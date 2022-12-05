@@ -82,18 +82,21 @@ describe('Service router', () => {
     status: 'maintenance',
     internalStatus: 'stopped',
     endpoint: { status: 'offline' },
+    tenantId: tenantId.toString(),
   };
 
   const myStatusId = '620ae946ddd181001195caad';
+  const myAppKey = 'myapp-1';
   const myApplicationStatus: ServiceStatusApplication = {
     _id: myStatusId,
-    appKey: 'myapp-1',
+    appKey: myAppKey,
     metadata: '',
     enabled: true,
     statusTimestamp: 1648247257463,
     status: 'operational',
     internalStatus: 'healthy',
     endpoint: { status: 'online' },
+    tenantId: tenantId.toString(),
   };
 
   const applicationStatusMock = [
@@ -137,30 +140,26 @@ describe('Service router', () => {
   ];
 
   const configurationMock = {
-    [myStatusId]: {
-      _id: myStatusId,
-      appKey: 'myapp-1',
+    [myAppKey]: {
+      appKey: myAppKey,
       name: 'MyApp 1',
       url: 'http://localhost',
       description: 'MyApp',
-      tenantId: tenantId,
     },
-    [bobsStatusId]: {
-      _id: bobsStatusId,
+    [bobsAppKey]: {
       appKey: bobsAppKey,
       name: 'test-mock',
       url: 'http://www.yahoo.com',
       description: '',
-      tenantId: tenantId,
     },
   };
 
   const entriesMock = [
     {
-      appKey: 'myapp-1',
+      appKey: myAppKey,
       repository: { opts: { limit: 200, everyMilliseconds: 60000 } },
       ok: true,
-      url: configurationMock[myStatusId].url,
+      url: configurationMock[myAppKey].url,
       timestamp: 1649277360004,
       responseTime: 685,
       status: '200',
@@ -169,7 +168,7 @@ describe('Service router', () => {
       appKey: bobsAppKey,
       repository: { opts: { limit: 200, everyMilliseconds: 60000 } },
       ok: true,
-      url: configurationMock[bobsStatusId].url,
+      url: configurationMock[bobsAppKey].url,
       timestamp: 1649277300002,
       responseTime: 514,
       status: '200',
@@ -232,21 +231,21 @@ describe('Service router', () => {
       const returnMock = [
         {
           ...myStatus,
-          name: configurationMock[myApplicationStatus._id].name,
-          description: configurationMock[myApplicationStatus._id].description,
+          name: configurationMock[myAppKey].name,
+          description: configurationMock[myAppKey].description,
           endpoint: {
             status: myApplicationStatus.endpoint.status,
-            url: configurationMock[myApplicationStatus._id].url,
+            url: configurationMock[myAppKey].url,
           },
           tenantId: tenantId.toString(),
         },
         {
           ...bobsStatus,
-          name: configurationMock[bobsApplicationStatus._id].name,
-          description: configurationMock[bobsApplicationStatus._id].description,
+          name: configurationMock[bobsAppKey].name,
+          description: configurationMock[bobsAppKey].description,
           endpoint: {
             status: bobsApplicationStatus.endpoint.status,
-            url: configurationMock[bobsApplicationStatus._id].url,
+            url: configurationMock[bobsAppKey].url,
           },
           tenantId: tenantId.toString(),
         },
@@ -310,17 +309,17 @@ describe('Service router', () => {
       } as unknown as Request;
 
       getConfigurationMock.mockReturnValue({
-        [bobsStatusId]: configurationMock[bobsStatusId],
+        [bobsAppKey]: configurationMock[bobsAppKey],
       });
       statusRepositoryMock.find.mockResolvedValueOnce([applicationStatusMock[0]]);
       await handler(reqMock, resMock, nextMock);
       expect(resMock.json).toHaveBeenCalledWith(
         expect.arrayContaining([
           {
-            description: configurationMock[bobsStatusId].description,
+            description: configurationMock[bobsAppKey].description,
             id: bobsAppKey,
             lastUpdated: null,
-            name: configurationMock[bobsStatusId].name,
+            name: configurationMock[bobsAppKey].name,
             status: '',
           },
         ])
@@ -354,7 +353,7 @@ describe('Service router', () => {
           ...almostExpected,
           enabled: true,
           internalStatus: 'unhealthy',
-          endpoint: { status: bobsApplicationStatus.endpoint.status, url: configurationMock[bobsStatusId].url },
+          endpoint: { status: bobsApplicationStatus.endpoint.status, url: configurationMock[bobsAppKey].url },
         })
       );
     });
@@ -382,7 +381,7 @@ describe('Service router', () => {
         expect.objectContaining({
           ...expected,
           enabled: false,
-          endpoint: { status: bobsApplicationStatus.endpoint.status, url: configurationMock[bobsStatusId].url },
+          endpoint: { status: bobsApplicationStatus.endpoint.status, url: configurationMock[bobsAppKey].url },
         })
       );
     });

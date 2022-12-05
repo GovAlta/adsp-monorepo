@@ -7,7 +7,7 @@ import {
 } from '@core-services/core-common';
 import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
-import { StaticApplicationData } from '../model';
+import { ApplicationConfiguration } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { PublicServiceStatusType } from '../types';
@@ -34,7 +34,7 @@ export const getApplications = (logger: Logger, applicationRepo: ApplicationRepo
         throw new UnauthorizedError('missing tenant id');
       }
       const apps = await applicationRepo.getTenantApps(tenantId);
-      const statuses = await applicationRepo.findAllStatuses(apps);
+      const statuses = await applicationRepo.findAllStatuses(apps, tenantId.toString());
       const result = apps.map((app) => {
         const status = statuses.find((s) => s.appKey == app.appKey) || null;
         return applicationRepo.mergeApplicationData(tenantId.toString(), app, status);
@@ -99,7 +99,7 @@ export const createNewApplication =
     const { name, description, endpoint } = req.body;
 
     try {
-      const appKey = ApplicationRepo.getApplicationKey(tenant.name, name);
+      const appKey = ApplicationRepo.getApplicationKey(name);
       const existing = await applicationRepo.getTenantApps(tenant.id);
       existing.forEach((a) => {
         if (a.appKey == appKey || a.name == name) {
@@ -134,14 +134,13 @@ export const updateApplication =
         throw new NotFoundError('Status application', appKey);
       }
 
-      const update: StaticApplicationData = {
+      const update: ApplicationConfiguration = {
         appKey,
         name,
         url: endpoint.url,
         description,
-        tenantId: app.tenantId,
       };
-      await applicationRepo.updateApp(update);
+      await applicationRepo.updateApp(update, tenantId);
 
       const status = await applicationRepo.findStatus(appKey);
 

@@ -1,3 +1,4 @@
+import { AdspId } from '@abgov/adsp-service-sdk';
 import * as NodeCache from 'node-cache';
 import { Logger } from 'winston';
 import { StaticApplicationData } from '../model';
@@ -32,7 +33,7 @@ export class HealthCheckJobCache {
   };
 
   add = (app: StaticApplicationData, scheduler: JobScheduler): HealthCheckJob => {
-    const job: HealthCheckJob = new HealthCheckJob(app);
+    const job: HealthCheckJob = new HealthCheckJob(app, app.tenantId);
     HealthCheckJobCache.#activeHealthChecks.set(app.appKey, job);
     job.schedule(scheduler);
     this.#logger.info(`Job Cache: scheduled app with url ${job.getUrl()}`);

@@ -10,22 +10,28 @@ import {
 } from '../types';
 
 // Stored in the configuration service repository
-export type StatusServiceConfiguration = Record<string, StaticApplicationData>;
+export type StatusServiceConfiguration = Record<string, ApplicationConfiguration>;
 
 // The application bits that rarely change (so not quite static)
 // and are stored as part of the status-service
 // configuration.
 
-export interface StaticApplicationData {
+// This is the structure of applications stored in the
+// configuration service.
+export interface ApplicationConfiguration {
   appKey: string;
   name: string;
   url: string;
   description?: string;
-  // FIXME make this mandatory.  It is optional only for data conversion purposes,
-  // a run once operation. (Nov 18, 2022).  It can be made mandatory when
-  // the conversion has been run in production.
-  tenantId?: AdspId;
 }
+
+// Add the tenant to the configuration.
+export interface StaticApplicationData extends ApplicationConfiguration {
+  tenantId: AdspId;
+}
+
+export type StatusServiceApplications = Record<string, StaticApplicationData>;
+
 // Application data, combines the static
 // and dynamic bits
 export interface ApplicationData {

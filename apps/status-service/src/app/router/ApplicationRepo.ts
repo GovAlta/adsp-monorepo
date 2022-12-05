@@ -1,8 +1,13 @@
 import { adspId, AdspId, ServiceDirectory, Tenant, TokenProvider, User } from '@abgov/adsp-service-sdk';
 import { NotFoundError } from '@core-services/core-common';
 import axios from 'axios';
-import { appPropertyRegex } from '../../mongo/schema';
-import { ServiceStatusApplicationEntity, StaticApplicationData, StatusServiceConfiguration } from '../model';
+import { isApp } from '../../mongo/schema';
+import {
+  ApplicationConfiguration,
+  ServiceStatusApplicationEntity,
+  StaticApplicationData,
+  StatusServiceConfiguration,
+} from '../model';
 import { StatusApplications } from '../model/statusApplications';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 
@@ -58,11 +63,11 @@ export class ApplicationRepo {
     return applications.find(appKey);
   };
 
-  findAllStatuses = async (apps: StatusApplications) => {
-    const appIds = apps.map((a) => {
+  findAllStatuses = async (apps: StatusApplications, tenantId: string) => {
+    const appKeys = apps.map((a) => {
       return a.appKey;
     });
-    return await this.#repository.find({ appKey: { $in: appIds } });
+    return await this.#repository.find({ appKey: { $in: appKeys }, tenantId: tenantId });
   };
 
   /*
@@ -84,19 +89,18 @@ export class ApplicationRepo {
     const { data } = await axios.get<StatusServiceConfiguration>(configUrl.href, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    const regex = new RegExp(appPropertyRegex);
-    const keys = Object.keys(data).filter((k) => {
-      return regex.test(k);
-    });
+    const keys = Object.keys(data);
     const apps = {};
     // Add the tenantId in, cause its not part of the configuration.
     keys.forEach((k) => {
-      apps[k] = { ...data[k], tenantId: tenantId };
+      if (isApp(data[k])) {
+        apps[k] = { ...data[k], tenantId: tenantId };
+      }
     });
     return new StatusApplications(apps);
   };
 
-  mergeApplicationData = (tenantId: string, app: StaticApplicationData, status?: ServiceStatusApplicationEntity) => {
+  mergeApplicationData = (tenantId: string, app: ApplicationConfiguration, status?: ServiceStatusApplicationEntity) => {
     return {
       appKey: app.appKey,
       name: app.name,
@@ -115,30 +119,21 @@ export class ApplicationRepo {
   };
 
   createApp = async (appName: string, description: string, url: string, tenant: Tenant) => {
-    const appKey = ApplicationRepo.getApplicationKey(tenant.name, appName);
+    const appKey = ApplicationRepo.getApplicationKey(appName);
     const newApp = {
-      _id: null,
       appKey: appKey,
       name: appName,
       url: url,
       description: description,
-      tenantId: tenant.id,
     };
-    await this.updateApp(newApp);
-    const created = await this.getApp(appKey, tenant.id);
-    return this.mergeApplicationData(tenant.id.toString(), created);
+    await this.updateApp(newApp, tenant.id.toString());
+    return this.mergeApplicationData(tenant.id.toString(), newApp);
   };
 
-  updateApp = async (newApp: StaticApplicationData) => {
+  updateApp = async (newApp: ApplicationConfiguration, tenantId: string) => {
     const baseUrl = await this.#directoryService.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
     const token = await this.#tokenProvider.getAccessToken();
-    const configUrl = new URL(
-      `/configuration/v2/configuration/platform/status-service?tenantId=${newApp.tenantId}`,
-      baseUrl
-    );
-    // Configuration must be tenantless, so it can be
-    // imported by other tenants.
-    delete newApp.tenantId;
+    const configUrl = new URL(`/configuration/v2/configuration/platform/status-service?tenantId=${tenantId}`, baseUrl);
     await axios.patch(
       configUrl.href,
       {
@@ -186,10 +181,9 @@ export class ApplicationRepo {
   // create a unique key that can be used to access the application
   // status.  This algorithm assumes that the application name
   // will be unique within a tenant context.
-  static getApplicationKey = (tenantName: string, appName: string): string => {
+  static getApplicationKey = (appName: string): string => {
     // Its a verb: to kebab.
-    const kebabed = ApplicationRepo.toKebabCase(`${tenantName}-${appName}`);
-    return `app_${kebabed}`;
+    return ApplicationRepo.toKebabCase(appName);
   };
 
   private static toKebabCase = (s: string): string => {

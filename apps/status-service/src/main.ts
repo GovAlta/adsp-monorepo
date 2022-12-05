@@ -70,8 +70,8 @@ app.use(express.json({ limit: '1mb' }));
           'Service support contact information, and Applications including name, description, and URL. Application status, health check, and notices are not included.',
         schema: configurationSchema,
       },
-      combineConfiguration: (tenant: Record<string, unknown>, core: Record<string, unknown>) => ({
-        ...core,
+      combineConfiguration: (tenant: Record<string, unknown>, _core: Record<string, unknown>) => ({
+        // leave the core out        ...core,
         ...tenant,
       }),
       useLongConfigurationCacheTTL: true,
@@ -117,7 +117,6 @@ app.use(express.json({ limit: '1mb' }));
     repositories.serviceStatusRepository,
     directory,
     tenantService,
-    repositories.noticeRepository,
     logger
   );
 
