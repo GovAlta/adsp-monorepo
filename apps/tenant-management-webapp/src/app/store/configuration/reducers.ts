@@ -10,6 +10,7 @@ import {
   REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION,
   RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION,
   SET_CONFIGURATION_REVISION_SUCCESS_ACTION,
+  SET_CONFIGURATION_REVISION_ACTIVE_SUCCESS_ACTION,
   RESET_IMPORTS_LIST_ACTION,
   FETCH_CONFIGURATION_REVISIONS_SUCCESS_ACTION,
   FETCH_CONFIGURATION_ACTIVE_REVISION_SUCCESS_ACTION,
@@ -103,6 +104,13 @@ export default function (
         state.configurationRevisions[action.service].revisions.latest = latest;
       }
 
+      return {
+        ...state,
+      };
+    }
+
+    case SET_CONFIGURATION_REVISION_ACTIVE_SUCCESS_ACTION: {
+      state.configurationRevisions[action.service].revisions.active = action.payload.data?.active;
       return {
         ...state,
       };

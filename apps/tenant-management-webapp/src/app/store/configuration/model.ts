@@ -63,6 +63,7 @@ export interface ServiceConfiguration {
   name: string;
   description?: string;
   latest: ServiceSchemas;
+  active: ServiceSchemas;
   success?: boolean;
   error?: string;
 }
