@@ -12,7 +12,6 @@ export function* fetchDirectory(): SagaIterator {
   const state: RootState = yield select();
   const token: string = yield call(getAccessToken);
   const directoryBaseUrl: string = state.config.serviceUrls?.directoryServiceApiUrl;
-  let tenantDirectoryData = [];
   yield put(
     UpdateIndicator({
       show: true,
