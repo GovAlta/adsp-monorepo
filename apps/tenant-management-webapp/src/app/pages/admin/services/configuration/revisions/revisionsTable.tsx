@@ -13,6 +13,7 @@ import {
   getConfigurationRevisions,
   getConfigurationActive,
   setConfigurationRevision,
+  setConfigurationRevisionActive,
 } from '@store/configuration/action';
 
 interface VisibleProps {
@@ -28,6 +29,7 @@ interface RevisionComponentProps {
   isLatest?: boolean;
   isActive?: boolean;
   createRevision?: (revision: Revision) => void;
+  setActiveRevision?: (revision: Revision) => void;
 }
 
 const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
@@ -35,6 +37,7 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
   isLatest,
   isActive,
   createRevision,
+  setActiveRevision,
 }: RevisionComponentProps) => {
   const [showDetails, setShowDetails] = useState(false);
 
@@ -67,6 +70,14 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
                 testId="toggle-details-visibility"
               />
             )}
+            {!isLatest && !isActive && (
+              <GoAContextMenuIcon
+                title="Set Active"
+                type="checkmark-circle"
+                onClick={() => setActiveRevision(revision)}
+                testId="toggle-details-visibility"
+              />
+            )}
           </GoAContextMenu>
         </td>
       </tr>
@@ -90,6 +101,12 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
   const configurationRevisions = useSelector((state: RootState) => state.configuration.configurationRevisions);
   const revisions = configurationRevisions[service]?.revisions?.result;
   const [showCreateNewRevision, setShowCreateNewRevision] = useState(false);
+  const [showActiveRevision, setShowActiveRevision] = useState(false);
+  const [selectedRevision, setSelectedRevision] = useState(null);
+  const onSetActive = (revision) => {
+    setSelectedRevision(revision);
+    setShowActiveRevision(true);
+  };
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -99,6 +116,7 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
   const onNext = () => {
     dispatch(getConfigurationRevisions(service, next));
   };
+
   // eslint-disable-next-line
   useEffect(() => {
     if (revisions?.length > 0) {
@@ -135,6 +153,7 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
                     isLatest={revision.revision === latest}
                     isActive={revision.revision === active}
                     createRevision={() => setShowCreateNewRevision(true)}
+                    setActiveRevision={onSetActive}
                   />
                 ))}
             </tbody>
@@ -163,6 +182,25 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
               }}
             >
               Create
+            </GoAButton>
+          </GoAButtonGroup>
+        }
+      />
+      <GoAModal
+        open={showActiveRevision}
+        heading={`Set active revision for ${service} in revision ${selectedRevision?.revision} ?`}
+        actions={
+          <GoAButtonGroup alignment="end">
+            <GoAButton type="secondary" onClick={() => setShowActiveRevision(false)}>
+              Cancel
+            </GoAButton>
+            <GoAButton
+              onClick={() => {
+                setShowActiveRevision(false);
+                dispatch(setConfigurationRevisionActive(service, selectedRevision.revision));
+              }}
+            >
+              Set Active
             </GoAButton>
           </GoAButtonGroup>
         }

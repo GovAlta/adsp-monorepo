@@ -33,6 +33,10 @@ export const FETCH_CONFIGURATION_ACTIVE_REVISION_SUCCESS_ACTION =
 export const SET_CONFIGURATION_REVISION_ACTION = 'configuration/SET_CONFIGURATION_REVISION_ACTION';
 export const SET_CONFIGURATION_REVISION_SUCCESS_ACTION = 'configuration/SET_CONFIGURATION_REVISION_SUCCESS_ACTION';
 
+export const SET_CONFIGURATION_REVISION_ACTIVE_ACTION = 'configuration/SET_CONFIGURATION_REVISION_ACTIVE_ACTION';
+export const SET_CONFIGURATION_REVISION_ACTIVE_SUCCESS_ACTION =
+  'configuration/SET_CONFIGURATION_REVISION_ACTIVE_SUCCESS_ACTION';
+
 export const REPLACE_CONFIGURATION_DATA_ACTION = 'configuration/REPLACE_CONFIGURATION_DATA_ACTION';
 export const REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION = 'configuration/REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION';
 
@@ -108,6 +112,18 @@ export interface SetConfigurationRevisionSuccessAction {
   service: string;
 }
 
+export interface SetConfigurationRevisionActiveAction {
+  type: typeof SET_CONFIGURATION_REVISION_ACTIVE_ACTION;
+  service: string;
+  setActiveRevision: number;
+}
+
+export interface SetConfigurationRevisionActiveSuccessAction {
+  type: typeof SET_CONFIGURATION_REVISION_ACTIVE_SUCCESS_ACTION;
+  payload: { data: ServiceConfiguration };
+  service: string;
+}
+
 export interface ReplaceConfigurationDataAction {
   type: typeof REPLACE_CONFIGURATION_DATA_ACTION;
   configuration: ReplaceConfiguration;
@@ -147,6 +163,8 @@ export type ConfigurationDefinitionActionTypes =
   | DeleteConfigurationDefinitionSuccessAction
   | SetConfigurationRevisionAction
   | SetConfigurationRevisionSuccessAction
+  | SetConfigurationRevisionActiveAction
+  | SetConfigurationRevisionActiveSuccessAction
   | ReplaceConfigurationDataAction
   | ReplaceConfigurationDataSuccessAction
   | GetReplaceConfigurationErrorAction
@@ -252,6 +270,25 @@ export const setConfigurationRevisionSuccessAction = (
   }
 ): SetConfigurationRevisionSuccessAction => ({
   type: SET_CONFIGURATION_REVISION_SUCCESS_ACTION,
+  service: service,
+  payload,
+});
+
+export const setConfigurationRevisionActive = (
+  service: string,
+  setActiveRevision: number
+): SetConfigurationRevisionActiveAction => ({
+  type: SET_CONFIGURATION_REVISION_ACTIVE_ACTION,
+  service: service,
+  setActiveRevision: setActiveRevision,
+});
+export const setConfigurationRevisionActiveSuccessAction = (
+  service: string,
+  payload: {
+    data: ServiceConfiguration;
+  }
+): SetConfigurationRevisionActiveSuccessAction => ({
+  type: SET_CONFIGURATION_REVISION_ACTIVE_SUCCESS_ACTION,
   service: service,
   payload,
 });
