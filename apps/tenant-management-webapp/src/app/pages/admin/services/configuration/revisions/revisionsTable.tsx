@@ -73,7 +73,7 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
             {!isLatest && !isActive && (
               <GoAContextMenuIcon
                 title="Set Active"
-                type="checkmark-circle"
+                type="power"
                 onClick={() => setActiveRevision(revision)}
                 testId="toggle-details-visibility"
               />
