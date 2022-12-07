@@ -49,6 +49,13 @@ internal class Program
           Scheme = "bearer",
           Type = SecuritySchemeType.Http
         };
+        c.AddSecurityDefinition("accessToken", bearerScheme);
+
+        var securityRequirements = new OpenApiSecurityRequirement
+        {
+            { bearerScheme, Array.Empty<string>() },
+        };
+        c.AddSecurityRequirement(securityRequirements);
       }
     );
 
