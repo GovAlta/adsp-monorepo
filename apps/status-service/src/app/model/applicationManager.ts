@@ -119,6 +119,7 @@ export class ApplicationManager {
     });
   };
 
+  // TODO remove this code after next production release (Dec. 8, 2022).
   #updateAppDefinition = async (tenant: Tenant) => {
     const config: StatusServiceConfiguration = await this.#getConfiguration(tenant.id);
     const ids = Object.keys(config);
@@ -126,9 +127,7 @@ export class ApplicationManager {
     ids.forEach(async (appId) => {
       const app = config[appId];
       // Fix up he app's configuration data.
-      // Only checking config data that has a name and url; a poor mans check
-      // for an app object.
-      if (app && app.name && app.url) {
+      if (isApp(app)) {
         needsUpdate = true;
         const appKey = ApplicationRepo.getApplicationKey(app.name);
         const replacement: ApplicationConfiguration = {
