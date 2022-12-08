@@ -119,6 +119,7 @@ export class ApplicationManager {
     });
   };
 
+  // TODO remove this code after next production release (Dec. 8, 2022).
   #updateAppDefinition = async (tenant: Tenant) => {
     const config: StatusServiceConfiguration = await this.#getConfiguration(tenant.id);
     const ids = Object.keys(config);

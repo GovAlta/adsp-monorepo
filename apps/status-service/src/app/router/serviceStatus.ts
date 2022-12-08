@@ -96,18 +96,18 @@ export const createNewApplication =
   async (req, res, next) => {
     const user = req.user as User;
     const tenant = await tenantService.getTenant(user.tenantId);
-    const { name, description, endpoint } = req.body;
+    const { name, description, endpoint, appKey } = req.body;
 
     try {
-      const appKey = ApplicationRepo.getApplicationKey(name);
+      const newAppKey = appKey ? appKey : ApplicationRepo.getApplicationKey(name);
       const existing = await applicationRepo.getTenantApps(tenant.id);
       existing.forEach((a) => {
-        if (a.appKey == appKey || a.name == name) {
+        if (a.appKey == newAppKey || a.name == name) {
           throw new InvalidValueError('status-service', `Duplicate Application Name ${name}`);
         }
       });
 
-      const newApp = await applicationRepo.createApp(name, description, endpoint.url, tenant);
+      const newApp = await applicationRepo.createApp(newAppKey, name, description, endpoint.url, tenant);
       res.status(201).json(newApp);
     } catch (err) {
       logger.error(`Failed to create new application: ${err.message}`);

@@ -118,8 +118,7 @@ export class ApplicationRepo {
     };
   };
 
-  createApp = async (appName: string, description: string, url: string, tenant: Tenant) => {
-    const appKey = ApplicationRepo.getApplicationKey(appName);
+  createApp = async (appKey: string, appName: string, description: string, url: string, tenant: Tenant) => {
     const newApp = {
       appKey: appKey,
       name: appName,
