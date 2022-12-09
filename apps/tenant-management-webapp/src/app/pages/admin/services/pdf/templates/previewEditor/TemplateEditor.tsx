@@ -6,6 +6,8 @@ import {
   MonacoDivHeader,
   MonacoDivFooter,
   PdfEditorLabelWrapper,
+  PdfEditActionLayout,
+  PdfEditActions,
 } from './styled-components';
 import { GoAForm, GoAFormItem, GoABadge } from '@abgov/react-components/experimental';
 import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
@@ -220,35 +222,40 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             </Tab>
           </Tabs>
         </GoAFormItem>
+
         <EditTemplateActions>
           {' '}
-          <GoAButton
-            onClick={() => {
-              if (
-                savedTemplate.template !== template.template ||
-                savedTemplate.header !== template.header ||
-                savedTemplate.footer !== template.footer
-              ) {
-                setSaveModal(true);
-              } else {
-                cancel();
-              }
-            }}
-            data-testid="template-form-close"
-            buttonType="secondary"
-            type="button"
-          >
-            Close
-          </GoAButton>
-          <GoAButton
-            disabled={!validateEventTemplateFields() || hasConfigError}
-            onClick={() => saveCurrentTemplate()}
-            buttonType="primary"
-            data-testid="template-form-save"
-            type="submit"
-          >
-            Save
-          </GoAButton>
+          <PdfEditActionLayout>
+            <PdfEditActions>
+              <GoAButton
+                onClick={() => {
+                  if (
+                    savedTemplate.template !== template.template ||
+                    savedTemplate.header !== template.header ||
+                    savedTemplate.footer !== template.footer
+                  ) {
+                    setSaveModal(true);
+                  } else {
+                    cancel();
+                  }
+                }}
+                data-testid="template-form-close"
+                buttonType="secondary"
+                type="button"
+              >
+                Close
+              </GoAButton>
+              <GoAButton
+                disabled={!validateEventTemplateFields() || hasConfigError}
+                onClick={() => saveCurrentTemplate()}
+                buttonType="primary"
+                data-testid="template-form-save"
+                type="submit"
+              >
+                Save
+              </GoAButton>
+            </PdfEditActions>
+          </PdfEditActionLayout>
         </EditTemplateActions>
       </GoAForm>
       <SaveFormModal
