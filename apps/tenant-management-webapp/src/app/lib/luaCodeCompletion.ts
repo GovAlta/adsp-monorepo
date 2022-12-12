@@ -1,26 +1,26 @@
 export const functionSuggestion = [
   {
-    label: 'CreateTask',
-    insertText: 'CreateTask',
+    label: 'adsp.CreateTask',
+    insertText: 'adsp.CreateTask',
   },
   {
-    label: 'GeneratePdf',
-    insertText: 'GeneratePdf',
+    label: 'adsp.GeneratePdf',
+    insertText: 'adsp.GeneratePdf',
   },
   {
-    label: 'GetConfiguration',
-    insertText: 'GetConfiguration',
+    label: 'adsp.GetConfiguration',
+    insertText: 'adsp.GetConfiguration',
   },
   {
-    label: 'GetFormData',
-    insertText: 'GetFormData',
+    label: 'adsp.GetFormData',
+    insertText: 'adsp.GetFormData',
   },
 ];
 
 export const functionSignature = [
   {
     label:
-      'CreateTask(string queueNamespace, string queueName, string name,string? description = null, string? recordId = null, string? priority = null, LuaTable? context = null)',
+      'adsp.CreateTask(string queueNamespace, string queueName, string name,string? description = null, string? recordId = null, string? priority = null, LuaTable? context = null)',
     documentation: 'This function is used to create a task',
     parameters: [
       {
@@ -54,7 +54,7 @@ export const functionSignature = [
     ],
   },
   {
-    label: 'GeneratePdf(string templateId, string filename, object values)',
+    label: 'adsp.GeneratePdf(string templateId, string filename, object values)',
     documentation: 'This function help GeneratePdf',
     parameters: [
       {
@@ -72,7 +72,7 @@ export const functionSignature = [
     ],
   },
   {
-    label: 'GetConfiguration(string @namespace, string name)',
+    label: 'adsp.GetConfiguration(string @namespace, string name)',
     parameters: [
       {
         label: 'namespace',
@@ -85,7 +85,7 @@ export const functionSignature = [
     ],
   },
   {
-    label: 'GetFormData(string formId)',
+    label: 'adsp.GetFormData(string formId)',
     parameters: [
       {
         label: 'formId',
