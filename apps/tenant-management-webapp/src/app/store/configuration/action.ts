@@ -48,6 +48,8 @@ export const RESET_IMPORTS_LIST_ACTION = 'configuration/RESET_IMPORTS_LIST_ACTIO
 
 export const RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION =
   'configuration/RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION';
+
+export const UPDATE_LATEST_REVISION_SUCCESS_ACTION = 'configuration/UPDATE_LATEST_REVISION_SUCCESS_ACTION';
 export interface DeleteConfigurationDefinitionAction {
   type: typeof DELETE_CONFIGURATION_DEFINITION_ACTION;
   definitionName: string;
@@ -127,13 +129,17 @@ export interface SetConfigurationRevisionActiveSuccessAction {
 export interface ReplaceConfigurationDataAction {
   type: typeof REPLACE_CONFIGURATION_DATA_ACTION;
   configuration: ReplaceConfiguration;
+  isImportConfiguration: boolean;
 }
 
 export interface ReplaceConfigurationDataSuccessAction {
   type: typeof REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION;
   payload: { data: ServiceConfiguration };
 }
-
+export interface UpdateLatestRevisionSuccessAction {
+  type: typeof UPDATE_LATEST_REVISION_SUCCESS_ACTION;
+  payload: ReplaceConfiguration;
+}
 export interface GetReplaceConfigurationErrorAction {
   type: typeof REPLACE_CONFIGURATION_ERROR_ACTION;
 }
@@ -167,6 +173,7 @@ export type ConfigurationDefinitionActionTypes =
   | SetConfigurationRevisionActiveSuccessAction
   | ReplaceConfigurationDataAction
   | ReplaceConfigurationDataSuccessAction
+  | UpdateLatestRevisionSuccessAction
   | GetReplaceConfigurationErrorAction
   | GetReplaceConfigurationErrorSuccessAction
   | ResetReplaceConfigurationListAction
@@ -294,10 +301,12 @@ export const setConfigurationRevisionActiveSuccessAction = (
 });
 
 export const replaceConfigurationDataAction = (
-  configuration: ReplaceConfiguration
+  configuration: ReplaceConfiguration,
+  isImportConfiguration
 ): ReplaceConfigurationDataAction => ({
   type: REPLACE_CONFIGURATION_DATA_ACTION,
   configuration,
+  isImportConfiguration,
 });
 export const resetReplaceConfigurationListAction = (): ResetReplaceConfigurationListAction => ({
   type: RESET_REPLACE_CONFIGURATION_LIST_ACTION,
@@ -314,6 +323,13 @@ export const replaceConfigurationDataSuccessAction = (payload: {
   data: ServiceConfiguration;
 }): ReplaceConfigurationDataSuccessAction => ({
   type: REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION,
+  payload,
+});
+
+export const updateLatestRevisionSuccessAction = (
+  payload: ReplaceConfiguration
+): UpdateLatestRevisionSuccessAction => ({
+  type: UPDATE_LATEST_REVISION_SUCCESS_ACTION,
   payload,
 });
 
