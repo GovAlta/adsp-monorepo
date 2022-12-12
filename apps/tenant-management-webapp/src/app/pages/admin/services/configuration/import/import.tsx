@@ -41,8 +41,7 @@ export const ConfigurationImport: FunctionComponent = () => {
   const [errorsStatus, setErrorsStatus] = useState<string>('');
   const dispatch = useDispatch();
 
-  const onUploadSubmit = (e) => {
-    e.preventDefault();
+  const onUploadSubmit = () => {
     setErrorsStatus('');
     //Open a modal to list impact configuration
     const jsonValidationFormat = isValidJSONCheck()(selectedImportFile);
