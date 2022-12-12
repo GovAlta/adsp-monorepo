@@ -110,13 +110,16 @@ export const ConfigurationImport: FunctionComponent = () => {
     for (const config in importConfigJson) {
       for (const name in importConfigJson[config]) {
         if (importConfigJson[config][name] !== null && importConfigJson[config][name].configuration) {
-            dispatch(
-              replaceConfigurationDataAction({
+          dispatch(
+            replaceConfigurationDataAction(
+              {
                 namespace: config,
                 name: name,
                 configuration: importConfigJson[config][name].configuration,
-              })
-            );
+              },
+              true
+            )
+          );
         }
       }
     }

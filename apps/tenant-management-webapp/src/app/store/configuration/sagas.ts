@@ -18,6 +18,7 @@ import {
   ReplaceConfigurationDataAction,
   REPLACE_CONFIGURATION_DATA_ACTION,
   replaceConfigurationDataSuccessAction,
+  updateLatestRevisionSuccessAction,
   REPLACE_CONFIGURATION_ERROR_ACTION,
   getReplaceConfigurationErrorSuccessAction,
   ResetReplaceConfigurationListAction,
@@ -345,19 +346,22 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
           });
           return;
         }
-        // Import creates a new revision so there is a snapshot of pre-import revision.
-        const revision = yield call(
-          axios.post,
-          `${baseUrl}/configuration/v2/configuration/${action.configuration.namespace}/${action.configuration.name}`,
-          {
-            operation: 'CREATE-REVISION',
-          },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        let revision = null;
+        if (action.isImportConfiguration) {
+          // Import creates a new revision so there is a snapshot of pre-import revision.
+          revision = yield call(
+            axios.post,
+            `${baseUrl}/configuration/v2/configuration/${action.configuration.namespace}/${action.configuration.name}`,
+            {
+              operation: 'CREATE-REVISION',
+            },
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
 
-        yield put(setConfigurationRevisionSuccessAction(service, revision));
+          yield put(setConfigurationRevisionSuccessAction(service, revision));
+        }
         // Send request to replace configuration
         //Import configuration replaces (REPLACE operation in PATCH) the configuration stored in latest revision
         yield call(
@@ -368,8 +372,11 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
             headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           }
         );
-
-        yield put(replaceConfigurationDataSuccessAction(revision));
+        if (action.isImportConfiguration) {
+          yield put(replaceConfigurationDataSuccessAction(revision));
+        } else {
+          yield put(updateLatestRevisionSuccessAction(action.configuration));
+        }
       } catch (err) {
         replaceErrorConfiguration.push({
           name: service,
@@ -385,6 +392,7 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
     }
   }
 }
+
 export function* getReplaceList(action: SetConfigurationRevisionAction): SagaIterator {
   if (replaceErrorConfiguration.length > 0) {
     yield put(getReplaceConfigurationErrorSuccessAction(replaceErrorConfiguration));

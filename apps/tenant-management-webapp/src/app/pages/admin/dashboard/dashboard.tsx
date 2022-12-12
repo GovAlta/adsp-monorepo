@@ -232,7 +232,6 @@ const Dashboard = (): JSX.Element => {
                         configured in a script and executed via the script service API so that policy changes to the
                         formula can implemented through configuration change.
                       </div>
-                      <div>&nbsp;</div>
                     </GoACard>
                   </GridItem>
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
@@ -245,6 +244,10 @@ const Dashboard = (): JSX.Element => {
                         represent a service that is useful to the end user by itself, such as child care subsidy and
                         child care certification.
                       </div>
+                      <div>&nbsp;</div>
+                      <div>&nbsp;</div>
+                      <div>&nbsp;</div>
+                      <div>&nbsp;</div>
                     </GoACard>
                   </GridItem>
                 </Grid>

@@ -15,6 +15,7 @@ import {
   FETCH_CONFIGURATION_REVISIONS_SUCCESS_ACTION,
   FETCH_CONFIGURATION_ACTIVE_REVISION_SUCCESS_ACTION,
   REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION,
+  UPDATE_LATEST_REVISION_SUCCESS_ACTION,
 } from './action';
 import {
   ConfigurationDefinitionState,
@@ -151,6 +152,9 @@ export default function (
         state.configurationRevisions[action.service]['revisions']['next'] = action.next;
         const latest = state.configurationRevisions[action.service]['revisions']['result'][0].revision;
         state.configurationRevisions[action.service]['revisions']['latest'] = latest;
+        state.configurationRevisions[action.service]['revisions']['isCore'] = Object.keys(
+          state.coreConfigDefinitions?.configuration
+        ).some((key) => key === action.service);
       }
       return {
         ...state,
@@ -159,6 +163,25 @@ export default function (
     case FETCH_CONFIGURATION_ACTIVE_REVISION_SUCCESS_ACTION: {
       if (state.configurationRevisions[action.service] && action.payload) {
         state.configurationRevisions[action.service]['revisions']['active'] = action.payload.revision;
+      }
+      return {
+        ...state,
+      };
+    }
+    case UPDATE_LATEST_REVISION_SUCCESS_ACTION: {
+      const configuration = action.payload;
+      const service = `${configuration.namespace}:${configuration.name}`;
+
+      if (state.configurationRevisions[service].revisions.result.length > 0) {
+        state.configurationRevisions[service].revisions.result[0].configuration = configuration.configuration;
+      } else {
+        const revision = {
+          revision: 0,
+          created: new Date().toISOString(),
+          lastUpdated: new Date().toISOString(),
+          configuration: configuration.configuration,
+        };
+        state.configurationRevisions[service].revisions.result.push(revision);
       }
       return {
         ...state,
