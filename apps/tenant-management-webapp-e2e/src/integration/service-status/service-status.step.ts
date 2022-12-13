@@ -583,7 +583,7 @@ Then('the user changes status to the first unused status', function () {
 
 When('the user clicks Save button in Manual status change modal', function () {
   statusObj.manualStatusChangeModalSaveBtn().click();
-  cy.wait(2000);
+  cy.wait(4000);
 });
 
 Then('the user views the status of {string} changed to the first unused status', function (appName) {
