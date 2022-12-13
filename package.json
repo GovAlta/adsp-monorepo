@@ -46,7 +46,7 @@
     "@azure/storage-blob": "^12.9.0",
     "@faker-js/faker": "7.0.1",
     "@keycloak/keycloak-admin-client": "^15.0.2",
-    "@socket.io/redis-adapter": "^7.1.0",
+    "@socket.io/redis-adapter": "7.2.0",
     "ajv": "^6.12.6",
     "amqp-connection-manager": "^3.7.0",
     "json-schema-migrate": "2.0.0",
