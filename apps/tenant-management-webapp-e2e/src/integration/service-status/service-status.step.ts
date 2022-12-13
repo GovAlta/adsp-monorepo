@@ -583,7 +583,7 @@ Then('the user changes status to the first unused status', function () {
 
 When('the user clicks Save button in Manual status change modal', function () {
   statusObj.manualStatusChangeModalSaveBtn().click();
-  cy.wait(2000);
+  cy.wait(4000);
 });
 
 Then('the user views the status of {string} changed to the first unused status', function (appName) {
@@ -604,6 +604,7 @@ Then('the user views the status of {string} changed to the first unused status',
 
 When('the user clicks Edit button for contact information', function () {
   statusObj.contactInformationEditBtn().click();
+  cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
 Then('the user views Edit contact information modal on the status overview page', function () {
