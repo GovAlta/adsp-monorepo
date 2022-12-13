@@ -1,6 +1,7 @@
 import { adspId, AdspId, ServiceDirectory, Tenant, TokenProvider, User } from '@abgov/adsp-service-sdk';
 import { NotFoundError } from '@core-services/core-common';
 import axios from 'axios';
+import MongoEndpointStatusEntryRepository from '../../mongo/endpointStatusEntry';
 import { isApp } from '../../mongo/schema';
 import {
   ApplicationConfiguration,
@@ -154,10 +155,17 @@ export class ApplicationRepo {
       throw new NotFoundError('Status application', appKey);
     }
 
+    // Delete the app status
     const appStatus = await this.getStatus(user, appKey);
     if (appStatus) {
       await appStatus.delete({ ...user } as User);
     }
+
+    // Delete its health status
+    const endpointDb = new MongoEndpointStatusEntryRepository();
+    await endpointDb.deleteAll(app.appKey);
+
+    // Delete the app itself.
     this.#deleteConfigurationApp(appKey, user.tenantId);
   };
 

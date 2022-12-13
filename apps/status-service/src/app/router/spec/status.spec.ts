@@ -528,7 +528,7 @@ describe('Service router', () => {
     });
     it('Can delete application', async () => {
       statusRepositoryMock.get.mockResolvedValueOnce(applicationStatusMock[1]);
-      const handler = deleteApplication(loggerMock, applicationRepo);
+      const handler = deleteApplication(loggerMock, applicationRepo, eventServiceMock);
       const req: Request = {
         user: {
           tenantId,
