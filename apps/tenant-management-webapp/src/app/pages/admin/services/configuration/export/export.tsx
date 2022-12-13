@@ -278,8 +278,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                         <GoAButton
                           data-testid="export-configuration-1"
                           disabled={Object.keys(exportServices).length < 1 || indicator.show}
-                          onClick={(e) => {
-                            e.preventDefault();
+                          onClick={() => {
                             dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
                           }}
                         >
@@ -290,7 +289,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                         <GoAButton
                           type="secondary"
                           disabled={Object.keys(exportServices).length < 1 || indicator.show}
-                          onClick={(e) => {
+                          onClick={() => {
                             unselectAll();
                             setSelectAll(false);
                           }}
