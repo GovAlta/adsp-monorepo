@@ -16,7 +16,7 @@ import {
   setConfigurationRevision,
   setConfigurationRevisionActive,
 } from '@store/configuration/action';
-
+import { RowFlex } from '../styled-components';
 interface VisibleProps {
   visible: boolean;
 }
@@ -60,27 +60,13 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
         </td>
         <td>{revision.lastUpdated ? FormatTimeWithAt(new Date(revision.lastUpdated)) : ''}</td>
         <td>
-          <GoAContextMenu>
-            <GoAContextMenuIcon
-              title="Toggle details"
-              type={showDetails ? 'eye-off' : 'eye'}
-              onClick={() => setShowDetails(!showDetails)}
-              testId="toggle-details-visibility"
-            />
+          <RowFlex>
             {isLatest && (
               <GoAContextMenuIcon
                 title="Add revision"
                 type="add"
                 onClick={() => createRevision(revision)}
                 testId={`revision-add-${revision.configuration.namespace}-${revision.configuration.namespace}`}
-              />
-            )}
-            {!isLatest && !isActive && (
-              <GoAContextMenuIcon
-                title="Set Active"
-                type="power"
-                onClick={() => setActiveRevision(revision)}
-                testId={`revision-set-active-${revision.configuration.namespace}-${revision.configuration.namespace}`}
               />
             )}
             {!isCore && isLatest && (
@@ -93,7 +79,22 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
                 }}
               />
             )}
-          </GoAContextMenu>
+            {!isLatest && !isActive && (
+              <GoAContextMenuIcon
+                title="Set Active"
+                type="power"
+                onClick={() => setActiveRevision(revision)}
+                testId={`revision-set-active-${revision.configuration.namespace}-${revision.configuration.namespace}`}
+              />
+            )}
+
+            <GoAContextMenuIcon
+              title="Toggle details"
+              type={showDetails ? 'eye-off' : 'eye'}
+              onClick={() => setShowDetails(!showDetails)}
+              testId="toggle-details-visibility"
+            />
+          </RowFlex>
         </td>
       </tr>
       {showDetails && (
@@ -272,10 +273,10 @@ export const RevisionTable = styled(RevisionTableComponent)`
     width: 30%;
   }
   & .data-col {
-    width: 50%;
+    width: 40%;
   }
   & .action-col {
-    width: 20%;
+    width: 30%;
   }
   & .number-badge {
     display: flex;

@@ -59,6 +59,11 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
                   scrollBeyondLastLine: false,
                   tabSize: 2,
                   minimap: { enabled: false },
+                  overviewRulerBorder: false,
+                  lineHeight: 25,
+                  renderLineHighlight: 'line' as const,
+                  overviewRulerLanes: 0,
+                  hideCursorInOverviewRuler: true,
                 }}
               />
             </GoAFormItem>
@@ -66,7 +71,14 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
         </GoAModalContent>
         <GoAModalActions>
           <GoAButtonGroup alignment="end">
-            <GoAButton data-testid="form-cancel" type="secondary" onClick={onClose}>
+            <GoAButton
+              data-testid="form-cancel"
+              type="secondary"
+              onClick={() => {
+                setConfiguration('');
+                onClose();
+              }}
+            >
               Cancel
             </GoAButton>
             <GoAButton
@@ -86,6 +98,7 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
                     false
                   )
                 );
+                setConfiguration('');
                 onClose();
               }}
             >
