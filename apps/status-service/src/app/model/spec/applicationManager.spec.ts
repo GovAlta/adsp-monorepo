@@ -1,5 +1,6 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
+import { EndpointStatusEntryRepository } from '../../repository/endpointStatusEntry';
 import { ApplicationManager } from '../applicationManager';
 
 jest.mock('axios');
@@ -16,11 +17,13 @@ const repositoryMock = {
   save: jest.fn(),
 };
 
-const notificationRepositoryMock = {
-  find: jest.fn(),
+const endpointRepoMock: EndpointStatusEntryRepository = {
   delete: jest.fn(),
+  deleteAll: jest.fn(),
   save: jest.fn(),
   get: jest.fn(),
+  findRecentByUrlAndApplicationId: jest.fn(),
+  deleteOldUrlStatus: jest.fn(),
 };
 
 const loggerMock = {
@@ -115,6 +118,7 @@ describe('Application Manager', () => {
       configurationServiceMock,
       adspId`${service}`,
       repositoryMock,
+      endpointRepoMock,
       directoryServiceMock,
       tenantServiceMock,
       loggerMock

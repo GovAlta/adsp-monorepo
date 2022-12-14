@@ -30,6 +30,7 @@ describe('checkEndpoint', () => {
     find: jest.fn(),
     save: jest.fn((entity) => Promise.resolve(entity)),
     delete: jest.fn(),
+    deleteAll: jest.fn(),
   };
 
   const eventServiceMock = {

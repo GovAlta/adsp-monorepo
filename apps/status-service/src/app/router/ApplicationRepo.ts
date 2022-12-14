@@ -9,6 +9,7 @@ import {
   StatusServiceConfiguration,
 } from '../model';
 import { StatusApplications } from '../model/statusApplications';
+import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 
 /**
@@ -18,12 +19,14 @@ import { ServiceStatusRepository } from '../repository/serviceStatus';
  */
 export class ApplicationRepo {
   #repository: ServiceStatusRepository;
+  #endpointStatusEntryRepository: EndpointStatusEntryRepository;
   #serviceId: AdspId;
   #directoryService: ServiceDirectory;
   #tokenProvider: TokenProvider;
 
   constructor(
     repository: ServiceStatusRepository,
+    endpointStatusEntryRepository: EndpointStatusEntryRepository,
     serviceId: AdspId,
     directoryService: ServiceDirectory,
     tokenProvider: TokenProvider
@@ -32,6 +35,7 @@ export class ApplicationRepo {
     this.#serviceId = serviceId;
     this.#directoryService = directoryService;
     this.#tokenProvider = tokenProvider;
+    this.#endpointStatusEntryRepository = endpointStatusEntryRepository;
   }
 
   /*
@@ -154,10 +158,16 @@ export class ApplicationRepo {
       throw new NotFoundError('Status application', appKey);
     }
 
+    // Delete the app status
     const appStatus = await this.getStatus(user, appKey);
     if (appStatus) {
       await appStatus.delete({ ...user } as User);
     }
+
+    // Delete its health status
+    await this.#endpointStatusEntryRepository.deleteAll(app.appKey);
+
+    // Delete the app itself.
     this.#deleteConfigurationApp(appKey, user.tenantId);
   };
 

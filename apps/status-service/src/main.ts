@@ -115,6 +115,7 @@ app.use(express.json({ limit: '1mb' }));
     configurationService,
     serviceId,
     repositories.serviceStatusRepository,
+    repositories.endpointStatusEntryRepository,
     directory,
     tenantService,
     logger

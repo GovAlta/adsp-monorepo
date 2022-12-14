@@ -10,6 +10,7 @@ import {
 import axios from 'axios';
 import { Logger } from 'winston';
 import { isApp } from '../../mongo/schema';
+import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { ApplicationRepo } from '../router/ApplicationRepo';
 import {
@@ -38,6 +39,7 @@ export class ApplicationManager {
     configurationService: ConfigurationService,
     serviceId: AdspId,
     repository: ServiceStatusRepository,
+    endpointStatusEntryRepository: EndpointStatusEntryRepository,
     directory: ServiceDirectory,
     tenantService: TenantService,
     logger: Logger
@@ -46,7 +48,13 @@ export class ApplicationManager {
     this.#repository = repository;
     this.#logger = logger;
     this.#tenantService = tenantService;
-    this.#applicationRepo = new ApplicationRepo(repository, serviceId, directory, tokenProvider);
+    this.#applicationRepo = new ApplicationRepo(
+      repository,
+      endpointStatusEntryRepository,
+      serviceId,
+      directory,
+      tokenProvider
+    );
     this.#tokenProvider = tokenProvider;
     this.#directory = directory;
     this.serviceId = serviceId;

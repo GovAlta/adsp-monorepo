@@ -152,11 +152,30 @@ export const updateApplication =
   };
 
 export const deleteApplication =
-  (logger: Logger, applicationRepo: ApplicationRepo): RequestHandler =>
+  (logger: Logger, applicationRepo: ApplicationRepo, eventService: EventService): RequestHandler =>
   async (req, res, next) => {
     try {
       const user = req.user as User;
       const { appKey } = req.params;
+      const app = await applicationRepo.getApp(appKey, user.tenantId);
+      if (!app) {
+        throw new NotFoundError('Status application', appKey);
+      }
+      const status = await applicationRepo.findStatus(appKey);
+
+      // Stop health checks if necessary.  Note, there is a lag
+      // between requesting the stop and having the service
+      // actually stop pinging the Application.  This is because the stop
+      // is implemented through the event service, and the uptake time
+      // can be O(second).  Unfortunately, this lag can lead to an orphaned Endpoint
+      // Status Entry being added to the database AFTER the App has
+      // been deleted!
+      // TODO One way to mitigate the issue would be to force the user to stop
+      // monitoring the app before it can be deleted.
+      if (status.enable) {
+        eventService.send(applicationStatusToStopped(app, user));
+      }
+
       applicationRepo.deleteApp(appKey, user);
       res.sendStatus(204);
     } catch (err) {
@@ -269,7 +288,13 @@ export function createServiceStatusRouter({
   serviceId,
 }: ServiceStatusRouterProps): Router {
   const router = Router();
-  const applicationRepo = new ApplicationRepo(serviceStatusRepository, serviceId, directory, tokenProvider);
+  const applicationRepo = new ApplicationRepo(
+    serviceStatusRepository,
+    endpointStatusEntryRepository,
+    serviceId,
+    directory,
+    tokenProvider
+  );
 
   // Get the service for the tenant
   router.get('/applications', assertAuthenticatedHandler, getApplications(logger, applicationRepo));
@@ -290,7 +315,11 @@ export function createServiceStatusRouter({
     createNewApplication(logger, applicationRepo, tenantService)
   );
   router.put('/applications/:appKey', assertAuthenticatedHandler, updateApplication(logger, applicationRepo));
-  router.delete('/applications/:appKey', assertAuthenticatedHandler, deleteApplication(logger, applicationRepo));
+  router.delete(
+    '/applications/:appKey',
+    assertAuthenticatedHandler,
+    deleteApplication(logger, applicationRepo, eventService)
+  );
   router.patch(
     '/applications/:appKey/status',
     assertAuthenticatedHandler,
