@@ -172,7 +172,7 @@ export const deleteApplication =
       // been deleted!
       // TODO One way to mitigate the issue would be to force the user to stop
       // monitoring the app before it can be deleted.
-      if (status.enable) {
+      if (status?.enable) {
         eventService.send(applicationStatusToStopped(app, user));
       }
 
