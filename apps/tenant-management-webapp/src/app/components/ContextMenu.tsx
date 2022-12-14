@@ -7,13 +7,13 @@ interface ContextMenuIconProps {
   type: GoAIconType;
   testId?: string;
   title?: string;
-  onClick: () => void;
+  onClick?: () => void;
 }
 
 interface ContextMenuTextProps {
-  type: GoAIconType;
+  type?: GoAIconType;
   testId?: string;
-  onClick: () => void;
+  onClick?: () => void;
 }
 
 export const GoAContextMenuIcon: FC<ContextMenuIconProps> = (props) => {
