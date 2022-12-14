@@ -1,7 +1,6 @@
 import { adspId, AdspId, ServiceDirectory, Tenant, TokenProvider, User } from '@abgov/adsp-service-sdk';
 import { NotFoundError } from '@core-services/core-common';
 import axios from 'axios';
-import MongoEndpointStatusEntryRepository from '../../mongo/endpointStatusEntry';
 import { isApp } from '../../mongo/schema';
 import {
   ApplicationConfiguration,
@@ -10,6 +9,7 @@ import {
   StatusServiceConfiguration,
 } from '../model';
 import { StatusApplications } from '../model/statusApplications';
+import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 
 /**
@@ -19,12 +19,14 @@ import { ServiceStatusRepository } from '../repository/serviceStatus';
  */
 export class ApplicationRepo {
   #repository: ServiceStatusRepository;
+  #endpointStatusEntryRepository: EndpointStatusEntryRepository;
   #serviceId: AdspId;
   #directoryService: ServiceDirectory;
   #tokenProvider: TokenProvider;
 
   constructor(
     repository: ServiceStatusRepository,
+    endpointStatusEntryRepository: EndpointStatusEntryRepository,
     serviceId: AdspId,
     directoryService: ServiceDirectory,
     tokenProvider: TokenProvider
@@ -33,6 +35,7 @@ export class ApplicationRepo {
     this.#serviceId = serviceId;
     this.#directoryService = directoryService;
     this.#tokenProvider = tokenProvider;
+    this.#endpointStatusEntryRepository = endpointStatusEntryRepository;
   }
 
   /*
@@ -162,8 +165,7 @@ export class ApplicationRepo {
     }
 
     // Delete its health status
-    const endpointDb = new MongoEndpointStatusEntryRepository();
-    await endpointDb.deleteAll(app.appKey);
+    await this.#endpointStatusEntryRepository.deleteAll(app.appKey);
 
     // Delete the app itself.
     this.#deleteConfigurationApp(appKey, user.tenantId);

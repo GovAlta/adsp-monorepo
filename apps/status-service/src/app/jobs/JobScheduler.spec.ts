@@ -1,19 +1,12 @@
 import { Logger } from 'winston';
 import { HealthCheckJobScheduler, HealthCheckSchedulingProps } from './JobScheduler';
-import {
-  ApplicationConfiguration,
-  ServiceStatusApplicationEntity,
-  StaticApplicationData,
-  StatusServiceApplications,
-  StatusServiceConfiguration,
-} from '../model';
+import { ApplicationConfiguration, ServiceStatusApplicationEntity, StatusServiceConfiguration } from '../model';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { adspId, EventService } from '@abgov/adsp-service-sdk';
 import { HealthCheckJobCache } from './HealthCheckJobCache';
 import { getScheduler } from './SchedulerFactory';
 import { ApplicationManager } from '../model/applicationManager';
-import { StatusApplications } from '../model/statusApplications';
 
 describe('JobScheduler', () => {
   const loggerMock: Logger = {
@@ -41,13 +34,6 @@ describe('JobScheduler', () => {
   const directoryServiceMock = {
     getServiceUrl: jest.fn(),
     getResourceUrl: jest.fn(),
-  };
-
-  const notificationServiceMock = {
-    find: jest.fn(),
-    delete: jest.fn(),
-    save: jest.fn(),
-    get: jest.fn(),
   };
 
   const tenantId = adspId`urn:ads:mock-tenant:mock-service:bob:bobs-id`;
@@ -116,6 +102,7 @@ describe('JobScheduler', () => {
       configurationServiceMock,
       adspId`${service}`,
       statusRepoMock,
+      endpointRepoMock,
       directoryServiceMock,
       tenantServiceMock,
       loggerMock
@@ -124,6 +111,7 @@ describe('JobScheduler', () => {
 
   const endpointRepoMock: EndpointStatusEntryRepository = {
     deleteOldUrlStatus: jest.fn(),
+    deleteAll: jest.fn(),
   } as unknown as EndpointStatusEntryRepository;
 
   const eventServiceMock: EventService = {

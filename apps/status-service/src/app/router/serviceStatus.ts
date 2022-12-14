@@ -288,7 +288,13 @@ export function createServiceStatusRouter({
   serviceId,
 }: ServiceStatusRouterProps): Router {
   const router = Router();
-  const applicationRepo = new ApplicationRepo(serviceStatusRepository, serviceId, directory, tokenProvider);
+  const applicationRepo = new ApplicationRepo(
+    serviceStatusRepository,
+    endpointStatusEntryRepository,
+    serviceId,
+    directory,
+    tokenProvider
+  );
 
   // Get the service for the tenant
   router.get('/applications', assertAuthenticatedHandler, getApplications(logger, applicationRepo));

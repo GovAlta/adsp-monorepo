@@ -67,6 +67,7 @@ describe('Service router', () => {
     find: jest.fn(),
     save: jest.fn((entity) => Promise.resolve(entity)),
     delete: jest.fn(),
+    deleteAll: jest.fn(),
   };
 
   const nextMock = jest.fn();
@@ -198,7 +199,13 @@ describe('Service router', () => {
     }),
   } as unknown as Response;
 
-  const applicationRepo = new ApplicationRepo(statusRepositoryMock, serviceId, serviceDirectoryMock, tokenProviderMock);
+  const applicationRepo = new ApplicationRepo(
+    statusRepositoryMock,
+    endpointRepositoryMock,
+    serviceId,
+    serviceDirectoryMock,
+    tokenProviderMock
+  );
 
   describe('createStatusServiceRouter', () => {
     it('Can create status service routers', () => {
