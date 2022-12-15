@@ -3,7 +3,7 @@ import { TemplateEditorContainer, MonacoDiv, EditTemplateActions, MonacoDivBody 
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
-import { buildSuggestions } from '@lib/autoComplete';
+import { buildSuggestions, triggerInScope } from '@lib/autoComplete';
 import { Template } from '@store/notification/models';
 import { SaveFormModal } from '@components/saveModal';
 
@@ -72,7 +72,15 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
       const provider = monaco.languages.registerCompletionItemProvider('handlebars', {
         triggerCharacters: ['{{', '.'],
         provideCompletionItems: (model, position) => {
-          const suggestions = buildSuggestions(monaco, eventSuggestion, model, position);
+          const textUntilPosition = model.getValueInRange({
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column,
+          });
+          const suggestions = triggerInScope(textUntilPosition, position.lineNumber)
+            ? buildSuggestions(monaco, eventSuggestion, model, position)
+            : [];
           return {
             suggestions,
           } as languages.ProviderResult<languages.CompletionList>;
