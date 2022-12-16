@@ -13,7 +13,7 @@ import { GoAForm, GoAFormItem, GoABadge } from '@abgov/react-components/experime
 import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
 import { PdfTemplate } from '@store/pdf/model';
 import { languages } from 'monaco-editor';
-import { buildSuggestions } from '@lib/autoComplete';
+import { buildSuggestions, triggerInScope } from '@lib/autoComplete';
 import { GoAButton } from '@abgov/react-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { SaveFormModal } from '@components/saveModal';
@@ -73,7 +73,16 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
       const provider = monaco.languages.registerCompletionItemProvider('handlebars', {
         triggerCharacters: ['{{', '.'],
         provideCompletionItems: (model, position) => {
-          const suggestions = buildSuggestions(monaco, suggestion, model, position);
+          const textUntilPosition = model.getValueInRange({
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column,
+          });
+          const suggestions = triggerInScope(textUntilPosition, position.lineNumber)
+            ? buildSuggestions(monaco, suggestion, model, position)
+            : [];
+
           return {
             suggestions,
           } as languages.ProviderResult<languages.CompletionList>;
