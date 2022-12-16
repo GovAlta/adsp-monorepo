@@ -16,10 +16,8 @@ config:
       fields:
         - "keycloak_url"
         - "tenant_realm_id"
-        - "client_id"
-        - "client_secret"
-        - "username"
-        - "password"
+        # - "client_id"
+        # - "client_secret"
   variables:
     tenant:
       - "demo"
@@ -27,7 +25,7 @@ config:
   phases:
     - name: warm up
       duration: 10
-      arrivalCount: 2
+      arrivalRate: 10
     # - name: load
     #   duration: 120
     #   arrivalCount: 500 // creates users in 120 sec
@@ -45,8 +43,8 @@ before:
         form:
           {
             grant_type: "client_credentials",
-            client_id: "{{ client_id }}",
-            client_secret: "{{ client_secret }}",
+            client_id: "{{ $processEnvironment.CLIENT_ID }}",
+            client_secret: "{{ $processEnvironment.CLIENT_SECRET }}",
           }
         capture:
           - json: "$.access_token"
