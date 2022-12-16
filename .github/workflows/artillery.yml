@@ -43,4 +43,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: artillery-test-report
-          path: tests/reports/*
+          path: reports/*
