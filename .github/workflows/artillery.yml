@@ -17,33 +17,30 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-        
+
+      - name: Make reports directory
+        run: mkdir reports
+
       - name: Execute load tests event service
-        run: /home/node/artillery/bin/run run tests/events-service/load.yml --environment dev --output tests/reports/event-report.json
+        run: /home/node/artillery/bin/run run tests/events-service/load.yml --environment dev --output reports/event-report.json
         env:
           CLIENT_ID: ${{ inputs.CLIENT_ID }}
           CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
-          
+
       - name: Execute load tests status service
-        run: /home/node/artillery/bin/run run tests/status-service/load.yml --environment dev --output tests/reports/status-report.json
+        run: /home/node/artillery/bin/run run tests/status-service/load.yml --environment dev --output reports/status-report.json
         env:
           CLIENT_ID: ${{ inputs.CLIENT_ID }}
           CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
 
       - name: Generate HTML report
-        run: /home/node/artillery/bin/run report --output tests/reports/report tests/reports/event-report.json
-        with:
-          name: artillery-test-report1
-          path: tests/reports/
-          
+        run: /home/node/artillery/bin/run report --output reports/report reports/event-report.json
+
       - name: Generate HTML report
-        run: /home/node/artillery/bin/run report --output tests/reports/report tests/reports/status-report.json
-        with:
-          name: artillery-test-report2
-          path: tests/reports/
-          
+        run: /home/node/artillery/bin/run report --output reports/report reports/status-report.json
+
       - name: Archive test report
         uses: actions/upload-artifact@v3
         with:
           name: artillery-test-report
-          path: tests/reports/*
+          path: reports/*
