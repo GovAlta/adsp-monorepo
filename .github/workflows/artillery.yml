@@ -18,16 +18,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Execute load tests
-        run: /home/node/artillery/bin/run run tests/events-service/load.yml --environment dev --output tests/reports/report.json
+      - name: Execute load tests event service
+        run: /home/node/artillery/bin/run run tests/events-service/load.yml --environment dev --output tests/reports/event-report.json
+        env:
+          CLIENT_ID: ${{ inputs.CLIENT_ID }}
+          CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
+      - name: Execute load tests status service
+        run: /home/node/artillery/bin/run run tests/status-service/load.yml --environment dev --output tests/reports/status-report.json
         env:
           CLIENT_ID: ${{ inputs.CLIENT_ID }}
           CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
 
       - name: Generate HTML report
         run: /home/node/artillery/bin/run report --output tests/reports/report tests/reports/report.json
+        with:
+          name: artillery-test-report1
+          path: tests/reports/
+      - name: Generate HTML report
+        run: /home/node/artillery/bin/run report --output tests/reports/report tests/reports/report.json
+        with:
+          name: artillery-test-report2
+          path: tests/reports/
       - name: Archive test report
         uses: actions/upload-artifact@v2
         with:
           name: artillery-test-report
-          path: reports/*
+          path: tests/reports/*
