@@ -26,7 +26,6 @@ jobs:
 
       - name: Generate HTML report
         run: /home/node/artillery/bin/run report --output tests/reports/report tests/reports/report.json
-
       - name: Archive test report
         uses: actions/upload-artifact@v2
         with:
