@@ -55,7 +55,7 @@ Thumbs.db
 /tenant-management-webapp-e2e/cypress
 
 # Artillery csv for environments not to be checked in
-**/artillery.*.csv
+# **/artillery.*.csv
 
 apps/*/bin
 apps/*/obj
