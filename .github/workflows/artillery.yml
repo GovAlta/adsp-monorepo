@@ -19,13 +19,13 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Execute load tests
-        run: /home/node/artillery/bin/artillery run tests/events-service/load.yml --environment dev --output reports/report.json
+        run: /home/node/artillery/bin/run run tests/events-service/load.yml --environment dev --output reports/report.json
         env:
           CLIENT_ID: ${{ inputs.CLIENT_ID }}
           CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
 
       - name: Generate HTML report
-        run: /home/node/artillery/bin/artillery report --output reports/report reports/report.json
+        run: /home/node/artillery/bin/run report --output reports/report reports/report.json
 
       - name: Archive test report
         uses: actions/upload-artifact@v2
