@@ -1,4 +1,4 @@
-name: Artillery event service Load Test
+name: Artillery performance tests
 
 on:
   workflow_dispatch:
@@ -33,13 +33,13 @@ jobs:
           CLIENT_ID: ${{ inputs.CLIENT_ID }}
           CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
 
-      - name: Generate HTML report
-        run: /home/node/artillery/bin/run report --output reports/report reports/event-report.json
+      - name: Generate HTML report event service
+        run: /home/node/artillery/bin/run report --output reports/event-report.html reports/event-report.json
 
-      - name: Generate HTML report
-        run: /home/node/artillery/bin/run report --output reports/report reports/status-report.json
-        
-      - name: Archive test report
+      - name: Generate HTML report status service
+        run: /home/node/artillery/bin/run report --output reports/status-report.html reports/status-report.json
+
+      - name: Archive tests reports
         uses: actions/upload-artifact@v3
         with:
           name: artillery-test-report
