@@ -11,7 +11,7 @@ on:
         required: true
 
 jobs:
-  artillery:
+  artillery-event:
     runs-on: ubuntu-latest
     container: artilleryio/artillery:latest
     steps:
@@ -27,14 +27,30 @@ jobs:
           CLIENT_ID: ${{ inputs.CLIENT_ID }}
           CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
 
+      - name: Generate HTML report event service
+        run: /home/node/artillery/bin/run report --output reports/event-report.html reports/event-report.json
+
+      - name: Archive tests reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: artillery-test-report-event
+          path: reports/*
+
+  artillery-status:
+    runs-on: ubuntu-latest
+    container: artilleryio/artillery:latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Make reports directory
+        run: mkdir reports
+
       - name: Execute load tests status service
         run: /home/node/artillery/bin/run run tests/status-service/load.yml --environment dev --output reports/status-report.json
         env:
           CLIENT_ID: ${{ inputs.CLIENT_ID }}
           CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
-
-      - name: Generate HTML report event service
-        run: /home/node/artillery/bin/run report --output reports/event-report.html reports/event-report.json
 
       - name: Generate HTML report status service
         run: /home/node/artillery/bin/run report --output reports/status-report.html reports/status-report.json
@@ -42,5 +58,5 @@ jobs:
       - name: Archive tests reports
         uses: actions/upload-artifact@v3
         with:
-          name: artillery-test-report
+          name: artillery-test-report-status
           path: reports/*
