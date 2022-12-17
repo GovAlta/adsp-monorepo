@@ -3,9 +3,7 @@ import Editor from '@monaco-editor/react';
 import { RootState } from '@store/index';
 import { Revision } from '@store/configuration/model';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import { GoAButton, GoAButtonGroup, GoAFormItem, GoAModal } from '@abgov/react-components-new';
 import { replaceConfigurationDataAction } from '@store/configuration/action';
 import styled from 'styled-components';
 
@@ -40,36 +38,11 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
 
   return (
     <ModalOverwrite>
-      <GoAModal testId="definition-form" isOpen={open}>
-        <GoAModalTitle testId="definition-form-title">{`Edit Revision for ${service}`}</GoAModalTitle>
-        <GoAModalContent>
-          <GoAForm>
-            <GoAFormItem error={error}>
-              <Editor
-                data-testid="form-schema"
-                height={200}
-                value={configuration}
-                onChange={(value) => {
-                  validateSchema(value);
-                  setConfiguration(value);
-                }}
-                language="json"
-                options={{
-                  automaticLayout: true,
-                  scrollBeyondLastLine: false,
-                  tabSize: 2,
-                  minimap: { enabled: false },
-                  overviewRulerBorder: false,
-                  lineHeight: 25,
-                  renderLineHighlight: 'line' as const,
-                  overviewRulerLanes: 0,
-                  hideCursorInOverviewRuler: true,
-                }}
-              />
-            </GoAFormItem>
-          </GoAForm>
-        </GoAModalContent>
-        <GoAModalActions>
+      <GoAModal
+        data-testId="definition-form"
+        open={open}
+        heading={`Edit Revision for ${service}`}
+        actions={
           <GoAButtonGroup alignment="end">
             <GoAButton
               data-testid="form-cancel"
@@ -105,7 +78,32 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
               Save
             </GoAButton>
           </GoAButtonGroup>
-        </GoAModalActions>
+        }
+      >
+        <GoAFormItem error={error} label="">
+          <Editor
+            data-testid="form-schema"
+            height={200}
+            value={configuration}
+            onChange={(value) => {
+              validateSchema(value);
+              setConfiguration(value);
+            }}
+            language="json"
+            options={{
+              automaticLayout: true,
+              scrollBeyondLastLine: false,
+              tabSize: 2,
+              minimap: { enabled: false },
+              overviewRulerBorder: false,
+              lineHeight: 25,
+              renderLineHighlight: 'line' as const,
+              overviewRulerLanes: 0,
+              hideCursorInOverviewRuler: true,
+              wordWrap: 'on',
+            }}
+          />
+        </GoAFormItem>
       </GoAModal>
     </ModalOverwrite>
   );

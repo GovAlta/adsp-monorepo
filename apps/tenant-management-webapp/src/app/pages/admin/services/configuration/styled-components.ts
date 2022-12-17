@@ -247,5 +247,5 @@ export const ConfigurationTableStyles = styled.div`
 export const RowFlex = styled.div`
   display: flex;
   flex-direction: row;
-  justify-content: flex-end;
+  justify-content: flex-start;
 `;

@@ -61,6 +61,21 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
         <td>{revision.lastUpdated ? FormatTimeWithAt(new Date(revision.lastUpdated)) : ''}</td>
         <td>
           <RowFlex>
+            <GoAContextMenuIcon
+              title="Toggle details"
+              type={showDetails ? 'eye-off' : 'eye'}
+              onClick={() => setShowDetails(!showDetails)}
+              testId="toggle-details-visibility"
+            />
+            {!isLatest && !isActive && (
+              <GoAContextMenuIcon
+                title="Set Active"
+                type="power"
+                onClick={() => setActiveRevision(revision)}
+                testId={`revision-set-active-${revision.configuration.namespace}-${revision.configuration.namespace}`}
+              />
+            )}
+            {isLatest && <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>}
             {isLatest && (
               <GoAContextMenuIcon
                 title="Add revision"
@@ -79,21 +94,6 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
                 }}
               />
             )}
-            {!isLatest && !isActive && (
-              <GoAContextMenuIcon
-                title="Set Active"
-                type="power"
-                onClick={() => setActiveRevision(revision)}
-                testId={`revision-set-active-${revision.configuration.namespace}-${revision.configuration.namespace}`}
-              />
-            )}
-
-            <GoAContextMenuIcon
-              title="Toggle details"
-              type={showDetails ? 'eye-off' : 'eye'}
-              onClick={() => setShowDetails(!showDetails)}
-              testId="toggle-details-visibility"
-            />
           </RowFlex>
         </td>
       </tr>
@@ -273,10 +273,10 @@ export const RevisionTable = styled(RevisionTableComponent)`
     width: 30%;
   }
   & .data-col {
-    width: 40%;
+    width: 43%;
   }
   & .action-col {
-    width: 30%;
+    width: 27%;
   }
   & .number-badge {
     display: flex;
