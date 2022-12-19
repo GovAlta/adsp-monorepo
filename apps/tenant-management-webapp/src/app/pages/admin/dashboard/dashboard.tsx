@@ -292,14 +292,13 @@ const Dashboard = (): JSX.Element => {
         <GoACallout type="important" data-testid="delete-modal">
           <h3>Access to tenant admin app requires tenant-admin role</h3>
           <p>
-            You require administrator role to access the admin interface and will need to contact the tenant created at{' '}
-            <a href={`mailto: ${adminEmail}`}>{adminEmail}</a>
+            You must have the administrator role to access the tenant administration application. If you need access,
+            contact the tenant owner at <a href={`mailto: ${adminEmail}`}>{adminEmail}</a>
           </p>
         </GoACallout>
       </Main>
     );
   };
-
   return hasAdminRole ? adminDashboard() : calloutMessage();
 };
 export default Dashboard;
