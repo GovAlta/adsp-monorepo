@@ -3,7 +3,7 @@ import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgo
 import { Role } from '@store/tenant/models';
 import { GoAButton } from '@abgov/react-components';
 import { GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
-import { GoACheckbox } from '@abgov/react-components';
+import { GoACheckbox } from '@abgov/react-components-new';
 import styled from 'styled-components';
 import { UpdateFileTypeService, CreateFileTypeService } from '@store/file/actions';
 import { FileTypeItem } from '@store/file/models';
@@ -69,6 +69,7 @@ const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
                     key={`file-type-read-role-checkbox-${compositeRole}`}
                     checked={readRoles.includes(compositeRole)}
                     data-testid={`file-type-read-role-checkbox-${role}`}
+                    ariaLabel={`file-type-read-role-checkbox-${role}-checkbox`}
                     disabled={props.anonymousRead}
                     onChange={() => {
                       if (readRoles.includes(compositeRole)) {
@@ -91,6 +92,7 @@ const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
                     key={`file-type-update-role-checkbox-${role}`}
                     checked={updateRoles.includes(compositeRole)}
                     data-testid={`file-type-update-role-checkbox-${role}`}
+                    ariaLabel={`file-type-update-role-checkbox-${role}-checkbox`}
                     onChange={() => {
                       if (updateRoles.includes(compositeRole)) {
                         const newRoles = updateRoles.filter((updateRole) => {
@@ -141,7 +143,13 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
     };
   };
 
-  const { errors, validators } = useValidators('name', 'name', checkForBadChars, wordLengthCheck, isNotEmptyCheck('name'))
+  const { errors, validators } = useValidators(
+    'name',
+    'name',
+    checkForBadChars,
+    wordLengthCheck,
+    isNotEmptyCheck('name')
+  )
     .add('duplicated', 'name', duplicateFileTypeCheck(props.fileTypeNames))
     .build();
 
@@ -245,6 +253,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
               checked={fileType.anonymousRead}
               name="file-type-anonymousRead-checkbox"
               data-testid="file-type-anonymousRead-checkbox"
+              ariaLabel={`file-type-anonymousRead-checkbox`}
               onChange={() => {
                 setFileType({
                   ...fileType,
