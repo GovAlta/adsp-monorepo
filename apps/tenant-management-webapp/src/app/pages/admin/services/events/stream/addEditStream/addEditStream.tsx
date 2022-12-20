@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { GoAButton, GoADropdownOption, GoADropdown, GoACheckbox } from '@abgov/react-components';
+import { GoAButton, GoADropdownOption, GoADropdown } from '@abgov/react-components';
 import {
   GoAModal,
   GoAModalActions,
@@ -19,7 +19,7 @@ import { EventDefinition } from '@store/event/models';
 import { RolesTable } from './rolesTable';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { ServiceRoleConfig } from '@store/access/models';
-import { GoAChip } from '@abgov/react-components-new';
+import { GoAChip, GoACheckbox } from '@abgov/react-components-new';
 
 interface AddEditStreamProps {
   onSave: (stream: Stream) => void;
@@ -171,6 +171,7 @@ export const AddEditStream = ({
                     publicSubscribe: !stream.publicSubscribe,
                   });
                 }}
+                ariaLabel={`stream-anonymousRead-checkbox`}
               />
               Make stream public
             </AnonymousWrapper>
