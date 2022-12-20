@@ -19,6 +19,7 @@ interface RevisionEditProps {
 export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, revision, service, onClose }) => {
   const [configuration, setConfiguration] = useState<string>(JSON.stringify(revision?.configuration, null, 2));
   const debouncedRenderConfiguration = useDebounce(configuration, 500);
+
   const [error, setError] = useState('');
   const definition = useSelector(
     (state: RootState) => state.configuration.tenantConfigDefinitions.configuration[service]
@@ -28,7 +29,7 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
   const dispatch = useDispatch();
 
   useEffect(() => {
-    validateSchema(debouncedRenderConfiguration);
+    revision && validateSchema(debouncedRenderConfiguration);
   }, [debouncedRenderConfiguration]);
 
   const validateSchema = (configuration) => {
