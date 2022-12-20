@@ -60,12 +60,20 @@ export default function (
         ...state,
         tenantConfigDefinitions: action.payload,
         isAddedFromOverviewPage: action.isAddedFromOverviewPage,
+        serviceList: [
+          ...Object.keys(state.coreConfigDefinitions.configuration || {}),
+          ...Object.keys(action.payload.configuration || {}),
+        ].sort((a, b) => (a < b ? -1 : 1)),
       };
     case DELETE_CONFIGURATION_DEFINITION_ACTION_SUCCESS:
       return {
         ...state,
         tenantConfigDefinitions: action.payload,
         isAddedFromOverviewPage: false,
+        serviceList: [
+          ...Object.keys(state.coreConfigDefinitions.configuration || {}),
+          ...Object.keys(action.payload.configuration || {}),
+        ].sort((a, b) => (a < b ? -1 : 1)),
       };
 
     case REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION: {
