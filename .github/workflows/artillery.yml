@@ -37,10 +37,16 @@ jobs:
         with:
           name: artillery-test-report-event
           path: reports/*
-
+      - name: JSON to variables
+        uses: antifree/json-to-variables@v1.0.1
+        with:
+          filename: "reports/event-report.json"
+          prefix: test
+      - name: Show output
+        run: echo "The time was ${{ env.test_aggregate }}"
       - id: set_var
         run: |
-          content=`cat .reports/event-report.json`
+          content=`cat ./reports/event-report.json`
           # the following lines are only required for multi line json
           content="${content//'%'/'%25'}"
           content="${content//$'\n'/'%0A'}"
