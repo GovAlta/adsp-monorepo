@@ -308,8 +308,13 @@ function Application(app: ApplicationStatus) {
         </div>
 
         <GoAContextMenu>
-          <GoAContextMenuIcon type="create" onClick={() => setShowEditModal(true)} data-testid="status-edit-button" />
-          <GoAContextMenuIcon type="trash" onClick={() => setShowDeleteConfirmation(true)} />
+          <GoAContextMenuIcon
+            type="create"
+            title="Edit"
+            onClick={() => setShowEditModal(true)}
+            data-testid="status-edit-button"
+          />
+          <GoAContextMenuIcon type="trash" title="Delete" onClick={() => setShowDeleteConfirmation(true)} />
         </GoAContextMenu>
       </AppHeader>
 

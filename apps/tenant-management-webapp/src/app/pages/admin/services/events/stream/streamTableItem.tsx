@@ -49,11 +49,22 @@ export const StreamTableItem = ({
                 type={showStream ? 'eye-off' : 'eye'}
                 onClick={() => setShowStream(!showStream)}
                 testId={`toggle-stream-visibility`}
+                title="Toggle details"
               />
               {isTenantSpecificStream ? (
                 <>
-                  <GoAContextMenuIcon type="create" onClick={() => onEdit(stream.id)} testId="edit-stream" />
-                  <GoAContextMenuIcon type="trash" onClick={() => onDelete(stream.id)} testId="delete-stream" />
+                  <GoAContextMenuIcon
+                    type="create"
+                    title="Edit"
+                    onClick={() => onEdit(stream.id)}
+                    testId="edit-stream"
+                  />
+                  <GoAContextMenuIcon
+                    type="trash"
+                    title="Delete "
+                    onClick={() => onDelete(stream.id)}
+                    testId="delete-stream"
+                  />
                 </>
               ) : (
                 ''

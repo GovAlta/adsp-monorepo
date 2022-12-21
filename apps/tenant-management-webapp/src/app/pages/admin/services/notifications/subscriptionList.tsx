@@ -8,7 +8,7 @@ import { UpdateSubscriber, GetTypeSubscriptions } from '@store/subscription/acti
 import styled from 'styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
 import { SubscriberModalForm } from './editSubscriber';
-import { GoAIcon, GoAIconButton } from '@abgov/react-components/experimental';
+import { GoAIcon } from '@abgov/react-components/experimental';
 import { SubscriptionNextLoader } from './subscriptionNextLoader';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 
@@ -72,15 +72,16 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscribe
         </td>
         <td headers="actions" data-testid="actions">
           <div style={{ display: 'flex', flexDirection: 'row-reverse' }}>
-            <GoAIconButton
-              data-testid={`delete-subscription-${subscriber.id}`}
-              size="medium"
+            <GoAContextMenuIcon
+              testId={`delete-subscription-${subscriber.id}`}
               type="trash"
+              title="Delete"
               onClick={() => onDelete(subscriber, typeId)}
             />
             {criteria && (criteria.correlationId || criteria.context) && (
               <GoAContextMenuIcon
                 type={showDetails ? 'eye-off' : 'eye'}
+                title="Toggle details"
                 onClick={() => {
                   setShowDetails(!showDetails);
                 }}

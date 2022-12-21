@@ -11,7 +11,7 @@ import { GoAButton, GoADropdown, GoADropdownOption } from '@abgov/react-componen
 import { GoAForm } from '@abgov/react-components/experimental';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
-import { GoAIconButton } from '@abgov/react-components/experimental';
+import { GoAIconButton } from '@abgov/react-components-new';
 import { renderNoItem } from '@components/NoItem';
 import { DeleteModal } from '@components/DeleteModal';
 import { FileItem } from '@store/file/models';
@@ -100,16 +100,18 @@ const FileList = (): JSX.Element => {
                       <div className="flex">
                         <GoAIconButton
                           data-testid="download-icon"
-                          size="medium"
-                          type="download"
+                          size="small"
+                          icon="download"
+                          title="Download"
                           onClick={() => onDownloadFile(file)}
                         />
                       </div>
                       <div className="flex">
                         <GoAIconButton
                           data-testid="delete-icon"
-                          size="medium"
-                          type="trash"
+                          size="small"
+                          icon="trash"
+                          title="Delete"
                           onClick={() => onDeleteFile(file)}
                         />
                       </div>

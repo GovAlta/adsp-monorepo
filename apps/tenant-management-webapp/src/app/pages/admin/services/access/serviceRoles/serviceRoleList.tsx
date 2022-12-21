@@ -7,7 +7,7 @@ import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { ServiceRoleConfig, ServiceRoleSyncStatus } from '@store/access/models';
-import { GoAIconButton } from '@abgov/react-components/experimental';
+import { GoAIconButton } from '@abgov/react-components-new';
 
 interface ServiceRoleListProps {
   roles: ServiceRoles;
@@ -97,7 +97,9 @@ export const ServiceRoleList = ({ roles, clientId, addRoleFunc, inProcess }: Ser
                       !isInProcess &&
                       status !== ServiceRoleSyncStatus.matched && (
                         <GoAIconButton
-                          type="add-circle"
+                          icon="add-circle"
+                          title="Add"
+                          size="small"
                           onClick={() => {
                             addRoleFunc(clientId, role.role, status);
                           }}

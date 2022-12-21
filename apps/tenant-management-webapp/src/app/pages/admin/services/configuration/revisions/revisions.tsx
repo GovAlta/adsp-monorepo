@@ -30,7 +30,7 @@ export const ConfigurationRevisions = (): JSX.Element => {
               dispatch(getConfigurationRevisions(selectedConfiguration.toString()));
               setShowTable(true);
             }}
-            aria-label="select-configuration-dropdown"
+            ariaLabel="select-configuration-dropdown"
             width="100%"
           >
             {serviceList.map((item) => (

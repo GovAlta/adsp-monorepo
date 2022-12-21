@@ -3,7 +3,6 @@ import { GoAElementLoader } from '@abgov/react-components';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
-import { GoAIconButton } from '@abgov/react-components/experimental';
 import { Service } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchEntryDetail } from '@store/directory/actions';
@@ -79,6 +78,7 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({
               {!service.isCore && service.metadata?._links?.api && !service.api && hasApi(service) && (
                 <GoAContextMenuIcon
                   type="add"
+                  title="Create"
                   onClick={() => quickAdd(service)}
                   testId="directory-toggle-details-visibility"
                 />
@@ -86,6 +86,7 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({
               {!service.api && (
                 <GoAContextMenuIcon
                   type={showDetails ? 'eye-off' : 'eye'}
+                  title="Toggle details"
                   onClick={() => setDetails(service)}
                   testId="directory-toggle-details-visibility"
                 />
@@ -101,10 +102,9 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({
                 />
               )}
               {!service.isCore && (
-                <GoAIconButton
+                <GoAContextMenuIcon
                   testId={`directory-delete-${service.service}`}
                   title="Delete"
-                  size="medium"
                   type="trash"
                   onClick={() => {
                     setShowDetails(false);

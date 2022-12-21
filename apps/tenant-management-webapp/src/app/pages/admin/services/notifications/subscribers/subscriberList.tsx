@@ -9,7 +9,6 @@ import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Subscriber } from '@store/subscription/models';
 import { GetSubscriberSubscriptions, DeleteSubscriber } from '@store/subscription/actions';
 import { renderNoItem } from '@components/NoItem';
-import { GoAIconButton } from '@abgov/react-components/experimental';
 import { DeleteModal } from '@components/DeleteModal';
 import type { SubscriberSearchCriteria } from '@store/subscription/models';
 import { phoneWrapper } from '@lib/wrappers';
@@ -57,6 +56,7 @@ const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
               <div data-account-link={subscriber.accountLink}>
                 <GoAContextMenuIcon
                   type={'person'}
+                  title="Subscriber Account"
                   onClick={() => {
                     window.open(subscriber.accountLink, '_blank');
                   }}
@@ -65,6 +65,7 @@ const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
               </div>
               <GoAContextMenuIcon
                 type={showSubscriptions ? 'eye-off' : 'eye'}
+                title="Toggle details"
                 onClick={() => {
                   setShowSubscriptions(!showSubscriptions);
                   if (!showSubscriptions) {
@@ -80,10 +81,10 @@ const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
                 testId={`edit-subscription-item-${subscriber.id}`}
               />
 
-              <GoAIconButton
-                data-testid="delete-icon"
-                size="medium"
+              <GoAContextMenuIcon
+                testId={`delete-subscription-item-${subscriber.id}`}
                 type="trash"
+                title="Delete"
                 onClick={() => {
                   openDeleteModalFunction(subscriber);
                 }}

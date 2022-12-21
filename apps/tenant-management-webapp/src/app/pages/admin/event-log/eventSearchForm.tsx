@@ -2,15 +2,8 @@ import React, { FunctionComponent, useState, useEffect } from 'react';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import type { EventSearchCriteria } from '@store/event/models';
-
-import {
-  GoAForm,
-  GoAFormItem,
-  GoAFormActions,
-  GoAFlexRow,
-  GoAIconButton,
-  GoAButton,
-} from '@abgov/react-components/experimental';
+import { GoAIconButton } from '@abgov/react-components-new';
+import { GoAForm, GoAFormItem, GoAFormActions, GoAFlexRow, GoAButton } from '@abgov/react-components/experimental';
 import { getEventDefinitions } from '@store/event/actions';
 import styled from 'styled-components';
 
@@ -166,10 +159,10 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
               />
 
               <GoAIconButton
-                type={open ? 'close-circle' : 'chevron-down'}
-                size="medium"
-                testId="menu-open-close"
-                variant="tertiary"
+                icon={open ? 'close-circle' : 'chevron-down'}
+                size="small"
+                variant="dark"
+                data-testId="menu-open-close"
                 onClick={() => {
                   if (!open && searchBox.length === 0) {
                     setFilteredSuggestions(autoCompleteList);
@@ -261,7 +254,7 @@ const SearchBox = styled.div`
     display: flex;
     border: 1px solid var(--color-gray-700);
     border-radius: 3px;
-    padding: 0.15rem;
+    padding: 0.37rem;
   }
   .search-open {
     border: 1px solid var(--color-orange);

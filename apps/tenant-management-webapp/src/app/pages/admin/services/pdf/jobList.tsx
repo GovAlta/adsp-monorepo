@@ -4,7 +4,7 @@ import { DownloadFileService } from '@store/file/actions';
 import { updatePdfResponse } from '@store/pdf/action';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
-import { GoAIconButton } from '@abgov/react-components/experimental';
+import { GoAIconButton } from '@abgov/react-components-new';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import styled from 'styled-components';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
@@ -83,8 +83,9 @@ const JobList = (): JSX.Element => {
                         <GoAIconButton
                           disabled={!file?.size}
                           data-testid="download-icon"
-                          size="medium"
-                          type="download"
+                          size="small"
+                          icon="download"
+                          title="Download"
                           onClick={() => onDownloadFile(file)}
                         />
                       ) : (

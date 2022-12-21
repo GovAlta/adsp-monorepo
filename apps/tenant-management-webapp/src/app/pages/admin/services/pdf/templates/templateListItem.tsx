@@ -2,7 +2,6 @@ import React, { FunctionComponent } from 'react';
 import { PdfTemplate } from '@store/pdf/model';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import styled from 'styled-components';
-import { GoAIconButton } from '@abgov/react-components/experimental';
 import { GoABadge } from '@abgov/react-components/experimental';
 
 interface PdfTemplateItemProps {
@@ -28,10 +27,9 @@ export const PdfTemplateItem: FunctionComponent<PdfTemplateItemProps> = ({ pdfTe
                 onClick={() => edit(pdfTemplate)}
                 testId={`edit-pdf-item`}
               />
-              <GoAIconButton
+              <GoAContextMenuIcon
                 testId={`pdf-template-delete`}
                 title="Delete"
-                size="medium"
                 type="trash"
                 onClick={() => onDelete(pdfTemplate)}
               />

@@ -78,7 +78,7 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
             {isLatest && <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>}
             {isLatest && (
               <GoAContextMenuIcon
-                title="Add revision"
+                title="Create"
                 type="add"
                 onClick={() => createRevision(revision)}
                 testId={`revision-add-${revision.configuration.namespace}-${revision.configuration.namespace}`}
