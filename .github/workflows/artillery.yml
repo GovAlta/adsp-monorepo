@@ -49,7 +49,8 @@ jobs:
           echo "::set-output name=packageJson::$content"
           # echo "packageJson=$content" >> $GITHUB_OUTPUT
       - run: |
-          echo "${{fromJson(steps.set_var.outputs.packageJson).aggregate.counters.vusers.created}}"
+          echo "${{fromJson(steps.set_var.outputs.packageJson).aggregate.counters.firstCounterAt}}"
+          echo "${{fromJson(steps.set_var.outputs.packageJson).aggregate.counters.['vusers.created']}}"
 
   artillery-status:
     runs-on: ubuntu-latest
