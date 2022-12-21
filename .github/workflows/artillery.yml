@@ -43,7 +43,8 @@ jobs:
           filename: "reports/event-report.json"
           prefix: test
       - name: Show output
-        run: env 'test_aggregate_counters_http.requests'
+        # run: echo "The time was ${{ env.test_aggregate_counters_http.requests}}"
+        run: echo $test_aggregate_counters_http.requests
 
   artillery-status:
     runs-on: ubuntu-latest
