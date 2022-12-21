@@ -18,6 +18,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Install dependencies
+        run: npm i
+
       - name: Make reports directory
         run: mkdir reports
 
@@ -54,6 +57,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: npm i
 
       - name: Make reports directory
         run: mkdir reports
