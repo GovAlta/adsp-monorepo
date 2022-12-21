@@ -84,7 +84,7 @@ jobs:
         run: echo "The time was ${{ env['status_aggregate_counters_http.requests'] }}"
       - name: job result
         uses: actions/github-script@v3
-        if: ${{ env['status_aggregate_counters_http.requests'] }} < 1
+        if: ${{ env['status_aggregate_counters_http.requests'] }} != 100
         with:
           script: |
             core.setFailed('metrics bad')
