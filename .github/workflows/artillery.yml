@@ -75,3 +75,16 @@ jobs:
         with:
           name: artillery-test-report-status
           path: reports/*
+      - name: JSON to variables
+        uses: antifree/json-to-variables@v1.0.1
+        with:
+          filename: "reports/status-report.json"
+          prefix: test
+      - name: Show output
+        run: echo "The time was ${{ env['test_aggregate_counters_http.requests'] }}"
+      - name: job result
+        uses: actions/github-script@v3
+        if: ${{ env['test_aggregate_counters_http.requests'] }} > 1
+        with:
+          script: |
+            core.setFailed('metrics bad')
