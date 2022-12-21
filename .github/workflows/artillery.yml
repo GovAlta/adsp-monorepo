@@ -20,23 +20,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-      - uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-      - run: npm ci
-
-      - name: Make reports directory
-        run: mkdir reports
-
-      - uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-
       - name: Execute load tests event service
         run: /home/node/artillery/bin/run run tests/events-service/load.yml --environment dev --output reports/event-report.json
         env:
@@ -64,30 +47,30 @@ jobs:
       - run: |
           echo "${{fromJson(steps.set_var.outputs.packageJson).aggregate}}"
 
-  # artillery-status:
-  #   runs-on: ubuntu-latest
-  #   container: artilleryio/artillery:latest
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v2
+  artillery-status:
+    runs-on: ubuntu-latest
+    container: artilleryio/artillery:latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-  #     - name: Install dependencies
-  #       run: npm i
+      - name: Install dependencies
+        run: npm i
 
-  #     - name: Make reports directory
-  #       run: mkdir reports
+      - name: Make reports directory
+        run: mkdir reports
 
-  #     - name: Execute load tests status service
-  #       run: /home/node/artillery/bin/run run tests/status-service/load.yml --environment dev --output reports/status-report.json
-  #       env:
-  #         CLIENT_ID: ${{ inputs.CLIENT_ID }}
-  #         CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
+      - name: Execute load tests status service
+        run: /home/node/artillery/bin/run run tests/status-service/load.yml --environment dev --output reports/status-report.json
+        env:
+          CLIENT_ID: ${{ inputs.CLIENT_ID }}
+          CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
 
-  #     - name: Generate HTML report status service
-  #       run: /home/node/artillery/bin/run report --output reports/status-report.html reports/status-report.json
+      - name: Generate HTML report status service
+        run: /home/node/artillery/bin/run report --output reports/status-report.html reports/status-report.json
 
-  #     - name: Archive tests reports
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: artillery-test-report-status
-  #         path: reports/*
+      - name: Archive tests reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: artillery-test-report-status
+          path: reports/*
