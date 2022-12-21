@@ -43,19 +43,7 @@ jobs:
           filename: "reports/event-report.json"
           prefix: test
       - name: Show output
-        run: echo "The time was ${{ env.test_intermediate_1_period }}"
-      # - id: set_var
-      #   run: |
-      #     content=`cat ./reports/event-report.json`
-      #     # the following lines are only required for multi line json
-      #     content="${content//'%'/'%25'}"
-      #     content="${content//$'\n'/'%0A'}"
-      #     content="${content//$'\r'/'%0D'}"
-      #     # end of optional handling for multi line json
-      #     # echo "::set-output name=packageJson::$content"
-      #     echo "packageJson=$content" >> $GITHUB_OUTPUT
-      # - run: |
-      #     echo "${{fromJson(steps.set_var.outputs.packageJson).aggregate.counters.firstCounterAt}}"
+        run: env 'test_aggregate_counters_http.requests'
 
   artillery-status:
     runs-on: ubuntu-latest
