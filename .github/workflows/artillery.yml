@@ -13,12 +13,13 @@ env:
   NODE_OPTIONS: --max-old-space-size=16384
 
 jobs:
-  build:
-    runs-on: ubuntu-20.04
+  artillery-event:
+    runs-on: ubuntu-latest
+    container: artilleryio/artillery:latest
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
       - uses: actions/setup-node@v3
         with:
           node-version: 16
@@ -27,14 +28,6 @@ jobs:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
       - run: npm ci
-
-  artillery-event:
-    runs-on: ubuntu-latest
-    needs: build
-    container: artilleryio/artillery:latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
 
       - name: Make reports directory
         run: mkdir reports
