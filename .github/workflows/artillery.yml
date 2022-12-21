@@ -22,8 +22,9 @@ jobs:
         with:
           node-version: 16
 
-      - name: Install dependencies
-        run: npm i
+      - name: Install Dependencies
+        run: |
+          npm ci
 
       - name: Make reports directory
         run: mkdir reports
