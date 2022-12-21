@@ -41,12 +41,12 @@ jobs:
         uses: antifree/json-to-variables@v1.0.1
         with:
           filename: "reports/event-report.json"
-          prefix: test
+          prefix: event
       - name: Show output
-        run: echo "The time was ${{ env['test_aggregate_counters_http.requests'] }}"
+        run: echo "The time was ${{ env['event_aggregate_counters_http.requests'] }}"
       - name: job result
         uses: actions/github-script@v3
-        if: ${{ env['test_aggregate_counters_http.requests'] }} != 1
+        if: ${{ env['event_aggregate_counters_http.requests'] }} != 1
         with:
           script: |
             core.setFailed('metrics bad')
@@ -79,12 +79,12 @@ jobs:
         uses: antifree/json-to-variables@v1.0.1
         with:
           filename: "reports/status-report.json"
-          prefix: test
+          prefix: status
       - name: Show output
-        run: echo "The time was ${{ env['test_aggregate_counters_http.requests'] }}"
+        run: echo "The time was ${{ env['status_aggregate_counters_http.requests'] }}"
       - name: job result
         uses: actions/github-script@v3
-        if: ${{ env['test_aggregate_counters_http.requests'] }} > 1
+        if: ${{ env['status_aggregate_counters_http.requests'] }} > 1
         with:
           script: |
             core.setFailed('metrics bad')
