@@ -40,14 +40,14 @@ jobs:
 
       - id: set_var
         run: |
-          content=`cat reports/event-report.json`
+          content=`cat .reports/event-report.json`
           # the following lines are only required for multi line json
           content="${content//'%'/'%25'}"
           content="${content//$'\n'/'%0A'}"
           content="${content//$'\r'/'%0D'}"
           # end of optional handling for multi line json
-          echo "::set-output name=packageJson::$content"
-          # echo "packageJson=$content" >> $GITHUB_OUTPUT
+          # echo "::set-output name=packageJson::$content"
+          echo "packageJson=$content" >> $GITHUB_OUTPUT
       - run: |
           echo "${{fromJson(steps.set_var.outputs.packageJson).aggregate.counters.firstCounterAt}}"
 
