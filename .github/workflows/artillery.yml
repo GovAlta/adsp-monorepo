@@ -44,7 +44,12 @@ jobs:
           prefix: test
       - name: Show output
         run: echo "The time was ${{ env['test_aggregate_counters_http.requests'] }}"
-        # run: echo $test_aggregate_counters_http.requests
+      - name: job result
+        uses: actions/github-script@v3
+        if: ${{ env['test_aggregate_counters_http.requests'] }} != 1
+        with:
+          script: |
+            core.setFailed('metrics bad')
 
   artillery-status:
     runs-on: ubuntu-latest
