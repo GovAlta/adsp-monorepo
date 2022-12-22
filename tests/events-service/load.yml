@@ -16,8 +16,8 @@ config:
       fields:
         - "keycloak_url"
         - "tenant_realm_id"
-        # - "client_id"
-        # - "client_secret"
+        - "client_id"
+        - "client_secret"
   variables:
     tenant:
       - "demo"
@@ -41,11 +41,17 @@ before:
         headers:
           Content-Type: "application/x-www-form-urlencoded"
           Accept: "application/json"
+        # form:
+        #   {
+        #     grant_type: "client_credentials",
+        #     client_id: "{{ $processEnvironment.CLIENT_ID }}",
+        #     client_secret: "{{ $processEnvironment.CLIENT_SECRET }}",
+        #   }
         form:
           {
             grant_type: "client_credentials",
-            client_id: "{{ $processEnvironment.CLIENT_ID }}",
-            client_secret: "{{ $processEnvironment.CLIENT_SECRET }}",
+            client_id: "{{ client_id }}",
+            client_secret: "{{ client_secret }}",
           }
         capture:
           - json: "$.access_token"
@@ -58,17 +64,17 @@ scenarios:
           url: "/configuration/v2/configuration/platform/event-service/latest?core"
           headers:
             authorization: "Bearer {{ token }}"
-      # - patch:
-      #     url: "/configuration/v2/configuration/platform/event-service"
-      #     headers:
-      #       authorization: "Bearer {{ token }}"
-      #     beforeRequest: "setJSONBody"
-      #     afterResponse: "logHeaders"
-      #     json: "{{payload}}"
-      # - patch:
-      #     url: "/configuration/v2/configuration/platform/event-service"
-      #     beforeRequest: "deleteEvent"
-      #     afterResponse: "logHeaders"
-      #     headers:
-      #       authorization: "Bearer {{ token }}"
-      #     json: "{{deletePayload}}"
+      - patch:
+          url: "/configuration/v2/configuration/platform/event-service"
+          headers:
+            authorization: "Bearer {{ token }}"
+          beforeRequest: "setJSONBody"
+          afterResponse: "logHeaders"
+          json: "{{payload}}"
+      - patch:
+          url: "/configuration/v2/configuration/platform/event-service"
+          beforeRequest: "deleteEvent"
+          afterResponse: "logHeaders"
+          headers:
+            authorization: "Bearer {{ token }}"
+          json: "{{deletePayload}}"
