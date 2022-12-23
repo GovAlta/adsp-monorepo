@@ -84,7 +84,6 @@ export function* fetchServiceStatusApps(): SagaIterator {
 
 export function* saveApplication(action: SaveApplicationAction): SagaIterator {
   const currentState: RootState = yield select();
-
   const baseUrl = getServiceStatusUrl(currentState.config);
   const token = yield call(getAccessToken);
   try {
@@ -170,12 +169,15 @@ export function* fetchStatusMetrics(): SagaIterator {
   const token: string = yield call(getAccessToken);
 
   yield take(FETCH_SERVICE_STATUS_APPS_SUCCESS_ACTION);
-  const apps: Record<string, ApplicationStatus> = (yield select(
-    (state: RootState) => state.serviceStatus.applications
-  )).reduce((apps: Record<string, ApplicationStatus>, app: ApplicationStatus) => ({ ...apps, [app.appKey]: app }), {});
 
   if (baseUrl && token) {
     try {
+      const apps: Record<string, ApplicationStatus> = (yield select(
+        (state: RootState) => state.serviceStatus.applications
+      )).reduce(
+        (apps: Record<string, ApplicationStatus>, app: ApplicationStatus) => ({ ...apps, [app.appKey]: app }),
+        {}
+      );
       const criteria = JSON.stringify({
         intervalMax: moment().toISOString(),
         intervalMin: moment().subtract(7, 'day').toISOString(),
@@ -261,15 +263,14 @@ export function* fetchStatusConfiguration(): SagaIterator {
   );
   const token: string = yield call(getAccessToken);
 
-  yield put(
-    UpdateLoadingState({
-      name: FETCH_STATUS_CONFIGURATION,
-      state: 'start',
-    })
-  );
-
   if (configBaseUrl && token) {
     try {
+      yield put(
+        UpdateLoadingState({
+          name: FETCH_STATUS_CONFIGURATION,
+          state: 'start',
+        })
+      );
       const { data: configuration } = yield call(
         axios.get,
         `${configBaseUrl}/configuration/v2/configuration/platform/status-service`,
