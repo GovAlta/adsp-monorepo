@@ -32,13 +32,14 @@ import { getAccessToken } from '@store/tenant/sagas';
 import { UpdateLoadingState } from '@store/session/actions';
 
 export function* fetchServiceStatusAppHealthEffect(api: StatusApi, application: ApplicationStatus): SagaIterator {
-  // This is so application state knows there is an incremental load.
-  yield put(fetchServiceStatusAppHealth(application.appKey));
-
-  const entryMap: EndpointStatusEntry[] = yield call([api, api.getEndpointStatusEntries], application.appKey);
-  application.endpoint.statusEntries = entryMap;
-
-  yield put(fetchServiceStatusAppHealthSuccess(application.appKey, application.endpoint.url, entryMap));
+  try {
+    yield put(fetchServiceStatusAppHealth(application.appKey));
+    const entryMap: EndpointStatusEntry[] = yield call([api, api.getEndpointStatusEntries], application.appKey);
+    application.endpoint.statusEntries = entryMap;
+    yield put(fetchServiceStatusAppHealthSuccess(application.appKey, application.endpoint.url, entryMap));
+  } catch (e) {
+    yield put(ErrorNotification({ message: `${e.message} - fetchServiceStatusAppHealthEffect` }));
+  }
 }
 
 export function* fetchServiceStatusApps(): SagaIterator {
