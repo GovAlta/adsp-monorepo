@@ -72,3 +72,7 @@ export interface EndpointStatusEntry {
   responseTime: number;
   status: number | string;
 }
+
+export interface MetricResponse {
+  values: { sum: string; max: string }[];
+}
