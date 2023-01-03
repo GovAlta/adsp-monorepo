@@ -187,20 +187,16 @@ class eventsPage {
 
   streamModalClientRoleCheckbox(clientName, roleName) {
     return cy.xpath(
-      `//*[@data-testid="stream-form"]//thead/tr/th[@class="role-name" and text()="${clientName}"]/ancestor::thead/following-sibling::tbody/tr/td[@class="role-label" and text()="${roleName}"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]`
+      `//*[@data-testid="stream-form"]//thead/tr/th[@class="role-name" and text()="${clientName}"]/ancestor::thead/following-sibling::tbody/tr/td[@class="role-label" and text()="${roleName}"]/following-sibling::td`
     );
   }
 
   streamModalRoleCheckboxes() {
-    return cy.xpath(
-      `//*[@data-testid="stream-form"]//tbody/tr/td[@class="role-label"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]`
-    );
+    return cy.xpath(`//*[@data-testid="stream-form"]//goa-checkbox[contains(@name, "auto-test-role1")]`);
   }
 
   streamModalRolesCheckboxes() {
-    return cy.xpath(
-      '//*[@data-testid="stream-form"]//tbody/tr/td[@class="role-label"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]'
-    );
+    return cy.xpath(`//*[@data-testid="stream-form"]//goa-checkbox[contains(@name, "auto-test-role1")]`);
   }
 
   streamNameList() {
@@ -240,9 +236,7 @@ class eventsPage {
   }
 
   streamModalPublicCheckbox() {
-    return cy.xpath(
-      '//*[@data-testid="stream-form"]//input[@name="stream-anonymousRead-checkbox"]/parent::*[contains(@class, "goa-checkbox-container")]'
-    );
+    return cy.xpath('//*[@data-testid="stream-form"]//goa-checkbox[@name="stream-anonymousRead-checkbox"]');
   }
 }
 

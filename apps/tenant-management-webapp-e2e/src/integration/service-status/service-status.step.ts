@@ -400,6 +400,8 @@ Given('a tenant admin user is on status applications page', function () {
 When('the user {string} the subscribe checkbox for health check notification type', function (checkboxOperation) {
   statusObj
     .applicationHealthChangeNotificationSubscribeCheckbox()
+    .shadow()
+    .find('.goa-checkbox-container')
     .invoke('attr', 'class')
     .then((classAttVal) => {
       if (classAttVal == undefined) {
@@ -410,12 +412,20 @@ When('the user {string} the subscribe checkbox for health check notification typ
             if (classAttVal.includes('selected')) {
               cy.log('The subscribe checkbox was already checked.');
             } else {
-              statusObj.applicationHealthChangeNotificationSubscribeCheckbox().click();
+              statusObj
+                .applicationHealthChangeNotificationSubscribeCheckbox()
+                .shadow()
+                .find('.goa-checkbox-container')
+                .click();
             }
             break;
           case 'unselects':
             if (classAttVal.includes('selected')) {
-              statusObj.applicationHealthChangeNotificationSubscribeCheckbox().click();
+              statusObj
+                .applicationHealthChangeNotificationSubscribeCheckbox()
+                .shadow()
+                .find('.goa-checkbox-container')
+                .click();
             } else {
               cy.log('The subscribe checkbox was already unchecked.');
             }
@@ -431,6 +441,8 @@ Then('the user views the subscribe checkbox is {string}', function (checkboxStat
   cy.wait(2000); // Wait for the checkbox status to show
   statusObj
     .applicationHealthChangeNotificationSubscribeCheckbox()
+    .shadow()
+    .find('.goa-checkbox-container')
     .invoke('attr', 'class')
     .then((classAttVal) => {
       if (classAttVal == undefined) {

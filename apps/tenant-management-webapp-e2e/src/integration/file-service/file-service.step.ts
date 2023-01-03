@@ -385,35 +385,43 @@ When('the user enters {string}, {string}, {string} on file type modal', function
   if (readRole == 'public') {
     fileServiceObj
       .fileTypeModalPublicCheckbox()
+      .shadow()
+      .find('.goa-checkbox-container')
       .invoke('attr', 'class')
       .then((classAttr) => {
         if (classAttr?.includes('-selected')) {
           cy.log('Make public checkbox is already checked off. ');
         } else {
-          fileServiceObj.fileTypeModalPublicCheckbox().click();
+          fileServiceObj.fileTypeModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
         }
       });
   } else {
     //Unselect Make public checkbox if not already unchecked
     fileServiceObj
       .fileTypeModalPublicCheckbox()
+      .shadow()
+      .find('.goa-checkbox-container')
       .invoke('attr', 'class')
       .then((classAttr) => {
         if (classAttr?.includes('-selected')) {
-          fileServiceObj.fileTypeModalPublicCheckbox().click();
+          fileServiceObj.fileTypeModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
           cy.log('Make public checkbox is already checked off. ');
         } else {
           cy.log('Make public checkbox is already unchecked. ');
         }
       });
     //Unselect all read checkboxes
-    fileServiceObj.fileTypeModalReadCheckboxes().then((elements) => {
-      for (let i = 0; i < elements.length; i++) {
-        if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
-          elements[i].click();
+    fileServiceObj
+      .fileTypeModalReadCheckboxes()
+      .shadow()
+      .find('.goa-checkbox-container')
+      .then((elements) => {
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
+            elements[i].click();
+          }
         }
-      }
-    });
+      });
     //Select read roles
     const readRoles = readRole.split(',');
     for (let i = 0; i < readRoles.length; i++) {
@@ -422,18 +430,22 @@ When('the user enters {string}, {string}, {string} on file type modal', function
   }
 
   //Unselect all modify checkboxes
-  fileServiceObj.fileTypeModalModifyCheckboxes().then((elements) => {
-    for (let i = 0; i < elements.length; i++) {
-      if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
-        elements[i].click();
+  fileServiceObj
+    .fileTypeModalModifyCheckboxes()
+    .shadow()
+    .find('.goa-checkbox-container')
+    .then((elements) => {
+      for (let i = 0; i < elements.length; i++) {
+        if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
+          elements[i].click();
+        }
       }
-    }
-  });
+    });
 
   //Select modify roles
   const updateRoles = updateRole.split(',');
   for (let i = 0; i < updateRoles.length; i++) {
-    fileServiceObj.fileTypeModalModifyCheckbox(updateRoles[i].trim()).click();
+    fileServiceObj.fileTypeModalModifyCheckbox(updateRoles[i].trim()).shadow().find('.goa-checkbox-container').click();
   }
 });
 
