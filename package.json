@@ -123,6 +123,7 @@
     "@abgov/react-components-new": "npm:@abgov/react-components@4.0.0-alpha.98",
     "@abgov/semantic-release-nuget": "^1.0.0",
     "@abgov/styles": "^1.0.0-alpha.14",
+    "redux-saga-test-plan": "4.0.6",
     "@babel/core": "7.9.6",
     "@babel/preset-env": "7.9.6",
     "@babel/preset-react": "7.9.4",

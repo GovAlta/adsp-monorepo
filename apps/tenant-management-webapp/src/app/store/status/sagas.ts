@@ -1,7 +1,7 @@
 import { put, select, call, fork, take } from 'redux-saga/effects';
 import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
-import { StatusApi } from './api';
+import { StatusApi, fetchStatusMetricsApi } from './api';
 import {
   SaveApplicationAction,
   saveApplicationSuccess,
@@ -23,7 +23,7 @@ import {
 } from './actions';
 import { ConfigState } from '@store/config/models';
 import { SetApplicationStatusAction, setApplicationStatusSuccess } from './actions/setApplicationStatus';
-import { EndpointStatusEntry, ApplicationStatus } from './models';
+import { EndpointStatusEntry, ApplicationStatus, MetricResponse } from './models';
 import { SagaIterator } from '@redux-saga/core';
 import moment from 'moment';
 import axios from 'axios';
@@ -161,9 +161,6 @@ interface MetricValue {
   sum: number;
   max: number;
 }
-interface MetricResponse {
-  values: { sum: string; max: string }[];
-}
 
 export function* fetchStatusMetrics(): SagaIterator {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
@@ -186,11 +183,9 @@ export function* fetchStatusMetrics(): SagaIterator {
       });
 
       const unhealthyMetric = 'status-service:application-unhealthy:count';
-      const { data: metrics }: { data: Record<string, MetricResponse> } = yield call(
-        axios.get,
-        `${baseUrl}/value/v1/event-service/values/event/metrics?interval=weekly&criteria=${criteria}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const url = `${baseUrl}/value/v1/event-service/values/event/metrics?interval=weekly&criteria=${criteria}`;
+
+      const metrics = (yield call(fetchStatusMetricsApi, url, token)) as Record<string, MetricResponse>;
 
       const downtimeDurations: MetricValue[] = [];
       Object.entries(metrics).forEach(([metric, durationMetric]) => {
@@ -210,17 +205,16 @@ export function* fetchStatusMetrics(): SagaIterator {
       const maxDuration = downtimeDurations.reduce((max, duration) => Math.max(duration.max, max), 0);
       const totalDuration = downtimeDurations.reduce((total, duration) => total + duration.sum, 0);
       const unhealthyApp = downtimeDurations.sort((a, b) => b.sum - a.sum)[0];
+      const parsedMetrics = {
+        unhealthyCount: parseInt(metrics[unhealthyMetric]?.values[0]?.sum || '0'),
+        maxUnhealthyDuration: maxDuration / 60,
+        totalUnhealthyDuration: totalDuration / 60,
+        leastHealthyApp: unhealthyApp?.sum
+          ? { name: unhealthyApp.app, totalUnhealthyDuration: unhealthyApp.sum / 60 }
+          : null,
+      };
 
-      yield put(
-        fetchStatusMetricsSucceeded({
-          unhealthyCount: parseInt(metrics[unhealthyMetric]?.values[0]?.sum || '0'),
-          maxUnhealthyDuration: maxDuration / 60,
-          totalUnhealthyDuration: totalDuration / 60,
-          leastHealthyApp: unhealthyApp?.sum
-            ? { name: unhealthyApp.app, totalUnhealthyDuration: unhealthyApp.sum / 60 }
-            : null,
-        })
-      );
+      yield put(fetchStatusMetricsSucceeded(parsedMetrics));
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - fetchStatusMetrics` }));
     }
