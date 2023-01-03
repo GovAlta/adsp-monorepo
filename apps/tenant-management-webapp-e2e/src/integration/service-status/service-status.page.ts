@@ -140,7 +140,7 @@ class StatusServicePage {
   }
 
   applicationHealthChangeNotificationSubscribeCheckbox() {
-    return cy.xpath('//*[@class="goa-checkbox"]//*[@name="subscribe"]/parent::div');
+    return cy.xpath('//goa-checkbox[@name="subscribe"]');
   }
 
   addApplicationButton() {

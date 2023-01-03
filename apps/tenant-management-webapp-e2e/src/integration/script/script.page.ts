@@ -26,14 +26,12 @@ class ScriptPage {
   }
 
   addScriptModalUseServiceAccountCheckbox() {
-    return cy.xpath(
-      '//input[@name="script-use-service-account-checkbox"]/parent::div[@class="goa-checkbox-container"]'
-    );
+    return cy.xpath('//goa-checkbox[@name="script-use-service-account-checkbox"]');
   }
 
   addScriptModalRolesCheckbox(roleName) {
     return cy.xpath(
-      `//*[@data-testid="add-script-modal"]//td[text()="${roleName}"]/following-sibling::td//input[contains(@name, "runner")]/parent::*[contains(@class, "goa-checkbox-container")]`
+      `//*[@data-testid="add-script-modal"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "runner")]`
     );
   }
 
