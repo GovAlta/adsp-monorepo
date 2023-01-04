@@ -1,4 +1,4 @@
-import { adspId, AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
+import { AdspId, ServiceDirectory, TokenProvider, User } from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
   InvalidValueError,
@@ -7,7 +7,7 @@ import {
 } from '@core-services/core-common';
 import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
-import { StaticApplicationData } from '../model';
+import { ApplicationConfiguration } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { PublicServiceStatusType } from '../types';
@@ -34,7 +34,7 @@ export const getApplications = (logger: Logger, applicationRepo: ApplicationRepo
         throw new UnauthorizedError('missing tenant id');
       }
       const apps = await applicationRepo.getTenantApps(tenantId);
-      const statuses = await applicationRepo.findAllStatuses(apps);
+      const statuses = await applicationRepo.findAllStatuses(apps, tenantId.toString());
       const result = apps.map((app) => {
         const status = statuses.find((s) => s.appKey == app.appKey) || null;
         return applicationRepo.mergeApplicationData(tenantId.toString(), app, status);
@@ -96,18 +96,18 @@ export const createNewApplication =
   async (req, res, next) => {
     const user = req.user as User;
     const tenant = await tenantService.getTenant(user.tenantId);
-    const { name, description, endpoint } = req.body;
+    const { name, description, endpoint, appKey } = req.body;
 
     try {
-      const appKey = ApplicationRepo.getApplicationKey(tenant.name, name);
+      const newAppKey = appKey ? appKey : ApplicationRepo.getApplicationKey(name);
       const existing = await applicationRepo.getTenantApps(tenant.id);
       existing.forEach((a) => {
-        if (a.appKey == appKey || a.name == name) {
+        if (a.appKey == newAppKey || a.name == name) {
           throw new InvalidValueError('status-service', `Duplicate Application Name ${name}`);
         }
       });
 
-      const newApp = await applicationRepo.createApp(name, description, endpoint.url, tenant);
+      const newApp = await applicationRepo.createApp(newAppKey, name, description, endpoint.url, tenant);
       res.status(201).json(newApp);
     } catch (err) {
       logger.error(`Failed to create new application: ${err.message}`);
@@ -134,14 +134,13 @@ export const updateApplication =
         throw new NotFoundError('Status application', appKey);
       }
 
-      const update: StaticApplicationData = {
+      const update: ApplicationConfiguration = {
         appKey,
         name,
         url: endpoint.url,
         description,
-        tenantId: app.tenantId,
       };
-      await applicationRepo.updateApp(update);
+      await applicationRepo.updateApp(update, tenantId);
 
       const status = await applicationRepo.findStatus(appKey);
 
@@ -153,11 +152,30 @@ export const updateApplication =
   };
 
 export const deleteApplication =
-  (logger: Logger, applicationRepo: ApplicationRepo): RequestHandler =>
+  (logger: Logger, applicationRepo: ApplicationRepo, eventService: EventService): RequestHandler =>
   async (req, res, next) => {
     try {
       const user = req.user as User;
       const { appKey } = req.params;
+      const app = await applicationRepo.getApp(appKey, user.tenantId);
+      if (!app) {
+        throw new NotFoundError('Status application', appKey);
+      }
+      const status = await applicationRepo.findStatus(appKey);
+
+      // Stop health checks if necessary.  Note, there is a lag
+      // between requesting the stop and having the service
+      // actually stop pinging the Application.  This is because the stop
+      // is implemented through the event service, and the uptake time
+      // can be O(second).  Unfortunately, this lag can lead to an orphaned Endpoint
+      // Status Entry being added to the database AFTER the App has
+      // been deleted!
+      // TODO One way to mitigate the issue would be to force the user to stop
+      // monitoring the app before it can be deleted.
+      if (status?.enable) {
+        eventService.send(applicationStatusToStopped(app, user));
+      }
+
       applicationRepo.deleteApp(appKey, user);
       res.sendStatus(204);
     } catch (err) {
@@ -270,7 +288,13 @@ export function createServiceStatusRouter({
   serviceId,
 }: ServiceStatusRouterProps): Router {
   const router = Router();
-  const applicationRepo = new ApplicationRepo(serviceStatusRepository, serviceId, directory, tokenProvider);
+  const applicationRepo = new ApplicationRepo(
+    serviceStatusRepository,
+    endpointStatusEntryRepository,
+    serviceId,
+    directory,
+    tokenProvider
+  );
 
   // Get the service for the tenant
   router.get('/applications', assertAuthenticatedHandler, getApplications(logger, applicationRepo));
@@ -291,7 +315,11 @@ export function createServiceStatusRouter({
     createNewApplication(logger, applicationRepo, tenantService)
   );
   router.put('/applications/:appKey', assertAuthenticatedHandler, updateApplication(logger, applicationRepo));
-  router.delete('/applications/:appKey', assertAuthenticatedHandler, deleteApplication(logger, applicationRepo));
+  router.delete(
+    '/applications/:appKey',
+    assertAuthenticatedHandler,
+    deleteApplication(logger, applicationRepo, eventService)
+  );
   router.patch(
     '/applications/:appKey/status',
     assertAuthenticatedHandler,

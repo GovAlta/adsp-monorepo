@@ -1,10 +1,18 @@
-import { adspId, AdspId, benchmark, EventService, startBenchmark, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import {
+  adspId,
+  AdspId,
+  benchmark,
+  EventService,
+  startBenchmark,
+  UnauthorizedUserError,
+} from '@abgov/adsp-service-sdk';
 import {
   assertAuthenticatedHandler,
   UnauthorizedError,
   NotFoundError,
   InvalidOperationError,
   createValidationHandler,
+  decodeAfter,
 } from '@core-services/core-common';
 import { Request, RequestHandler, Response, Router } from 'express';
 import { param, query } from 'express-validator';
@@ -293,7 +301,15 @@ export const createFileRouter = ({
   fileRouter.get(
     '/files',
     assertAuthenticatedHandler,
-    createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
+    createValidationHandler(
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after')
+        .optional()
+        .isString()
+        .custom((val) => {
+          return !isNaN(decodeAfter(val));
+        })
+    ),
     getFiles(apiId, fileRepository)
   );
   fileRouter.post('/files', assertAuthenticatedHandler, upload.single('file'), uploadFile(apiId, logger, eventService));

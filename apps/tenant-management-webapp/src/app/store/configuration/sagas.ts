@@ -18,6 +18,7 @@ import {
   ReplaceConfigurationDataAction,
   REPLACE_CONFIGURATION_DATA_ACTION,
   replaceConfigurationDataSuccessAction,
+  updateLatestRevisionSuccessAction,
   REPLACE_CONFIGURATION_ERROR_ACTION,
   getReplaceConfigurationErrorSuccessAction,
   ResetReplaceConfigurationListAction,
@@ -29,6 +30,9 @@ import {
   getConfigurationRevisionsSuccess,
   FetchConfigurationActionRevisionAction,
   getConfigurationActiveSuccess,
+  SetConfigurationRevisionActiveAction,
+  setConfigurationRevisionActiveSuccessAction,
+  SET_CONFIGURATION_REVISION_ACTIVE_ACTION,
   ServiceId,
 } from './action';
 import { SagaIterator } from '@redux-saga/core';
@@ -279,7 +283,31 @@ export function* setConfigurationRevision(action: SetConfigurationRevisionAction
     }
   }
 }
+export function* setConfigurationRevisionActive(action: SetConfigurationRevisionActiveAction): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const token: string = yield call(getAccessToken);
 
+  const service = action.service.split(':');
+  if (baseUrl && token) {
+    try {
+      const revision = yield call(
+        axios.post,
+        `${baseUrl}/configuration/v2/configuration/${service[0]}/${service[1]}`,
+        {
+          operation: 'SET-ACTIVE-REVISION',
+          setActiveRevision: action.setActiveRevision,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      yield put(setConfigurationRevisionActiveSuccessAction(action.service, revision));
+    } catch (err) {
+      yield put(ErrorNotification({ message: err.message }));
+    }
+  }
+}
 let replaceErrorConfiguration = [];
 
 export function* replaceConfigurationData(action: ReplaceConfigurationDataAction): SagaIterator {
@@ -318,19 +346,22 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
           });
           return;
         }
-        // Import creates a new revision so there is a snapshot of pre-import revision.
-        const revision = yield call(
-          axios.post,
-          `${baseUrl}/configuration/v2/configuration/${action.configuration.namespace}/${action.configuration.name}`,
-          {
-            operation: 'CREATE-REVISION',
-          },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        let revision = null;
+        if (action.isImportConfiguration) {
+          // Import creates a new revision so there is a snapshot of pre-import revision.
+          revision = yield call(
+            axios.post,
+            `${baseUrl}/configuration/v2/configuration/${action.configuration.namespace}/${action.configuration.name}`,
+            {
+              operation: 'CREATE-REVISION',
+            },
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
 
-        yield put(setConfigurationRevisionSuccessAction(service, revision));
+          yield put(setConfigurationRevisionSuccessAction(service, revision));
+        }
         // Send request to replace configuration
         //Import configuration replaces (REPLACE operation in PATCH) the configuration stored in latest revision
         yield call(
@@ -341,8 +372,11 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
             headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           }
         );
-
-        yield put(replaceConfigurationDataSuccessAction(revision));
+        if (action.isImportConfiguration) {
+          yield put(replaceConfigurationDataSuccessAction(revision));
+        } else {
+          yield put(updateLatestRevisionSuccessAction(action.configuration));
+        }
       } catch (err) {
         replaceErrorConfiguration.push({
           name: service,
@@ -358,6 +392,7 @@ export function* replaceConfigurationData(action: ReplaceConfigurationDataAction
     }
   }
 }
+
 export function* getReplaceList(action: SetConfigurationRevisionAction): SagaIterator {
   if (replaceErrorConfiguration.length > 0) {
     yield put(getReplaceConfigurationErrorSuccessAction(replaceErrorConfiguration));
@@ -374,6 +409,7 @@ export function* watchConfigurationSagas(): Generator {
   yield takeEvery(DELETE_CONFIGURATION_DEFINITION_ACTION, deleteConfigurationDefinition);
   yield takeEvery(FETCH_CONFIGURATIONS_ACTION, fetchConfigurations);
   yield takeEvery(SET_CONFIGURATION_REVISION_ACTION, setConfigurationRevision);
+  yield takeEvery(SET_CONFIGURATION_REVISION_ACTIVE_ACTION, setConfigurationRevisionActive);
   yield takeEvery(REPLACE_CONFIGURATION_DATA_ACTION, replaceConfigurationData);
   yield takeEvery(REPLACE_CONFIGURATION_ERROR_ACTION, getReplaceList);
   yield takeEvery(RESET_REPLACE_CONFIGURATION_LIST_ACTION, resetReplaceList);

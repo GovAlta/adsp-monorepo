@@ -10,10 +10,12 @@ import {
   REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION,
   RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION,
   SET_CONFIGURATION_REVISION_SUCCESS_ACTION,
+  SET_CONFIGURATION_REVISION_ACTIVE_SUCCESS_ACTION,
   RESET_IMPORTS_LIST_ACTION,
   FETCH_CONFIGURATION_REVISIONS_SUCCESS_ACTION,
   FETCH_CONFIGURATION_ACTIVE_REVISION_SUCCESS_ACTION,
   REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION,
+  UPDATE_LATEST_REVISION_SUCCESS_ACTION,
 } from './action';
 import {
   ConfigurationDefinitionState,
@@ -58,12 +60,20 @@ export default function (
         ...state,
         tenantConfigDefinitions: action.payload,
         isAddedFromOverviewPage: action.isAddedFromOverviewPage,
+        serviceList: [
+          ...Object.keys(state.coreConfigDefinitions.configuration || {}),
+          ...Object.keys(action.payload.configuration || {}),
+        ].sort((a, b) => (a < b ? -1 : 1)),
       };
     case DELETE_CONFIGURATION_DEFINITION_ACTION_SUCCESS:
       return {
         ...state,
         tenantConfigDefinitions: action.payload,
         isAddedFromOverviewPage: false,
+        serviceList: [
+          ...Object.keys(state.coreConfigDefinitions.configuration || {}),
+          ...Object.keys(action.payload.configuration || {}),
+        ].sort((a, b) => (a < b ? -1 : 1)),
       };
 
     case REPLACE_CONFIGURATION_ERROR_SUCCESS_ACTION: {
@@ -97,10 +107,19 @@ export default function (
     case RESET_IMPORTS_LIST_ACTION:
       return { ...state, imports: [] };
     case SET_CONFIGURATION_REVISION_SUCCESS_ACTION: {
-      state.configurationRevisions[action.service]?.revisions?.result?.unshift(action.payload.data?.latest);
-      const latest = state.configurationRevisions[action.service]?.revisions?.result[0]?.revision;
-      state.configurationRevisions[action.service].revisions.latest = latest;
+      if (state.configurationRevisions[action.service]?.revisions?.result) {
+        state.configurationRevisions[action.service]?.revisions?.result?.unshift(action.payload.data?.latest);
+        const latest = state.configurationRevisions[action.service]?.revisions?.result[0]?.revision;
+        state.configurationRevisions[action.service].revisions.latest = latest;
+      }
 
+      return {
+        ...state,
+      };
+    }
+
+    case SET_CONFIGURATION_REVISION_ACTIVE_SUCCESS_ACTION: {
+      state.configurationRevisions[action.service].revisions.active = action.payload.data?.active;
       return {
         ...state,
       };
@@ -116,9 +135,23 @@ export default function (
     }
     case FETCH_CONFIGURATION_REVISIONS_SUCCESS_ACTION: {
       if (state.configurationRevisions[action.service]) {
-        state.configurationRevisions[action.service].revisions.result = action.after
-          ? [...state.configurationRevisions[action.service].revisions.result, ...action.payload]
-          : action.payload;
+        if (action.after) {
+          const result = state.configurationRevisions[action.service].revisions.result;
+          const noDuplicate = [];
+          const cacheLength = result.length;
+          for (let i = 0; i < action.payload.length; i++) {
+            if (result[cacheLength - 1 - i].revision !== action.payload[i].revision) {
+              noDuplicate.push(action.payload[i]);
+            }
+          }
+          state.configurationRevisions[action.service].revisions.result = [
+            ...state.configurationRevisions[action.service].revisions.result,
+            ...noDuplicate,
+          ];
+        } else {
+          state.configurationRevisions[action.service].revisions.result = action.payload;
+        }
+
         state.configurationRevisions[action.service].revisions.next = action.next;
       } else {
         state.configurationRevisions[action.service] = {};
@@ -127,6 +160,9 @@ export default function (
         state.configurationRevisions[action.service]['revisions']['next'] = action.next;
         const latest = state.configurationRevisions[action.service]['revisions']['result'][0].revision;
         state.configurationRevisions[action.service]['revisions']['latest'] = latest;
+        state.configurationRevisions[action.service]['revisions']['isCore'] = Object.keys(
+          state.coreConfigDefinitions?.configuration
+        ).some((key) => key === action.service);
       }
       return {
         ...state,
@@ -135,6 +171,25 @@ export default function (
     case FETCH_CONFIGURATION_ACTIVE_REVISION_SUCCESS_ACTION: {
       if (state.configurationRevisions[action.service] && action.payload) {
         state.configurationRevisions[action.service]['revisions']['active'] = action.payload.revision;
+      }
+      return {
+        ...state,
+      };
+    }
+    case UPDATE_LATEST_REVISION_SUCCESS_ACTION: {
+      const configuration = action.payload;
+      const service = `${configuration.namespace}:${configuration.name}`;
+
+      if (state.configurationRevisions[service].revisions.result.length > 0) {
+        state.configurationRevisions[service].revisions.result[0].configuration = configuration.configuration;
+      } else {
+        const revision = {
+          revision: 0,
+          created: new Date().toISOString(),
+          lastUpdated: new Date().toISOString(),
+          configuration: configuration.configuration,
+        };
+        state.configurationRevisions[service].revisions.result.push(revision);
       }
       return {
         ...state,

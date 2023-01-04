@@ -232,7 +232,6 @@ const Dashboard = (): JSX.Element => {
                         configured in a script and executed via the script service API so that policy changes to the
                         formula can implemented through configuration change.
                       </div>
-                      <div>&nbsp;</div>
                     </GoACard>
                   </GridItem>
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
@@ -245,6 +244,10 @@ const Dashboard = (): JSX.Element => {
                         represent a service that is useful to the end user by itself, such as child care subsidy and
                         child care certification.
                       </div>
+                      <div>&nbsp;</div>
+                      <div>&nbsp;</div>
+                      <div>&nbsp;</div>
+                      <div>&nbsp;</div>
                     </GoACard>
                   </GridItem>
                 </Grid>
@@ -289,14 +292,13 @@ const Dashboard = (): JSX.Element => {
         <GoACallout type="important" data-testid="delete-modal">
           <h3>Access to tenant admin app requires tenant-admin role</h3>
           <p>
-            You require administrator role to access the admin interface and will need to contact the tenant created at{' '}
-            <a href={`mailto: ${adminEmail}`}>{adminEmail}</a>
+            You must have the administrator role to access the tenant administration application. If you need access,
+            contact the tenant owner at <a href={`mailto: ${adminEmail}`}>{adminEmail}</a>
           </p>
         </GoACallout>
       </Main>
     );
   };
-
   return hasAdminRole ? adminDashboard() : calloutMessage();
 };
 export default Dashboard;

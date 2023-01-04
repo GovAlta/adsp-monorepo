@@ -1,6 +1,7 @@
 import React, { FunctionComponent, useState } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAButton, GoACheckbox } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components';
+import { GoACheckbox } from '@abgov/react-components-new';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { ScriptItem } from '@store/script/models';
 import { useSelector } from 'react-redux';
@@ -171,6 +172,7 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
                   useServiceAccount: !script.useServiceAccount,
                 });
               }}
+              ariaLabel={`script-use-service-account-checkbox`}
             />
             Use service account
           </UseServiceAccountWrapper>
@@ -245,7 +247,8 @@ const RunnerRoleTable = (props: RunnerRoleTableProps): JSX.Element => {
                     name={`script-runner-role-checkbox-${role}`}
                     key={`script-runner-role-checkbox-${compositeRole}`}
                     checked={runnerRoles.includes(compositeRole)}
-                    data-testid={`file-type-read-role-checkbox-${role}`}
+                    data-testid={`script-runner-role-checkbox-${role}`}
+                    ariaLabel={`script-use-service-account-checkbox`}
                     onChange={() => {
                       if (runnerRoles.includes(compositeRole)) {
                         const newRoles = runnerRoles.filter((runnerRole) => {

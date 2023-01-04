@@ -1,7 +1,7 @@
 config:
   environments:
     dev:
-      target: "https://status-service.adsp-dev.gov.ab.ca"
+      target: "https://configuration-service.adsp-dev.gov.ab.ca"
     test:
       target: "https://status-service-core-services-test.os99.gov.ab.ca"
     uat:
@@ -22,6 +22,7 @@ config:
     tenant:
       - "demo"
       - "platform"
+  processor: "../my-functions.js"
   phases:
     - name: warm up
       duration: 10
@@ -29,7 +30,7 @@ config:
     # - name: load
     #   duration: 120
     #   arrivalCount: 500 // creates users in 120 sec
-    #   # arrivalRate: 10 // creates virtual users every second
+    #   # arrivalRate: 10 // creates virtual users every second until duration and maxv
     #   # rampTo: 50 // ramp to that users count in 120 duration sec
     #   # maxVusers: 50 // concurrent users
 before:
@@ -50,9 +51,24 @@ before:
           - json: "$.access_token"
             as: token
 scenarios:
-  - name: get application statuses
+  - name: get events list, create events and delete events
     flow:
+      # - function: "setJSONBody"
       - get:
-          url: "/status/v1/applications"
+          url: "/configuration/v2/configuration/platform/event-service/latest?core"
           headers:
             authorization: "Bearer {{ token }}"
+      # - patch:
+      #     url: "/configuration/v2/configuration/platform/event-service"
+      #     headers:
+      #       authorization: "Bearer {{ token }}"
+      #     beforeRequest: "setJSONBody"
+      #     afterResponse: "logHeaders"
+      #     json: "{{payload}}"
+      # - patch:
+      #     url: "/configuration/v2/configuration/platform/event-service"
+      #     beforeRequest: "deleteEvent"
+      #     afterResponse: "logHeaders"
+      #     headers:
+      #       authorization: "Bearer {{ token }}"
+      #     json: "{{deletePayload}}"

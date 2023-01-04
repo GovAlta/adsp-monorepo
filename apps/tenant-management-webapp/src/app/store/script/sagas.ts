@@ -130,6 +130,11 @@ export function* executeScript(action: RunScriptAction): SagaIterator {
   const { testInputs, script } = action.payload;
   if (scriptUrl && token) {
     try {
+      yield put(
+        UpdateIndicatorSession({
+          show: true,
+        })
+      );
       const response = yield call(
         axios.post,
         `${scriptUrl}/script/v1/scripts`,

@@ -8,7 +8,7 @@ import {
   toServiceName,
   toNamespace,
 } from './ServiceConfiguration';
-import { GoACheckbox } from '@abgov/react-components';
+
 import { useDispatch, useSelector } from 'react-redux';
 import { getConfigurationDefinitions, getConfigurations, ServiceId } from '@store/configuration/action';
 import { PageIndicator } from '@components/Indicator';
@@ -19,8 +19,8 @@ import { ReactComponent as SmallClose } from '@assets/icons/x.svg';
 import { ReactComponent as Triangle } from '@assets/icons/triangle.svg';
 import { ReactComponent as Rectangle } from '@assets/icons/rectangle.svg';
 import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
-import { GoAChip } from '@abgov/react-components-new';
-import { GoAButton } from '@abgov/react-components-new';
+
+import { GoAButton, GoACheckbox, GoAChip } from '@abgov/react-components-new';
 
 function getTextWidth(text) {
   const canvas = document.createElement('canvas');
@@ -145,11 +145,13 @@ export const ConfigurationExport: FunctionComponent = () => {
               <div className="flex-row">
                 <GoACheckbox
                   name="Select all"
+                  key="Select all"
                   checked={selectAll}
                   onChange={() => {
                     toggleSelection('select-all');
                   }}
                   data-testid={'select-all-id'}
+                  ariaLabel="select-all-checkbox"
                 ></GoACheckbox>
                 <div className="middle-align">Select all</div>
               </div>
@@ -165,11 +167,13 @@ export const ConfigurationExport: FunctionComponent = () => {
                             <div className="flex-row">
                               <GoACheckbox
                                 name={name}
+                                key={name}
                                 checked={exportServices[toServiceKey(namespace, name)] || false}
                                 onChange={() => {
                                   toggleSelection(toServiceKey(namespace, name));
                                 }}
                                 data-testid={`${toServiceKey(namespace, name)}_id`}
+                                ariaLabel={`${toServiceKey(namespace, name)}_id_checkbox`}
                               ></GoACheckbox>
                               <div className="middle-align">{name}</div>
                             </div>
@@ -278,8 +282,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                         <GoAButton
                           data-testid="export-configuration-1"
                           disabled={Object.keys(exportServices).length < 1 || indicator.show}
-                          onClick={(e) => {
-                            e.preventDefault();
+                          onClick={() => {
                             dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
                           }}
                         >
@@ -290,7 +293,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                         <GoAButton
                           type="secondary"
                           disabled={Object.keys(exportServices).length < 1 || indicator.show}
-                          onClick={(e) => {
+                          onClick={() => {
                             unselectAll();
                             setSelectAll(false);
                           }}

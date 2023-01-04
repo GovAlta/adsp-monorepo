@@ -70,7 +70,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
             setEditCalendar(true);
           }}
         >
-          Add Calendar
+          Add calendar
         </GoAButton>
       </div>
       {fetchCalendarState === ActionState.inProcess && <PageIndicator />}

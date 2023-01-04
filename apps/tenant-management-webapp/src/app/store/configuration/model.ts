@@ -15,7 +15,7 @@ export interface ConfigurationDefinitionState {
   imports: ServiceConfiguration[];
   configurationRevisions: {
     service?: string;
-    revisions?: { result?: []; next?: string; active?: number; latest?: number };
+    revisions?: { result?: []; next?: string; active?: number; latest?: number; isCore?: boolean };
   };
   serviceList: string[];
 }
@@ -63,6 +63,7 @@ export interface ServiceConfiguration {
   name: string;
   description?: string;
   latest: ServiceSchemas;
+  active: ServiceSchemas;
   success?: boolean;
   error?: string;
 }

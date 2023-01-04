@@ -10,8 +10,8 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
     this.model = model<ServiceStatusApplication & Document>('ServiceStatus', serviceStatusApplicationSchema);
   }
 
-  async findEnabledApplications(): Promise<ServiceStatusApplicationEntity[]> {
-    const docs = await this.model.find({ enabled: true });
+  async findEnabledApplications(tenantId: string): Promise<ServiceStatusApplicationEntity[]> {
+    const docs = await this.model.find({ enabled: true, tenantId: tenantId });
     return docs.map((doc) => this.fromDoc(doc));
   }
 
@@ -75,6 +75,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
       statusTimestamp: application.statusTimestamp,
       status: application.status,
       enabled: application.enabled,
+      tenantId: application.tenantId,
     };
   }
 
@@ -90,6 +91,7 @@ export default class MongoServiceStatusRepository implements ServiceStatusReposi
       statusTimestamp: doc.statusTimestamp,
       status: doc.status,
       enabled: doc.enabled,
+      tenantId: doc.tenantId,
     });
   }
 }

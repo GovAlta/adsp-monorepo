@@ -1,5 +1,6 @@
 import { adspId } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
+import { EndpointStatusEntryRepository } from '../../repository/endpointStatusEntry';
 import { ApplicationManager } from '../applicationManager';
 
 jest.mock('axios');
@@ -16,11 +17,13 @@ const repositoryMock = {
   save: jest.fn(),
 };
 
-const notificationRepositoryMock = {
-  find: jest.fn(),
+const endpointRepoMock: EndpointStatusEntryRepository = {
   delete: jest.fn(),
+  deleteAll: jest.fn(),
   save: jest.fn(),
   get: jest.fn(),
+  findRecentByUrlAndApplicationId: jest.fn(),
+  deleteOldUrlStatus: jest.fn(),
 };
 
 const loggerMock = {
@@ -47,46 +50,50 @@ const tenantServiceMock = {
   getTenantByRealm: jest.fn(),
 };
 
+const tenant1 = 'urn:ads:mock-tenant:mock-service:bob:bobs-id';
+const tenant2 = 'urn:ads:mock-tenant:mock-service:bill:bills-id';
+
 const statusMock = [
   {
     _id: '620ae946ddd181001195caad',
-    appKey: 'temp-app-name-1',
+    appKey: 'app_temp-app-name-1',
     endpoint: { status: 'online' },
     metadata: '',
     statusTimestamp: 1648247257463,
     status: 'operational',
     enabled: true,
     internalStatus: 'healthy',
+    tenantId: tenant1,
   },
   {
     _id: '620ae946ddd181001195cbbc',
-    appKey: 'temp-app-name-2',
+    appKey: 'app_temp-app-name-2',
     endpoint: { status: 'online' },
     metadata: '',
     statusTimestamp: 1648247257464,
     status: 'operational',
     enabled: true,
     internalStatus: 'healthy',
+    tenantId: tenant2,
   },
 ];
 
 const appMock = [
   {
-    [statusMock[0]._id]: {
-      appKey: 'temp-app-name-1',
+    contact: { contactEmail: 'bob@bob.com' },
+    ['app_temp-app-name-1']: {
+      appKey: 'app_temp-app-name-1',
       name: 'temp app name 1',
       url: 'https://www.yahoo.com',
       description: 'MyApp goes to Hollywood',
-      tenantId: 'urn:ads:mock-tenant:mock-service:bob:bobs-id',
     },
   },
   {
-    [statusMock[1]._id]: {
-      appKey: 'temp-app-name-2',
+    ['app_temp-app-name-2']: {
+      appKey: 'app_temp-app-name-2',
       name: 'temp app name 2',
       url: 'https://www.google.com',
       description: 'MyApp - the sequel',
-      tenantId: 'urn:ads:mock-tenant:mock-service:bill:bills-id',
     },
   },
 ];
@@ -94,15 +101,15 @@ const appMock = [
 describe('Application Manager', () => {
   it('Can get Active Applications', async () => {
     const appManager = appManagerFactory('urn:ads:mock-tenant:mock-service');
-    tenantServiceMock.getTenants.mockResolvedValue([
-      { id: appMock[0][statusMock[0]._id].tenantId },
-      { id: appMock[1][statusMock[1]._id].tenantId },
-    ]);
-    repositoryMock.findEnabledApplications.mockResolvedValueOnce(statusMock);
+    tenantServiceMock.getTenants.mockResolvedValue([{ id: tenant1 }, { id: tenant2 }]);
+    repositoryMock.findEnabledApplications
+      .mockResolvedValueOnce([statusMock[0]])
+      .mockResolvedValueOnce([statusMock[1]]);
     configurationServiceMock.getConfiguration.mockResolvedValueOnce(appMock[0]).mockResolvedValueOnce(appMock[1]);
     const apps = await appManager.findEnabledApps();
-    const expected = apps.get(statusMock[1]._id);
-    expect(expected).toEqual(appMock[1][statusMock[1]._id]);
+    expect(apps.size()).toBe(2);
+    const actual = apps.get(statusMock[1].appKey);
+    expect(actual).toEqual({ ...appMock[1][statusMock[1].appKey], tenantId: tenant2 });
   });
 
   const appManagerFactory = (service: string): ApplicationManager => {
@@ -111,9 +118,9 @@ describe('Application Manager', () => {
       configurationServiceMock,
       adspId`${service}`,
       repositoryMock,
+      endpointRepoMock,
       directoryServiceMock,
       tenantServiceMock,
-      notificationRepositoryMock,
       loggerMock
     );
   };

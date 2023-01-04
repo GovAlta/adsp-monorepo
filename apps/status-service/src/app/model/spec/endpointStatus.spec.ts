@@ -6,6 +6,7 @@ describe('EndpointStatusEntryEntity', () => {
     findRecentByUrlAndApplicationId: jest.fn(),
     deleteOldUrlStatus: jest.fn(),
     delete: jest.fn(),
+    deleteAll: jest.fn(),
     save: jest.fn(),
     get: jest.fn(),
   };

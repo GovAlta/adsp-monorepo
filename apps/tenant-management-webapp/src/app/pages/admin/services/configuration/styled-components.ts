@@ -243,3 +243,9 @@ export const ConfigurationTableStyles = styled.div`
     margin-top: 4px;
   }
 `;
+
+export const RowFlex = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+`;

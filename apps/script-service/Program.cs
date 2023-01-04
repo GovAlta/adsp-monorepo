@@ -36,7 +36,26 @@ internal class Program
     builder.Services.AddSwaggerGen(
       c =>
       {
-        c.SwaggerDoc("v1", new OpenApiInfo { Title = "Script Service", Version = "v1" });
+        c.SwaggerDoc("v1", new OpenApiInfo
+        {
+          Title = "Script Service",
+          Version = "v1",
+          Description = "The script service executes pre-configured scripts and allows applications to externalize logic to configuration."
+        });
+
+        var bearerScheme = new OpenApiSecurityScheme
+        {
+          BearerFormat = "JWT",
+          Scheme = "bearer",
+          Type = SecuritySchemeType.Http
+        };
+        c.AddSecurityDefinition("accessToken", bearerScheme);
+
+        var securityRequirements = new OpenApiSecurityRequirement
+        {
+            { bearerScheme, Array.Empty<string>() },
+        };
+        c.AddSecurityRequirement(securityRequirements);
       }
     );
 

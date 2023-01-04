@@ -20,7 +20,8 @@ import {
 } from '@store/status/models';
 import styled, { CSSProperties } from 'styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
-import { GoAButton, GoARadio, GoARadioGroup, GoACheckbox } from '@abgov/react-components';
+import { GoAButton, GoARadio, GoARadioGroup } from '@abgov/react-components';
+import { GoACheckbox } from '@abgov/react-components-new';
 import {
   GoABadge,
   GoAModal,
@@ -161,6 +162,7 @@ function Status(): JSX.Element {
                 subscribeToggle();
               }}
               value="subscribed"
+              ariaLabel="subscribe-checkbox"
             >
               I want to subscribe and receive notifications
             </GoACheckbox>

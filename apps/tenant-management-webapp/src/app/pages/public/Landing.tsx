@@ -150,14 +150,14 @@ const LandingPage = (): JSX.Element => {
                   <GridItem md={4} hSpacing={0.5}>
                     <GoACard type="primary">
                       <CardLayout>
-                        <h2>UI components library</h2>
+                        <h2>UI components</h2>
                         <CardContent maxHeight={rowOneMaxHeight}>
-                          The design system and UI component library provide reusable patterns and components for your
-                          front end application. Choose from components for Angular, React, and Vue.
+                          UI components library provides reusable styles, components, and patterns for your front end
+                          application. Our Web Components work with Angular, React and many other front end frameworks.
                         </CardContent>
                         <RedirectButton
                           name="ui-components"
-                          url="https://ui-components.alpha.alberta.ca"
+                          url="https://ui-components.alberta.ca/?path=/docs/overview--page"
                           label="Learn more"
                         />
                       </CardLayout>

@@ -8,9 +8,10 @@ export class HealthCheckJob {
   #action?: Job;
   #tenantId: AdspId;
 
-  constructor(app: StaticApplicationData) {
+  constructor(app: StaticApplicationData, tenantId: AdspId) {
     this.#app = app;
     this.#action = null;
+    this.#tenantId = tenantId;
   }
 
   getUrl = (): string => {

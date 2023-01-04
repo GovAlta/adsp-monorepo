@@ -48,6 +48,7 @@ describe('Service status mongo repository', () => {
       {
         enabled: false,
         appKey: 'test-mock-app-0',
+        tenantId: 'MockTenant',
         endpoint: {
           status: null,
         },
@@ -55,6 +56,7 @@ describe('Service status mongo repository', () => {
       {
         enabled: false,
         appKey: 'test-mock-app-0',
+        tenantId: 'MockTenant',
         endpoint: {
           status: null,
         },
@@ -64,7 +66,7 @@ describe('Service status mongo repository', () => {
 
     const allApplications = await repo.find({});
     expect(allApplications.length).toBe(2);
-    const enabledApplications = await repo.findEnabledApplications();
+    const enabledApplications = await repo.findEnabledApplications('MockTenant');
     expect(enabledApplications.length).toEqual(1);
   });
 

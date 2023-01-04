@@ -1,11 +1,13 @@
 import type { EventDefinition } from '@store/event/models';
 import { languages, editor, Position } from 'monaco-editor';
 import { Monaco } from '@monaco-editor/react';
+
 export interface EditorSuggestion {
   label: string;
   insertText: string;
   children?: EditorSuggestion[];
 }
+const MAX_LINE_LENGTH = 10000;
 
 const createSuggestion = (instance: Monaco, suggestion: EditorSuggestion, hasBracket: boolean, hasParent = false) => {
   const showSuggest = suggestion.children?.length;
@@ -198,3 +200,14 @@ const getElementSuggestion = (element) => {
   }
   return suggest;
 };
+const getPositionX = (text: string, search: string): number => {
+  const textArr = text.split('\n');
+  for (let i = textArr.length - 1; i >= 0; i--) {
+    if (textArr[i].indexOf(search) > -1) {
+      return i + 1;
+    }
+  }
+  return MAX_LINE_LENGTH;
+};
+export const triggerInScope = (text: string, lineNumber: number) =>
+  text.indexOf('{{') !== -1 && getPositionX(text, '{{') <= lineNumber && getPositionX(text, '{{') >= lineNumber;

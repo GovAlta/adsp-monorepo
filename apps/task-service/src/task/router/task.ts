@@ -1,5 +1,11 @@
 import { adspId, AdspId, DomainEvent, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { createValidationHandler, InvalidOperationError, NotFoundError, Update } from '@core-services/core-common';
+import {
+  createValidationHandler,
+  InvalidOperationError,
+  NotFoundError,
+  Update,
+  decodeAfter,
+} from '@core-services/core-common';
 import { Request, RequestHandler, Response, Router } from 'express';
 import { checkSchema, param, query } from 'express-validator';
 import { Logger } from 'winston';
@@ -176,7 +182,15 @@ export function createTaskRouter({
 
   router.get(
     '/tasks',
-    createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
+    createValidationHandler(
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after')
+        .optional()
+        .isString()
+        .custom((val) => {
+          return !isNaN(decodeAfter(val));
+        })
+    ),
     getTasks(apiId, repository)
   );
   router.get('/tasks/:id', validateIdHandler, getTask(repository), (req: Request, res: Response) =>

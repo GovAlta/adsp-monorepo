@@ -37,15 +37,17 @@ When(
     // Public or select roles
     notificationsObj
       .notificationTypeModalPublicCheckbox()
+      .shadow()
+      .find('.goa-checkbox-container')
       .invoke('attr', 'class')
       .then((publicCheckboxClassName) => {
         if (role.toLowerCase() == 'public') {
           if (!publicCheckboxClassName?.includes('--selected')) {
-            notificationsObj.notificationTypeModalPublicCheckbox().click();
+            notificationsObj.notificationTypeModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
           }
         } else {
           if (publicCheckboxClassName?.includes('--selected')) {
-            notificationsObj.notificationTypeModalPublicCheckbox().click();
+            notificationsObj.notificationTypeModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
           }
           // Deselect all previously selected roles and then select new roles
           notificationsObj
