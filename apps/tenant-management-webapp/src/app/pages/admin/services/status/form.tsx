@@ -15,6 +15,8 @@ import {
 } from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
 import { createSelector } from 'reselect';
+import { useValidators } from '@lib/useValidators';
+import { characterCheck, validationPattern, isNotEmptyCheck, wordMaxLengthCheck } from '@lib/checkInput';
 import styled from 'styled-components';
 
 interface Props {
@@ -69,18 +71,29 @@ export const ApplicationFormModal: FC<Props> = ({
   const [openDropdown, setOpenDropdown] = useState<boolean>(false);
   const { directory } = useSelector((state: RootState) => state.directory);
 
-  function isFormValid(): boolean {
-    if (!application?.name) return false;
-    if (!application?.endpoint.url) return false;
-    return true;
-  }
-
   function save() {
     if (!isFormValid()) {
       return;
     }
     dispatch(saveApplication(application));
     if (onSave) onSave();
+  }
+
+  const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
+  const wordLengthCheck = wordMaxLengthCheck(32);
+
+  const { errors, validators } = useValidators(
+    'name',
+    'name',
+    checkForBadChars,
+    wordLengthCheck,
+    isNotEmptyCheck('name')
+  ).build();
+
+  function isFormValid(): boolean {
+    if (!application?.name) return false;
+    if (!application?.endpoint.url) return false;
+    return !validators.haveErrors();
   }
 
   useEffect(() => {
@@ -101,7 +114,7 @@ export const ApplicationFormModal: FC<Props> = ({
       <GoAModalTitle>{title}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
-          <GoAFormItem>
+          <GoAFormItem error={errors?.['name']}>
             <label>Application name</label>
 
             <GoAInput
@@ -109,6 +122,8 @@ export const ApplicationFormModal: FC<Props> = ({
               name="name"
               value={application?.name}
               onChange={(name, value) => {
+                validators['name'].check(value);
+
                 setApplication({
                   ...application,
                   name: value,
