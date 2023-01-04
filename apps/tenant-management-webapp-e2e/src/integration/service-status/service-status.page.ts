@@ -24,7 +24,7 @@ class StatusServicePage {
   }
 
   noticeModalAllApplicationsCheckbox() {
-    return cy.xpath('//label[@class="goa-checkbox"]/div[contains(@class, "goa-checkbox-container")]');
+    return cy.xpath('//goa-checkbox[@name="isAllApplications"]');
   }
 
   noticeModalApplicationDropdown() {

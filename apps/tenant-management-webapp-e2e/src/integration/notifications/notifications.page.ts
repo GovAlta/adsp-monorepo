@@ -42,9 +42,7 @@ class NotificationsPage {
   }
 
   notificationChannelCheckbox(channelName) {
-    return cy.xpath(
-      `//*[@class="modal"]//goa-checkbox[@name="${channelName}"]/parent::*[contains(@class, "goa-checkbox-container")]`
-    );
+    return cy.xpath(`//*[@class="modal"]//goa-checkbox[@name="${channelName}"]`);
   }
 
   notificationChannelEmailCheckbox() {
@@ -289,11 +287,11 @@ class NotificationsPage {
   }
 
   subscribersAddressAsSearchField() {
-    return cy.xpath('//goa-checkbox[@id="name"]');
+    return cy.xpath('//input[@id="name"]');
   }
 
   subscribersEmailSearchField() {
-    return cy.xpath('//goa-checkbox[@id="email"]');
+    return cy.xpath('//input[@id="email"]');
   }
 
   subscribersSearchBtn() {
