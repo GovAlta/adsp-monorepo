@@ -13,6 +13,7 @@ import {
   GoAModalContent,
   GoAModalTitle,
 } from '@abgov/react-components/experimental';
+import { GoATextArea } from '@abgov/react-components-new';
 import { RootState } from '@store/index';
 import { createSelector } from 'reselect';
 import { useValidators } from '@lib/useValidators';
@@ -135,14 +136,14 @@ export const ApplicationFormModal: FC<Props> = ({
 
           <GoAFormItem>
             <label>Description</label>
-            <textarea
+            <GoATextArea
               name="description"
-              className="goa-textarea"
+              width="100%"
               value={application?.description}
-              onChange={(e) =>
+              onChange={(name, value) =>
                 setApplication({
                   ...application,
-                  description: e.target.value,
+                  description: value,
                 })
               }
               aria-label="description"

@@ -74,6 +74,8 @@ When(
     //bot checkbox
     notificationsObj
       .notificationChannelCheckbox('bot')
+      .shadow()
+      .find('.goa-checkbox-container')
       .invoke('attr', 'class')
       .then((classAttVal) => {
         if (classAttVal == undefined) {
@@ -84,7 +86,7 @@ When(
               if (classAttVal.includes('selected')) {
                 cy.log('Bot check box is already selected. ');
               } else {
-                notificationsObj.notificationChannelCheckbox('bot').click();
+                notificationsObj.notificationChannelCheckbox('bot').shadow().find('.goa-checkbox-container').click();
               }
               break;
             case 'no':
@@ -92,7 +94,7 @@ When(
                 if (!classAttVal.includes('selected')) {
                   cy.log('Bot check box is already not selected. ');
                 } else {
-                  notificationsObj.notificationChannelCheckbox('bot').click();
+                  notificationsObj.notificationChannelCheckbox('bot').shadow().find('.goa-checkbox-container').click();
                 }
               }
               break;
@@ -104,6 +106,8 @@ When(
     //sms checkbox
     notificationsObj
       .notificationChannelCheckbox('sms')
+      .shadow()
+      .find('.goa-checkbox-container')
       .invoke('attr', 'class')
       .then((classAttVal) => {
         if (classAttVal == undefined) {
@@ -114,7 +118,7 @@ When(
               if (classAttVal.includes('selected')) {
                 cy.log('SMS check box is already selected. ');
               } else {
-                notificationsObj.notificationChannelCheckbox('sms').click();
+                notificationsObj.notificationChannelCheckbox('sms').shadow().find('.goa-checkbox-container').click();
               }
               break;
             case 'no':
@@ -122,7 +126,7 @@ When(
                 if (!classAttVal.includes('selected')) {
                   cy.log('SMS check box is already not selected. ');
                 } else {
-                  notificationsObj.notificationChannelCheckbox('sms').click();
+                  notificationsObj.notificationChannelCheckbox('sms').shadow().find('.goa-checkbox-container').click();
                 }
               }
               break;

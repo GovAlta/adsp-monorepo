@@ -50,15 +50,17 @@ When(
     statusObj.noticeModalDescField().clear({ force: true }).type(desc);
     // Select Application
     if (app == 'All') {
-      statusObj.noticeModalAllApplicationsCheckbox().click();
+      statusObj.noticeModalAllApplicationsCheckbox().shadow().find('.goa-checkbox-container').click();
     } else {
       // Uncheck All applications checkbox if checked
       statusObj
         .noticeModalAllApplicationsCheckbox()
+        .shadow()
+        .find('.goa-checkbox-container')
         .invoke('attr', 'class')
         .then((classAttr) => {
           if (classAttr?.includes('-selected')) {
-            statusObj.noticeModalAllApplicationsCheckbox().click();
+            statusObj.noticeModalAllApplicationsCheckbox().shadow().find('.goa-checkbox-container').click();
           }
         });
       statusObj.noticeModalApplicationDropdown().click();

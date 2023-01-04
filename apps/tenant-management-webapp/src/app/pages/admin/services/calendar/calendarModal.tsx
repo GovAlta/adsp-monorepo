@@ -3,6 +3,7 @@ import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgo
 import { GoAButton } from '@abgov/react-components';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { CalendarItem } from '@store/calendar/models';
+import { GoATextArea } from '@abgov/react-components-new';
 import { useSelector } from 'react-redux';
 import { Role } from '@store/tenant/models';
 import { ClientRoleTable } from '@components/ClientRoleTable';
@@ -166,15 +167,14 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
           </GoAFormItem>
           <GoAFormItem error={errors?.['description']}>
             <label>Description</label>
-            <textarea
+            <GoATextArea
               name="description"
               value={calendar.description}
-              data-testid={`calendar-modal-description-input`}
+              testId={`calendar-modal-description-input`}
               aria-label="description"
-              className="goa-textarea"
-              maxLength={250}
-              onChange={(e) => {
-                const description = e.target.value;
+              width="100%"
+              onChange={(name, value) => {
+                const description = value;
                 validators.remove('description');
                 validators['description'].check(description);
                 setCalendar({ ...calendar, description });

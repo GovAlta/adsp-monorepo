@@ -23,6 +23,7 @@ import { useValidators } from '@lib/useValidators';
 import { updateEventDefinition } from '@store/event/actions';
 import { useDispatch } from 'react-redux';
 import styled from 'styled-components';
+import { GoATextArea } from '@abgov/react-components-new';
 
 interface EventDefinitionFormProps {
   initialValue?: EventDefinition;
@@ -119,14 +120,13 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
             </GoAFormItem>
             <GoAFormItem>
               <label>Description</label>
-              <textarea
+              <GoATextArea
                 name="description"
-                data-testid="form-description"
+                testId="form-description"
                 value={definition.description}
                 aria-label="description"
-                className="goa-textarea"
-                maxLength={250}
-                onChange={(e) => setDefinition({ ...definition, description: e.target.value })}
+                width="100%"
+                onChange={(name, value) => setDefinition({ ...definition, description: value })}
               />
             </GoAFormItem>
             <GoAFormItem error={errors?.['payloadSchema']}>

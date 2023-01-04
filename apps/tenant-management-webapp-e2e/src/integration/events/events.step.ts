@@ -258,7 +258,7 @@ When(
             .find('.goa-checkbox-container')
             .click();
         } else {
-          eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
+          eventsObj.streamModalRoleCheckbox(roles[i].trim()).shadow().find('.goa-checkbox-container').click();
         }
       }
     }
@@ -457,7 +457,7 @@ Then('the user enters {string}, {string}, {string} in Edit stream modal', functi
       })
       .then(() => {
         for (let i = 0; i < roles.length; i++) {
-          eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
+          eventsObj.streamModalRoleCheckbox(roles[i].trim()).shadow().find('.goa-checkbox-container').click();
         }
       });
   }

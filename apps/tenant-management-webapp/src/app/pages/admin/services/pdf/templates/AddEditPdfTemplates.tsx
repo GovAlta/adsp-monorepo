@@ -10,7 +10,7 @@ import { characterCheck, validationPattern, isNotEmptyCheck, Validator, wordMaxL
 import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
-
+import { GoATextArea } from '@abgov/react-components-new';
 interface AddEditPdfTemplateProps {
   open: boolean;
   isEdit: boolean;
@@ -102,16 +102,15 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
 
             <GoAFormItem>
               <label>Description</label>
-              <textarea
+              <GoATextArea
                 name="pdf-template-description"
                 value={template.description}
                 disabled={isEdit}
-                maxLength={250}
-                className="goa-textarea"
-                data-testid="pdf-template-description"
+                width="100%"
+                testId="pdf-template-description"
                 aria-label="pdf-template-description"
-                onChange={(e) => {
-                  setTemplate({ ...template, description: e.target.value });
+                onChange={(name, value) => {
+                  setTemplate({ ...template, description: value });
                 }}
               />
             </GoAFormItem>

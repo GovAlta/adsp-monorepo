@@ -22,6 +22,7 @@ import { RootState } from '@store/index';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { functionSuggestion, functionSignature } from '@lib/luaCodeCompletion';
 import { buildSuggestions } from '@lib/autoComplete';
+import { GoATextArea } from '@abgov/react-components-new';
 interface ScriptEditorProps {
   editorConfig?: EditorProps;
   name: string;
@@ -192,15 +193,14 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
           </GoAFormItem>
           <GoAFormItem error={errors?.['description']}>
             <label>Description</label>
-            <textarea
+            <GoATextArea
               name="description"
               value={description}
-              data-testid={`script-modal-description-input`}
+              testId={`script-modal-description-input`}
               aria-label="script-description"
-              maxLength={250}
-              className="goa-textarea"
-              onChange={(e) => {
-                onDescriptionChange(e.target.value);
+              width="100%"
+              onChange={(name, value) => {
+                onDescriptionChange(value);
               }}
             />
           </GoAFormItem>

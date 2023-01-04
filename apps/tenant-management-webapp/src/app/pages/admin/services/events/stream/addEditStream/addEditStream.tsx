@@ -20,7 +20,7 @@ import { RolesTable } from './rolesTable';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { ServiceRoleConfig } from '@store/access/models';
 import { GoAChip, GoACheckbox } from '@abgov/react-components-new';
-
+import { GoATextArea } from '@abgov/react-components-new';
 interface AddEditStreamProps {
   onSave: (stream: Stream) => void;
   onClose: () => void;
@@ -106,14 +106,14 @@ export const AddEditStream = ({
             </GoAFormItem>
             <GoAFormItem>
               <label>Description</label>
-              <textarea
+              <GoATextArea
                 name="stream-description"
                 value={stream.description}
-                data-testid="stream-description"
+                testId="stream-description"
                 aria-label="stream-description"
-                className="goa-textarea"
-                onChange={(e) => {
-                  setStream({ ...stream, description: e.target.value });
+                width="100%"
+                onChange={(name, value) => {
+                  setStream({ ...stream, description: value });
                 }}
               />
             </GoAFormItem>
