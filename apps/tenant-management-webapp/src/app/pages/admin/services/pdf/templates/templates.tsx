@@ -115,11 +115,15 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
 
   useEffect(() => {
     try {
-      const template = getTemplateBody(footer, 'pdf', {
-        data: currentTemplate,
-        serviceUrl: webappUrl,
-        today: new Date().toDateString(),
-      });
+      let template = '';
+      // If footer is empty, we shall add PDF wrapper for the footer in the preview.
+      if (footer && footer.length > 0) {
+        template = getTemplateBody(footer, 'pdf', {
+          data: currentTemplate,
+          serviceUrl: webappUrl,
+          today: new Date().toDateString(),
+        });
+      }
       setFooterPreview(
         generateMessage(template, { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() })
       );
@@ -130,11 +134,15 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
 
   useEffect(() => {
     try {
-      const template = getTemplateBody(header, 'pdf', {
-        data: currentTemplate,
-        serviceUrl: webappUrl,
-        today: new Date().toDateString(),
-      });
+      let template = '';
+      // If header is empty, we shall add PDF wrapper for the header in the preview.
+      if (header && header.length > 0) {
+        template = getTemplateBody(header, 'pdf', {
+          data: currentTemplate,
+          serviceUrl: webappUrl,
+          today: new Date().toDateString(),
+        });
+      }
       setHeaderPreview(
         generateMessage(template, { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() })
       );
@@ -145,11 +153,16 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
 
   useEffect(() => {
     try {
-      const template = getTemplateBody(body, 'pdf', {
-        data: currentTemplate,
-        serviceUrl: webappUrl,
-        today: new Date().toDateString(),
-      });
+      let template = '';
+      // If body is empty, we shall add PDF wrapper for the body in the preview.
+      if (currentTemplate?.template.length > 0) {
+        template = getTemplateBody(body, 'pdf', {
+          data: currentTemplate,
+          serviceUrl: webappUrl,
+          today: new Date().toDateString(),
+        });
+      }
+
       setBodyPreview(
         generateMessage(template, { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() })
       );
