@@ -62,7 +62,7 @@ When(
 );
 
 When('the user clicks Save button in Add script modal', function () {
-  scriptObj.scriptModalSaveButton().click();
+  scriptObj.scriptModalSaveButton().click({ force: true });
   cy.wait(2000);
 });
 

@@ -39,7 +39,7 @@ class FileServicePage {
 
   fileTypeModalReadCheckbox(roleName) {
     return cy.xpath(
-      `//*[@data-testid="file-type-modal"]//td[text()="${roleName}"]/following-sibling::td//input[contains(@name, "read-role")]/parent::*[contains(@class, "goa-checkbox-container")]`
+      `//*[@data-testid="file-type-modal"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "read-role")]`
     );
   }
 

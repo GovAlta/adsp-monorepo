@@ -181,7 +181,7 @@ class eventsPage {
 
   streamModalRoleCheckbox(roleLabel) {
     return cy.xpath(
-      `//*[@data-testid="stream-form"]//tbody/tr/td[@class="role-label" and text()="${roleLabel}"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]`
+      `//*[@data-testid="stream-form"]//tbody/tr/td[@class="role-label" and text()="${roleLabel}"]/following-sibling::td`
     );
   }
 

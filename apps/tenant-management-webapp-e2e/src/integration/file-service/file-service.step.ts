@@ -425,7 +425,7 @@ When('the user enters {string}, {string}, {string} on file type modal', function
     //Select read roles
     const readRoles = readRole.split(',');
     for (let i = 0; i < readRoles.length; i++) {
-      fileServiceObj.fileTypeModalReadCheckbox(readRoles[i].trim()).click();
+      fileServiceObj.fileTypeModalReadCheckbox(readRoles[i].trim()).shadow().find('.goa-checkbox-container').click();
     }
   }
 
