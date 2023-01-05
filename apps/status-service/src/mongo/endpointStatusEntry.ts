@@ -35,6 +35,11 @@ export default class MongoEndpointStatusEntryRepository implements EndpointStatu
     throw new Error('not implemented');
   }
 
+  async deleteAll(appKey: string): Promise<number> {
+    const count = await this.model.deleteMany({ applicationId: appKey });
+    return count.deletedCount;
+  }
+
   async save(entity: EndpointStatusEntryEntity): Promise<EndpointStatusEntryEntity> {
     const doc = await this.model.create(this.toDoc(entity));
     return this.fromDoc(doc);

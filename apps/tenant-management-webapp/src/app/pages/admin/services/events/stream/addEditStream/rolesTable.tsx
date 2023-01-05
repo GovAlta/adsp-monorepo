@@ -2,7 +2,7 @@ import React from 'react';
 import { SubscriberRolesOptions } from '@store/stream/models';
 import DataTable from '@components/DataTable';
 import { DataTableWrapper } from '../styleComponents';
-import { GoACheckbox } from '@abgov/react-components';
+import { GoACheckbox } from '@abgov/react-components-new';
 
 interface RolesTableProps {
   subscriberRolesOptions: SubscriberRolesOptions[];
@@ -41,6 +41,7 @@ export const RolesTable = ({
                       onChange={() => {
                         onItemChecked(role.value);
                       }}
+                      ariaLabel={`${role.label}-checkbox`}
                     />
                   </span>
                 </td>

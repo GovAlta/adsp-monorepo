@@ -119,10 +119,19 @@ export function getSubscriber(tokenProvider: TokenProvider, directory: ServiceDi
         `/subscription/v1/subscribers/${filteredSubscriberId}?includeSubscriptions=true`,
         notificationServiceUrl
       );
-      const { data } = await axios.get(subscribersUrl.href, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      res.send(data);
+
+      try {
+        const { data } = await axios.get(subscribersUrl.href, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        res.send(data);
+      } catch (err) {
+        if (err?.response?.status === 400) {
+          throw new NotFoundError('Subscriber Id', filteredSubscriberId);
+        }
+
+        throw new InvalidOperationError(`Failed fetching subscriber.`);
+      }
     } catch (err) {
       next(err);
     }

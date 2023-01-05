@@ -11,7 +11,7 @@ import {
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { GoACallout } from '@abgov/react-components';
 import styled from 'styled-components';
-import { GoACheckbox } from '@abgov/react-components';
+import { GoACheckbox } from '@abgov/react-components-new';
 import { toKebabName } from '@lib/kebabName';
 import { Role } from '@store/tenant/models';
 import { ServiceRoleConfig } from '@store/access/models';
@@ -134,6 +134,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                           }}
                           data-testid="manage-subscriptions-checkbox"
                           value="manageSubscribe"
+                          ariaLabel={`manage-subscriptions-checkbox`}
                         >
                           {channel.title}
                         </GoACheckbox>
@@ -153,6 +154,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                   }}
                   data-testid="manage-subscriptions-checkbox"
                   value="manageSubscribe"
+                  ariaLabel={`manage-subscriptions-checkbox`}
                 >
                   My subscribers are allowed to manage their own subscription for this notification type
                 </GoACheckbox>
@@ -177,6 +179,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                     publicSubscribe: !type.publicSubscribe,
                   });
                 }}
+                ariaLabel={`anonymousRead-checkbox`}
               />
               Make notification public
             </AnonymousWrapper>

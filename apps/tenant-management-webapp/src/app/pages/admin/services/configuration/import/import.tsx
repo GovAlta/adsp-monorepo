@@ -41,8 +41,7 @@ export const ConfigurationImport: FunctionComponent = () => {
   const [errorsStatus, setErrorsStatus] = useState<string>('');
   const dispatch = useDispatch();
 
-  const onUploadSubmit = (e) => {
-    e.preventDefault();
+  const onUploadSubmit = () => {
     setErrorsStatus('');
     //Open a modal to list impact configuration
     const jsonValidationFormat = isValidJSONCheck()(selectedImportFile);
@@ -110,13 +109,16 @@ export const ConfigurationImport: FunctionComponent = () => {
     for (const config in importConfigJson) {
       for (const name in importConfigJson[config]) {
         if (importConfigJson[config][name] !== null && importConfigJson[config][name].configuration) {
-            dispatch(
-              replaceConfigurationDataAction({
+          dispatch(
+            replaceConfigurationDataAction(
+              {
                 namespace: config,
                 name: name,
                 configuration: importConfigJson[config][name].configuration,
-              })
-            );
+              },
+              true
+            )
+          );
         }
       }
     }

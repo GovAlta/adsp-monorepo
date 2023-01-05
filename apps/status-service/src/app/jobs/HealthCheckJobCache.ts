@@ -26,14 +26,14 @@ export class HealthCheckJobCache {
     return HealthCheckJobCache.#activeHealthChecks.get(key);
   };
 
-  addBatch = (applications: StatusApplications, scheduler: JobScheduler): void => {
-    applications.forEach((app) => {
+  addBatch = (statuses: StatusApplications, scheduler: JobScheduler): void => {
+    statuses.forEach((app) => {
       this.add(app, scheduler);
     });
   };
 
   add = (app: StaticApplicationData, scheduler: JobScheduler): HealthCheckJob => {
-    const job: HealthCheckJob = new HealthCheckJob(app);
+    const job: HealthCheckJob = new HealthCheckJob(app, app.tenantId);
     HealthCheckJobCache.#activeHealthChecks.set(app.appKey, job);
     job.schedule(scheduler);
     this.#logger.info(`Job Cache: scheduled app with url ${job.getUrl()}`);

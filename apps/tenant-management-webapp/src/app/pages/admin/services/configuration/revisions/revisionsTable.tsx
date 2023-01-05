@@ -8,13 +8,15 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { PageIndicator } from '@components/Indicator';
 import { GoAButton, GoABadge, GoAButtonGroup, GoAModal } from '@abgov/react-components-new';
 import { renderNoItem } from '@components/NoItem';
-import { FormatDateTimeWithAt } from '@lib/timeUtil';
+import { FormatTimeWithAt } from '@lib/timeUtil';
+import { RevisionEditModal } from './revisionEditModal';
 import {
   getConfigurationRevisions,
   getConfigurationActive,
   setConfigurationRevision,
+  setConfigurationRevisionActive,
 } from '@store/configuration/action';
-
+import { RowFlex } from '../styled-components';
 interface VisibleProps {
   visible: boolean;
 }
@@ -27,14 +29,20 @@ interface RevisionComponentProps {
   revision: Revision;
   isLatest?: boolean;
   isActive?: boolean;
+  isCore?: boolean;
   createRevision?: (revision: Revision) => void;
+  setActiveRevision?: (revision: Revision) => void;
+  editRevision?: (revision: Revision) => void;
 }
 
 const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
   revision,
   isLatest,
   isActive,
+  isCore,
   createRevision,
+  setActiveRevision,
+  editRevision,
 }: RevisionComponentProps) => {
   const [showDetails, setShowDetails] = useState(false);
 
@@ -50,24 +58,43 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
             </div>
           </div>
         </td>
-        <td>{revision.lastUpdated ? FormatDateTimeWithAt(new Date(revision.lastUpdated)) : ''}</td>
+        <td>{revision.lastUpdated ? FormatTimeWithAt(new Date(revision.lastUpdated)) : ''}</td>
         <td>
-          <GoAContextMenu>
+          <RowFlex>
             <GoAContextMenuIcon
               title="Toggle details"
               type={showDetails ? 'eye-off' : 'eye'}
               onClick={() => setShowDetails(!showDetails)}
               testId="toggle-details-visibility"
             />
+            {!isLatest && !isActive && (
+              <GoAContextMenuIcon
+                title="Set Active"
+                type="power"
+                onClick={() => setActiveRevision(revision)}
+                testId={`revision-set-active-${revision.configuration.namespace}-${revision.configuration.namespace}`}
+              />
+            )}
+            {isLatest && <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>}
             {isLatest && (
               <GoAContextMenuIcon
                 title="Add revision"
                 type="add"
                 onClick={() => createRevision(revision)}
-                testId="toggle-details-visibility"
+                testId={`revision-add-${revision.configuration.namespace}-${revision.configuration.namespace}`}
               />
             )}
-          </GoAContextMenu>
+            {!isCore && isLatest && (
+              <GoAContextMenuIcon
+                type="create"
+                title="Edit"
+                testId={`revision-edit-${revision.configuration.namespace}-${revision.configuration.namespace}`}
+                onClick={() => {
+                  editRevision(revision);
+                }}
+              />
+            )}
+          </RowFlex>
         </td>
       </tr>
       {showDetails && (
@@ -80,6 +107,23 @@ const RevisionComponent: FunctionComponent<RevisionComponentProps> = ({
     </>
   );
 };
+interface NoItemRevisionComponentProps {
+  service: string;
+  onClick?: () => void;
+}
+const NoItemRevisionComponent: FunctionComponent<NoItemRevisionComponentProps> = ({ service, onClick }) => {
+  return (
+    <tr>
+      <td></td>
+      <td></td>
+      <td>
+        <GoAContextMenu>
+          {<GoAContextMenuIcon type="create" title="Edit" testId={`revision-edit-${service}`} onClick={onClick} />}
+        </GoAContextMenu>
+      </td>
+    </tr>
+  );
+};
 
 interface RevisionTableComponentProps {
   className?: string;
@@ -90,6 +134,21 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
   const configurationRevisions = useSelector((state: RootState) => state.configuration.configurationRevisions);
   const revisions = configurationRevisions[service]?.revisions?.result;
   const [showCreateNewRevision, setShowCreateNewRevision] = useState(false);
+  const [showActiveRevision, setShowActiveRevision] = useState(false);
+  const [showEditRevision, setShowEditRevision] = useState(false);
+  const [selectedRevision, setSelectedRevision] = useState(null);
+  const onSetActive = (revision) => {
+    setSelectedRevision(revision);
+    setShowActiveRevision(true);
+  };
+  const onEditRevision = (revision) => {
+    setSelectedRevision(revision);
+    setShowEditRevision(true);
+  };
+
+  const resetEdit = () => {
+    setShowEditRevision(false);
+  };
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -99,6 +158,7 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
   const onNext = () => {
     dispatch(getConfigurationRevisions(service, next));
   };
+
   // eslint-disable-next-line
   useEffect(() => {
     if (revisions?.length > 0) {
@@ -107,7 +167,7 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
   }, [indicator, revisions]);
   const latest = configurationRevisions[service]?.revisions?.latest;
   const active = configurationRevisions[service]?.revisions?.active;
-
+  const isCore = configurationRevisions[service]?.revisions?.isCore;
   return (
     <>
       <Visible visible={!indicator.show && revisions && revisions.length > 0}>
@@ -134,15 +194,26 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
                     revision={revision}
                     isLatest={revision.revision === latest}
                     isActive={revision.revision === active}
+                    isCore={isCore}
                     createRevision={() => setShowCreateNewRevision(true)}
+                    setActiveRevision={onSetActive}
+                    editRevision={onEditRevision}
                   />
                 ))}
+              {!isCore && !indicator.show && revisions && revisions.length === 0 && (
+                <NoItemRevisionComponent
+                  service={service}
+                  onClick={() => {
+                    setShowEditRevision(true);
+                  }}
+                />
+              )}
             </tbody>
           </DataTable>
         </div>
       </Visible>
       {indicator.show && <PageIndicator />}
-      {!indicator.show && revisions && revisions.length === 0 && renderNoItem(`revisions`)}
+      {!indicator.show && revisions && revisions.length === 0 && isCore && renderNoItem(`revisions`)}
       {next && (
         <GoAButton onClick={onNext} type="secondary">
           Load more...
@@ -167,6 +238,28 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
           </GoAButtonGroup>
         }
       />
+      <GoAModal
+        open={showActiveRevision}
+        heading={`Set active revision for ${service} revision ${selectedRevision?.revision}?`}
+        actions={
+          <GoAButtonGroup alignment="end">
+            <GoAButton type="secondary" onClick={() => setShowActiveRevision(false)}>
+              Cancel
+            </GoAButton>
+            <GoAButton
+              onClick={() => {
+                setShowActiveRevision(false);
+                dispatch(setConfigurationRevisionActive(service, selectedRevision.revision));
+              }}
+            >
+              Set Active
+            </GoAButton>
+          </GoAButtonGroup>
+        }
+      />
+      {showEditRevision && (
+        <RevisionEditModal open={showEditRevision} revision={selectedRevision} service={service} onClose={resetEdit} />
+      )}
     </>
   );
 };
@@ -180,10 +273,10 @@ export const RevisionTable = styled(RevisionTableComponent)`
     width: 30%;
   }
   & .data-col {
-    width: 55%;
+    width: 43%;
   }
   & .action-col {
-    width: 15%;
+    width: 27%;
   }
   & .number-badge {
     display: flex;

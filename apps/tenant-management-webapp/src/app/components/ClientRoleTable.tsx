@@ -1,6 +1,6 @@
 import DataTable from '@components/DataTable';
 import React, { useState } from 'react';
-import { GoACheckbox } from '@abgov/react-components';
+import { GoACheckbox } from '@abgov/react-components-new';
 import { DataTableWrapper } from './styled-components';
 
 interface ClientRoleTableProps {
@@ -46,6 +46,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
                     checked={readRoles.includes(compositeRole)}
                     data-testid={`file-type-read-role-checkbox-${role}`}
                     disabled={props.anonymousRead}
+                    ariaLabel={`file-type-read-role-checkbox-${role}`}
                     onChange={() => {
                       if (readRoles.includes(compositeRole)) {
                         const newRoles = readRoles.filter((readRole) => {
@@ -65,6 +66,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
                   <GoACheckbox
                     name={`file-type-update-role-checkbox-${role}`}
                     key={`file-type-update-role-checkbox-${role}`}
+                    ariaLabel={`file-type-update-role-checkbox-${role}-checkbox`}
                     checked={updateRoles.includes(compositeRole)}
                     data-testid={`file-type-update-role-checkbox-${role}`}
                     onChange={() => {

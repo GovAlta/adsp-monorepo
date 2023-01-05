@@ -50,15 +50,17 @@ When(
     statusObj.noticeModalDescField().clear({ force: true }).type(desc);
     // Select Application
     if (app == 'All') {
-      statusObj.noticeModalAllApplicationsCheckbox().click();
+      statusObj.noticeModalAllApplicationsCheckbox().shadow().find('.goa-checkbox-container').click();
     } else {
       // Uncheck All applications checkbox if checked
       statusObj
         .noticeModalAllApplicationsCheckbox()
+        .shadow()
+        .find('.goa-checkbox-container')
         .invoke('attr', 'class')
         .then((classAttr) => {
           if (classAttr?.includes('-selected')) {
-            statusObj.noticeModalAllApplicationsCheckbox().click();
+            statusObj.noticeModalAllApplicationsCheckbox().shadow().find('.goa-checkbox-container').click();
           }
         });
       statusObj.noticeModalApplicationDropdown().click();
@@ -400,6 +402,8 @@ Given('a tenant admin user is on status applications page', function () {
 When('the user {string} the subscribe checkbox for health check notification type', function (checkboxOperation) {
   statusObj
     .applicationHealthChangeNotificationSubscribeCheckbox()
+    .shadow()
+    .find('.goa-checkbox-container')
     .invoke('attr', 'class')
     .then((classAttVal) => {
       if (classAttVal == undefined) {
@@ -410,12 +414,20 @@ When('the user {string} the subscribe checkbox for health check notification typ
             if (classAttVal.includes('selected')) {
               cy.log('The subscribe checkbox was already checked.');
             } else {
-              statusObj.applicationHealthChangeNotificationSubscribeCheckbox().click();
+              statusObj
+                .applicationHealthChangeNotificationSubscribeCheckbox()
+                .shadow()
+                .find('.goa-checkbox-container')
+                .click();
             }
             break;
           case 'unselects':
             if (classAttVal.includes('selected')) {
-              statusObj.applicationHealthChangeNotificationSubscribeCheckbox().click();
+              statusObj
+                .applicationHealthChangeNotificationSubscribeCheckbox()
+                .shadow()
+                .find('.goa-checkbox-container')
+                .click();
             } else {
               cy.log('The subscribe checkbox was already unchecked.');
             }
@@ -431,6 +443,8 @@ Then('the user views the subscribe checkbox is {string}', function (checkboxStat
   cy.wait(2000); // Wait for the checkbox status to show
   statusObj
     .applicationHealthChangeNotificationSubscribeCheckbox()
+    .shadow()
+    .find('.goa-checkbox-container')
     .invoke('attr', 'class')
     .then((classAttVal) => {
       if (classAttVal == undefined) {
@@ -583,7 +597,7 @@ Then('the user changes status to the first unused status', function () {
 
 When('the user clicks Save button in Manual status change modal', function () {
   statusObj.manualStatusChangeModalSaveBtn().click();
-  cy.wait(2000);
+  cy.wait(4000);
 });
 
 Then('the user views the status of {string} changed to the first unused status', function (appName) {
@@ -604,6 +618,7 @@ Then('the user views the status of {string} changed to the first unused status',
 
 When('the user clicks Edit button for contact information', function () {
   statusObj.contactInformationEditBtn().click();
+  cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
 Then('the user views Edit contact information modal on the status overview page', function () {

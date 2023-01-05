@@ -1,4 +1,5 @@
 import { Schema } from 'mongoose';
+import { ApplicationConfiguration, EndpointToInternalStatusMapping } from '../app';
 
 export const serviceStatusEndpointSchema = new Schema(
   {
@@ -51,6 +52,9 @@ export const serviceStatusApplicationSchema = new Schema(
     },
     enabled: {
       type: Boolean,
+    },
+    tenantId: {
+      type: String,
     },
     endpoint: serviceStatusEndpointSchema,
   },
@@ -105,10 +109,13 @@ export const noticeApplicationSchema = new Schema(
   { timestamps: true }
 );
 
-// The property key for the configuration schema is the appKey prefixed by "app_".
-// DEPRECATED It can also be a mongo _id (12 hex bytes), but this is
-// supported for legacy purposes only (Nov. 2022).  Do not use.
-export const appPropertyRegex = '(^[a-fA-F0-9]{24}$)|(^app_.+$)';
+// An application property is pretty wide open.
+export const appPropertyRegex = '^.+$';
+
+// A poor mans test for a valid application
+export const isApp = (app): boolean => {
+  return app && app.name && app.url;
+};
 
 export const configurationSchema = {
   type: 'object',
@@ -124,7 +131,6 @@ export const configurationSchema = {
     appPropertyRegex: {
       type: 'object',
       properties: {
-        _id: { type: 'string' },
         appKey: { type: 'string', description: 'A unique identifier for the application' },
         name: { type: 'string', description: 'Name of the application' },
         url: { type: 'string', description: 'URL to be checked' },

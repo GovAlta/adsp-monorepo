@@ -1,11 +1,11 @@
 import { ActionState } from '@store/session/models';
 export interface ScriptItem {
-  name: string;
+  name?: string;
   id?: string;
   script: string;
-  useServiceAccount: boolean;
+  useServiceAccount?: boolean;
   description?: string;
-  runnerRoles: string[];
+  runnerRoles?: string[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   testInputs: Record<string, any>;
 }

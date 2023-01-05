@@ -1,0 +1,77 @@
+name: Artillery performance tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      CLIENT_ID:
+        description: CLIENT_ID
+        required: true
+      CLIENT_SECRET:
+        description: CLIENT_SECRET
+        required: true
+env:
+  NODE_OPTIONS: --max-old-space-size=16384
+
+jobs:
+  artillery-event:
+    runs-on: ubuntu-latest
+    container: artilleryio/artillery:latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Make reports directory
+        run: mkdir reports
+
+      - name: Execute load tests event service
+        run: /home/node/artillery/bin/run run tests/events-service/load.yml --environment dev --output reports/event-report.json
+        env:
+          CLIENT_ID: ${{ inputs.CLIENT_ID }}
+          CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
+
+      - name: Generate HTML report event service
+        run: /home/node/artillery/bin/run report --output reports/event-report.html reports/event-report.json
+
+      - name: Archive tests reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: artillery-test-report-event
+          path: reports/*
+
+      - id: set_var
+        run: |
+          content=`cat reports/event-report.json`
+          # the following lines are only required for multi line json
+          content="${content//'%'/'%25'}"
+          content="${content//$'\n'/'%0A'}"
+          content="${content//$'\r'/'%0D'}"
+          # end of optional handling for multi line json
+          echo "::set-output name=packageJson::$content"
+          # echo "packageJson=$content" >> $GITHUB_OUTPUT
+      - run: |
+          echo "${{fromJson(steps.set_var.outputs.packageJson).aggregate.counters.firstCounterAt}}"
+
+  artillery-status:
+    runs-on: ubuntu-latest
+    container: artilleryio/artillery:latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Make reports directory
+        run: mkdir reports
+
+      - name: Execute load tests status service
+        run: /home/node/artillery/bin/run run tests/status-service/load.yml --environment dev --output reports/status-report.json
+        env:
+          CLIENT_ID: ${{ inputs.CLIENT_ID }}
+          CLIENT_SECRET: ${{ inputs.CLIENT_SECRET }}
+
+      - name: Generate HTML report status service
+        run: /home/node/artillery/bin/run report --output reports/status-report.html reports/status-report.json
+
+      - name: Archive tests reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: artillery-test-report-status
+          path: reports/*

@@ -4,7 +4,8 @@ import { fetchServiceStatusApps, fetchStatusMetrics, FETCH_SERVICE_STATUS_APPS_A
 import { RootState } from '@store/index';
 import ReactTooltip from 'react-tooltip';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton, GoACheckbox } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components';
+import { GoACheckbox } from '@abgov/react-components-new';
 import ApplicationFormModal from './form';
 import { Application } from './applications/application';
 import NoticeModal from './noticeModal';
@@ -135,6 +136,7 @@ function Status(): JSX.Element {
                 subscribeToggle();
               }}
               value="subscribed"
+              ariaLabel="subscribe-checkbox"
             >
               I want to subscribe and receive notifications
             </GoACheckbox>

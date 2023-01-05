@@ -5,6 +5,7 @@ import {
   InvalidOperationError,
   NotFoundError,
   Results,
+  decodeAfter,
 } from '@core-services/core-common';
 import { Request, RequestHandler, Router } from 'express';
 import { body, checkSchema, query } from 'express-validator';
@@ -405,7 +406,16 @@ export function createConfigurationRouter({
     '/configuration/:namespace/:name/revisions',
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
-    createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
+    createValidationHandler(
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after')
+        .optional()
+        .isString()
+        .custom((val) => {
+          return !isNaN(decodeAfter(val));
+        })
+    ),
+
     getConfigurationEntity(serviceId, configurationRepository),
     getRevisions()
   );
@@ -414,7 +424,15 @@ export function createConfigurationRouter({
     '/configuration/:namespace/:name/active',
     assertAuthenticatedHandler,
     validateNamespaceNameHandler,
-    createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
+    createValidationHandler(
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after')
+        .optional()
+        .isString()
+        .custom((val) => {
+          return !isNaN(decodeAfter(val));
+        })
+    ),
     getConfigurationEntity(serviceId, configurationRepository),
     getActiveRevision(logger)
   );

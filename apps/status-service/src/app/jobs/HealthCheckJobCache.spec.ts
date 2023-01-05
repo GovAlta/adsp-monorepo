@@ -3,6 +3,7 @@ import { StaticApplicationData } from '../model';
 import { HealthCheckJobCache } from './HealthCheckJobCache';
 import { HealthCheckJob } from './HealthCheckJob';
 import { StatusApplications } from '../model/statusApplications';
+import { adspId } from '@abgov/adsp-service-sdk';
 
 describe('HealthCheckJobCache', () => {
   const loggerMock: Logger = {
@@ -11,21 +12,26 @@ describe('HealthCheckJobCache', () => {
     error: jest.fn(),
   } as unknown as Logger;
 
+  const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+
   const mockApplications: StaticApplicationData[] = [
     {
       name: 'App1',
       appKey: 'app_application-1',
       url: 'http://www.application1.com',
+      tenantId,
     },
     {
       name: 'App2',
       appKey: 'app_application-2',
       url: 'http://www.application2.com',
+      tenantId,
     },
     {
       name: 'app3',
       appKey: 'app_application-3',
       url: 'http://www.application3.com',
+      tenantId,
     },
   ];
 
@@ -56,7 +62,7 @@ describe('HealthCheckJobCache', () => {
     cache.addBatch(StatusApplications.fromArray(mockApplications), { schedule: jest.fn() });
     cache.remove('application 1', jest.fn());
     cache.add(
-      { name: 'application 4', url: 'https://application/1', appKey: 'app_application-1' },
+      { name: 'application 4', url: 'https://application/1', appKey: 'app_application-1', tenantId },
       { schedule: jest.fn() }
     );
     expect(cache.getApplicationIds().length).toEqual(3);

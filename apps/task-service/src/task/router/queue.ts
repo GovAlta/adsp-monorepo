@@ -1,5 +1,5 @@
 import { AdspId, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { createValidationHandler, NotFoundError } from '@core-services/core-common';
+import { createValidationHandler, NotFoundError, decodeAfter } from '@core-services/core-common';
 import axios from 'axios';
 import { Request, RequestHandler, Response, Router } from 'express';
 import { checkSchema, param, query } from 'express-validator';
@@ -210,7 +210,15 @@ export function createQueueRouter({
   router.get(
     '/queues/:namespace/:name/tasks',
     validateNamespaceNameHandler,
-    createValidationHandler(query('top').optional().isInt({ min: 1, max: 5000 }), query('after').optional().isString()),
+    createValidationHandler(
+      query('top').optional().isInt({ min: 1, max: 5000 }),
+      query('after')
+        .optional()
+        .isString()
+        .custom((val) => {
+          return !isNaN(decodeAfter(val));
+        })
+    ),
     getQueue,
     getQueuedTasks(apiId, repository)
   );

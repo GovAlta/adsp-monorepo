@@ -1,17 +1,16 @@
-import { appPropertyRegex } from '../../mongo/schema';
-import { ApplicationRepo } from '../router/ApplicationRepo';
-import { StaticApplicationData, StatusServiceConfiguration } from './serviceStatus';
+import { isApp } from '../../mongo/schema';
+import { StaticApplicationData, StatusServiceApplications, StatusServiceConfiguration } from './serviceStatus';
 
 export class StatusApplications {
-  #apps: StatusServiceConfiguration;
+  #apps: StatusServiceApplications;
 
-  constructor(statusConfiguration: StatusServiceConfiguration) {
-    const regex = new RegExp(appPropertyRegex);
-    // remove possible configuration entities that are NOT apps.
-    const keys = Object.keys(statusConfiguration).filter((id) => regex.test(id));
+  constructor(statusConfiguration: StatusServiceApplications) {
+    const keys = Object.keys(statusConfiguration);
     const apps = {};
     keys.forEach((k) => {
-      apps[k] = statusConfiguration[k];
+      if (isApp(statusConfiguration[k])) {
+        apps[k] = statusConfiguration[k];
+      }
     });
     this.#apps = apps;
   }
@@ -40,8 +39,6 @@ export class StatusApplications {
   };
 
   get(id: string): StaticApplicationData {
-    const regex = new RegExp(appPropertyRegex);
-    if (!regex.test(id)) return null;
     return this.#apps[id] ?? null;
   }
 
@@ -61,7 +58,7 @@ export class StatusApplications {
   };
 
   static fromArray = (apps: StaticApplicationData[]): StatusApplications => {
-    const result: StatusServiceConfiguration = {};
+    const result: StatusServiceApplications = {};
     apps.forEach((a) => {
       result[a.appKey] = a;
     });

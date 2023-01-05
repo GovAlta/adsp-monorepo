@@ -2,7 +2,8 @@ import { RootState } from '@store/index';
 import { saveNotice } from '@store/notice/actions';
 import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton, GoACheckbox } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components';
+import { GoACheckbox } from '@abgov/react-components-new';
 import {
   GoAForm,
   GoAFormItem,
@@ -170,6 +171,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
                     name="isAllApplications"
                     checked={isAllApplications}
                     data-testid="notice-form-all-applications-checkbox"
+                    ariaLabel="notice-form-all-applications-checkbox"
                     onChange={() => {
                       setIsAllApplications(!isAllApplications);
                     }}

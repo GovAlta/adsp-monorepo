@@ -22,7 +22,6 @@ export const ConfigurationOverview: FunctionComponent<ConfigurationOverviewProps
           changing configuration. Store configuration against namespace and name keys, and optionally define
           configuration schemas for write validation.
         </p>
-        <br />
         <GoAButton
           data-testid="add-definition"
           disabled={disabled}

@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import addAuthTokenInterceptor from './authTokenInterceptor';
-import { EndpointStatusEntry, ApplicationStatus } from './models';
+import { EndpointStatusEntry, ApplicationStatus, MetricResponse } from './models';
 
 export class StatusApi {
   private http: AxiosInstance;
@@ -17,7 +17,7 @@ export class StatusApi {
   async getEndpointStatusEntries(appKey: string): Promise<EndpointStatusEntry[]> {
     // We show up to 30 right now.
     const limit = 35;
-    const res = await this.http.get(`/applications/${appKey}/endpoint-status-entries?top=${limit}`);
+    const res = await this.http.get(`/applications/${encodeURIComponent(appKey)}/endpoint-status-entries?top=${limit}`);
     return res.data;
   }
 
@@ -31,7 +31,7 @@ export class StatusApi {
   }
 
   async deleteApplication(appKey: string): Promise<void> {
-    await this.http.delete(`/applications/${appKey}`);
+    await this.http.delete(`/applications/${encodeURIComponent(appKey)}`);
   }
 
   async setStatus(applicationId: string, status: string): Promise<ApplicationStatus> {
@@ -44,3 +44,9 @@ export class StatusApi {
     return res.data;
   }
 }
+
+// Paul: 2023-Jan-03, we start to use simple function for Apis.
+export const fetchStatusMetricsApi = async (url: string, token: string): Promise<Record<string, MetricResponse>> => {
+  const res = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+  return res.data;
+};

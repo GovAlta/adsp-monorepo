@@ -45,8 +45,7 @@ export class MongoConfigurationRepository implements ConfigurationRepository {
         .exec((err, results: ConfigurationRevisionDoc[]) => (err ? reject(err) : resolve(results[0])));
     });
     const latest = this.fromDoc<C>(latestDoc);
-    let activeRevisionDoc = { active: null };
-    activeRevisionDoc = await this.activeRevisionRepository.get(namespace, name, tenantId);
+    const activeRevisionDoc = await this.activeRevisionRepository.get(namespace, name, tenantId);
 
     return new ConfigurationEntity<C>(
       namespace,

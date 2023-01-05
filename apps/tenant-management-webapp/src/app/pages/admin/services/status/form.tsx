@@ -108,18 +108,29 @@ export const ApplicationFormModal: FC<Props> = ({
     .add('appKeyDuplicate', 'appKey', isDuplicateAppKey())
     .build();
 
-  function isFormValid(): boolean {
-    if (!application?.name) return false;
-    if (!application?.endpoint.url) return false;
-    return true;
-  }
-
   function save() {
     if (!isFormValid()) {
       return;
     }
     dispatch(saveApplication(application));
     if (onSave) onSave();
+  }
+
+  // const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
+  // const wordLengthCheck = wordMaxLengthCheck(32);
+
+  // const { errors, validators } = useValidators(
+  //   'name',
+  //   'name',
+  //   checkForBadChars,
+  //   wordLengthCheck,
+  //   isNotEmptyCheck('name')
+  // ).build();
+
+  function isFormValid(): boolean {
+    if (!application?.name) return false;
+    if (!application?.endpoint.url) return false;
+    return !validators.haveErrors();
   }
 
   useEffect(() => {

@@ -24,7 +24,7 @@ class StatusServicePage {
   }
 
   noticeModalAllApplicationsCheckbox() {
-    return cy.xpath('//label[@class="goa-checkbox"]/div[contains(@class, "goa-checkbox-container")]');
+    return cy.xpath('//goa-checkbox[@name="isAllApplications"]');
   }
 
   noticeModalApplicationDropdown() {
@@ -140,7 +140,7 @@ class StatusServicePage {
   }
 
   applicationHealthChangeNotificationSubscribeCheckbox() {
-    return cy.xpath('//*[@class="goa-checkbox"]//*[@name="subscribe"]/parent::div');
+    return cy.xpath('//goa-checkbox[@name="subscribe"]');
   }
 
   addApplicationButton() {
@@ -238,7 +238,7 @@ class StatusServicePage {
   }
 
   editContactInformationModal() {
-    return cy.xpath('//*[@data-testid="notification-types-form"]//*[@class="modal-title"]');
+    return cy.xpath('//*[@data-testid="edit-contact-information-status"]//*[@class="modal-title"]');
   }
 
   editContactInformationEmail() {

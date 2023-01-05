@@ -37,15 +37,17 @@ When(
     // Public or select roles
     notificationsObj
       .notificationTypeModalPublicCheckbox()
+      .shadow()
+      .find('.goa-checkbox-container')
       .invoke('attr', 'class')
       .then((publicCheckboxClassName) => {
         if (role.toLowerCase() == 'public') {
           if (!publicCheckboxClassName?.includes('--selected')) {
-            notificationsObj.notificationTypeModalPublicCheckbox().click();
+            notificationsObj.notificationTypeModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
           }
         } else {
           if (publicCheckboxClassName?.includes('--selected')) {
-            notificationsObj.notificationTypeModalPublicCheckbox().click();
+            notificationsObj.notificationTypeModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
           }
           // Deselect all previously selected roles and then select new roles
           notificationsObj
@@ -72,6 +74,8 @@ When(
     //bot checkbox
     notificationsObj
       .notificationChannelCheckbox('bot')
+      .shadow()
+      .find('.goa-checkbox-container')
       .invoke('attr', 'class')
       .then((classAttVal) => {
         if (classAttVal == undefined) {
@@ -82,7 +86,7 @@ When(
               if (classAttVal.includes('selected')) {
                 cy.log('Bot check box is already selected. ');
               } else {
-                notificationsObj.notificationChannelCheckbox('bot').click();
+                notificationsObj.notificationChannelCheckbox('bot').shadow().find('.goa-checkbox-container').click();
               }
               break;
             case 'no':
@@ -90,7 +94,7 @@ When(
                 if (!classAttVal.includes('selected')) {
                   cy.log('Bot check box is already not selected. ');
                 } else {
-                  notificationsObj.notificationChannelCheckbox('bot').click();
+                  notificationsObj.notificationChannelCheckbox('bot').shadow().find('.goa-checkbox-container').click();
                 }
               }
               break;
@@ -102,6 +106,8 @@ When(
     //sms checkbox
     notificationsObj
       .notificationChannelCheckbox('sms')
+      .shadow()
+      .find('.goa-checkbox-container')
       .invoke('attr', 'class')
       .then((classAttVal) => {
         if (classAttVal == undefined) {
@@ -112,7 +118,7 @@ When(
               if (classAttVal.includes('selected')) {
                 cy.log('SMS check box is already selected. ');
               } else {
-                notificationsObj.notificationChannelCheckbox('sms').click();
+                notificationsObj.notificationChannelCheckbox('sms').shadow().find('.goa-checkbox-container').click();
               }
               break;
             case 'no':
@@ -120,7 +126,7 @@ When(
                 if (!classAttVal.includes('selected')) {
                   cy.log('SMS check box is already not selected. ');
                 } else {
-                  notificationsObj.notificationChannelCheckbox('sms').click();
+                  notificationsObj.notificationChannelCheckbox('sms').shadow().find('.goa-checkbox-container').click();
                 }
               }
               break;
@@ -616,7 +622,7 @@ When('the user clicks edit button for contact information', function () {
   cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
-Then('the user views Edit contact information modal', function () {
+Then('the user views Edit contact information modal on notification overview page', function () {
   notificationsObj.editContactModal().should('exist');
 });
 

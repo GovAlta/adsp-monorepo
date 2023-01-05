@@ -39,7 +39,7 @@ When(
     scriptObj.addScriptModalDescriptionField().clear().type(desc);
     switch (useServiceAcct) {
       case 'yes':
-        scriptObj.addScriptModalUseServiceAccountCheckbox().click();
+        scriptObj.addScriptModalUseServiceAccountCheckbox().shadow().find('.goa-checkbox-container').click();
         break;
       case 'no':
         break;
@@ -49,16 +49,20 @@ When(
     for (let i = 0; i < roles.length; i++) {
       if (roles[i].includes(':')) {
         const clientRoleStringArray = roles[i].split(':');
-        scriptObj.addScriptModalRolesCheckbox(clientRoleStringArray[clientRoleStringArray.length - 1]).click();
+        scriptObj
+          .addScriptModalRolesCheckbox(clientRoleStringArray[clientRoleStringArray.length - 1])
+          .shadow()
+          .find('.goa-checkbox-container')
+          .click();
       } else {
-        scriptObj.addScriptModalRolesCheckbox(roles[i].trim()).click();
+        scriptObj.addScriptModalRolesCheckbox(roles[i].trim()).shadow().find('.goa-checkbox-container').click();
       }
     }
   }
 );
 
 When('the user clicks Save button in Add script modal', function () {
-  scriptObj.scriptModalSaveButton().click();
+  scriptObj.scriptModalSaveButton().click({ force: true });
   cy.wait(2000);
 });
 

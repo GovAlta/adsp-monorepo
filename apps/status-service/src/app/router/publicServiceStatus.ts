@@ -1,6 +1,6 @@
 import { Router, RequestHandler } from 'express';
 import { Logger } from 'winston';
-import { StatusServiceConfiguration } from '../model';
+import { StatusServiceApplications, StatusServiceConfiguration } from '../model';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { environment } from '../../environments/environment';
 import { TenantService } from '@abgov/adsp-service-sdk';
@@ -28,10 +28,12 @@ export const getApplicationsByName =
       }
 
       const config = await req.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(tenantId);
-      const apps = new StatusApplications(config);
-      const appKeys = apps.map((a) => {
-        return a.appKey;
+      const appKeys = Object.keys(config);
+      const theApps: StatusServiceApplications = {};
+      appKeys.forEach((k) => {
+        theApps[k] = { ...config[k], tenantId };
       });
+      const apps = new StatusApplications(theApps);
       const statuses = await serviceStatusRepository.find({ appKey: { $in: appKeys } });
 
       const results = apps.map((app) => {

@@ -2,7 +2,7 @@ import { Job } from 'node-schedule';
 import { Logger } from 'winston';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
-import { AdspId, EventService, Tenant } from '@abgov/adsp-service-sdk';
+import { EventService } from '@abgov/adsp-service-sdk';
 import { HealthCheckJobCache } from './HealthCheckJobCache';
 import { HealthCheckJob } from './HealthCheckJob';
 import { getScheduler } from './SchedulerFactory';

@@ -17,7 +17,7 @@ import {
   DescriptionWrapper,
 } from '../private/Subscriptions/styled-components';
 
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-6';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { getSubscriberDetails, signedOutUnsubscribe } from '@store/subscription/actions';
@@ -37,7 +37,7 @@ const Subscriptions = (): JSX.Element => {
   const subscriberEmail = subscriber?.channels.find((chn: SubscriberChannel) => chn.channel === EMAIL)?.address;
   const [showUnSubscribeModal, setShowUnSubscribeModal] = useState(false);
   const [selectedUnsubscribeSub, setSelectedUnsubscribeSub] = useState<Subscription>();
-  const subscriberId = useParams<{ subscriberId: string }>().subscriberId;
+  const { subscriberId } = useParams();
 
   const phoneWrapper = (phoneNumber) => {
     if (phoneNumber) {

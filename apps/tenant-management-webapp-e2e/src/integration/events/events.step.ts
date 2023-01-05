@@ -217,12 +217,14 @@ When(
     if (role == 'public') {
       eventsObj
         .streamModalPublicCheckbox()
+        .shadow()
+        .find('.goa-checkbox-container')
         .invoke('attr', 'class')
         .then((classAttr) => {
           if (classAttr?.includes('selected')) {
             cy.log('Make stream public checkbox is already checked. ');
           } else {
-            eventsObj.streamModalPublicCheckbox().click();
+            eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
           }
         });
     } else if (role == 'n/a') {
@@ -250,9 +252,13 @@ When(
             }
           }
           const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
-          eventsObj.streamModalClientRoleCheckbox(clientName, roleName).click();
+          eventsObj
+            .streamModalClientRoleCheckbox(clientName, roleName)
+            .shadow()
+            .find('.goa-checkbox-container')
+            .click();
         } else {
-          eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
+          eventsObj.streamModalRoleCheckbox(roles[i].trim()).shadow().find('.goa-checkbox-container').click();
         }
       }
     }
@@ -416,12 +422,14 @@ Then('the user enters {string}, {string}, {string} in Edit stream modal', functi
   if (role == 'public') {
     eventsObj
       .streamModalPublicCheckbox()
+      .shadow()
+      .find('.goa-checkbox-container')
       .invoke('attr', 'class')
       .then((classAttr) => {
         if (classAttr?.includes('-selected')) {
           cy.log('Make stream public is already checked off.');
         } else {
-          eventsObj.streamModalPublicCheckbox().click();
+          eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
         }
       });
   } else if (role == 'n/a') {
@@ -430,10 +438,12 @@ Then('the user enters {string}, {string}, {string} in Edit stream modal', functi
     const roles = role.split(',');
     eventsObj
       .streamModalPublicCheckbox()
+      .shadow()
+      .find('.goa-checkbox-container')
       .invoke('attr', 'class')
       .then((classAttr) => {
         if (classAttr?.includes('-selected')) {
-          eventsObj.streamModalPublicCheckbox().click();
+          eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
         }
       });
     eventsObj
@@ -447,7 +457,7 @@ Then('the user enters {string}, {string}, {string} in Edit stream modal', functi
       })
       .then(() => {
         for (let i = 0; i < roles.length; i++) {
-          eventsObj.streamModalRoleCheckbox(roles[i].trim()).click();
+          eventsObj.streamModalRoleCheckbox(roles[i].trim()).shadow().find('.goa-checkbox-container').click();
         }
       });
   }
@@ -463,6 +473,8 @@ When('the user removes event chips of {string} in Edit stream modal', function (
 When('the user {string} Make stream public checkbox in Stream modal', function (selectOrUnselect) {
   eventsObj
     .streamModalPublicCheckbox()
+    .shadow()
+    .find('.goa-checkbox-container')
     .invoke('attr', 'class')
     .then((classAttr) => {
       switch (selectOrUnselect) {
@@ -470,12 +482,12 @@ When('the user {string} Make stream public checkbox in Stream modal', function (
           if (classAttr?.includes('selected')) {
             cy.log('Make stream public checkbox is already checked. ');
           } else {
-            eventsObj.streamModalPublicCheckbox().click();
+            eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
           }
           break;
         case 'un-selects':
           if (classAttr?.includes('selected')) {
-            eventsObj.streamModalPublicCheckbox().click();
+            eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
           } else {
             cy.log('Make stream public checkbox is already un-selected. ');
           }

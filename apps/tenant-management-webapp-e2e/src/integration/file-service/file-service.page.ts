@@ -34,33 +34,27 @@ class FileServicePage {
   }
 
   fileTypeModalPublicCheckbox() {
-    return cy.xpath(
-      '//*[@data-testid="file-type-modal"]//input[@name="file-type-anonymousRead-checkbox"]/parent::*[contains(@class, "goa-checkbox-container")]'
-    );
+    return cy.xpath('//*[@data-testid="file-type-modal"]//goa-checkbox[@name="file-type-anonymousRead-checkbox"]');
   }
 
   fileTypeModalReadCheckbox(roleName) {
     return cy.xpath(
-      `//*[@data-testid="file-type-modal"]//td[text()="${roleName}"]/following-sibling::td//input[contains(@name, "read-role")]/parent::*[contains(@class, "goa-checkbox-container")]`
+      `//*[@data-testid="file-type-modal"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "read-role")]`
     );
   }
 
   fileTypeModalReadCheckboxes() {
-    return cy.xpath(
-      `//*[@data-testid="file-type-modal"]//input[contains(@name, "read-role")]/parent::*[contains(@class, "goa-checkbox-container")]`
-    );
+    return cy.xpath(`//*[@data-testid="file-type-modal"]//goa-checkbox[contains(@name, "read-role")]`);
   }
 
   fileTypeModalModifyCheckbox(roleName) {
     return cy.xpath(
-      `//*[@data-testid="file-type-modal"]//td[text()="${roleName}"]/following-sibling::td//input[contains(@name, "update-role")]/parent::*[contains(@class, "goa-checkbox-container")]`
+      `//*[@data-testid="file-type-modal"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "update-role")]`
     );
   }
 
   fileTypeModalModifyCheckboxes() {
-    return cy.xpath(
-      '//*[@data-testid="file-type-modal"]//input[contains(@name, "update-role")]/parent::*[contains(@class, "goa-checkbox-container")]'
-    );
+    return cy.xpath('//*[@data-testid="file-type-modal"]//goa-checkbox[contains(@name, "update-role")]');
   }
 
   fileTypeModalSaveButton() {

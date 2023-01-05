@@ -1,4 +1,4 @@
-name: zap-api-scan
+name: zap api security scan
 
 on:
   workflow_dispatch:

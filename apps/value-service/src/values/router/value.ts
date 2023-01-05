@@ -1,5 +1,5 @@
 import { AdspId, EventService, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
-import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { createValidationHandler, InvalidOperationError, NotFoundError, decodeAfter } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { checkSchema, param, query } from 'express-validator';
 import { Logger } from 'winston';
@@ -305,7 +305,12 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
     createValidationHandler(
       query('interval').optional().isString(),
       query('top').optional().isInt({ min: 1, max: 5000 }),
-      query('after').optional().isString()
+      query('after')
+        .optional()
+        .isString()
+        .custom((val) => {
+          return !isNaN(decodeAfter(val));
+        })
     ),
     readMetrics(repository)
   );
@@ -323,7 +328,12 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
       ),
       query('interval').optional().isString(),
       query('top').optional().isInt({ min: 1, max: 5000 }),
-      query('after').optional().isString()
+      query('after')
+        .optional()
+        .isString()
+        .custom((val) => {
+          return !isNaN(decodeAfter(val));
+        })
     ),
     readMetric(repository)
   );

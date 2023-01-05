@@ -22,7 +22,7 @@ class NotificationsPage {
   }
 
   notificationTypeModalPublicCheckbox() {
-    return cy.xpath('//input[@name="anonymousRead-checkbox"]/parent::div');
+    return cy.xpath('//goa-checkbox[@name="anonymousRead-checkbox"]');
   }
 
   notificationTypeModalRolesCheckboxes() {
@@ -38,17 +38,15 @@ class NotificationsPage {
   }
 
   notificationTypeModalClientRoleCheckbox(clientRole) {
-    return cy.xpath(`//input[@type="checkbox" and @value="${clientRole}"]/parent::div`);
+    return cy.xpath(`//goa-checkbox[@type="checkbox" and @value="${clientRole}"]/parent::div`);
   }
 
   notificationChannelCheckbox(channelName) {
-    return cy.xpath(
-      `//*[@class="modal"]//input[@name="${channelName}"]/parent::*[contains(@class, "goa-checkbox-container")]`
-    );
+    return cy.xpath(`//*[@class="modal"]//goa-checkbox[@name="${channelName}"]`);
   }
 
   notificationChannelEmailCheckbox() {
-    return cy.xpath('//input[@name="email"]');
+    return cy.xpath('//goa-checkbox[@name="email"]');
   }
 
   notificationTypeModalSelfServiceCheckbox() {

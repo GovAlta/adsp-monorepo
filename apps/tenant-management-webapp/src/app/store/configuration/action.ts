@@ -33,6 +33,10 @@ export const FETCH_CONFIGURATION_ACTIVE_REVISION_SUCCESS_ACTION =
 export const SET_CONFIGURATION_REVISION_ACTION = 'configuration/SET_CONFIGURATION_REVISION_ACTION';
 export const SET_CONFIGURATION_REVISION_SUCCESS_ACTION = 'configuration/SET_CONFIGURATION_REVISION_SUCCESS_ACTION';
 
+export const SET_CONFIGURATION_REVISION_ACTIVE_ACTION = 'configuration/SET_CONFIGURATION_REVISION_ACTIVE_ACTION';
+export const SET_CONFIGURATION_REVISION_ACTIVE_SUCCESS_ACTION =
+  'configuration/SET_CONFIGURATION_REVISION_ACTIVE_SUCCESS_ACTION';
+
 export const REPLACE_CONFIGURATION_DATA_ACTION = 'configuration/REPLACE_CONFIGURATION_DATA_ACTION';
 export const REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION = 'configuration/REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION';
 
@@ -44,6 +48,8 @@ export const RESET_IMPORTS_LIST_ACTION = 'configuration/RESET_IMPORTS_LIST_ACTIO
 
 export const RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION =
   'configuration/RESET_REPLACE_CONFIGURATION_LIST_SUCCESS_ACTION';
+
+export const UPDATE_LATEST_REVISION_SUCCESS_ACTION = 'configuration/UPDATE_LATEST_REVISION_SUCCESS_ACTION';
 export interface DeleteConfigurationDefinitionAction {
   type: typeof DELETE_CONFIGURATION_DEFINITION_ACTION;
   definitionName: string;
@@ -108,16 +114,32 @@ export interface SetConfigurationRevisionSuccessAction {
   service: string;
 }
 
+export interface SetConfigurationRevisionActiveAction {
+  type: typeof SET_CONFIGURATION_REVISION_ACTIVE_ACTION;
+  service: string;
+  setActiveRevision: number;
+}
+
+export interface SetConfigurationRevisionActiveSuccessAction {
+  type: typeof SET_CONFIGURATION_REVISION_ACTIVE_SUCCESS_ACTION;
+  payload: { data: ServiceConfiguration };
+  service: string;
+}
+
 export interface ReplaceConfigurationDataAction {
   type: typeof REPLACE_CONFIGURATION_DATA_ACTION;
   configuration: ReplaceConfiguration;
+  isImportConfiguration: boolean;
 }
 
 export interface ReplaceConfigurationDataSuccessAction {
   type: typeof REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION;
   payload: { data: ServiceConfiguration };
 }
-
+export interface UpdateLatestRevisionSuccessAction {
+  type: typeof UPDATE_LATEST_REVISION_SUCCESS_ACTION;
+  payload: ReplaceConfiguration;
+}
 export interface GetReplaceConfigurationErrorAction {
   type: typeof REPLACE_CONFIGURATION_ERROR_ACTION;
 }
@@ -147,8 +169,11 @@ export type ConfigurationDefinitionActionTypes =
   | DeleteConfigurationDefinitionSuccessAction
   | SetConfigurationRevisionAction
   | SetConfigurationRevisionSuccessAction
+  | SetConfigurationRevisionActiveAction
+  | SetConfigurationRevisionActiveSuccessAction
   | ReplaceConfigurationDataAction
   | ReplaceConfigurationDataSuccessAction
+  | UpdateLatestRevisionSuccessAction
   | GetReplaceConfigurationErrorAction
   | GetReplaceConfigurationErrorSuccessAction
   | ResetReplaceConfigurationListAction
@@ -256,11 +281,32 @@ export const setConfigurationRevisionSuccessAction = (
   payload,
 });
 
+export const setConfigurationRevisionActive = (
+  service: string,
+  setActiveRevision: number
+): SetConfigurationRevisionActiveAction => ({
+  type: SET_CONFIGURATION_REVISION_ACTIVE_ACTION,
+  service: service,
+  setActiveRevision: setActiveRevision,
+});
+export const setConfigurationRevisionActiveSuccessAction = (
+  service: string,
+  payload: {
+    data: ServiceConfiguration;
+  }
+): SetConfigurationRevisionActiveSuccessAction => ({
+  type: SET_CONFIGURATION_REVISION_ACTIVE_SUCCESS_ACTION,
+  service: service,
+  payload,
+});
+
 export const replaceConfigurationDataAction = (
-  configuration: ReplaceConfiguration
+  configuration: ReplaceConfiguration,
+  isImportConfiguration
 ): ReplaceConfigurationDataAction => ({
   type: REPLACE_CONFIGURATION_DATA_ACTION,
   configuration,
+  isImportConfiguration,
 });
 export const resetReplaceConfigurationListAction = (): ResetReplaceConfigurationListAction => ({
   type: RESET_REPLACE_CONFIGURATION_LIST_ACTION,
@@ -277,6 +323,13 @@ export const replaceConfigurationDataSuccessAction = (payload: {
   data: ServiceConfiguration;
 }): ReplaceConfigurationDataSuccessAction => ({
   type: REPLACE_CONFIGURATION_DATA_SUCCESS_ACTION,
+  payload,
+});
+
+export const updateLatestRevisionSuccessAction = (
+  payload: ReplaceConfiguration
+): UpdateLatestRevisionSuccessAction => ({
+  type: UPDATE_LATEST_REVISION_SUCCESS_ACTION,
   payload,
 });
 

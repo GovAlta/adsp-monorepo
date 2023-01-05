@@ -9,17 +9,19 @@ import {
   TestInputDivBody,
 } from '../styled-components';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
-import MonacoEditor, { EditorProps } from '@monaco-editor/react';
+import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
+import { languages } from 'monaco-editor';
 import { SaveFormModal } from '@components/saveModal';
 import { ScriptItem } from '@store/script/models';
-import { SaveAndExecuteScript, ClearScripts } from '@store/script/actions';
+import { ClearScripts, ExecuteScript } from '@store/script/actions';
 import { GoAButton } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import { RootState } from '@store/index';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
-
+import { functionSuggestion, functionSignature } from '@lib/luaCodeCompletion';
+import { buildSuggestions } from '@lib/autoComplete';
 interface ScriptEditorProps {
   editorConfig?: EditorProps;
   name: string;
@@ -60,7 +62,75 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     onDescriptionChange(selectedScript?.description || '');
     onScriptChange(selectedScript?.script || '');
   };
+  const monaco = useMonaco();
+  let activeParam = 0;
+  let activeSignature = 0;
+  useEffect(() => {
+    if (monaco) {
+      const completionProvider = monaco.languages.registerCompletionItemProvider('lua', {
+        provideCompletionItems: (model, position) => {
+          const suggestions = buildSuggestions(monaco, functionSuggestion, model, position);
+          return {
+            suggestions,
+          } as languages.ProviderResult<languages.CompletionList>;
+        },
+      });
 
+      const helperProvider = monaco.languages.registerSignatureHelpProvider('lua', {
+        signatureHelpTriggerCharacters: ['(', ','],
+        provideSignatureHelp: (model, position, token) => {
+          const textUntilPosition = model.getValueInRange({
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column,
+          });
+
+          if (textUntilPosition.slice(-1) === ',') {
+            activeParam++;
+          }
+          if (textUntilPosition.slice(-1) === ')') {
+            activeParam = 0;
+          }
+          const functionNamePosition = model.getValueInRange({
+            startLineNumber: position.lineNumber,
+            startColumn: 1,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column,
+          });
+          let functionName = '';
+
+          const functionNameArr = functionNamePosition.split(' ');
+          if (functionNameArr[functionNameArr.length - 1] === '(') {
+            functionName = functionNameArr[functionNameArr.length - 2];
+          } else {
+            functionName = functionNameArr[functionNameArr.length - 1];
+          }
+
+          for (let i = 0; i < functionSignature.length; i++) {
+            if (functionSuggestion[i].label.split('(')[0] === functionName.trim()) {
+              activeSignature = i;
+            }
+          }
+
+          return {
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            dispose: () => {},
+            value: {
+              activeParameter: activeParam,
+              activeSignature: activeSignature,
+              signatures: functionSignature,
+            },
+          };
+        },
+      });
+      return function cleanup() {
+        activeParam = 0;
+        completionProvider.dispose();
+        helperProvider.dispose();
+      };
+    }
+  }, [monaco]);
   const loadingIndicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -72,10 +142,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   }, [selectedScript]);
 
   const scriptResponse = useSelector((state: RootState) => state.scriptService.scriptResponse);
-
-  const saveAndExecute = () => {
-    dispatch(SaveAndExecuteScript(updateScript()));
-  };
 
   const setTestInput = (input: string) => {
     testInputUpdate(input);
@@ -97,6 +163,15 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
       selectedScript.name !== name || selectedScript.description !== description || selectedScript.script !== scriptStr
     );
   };
+
+  //eslint-disable-next-line
+  const parseTestResult = (result: string | Record<string, any>) => {
+    if (typeof result !== 'string') {
+      return JSON.stringify(result);
+    }
+    return result;
+  };
+
   return (
     <EditModalStyle>
       <ScriptEditorContainer>
@@ -142,6 +217,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               />
             </MonacoDivBody>
           </GoAFormItem>
+
           <EditScriptActions>
             <GoAButton
               onClick={() => {
@@ -217,7 +293,13 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             <div className="execute-button">
               <GoAButton
                 onClick={() => {
-                  saveAndExecute();
+                  const testItem: ScriptItem = {
+                    testInputs: {
+                      inputs: JSON.parse(testInput),
+                    },
+                    script: scriptStr,
+                  };
+                  dispatch(ExecuteScript(testItem));
                 }}
                 disabled={errors?.['payloadSchema'] || loadingIndicator.show}
                 data-testid="template-form-save"
@@ -258,7 +340,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                           </div>
                         </td>
                         <td data-testid="response-inputs">{JSON.stringify(response.inputs)}</td>
-                        <td data-testid="response-output">{!response.hasError ? response.result : ''}</td>
+                        <td data-testid="response-output">
+                          {!response.hasError ? parseTestResult(response.result) : ''}
+                        </td>
                       </tr>
                     ))}
                 </tbody>
