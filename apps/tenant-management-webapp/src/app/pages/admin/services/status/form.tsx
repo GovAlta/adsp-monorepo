@@ -84,28 +84,29 @@ export const ApplicationFormModal: FC<Props> = ({
 
       for (const application of applications) {
         existingApp = application.name === appName;
+        console.log('existing app', existingApp, application.name);
       }
       return existingApp ? 'application name is duplicate, please use a different name' : '';
     };
   };
   const isDuplicateAppKey = (): Validator => {
-    return (appKey: string) => {
+    return (appName: string) => {
       let existingApp = false;
-      console.log('appKey', appKey);
+      console.log('appKey', appName);
       for (const application of applications) {
-        existingApp = application.appKey === appKey;
+        existingApp = application.appKey === toKebabName(appName);
       }
       return existingApp ? 'application key is duplicate, please use a different name' : '';
     };
   };
   const { errors, validators } = useValidators(
-    'name',
+    'nameAppKey',
     'name',
     checkForBadChars,
-    isNotEmptyCheck('name'),
-    isDuplicateAppName()
+    isNotEmptyCheck('nameAppKey'),
+    isDuplicateAppKey()
   )
-    .add('appKeyDuplicate', 'appKey', isDuplicateAppKey())
+    .add('nameOnly', 'name', checkForBadChars, isDuplicateAppName())
     .build();
 
   function save() {
@@ -151,7 +152,7 @@ export const ApplicationFormModal: FC<Props> = ({
       <GoAModalTitle>{title}</GoAModalTitle>
       <GoAModalContent>
         <GoAForm>
-          <GoAFormItem error={errors?.['name'] || errors?.['appKey']}>
+          <GoAFormItem error={errors?.['name']}>
             <label>Application name</label>
             <GoAInput
               type="text"
@@ -160,15 +161,15 @@ export const ApplicationFormModal: FC<Props> = ({
               onChange={(name, value) => {
                 console.log('errors', errors);
 
-                // name should be unique
-                validators['name'].check(value);
                 if (!isEdit) {
+                  // name should be unique
+                  validators['nameAppKey'].check(value);
                   // check for duplicate appKey
                   const appKey = toKebabName(value);
-                  const validations = {
-                    appKeyDuplicate: appKey,
-                  };
-                  validators.checkAll(validations);
+                  // const validations = {
+                  //   appKeyDuplicate: appKey,
+                  // };
+                  // // validators.checkAll(validations);
                   setApplication({
                     ...application,
                     name: value,
@@ -176,6 +177,9 @@ export const ApplicationFormModal: FC<Props> = ({
                   });
                 } else {
                   // should not update appKey during update
+                  // validators['nameOnly'].check(value);
+                  console.log('errors', errors);
+
                   setApplication({
                     ...application,
                     name: value,
@@ -262,7 +266,20 @@ export const ApplicationFormModal: FC<Props> = ({
         >
           Cancel
         </GoAButton>
-        <GoAButton disabled={!isFormValid()} buttonType="primary" onClick={save}>
+        <GoAButton
+          disabled={!isFormValid() || validators.haveErrors()}
+          buttonType="primary"
+          onClick={(e) => {
+            const validations = {
+              nameOnly: application?.name,
+            };
+
+            if (isEdit && !validators.checkAll(validations)) {
+              return;
+            }
+            save();
+          }}
+        >
           Save
         </GoAButton>
       </GoAModalActions>
