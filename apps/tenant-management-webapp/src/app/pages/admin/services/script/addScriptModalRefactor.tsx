@@ -1,15 +1,7 @@
 import React, { FunctionComponent, useState } from 'react';
 
-import {
-  GoACheckbox,
-  GoAButton,
-  GoAButtonGroup,
-  GoAFormItem,
-  GoAInput,
-  GoAModal,
-  GoATextArea,
-} from '@abgov/react-components-new';
-
+import { GoACheckbox } from '@abgov/react-components-new';
+import { CommonModal, Config } from '@components/modal/CommonModal';
 import { ScriptItem } from '@store/script/models';
 import { useSelector } from 'react-redux';
 import { Role } from '@store/tenant/models';
@@ -18,12 +10,11 @@ import { useValidators } from '@lib/useValidators';
 import { toKebabName } from '@lib/kebabName';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { characterCheck, validationPattern, isNotEmptyCheck, Validator, wordMaxLengthCheck } from '@lib/checkInput';
-import { IdField } from './styled-components';
+
 import { ServiceRoleConfig } from '@store/access/models';
 import { RootState } from '@store/index';
 import { UseServiceAccountWrapper, DataTableWrapper } from './styled-components';
 import DataTable from '@components/DataTable';
-import styled from 'styled-components';
 
 interface AddScriptModalProps {
   initialValue?: ScriptItem;
@@ -138,91 +129,74 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
     const description = value;
     setScript({ ...script, description });
   };
-  const customWrapper = () => {
-    return (
-      <>
-        <UseServiceAccountWrapper>
-          <GoACheckbox
-            checked={script.useServiceAccount}
-            name="script-use-service-account-checkbox"
-            data-testid="script-use-service-account-checkbox"
-            onChange={() => {
-              setScript({
-                ...script,
-                useServiceAccount: !script.useServiceAccount,
-              });
-            }}
-            ariaLabel={`script-use-service-account-checkbox`}
-          />
-          Use service account
-        </UseServiceAccountWrapper>
 
-        {tenantClients &&
-          elements.map((e, key) => {
-            return <RunnerRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
-          })}
-        {Object.entries(tenantClients).length === 0 && (
-          <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>
-        )}
-      </>
-    );
+  const scriptModalConfig: Config = {
+    open: open,
+    heading: 'Add Script',
+    dateTestId: 'add-script-modal',
+    onCancel: onCancel,
+    onSubmit: validationCheck,
+    saveButtonDisable: validators && validators.haveErrors(),
+    body: [
+      {
+        type: 'GoAFormItem',
+        label: 'Name',
+        error: errors?.['name'],
+        subType: 'GoAInput',
+        inputType: 'text',
+        name: 'name',
+        value: script.name,
+        onChange: (name, value) => nameOnChange(name, value),
+      },
+      {
+        type: 'GoAFormItem',
+        label: 'Script ID',
+        subType: 'div',
+        value: script.id,
+      },
+      {
+        type: 'GoAFormItem',
+        label: 'Description',
+        error: errors?.['description'],
+        subType: 'GoATextArea',
+        name: 'description',
+        value: script.description,
+        onChange: (name, value) => descOnchange(name, value),
+      },
+    ],
   };
-  return (
-    <ModalOverwrite>
-      <GoAModal
-        data-testId="add-script-modal"
-        open={open}
-        heading="Add script"
-        actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton type="secondary" data-testid="script-modal-cancel" onClick={onCancel}>
-              Cancel
-            </GoAButton>
-            <GoAButton
-              type="primary"
-              data-testid="script-modal-save"
-              disabled={validators && validators.haveErrors()}
-              onClick={validationCheck}
-            >
-              Save
-            </GoAButton>
-          </GoAButtonGroup>
-        }
-      >
-        <ModalContent>
-          <GoAFormItem error={errors?.['name']} label="Name">
-            <GoAInput
-              type="text"
-              name="name"
-              width="100%"
-              value={script.name}
-              data-testid={`script-modal-name-input`}
-              ariaLabel="name"
-              onChange={(name, value) => {
-                nameOnChange(name, value);
-              }}
-            />
-          </GoAFormItem>
-          <GoAFormItem label="Script ID">
-            <div>{script.id}</div>
-          </GoAFormItem>
 
-          <GoAFormItem label="Description">
-            <GoATextArea
-              name="description"
-              value={script.description}
-              data-testid={`script-modal-description-input`}
-              ariaLabel="description"
-              width="100%"
-              onChange={(name, value) => {
-                descOnchange(name, value);
+  return (
+    <>
+      <CommonModal modalConfig={scriptModalConfig}>
+        {' '}
+        <>
+          <UseServiceAccountWrapper>
+            <GoACheckbox
+              checked={script.useServiceAccount}
+              name="script-use-service-account-checkbox"
+              data-testid="script-use-service-account-checkbox"
+              onChange={() => {
+                setScript({
+                  ...script,
+                  useServiceAccount: !script.useServiceAccount,
+                });
               }}
+              ariaLabel={`script-use-service-account-checkbox`}
             />
-          </GoAFormItem>
-          {customWrapper()}
-        </ModalContent>
-      </GoAModal>
-    </ModalOverwrite>
+            Use service account
+          </UseServiceAccountWrapper>
+
+          {tenantClients &&
+            elements.map((e, key) => {
+              return <RunnerRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+            })}
+          {Object.entries(tenantClients).length === 0 && (
+            <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>
+          )}
+        </>
+      </CommonModal>
+    </>
   );
 };
 
@@ -287,12 +261,3 @@ const RunnerRoleTable = (props: RunnerRoleTableProps): JSX.Element => {
     </DataTableWrapper>
   );
 };
-const ModalOverwrite = styled.div`
-  .modal {
-    max-height: 100% !important;
-  }
-`;
-const ModalContent = styled.div`
-  padding-left: 3px;
-  padding-right: 5px;
-`;
