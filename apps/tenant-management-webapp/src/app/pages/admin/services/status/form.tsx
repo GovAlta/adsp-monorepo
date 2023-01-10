@@ -5,7 +5,7 @@ import { fetchDirectory, fetchDirectoryDetailByURNs } from '@store/directory/act
 import { ApplicationStatus } from '@store/status/models';
 import { GoAButton, GoADropdownOption } from '@abgov/react-components';
 import { useValidators } from '@lib/useValidators';
-import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
+import { characterCheck, validationPattern, isNotEmptyCheck, Validator, wordMaxLengthCheck } from '@lib/checkInput';
 
 import {
   GoAForm,
@@ -79,30 +79,24 @@ export const ApplicationFormModal: FC<Props> = ({
 
   const isDuplicateAppName = (): Validator => {
     return (appName: string) => {
-      let existingApp = false;
-      console.log('appName', appName);
+      const existingApp = applications.filter((app) => app.name === appName);
 
-      for (const application of applications) {
-        existingApp = application.name === appName;
-        console.log('existing app', existingApp, application.name);
-      }
-      return existingApp ? 'application name is duplicate, please use a different name' : '';
+      return existingApp.length === 1 ? 'application name is duplicate, please use a different name' : '';
     };
   };
   const isDuplicateAppKey = (): Validator => {
-    return (appName: string) => {
-      let existingApp = false;
-      console.log('appKey', appName);
-      for (const application of applications) {
-        existingApp = application.appKey === toKebabName(appName);
-      }
-      return existingApp ? 'application key is duplicate, please use a different name' : '';
+    return (appKey: string) => {
+      const existingApp = applications.filter((app) => app.appKey === appKey);
+      return existingApp.length === 1 ? 'application key is duplicate, please use a different name' : '';
     };
   };
+
+  const wordLengthCheck = wordMaxLengthCheck(32);
   const { errors, validators } = useValidators(
     'nameAppKey',
     'name',
     checkForBadChars,
+    wordLengthCheck,
     isNotEmptyCheck('nameAppKey'),
     isDuplicateAppKey()
   )
@@ -116,17 +110,6 @@ export const ApplicationFormModal: FC<Props> = ({
     dispatch(saveApplication(application));
     if (onSave) onSave();
   }
-
-  // const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
-  // const wordLengthCheck = wordMaxLengthCheck(32);
-
-  // const { errors, validators } = useValidators(
-  //   'name',
-  //   'name',
-  //   checkForBadChars,
-  //   wordLengthCheck,
-  //   isNotEmptyCheck('name')
-  // ).build();
 
   function isFormValid(): boolean {
     if (!application?.name) return false;
@@ -162,14 +145,9 @@ export const ApplicationFormModal: FC<Props> = ({
                 console.log('errors', errors);
 
                 if (!isEdit) {
-                  // name should be unique
-                  validators['nameAppKey'].check(value);
-                  // check for duplicate appKey
                   const appKey = toKebabName(value);
-                  // const validations = {
-                  //   appKeyDuplicate: appKey,
-                  // };
-                  // // validators.checkAll(validations);
+                  // check for duplicate appKey
+                  validators['nameAppKey'].check(appKey);
                   setApplication({
                     ...application,
                     name: value,
@@ -177,7 +155,7 @@ export const ApplicationFormModal: FC<Props> = ({
                   });
                 } else {
                   // should not update appKey during update
-                  // validators['nameOnly'].check(value);
+                  validators['nameOnly'].check(value);
                   console.log('errors', errors);
 
                   setApplication({
@@ -262,24 +240,13 @@ export const ApplicationFormModal: FC<Props> = ({
           buttonType="secondary"
           onClick={() => {
             if (onCancel) onCancel();
+            validators.clear();
+            setApplication({ ...defaultApplication });
           }}
         >
           Cancel
         </GoAButton>
-        <GoAButton
-          disabled={!isFormValid() || validators.haveErrors()}
-          buttonType="primary"
-          onClick={(e) => {
-            const validations = {
-              nameOnly: application?.name,
-            };
-
-            if (isEdit && !validators.checkAll(validations)) {
-              return;
-            }
-            save();
-          }}
-        >
+        <GoAButton disabled={!isFormValid() || validators.haveErrors()} buttonType="primary" onClick={save}>
           Save
         </GoAButton>
       </GoAModalActions>

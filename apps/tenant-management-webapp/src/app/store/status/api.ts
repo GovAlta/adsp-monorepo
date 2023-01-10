@@ -26,7 +26,7 @@ export class StatusApi {
     return res.data;
   }
   async updateApplication(props: ApplicationStatus): Promise<ApplicationStatus> {
-    const res = await this.http.put(`/applications/${props.appKey}`, props);
+    const res = await this.http.put(`/applications/${encodeURIComponent(props.appKey)}`, props);
     return res.data;
   }
 
