@@ -9,7 +9,7 @@ import { useSelector } from 'react-redux';
 import { useValidators } from '@lib/useValidators';
 import { characterCheck, validationPattern, isNotEmptyCheck, isValidJSONCheck, Validator } from '@lib/checkInput';
 import styled from 'styled-components';
-
+import { GoATextArea } from '@abgov/react-components-new';
 interface AddEditConfigDefinitionProps {
   onSave: (definition: ConfigDefinition) => void;
   initialValue: ConfigDefinition;
@@ -143,15 +143,14 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
               </GoAFormItem>
               <GoAFormItem error={errors?.['description']}>
                 <label>Description</label>
-                <textarea
+                <GoATextArea
                   name="description"
                   value={definition.description}
-                  data-testid="form-description"
+                  testId="form-description"
                   aria-label="description"
-                  className="goa-textarea"
-                  maxLength={250}
-                  onChange={(e) => {
-                    const description = e.target.value;
+                  width="100%"
+                  onChange={(name, value) => {
+                    const description = value;
                     validators.remove('description');
                     validators['description'].check(description);
                     setDefinition({ ...definition, description });

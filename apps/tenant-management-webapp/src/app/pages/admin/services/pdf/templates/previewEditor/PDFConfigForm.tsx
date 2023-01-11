@@ -5,7 +5,7 @@ import { Grid, GridItem } from '@components/Grid';
 import { useValidators } from '@lib/useValidators';
 import { characterCheck, validationPattern, isNotEmptyCheck, wordMaxLengthCheck } from '@lib/checkInput';
 import { PdfConfigFormWrapper } from './styled-components';
-
+import { GoATextArea } from '@abgov/react-components-new';
 interface PDFConfigFormProps {
   template: PdfTemplate;
   onChange(template: PdfTemplate): void;
@@ -65,15 +65,14 @@ export const PDFConfigForm = ({ template, onChange, setError }: PDFConfigFormPro
         <Grid>
           <GoAFormItem>
             <label>Description</label>
-            <textarea
+            <GoATextArea
               name="description"
               value={description}
-              maxLength={250}
-              className="goa-textarea"
-              data-testid="pdf-service-modal-description-textarea"
+              width="100%"
+              testId="pdf-service-modal-description-textarea"
               aria-label="description"
-              onChange={(e) => {
-                onChange({ ...template, description: e.target.value });
+              onChange={(name, value) => {
+                onChange({ ...template, description: value });
               }}
             />
           </GoAFormItem>

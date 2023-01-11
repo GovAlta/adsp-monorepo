@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useState } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAButton } from '@abgov/react-components';
-import { GoACheckbox } from '@abgov/react-components-new';
+import { GoACheckbox, GoATextArea } from '@abgov/react-components-new';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { ScriptItem } from '@store/script/models';
 import { useSelector } from 'react-redux';
@@ -148,15 +148,14 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
 
           <GoAFormItem>
             <label>Description</label>
-            <textarea
+            <GoATextArea
               name="description"
               value={script.description}
-              data-testid={`script-modal-description-input`}
+              testId={`script-modal-description-input`}
               aria-label="description"
-              maxLength={250}
-              className="goa-textarea"
-              onChange={(e) => {
-                const description = e.target.value;
+              width="100%"
+              onChange={(name, value) => {
+                const description = value;
                 setScript({ ...script, description });
               }}
             />

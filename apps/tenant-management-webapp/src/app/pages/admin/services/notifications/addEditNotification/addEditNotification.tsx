@@ -11,7 +11,7 @@ import {
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { GoACallout } from '@abgov/react-components';
 import styled from 'styled-components';
-import { GoACheckbox } from '@abgov/react-components-new';
+import { GoACheckbox, GoATextArea } from '@abgov/react-components-new';
 import { toKebabName } from '@lib/kebabName';
 import { Role } from '@store/tenant/models';
 import { ServiceRoleConfig } from '@store/access/models';
@@ -99,13 +99,13 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
             </GoAFormItem>
             <GoAFormItem>
               <label>Description</label>
-              <textarea
+              <GoATextArea
                 name="description"
-                data-testid="form-description"
+                testId="form-description"
                 value={type.description}
                 aria-label="description"
-                className="goa-textarea"
-                onChange={(e) => setType({ ...type, description: e.target.value })}
+                width="100%"
+                onChange={(name, value) => setType({ ...type, description: value })}
               />
             </GoAFormItem>
             <GoAFormItem error={errors?.['channels']}>
