@@ -181,13 +181,13 @@ class eventsPage {
 
   streamModalRoleCheckbox(roleLabel) {
     return cy.xpath(
-      `//*[@data-testid="stream-form"]//tbody/tr/td[@class="role-label" and text()="${roleLabel}"]/following-sibling::td`
+      `//*[@data-testid="stream-form"]//tbody/tr/td[@class="role-label" and text()="${roleLabel}"]/following-sibling::td//goa-checkbox`
     );
   }
 
   streamModalClientRoleCheckbox(clientName, roleName) {
     return cy.xpath(
-      `//*[@data-testid="stream-form"]//thead/tr/th[@class="role-name" and text()="${clientName}"]/ancestor::thead/following-sibling::tbody/tr/td[@class="role-label" and text()="${roleName}"]/following-sibling::td`
+      `//*[@data-testid="stream-form"]//thead/tr/th[@class="role-name" and text()="${clientName}"]/ancestor::thead/following-sibling::tbody/tr/td[@class="role-label" and text()="${roleName}"]/following-sibling::td//goa-checkbox`
     );
   }
 
