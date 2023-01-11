@@ -203,7 +203,13 @@ When(
   function (name, description, event, role) {
     const events = event.split(',');
     eventsObj.streamModalNameInput().scrollIntoView().clear().type(name);
-    eventsObj.streamModalDescriptionInput().scrollIntoView().clear().type(description);
+    eventsObj
+      .streamModalDescriptionInput()
+      .shadow()
+      .find('.goa-textarea')
+      .scrollIntoView()
+      .clear()
+      .type(description, { force: true });
     if (event !== 'n/a') {
       eventsObj.streamModalEventDropdown().click();
       eventsObj.streamModalEventDropdownItems().then(() => {
@@ -376,16 +382,16 @@ Then(
 When('the user clicks {string} button for the stream of {string}', function (button, streamName) {
   switch (button) {
     case 'Eye':
-      eventsObj.streamDetailsEyeIcon(streamName).click();
+      eventsObj.streamDetailsEyeIcon(streamName).click({ force: true });
       break;
     case 'Eye-Off':
-      eventsObj.streamDetailsEyeOffIcon(streamName).click();
+      eventsObj.streamDetailsEyeOffIcon(streamName).click({ force: true });
       break;
     case 'Edit':
-      eventsObj.streamEditBtn(streamName).click();
+      eventsObj.streamEditBtn(streamName).click({ force: true });
       break;
     case 'Delete':
-      eventsObj.streamDeleteBtn(streamName).click();
+      eventsObj.streamDeleteBtn(streamName).click({ force: true });
       break;
     default:
       expect(button).to.be.oneOf(['Eye', 'Edit', 'Delete']);
@@ -398,7 +404,7 @@ Then('the user views Edit stream modal', function () {
 
 //User can use "n/a" as input for event or role in case there is no selection of the event or role
 Then('the user enters {string}, {string}, {string} in Edit stream modal', function (description, event, role) {
-  eventsObj.streamModalDescriptionInput().clear().type(description);
+  eventsObj.streamModalDescriptionInput().shadow().find('.goa-textarea').clear().type(description, { force: true });
   if (event == 'n/a') {
     eventsObj.streamModalEventDropdown().should('exist');
   } else {

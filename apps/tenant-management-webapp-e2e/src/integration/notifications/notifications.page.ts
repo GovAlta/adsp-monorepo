@@ -50,9 +50,7 @@ class NotificationsPage {
   }
 
   notificationTypeModalSelfServiceCheckbox() {
-    return cy.xpath(
-      '//*[@data-testid="manage-subscriptions-checkbox-wrapper"]//div[contains(@class, "goa-checkbox-container")]'
-    );
+    return cy.xpath('//*[@data-testid="manage-subscriptions-checkbox-wrapper"]//goa-checkbox');
   }
 
   notificationTypeModalSelfServiceCalloutContent() {
@@ -466,7 +464,7 @@ class NotificationsPage {
 
   eventTemplateModalSubject(channel) {
     return cy.xpath(
-      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-subject"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea`
+      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-subject"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::goa-textarea`
     );
   }
 

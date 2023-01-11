@@ -138,6 +138,8 @@ When(
     //Self-service checkbox
     notificationsObj
       .notificationTypeModalSelfServiceCheckbox()
+      .shadow()
+      .find('.goa-checkbox-container')
       .invoke('attr', 'class')
       .then((classAttVal) => {
         if (classAttVal == undefined) {
@@ -148,7 +150,11 @@ When(
               if (classAttVal.includes('selected')) {
                 cy.log('Self service check box is already selected. ');
               } else {
-                notificationsObj.notificationTypeModalSelfServiceCheckbox().click();
+                notificationsObj
+                  .notificationTypeModalSelfServiceCheckbox()
+                  .shadow()
+                  .find('.goa-checkbox-container')
+                  .click();
                 notificationsObj.notificationTypeModalSelfServiceCalloutContent().should('be.visible');
               }
               break;
@@ -157,7 +163,11 @@ When(
                 if (!classAttVal.includes('selected')) {
                   cy.log('Self service check box is already not selected. ');
                 } else {
-                  notificationsObj.notificationTypeModalSelfServiceCheckbox().click();
+                  notificationsObj
+                    .notificationTypeModalSelfServiceCheckbox()
+                    .shadow()
+                    .find('.goa-checkbox-container')
+                    .click();
                   notificationsObj.notificationTypeModalSelfServiceCalloutContent().should('not.exist');
                 }
               }
@@ -842,6 +852,8 @@ When(
     }
     notificationsObj
       .eventTemplateModalSubject(channelNameInTitle)
+      .shadow()
+      .find('.goa-textarea')
       .click()
       .focus()
       .type('{ctrl}a')

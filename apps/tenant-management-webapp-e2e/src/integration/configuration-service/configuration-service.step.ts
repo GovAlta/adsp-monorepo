@@ -149,7 +149,15 @@ When('the user enters "{string}" in payload schema in configuration definition m
 });
 
 When('the user enters {string} in payload schema in configuration definition modal', function (payload) {
-  configurationObj.configurationDefinitionModalPayloadEditor().click().focus().type('{ctrl}a').clear().type(payload);
+  configurationObj
+    .configurationDefinitionModalPayloadEditor()
+    .shadow()
+    .find('.goa-textarea')
+    .click()
+    .focus()
+    .type('{ctrl}a')
+    .clear()
+    .type(payload);
 });
 
 // payload parameter has payload content without "{}"
