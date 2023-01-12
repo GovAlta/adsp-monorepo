@@ -93,11 +93,9 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
           <GoAContextMenuIcon type="trash" onClick={() => setShowDeleteConfirmation(true)} />
         </GoAContextMenu>
       </AppHeader>
-
       {/* Endpoint List for watched service */}
-      <AppName>
-        {app.name}:{app.appKey}
-      </AppName>
+      <AppName>{app.name}</AppName>
+      <div>key: {app.appKey}</div>
       <AppHealth>
         <HealthBar data-testid="endpoint" displayCount={30} app={app}></HealthBar>
         <GoAButton
@@ -162,7 +160,6 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
           </GoAButton>
         </GoAModalActions>
       </GoAModal>
-
       <ApplicationFormModal
         isOpen={showEditModal}
         title="Edit application"
