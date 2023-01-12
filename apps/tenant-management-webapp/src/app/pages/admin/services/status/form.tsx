@@ -4,6 +4,9 @@ import { saveApplication } from '@store/status/actions';
 import { fetchDirectory, fetchDirectoryDetailByURNs } from '@store/directory/actions';
 import { ApplicationStatus } from '@store/status/models';
 import { GoAButton, GoADropdownOption } from '@abgov/react-components';
+import { useValidators } from '@lib/useValidators';
+import { characterCheck, validationPattern, isNotEmptyCheck, Validator, wordMaxLengthCheck } from '@lib/checkInput';
+
 import {
   GoAForm,
   GoAFormItem,
@@ -16,14 +19,14 @@ import {
 import { GoATextArea } from '@abgov/react-components-new';
 import { RootState } from '@store/index';
 import { createSelector } from 'reselect';
-import { useValidators } from '@lib/useValidators';
-import { characterCheck, validationPattern, isNotEmptyCheck, wordMaxLengthCheck } from '@lib/checkInput';
-import styled from 'styled-components';
+import { DropdownListContainer, DropdownList, IdField } from './styled-components';
+import { toKebabName } from '@lib/kebabName';
 
 interface Props {
   isOpen: boolean;
   title: string;
   testId: string;
+  isEdit: boolean;
   defaultApplication: ApplicationStatus;
   onCancel?: () => void;
   onSave?: () => void;
@@ -64,6 +67,7 @@ export const ApplicationFormModal: FC<Props> = ({
   onSave,
   testId,
   defaultApplication,
+  isEdit,
 }: Props) => {
   const dispatch = useDispatch();
   const [application, setApplication] = useState<ApplicationStatus>({ ...defaultApplication });
@@ -71,6 +75,34 @@ export const ApplicationFormModal: FC<Props> = ({
   const healthEndpoints = useSelector(healthEndpointsSelector);
   const [openDropdown, setOpenDropdown] = useState<boolean>(false);
   const { directory } = useSelector((state: RootState) => state.directory);
+  const { applications } = useSelector((state: RootState) => state.serviceStatus);
+  const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
+
+  const isDuplicateAppName = (): Validator => {
+    return (appName: string) => {
+      const existingApp = applications.filter((app) => app.name === appName);
+
+      return existingApp.length === 1 ? 'application name is duplicate, please use a different name' : '';
+    };
+  };
+  const isDuplicateAppKey = (): Validator => {
+    return (appKey: string) => {
+      const existingApp = applications.filter((app) => app.appKey === appKey);
+      return existingApp.length === 1 ? 'application key is duplicate, please use a different name' : '';
+    };
+  };
+
+  const wordLengthCheck = wordMaxLengthCheck(32);
+  const { errors, validators } = useValidators(
+    'nameAppKey',
+    'name',
+    checkForBadChars,
+    wordLengthCheck,
+    isNotEmptyCheck('nameAppKey'),
+    isDuplicateAppKey()
+  )
+    .add('nameOnly', 'name', checkForBadChars, isDuplicateAppName())
+    .build();
 
   function save() {
     if (!isFormValid()) {
@@ -79,17 +111,6 @@ export const ApplicationFormModal: FC<Props> = ({
     dispatch(saveApplication(application));
     if (onSave) onSave();
   }
-
-  const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
-  const wordLengthCheck = wordMaxLengthCheck(32);
-
-  const { errors, validators } = useValidators(
-    'name',
-    'name',
-    checkForBadChars,
-    wordLengthCheck,
-    isNotEmptyCheck('name')
-  ).build();
 
   function isFormValid(): boolean {
     if (!application?.name) return false;
@@ -117,23 +138,40 @@ export const ApplicationFormModal: FC<Props> = ({
         <GoAForm>
           <GoAFormItem error={errors?.['name']}>
             <label>Application name</label>
-
             <GoAInput
               type="text"
               name="name"
               value={application?.name}
               onChange={(name, value) => {
-                validators['name'].check(value);
+                console.log('errors', errors);
 
-                setApplication({
-                  ...application,
-                  name: value,
-                });
+                if (!isEdit) {
+                  const appKey = toKebabName(value);
+                  // check for duplicate appKey
+                  validators['nameAppKey'].check(appKey);
+                  setApplication({
+                    ...application,
+                    name: value,
+                    appKey,
+                  });
+                } else {
+                  // should not update appKey during update
+                  validators['nameOnly'].check(value);
+                  console.log('errors', errors);
+
+                  setApplication({
+                    ...application,
+                    name: value,
+                  });
+                }
               }}
               aria-label="name"
             />
           </GoAFormItem>
-
+          <GoAFormItem>
+            <label>application ID</label>
+            <IdField>{application.appKey}</IdField>
+          </GoAFormItem>
           <GoAFormItem>
             <label>Description</label>
             <GoATextArea
@@ -203,33 +241,18 @@ export const ApplicationFormModal: FC<Props> = ({
           buttonType="secondary"
           onClick={() => {
             if (onCancel) onCancel();
+            validators.clear();
+            setApplication({ ...defaultApplication });
           }}
         >
           Cancel
         </GoAButton>
-        <GoAButton disabled={!isFormValid()} buttonType="primary" onClick={save}>
+        <GoAButton disabled={!isFormValid() || validators.haveErrors()} buttonType="primary" onClick={save}>
           Save
         </GoAButton>
       </GoAModalActions>
     </GoAModal>
   );
 };
-const DropdownListContainer = styled.div`
-  max-height: 10rem;
-  overflow: hidden auto;
-  padding: 0rem;
-  scroll-behavior: smooth;
-`;
-
-const DropdownList = styled.ul`
-  position: relative;
-  margin-top: 3px;
-  list-style-type: none;
-  background: var(--color-white);
-  border-radius: var(--input-border-radius);
-  box-shadow: 0 8px 8px rgb(0 0 0 / 20%), 0 4px 4px rgb(0 0 0 / 10%);
-  z-index: 99;
-  padding-left: 0rem !important;
-`;
 
 export default ApplicationFormModal;
