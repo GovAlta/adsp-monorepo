@@ -27,13 +27,13 @@ class NotificationsPage {
 
   notificationTypeModalRolesCheckboxes() {
     return cy.xpath(
-      '//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-label"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]'
+      '//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-label"]/following-sibling::td//goa-checkbox'
     );
   }
 
   notificationTypeModalRolesCheckbox(roleLabel) {
     return cy.xpath(
-      `//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-label" and text()="${roleLabel}"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]`
+      `//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-label" and text()="${roleLabel}"]/following-sibling::td//goa-checkbox`
     );
   }
 
@@ -464,7 +464,7 @@ class NotificationsPage {
 
   eventTemplateModalSubject(channel) {
     return cy.xpath(
-      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-subject"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::goa-textarea`
+      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-subject"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea`
     );
   }
 

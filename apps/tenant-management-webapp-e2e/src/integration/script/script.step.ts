@@ -36,7 +36,7 @@ When(
   function (name, desc, useServiceAcct, role) {
     const roles = role.split(',');
     scriptObj.addScriptModalNameField().clear().type(name);
-    scriptObj.addScriptModalDescriptionField().clear().type(desc);
+    scriptObj.addScriptModalDescriptionField().shadow().find('.goa-textarea').clear().type(desc, { force: true });
     switch (useServiceAcct) {
       case 'yes':
         scriptObj.addScriptModalUseServiceAccountCheckbox().shadow().find('.goa-checkbox-container').click();
@@ -168,7 +168,7 @@ Then('the user views Edit script modal', function () {
 
 When('the user enters {string} as name {string} as description in Edit script modal', function (name, description) {
   scriptObj.editScriptModalNameField().clear().type(name);
-  scriptObj.editScriptModalDescriptionField().clear().type(description);
+  scriptObj.editScriptModalDescriptionField().shadow().find('.goa-textarea').clear().type(description, { force: true });
 });
 
 When('the user enters {string} as lua script', function (script) {

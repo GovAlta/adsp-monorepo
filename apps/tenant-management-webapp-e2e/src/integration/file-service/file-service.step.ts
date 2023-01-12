@@ -450,7 +450,7 @@ When('the user enters {string}, {string}, {string} on file type modal', function
 });
 
 When('the user clicks Save button on file type modal', function () {
-  fileServiceObj.fileTypeModalSaveButton().click();
+  fileServiceObj.fileTypeModalSaveButton().click({ force: true });
   cy.wait(2000); // Wait the file type list to refresh
 });
 
@@ -486,11 +486,11 @@ When(
     findFileType(name, readRole, updateRole).then((rowNumber) => {
       switch (button) {
         case 'Edit':
-          fileServiceObj.fileTypeEditButton(rowNumber).click();
+          fileServiceObj.fileTypeEditButton(rowNumber).click({ force: true });
           break;
         case 'Delete':
           cy.wait(1000); // Wait to avoid no modal showing up for delete button clicking
-          fileServiceObj.fileTypeDeleteButton(rowNumber).click();
+          fileServiceObj.fileTypeDeleteButton(rowNumber).click({ force: true });
           break;
         default:
           expect(button).to.be.oneOf(['Edit', 'Delete']);

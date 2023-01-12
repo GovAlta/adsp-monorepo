@@ -80,7 +80,7 @@ When(
   function (namespace, name, desc) {
     eventsObj.definitionModalNamespaceField().type(namespace);
     eventsObj.definitionModalNameField().type(name);
-    eventsObj.definitionModalDescriptionField().type(desc);
+    eventsObj.definitionModalDescriptionField().shadow().find('.goa-textarea').type(desc, { force: true });
   }
 );
 
@@ -98,10 +98,10 @@ When(
   function (button, eventName, eventDesc, eventNamespace) {
     switch (button) {
       case 'Edit':
-        eventsObj.editDefinitionButton(eventNamespace, eventName, eventDesc).click();
+        eventsObj.editDefinitionButton(eventNamespace, eventName, eventDesc).click({ force: true });
         break;
       case 'Delete':
-        eventsObj.deleteDefinitionButton(eventNamespace, eventName, eventDesc).click();
+        eventsObj.deleteDefinitionButton(eventNamespace, eventName, eventDesc).click({ force: true });
         break;
       default:
         expect(button).to.be.oneOf(['Edit', 'Delete']);
@@ -110,7 +110,7 @@ When(
 );
 
 When('the user enters {string} in Description', function (desc) {
-  eventsObj.definitionModalDescriptionField().clear().type(desc);
+  eventsObj.definitionModalDescriptionField().shadow().find('.goa-textarea').clear().type(desc, { force: true });
 });
 
 Given('a service owner user is on event definitions page', function () {

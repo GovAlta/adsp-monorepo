@@ -33,7 +33,12 @@ When(
   function (name, description, role, bot, sms, selfService) {
     const roles = role.split(',');
     notificationsObj.notificationTypeModalNameField().clear().type(name);
-    notificationsObj.notificationTypeModalDescriptionField().clear().type(description);
+    notificationsObj
+      .notificationTypeModalDescriptionField()
+      .shadow()
+      .find('.goa-textarea')
+      .clear()
+      .type(description, { force: true });
     // Public or select roles
     notificationsObj
       .notificationTypeModalPublicCheckbox()
@@ -52,6 +57,8 @@ When(
           // Deselect all previously selected roles and then select new roles
           notificationsObj
             .notificationTypeModalRolesCheckboxes()
+            .shadow()
+            .find('.goa-checkbox-container')
             .then((elements) => {
               for (let i = 0; i < elements.length; i++) {
                 if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
@@ -64,7 +71,11 @@ When(
                 if (roles[i].includes(':')) {
                   notificationsObj.notificationTypeModalClientRoleCheckbox(roles[i].trim()).click();
                 } else {
-                  notificationsObj.notificationTypeModalRolesCheckbox(roles[i].trim()).click();
+                  notificationsObj
+                    .notificationTypeModalRolesCheckbox(roles[i].trim())
+                    .shadow()
+                    .find('.goa-checkbox-container')
+                    .click();
                 }
               }
             });
@@ -215,10 +226,10 @@ Then('the user views Add notification type button on Notification types page', f
 When('the user clicks {string} button for the notification type card of {string}', function (buttonType, cardTitle) {
   switch (buttonType) {
     case 'edit':
-      notificationsObj.notificationTypeEditBtn(cardTitle).click();
+      notificationsObj.notificationTypeEditBtn(cardTitle).click({ force: true });
       break;
     case 'delete':
-      notificationsObj.notificationTypeDeleteBtn(cardTitle).click();
+      notificationsObj.notificationTypeDeleteBtn(cardTitle).click({ force: true });
       break;
     default:
       expect(buttonType).to.be.oneOf(['edit', 'delete']);
@@ -663,7 +674,12 @@ When(
     }
     notificationsObj.editContactModalEmail().clear().type(emailInput);
     notificationsObj.editContactModalPhone().clear().type(phoneInput);
-    notificationsObj.editContactModalInstructions().clear().type(instructionsInput);
+    notificationsObj
+      .editContactModalInstructions()
+      .shadow()
+      .find('.goa-textarea')
+      .clear()
+      .type(instructionsInput, { force: true });
   }
 );
 
@@ -822,8 +838,8 @@ Then(
 );
 
 Then('the user views that email channel is greyed out', function () {
-  notificationsObj.notificationChannelEmailCheckbox().should('be.disabled');
-  notificationsObj.notificationChannelEmailCheckbox().should('be.checked');
+  notificationsObj.notificationChannelEmailCheckbox().shadow().find('input').should('be.disabled');
+  notificationsObj.notificationChannelEmailCheckbox().shadow().find('input').should('be.checked');
 });
 
 When('the user selects {string} tab on the event template', function (tab) {
