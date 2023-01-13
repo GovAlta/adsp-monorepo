@@ -1,5 +1,6 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components';
+import { OverviewLayout } from '@components/Overview';
 
 interface ConfigurationOverviewProps {
   setActiveEdit: (boolean) => void;
@@ -13,15 +14,12 @@ export const ConfigurationOverview: FunctionComponent<ConfigurationOverviewProps
     setActiveEdit(false);
     setActiveIndex(0);
   }, []);
+  const description = `The configuration service provides a generic json document store for storage and revisioning of infrequently changing configuration. Store configuration against namespace and name keys, and optionally define configuration schemas for write validation.`;
 
   return (
-    <div>
-      <section>
-        <p>
-          The configuration service provides a generic json document store for storage and revisioning of infrequently
-          changing configuration. Store configuration against namespace and name keys, and optionally define
-          configuration schemas for write validation.
-        </p>
+    <OverviewLayout
+      description={description}
+      addButton={
         <GoAButton
           data-testid="add-definition"
           disabled={disabled}
@@ -31,7 +29,7 @@ export const ConfigurationOverview: FunctionComponent<ConfigurationOverviewProps
         >
           Add definition
         </GoAButton>
-      </section>
-    </div>
+      }
+    />
   );
 };

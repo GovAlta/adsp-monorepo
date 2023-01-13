@@ -3,6 +3,7 @@ import { GoAButton } from '@abgov/react-components';
 import { PdfMetrics } from './metrics';
 import { useDispatch } from 'react-redux';
 import { fetchPdfMetrics } from '@store/pdf/action';
+import { OverviewLayout } from '@components/Overview';
 
 interface PdfOverviewProps {
   updateActiveIndex: (index: number) => void;
@@ -16,24 +17,25 @@ export const PdfOverview: FunctionComponent<PdfOverviewProps> = ({ updateActiveI
     setOpenAddTemplate(false);
     dispatch(fetchPdfMetrics());
   }, []);
+  const description =
+    'The PDF service provides PDF operations like generating new PDFs from templates. It runs operations as asynchronous jobs and uploads the output PDF files to the file service.';
   return (
-    <div>
-      <section>
-        <p>
-          The PDF service provides PDF operations like generating new PDFs from templates. It runs operations as
-          asynchronous jobs and uploads the output PDF files to the file service.
-        </p>
-        <GoAButton
-          data-testid="add-templates"
-          onClick={() => {
-            updateActiveIndex(1); // to switch to templates tab
-            setOpenAddTemplate(true);
-          }}
-        >
-          Add template
-        </GoAButton>
-      </section>
-      <PdfMetrics />
-    </div>
+    <OverviewLayout
+      description={description}
+      addButton={
+        <>
+          <GoAButton
+            data-testid="add-templates"
+            onClick={() => {
+              updateActiveIndex(1); // to switch to templates tab
+              setOpenAddTemplate(true);
+            }}
+          >
+            Add template
+          </GoAButton>
+        </>
+      }
+      extra={<PdfMetrics />}
+    />
   );
 };
