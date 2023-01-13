@@ -27,13 +27,13 @@ class NotificationsPage {
 
   notificationTypeModalRolesCheckboxes() {
     return cy.xpath(
-      '//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-label"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]'
+      '//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-label"]/following-sibling::td//goa-checkbox'
     );
   }
 
   notificationTypeModalRolesCheckbox(roleLabel) {
     return cy.xpath(
-      `//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-label" and text()="${roleLabel}"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]`
+      `//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-label" and text()="${roleLabel}"]/following-sibling::td//goa-checkbox`
     );
   }
 

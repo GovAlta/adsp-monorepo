@@ -29,7 +29,12 @@ Then('the user views Add template modal', function () {
 
 When('the user enters {string} as name, {string} as description in pdf template modal', function (name, description) {
   pdfServiceObj.pdfAddTemplateModalName().clear().type(name);
-  pdfServiceObj.pdfAddTemplateModalDescription().clear().type(description);
+  pdfServiceObj
+    .pdfAddTemplateModalDescription()
+    .shadow()
+    .find('.goa-textarea')
+    .clear()
+    .type(description, { force: true });
 });
 
 Then('the user clicks Save button in Add template modal', function () {
@@ -96,10 +101,10 @@ When(
   function (iconType, name, templateId, description) {
     switch (iconType.toLowerCase()) {
       case 'edit':
-        pdfServiceObj.pdfTemplateEditBtn(name, templateId, description).click();
+        pdfServiceObj.pdfTemplateEditBtn(name, templateId, description).click({ force: true });
         break;
       case 'delete':
-        pdfServiceObj.pdfTemplateDeleteBtn(name, templateId, description).click();
+        pdfServiceObj.pdfTemplateDeleteBtn(name, templateId, description).click({ force: true });
         break;
       default:
         expect(iconType.toLowerCase()).to.be.oneOf(['edit', 'delete']);
@@ -110,7 +115,12 @@ When(
 Then('the user views {string}, {string} and {string} in PDF template modal', function (name, templateId, description) {
   pdfServiceObj.pdfTemplateModalNameField().invoke('attr', 'value').should('eq', name);
   pdfServiceObj.pdfTemplateModalTemplateIdField().invoke('attr', 'value').should('eq', templateId);
-  pdfServiceObj.pdfTemplateModalDescriptionField().invoke('text').should('eq', description);
+  pdfServiceObj
+    .pdfTemplateModalDescriptionField()
+    .shadow()
+    .find('.goa-textarea')
+    .invoke('val')
+    .should('eq', description);
 });
 
 When('the user clicks Save button in PDF template modal', function () {
@@ -162,7 +172,12 @@ When(
   'the user enters {string} as name and {string} as description in PDF template modal',
   function (name, description) {
     pdfServiceObj.pdfTemplateModalNameField().clear().type(name);
-    pdfServiceObj.pdfTemplateModalDescriptionField().clear().type(description);
+    pdfServiceObj
+      .pdfTemplateModalDescriptionField()
+      .shadow()
+      .find('.goa-textarea')
+      .clear()
+      .type(description, { force: true });
   }
 );
 
