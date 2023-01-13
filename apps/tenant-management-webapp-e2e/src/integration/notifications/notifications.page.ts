@@ -38,7 +38,7 @@ class NotificationsPage {
   }
 
   notificationTypeModalClientRoleCheckbox(clientRole) {
-    return cy.xpath(`//goa-checkbox[@type="checkbox" and @value="${clientRole}"]/parent::div`);
+    return cy.xpath(`//goa-checkbox[@value="${clientRole}"]`);
   }
 
   notificationChannelCheckbox(channelName) {
@@ -464,7 +464,7 @@ class NotificationsPage {
 
   eventTemplateModalSubject(channel) {
     return cy.xpath(
-      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-subject"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::goa-textarea`
+      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-subject"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea`
     );
   }
 

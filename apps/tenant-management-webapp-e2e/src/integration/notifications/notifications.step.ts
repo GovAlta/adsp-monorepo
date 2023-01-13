@@ -69,7 +69,11 @@ When(
             .then(() => {
               for (let i = 0; i < roles.length; i++) {
                 if (roles[i].includes(':')) {
-                  notificationsObj.notificationTypeModalClientRoleCheckbox(roles[i].trim()).click();
+                  notificationsObj
+                    .notificationTypeModalClientRoleCheckbox(roles[i].trim())
+                    .shadow()
+                    .find('.goa-checkbox-container')
+                    .click();
                 } else {
                   notificationsObj
                     .notificationTypeModalRolesCheckbox(roles[i].trim())
@@ -868,8 +872,6 @@ When(
     }
     notificationsObj
       .eventTemplateModalSubject(channelNameInTitle)
-      .shadow()
-      .find('.goa-textarea')
       .click()
       .focus()
       .type('{ctrl}a')
