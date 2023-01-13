@@ -100,7 +100,7 @@ class ConfigurationServicePage {
   }
 
   configurationDefinitionModalPayloadEditor() {
-    return cy.xpath('//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::goa-textarea');
+    return cy.xpath('//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea');
   }
 
   exportServiceInfoIcon(namespace, name) {
