@@ -46,7 +46,6 @@ export const AppStatus = styled.div`
 export const AppName = styled.div`
   font-size: var(--fs-lg);
   font-weight: var(--fw-bold);
-  text-transform: capitalize;
   margin-top: 1rem;
 `;
 
