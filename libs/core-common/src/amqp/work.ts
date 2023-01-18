@@ -78,37 +78,33 @@ export class AmqpWorkQueueService<T> implements WorkQueueService<T> {
 
   private onSubscribed = async (sub: Subscriber<WorkItem<T>>): Promise<void> => {
     const channel = this.channel;
-    channel.consume(
-      this.queue,
-      (msg) => {
-        // If the message is redelivered, then don't requeue on failure, and let it go to dead letter.
-        const requeueOnFail = !msg.fields?.redelivered;
-        try {
-          sub.next({
-            item: this.convertMessage(msg),
-            retryOnError: requeueOnFail,
-            done: (err) => {
-              if (err) {
-                channel.nack(msg, false, requeueOnFail);
-                if (!requeueOnFail) {
-                  this.logger.error(
-                    `Redelivered message ${msg.fields.routingKey} processing failed and will be dead lettered.`
-                  );
-                }
-              } else {
-                channel.ack(msg);
+    channel.consume(this.queue, (msg) => {
+      // If the message is redelivered, then don't requeue on failure, and let it go to dead letter.
+      const requeueOnFail = !msg.fields?.redelivered;
+      try {
+        sub.next({
+          item: this.convertMessage(msg),
+          retryOnError: requeueOnFail,
+          done: (err) => {
+            if (err) {
+              channel.nack(msg, false, requeueOnFail);
+              if (!requeueOnFail) {
+                this.logger.error(
+                  `Redelivered message ${msg.fields.routingKey} processing failed and will be dead lettered.`
+                );
               }
-            },
-          });
-        } catch (err) {
-          this.logger.error(
-            `Processing of item with routing key ${msg?.fields?.routingKey} failed and will NOT be retried. ${err}`
-          );
-          channel.nack(msg, false, false);
-        }
-      },
-      { prefetch: 1 }
-    );
+            } else {
+              channel.ack(msg);
+            }
+          },
+        });
+      } catch (err) {
+        this.logger.error(
+          `Processing of item with routing key ${msg?.fields?.routingKey} failed and will NOT be retried. ${err}`
+        );
+        channel.nack(msg, false, false);
+      }
+    });
   };
 
   getItems(): Observable<WorkItem<T>> {
