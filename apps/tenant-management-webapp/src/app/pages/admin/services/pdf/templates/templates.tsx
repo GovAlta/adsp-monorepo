@@ -118,7 +118,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
       let template = '';
       // If footer is empty, we shall add PDF wrapper for the footer in the preview.
       if (footer && footer.length > 0) {
-        template = getTemplateBody(footer, 'pdf', {
+        template = getTemplateBody(footer, 'pdf-footer', {
           data: currentTemplate,
           serviceUrl: webappUrl,
           today: new Date().toDateString(),
@@ -137,7 +137,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
       let template = '';
       // If header is empty, we shall add PDF wrapper for the header in the preview.
       if (header && header.length > 0) {
-        template = getTemplateBody(header, 'pdf', {
+        template = getTemplateBody(header, 'pdf-header', {
           data: currentTemplate,
           serviceUrl: webappUrl,
           today: new Date().toDateString(),
