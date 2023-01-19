@@ -95,7 +95,7 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
       </AppHeader>
       {/* Endpoint List for watched service */}
       <AppName>{app.name}</AppName>
-      <div>key: {app.appKey}</div>
+      <div>ID: {app.appKey}</div>
       <AppHealth>
         <HealthBar data-testid="endpoint" displayCount={30} app={app}></HealthBar>
         <GoAButton
