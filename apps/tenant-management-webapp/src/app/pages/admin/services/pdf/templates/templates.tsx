@@ -369,7 +369,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
                 cancel={() => reset()}
                 errors={templateEditErrors}
                 validateEventTemplateFields={() => {
-                  return validateEventTemplateFields();
+                  return true;
                 }}
               />
 
