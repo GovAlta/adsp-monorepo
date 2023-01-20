@@ -8,6 +8,7 @@ import SupportLinks from '@components/SupportLinks';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@store/index';
 import { FetchFileTypeService, FetchFilesService } from '@store/file/actions';
+import { useLocation } from 'react-router-dom';
 
 export const Pdf: FunctionComponent = () => {
   const dispatch = useDispatch();
@@ -15,6 +16,8 @@ export const Pdf: FunctionComponent = () => {
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [openAddTemplate, setOpenAddTemplate] = useState(false);
+  const location = useLocation();
+  const locationParser = JSON.parse(JSON.stringify(location.state));
 
   useEffect(() => {
     dispatch(FetchFilesService());
@@ -25,7 +28,7 @@ export const Pdf: FunctionComponent = () => {
     <Page>
       <Main>
         <h1 data-testid="pdf-service-title">PDF service</h1>
-        <Tabs activeIndex={activeIndex}>
+        <Tabs activeIndex={locationParser ? 1 : activeIndex}>
           <Tab label="Overview">
             <PdfOverview updateActiveIndex={setActiveIndex} setOpenAddTemplate={setOpenAddTemplate} />
           </Tab>

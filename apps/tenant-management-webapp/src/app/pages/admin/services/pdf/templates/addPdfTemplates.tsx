@@ -11,21 +11,14 @@ import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { GoATextArea } from '@abgov/react-components-new';
-interface AddEditPdfTemplateProps {
+interface AddPdfTemplateProps {
   open: boolean;
-  isEdit: boolean;
   initialValue: PdfTemplate;
   onClose: () => void;
   onSave: (template: PdfTemplate) => void;
 }
 
-export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
-  initialValue,
-  onClose,
-  open,
-  isEdit,
-  onSave,
-}) => {
+export const AddPdfTemplate: FunctionComponent<AddPdfTemplateProps> = ({ initialValue, onClose, open, onSave }) => {
   const [template, setTemplate] = useState<PdfTemplate>(initialValue);
   const [spinner, setSpinner] = useState<boolean>(false);
 
@@ -76,7 +69,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
   return (
     <>
       <GoAModal testId="template-form" isOpen={open}>
-        <GoAModalTitle testId="template-form-title">{isEdit ? 'Edit template' : 'Add template'}</GoAModalTitle>
+        <GoAModalTitle testId="template-form-title">{'Add template'}</GoAModalTitle>
         <GoAModalContent>
           <GoAForm>
             <GoAFormItem error={errors?.['name']}>
@@ -85,7 +78,6 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
                 type="text"
                 name="pdf-template-name"
                 value={template.name}
-                disabled={isEdit}
                 data-testid="pdf-template-name"
                 aria-label="pdf-template-name"
                 onChange={(name, value) => {
@@ -105,7 +97,6 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
               <GoATextArea
                 name="pdf-template-description"
                 value={template.description}
-                disabled={isEdit}
                 width="100%"
                 testId="pdf-template-description"
                 aria-label="pdf-template-description"
