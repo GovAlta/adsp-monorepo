@@ -10,7 +10,7 @@ import {
   PdfEditActions,
 } from './styled-components';
 import { GoAForm, GoAFormItem, GoABadge } from '@abgov/react-components/experimental';
-import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
+import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { PdfTemplate } from '@store/pdf/model';
 import { languages } from 'monaco-editor';
 import { buildSuggestions, triggerInScope } from '@lib/autoComplete';
@@ -18,26 +18,21 @@ import { GoAButton } from '@abgov/react-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { SaveFormModal } from '@components/saveModal';
 import { PDFConfigForm } from './PDFConfigForm';
-
+import { getSuggestion } from '../utils/suggestion';
+import { bodyEditorConfig } from './config';
 interface TemplateEditorProps {
   modelOpen: boolean;
-  mainTitle: string;
-  subjectTitle: string;
-  subjectEditorConfig?: EditorProps;
   onBodyChange: (value: string) => void;
   onHeaderChange: (value: string) => void;
   onFooterChange: (value: string) => void;
   setPreview: (channel: string) => void;
-  bodyEditorHintText?: string;
+
   template: PdfTemplate;
   savedTemplate: PdfTemplate;
-  bodyTitle: string;
-  bodyEditorConfig?: EditorProps;
   saveCurrentTemplate?: () => void;
   // eslint-disable-next-line
   errors?: any;
   // eslint-disable-next-line
-  suggestion?: any;
   cancel: () => void;
   updateTemplate: (template: PdfTemplate) => void;
   validateEventTemplateFields: () => boolean;
@@ -45,21 +40,15 @@ interface TemplateEditorProps {
 
 export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   modelOpen,
-  mainTitle,
-  subjectTitle,
-  subjectEditorConfig,
   onBodyChange,
   onHeaderChange,
   onFooterChange,
   setPreview,
-  bodyEditorHintText,
+
   template,
   savedTemplate,
-  bodyTitle,
-  bodyEditorConfig,
   saveCurrentTemplate,
   errors,
-  suggestion,
   cancel,
   updateTemplate,
   validateEventTemplateFields,
@@ -67,7 +56,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   const monaco = useMonaco();
   const [saveModal, setSaveModal] = useState(false);
   const [hasConfigError, setHasConfigError] = useState(false);
-
+  const suggestion = template ? getSuggestion() : [];
   useEffect(() => {
     if (monaco) {
       const provider = monaco.languages.registerCompletionItemProvider('handlebars', {
@@ -211,7 +200,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               }
             >
               <>
-                <GoAFormItem error={errors?.body ?? null} helpText={bodyEditorHintText}>
+                <GoAFormItem error={errors?.body ?? null}>
                   <div className="title">Body</div>
                   <MonacoDivBody>
                     <MonacoEditor
@@ -238,6 +227,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             <PdfEditActions>
               <GoAButton
                 onClick={() => {
+                  console.log('savedTemplate', savedTemplate);
                   if (
                     savedTemplate.template !== template.template ||
                     savedTemplate.header !== template.header ||
