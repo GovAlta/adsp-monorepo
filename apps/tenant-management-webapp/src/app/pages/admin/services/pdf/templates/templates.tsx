@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import { AddEditPdfTemplate } from './AddEditPdfTemplates';
+import { AddPdfTemplate } from './addPdfTemplates';
 import { GoAButton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { getPdfTemplates, updatePdfTemplate, deletePdfTemplate } from '@store/pdf/action';
@@ -32,8 +32,6 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
 
   const [currentTemplate, setCurrentTemplate] = useState(defaultPdfTemplate);
 
-  const [isEdit, setIsEdit] = useState(false);
-
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -41,7 +39,6 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
   const dispatch = useDispatch();
   const history = useHistory();
   const reset = () => {
-    setIsEdit(false);
     setOpenAddPdfTemplate(false);
     setCurrentTemplate(defaultPdfTemplate);
   };
@@ -70,10 +67,9 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
         <br />
         <br />
         <PageIndicator />
-        {(isEdit || openAddPdfTemplate) && (
-          <AddEditPdfTemplate
+        {openAddPdfTemplate && (
+          <AddPdfTemplate
             open={openAddPdfTemplate}
-            isEdit={isEdit}
             onClose={reset}
             initialValue={defaultPdfTemplate}
             onSave={(definition) => {

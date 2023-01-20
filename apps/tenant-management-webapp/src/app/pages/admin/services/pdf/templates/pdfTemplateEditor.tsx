@@ -23,12 +23,8 @@ import { useHistory } from 'react-router-dom';
 
 export interface PdfTemplatesEditorProps {
   passedTemplate?: PdfTemplate;
-  showTemplateForm?: boolean;
 }
-export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({
-  passedTemplate,
-  showTemplateForm,
-}) => {
+export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({ passedTemplate }) => {
   const [bodyPreview, setBodyPreview] = useState('');
   const [headerPreview, setHeaderPreview] = useState('');
   const [footerPreview, setFooterPreview] = useState('');
@@ -183,7 +179,6 @@ export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({
     setBodyPreview('');
     setFooterPreview('');
     setHeaderPreview('');
-    showTemplateForm = false;
     history.push({
       pathname: '/admin/services/pdf',
       state: { activeIndex: 1 },
@@ -214,13 +209,13 @@ export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({
   return (
     <>
       {/* Edit/Add event template for a notification */}
-      <Modal open={showTemplateForm} data-testid="template-form">
+      <Modal data-testid="template-form">
         {/* Hides body overflow when the modal is up */}
-        <BodyGlobalStyles hideOverflow={showTemplateForm} />
+        <BodyGlobalStyles hideOverflow={true} />
         <ModalContent>
           <NotificationTemplateEditorContainer>
             <TemplateEditor
-              modelOpen={showTemplateForm}
+              modelOpen={true}
               template={currentTemplate}
               savedTemplate={currentSavedTemplate}
               onBodyChange={(value) => {

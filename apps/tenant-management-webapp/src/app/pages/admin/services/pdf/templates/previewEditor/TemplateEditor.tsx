@@ -227,7 +227,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             <PdfEditActions>
               <GoAButton
                 onClick={() => {
-                  console.log('savedTemplate', savedTemplate);
                   if (
                     savedTemplate.template !== template.template ||
                     savedTemplate.header !== template.header ||

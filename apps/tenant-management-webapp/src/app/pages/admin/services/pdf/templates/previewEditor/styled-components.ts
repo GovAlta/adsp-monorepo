@@ -79,12 +79,10 @@ export const TemplateEditorContainerPdf = styled.div`
     }
   }
 `;
-export const Modal = styled.div<{ open: boolean }>`
-  display: ${(props) => (props.open ? `block` : `none`)};
+export const Modal = styled.div`
+  display: block;
   position: fixed;
-  top: 0;
   left: 0;
-  bottom: 0;
   z-index: 10000;
   width: 100%;
 `;
@@ -100,7 +98,7 @@ export const ModalContent = styled.div`
 export const PreviewTemplateContainer = styled.div`
   width: 612px;
   margin-left: 2rem;
-  padding-top: 4rem;
+  padding-top: 1rem;
   padding-left: 2rem;
   background-color: #c3c3c3;
   overflow: hidden;
@@ -119,7 +117,7 @@ export const MonacoDivBody = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(100vh - 376px - 7rem);
+  height: calc(92vh - 376px - 7rem);
   min-height: 2rem;
 `;
 export const MonacoDivHeader = styled.div`
@@ -127,7 +125,7 @@ export const MonacoDivHeader = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(50vh - 210px - 3.5rem);
+  height: calc(46vh - 210px - 3.5rem);
   min-height: 2rem;
 `;
 export const MonacoDivFooter = styled.div`
@@ -135,7 +133,7 @@ export const MonacoDivFooter = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(50vh - 210px - 3.5rem);
+  height: calc(46vh - 210px - 3.5rem);
   min-height: 2rem;
 `;
 export const EditTemplateActions = styled.div`
@@ -148,7 +146,7 @@ export const EditTemplateActions = styled.div`
 export const PreviewContainer = styled.div`
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 85%;
   margin-right: 2rem;
 `;
 
