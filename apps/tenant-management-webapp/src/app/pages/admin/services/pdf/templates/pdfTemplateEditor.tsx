@@ -61,9 +61,9 @@ export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({
   useEffect(() => {
     setCurrentTemplate(passedTemplate);
     setCurrentSavedTemplate(passedTemplate);
-    setBody(currentTemplate?.template || '');
-    setFooter(currentTemplate?.footer || '');
-    setHeader(currentTemplate?.header || '');
+    setBody(passedTemplate?.template || '');
+    setFooter(passedTemplate?.footer || '');
+    setHeader(passedTemplate?.header || '');
   }, [passedTemplate]);
   useEffect(() => {
     try {
@@ -216,8 +216,8 @@ export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({
           <NotificationTemplateEditorContainer>
             <TemplateEditor
               modelOpen={true}
-              template={currentTemplate}
-              savedTemplate={currentSavedTemplate}
+              template={passedTemplate}
+              savedTemplate={currentTemplate}
               onBodyChange={(value) => {
                 setBody(value);
               }}

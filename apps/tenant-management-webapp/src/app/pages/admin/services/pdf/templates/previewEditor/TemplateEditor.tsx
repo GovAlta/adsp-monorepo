@@ -230,7 +230,9 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   if (
                     savedTemplate.template !== template.template ||
                     savedTemplate.header !== template.header ||
-                    savedTemplate.footer !== template.footer
+                    savedTemplate.footer !== template.footer ||
+                    savedTemplate.name !== template.name ||
+                    savedTemplate.description !== template.description
                   ) {
                     setSaveModal(true);
                   } else {
