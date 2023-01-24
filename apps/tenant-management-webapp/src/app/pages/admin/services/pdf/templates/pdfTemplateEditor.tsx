@@ -60,7 +60,7 @@ export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({
   });
   useEffect(() => {
     setCurrentTemplate(passedTemplate);
-    setCurrentSavedTemplate(passedTemplate);
+    setCurrentSavedTemplate(JSON.parse(JSON.stringify(passedTemplate)));
     setBody(passedTemplate?.template || '');
     setFooter(passedTemplate?.footer || '');
     setHeader(passedTemplate?.header || '');
@@ -217,7 +217,7 @@ export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({
             <TemplateEditor
               modelOpen={true}
               template={passedTemplate}
-              savedTemplate={currentTemplate}
+              savedTemplate={currentSavedTemplate}
               onBodyChange={(value) => {
                 setBody(value);
               }}
