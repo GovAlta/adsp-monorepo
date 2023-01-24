@@ -243,7 +243,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 buttonType="secondary"
                 type="button"
               >
-                Close
+                Back
               </GoAButton>
               <GoAButton
                 disabled={!validateEventTemplateFields() || hasConfigError}
