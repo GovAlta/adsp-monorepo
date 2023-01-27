@@ -14,10 +14,10 @@ import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { ConfigServiceRole } from '@store/access/models';
-import { useValidators } from '@lib/useValidators';
+import { useValidators } from '@lib/validation/useValidators';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { ActionState } from '@store/session/models';
-import { characterCheck, validationPattern, isNotEmptyCheck, Validator, wordMaxLengthCheck } from '@lib/checkInput';
+import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 interface FileTypeModalProps {
   fileType?: FileTypeItem;
   onCancel: () => void;
@@ -132,25 +132,15 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   const isNew = props.type === 'new';
   const [fileType, setFileType] = useState(props.fileType);
   const title = isNew ? 'Add file type' : 'Edit file type';
-  const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
-  const wordLengthCheck = wordMaxLengthCheck(32);
-
-  const duplicateFileTypeCheck = (names: string[]): Validator => {
-    return (name: string) => {
-      return names.map((n) => n.toLowerCase().replace(/ /g, '-')).includes(name.toLowerCase().replace(/ /g, '-'))
-        ? `Duplicated file type name ${name}.`
-        : '';
-    };
-  };
 
   const { errors, validators } = useValidators(
     'name',
     'name',
-    checkForBadChars,
-    wordLengthCheck,
+    badCharsCheck,
+    wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
   )
-    .add('duplicated', 'name', duplicateFileTypeCheck(props.fileTypeNames))
+    .add('duplicated', 'name', duplicateNameCheck(props.fileTypeNames, 'File type'))
     .build();
 
   const roleNames = props.roles.map((role) => {
@@ -276,6 +266,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
             buttonType="secondary"
             data-testid="file-type-modal-cancel"
             onClick={() => {
+              validators.clear();
               props.onCancel();
             }}
           >

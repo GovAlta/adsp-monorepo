@@ -122,7 +122,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             setHasConfigError(hasError);
           }}
           onChange={(_template) => {
-            updateTemplate({ ..._template });
+            updateTemplate(_template);
           }}
         />
       )}

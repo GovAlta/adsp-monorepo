@@ -40,7 +40,7 @@ import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '..';
 import { select, call, put, takeEvery, all } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
-import { jsonSchemaCheck } from '@lib/checkInput';
+import { jsonSchemaCheck } from '@lib/validation/checkInput';
 import { getAccessToken } from '@store/tenant/sagas';
 
 export function* fetchConfigurationDefinitions(action: FetchConfigurationDefinitionsAction): SagaIterator {

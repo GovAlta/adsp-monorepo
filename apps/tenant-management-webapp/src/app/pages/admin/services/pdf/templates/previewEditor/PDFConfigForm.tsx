@@ -2,8 +2,8 @@ import React from 'react';
 import { PdfTemplate } from '@store/pdf/model';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { Grid, GridItem } from '@components/Grid';
-import { useValidators } from '@lib/useValidators';
-import { characterCheck, validationPattern, isNotEmptyCheck, wordMaxLengthCheck } from '@lib/checkInput';
+import { useValidators } from '@lib/validation/useValidators';
+import { characterCheck, validationPattern, isNotEmptyCheck, wordMaxLengthCheck } from '@lib/validation/checkInput';
 import { PdfConfigFormWrapper } from './styled-components';
 import { GoATextArea } from '@abgov/react-components-new';
 interface PDFConfigFormProps {
@@ -13,7 +13,7 @@ interface PDFConfigFormProps {
 }
 export const PDFConfigForm = ({ template, onChange, setError }: PDFConfigFormProps) => {
   const { id, name, description } = template;
-  const wordLengthCheck = wordMaxLengthCheck(32);
+  const wordLengthCheck = wordMaxLengthCheck(32, 'Name');
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
   const { errors, validators } = useValidators(
     'name',

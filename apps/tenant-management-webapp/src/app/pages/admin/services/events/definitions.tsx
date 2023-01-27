@@ -93,9 +93,7 @@ export const EventDefinitions: FunctionComponent<ParentCompProps> = ({ activeEdi
           open={true}
           initialValue={selectedDefinition}
           isEdit={isEdit}
-          definitions={Object.entries(definitions).map(([id, definition]) => {
-            return definition;
-          })}
+          definitions={definitions}
           coreNamespaces={coreNamespaces}
           onClose={() => {
             reset();

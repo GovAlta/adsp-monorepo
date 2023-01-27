@@ -10,7 +10,7 @@ import { DeleteModal } from '@components/DeleteModal';
 
 import { GoAIcon } from '@abgov/react-components/experimental';
 import { FetchRealmRoles } from '@store/tenant/actions';
-import { isDuplicatedNotificationName } from './validation';
+
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
 import { hasXSS } from '@lib/sanitize';
@@ -707,7 +707,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       <NotificationTypeModalForm
         open={editType}
         initialValue={selectedType}
-        errors={errors}
         title={formTitle}
         tenantClients={tenantClientsRoles.tenantClients}
         realmRoles={tenantClientsRoles.realmRoles}
@@ -716,19 +715,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           type.events = type.events || [];
           type.publicSubscribe = type.publicSubscribe || false;
 
-          if (!type.channels.includes('email')) {
-            // Must include email as first channel
-            type.channels = ['email', ...type.channels];
-          }
-          const isDuplicatedName =
-            notification.notificationTypes &&
-            isDuplicatedNotificationName(coreNotification, notification.notificationTypes, selectedType, type.name);
-          if (isDuplicatedName) {
-            setErrors({ name: 'Duplicated name of notification type.' });
-          } else {
-            dispatch(UpdateNotificationTypeService(type));
-            reset();
-          }
+          dispatch(UpdateNotificationTypeService(type));
+          reset();
         }}
         onCancel={() => {
           reset();

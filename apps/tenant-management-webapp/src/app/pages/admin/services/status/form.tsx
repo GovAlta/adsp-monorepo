@@ -4,8 +4,14 @@ import { saveApplication } from '@store/status/actions';
 import { fetchDirectory, fetchDirectoryDetailByURNs } from '@store/directory/actions';
 import { ApplicationStatus } from '@store/status/models';
 import { GoAButton, GoADropdownOption } from '@abgov/react-components';
-import { useValidators } from '@lib/useValidators';
-import { characterCheck, validationPattern, isNotEmptyCheck, Validator, wordMaxLengthCheck } from '@lib/checkInput';
+import { useValidators } from '@lib/validation/useValidators';
+import {
+  characterCheck,
+  validationPattern,
+  isNotEmptyCheck,
+  Validator,
+  wordMaxLengthCheck,
+} from '@lib/validation/checkInput';
 
 import {
   GoAForm,
@@ -92,22 +98,31 @@ export const ApplicationFormModal: FC<Props> = ({
     };
   };
 
-  const wordLengthCheck = wordMaxLengthCheck(32);
+  //const wordLengthCheck = wordMaxLengthCheck(32);
   const { errors, validators } = useValidators(
     'nameAppKey',
     'name',
     checkForBadChars,
-    wordLengthCheck,
+    wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('nameAppKey'),
     isDuplicateAppKey()
   )
     .add('nameOnly', 'name', checkForBadChars, isDuplicateAppName())
+    .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
+    .add(
+      'url',
+      'url',
+      wordMaxLengthCheck(150, 'URL'),
+      characterCheck(validationPattern.validURL),
+      isNotEmptyCheck('url')
+    )
     .build();
 
   function save() {
     if (!isFormValid()) {
       return;
     }
+
     dispatch(saveApplication(application));
     if (onSave) onSave();
   }
@@ -172,28 +187,32 @@ export const ApplicationFormModal: FC<Props> = ({
             <label>application ID</label>
             <IdField>{application.appKey}</IdField>
           </GoAFormItem>
-          <GoAFormItem>
+          <GoAFormItem error={errors?.['description']}>
             <label>Description</label>
             <GoATextArea
               name="description"
               width="100%"
               value={application?.description}
-              onChange={(name, value) =>
+              onChange={(name, value) => {
+                validators.remove('description');
+                validators['description'].check(value);
                 setApplication({
                   ...application,
                   description: value,
-                })
-              }
+                });
+              }}
               aria-label="description"
             />
           </GoAFormItem>
-          <GoAFormItem>
+          <GoAFormItem error={errors?.['url']}>
             <label>URL</label>
             <GoAInput
               type="test"
               name="url"
               value={application?.endpoint?.url}
               onChange={(name, value) => {
+                validators.remove('url');
+                validators['url'].check(value);
                 setApplication({
                   ...application,
                   endpoint: {
