@@ -10,8 +10,8 @@ import {
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { AnonymousWrapper, ChipsWrapper, IdField, StreamModalStyles } from '../styleComponents';
 import { Stream } from '@store/stream/models';
-import { useValidators } from '@lib/useValidators';
-import { characterCheck, validationPattern, isNotEmptyCheck, Validator } from '@lib/checkInput';
+import { useValidators } from '@lib/validation/useValidators';
+import { isNotEmptyCheck, duplicateNameCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { toKebabName } from '@lib/kebabName';
 import { generateEventOptions, generateSubscriberRolesOptions, mapTenantClientRoles } from '../utils';
 import { Role } from '@store/tenant/models';
@@ -45,15 +45,15 @@ export const AddEditStream = ({
 }: AddEditStreamProps): JSX.Element => {
   const [stream, setStream] = useState<Stream>({ ...initialValue });
 
-  const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
-  const isDuplicateStreamId = (): Validator => {
-    return (streamId: string) => {
-      return streams[streamId] ? 'Stream ID is duplicate, please use a different name to get a unique Stream ID' : '';
-    };
-  };
-
-  const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
-    .add('duplicate', 'name', isDuplicateStreamId())
+  const { errors, validators } = useValidators(
+    'name',
+    'name',
+    badCharsCheck,
+    isNotEmptyCheck('name'),
+    wordMaxLengthCheck(32, 'Name')
+  )
+    .add('duplicate', 'name', duplicateNameCheck(Object.keys(streams), 'Stream'))
+    .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .build();
 
   const streamEvents = useMemo(() => {
@@ -94,6 +94,7 @@ export const AddEditStream = ({
                 data-testid="stream-name"
                 aria-label="stream-name"
                 onChange={(name, value) => {
+                  validators.remove('name');
                   validators['name'].check(value);
                   const streamId = toKebabName(value);
                   setStream({ ...stream, name: value, id: streamId });
@@ -113,6 +114,8 @@ export const AddEditStream = ({
                 aria-label="stream-description"
                 width="100%"
                 onChange={(name, value) => {
+                  validators.remove('description');
+                  validators['description'].check(value);
                   setStream({ ...stream, description: value });
                 }}
               />
@@ -245,6 +248,7 @@ export const AddEditStream = ({
             buttonType="secondary"
             type="button"
             onClick={() => {
+              validators.clear();
               onClose();
             }}
           >

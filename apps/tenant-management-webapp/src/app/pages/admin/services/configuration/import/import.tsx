@@ -12,7 +12,7 @@ import {
 import { ConfigDefinition } from '@store/configuration/model';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { ImportModal } from './importModal';
-import { isValidJSONCheck, jsonSchemaCheck } from '@lib/checkInput';
+import { isValidJSONCheck, jsonSchemaCheck } from '@lib/validation/checkInput';
 import { ErrorStatusText } from '../styled-components';
 import JobList from './jobList';
 import { Import } from '../styled-components';

@@ -8,7 +8,7 @@ import { replaceConfigurationDataAction } from '@store/configuration/action';
 import styled from 'styled-components';
 
 import { useDebounce } from '@lib/useDebounce';
-import { jsonSchemaCheck } from '@lib/checkInput';
+import { jsonSchemaCheck } from '@lib/validation/checkInput';
 interface RevisionEditProps {
   open: boolean;
   revision?: Revision;

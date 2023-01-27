@@ -58,9 +58,7 @@ export const Events: FunctionComponent = () => {
             open={true}
             initialValue={defaultEventDefinition}
             isEdit={false}
-            definitions={Object.entries(definitions).map(([id, definition]) => {
-              return definition;
-            })}
+            definitions={definitions}
             coreNamespaces={coreNamespaces}
             onClose={() => {
               setActivateEditState(false);

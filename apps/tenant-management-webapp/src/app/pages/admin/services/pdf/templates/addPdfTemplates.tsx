@@ -5,8 +5,8 @@ import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experime
 import { PdfTemplate } from '@store/pdf/model';
 import { IdField } from '../styled-components';
 import { toKebabName } from '@lib/kebabName';
-import { useValidators } from '@lib/useValidators';
-import { characterCheck, validationPattern, isNotEmptyCheck, Validator, wordMaxLengthCheck } from '@lib/checkInput';
+import { useValidators } from '@lib/validation/useValidators';
+import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
@@ -25,7 +25,7 @@ export const AddPdfTemplate: FunctionComponent<AddPdfTemplateProps> = ({ initial
   const templates = useSelector((state: RootState) => {
     return state?.pdf?.pdfTemplates;
   });
-
+  const templateIds = Object.keys(templates);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -45,25 +45,15 @@ export const AddPdfTemplate: FunctionComponent<AddPdfTemplateProps> = ({ initial
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
 
-  const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
-
-  const isDuplicateTemplateId = (): Validator => {
-    return (templateId: string) => {
-      return templates[templateId]
-        ? 'Template ID is duplicate, please use a different name to get a unique Template ID'
-        : '';
-    };
-  };
-  const wordLengthCheck = wordMaxLengthCheck(32);
-
   const { errors, validators } = useValidators(
     'name',
     'name',
-    checkForBadChars,
-    wordLengthCheck,
+    badCharsCheck,
+    wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
   )
-    .add('duplicate', 'name', isDuplicateTemplateId())
+    .add('duplicate', 'name', duplicateNameCheck(templateIds, 'Template'))
+    .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .build();
 
   return (
@@ -81,8 +71,13 @@ export const AddPdfTemplate: FunctionComponent<AddPdfTemplateProps> = ({ initial
                 data-testid="pdf-template-name"
                 aria-label="pdf-template-name"
                 onChange={(name, value) => {
-                  validators['name'].check(value);
+                  const validations = {
+                    name: value,
+                  };
+                  validators.remove('name');
+
                   const templateId = toKebabName(value);
+                  validators.checkAll(validations);
                   setTemplate({ ...template, name: value, id: templateId });
                 }}
               />
@@ -92,7 +87,7 @@ export const AddPdfTemplate: FunctionComponent<AddPdfTemplateProps> = ({ initial
               <IdField>{template.id}</IdField>
             </GoAFormItem>
 
-            <GoAFormItem>
+            <GoAFormItem error={errors?.['description']}>
               <label>Description</label>
               <GoATextArea
                 name="pdf-template-description"
@@ -101,6 +96,9 @@ export const AddPdfTemplate: FunctionComponent<AddPdfTemplateProps> = ({ initial
                 testId="pdf-template-description"
                 aria-label="pdf-template-description"
                 onChange={(name, value) => {
+                  const description = value;
+                  validators.remove('description');
+                  validators['description'].check(description);
                   setTemplate({ ...template, description: value });
                 }}
               />
@@ -114,6 +112,7 @@ export const AddPdfTemplate: FunctionComponent<AddPdfTemplateProps> = ({ initial
             buttonType="secondary"
             type="button"
             onClick={() => {
+              validators.clear();
               onClose();
             }}
           >

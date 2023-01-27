@@ -63,6 +63,14 @@ export const validationPattern = {
   lowerKebabCase: { pattern: new RegExp(/^[a-z0-9-]+$/), onFailureMessage: 'Allowed characters are: a-z, 0-9, -' },
   upperKebabCase: { pattern: new RegExp(/^[A-Z0-9-]+$/), onFailureMessage: 'Allowed characters are: A-Z, 0-9, -' },
   validURL: { pattern: new RegExp(/^(http|https):\/\/[^ "]+$/), onFailureMessage: 'Please enter a valid URL' },
+  validEmail: {
+    pattern: new RegExp(/^\w+(?:[.-]\w+)*@\w+(?:[.-]\w+)*(?:\.\w{2,3})+$/),
+    onFailureMessage: 'Please enter a valid email address',
+  },
+  validSms: {
+    pattern: new RegExp(/^\d{10}$/),
+    onFailureMessage: 'Please enter a valid 10 digit phone number ie. 7801234567',
+  },
 };
 
 export type Validator = (input) => string;
@@ -76,6 +84,8 @@ export const characterCheck = (validationPattern: ValidInput): Validator => {
     return '';
   };
 };
+
+export const badCharsCheck = characterCheck(validationPattern.mixedArrowCaseWithSpace);
 
 export const wordCheck = (forbidden: string[]): Validator => {
   return (input: string) => {
@@ -100,13 +110,21 @@ export const isValidJSONCheck = (label?: string): Validator => {
   };
 };
 
-export const wordMaxLengthCheck = (maxLen: number): Validator => {
+export const wordMaxLengthCheck = (maxLen: number, field: string): Validator => {
   return (input: string) => {
     if (input && input.length > maxLen) {
-      return `The max length of ${maxLen} characters is reached.`;
+      return `${field}'s max length of ${maxLen} characters is reached.`;
     } else {
       return '';
     }
+  };
+};
+
+export const duplicateNameCheck = (names: string[], service: string): Validator => {
+  return (name: string) => {
+    return names.includes(name)
+      ? `Duplicated ${service} name ${name}, Please use a different name to get a unique ${service} name`
+      : '';
   };
 };
 

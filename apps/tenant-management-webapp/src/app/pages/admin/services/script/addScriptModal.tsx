@@ -7,10 +7,10 @@ import { ScriptItem } from '@store/script/models';
 import { useSelector } from 'react-redux';
 import { Role } from '@store/tenant/models';
 import { ConfigServiceRole } from '@store/access/models';
-import { useValidators } from '@lib/useValidators';
+import { useValidators } from '@lib/validation/useValidators';
 import { toKebabName } from '@lib/kebabName';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
-import { characterCheck, validationPattern, isNotEmptyCheck, Validator, wordMaxLengthCheck } from '@lib/checkInput';
+import { isNotEmptyCheck, wordMaxLengthCheck, duplicateNameCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { IdField } from './styled-components';
 import { ServiceRoleConfig } from '@store/access/models';
 import { RootState } from '@store/index';
@@ -40,25 +40,15 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
     return state?.scriptService?.scripts;
   });
 
-  const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
-  const wordLengthCheck = wordMaxLengthCheck(32);
-
-  const duplicateScriptCheck = (): Validator => {
-    return (name: string) => {
-      return scripts[name]
-        ? `Duplicated script name ${name}, Please use a different name to get a unique script name`
-        : '';
-    };
-  };
-
   const { errors, validators } = useValidators(
     'name',
     'name',
-    checkForBadChars,
-    wordLengthCheck,
+    badCharsCheck,
+    wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
   )
-    .add('duplicated', 'name', duplicateScriptCheck())
+    .add('duplicated', 'name', duplicateNameCheck(Object.keys(scripts), 'Script'))
+    .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .build();
 
   const roleNames = realmRoles.map((role) => {
@@ -146,7 +136,7 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
             <IdField>{script.id}</IdField>
           </GoAFormItem>
 
-          <GoAFormItem>
+          <GoAFormItem error={errors?.['description']}>
             <label>Description</label>
             <GoATextArea
               name="description"
@@ -190,6 +180,7 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
           buttonType="secondary"
           data-testid="script-modal-cancel"
           onClick={() => {
+            validators.clear();
             onCancel();
           }}
         >

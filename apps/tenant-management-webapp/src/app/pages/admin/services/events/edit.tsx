@@ -12,14 +12,14 @@ import {
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import {
   wordCheck,
-  characterCheck,
-  validationPattern,
   isNotEmptyCheck,
   Validator,
   isValidJSONCheck,
   wordMaxLengthCheck,
-} from '@lib/checkInput';
-import { useValidators } from '@lib/useValidators';
+  badCharsCheck,
+  duplicateNameCheck,
+} from '@lib/validation/checkInput';
+import { useValidators } from '@lib/validation/useValidators';
 import { updateEventDefinition } from '@store/event/actions';
 import { useDispatch } from 'react-redux';
 import styled from 'styled-components';
@@ -27,7 +27,7 @@ import { GoATextArea } from '@abgov/react-components-new';
 
 interface EventDefinitionFormProps {
   initialValue?: EventDefinition;
-  definitions: EventDefinition[];
+  definitions: Record<string, unknown>;
   onClose?: () => void;
   onSave?: () => void;
   open: boolean;
@@ -47,36 +47,29 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
   const [definition, setDefinition] = useState<EventDefinition>(initialValue);
   const dispatch = useDispatch();
   const [payloadSchema, setPayloadSchema] = useState<string>(JSON.stringify(definition.payloadSchema, null, 2));
+
   const forbiddenWords = coreNamespaces.concat('platform');
   const checkForConflicts = wordCheck(forbiddenWords);
-  const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
-  const wordLengthCheck = wordMaxLengthCheck(32);
-
-  const duplicateEventCheck = (definitions: EventDefinition[]): Validator => {
-    return (identifier: string) => {
-      return definitions
-        .map((event) => {
-          return `${event.namespace}:${event.name}`;
-        })
-        .find((_identifier) => {
-          return _identifier === identifier;
-        })
-        ? `Duplicated event ${identifier}.`
-        : '';
+  const identifiers = Object.keys(definitions);
+  const namespaceCheck = (): Validator => {
+    return (namespace: string) => {
+      return namespace === 'platform' ? 'Cannot use the word platform as namespace' : '';
     };
   };
 
   const { errors, validators } = useValidators(
     'namespace',
     'namespace',
+    namespaceCheck(),
+    badCharsCheck,
     checkForConflicts,
-    checkForBadChars,
-    wordLengthCheck,
+    wordMaxLengthCheck(32, 'Namespace'),
     isNotEmptyCheck('namespace')
   )
-    .add('name', 'name', checkForBadChars, wordLengthCheck, isNotEmptyCheck('name'))
-    .add('duplicated', 'name', duplicateEventCheck(definitions))
+    .add('name', 'name', badCharsCheck, wordMaxLengthCheck(32, 'Name'), isNotEmptyCheck('name'))
+    .add('duplicated', 'name', duplicateNameCheck(identifiers, 'Event'))
     .add('payloadSchema', 'payloadSchema', isValidJSONCheck('payloadSchema'))
+    .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .build();
 
   return (
@@ -96,7 +89,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
                 aria-label="nameSpace"
                 onChange={(name, value) => {
                   validators.remove('namespace');
-                  validators.remove('name');
+                  // validators.remove('name');
                   validators['namespace'].check(value);
                   setDefinition({ ...definition, namespace: value });
                 }}
@@ -126,7 +119,11 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
                 value={definition.description}
                 aria-label="description"
                 width="100%"
-                onChange={(name, value) => setDefinition({ ...definition, description: value })}
+                onChange={(name, value) => {
+                  validators.remove('description');
+                  validators['description'].check(value);
+                  setDefinition({ ...definition, description: value });
+                }}
               />
             </GoAFormItem>
             <GoAFormItem error={errors?.['payloadSchema']}>
@@ -175,6 +172,8 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               if (!isEdit) {
                 validations['namespace'] = definition?.namespace;
                 validations['duplicated'] = `${definition?.namespace}:${definition?.name}`;
+                validations['description'] = definition.description;
+                validations['name'] = definition.name;
               }
 
               if (!validators.checkAll(validations)) {

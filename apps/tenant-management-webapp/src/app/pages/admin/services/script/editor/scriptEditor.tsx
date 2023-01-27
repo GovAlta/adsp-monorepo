@@ -186,8 +186,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               data-testid={`script-modal-name-input`}
               aria-label="script-name"
               onChange={(key, value) => {
-                const name = value.substring(0, 32);
-                onNameChange(name);
+                onNameChange(value);
               }}
             />
           </GoAFormItem>

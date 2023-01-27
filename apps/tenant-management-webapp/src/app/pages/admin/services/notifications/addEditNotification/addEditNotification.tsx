@@ -1,4 +1,5 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import type { NotificationItem } from '@store/notification/models';
 import { GoAButton, GoASkeletonGridColumnContent } from '@abgov/react-components';
 import {
@@ -18,14 +19,15 @@ import { ServiceRoleConfig } from '@store/access/models';
 import { AnonymousWrapper } from './styledComponents';
 import { RolesTable } from './rolesTable';
 import { mapTenantClientRoles } from '../../events/stream/utils';
-
+import { useValidators } from '@lib/validation/useValidators';
+import { isNotEmptyCheck, duplicateNameCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
+import { RootState } from '@store/index';
 interface NotificationTypeFormProps {
   initialValue?: NotificationItem;
   onCancel?: () => void;
   onSave?: (type: NotificationItem) => void;
   title: string;
   open: boolean;
-  errors?: Record<string, string>;
   realmRoles: Role[];
   tenantClients: ServiceRoleConfig;
 }
@@ -44,7 +46,6 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   initialValue,
   onCancel,
   onSave,
-  errors,
   title,
   open,
   realmRoles,
@@ -52,7 +53,10 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
 }) => {
   const isEdit = !!initialValue?.id;
   const [type, setType] = useState(initialValue);
-
+  const notificationType = useSelector((state: RootState) => state.notification.notificationTypes);
+  const core = useSelector((state: RootState) => state.notification.core);
+  const typeObjects = Object.values({ ...notificationType, ...core });
+  const typeNames = typeObjects.map((type: NotificationItem) => type.name);
   useEffect(() => {
     setType(JSON.parse(JSON.stringify(initialValue)));
   }, [initialValue]);
@@ -70,6 +74,16 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
     });
   }
   const tenantClientsMappedRoles = tenantClients ? mapTenantClientRoles(tenantClients) : undefined;
+  const { errors, validators } = useValidators(
+    'name',
+    'name',
+    badCharsCheck,
+    wordMaxLengthCheck(32, 'Name'),
+    isNotEmptyCheck('name')
+  )
+    .add('duplicated', 'name', duplicateNameCheck(typeNames, 'Notification type'))
+    .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
+    .build();
 
   return (
     <EditStyles>
@@ -85,7 +99,15 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 value={type.name}
                 data-testid="form-name"
                 aria-label="name"
-                onChange={(name, value) => setType({ ...type, name: value, id: isEdit ? type.id : toKebabName(value) })}
+                onChange={(name, value) => {
+                  const validations = {
+                    name: value,
+                  };
+                  validators.remove('name');
+                  validations['duplicated'] = value;
+
+                  setType({ ...type, name: value, id: isEdit ? type.id : toKebabName(value) });
+                }}
               />
             </GoAFormItem>
             <GoAFormItem>
@@ -97,7 +119,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 </div>
               </div>
             </GoAFormItem>
-            <GoAFormItem>
+            <GoAFormItem error={errors?.['description']}>
               <label>Description</label>
               <GoATextArea
                 name="description"
@@ -244,17 +266,33 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
             type="button"
             onClick={() => {
               setType(initialValue);
+              validators.clear();
               onCancel();
             }}
           >
             Cancel
           </GoAButton>
           <GoAButton
-            disabled={!type?.name}
+            disabled={validators.haveErrors()}
             buttonType="primary"
             data-testid="form-save"
             type="submit"
-            onClick={(e) => onSave(type)}
+            onClick={(e) => {
+              const validations = {
+                name: type.name,
+              };
+              if (!isEdit) {
+                validations['duplicated'] = type.name;
+              }
+              if (!type.channels.includes('email')) {
+                // Must include email as first channel
+                type.channels = ['email', ...type.channels];
+              }
+              if (!validators.checkAll(validations)) {
+                return;
+              }
+              onSave(type);
+            }}
           >
             Save
           </GoAButton>
