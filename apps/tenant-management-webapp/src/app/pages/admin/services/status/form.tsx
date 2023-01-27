@@ -158,8 +158,6 @@ export const ApplicationFormModal: FC<Props> = ({
               name="name"
               value={application?.name}
               onChange={(name, value) => {
-                console.log('errors', errors);
-
                 if (!isEdit) {
                   const appKey = toKebabName(value);
                   // check for duplicate appKey
@@ -172,8 +170,6 @@ export const ApplicationFormModal: FC<Props> = ({
                 } else {
                   // should not update appKey during update
                   validators['nameOnly'].check(value);
-                  console.log('errors', errors);
-
                   setApplication({
                     ...application,
                     name: value,
@@ -184,7 +180,7 @@ export const ApplicationFormModal: FC<Props> = ({
             />
           </GoAFormItem>
           <GoAFormItem>
-            <label>application ID</label>
+            <label>Application ID</label>
             <IdField>{application.appKey}</IdField>
           </GoAFormItem>
           <GoAFormItem error={errors?.['description']}>
