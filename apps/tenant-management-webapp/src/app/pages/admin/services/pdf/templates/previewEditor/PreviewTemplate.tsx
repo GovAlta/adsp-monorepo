@@ -39,6 +39,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
   const previewByType = {
     main: <PdfPreview />,
     'footer/header': <HeaderFooterPreview />,
+    'Template variables': <PdfPreview />,
   };
 
   return <PreviewContainer>{previewByType[channel]}</PreviewContainer>;

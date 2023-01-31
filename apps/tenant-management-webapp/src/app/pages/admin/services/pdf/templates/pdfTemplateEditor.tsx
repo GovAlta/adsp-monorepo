@@ -53,7 +53,11 @@ export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({
   };
 
   const [templateEditErrors, setTemplateEditErrors] = useState(editDefaultErrors);
-  const channelNames = { main: 'PDF preview', 'header/footer': 'Header / Footer preview' };
+  const channelNames = {
+    main: 'PDF preview',
+    'header/footer': 'Header / Footer preview',
+    'Template variables': 'PDF preview',
+  };
 
   const webappUrl = useSelector((state: RootState) => {
     return state.config.serviceUrls.tenantManagementWebApp;
