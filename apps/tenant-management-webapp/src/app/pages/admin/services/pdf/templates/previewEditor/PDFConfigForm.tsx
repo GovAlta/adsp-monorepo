@@ -3,9 +3,10 @@ import { PdfTemplate } from '@store/pdf/model';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { Grid, GridItem } from '@components/Grid';
 import { useValidators } from '@lib/validation/useValidators';
-import { characterCheck, validationPattern, isNotEmptyCheck, wordMaxLengthCheck } from '@lib/validation/checkInput';
+import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { PdfConfigFormWrapper } from './styled-components';
 import { GoATextArea } from '@abgov/react-components-new';
+
 interface PDFConfigFormProps {
   template: PdfTemplate;
   onChange(template: PdfTemplate): void;
@@ -13,15 +14,15 @@ interface PDFConfigFormProps {
 }
 export const PDFConfigForm = ({ template, onChange, setError }: PDFConfigFormProps) => {
   const { id, name, description } = template;
-  const wordLengthCheck = wordMaxLengthCheck(32, 'Name');
-  const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
   const { errors, validators } = useValidators(
     'name',
     'name',
-    checkForBadChars,
-    wordLengthCheck,
+    badCharsCheck,
+    wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
-  ).build();
+  )
+    .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
+    .build();
 
   return (
     <PdfConfigFormWrapper>
@@ -37,6 +38,7 @@ export const PDFConfigForm = ({ template, onChange, setError }: PDFConfigFormPro
                 data-testid={`pdf-service-modal-name-input`}
                 aria-label="name"
                 onChange={(key, name) => {
+                  validators.remove('name');
                   const error = validators['name'].check(name);
                   setError(error && error.length > 0);
                   onChange({ ...template, name });
