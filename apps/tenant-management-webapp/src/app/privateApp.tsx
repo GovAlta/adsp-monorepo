@@ -10,6 +10,7 @@ import { GoAPageLoader } from '@abgov/react-components';
 import { NotificationBanner } from './notificationBanner';
 import styled from 'styled-components';
 import { LogoutModal } from '@components/LogoutModal';
+import { TokenExpiryCount } from '@components/TokenExpiryCount';
 
 interface privateAppProps {
   children: ReactNode;
@@ -51,6 +52,7 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
 
           <NotificationBanner />
           <LogoutModal />
+          <TokenExpiryCount />
         </FixedContainer>
       </ScrollBarFixTop>
       <ScrollBarFixMain notifications={notifications}>
