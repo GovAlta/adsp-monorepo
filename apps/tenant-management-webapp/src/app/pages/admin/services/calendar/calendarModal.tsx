@@ -41,7 +41,7 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
   const calendars = useSelector((state: RootState) => {
     return state?.calendarService?.calendars;
   });
-  const calendarNames = Object.keys(calendars);
+  const calendarNames = calendars ? Object.keys(calendars) : [];
   const title = isNew ? 'Add calendar' : 'Edit calendar';
 
   const { errors, validators } = useValidators(

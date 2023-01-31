@@ -8,6 +8,7 @@ import {
   PdfEditorLabelWrapper,
   PdfEditActionLayout,
   PdfEditActions,
+  GeneratorStyling,
 } from './styled-components';
 import { GoAForm, GoAFormItem, GoABadge } from '@abgov/react-components/experimental';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
@@ -20,6 +21,10 @@ import { SaveFormModal } from '@components/saveModal';
 import { PDFConfigForm } from './PDFConfigForm';
 import { getSuggestion } from '../utils/suggestion';
 import { bodyEditorConfig } from './config';
+import { generatePdf } from '@store/pdf/action';
+import { useDispatch } from 'react-redux';
+import GeneratedPdfList from '../../testGenerate/generatedPdfList';
+import { GeneratePDF } from '../../testGenerate/generatePDF';
 interface TemplateEditorProps {
   modelOpen: boolean;
   onBodyChange: (value: string) => void;
@@ -44,7 +49,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   onHeaderChange,
   onFooterChange,
   setPreview,
-
   template,
   savedTemplate,
   saveCurrentTemplate,
@@ -57,6 +61,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   const [saveModal, setSaveModal] = useState(false);
   const [hasConfigError, setHasConfigError] = useState(false);
   const suggestion = template ? getSuggestion() : [];
+  const dispatch = useDispatch();
   useEffect(() => {
     if (monaco) {
       const provider = monaco.languages.registerCompletionItemProvider('handlebars', {
@@ -105,7 +110,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [modelOpen]);
 
-  const channels = ['footer/header', 'main'];
+  const channels = ['footer/header', 'main', 'Template variables'];
   const tmpTemplate = template;
   const resetSavedAction = () => {
     onBodyChange(savedTemplate.template);
@@ -216,6 +221,24 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     />
                   </MonacoDivBody>
                 </GoAFormItem>
+              </>
+            </Tab>
+            <Tab
+              testId={`pdf-test-generator`}
+              label={<PdfEditorLabelWrapper>Variable Assignments</PdfEditorLabelWrapper>}
+            >
+              <>
+                <GeneratorStyling>
+                  <GeneratePDF
+                    template={template}
+                    onSave={(definition) => {
+                      dispatch(generatePdf(definition));
+                    }}
+                  />
+                  <section>
+                    <GeneratedPdfList />
+                  </section>
+                </GeneratorStyling>
               </>
             </Tab>
           </Tabs>

@@ -190,3 +190,54 @@ export const PdfEditActions = styled.div`
   display: flex;
   gap: 0.5rem;
 `;
+export const EditorStyles = styled.div`
+  border: 1px solid #666;
+  border-radius: 3px;
+`;
+
+export const SpinnerSpace = styled.div`
+  margin: 10px 9px 10px 14px;
+  float: right;
+`;
+
+export const GenerateButtonPadding = styled.div`
+  margin: 0 0 0 14px;
+`;
+
+export const PaddingRight = styled.div`
+  margin-right: 12px;
+  padding-top: 1rem;
+`;
+
+export const FlexRow = styled.div`
+  display: flex;
+  flex-direction: row;
+`;
+export const GeneratorStyling = styled.div`
+  .extra-padding {
+    margin: 20px 0 0 0;
+  }
+
+  .topBottomPadding {
+    padding: 15px 0;
+  }
+
+  .row-flex {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .indicator {
+    background: #f3f3f3;
+    min-width: 160px;
+  }
+
+  .event-stream {
+    flex: 3;
+    fontsize: 12px;
+  }
+
+  .button-margin {
+    margin: 0 0 20px 0;
+  }
+`;

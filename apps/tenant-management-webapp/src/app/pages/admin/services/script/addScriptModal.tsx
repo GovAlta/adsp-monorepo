@@ -39,7 +39,7 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
   const scripts = useSelector((state: RootState) => {
     return state?.scriptService?.scripts;
   });
-
+  const scriptNames = scripts ? Object.keys(scripts) : [];
   const { errors, validators } = useValidators(
     'name',
     'name',
@@ -47,8 +47,8 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
     wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
   )
-    .add('duplicated', 'name', duplicateNameCheck(Object.keys(scripts), 'Script'))
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
+    .add('duplicated', 'name', duplicateNameCheck(scriptNames, 'Script'))
     .build();
 
   const roleNames = realmRoles.map((role) => {
