@@ -1,9 +1,9 @@
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { SetSessionExpired } from '@store/session/actions';
 
-export const TokenExpiryCount = (): JSX.Element => {
+export const useTokenExpiryCount = () => {
   const { refreshTokenExp } = useSelector((state: RootState) => ({
     refreshTokenExp: state.session?.credentials?.refreshTokenExp,
   }));
@@ -24,5 +24,5 @@ export const TokenExpiryCount = (): JSX.Element => {
     };
   }, [refreshTokenExp]);
 
-  return <></>;
+  return null;
 };
