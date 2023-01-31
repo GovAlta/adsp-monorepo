@@ -32,7 +32,7 @@ export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({
   const XSS_CHECK_RENDER_DEBOUNCE_TIMER = 2000; // ms
   const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
   const history = useHistory();
-  const [currentTemplate, setCurrentTemplate] = useState(null);
+  const [currentTemplate, setCurrentTemplate] = useState(passedTemplate);
   const [currentSavedTemplate, setCurrentSavedTemplate] = useState(defaultPdfTemplate);
   const [body, setBody] = useState('');
   const [footer, setFooter] = useState('');
@@ -216,7 +216,7 @@ export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({
           <NotificationTemplateEditorContainer>
             <TemplateEditor
               modelOpen={true}
-              template={passedTemplate}
+              template={currentTemplate}
               savedTemplate={currentSavedTemplate}
               onBodyChange={(value) => {
                 setBody(value);

@@ -230,7 +230,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               data-testid="template-form-close"
               type="secondary"
             >
-              Close
+              Back
             </GoAButton>
             <div>
               <GoAButton
@@ -259,6 +259,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
           onEditorCancel();
           dispatch(ClearScripts());
         }}
+        saveDisable={Object.keys(errors).length > 0 || !hasChanged()}
         onSave={() => {
           updateScript();
           saveAndReset(selectedScript);

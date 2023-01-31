@@ -1,6 +1,6 @@
 import { RootState } from '@store/index';
 import { saveNotice } from '@store/notice/actions';
-import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import React, { useState, useEffect, FormEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton } from '@abgov/react-components';
 import { GoACheckbox } from '@abgov/react-components-new';
@@ -92,6 +92,9 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
   function messageExistsErrors() {
     if (message.length === 0) {
       return { message: 'Description is required' };
+    }
+    if (message.length > 250) {
+      return { message: 'Description could not over 250 characters' };
     }
   }
 
