@@ -269,6 +269,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           saveCurrentTemplate();
           setSaveModal(false);
         }}
+        saveDisable={!validateEventTemplateFields() || hasConfigError}
         onCancel={() => {
           setSaveModal(false);
         }}
