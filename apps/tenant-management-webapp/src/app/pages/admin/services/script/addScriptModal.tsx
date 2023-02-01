@@ -146,6 +146,8 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
               width="100%"
               onChange={(name, value) => {
                 const description = value;
+                validators.remove('description');
+                validators['description'].check(description);
                 setScript({ ...script, description });
               }}
             />

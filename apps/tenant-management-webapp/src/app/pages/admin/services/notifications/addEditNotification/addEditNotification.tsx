@@ -105,7 +105,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                   };
                   validators.remove('name');
                   validations['duplicated'] = value;
-
+                  validators.checkAll(validations);
                   setType({ ...type, name: value, id: isEdit ? type.id : toKebabName(value) });
                 }}
               />
@@ -127,7 +127,12 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 value={type.description}
                 aria-label="description"
                 width="100%"
-                onChange={(name, value) => setType({ ...type, description: value })}
+                onChange={(name, value) => {
+                  const description = value;
+                  validators.remove('description');
+                  validators['description'].check(description);
+                  setType({ ...type, description: value });
+                }}
               />
             </GoAFormItem>
             <GoAFormItem error={errors?.['channels']}>

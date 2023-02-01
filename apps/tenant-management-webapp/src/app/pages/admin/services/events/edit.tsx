@@ -111,7 +111,7 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
                 }}
               />
             </GoAFormItem>
-            <GoAFormItem>
+            <GoAFormItem error={errors?.['description']}>
               <label>Description</label>
               <GoATextArea
                 name="description"
