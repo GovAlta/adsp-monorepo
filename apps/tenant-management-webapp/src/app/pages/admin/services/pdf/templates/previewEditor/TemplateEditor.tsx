@@ -10,7 +10,7 @@ import {
   PdfEditActions,
   GeneratorStyling,
 } from './styled-components';
-import { GoAForm, GoAFormItem, GoABadge } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { PdfTemplate } from '@store/pdf/model';
 import { languages } from 'monaco-editor';
@@ -40,7 +40,6 @@ interface TemplateEditorProps {
   // eslint-disable-next-line
   cancel: () => void;
   updateTemplate: (template: PdfTemplate) => void;
-  validateEventTemplateFields: () => boolean;
 }
 
 export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
@@ -55,7 +54,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   errors,
   cancel,
   updateTemplate,
-  validateEventTemplateFields,
 }) => {
   const monaco = useMonaco();
   const [saveModal, setSaveModal] = useState(false);
@@ -142,16 +140,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           >
             <Tab
               testId={`pdf-edit-header-footer`}
-              label={
-                <PdfEditorLabelWrapper>
-                  Header/Footer{' '}
-                  <div className="badge">
-                    {(errors?.footer || errors?.header) && (
-                      <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" icon="warning" />
-                    )}
-                  </div>
-                </PdfEditorLabelWrapper>
-              }
+              label={<PdfEditorLabelWrapper>Header/Footer </PdfEditorLabelWrapper>}
             >
               <>
                 <GoAFormItem error={errors?.header ?? ''}>
@@ -191,19 +180,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               </>
             </Tab>
 
-            <Tab
-              testId={`pdf-edit-body`}
-              label={
-                <PdfEditorLabelWrapper>
-                  Body
-                  <div className="badge">
-                    {errors?.body && (
-                      <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" icon="warning" />
-                    )}
-                  </div>
-                </PdfEditorLabelWrapper>
-              }
-            >
+            <Tab testId={`pdf-edit-body`} label={<PdfEditorLabelWrapper>Body</PdfEditorLabelWrapper>}>
               <>
                 <GoAFormItem error={errors?.body ?? null}>
                   <div className="title">Body</div>
@@ -269,7 +246,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 Back
               </GoAButton>
               <GoAButton
-                disabled={!validateEventTemplateFields() || hasConfigError}
+                disabled={hasConfigError}
                 onClick={() => saveCurrentTemplate()}
                 buttonType="primary"
                 data-testid="template-form-save"
@@ -292,7 +269,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           saveCurrentTemplate();
           setSaveModal(false);
         }}
-        saveDisable={!validateEventTemplateFields() || hasConfigError}
+        saveDisable={hasConfigError}
         onCancel={() => {
           setSaveModal(false);
         }}
