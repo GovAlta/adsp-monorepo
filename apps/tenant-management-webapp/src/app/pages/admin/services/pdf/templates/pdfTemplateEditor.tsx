@@ -18,7 +18,6 @@ import { PreviewTemplate } from './previewEditor/PreviewTemplate';
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
 import { useDebounce } from '@lib/useDebounce';
-import { hasXSS, XSSErrorMessage } from '@lib/sanitize';
 import { useHistory } from 'react-router-dom';
 
 export interface PdfTemplatesEditorProps {
@@ -29,7 +28,6 @@ export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({
   const [headerPreview, setHeaderPreview] = useState('');
   const [footerPreview, setFooterPreview] = useState('');
   const [currentChannel, setCurrentChannel] = useState('footer/header');
-  const XSS_CHECK_RENDER_DEBOUNCE_TIMER = 2000; // ms
   const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
   const history = useHistory();
   const [currentTemplate, setCurrentTemplate] = useState(passedTemplate);
@@ -42,17 +40,6 @@ export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({
   const debouncedRenderFooterPreview = useDebounce(footer, TEMPLATE_RENDER_DEBOUNCE_TIMER);
   const debouncedRenderHeaderPreview = useDebounce(header, TEMPLATE_RENDER_DEBOUNCE_TIMER);
 
-  const debouncedXssCheckRenderBody = useDebounce(body, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
-  const debouncedXssCheckRenderFooter = useDebounce(footer, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
-  const debouncedXssCheckRenderHeader = useDebounce(header, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
-
-  const editDefaultErrors = {
-    body: '',
-    footer: '',
-    header: '',
-  };
-
-  const [templateEditErrors, setTemplateEditErrors] = useState(editDefaultErrors);
   const channelNames = {
     main: 'PDF preview',
     'header/footer': 'Header / Footer preview',
@@ -127,59 +114,10 @@ export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({
     }
   }, [debouncedRenderBodyPreview]);
 
-  useEffect(() => {
-    if (hasXSS(debouncedXssCheckRenderBody)) {
-      setTemplateEditErrors({
-        ...templateEditErrors,
-        body: XSSErrorMessage,
-      });
-    } else {
-      if (templateEditErrors.body !== '') {
-        setTemplateEditErrors({
-          ...templateEditErrors,
-          body: '',
-        });
-      }
-    }
-  }, [debouncedXssCheckRenderBody]);
-
-  useEffect(() => {
-    if (hasXSS(debouncedXssCheckRenderFooter)) {
-      setTemplateEditErrors({
-        ...templateEditErrors,
-        footer: XSSErrorMessage,
-      });
-    } else {
-      if (templateEditErrors.footer !== '') {
-        setTemplateEditErrors({
-          ...templateEditErrors,
-          footer: '',
-        });
-      }
-    }
-  }, [debouncedXssCheckRenderFooter]);
-
-  useEffect(() => {
-    if (hasXSS(debouncedXssCheckRenderHeader)) {
-      setTemplateEditErrors({
-        ...templateEditErrors,
-        header: XSSErrorMessage,
-      });
-    } else {
-      if (templateEditErrors.header !== '') {
-        setTemplateEditErrors({
-          ...templateEditErrors,
-          header: '',
-        });
-      }
-    }
-  }, [debouncedXssCheckRenderHeader]);
-
   const dispatch = useDispatch();
 
   const reset = () => {
     setCurrentTemplate(defaultPdfTemplate);
-    setTemplateEditErrors(editDefaultErrors);
     setBodyPreview('');
     setFooterPreview('');
     setHeaderPreview('');
@@ -197,17 +135,6 @@ export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({
     dispatch(updatePdfTemplate(saveObject));
 
     reset();
-  };
-
-  const validateEventTemplateFields = () => {
-    try {
-      const xssTemplate =
-        templateEditErrors?.header !== '' || templateEditErrors?.footer !== '' || templateEditErrors?.body !== '';
-      return true && !xssTemplate;
-    } catch (e) {
-      console.error(e);
-      return false;
-    }
   };
 
   return (
@@ -254,8 +181,6 @@ export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({
               }}
               saveCurrentTemplate={savePdfTemplate}
               cancel={reset}
-              errors={templateEditErrors}
-              validateEventTemplateFields={validateEventTemplateFields}
             />
 
             <PreviewTemplateContainer>
