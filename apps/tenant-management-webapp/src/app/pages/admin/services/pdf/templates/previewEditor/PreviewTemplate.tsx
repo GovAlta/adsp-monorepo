@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from 'react';
-import { PreviewContainer, BodyPreview } from './styled-components';
+import { PreviewContainer, BodyPreview } from '../../styled-components';
 
 interface PreviewTemplateProps {
   channelTitle: string;
@@ -39,7 +39,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
   const previewByType = {
     main: <PdfPreview />,
     'footer/header': <HeaderFooterPreview />,
-    'Template variables': <PdfPreview />,
+    'Variable assignments': <PdfPreview />,
   };
 
   return <PreviewContainer>{previewByType[channel]}</PreviewContainer>;

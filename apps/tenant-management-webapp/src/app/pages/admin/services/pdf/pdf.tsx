@@ -2,7 +2,6 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { PdfOverview } from './overview';
-import { TestGenerate } from './testGenerate';
 import { PdfTemplates } from './templates/templates';
 import SupportLinks from '@components/SupportLinks';
 import { useSelector, useDispatch } from 'react-redux';
@@ -34,9 +33,6 @@ export const Pdf: FunctionComponent = () => {
           </Tab>
           <Tab label="Templates">
             <PdfTemplates openAddTemplate={openAddTemplate} />
-          </Tab>
-          <Tab label="Test generate">
-            <TestGenerate />
           </Tab>
         </Tabs>
       </Main>
