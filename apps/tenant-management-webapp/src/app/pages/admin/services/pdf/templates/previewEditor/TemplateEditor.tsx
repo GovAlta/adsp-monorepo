@@ -9,13 +9,16 @@ import {
   PdfEditActionLayout,
   PdfEditActions,
   GeneratorStyling,
-} from './styled-components';
+  GenerateButtonPadding,
+  SpinnerPadding,
+  SpinnerSpace,
+} from '../../styled-components';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { PdfTemplate } from '@store/pdf/model';
 import { languages } from 'monaco-editor';
 import { buildSuggestions, triggerInScope } from '@lib/autoComplete';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { Tab, Tabs } from '@components/Tabs';
 import { SaveFormModal } from '@components/saveModal';
 import { PDFConfigForm } from './PDFConfigForm';
@@ -25,6 +28,9 @@ import { generatePdf } from '@store/pdf/action';
 import { useDispatch } from 'react-redux';
 import GeneratedPdfList from '../../testGenerate/generatedPdfList';
 import { GeneratePDF } from '../../testGenerate/generatePDF';
+import { GoAElementLoader } from '@abgov/react-components';
+import { useSelector } from 'react-redux';
+import { RootState } from '@store/index';
 interface TemplateEditorProps {
   modelOpen: boolean;
   onBodyChange: (value: string) => void;
@@ -58,8 +64,13 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   const monaco = useMonaco();
   const [saveModal, setSaveModal] = useState(false);
   const [hasConfigError, setHasConfigError] = useState(false);
+  const [variables, setVariables] = useState('{}');
   const suggestion = template ? getSuggestion() : [];
+  const [activeIndex, setActiveIndex] = useState(0);
   const dispatch = useDispatch();
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
   useEffect(() => {
     if (monaco) {
       const provider = monaco.languages.registerCompletionItemProvider('handlebars', {
@@ -86,8 +97,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [monaco, suggestion]);
 
-  const [activeIndex, setActiveIndex] = useState(0);
-
   useEffect(() => {
     setPreview('footer/header');
     onHeaderChange(template?.header);
@@ -108,7 +117,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [modelOpen]);
 
-  const channels = ['footer/header', 'main', 'Template variables'];
+  const channels = ['footer/header', 'main', 'Variable assignments'];
   const tmpTemplate = template;
   const resetSavedAction = () => {
     onBodyChange(savedTemplate.template);
@@ -134,6 +143,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           <Tabs
             activeIndex={activeIndex}
             changeTabCallback={(index: number) => {
+              setActiveIndex(index);
               switchTabPreview(channels[index]);
               updateTemplate(tmpTemplate);
             }}
@@ -206,14 +216,9 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             >
               <>
                 <GeneratorStyling>
-                  <GeneratePDF
-                    template={template}
-                    onSave={(definition) => {
-                      dispatch(generatePdf(definition));
-                    }}
-                  />
+                  <GeneratePDF payloadData={variables} setPayload={setVariables} />
                   <section>
-                    <GeneratedPdfList />
+                    <GeneratedPdfList templateId={template.id} />
                   </section>
                 </GeneratorStyling>
               </>
@@ -222,38 +227,69 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
         </GoAFormItem>
 
         <EditTemplateActions>
-          {' '}
           <PdfEditActionLayout>
             <PdfEditActions>
-              <GoAButton
-                onClick={() => {
-                  if (
-                    savedTemplate.template !== template.template ||
-                    savedTemplate.header !== template.header ||
-                    savedTemplate.footer !== template.footer ||
-                    savedTemplate.name !== template.name ||
-                    savedTemplate.description !== template.description
-                  ) {
-                    setSaveModal(true);
-                  } else {
-                    cancel();
-                  }
-                }}
-                data-testid="template-form-close"
-                buttonType="secondary"
-                type="button"
-              >
-                Back
-              </GoAButton>
-              <GoAButton
-                disabled={hasConfigError}
-                onClick={() => saveCurrentTemplate()}
-                buttonType="primary"
-                data-testid="template-form-save"
-                type="submit"
-              >
-                Save
-              </GoAButton>
+              <>
+                <GoAButton
+                  disabled={hasConfigError}
+                  onClick={() => saveCurrentTemplate()}
+                  type="primary"
+                  data-testid="template-form-save"
+                >
+                  Save
+                </GoAButton>
+                {activeIndex === 2 && (
+                  <GoAButton
+                    disabled={indicator.show}
+                    type="secondary"
+                    data-testid="form-save"
+                    onClick={() => {
+                      saveCurrentTemplate();
+                      const payload = {
+                        templateId: template.id,
+                        data: JSON.parse(variables),
+                        fileName: `${template.id}_${new Date().toJSON().slice(0, 19).replace(/:/g, '-')}.pdf`,
+                      };
+                      dispatch(generatePdf(payload));
+                    }}
+                  >
+                    <GenerateButtonPadding>
+                      Generate PDF
+                      {indicator.show ? (
+                        <SpinnerPadding>
+                          <GoAElementLoader
+                            visible={true}
+                            size="default"
+                            baseColour="#c8eef9"
+                            spinnerColour="#0070c4"
+                          />
+                        </SpinnerPadding>
+                      ) : (
+                        <SpinnerSpace></SpinnerSpace>
+                      )}
+                    </GenerateButtonPadding>
+                  </GoAButton>
+                )}
+                <GoAButton
+                  onClick={() => {
+                    if (
+                      savedTemplate.template !== template.template ||
+                      savedTemplate.header !== template.header ||
+                      savedTemplate.footer !== template.footer ||
+                      savedTemplate.name !== template.name ||
+                      savedTemplate.description !== template.description
+                    ) {
+                      setSaveModal(true);
+                    } else {
+                      cancel();
+                    }
+                  }}
+                  data-testid="template-form-close"
+                  type="tertiary"
+                >
+                  Back
+                </GoAButton>
+              </>
             </PdfEditActions>
           </PdfEditActionLayout>
         </EditTemplateActions>

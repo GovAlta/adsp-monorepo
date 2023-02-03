@@ -4,7 +4,7 @@ import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experime
 import { Grid, GridItem } from '@components/Grid';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
-import { PdfConfigFormWrapper } from './styled-components';
+import { PdfConfigFormWrapper } from '../../styled-components';
 import { GoATextArea } from '@abgov/react-components-new';
 
 interface PDFConfigFormProps {

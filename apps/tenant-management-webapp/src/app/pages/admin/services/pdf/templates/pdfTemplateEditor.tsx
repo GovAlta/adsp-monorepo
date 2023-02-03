@@ -11,7 +11,7 @@ import {
   Modal,
   BodyGlobalStyles,
   ModalContent,
-} from './previewEditor/styled-components';
+} from '../styled-components';
 
 import { TemplateEditor } from './previewEditor/TemplateEditor';
 import { PreviewTemplate } from './previewEditor/PreviewTemplate';
@@ -43,7 +43,7 @@ export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({
   const channelNames = {
     main: 'PDF preview',
     'header/footer': 'Header / Footer preview',
-    'Template variables': 'PDF preview',
+    'Variable assignments': 'PDF preview',
   };
 
   const webappUrl = useSelector((state: RootState) => {
@@ -133,8 +133,7 @@ export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({
     saveObject.header = header;
     saveObject.footer = footer;
     dispatch(updatePdfTemplate(saveObject));
-
-    reset();
+    setCurrentSavedTemplate(currentTemplate);
   };
 
   return (

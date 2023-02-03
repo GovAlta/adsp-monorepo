@@ -10,11 +10,15 @@ import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import InformationCircle from '@components/icons/InformationCircle';
 import { streamPdfSocket } from '@store/pdf/action';
-import { FileTableStyles } from './styled-components';
-const GeneratedPdfList = (): JSX.Element => {
+import { FileTableStyles } from '../styled-components';
+
+interface GeneratedPdfListProps {
+  templateId: string;
+}
+
+const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element => {
   const dispatch = useDispatch();
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
-
   const onDownloadFile = async (file) => {
     dispatch(DownloadFileService(file));
   };
@@ -49,66 +53,68 @@ const GeneratedPdfList = (): JSX.Element => {
   const renderFileTable = () => {
     return (
       <FileTableStyles>
-        {jobList.length > 0 && (
-          <DataTable id="files-information">
-            <thead>
-              <tr>
-                <th>File Name</th>
-                <th>Status</th>
-                <th>Size (KB)</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {jobList.map((job, key) => {
-                const file = fileList.find((file) => file.recordId === job.id);
-                const status = file?.filename ? 'pdf-generated' : job.status;
-                return (
-                  <tr key={job.id}>
-                    <td>{job.filename}</td>
-                    {/* Use ceil here to make sure people will allocate enough resources */}
-                    <td>
-                      <div className="flex-horizontal mt-2">
-                        <div className="mt-1">{iconGenerator[status]}</div>
-                        <div className="flex">{statusGenerator[status]}</div>
-                      </div>
-                    </td>
-                    <td>
-                      {file?.size ? (
-                        Math.ceil(file.size / 1024)
-                      ) : (
-                        <div>
-                          {job.fileWasGenerated ? (
-                            'Deleted'
-                          ) : (
-                            <GoASkeletonGridColumnContent key={job.id} rows={1}></GoASkeletonGridColumnContent>
-                          )}
+        <DataTable id="files-information">
+          <thead>
+            <tr>
+              <th>File Name</th>
+              <th>Status</th>
+              <th>Size (KB)</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {jobList.map((job, key) => {
+              const file = fileList.find((file) => file.recordId === job.id && file.filename.indexOf(templateId) > -1);
+              const status = file?.filename ? 'pdf-generated' : job.status;
+              return (
+                <>
+                  {file && (
+                    <tr key={job.id}>
+                      <td>{job.filename}</td>
+                      {/* Use ceil here to make sure people will allocate enough resources */}
+                      <td>
+                        <div className="flex-horizontal mt-2">
+                          <div className="mt-1">{iconGenerator[status]}</div>
+                          <div className="flex">{statusGenerator[status]}</div>
                         </div>
-                      )}
-                    </td>
-                    <td>
-                      {file?.filename ? (
-                        <GoAIconButton
-                          disabled={!file?.size}
-                          data-testid="download-icon"
-                          size="medium"
-                          type="download"
-                          onClick={() => onDownloadFile(file)}
-                        />
-                      ) : (
-                        <div>
-                          {!job.fileWasGenerated && (
-                            <GoASkeletonGridColumnContent key={job.id} rows={1}></GoASkeletonGridColumnContent>
-                          )}
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </DataTable>
-        )}
+                      </td>
+                      <td>
+                        {file?.size ? (
+                          Math.ceil(file.size / 1024)
+                        ) : (
+                          <div>
+                            {job.fileWasGenerated ? (
+                              'Deleted'
+                            ) : (
+                              <GoASkeletonGridColumnContent key={job.id} rows={1}></GoASkeletonGridColumnContent>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        {file?.filename ? (
+                          <GoAIconButton
+                            disabled={!file?.size}
+                            data-testid="download-icon"
+                            size="medium"
+                            type="download"
+                            onClick={() => onDownloadFile(file)}
+                          />
+                        ) : (
+                          <div>
+                            {!job.fileWasGenerated && (
+                              <GoASkeletonGridColumnContent key={job.id} rows={1}></GoASkeletonGridColumnContent>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                </>
+              );
+            })}
+          </tbody>
+        </DataTable>
       </FileTableStyles>
     );
   };
