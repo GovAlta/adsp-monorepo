@@ -76,7 +76,9 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
         jobs[index].stream.push(action.payload);
         jobs[index].status = action.payload.name;
       } else {
-        jobs = [action.payload].concat(jobs);
+        if (action.payload?.filename) {
+          jobs = [action.payload].concat(jobs);
+        }
       }
       return {
         ...state,
