@@ -148,10 +148,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               updateTemplate(tmpTemplate);
             }}
           >
-            <Tab
-              testId={`pdf-edit-header-footer`}
-              label={<PdfEditorLabelWrapper>Header/Footer </PdfEditorLabelWrapper>}
-            >
+            <Tab testId={`pdf-edit-header-footer`} label={<PdfEditorLabelWrapper>Header/Footer</PdfEditorLabelWrapper>}>
               <>
                 <GoAFormItem error={errors?.header ?? ''}>
                   <div className="title">Header</div>
