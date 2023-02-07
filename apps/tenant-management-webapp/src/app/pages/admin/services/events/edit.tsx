@@ -16,7 +16,7 @@ import {
   Validator,
   isValidJSONCheck,
   wordMaxLengthCheck,
-  badCharsCheck,
+  badCharsCheckNoSpace,
   duplicateNameCheck,
 } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
@@ -61,12 +61,12 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
     'namespace',
     'namespace',
     namespaceCheck(),
-    badCharsCheck,
+    badCharsCheckNoSpace,
     checkForConflicts,
     wordMaxLengthCheck(32, 'Namespace'),
     isNotEmptyCheck('namespace')
   )
-    .add('name', 'name', badCharsCheck, wordMaxLengthCheck(32, 'Name'), isNotEmptyCheck('name'))
+    .add('name', 'name', badCharsCheckNoSpace, wordMaxLengthCheck(32, 'Name'), isNotEmptyCheck('name'))
     .add('duplicated', 'name', duplicateNameCheck(identifiers, 'Event'))
     .add('payloadSchema', 'payloadSchema', isValidJSONCheck('payloadSchema'))
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
@@ -89,7 +89,6 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
                 aria-label="nameSpace"
                 onChange={(name, value) => {
                   validators.remove('namespace');
-                  // validators.remove('name');
                   validators['namespace'].check(value);
                   setDefinition({ ...definition, namespace: value });
                 }}

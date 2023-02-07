@@ -86,7 +86,7 @@ export const characterCheck = (validationPattern: ValidInput): Validator => {
 };
 
 export const badCharsCheck = characterCheck(validationPattern.mixedArrowCaseWithSpace);
-
+export const badCharsCheckNoSpace = characterCheck(validationPattern.mixedKebabCase);
 export const wordCheck = (forbidden: string[]): Validator => {
   return (input: string) => {
     return forbidden.some((e) => e === input) ? `${input} is forbidden` : '';
