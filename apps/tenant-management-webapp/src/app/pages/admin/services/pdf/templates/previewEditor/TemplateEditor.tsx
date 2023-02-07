@@ -31,6 +31,7 @@ import { GeneratePDF } from '../../testGenerate/generatePDF';
 import { GoAElementLoader } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
+import { streamPdfSocket } from '@store/pdf/action';
 interface TemplateEditorProps {
   modelOpen: boolean;
   onBodyChange: (value: string) => void;
@@ -71,6 +72,14 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+  const socketChannel = useSelector((state: RootState) => {
+    return state?.pdf.socketChannel;
+  });
+
+  useEffect(() => {
+    if (!socketChannel || socketChannel.connected === false) dispatch(streamPdfSocket(false));
+  }, [socketChannel]);
+
   useEffect(() => {
     if (monaco) {
       const provider = monaco.languages.registerCompletionItemProvider('handlebars', {
@@ -148,10 +157,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               updateTemplate(tmpTemplate);
             }}
           >
-            <Tab
-              testId={`pdf-edit-header-footer`}
-              label={<PdfEditorLabelWrapper>Header/Footer </PdfEditorLabelWrapper>}
-            >
+            <Tab testId={`pdf-edit-header-footer`} label={<PdfEditorLabelWrapper>Header/Footer</PdfEditorLabelWrapper>}>
               <>
                 <GoAFormItem error={errors?.header ?? ''}>
                   <div className="title">Header</div>

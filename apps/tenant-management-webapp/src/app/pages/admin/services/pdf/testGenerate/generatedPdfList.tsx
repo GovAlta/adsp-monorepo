@@ -9,7 +9,6 @@ import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import InformationCircle from '@components/icons/InformationCircle';
-import { streamPdfSocket } from '@store/pdf/action';
 import { FileTableStyles } from '../styled-components';
 
 interface GeneratedPdfListProps {
@@ -22,14 +21,6 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
   const onDownloadFile = async (file) => {
     dispatch(DownloadFileService(file));
   };
-
-  const socketChannel = useSelector((state: RootState) => {
-    return state?.pdf.socketChannel;
-  });
-
-  useEffect(() => {
-    if (!socketChannel || socketChannel.connected === false) dispatch(streamPdfSocket(false));
-  }, [socketChannel]);
 
   useEffect(() => {
     dispatch(updatePdfResponse({ fileList: fileList }));
@@ -49,6 +40,9 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
     'pdf-generated': <CheckmarkCircle size="medium" />,
     'pdf-generation-failed': <CloseCircle size="medium" />,
   };
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
 
   const renderFileTable = () => {
     return (
@@ -68,7 +62,7 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
               const status = file?.filename ? 'pdf-generated' : job.status;
               return (
                 <>
-                  {file && (
+                  {(file || indicator.show) && (
                     <tr key={job.id}>
                       <td>{job.filename}</td>
                       {/* Use ceil here to make sure people will allocate enough resources */}
@@ -83,10 +77,10 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                           Math.ceil(file.size / 1024)
                         ) : (
                           <div>
-                            {job.fileWasGenerated ? (
+                            {!indicator.show ? (
                               'Deleted'
                             ) : (
-                              <GoASkeletonGridColumnContent key={job.id} rows={1}></GoASkeletonGridColumnContent>
+                              <GoASkeletonGridColumnContent rows={1}></GoASkeletonGridColumnContent>
                             )}
                           </div>
                         )}
@@ -102,9 +96,7 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                           />
                         ) : (
                           <div>
-                            {!job.fileWasGenerated && (
-                              <GoASkeletonGridColumnContent key={job.id} rows={1}></GoASkeletonGridColumnContent>
-                            )}
+                            {indicator.show && <GoASkeletonGridColumnContent rows={1}></GoASkeletonGridColumnContent>}
                           </div>
                         )}
                       </td>
