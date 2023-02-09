@@ -32,6 +32,8 @@ import { GoAElementLoader } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { streamPdfSocket } from '@store/pdf/action';
+import { LogoutModal } from '@components/LogoutModal';
+
 interface TemplateEditorProps {
   modelOpen: boolean;
   onBodyChange: (value: string) => void;
@@ -48,6 +50,16 @@ interface TemplateEditorProps {
   cancel: () => void;
   updateTemplate: (template: PdfTemplate) => void;
 }
+
+const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
+  return (
+    prev.template !== next.template ||
+    prev.header !== next.header ||
+    prev.footer !== next.footer ||
+    prev.name !== next.name ||
+    prev.description !== next.description
+  );
+};
 
 export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   modelOpen,
@@ -136,6 +148,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
   return (
     <TemplateEditorContainerPdf>
+      <LogoutModal />
       {template && (
         <PDFConfigForm
           template={template}
@@ -237,7 +250,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             <PdfEditActions>
               <>
                 <GoAButton
-                  disabled={hasConfigError}
+                  disabled={hasConfigError || !isPDFUpdated(template, savedTemplate)}
                   onClick={() => saveCurrentTemplate()}
                   type="primary"
                   data-testid="template-form-save"
@@ -278,13 +291,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 )}
                 <GoAButton
                   onClick={() => {
-                    if (
-                      savedTemplate.template !== template.template ||
-                      savedTemplate.header !== template.header ||
-                      savedTemplate.footer !== template.footer ||
-                      savedTemplate.name !== template.name ||
-                      savedTemplate.description !== template.description
-                    ) {
+                    if (isPDFUpdated(template, savedTemplate)) {
                       setSaveModal(true);
                     } else {
                       cancel();
@@ -310,6 +317,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
         onSave={() => {
           saveCurrentTemplate();
           setSaveModal(false);
+          cancel();
         }}
         saveDisable={hasConfigError}
         onCancel={() => {

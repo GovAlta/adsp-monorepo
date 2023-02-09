@@ -16,7 +16,7 @@ import { Events } from './services/events';
 import { Notifications } from './services/notifications';
 import { Configuration } from './services/configuration';
 import { Calendar } from './services/calendar';
-import { Pdf } from './services/pdf';
+import { PDFRouter } from './services/pdf';
 import { Script } from './services/script';
 
 const TenantManagement = (): JSX.Element => {
@@ -54,9 +54,7 @@ const TenantManagement = (): JSX.Element => {
           <Route exact path="/admin/services/configuration">
             <Configuration />
           </Route>
-          <Route exact path="/admin/services/pdf">
-            <Pdf />
-          </Route>
+          <Route path="/admin/services/pdf" component={PDFRouter} />
           <Route exact path="/admin/services/file">
             <File />
           </Route>

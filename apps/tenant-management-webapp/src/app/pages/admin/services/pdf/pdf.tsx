@@ -21,7 +21,7 @@ export const Pdf: FunctionComponent = () => {
   useEffect(() => {
     dispatch(FetchFilesService());
     dispatch(FetchFileTypeService());
-  }, [dispatch]);
+  }, []);
 
   return (
     <Page>

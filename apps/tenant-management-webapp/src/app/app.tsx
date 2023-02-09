@@ -17,7 +17,6 @@ import { PrivateApp, PrivateRoute } from './privateApp';
 import { fetchConfig } from '@store/config/actions';
 import AuthContext from '@lib/authContext';
 import CreateTenant from '@pages/admin/tenants/CreateTenant';
-import { EditorLayoutManager } from '@pages/editor';
 import { ThemeProvider } from 'styled-components';
 import { theme } from 'theme';
 import PublicApp from './publicApp';
@@ -44,11 +43,6 @@ const AppRouters = () => {
               <PrivateApp>
                 <PrivateRoute path="/admin" component={Admin} />
                 <PrivateRoute path="/admin/tenants" component={TenantsRouter} />
-              </PrivateApp>
-            </Route>
-            <Route path="/editor">
-              <PrivateApp>
-                <PrivateRoute path="/editor" component={EditorLayoutManager} />
               </PrivateApp>
             </Route>
             <PublicApp>
