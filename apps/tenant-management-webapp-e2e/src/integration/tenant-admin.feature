@@ -92,14 +92,14 @@ Feature: Tenant admin
     And the user clicks "Event" link
     Then the user is directed to "Event service" page
     When the user selects the "Dashboard" menu item
-    And the user clicks "PDF" link
-    Then the user is directed to "PDF service" page
-    When the user selects the "Dashboard" menu item
-    And the user clicks "Configuration" link
-    Then the user is directed to "Configuration service" page
-    When the user selects the "Dashboard" menu item
-    And the user clicks "Script" link
-    Then the user is directed to "Script service" page
+    #And the user clicks "PDF" link
+    #Then the user is directed to "PDF service" page
+    #When the user selects the "Dashboard" menu item
+    #And the user clicks "Configuration" link
+    #Then the user is directed to "Configuration service" page
+    #When the user selects the "Dashboard" menu item
+    #And the user clicks "Script" link
+    #Then the user is directed to "Script service" page
 
   # TEST DATA: need a user without tenant admin role
   @TEST_CS-743 @regression

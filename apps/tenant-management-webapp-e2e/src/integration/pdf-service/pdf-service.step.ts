@@ -124,7 +124,7 @@ Then('the user views {string}, {string} and {string} in PDF template modal', fun
 });
 
 When('the user clicks Save button in PDF template modal', function () {
-  pdfServiceObj.pdfTemplateModalSaveBtn().click();
+  pdfServiceObj.pdfTemplateModalSaveBtn().shadow().find('button').click();
   cy.wait(1000);
 });
 
