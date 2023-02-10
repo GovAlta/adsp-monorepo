@@ -1,10 +1,9 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { updatePdfTemplate } from '@store/pdf/action';
 import { RootState } from '@store/index';
 
 import { defaultPdfTemplate } from '@store/pdf/model';
-import { PdfTemplate } from '@store/pdf/model';
 import {
   PreviewTemplateContainer,
   NotificationTemplateEditorContainer,
@@ -18,19 +17,22 @@ import { PreviewTemplate } from './previewEditor/PreviewTemplate';
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
 import { useDebounce } from '@lib/useDebounce';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 
-export interface PdfTemplatesEditorProps {
-  passedTemplate?: PdfTemplate;
-}
-export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({ passedTemplate }) => {
+export const PdfTemplatesEditor = (): JSX.Element => {
+  const { id } = useParams<{ id: string }>();
+
+  const pdfTemplate = useSelector((state: RootState) => {
+    return state?.pdf?.pdfTemplates[id];
+  });
+
   const [bodyPreview, setBodyPreview] = useState('');
   const [headerPreview, setHeaderPreview] = useState('');
   const [footerPreview, setFooterPreview] = useState('');
   const [currentChannel, setCurrentChannel] = useState('footer/header');
   const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
   const history = useHistory();
-  const [currentTemplate, setCurrentTemplate] = useState(passedTemplate);
+  const [currentTemplate, setCurrentTemplate] = useState(pdfTemplate);
   const [currentSavedTemplate, setCurrentSavedTemplate] = useState(defaultPdfTemplate);
   const [body, setBody] = useState('');
   const [footer, setFooter] = useState('');
@@ -46,16 +48,20 @@ export const PdfTemplatesEditor: FunctionComponent<PdfTemplatesEditorProps> = ({
     'Variable assignments': 'PDF preview',
   };
 
+  // eslint-disable-next-line
+  useEffect(() => {}, [pdfTemplate]);
+
   const webappUrl = useSelector((state: RootState) => {
     return state.config.serviceUrls.tenantManagementWebApp;
   });
   useEffect(() => {
-    setCurrentTemplate(passedTemplate);
-    setCurrentSavedTemplate(JSON.parse(JSON.stringify(passedTemplate)));
-    setBody(passedTemplate?.template || '');
-    setFooter(passedTemplate?.footer || '');
-    setHeader(passedTemplate?.header || '');
-  }, [passedTemplate]);
+    setCurrentTemplate(pdfTemplate);
+    setCurrentSavedTemplate(JSON.parse(JSON.stringify(pdfTemplate)));
+    setBody(pdfTemplate?.template || '');
+    setFooter(pdfTemplate?.footer || '');
+    setHeader(pdfTemplate?.header || '');
+  }, [pdfTemplate]);
+
   useEffect(() => {
     try {
       let template = '';

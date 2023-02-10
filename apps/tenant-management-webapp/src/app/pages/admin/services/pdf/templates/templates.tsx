@@ -52,6 +52,9 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
     dispatch(getPdfTemplates());
   }, []);
 
+  // eslint-disable-next-line
+  useEffect(() => {}, [pdfTemplates]);
+
   return (
     <>
       <div>

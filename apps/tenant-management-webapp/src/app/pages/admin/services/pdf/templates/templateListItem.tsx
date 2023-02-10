@@ -4,6 +4,8 @@ import { GoAContextMenuIcon } from '@components/ContextMenu';
 import styled from 'styled-components';
 import { GoAIconButton } from '@abgov/react-components/experimental';
 import { GoABadge } from '@abgov/react-components/experimental';
+import { useRouteMatch } from 'react-router';
+import { useHistory } from 'react-router-dom';
 
 interface PdfTemplateItemProps {
   pdfTemplate: PdfTemplate;
@@ -11,6 +13,8 @@ interface PdfTemplateItemProps {
   onDelete?: (PdfTemplate) => void;
 }
 export const PdfTemplateItem: FunctionComponent<PdfTemplateItemProps> = ({ pdfTemplate, edit, onDelete }) => {
+  const { url } = useRouteMatch();
+  const history = useHistory();
   return (
     <>
       <tr>
@@ -25,7 +29,7 @@ export const PdfTemplateItem: FunctionComponent<PdfTemplateItemProps> = ({ pdfTe
               <GoAContextMenuIcon
                 type="create"
                 title="Edit"
-                onClick={() => edit(pdfTemplate)}
+                onClick={() => history.push(`${url}/edit/${pdfTemplate.id}`)}
                 testId={`edit-pdf-item`}
               />
               <GoAIconButton
