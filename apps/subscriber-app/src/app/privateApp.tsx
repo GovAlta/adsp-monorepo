@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom-6';
 import Header from '@components/AppHeader';
 import { HeaderCtx } from '@lib/headerContext';
+import { RootState } from '@store/index';
 import { KeycloakCheckSSOWithLogout, KeycloakRefreshToken } from '@store/tenant/actions';
 import { NotificationBanner } from './notificationBanner';
 import { UpdateConfigRealm } from '@store/config/actions';
