@@ -1,3 +1,7 @@
+import { defaultTemplateBody } from '../../store/pdf/defaultTemplates/body';
+import { defaultTemplateHeader } from '../../store/pdf/defaultTemplates/header';
+import { defaultTemplateFooter } from '../../store/pdf/defaultTemplates/footer';
+
 export interface PdfTemplate {
   id: string;
   name: string;
@@ -97,7 +101,7 @@ export const defaultPdfTemplate: PdfTemplate = {
   id: '',
   name: '',
   description: '',
-  template: '',
-  header: '',
-  footer: '',
+  template: defaultTemplateBody,
+  header: defaultTemplateHeader,
+  footer: defaultTemplateFooter,
 };
