@@ -36,6 +36,9 @@ import {
   DeleteSubscriberSuccess,
   DELETE_SUBSCRIPTION,
   DeleteSubscriptionSuccess,
+  ToggleSubsAction,
+  TOGGLE_SHOW_SUBSCRIPTIONS,
+  ToggleShowSubsSuccess,
 } from './actions';
 import { Subscriber, SubscriptionWrapper, Events } from './models';
 import { RootState } from '../index';
@@ -406,6 +409,9 @@ function* deleteSubscriber(action: DeleteSubscriberAction): SagaIterator {
     yield put(ErrorNotification({ message: `Subscriptions (getSubscriberSubscriptions): ${e.message}` }));
   }
 }
+function* toggleShowSubs(action: ToggleSubsAction): SagaIterator {
+  yield put(ToggleShowSubsSuccess(action.payload.subscriberInfo));
+}
 
 export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(GET_MY_SUBSCRIBER, getMySubscriber);
@@ -420,4 +426,5 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(RESOLVE_SUBSCRIBER_USER, resolveSubscriberUser);
   yield takeEvery(UPDATE_SUBSCRIBER, updateSubscriber);
   yield takeEvery(DELETE_SUBSCRIBER, deleteSubscriber);
+  yield takeEvery(TOGGLE_SHOW_SUBSCRIPTIONS, toggleShowSubs);
 }
