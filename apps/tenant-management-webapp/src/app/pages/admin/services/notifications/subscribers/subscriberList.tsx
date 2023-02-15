@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
 import styled from 'styled-components';
 import { SubscriberModalForm } from '../editSubscriber';
-import { UpdateSubscriber } from '@store/subscription/actions';
+import { ToggleShowSubs, UpdateSubscriber } from '@store/subscription/actions';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Subscriber } from '@store/subscription/models';
 import { GetSubscriberSubscriptions, DeleteSubscriber } from '@store/subscription/actions';
@@ -41,10 +41,8 @@ const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
   );
 
   const dispatch = useDispatch();
-  const [showSubscriptions, setShowSubscriptions] = useState(false);
   const email = subscriber?.channels?.find(({ channel }) => channel === 'email')?.address;
   const sms = subscriber?.channels?.find(({ channel }) => channel === 'sms')?.address;
-
   return (
     <>
       <tr key={subscriber.id}>
@@ -64,11 +62,12 @@ const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
                 />
               </div>
               <GoAContextMenuIcon
-                type={showSubscriptions ? 'eye-off' : 'eye'}
+                type={subscriberSubscriptions?.showHide ? 'eye-off' : 'eye'}
                 onClick={() => {
-                  setShowSubscriptions(!showSubscriptions);
-                  if (!showSubscriptions) {
+                  if (!subscriberSubscriptions) {
                     dispatch(GetSubscriberSubscriptions(subscriber, null));
+                  } else {
+                    dispatch(ToggleShowSubs(subscriber));
                   }
                 }}
                 testId="toggle-details-visibility"
@@ -94,7 +93,7 @@ const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
           ''
         )}
       </tr>
-      {showSubscriptions && (
+      {subscriberSubscriptions?.showHide && (
         <tr>
           <td colSpan={3}>
             <h2>Subscriptions</h2>

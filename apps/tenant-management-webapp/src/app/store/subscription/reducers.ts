@@ -10,12 +10,26 @@ import {
   SUBSCRIBE_SUCCESS,
   DELETE_SUBSCRIBER_SUCCESS,
   DELETE_SUBSCRIPTION_SUCCESS,
+  TOGGLE_SHOW_SUBSCRIPTIONS,
 } from './actions';
 
 import { SUBSCRIBER_INIT, SubscriberService, SubscriptionWrapper } from './models';
 
 export default function (state = SUBSCRIBER_INIT, action: ActionTypes): SubscriberService {
   switch (action.type) {
+    case TOGGLE_SHOW_SUBSCRIPTIONS: {
+      const key = action.payload.subscriberInfo.id;
+      return {
+        ...state,
+        subscriberSubscriptionSearch: {
+          ...state.subscriberSubscriptionSearch,
+          [key]: {
+            ...state.subscriberSubscriptionSearch[key],
+            showHide: !state.subscriberSubscriptionSearch[key].showHide,
+          },
+        },
+      };
+    }
     case GET_MY_SUBSCRIBER_SUCCESS: {
       const { subscriptions, ...subscriber } = action.payload.subscriberInfo;
       return {
@@ -139,6 +153,7 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
         subscriberSubscriptionSearch: {
           ...state.subscriberSubscriptionSearch,
           [key]: {
+            showHide: true, // assuming users want to see subs for the first time
             results: after
               ? [...state.subscriberSubscriptionSearch[key].results, ...subscriptions.map((sub) => sub.subscriberId)]
               : subscriptions.map((sub) => sub.typeId),

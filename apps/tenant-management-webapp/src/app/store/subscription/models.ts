@@ -59,6 +59,7 @@ export interface SubscriberService {
     string,
     {
       results: string[];
+      showHide: boolean;
       next: string;
     }
   >;

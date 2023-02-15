@@ -28,6 +28,9 @@ export const RESOLVE_SUBSCRIBER_USER_SUCCESS = 'tenant/subscriber-service/resolv
 export const DELETE_SUBSCRIBER = 'tenant/subscriber-service/delete-subscriber';
 export const DELETE_SUBSCRIBER_SUCCESS = 'tenant/subscriber-service/delete-subscriber-success';
 
+export const TOGGLE_SHOW_SUBSCRIPTIONS = 'tenant/subscriber-service/toggle-subs';
+export const TOGGLE_SHOW_SUBSCRIPTIONS_SUCCESS = 'tenant/subscriber-service/toggle-subs-success';
+
 // =============
 // Actions Types
 // =============
@@ -46,7 +49,9 @@ export type ActionTypes =
   | ResolveSubscriberUserSuccessAction
   | DeleteSubscriberSuccessAction
   | DeleteSubscriptionAction
-  | DeleteSubscriptionSuccessAction;
+  | DeleteSubscriptionSuccessAction
+  | ToggleSubsAction
+  | ToggleSubsActionSuccess;
 
 export interface GetMySubscriberAction {
   type: typeof GET_MY_SUBSCRIBER;
@@ -358,3 +363,28 @@ export const DeleteSubscriberSuccess = (subscriberId: string): DeleteSubscriberS
     subscriberId,
   },
 });
+
+export const ToggleShowSubs = (subscriberInfo: Subscriber): ToggleSubsAction => ({
+  type: TOGGLE_SHOW_SUBSCRIPTIONS,
+  payload: {
+    subscriberInfo,
+  },
+});
+export interface ToggleSubsAction {
+  type: typeof TOGGLE_SHOW_SUBSCRIPTIONS;
+  payload: {
+    subscriberInfo: Subscriber;
+  };
+}
+export const ToggleShowSubsSuccess = (subscriberInfo: Subscriber): ToggleSubsActionSuccess => ({
+  type: TOGGLE_SHOW_SUBSCRIPTIONS_SUCCESS,
+  payload: {
+    subscriberInfo,
+  },
+});
+export interface ToggleSubsActionSuccess {
+  type: typeof TOGGLE_SHOW_SUBSCRIPTIONS_SUCCESS;
+  payload: {
+    subscriberInfo: Subscriber;
+  };
+}
