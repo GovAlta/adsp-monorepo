@@ -62,7 +62,7 @@ async function checkEndpoint(
       status: err?.response?.status ?? 'timeout',
       timestamp: start,
       responseTime: 0,
-      applicationId: null,
+      applicationId: appKey,
     };
   }
 }
