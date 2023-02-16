@@ -51,13 +51,35 @@ export function* getMySubscriberDetails(): SagaIterator {
 
 export function* getSubscriberDetails(action: GetSubscriberAction): SagaIterator {
   try {
+    yield put(
+      UpdateIndicator({
+        show: true,
+        message: '',
+        action: action.payload.subscriberId,
+      })
+    );
+
     const subscriberId = action.payload.subscriberId;
     const { data } = yield call(axios.get, `/api/subscriber/v1/get-subscriber/${subscriberId}`);
 
     if (data) {
       yield put(GetSubscriberDetailsSuccess(data));
     }
+    yield put(
+      UpdateIndicator({
+        show: false,
+        message: '',
+        action: '',
+      })
+    );
   } catch (e) {
+    yield put(
+      UpdateIndicator({
+        show: false,
+        message: '',
+        action: '',
+      })
+    );
     yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
   }
 }
