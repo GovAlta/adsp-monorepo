@@ -38,6 +38,10 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
   const [showUnSubscribeModal, setShowUnSubscribeModal] = useState(false);
   const [selectedUnsubscribeSub, setSelectedUnsubscribeSub] = useState<Subscription>();
 
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
+
   useEffect(() => {
     dispatch(getMySubscriberDetails());
   }, []);
@@ -126,11 +130,15 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
               <tbody>
                 {subscriber ? (
                   <SubscriptionsList onUnsubscribe={unSubscribe} subscriber={subscriber} />
-                ) : (
+                ) : indicator?.show ? (
                   <tr>
                     <td colSpan={4}>
                       <GoASkeletonGridColumnContent rows={5}></GoASkeletonGridColumnContent>
                     </td>
+                  </tr>
+                ) : (
+                  <tr>
+                    <td colSpan={4}>No Subscriptions</td>
                   </tr>
                 )}
               </tbody>
@@ -144,7 +152,7 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
           </SubscriptionListContainer>
 
           <>
-            {contact?.contactEmail ? (
+            {contact?.contactEmail && indicator?.show ? (
               <CalloutWrapper id="contactSupport">
                 <GoACallout title="Need help? Contact your service admin" type="information">
                   <div>{contact?.supportInstructions}</div>
