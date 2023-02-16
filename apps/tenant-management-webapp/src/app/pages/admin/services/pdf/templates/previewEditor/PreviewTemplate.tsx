@@ -25,11 +25,18 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
     );
   };
 
-  const HeaderFooterPreview = () => {
+  const HeaderPreview = () => {
     return (
       <>
         <h3>Header</h3>
         <BodyPreview data-testid="header-preview-subject" title="Header" html={headerPreviewContent}></BodyPreview>
+      </>
+    );
+  };
+
+  const FooterPreview = () => {
+    return (
+      <>
         <h3>Footer</h3>
         <BodyPreview data-testid="footer-preview-subject" title="Footer" html={footerPreviewContent}></BodyPreview>
       </>
@@ -38,7 +45,8 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
 
   const previewByType = {
     main: <PdfPreview />,
-    'footer/header': <HeaderFooterPreview />,
+    header: <HeaderPreview />,
+    footer: <FooterPreview />,
     'Variable assignments': <PdfPreview />,
   };
 
