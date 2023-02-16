@@ -1,10 +1,62 @@
-export const defaultTemplateBody = `<style>
+export const defaultTemplateBody = `<!--
+--
+-- Standard, Default PDF Template:
+--
+-- New templates are initialized with the following defaults, intended to
+-- be a starting point which should be modified to suit your needs.  It also serves
+-- as a short, somewhat cryptic, tutorial for some of the more esoteric
+-- points of template authoring.  For a more in depth tutorial, see
+--   <ADD link to PDF tutorial here>.
+--
+-- Quick Start:
+--
+-- Template authoring is all about iteratively developing content, whether its adding
+-- boilerplate text or placeholders for variable data, and then testing to see how the
+-- PDF generator interprets the code.  Unfortunately, its not always exactly what you'd
+-- expect from your HTML and CSS, as Puppeteer (the underlying engine) must make decisions
+-- about where and how to place things on individual pages, rather than just continuously
+-- stream content like it would on a website.  The template editor is meant to facilitate
+-- this process by providing tools to view instances of the final product, given some
+-- test data.  To see how this works:
+--
+--   1. Click on the "Variable Assignments" tab.
+--   2. Copy the JSON below and replace the contents of the tab with it.  These are some
+--      variable assignments for code in this demo template.
+--   3. Click "Generate PDF" in the preview pane to the right.
+--   4. The PDF will appear in the preview pane after a second or two.
+--
+-- The following JSON object represents some data an application might gather to use
+-- with this template for generating a custom PDF document.
+
+{
+  "paragraph2" : "The rain in Spain stays mainly in the plain.",
+  "table" : {
+    "title" : "Bobs I have known",
+    "column1header" : "Name",
+    "column2header" : "Value",
+    "rows" : [
+      { "name" : "Bob", "value" : 23 },
+      { "name" : "Bobby", "value" : 19 },
+      { "name" : "Bobbie", "value" : 13 }
+    ]
+  },
+  "bobs" : ["Bob Woodward", "Bob McDonald", "Bob Jordan", "Bob Redford"],
+  "caseWorker" : {
+     "name" : "Bob Bing",
+     "emailAddress" : "bob.bing@gov.ab.ca",
+     "phoneNumber" : "1-800-call-bob",
+     "office" : "Calgary, Alberta, Regional Office",
+     "signature" : "https://drive.google.com/uc?export=view&id=1BRi8Acu3RMNTMpHjzjRh51H3QDhshicC"
+  }
+}
+
+-->
+<style>
   /*
    * With Puppeteer, the height of the headers and footers is determined by the page
    * margins, which default to something smallish.  If you header is larger than that
    * then bits of it may be over layed by the body. You can explicitly set the height
-   * of the page header and footer through the @page attributes though, as shown
-   * below.
+   * of the page header and footer through the @page attributes.
    */
   @page {
     margin: 75px 0 130px 0;
