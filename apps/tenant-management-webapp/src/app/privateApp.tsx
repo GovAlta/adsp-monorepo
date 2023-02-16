@@ -11,7 +11,6 @@ import { NotificationBanner } from './notificationBanner';
 import styled from 'styled-components';
 import { LogoutModal } from '@components/LogoutModal';
 import { useTokenExpiryCount } from '@lib/useTokenExpiryCount';
-import { useLocation } from 'react-router-dom';
 
 interface privateAppProps {
   children: ReactNode;
@@ -34,20 +33,6 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
   useEffect(() => {
     dispatch(KeycloakCheckSSOWithLogout(realm));
   }, []);
-
-  const location = useLocation();
-  const paths: string[] = location.pathname.split('/');
-
-  /* If the url contains /edit, it indicates the page is for edit action.
-   * We do not like to include the header there.
-   **/
-  if (paths.includes('edit')) {
-    return (
-      <HeaderCtx.Provider value={{ setTitle }}>
-        <div>{children}</div>
-      </HeaderCtx.Provider>
-    );
-  }
 
   return (
     <HeaderCtx.Provider value={{ setTitle }}>
