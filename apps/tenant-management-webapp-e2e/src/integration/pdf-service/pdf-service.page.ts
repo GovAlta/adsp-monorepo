@@ -93,8 +93,12 @@ class PDFServicePage {
     return cy.xpath('//div[text()="Body"]/parent::div');
   }
 
-  pdfTemplateModalHeaderFooterTab() {
-    return cy.xpath('//div[text()="Header/Footer"]/parent::div');
+  pdfTemplateModalHeaderTab() {
+    return cy.xpath('//div[text()="Header"]/parent::div');
+  }
+
+  pdfTemplateModalFooterTab() {
+    return cy.xpath('//div[text()="Footer"]/parent::div');
   }
 
   pdfTemplateModalBodyEditor() {

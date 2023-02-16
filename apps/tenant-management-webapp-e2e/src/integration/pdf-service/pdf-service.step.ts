@@ -143,22 +143,22 @@ When('the user enters {string} for {string} in PDF template modal', function (co
       break;
     case 'header':
       pdfServiceObj
-        .pdfTemplateModalHeaderFooterTab()
+        .pdfTemplateModalHeaderTab()
         .invoke('attr', 'class')
         .then((classAttr) => {
           if (!classAttr?.includes('active')) {
-            pdfServiceObj.pdfTemplateModalHeaderFooterTab().click();
+            pdfServiceObj.pdfTemplateModalHeaderTab().click();
           }
         });
       pdfServiceObj.pdfTemplateModalHeaderEditor().type(content), { parseSpecialCharSequences: false };
       break;
     case 'footer':
       pdfServiceObj
-        .pdfTemplateModalHeaderFooterTab()
+        .pdfTemplateModalFooterTab()
         .invoke('attr', 'class')
         .then((classAttr) => {
           if (!classAttr?.includes('active')) {
-            pdfServiceObj.pdfTemplateModalHeaderFooterTab().click();
+            pdfServiceObj.pdfTemplateModalFooterTab().click();
           }
         });
       pdfServiceObj.pdfTemplateModalFooterEditor().type(content, { parseSpecialCharSequences: false });

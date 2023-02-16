@@ -44,7 +44,8 @@ export const PdfTemplatesEditor = (): JSX.Element => {
 
   const channelNames = {
     main: 'PDF preview',
-    'header/footer': 'Header / Footer preview',
+    header: 'Header preview',
+    footer: 'Footer preview',
     'Variable assignments': 'PDF preview',
   };
 

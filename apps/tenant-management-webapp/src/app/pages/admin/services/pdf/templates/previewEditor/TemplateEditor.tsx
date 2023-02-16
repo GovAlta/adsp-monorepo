@@ -119,7 +119,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   }, [monaco, suggestion]);
 
   useEffect(() => {
-    setPreview('footer/header');
+    setPreview('header');
     onHeaderChange(template?.header);
     onFooterChange(template?.footer);
   }, [template, modelOpen]);
@@ -138,7 +138,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [modelOpen]);
 
-  const channels = ['footer/header', 'main', 'Variable assignments'];
+  const channels = ['header', 'main', 'footer', 'Variable assignments'];
   const tmpTemplate = template;
   const resetSavedAction = () => {
     onBodyChange(savedTemplate.template);
@@ -170,49 +170,26 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               updateTemplate(tmpTemplate);
             }}
           >
-            <Tab testId={`pdf-edit-header-footer`} label={<PdfEditorLabelWrapper>Header/Footer</PdfEditorLabelWrapper>}>
-              <>
-                <GoAFormItem error={errors?.header ?? ''}>
-                  <div className="title">Header</div>
-                  <MonacoDivHeader>
-                    <MonacoEditor
-                      language={'handlebars'}
-                      defaultValue={template?.header}
-                      onChange={(value) => {
-                        onHeaderChange(value);
-                        if (tmpTemplate) {
-                          tmpTemplate.header = value;
-                        }
-                      }}
-                      {...bodyEditorConfig}
-                    />
-                  </MonacoDivHeader>
-                </GoAFormItem>
-              </>
-              <>
-                <GoAFormItem error={errors?.footer ?? ''}>
-                  <div className="title">Footer</div>
-                  <MonacoDivFooter>
-                    <MonacoEditor
-                      language={'handlebars'}
-                      defaultValue={template?.footer}
-                      onChange={(value) => {
-                        onFooterChange(value);
-                        if (tmpTemplate) {
-                          tmpTemplate.footer = value;
-                        }
-                      }}
-                      {...bodyEditorConfig}
-                    />
-                  </MonacoDivFooter>
-                </GoAFormItem>
-              </>
+            <Tab testId={`pdf-edit-header`} label={<PdfEditorLabelWrapper>Header</PdfEditorLabelWrapper>}>
+              <GoAFormItem error={errors?.header ?? ''}>
+                <MonacoDivHeader>
+                  <MonacoEditor
+                    language={'handlebars'}
+                    defaultValue={template?.header}
+                    onChange={(value) => {
+                      onHeaderChange(value);
+                      if (tmpTemplate) {
+                        tmpTemplate.header = value;
+                      }
+                    }}
+                    {...bodyEditorConfig}
+                  />
+                </MonacoDivHeader>
+              </GoAFormItem>
             </Tab>
-
             <Tab testId={`pdf-edit-body`} label={<PdfEditorLabelWrapper>Body</PdfEditorLabelWrapper>}>
               <>
                 <GoAFormItem error={errors?.body ?? null}>
-                  <div className="title">Body</div>
                   <MonacoDivBody>
                     <MonacoEditor
                       language={'handlebars'}
@@ -229,6 +206,24 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 </GoAFormItem>
               </>
             </Tab>
+            <Tab testId={`pdf-edit-footer`} label={<PdfEditorLabelWrapper>Footer</PdfEditorLabelWrapper>}>
+              <GoAFormItem error={errors?.footer ?? ''}>
+                <MonacoDivFooter>
+                  <MonacoEditor
+                    language={'handlebars'}
+                    defaultValue={template?.footer}
+                    onChange={(value) => {
+                      onFooterChange(value);
+                      if (tmpTemplate) {
+                        tmpTemplate.footer = value;
+                      }
+                    }}
+                    {...bodyEditorConfig}
+                  />
+                </MonacoDivFooter>
+              </GoAFormItem>
+            </Tab>
+
             <Tab
               testId={`pdf-test-generator`}
               label={<PdfEditorLabelWrapper>Variable Assignments</PdfEditorLabelWrapper>}
@@ -236,15 +231,13 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               <>
                 <GeneratorStyling>
                   <GeneratePDF payloadData={variables} setPayload={setVariables} />
-                  <section>
-                    <GeneratedPdfList templateId={template.id} />
-                  </section>
+                  <section>{template?.id && <GeneratedPdfList templateId={template.id} />}</section>
                 </GeneratorStyling>
               </>
             </Tab>
           </Tabs>
         </GoAFormItem>
-
+        <hr className="hr-resize" />
         <EditTemplateActions>
           <PdfEditActionLayout>
             <PdfEditActions>
@@ -257,7 +250,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 >
                   Save
                 </GoAButton>
-                {activeIndex === 2 && (
+                {activeIndex === 3 && (
                   <GoAButton
                     disabled={indicator.show}
                     type="secondary"
