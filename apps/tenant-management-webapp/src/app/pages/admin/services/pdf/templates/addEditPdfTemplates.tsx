@@ -11,14 +11,21 @@ import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { GoATextArea } from '@abgov/react-components-new';
-interface AddPdfTemplateProps {
+interface AddEditPdfTemplateProps {
   open: boolean;
-  initialValue: PdfTemplate;
+  isEdit: boolean;
+  initialValue?: PdfTemplate;
   onClose: () => void;
   onSave: (template: PdfTemplate) => void;
 }
 
-export const AddPdfTemplate: FunctionComponent<AddPdfTemplateProps> = ({ initialValue, onClose, open, onSave }) => {
+export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
+  initialValue,
+  isEdit,
+  onClose,
+  open,
+  onSave,
+}) => {
   const [template, setTemplate] = useState<PdfTemplate>(initialValue);
   const [spinner, setSpinner] = useState<boolean>(false);
 
@@ -52,14 +59,14 @@ export const AddPdfTemplate: FunctionComponent<AddPdfTemplateProps> = ({ initial
     wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
   )
-    .add('duplicate', 'name', duplicateNameCheck(templateIds, 'Template'))
+    .add('duplicate', 'id', duplicateNameCheck(templateIds, 'Template'))
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .build();
 
   return (
     <>
       <GoAModal testId="template-form" isOpen={open}>
-        <GoAModalTitle testId="template-form-title">{'Add template'}</GoAModalTitle>
+        <GoAModalTitle testId="template-form-title">{`${isEdit ? 'Edit' : 'Add'} template`}</GoAModalTitle>
         <GoAModalContent>
           <GoAForm>
             <GoAFormItem error={errors?.['name']}>
@@ -76,9 +83,11 @@ export const AddPdfTemplate: FunctionComponent<AddPdfTemplateProps> = ({ initial
                   };
                   validators.remove('name');
 
-                  const templateId = toKebabName(value);
                   validators.checkAll(validations);
-                  setTemplate({ ...template, name: value, id: templateId });
+
+                  setTemplate(
+                    isEdit ? { ...template, name: value } : { ...template, name: value, id: toKebabName(value) }
+                  );
                 }}
               />
             </GoAFormItem>
@@ -127,11 +136,13 @@ export const AddPdfTemplate: FunctionComponent<AddPdfTemplateProps> = ({ initial
               if (indicator.show === true) {
                 setSpinner(true);
               } else {
-                const validations = {
-                  duplicate: template.id,
-                };
-                if (!validators.checkAll(validations)) {
-                  return;
+                if (!isEdit) {
+                  const validations = {
+                    duplicate: template.id,
+                  };
+                  if (!validators.checkAll(validations)) {
+                    return;
+                  }
                 }
                 onSave(template);
                 onClose();

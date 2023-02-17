@@ -214,11 +214,36 @@ export const PdfEditorLabelWrapper = styled.div`
 `;
 
 export const PdfConfigFormWrapper = styled.div`
-  .goa-form-item {
-    margin-bottom: 0.2rem !important;
-  }
   padding-left: 3px;
-  padding-top: 1.5rem;
+  margin-top: 0.5rem;
+  border: solid 1px #dcdcdc;
+  border-radius: 3px;
+  height: 8rem;
+  background-color: #f1f1f1;
+  width: 100%;
+  .nameColumn {
+    padding-left: 0.5rem;
+    width: 15%;
+    float: left;
+  }
+  .idColumn {
+    padding-left: 0.5rem;
+    width: 15%;
+    float: left;
+    height: 100%;
+    border-left: 1px solid #ccc;
+  }
+  .descColumn {
+    padding-left: 0.5rem;
+    width: 60%;
+    float: left;
+    height: 100%;
+    border-left: 1px solid #ccc;
+  }
+  .editColumn {
+    width: 10%;
+    float: right;
+  }
 `;
 
 export const PdfEditActionLayout = styled.div`
@@ -271,4 +296,19 @@ export const GeneratorStyling = styled.div`
 export const SpinnerPadding = styled.div`
   margin: 0 0 0 5px;
   float: right;
+`;
+export const Edit = styled.div`
+  .flexRow {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .badgePadding {
+    margin: 6px 0 0 5px;
+  }
+
+  display: flex;
+`;
+export const OverflowWrap = styled.div`
+  overflow-wrap: anywhere;
 `;
