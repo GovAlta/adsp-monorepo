@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import { AddPdfTemplate } from './addPdfTemplates';
+import { AddEditPdfTemplate } from './addEditPdfTemplates';
 import { GoAButton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
 import { getPdfTemplates, updatePdfTemplate, deletePdfTemplate } from '@store/pdf/action';
@@ -71,12 +71,13 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
         <br />
         <PageIndicator />
         {openAddPdfTemplate && (
-          <AddPdfTemplate
+          <AddEditPdfTemplate
             open={openAddPdfTemplate}
+            isEdit={false}
             onClose={reset}
             initialValue={defaultPdfTemplate}
-            onSave={(definition) => {
-              dispatch(updatePdfTemplate(definition));
+            onSave={(template) => {
+              dispatch(updatePdfTemplate(template));
             }}
           />
         )}

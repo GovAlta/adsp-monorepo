@@ -1,7 +1,7 @@
 import React, { FunctionComponent } from 'react';
 import { PdfTemplate } from '@store/pdf/model';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
-import styled from 'styled-components';
+import { Edit, OverflowWrap } from '../styled-components';
 import { GoAIconButton } from '@abgov/react-components/experimental';
 import { GoABadge } from '@abgov/react-components/experimental';
 import { useRouteMatch } from 'react-router';
@@ -49,20 +49,3 @@ export const PdfTemplateItem: FunctionComponent<PdfTemplateItemProps> = ({ pdfTe
     </>
   );
 };
-
-const Edit = styled.div`
-  .flexRow {
-    display: flex;
-    flex-direction: row;
-  }
-
-  .badgePadding {
-    margin: 6px 0 0 5px;
-  }
-
-  display: flex;
-`;
-
-const OverflowWrap = styled.div`
-  overflow-wrap: anywhere;
-`;

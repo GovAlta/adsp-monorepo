@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PdfTemplate } from '@store/pdf/model';
-import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
-import { Grid, GridItem } from '@components/Grid';
-import { useValidators } from '@lib/validation/useValidators';
-import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
-import { PdfConfigFormWrapper } from '../../styled-components';
-import { GoATextArea } from '@abgov/react-components-new';
 
+import { GoAIconButton } from '@abgov/react-components-new';
+
+import { PdfConfigFormWrapper } from '../../styled-components';
+
+import { Edit, OverflowWrap } from '../../styled-components';
+import { AddEditPdfTemplate } from '../addEditPdfTemplates';
+import { useDispatch } from 'react-redux';
+import { updatePdfTemplate } from '@store/pdf/action';
 interface PDFConfigFormProps {
   template: PdfTemplate;
   onChange(template: PdfTemplate): void;
@@ -14,72 +16,44 @@ interface PDFConfigFormProps {
 }
 export const PDFConfigForm = ({ template, onChange, setError }: PDFConfigFormProps) => {
   const { id, name, description } = template;
-  const { errors, validators } = useValidators(
-    'name',
-    'name',
-    badCharsCheck,
-    wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
-  )
-    .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
-    .build();
+  const [openEditPdfTemplate, setOpenEditPdfTemplate] = useState(false);
 
+  const dispatch = useDispatch();
   return (
     <PdfConfigFormWrapper>
-      <GoAForm>
-        <Grid>
-          <GridItem md={6} hSpacing={1}>
-            <GoAFormItem error={errors?.['name']}>
-              <label>Name</label>
-              <GoAInput
-                type="text"
-                name="name"
-                value={name}
-                data-testid={`pdf-service-modal-name-input`}
-                aria-label="name"
-                onChange={(key, name) => {
-                  validators.remove('name');
-                  const error = validators['name'].check(name);
-                  setError(error && error.length > 0);
-                  onChange({ ...template, name });
-                }}
-              />
-            </GoAFormItem>
-          </GridItem>
+      <div className="nameColumn">
+        <h4>Name</h4>
+        <OverflowWrap>{name}</OverflowWrap>
+      </div>
 
-          <GridItem md={6}>
-            <GoAFormItem>
-              <label>Template ID</label>
-              <GoAInput
-                type="text"
-                name="template-id"
-                disabled={true}
-                value={id}
-                data-testid={`pdf-service-modal-template-id-input`}
-                aria-label="template id"
-                onChange={(key, id) => {
-                  onChange({ ...template, id });
-                }}
-              />
-            </GoAFormItem>
-          </GridItem>
-        </Grid>
-        <Grid>
-          <GoAFormItem>
-            <label>Description</label>
-            <GoATextArea
-              name="description"
-              value={description}
-              width="100%"
-              testId="pdf-service-modal-description-textarea"
-              aria-label="description"
-              onChange={(name, value) => {
-                onChange({ ...template, description: value });
-              }}
-            />
-          </GoAFormItem>
-        </Grid>
-      </GoAForm>
+      <div className="idColumn">
+        <h4>Template ID</h4>
+
+        {id}
+      </div>
+
+      <div className="descColumn">
+        <h4>Description</h4>
+        <OverflowWrap>{description}</OverflowWrap>
+      </div>
+
+      <Edit>
+        <a rel="noopener noreferrer" onClick={() => setOpenEditPdfTemplate(true)}>
+          Edit
+        </a>
+        <GoAIconButton icon="create" title="Edit" size="small" onClick={() => setOpenEditPdfTemplate(true)} />
+      </Edit>
+      {openEditPdfTemplate && (
+        <AddEditPdfTemplate
+          open={openEditPdfTemplate}
+          isEdit={true}
+          onClose={() => setOpenEditPdfTemplate(false)}
+          initialValue={template}
+          onSave={(template) => {
+            dispatch(updatePdfTemplate(template));
+          }}
+        />
+      )}
     </PdfConfigFormWrapper>
   );
 };
