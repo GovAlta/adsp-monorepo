@@ -37,6 +37,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
   const [body, setBody] = useState('');
   const [footer, setFooter] = useState('');
   const [header, setHeader] = useState('');
+  const [css, setCss] = useState('');
 
   const debouncedRenderBodyPreview = useDebounce(body, TEMPLATE_RENDER_DEBOUNCE_TIMER);
   const debouncedRenderFooterPreview = useDebounce(footer, TEMPLATE_RENDER_DEBOUNCE_TIMER);
@@ -46,6 +47,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     main: 'PDF preview',
     header: 'Header preview',
     footer: 'Footer preview',
+    css: 'PDF preview',
     'Variable assignments': 'PDF preview',
   };
 
@@ -139,6 +141,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     saveObject.template = body;
     saveObject.header = header;
     saveObject.footer = footer;
+    saveObject.css = css;
     dispatch(updatePdfTemplate(saveObject));
     setCurrentSavedTemplate(currentTemplate);
   };
@@ -163,6 +166,10 @@ export const PdfTemplatesEditor = (): JSX.Element => {
               }}
               onFooterChange={(value) => {
                 setFooter(value);
+              }}
+              onCssChange={(value) => {
+                console.log(JSON.stringify(value) + ' <value');
+                setCss(value);
               }}
               updateTemplate={(template) => {
                 setCurrentTemplate(template);

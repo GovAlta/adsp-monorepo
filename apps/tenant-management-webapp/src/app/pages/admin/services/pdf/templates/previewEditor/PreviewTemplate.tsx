@@ -47,6 +47,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
     main: <PdfPreview />,
     header: <HeaderPreview />,
     footer: <FooterPreview />,
+    css: <PdfPreview />,
     'Variable assignments': <PdfPreview />,
   };
 

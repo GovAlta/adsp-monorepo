@@ -38,6 +38,7 @@ interface TemplateEditorProps {
   modelOpen: boolean;
   onBodyChange: (value: string) => void;
   onHeaderChange: (value: string) => void;
+  onCssChange: (value: string) => void;
   onFooterChange: (value: string) => void;
   setPreview: (channel: string) => void;
 
@@ -66,6 +67,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   onBodyChange,
   onHeaderChange,
   onFooterChange,
+  onCssChange,
   setPreview,
   template,
   savedTemplate,
@@ -122,11 +124,15 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     setPreview('header');
     onHeaderChange(template?.header);
     onFooterChange(template?.footer);
+    onCssChange(template?.css);
   }, [template, modelOpen]);
 
   const switchTabPreview = (value) => {
+    console.log(JSON.stringify(value) + '<valuesss');
+    console.log(JSON.stringify(template) + '<template');
     onHeaderChange(template?.header);
     onFooterChange(template?.footer);
+    onCssChange(template?.css);
     setPreview(value);
   };
 
@@ -138,12 +144,13 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [modelOpen]);
 
-  const channels = ['header', 'main', 'footer', 'Variable assignments'];
+  const channels = ['header', 'main', 'footer', 'css', 'Variable assignments'];
   const tmpTemplate = template;
   const resetSavedAction = () => {
     onBodyChange(savedTemplate.template);
     onHeaderChange(savedTemplate.header);
     onFooterChange(savedTemplate.footer);
+    onCssChange(savedTemplate.css);
   };
 
   return (
@@ -223,7 +230,25 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 </MonacoDivFooter>
               </GoAFormItem>
             </Tab>
-
+            <Tab testId={`pdf-edit-css`} label={<PdfEditorLabelWrapper>CSS</PdfEditorLabelWrapper>}>
+              <>
+                <GoAFormItem error={errors?.body ?? null}>
+                  <MonacoDivBody>
+                    <MonacoEditor
+                      language={'handlebars'}
+                      defaultValue={template?.css}
+                      onChange={(value) => {
+                        onCssChange(value);
+                        if (tmpTemplate) {
+                          tmpTemplate.css = value;
+                        }
+                      }}
+                      {...bodyEditorConfig}
+                    />
+                  </MonacoDivBody>
+                </GoAFormItem>
+              </>
+            </Tab>
             <Tab
               testId={`pdf-test-generator`}
               label={<PdfEditorLabelWrapper>Variable Assignments</PdfEditorLabelWrapper>}
