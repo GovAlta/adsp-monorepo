@@ -37,12 +37,12 @@ export const PdfTemplatesEditor = (): JSX.Element => {
   const [body, setBody] = useState('');
   const [footer, setFooter] = useState('');
   const [header, setHeader] = useState('');
-  const [css, setCss] = useState('');
+  const [additionalStyles, setAdditionalStyles] = useState('');
 
   const debouncedRenderBodyPreview = useDebounce(body, TEMPLATE_RENDER_DEBOUNCE_TIMER);
   const debouncedRenderFooterPreview = useDebounce(footer, TEMPLATE_RENDER_DEBOUNCE_TIMER);
   const debouncedRenderHeaderPreview = useDebounce(header, TEMPLATE_RENDER_DEBOUNCE_TIMER);
-  const debouncedRenderCSSPreview = useDebounce(css, TEMPLATE_RENDER_DEBOUNCE_TIMER);
+  const debouncedRenderCSSPreview = useDebounce(additionalStyles, TEMPLATE_RENDER_DEBOUNCE_TIMER);
 
   const channelNames = {
     main: 'PDF preview',
@@ -70,7 +70,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
       let template = '';
       // If footer is empty, we shall add PDF wrapper for the footer in the preview.
       if (footer && footer.length > 0) {
-        template = getTemplateBody(('<style>' + css + '</style>').concat(footer), 'pdf-footer', {
+        template = getTemplateBody(('<style>' + additionalStyles + '</style>').concat(footer), 'pdf-footer', {
           data: currentTemplate,
           serviceUrl: webappUrl,
           today: new Date().toDateString(),
@@ -89,7 +89,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
       let template = '';
       // If header is empty, we shall add PDF wrapper for the header in the preview.
       if (header && header.length > 0) {
-        template = getTemplateBody(('<style>' + css + '</style>').concat(header), 'pdf-header', {
+        template = getTemplateBody(('<style>' + additionalStyles + '</style>').concat(header), 'pdf-header', {
           data: currentTemplate,
           serviceUrl: webappUrl,
           today: new Date().toDateString(),
@@ -108,10 +108,11 @@ export const PdfTemplatesEditor = (): JSX.Element => {
       let template = '';
       // If body is empty, we shall add PDF wrapper for the body in the preview.
       console.log(
-        JSON.stringify(('<style>' + css + '</style>').concat(body)) + "<('<style>' + css + '</style>').concat(body)"
+        JSON.stringify(('<style>' + additionalStyles + '</style>').concat(body)) +
+          "<('<style>' + css + '</style>').concat(body)"
       );
       if (currentTemplate?.template.length > 0) {
-        template = getTemplateBody(('<style>' + css + '</style>').concat(body), 'pdf', {
+        template = getTemplateBody(('<style>' + additionalStyles + '</style>').concat(body), 'pdf', {
           data: currentTemplate,
           serviceUrl: webappUrl,
           today: new Date().toDateString(),
@@ -144,7 +145,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     saveObject.template = body;
     saveObject.header = header;
     saveObject.footer = footer;
-    saveObject.css = css;
+    saveObject.additionalStyles = additionalStyles;
     dispatch(updatePdfTemplate(saveObject));
     setCurrentSavedTemplate(currentTemplate);
   };
@@ -171,7 +172,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
                 setFooter(value);
               }}
               onCssChange={(value) => {
-                setCss(value);
+                setAdditionalStyles(value);
               }}
               updateTemplate={(template) => {
                 setCurrentTemplate(template);
@@ -181,13 +182,13 @@ export const PdfTemplatesEditor = (): JSX.Element => {
                   main: body,
                   header: header,
                   footer: footer,
-                  css: body,
+                  additionalStyles: body,
                   'Variable assignments': body,
                 };
                 try {
                   setBodyPreview(
                     generateMessage(
-                      getTemplateBody(('<style>' + css + '</style>').concat(body), 'pdf', {
+                      getTemplateBody(('<style>' + additionalStyles + '</style>').concat(body), 'pdf', {
                         data: currentTemplate,
                         serviceUrl: webappUrl,
                         today: new Date().toDateString(),
@@ -198,7 +199,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
 
                   setHeaderPreview(
                     generateMessage(
-                      getTemplateBody(('<style>' + css + '</style>').concat(header), 'pdf', {
+                      getTemplateBody(('<style>' + additionalStyles + '</style>').concat(header), 'pdf', {
                         data: currentTemplate,
                         serviceUrl: webappUrl,
                         today: new Date().toDateString(),
@@ -213,7 +214,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
 
                   setFooterPreview(
                     generateMessage(
-                      getTemplateBody(('<style>' + css + '</style>').concat(footer), 'pdf', {
+                      getTemplateBody(('<style>' + additionalStyles + '</style>').concat(footer), 'pdf', {
                         data: currentTemplate,
                         serviceUrl: webappUrl,
                         today: new Date().toDateString(),

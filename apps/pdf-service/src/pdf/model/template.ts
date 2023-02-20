@@ -27,7 +27,7 @@ export class PdfTemplateEntity implements PdfTemplate {
     this.template = template;
     this.header = header;
     this.footer = footer;
-    this.css = css;
+    this.additionalStyles = additionalStyles;
     this.evaluateTemplate = templateService.getTemplateFunction(template);
     this.evaluateFooterTemplate = templateService.getTemplateFunction(footer, 'pdf-footer');
     this.evaluateHeaderTemplate = templateService.getTemplateFunction(header, 'pdf-header');

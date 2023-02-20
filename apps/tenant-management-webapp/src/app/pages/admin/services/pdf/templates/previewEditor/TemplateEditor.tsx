@@ -57,7 +57,7 @@ const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
     prev.template !== next.template ||
     prev.header !== next.header ||
     prev.footer !== next.footer ||
-    prev.css !== next.css ||
+    prev.additionalStyles !== next.additionalStyles ||
     prev.name !== next.name ||
     prev.description !== next.description
   );
@@ -129,13 +129,13 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     //setPreview('header');
     onHeaderChange(template?.header);
     onFooterChange(template?.footer);
-    onCssChange(template?.css);
+    onCssChange(template?.additionalStyles);
   }, [template, modelOpen]);
 
   const switchTabPreview = (value) => {
     onHeaderChange(template?.header);
     onFooterChange(template?.footer);
-    onCssChange(template?.css);
+    onCssChange(template?.additionalStyles);
     setPreview(value);
   };
 
@@ -153,7 +153,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     onBodyChange(savedTemplate.template);
     onHeaderChange(savedTemplate.header);
     onFooterChange(savedTemplate.footer);
-    onCssChange(savedTemplate.css);
+    onCssChange(savedTemplate.additionalStyles);
   };
 
   return (
@@ -239,11 +239,11 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   <MonacoDivBody>
                     <MonacoEditor
                       language={'handlebars'}
-                      defaultValue={template?.css}
+                      defaultValue={template?.additionalStyles}
                       onChange={(value) => {
                         onCssChange(value);
                         if (tmpTemplate) {
-                          tmpTemplate.css = value;
+                          tmpTemplate.additionalStyles = value;
                         }
                       }}
                       {...bodyEditorConfig}
