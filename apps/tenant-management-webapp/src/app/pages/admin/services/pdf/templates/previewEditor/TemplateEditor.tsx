@@ -147,7 +147,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [modelOpen]);
 
-  const channels = ['header', 'main', 'footer', 'css', 'Variable assignments'];
+  const channels = ['header', 'main', 'footer', 'additionalStyles', 'Variable assignments'];
   const tmpTemplate = template;
   const resetSavedAction = () => {
     onBodyChange(savedTemplate.template);

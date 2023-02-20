@@ -43,11 +43,13 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
     );
   };
 
+  console.log(JSON.stringify(channel) + '<channel---');
+
   const previewByType = {
     main: <PdfPreview />,
     header: <HeaderPreview />,
     footer: <FooterPreview />,
-    css: <PdfPreview />,
+    additionalStyles: <PdfPreview />,
     'Variable assignments': <PdfPreview />,
   };
 

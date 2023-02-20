@@ -48,7 +48,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     main: 'PDF preview',
     header: 'Header preview',
     footer: 'Footer preview',
-    css: 'PDF preview',
+    additionalStyles: 'PDF preview',
     'Variable assignments': 'PDF preview',
   };
   // eslint-disable-next-line
@@ -107,10 +107,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     try {
       let template = '';
       // If body is empty, we shall add PDF wrapper for the body in the preview.
-      console.log(
-        JSON.stringify(('<style>' + additionalStyles + '</style>').concat(body)) +
-          "<('<style>' + css + '</style>').concat(body)"
-      );
+
       if (currentTemplate?.template.length > 0) {
         template = getTemplateBody(('<style>' + additionalStyles + '</style>').concat(body), 'pdf', {
           data: currentTemplate,
@@ -178,13 +175,6 @@ export const PdfTemplatesEditor = (): JSX.Element => {
                 setCurrentTemplate(template);
               }}
               setPreview={(channel) => {
-                const generateType = {
-                  main: body,
-                  header: header,
-                  footer: footer,
-                  additionalStyles: body,
-                  'Variable assignments': body,
-                };
                 try {
                   setBodyPreview(
                     generateMessage(

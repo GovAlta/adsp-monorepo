@@ -8,11 +8,11 @@ export interface PdfServiceProps {
   content: string;
   footer?: string;
   header?: string;
-  css?: string;
+  additionalStyles?: string;
 }
 
 export interface PdfService {
-  generatePdf({ content, footer, header, css }: PdfServiceProps): Promise<Buffer>;
+  generatePdf({ content, footer, header, additionalStyles }: PdfServiceProps): Promise<Buffer>;
 }
 
 export interface FileResult {
@@ -32,9 +32,9 @@ export interface PdfTemplate {
   name: string;
   description: string;
   template: string;
-  footer?: string;  
+  footer?: string;
   header?: string;
-  css?: string;
+  additionalStyles?: string;
 }
 
 export type PdfJobStatus = 'queued' | 'completed' | 'failed';

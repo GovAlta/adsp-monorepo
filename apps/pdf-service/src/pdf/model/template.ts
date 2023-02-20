@@ -9,7 +9,7 @@ export class PdfTemplateEntity implements PdfTemplate {
   template: string;
   header?: string;
   footer?: string;
-  css?: string;
+  additionalStyles?: string;
 
   private evaluateTemplate: (context: unknown) => string;
   private evaluateFooterTemplate: (context: unknown) => string;
@@ -18,7 +18,7 @@ export class PdfTemplateEntity implements PdfTemplate {
   constructor(
     templateService: TemplateService,
     private readonly pdfService: PdfService,
-    { tenantId, id, name, description, template, header, footer, css }: PdfTemplate
+    { tenantId, id, name, description, template, header, footer, additionalStyles }: PdfTemplate
   ) {
     this.tenantId = tenantId;
     this.id = id;

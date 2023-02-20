@@ -4,16 +4,19 @@ import { PdfService, PdfServiceProps } from './pdf';
 class PuppeteerPdfService implements PdfService {
   constructor(private browser: puppeteer.Browser) {}
 
-  async generatePdf({ content, header, footer, css = '' }: PdfServiceProps): Promise<Buffer> {
+  async generatePdf({ content, header, footer, additionalStyles = '' }: PdfServiceProps): Promise<Buffer> {
     let page: puppeteer.Page;
     try {
       page = await this.browser.newPage();
       await page.setJavaScriptEnabled(false);
-      await page.setContent(("<style>" + css + "</style>").concat(content), { waitUntil: 'load', timeout: 2 * 60 * 1000 });
+      await page.setContent(('<style>' + additionalStyles + '</style>').concat(content), {
+        waitUntil: 'load',
+        timeout: 2 * 60 * 1000,
+      });
       if (header !== null || footer !== null) {
-        const _header = header === null ? '' : ("<style>" + css + "</style>").concat(header);
-        const _footer = footer === null ? '' : ("<style>" + css + "</style>").concat(footer);
-        
+        const _header = header === null ? '' : ('<style>' + additionalStyles + '</style>').concat(header);
+        const _footer = footer === null ? '' : ('<style>' + additionalStyles + '</style>').concat(footer);
+
         return await page.pdf({
           footerTemplate: _footer,
           headerTemplate: _header,
