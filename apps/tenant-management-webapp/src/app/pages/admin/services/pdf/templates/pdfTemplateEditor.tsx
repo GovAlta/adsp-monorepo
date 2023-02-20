@@ -29,7 +29,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
   const [bodyPreview, setBodyPreview] = useState('');
   const [headerPreview, setHeaderPreview] = useState('');
   const [footerPreview, setFooterPreview] = useState('');
-  const [currentChannel, setCurrentChannel] = useState('footer/header');
+  const [currentChannel, setCurrentChannel] = useState('header');
   const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
   const history = useHistory();
   const [currentTemplate, setCurrentTemplate] = useState(pdfTemplate);
@@ -37,18 +37,20 @@ export const PdfTemplatesEditor = (): JSX.Element => {
   const [body, setBody] = useState('');
   const [footer, setFooter] = useState('');
   const [header, setHeader] = useState('');
+  const [additionalStyles, setAdditionalStyles] = useState('');
 
   const debouncedRenderBodyPreview = useDebounce(body, TEMPLATE_RENDER_DEBOUNCE_TIMER);
   const debouncedRenderFooterPreview = useDebounce(footer, TEMPLATE_RENDER_DEBOUNCE_TIMER);
   const debouncedRenderHeaderPreview = useDebounce(header, TEMPLATE_RENDER_DEBOUNCE_TIMER);
+  const debouncedRenderCSSPreview = useDebounce(additionalStyles, TEMPLATE_RENDER_DEBOUNCE_TIMER);
 
   const channelNames = {
     main: 'PDF preview',
     header: 'Header preview',
     footer: 'Footer preview',
+    additionalStyles: 'PDF preview',
     'Variable assignments': 'PDF preview',
   };
-
   // eslint-disable-next-line
   useEffect(() => {}, [pdfTemplate]);
 
@@ -68,7 +70,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
       let template = '';
       // If footer is empty, we shall add PDF wrapper for the footer in the preview.
       if (footer && footer.length > 0) {
-        template = getTemplateBody(footer, 'pdf-footer', {
+        template = getTemplateBody(('<style>' + additionalStyles + '</style>').concat(footer), 'pdf-footer', {
           data: currentTemplate,
           serviceUrl: webappUrl,
           today: new Date().toDateString(),
@@ -87,7 +89,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
       let template = '';
       // If header is empty, we shall add PDF wrapper for the header in the preview.
       if (header && header.length > 0) {
-        template = getTemplateBody(header, 'pdf-header', {
+        template = getTemplateBody(('<style>' + additionalStyles + '</style>').concat(header), 'pdf-header', {
           data: currentTemplate,
           serviceUrl: webappUrl,
           today: new Date().toDateString(),
@@ -105,8 +107,9 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     try {
       let template = '';
       // If body is empty, we shall add PDF wrapper for the body in the preview.
+
       if (currentTemplate?.template.length > 0) {
-        template = getTemplateBody(body, 'pdf', {
+        template = getTemplateBody(('<style>' + additionalStyles + '</style>').concat(body), 'pdf', {
           data: currentTemplate,
           serviceUrl: webappUrl,
           today: new Date().toDateString(),
@@ -119,7 +122,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     } catch (e) {
       console.error('error: ' + e.message);
     }
-  }, [debouncedRenderBodyPreview]);
+  }, [debouncedRenderBodyPreview, debouncedRenderCSSPreview]);
 
   const dispatch = useDispatch();
 
@@ -139,6 +142,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     saveObject.template = body;
     saveObject.header = header;
     saveObject.footer = footer;
+    saveObject.additionalStyles = additionalStyles;
     dispatch(updatePdfTemplate(saveObject));
     setCurrentSavedTemplate(currentTemplate);
   };
@@ -164,6 +168,9 @@ export const PdfTemplatesEditor = (): JSX.Element => {
               onFooterChange={(value) => {
                 setFooter(value);
               }}
+              onCssChange={(value) => {
+                setAdditionalStyles(value);
+              }}
               updateTemplate={(template) => {
                 setCurrentTemplate(template);
               }}
@@ -171,12 +178,42 @@ export const PdfTemplatesEditor = (): JSX.Element => {
                 try {
                   setBodyPreview(
                     generateMessage(
-                      getTemplateBody(body, 'pdf', {
+                      getTemplateBody(('<style>' + additionalStyles + '</style>').concat(body), 'pdf', {
                         data: currentTemplate,
                         serviceUrl: webappUrl,
                         today: new Date().toDateString(),
                       }),
                       { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() }
+                    )
+                  );
+
+                  setHeaderPreview(
+                    generateMessage(
+                      getTemplateBody(('<style>' + additionalStyles + '</style>').concat(header), 'pdf', {
+                        data: currentTemplate,
+                        serviceUrl: webappUrl,
+                        today: new Date().toDateString(),
+                      }),
+                      {
+                        data: currentTemplate,
+                        serviceUrl: webappUrl,
+                        today: new Date().toDateString(),
+                      }
+                    )
+                  );
+
+                  setFooterPreview(
+                    generateMessage(
+                      getTemplateBody(('<style>' + additionalStyles + '</style>').concat(footer), 'pdf', {
+                        data: currentTemplate,
+                        serviceUrl: webappUrl,
+                        today: new Date().toDateString(),
+                      }),
+                      {
+                        data: currentTemplate,
+                        serviceUrl: webappUrl,
+                        today: new Date().toDateString(),
+                      }
                     )
                   );
                 } catch (e) {

@@ -19,6 +19,7 @@ export const configurationSchema = {
         },
         footer: { type: ['string', 'null'] },
         header: { type: ['string', 'null'] },
+        additionalStyles: { type: ['string', 'null'] },
       },
       required: ['id', 'name', 'template'],
     },
