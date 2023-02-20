@@ -8,6 +8,7 @@ export interface PdfTemplate {
   description: string;
   template: string;
   header: string;
+  css: string;
   footer: string;
 }
 
@@ -102,6 +103,7 @@ export const defaultPdfTemplate: PdfTemplate = {
   name: '',
   description: '',
   template: defaultTemplateBody,
+  css: '',
   header: defaultTemplateHeader,
   footer: defaultTemplateFooter,
 };

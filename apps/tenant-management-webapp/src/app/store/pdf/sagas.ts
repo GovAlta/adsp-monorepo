@@ -234,7 +234,6 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
         filename: payload.fileName,
       };
       const body = { operation: 'generate', ...pdfData };
-      console.log(JSON.stringify(body) + '<>body');
       const response: PdfGenerationResponse = yield call(axios.post, `${pdfServiceUrl}/pdf/v1/jobs`, body, {
         headers: { Authorization: `Bearer ${token}` },
       });

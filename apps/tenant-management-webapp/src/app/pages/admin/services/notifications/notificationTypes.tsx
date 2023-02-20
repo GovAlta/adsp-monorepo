@@ -147,7 +147,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
       try {
         setSubjectPreview('');
-        const bodyPreview = generateMessage(getTemplateBody(template?.body, currentChannel, htmlPayload), htmlPayload);
+        const combinedPreview = ('<style>' + template?.css + '</style>').concat(template?.body);
+        const bodyPreview = generateMessage(getTemplateBody(combinedPreview, currentChannel, htmlPayload), htmlPayload);
         setBodyPreview(bodyPreview);
         setTemplateEditErrors({
           ...templateEditErrors,
@@ -781,9 +782,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               }}
               setPreview={(channel) => {
                 if (templates && templates[channel]) {
-                  setBodyPreview(
-                    generateMessage(getTemplateBody(templates[channel]?.body, channel, htmlPayload), htmlPayload)
+                  const combinedPreview = ('<style>' + templates[channel]?.css + '</style>').concat(
+                    templates[channel]?.body
                   );
+                  setBodyPreview(generateMessage(getTemplateBody(combinedPreview, channel, htmlPayload), htmlPayload));
                   setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
                 } else {
                   setBodyPreview('');

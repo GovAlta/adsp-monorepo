@@ -57,6 +57,7 @@ const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
     prev.template !== next.template ||
     prev.header !== next.header ||
     prev.footer !== next.footer ||
+    prev.css !== next.css ||
     prev.name !== next.name ||
     prev.description !== next.description
   );
@@ -122,14 +123,16 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
   useEffect(() => {
     setPreview('header');
+  }, []);
+
+  useEffect(() => {
+    //setPreview('header');
     onHeaderChange(template?.header);
     onFooterChange(template?.footer);
     onCssChange(template?.css);
   }, [template, modelOpen]);
 
   const switchTabPreview = (value) => {
-    console.log(JSON.stringify(value) + '<valuesss');
-    console.log(JSON.stringify(template) + '<template');
     onHeaderChange(template?.header);
     onFooterChange(template?.footer);
     onCssChange(template?.css);
@@ -275,7 +278,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 >
                   Save
                 </GoAButton>
-                {activeIndex === 3 && (
+                {activeIndex === 4 && (
                   <GoAButton
                     disabled={indicator.show}
                     type="secondary"
