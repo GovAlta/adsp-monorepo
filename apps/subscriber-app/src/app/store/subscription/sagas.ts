@@ -80,7 +80,7 @@ export function* getSubscriberDetails(action: GetSubscriberAction): SagaIterator
         action: '',
       })
     );
-    yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+    yield put(ErrorNotification({ message: `${e.response.data.errorMessage ?? e.message}` }));
   }
 }
 
