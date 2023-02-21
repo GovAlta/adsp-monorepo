@@ -8,11 +8,10 @@ export interface PdfServiceProps {
   content: string;
   footer?: string;
   header?: string;
-  additionalStyles?: string;
 }
 
 export interface PdfService {
-  generatePdf({ content, footer, header, additionalStyles }: PdfServiceProps): Promise<Buffer>;
+  generatePdf({ content, footer, header }: PdfServiceProps): Promise<Buffer>;
 }
 
 export interface FileResult {

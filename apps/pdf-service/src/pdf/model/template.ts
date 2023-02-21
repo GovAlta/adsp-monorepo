@@ -27,10 +27,17 @@ export class PdfTemplateEntity implements PdfTemplate {
     this.template = template;
     this.header = header;
     this.footer = footer;
-    this.additionalStyles = additionalStyles;
-    this.evaluateTemplate = templateService.getTemplateFunction(template);
-    this.evaluateFooterTemplate = templateService.getTemplateFunction(footer, 'pdf-footer');
-    this.evaluateHeaderTemplate = templateService.getTemplateFunction(header, 'pdf-header');
+
+    const additionalStylesWrapped = '<style>' + additionalStyles + '</style>';
+    this.evaluateTemplate = templateService.getTemplateFunction(additionalStylesWrapped.concat(template));
+    this.evaluateFooterTemplate = templateService.getTemplateFunction(
+      additionalStylesWrapped.concat(footer),
+      'pdf-footer'
+    );
+    this.evaluateHeaderTemplate = templateService.getTemplateFunction(
+      additionalStylesWrapped.concat(header),
+      'pdf-header'
+    );
   }
 
   generate(context: unknown): Promise<Buffer> {
