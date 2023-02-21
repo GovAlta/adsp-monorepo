@@ -5,57 +5,94 @@ components:
       properties:
         id:
           type: string
+          description: The template ID
+          example: my-template
         name:
           type: string
+          description: The name of the template
+          example: My Template
         description:
           type: string
+          description: The purpose of the template
+          example: A template for rendering a user name
         template:
           type: string
+          description: The template body, designed with HTML/CSS
+          example: <p>Their name is {{data.user.name}}</p>
         header:
           type: string
+          description: Page headers, designed with HTML/CSS
+          example: <h1>What is their name?</h1>
         footer:
           type: string
+          description: Page footers, designed with HTML/CSS
+          example: <p>Thank you, thank you very much</p>
     Job:
       type: object
       properties:
         id:
+          description: Id of the Job spawned to generate a PDF.  Required when polling to get the status of the Job.
           type: string
+          example: 7696ed03-977e-4bde-af54-d823be00ffad
         status:
           type: string
           enum: [queued, completed, failed]
+          description: Indicates the status of the PDF generation Job.
+        urn:
+          type: string
+          description: Logical URN to use for querying the job status.  You can map the URN to a URL using the [ADSP Service SDK's](https://github.com/GovAlta/adsp-monorepo/blob/main/libs/adsp-service-sdk/src/directory/serviceDirectory.ts) getResourceUrl(AdspId\`urn\`)
+          example: urn:ads:platform:pdf-service:v1:/jobs/7696ed03-977e-4bde-af54-d823be00ffad
         result:
           type: object
           properties:
             urn:
               type: string
+              description: Logical URN to use for downloading the PDF.  You can map the URN to a URL using the [ADSP Service SDK's](https://github.com/GovAlta/adsp-monorepo/blob/main/libs/adsp-service-sdk/src/directory/serviceDirectory.ts) getResourceUrl(AdspId\`urn\`)
+              example: urn:ads:platform:file-service:v1:/files/54e22556-d453-4626-ac6b-9bcadc577901
             id:
+              description: A `fileId` to be used with the [File Service](https://api.adsp.alberta.ca/platform/?urls.primaryName=File%20service) for downloading the PDF.
               type: string
+              example: 54e22556-d453-4626-ac6b-9bcadc577901
+            filename:
+              type: string
+              description: The name of the PDF file.
+              example: MyPDF-2022-02-19
     GenerateOperation:
       type: object
       properties:
         operation:
           type: string
           enum: [generate]
+          description: The operation will always be *generate*.
         fileType:
           type: string
+          example: example-template
+          description: The **File Server** collection to which this PDF document will be assigned.  Useful when searching for collections of PDF documents, like those generated from a specific template.
         templateId:
+          description: Identifies the template to use when generating the PDF document.
           type: string
+          example: my-template
         recordId:
+          description: An arbitrary identifier that can be used by your application to cross reference the PDF document being generated.
           type: string
+          example: user-jane-doe
         data:
-          type: object
+          description: The variable (Handlebars) assignments to be applied to the template when generating a PDF.  This is an arbitrary JSON object, but its properties must match those expected by the template.
+          example: { "user" : { "name" : "Jane Doe" }}
         filename:
+          description: The name of the file that will be given to the generated PDF document.  It must be unique within your tenant.
           type: string
+          example: janeDoe.pdf
       required: [operation, templateId, filename]
 
 /pdf/v1/templates:
   get:
     tags:
-      - PDF
-    description: Retrieves PDF templates.
+      - Templates
+    description: Retrieves all PDF templates created by the tenant.
     responses:
       200:
-        description: PDF templates successfully retrieved.
+        description: A list of PDF templates successfully retrieved.
         content:
           application/json:
             schema:
@@ -66,18 +103,18 @@ components:
 /pdf/v1/templates/{templateId}:
   get:
     tags:
-      - PDF
-    description: Retrieve a PDF template.
+      - Templates
+    description: Retrieve the specified PDF template.
     parameters:
       - name: templateId
-        description: ID of template to retrieve.
+        description: ID of template to retrieve. You can find the ID in the [Template Editor](https://adsp.alberta.ca).
         in: path
         required: true
         schema:
           type: string
     responses:
       200:
-        description: PDF templates successfully retrieved.
+        description: The PDF template.
         content:
           application/json:
             schema:
@@ -86,8 +123,10 @@ components:
 /pdf/v1/jobs:
   post:
     tags:
-      - PDF
-    description: Creates a new job.
+      - Generator
+    description: "Initiate a new, asynchronous Job to generate a PDF document.  When complete, the Job's *properties*
+will only be available for inspection for approximately 1/2 hour.  It is important for your application
+to ensure that it receives the *file id* of the new PDF document within that time frame, e.g. by polling  \n>GET /pdf/v1/jobs/{jobId}"
     requestBody:
       required: true
       content:
@@ -106,12 +145,19 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/Job'
+        links:
+          getJobById:
+            description: The `id` returned can be used as the `jobId` parameter in `GET /pdf/v1/jobs/{jobId}`
+            operationId: getJob
+            parameters:
+              jobId: $response.body#/id
 
 /pdf/v1/jobs/{jobId}:
   get:
     tags:
-      - PDF
-    description: Retrieve a job.
+      - Generator
+    description: Retrieve the specified job's attributes.
+    operationId: getJob
     parameters:
       - name: jobId
         description: ID of job to retrieve.
