@@ -10,6 +10,7 @@ export interface PdfTemplate {
   header: string;
   additionalStyles: string;
   footer: string;
+  variables?: string;
 }
 
 export interface PdfGenerationResponse {
@@ -106,4 +107,5 @@ export const defaultPdfTemplate: PdfTemplate = {
   additionalStyles: '',
   header: defaultTemplateHeader,
   footer: defaultTemplateFooter,
+  variables: '{}',
 };

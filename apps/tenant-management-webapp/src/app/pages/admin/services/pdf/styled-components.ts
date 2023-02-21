@@ -312,3 +312,10 @@ export const Edit = styled.div`
 export const OverflowWrap = styled.div`
   overflow-wrap: anywhere;
 `;
+
+export const PreviewTopStyle = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: left;
+  gap: 1rem;
+`;
