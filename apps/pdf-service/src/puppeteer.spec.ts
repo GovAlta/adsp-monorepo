@@ -52,12 +52,6 @@ describe('puppeteer', () => {
               header
             </p>
           </div>`,
-        additionalStyles: `<style>
-          div {
-            font-size: 32px;
-          }
-          </style>
-        `,
       };
 
       const result = await service.generatePdf(template);
