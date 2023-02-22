@@ -37,6 +37,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
   const [body, setBody] = useState('');
   const [footer, setFooter] = useState('');
   const [header, setHeader] = useState('');
+  const [variables, setVariables] = useState('');
   const [additionalStyles, setAdditionalStyles] = useState('');
 
   const debouncedRenderBodyPreview = useDebounce(body, TEMPLATE_RENDER_DEBOUNCE_TIMER);
@@ -49,7 +50,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     header: 'Header preview',
     footer: 'Footer preview',
     additionalStyles: 'PDF preview',
-    'Variable assignments': 'PDF preview',
+    variableAssignments: 'PDF preview',
   };
   // eslint-disable-next-line
   useEffect(() => {}, [pdfTemplate]);
@@ -143,6 +144,8 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     saveObject.header = header;
     saveObject.footer = footer;
     saveObject.additionalStyles = additionalStyles;
+    saveObject.variables = variables;
+    console.log('saveObject: ' + JSON.stringify(saveObject));
     dispatch(updatePdfTemplate(saveObject));
     setCurrentSavedTemplate(currentTemplate);
   };
@@ -170,6 +173,9 @@ export const PdfTemplatesEditor = (): JSX.Element => {
               }}
               onCssChange={(value) => {
                 setAdditionalStyles(value);
+              }}
+              onVariableChange={(value) => {
+                setVariables(value);
               }}
               updateTemplate={(template) => {
                 setCurrentTemplate(template);
@@ -233,6 +239,8 @@ export const PdfTemplatesEditor = (): JSX.Element => {
                 headerPreviewContent={headerPreview}
                 footerPreviewContent={footerPreview}
                 channel={currentChannel}
+                saveCurrentTemplate={savePdfTemplate}
+                template={currentTemplate}
               />
             </PreviewTemplateContainer>
           </NotificationTemplateEditorContainer>

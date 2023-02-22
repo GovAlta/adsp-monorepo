@@ -17,7 +17,7 @@ export const GeneratePDF: FunctionComponent<GeneratePDFModalProps> = ({ payloadD
               data-testid="form-schema"
               height={150}
               value={payloadData}
-              onChange={(value) => setPayload(value)}
+              onChange={(value) => setPayload(JSON.stringify(value))}
               language="json"
               options={{
                 automaticLayout: true,

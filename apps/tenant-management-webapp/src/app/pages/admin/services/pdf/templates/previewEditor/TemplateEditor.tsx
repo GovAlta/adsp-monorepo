@@ -9,9 +9,6 @@ import {
   PdfEditActionLayout,
   PdfEditActions,
   GeneratorStyling,
-  GenerateButtonPadding,
-  SpinnerPadding,
-  SpinnerSpace,
 } from '../../styled-components';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
@@ -24,11 +21,9 @@ import { SaveFormModal } from '@components/saveModal';
 import { PDFConfigForm } from './PDFConfigForm';
 import { getSuggestion } from '../utils/suggestion';
 import { bodyEditorConfig } from './config';
-import { generatePdf } from '@store/pdf/action';
 import { useDispatch } from 'react-redux';
 import GeneratedPdfList from '../../testGenerate/generatedPdfList';
 import { GeneratePDF } from '../../testGenerate/generatePDF';
-import { GoAElementLoader } from '@abgov/react-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { streamPdfSocket } from '@store/pdf/action';
@@ -40,6 +35,7 @@ interface TemplateEditorProps {
   onHeaderChange: (value: string) => void;
   onCssChange: (value: string) => void;
   onFooterChange: (value: string) => void;
+  onVariableChange: (value: string) => void;
   setPreview: (channel: string) => void;
 
   template: PdfTemplate;
@@ -69,6 +65,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   onHeaderChange,
   onFooterChange,
   onCssChange,
+  onVariableChange,
   setPreview,
   template,
   savedTemplate,
@@ -80,13 +77,11 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   const monaco = useMonaco();
   const [saveModal, setSaveModal] = useState(false);
   const [hasConfigError, setHasConfigError] = useState(false);
-  const [variables, setVariables] = useState('{}');
+
   const suggestion = template ? getSuggestion() : [];
   const [activeIndex, setActiveIndex] = useState(0);
   const dispatch = useDispatch();
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
+
   const socketChannel = useSelector((state: RootState) => {
     return state?.pdf.socketChannel;
   });
@@ -126,16 +121,17 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   }, []);
 
   useEffect(() => {
-    //setPreview('header');
     onHeaderChange(template?.header);
     onFooterChange(template?.footer);
     onCssChange(template?.additionalStyles);
+    onVariableChange(template?.variables);
   }, [template, modelOpen]);
 
   const switchTabPreview = (value) => {
     onHeaderChange(template?.header);
     onFooterChange(template?.footer);
     onCssChange(template?.additionalStyles);
+    onVariableChange(template?.variables);
     setPreview(value);
   };
 
@@ -147,13 +143,14 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [modelOpen]);
 
-  const channels = ['header', 'main', 'footer', 'additionalStyles', 'Variable assignments'];
+  const channels = ['header', 'main', 'footer', 'additionalStyles', 'variableAssignments'];
   const tmpTemplate = template;
   const resetSavedAction = () => {
     onBodyChange(savedTemplate.template);
     onHeaderChange(savedTemplate.header);
     onFooterChange(savedTemplate.footer);
     onCssChange(savedTemplate.additionalStyles);
+    onVariableChange(savedTemplate?.variables);
   };
 
   return (
@@ -258,7 +255,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             >
               <>
                 <GeneratorStyling>
-                  <GeneratePDF payloadData={variables} setPayload={setVariables} />
+                  <GeneratePDF payloadData={template.variables} setPayload={onVariableChange} />
                   <section>{template?.id && <GeneratedPdfList templateId={template.id} />}</section>
                 </GeneratorStyling>
               </>
@@ -278,38 +275,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 >
                   Save
                 </GoAButton>
-                {activeIndex === 4 && (
-                  <GoAButton
-                    disabled={indicator.show}
-                    type="secondary"
-                    data-testid="form-save"
-                    onClick={() => {
-                      saveCurrentTemplate();
-                      const payload = {
-                        templateId: template.id,
-                        data: JSON.parse(variables),
-                        fileName: `${template.id}_${new Date().toJSON().slice(0, 19).replace(/:/g, '-')}.pdf`,
-                      };
-                      dispatch(generatePdf(payload));
-                    }}
-                  >
-                    <GenerateButtonPadding>
-                      Generate PDF
-                      {indicator.show ? (
-                        <SpinnerPadding>
-                          <GoAElementLoader
-                            visible={true}
-                            size="default"
-                            baseColour="#c8eef9"
-                            spinnerColour="#0070c4"
-                          />
-                        </SpinnerPadding>
-                      ) : (
-                        <SpinnerSpace></SpinnerSpace>
-                      )}
-                    </GenerateButtonPadding>
-                  </GoAButton>
-                )}
                 <GoAButton
                   onClick={() => {
                     if (isPDFUpdated(template, savedTemplate)) {
