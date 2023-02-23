@@ -18,6 +18,7 @@ import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
 import { useDebounce } from '@lib/useDebounce';
 import { useHistory, useParams } from 'react-router-dom';
+import { useTokenWillExpiryCount } from '@lib/useTokenExpiryCount';
 
 export const PdfTemplatesEditor = (): JSX.Element => {
   const { id } = useParams<{ id: string }>();
@@ -42,6 +43,8 @@ export const PdfTemplatesEditor = (): JSX.Element => {
   const debouncedRenderFooterPreview = useDebounce(footer, TEMPLATE_RENDER_DEBOUNCE_TIMER);
   const debouncedRenderHeaderPreview = useDebounce(header, TEMPLATE_RENDER_DEBOUNCE_TIMER);
 
+  useTokenWillExpiryCount();
+
   const channelNames = {
     main: 'PDF preview',
     'header/footer': 'Header / Footer preview',
@@ -54,6 +57,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
   const webappUrl = useSelector((state: RootState) => {
     return state.config.serviceUrls.tenantManagementWebApp;
   });
+
   useEffect(() => {
     setCurrentTemplate(pdfTemplate);
     setCurrentSavedTemplate(JSON.parse(JSON.stringify(pdfTemplate)));
