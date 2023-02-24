@@ -9,10 +9,9 @@ import { useHistory } from 'react-router-dom';
 
 interface PdfTemplateItemProps {
   pdfTemplate: PdfTemplate;
-  edit?: (PdfTemplate) => void;
   onDelete?: (PdfTemplate) => void;
 }
-export const PdfTemplateItem: FunctionComponent<PdfTemplateItemProps> = ({ pdfTemplate, edit, onDelete }) => {
+export const PdfTemplateItem: FunctionComponent<PdfTemplateItemProps> = ({ pdfTemplate, onDelete }) => {
   const { url } = useRouteMatch();
   const history = useHistory();
   return (

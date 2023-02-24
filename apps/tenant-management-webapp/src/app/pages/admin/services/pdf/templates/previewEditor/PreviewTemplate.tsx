@@ -70,6 +70,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
           disabled={indicator.show}
           type="secondary"
           data-testid="form-save"
+          size="compact"
           onClick={() => {
             saveCurrentTemplate();
             const payload = {
@@ -101,6 +102,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
     footer: <FooterPreview />,
     additionalStyles: <PdfPreview />,
     variableAssignments: <PdfPreview />,
+    history: <PdfPreview />,
   };
 
   return <PreviewContainer>{previewByType[channel]}</PreviewContainer>;

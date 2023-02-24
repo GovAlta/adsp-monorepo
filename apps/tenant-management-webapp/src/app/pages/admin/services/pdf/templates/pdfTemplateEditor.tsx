@@ -54,6 +54,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     footer: 'Footer preview',
     additionalStyles: 'PDF preview',
     variableAssignments: 'PDF preview',
+    history: 'PDF preview',
   };
   // eslint-disable-next-line
   useEffect(() => {}, [pdfTemplate]);
@@ -149,7 +150,6 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     saveObject.footer = footer;
     saveObject.additionalStyles = additionalStyles;
     saveObject.variables = variables;
-    console.log('saveObject: ' + JSON.stringify(saveObject));
     dispatch(updatePdfTemplate(saveObject));
     setCurrentSavedTemplate(currentTemplate);
   };

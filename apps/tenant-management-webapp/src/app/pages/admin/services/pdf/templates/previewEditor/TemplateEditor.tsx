@@ -22,8 +22,7 @@ import { PDFConfigForm } from './PDFConfigForm';
 import { getSuggestion } from '../utils/suggestion';
 import { bodyEditorConfig } from './config';
 import { useDispatch } from 'react-redux';
-import GeneratedPdfList from '../../testGenerate/generatedPdfList';
-import { GeneratePDF } from '../../testGenerate/generatePDF';
+import GeneratedPdfList from '../generatedPdfList';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { streamPdfSocket } from '@store/pdf/action';
@@ -143,7 +142,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [modelOpen]);
 
-  const channels = ['header', 'main', 'footer', 'additionalStyles', 'variableAssignments'];
+  const channels = ['header', 'main', 'footer', 'additionalStyles', 'variableAssignments', 'history'];
   const tmpTemplate = template;
   const resetSavedAction = () => {
     onBodyChange(savedTemplate.template);
@@ -251,11 +250,23 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             </Tab>
             <Tab
               testId={`pdf-test-generator`}
-              label={<PdfEditorLabelWrapper>Variable Assignments</PdfEditorLabelWrapper>}
+              label={<PdfEditorLabelWrapper>Variable assignments</PdfEditorLabelWrapper>}
             >
+              <GoAFormItem error={errors?.body ?? null}>
+                <MonacoDivBody>
+                  <MonacoEditor
+                    data-testid="form-schema"
+                    value={template.variables}
+                    onChange={(value) => onVariableChange(JSON.stringify(value))}
+                    language="json"
+                    {...bodyEditorConfig}
+                  />
+                </MonacoDivBody>
+              </GoAFormItem>
+            </Tab>
+            <Tab testId={`pdf-test-history`} label={<PdfEditorLabelWrapper>File history</PdfEditorLabelWrapper>}>
               <>
                 <GeneratorStyling>
-                  <GeneratePDF payloadData={template.variables} setPayload={onVariableChange} />
                   <section>{template?.id && <GeneratedPdfList templateId={template.id} />}</section>
                 </GeneratorStyling>
               </>

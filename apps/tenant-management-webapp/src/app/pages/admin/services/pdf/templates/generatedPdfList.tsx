@@ -26,7 +26,7 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
     dispatch(updatePdfResponse({ fileList: fileList }));
   }, [fileList]);
 
-  const jobList = useSelector((state: RootState) => state.pdf.jobs);
+  const pdfList = useSelector((state: RootState) => state.pdf.jobs);
 
   const statusGenerator = {
     queued: 'Queued',
@@ -43,7 +43,7 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
-
+  const jobList = pdfList.length > 5 ? pdfList.slice(0, 5) : pdfList;
   const renderFileTable = () => {
     return (
       <FileTableStyles>
