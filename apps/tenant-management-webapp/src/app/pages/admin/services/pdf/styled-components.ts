@@ -22,11 +22,6 @@ export const FileTableStyles = styled.div`
   }
 `;
 
-export const EditorStyles = styled.div`
-  border: 1px solid #666;
-  border-radius: 3px;
-`;
-
 export const PaddingRight = styled.div`
   margin-right: 12px;
 `;
@@ -215,35 +210,38 @@ export const PdfEditorLabelWrapper = styled.div`
 
 export const PdfConfigFormWrapper = styled.div`
   padding-left: 3px;
-  margin-top: 0.5rem;
   border: solid 1px #dcdcdc;
   border-radius: 3px;
   height: 8rem;
   background-color: #f1f1f1;
   width: 100%;
-  .nameColumn {
-    padding-left: 0.5rem;
-    width: 15%;
-    float: left;
-  }
-  .idColumn {
-    padding-left: 0.5rem;
-    width: 15%;
-    float: left;
-    height: 100%;
-    border-left: 1px solid #ccc;
-  }
-  .descColumn {
-    padding-left: 0.5rem;
-    width: 60%;
-    float: left;
-    height: 100%;
-    border-left: 1px solid #ccc;
-  }
-  .editColumn {
-    width: 10%;
-    float: right;
-  }
+  display: flex;
+  direction: row;
+  // .nameColumn {
+  //   padding-left: 0.5rem;
+  //   width: 15%;
+  //   float: left;
+  //   min-width: auto;
+  // }
+  // .idColumn {
+  //   padding-left: 0.5rem;
+  //   width: 15%;
+  //   float: left;
+  //   height: 100%;
+  //   border-left: 1px solid #ccc;
+  //   min-width: auto;
+  // }
+  // .descColumn {
+  //   padding-left: 0.5rem;
+  //   width: 60%;
+  //   float: left;
+  //   height: 100%;
+  //   border-left: 1px solid #ccc;
+  // }
+  // .editColumn {
+  //   width: 8%;
+  //   float: right;
+  // }
 `;
 
 export const PdfEditActionLayout = styled.div`
@@ -298,19 +296,12 @@ export const SpinnerPadding = styled.div`
   float: right;
 `;
 export const Edit = styled.div`
-  .flexRow {
-    display: flex;
-    flex-direction: row;
-  }
-
-  .badgePadding {
-    margin: 6px 0 0 5px;
-  }
-
   display: flex;
+  flex-direction: row;
+  margin-right: 1rem;
 `;
 export const OverflowWrap = styled.div`
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 `;
 
 export const PreviewTopStyle = styled.div`
@@ -318,4 +309,58 @@ export const PreviewTopStyle = styled.div`
   flex-direction: row;
   justify-content: left;
   gap: 1rem;
+`;
+
+export const PdfInfoTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  word-wrap: break-word;
+  overflow: auto;
+  position: relative;
+  padding-top: 0.5rem;
+
+  th {
+    white-space: pre-wrap;
+    color: var(--color-th);
+    font-size: var(--fs-base);
+    table-layout: fixed;
+    padding-left: 0.5rem;
+    text-align: left;
+    font-weight: var(--fw-bold);
+  }
+  td {
+    padding-left: 0.5rem;
+  }
+  & th:nth-child(1) {
+    width: 15%;
+  }
+
+  & td:nth-child(1) {
+    text-overflow: ellipsis;
+    width: 15%;
+  }
+  & th:nth-child(2) {
+    width: 15%;
+    border-left: 1px solid #ccc;
+  }
+
+  & td:nth-child(2) {
+    text-overflow: ellipsis;
+    width: 15%;
+    border-left: 1px solid #ccc;
+  }
+  & th:nth-child(3) {
+    width: 60%;
+    border-left: 1px solid #ccc;
+  }
+
+  & td:nth-child(3) {
+    text-overflow: ellipsis;
+    width: 60%;
+    border-left: 1px solid #ccc;
+  }
+  & th:nth-child(4) {
+    font-weight: var(--fw-light) !important;
+    width: 10%;
+  }
 `;

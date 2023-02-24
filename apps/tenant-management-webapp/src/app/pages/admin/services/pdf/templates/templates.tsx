@@ -10,7 +10,6 @@ import { PageIndicator } from '@components/Indicator';
 import { defaultPdfTemplate } from '@store/pdf/model';
 
 import { DeleteModal } from '@components/DeleteModal';
-import { useHistory } from 'react-router-dom';
 
 interface PdfTemplatesProps {
   openAddTemplate: boolean;
@@ -37,7 +36,7 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
   });
 
   const dispatch = useDispatch();
-  const history = useHistory();
+
   const reset = () => {
     setOpenAddPdfTemplate(false);
     setCurrentTemplate(defaultPdfTemplate);
@@ -85,14 +84,6 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
         {!indicator.show && pdfTemplates && (
           <PdfTemplatesTable
             templates={pdfTemplates}
-            edit={(currentTemplate) => {
-              setCurrentTemplate(currentTemplate);
-
-              history.push({
-                pathname: '/editor/pdf',
-                state: { currentTemplate },
-              });
-            }}
             onDelete={(currentTemplate) => {
               setShowDeleteConfirmation(true);
               setCurrentTemplate(currentTemplate);
@@ -104,7 +95,11 @@ export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemp
           <DeleteModal
             isOpen={showDeleteConfirmation}
             title="Delete PDF template"
-            content={`Delete ${currentTemplate?.name} (ID: ${currentTemplate?.id})?`}
+            content={
+              <div>
+                Delete <b>{`${currentTemplate?.name} (ID: ${currentTemplate?.id})?`}</b>
+              </div>
+            }
             onCancel={() => setShowDeleteConfirmation(false)}
             onDelete={() => {
               setShowDeleteConfirmation(false);
