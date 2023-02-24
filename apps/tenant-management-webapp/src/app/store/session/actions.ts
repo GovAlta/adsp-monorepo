@@ -8,6 +8,7 @@ export const UPDATE_ELEMENT_INDICATOR = 'session/elementIndicator';
 export const UPDATE_LOADING_STATE = 'session/loading/state';
 export const SET_SESSION_EXPIRED = 'session/expired';
 export const UPDATE_RESOURCE_ACCESS = 'session/resourceAccess/update';
+export const SET_SESSION_WILL_EXPIRED = 'session/will/expired';
 
 export type ActionType =
   | SessionLoginSuccessAction
@@ -17,6 +18,7 @@ export type ActionType =
   | UpdateLoadingStateAction
   | UpdateElementIndicatorAction
   | SetSessionExpiredAction
+  | SetSessionWillExpiredAction
   | UpdateResourceAccessAction;
 
 export interface CredentialRefreshAction {
@@ -50,6 +52,11 @@ export interface UpdateElementIndicatorAction {
 
 export interface SetSessionExpiredAction {
   type: typeof SET_SESSION_EXPIRED;
+  payload: boolean;
+}
+
+export interface SetSessionWillExpiredAction {
+  type: typeof SET_SESSION_WILL_EXPIRED;
   payload: boolean;
 }
 
@@ -101,4 +108,9 @@ export const UpdateResourceAccess = (clientId: string, role: string): UpdateReso
     clientId,
     role,
   },
+});
+
+export const SetSessionWillExpired = (isExpired: boolean): SetSessionWillExpiredAction => ({
+  type: SET_SESSION_WILL_EXPIRED,
+  payload: isExpired,
 });

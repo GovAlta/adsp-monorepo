@@ -16,6 +16,7 @@ export const TENANT_LOGOUT = 'TENANT_LOGOUT';
 export const UPDATE_TENANT_CREATED = 'UPDATE_TENANT_CREATED';
 export const FETCH_REALM_ROLES = 'FETCH_REALM_ROLES';
 export const FETCH_REALM_ROLES_SUCCESS = 'FETCH_REALM_ROLES_SUCCESS';
+export const UPDATE_ACCESS_TOKEN = 'UPDATE_ACCESS_TOKEN';
 
 interface SelectTenantAction {
   type: typeof SELECT_TENANT;
@@ -44,6 +45,10 @@ export interface CheckIsTenantAdminAction {
 
 export interface UpdateTenantCreatedAction {
   type: typeof UPDATE_TENANT_CREATED;
+}
+
+export interface UpdateAccessTokenAction {
+  type: typeof UPDATE_ACCESS_TOKEN;
 }
 
 interface UpdateTenantAdminInfoAction {
@@ -112,6 +117,7 @@ export type ActionType =
   | KeycloakCheckSSOAction
   | FetchRealmRolesAction
   | FetchRealmRolesSuccessAction
+  | UpdateAccessTokenAction
   | UpdateTenantCreatedAction;
 
 export const SelectTenant = (realm: string): SelectTenantAction => ({
@@ -197,4 +203,8 @@ export const FetchRealmRoles = (): FetchRealmRolesAction => ({
 export const FetchRealmRolesSuccess = (roles: Role[]): FetchRealmRolesSuccessAction => ({
   type: 'FETCH_REALM_ROLES_SUCCESS',
   payload: roles,
+});
+
+export const UpdateAccessToken = (): UpdateAccessTokenAction => ({
+  type: 'UPDATE_ACCESS_TOKEN',
 });

@@ -13,6 +13,7 @@ import {
   TenantLoginAction,
   KeycloakCheckSSOWithLogOutAction,
   FetchRealmRolesSuccess,
+  UpdateAccessTokenAction,
   CHECK_IS_TENANT_ADMIN,
   CREATE_TENANT,
   FETCH_REALM_ROLES,
@@ -26,6 +27,7 @@ import {
   TenantLogout,
   TenantAdminLoginAction,
   TenantCreationLoginInitAction,
+  UPDATE_ACCESS_TOKEN,
 } from './actions';
 
 import { CredentialRefresh, SessionLoginSuccess, UpdateIndicator, SetSessionExpired } from '@store/session/actions';
@@ -154,7 +156,7 @@ export function* tenantLogin(action: TenantLoginAction): SagaIterator {
   }
 }
 
-export function* getAccessToken(): SagaIterator {
+export function* getAccessToken(isForce = false): SagaIterator {
   const realmInSession = localStorage.getItem('realm');
 
   try {
@@ -162,9 +164,8 @@ export function* getAccessToken(): SagaIterator {
     const credentials: Credentials = yield select((state: RootState) => state.session.credentials);
 
     // Check if token is within 1 min of expiry.
-    if (credentials.tokenExp - Date.now() / 1000 < 60) {
+    if (credentials.tokenExp - Date.now() / 1000 < 60 || isForce) {
       const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth);
-
       const session: Session = yield call([keycloakAuth, keycloakAuth.refreshToken]);
       if (session) {
         const { credentials } = session;
@@ -225,6 +226,10 @@ export function* fetchRealmRoles(): SagaIterator {
   }
 }
 
+export function* updateAccessToken(action: UpdateAccessTokenAction): SagaIterator {
+  yield call(getAccessToken, true);
+}
+
 export function* watchTenantSagas(): SagaIterator {
   // tenant and keycloak
   yield takeEvery(CHECK_IS_TENANT_ADMIN, isTenantAdmin);
@@ -232,6 +237,7 @@ export function* watchTenantSagas(): SagaIterator {
   yield takeEvery(TENANT_LOGIN, tenantLogin);
   yield takeEvery(KEYCLOAK_CHECK_SSO_WITH_LOGOUT, keycloakCheckSSOWithLogout);
   yield takeEvery(TENANT_LOGOUT, tenantLogout);
+  yield takeEvery(UPDATE_ACCESS_TOKEN, updateAccessToken);
 
   //tenant config
   yield takeEvery(CREATE_TENANT, createTenant);
