@@ -45,7 +45,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
   const debouncedRenderFooterPreview = useDebounce(footer, TEMPLATE_RENDER_DEBOUNCE_TIMER);
   const debouncedRenderHeaderPreview = useDebounce(header, TEMPLATE_RENDER_DEBOUNCE_TIMER);
   const debouncedRenderCSSPreview = useDebounce(additionalStyles, TEMPLATE_RENDER_DEBOUNCE_TIMER);
-
+  const debouncedRenderVariableAssignments = useDebounce(variables, TEMPLATE_RENDER_DEBOUNCE_TIMER);
   useTokenWillExpiryCount();
 
   const channelNames = {
@@ -69,6 +69,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     setBody(pdfTemplate?.template || '');
     setFooter(pdfTemplate?.footer || '');
     setHeader(pdfTemplate?.header || '');
+    setVariables(pdfTemplate?.variables || '');
   }, [pdfTemplate]);
 
   useEffect(() => {
@@ -128,7 +129,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     } catch (e) {
       console.error('error: ' + e.message);
     }
-  }, [debouncedRenderBodyPreview, debouncedRenderCSSPreview]);
+  }, [debouncedRenderBodyPreview, debouncedRenderCSSPreview, debouncedRenderVariableAssignments]);
 
   const dispatch = useDispatch();
 
@@ -137,6 +138,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     setBodyPreview('');
     setFooterPreview('');
     setHeaderPreview('');
+    setVariables('');
     history.push({
       pathname: '/admin/services/pdf',
       state: { activeIndex: 1 },

@@ -257,7 +257,12 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   <MonacoEditor
                     data-testid="form-schema"
                     value={template.variables}
-                    onChange={(value) => onVariableChange(JSON.stringify(value))}
+                    onChange={(value) => {
+                      onVariableChange(value);
+                      if (tmpTemplate) {
+                        tmpTemplate.variables = value;
+                      }
+                    }}
                     language="json"
                     {...bodyEditorConfig}
                   />
