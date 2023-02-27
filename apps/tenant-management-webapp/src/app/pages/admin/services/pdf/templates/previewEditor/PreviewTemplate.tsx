@@ -23,6 +23,26 @@ interface PreviewTemplateProps {
   channel: string;
 }
 
+const base64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
+  const byteCharacters = atob(b64Data);
+  const byteArrays = [];
+
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+
+  const blob = new Blob(byteArrays, { type: contentType });
+  return blob;
+};
+
 export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
   channelTitle,
   bodyPreviewContent,
@@ -34,6 +54,12 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
 }) => {
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
+  });
+  const files = useSelector((state: RootState) => {
+    return state?.pdf.files;
+  });
+  const currentId = useSelector((state: RootState) => {
+    return state?.pdf.currentId;
   });
   const dispatch = useDispatch();
   const PdfPreview = () => {
@@ -62,6 +88,36 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
       </>
     );
   };
+
+  const PreviewPreview = () => {
+    console.log(JSON.stringify(blobUrl) + '<blobUrl');
+    console.log(JSON.stringify(blob) + '<blob');
+    return (
+      <>
+        <PreviewTop title={channelTitle} />
+        {blobUrl && (
+          <div>
+            <div>
+              <object type="application/pdf" data={blobUrl} height="650" style={{ width: '100%' }}>
+                <iframe src={blobUrl} height="100%" width="100%"></iframe>
+              </object>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  };
+
+  console.log(JSON.stringify(files) + '<files');
+  console.log(JSON.stringify(currentId) + '<currentId');
+  console.log(JSON.stringify(files[currentId]) + '<files[currentId]');
+
+  const blob = files[currentId] && base64toBlob(files[currentId], 'application/pdf');
+  const xx = files[currentId] && 42;
+  console.log(xx + '<xx');
+  console.log(JSON.stringify(blob) + '<blobblob');
+  const blobUrl = blob && URL.createObjectURL(blob);
+
   const PreviewTop = ({ title }) => {
     return (
       <PreviewTopStyle>
@@ -96,11 +152,11 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
   };
 
   const previewByType = {
-    main: <PdfPreview />,
-    header: <HeaderPreview />,
-    footer: <FooterPreview />,
-    additionalStyles: <PdfPreview />,
-    variableAssignments: <PdfPreview />,
+    main: <PreviewPreview />,
+    header: <PreviewPreview />,
+    footer: <PreviewPreview />,
+    additionalStyles: <PreviewPreview />,
+    variableAssignments: <PreviewPreview />,
   };
 
   return <PreviewContainer>{previewByType[channel]}</PreviewContainer>;

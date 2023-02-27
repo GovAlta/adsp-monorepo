@@ -22,12 +22,14 @@ import { PDFConfigForm } from './PDFConfigForm';
 import { getSuggestion } from '../utils/suggestion';
 import { bodyEditorConfig } from './config';
 import { useDispatch } from 'react-redux';
+import { updatePdfResponse } from '@store/pdf/action';
 import GeneratedPdfList from '../../testGenerate/generatedPdfList';
 import { GeneratePDF } from '../../testGenerate/generatePDF';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { streamPdfSocket } from '@store/pdf/action';
 import { LogoutModal } from '@components/LogoutModal';
+import { showCurrentFilePdf, setPdfDisplayFileId } from '@store/pdf/action';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -86,9 +88,27 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     return state?.pdf.socketChannel;
   });
 
+  const fileList = useSelector((state: RootState) => state.fileService.fileList);
+  const jobList = useSelector((state: RootState) => state.pdf.jobs);
+
   useEffect(() => {
     if (!socketChannel || socketChannel.connected === false) dispatch(streamPdfSocket(false));
   }, [socketChannel]);
+
+  useEffect(() => {
+    console.log(JSON.stringify('templated editor--'));
+  }, []);
+
+  useEffect(() => {
+    console.log(JSON.stringify('updating pdf generation view'));
+    dispatch(updatePdfResponse({ fileList: fileList }));
+    const currentFile = fileList.find((file) => jobList.map((job) => job.id).includes(file.recordId));
+    if (currentFile) {
+      dispatch(showCurrentFilePdf(currentFile?.id));
+    } else {
+      dispatch(setPdfDisplayFileId(null));
+    }
+  }, [fileList]);
 
   useEffect(() => {
     if (monaco) {
@@ -255,7 +275,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             >
               <>
                 <GeneratorStyling>
-                  <GeneratePDF payloadData={template.variables} setPayload={onVariableChange} />
+                  <GeneratePDF payloadData={template?.variables} setPayload={onVariableChange} />
                   <section>{template?.id && <GeneratedPdfList templateId={template.id} />}</section>
                 </GeneratorStyling>
               </>

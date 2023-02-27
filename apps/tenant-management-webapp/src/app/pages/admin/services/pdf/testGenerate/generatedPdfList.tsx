@@ -10,6 +10,7 @@ import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import InformationCircle from '@components/icons/InformationCircle';
 import { FileTableStyles } from '../styled-components';
+import { showCurrentFilePdf, setPdfDisplayFileId } from '@store/pdf/action';
 
 interface GeneratedPdfListProps {
   templateId: string;
@@ -18,15 +19,10 @@ interface GeneratedPdfListProps {
 const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element => {
   const dispatch = useDispatch();
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
+  const jobList = useSelector((state: RootState) => state.pdf.jobs);
   const onDownloadFile = async (file) => {
     dispatch(DownloadFileService(file));
   };
-
-  useEffect(() => {
-    dispatch(updatePdfResponse({ fileList: fileList }));
-  }, [fileList]);
-
-  const jobList = useSelector((state: RootState) => state.pdf.jobs);
 
   const statusGenerator = {
     queued: 'Queued',
@@ -87,13 +83,21 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                       </td>
                       <td>
                         {file?.filename ? (
-                          <GoAIconButton
-                            disabled={!file?.size}
-                            data-testid="download-icon"
-                            size="medium"
-                            type="download"
-                            onClick={() => onDownloadFile(file)}
-                          />
+                          <div>
+                            <GoAIconButton
+                              disabled={!file?.size}
+                              data-testid="download-icon"
+                              size="medium"
+                              type="download"
+                              onClick={() => onDownloadFile(file)}
+                            />
+                            <GoAIconButton
+                              title="Toggle details"
+                              type={'eye'}
+                              onClick={() => dispatch(showCurrentFilePdf(file.id))}
+                              testId="toggle-details-visibility"
+                            />
+                          </div>
                         ) : (
                           <div>
                             {indicator.show && <GoASkeletonGridColumnContent rows={1}></GoASkeletonGridColumnContent>}
