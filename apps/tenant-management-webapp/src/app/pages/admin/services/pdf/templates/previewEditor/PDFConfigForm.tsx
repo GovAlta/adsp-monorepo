@@ -4,7 +4,6 @@ import { PdfTemplate } from '@store/pdf/model';
 import { GoAIconButton } from '@abgov/react-components-new';
 
 import { PdfConfigFormWrapper } from '../../styled-components';
-import DataTable from '@components/DataTable';
 import { Edit, PdfInfoTable } from '../../styled-components';
 import { AddEditPdfTemplate } from '../addEditPdfTemplates';
 import { useDispatch } from 'react-redux';
@@ -21,23 +20,6 @@ export const PDFConfigForm = ({ template, onChange, setError }: PDFConfigFormPro
   const dispatch = useDispatch();
   return (
     <PdfConfigFormWrapper>
-      {/* <div className="nameColumn">
-        <h4>Name</h4>
-        <OverflowWrap>{name}</OverflowWrap>
-      </div>
-
-      <div className="idColumn">
-        <OverflowWrap>
-          {' '}
-          <h4>Template ID</h4>
-          {id}
-        </OverflowWrap>
-      </div>
-
-      <div className="descColumn">
-        <h4>Description</h4>
-        <OverflowWrap>{description}</OverflowWrap>
-      </div> */}
       <PdfInfoTable>
         <thead>
           <tr>
@@ -70,13 +52,6 @@ export const PDFConfigForm = ({ template, onChange, setError }: PDFConfigFormPro
           </tr>
         </tbody>
       </PdfInfoTable>
-
-      {/* <Edit>
-        <a rel="noopener noreferrer" onClick={() => setOpenEditPdfTemplate(true)}>
-          Edit
-        </a>
-        <GoAIconButton icon="create" title="Edit" size="small" onClick={() => setOpenEditPdfTemplate(true)} />
-      </Edit> */}
       {openEditPdfTemplate && (
         <AddEditPdfTemplate
           open={openEditPdfTemplate}
