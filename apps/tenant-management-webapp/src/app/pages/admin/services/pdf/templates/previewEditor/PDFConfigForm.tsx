@@ -10,10 +10,8 @@ import { useDispatch } from 'react-redux';
 import { updatePdfTemplate } from '@store/pdf/action';
 interface PDFConfigFormProps {
   template: PdfTemplate;
-  onChange(template: PdfTemplate): void;
-  setError(hasError: boolean): void;
 }
-export const PDFConfigForm = ({ template, onChange, setError }: PDFConfigFormProps) => {
+export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
   const { id, name, description } = template;
   const [openEditPdfTemplate, setOpenEditPdfTemplate] = useState(false);
 

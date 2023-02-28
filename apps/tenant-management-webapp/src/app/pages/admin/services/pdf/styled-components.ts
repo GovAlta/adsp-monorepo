@@ -364,3 +364,6 @@ export const PdfInfoTable = styled.table`
     width: 10%;
   }
 `;
+export const TextAreaDiv = styled.div`
+  margin-bottom: 1rem;
+`;
