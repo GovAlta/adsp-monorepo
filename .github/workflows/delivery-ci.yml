@@ -25,28 +25,21 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
+          cache: 'npm'
       - uses: actions/setup-java@v3
         with:
           java-version: "11"
           distribution: temurin
           cache: maven
-      - uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
       - run: npm ci
       - name: Get last successful commit
-        uses: nrwl/last-successful-commit-action@v1
         id: last_successful_commit
-        with:
-          branch: main
-          workflow_id: delivery-ci.yml
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+        uses: nrwl/nx-set-shas@v3
       - name: Build
         id: production-build
         uses: ./.github/actions/nx-production-build
         with:
-          affected-base: ${{ github.event.inputs.AFFECTED_BASE || steps.last_successful_commit.outputs.commit_hash }}
+          affected-base: ${{ github.event.inputs.AFFECTED_BASE || steps.last_successful_commit.outputs.base }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           npm_token: ${{ secrets.NPM_TOKEN }}
       - run: npm prune --production
@@ -140,10 +133,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-      - uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          cache: 'npm'
       - name: E2E Test
         uses: ./.github/actions/nx-cypress-e2e
         with:
@@ -208,10 +198,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-      - uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          cache: 'npm'
       - name: E2E Test
         uses: ./.github/actions/nx-cypress-e2e
         with:
