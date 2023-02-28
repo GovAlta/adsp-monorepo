@@ -155,17 +155,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   return (
     <TemplateEditorContainerPdf>
       <LogoutModal />
-      {template && (
-        <PDFConfigForm
-          template={template}
-          setError={(hasError) => {
-            setHasConfigError(hasError);
-          }}
-          onChange={(_template) => {
-            updateTemplate(_template);
-          }}
-        />
-      )}
+      {template && <PDFConfigForm template={template} />}
       <GoAForm>
         <GoAFormItem>
           <Tabs

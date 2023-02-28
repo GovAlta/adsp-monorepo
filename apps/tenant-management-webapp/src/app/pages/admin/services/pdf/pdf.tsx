@@ -16,7 +16,7 @@ export const Pdf: FunctionComponent = () => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [openAddTemplate, setOpenAddTemplate] = useState(false);
   const location = useLocation();
-  const locationParser = JSON.parse(JSON.stringify(location.state));
+  const locationParser = location.state ? JSON.parse(JSON.stringify(location.state)) : '';
 
   useEffect(() => {
     dispatch(FetchFilesService());
