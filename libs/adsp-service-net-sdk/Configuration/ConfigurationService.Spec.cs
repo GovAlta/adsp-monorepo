@@ -59,7 +59,7 @@ public class ConfigurationServiceTests
       .Setup((d) => d.GetServiceUrl(AdspId.Parse("urn:ads:platform:configuration-service:v2")))
       .ReturnsAsync(new Uri("https://tenant-service/tenants/v2"));
 
-    object whatever;
+    object? whatever;
 
     cache
       .Setup(mc => mc.TryGetValue(It.IsAny<object>(), out whatever))

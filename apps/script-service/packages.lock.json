@@ -1,7 +1,7 @@
 {
   "version": 1,
   "dependencies": {
-    "net6.0": {
+    "net7.0": {
       "coverlet.collector": {
         "type": "Direct",
         "requested": "[3.1.2, )",
@@ -19,9 +19,9 @@
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
-        "requested": "[6.0.0, )",
-        "resolved": "6.0.0",
-        "contentHash": "cjG06LMeOADNUeCUaklOfVgrnVkLy80H5PVll4QHDUXv+C+6G9rHczrNdWjfb3xKv3Ts9s4UsP6J2ZWe52Gz4Q=="
+        "requested": "[7.0.0, )",
+        "resolved": "7.0.0",
+        "contentHash": "Khlc9eqD9Dqn9C483beBm9NvVLF1atZng9AWc6ujeXyw2xdhDaaTKQ3Nq57r2tGMVle/pIvoNs5lCgTkQ0eB4g=="
       },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
@@ -1384,22 +1384,22 @@
       "Adsp.Sdk": {
         "type": "Project",
         "dependencies": {
-          "FluentAssertions": "6.7.0",
-          "IdentityModel": "6.0.0",
-          "Microsoft.AspNetCore.Authentication.JwtBearer": "6.0.0",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "6.0.0",
-          "Microsoft.Extensions.Caching.Memory": "6.0.0",
-          "Microsoft.Extensions.DependencyInjection": "6.0.0",
-          "Microsoft.NET.Test.Sdk": "17.2.0",
-          "Moq": "4.18.1",
-          "NJsonSchema": "10.7.2",
-          "Polly": "7.2.3",
-          "RabbitMQ.Client": "6.4.0",
-          "ReportGenerator": "5.1.9",
-          "RestSharp": "108.0.1",
-          "RichardSzalay.MockHttp": "6.0.0",
-          "SocketIOClient": "3.0.6",
-          "xunit": "2.4.1"
+          "FluentAssertions": "[6.7.0, )",
+          "IdentityModel": "[6.0.0, )",
+          "Microsoft.AspNetCore.Authentication.JwtBearer": "[6.0.0, )",
+          "Microsoft.CodeAnalysis.NetAnalyzers": "[7.0.0, )",
+          "Microsoft.Extensions.Caching.Memory": "[6.0.0, )",
+          "Microsoft.Extensions.DependencyInjection": "[6.0.0, )",
+          "Microsoft.NET.Test.Sdk": "[17.2.0, )",
+          "Moq": "[4.18.1, )",
+          "NJsonSchema": "[10.7.2, )",
+          "Polly": "[7.2.3, )",
+          "RabbitMQ.Client": "[6.4.0, )",
+          "ReportGenerator": "[5.1.9, )",
+          "RestSharp": "[108.0.1, )",
+          "RichardSzalay.MockHttp": "[6.0.0, )",
+          "SocketIOClient": "[3.0.6, )",
+          "xunit": "[2.4.1, )"
         }
       }
     }
