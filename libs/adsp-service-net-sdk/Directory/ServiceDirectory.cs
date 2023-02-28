@@ -47,7 +47,7 @@ internal class ServiceDirectory : IServiceDirectory, IDisposable
       }
     }
 
-    return url;
+    return url!;
   }
 
   private async Task<IDictionary<AdspId, Uri>> RetrieveDirectory(string @namespace)
