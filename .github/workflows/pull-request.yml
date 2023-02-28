@@ -16,15 +16,12 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
+          cache: 'npm'
       - uses: actions/setup-java@v3
         with:
           java-version: "11"
           distribution: temurin
           cache: maven
-      - uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
       - run: npm ci
       # Run with the target branch as the base.
       - name: Build
