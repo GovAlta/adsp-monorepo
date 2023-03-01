@@ -22,7 +22,7 @@ import { theme } from 'theme';
 import PublicApp from './publicApp';
 import styled from 'styled-components';
 import { GoAHeader } from '@abgov/react-components';
-
+import '@abgov/web-components/index.css';
 const AppRouters = () => {
   return (
     <>
