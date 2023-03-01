@@ -5,7 +5,7 @@ using RestSharp;
 
 namespace Adsp.Sdk.Access;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
-internal class TokenProvider : ITokenProvider, IDisposable
+internal sealed class TokenProvider : ITokenProvider, IDisposable
 {
   private readonly object _lock = new();
   private string? _token;

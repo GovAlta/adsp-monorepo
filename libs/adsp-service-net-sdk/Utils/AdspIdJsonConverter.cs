@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Adsp.Sdk.Utils;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "For deserialization")]
-internal class AdspIdJsonConverter : JsonConverter<AdspId>
+internal sealed class AdspIdJsonConverter : JsonConverter<AdspId>
 {
   public override AdspId? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
   {

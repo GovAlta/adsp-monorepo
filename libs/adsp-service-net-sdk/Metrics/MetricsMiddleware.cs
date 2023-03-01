@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Adsp.Sdk.Metrics;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Middleware for application builder")]
-internal class MetricsMiddleware
+internal sealed class MetricsMiddleware
 {
   public const string BenchmarkContextKey = "ADSP:Benchmark";
 

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 
 namespace Adsp.Sdk.Events;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
-internal class EventSubscriberStartupFilter : IStartupFilter
+internal sealed class EventSubscriberStartupFilter : IStartupFilter
 {
   private readonly IEnumerable<ISubscriberService> _services;
 

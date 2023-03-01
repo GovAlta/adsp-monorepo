@@ -7,7 +7,7 @@ using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Swagger;
 
 namespace Adsp.Platform.ScriptService;
-internal class Program
+internal sealed class Program
 {
   private static void Main(string[] args)
   {

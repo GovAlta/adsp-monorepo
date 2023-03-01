@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Adsp.Platform.ScriptService.Services.Platform;
 [SuppressMessage("Usage", "CA2227: Collection properties should be read only", Justification = "Data transfer object")]
-internal class TaskCreationRequest
+internal sealed class TaskCreationRequest
 {
   [JsonPropertyName("name")]
   public string? Name { get; set; }
