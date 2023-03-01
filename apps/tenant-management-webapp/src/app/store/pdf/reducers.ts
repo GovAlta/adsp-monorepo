@@ -47,14 +47,11 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
         },
       };
     case SET_PDF_DISPLAY_FILE_ID:
-      console.log(JSON.stringify(action.id) + '<currentId');
       return {
         ...state,
         currentId: action.id,
       };
     case SHOW_CURRENT_FILE_PDF_SUCCESS:
-      console.log(JSON.stringify(action.id) + '<currentId');
-
       return {
         ...state,
         files: {

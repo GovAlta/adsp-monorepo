@@ -130,8 +130,6 @@ export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): Saga
 export function* showCurrentFilePdf(action: ShowCurrentFilePdfAction): SagaIterator {
   const fileUrl = yield select((state: RootState) => state.config.serviceUrls?.fileApi);
 
-  console.log(JSON.stringify(fileUrl) + '<fileUrl');
-
   const token: string = yield call(getAccessToken);
 
   if (fileUrl && token) {
@@ -242,8 +240,9 @@ function* emitResponse(socket) {
   yield apply(socket, socket.emit, ['message received']);
 }
 
-export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
+export function* generatePdf({ payload, saveObject }: GeneratePdfAction): SagaIterator {
   const pdfServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pdfServiceApiUrl);
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
 
   const token: string = yield call(getAccessToken);
 
@@ -256,6 +255,18 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
 
   if (pdfServiceUrl && token) {
     try {
+      // save first
+      const pdfTemplate = {
+        [saveObject.id]: {
+          ...saveObject,
+        },
+      };
+      const saveBody = { operation: 'UPDATE', update: { ...pdfTemplate } };
+      yield call(axios.patch, `${baseUrl}/configuration/v2/configuration/platform/pdf-service`, saveBody, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // generate after
       const pdfData = {
         templateId: payload.templateId,
         data: payload.data,

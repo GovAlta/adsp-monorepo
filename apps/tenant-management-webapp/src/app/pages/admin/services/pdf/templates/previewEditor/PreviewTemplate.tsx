@@ -1,6 +1,5 @@
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useState, useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components-new';
-import { generatePdf } from '@store/pdf/action';
 import { GoAElementLoader } from '@abgov/react-components';
 import {
   GenerateButtonPadding,
@@ -8,19 +7,13 @@ import {
   SpinnerSpace,
   PreviewTopStyle,
   PreviewContainer,
-  BodyPreview,
 } from '../../styled-components';
 import { RootState } from '@store/index';
-import { useSelector, useDispatch } from 'react-redux';
-import { PdfTemplate } from '@store/pdf/model';
+import { useSelector } from 'react-redux';
+
 interface PreviewTemplateProps {
   channelTitle: string;
-  bodyPreviewContent: string;
-  headerPreviewContent: string;
-  footerPreviewContent: string;
-  saveCurrentTemplate?: () => void;
-  template: PdfTemplate;
-  channel: string;
+  generateTemplate: () => void;
 }
 
 const base64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
@@ -43,62 +36,43 @@ const base64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
   return blob;
 };
 
-export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
-  channelTitle,
-  bodyPreviewContent,
-  headerPreviewContent,
-  footerPreviewContent,
-  channel,
-  saveCurrentTemplate,
-  template,
-}) => {
+export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ channelTitle, generateTemplate }) => {
+  const [windowSize, setWindowSize] = useState([window.innerWidth, window.innerHeight]);
+
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
   const files = useSelector((state: RootState) => {
     return state?.pdf.files;
   });
+
   const currentId = useSelector((state: RootState) => {
     return state?.pdf.currentId;
   });
-  const dispatch = useDispatch();
-  const PdfPreview = () => {
-    return (
-      <>
-        <PreviewTop title={channelTitle} />
-        <BodyPreview title={channelTitle} html={bodyPreviewContent}></BodyPreview>
-      </>
-    );
-  };
 
-  const HeaderPreview = () => {
-    return (
-      <>
-        <PreviewTop title="Header" />
-        <BodyPreview data-testid="header-preview-subject" title="Header" html={headerPreviewContent}></BodyPreview>
-      </>
-    );
-  };
+  useEffect(() => {
+    const handleWindowResize = () => {
+      setWindowSize([window.innerWidth, window.innerHeight]);
+    };
 
-  const FooterPreview = () => {
-    return (
-      <>
-        <PreviewTop title="Footer" />
-        <BodyPreview data-testid="footer-preview-subject" title="Footer" html={footerPreviewContent}></BodyPreview>
-      </>
-    );
-  };
+    window.addEventListener('resize', handleWindowResize);
+
+    return () => {
+      window.removeEventListener('resize', handleWindowResize);
+    };
+  });
 
   const PreviewPreview = () => {
-    console.log(JSON.stringify(blobUrl) + '<blobUrl');
-    console.log(JSON.stringify(blob) + '<blob');
+    const blob = files[currentId] && base64toBlob(files[currentId], 'application/pdf');
+
+    const blobUrl = blob && URL.createObjectURL(blob);
     return (
       <>
         <PreviewTop title={channelTitle} />
         {blobUrl && (
           <div>
             <div>
-              <object type="application/pdf" data={blobUrl} height="650" style={{ width: '100%' }}>
+              <object type="application/pdf" data={blobUrl} height={windowSize[1] - 200} style={{ width: '100%' }}>
                 <iframe src={blobUrl} height="100%" width="100%"></iframe>
               </object>
             </div>
@@ -107,16 +81,6 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
       </>
     );
   };
-
-  console.log(JSON.stringify(files) + '<files');
-  console.log(JSON.stringify(currentId) + '<currentId');
-  console.log(JSON.stringify(files[currentId]) + '<files[currentId]');
-
-  const blob = files[currentId] && base64toBlob(files[currentId], 'application/pdf');
-  const xx = files[currentId] && 42;
-  console.log(xx + '<xx');
-  console.log(JSON.stringify(blob) + '<blobblob');
-  const blobUrl = blob && URL.createObjectURL(blob);
 
   const PreviewTop = ({ title }) => {
     return (
@@ -127,13 +91,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
           type="secondary"
           data-testid="form-save"
           onClick={() => {
-            saveCurrentTemplate();
-            const payload = {
-              templateId: template.id,
-              data: template.variables ? JSON.parse(template.variables) : {},
-              fileName: `${template.id}_${new Date().toJSON().slice(0, 19).replace(/:/g, '-')}.pdf`,
-            };
-            dispatch(generatePdf(payload));
+            generateTemplate();
           }}
         >
           <GenerateButtonPadding>
@@ -151,13 +109,9 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
     );
   };
 
-  const previewByType = {
-    main: <PreviewPreview />,
-    header: <PreviewPreview />,
-    footer: <PreviewPreview />,
-    additionalStyles: <PreviewPreview />,
-    variableAssignments: <PreviewPreview />,
-  };
-
-  return <PreviewContainer>{previewByType[channel]}</PreviewContainer>;
+  return (
+    <PreviewContainer>
+      <PreviewPreview />
+    </PreviewContainer>
+  );
 };

@@ -20,6 +20,7 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
   const dispatch = useDispatch();
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
   const jobList = useSelector((state: RootState) => state.pdf.jobs);
+  const files = useSelector((state: RootState) => state.pdf.files);
   const onDownloadFile = async (file) => {
     dispatch(DownloadFileService(file));
   };
@@ -39,6 +40,14 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+
+  const showCurrentPdf = (file) => {
+    if (Object.keys(files).includes(file.id)) {
+      dispatch(setPdfDisplayFileId(file.id));
+    } else {
+      dispatch(showCurrentFilePdf(file.id));
+    }
+  };
 
   const renderFileTable = () => {
     return (
@@ -94,7 +103,7 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                             <GoAIconButton
                               title="Toggle details"
                               type={'eye'}
-                              onClick={() => dispatch(showCurrentFilePdf(file.id))}
+                              onClick={() => showCurrentPdf(file)}
                               testId="toggle-details-visibility"
                             />
                           </div>

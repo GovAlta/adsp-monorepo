@@ -157,7 +157,7 @@ export const MonacoDivBody = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(92vh - 366px - 7rem);
+  height: calc(92vh - 366px);
   min-height: 2rem;
 `;
 export const MonacoDivHeader = styled.div`
@@ -165,7 +165,7 @@ export const MonacoDivHeader = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(92vh - 366px - 7rem);
+  height: calc(92vh - 366px);
   min-height: 2rem;
 `;
 export const MonacoDivFooter = styled.div`
@@ -173,7 +173,7 @@ export const MonacoDivFooter = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(92vh - 366px - 7rem);
+  height: calc(92vh - 366px);
   min-height: 2rem;
 `;
 export const EditTemplateActions = styled.div`
@@ -221,28 +221,39 @@ export const PdfConfigFormWrapper = styled.div`
   height: 8rem;
   background-color: #f1f1f1;
   width: 100%;
+  display: flex;
+  overflow: hidden;
+  margin-bottom: 10px;
   .nameColumn {
     padding-left: 0.5rem;
-    width: 15%;
+    width: calc(22% - 17px);
+    flex-grow: 1;
     float: left;
   }
   .idColumn {
     padding-left: 0.5rem;
-    width: 15%;
+    width: calc(22% - 17px);
     float: left;
     height: 100%;
+    flex-grow: 1;
     border-left: 1px solid #ccc;
   }
   .descColumn {
     padding-left: 0.5rem;
-    width: 60%;
+    width: calc(56% - 42px);
     float: left;
+    flex-grow: 2;
     height: 100%;
     border-left: 1px solid #ccc;
   }
+
+  .padding-bottom {
+    padding-bottom: 10px;
+  }
+
   .editColumn {
-    width: 10%;
-    float: right;
+    width: 76px;
+    margin-top: 16px;
   }
 `;
 
@@ -307,10 +318,15 @@ export const Edit = styled.div`
     margin: 6px 0 0 5px;
   }
 
+  a {
+    margin-top: 3px;
+  }
+
   display: flex;
 `;
 export const OverflowWrap = styled.div`
   overflow-wrap: anywhere;
+  overflow-y: hidden;
 `;
 
 export const PreviewTopStyle = styled.div`

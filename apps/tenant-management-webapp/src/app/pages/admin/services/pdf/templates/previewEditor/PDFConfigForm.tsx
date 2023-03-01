@@ -36,13 +36,14 @@ export const PDFConfigForm = ({ template, onChange, setError }: PDFConfigFormPro
         <h4>Description</h4>
         <OverflowWrap>{description}</OverflowWrap>
       </div>
-
-      <Edit>
-        <a rel="noopener noreferrer" onClick={() => setOpenEditPdfTemplate(true)}>
-          Edit
-        </a>
-        <GoAIconButton icon="create" title="Edit" size="small" onClick={() => setOpenEditPdfTemplate(true)} />
-      </Edit>
+      <div className="editColumn">
+        <Edit>
+          <a rel="noopener noreferrer" onClick={() => setOpenEditPdfTemplate(true)}>
+            Edit
+          </a>
+          <GoAIconButton icon="create" title="Edit" size="small" onClick={() => setOpenEditPdfTemplate(true)} />
+        </Edit>
+      </div>
       {openEditPdfTemplate && (
         <AddEditPdfTemplate
           open={openEditPdfTemplate}
