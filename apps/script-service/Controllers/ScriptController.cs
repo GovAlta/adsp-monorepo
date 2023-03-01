@@ -88,7 +88,7 @@ public class ScriptController : ControllerBase
 
     Func<Task<string>> getToken = definition.UseServiceAccount == true ?
       () => _tokenProvider.GetAccessToken() :
-      () => Task.FromResult(HttpContext.Request.Headers[HeaderNames.Authorization].First()[TOKEN_INDEX..]);
+      () => Task.FromResult(HttpContext.Request.Headers[HeaderNames.Authorization].First()![TOKEN_INDEX..]);
 
     using (HttpContext.Benchmark("run-script-time"))
     {

@@ -84,7 +84,7 @@ internal class TenantService : ITenantService, IDisposable
 
     if (tenant != null)
     {
-      _cache.Set(tenant.Id, tenant, TimeSpan.FromHours(1));
+      _cache.Set(tenant.Id!, tenant, TimeSpan.FromHours(1));
     }
 
     return tenant;
@@ -111,7 +111,7 @@ internal class TenantService : ITenantService, IDisposable
     {
       foreach (var tenant in tenants)
       {
-        _cache.Set(tenant.Id, tenant, TimeSpan.FromHours(1));
+        _cache.Set(tenant.Id!, tenant, TimeSpan.FromHours(1));
       }
     }
 
