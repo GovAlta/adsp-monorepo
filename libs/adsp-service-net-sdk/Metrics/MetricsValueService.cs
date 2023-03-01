@@ -7,7 +7,8 @@ using RestSharp;
 
 namespace Adsp.Sdk.Metrics;
 [SuppressMessage("Usage", "CA1031: Do not catch general exception types", Justification = "WIP: script error handling")]
-internal class MetricsValueService : IMetricsValueService
+[SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+internal sealed class MetricsValueService : IMetricsValueService
 {
   private const int WriteDelayMs = 60000;
 

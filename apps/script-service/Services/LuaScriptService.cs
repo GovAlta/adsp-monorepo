@@ -10,7 +10,7 @@ using NLua.Exceptions;
 namespace Adsp.Platform.ScriptService.Services;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
 [SuppressMessage("Usage", "CA1031: Do not catch general exception types", Justification = "WIP: script error handling")]
-internal class LuaScriptService : ILuaScriptService
+internal sealed class LuaScriptService : ILuaScriptService
 {
   private readonly ILogger<LuaScriptService> _logger;
   private readonly IServiceDirectory _directory;

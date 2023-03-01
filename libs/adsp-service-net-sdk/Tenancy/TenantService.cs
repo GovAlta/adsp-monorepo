@@ -7,7 +7,7 @@ using RestSharp;
 
 namespace Adsp.Sdk.Tenancy;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
-internal class TenantService : ITenantService, IDisposable
+internal sealed class TenantService : ITenantService, IDisposable
 {
   private static readonly AdspId TENANT_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:tenant-service:v2");
 
