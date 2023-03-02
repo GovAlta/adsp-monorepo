@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from 'react';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton, GoAIconButton } from '@abgov/react-components-new';
 import { generatePdf } from '@store/pdf/action';
 import { GoAElementLoader } from '@abgov/react-components';
 import {
@@ -9,10 +9,12 @@ import {
   PreviewTopStyle,
   PreviewContainer,
   BodyPreview,
+  PDFTitle,
 } from '../../styled-components';
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
 import { PdfTemplate } from '@store/pdf/model';
+import { DownloadFileService } from '@store/file/actions';
 interface PreviewTemplateProps {
   channelTitle: string;
   bodyPreviewContent: string;
@@ -35,6 +37,12 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+  const fileList = useSelector((state: RootState) => state.fileService.fileList);
+  const pdfList = useSelector((state: RootState) => state.pdf.jobs);
+  const onDownloadFile = async (file) => {
+    file && dispatch(DownloadFileService(file));
+  };
+
   const dispatch = useDispatch();
   const PdfPreview = () => {
     return (
@@ -64,35 +72,53 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
   };
   const PreviewTop = ({ title }) => {
     return (
-      <PreviewTopStyle>
-        <h3>{title}</h3>
-        <GoAButton
-          disabled={indicator.show}
-          type="secondary"
-          data-testid="form-save"
-          size="compact"
-          onClick={() => {
-            saveCurrentTemplate();
-            const payload = {
-              templateId: template.id,
-              data: template.variables ? JSON.parse(template.variables) : {},
-              fileName: `${template.id}_${new Date().toJSON().slice(0, 19).replace(/:/g, '-')}.pdf`,
-            };
-            dispatch(generatePdf(payload));
-          }}
-        >
-          <GenerateButtonPadding>
-            Generate PDF
-            {indicator.show ? (
-              <SpinnerPadding>
-                <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
-              </SpinnerPadding>
-            ) : (
-              <SpinnerSpace></SpinnerSpace>
-            )}
-          </GenerateButtonPadding>
-        </GoAButton>
-      </PreviewTopStyle>
+      <>
+        <PreviewTopStyle>
+          <PDFTitle>{title}</PDFTitle>
+
+          <GoAButton
+            disabled={indicator.show}
+            type="secondary"
+            data-testid="form-save"
+            size="compact"
+            onClick={() => {
+              saveCurrentTemplate();
+              const payload = {
+                templateId: template.id,
+                data: template.variables ? JSON.parse(template.variables) : {},
+                fileName: `${template.id}_${new Date().toJSON().slice(0, 19).replace(/:/g, '-')}.pdf`,
+              };
+              dispatch(generatePdf(payload));
+            }}
+          >
+            <GenerateButtonPadding>
+              Generate PDF
+              {indicator.show ? (
+                <SpinnerPadding>
+                  <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
+                </SpinnerPadding>
+              ) : (
+                <SpinnerSpace></SpinnerSpace>
+              )}
+            </GenerateButtonPadding>
+          </GoAButton>
+          {
+            <GoAIconButton
+              icon="download"
+              title="Download"
+              testId="download-icon"
+              size="medium"
+              onClick={() => {
+                const file = fileList[0];
+                if (file.recordId === pdfList[0].id && file.filename.indexOf(pdfList[0].templateId) > -1) {
+                  onDownloadFile(file);
+                }
+              }}
+            />
+          }
+        </PreviewTopStyle>
+        <hr className="hr-resize" style={{ marginTop: '0.5rem' }} />
+      </>
     );
   };
 

@@ -75,7 +75,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
                 type="text"
                 name="pdf-template-name"
                 value={template.name}
-                data-testid="pdf-template-name"
+                testId="pdf-template-name"
                 aria-label="pdf-template-name"
                 width="100%"
                 onChange={(name, value) => {

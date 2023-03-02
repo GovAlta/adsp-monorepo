@@ -3,12 +3,11 @@ import {
   TemplateEditorContainerPdf,
   EditTemplateActions,
   MonacoDivBody,
-  MonacoDivHeader,
-  MonacoDivFooter,
   PdfEditorLabelWrapper,
   PdfEditActionLayout,
   PdfEditActions,
   GeneratorStyling,
+  PDFTitle,
 } from '../../styled-components';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
@@ -155,7 +154,10 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   return (
     <TemplateEditorContainerPdf>
       <LogoutModal />
+      <PDFTitle>PDF / Template Editor</PDFTitle>
+      <hr className="hr-resize" />
       {template && <PDFConfigForm template={template} />}
+
       <GoAForm>
         <GoAFormItem>
           <Tabs
@@ -168,7 +170,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           >
             <Tab testId={`pdf-edit-header`} label={<PdfEditorLabelWrapper>Header</PdfEditorLabelWrapper>}>
               <GoAFormItem error={errors?.header ?? ''}>
-                <MonacoDivHeader>
+                <MonacoDivBody>
                   <MonacoEditor
                     language={'handlebars'}
                     defaultValue={template?.header}
@@ -180,7 +182,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     }}
                     {...bodyEditorConfig}
                   />
-                </MonacoDivHeader>
+                </MonacoDivBody>
               </GoAFormItem>
             </Tab>
             <Tab testId={`pdf-edit-body`} label={<PdfEditorLabelWrapper>Body</PdfEditorLabelWrapper>}>
@@ -204,7 +206,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             </Tab>
             <Tab testId={`pdf-edit-footer`} label={<PdfEditorLabelWrapper>Footer</PdfEditorLabelWrapper>}>
               <GoAFormItem error={errors?.footer ?? ''}>
-                <MonacoDivFooter>
+                <MonacoDivBody>
                   <MonacoEditor
                     language={'handlebars'}
                     defaultValue={template?.footer}
@@ -216,7 +218,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     }}
                     {...bodyEditorConfig}
                   />
-                </MonacoDivFooter>
+                </MonacoDivBody>
               </GoAFormItem>
             </Tab>
             <Tab testId={`pdf-edit-css`} label={<PdfEditorLabelWrapper>CSS</PdfEditorLabelWrapper>}>
