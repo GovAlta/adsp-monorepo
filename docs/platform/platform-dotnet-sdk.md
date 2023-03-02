@@ -1,6 +1,6 @@
 ---
 layout: page
-title: Service SDK (.NET 6)
+title: Service SDK (.NET)
 nav_order: 2
 parent: Platform development
 ---
@@ -14,7 +14,7 @@ parent: Platform development
 {:toc}
 </details>
 
-# ADSP service SDK (.NET 6)
+# ADSP service SDK (.NET)
 Platform services integrate into the foundational capabilities via a Software Development Kit (SDK). The SDK includes interfaces and utilities for handling tenancy, configurations, and registration. The same SDK can be used for development of tenant services.
 
 Note that the SDK provides friendly interfaces on top of APIs. It is intended to speed up service development but is not the only way to access platform capabilities.
