@@ -1,8 +1,6 @@
 import styled, { createGlobalStyle } from 'styled-components';
 import { PreviewPortal } from './templates/previewPortal';
-export const IdField = styled.div`
-  min-height: 1.6rem;
-`;
+
 export const FileTableStyles = styled.div`
   .flex-horizontal {
     display: flex;
@@ -13,13 +11,7 @@ export const FileTableStyles = styled.div`
     flex: 1;
   }
 
-  .mt-1 {
-    margin-top: 2px;
-  }
-
-  .mt-2 {
-    margin-top: 4px;
-  }
+  margin: 1rem 0 1rem;
 `;
 
 export const PaddingRight = styled.div`
@@ -94,7 +86,7 @@ export const TemplateEditorContainerPdf = styled.div`
   }
 
   .hr-resize {
-    margin-top: 1rem;
+    margin-top: 0.75rem;
   }
 
   .title {
@@ -133,9 +125,6 @@ export const ModalContent = styled.div`
 export const PreviewTemplateContainer = styled.div`
   width: 612px;
   margin-left: 2rem;
-  padding-top: 1rem;
-  padding-left: 2rem;
-  background-color: #c3c3c3;
   overflow: hidden;
   &:hover {
     overflow: auto;
@@ -154,27 +143,14 @@ export const MonacoDivBody = styled.div`
   padding: 0.15rem 0.15rem;
   height: calc(92vh - 366px);
   min-height: 2rem;
+  margin: 0.5rem 0 0 0;
 `;
-export const MonacoDivHeader = styled.div`
-  display: flex;
-  border: 1px solid var(--color-gray-700);
-  border-radius: 3px;
-  padding: 0.15rem 0.15rem;
-  height: calc(92vh - 366px);
-  min-height: 2rem;
-`;
-export const MonacoDivFooter = styled.div`
-  display: flex;
-  border: 1px solid var(--color-gray-700);
-  border-radius: 3px;
-  padding: 0.15rem 0.15rem;
-  height: calc(92vh - 366px);
-  min-height: 2rem;
-`;
+
 export const EditTemplateActions = styled.div`
   display: flex;
   justify-content: left;
   gap: 1rem;
+  margin: 1rem 0 2rem 0;
 `;
 
 // preview template components
@@ -198,6 +174,7 @@ export const BodyPreview = styled(PreviewPortal)`
   }
   flex-grow: 1;
   margin-bottom: 1rem;
+  border: 1.5rem solid #b2d4ed;
 `;
 
 export const PdfEditorLabelWrapper = styled.div`
@@ -216,38 +193,43 @@ export const PdfConfigFormWrapper = styled.div`
   background-color: #f1f1f1;
   width: 100%;
   display: flex;
-  overflow: hidden;
-  margin-bottom: 10px;
+  direction: row;
+  margin-bottom: 2rem;
   .nameColumn {
-    padding-left: 0.5rem;
-    width: calc(22% - 17px);
-    flex-grow: 1;
+    width: 15%;
     float: left;
+    min-width: 100px;
   }
   .idColumn {
-    padding-left: 0.5rem;
-    width: calc(22% - 17px);
+    width: 15%;
     float: left;
     height: 100%;
-    flex-grow: 1;
-    border-left: 1px solid #ccc;
+
+    min-width: 100px;
   }
   .descColumn {
-    padding-left: 0.5rem;
-    width: calc(56% - 42px);
+    width: 60%;
     float: left;
-    flex-grow: 2;
     height: 100%;
+  }
+  .editColumn {
+    width: 8%;
+    float: right;
+    min-width: 50px;
+  }
+  .separator {
+    margin-top: 1rem;
+    width: 1px;
+    height: 6rem;
+
     border-left: 1px solid #ccc;
   }
-
-  .padding-bottom {
-    padding-bottom: 10px;
+  table {
+    margin: 0.5rem 1rem 1rem 1rem;
   }
-
-  .editColumn {
-    width: 76px;
-    margin-top: 16px;
+  th {
+    text-align: left;
+>>>>>>> main
   }
 `;
 
@@ -318,6 +300,7 @@ export const Edit = styled.div`
   display: flex;
   flex-direction: row;
   margin-right: 1rem;
+  margin-top: 0.5rem;
 `;
 export const OverflowWrap = styled.div`
   overflow-wrap: break-word;
@@ -331,59 +314,12 @@ export const PreviewTopStyle = styled.div`
   gap: 1rem;
 `;
 
-export const PdfInfoTable = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  word-wrap: break-word;
-  overflow: auto;
-  position: relative;
-  padding-top: 0.5rem;
-
-  th {
-    white-space: pre-wrap;
-    color: var(--color-th);
-    font-size: var(--fs-base);
-    table-layout: fixed;
-    padding-left: 0.5rem;
-    text-align: left;
-    font-weight: var(--fw-bold);
-  }
-  td {
-    padding-left: 0.5rem;
-  }
-  & th:nth-child(1) {
-    width: 15%;
-  }
-
-  & td:nth-child(1) {
-    text-overflow: ellipsis;
-    width: 15%;
-  }
-  & th:nth-child(2) {
-    width: 15%;
-    border-left: 1px solid #ccc;
-  }
-
-  & td:nth-child(2) {
-    text-overflow: ellipsis;
-    width: 15%;
-    border-left: 1px solid #ccc;
-  }
-  & th:nth-child(3) {
-    width: 60%;
-    border-left: 1px solid #ccc;
-  }
-
-  & td:nth-child(3) {
-    text-overflow: ellipsis;
-    width: 60%;
-    border-left: 1px solid #ccc;
-  }
-  & th:nth-child(4) {
-    font-weight: var(--fw-light) !important;
-    width: 10%;
-  }
-`;
 export const TextAreaDiv = styled.div`
   margin-bottom: 1rem;
+`;
+
+export const PDFTitle = styled.div`
+  font-size: var(--fs-xl);
+  line-height: var(--lh-lg);
+  font-weight: var(--fw-regular);
 `;

@@ -3,11 +3,11 @@ import { PdfTemplate } from '@store/pdf/model';
 
 import { GoAIconButton } from '@abgov/react-components-new';
 
-import { PdfConfigFormWrapper } from '../../styled-components';
-import { Edit, PdfInfoTable } from '../../styled-components';
+import { Edit, PdfConfigFormWrapper } from '../../styled-components';
 import { AddEditPdfTemplate } from '../addEditPdfTemplates';
 import { useDispatch } from 'react-redux';
 import { updatePdfTemplate } from '@store/pdf/action';
+
 interface PDFConfigFormProps {
   template: PdfTemplate;
 }
@@ -18,40 +18,46 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
   const dispatch = useDispatch();
   return (
     <PdfConfigFormWrapper>
-      <PdfInfoTable>
-        <thead>
+      <div className="nameColumn">
+        <table>
           <tr>
-            <th data-testid="pdf-templates-table-header-name">Name</th>
-            <th id="pdf-templates-template-id" data-testid="pdf-templates-table-header-template-id">
-              Template ID
-            </th>
-            <th id="pdf-templates-Description" data-testid="pdf-templates-table-header-description">
-              Description
-            </th>
-            <th id="pdf-templates-action" data-testid="pdf-templates-table-header-action">
-              <div className="editColumn">
-                <Edit>
-                  <a rel="noopener noreferrer" onClick={() => setOpenEditPdfTemplate(true)}>
-                    Edit
-                  </a>
-                  <GoAIconButton icon="create" title="Edit" size="small" onClick={() => setOpenEditPdfTemplate(true)} />
-                </Edit>
-              </div>
-            </th>
+            <th>Name</th>
           </tr>
-        </thead>
-        <tbody>
           <tr>
-            <td data-testid="pdf-templates-table-header-name">{name}</td>
-            <td id="pdf-templates-template-id" data-testid="pdf-templates-table-header-template-id">
-              {id}
-            </td>
-            <td id="pdf-templates-Description" data-testid="pdf-templates-table-header-description">
-              {description}
-            </td>
+            <td>{name}</td>
           </tr>
-        </tbody>
-      </PdfInfoTable>
+        </table>
+      </div>
+      <div className="separator"></div>
+      <div className="idColumn">
+        <table>
+          <tr>
+            <th>Template ID</th>
+          </tr>
+          <tr>
+            <td>{id}</td>
+          </tr>
+        </table>
+      </div>
+      <div className="separator"></div>
+      <div className="descColumn">
+        <table>
+          <tr>
+            <th>Description</th>
+          </tr>
+          <tr>
+            <td>{description}</td>
+          </tr>
+        </table>
+      </div>
+      <div className="editColumn">
+        <Edit>
+          <a rel="noopener noreferrer" onClick={() => setOpenEditPdfTemplate(true)}>
+            Edit
+          </a>
+          <GoAIconButton icon="create" title="Edit" size="small" onClick={() => setOpenEditPdfTemplate(true)} />
+        </Edit>
+      </div>
       {openEditPdfTemplate && (
         <AddEditPdfTemplate
           open={openEditPdfTemplate}

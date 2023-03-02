@@ -1,5 +1,7 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton, GoAIconButton } from '@abgov/react-components-new';
+import { generatePdf } from '@store/pdf/action';
+
 import { GoAElementLoader } from '@abgov/react-components';
 import {
   GenerateButtonPadding,
@@ -7,10 +9,14 @@ import {
   SpinnerSpace,
   PreviewTopStyle,
   PreviewContainer,
+  BodyPreview,
+  PDFTitle,
 } from '../../styled-components';
-import { RootState } from '@store/index';
-import { useSelector } from 'react-redux';
 
+import { RootState } from '@store/index';
+import { useSelector, useDispatch } from 'react-redux';
+import { PdfTemplate } from '@store/pdf/model';
+import { DownloadFileService } from '@store/file/actions';
 interface PreviewTemplateProps {
   channelTitle: string;
   generateTemplate: () => void;
@@ -39,9 +45,12 @@ const base64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
 export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ channelTitle, generateTemplate }) => {
   const [windowSize, setWindowSize] = useState([window.innerWidth, window.innerHeight]);
 
+  const dispatch = useDispatch();
+
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+
   const files = useSelector((state: RootState) => {
     return state?.pdf.files;
   });
@@ -62,10 +71,17 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
     };
   });
 
-  const PreviewPreview = () => {
+  const fileList = useSelector((state: RootState) => state.fileService.fileList);
+  const pdfList = useSelector((state: RootState) => state.pdf.jobs);
+  const onDownloadFile = async (file) => {
+    file && dispatch(DownloadFileService(file));
+  };
+
+  const PdfPreview = () => {
     const blob = files[currentId] && base64toBlob(files[currentId], 'application/pdf');
 
     const blobUrl = blob && URL.createObjectURL(blob);
+
     return (
       <>
         <PreviewTop title={channelTitle} />
@@ -84,35 +100,53 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
 
   const PreviewTop = ({ title }) => {
     return (
-      <PreviewTopStyle>
-        <h3>{title}</h3>
-        <GoAButton
-          disabled={indicator.show}
-          type="secondary"
-          data-testid="form-save"
-          size="compact"
-          onClick={() => {
-            generateTemplate();
-          }}
-        >
-          <GenerateButtonPadding>
-            Generate PDF
-            {indicator.show ? (
-              <SpinnerPadding>
-                <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
-              </SpinnerPadding>
-            ) : (
-              <SpinnerSpace></SpinnerSpace>
-            )}
-          </GenerateButtonPadding>
-        </GoAButton>
-      </PreviewTopStyle>
+      <>
+        <PreviewTopStyle>
+          <PDFTitle>{title}</PDFTitle>
+
+          <GoAButton
+            disabled={indicator.show}
+            type="secondary"
+            data-testid="form-save"
+            size="compact"
+            onClick={() => {
+              generateTemplate();
+            }}
+          >
+            <GenerateButtonPadding>
+              Generate PDF
+              {indicator.show ? (
+                <SpinnerPadding>
+                  <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
+                </SpinnerPadding>
+              ) : (
+                <SpinnerSpace></SpinnerSpace>
+              )}
+            </GenerateButtonPadding>
+          </GoAButton>
+          {
+            <GoAIconButton
+              icon="download"
+              title="Download"
+              data-testid="download-icon"
+              size="medium"
+              onClick={() => {
+                const file = fileList[0];
+                if (file.recordId === pdfList[0].id && file.filename.indexOf(pdfList[0].templateId) > -1) {
+                  onDownloadFile(file);
+                }
+              }}
+            />
+          }
+        </PreviewTopStyle>
+        <hr className="hr-resize" style={{ marginTop: '0.5rem' }} />
+      </>
     );
   };
 
   return (
     <PreviewContainer>
-      <PreviewPreview />
+      <PdfPreview />
     </PreviewContainer>
   );
 };
