@@ -229,7 +229,6 @@ export const PdfConfigFormWrapper = styled.div`
   }
   th {
     text-align: left;
->>>>>>> main
   }
 `;
 
