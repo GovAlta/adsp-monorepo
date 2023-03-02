@@ -7,7 +7,7 @@ using RestSharp;
 
 namespace Adsp.Sdk.Events;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
-internal class EventService : IEventService, IDisposable
+internal sealed class EventService : IEventService, IDisposable
 {
   private static readonly AdspId EVENT_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:event-service:v1");
 

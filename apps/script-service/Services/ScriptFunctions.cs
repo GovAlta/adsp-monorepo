@@ -5,7 +5,7 @@ using NLua;
 using RestSharp;
 
 namespace Adsp.Platform.ScriptService.Services;
-class ScriptFunctions : IScriptFunctions
+internal sealed class ScriptFunctions : IScriptFunctions
 {
   private readonly AdspId _tenantId;
   private readonly IServiceDirectory _directory;

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 
 namespace Adsp.Sdk.Access;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
-internal class IssuerCache : IIssuerCache
+internal sealed class IssuerCache : IIssuerCache
 {
   private readonly ILogger<IssuerCache> _logger;
   private readonly IMemoryCache _cache;

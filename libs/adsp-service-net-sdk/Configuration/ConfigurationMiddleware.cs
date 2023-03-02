@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 
 namespace Adsp.Sdk.Configuration;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Middleware for application builder")]
-internal class ConfigurationMiddleware
+internal sealed class ConfigurationMiddleware
 {
   public const string ConfigurationContextKey = "ADSP:ConfigurationService";
 

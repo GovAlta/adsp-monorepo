@@ -1,7 +1,7 @@
 using System.Diagnostics;
 
 namespace Adsp.Sdk.Metrics;
-internal class MetricsContext
+internal sealed class MetricsContext
 {
   private const string ResponseTimeMetric = "response-time";
 
@@ -54,7 +54,7 @@ internal class MetricsContext
     }
   }
 
-  class Benchmark : IDisposable
+  sealed class Benchmark : IDisposable
   {
     private readonly MetricsContext _context;
     private readonly long _start;

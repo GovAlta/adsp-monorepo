@@ -5,7 +5,7 @@ using Adsp.Sdk.Errors;
 
 namespace Adsp.Platform.ScriptService.Controller;
 
-internal class NotAllowedRunnerException : HttpResponseException
+internal sealed class NotAllowedRunnerException : HttpResponseException
 {
 
   public NotAllowedRunnerException()
