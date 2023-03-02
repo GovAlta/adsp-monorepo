@@ -1,6 +1,6 @@
 export function readFileAsync(file): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    let reader = new FileReader();
+    const reader = new FileReader();
 
     reader.readAsDataURL(file);
 
@@ -10,7 +10,5 @@ export function readFileAsync(file): Promise<Blob> {
     };
 
     reader.onerror = reject;
-
-    //reader.readAsArrayBuffer(file);
   });
 }
