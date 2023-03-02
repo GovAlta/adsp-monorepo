@@ -44,7 +44,6 @@ interface TemplateEditorProps {
   errors?: any;
   // eslint-disable-next-line
   cancel: () => void;
-  updateTemplate: (template: PdfTemplate) => void;
 }
 
 const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
@@ -69,7 +68,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   saveCurrentTemplate,
   errors,
   cancel,
-  updateTemplate,
 }) => {
   const monaco = useMonaco();
   const [saveModal, setSaveModal] = useState(false);
@@ -87,15 +85,10 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   const jobList = useSelector((state: RootState) => state.pdf.jobs.filter((job) => job.templateId === template.id));
 
   useEffect(() => {
-    console.log('socketChannel');
-    if (!socketChannel) dispatch(streamPdfSocket(false));
-
-    setTimeout(function () {
-      if (socketChannel && socketChannel.connected === false) {
-        dispatch(streamPdfSocket(false));
-      }
-    }, 2000);
-  }, [socketChannel]);
+    if (!socketChannel) {
+      dispatch(streamPdfSocket(false));
+    }
+  }, []);
 
   useEffect(() => {
     dispatch(updatePdfResponse({ fileList: fileList }));
@@ -234,7 +227,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 <MonacoDivBody>
                   <MonacoEditor
                     data-testid="form-schema"
-                    value={template.variables}
+                    value={template?.variables}
                     onChange={(value) => {
                       onVariableChange(value);
                       if (tmpTemplate) {

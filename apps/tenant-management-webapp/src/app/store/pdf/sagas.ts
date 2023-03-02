@@ -143,6 +143,11 @@ export function* showCurrentFilePdf(action: ShowCurrentFilePdfAction): SagaItera
       const responseFile = yield call(readFileAsync, response.data);
 
       yield put(showCurrentFilePdfSuccess(responseFile, action.fileId));
+      yield put(
+        UpdateIndicator({
+          show: false,
+        })
+      );
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));
     }
@@ -278,11 +283,6 @@ export function* generatePdf({ payload, saveObject }: GeneratePdfAction): SagaIt
       });
       const pdfResponse = { ...body, ...response?.data };
       yield put(generatePdfSuccess(pdfResponse));
-      yield put(
-        UpdateIndicator({
-          show: false,
-        })
-      );
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));
       yield put(

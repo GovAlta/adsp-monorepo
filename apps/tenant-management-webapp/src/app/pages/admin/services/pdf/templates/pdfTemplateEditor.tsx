@@ -91,9 +91,6 @@ export const PdfTemplatesEditor = (): JSX.Element => {
               onCssChange={(value) => {
                 setCurrentTemplate({ ...currentTemplate, additionalStyles: value });
               }}
-              updateTemplate={(template) => {
-                setCurrentTemplate(template);
-              }}
               saveCurrentTemplate={savePdfTemplate}
               cancel={reset}
             />
