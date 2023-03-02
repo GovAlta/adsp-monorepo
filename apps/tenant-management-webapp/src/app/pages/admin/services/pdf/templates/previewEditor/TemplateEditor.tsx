@@ -21,11 +21,13 @@ import { PDFConfigForm } from './PDFConfigForm';
 import { getSuggestion } from '../utils/suggestion';
 import { bodyEditorConfig } from './config';
 import { useDispatch } from 'react-redux';
+import { updatePdfResponse } from '@store/pdf/action';
 import GeneratedPdfList from '../generatedPdfList';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { streamPdfSocket } from '@store/pdf/action';
 import { LogoutModal } from '@components/LogoutModal';
+import { showCurrentFilePdf, setPdfDisplayFileId } from '@store/pdf/action';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -33,8 +35,6 @@ interface TemplateEditorProps {
   onHeaderChange: (value: string) => void;
   onCssChange: (value: string) => void;
   onFooterChange: (value: string) => void;
-  onVariableChange: (value: string) => void;
-  setPreview: (channel: string) => void;
 
   template: PdfTemplate;
   savedTemplate: PdfTemplate;
@@ -43,17 +43,16 @@ interface TemplateEditorProps {
   errors?: any;
   // eslint-disable-next-line
   cancel: () => void;
-  updateTemplate: (template: PdfTemplate) => void;
 }
 
 const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
   return (
-    prev.template !== next.template ||
-    prev.header !== next.header ||
-    prev.footer !== next.footer ||
-    prev.additionalStyles !== next.additionalStyles ||
-    prev.name !== next.name ||
-    prev.description !== next.description
+    prev?.template !== next?.template ||
+    prev?.header !== next?.header ||
+    prev?.footer !== next?.footer ||
+    prev?.additionalStyles !== next?.additionalStyles ||
+    prev?.name !== next?.name ||
+    prev?.description !== next?.description
   );
 };
 
@@ -63,19 +62,16 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   onHeaderChange,
   onFooterChange,
   onCssChange,
-  onVariableChange,
-  setPreview,
   template,
   savedTemplate,
   saveCurrentTemplate,
   errors,
   cancel,
-  updateTemplate,
 }) => {
   const monaco = useMonaco();
   const [saveModal, setSaveModal] = useState(false);
   const [hasConfigError, setHasConfigError] = useState(false);
-
+  const [tmpTemplate, setTmpTemplate] = useState(template);
   const suggestion = template ? getSuggestion() : [];
   const [activeIndex, setActiveIndex] = useState(0);
   const dispatch = useDispatch();
@@ -84,9 +80,24 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     return state?.pdf.socketChannel;
   });
 
+  const fileList = useSelector((state: RootState) => state.fileService.fileList);
+  const jobList = useSelector((state: RootState) => state.pdf.jobs.filter((job) => job.templateId === template.id));
+
   useEffect(() => {
-    if (!socketChannel || socketChannel.connected === false) dispatch(streamPdfSocket(false));
-  }, [socketChannel]);
+    if (!socketChannel) {
+      dispatch(streamPdfSocket(false));
+    }
+  }, []);
+
+  useEffect(() => {
+    dispatch(updatePdfResponse({ fileList: fileList }));
+    const currentFile = fileList.find((file) => jobList.map((job) => job.id).includes(file.recordId));
+    if (currentFile) {
+      dispatch(showCurrentFilePdf(currentFile?.id));
+    } else {
+      dispatch(setPdfDisplayFileId(null));
+    }
+  }, [fileList]);
 
   useEffect(() => {
     if (monaco) {
@@ -114,23 +125,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [monaco, suggestion]);
 
-  useEffect(() => {
-    setPreview('header');
-  }, []);
-
-  useEffect(() => {
-    onHeaderChange(template?.header);
-    onFooterChange(template?.footer);
-    onCssChange(template?.additionalStyles);
-    onVariableChange(template?.variables);
-  }, [template, modelOpen]);
-
-  const switchTabPreview = (value) => {
-    onHeaderChange(template?.header);
-    onFooterChange(template?.footer);
-    onCssChange(template?.additionalStyles);
-    onVariableChange(template?.variables);
-    setPreview(value);
+  const onVariableChange = (value) => {
+    setTmpTemplate({ ...tmpTemplate, variables: value });
   };
 
   useEffect(() => {
@@ -141,8 +137,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [modelOpen]);
 
-  const channels = ['header', 'main', 'footer', 'additionalStyles', 'variableAssignments', 'history'];
-  const tmpTemplate = template;
   const resetSavedAction = () => {
     onBodyChange(savedTemplate.template);
     onHeaderChange(savedTemplate.header);
@@ -160,28 +154,21 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
       <GoAForm>
         <GoAFormItem>
-          <Tabs
-            activeIndex={activeIndex}
-            changeTabCallback={(index: number) => {
-              setActiveIndex(index);
-              switchTabPreview(channels[index]);
-              updateTemplate(tmpTemplate);
-            }}
-          >
+          <Tabs activeIndex={activeIndex}>
             <Tab testId={`pdf-edit-header`} label={<PdfEditorLabelWrapper>Header</PdfEditorLabelWrapper>}>
               <GoAFormItem error={errors?.header ?? ''}>
                 <MonacoDivBody>
-                  <MonacoEditor
-                    language={'handlebars'}
-                    defaultValue={template?.header}
-                    onChange={(value) => {
-                      onHeaderChange(value);
-                      if (tmpTemplate) {
-                        tmpTemplate.header = value;
-                      }
-                    }}
-                    {...bodyEditorConfig}
-                  />
+                  {template && (
+                    <MonacoEditor
+                      language={'handlebars'}
+                      defaultValue={template?.header}
+                      onChange={(value) => {
+                        template.header = value;
+                        setTmpTemplate({ ...tmpTemplate, header: value });
+                      }}
+                      {...bodyEditorConfig}
+                    />
+                  )}
                 </MonacoDivBody>
               </GoAFormItem>
             </Tab>
@@ -193,10 +180,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                       language={'handlebars'}
                       defaultValue={template?.template}
                       onChange={(value) => {
-                        onBodyChange(value);
-                        if (tmpTemplate) {
-                          tmpTemplate.template = value;
-                        }
+                        template.template = value;
+                        setTmpTemplate({ ...tmpTemplate, template: value });
                       }}
                       {...bodyEditorConfig}
                     />
@@ -211,10 +196,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     language={'handlebars'}
                     defaultValue={template?.footer}
                     onChange={(value) => {
-                      onFooterChange(value);
-                      if (tmpTemplate) {
-                        tmpTemplate.footer = value;
-                      }
+                      template.footer = value;
+                      setTmpTemplate({ ...tmpTemplate, footer: value });
                     }}
                     {...bodyEditorConfig}
                   />
@@ -229,10 +212,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                       language={'handlebars'}
                       defaultValue={template?.additionalStyles}
                       onChange={(value) => {
-                        onCssChange(value);
-                        if (tmpTemplate) {
-                          tmpTemplate.additionalStyles = value;
-                        }
+                        template.additionalStyles = value;
+                        setTmpTemplate({ ...tmpTemplate, additionalStyles: value });
                       }}
                       {...bodyEditorConfig}
                     />
@@ -248,7 +229,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 <MonacoDivBody>
                   <MonacoEditor
                     data-testid="form-schema"
-                    value={template.variables}
+                    value={template?.variables}
                     onChange={(value) => {
                       onVariableChange(value);
                       if (tmpTemplate) {
@@ -276,7 +257,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             <PdfEditActions>
               <>
                 <GoAButton
-                  disabled={hasConfigError || !isPDFUpdated(template, savedTemplate)}
+                  disabled={hasConfigError || !isPDFUpdated(tmpTemplate, savedTemplate)}
                   onClick={() => saveCurrentTemplate()}
                   type="primary"
                   data-testid="template-form-save"
@@ -285,7 +266,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 </GoAButton>
                 <GoAButton
                   onClick={() => {
-                    if (isPDFUpdated(template, savedTemplate)) {
+                    if (isPDFUpdated(tmpTemplate, savedTemplate)) {
                       setSaveModal(true);
                     } else {
                       cancel();

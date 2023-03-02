@@ -8,6 +8,8 @@ import {
   UPDATE_PDF_RESPONSE_ACTION,
   GENERATE_PDF_SUCCESS_ACTION,
   SOCKET_CHANNEL,
+  SHOW_CURRENT_FILE_PDF_SUCCESS,
+  SET_PDF_DISPLAY_FILE_ID,
 } from './action';
 import { PdfState } from './model';
 
@@ -18,6 +20,9 @@ const defaultState: PdfState = {
   jobs: [],
   status: [],
   socketChannel: null,
+  files: {},
+  currentFile: null,
+  currentId: '',
 };
 
 export default function (state: PdfState = defaultState, action: PdfActionTypes): PdfState {
@@ -40,6 +45,21 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
         pdfTemplates: {
           ...action.payload,
         },
+      };
+    case SET_PDF_DISPLAY_FILE_ID:
+      return {
+        ...state,
+        currentId: action.id,
+      };
+    case SHOW_CURRENT_FILE_PDF_SUCCESS:
+      return {
+        ...state,
+        files: {
+          ...state.files,
+          [action.id]: action.file,
+        },
+        currentFile: action.file,
+        currentId: action.id,
       };
     case FETCH_PDF_METRICS_SUCCESS_ACTION:
       return {

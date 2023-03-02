@@ -11,6 +11,7 @@ import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import InformationCircle from '@components/icons/InformationCircle';
 import { FileTableStyles } from '../styled-components';
+import { showCurrentFilePdf, setPdfDisplayFileId } from '@store/pdf/action';
 
 interface GeneratedPdfListProps {
   templateId: string;
@@ -19,6 +20,7 @@ interface GeneratedPdfListProps {
 const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element => {
   const dispatch = useDispatch();
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
+  const files = useSelector((state: RootState) => state.pdf.files);
   const onDownloadFile = async (file) => {
     dispatch(DownloadFileService(file));
   };
@@ -44,7 +46,17 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+
+  const showCurrentPdf = (file) => {
+    if (Object.keys(files).includes(file.id)) {
+      dispatch(setPdfDisplayFileId(file.id));
+    } else {
+      dispatch(showCurrentFilePdf(file.id));
+    }
+  };
+
   const jobList = pdfList.length > 5 ? pdfList.slice(0, 5) : pdfList;
+
   const renderFileTable = () => {
     return (
       <>
@@ -96,13 +108,21 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                         </td>
                         <td>
                           {file?.filename ? (
-                            <GoAIconButton
-                              disabled={!file?.size}
-                              data-testid="download-icon"
-                              size="medium"
-                              type="download"
-                              onClick={() => onDownloadFile(file)}
-                            />
+                            <>
+                              <GoAIconButton
+                                disabled={!file?.size}
+                                data-testid="download-icon"
+                                size="medium"
+                                type="download"
+                                onClick={() => onDownloadFile(file)}
+                              />
+                              <GoAIconButton
+                                title="Toggle details"
+                                type={'eye'}
+                                onClick={() => showCurrentPdf(file)}
+                                testId="toggle-details-visibility"
+                              />
+                            </>
                           ) : (
                             <div>
                               {indicator.show && <GoASkeletonGridColumnContent rows={1}></GoASkeletonGridColumnContent>}

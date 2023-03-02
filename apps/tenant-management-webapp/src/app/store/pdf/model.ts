@@ -96,6 +96,9 @@ export interface PdfState {
   stream: Stream[];
   jobs: PdfGenerationResponse[];
   status: string[];
+  files: Record<string, Blob>;
+  currentFile: Blob;
+  currentId: string;
   socketChannel: SocketChannel;
 }
 

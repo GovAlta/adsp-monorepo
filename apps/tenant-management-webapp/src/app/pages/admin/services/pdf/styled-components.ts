@@ -284,6 +284,18 @@ export const SpinnerPadding = styled.div`
   float: right;
 `;
 export const Edit = styled.div`
+  .flexRow {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .badgePadding {
+    margin: 6px 0 0 5px;
+  }
+
+  a {
+    margin-top: 3px;
+  }
   display: flex;
   flex-direction: row;
   margin-right: 1rem;
@@ -291,6 +303,7 @@ export const Edit = styled.div`
 `;
 export const OverflowWrap = styled.div`
   overflow-wrap: break-word;
+  overflow-y: hidden;
 `;
 
 export const PreviewTopStyle = styled.div`

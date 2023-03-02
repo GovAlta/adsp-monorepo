@@ -16,6 +16,9 @@ export const GENERATE_PDF_ACTION = 'pdf/GENERATE_PDF_ACTION';
 export const GENERATE_PDF_SUCCESS_ACTION = 'pdf/GENERATE_PDF_SUCCESS_ACTION';
 export const UPDATE_PDF_RESPONSE_ACTION = 'pdf/UPDATE_PDF_RESPONSE_ACTION';
 export const STREAM_PDF_SOCKET_ACTION = 'pdf/STREAM_PDF_SOCKET_ACTION';
+export const SHOW_CURRENT_FILE_PDF = 'pdf/SHOW_CURRENT_FILE_PDF';
+export const SHOW_CURRENT_FILE_PDF_SUCCESS = 'pdf/SHOW_CURRENT_FILE_PDF_SUCCESS';
+export const SET_PDF_DISPLAY_FILE_ID = 'pdf/SET_PDF_DISPLAY_FILE_ID';
 
 export const SOCKET_CHANNEL = 'pdf/SOCKET_CHANNEL';
 
@@ -57,6 +60,7 @@ export interface SocketChannelAction {
 export interface GeneratePdfAction {
   type: typeof GENERATE_PDF_ACTION;
   payload: PdfGenerationPayload;
+  saveObject: PdfTemplate;
 }
 
 export interface StreamPdfSocketAction {
@@ -83,6 +87,20 @@ export interface DeletePdfTemplatesSuccessAction {
   type: typeof DELETE_PDF_TEMPLATE_SUCCESS_ACTION;
   payload: Record<string, PdfTemplate>;
 }
+export interface ShowCurrentFilePdfAction {
+  type: typeof SHOW_CURRENT_FILE_PDF;
+  fileId: string;
+}
+
+export interface ShowCurrentFilePdfSuccessAction {
+  type: typeof SHOW_CURRENT_FILE_PDF_SUCCESS;
+  file: Blob;
+  id: string;
+}
+export interface SetPdfDisplayFileIdAction {
+  type: typeof SET_PDF_DISPLAY_FILE_ID;
+  id: string;
+}
 
 export interface FetchPdfMetricsAction {
   type: typeof FETCH_PDF_METRICS_ACTION;
@@ -106,6 +124,8 @@ export type PdfActionTypes =
   | AddToStreamAction
   | SocketChannelAction
   | GeneratePdfSuccessAction
+  | ShowCurrentFilePdfSuccessAction
+  | SetPdfDisplayFileIdAction
   | UpdatePdfResponseAction;
 
 export const updatePdfTemplate = (template: PdfTemplate): UpdatePdfTemplatesAction => ({
@@ -137,9 +157,10 @@ export const getPdfTemplatesSuccess = (results: Record<string, PdfTemplate>): Fe
   payload: results,
 });
 
-export const generatePdf = (payload: PdfGenerationPayload): GeneratePdfAction => ({
+export const generatePdf = (payload: PdfGenerationPayload, saveObject: PdfTemplate): GeneratePdfAction => ({
   type: GENERATE_PDF_ACTION,
   payload: payload,
+  saveObject: saveObject,
 });
 
 export const streamPdfSocket = (disconnect: boolean): StreamPdfSocketAction => ({
@@ -170,4 +191,20 @@ export const fetchPdfMetrics = (): FetchPdfMetricsAction => ({
 export const fetchPdfMetricsSucceeded = (metrics: PdfMetrics): FetchPdfMetricsSuccessAction => ({
   type: FETCH_PDF_METRICS_SUCCESS_ACTION,
   metrics,
+});
+
+export const showCurrentFilePdf = (fileId: string): ShowCurrentFilePdfAction => ({
+  type: SHOW_CURRENT_FILE_PDF,
+  fileId,
+});
+
+export const setPdfDisplayFileId = (id: string): SetPdfDisplayFileIdAction => ({
+  type: SET_PDF_DISPLAY_FILE_ID,
+  id,
+});
+
+export const showCurrentFilePdfSuccess = (file: Blob, id: string): ShowCurrentFilePdfSuccessAction => ({
+  type: SHOW_CURRENT_FILE_PDF_SUCCESS,
+  file,
+  id,
 });

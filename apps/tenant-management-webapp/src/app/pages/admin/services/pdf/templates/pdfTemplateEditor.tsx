@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { updatePdfTemplate } from '@store/pdf/action';
+import { updatePdfTemplate, getPdfTemplates } from '@store/pdf/action';
 import { RootState } from '@store/index';
 
 import { defaultPdfTemplate } from '@store/pdf/model';
@@ -14,11 +14,8 @@ import {
 
 import { TemplateEditor } from './previewEditor/TemplateEditor';
 import { PreviewTemplate } from './previewEditor/PreviewTemplate';
-import { generateMessage } from '@lib/handlebarHelper';
-import { getTemplateBody } from '@core-services/notification-shared';
-import { useDebounce } from '@lib/useDebounce';
+import { generatePdf } from '@store/pdf/action';
 import { useHistory, useParams } from 'react-router-dom';
-import { useTokenWillExpiryCount } from '@lib/useTokenExpiryCount';
 
 export const PdfTemplatesEditor = (): JSX.Element => {
   const { id } = useParams<{ id: string }>();
@@ -27,37 +24,25 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     return state?.pdf?.pdfTemplates[id];
   });
 
-  const [bodyPreview, setBodyPreview] = useState('');
-  const [headerPreview, setHeaderPreview] = useState('');
-  const [footerPreview, setFooterPreview] = useState('');
-  const [currentChannel, setCurrentChannel] = useState('header');
-  const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (!pdfTemplate) dispatch(getPdfTemplates());
+  }, []);
+
   const history = useHistory();
   const [currentTemplate, setCurrentTemplate] = useState(pdfTemplate);
   const [currentSavedTemplate, setCurrentSavedTemplate] = useState(defaultPdfTemplate);
-  const [body, setBody] = useState('');
-  const [footer, setFooter] = useState('');
-  const [header, setHeader] = useState('');
-  const [variables, setVariables] = useState('');
-  const [additionalStyles, setAdditionalStyles] = useState('');
 
-  const debouncedRenderBodyPreview = useDebounce(body, TEMPLATE_RENDER_DEBOUNCE_TIMER);
-  const debouncedRenderFooterPreview = useDebounce(footer, TEMPLATE_RENDER_DEBOUNCE_TIMER);
-  const debouncedRenderHeaderPreview = useDebounce(header, TEMPLATE_RENDER_DEBOUNCE_TIMER);
-  const debouncedRenderCSSPreview = useDebounce(additionalStyles, TEMPLATE_RENDER_DEBOUNCE_TIMER);
-  const debouncedRenderVariableAssignments = useDebounce(variables, TEMPLATE_RENDER_DEBOUNCE_TIMER);
-  useTokenWillExpiryCount();
-
-  const channelNames = {
-    main: 'PDF preview',
-    header: 'Header preview',
-    footer: 'Footer preview',
-    additionalStyles: 'PDF preview',
-    variableAssignments: 'PDF preview',
-    history: 'PDF preview',
+  const generateTemplateFunction = () => {
+    const payload = {
+      templateId: currentTemplate.id,
+      data: currentTemplate.variables ? JSON.parse(currentTemplate.variables) : {},
+      fileName: `${currentTemplate.id}_${new Date().toJSON().slice(0, 19).replace(/:/g, '-')}.pdf`,
+    };
+    const saveObject = JSON.parse(JSON.stringify(currentTemplate));
+    dispatch(generatePdf(payload, saveObject));
   };
-  // eslint-disable-next-line
-  useEffect(() => {}, [pdfTemplate]);
 
   const webappUrl = useSelector((state: RootState) => {
     return state.config.serviceUrls.tenantManagementWebApp;
@@ -65,80 +50,11 @@ export const PdfTemplatesEditor = (): JSX.Element => {
 
   useEffect(() => {
     setCurrentTemplate(pdfTemplate);
-    setCurrentSavedTemplate(JSON.parse(JSON.stringify(pdfTemplate)));
-    setBody(pdfTemplate?.template || '');
-    setFooter(pdfTemplate?.footer || '');
-    setHeader(pdfTemplate?.header || '');
-    setVariables(pdfTemplate?.variables || '');
+    setCurrentSavedTemplate(JSON.parse(JSON.stringify(pdfTemplate || '')));
   }, [pdfTemplate]);
-
-  useEffect(() => {
-    try {
-      let template = '';
-      // If footer is empty, we shall add PDF wrapper for the footer in the preview.
-      if (footer && footer.length > 0) {
-        template = getTemplateBody(('<style>' + additionalStyles + '</style>').concat(footer), 'pdf-footer', {
-          data: currentTemplate,
-          serviceUrl: webappUrl,
-          today: new Date().toDateString(),
-        });
-      }
-      setFooterPreview(
-        generateMessage(template, { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() })
-      );
-    } catch (e) {
-      console.error('error: ' + e.message);
-    }
-  }, [debouncedRenderFooterPreview]);
-
-  useEffect(() => {
-    try {
-      let template = '';
-      // If header is empty, we shall add PDF wrapper for the header in the preview.
-      if (header && header.length > 0) {
-        template = getTemplateBody(('<style>' + additionalStyles + '</style>').concat(header), 'pdf-header', {
-          data: currentTemplate,
-          serviceUrl: webappUrl,
-          today: new Date().toDateString(),
-        });
-      }
-      setHeaderPreview(
-        generateMessage(template, { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() })
-      );
-    } catch (e) {
-      console.error('error: ' + e.message);
-    }
-  }, [debouncedRenderHeaderPreview]);
-
-  useEffect(() => {
-    try {
-      let template = '';
-      // If body is empty, we shall add PDF wrapper for the body in the preview.
-
-      if (currentTemplate?.template.length > 0) {
-        template = getTemplateBody(('<style>' + additionalStyles + '</style>').concat(body), 'pdf', {
-          data: currentTemplate,
-          serviceUrl: webappUrl,
-          today: new Date().toDateString(),
-        });
-      }
-
-      setBodyPreview(
-        generateMessage(template, { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() })
-      );
-    } catch (e) {
-      console.error('error: ' + e.message);
-    }
-  }, [debouncedRenderBodyPreview, debouncedRenderCSSPreview, debouncedRenderVariableAssignments]);
-
-  const dispatch = useDispatch();
 
   const reset = () => {
     setCurrentTemplate(defaultPdfTemplate);
-    setBodyPreview('');
-    setFooterPreview('');
-    setHeaderPreview('');
-    setVariables('');
     history.push({
       pathname: '/admin/services/pdf',
       state: { activeIndex: 1 },
@@ -147,11 +63,6 @@ export const PdfTemplatesEditor = (): JSX.Element => {
 
   const savePdfTemplate = () => {
     const saveObject = JSON.parse(JSON.stringify(currentTemplate));
-    saveObject.template = body;
-    saveObject.header = header;
-    saveObject.footer = footer;
-    saveObject.additionalStyles = additionalStyles;
-    saveObject.variables = variables;
     dispatch(updatePdfTemplate(saveObject));
     setCurrentSavedTemplate(currentTemplate);
   };
@@ -169,85 +80,23 @@ export const PdfTemplatesEditor = (): JSX.Element => {
               template={currentTemplate}
               savedTemplate={currentSavedTemplate}
               onBodyChange={(value) => {
-                setBody(value);
+                setCurrentTemplate({ ...currentTemplate, template: value });
               }}
               onHeaderChange={(value) => {
-                setHeader(value);
+                setCurrentTemplate({ ...currentTemplate, header: value });
               }}
               onFooterChange={(value) => {
-                setFooter(value);
+                setCurrentTemplate({ ...currentTemplate, footer: value });
               }}
               onCssChange={(value) => {
-                setAdditionalStyles(value);
-              }}
-              onVariableChange={(value) => {
-                setVariables(value);
-              }}
-              updateTemplate={(template) => {
-                setCurrentTemplate(template);
-              }}
-              setPreview={(channel) => {
-                try {
-                  setBodyPreview(
-                    generateMessage(
-                      getTemplateBody(('<style>' + additionalStyles + '</style>').concat(body), 'pdf', {
-                        data: currentTemplate,
-                        serviceUrl: webappUrl,
-                        today: new Date().toDateString(),
-                      }),
-                      { data: currentTemplate, serviceUrl: webappUrl, today: new Date().toDateString() }
-                    )
-                  );
-
-                  setHeaderPreview(
-                    generateMessage(
-                      getTemplateBody(('<style>' + additionalStyles + '</style>').concat(header), 'pdf', {
-                        data: currentTemplate,
-                        serviceUrl: webappUrl,
-                        today: new Date().toDateString(),
-                      }),
-                      {
-                        data: currentTemplate,
-                        serviceUrl: webappUrl,
-                        today: new Date().toDateString(),
-                      }
-                    )
-                  );
-
-                  setFooterPreview(
-                    generateMessage(
-                      getTemplateBody(('<style>' + additionalStyles + '</style>').concat(footer), 'pdf', {
-                        data: currentTemplate,
-                        serviceUrl: webappUrl,
-                        today: new Date().toDateString(),
-                      }),
-                      {
-                        data: currentTemplate,
-                        serviceUrl: webappUrl,
-                        today: new Date().toDateString(),
-                      }
-                    )
-                  );
-                } catch (e) {
-                  console.error('error: ' + e.message);
-                }
-
-                setCurrentChannel(channel);
+                setCurrentTemplate({ ...currentTemplate, additionalStyles: value });
               }}
               saveCurrentTemplate={savePdfTemplate}
               cancel={reset}
             />
 
             <PreviewTemplateContainer>
-              <PreviewTemplate
-                channelTitle={channelNames[currentChannel]}
-                bodyPreviewContent={bodyPreview}
-                headerPreviewContent={headerPreview}
-                footerPreviewContent={footerPreview}
-                channel={currentChannel}
-                saveCurrentTemplate={savePdfTemplate}
-                template={currentTemplate}
-              />
+              <PreviewTemplate channelTitle="PDF preview" generateTemplate={generateTemplateFunction} />
             </PreviewTemplateContainer>
           </NotificationTemplateEditorContainer>
         </ModalContent>

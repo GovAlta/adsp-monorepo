@@ -1,6 +1,7 @@
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useState, useEffect } from 'react';
 import { GoAButton, GoAIconButton } from '@abgov/react-components-new';
 import { generatePdf } from '@store/pdf/action';
+
 import { GoAElementLoader } from '@abgov/react-components';
 import {
   GenerateButtonPadding,
@@ -11,65 +12,92 @@ import {
   BodyPreview,
   PDFTitle,
 } from '../../styled-components';
+
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
 import { PdfTemplate } from '@store/pdf/model';
 import { DownloadFileService } from '@store/file/actions';
 interface PreviewTemplateProps {
   channelTitle: string;
-  bodyPreviewContent: string;
-  headerPreviewContent: string;
-  footerPreviewContent: string;
-  saveCurrentTemplate?: () => void;
-  template: PdfTemplate;
-  channel: string;
+  generateTemplate: () => void;
 }
 
-export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
-  channelTitle,
-  bodyPreviewContent,
-  headerPreviewContent,
-  footerPreviewContent,
-  channel,
-  saveCurrentTemplate,
-  template,
-}) => {
+const base64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
+  const byteCharacters = atob(b64Data);
+  const byteArrays = [];
+
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+
+  const blob = new Blob(byteArrays, { type: contentType });
+  return blob;
+};
+
+export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ channelTitle, generateTemplate }) => {
+  const [windowSize, setWindowSize] = useState([window.innerWidth, window.innerHeight]);
+
+  const dispatch = useDispatch();
+
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+
+  const files = useSelector((state: RootState) => {
+    return state?.pdf.files;
+  });
+
+  const currentId = useSelector((state: RootState) => {
+    return state?.pdf.currentId;
+  });
+
+  useEffect(() => {
+    const handleWindowResize = () => {
+      setWindowSize([window.innerWidth, window.innerHeight]);
+    };
+
+    window.addEventListener('resize', handleWindowResize);
+
+    return () => {
+      window.removeEventListener('resize', handleWindowResize);
+    };
+  });
+
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
   const pdfList = useSelector((state: RootState) => state.pdf.jobs);
   const onDownloadFile = async (file) => {
     file && dispatch(DownloadFileService(file));
   };
 
-  const dispatch = useDispatch();
   const PdfPreview = () => {
+    const blob = files[currentId] && base64toBlob(files[currentId], 'application/pdf');
+
+    const blobUrl = blob && URL.createObjectURL(blob);
+
     return (
       <>
         <PreviewTop title={channelTitle} />
-        <BodyPreview title={channelTitle} html={bodyPreviewContent}></BodyPreview>
+        {blobUrl && (
+          <div>
+            <div>
+              <object type="application/pdf" data={blobUrl} height={windowSize[1] - 200} style={{ width: '100%' }}>
+                <iframe src={blobUrl} height="100%" width="100%"></iframe>
+              </object>
+            </div>
+          </div>
+        )}
       </>
     );
   };
 
-  const HeaderPreview = () => {
-    return (
-      <>
-        <PreviewTop title="Header" />
-        <BodyPreview data-testid="header-preview-subject" title="Header" html={headerPreviewContent}></BodyPreview>
-      </>
-    );
-  };
-
-  const FooterPreview = () => {
-    return (
-      <>
-        <PreviewTop title="Footer" />
-        <BodyPreview data-testid="footer-preview-subject" title="Footer" html={footerPreviewContent}></BodyPreview>
-      </>
-    );
-  };
   const PreviewTop = ({ title }) => {
     return (
       <>
@@ -82,13 +110,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
             data-testid="form-save"
             size="compact"
             onClick={() => {
-              saveCurrentTemplate();
-              const payload = {
-                templateId: template.id,
-                data: template.variables ? JSON.parse(template.variables) : {},
-                fileName: `${template.id}_${new Date().toJSON().slice(0, 19).replace(/:/g, '-')}.pdf`,
-              };
-              dispatch(generatePdf(payload));
+              generateTemplate();
             }}
           >
             <GenerateButtonPadding>
@@ -106,7 +128,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
             <GoAIconButton
               icon="download"
               title="Download"
-              testId="download-icon"
+              data-testid="download-icon"
               size="medium"
               onClick={() => {
                 const file = fileList[0];
@@ -122,14 +144,9 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({
     );
   };
 
-  const previewByType = {
-    main: <PdfPreview />,
-    header: <HeaderPreview />,
-    footer: <FooterPreview />,
-    additionalStyles: <PdfPreview />,
-    variableAssignments: <PdfPreview />,
-    history: <PdfPreview />,
-  };
-
-  return <PreviewContainer>{previewByType[channel]}</PreviewContainer>;
+  return (
+    <PreviewContainer>
+      <PdfPreview />
+    </PreviewContainer>
+  );
 };

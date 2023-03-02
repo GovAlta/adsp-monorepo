@@ -24,7 +24,11 @@ import {
   DeletePdfTemplatesAction,
   deletePdfTemplateSuccess,
   DELETE_PDF_TEMPLATE_ACTION,
+  SHOW_CURRENT_FILE_PDF,
+  ShowCurrentFilePdfAction,
+  showCurrentFilePdfSuccess,
 } from './action';
+import { readFileAsync } from './readFile';
 import { io } from 'socket.io-client';
 import { FETCH_FILE_LIST } from '@store/file/actions';
 import { getAccessToken } from '@store/tenant/sagas';
@@ -115,6 +119,33 @@ export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): Saga
       yield put(
         updatePdfTemplateSuccess({
           ...latest.configuration,
+        })
+      );
+    } catch (err) {
+      yield put(ErrorNotification({ message: err.message }));
+    }
+  }
+}
+
+export function* showCurrentFilePdf(action: ShowCurrentFilePdfAction): SagaIterator {
+  const fileUrl = yield select((state: RootState) => state.config.serviceUrls?.fileApi);
+
+  const token: string = yield call(getAccessToken);
+
+  if (fileUrl && token) {
+    try {
+      const url = `${fileUrl}/file/v1/files/${action.fileId}/download`;
+      const response = yield call(axios.get, url, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob',
+      });
+
+      const responseFile = yield call(readFileAsync, response.data);
+
+      yield put(showCurrentFilePdfSuccess(responseFile, action.fileId));
+      yield put(
+        UpdateIndicator({
+          show: false,
         })
       );
     } catch (err) {
@@ -214,8 +245,9 @@ function* emitResponse(socket) {
   yield apply(socket, socket.emit, ['message received']);
 }
 
-export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
+export function* generatePdf({ payload, saveObject }: GeneratePdfAction): SagaIterator {
   const pdfServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pdfServiceApiUrl);
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
 
   const token: string = yield call(getAccessToken);
 
@@ -228,6 +260,18 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
 
   if (pdfServiceUrl && token) {
     try {
+      // save first
+      const pdfTemplate = {
+        [saveObject.id]: {
+          ...saveObject,
+        },
+      };
+      const saveBody = { operation: 'UPDATE', update: { ...pdfTemplate } };
+      yield call(axios.patch, `${baseUrl}/configuration/v2/configuration/platform/pdf-service`, saveBody, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // generate after
       const pdfData = {
         templateId: payload.templateId,
         data: payload.data,
@@ -239,11 +283,6 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
       });
       const pdfResponse = { ...body, ...response?.data };
       yield put(generatePdfSuccess(pdfResponse));
-      yield put(
-        UpdateIndicator({
-          show: false,
-        })
-      );
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));
       yield put(
@@ -302,4 +341,5 @@ export function* watchPdfSagas(): Generator {
   yield takeEvery(GENERATE_PDF_ACTION, generatePdf);
   yield takeEvery(STREAM_PDF_SOCKET_ACTION, streamPdfSocket);
   yield takeEvery(DELETE_PDF_TEMPLATE_ACTION, deletePdfTemplate);
+  yield takeEvery(SHOW_CURRENT_FILE_PDF, showCurrentFilePdf);
 }
