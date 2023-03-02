@@ -1,4 +1,4 @@
-import { ActionType, SET_SESSION_EXPIRED } from './actions';
+import { ActionType, SET_SESSION_EXPIRED, SET_SESSION_WILL_EXPIRED } from './actions';
 import { Session, SESSION_INIT } from './models';
 
 export default function (state: Session = SESSION_INIT, action: ActionType): Session {
@@ -19,6 +19,7 @@ export default function (state: Session = SESSION_INIT, action: ActionType): Ses
           ...state.credentials,
           ...action.payload,
         },
+        isWillExpired: false,
       };
 
     case 'session/indicator': {
@@ -89,6 +90,11 @@ export default function (state: Session = SESSION_INIT, action: ActionType): Ses
       return {
         ...state,
         isExpired: action.payload,
+      };
+    case SET_SESSION_WILL_EXPIRED:
+      return {
+        ...state,
+        isWillExpired: action.payload,
       };
 
     default:

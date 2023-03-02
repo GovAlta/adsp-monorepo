@@ -23,26 +23,12 @@ import { getSuggestion } from '../utils/suggestion';
 import { bodyEditorConfig } from './config';
 import { useDispatch } from 'react-redux';
 import { updatePdfResponse } from '@store/pdf/action';
-import GeneratedPdfList from '../../testGenerate/generatedPdfList';
-import { GeneratePDF } from '../../testGenerate/generatePDF';
+import GeneratedPdfList from '../generatedPdfList';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { streamPdfSocket } from '@store/pdf/action';
 import { LogoutModal } from '@components/LogoutModal';
 import { showCurrentFilePdf, setPdfDisplayFileId } from '@store/pdf/action';
-
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -147,21 +133,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [monaco, suggestion]);
 
-  useEffect(() => {
-    //onHeaderChange(template?.header);
-    // onFooterChange(template?.footer);
-    // onCssChange(template?.additionalStyles);
-    // onVariableChange(template?.variables);
-  }, [modelOpen]);
-
-  // const switchTabPreview = (value) => {
-  //   onHeaderChange(template?.header);
-  //   onFooterChange(template?.footer);
-  //   onCssChange(template?.additionalStyles);
-  //   onVariableChange(template?.variables);
-  //   setPreview(value);
-  // };
-
   const onVariableChange = (value) => {
     setTmpTemplate({ ...tmpTemplate, variables: value });
   };
@@ -185,26 +156,10 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   return (
     <TemplateEditorContainerPdf>
       <LogoutModal />
-      {template && (
-        <PDFConfigForm
-          template={template}
-          setError={(hasError) => {
-            setHasConfigError(hasError);
-          }}
-          onChange={(_template) => {
-            updateTemplate(_template);
-          }}
-        />
-      )}
+      {template && <PDFConfigForm template={template} />}
       <GoAForm>
         <GoAFormItem>
-          <Tabs
-            activeIndex={activeIndex}
-            changeTabCallback={(index: number) => {
-              //setActiveIndex(index);
-              //updateTemplate(tmpTemplate);
-            }}
-          >
+          <Tabs activeIndex={activeIndex}>
             <Tab testId={`pdf-edit-header`} label={<PdfEditorLabelWrapper>Header</PdfEditorLabelWrapper>}>
               <GoAFormItem error={errors?.header ?? ''}>
                 <MonacoDivHeader>
@@ -246,10 +201,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     language={'handlebars'}
                     defaultValue={template?.footer}
                     onChange={(value) => {
-                      // onFooterChange(value);
-                      // if (tmpTemplate) {
-                      //   tmpTemplate.footer = value;
-                      // }
                       template.footer = value;
                       setTmpTemplate({ ...tmpTemplate, footer: value });
                     }}
@@ -266,10 +217,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                       language={'handlebars'}
                       defaultValue={template?.additionalStyles}
                       onChange={(value) => {
-                        // onCssChange(value);
-                        // if (tmpTemplate) {
-                        //   tmpTemplate.additionalStyles = value;
-                        // }
                         template.additionalStyles = value;
                         setTmpTemplate({ ...tmpTemplate, additionalStyles: value });
                       }}
@@ -281,11 +228,28 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             </Tab>
             <Tab
               testId={`pdf-test-generator`}
-              label={<PdfEditorLabelWrapper>Variable Assignments</PdfEditorLabelWrapper>}
+              label={<PdfEditorLabelWrapper>Variable assignments</PdfEditorLabelWrapper>}
             >
+              <GoAFormItem error={errors?.body ?? null}>
+                <MonacoDivBody>
+                  <MonacoEditor
+                    data-testid="form-schema"
+                    value={template.variables}
+                    onChange={(value) => {
+                      onVariableChange(value);
+                      if (tmpTemplate) {
+                        tmpTemplate.variables = value;
+                      }
+                    }}
+                    language="json"
+                    {...bodyEditorConfig}
+                  />
+                </MonacoDivBody>
+              </GoAFormItem>
+            </Tab>
+            <Tab testId={`pdf-test-history`} label={<PdfEditorLabelWrapper>File history</PdfEditorLabelWrapper>}>
               <>
                 <GeneratorStyling>
-                  <GeneratePDF payloadData={template?.variables} setPayload={onVariableChange} />
                   <section>{template?.id && <GeneratedPdfList templateId={template.id} />}</section>
                 </GeneratorStyling>
               </>

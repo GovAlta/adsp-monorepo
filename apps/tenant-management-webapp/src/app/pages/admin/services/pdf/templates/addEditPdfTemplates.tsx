@@ -1,16 +1,16 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { GoAButton, GoAElementLoader } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+
 import { PdfTemplate } from '@store/pdf/model';
-import { IdField } from '../styled-components';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
-import styled from 'styled-components';
+import { SpinnerPadding, TextAreaDiv } from '../styled-components';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
-import { GoATextArea } from '@abgov/react-components-new';
+import { GoATextArea, GoAInput } from '@abgov/react-components-new';
 interface AddEditPdfTemplateProps {
   open: boolean;
   isEdit: boolean;
@@ -77,6 +77,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
                 value={template.name}
                 data-testid="pdf-template-name"
                 aria-label="pdf-template-name"
+                width="100%"
                 onChange={(name, value) => {
                   const validations = {
                     name: value,
@@ -93,24 +94,33 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
             </GoAFormItem>
             <GoAFormItem>
               <label>Template ID</label>
-              <IdField>{template.id}</IdField>
+              <GoAInput
+                name="pdf-template-id"
+                value={template.id}
+                disabled={true}
+                width="100%"
+                // eslint-disable-next-line
+                onChange={() => {}}
+              />
             </GoAFormItem>
 
             <GoAFormItem error={errors?.['description']}>
               <label>Description</label>
-              <GoATextArea
-                name="pdf-template-description"
-                value={template.description}
-                width="100%"
-                testId="pdf-template-description"
-                aria-label="pdf-template-description"
-                onChange={(name, value) => {
-                  const description = value;
-                  validators.remove('description');
-                  validators['description'].check(description);
-                  setTemplate({ ...template, description: value });
-                }}
-              />
+              <TextAreaDiv>
+                <GoATextArea
+                  name="pdf-template-description"
+                  value={template.description}
+                  width="100%"
+                  testId="pdf-template-description"
+                  aria-label="pdf-template-description"
+                  onChange={(name, value) => {
+                    const description = value;
+                    validators.remove('description');
+                    validators['description'].check(description);
+                    setTemplate({ ...template, description: value });
+                  }}
+                />
+              </TextAreaDiv>
             </GoAFormItem>
           </GoAForm>
         </GoAModalContent>
@@ -161,8 +171,3 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
     </>
   );
 };
-
-const SpinnerPadding = styled.div`
-  margin: 0 0 0 5px;
-  float: right;
-`;

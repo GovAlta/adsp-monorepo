@@ -2,7 +2,7 @@ using System.Net;
 using Adsp.Sdk.Errors;
 
 namespace Adsp.Platform.ScriptService.Services;
-internal class ScriptRunException : HttpResponseException
+internal sealed class ScriptRunException : HttpResponseException
 {
   public ScriptRunException() : base()
   {

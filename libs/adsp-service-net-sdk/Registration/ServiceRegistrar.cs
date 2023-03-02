@@ -6,7 +6,7 @@ using RestSharp;
 
 namespace Adsp.Sdk.Registration;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
-internal class ServiceRegistrar : IServiceRegistrar, IDisposable
+internal sealed class ServiceRegistrar : IServiceRegistrar, IDisposable
 {
   private static readonly AdspId CONFIGURATION_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:configuration-service:v2");
 

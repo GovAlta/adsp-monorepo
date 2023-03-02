@@ -2,7 +2,7 @@ using Adsp.Platform.ScriptService.Model;
 using Adsp.Sdk;
 
 namespace Adsp.Platform.ScriptService;
-internal class ScriptConfiguration
+internal sealed class ScriptConfiguration
 {
   private readonly IDictionary<string, ScriptDefinition> _definitions = new Dictionary<string, ScriptDefinition>();
   private readonly IDictionary<string, (EventIdentity, ScriptDefinition)> _definitionsByEvent = new Dictionary<string, (EventIdentity, ScriptDefinition)>();

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 
 namespace Adsp.Sdk.Configuration;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
-internal class ConfigurationStartupFilter : IStartupFilter
+internal sealed class ConfigurationStartupFilter : IStartupFilter
 {
   private readonly IConfigurationUpdateClient _client;
   private readonly bool _enabled;

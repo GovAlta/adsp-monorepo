@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 
 namespace Adsp.Sdk.Registration;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
-internal class RegistrationStartupFilter : IStartupFilter
+internal sealed class RegistrationStartupFilter : IStartupFilter
 {
   private readonly IServiceRegistrar _registrar;
   private readonly ServiceRegistration _registration;

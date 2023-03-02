@@ -90,6 +90,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
           disabled={indicator.show}
           type="secondary"
           data-testid="form-save"
+          size="compact"
           onClick={() => {
             generateTemplate();
           }}

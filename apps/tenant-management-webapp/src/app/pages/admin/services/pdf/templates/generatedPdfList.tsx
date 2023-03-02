@@ -19,11 +19,16 @@ interface GeneratedPdfListProps {
 const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element => {
   const dispatch = useDispatch();
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
-  const jobList = useSelector((state: RootState) => state.pdf.jobs);
   const files = useSelector((state: RootState) => state.pdf.files);
   const onDownloadFile = async (file) => {
     dispatch(DownloadFileService(file));
   };
+
+  useEffect(() => {
+    dispatch(updatePdfResponse({ fileList: fileList }));
+  }, [fileList]);
+
+  const pdfList = useSelector((state: RootState) => state.pdf.jobs);
 
   const statusGenerator = {
     queued: 'Queued',
@@ -48,6 +53,8 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
       dispatch(showCurrentFilePdf(file.id));
     }
   };
+
+  const jobList = pdfList.length > 5 ? pdfList.slice(0, 5) : pdfList;
 
   const renderFileTable = () => {
     return (

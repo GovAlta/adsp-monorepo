@@ -14,9 +14,7 @@ import {
 
 import { TemplateEditor } from './previewEditor/TemplateEditor';
 import { PreviewTemplate } from './previewEditor/PreviewTemplate';
-import { getTemplateBody } from '@core-services/notification-shared';
 import { generatePdf } from '@store/pdf/action';
-import { useDebounce } from '@lib/useDebounce';
 import { useHistory, useParams } from 'react-router-dom';
 
 export const PdfTemplatesEditor = (): JSX.Element => {
@@ -49,6 +47,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
   const webappUrl = useSelector((state: RootState) => {
     return state.config.serviceUrls.tenantManagementWebApp;
   });
+
   useEffect(() => {
     setCurrentTemplate(pdfTemplate);
     setCurrentSavedTemplate(JSON.parse(JSON.stringify(pdfTemplate || '')));

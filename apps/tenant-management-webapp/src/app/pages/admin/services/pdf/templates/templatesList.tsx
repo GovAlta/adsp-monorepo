@@ -5,7 +5,6 @@ import { PdfTemplate } from '@store/pdf/model';
 
 export interface PdfTemplatesTableProps {
   templates: Record<string, PdfTemplate>;
-  edit?: (PdfTemplate) => void;
   onDelete?: (PdfTemplate) => void;
 }
 export const PdfTemplatesTable: FunctionComponent<PdfTemplatesTableProps> = ({ templates, edit, onDelete }) => {
@@ -30,14 +29,7 @@ export const PdfTemplatesTable: FunctionComponent<PdfTemplatesTableProps> = ({ t
         </thead>
         <tbody>
           {Object.keys(newTemplates).map((templateName) => {
-            return (
-              <PdfTemplateItem
-                key={templateName}
-                pdfTemplate={newTemplates[templateName]}
-                edit={edit}
-                onDelete={onDelete}
-              />
-            );
+            return <PdfTemplateItem key={templateName} pdfTemplate={newTemplates[templateName]} onDelete={onDelete} />;
           })}
         </tbody>
       </DataTable>

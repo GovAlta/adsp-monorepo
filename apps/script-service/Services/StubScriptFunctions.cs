@@ -3,7 +3,7 @@ using NLua;
 
 namespace Adsp.Platform.ScriptService.Services;
 
-internal class StubScriptFunctions : IScriptFunctions
+internal sealed class StubScriptFunctions : IScriptFunctions
 {
   public FormDataResult? GetFormData(string formId)
   {

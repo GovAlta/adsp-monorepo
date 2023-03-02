@@ -7,7 +7,7 @@ using RestSharp;
 
 namespace Adsp.Sdk.Directory;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
-internal class ServiceDirectory : IServiceDirectory, IDisposable
+internal sealed class ServiceDirectory : IServiceDirectory, IDisposable
 {
   private readonly ILogger<ServiceDirectory> _logger;
   private readonly IMemoryCache _cache;
@@ -47,7 +47,7 @@ internal class ServiceDirectory : IServiceDirectory, IDisposable
       }
     }
 
-    return url;
+    return url!;
   }
 
   private async Task<IDictionary<AdspId, Uri>> RetrieveDirectory(string @namespace)

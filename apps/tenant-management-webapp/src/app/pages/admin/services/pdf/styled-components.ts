@@ -22,11 +22,6 @@ export const FileTableStyles = styled.div`
   }
 `;
 
-export const EditorStyles = styled.div`
-  border: 1px solid #666;
-  border-radius: 3px;
-`;
-
 export const PaddingRight = styled.div`
   margin-right: 12px;
 `;
@@ -215,7 +210,6 @@ export const PdfEditorLabelWrapper = styled.div`
 
 export const PdfConfigFormWrapper = styled.div`
   padding-left: 3px;
-  margin-top: 0.5rem;
   border: solid 1px #dcdcdc;
   border-radius: 3px;
   height: 8rem;
@@ -321,11 +315,12 @@ export const Edit = styled.div`
   a {
     margin-top: 3px;
   }
-
   display: flex;
+  flex-direction: row;
+  margin-right: 1rem;
 `;
 export const OverflowWrap = styled.div`
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   overflow-y: hidden;
 `;
 
@@ -334,4 +329,61 @@ export const PreviewTopStyle = styled.div`
   flex-direction: row;
   justify-content: left;
   gap: 1rem;
+`;
+
+export const PdfInfoTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  word-wrap: break-word;
+  overflow: auto;
+  position: relative;
+  padding-top: 0.5rem;
+
+  th {
+    white-space: pre-wrap;
+    color: var(--color-th);
+    font-size: var(--fs-base);
+    table-layout: fixed;
+    padding-left: 0.5rem;
+    text-align: left;
+    font-weight: var(--fw-bold);
+  }
+  td {
+    padding-left: 0.5rem;
+  }
+  & th:nth-child(1) {
+    width: 15%;
+  }
+
+  & td:nth-child(1) {
+    text-overflow: ellipsis;
+    width: 15%;
+  }
+  & th:nth-child(2) {
+    width: 15%;
+    border-left: 1px solid #ccc;
+  }
+
+  & td:nth-child(2) {
+    text-overflow: ellipsis;
+    width: 15%;
+    border-left: 1px solid #ccc;
+  }
+  & th:nth-child(3) {
+    width: 60%;
+    border-left: 1px solid #ccc;
+  }
+
+  & td:nth-child(3) {
+    text-overflow: ellipsis;
+    width: 60%;
+    border-left: 1px solid #ccc;
+  }
+  & th:nth-child(4) {
+    font-weight: var(--fw-light) !important;
+    width: 10%;
+  }
+`;
+export const TextAreaDiv = styled.div`
+  margin-bottom: 1rem;
 `;

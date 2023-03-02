@@ -34,6 +34,7 @@ export interface Session {
   elementIndicator?: ElementIndicator;
   loadingStates?: LoadingStates;
   isExpired?: boolean;
+  isWillExpired?: boolean;
 }
 
 export interface Credentials {

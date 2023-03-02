@@ -52,3 +52,9 @@ export const DataTableWrapper = styled.div`
     padding-top: 1.25rem;
   }
 `;
+
+export const ActionButtonWrapper = styled.div`
+  display: flex;
+  gap: 1em;
+  justify-content: flex-end;
+`;
