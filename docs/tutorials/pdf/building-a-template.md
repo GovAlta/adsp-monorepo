@@ -29,7 +29,7 @@ The following recipe will guide you through the steps the CS team needed to go t
 
 ## The Template Editor
 
-Template development is done through the Tenant Admin Webapp's PDF service. Your team will need to have access to a tenant (i.e. a realm on Keycloak) in production, and your GOA user given the tenant admin role. You may need your team lead to set you up with this. And if your team needs to set up a new tenant, please follow the instructions here (https://govalta.github.io/adsp-monorepo/getting-started.html).
+Template development is done through the Tenant Admin Webapp's PDF service. Your team will need to have access to a tenant (i.e. a realm on Keycloak) in production, and your GOA user given the tenant admin role. You may need your team lead to set you up with this. And if your team needs to set up a new tenant, please follow the instructions here (/adsp-monorepo/getting-started.html).
 
 Once you are able to log in, select PDF on the left menu, and then the Templates tab. Then, just click on the Add Template button to begin building your template. There are six tabs in the editor:
 
@@ -275,4 +275,4 @@ In this example we've used text, but it's easy enough to place a background imag
 
 ## Learn More
 
-- Learn how to [build a sophisticated template](/adsp-monorepo/tutorials/building-a-template.html) using ADSP's Template Editor
+- Learn how to [build a sophisticated template](/adsp-monorepo/tutorials/pdf/building-a-template.html) using ADSP's Template Editor

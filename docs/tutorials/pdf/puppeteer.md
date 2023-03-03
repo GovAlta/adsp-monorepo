@@ -21,5 +21,5 @@ Fortunately, most of these issues can be address through CSS specifically implem
 
 #### Learn More
 
-- Learn how to [build a sophisticated template](/adsp-monorepo/tutorials/building-a-template.html) using ADSP's Template Editor
-- Learn how to [generating a PDF from a template](/adsp-monorepo/tutorials/building-a-template.html)
+- Learn how to [build a sophisticated template](/adsp-monorepo/tutorials/pdf/building-a-template.html) using ADSP's Template Editor
+- Learn how to [generating a PDF from a template](/adsp-monorepo/tutorials/pdf/generate-a-pdf.html)

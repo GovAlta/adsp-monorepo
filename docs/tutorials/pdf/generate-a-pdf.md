@@ -10,7 +10,7 @@ grand_parent: Tutorials
 
 The PDF Service allows you to automatically build a customized PDF document from an HTML template and a set of template variable-assignments. You can use the PDF Service's [Template Editor](https://adsp.alberta.ca) to build one interactively, or use the API's to save one you already have. Either way, once you've put a template into the system you can start using it in your application to generate downloadable PDF documents for your end users.
 
-PDF generation is accomplished through a series of API calls that create the PDF and store it within the [File Service](https://govalta.github.io/adsp-monorepo/services/file-service.html), where you have access to it through a file ID. The main steps are:
+PDF generation is accomplished through a series of API calls that create the PDF and store it within the [File Service](/adsp-monorepo/services/file-service.html), where you have access to it through a file ID. The main steps are:
 
 - Authenticate your application and get an access token from Keycloak,
 - Initiate an asynchronous Job to generate the PDF and store it in the File Service,
@@ -19,15 +19,15 @@ PDF generation is accomplished through a series of API calls that create the PDF
 
 Although you can call the API's from any language, the tutorial examples are written in Node.js. Familiarity with the latter (or Javascript) is desirable, but not absolutely necessary.
 
-Most of the API calls to the Platform Service require authentication via Keycloak with [Tenant Access](https://govalta.github.io/adsp-monorepo/services/tenant-service.html). To make the calls described in the tutorial you will need:
+Most of the API calls to the Platform Service require authentication via Keycloak with [Tenant Access](/adsp-monorepo/services/tenant-service.html). To make the calls described in the tutorial you will need:
 
 - A tenant, or realm ID
 - A client ID, and
 - A client secret
 
-The information is specific to your program area and application. Please ask your team lead If you do not have it. New applications can get set up by following [these instruction](https://govalta.github.io/adsp-monorepo/getting-started.html)
+The information is specific to your program area and application. Please ask your team lead If you do not have it. New applications can get set up by following [these instruction](/adsp-monorepo/getting-started.html)
 
-Continuing on from the tutorial on how to [Build a Template](https://govalta.github.io/adsp-monorepo/tutorials/building-a-template.md) with the PDF service, our examples will be based on the template set up there for the Child Service's Intervention Record Check. Familiarity with that particular template is not necessary to follow along here, but the information will be useful if you want to understand how the pieces relate to each other.
+Continuing on from the tutorial on how to [Build a Template](/adsp-monorepo/tutorials/building-a-template.html) with the PDF service, our examples will be based on the template set up there for the Child Service's Intervention Record Check. Familiarity with that particular template is not necessary to follow along here, but the information will be useful if you want to understand how the pieces relate to each other.
 
 ## Get Access Token
 
@@ -65,7 +65,7 @@ The template ID can be seen in your template editor while you are developing it.
 
 You supply the filename, which should be something that uniquely identifies the new PDF document.
 
-The file type is a unique classification for files that helps you group them. So, for example, you may want to have a file type for each of your templates. The advantage is that you can now easily manage all your generated PDF files for that particular template with the File Service. See the [File Service](https://govalta.github.io/adsp-monorepo/services/file-service.html) for information on how to create a new file type.
+The file type is a unique classification for files that helps you group them. So, for example, you may want to have a file type for each of your templates. The advantage is that you can now easily manage all your generated PDF files for that particular template with the File Service. See the [File Service](/adsp-monorepo/services/file-service.html) for information on how to create a new file type.
 
 The request body for generating a new PDF will look something like this:
 
@@ -135,7 +135,7 @@ Polling is done using GET /pdf/v1/jobs/{jobID} and testing to see if the returne
 
 where result.id is the file ID of the PDF document.
 
-Polling forces the application developer to manage retrying and sleeping between tries, however. A less fussy approach would be to use the [Push Service](https://govalta.github.io/adsp-monorepo/services/push-service.html). It enables applications to connect to a socket and listen for events of a specific type, such as "pdf-generated". The latter occurs when a Job successfully creates a PDF. You can connect to a Push Service socket as follows:
+Polling forces the application developer to manage retrying and sleeping between tries, however. A less fussy approach would be to use the [Push Service](/adsp-monorepo/services/push-service.html). It enables applications to connect to a socket and listen for events of a specific type, such as "pdf-generated". The latter occurs when a Job successfully creates a PDF. You can connect to a Push Service socket as follows:
 
 ```
 import { io } from 'socket.io-client';
@@ -166,7 +166,7 @@ The listener will pick up on all pdf-generated events for your tenant, so you wi
 }
 ```
 
-Whichever method you use, the important part is the file ID you get upon successful generation. This identifies the PDF document in the ]File Service](https://govalta.github.io/adsp-monorepo/services/file-service.html) which you can use to access it.
+Whichever method you use, the important part is the file ID you get upon successful generation. This identifies the PDF document in the ]File Service](/adsp-monorepo/services/file-service.html) which you can use to access it.
 
 ## Download a PDF File
 
@@ -184,4 +184,4 @@ await fetch(
 
 ## Learn More
 
-- Learn how to [generating a PDF from a template](/adsp-monorepo/tutorials/building-a-template.html)
+- Learn how to [generating a PDF from a template](/adsp-monorepo/tutorials/pdf/generate-a-pdf.html)
