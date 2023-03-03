@@ -3,6 +3,7 @@ title: Building a Template
 layout: page
 nav_order: 4
 parent: PDF Service
+grand_parent: Tutorials
 ---
 
 ## Getting Started
