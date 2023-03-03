@@ -71,7 +71,8 @@ The page header for the IRC document consists of
 - The Government of Alberta logo
 - The document title
 - Applicant identification
-  <screen shot of header goes here>
+
+-- screen shot of header goes here --
 
 The HTML for the header is quite simple;
 
@@ -122,7 +123,7 @@ The rest is pretty much standard CSS for managing layout, as you would normally 
 ## Build the Page Footer
 
 The page footer also has some features worth discussing.
-<Screen shot of footer goes here>
+-- Screen shot of footer goes here --
 Again, the HTML is quite simple
 
 ```
@@ -164,7 +165,7 @@ Puppeteer treats this as a placeholder and will substitute the actual page numbe
 ## Build the Body
 
 There is not a lot of boilerplate text in the IRC body. Most of it is input by the applicant when they're applying for a record check. The bulk of it consists of the applicant's history, which can be quite extensive, and it's compiled into a series of blocks, each with a title and content.
-<show history block here>
+-- show history block here --
 
 #### Handlebars Iterators
 
@@ -199,7 +200,7 @@ Applying the following Json to the template
 ```
 
 would yield three history blocks, each looking something like
-< insert pic of history block here>
+-- insert pic of history block here> --
 
 #### Avoiding Page Breaks
 

@@ -17,3 +17,9 @@ Two main components are used for managing pdf templates:
 - APIs to access the saved templates and generate a PDF document using a template and application-supplied values for the template variables
 
 The templating engine is based on [Puppeteer](https://pptr.dev/) - used for the HTML/CSS to PDF conversion process, and [Handlebars](https://handlebarsjs.com/guide/), which manages template customization.
+
+#### Learn More
+
+- Here are some brief introductions to [Puppeteer](/tutorials/puppeteer.html) and [Handlebars](/tutorials/handlebars.html)
+- Learn more about how to [build a sophisticated template](/tutorials/building-a-template.html)
+- Learn more about [generating a PDF from a template](/tutorials/building-a-template.html)

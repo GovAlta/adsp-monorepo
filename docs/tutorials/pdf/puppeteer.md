@@ -2,7 +2,7 @@
 title: Puppeteer
 layout: page
 nav_order: 2
-parent: Tutorials
+parent: PDF Service
 ---
 
 [Puppeteer](https://pptr.dev/) is the heart of the PDF generator and is the final arbitrator on how a generated document will look.  Based on a headless chromium engine, it allows users to input HTML and CSS to render a PDF document.  Because it's based on chromium, it's best to work on the template using Chrome, or any other Chromium based browser.
