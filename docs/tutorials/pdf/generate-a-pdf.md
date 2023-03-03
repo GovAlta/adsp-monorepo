@@ -184,4 +184,4 @@ await fetch(
 
 ## Learn More
 
-- Learn how to [generating a PDF from a template](/adsp-monorepo/tutorials/pdf/generate-a-pdf.html)
+- Learn how to [build a sophisticated template](/adsp-monorepo/tutorials/pdf/building-a-template.html) using ADSP's Template Editor

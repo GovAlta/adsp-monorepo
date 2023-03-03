@@ -275,4 +275,4 @@ In this example we've used text, but it's easy enough to place a background imag
 
 ## Learn More
 
-- Learn how to [build a sophisticated template](/adsp-monorepo/tutorials/pdf/building-a-template.html) using ADSP's Template Editor
+- Learn how to [generate a PDF from a template](/adsp-monorepo/tutorials/pdf/generate-a-pdf.html)
