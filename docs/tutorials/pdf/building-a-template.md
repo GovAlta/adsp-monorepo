@@ -272,3 +272,7 @@ You can add watermarks to your PDF pages, which can be important for identificat
 ```
 
 In this example we've used text, but it's easy enough to place a background image instead, if desired.
+
+## Learn More
+
+- Learn how to [build a sophisticated template](/adsp-monorepo/tutorials/building-a-template.html) using ADSP's Template Editor

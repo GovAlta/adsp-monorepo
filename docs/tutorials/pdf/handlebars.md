@@ -45,3 +45,8 @@ See the [Handlebars Documentation](https://handlebarsjs.com/guide/) for more inf
 [building templates](/blog/building-a-template).
 
 Other Handlebars capabilities include the use of Helper Methods, but the PDF Service does not currently support them.
+
+#### Learn More
+
+- Learn how to [build a sophisticated template](/adsp-monorepo/tutorials/building-a-template.html) using ADSP's Template Editor
+- Learn how to [generating a PDF from a template](/adsp-monorepo/tutorials/building-a-template.html)
