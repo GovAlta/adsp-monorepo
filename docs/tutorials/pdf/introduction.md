@@ -21,6 +21,6 @@ The template engine is based on [Puppeteer](https://pptr.dev/) - used for the H
 
 #### Learn More
 
-- Here are some brief introductions to [Puppeteer](/adsp-monorepo/tutorials/puppeteer.html) and [Handlebars](/adsp-monorepo/tutorials/handlebars.html)
-- Learn more about how to [build a sophisticated template](/adsp-monorepo/tutorials/building-a-template.html) using ADSP's Template Editor
-- Learn more about [generating a PDF from a template](/adsp-monorepo/tutorials/building-a-template.html)
+- Here are some brief introductions to [Puppeteer](/adsp-monorepo/tutorials/pdf/puppeteer.html) and [Handlebars](/adsp-monorepo/tutorials/pdf/handlebars.html)
+- Learn more about how to [build a sophisticated template](/adsp-monorepo/tutorials/pdf/building-a-template.html) using ADSP's Template Editor
+- Learn more about [generating a PDF from a template](/adsp-monorepo/tutorials/pdf/generate-a-pdf.html)
