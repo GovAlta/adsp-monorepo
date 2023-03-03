@@ -4,7 +4,7 @@ import { DownloadFileService } from '@store/file/actions';
 import { updatePdfResponse } from '@store/pdf/action';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
-import { GoACallout } from '@abgov/react-components';
+
 import { GoAIconButton } from '@abgov/react-components/experimental';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
@@ -60,11 +60,6 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
   const renderFileTable = () => {
     return (
       <>
-        <GoACallout
-          title="PDF file will be deleted from the servers after 7 days."
-          key="success"
-          type="important"
-        ></GoACallout>
         <FileTableStyles>
           <DataTable id="files-information">
             <thead>
