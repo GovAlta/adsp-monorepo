@@ -52,7 +52,8 @@ const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
     prev?.footer !== next?.footer ||
     prev?.additionalStyles !== next?.additionalStyles ||
     prev?.name !== next?.name ||
-    prev?.description !== next?.description
+    prev?.description !== next?.description ||
+    prev?.variables !== next?.variables
   );
 };
 
@@ -231,10 +232,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     data-testid="form-schema"
                     value={template?.variables}
                     onChange={(value) => {
-                      onVariableChange(value);
-                      if (tmpTemplate) {
-                        tmpTemplate.variables = value;
-                      }
+                      template.variables = value;
+                      setTmpTemplate({ ...tmpTemplate, variables: value });
                     }}
                     language="json"
                     {...bodyEditorConfig}
