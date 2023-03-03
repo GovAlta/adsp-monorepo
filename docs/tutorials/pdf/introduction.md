@@ -2,7 +2,7 @@
 title: Introduction
 layout: page
 nav_order: 1
-parent: Tutorials
+parent: PDF Service
 ---
 
 ## Introduction
