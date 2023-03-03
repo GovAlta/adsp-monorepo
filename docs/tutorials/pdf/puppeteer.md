@@ -18,3 +18,8 @@ While puppeteer does a great job of turning HTML into PDF, there are things that
 - Page numbering
 
 Fortunately, most of these issues can be address through CSS specifically implement to address print media concerns.  Here's a [good tutorial](https://www.smashingmagazine.com/2018/05/print-stylesheets-in-2018/) on CSS for print media.
+
+#### Learn More
+
+- Learn how to [build a sophisticated template](/adsp-monorepo/tutorials/building-a-template.html) using ADSP's Template Editor
+- Learn how to [generating a PDF from a template](/adsp-monorepo/tutorials/building-a-template.html)

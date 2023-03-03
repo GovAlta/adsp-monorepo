@@ -17,10 +17,10 @@ Two main components are used for managing pdf templates:
 - The ADSP Tenant Admin Webapp, which provides a GUI for developers to build, test and save their template using HTML, CSS and a custom designed set of embedded template variables
 - APIs to access the saved templates and generate a PDF document using a template and application-supplied values for the template variables
 
-The templating engine is based on [Puppeteer](https://pptr.dev/) - used for the HTML/CSS to PDF conversion process, and [Handlebars](https://handlebarsjs.com/guide/), which manages template customization.
+The template engine is based on [Puppeteer](https://pptr.dev/) - used for the HTML/CSS to PDF conversion process, and [Handlebars](https://handlebarsjs.com/guide/), which manages template customization.
 
 #### Learn More
 
-- Here are some brief introductions to [Puppeteer](/tutorials/puppeteer.html) and [Handlebars](/tutorials/handlebars.html)
-- Learn more about how to [build a sophisticated template](/tutorials/building-a-template.html)
-- Learn more about [generating a PDF from a template](/tutorials/building-a-template.html)
+- Here are some brief introductions to [Puppeteer](/adsp-monorepo/tutorials/puppeteer.html) and [Handlebars](/adsp-monorepo/tutorials/handlebars.html)
+- Learn more about how to [build a sophisticated template](/adsp-monorepo/tutorials/building-a-template.html) using ADSP's Template Editor
+- Learn more about [generating a PDF from a template](/adsp-monorepo/tutorials/building-a-template.html)
