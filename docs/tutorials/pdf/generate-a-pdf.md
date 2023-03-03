@@ -3,6 +3,7 @@ title: Generate a PDF
 layout: page
 nav_order: 5
 parent: PDF Service
+grand_parent: Tutorials
 ---
 
 ## Getting Started

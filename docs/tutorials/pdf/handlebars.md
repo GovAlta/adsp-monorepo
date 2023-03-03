@@ -3,6 +3,7 @@ title: Handlebars
 layout: page
 nav_order: 3
 parent: PDF Service
+grand_parent: Tutorials
 ---
 
 ## Introduction
