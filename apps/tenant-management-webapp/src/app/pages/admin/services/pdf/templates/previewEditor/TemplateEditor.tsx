@@ -70,7 +70,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 }) => {
   const monaco = useMonaco();
   const [saveModal, setSaveModal] = useState(false);
-  const [hasConfigError, setHasConfigError] = useState(false);
+
   const [tmpTemplate, setTmpTemplate] = useState(template);
   const suggestion = template ? getSuggestion() : [];
   const [activeIndex, setActiveIndex] = useState(0);
@@ -257,7 +257,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             <PdfEditActions>
               <>
                 <GoAButton
-                  disabled={hasConfigError || !isPDFUpdated(tmpTemplate, savedTemplate)}
+                  disabled={!isPDFUpdated(tmpTemplate, savedTemplate)}
                   onClick={() => saveCurrentTemplate()}
                   type="primary"
                   data-testid="template-form-save"
@@ -294,7 +294,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           setSaveModal(false);
           cancel();
         }}
-        saveDisable={hasConfigError}
+        saveDisable={false}
         onCancel={() => {
           setSaveModal(false);
         }}

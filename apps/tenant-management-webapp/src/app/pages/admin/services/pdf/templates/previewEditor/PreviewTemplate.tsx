@@ -1,7 +1,5 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { GoAButton, GoAIconButton } from '@abgov/react-components-new';
-import { generatePdf } from '@store/pdf/action';
-
 import { GoAElementLoader } from '@abgov/react-components';
 import {
   GenerateButtonPadding,
@@ -9,13 +7,11 @@ import {
   SpinnerSpace,
   PreviewTopStyle,
   PreviewContainer,
-  BodyPreview,
   PDFTitle,
 } from '../../styled-components';
 
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
-import { PdfTemplate } from '@store/pdf/model';
 import { DownloadFileService } from '@store/file/actions';
 interface PreviewTemplateProps {
   channelTitle: string;
@@ -89,7 +85,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
           <div>
             <div>
               <object type="application/pdf" data={blobUrl} height={windowSize[1] - 200} style={{ width: '100%' }}>
-                <iframe src={blobUrl} height="100%" width="100%"></iframe>
+                <iframe title={'PDF preview'} src={blobUrl} height="100%" width="100%"></iframe>
               </object>
             </div>
           </div>

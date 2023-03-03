@@ -44,10 +44,6 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     dispatch(generatePdf(payload, saveObject));
   };
 
-  const webappUrl = useSelector((state: RootState) => {
-    return state.config.serviceUrls.tenantManagementWebApp;
-  });
-
   useEffect(() => {
     setCurrentTemplate(pdfTemplate);
     setCurrentSavedTemplate(JSON.parse(JSON.stringify(pdfTemplate || '')));

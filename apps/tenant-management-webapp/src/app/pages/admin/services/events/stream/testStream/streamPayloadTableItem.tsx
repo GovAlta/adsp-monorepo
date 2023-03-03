@@ -3,6 +3,7 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { EntryDetail, NoPaddingTd } from '../styleComponents';
 
 interface StreamPayloadTableItemProps {
+  //eslint-disable-next-line
   stream: Record<string, any>;
 }
 

@@ -3,6 +3,7 @@ import DataTable from '@components/DataTable';
 import { StreamPayloadTableItem } from './streamPayloadTableItem';
 
 interface StreamPayloadTableProps {
+  //eslint-disable-next-line
   streams: Record<string, any>[];
 }
 
