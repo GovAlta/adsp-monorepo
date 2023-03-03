@@ -87,6 +87,7 @@ const ScrollBarFixTop = styled.div`
 `;
 
 interface ItemProps {
+  //eslint-disable-next-line
   notifications: any[];
 }
 const ScrollBarFixMain = styled.div`

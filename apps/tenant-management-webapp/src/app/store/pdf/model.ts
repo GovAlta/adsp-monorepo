@@ -26,7 +26,9 @@ export interface PdfGenerationResponse {
     jobId?: string;
     templateId?: string;
   };
+  //eslint-disable-next-line
   data: any;
+  //eslint-disable-next-line
   stream: any;
   name?: string;
   fileWasGenerated: boolean;

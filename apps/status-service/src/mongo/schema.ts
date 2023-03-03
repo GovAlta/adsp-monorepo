@@ -1,5 +1,4 @@
 import { Schema } from 'mongoose';
-import { ApplicationConfiguration, EndpointToInternalStatusMapping } from '../app';
 
 export const serviceStatusEndpointSchema = new Schema(
   {
