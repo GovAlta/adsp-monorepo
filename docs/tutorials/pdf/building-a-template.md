@@ -85,10 +85,10 @@ The HTML for the header is quite simple;
     </div>
   <div class="clear"/>
   <div class="client-info">
-    <div>{{data.date}}</div>
-    <div class="uppercase">To: {{data.applicant.lastName}}, {{data.applicant.firstName}}</div>
-    <div class="uppercase">Aliases: {{data.applicant.lastName}}, {{data.applicant.alias}}</div>
-    <div class="uppercase">Dob: {{data.applicant.dob}}</div>
+    <div>\{\{data.date\}\}</div>
+    <div class="uppercase">To: \{\{data.applicant.lastName\}\}, \{\{data.applicant.firstName\}\}</div>
+    <div class="uppercase">Aliases: \{\{data.applicant.lastName\}\}, \{\{data.applicant.alias\}\}</div>
+    <div class="uppercase">Dob: \{\{data.applicant.dob\}\}</div>
   </div>
 </div>
 ```
@@ -173,18 +173,18 @@ There is not a lot of boilerplate text in the IRC body. Most of it is input by t
 Since we don't know how much history there is going to be, this is a perfect opportunity to utilize handlebars iterator construct, which looks like this:
 
 ```
-{{#each data.history}}
+\{\{#each data.history\}\}
   <div class="history">
-    <div class="title">{{this.title}}</div>
+    <div class="title">\{\{this.title\}\}</div>
     <div class="content">
       <p>
-        {{#each this.content}}
-          <p>{{this}}</p>
-        {{/each}}
+        \{\{#each this.content\}\}
+          <p>\{\{this\}\}</p>
+        \{\{/each\}\}
       </p>
     </div>
   </div>
-{{/each}}
+\{\{/each\}\}
 ```
 
 Applying the following Json to the template
@@ -231,16 +231,16 @@ Another interesting requirement was the placement of a title on each page that h
       </tr>
     </thead>
     <tbody>
-    {{#each data.history}}
+   \{\{#each data.history\}\}
       <tr><td>
-        <div class="title">{{this.title}}</div>
+        <div class="title">\{\{this.title\}\}</div>
         <div class="content">
-        {{#each this.content}}
-          <p>{{this}}</p>
-        {{/each}}
+        \{\{#each this.content\}\}
+          <p>\{\{this\}\}</p>
+        \{\{/each\}\}
         </div>
       </td></tr>
-    {{/each}}
+    \{\{/each\}\}
     </tbody>
   </table>
 </div>
