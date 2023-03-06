@@ -73,11 +73,11 @@ The page header for the IRC document consists of
 - The document title
 - Applicant identification
 
-![test 1](/assets/pdf/header.png)
-![test 2](/pdf/header.png)
-![test 3](/adsp-monrepo/assets/pdf/header.png)
+![](/adsp-monorepo/assets/pdf/header.png)
 
 The HTML for the header is quite simple;
+
+{% raw %}
 
 ```html
 <div class="header-wrapper">
@@ -93,6 +93,8 @@ The HTML for the header is quite simple;
   </div>
 </div>
 ```
+
+{% endraw %}
 
 #### Handlebars Placeholders
 
@@ -173,8 +175,10 @@ There is not a lot of boilerplate text in the IRC body. Most of it is input by t
 
 Since we don't know how much history there is going to be, this is a perfect opportunity to utilize handlebars iterator construct, which looks like this:
 
+{% raw %}
+
 ```html
-\{\{#each data.history\}\}
+{{#each data.history}}
   <div class="history">
     <div class="title">\{\{this.title\}\}</div>
     <div class="content">
@@ -187,6 +191,8 @@ Since we don't know how much history there is going to be, this is a perfect opp
   </div>
 \{\{/each\}\}
 ```
+
+{% endraw %}
 
 Applying the following Json to the template
 
@@ -223,6 +229,8 @@ By wrapping each history block in a <div> tag with class history, Puppeteer will
 
 Another interesting requirement was the placement of a title on each page that had a history block on it, namely Summary of your involvement up to today. We couldn't put it in the header, because not every page has a history block. So how can we tell Puppeteer to do this? Well, it turns out that it has a very nice feature; when a table spans more than one page the headers are repeated at the top of each one. By wrapping the history blocks in a table, with the above sentence as a table header, the requirement is met!
 
+{% raw %}
+
 ```html
 <div class="history">
   <table>
@@ -232,22 +240,24 @@ Another interesting requirement was the placement of a title on each page that h
       </tr>
     </thead>
     <tbody>
-      \{\{#each data.history\}\}
+      {{#each data.history}}
       <tr>
         <td>
-          <div class="title">\{\{this.title\}\}</div>
+          <div class="title">{{this.title}}</div>
           <div class="content">
-            \{\{#each this.content\}\}
-            <p>\{\{this\}\}</p>
-            \{\{/each\}\}
+            {{#each this.content}}
+            <p>{{this}}</p>
+            {{/each}}
           </div>
         </td>
       </tr>
-      \{\{/each\}\}
+      {{/each}}
     </tbody>
   </table>
 </div>
 ```
+
+{% endraw %}
 
 #### Watermarks
 
