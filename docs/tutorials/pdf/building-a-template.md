@@ -127,7 +127,9 @@ The rest is pretty much standard CSS for managing layout, as you would normally 
 ## Build the Page Footer
 
 The page footer also has some features worth discussing.
-** Screen shot of footer goes here**
+
+![](adsp-monorepo/assets/pdf/footer.png)
+
 Again, the HTML is quite simple
 
 ```html
