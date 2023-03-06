@@ -55,7 +55,8 @@ Generating a PDF is an expensive operation and can take up to several seconds, d
 - a file type
 
 The template ID can be seen in your template editor while you are developing it.
-** screenshot goes here **
+
+![](/adsp-monorepo/assets/pdf/templateId.png)
 
 You supply the filename, which should be something that uniquely identifies the new PDF document.
 
