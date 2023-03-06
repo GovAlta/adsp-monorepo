@@ -73,7 +73,9 @@ The page header for the IRC document consists of
 - The document title
 - Applicant identification
 
-![](/assets/pdf/header.png)
+![test 1](/assets/pdf/header.png)
+![test 2](/pdf/header.png)
+![test 3](/adsp-monrepo/assets/pdf/header.png)
 
 The HTML for the header is quite simple;
 
