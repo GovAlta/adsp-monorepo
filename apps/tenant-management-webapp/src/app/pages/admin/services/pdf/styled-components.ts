@@ -71,7 +71,7 @@ export const TemplateEditorContainerPdf = styled.div`
     overflow: auto;
   }
 
-  width: calc(100vw - 612px - 3em);
+  width: calc(100vw - 650px - 3em);
 
   .reduce-margin {
     margin-top: 5px;
@@ -125,7 +125,7 @@ export const ModalContent = styled.div`
   background: white;
 `;
 export const PreviewTemplateContainer = styled.div`
-  width: 612px;
+  width: 650px;
   margin-left: 2rem;
   overflow: hidden;
   &:hover {
