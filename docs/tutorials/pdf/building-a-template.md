@@ -86,10 +86,10 @@ The HTML for the header is quite simple;
   <div class="subtitle"><span>Intervention Record Check</span><span>Protected B</span></div>
   <div class="clear" />
   <div class="client-info">
-    <div>\{\{data.date\}\}</div>
-    <div class="uppercase">To: \{\{data.applicant.lastName\}\}, \{\{data.applicant.firstName\}\}</div>
-    <div class="uppercase">Aliases: \{\{data.applicant.lastName\}\}, \{\{data.applicant.alias\}\}</div>
-    <div class="uppercase">Dob: \{\{data.applicant.dob\}\}</div>
+    <div>{{data.date}}</div>
+    <div class="uppercase">To: {{data.applicant.lastName}}, {{data.applicant.firstName}}</div>
+    <div class="uppercase">Aliases: {{data.applicant.lastName}}, {{data.applicant.alias}}</div>
+    <div class="uppercase">Dob: {{data.applicant.dob}}</div>
   </div>
 </div>
 ```
@@ -180,16 +180,16 @@ Since we don't know how much history there is going to be, this is a perfect opp
 ```html
 {{#each data.history}}
   <div class="history">
-    <div class="title">\{\{this.title\}\}</div>
+    <div class="title">{{this.title}}</div>
     <div class="content">
       <p>
-        \{\{#each this.content\}\}
-          <p>\{\{this\}\}</p>
-        \{\{/each\}\}
+        {{#each this.content}}
+          <p>{{this}}</p>
+        {{/each}}
       </p>
     </div>
   </div>
-\{\{/each\}\}
+{{/each}}
 ```
 
 {% endraw %}
