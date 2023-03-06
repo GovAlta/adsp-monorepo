@@ -73,7 +73,7 @@ The page header for the IRC document consists of
 - The document title
 - Applicant identification
 
-** screen shot of header goes here **
+![](/assets/pdf/header.png)
 
 The HTML for the header is quite simple;
 
