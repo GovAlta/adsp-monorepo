@@ -33,23 +33,17 @@ Continuing on from the tutorial on how to [Build a Template](/adsp-monorepo/tuto
 
 Using the information required to authenticate your application, you can grab an access token required to access the PDF Service as follows:
 
-```
-const response = await fetch(
-  `https://access.alberta.ca/auth/realms/${realmID}/protocol/openid-connect/token`,
-  {
-    method: 'POST',
-    body: new URLSearchParams({
-      'grant_type': 'client_credentials',
-      'client_id': clientId,
-      'client_secret': clientSecret,
-    })
-  }
-);
+```typescript
+const response = await fetch(`https://access.alberta.ca/auth/realms/${realmID}/protocol/openid-connect/token`, {
+  method: 'POST',
+  body: new URLSearchParams({
+    grant_type: 'client_credentials',
+    client_id: clientId,
+    client_secret: clientSecret,
+  }),
+});
 
-const {
-    access_token,
-    expires_in,
-} = await response.json();
+const { access_token, expires_in } = await response.json();
 ```
 
 ## Submit a PDF Generator Job
@@ -69,53 +63,57 @@ The file type is a unique classification for files that helps you group them. So
 
 The request body for generating a new PDF will look something like this:
 
-```
+```typescript
 const request = {
   operation: 'generate',
   templateId: 'intervention-record-check',
   filename: 'bobs-intervention-record-check.pdf',
   fileType: 'intervention-record-checks',
-  data: ircData
-}
+  data: ircData,
+};
 ```
 
 where ircData is a Json object containing the data collected by the application to use for variable substitutions:
 
-```
+```json
 {
   "date": "Jan 19, 2023",
-  "applicant": { "firstName":"Bob", "lastName":"Smith", "middleName": "J.", "alias":"Billy", "dob":"Jan 19, 1999" },
-  "caseWorker": { "name": "Bob Bing", "signature": "https://drive.google.com/uc?export=view&id=1BRi8Acu3RMNTMpHjzjRh51H3QDhshicC" },
+  "applicant": { "firstName": "Bob", "lastName": "Smith", "middleName": "J.", "alias": "Billy", "dob": "Jan 19, 1999" },
+  "caseWorker": {
+    "name": "Bob Bing",
+    "signature": "https://drive.google.com/uc?export=view&id=1BRi8Acu3RMNTMpHjzjRh51H3QDhshicC"
+  },
   "reason": "I am applying to work directly with children etc.",
-  "history": [{"title": "Alberta History", "content": ["Paragraph 1", "Paragraph 2", "Paragraph 3"] },
-              {"title": "BC History", "content": ["Lorem ipsum dolor sit amet, etc."]},
-              {"title": "England History", "content": ["Lorem ipsum dolor sit amet, etc."]}],
-  "position": [{ "organization": "Downton Abby", "position": "Head Grounds Keeper"},
-               { "organization": "Government of Canada", "position": "Ambassador to France"},
-               { "organization": "Stanford University", "position": "Professor Emeritus"}
-              ]
+  "history": [
+    { "title": "Alberta History", "content": ["Paragraph 1", "Paragraph 2", "Paragraph 3"] },
+    { "title": "BC History", "content": ["Lorem ipsum dolor sit amet, etc."] },
+    { "title": "England History", "content": ["Lorem ipsum dolor sit amet, etc."] }
+  ],
+  "position": [
+    { "organization": "Downton Abby", "position": "Head Grounds Keeper" },
+    { "organization": "Government of Canada", "position": "Ambassador to France" },
+    { "organization": "Stanford University", "position": "Professor Emeritus" }
+  ]
 }
 ```
 
 Generate the PDF file by submitting a Job
 
-```
-const response = await fetch(
-    'https://pdf-service.adsp.alberta.ca/pdf/v1/jobs',
-    {
-      method: 'POST',
-      headers: {
-          'Authorization': `Bearer ${accessToken}`,  'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(request)
-    }
-);
+```typescript
+const response = await fetch('https://pdf-service.adsp.alberta.ca/pdf/v1/jobs', {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(request),
+});
 ```
 
 which places the request on the job queue and returns the job ID and its status.
 
-```
-  const { urn,  jobId, status } = await response.json();
+```typescript
+const { urn, jobId, status } = await response.json();
 ```
 
 ## Test for Job Completion
@@ -124,7 +122,7 @@ The status of a job will have one of three values; 'queued', 'completed', or 'fa
 
 Polling is done using GET /pdf/v1/jobs/{jobID} and testing to see if the returned status is 'completed'. The API will return a structure of the form
 
-```
+```typescript
 {
     urn,
     id,
@@ -137,7 +135,7 @@ where result.id is the file ID of the PDF document.
 
 Polling forces the application developer to manage retrying and sleeping between tries, however. A less fussy approach would be to use the [Push Service](/adsp-monorepo/services/push-service.html). It enables applications to connect to a socket and listen for events of a specific type, such as "pdf-generated". The latter occurs when a Job successfully creates a PDF. You can connect to a Push Service socket as follows:
 
-```
+```typescript
 import { io } from 'socket.io-client';
 
 const socket = io(
@@ -157,7 +155,7 @@ socket.on('pdf-service:pdf-generated', (pdfEvent) => {
 
 The listener will pick up on all pdf-generated events for your tenant, so you will want to look for the one with the specific JobID. A pdfEvent has the form:
 
-```
+```typescript
 {
     jobId,
     templateId,
@@ -172,14 +170,11 @@ Whichever method you use, the important part is the file ID you get upon success
 
 The file can be downloaded via
 
-```
-await fetch(
-  `https://file-service.adsp.alberta.ca/file/v1/files/${fileID}/download`,
-  {
-    method: 'GET',
-    headers: { Authorization: `Bearer ${accessToken}` }
-  }
-);
+```typescript
+await fetch(`https://file-service.adsp.alberta.ca/file/v1/files/${fileID}/download`, {
+  method: 'GET',
+  headers: { Authorization: `Bearer ${accessToken}` },
+});
 ```
 
 ## Learn More
