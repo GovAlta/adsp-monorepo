@@ -14,7 +14,7 @@ Handlebars are the heart of the PDF service's templates.  They're a powerful te
 
 Handlebar keys are embedded into the template as text values surrounded by curly braces, e.g.
 
-```
+```handlebars
 The rain in {{data.country}} lies mainly in the {{data.landmark}}
 ```
 
@@ -22,10 +22,10 @@ Here we have two handlebar keys; country and landmark.  Notice the keys are pre
 
 The key-value pairing is specified as a JSON object, e.g.
 
-```
+```json
 {
-    "country":"Spain",
-    "landmark": "plain"
+  "country": "Spain",
+  "landmark": "plain"
 }
 ```
 
