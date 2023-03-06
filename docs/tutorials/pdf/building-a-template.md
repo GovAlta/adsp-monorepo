@@ -47,7 +47,7 @@ Note: it is important to remember that the values in the Variable Assignments ta
 
 The first step is to define the boundaries for the page. Puppeteer – the PDF generation engine used by the PDF service – allocates room for headers and footers via page margins. The header defaults to 10px in height. Since the IRC header is much higher than 10px these margins must be changed, or the lower portion of the header block will be obscured with body content. We can do this by setting the page margins on the CSS tab:
 
-```
+```css
 <style>
 @page {
     margin: 220px 0 100px 0;
@@ -59,7 +59,7 @@ Notice that the units are in pixels, rather than centimeters or other common CSS
 
 The template also uses the GOA colours for highlights. We need to explicitly tell puppeteer to render colours exactly, otherwise they come out as grey tones;
 
-```
+```css
 <style>
     html { -webkit-print-color-adjust: exact; }
 <style>
@@ -86,10 +86,10 @@ The HTML for the header is quite simple;
   <div class="subtitle"><span>Intervention Record Check</span><span>Protected B</span></div>
   <div class="clear" />
   <div class="client-info">
-    <div>\{\{data.date\}\}</div>
-    <div class="uppercase">To: \{\{data.applicant.lastName\}\}, \{\{data.applicant.firstName\}\}</div>
-    <div class="uppercase">Aliases: \{\{data.applicant.lastName\}\}, \{\{data.applicant.alias\}\}</div>
-    <div class="uppercase">Dob: \{\{data.applicant.dob\}\}</div>
+    <div>{{data.date}}</div>
+    <div class="uppercase">To: {{data.applicant.lastName}}, {{data.applicant.firstName}}</div>
+    <div class="uppercase">Aliases: {{data.applicant.lastName}}, {{data.applicant.alias}}</div>
+    <div class="uppercase">Dob: {{data.applicant.dob}}</div>
   </div>
 </div>
 ```
@@ -127,7 +127,9 @@ The rest is pretty much standard CSS for managing layout, as you would normally 
 ## Build the Page Footer
 
 The page footer also has some features worth discussing.
-** Screen shot of footer goes here**
+
+![](/adsp-monorepo/assets/pdf/footer.png)
+
 Again, the HTML is quite simple
 
 ```html
@@ -169,7 +171,6 @@ Puppeteer treats this as a placeholder and will substitute the actual page numbe
 ## Build the Body
 
 There is not a lot of boilerplate text in the IRC body. Most of it is input by the applicant when they're applying for a record check. The bulk of it consists of the applicant's history, which can be quite extensive, and it's compiled into a series of blocks, each with a title and content.
-** show history block here **
 
 #### Handlebars Iterators
 
@@ -180,16 +181,16 @@ Since we don't know how much history there is going to be, this is a perfect opp
 ```html
 {{#each data.history}}
   <div class="history">
-    <div class="title">\{\{this.title\}\}</div>
+    <div class="title">{{this.title}}</div>
     <div class="content">
       <p>
-        \{\{#each this.content\}\}
-          <p>\{\{this\}\}</p>
-        \{\{/each\}\}
+        {{#each this.content}}
+          <p>{{this}}</p>
+        {{/each}}
       </p>
     </div>
   </div>
-\{\{/each\}\}
+{{/each}}
 ```
 
 {% endraw %}
@@ -208,7 +209,8 @@ Applying the following Json to the template
 ```
 
 would yield three history blocks, each looking something like
-** insert pic of history block here> **
+
+![](/adsp-monorepo/assets/pdf/history_block.png)
 
 #### Avoiding Page Breaks
 
