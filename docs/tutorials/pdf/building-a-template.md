@@ -47,7 +47,7 @@ Note: it is important to remember that the values in the Variable Assignments ta
 
 The first step is to define the boundaries for the page. Puppeteer – the PDF generation engine used by the PDF service – allocates room for headers and footers via page margins. The header defaults to 10px in height. Since the IRC header is much higher than 10px these margins must be changed, or the lower portion of the header block will be obscured with body content. We can do this by setting the page margins on the CSS tab:
 
-```
+```css
 <style>
 @page {
     margin: 220px 0 100px 0;
@@ -59,7 +59,7 @@ Notice that the units are in pixels, rather than centimeters or other common CSS
 
 The template also uses the GOA colours for highlights. We need to explicitly tell puppeteer to render colours exactly, otherwise they come out as grey tones;
 
-```
+```css
 <style>
     html { -webkit-print-color-adjust: exact; }
 <style>
