@@ -8,9 +8,11 @@ import {
   SpinnerPadding,
   SpinnerSpace,
   PreviewTopStyle,
+  PreviewTopStyleWrapper,
   PreviewContainer,
   BodyPreview,
   PDFTitle,
+  TemplateEditorContainerPdf,
 } from '../../styled-components';
 
 import { RootState } from '@store/index';
@@ -88,7 +90,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
         {blobUrl && (
           <div>
             <div>
-              <object type="application/pdf" data={blobUrl} height={windowSize[1] - 200} style={{ width: '100%' }}>
+              <object type="application/pdf" data={blobUrl} height={windowSize[1] - 220} style={{ width: '100%' }}>
                 <iframe src={blobUrl} height="100%" width="100%"></iframe>
               </object>
             </div>
@@ -100,7 +102,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
 
   const PreviewTop = ({ title }) => {
     return (
-      <>
+      <PreviewTopStyleWrapper>
         <PreviewTopStyle>
           <PDFTitle>{title}</PDFTitle>
 
@@ -139,8 +141,8 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
             />
           }
         </PreviewTopStyle>
-        <hr className="hr-resize" style={{ marginTop: '0.5rem' }} />
-      </>
+        <hr className="hr-resize" />
+      </PreviewTopStyleWrapper>
     );
   };
 
