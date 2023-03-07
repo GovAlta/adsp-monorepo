@@ -347,10 +347,6 @@ export const PreviewTopStyleWrapper = styled.div`
   }
 `;
 
-export const TextAreaDiv = styled.div`
-  margin-bottom: 1rem;
-`;
-
 export const PDFTitle = styled.div`
   font-size: var(--fs-xl);
   line-height: var(--lh-lg);
@@ -375,4 +371,23 @@ export const TabletMessage = styled.div`
   @media (min-width: 1440px) {
     display: none;
   }
+
+export const PdfFormItem = styled.div`
+  margin-bottom: 1.5rem;
+  margin-left: 2px;
+  margin-right: 2px;
+`;
+
+export const HelpText = styled.div`
+  font-size: var(--fs-sm);
+  color: var(--color-gray-900);
+  line-height: calc(var(--fs-sm) + 0.5rem);
+  display: flex;
+  display-direction: row;
+  justify-content: space-between;
+`;
+export const DescriptionItem = styled.div`
+  margin-left: 2px;
+  margin-right: 2px;
+
 `;

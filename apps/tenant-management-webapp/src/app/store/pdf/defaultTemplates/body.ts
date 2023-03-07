@@ -6,7 +6,7 @@ export const defaultTemplateBody = `<!--
 -- be a starting point which should be modified to suit your needs.  It also serves
 -- as a short, somewhat cryptic, tutorial for some of the more esoteric
 -- points of template authoring.  For a more in depth tutorial, see
---   <ADD link to PDF tutorial here>.
+--   https://govalta.github.io/adsp-monorepo/tutorials/pdf/introduction.html
 --
 -- Quick Start:
 --
@@ -59,7 +59,7 @@ export const defaultTemplateBody = `<!--
    * of the page header and footer through the @page attributes.
    */
   @page {
-    margin: 75px 0 130px 0;
+    margin: 130px 0 130px 0;
   }
 
   /*

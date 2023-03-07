@@ -18,8 +18,8 @@ Feature: PDF service
     When the user enters "autotest-pdf-template" as name, "autotest PDF template desc" as description in pdf template modal
     And the user clicks Save button in Add template modal
     Then the user "views" the PDF template of "autotest-pdf-template", "autotest-pdf-template" and "autotest PDF template desc"
-    And the user "views" unfilled badge on "autotest-pdf-template", "autotest-pdf-template" and "autotest PDF template desc"
-    # # Edit a PDF template
+
+    # # Edit a PDF template  need rewrite
     When the user clicks "Edit" icon of "autotest-pdf-template", "autotest-pdf-template" and "autotest PDF template desc" on PDF templates page
     Then the user views "autotest-pdf-template", "autotest-pdf-template" and "autotest PDF template desc" in PDF template modal
     When the user enters "autotest-pdf-templateNew" as name and "autotest PDF template new desc" as description in PDF template modal

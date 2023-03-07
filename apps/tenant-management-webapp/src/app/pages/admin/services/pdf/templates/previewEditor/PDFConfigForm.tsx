@@ -61,7 +61,13 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
           <a rel="noopener noreferrer" onClick={() => setOpenEditPdfTemplate(true)}>
             Edit
           </a>
-          <GoAIconButton icon="create" title="Edit" size="small" onClick={() => setOpenEditPdfTemplate(true)} />
+          <GoAIconButton
+            icon="create"
+            testId="pdf-template-information-edit-icon"
+            title="Edit"
+            size="small"
+            onClick={() => setOpenEditPdfTemplate(true)}
+          />
         </Edit>
       </div>
       {openEditPdfTemplate && (

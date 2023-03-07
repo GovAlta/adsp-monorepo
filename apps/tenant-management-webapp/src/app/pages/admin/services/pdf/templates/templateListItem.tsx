@@ -14,6 +14,7 @@ interface PdfTemplateItemProps {
 export const PdfTemplateItem: FunctionComponent<PdfTemplateItemProps> = ({ pdfTemplate, onDelete }) => {
   const { url } = useRouteMatch();
   const history = useHistory();
+
   return (
     <>
       <tr>
@@ -38,9 +39,6 @@ export const PdfTemplateItem: FunctionComponent<PdfTemplateItemProps> = ({ pdfTe
                 type="trash"
                 onClick={() => onDelete(pdfTemplate)}
               />
-              <div className="badgePadding">
-                {pdfTemplate.template?.length === 0 && <GoABadge type="warning" content="Unfilled" icon="warning" />}
-              </div>
             </div>
           </Edit>
         </td>
