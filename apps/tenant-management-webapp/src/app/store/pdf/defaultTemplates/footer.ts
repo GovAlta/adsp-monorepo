@@ -1,10 +1,10 @@
 export const defaultTemplateFooter = `<style>
 .footer-wrapper {
   /*
-   * Use the full viewport width for the footer, as the background colours are
+   * Use the full (a4) page width for the footer, as the background colours are
    * expected to fill the entire block.
    */
-  width: 100vw;
+  width: 210mm;
   background-color: lightgrey;
   border-bottom: 2mm solid #00aad2;
   padding: 5mm 0 5mm 1cm;
@@ -21,7 +21,7 @@ export const defaultTemplateFooter = `<style>
    * The amount is determined empirically and may have to be adjusted for different page sizes.
    */
   position: relative;
-  top: 1.37cm;
+  top: 0.75cm;
 }
 .footer-wrapper span { display: inline-block; }
 .copyright { margin-right: 2cm; }
