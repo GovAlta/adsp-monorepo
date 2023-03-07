@@ -57,7 +57,7 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
 
   const jobList = pdfList.length > 5 ? pdfList.slice(0, 5) : pdfList;
 
-  const renderFileTable = () => {
+  const RenderFileTable = () => {
     return (
       <>
         <FileTableStyles>
@@ -71,15 +71,17 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
               </tr>
             </thead>
             <tbody>
-              {jobList.map((job, key) => {
+              {jobList.length === 0 && <div className="some-margin">No PDF's have been generated yet</div>}
+              {jobList.map((job) => {
                 const file = fileList.find(
                   (file) => file.recordId === job.id && file.filename.indexOf(templateId) > -1
                 );
+                const key = new Date().valueOf();
                 const status = file?.filename ? 'pdf-generated' : job.status;
                 return (
                   <>
                     {(file || indicator.show) && (
-                      <tr key={job.id}>
+                      <tr key={key}>
                         <td>{job.filename}</td>
                         {/* Use ceil here to make sure people will allocate enough resources */}
                         <td>
@@ -136,7 +138,7 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
     );
   };
 
-  return <>{renderFileTable()}</>;
+  return <RenderFileTable />;
 };
 
 export default GeneratedPdfList;

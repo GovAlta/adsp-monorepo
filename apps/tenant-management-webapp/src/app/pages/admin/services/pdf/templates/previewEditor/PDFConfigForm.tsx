@@ -20,34 +20,40 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
     <PdfConfigFormWrapper>
       <div className="nameColumn">
         <table>
-          <tr>
-            <th>Name</th>
-          </tr>
-          <tr>
-            <td>{name}</td>
-          </tr>
+          <thead>
+            <tr>
+              <th>Name</th>
+            </tr>
+            <tr>
+              <td>{name}</td>
+            </tr>
+          </thead>
         </table>
       </div>
       <div className="separator"></div>
       <div className="idColumn">
         <table>
-          <tr>
-            <th>Template ID</th>
-          </tr>
-          <tr>
-            <td>{id}</td>
-          </tr>
+          <thead>
+            <tr>
+              <th>Template ID</th>
+            </tr>
+            <tr>
+              <td>{id}</td>
+            </tr>
+          </thead>
         </table>
       </div>
       <div className="separator"></div>
       <div className="descColumn">
         <table>
-          <tr>
-            <th>Description</th>
-          </tr>
-          <tr>
-            <td>{description}</td>
-          </tr>
+          <thead>
+            <tr>
+              <th>Description</th>
+            </tr>
+            <tr>
+              <td>{description}</td>
+            </tr>
+          </thead>
         </table>
       </div>
       <div className="editColumn">

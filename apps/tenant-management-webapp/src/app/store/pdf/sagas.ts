@@ -30,7 +30,7 @@ import {
 } from './action';
 import { readFileAsync } from './readFile';
 import { io } from 'socket.io-client';
-import { FETCH_FILE_LIST } from '@store/file/actions';
+import { FETCH_FILE } from '@store/file/actions';
 import { getAccessToken } from '@store/tenant/sagas';
 import { PdfGenerationResponse } from './model';
 
@@ -38,7 +38,7 @@ export function* fetchPdfTemplates(): SagaIterator {
   yield put(
     UpdateIndicator({
       show: true,
-      message: 'Loading...',
+      message: 'Loading template...',
     })
   );
 
@@ -134,7 +134,7 @@ export function* showCurrentFilePdf(action: ShowCurrentFilePdfAction): SagaItera
 
   if (fileUrl && token) {
     try {
-      const url = `${fileUrl}/file/v1/files/${action.fileId}/download`;
+      const url = `${fileUrl}/file/v1/files/${action.fileId}/download?unsafe=true`;
       const response = yield call(axios.get, url, {
         headers: { Authorization: `Bearer ${token}` },
         responseType: 'blob',
@@ -230,7 +230,7 @@ export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIte
         yield put(generatePdfSuccess(payload));
 
         if (payload?.name === 'pdf-generated' || payload?.name === 'pdf-generation-failed') {
-          yield put({ type: FETCH_FILE_LIST });
+          yield put({ type: FETCH_FILE, fileId: payload?.payload?.file?.id });
         }
 
         yield fork(emitResponse, socket);
@@ -254,7 +254,7 @@ export function* generatePdf({ payload, saveObject }: GeneratePdfAction): SagaIt
   yield put(
     UpdateIndicator({
       show: true,
-      message: 'Loading...',
+      message: 'Generating PDF...',
     })
   );
 
