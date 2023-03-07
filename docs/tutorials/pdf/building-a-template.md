@@ -55,7 +55,7 @@ The first step is to define the boundaries for the page. Puppeteer – the PDF g
 </style>
 ```
 
-Notice that the units are in pixels, rather than centimeters or other common CSS units. This is mandatory. Puppeteer does not recognize any other units of measure. In this case the side margins are zero, giving us more room, if needed, for the component blocks. The top margin is set to 220px, a value derived from the old test to see what works algorithm.
+Notice that the units are in pixels, rather than centimeters or other common CSS units. This is mandatory. Puppeteer does not recognize any other units of measure. In this case the side margins are zero, giving us more room, if needed, for the component blocks. The top margin is set to 220px, a value derived from the ol' **test to see what works** algorithm.
 
 The template also uses the GOA colours for highlights. We need to explicitly tell puppeteer to render colours exactly, otherwise they come out as grey tones;
 
@@ -98,7 +98,7 @@ The HTML for the header is quite simple;
 
 #### Handlebars Placeholders
 
-Notice the code-like constructs between double curly braces. Each page of the PDF is required to have the applicant's identification – name, alias and date of birth – so it makes sense to put the information into the header. But the information is supplied dynamically, since it is different for each user. This is where a component of the PDF service comes in handy – Handlebars! It’s a templating tool that allows us to specify placeholders for the real data. When the PDF is generated, you provide the system with actual values as a JSON object, thereby customizing the document. The JSON object for this example might look something like this:
+Notice the code-like constructs between double curly braces. Each page of the PDF is required to have the applicant's identification – name, alias and date of birth – so it makes sense to put the information into the header. But the information is supplied dynamically, since it is different for each user. This is where a component of the PDF service comes in handy – Handlebars! It’s a template tool that allows us to specify placeholders for the real data. When the PDF is generated, you provide the system with actual values as a JSON object, thereby customizing the document. The JSON object for this example might look something like this:
 
 ```json
 {
@@ -111,11 +111,11 @@ In our example, we have handlebars for the applicants name, alias, and date of b
 
 #### General Page Layout
 
-Styling the HTML also has some interesting features.  First, define a container for the header and set its width at 60% of the page viewport.  The latter is quite a bit bigger than the actual page size and it may require a bit of back and forth testing to find the best fit.
+Styling the HTML also has some interesting features.  First, define a container for the header and set its width at ~60% of the page width of 210mm (a4). This was determined empirically, and changes may require a bit of back and forth testing to find the best fit.
 
 ```css
 <style>
-    .header-wrapper { padding: 0 0 0 2cm; margin: 0; width: 60vw; }
+    .header-wrapper { padding: 0 0 0 2cm; margin: 0; width: 130mm; }
     .header-wrapper p, div { margin: 0; padding: 0; font-size: 8pt; }
 </style>
 ```
@@ -146,7 +146,7 @@ In spite of setting the page margins to 0, however, Puppeteer still needs some c
 
 ```css
 .footer-wrapper {
-  width: 100vw;
+  width: 210mm;
   border-bottom: 2mm solid #00aad2; // GOA Blue.
   padding: 5mm 0 5mm 1cm;
   font-size: 10pt;
@@ -156,7 +156,7 @@ In spite of setting the page margins to 0, however, Puppeteer still needs some c
 }
 ```
 
-Also, in this case, we set the width to the full viewport width to ensure the coloured background covers everything.
+Also, in this case, we set the width to the full width of the a4 letter size, to ensure the coloured background covers everything.
 
 #### Displaying Page Numbers
 
@@ -199,18 +199,17 @@ Applying the following Json to the template
 
 ```json
 {
-
-  "history" : [
-    { "title" : "First Title", [ "paragraph 1a", "paragraph 2a", "paragraph 3a" ] },
-    { "title" : "Second Title", [ "paragraph 1b", "paragraph 2b", "paragraph 3b" ] },
-    { "title" : "Third Title", [ "paragraph 1c", "paragraph 2c", "paragraph 3c" ] }
+  "history": [
+    { "title": "First Title", "content": ["paragraph 1a", "paragraph 2a", "paragraph 3a"] },
+    { "title": "Second Title", "content": ["paragraph 1b", "paragraph 2b", "paragraph 3b"] },
+    { "title": "Third Title", "content": ["paragraph 1c", "paragraph 2c", "paragraph 3c"] }
   ]
 }
 ```
 
 would yield three history blocks, each looking something like
 
-![](/adsp-monorepo/assets/pdf/history_block.png)
+![](/adsp-monorepo/assets/pdf/history.png)
 
 #### Avoiding Page Breaks
 
