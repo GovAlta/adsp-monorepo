@@ -71,6 +71,8 @@ export const TemplateEditorContainerPdf = styled.div`
     overflow: auto;
   }
 
+  width: calc(100vw - 650px - 3em);
+
   .reduce-margin {
     margin-top: 5px;
   }
@@ -123,7 +125,7 @@ export const ModalContent = styled.div`
   background: white;
 `;
 export const PreviewTemplateContainer = styled.div`
-  width: 612px;
+  width: 650px;
   margin-left: 2rem;
   overflow: hidden;
   &:hover {
@@ -178,57 +180,73 @@ export const BodyPreview = styled(PreviewPortal)`
 `;
 
 export const PdfEditorLabelWrapper = styled.div`
-  display: flex;
+  display: block;
   flex-direction: row;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 4.5rem;
+
   .badge {
     margin: 0px 0px 0px 3px;
   }
 `;
 
 export const PdfConfigFormWrapper = styled.div`
+  font-size: 16px;
   padding-left: 3px;
   border: solid 1px #dcdcdc;
   border-radius: 3px;
-  height: 8rem;
+  height: 7.375rem;
   background-color: #f1f1f1;
-  width: 100%;
+  padding-right: 1rem;
+  border-bottom: solid 16px #f1f1f1;
   display: flex;
-  direction: row;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
   .nameColumn {
-    width: 15%;
+    width: calc(20% - 12px);
     float: left;
+    flex-grow: 1;
     min-width: 100px;
   }
   .idColumn {
-    width: 15%;
+    width: calc(20% - 12px);
     float: left;
     height: 100%;
-
+    flex-grow: 1;
     min-width: 100px;
+    overflow: hidden;
   }
   .descColumn {
     width: 60%;
+    width: calc(60% - 32px);
     float: left;
     height: 100%;
+    overflow: hidden;
   }
   .editColumn {
-    width: 8%;
+    width: 56px;
     float: right;
     min-width: 50px;
+    margin-top: 0.5rem;
   }
   .separator {
     margin-top: 1rem;
     width: 1px;
-    height: 6rem;
+    height: 5.375rem;
 
     border-left: 1px solid #ccc;
   }
+  .hideOverflow {
+    overflow: hidden;
+  }
   table {
-    margin: 0.5rem 1rem 1rem 1rem;
+    margin: 1rem 1.5rem 1rem 1.5rem;
   }
   th {
     text-align: left;
+    padding-bottom: 0.5rem;
   }
 `;
 
@@ -311,6 +329,12 @@ export const PreviewTopStyle = styled.div`
   flex-direction: row;
   justify-content: left;
   gap: 1rem;
+`;
+
+export const PreviewTopStyleWrapper = styled.div`
+  .hr-resize {
+    margin-top: 0.75rem;
+  }
 `;
 
 export const PDFTitle = styled.div`

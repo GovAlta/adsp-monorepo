@@ -14,7 +14,7 @@ Handlebars are the heart of the PDF service's templates.  They're a powerful te
 
 Handlebar keys are embedded into the template as text values surrounded by curly braces, e.g.
 
-```
+```handlebars
 The rain in {{data.country}} lies mainly in the {{data.landmark}}
 ```
 
@@ -22,10 +22,10 @@ Here we have two handlebar keys; country and landmark.  Notice the keys are pre
 
 The key-value pairing is specified as a JSON object, e.g.
 
-```
+```json
 {
-    "country":"Spain",
-    "landmark": "plain"
+  "country": "Spain",
+  "landmark": "plain"
 }
 ```
 
@@ -41,10 +41,7 @@ Although this is a trivial example, it illustrates how simple it is to use Handl
 - Conditionally test for the existence of values
 - Use nested data
 
-See the [Handlebars Documentation](https://handlebarsjs.com/guide/) for more information.  You can also check out our more detailed tutorial on
-[building templates](/blog/building-a-template).
-
-Other Handlebars capabilities include the use of Helper Methods, but the PDF Service does not currently support them.
+See the [Handlebars Documentation](https://handlebarsjs.com/guide/) for more information.
 
 #### Learn More
 

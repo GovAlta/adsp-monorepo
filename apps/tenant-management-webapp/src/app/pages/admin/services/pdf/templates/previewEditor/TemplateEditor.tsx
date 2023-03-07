@@ -88,7 +88,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     if (!socketChannel) {
       dispatch(streamPdfSocket(false));
     }
-  }, []);
+  }, [socketChannel]);
 
   useEffect(() => {
     dispatch(updatePdfResponse({ fileList: fileList }));
@@ -155,7 +155,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
       <GoAForm>
         <GoAFormItem>
-          <Tabs activeIndex={activeIndex}>
+          <Tabs style={{ minWidth: '4.5em' }} activeIndex={activeIndex}>
             <Tab testId={`pdf-edit-header`} label={<PdfEditorLabelWrapper>Header</PdfEditorLabelWrapper>}>
               <GoAFormItem error={errors?.header ?? ''}>
                 <MonacoDivBody>

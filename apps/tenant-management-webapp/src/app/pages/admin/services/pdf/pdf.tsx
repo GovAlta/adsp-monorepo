@@ -42,7 +42,7 @@ export const Pdf: FunctionComponent = () => {
           <a
             rel="noopener noreferrer"
             target="_blank"
-            href={`${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=PDF Service`}
+            href={`${docBaseUrl}/${tenantName?.replace(/ /g, '-')}?urls.primaryName=PDF service`}
           >
             Read the API docs
           </a>

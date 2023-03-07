@@ -24,6 +24,7 @@ internal sealed class LuaScriptService : ILuaScriptService
   }
   public IEnumerable<object> TestScript(
     IDictionary<string, object?> inputs,
+    Func<Task<string>> getToken,
     string script,
     AdspId tenantId
   )
@@ -33,7 +34,7 @@ internal sealed class LuaScriptService : ILuaScriptService
     try
     {
       using var lua = new Lua();
-      lua.RegisterFunctions(new StubScriptFunctions());
+      lua.RegisterFunctions(new StubScriptFunctions(tenantId, _directory, getToken));
       lua["script"] = script;
       lua["inputs"] = inputs;
 

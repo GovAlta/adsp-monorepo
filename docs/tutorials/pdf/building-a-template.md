@@ -47,7 +47,7 @@ Note: it is important to remember that the values in the Variable Assignments ta
 
 The first step is to define the boundaries for the page. Puppeteer – the PDF generation engine used by the PDF service – allocates room for headers and footers via page margins. The header defaults to 10px in height. Since the IRC header is much higher than 10px these margins must be changed, or the lower portion of the header block will be obscured with body content. We can do this by setting the page margins on the CSS tab:
 
-```
+```css
 <style>
 @page {
     margin: 220px 0 100px 0;
@@ -59,7 +59,7 @@ Notice that the units are in pixels, rather than centimeters or other common CSS
 
 The template also uses the GOA colours for highlights. We need to explicitly tell puppeteer to render colours exactly, otherwise they come out as grey tones;
 
-```
+```css
 <style>
     html { -webkit-print-color-adjust: exact; }
 <style>
@@ -73,17 +73,18 @@ The page header for the IRC document consists of
 - The document title
 - Applicant identification
 
-** screen shot of header goes here **
+![](/adsp-monorepo/assets/pdf/header.png)
 
 The HTML for the header is quite simple;
 
-```
+{% raw %}
+
+```html
 <div class="header-wrapper">
-  <div class="logo"></div><p>Children's Services</p>
-    <div class="subtitle">
-      <span>Intervention Record Check</span><span>Protected B</span>
-    </div>
-  <div class="clear"/>
+  <div class="logo"></div>
+  <p>Children's Services</p>
+  <div class="subtitle"><span>Intervention Record Check</span><span>Protected B</span></div>
+  <div class="clear" />
   <div class="client-info">
     <div>{{data.date}}</div>
     <div class="uppercase">To: {{data.applicant.lastName}}, {{data.applicant.firstName}}</div>
@@ -93,14 +94,16 @@ The HTML for the header is quite simple;
 </div>
 ```
 
+{% endraw %}
+
 #### Handlebars Placeholders
 
 Notice the code-like constructs between double curly braces. Each page of the PDF is required to have the applicant's identification – name, alias and date of birth – so it makes sense to put the information into the header. But the information is supplied dynamically, since it is different for each user. This is where a component of the PDF service comes in handy – Handlebars! It’s a templating tool that allows us to specify placeholders for the real data. When the PDF is generated, you provide the system with actual values as a JSON object, thereby customizing the document. The JSON object for this example might look something like this:
 
-```
+```json
 {
-    "date": "Jan 21, 2023",
-    "applicant": { "firstName":"Bob", "lastName":"Bing", "alias":"Billy", "dob":"Oct 31, 1989" }
+  "date": "Jan 21, 2023",
+  "applicant": { "firstName": "Bob", "lastName": "Bing", "alias": "Billy", "dob": "Oct 31, 1989" }
 }
 ```
 
@@ -110,7 +113,7 @@ In our example, we have handlebars for the applicants name, alias, and date of b
 
 Styling the HTML also has some interesting features.  First, define a container for the header and set its width at 60% of the page viewport.  The latter is quite a bit bigger than the actual page size and it may require a bit of back and forth testing to find the best fit.
 
-```
+```css
 <style>
     .header-wrapper { padding: 0 0 0 2cm; margin: 0; width: 60vw; }
     .header-wrapper p, div { margin: 0; padding: 0; font-size: 8pt; }
@@ -124,14 +127,16 @@ The rest is pretty much standard CSS for managing layout, as you would normally 
 ## Build the Page Footer
 
 The page footer also has some features worth discussing.
-** Screen shot of footer goes here**
+
+![](/adsp-monorepo/assets/pdf/footer.png)
+
 Again, the HTML is quite simple
 
-```
+```html
 <div class="footer-wrapper">
-    <span class="copyright">&copy 2023 Government of Alberta</span>
-    page <span class="pageNumber"/> of <span class="totalPages"/>
-    <div class="logo-wrapper"><div class="logo"></div></div>
+  <span class="copyright">&copy 2023 Government of Alberta</span>
+  page <span class="pageNumber" /> of <span class="totalPages" />
+  <div class="logo-wrapper"><div class="logo"></div></div>
 </div>
 ```
 
@@ -139,15 +144,15 @@ Again, the HTML is quite simple
 
 In spite of setting the page margins to 0, however, Puppeteer still needs some coaxing to get the footer flush with the bottom of the page. To force the issue set the position to relative and push the wrapper down a bit. Trial and error found 1.37cm worked in this instance.
 
-```
+```css
 .footer-wrapper {
-    width: 100vw;
-    border-bottom: 2mm solid #00aad2; // GOA Blue.
-    padding: 5mm 0 5mm 1cm;
-    font-size: 10pt;
-    background-color: lightgrey;
-    position: relative;
-    top: 1.37cm;
+  width: 100vw;
+  border-bottom: 2mm solid #00aad2; // GOA Blue.
+  padding: 5mm 0 5mm 1cm;
+  font-size: 10pt;
+  background-color: lightgrey;
+  position: relative;
+  top: 1.37cm;
 }
 ```
 
@@ -157,8 +162,8 @@ Also, in this case, we set the width to the full viewport width to ensure the co
 
 Another requirement for the IRC template was to have the page number displayed on each page – i.e. page 1 of 5. Fortunately, Puppeteer provides some variables to help us with this; pageNumber and totalPages. You can access the values through a tag's class attribute e.g.
 
-```
-    <span class="pageNumber"/>
+```html
+<span class="pageNumber" />
 ```
 
 Puppeteer treats this as a placeholder and will substitute the actual page number when the PDF is generated.
@@ -166,13 +171,14 @@ Puppeteer treats this as a placeholder and will substitute the actual page numbe
 ## Build the Body
 
 There is not a lot of boilerplate text in the IRC body. Most of it is input by the applicant when they're applying for a record check. The bulk of it consists of the applicant's history, which can be quite extensive, and it's compiled into a series of blocks, each with a title and content.
-** show history block here **
 
 #### Handlebars Iterators
 
 Since we don't know how much history there is going to be, this is a perfect opportunity to utilize handlebars iterator construct, which looks like this:
 
-```
+{% raw %}
+
+```html
 {{#each data.history}}
   <div class="history">
     <div class="title">{{this.title}}</div>
@@ -187,9 +193,11 @@ Since we don't know how much history there is going to be, this is a perfect opp
 {{/each}}
 ```
 
+{% endraw %}
+
 Applying the following Json to the template
 
-```
+```json
 {
 
   "history" : [
@@ -201,7 +209,8 @@ Applying the following Json to the template
 ```
 
 would yield three history blocks, each looking something like
-** insert pic of history block here> **
+
+![](/adsp-monorepo/assets/pdf/history_block.png)
 
 #### Avoiding Page Breaks
 
@@ -222,7 +231,9 @@ By wrapping each history block in a <div> tag with class history, Puppeteer will
 
 Another interesting requirement was the placement of a title on each page that had a history block on it, namely Summary of your involvement up to today. We couldn't put it in the header, because not every page has a history block. So how can we tell Puppeteer to do this? Well, it turns out that it has a very nice feature; when a table spans more than one page the headers are repeated at the top of each one. By wrapping the history blocks in a table, with the above sentence as a table header, the requirement is met!
 
-```
+{% raw %}
+
+```html
 <div class="history">
   <table>
     <thead>
@@ -231,28 +242,32 @@ Another interesting requirement was the placement of a title on each page that h
       </tr>
     </thead>
     <tbody>
-    {{#each data.history}}
-      <tr><td>
-        <div class="title">{{this.title}}</div>
-        <div class="content">
-        {{#each this.content}}
-          <p>{{this}}</p>
-        {{/each}}
-        </div>
-      </td></tr>
-    {{/each}}
+      {{#each data.history}}
+      <tr>
+        <td>
+          <div class="title">{{this.title}}</div>
+          <div class="content">
+            {{#each this.content}}
+            <p>{{this}}</p>
+            {{/each}}
+          </div>
+        </td>
+      </tr>
+      {{/each}}
     </tbody>
   </table>
 </div>
 ```
 
+{% endraw %}
+
 #### Watermarks
 
 You can add watermarks to your PDF pages, which can be important for identification and security purposes. This can be done entirely through CSS:
 
-```
+```css
 .body-wrapper:before {
-  content: "Government of Alberta Confidential";
+  content: 'Government of Alberta Confidential';
   position: fixed;
   top: 0;
   bottom: 120px;
