@@ -4,7 +4,7 @@ export const defaultTemplateHeader = `<style>
     margin: 0;
     /*
      * The width was determined empirically, for aesthetic reasons,
-     * and does not span the full page (a4) width.
+     * to be about 60% of the page (a4) width of 210mm.
      */
     width: 130mm;
   }

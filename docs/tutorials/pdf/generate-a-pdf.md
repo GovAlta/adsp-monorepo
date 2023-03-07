@@ -165,7 +165,7 @@ The listener will pick up on all pdf-generated events for your tenant, so you wi
 }
 ```
 
-Whichever method you use, the important part is the file ID you get upon successful generation. This identifies the PDF document in the ]File Service](/adsp-monorepo/services/file-service.html) which you can use to access it.
+Whichever method you use, the important part is the file ID you get upon successful generation. This identifies the PDF document in the [File Service](/adsp-monorepo/services/file-service.html) which you can use to access it. Job information is cached and has a finite TTL of about 12 hours. Please be sure your application accesses the file ID before the job information expires.
 
 ## Download a PDF File
 
