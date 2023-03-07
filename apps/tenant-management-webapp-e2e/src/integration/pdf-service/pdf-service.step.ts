@@ -1,6 +1,7 @@
 import { Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
 import PDFServicePage from './pdf-service.page';
 import commonlib from '../common/common-library';
+import { find } from 'lodash';
 
 const pdfServiceObj = new PDFServicePage();
 
@@ -28,7 +29,7 @@ Then('the user views Add template modal', function () {
 });
 
 When('the user enters {string} as name, {string} as description in pdf template modal', function (name, description) {
-  pdfServiceObj.pdfAddTemplateModalName().clear().type(name);
+  pdfServiceObj.pdfAddTemplateModalName().shadow().find('.input--goa').type(name);
   pdfServiceObj
     .pdfAddTemplateModalDescription()
     .shadow()
