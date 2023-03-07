@@ -29,9 +29,9 @@ The following recipe will guide you through the steps the CS team needed to go t
 
 ## The Template Editor
 
-Template development is done through the Tenant Admin Webapp's PDF service. Your team will need to have access to a tenant (i.e. a realm on Keycloak) in production, and your GOA user given the tenant admin role. You may need your team lead to set you up with this. And if your team needs to set up a new tenant, please follow the instructions here (/adsp-monorepo/getting-started.html).
+Template development is done through the Tenant Admin Webapp's PDF service. Your team will need to have access to a tenant (i.e. a realm on Keycloak) in production, and your GOA user given the tenant admin role. You may need your team lead to set you up with this. And if your team needs to set up a new tenant, please follow [these instructions](/adsp-monorepo/getting-started.html).
 
-Once you are able to log in, select PDF on the left menu, and then the Templates tab. Then, just click on the Add Template button to begin building your template. There are six tabs in the editor:
+Once you are able to log in, select PDF on the left menu, and then the Templates tab. Click on the Add Template button to begin building your template. There are six tabs in the editor:
 
 - **Header**: to design the document's header's in HTML,
 - **Footer**: to design the document's footer's in HTML,
@@ -40,8 +40,6 @@ Once you are able to log in, select PDF on the left menu, and then the Templates
 - **Variable Assignments**: to specify typical values for the variables used in the template, for when you are testing to see how a document actually looks, and
 - **File History**: a collection of PDF documents generated, for testing purposes, during your current session.
   On the right, you can see an area for previewing your PDF's. When you want to see how the template is coming along you can specify values for your template variables on the Variable Assignment tab, then click Generate PDF on the top right. Typically, your workflow will be to make changes to the template, preview them, and repeat.
-
-Note: it is important to remember that the values in the Variable Assignments tab persist only for a session. Once logged out, you will have to populate the tab again. If there is a lot of data that you don't want to type in again, save it somewhere else so that you can copy and paste it into the tab.
 
 ## Define Page Attributes
 
@@ -98,7 +96,7 @@ The HTML for the header is quite simple;
 
 #### Handlebars Placeholders
 
-Notice the code-like constructs between double curly braces. Each page of the PDF is required to have the applicant's identification – name, alias and date of birth – so it makes sense to put the information into the header. But the information is supplied dynamically, since it is different for each user. This is where a component of the PDF service comes in handy – Handlebars! It’s a template tool that allows us to specify placeholders for the real data. When the PDF is generated, you provide the system with actual values as a JSON object, thereby customizing the document. The JSON object for this example might look something like this:
+Notice the code-like constructs between double curly braces. Each page of the PDF is required to have the applicant's identification – name, alias and date of birth – so it makes sense to put the information into the header. But the information is supplied dynamically, since it is different for each user. This is where a component of the PDF service comes in handy – [Handlebars](/adsp-monorepo/tutorials/pdf/handlebars.html)! It’s a template tool that allows us to specify placeholders for the real data. When the PDF is generated, you provide the system with actual values as a JSON object, thereby customizing the document. The JSON object for this example might look something like this:
 
 ```json
 {
@@ -142,7 +140,7 @@ Again, the HTML is quite simple
 
 #### Anchoring the footer
 
-In spite of setting the page margins to 0, however, Puppeteer still needs some coaxing to get the footer flush with the bottom of the page. To force the issue set the position to relative and push the wrapper down a bit. Trial and error found 1.37cm worked in this instance.
+In spite of setting the page margins to 0, however, Puppeteer still needs some coaxing to get the footer flush with the bottom of the page. To force the issue set the position to relative and push the wrapper down a bit. Trial and error found 1.37cm worked in this instance. This value depends on the height of the header and will need adjusting as the latter changes.
 
 ```css
 .footer-wrapper {
@@ -215,9 +213,8 @@ would yield three history blocks, each looking something like
 
 One of the goals for the IRC template was to avoid page breaks over the history blocks. That is, if a block can fit on one page, make it do so. Pagination is controlled by Puppeteer, and it pays attention to CSS @media directives.
 
-```
+```css
 <style>
-
 @media print {
   .history { page-break-inside: avoid; }
 }
@@ -228,7 +225,7 @@ By wrapping each history block in a <div> tag with class history, Puppeteer will
 
 #### Repeating Table Headers
 
-Another interesting requirement was the placement of a title on each page that had a history block on it, namely Summary of your involvement up to today. We couldn't put it in the header, because not every page has a history block. So how can we tell Puppeteer to do this? Well, it turns out that it has a very nice feature; when a table spans more than one page the headers are repeated at the top of each one. By wrapping the history blocks in a table, with the above sentence as a table header, the requirement is met!
+Another interesting requirement was the placement of a title on each page that had a history block on it, namely **Summary of your involvement up to today**. We couldn't put it in the header, because not every page has a history block. So how can we tell Puppeteer to do this? Well, it turns out that it has a very nice feature; when a table spans more than one page the headers are repeated at the top of each one. By wrapping the history blocks in a table, with the above sentence as a table header, the requirement is met!
 
 {% raw %}
 
