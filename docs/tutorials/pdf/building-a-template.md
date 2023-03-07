@@ -53,7 +53,7 @@ The first step is to define the boundaries for the page. Puppeteer – the PDF g
 </style>
 ```
 
-Notice that the units are in pixels, rather than centimeters or other common CSS units. This is mandatory. Puppeteer does not recognize any other units of measure. In this case the side margins are zero, giving us more room, if needed, for the component blocks. The top margin is set to 220px, a value derived from the ol' **test to see what works** algorithm.
+Notice that the units are in pixels, rather than centimeters or other common CSS units. This is _mandatory_. Puppeteer does not recognize any other units of measure. In this case the side margins are zero, giving us more room, if needed, for the component blocks. The top margin is set to 220px, a value derived from the ol' **test to see what works** algorithm.
 
 The template also uses the GOA colours for highlights. We need to explicitly tell puppeteer to render colours exactly, otherwise they come out as grey tones;
 
@@ -105,7 +105,7 @@ Notice the code-like constructs between double curly braces. Each page of the PD
 }
 ```
 
-In our example, we have handlebars for the applicants name, alias, and date of birth, as well as the current date. Notice that the placeholder names always have a data. prefix. This is very important, as without the prefix the handlebar will be ignored. The rest of the name in the handlebar is used as a key, to map it to actual data when the PDF is generated.
+In our example, we have handlebars for the applicants name, alias, and date of birth, as well as the current date. Notice that the placeholder names always have a data. prefix. This is _very important_, as without the prefix the handlebar will be ignored. The rest of the name in the handlebar is used as a key, to map it to actual data when the PDF is generated.
 
 #### General Page Layout
 
@@ -225,7 +225,7 @@ By wrapping each history block in a <div> tag with class history, Puppeteer will
 
 #### Repeating Table Headers
 
-Another interesting requirement was the placement of a title on each page that had a history block on it, namely **Summary of your involvement up to today**. We couldn't put it in the header, because not every page has a history block. So how can we tell Puppeteer to do this? Well, it turns out that it has a very nice feature; when a table spans more than one page the headers are repeated at the top of each one. By wrapping the history blocks in a table, with the above sentence as a table header, the requirement is met!
+Another interesting requirement was the placement of a title on each page that had a history block on it, namely _Summary of your involvement up to today_. We couldn't put it in the header, because not every page has a history block. So how can we tell Puppeteer to do this? Well, it turns out that it has a very nice feature; when a table spans more than one page the headers are repeated at the top of each one. By wrapping the history blocks in a table, with the above sentence as a table header, the requirement is met!
 
 {% raw %}
 
@@ -282,7 +282,9 @@ You can add watermarks to your PDF pages, which can be important for identificat
 }
 ```
 
-In this example we've used text, but it's easy enough to place a background image instead, if desired.
+In this example we've used text, but it's easy enough to place a background image instead, if desired. The body, with the above watermark, will look something like the following:
+
+![](/adsp-monorepo/assets/pdf/watermarks.png)
 
 ## Learn More
 
