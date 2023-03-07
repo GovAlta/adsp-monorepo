@@ -5,7 +5,7 @@ using NLua;
 using RestSharp;
 
 namespace Adsp.Platform.ScriptService.Services;
-internal sealed class ScriptFunctions : IScriptFunctions
+internal class ScriptFunctions : IScriptFunctions
 {
   private readonly AdspId _tenantId;
   private readonly IServiceDirectory _directory;
@@ -20,7 +20,7 @@ internal sealed class ScriptFunctions : IScriptFunctions
     _client = client ?? new RestClient(new RestClientOptions { ThrowOnAnyError = true });
   }
 
-  public string? GeneratePdf(string templateId, string filename, object values)
+  public virtual string? GeneratePdf(string templateId, string filename, object values)
   {
     var servicesUrl = _directory.GetServiceUrl(AdspPlatformServices.PdfServiceId).Result;
     var requestUrl = new Uri(servicesUrl, "/pdf/v1/jobs");
@@ -84,7 +84,7 @@ internal sealed class ScriptFunctions : IScriptFunctions
     return result;
   }
 
-  public string? CreateTask(
+  public virtual string? CreateTask(
     string queueNamespace, string queueName, string name,
     string? description = null, string? recordId = null, string? priority = null, LuaTable? context = null
   )
