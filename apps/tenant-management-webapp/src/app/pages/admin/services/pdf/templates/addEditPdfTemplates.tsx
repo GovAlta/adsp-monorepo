@@ -68,7 +68,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
       actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
-            data-testid="form-cancel"
+            testId="form-cancel"
             type="secondary"
             onClick={() => {
               validators.clear();
@@ -79,7 +79,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
           </GoAButton>
           <GoAButton
             type="primary"
-            data-testid="form-save"
+            testId="form-save"
             disabled={!template.name || validators.haveErrors()}
             onClick={() => {
               if (indicator.show === true) {
