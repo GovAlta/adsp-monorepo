@@ -20,7 +20,7 @@ Product teams can get started by accessing an existing tenant or creating a new 
 **To create a new tenant**
 
 1. Go to [ADSP Home](https://adsp.alberta.ca);
-2. Click the _Get Started_ button. (You may require approval from the platform team to complete the tenant creation process.)
+2. Click the _Request a tenant_ button. (You may require approval from the platform team to complete the tenant creation process.)
 3. Congratulations! You have a tenant in ADSP.
 
 ## Overview of tenant administration
