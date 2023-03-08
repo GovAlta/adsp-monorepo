@@ -371,6 +371,7 @@ export const TabletMessage = styled.div`
   @media (min-width: 1440px) {
     display: none;
   }
+`;
 
 export const PdfFormItem = styled.div`
   margin-bottom: 1.5rem;
@@ -389,5 +390,4 @@ export const HelpText = styled.div`
 export const DescriptionItem = styled.div`
   margin-left: 2px;
   margin-right: 2px;
-
 `;
