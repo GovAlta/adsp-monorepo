@@ -52,7 +52,8 @@ const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
     prev?.footer !== next?.footer ||
     prev?.additionalStyles !== next?.additionalStyles ||
     prev?.name !== next?.name ||
-    prev?.description !== next?.description
+    prev?.description !== next?.description ||
+    prev?.variables !== next?.variables
   );
 };
 
@@ -70,7 +71,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 }) => {
   const monaco = useMonaco();
   const [saveModal, setSaveModal] = useState(false);
-  const [hasConfigError, setHasConfigError] = useState(false);
+
   const [tmpTemplate, setTmpTemplate] = useState(template);
   const suggestion = template ? getSuggestion() : [];
   const [activeIndex, setActiveIndex] = useState(0);
@@ -87,7 +88,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     if (!socketChannel) {
       dispatch(streamPdfSocket(false));
     }
-  }, []);
+  }, [socketChannel]);
 
   useEffect(() => {
     dispatch(updatePdfResponse({ fileList: fileList }));
@@ -154,7 +155,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
       <GoAForm>
         <GoAFormItem>
-          <Tabs activeIndex={activeIndex}>
+          <Tabs style={{ minWidth: '4.5em' }} activeIndex={activeIndex}>
             <Tab testId={`pdf-edit-header`} label={<PdfEditorLabelWrapper>Header</PdfEditorLabelWrapper>}>
               <GoAFormItem error={errors?.header ?? ''}>
                 <MonacoDivBody>
@@ -231,10 +232,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     data-testid="form-schema"
                     value={template?.variables}
                     onChange={(value) => {
-                      onVariableChange(value);
-                      if (tmpTemplate) {
-                        tmpTemplate.variables = value;
-                      }
+                      template.variables = value;
+                      setTmpTemplate({ ...tmpTemplate, variables: value });
                     }}
                     language="json"
                     {...bodyEditorConfig}
@@ -257,7 +256,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             <PdfEditActions>
               <>
                 <GoAButton
-                  disabled={hasConfigError || !isPDFUpdated(tmpTemplate, savedTemplate)}
+                  disabled={!isPDFUpdated(tmpTemplate, savedTemplate)}
                   onClick={() => saveCurrentTemplate()}
                   type="primary"
                   data-testid="template-form-save"
@@ -294,7 +293,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           setSaveModal(false);
           cancel();
         }}
-        saveDisable={hasConfigError}
+        saveDisable={false}
         onCancel={() => {
           setSaveModal(false);
         }}

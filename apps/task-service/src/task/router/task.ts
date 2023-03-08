@@ -1,4 +1,4 @@
-import { adspId, AdspId, DomainEvent, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import { AdspId, DomainEvent, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import {
   createValidationHandler,
   InvalidOperationError,

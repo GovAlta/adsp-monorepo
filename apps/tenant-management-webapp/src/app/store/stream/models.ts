@@ -26,6 +26,7 @@ export interface StreamStatus {
   core: Streams;
   tenant: Streams;
   socket: Socket;
+  //eslint-disable-next-line
   streamData: Record<string, any>[];
 }
 

@@ -1,21 +1,19 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { GoAButton, GoAIconButton } from '@abgov/react-components-new';
-import { generatePdf } from '@store/pdf/action';
-
 import { GoAElementLoader } from '@abgov/react-components';
 import {
   GenerateButtonPadding,
   SpinnerPadding,
   SpinnerSpace,
   PreviewTopStyle,
+  PreviewTopStyleWrapper,
   PreviewContainer,
-  BodyPreview,
   PDFTitle,
+  TemplateEditorContainerPdf,
 } from '../../styled-components';
 
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
-import { PdfTemplate } from '@store/pdf/model';
 import { DownloadFileService } from '@store/file/actions';
 interface PreviewTemplateProps {
   channelTitle: string;
@@ -88,8 +86,8 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
         {blobUrl && (
           <div>
             <div>
-              <object type="application/pdf" data={blobUrl} height={windowSize[1] - 200} style={{ width: '100%' }}>
-                <iframe src={blobUrl} height="100%" width="100%"></iframe>
+              <object type="application/pdf" data={blobUrl} height={windowSize[1] - 220} style={{ width: '100%' }}>
+                <iframe title={'PDF preview'} src={blobUrl} height="100%" width="100%"></iframe>
               </object>
             </div>
           </div>
@@ -100,7 +98,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
 
   const PreviewTop = ({ title }) => {
     return (
-      <>
+      <PreviewTopStyleWrapper>
         <PreviewTopStyle>
           <PDFTitle>{title}</PDFTitle>
 
@@ -139,8 +137,8 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
             />
           }
         </PreviewTopStyle>
-        <hr className="hr-resize" style={{ marginTop: '0.5rem' }} />
-      </>
+        <hr className="hr-resize" />
+      </PreviewTopStyleWrapper>
     );
   };
 

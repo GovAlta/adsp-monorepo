@@ -1,6 +1,7 @@
 import { Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
 import PDFServicePage from './pdf-service.page';
 import commonlib from '../common/common-library';
+import { find } from 'lodash';
 
 const pdfServiceObj = new PDFServicePage();
 
@@ -24,11 +25,11 @@ When('the user clicks Add template button', function () {
 });
 
 Then('the user views Add template modal', function () {
-  pdfServiceObj.pdfAddTemplateModalTitle().invoke('text').should('eq', 'Add template');
+  pdfServiceObj.pdfAddTemplateModal().shadow().find('.modal-title').invoke('text').should('eq', 'Add template');
 });
 
 When('the user enters {string} as name, {string} as description in pdf template modal', function (name, description) {
-  pdfServiceObj.pdfAddTemplateModalName().clear().type(name);
+  pdfServiceObj.pdfAddTemplateModalName().shadow().find('.input--goa').type(name);
   pdfServiceObj
     .pdfAddTemplateModalDescription()
     .shadow()
@@ -38,12 +39,12 @@ When('the user enters {string} as name, {string} as description in pdf template 
 });
 
 Then('the user clicks Save button in Add template modal', function () {
-  pdfServiceObj.pdfAddTemplateModalSaveBtn().click();
+  pdfServiceObj.pdfAddTemplateModalSaveBtn().shadow().find('.primary normal').click();
   cy.wait(2000);
 });
 
 Then('the user clicks Cancel button in Add template modal', function () {
-  pdfServiceObj.pdfAddTemplateModalCancelBtn().click();
+  pdfServiceObj.pdfAddTemplateModalCancelBtn().shadow().find('.secondary normal').click();
   cy.wait(1000);
 });
 

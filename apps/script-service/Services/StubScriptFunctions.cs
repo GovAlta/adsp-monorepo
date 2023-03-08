@@ -1,29 +1,27 @@
 using Adsp.Platform.ScriptService.Services.Platform;
+using Adsp.Sdk;
 using NLua;
+using RestSharp;
 
 namespace Adsp.Platform.ScriptService.Services;
 
-internal sealed class StubScriptFunctions : IScriptFunctions
+internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
 {
-  public FormDataResult? GetFormData(string formId)
+
+  public StubScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken)
+  : base(tenantId, directory, getToken)
+  {
+  }
+
+  public override string? GeneratePdf(string templateId, string filename, object values)
   {
     return null;
   }
 
-  public string? GeneratePdf(string templateId, string filename, object values)
-  {
-    return null;
-  }
-
-  public string? CreateTask(
+  public override string? CreateTask(
     string queueNamespace, string queueName, string name,
     string? description = null, string? recordId = null, string? priority = null, LuaTable? context = null
   )
-  {
-    return null;
-  }
-
-  public IDictionary<string, object?>? GetConfiguration(string @namespace, string name)
   {
     return null;
   }

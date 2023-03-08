@@ -3,12 +3,10 @@ export const defaultTemplateHeader = `<style>
     padding: 0 0 0 2cm;
     margin: 0;
     /*
-     * The viewport width of the PDF is larger than the page width, by
-     * a fair amount.  In order to use floats in the header, then,
-     * the width of the wrapper needs to be smaller than the viewport.
-     * 60vw was empirically determined to work for an a4 paper size.
+     * The width was determined empirically, for aesthetic reasons,
+     * to be about 60% of the page (a4) width of 210mm.
      */
-    width: 60vw;
+    width: 130mm;
   }
   .header-wrapper p, div {
     margin: 0;
@@ -71,15 +69,15 @@ export const defaultTemplateHeader = `<style>
     -- When a PDF document is generated, the placeholder is replaced by data, giving applications the
     -- ability to customize documents.  Placeholder names must always start with the prefix data. or they
     -- will be ignored.  Data to be substituted for the placeholders is written as a Json object.  You can
-    -- learn all about how Handlebars works here: https://handlebarsjs.com/guide/
+    -- learn all about how Handlebars works here:
+    --    https://govalta.github.io/adsp-monorepo/tutorials/pdf/introduction.html
     -- Handlebars values for the placeholders below will be something like:
     --
-    -- {
-    --    "service" : { "name" : "My Service", "protection" : "Protected B" },
-    --    "document" : { "name" : "Your Document" }
-    -- }
-    }
-   -->
+       {
+          "service" : { "name" : "My Service", "protection" : "Protected B" },
+          "document" : { "name" : "Your Document" }
+       }
+    -->
   <p>{{data.service.name}}</p>
   <div class="subtitle"><span>{{data.document.name}}</span><span>{{data.service.protection}}</span></div>
   <div class="clear" />

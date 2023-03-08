@@ -5,7 +5,7 @@ Feature: PDF service
   Scenario: As a tenant admin, I can see a PDF service overview, so I know about the service
     Given a tenant admin user is on PDF service overview page
     Then the user views the "PDF service" overview content "The PDF service provides"
-    And the user views the link of API docs for "PDF Service"
+    And the user views the link of API docs for "PDF service"
     And the user views the link of See the code for "pdf-service"
     And the user views the link of "Get support" under Support
 
@@ -18,8 +18,8 @@ Feature: PDF service
     When the user enters "autotest-pdf-template" as name, "autotest PDF template desc" as description in pdf template modal
     And the user clicks Save button in Add template modal
     Then the user "views" the PDF template of "autotest-pdf-template", "autotest-pdf-template" and "autotest PDF template desc"
-    And the user "views" unfilled badge on "autotest-pdf-template", "autotest-pdf-template" and "autotest PDF template desc"
-    # # Edit a PDF template
+
+    # # Edit a PDF template  need rewrite
     When the user clicks "Edit" icon of "autotest-pdf-template", "autotest-pdf-template" and "autotest PDF template desc" on PDF templates page
     Then the user views "autotest-pdf-template", "autotest-pdf-template" and "autotest PDF template desc" in PDF template modal
     When the user enters "autotest-pdf-templateNew" as name and "autotest PDF template new desc" as description in PDF template modal
