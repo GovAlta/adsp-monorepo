@@ -1,6 +1,7 @@
 package ca.ab.gov.alberta.adsp.sdk;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
@@ -55,5 +56,26 @@ class AdspIdTests {
   public void canConvertToString() {
     var urn = AdspId.parse("urn:ads:my-namespace:my-service").toString();
     assertEquals(urn, "urn:ads:my-namespace:my-service");
+  }
+
+  @Test
+  public void canCreateHashCode() {
+    var x = AdspId.parse("urn:ads:my-namespace:my-service:v1:/resources/my-resource");
+    var y = AdspId.parse("urn:ads:my-namespace:my-service:v1:/resources/my-resource");
+    var z = AdspId.parse("urn:ads:my-namespace:my-service:v1:/resources/my-resource-2");
+
+    assertEquals(x.hashCode(), y.hashCode());
+    assertNotEquals(x.hashCode(), z.hashCode());
+  }
+
+  @Test
+  public void canCompareEquality() {
+    var x = AdspId.parse("urn:ads:my-namespace:my-service:v1:/resources/my-resource");
+    var y = AdspId.parse("urn:ads:my-namespace:my-service:v1:/resources/my-resource");
+    var z = AdspId.parse("urn:ads:my-namespace:my-service:v1:/resources/my-resource-2");
+
+    assertEquals(x, y);
+    assertNotEquals(x, z);
+    assertNotEquals(x, "urn:ads:my-namespace:my-service:v1:/resources/my-resource");
   }
 }

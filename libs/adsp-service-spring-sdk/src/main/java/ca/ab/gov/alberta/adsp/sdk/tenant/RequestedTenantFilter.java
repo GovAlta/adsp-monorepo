@@ -37,6 +37,8 @@ class RequestedTenantFilter implements Filter {
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
 
+    // Note that the filter does not check if user is authorized to explicitly
+    // request a tenant context. That is handled in AdspRequestContextHolder.
     if (this.applyFilter) {
       try {
         var req = (HttpServletRequest) request;
