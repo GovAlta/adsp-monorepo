@@ -228,7 +228,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             </Tab>
             <Tab
               testId={`pdf-test-generator`}
-              label={<PdfEditorLabelWrapper>Variable assignments</PdfEditorLabelWrapper>}
+              label={<PdfEditorLabelWrapper>Template Variables</PdfEditorLabelWrapper>}
             >
               <GoAFormItem error={errors?.body ?? null}>
                 <MonacoDivBody>
