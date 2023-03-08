@@ -37,7 +37,7 @@ Once you are able to log in, select PDF on the left menu, and then the Templates
 - **Footer**: to design the document's footer's in HTML,
 - **Body**: to design the main content of the document in HTML,
 - **CSS**: to style the document,
-- **Variable Assignments**: to specify typical values for the variables used in the template, for when you are testing to see how a document actually looks, and
+- **Test Variables**: to specify typical values for the variables used in the template, for when you are testing to see how a document actually looks, and
 - **File History**: a collection of PDF documents generated, for testing purposes, during your current session.
   On the right, you can see an area for previewing your PDF's. When you want to see how the template is coming along you can specify values for your template variables on the Variable Assignment tab, then click Generate PDF on the top right. Typically, your workflow will be to make changes to the template, preview them, and repeat.
 
