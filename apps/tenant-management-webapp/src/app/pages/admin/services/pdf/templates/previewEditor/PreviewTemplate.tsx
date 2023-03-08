@@ -117,20 +117,19 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
           >
             Generate PDF
           </GoAButton>
-          {
-            <GoAIconButton
-              icon="download"
-              title="Download"
-              data-testid="download-icon"
-              size="medium"
-              onClick={() => {
-                const file = fileList[0];
-                if (file.recordId === pdfList[0].id && file.filename.indexOf(pdfList[0].templateId) > -1) {
-                  onDownloadFile(file);
-                }
-              }}
-            />
-          }
+
+          <GoAIconButton
+            icon="download"
+            title="Download"
+            data-testid="download-icon"
+            size="medium"
+            onClick={() => {
+              const file = fileList[0];
+              if (file.recordId === pdfList[0].id && file.filename.indexOf(pdfList[0].templateId) > -1) {
+                onDownloadFile(file);
+              }
+            }}
+          />
         </PreviewTopStyle>
         <hr className="hr-resize" />
       </PreviewTopStyleWrapper>

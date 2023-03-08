@@ -82,7 +82,7 @@ export const TemplateEditorContainerPdf = styled.div`
     overflow: auto;
   }
 
-  width: calc(100vw - 650px - 3em);
+  width: calc(100vw - 40vw - 3em);
 
   .reduce-margin {
     margin-top: 5px;
@@ -139,7 +139,7 @@ export const ModalContent = styled.div`
   background: white;
 `;
 export const PreviewTemplateContainer = styled.div`
-  width: 650px;
+  width: 40vw;
   margin-left: 2rem;
   overflow: hidden;
   &:hover {
@@ -219,22 +219,17 @@ export const PdfConfigFormWrapper = styled.div`
   display: flex;
   margin-bottom: 2.5rem;
   .nameColumn {
-    width: calc(20% - 12px);
+    width: 140px;
     float: left;
-    flex-grow: 1;
-    min-width: 100px;
   }
   .idColumn {
-    width: calc(20% - 12px);
+    width: 140px;
     float: left;
     height: 100%;
-    flex-grow: 1;
-    min-width: 100px;
     overflow: hidden;
   }
   .descColumn {
-    width: 60%;
-    width: calc(60% - 32px);
+    width: calc(100% - 336px);
     float: left;
     height: 100%;
     overflow: hidden;
@@ -267,7 +262,7 @@ export const PdfConfigFormWrapper = styled.div`
 export const PdfEditActionLayout = styled.div`
   position fixed;
   bottom: 4rem;
-  width: calc(100% - 653px - 5rem);
+  width: calc(100% - 40vw - 5.2rem);
 `;
 
 export const PdfEditActions = styled.div`
@@ -335,6 +330,7 @@ export const OverflowWrap = styled.div`
 `;
 
 export const PreviewTopStyle = styled.div`
+  margin: 3px 3px 0 3px;
   display: flex;
   flex-direction: row;
   justify-content: left;
@@ -343,7 +339,7 @@ export const PreviewTopStyle = styled.div`
 
 export const PreviewTopStyleWrapper = styled.div`
   .hr-resize {
-    margin-top: 0.75rem;
+    margin-top: calc(0.75rem - 3px);
   }
 `;
 
