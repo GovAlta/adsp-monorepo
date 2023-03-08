@@ -91,6 +91,10 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   }, [socketChannel]);
 
   useEffect(() => {
+    setTmpTemplate(template);
+  }, [template]);
+
+  useEffect(() => {
     dispatch(updatePdfResponse({ fileList: fileList }));
     const currentFile = fileList.find((file) => jobList.map((job) => job.id).includes(file.recordId));
     if (currentFile) {
@@ -250,9 +254,10 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             </Tab>
           </Tabs>
         </GoAFormItem>
-        <hr className="hr-resize" />
+
         <EditTemplateActions>
           <PdfEditActionLayout>
+            <hr className="hr-resize-bottom" />
             <PdfEditActions>
               <>
                 <GoAButton

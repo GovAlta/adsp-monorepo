@@ -1,20 +1,18 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { GoAButton, GoAIconButton } from '@abgov/react-components-new';
-import { GoAElementLoader } from '@abgov/react-components';
+
 import {
-  GenerateButtonPadding,
   SpinnerPadding,
-  SpinnerSpace,
   PreviewTopStyle,
   PreviewTopStyleWrapper,
   PreviewContainer,
   PDFTitle,
-  TemplateEditorContainerPdf,
 } from '../../styled-components';
 
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
 import { DownloadFileService } from '@store/file/actions';
+import { GoAPageLoader } from '@abgov/react-components';
 interface PreviewTemplateProps {
   channelTitle: string;
   generateTemplate: () => void;
@@ -41,7 +39,7 @@ const base64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
 };
 
 export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ channelTitle, generateTemplate }) => {
-  const [windowSize, setWindowSize] = useState([window.innerWidth, window.innerHeight]);
+  const [windowSize, setWindowSize] = useState(window.innerHeight);
 
   const dispatch = useDispatch();
 
@@ -59,7 +57,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
 
   useEffect(() => {
     const handleWindowResize = () => {
-      setWindowSize([window.innerWidth, window.innerHeight]);
+      if (window.innerHeight !== windowSize) setWindowSize(window.innerHeight);
     };
 
     window.addEventListener('resize', handleWindowResize);
@@ -83,14 +81,20 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
     return (
       <>
         <PreviewTop title={channelTitle} />
-        {blobUrl && (
-          <div>
+        {indicator.show ? (
+          <SpinnerPadding>
+            <GoAPageLoader visible={true} type="infinite" message={indicator.message} />
+          </SpinnerPadding>
+        ) : (
+          blobUrl && (
             <div>
-              <object type="application/pdf" data={blobUrl} height={windowSize[1] - 220} style={{ width: '100%' }}>
-                <iframe title={'PDF preview'} src={blobUrl} height="100%" width="100%"></iframe>
-              </object>
+              <div>
+                <object type="application/pdf" data={blobUrl} height={windowSize - 200} style={{ width: '100%' }}>
+                  <iframe title={'PDF preview'} src={blobUrl} height="100%" width="100%"></iframe>
+                </object>
+              </div>
             </div>
-          </div>
+          )
         )}
       </>
     );
@@ -111,16 +115,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
               generateTemplate();
             }}
           >
-            <GenerateButtonPadding>
-              Generate PDF
-              {indicator.show ? (
-                <SpinnerPadding>
-                  <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
-                </SpinnerPadding>
-              ) : (
-                <SpinnerSpace></SpinnerSpace>
-              )}
-            </GenerateButtonPadding>
+            Generate PDF
           </GoAButton>
           {
             <GoAIconButton
