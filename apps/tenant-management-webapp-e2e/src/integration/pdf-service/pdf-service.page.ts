@@ -7,10 +7,8 @@ class PDFServicePage {
     return cy.get('[data-testid="add-templates"]');
   }
 
-  pdfAddTemplateModalTitle() {
-    return cy.xpath(
-      '//*[@data-testid="template-form" and @data-state="visible"]/*[@class="modal"]//*[@data-testid="template-form-title"]'
-    );
+  pdfAddTemplateModal() {
+    return cy.xpath('//goa-modal');
   }
 
   pdfAddTemplateModalName() {
