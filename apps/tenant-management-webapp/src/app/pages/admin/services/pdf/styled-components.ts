@@ -330,7 +330,7 @@ export const OverflowWrap = styled.div`
 `;
 
 export const PreviewTopStyle = styled.div`
-  margin: 3px;
+  margin: 3px 3px 0 3px;
   display: flex;
   flex-direction: row;
   justify-content: left;
@@ -339,7 +339,7 @@ export const PreviewTopStyle = styled.div`
 
 export const PreviewTopStyleWrapper = styled.div`
   .hr-resize {
-    margin-top: 0.75rem;
+    margin-top: calc(0.75rem - 3px);
   }
 `;
 
