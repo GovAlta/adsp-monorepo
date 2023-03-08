@@ -55,14 +55,6 @@ export interface SubscriberService {
       next: string;
     }
   >;
-  subscriberSubscriptionSearch: Record<
-    string,
-    {
-      results: string[];
-      showHide: boolean;
-      next: string;
-    }
-  >;
   successMessage: string;
   updateError: string;
 }
@@ -75,7 +67,6 @@ export const SUBSCRIBER_INIT: SubscriberService = {
     next: null,
   },
   typeSubscriptionSearch: {},
-  subscriberSubscriptionSearch: {},
   successMessage: null,
   updateError: '',
 };

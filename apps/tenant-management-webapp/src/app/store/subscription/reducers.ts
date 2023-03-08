@@ -3,33 +3,18 @@ import {
   FIND_SUBSCRIBERS_SUCCESS,
   UPDATE_SUBSCRIBER_SUCCESS,
   GET_TYPE_SUBSCRIPTIONS_SUCCESS,
-  GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS,
   RESOLVE_SUBSCRIBER_USER_SUCCESS,
   UNSUBSCRIBE_SUCCESS,
   GET_MY_SUBSCRIBER_SUCCESS,
   SUBSCRIBE_SUCCESS,
   DELETE_SUBSCRIBER_SUCCESS,
   DELETE_SUBSCRIPTION_SUCCESS,
-  TOGGLE_SHOW_SUBSCRIPTIONS,
 } from './actions';
 
 import { SUBSCRIBER_INIT, SubscriberService, SubscriptionWrapper } from './models';
 
 export default function (state = SUBSCRIBER_INIT, action: ActionTypes): SubscriberService {
   switch (action.type) {
-    case TOGGLE_SHOW_SUBSCRIPTIONS: {
-      const key = action.payload.subscriberInfo.id;
-      return {
-        ...state,
-        subscriberSubscriptionSearch: {
-          ...state.subscriberSubscriptionSearch,
-          [key]: {
-            ...state.subscriberSubscriptionSearch[key],
-            showHide: !state.subscriberSubscriptionSearch[key].showHide,
-          },
-        },
-      };
-    }
     case GET_MY_SUBSCRIBER_SUCCESS: {
       const { subscriptions, ...subscriber } = action.payload.subscriberInfo;
       return {
@@ -80,13 +65,6 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
         typeSubscriptions.results.splice(typeIndex, 1);
       }
 
-      // Delete the result under the subscriber.
-      const subscriberSubscriptions = newState.subscriberSubscriptionSearch[subscriber.id];
-      const subscriberIndex = subscriberSubscriptions?.results.findIndex((result) => result === type);
-      if (subscriberIndex > -1) {
-        subscriberSubscriptions.results.splice(subscriberIndex, 1);
-      }
-
       return {
         ...state,
         subscriptions: {
@@ -101,14 +79,6 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
               },
             }
           : state.typeSubscriptionSearch,
-        subscriberSubscriptionSearch: subscriberSubscriptions
-          ? {
-              ...state.subscriberSubscriptionSearch,
-              [subscriber.id]: {
-                ...subscriberSubscriptions,
-              },
-            }
-          : state.subscriberSubscriptionSearch,
       };
     }
     case GET_TYPE_SUBSCRIPTIONS_SUCCESS: {
@@ -132,31 +102,6 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
             results: after
               ? [...state.typeSubscriptionSearch[typeId].results, ...subscriptions.map((sub) => sub.subscriberId)]
               : subscriptions.map((sub) => sub.subscriberId),
-            next,
-          },
-        },
-      };
-    }
-    case GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS: {
-      const { subscriptions = [], subscriber, after, next } = action.payload;
-      const key = subscriber.id;
-
-      return {
-        ...state,
-        subscriptions: subscriptions.reduce(
-          (subs, { subscriber, ...sub }): Record<string, SubscriptionWrapper> => ({
-            ...subs,
-            [`${sub.typeId}:${sub.subscriberId}`]: sub,
-          }),
-          state.subscriptions
-        ),
-        subscriberSubscriptionSearch: {
-          ...state.subscriberSubscriptionSearch,
-          [key]: {
-            showHide: true, // assuming users want to see subs for the first time
-            results: after
-              ? [...state.subscriberSubscriptionSearch[key].results, ...subscriptions.map((sub) => sub.subscriberId)]
-              : subscriptions.map((sub) => sub.typeId),
             next,
           },
         },
@@ -212,7 +157,6 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
     }
     case DELETE_SUBSCRIBER_SUCCESS: {
       delete state.subscribers[action.payload.subscriberId];
-      delete state.subscriberSubscriptionSearch[action.payload.subscriberId];
       Object.keys(state.subscriptions)
         .filter((key) => key.endsWith(action.payload.subscriberId))
         .forEach((key) => {
@@ -221,9 +165,6 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
       return {
         ...state,
         subscribers: { ...state.subscribers },
-        subscriberSubscriptionSearch: {
-          ...state.subscriberSubscriptionSearch,
-        },
         subscriptions: { ...state.subscriptions },
       };
     }
