@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { DownloadFileService } from '@store/file/actions';
-import { updatePdfResponse } from '@store/pdf/action';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
 
@@ -25,11 +24,7 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
     dispatch(DownloadFileService(file));
   };
 
-  useEffect(() => {
-    dispatch(updatePdfResponse({ fileList: fileList }));
-  }, [fileList]);
-
-  const pdfList = useSelector((state: RootState) => state.pdf.jobs);
+  const pdfList = useSelector((state: RootState) => state.pdf.jobs.filter((job) => job.templateId === templateId));
 
   const statusGenerator = {
     queued: 'Queued',

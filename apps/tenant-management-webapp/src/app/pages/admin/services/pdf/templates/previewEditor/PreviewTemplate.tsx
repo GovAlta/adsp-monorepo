@@ -39,7 +39,7 @@ const base64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
 };
 
 export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ channelTitle, generateTemplate }) => {
-  const [windowSize, setWindowSize] = useState([window.innerWidth, window.innerHeight]);
+  const [windowSize, setWindowSize] = useState(window.innerHeight);
 
   const dispatch = useDispatch();
 
@@ -57,7 +57,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
 
   useEffect(() => {
     const handleWindowResize = () => {
-      setWindowSize([window.innerWidth, window.innerHeight]);
+      if (window.innerHeight !== windowSize) setWindowSize(window.innerHeight);
     };
 
     window.addEventListener('resize', handleWindowResize);
@@ -89,7 +89,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
           blobUrl && (
             <div>
               <div>
-                <object type="application/pdf" data={blobUrl} height={windowSize[1] - 200} style={{ width: '100%' }}>
+                <object type="application/pdf" data={blobUrl} height={windowSize - 200} style={{ width: '100%' }}>
                   <iframe title={'PDF preview'} src={blobUrl} height="100%" width="100%"></iframe>
                 </object>
               </div>
