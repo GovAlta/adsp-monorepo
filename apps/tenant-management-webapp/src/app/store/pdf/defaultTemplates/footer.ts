@@ -16,7 +16,7 @@ export const defaultTemplateFooter = `<style>
    * The amount is determined empirically and may have to be adjusted for different page sizes.
    */
   position: relative;
-  top: 0.75cm;
+  top: 0.76cm;
 }
 .footer-wrapper span { display: inline-block; }
 .copyright { margin-right: 2cm; }
