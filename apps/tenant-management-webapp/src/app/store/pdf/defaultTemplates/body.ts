@@ -17,49 +17,18 @@ export const defaultTemplateBody = `<!--
 -- about where and how to place things on individual pages, rather than just continuously
 -- stream content like it would on a website.  The template editor is meant to facilitate
 -- this process by providing tools to view instances of the final product, given some
--- test data.  To see how this works:
---
---   1. Click on the "Variable Assignments" tab.
---   2. Copy the JSON below and replace the contents of the tab with it.  These are some
---      variable assignments for code in this demo template.
---   3. Click "Generate PDF" in the preview pane to the right.
---   4. The PDF will appear in the preview pane after a second or two.
---
--- The following JSON object represents some data an application might gather to use
--- with this template for generating a custom PDF document.
-
-{
-  "paragraph2" : "The rain in Spain stays mainly in the plain.",
-  "table" : {
-    "title" : "Bobs I have known",
-    "column1header" : "Name",
-    "column2header" : "Value",
-    "rows" : [
-      { "name" : "Bob", "value" : 23 },
-      { "name" : "Bobby", "value" : 19 },
-      { "name" : "Bobbie", "value" : 13 }
-    ]
-  },
-  "bobs" : ["Bob Woodward", "Bob McDonald", "Bob Jordan", "Bob Redford"],
-  "caseWorker" : {
-     "name" : "Bob Bing",
-     "emailAddress" : "bob.bing@gov.ab.ca",
-     "phoneNumber" : "1-800-call-bob",
-     "office" : "Calgary, Alberta, Regional Office",
-     "signature" : "https://drive.google.com/uc?export=view&id=1BRi8Acu3RMNTMpHjzjRh51H3QDhshicC"
-  }
-}
-
+-- test data.  To see how this works, click on the PDF Generate button on the right hand pane.
+-- The PDF will appear in the preview pane after a second or two.
 -->
 <style>
   /*
-   * With Puppeteer, the height of the headers and footers is determined by the page
-   * margins, which default to something smallish.  If you header is larger than that
-   * then bits of it may be over layed by the body. You can explicitly set the height
-   * of the page header and footer through the @page attributes.
-   */
+  * With Puppeteer, the height of the headers and footers is determined by the page
+  * margins, which default to something smallish.  If you header is larger than that
+  * then bits of it may be over layed by the body. You can explicitly set the height
+  * of the page header and footer through the @page attributes.
+  */
   @page {
-    margin: 130px 0 130px 0;
+  margin: 130px 0 130px 0;
   }
 
   /*
@@ -81,7 +50,7 @@ export const defaultTemplateBody = `<!--
     font-size: 9pt;
   }
   th div { text-align: left; width: 100%; }
-  p { padding: 0; margin 0; }
+
   .content table {
      margin-bottom: 3mm;
      margin-top: 5mm;
@@ -152,7 +121,7 @@ export const defaultTemplateBody = `<!--
         in ornare quam viverra orci sagittis eu volutpat odio facilisis mauris sit amet massa vitae tortor condimentum
         lacinia quis vel eros donec ac odio tempor orci dapibus ultrices in iaculis nunc sed augue lacus, viverra vitae
         congue eu, consequat ac felis donec et odio pellentesque diam volutpat commodo sed egestas egestas fringilla
-        phasellus faucibus!<sup>**</sup>
+        phasellus faucibus!<sup>*</sup>
     </p>
 
     <!--
@@ -174,7 +143,7 @@ export const defaultTemplateBody = `<!--
       -- 2. Handlebars placeholders are always embedded in double curly braces; e.g.
       --    {{data.paragraph2}}
     -->
-    <p><sup>**</sup>{{data.paragraph2}}</p>
+    <p style="margin-top:5mm"><sup>*</sup>{{data.paragraph2}}</p>
   </div>
 
   <!--
