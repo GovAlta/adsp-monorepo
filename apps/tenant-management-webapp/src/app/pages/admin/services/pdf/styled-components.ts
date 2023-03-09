@@ -350,6 +350,7 @@ export const PDFTitle = styled.div`
   font-weight: var(--fw-regular);
 `;
 
+
 export const HideTablet = styled.div`
   @media (max-width: 1439px) {
     display: none;
@@ -369,7 +370,6 @@ export const TabletMessage = styled.div`
     display: none;
   }
 `;
-
 export const PdfFormItem = styled.div`
   margin-bottom: 1.5rem;
   margin-left: 2px;

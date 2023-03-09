@@ -12,6 +12,7 @@ Given('a tenant admin user is on PDF service overview page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
+  cy.viewport(1440, 900);
   commonlib.tenantAdminMenuItem('PDF', 4000);
 });
 
@@ -39,12 +40,12 @@ When('the user enters {string} as name, {string} as description in pdf template 
 });
 
 Then('the user clicks Save button in Add template modal', function () {
-  pdfServiceObj.pdfAddTemplateModalSaveBtn().shadow().find('.primary normal').click();
+  pdfServiceObj.pdfAddTemplateModalSaveBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 
 Then('the user clicks Cancel button in Add template modal', function () {
-  pdfServiceObj.pdfAddTemplateModalCancelBtn().shadow().find('.secondary normal').click();
+  pdfServiceObj.pdfAddTemplateModalCancelBtn().shadow().find('button').click({ force: true });
   cy.wait(1000);
 });
 

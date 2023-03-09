@@ -404,7 +404,12 @@ When('the user enters {string}, {string}, {string} on file type modal', function
       .invoke('attr', 'class')
       .then((classAttr) => {
         if (classAttr?.includes('-selected')) {
-          fileServiceObj.fileTypeModalPublicCheckbox().shadow().find('.goa-checkbox-container').click({ force: true });
+          fileServiceObj
+            .fileTypeModalPublicCheckbox()
+            .shadow()
+            .find('.goa-checkbox-container')
+            .click({ force: true, multiple: true });
+
           cy.log('Make public checkbox is already checked off. ');
         } else {
           cy.log('Make public checkbox is already unchecked. ');
@@ -425,7 +430,11 @@ When('the user enters {string}, {string}, {string} on file type modal', function
     //Select read roles
     const readRoles = readRole.split(',');
     for (let i = 0; i < readRoles.length; i++) {
-      fileServiceObj.fileTypeModalReadCheckbox(readRoles[i].trim()).shadow().find('.goa-checkbox-container').click();
+      fileServiceObj
+        .fileTypeModalReadCheckbox(readRoles[i].trim())
+        .shadow()
+        .find('.goa-checkbox-container')
+        .click({ force: true, multiple: true });
     }
   }
 
@@ -445,12 +454,16 @@ When('the user enters {string}, {string}, {string} on file type modal', function
   //Select modify roles
   const updateRoles = updateRole.split(',');
   for (let i = 0; i < updateRoles.length; i++) {
-    fileServiceObj.fileTypeModalModifyCheckbox(updateRoles[i].trim()).shadow().find('.goa-checkbox-container').click();
+    fileServiceObj
+      .fileTypeModalModifyCheckbox(updateRoles[i].trim())
+      .shadow()
+      .find('.goa-checkbox-container')
+      .click({ force: true, multiple: true });
   }
 });
 
 When('the user clicks Save button on file type modal', function () {
-  fileServiceObj.fileTypeModalSaveButton().click({ force: true });
+  fileServiceObj.fileTypeModalSaveButton().click({ force: true, multiple: true });
   cy.wait(2000); // Wait the file type list to refresh
 });
 
