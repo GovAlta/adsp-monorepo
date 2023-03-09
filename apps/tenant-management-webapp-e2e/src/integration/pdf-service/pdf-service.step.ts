@@ -1,6 +1,7 @@
 import { Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
 import PDFServicePage from './pdf-service.page';
 import commonlib from '../common/common-library';
+import { find } from 'lodash';
 
 const pdfServiceObj = new PDFServicePage();
 

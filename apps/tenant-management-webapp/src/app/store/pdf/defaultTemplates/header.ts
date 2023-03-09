@@ -1,28 +1,18 @@
 export const defaultTemplateHeader = `<style>
   .header-wrapper {
-    padding: 0 0 0 2cm;
-    margin: 0;
+    padding-left: 2cm;
     /*
      * The width was determined empirically, for aesthetic reasons,
-     * and does not span the full page (a4) width.
+     * to be about 60% of the page (a4) width of 210mm.
      */
     width: 130mm;
   }
-  .header-wrapper p, div {
-    margin: 0;
-    padding: 0;
-  }
   .header-wrapper p {
-    /*
-    * Explicitly set the font size in both the header and the footer.  Puppeteer has a quirk
-    * that sometimes sets it to 0, making any text in the footer unreadable.
-    */
-    font-size: 8pt;
-    font-weight: normal;
     display: inline-block;
-    margin: 0 0 0 3mm;
+    margin-left: 3mm;
     position: relative;
     top: -1.4mm;
+    font-size: 8pt;
   }
   .subtitle {
     padding-top: 3mm;
@@ -42,18 +32,7 @@ export const defaultTemplateHeader = `<style>
     font-weight: bold;
     padding-top: 2px;
   }
-  .clear {
-    clear: both;
-  }
 
-  /*
-   * You need to explicitly tell Puppeteer to use colour when generating the
-   * PDF document, or it will just print out grey tones.  This does not
-   * apply to SVG, however, which seem to render correctly either way.
-   */
-  html {
-    -webkit-print-color-adjust: exact;
-  }
 </style>
 <div class="header-wrapper">
 
@@ -71,12 +50,8 @@ export const defaultTemplateHeader = `<style>
     -- will be ignored.  Data to be substituted for the placeholders is written as a Json object.  You can
     -- learn all about how Handlebars works here:
     --    https://govalta.github.io/adsp-monorepo/tutorials/pdf/introduction.html
-    -- Handlebars values for the placeholders below will be something like:
     --
-       {
-          "service" : { "name" : "My Service", "protection" : "Protected B" },
-          "document" : { "name" : "Your Document" }
-       }
+    -- See the JSON in the Test Variables tab for the examples used here.
     -->
   <p>{{data.service.name}}</p>
   <div class="subtitle"><span>{{data.document.name}}</span><span>{{data.service.protection}}</span></div>

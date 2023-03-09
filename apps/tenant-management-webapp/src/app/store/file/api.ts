@@ -33,6 +33,12 @@ export class FileApi {
     return res.data;
   }
 
+  async fetchFile(id: string): Promise<FileService> {
+    const url = this.fileConfig.endpoints.fileAdmin;
+    const res = await this.http.get(`${url}/${id}`);
+    return res.data;
+  }
+
   async downloadFiles(id: string): Promise<FileService> {
     const url = `${this.fileConfig.endpoints.fileAdmin}/${id}/download`;
     const res = await this.http.get(url, { responseType: 'blob' });

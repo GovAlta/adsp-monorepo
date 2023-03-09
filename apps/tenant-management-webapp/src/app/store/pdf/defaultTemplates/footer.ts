@@ -8,11 +8,6 @@ export const defaultTemplateFooter = `<style>
   background-color: lightgrey;
   border-bottom: 2mm solid #00aad2;
   padding: 5mm 0 5mm 1cm;
-
-  /*
-   * Explicitly set the font size in both the header and the footer.  Puppeteer has a quirk
-   * that sometimes sets it to 0, making any text in the footer unreadable.
-   */
   font-size: 10pt;
 
   /*
@@ -21,7 +16,7 @@ export const defaultTemplateFooter = `<style>
    * The amount is determined empirically and may have to be adjusted for different page sizes.
    */
   position: relative;
-  top: 0.75cm;
+  top: 0.76cm;
 }
 .footer-wrapper span { display: inline-block; }
 .copyright { margin-right: 2cm; }

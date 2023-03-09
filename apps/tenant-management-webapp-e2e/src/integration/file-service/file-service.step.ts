@@ -409,6 +409,7 @@ When('the user enters {string}, {string}, {string} on file type modal', function
             .shadow()
             .find('.goa-checkbox-container')
             .click({ force: true, multiple: true });
+
           cy.log('Make public checkbox is already checked off. ');
         } else {
           cy.log('Make public checkbox is already unchecked. ');

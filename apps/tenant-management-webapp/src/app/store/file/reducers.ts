@@ -1,3 +1,4 @@
+import { StreamPayloadTable } from '@pages/admin/services/events/stream/testStream/streamPayloadTable';
 import {
   ActionTypes,
   FETCH_FILE_LIST_SUCCESSES,
@@ -10,6 +11,7 @@ import {
   FETCH_FILE_TYPE_HAS_FILE_SUCCEEDED,
   FETCH_FILE_METRICS_SUCCEEDED,
   FETCH_FILE_LIST,
+  FETCH_FILE_SUCCESS,
 } from './actions';
 import { FILE_INIT, FileService } from './models';
 
@@ -63,6 +65,14 @@ export default function (state = FILE_INIT, action: ActionTypes): FileService {
         ...state,
         fileList: fileList,
         nextEntries: action.payload.results.next,
+        isLoading: false,
+      };
+    }
+    case FETCH_FILE_SUCCESS: {
+      const fileList = [action.payload.results.data, ...state.fileList];
+      return {
+        ...state,
+        fileList: fileList,
         isLoading: false,
       };
     }

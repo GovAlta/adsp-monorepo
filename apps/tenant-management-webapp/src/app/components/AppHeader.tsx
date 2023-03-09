@@ -137,7 +137,7 @@ const UserIconBox = styled.div`
 
 const HeaderContainer = styled.div`
   position: relative;
-  border-bottom: 10px solid #c8eefa;
+  border-bottom: 1px solid #dcdcdc;
 `;
 
 const Actions = styled.div`

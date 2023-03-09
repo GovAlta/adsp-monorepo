@@ -1,14 +1,10 @@
-import React, { FunctionComponent, useState, useEffect } from 'react';
+import React, { FunctionComponent, useState } from 'react';
 import { Subscriber } from '@store/subscription/models';
-import { RootState } from '@store/index';
-import { useSelector, useDispatch } from 'react-redux';
 import { phoneWrapper } from '@lib/wrappers';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
-import { ToggleShowSubs } from '@store/subscription/actions';
-import { GetSubscriberSubscriptions } from '@store/subscription/actions';
 import { GoAIconButton } from '@abgov/react-components/experimental';
 import { RowFlex } from './styled-components';
-
+import { getSubcriberSubscriptions } from './apis';
 interface ActionComponentProps {
   subscriber: Subscriber;
   openModalFunction?: (subscriber: Subscriber) => void;
@@ -31,11 +27,10 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
       return string;
     }
   }
-  const subscriberSubscriptions = useSelector(
-    (state: RootState) => state.subscription.subscriberSubscriptionSearch[subscriber.id]
-  );
 
-  const dispatch = useDispatch();
+  const [subSubs, setSubSubs] = useState(null);
+  const [showHide, setShowHide] = useState(false);
+
   const email = subscriber?.channels?.find(({ channel }) => channel === 'email')?.address;
   const sms = subscriber?.channels?.find(({ channel }) => channel === 'sms')?.address;
   return (
@@ -57,12 +52,14 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
                 />
               </div>
               <GoAContextMenuIcon
-                type={subscriberSubscriptions?.showHide ? 'eye-off' : 'eye'}
-                onClick={() => {
-                  if (!subscriberSubscriptions) {
-                    dispatch(GetSubscriberSubscriptions(subscriber, null));
+                type={showHide ? 'eye-off' : 'eye'}
+                onClick={async () => {
+                  if (subSubs == null) {
+                    const subscriptions = await getSubcriberSubscriptions(subscriber.id);
+                    setSubSubs(subscriptions);
+                    setShowHide(true);
                   } else {
-                    dispatch(ToggleShowSubs(subscriber));
+                    setShowHide(!showHide);
                   }
                 }}
                 testId="toggle-details-visibility"
@@ -88,24 +85,26 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
           ''
         )}
       </tr>
-      {subscriberSubscriptions?.showHide && (
+      {showHide && (
         <tr>
           <td colSpan={3}>
             <h2>Subscriptions</h2>
-            {subscriberSubscriptions?.results?.length < 1 ? (
+            {subSubs.length < 1 ? (
               <span>
                 <b>No subscriptions</b>
               </span>
             ) : (
               ''
             )}
-            {subscriberSubscriptions?.results.map((typeId, i) => {
-              return (
-                <div data-testid={`subscriptions-${i}`}>
-                  <b>{typeId}</b>
-                </div>
-              );
-            })}
+            {subSubs?.length >= 0
+              ? subSubs?.map((typeId, i) => {
+                  return (
+                    <div data-testid={`subscriptions-${i}`}>
+                      <b>{typeId}</b>
+                    </div>
+                  );
+                })
+              : ''}
           </td>
         </tr>
       )}

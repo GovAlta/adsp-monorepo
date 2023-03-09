@@ -12,6 +12,10 @@ export const FileTableStyles = styled.div`
   }
 
   margin: 1rem 0 1rem;
+
+  .some-margin {
+    margin: 8px;
+  }
 `;
 
 export const PaddingRight = styled.div`
@@ -26,11 +30,18 @@ export const FlexRow = styled.div`
 export const NotificationTemplateEditorContainer = styled.div`
   display: flex;
   flex: auto;
+  margin-top: 6px;
   padding-left: 3rem;
   width: 100%;
   height: 100vh;
   overflow: hidden;
   box-sizing: border-box;
+`;
+
+export const OuterNotificationTemplateEditorContainer = styled.div`
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
 `;
 // Edit Template components
 export const TemplateEditorContainer = styled.div`
@@ -71,7 +82,7 @@ export const TemplateEditorContainerPdf = styled.div`
     overflow: auto;
   }
 
-  width: calc(100vw - 650px - 3em);
+  width: calc(100vw - 40vw - 3em);
 
   .reduce-margin {
     margin-top: 5px;
@@ -89,6 +100,9 @@ export const TemplateEditorContainerPdf = styled.div`
 
   .hr-resize {
     margin-top: 0.75rem;
+  }
+  .hr-resize-bottom {
+    margin-bottom: 1.5rem;
   }
 
   .title {
@@ -125,7 +139,7 @@ export const ModalContent = styled.div`
   background: white;
 `;
 export const PreviewTemplateContainer = styled.div`
-  width: 650px;
+  width: 40vw;
   margin-left: 2rem;
   overflow: hidden;
   &:hover {
@@ -143,7 +157,7 @@ export const MonacoDivBody = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(92vh - 366px - 7rem);
+  height: calc(100vh - 441px - 9rem);
   min-height: 2rem;
   margin: 0.5rem 0 0 0;
 `;
@@ -205,22 +219,18 @@ export const PdfConfigFormWrapper = styled.div`
   display: flex;
   margin-bottom: 2.5rem;
   .nameColumn {
-    width: calc(20% - 12px);
+    width: 180px;
     float: left;
-    flex-grow: 1;
-    min-width: 100px;
+    overflow: hidden;
   }
   .idColumn {
-    width: calc(20% - 12px);
+    width: 180px;
     float: left;
     height: 100%;
-    flex-grow: 1;
-    min-width: 100px;
     overflow: hidden;
   }
   .descColumn {
-    width: 60%;
-    width: calc(60% - 32px);
+    width: calc(100% - 336px);
     float: left;
     height: 100%;
     overflow: hidden;
@@ -252,7 +262,8 @@ export const PdfConfigFormWrapper = styled.div`
 
 export const PdfEditActionLayout = styled.div`
   position fixed;
-  bottom: 2rem;
+  bottom: 4rem;
+  width: calc(100% - 40vw - 5.2rem);
 `;
 
 export const PdfEditActions = styled.div`
@@ -263,10 +274,6 @@ export const PdfEditActions = styled.div`
 export const SpinnerSpace = styled.div`
   margin: 10px 9px 10px 14px;
   float: right;
-`;
-
-export const GenerateButtonPadding = styled.div`
-  margin: 0 0 0 14px;
 `;
 
 export const GeneratorStyling = styled.div`
@@ -298,8 +305,7 @@ export const GeneratorStyling = styled.div`
   }
 `;
 export const SpinnerPadding = styled.div`
-  margin: 0 0 0 5px;
-  float: right;
+  margin: 200px 0 0 0;
 `;
 export const Edit = styled.div`
   .flexRow {
@@ -325,6 +331,7 @@ export const OverflowWrap = styled.div`
 `;
 
 export const PreviewTopStyle = styled.div`
+  margin: 3px 3px 0 3px;
   display: flex;
   flex-direction: row;
   justify-content: left;
@@ -333,7 +340,7 @@ export const PreviewTopStyle = styled.div`
 
 export const PreviewTopStyleWrapper = styled.div`
   .hr-resize {
-    margin-top: 0.75rem;
+    margin-top: calc(0.75rem - 3px);
   }
 `;
 
@@ -343,6 +350,26 @@ export const PDFTitle = styled.div`
   font-weight: var(--fw-regular);
 `;
 
+
+export const HideTablet = styled.div`
+  @media (max-width: 1439px) {
+    display: none;
+  }
+`;
+
+export const TabletMessage = styled.div`
+  h1,
+  h3 {
+    text-align: center;
+    margin: 40px;
+  }
+
+  text-align: center !important;
+
+  @media (min-width: 1440px) {
+    display: none;
+  }
+`;
 export const PdfFormItem = styled.div`
   margin-bottom: 1.5rem;
   margin-left: 2px;

@@ -124,9 +124,8 @@ components:
   post:
     tags:
       - Generator
-    description: "Initiate a new, asynchronous Job to generate a PDF document.  When complete, the Job's *properties*
-will only be available for inspection for approximately 1/2 hour.  It is important for your application
-to ensure that it receives the *file id* of the new PDF document within that time frame, e.g. by polling  \n>GET /pdf/v1/jobs/{jobId}"
+    description: "Initiate a new, asynchronous Job to generate a PDF document.  The Job's *properties* are cached, with a finite TTL, and it is important for your application
+to ensure that it receives the *file id* of the new PDF document within that time frame, e.g. by polling  \n>GET /pdf/v1/jobs/{jobId}. TTL is approximately 12 hours."
     requestBody:
       required: true
       content:
