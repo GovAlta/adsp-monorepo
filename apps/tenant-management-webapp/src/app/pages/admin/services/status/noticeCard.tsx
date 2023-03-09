@@ -82,27 +82,27 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
           {props.mode === 'draft' && (
             <GoABadge
               key={`${notice.id}-badge-draft`}
-              data-testid="notice-card-mode"
+              data-testid="notice-card-mode-draft"
               content={'Draft'}
               type="information"
-              testId="notice-card-mode"
+              testId="notice-card-mode-draft"
             />
           )}
           {props.mode === 'published' && (
             <GoABadge
               key={`${notice.id}-badge-published`}
               content={'Published'}
-              data-testid="notice-card-mode"
+              data-testid="notice-card-mode-published"
               type="success"
-              testId="notice-card-mode"
+              testId="notice-card-mode-published"
             />
           )}
           {props.mode === 'archived' && (
             <GoABadge
               key={`${notice.id}-badge-archived`}
               content={'Archived'}
-              data-testid="notice-card-mode"
-              testId="notice-card-mode"
+              data-testid="notice-card-mode-archived"
+              testId="notice-card-mode-archived"
               type="midtone"
             />
           )}
@@ -139,6 +139,7 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
         {isMenuOpen && (
           <div
             className="dropdown-overlay"
+            data-testid="dropdown-overlay"
             onClick={() => {
               clickMenuFn(notice.id, true);
             }}
