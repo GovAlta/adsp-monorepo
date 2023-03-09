@@ -39,7 +39,7 @@ Once you are able to log in, select PDF on the left menu, and then the Templates
 - **CSS**: to style the document,
 - **Test Variables**: to specify typical values for the variables used in the template, for when you are testing to see how a document actually looks, and
 - **File History**: a collection of PDF documents generated, for testing purposes, during your current session.
-  On the right, you can see an area for previewing your PDF's. When you want to see how the template is coming along you can specify values for your template variables on the Variable Assignment tab, then click Generate PDF on the top right. Typically, your workflow will be to make changes to the template, preview them, and repeat.
+  On the right, you can see an area for previewing your PDF's. When you want to see how the template is coming along you can specify values for your template variables on the _Test Variables_ tab, then click Generate PDF on the top right. Typically, your workflow will be to make changes to the template, preview them, and repeat.
 
 ## Define Page Attributes
 
