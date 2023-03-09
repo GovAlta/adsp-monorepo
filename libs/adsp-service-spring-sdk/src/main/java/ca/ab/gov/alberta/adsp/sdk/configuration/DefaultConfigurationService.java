@@ -34,11 +34,11 @@ class DefaultConfigurationService implements ConfigurationService {
   private final WebClient client;
 
   public DefaultConfigurationService(CacheManager cacheManager, ServiceDirectory directory,
-      TokenProvider tokenProvider) {
+      TokenProvider tokenProvider, WebClient.Builder clientBuilder) {
     this.configurationCache = cacheManager.getCache("adsp.configuration");
     this.directory = directory;
     this.tokenProvider = tokenProvider;
-    this.client = WebClient.create();
+    this.client = clientBuilder.build();
   }
 
   @Override
@@ -50,14 +50,12 @@ class DefaultConfigurationService implements ConfigurationService {
     Assert.notNull(typeReference, "typeReference cannot be null.");
 
     @SuppressWarnings("unchecked")
-    Mono<T> configuration = tenantId.isPresent()
-        ? Mono.fromCallable(() -> this.configurationCache.get(this.getCacheKey(serviceId, tenantId)))
-            .map(cached -> (T) cached.get())
-            .doOnNext(cached -> this.logger.debug("Cache hit for configuration of service {} for tenant {}.",
-                serviceId.getService(), tenantId))
-            .switchIfEmpty(
-                this.retrieveConfiguration(serviceId, tenantId, typeReference))
-        : Mono.empty();
+    Mono<T> configuration = Mono.fromCallable(() -> this.configurationCache.get(this.getCacheKey(serviceId, tenantId)))
+        .map(cached -> (T) cached.get())
+        .doOnNext(cached -> this.logger.debug("Cache hit for configuration of service {} for tenant {}.",
+            serviceId.getService(), tenantId))
+        .switchIfEmpty(
+            this.retrieveConfiguration(serviceId, tenantId, typeReference));
 
     return configuration;
   }

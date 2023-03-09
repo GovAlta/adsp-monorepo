@@ -35,6 +35,8 @@ class RequestedTenantWebFilter implements WebFilter {
 
     return chain.filter(exchange)
         .contextWrite(ctx -> {
+          // Note that the filter does not check if user is authorized to explicitly
+          // request a tenant context. That is handled in AdspRequestContextHolder.
           if (this.applyFilter) {
             try {
               var request = exchange.getRequest();
