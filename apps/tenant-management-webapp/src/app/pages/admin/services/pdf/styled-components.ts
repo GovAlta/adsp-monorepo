@@ -219,11 +219,12 @@ export const PdfConfigFormWrapper = styled.div`
   display: flex;
   margin-bottom: 2.5rem;
   .nameColumn {
-    width: 140px;
+    width: 180px;
     float: left;
+    overflow: hidden;
   }
   .idColumn {
-    width: 140px;
+    width: 180px;
     float: left;
     height: 100%;
     overflow: hidden;
