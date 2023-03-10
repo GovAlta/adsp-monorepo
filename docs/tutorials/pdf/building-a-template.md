@@ -25,14 +25,17 @@ You will also need to have access to GOA's Keycloak platform.  These are need
 - by the template designer to login to ADSP's Tenant Admin webapp, to access the PDF template editor, and
 - by the application using the template to acquire access tokens for the API calls.
 
-The following recipe will guide you through the steps the CS team needed to go through accomplish their task. You can download the full set of HTML and test data here:
+The following discussion will guide you through the steps needed to build a fairly complex template. There are a few pitfalls to navigate through, as Puppeteer can be a bit quirky, and we take full advantage of the [Handlebars](/adsp-monorepo/tutorials/pdf/handlebars.html) template engine. If you want to follow along and try it yourself, login to our [Template Editor](https://adsp.alberta.ca) and use the following set of HTML, CSS and test data files:
 
-- [Header](/adsp-monorepo/assets/pdf/header.html)
 - <a href="/adsp-monorepo/assets/pdf/header.html" download>Header</a>
+- <a href="/adsp-monorepo/assets/pdf/footer.html" download>Footer</a>
+- <a href="/adsp-monorepo/assets/pdf/body.html" download>Body</a>
+- <a href="/adsp-monorepo/assets/pdf/style.html" download>CSS</a>
+- <a href="/adsp-monorepo/assets/pdf/test_data.json" download>Test Data</a>
 
 ## The Template Editor
 
-Template development is done through the Tenant Admin Webapp's PDF service. Your team will need to have access to a tenant (i.e. a realm on Keycloak) in production, and your GOA user given the tenant admin role. You may need your team lead to set you up with this. And if your team needs to set up a new tenant, please follow [these instructions](/adsp-monorepo/getting-started.html).
+Template editing is done through the PDF Service's [Template Editor](https://adsp.alberta.ca). Your team will need to have access to a tenant (i.e. a realm on Keycloak) in production, and your GOA user given the tenant admin role. You may need your team lead to set you up with this. And if your team needs to set up a new tenant, please follow [these instructions](/adsp-monorepo/getting-started.html).
 
 Once you are able to log in, select PDF on the left menu, and then the Templates tab. Click on the Add Template button to begin building your template. There are six tabs in the editor:
 
@@ -58,11 +61,9 @@ The editor also keeps a list of the last few PDF files generated in your session
 The first step is to define the boundaries for the page. [Puppeteer](/adsp-monorepo/tutorials/pdf/puppeteer.html) – the PDF generation engine used by the PDF service – allocates room for headers and footers via page margins. The header defaults to 10px in height. Since the IRC header is much higher than 10px these margins must be changed, or the lower portion of the header block will be obscured with body content. We can do this by setting the page margins on the body tab:
 
 ```css
-<style>
 @page {
-    margin: 220px 0 100px 0;
+  margin: 220px 0 100px 0;
 }
-</style>
 ```
 
 Notice that the units are in pixels, rather than centimeters or other common CSS units. This is _mandatory_. Puppeteer does not recognize any other units of measure. In this case the side margins are zero, giving us more room, if needed, for the component blocks. The top margin is set to 220px, a value derived from the ol' **test to see what works** algorithm.
@@ -70,9 +71,9 @@ Notice that the units are in pixels, rather than centimeters or other common CSS
 The template also uses the GOA colours for highlights. We need to explicitly tell puppeteer to render colours exactly, otherwise they come out as grey tones;
 
 ```css
-<style>
-    html { -webkit-print-color-adjust: exact; }
-</style>
+html {
+  -webkit-print-color-adjust: exact;
+}
 ```
 
 ## Build the Page Header
@@ -124,10 +125,17 @@ In our example, we have handlebars for the applicants name, alias, and date of b
 Styling the HTML also has some interesting features.  First, define a container for the header and set its width at ~60% of the page width of 210mm (a4). This was determined empirically, and changes may require a bit of back and forth testing to find the best fit.
 
 ```css
-<style>
-    .header-wrapper { padding: 0 0 0 2cm; margin: 0; width: 130mm; }
-    .header-wrapper p, div { margin: 0; padding: 0; font-size: 8pt; }
-</style>
+.header-wrapper {
+  padding: 0 0 0 2cm;
+  margin: 0;
+  width: 130mm;
+}
+.header-wrapper p,
+div {
+  margin: 0;
+  padding: 0;
+  font-size: 8pt;
+}
 ```
 
 It is also _very important_ to explicitly set the font-size of the header content. Otherwise, at times, randomly it seems, puppeteer sets the font size to zero and your content appears to have vanished.
@@ -226,11 +234,11 @@ would yield three history blocks, each looking something like
 One of the goals for the IRC template was to avoid page breaks over the history blocks. That is, if a block can fit on one page, make it do so. Pagination is controlled by Puppeteer, and it pays attention to [CSS @media directives](https://www.smashingmagazine.com/2018/05/print-stylesheets-in-2018/).
 
 ```css
-<style>
 @media print {
-  .history { page-break-inside: avoid; }
+  .history {
+    page-break-inside: avoid;
+  }
 }
-</style>
 ```
 
 By wrapping each history block in a <div> tag with class history, Puppeteer will endeavor to place each one on a single page. Of course, if the content of a block spans more than one, this is not possible.

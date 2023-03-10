@@ -75,29 +75,8 @@ const request = {
 };
 ```
 
-where ircData is a Json object containing the data collected by the application to use for variable substitutions:
-
-```json
-{
-  "date": "Jan 19, 2023",
-  "applicant": { "firstName": "Bob", "lastName": "Smith", "middleName": "J.", "alias": "Billy", "dob": "Jan 19, 1999" },
-  "caseWorker": {
-    "name": "Bob Bing",
-    "signature": "https://drive.google.com/uc?export=view&id=1BRi8Acu3RMNTMpHjzjRh51H3QDhshicC"
-  },
-  "reason": "I am applying to work directly with children etc.",
-  "history": [
-    { "title": "Alberta History", "content": ["Paragraph 1", "Paragraph 2", "Paragraph 3"] },
-    { "title": "BC History", "content": ["Lorem ipsum dolor sit amet, etc."] },
-    { "title": "England History", "content": ["Lorem ipsum dolor sit amet, etc."] }
-  ],
-  "position": [
-    { "organization": "Downton Abby", "position": "Head Grounds Keeper" },
-    { "organization": "Government of Canada", "position": "Ambassador to France" },
-    { "organization": "Stanford University", "position": "Professor Emeritus" }
-  ]
-}
-```
+where ircData is a Json object containing the data collected by the application to use for variable substitutions. Note, the data for our tutorial can be
+<a href="/adsp-monorepo/assets/pdf/test_data.json" download>downloaded here</a>.
 
 Generate the PDF file by submitting a Job
 
