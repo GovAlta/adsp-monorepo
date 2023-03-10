@@ -8,16 +8,18 @@ grand_parent: Tutorials
 
 ## Introduction
 
-Handlebars are the heart of the PDF service's templates.  They're a powerful templating language that lets users embed keys into their PDF template and then, later, use a JSON structure to map the keys to actual values when generating a document.  The mapping is what allows applications to create customized PDF documents. Designers use HTLM, boiler-plate text, CSS, and handlebar keys to build a template, and the applications gathers together values for each of the template keys.  Used together with a simple API call, applications can build customized PDF documents.
+Handlebars are the heart of the PDF service's templates.  They're a powerful template language that lets users embed keys into their PDF template and then, later, use a JSON structure to map the keys to actual values when generating a document.  The mapping is what allows applications to create customized PDF documents. Designers use HTML, boiler-plate text, CSS, and handlebar keys to build a template, and the applications gathers together values for each of the template keys.  Used together with a simple API call, applications can build customized PDF documents.
 
 ## Usage
 
 Handlebar keys are embedded into the template as text values surrounded by curly braces, e.g.
+{% raw %}
 
 ```handlebars
 The rain in {{data.country}} lies mainly in the {{data.landmark}}
 ```
 
+{% endraw %}
 Here we have two handlebar keys; country and landmark.  Notice the keys are prefixed by the data. Identifier.  This is specific to the PDF service's implementation and not part of Handlebars itself.  It is very important to remember to use this prefix, otherwise the substitution of key to value will not occur, and the key will just be ignored in the generated document.
 
 The key-value pairing is specified as a JSON object, e.g.

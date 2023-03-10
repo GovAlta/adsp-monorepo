@@ -8,7 +8,7 @@ grand_parent: Tutorials
 
 ## Getting Started
 
-The PDF Service allows you to automatically build a customized PDF document from an HTML template and a set of template variable-assignments. You can use the PDF Service's [Template Editor](https://adsp.alberta.ca) to build one interactively, or use the API's to save one you already have. Either way, once you've put a template into the system you can start using it in your application to generate downloadable PDF documents for your end users.
+The PDF Service allows you to automatically build a customized PDF document from an HTML template and a set of template variable-assignments. You can use the PDF Service's [Template Editor](https://adsp.alberta.ca) to build one interactively, and once it's in the system you can start using it in your application to generate downloadable PDF documents for your end users.
 
 PDF generation is accomplished through a series of API calls that create the PDF and store it within the [File Service](/adsp-monorepo/services/file-service.html), where you have access to it through a file ID. The main steps are:
 
@@ -34,7 +34,8 @@ Continuing on from the tutorial on how to [Build a Template](/adsp-monorepo/tuto
 Using the information required to authenticate your application, you can grab an access token required to access the PDF Service as follows:
 
 ```typescript
-const response = await fetch(`https://access.alberta.ca/auth/realms/${realmID}/protocol/openid-connect/token`, {
+const accessUrl = `https://access.alberta.ca/auth/realms/${realmID}/protocol/openid-connect/token`;
+const response = await fetch(accessUrl, {
   method: 'POST',
   body: new URLSearchParams({
     grant_type: 'client_credentials',

@@ -16,7 +16,7 @@ The PDF service is ideal for these kinds of requirements, as it enables develope
 - generate fully customized PDF documents on demand, and
 - present the final document for the user to view or download.
 
-A template -  consisting of page headers, page footers, some boiler-plate text, placeholders for customization, and formatting - is built via the Template Editor within the PDF service, using HTML and CSS for page formatting.  Proficiency in those technologies is necessary for anyone wanting to build anything more than a trivial template.
+A template -  consisting of page headers, page footers, some boiler-plate text, placeholders for customization - is built via the Template Editor within the PDF service, using HTML and CSS for page formatting.  Proficiency in those technologies is necessary for anyone wanting to build anything more than a trivial template.
 
 Generating the final document, and providing access to it, is done through a series of RESTful API calls to the PDF service in the language of your choice.  The examples given here are written with NodeJS.
 
@@ -25,7 +25,9 @@ You will also need to have access to GOA's Keycloak platform.  These are need
 - by the template designer to login to ADSP's Tenant Admin webapp, to access the PDF template editor, and
 - by the application using the template to acquire access tokens for the API calls.
 
-The following recipe will guide you through the steps the CS team needed to go through accomplish their task.
+The following recipe will guide you through the steps the CS team needed to go through accomplish their task. You can download the full set of HTML and test data here:
+
+- [Header](/adsp-monorepo/assets/pdf/header.html)
 
 ## The Template Editor
 
@@ -36,14 +38,23 @@ Once you are able to log in, select PDF on the left menu, and then the Templates
 - **Header**: to design the document's header's in HTML,
 - **Footer**: to design the document's footer's in HTML,
 - **Body**: to design the main content of the document in HTML,
-- **CSS**: to style the document,
-- **Test Data**: to specify typical values for the variables used in the template, for when you are testing to see how a document actually looks, and
+- **CSS**: to specify styles that are common to all three components of the document; header, footer, and body
+- **Test Data**: to specify typical values for the Handlebars variables used in the template, for when you are testing to see how a document actually looks, and
 - **File History**: a collection of PDF documents generated, for testing purposes, during your current session.
-  On the right, you can see an area for previewing your PDF's. When you want to see how the template is coming along you can specify values for your template variables on the _Test Data_ tab, then click Generate PDF on the top right. Typically, your workflow will be to make changes to the template, preview them, and repeat.
+
+#### The Default Template
+
+To give template designers a head start, when a new template is created it will be populated with some default HTML/CSS. It contains a typical GOA header and footer, and some guidelines for things one might find in the body. You can customize this template to suite your needs, or you can delete it and build your own from scratch. In this tutorial we will be building a template from scratch.
+
+#### Testing Your Design
+
+When building a complex template it is important to be able to visualize how it is looking as you progress in your work, much like with web-design. The right-hand pane of the Template Editor contains an area for previewing PDF's. When you want to check your progress you can specify "typical" values for your [Handlebars](/adsp-monorepo/tutorials/pdf/handlebars.html) variables on the _Test Data_ tab, then click Generate PDF on the top right. It may take a few seconds, but the PDF will soon show up in the pane.
+
+The editor also keeps a list of the last few PDF files generated in your session, on the _File History_ tab, so you can look back at them if the need arises. The list is short, and temporary, so please download any files you may want to keep around for prosperity.
 
 ## Define Page Attributes
 
-The first step is to define the boundaries for the page. Puppeteer – the PDF generation engine used by the PDF service – allocates room for headers and footers via page margins. The header defaults to 10px in height. Since the IRC header is much higher than 10px these margins must be changed, or the lower portion of the header block will be obscured with body content. We can do this by setting the page margins on the CSS tab:
+The first step is to define the boundaries for the page. [Puppeteer](/adsp-monorepo/tutorials/pdf/puppeteer.html) – the PDF generation engine used by the PDF service – allocates room for headers and footers via page margins. The header defaults to 10px in height. Since the IRC header is much higher than 10px these margins must be changed, or the lower portion of the header block will be obscured with body content. We can do this by setting the page margins on the body tab:
 
 ```css
 <style>
@@ -60,7 +71,7 @@ The template also uses the GOA colours for highlights. We need to explicitly tel
 ```css
 <style>
     html { -webkit-print-color-adjust: exact; }
-<style>
+</style>
 ```
 
 ## Build the Page Header
@@ -118,7 +129,7 @@ Styling the HTML also has some interesting features.  First, define a container
 </style>
 ```
 
-It is very important to explicitly set the font-size of the header content. Otherwise, at times, randomly it seems, puppeteer sets the font size to zero and your content appears to have vanished.
+It is also _very important_ to explicitly set the font-size of the header content. Otherwise, at times, randomly it seems, puppeteer sets the font size to zero and your content appears to have vanished.
 
 The rest is pretty much standard CSS for managing layout, as you would normally do for any webpage.
 
@@ -140,7 +151,7 @@ Again, the HTML is quite simple
 
 #### Anchoring the footer
 
-In spite of setting the page margins to 0, however, Puppeteer still needs some coaxing to get the footer flush with the bottom of the page. To force the issue set the position to relative and push the wrapper down a bit. Trial and error found 1.37cm worked in this instance. This value depends on the height of the header and will need adjusting as the latter changes.
+In spite of setting the page margins to 0 Puppeteer still needs some coaxing to get the footer flush with the bottom of the page. To force the issue set the position to relative and push the wrapper down a bit. Trial and error found 1.37cm worked in this instance. This value depends on the height of the header and will need adjusting as the latter changes.
 
 ```css
 .footer-wrapper {
@@ -172,7 +183,7 @@ There is not a lot of boilerplate text in the IRC body. Most of it is input by t
 
 #### Handlebars Iterators
 
-Since we don't know how much history there is going to be, this is a perfect opportunity to utilize handlebars iterator construct, which looks like this:
+Since we don't know how much history there is going to be, this is a perfect opportunity to utilize [handlebars iterator](https://handlebarsjs.com/guide/builtin-helpers.html#each) construct, which looks like this:
 
 {% raw %}
 
@@ -211,7 +222,7 @@ would yield three history blocks, each looking something like
 
 #### Avoiding Page Breaks
 
-One of the goals for the IRC template was to avoid page breaks over the history blocks. That is, if a block can fit on one page, make it do so. Pagination is controlled by Puppeteer, and it pays attention to CSS @media directives.
+One of the goals for the IRC template was to avoid page breaks over the history blocks. That is, if a block can fit on one page, make it do so. Pagination is controlled by Puppeteer, and it pays attention to [CSS @media directives](https://www.smashingmagazine.com/2018/05/print-stylesheets-in-2018/).
 
 ```css
 <style>
@@ -256,6 +267,8 @@ Another interesting requirement was the placement of a title on each page that h
 ```
 
 {% endraw %}
+
+![](adsp_monorepo/assets/pdf/history_page_header.png)
 
 #### Watermarks
 
