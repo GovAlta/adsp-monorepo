@@ -3,7 +3,6 @@ import { PdfTemplate } from '@store/pdf/model';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Edit, OverflowWrap } from '../styled-components';
 import { GoAIconButton } from '@abgov/react-components/experimental';
-import { GoABadge } from '@abgov/react-components/experimental';
 import { useRouteMatch } from 'react-router';
 import { useHistory } from 'react-router-dom';
 

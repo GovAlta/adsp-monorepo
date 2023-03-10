@@ -1,7 +1,6 @@
 import { Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
 import PDFServicePage from './pdf-service.page';
 import commonlib from '../common/common-library';
-import { find } from 'lodash';
 
 const pdfServiceObj = new PDFServicePage();
 
@@ -115,6 +114,16 @@ When(
 );
 
 Then('the user views {string}, {string} and {string} in PDF template modal', function (name, templateId, description) {
+  pdfServiceObj.pdfTemplateEditorNameField().should('eq', name);
+  pdfServiceObj.pdfTemplateEditorTemplateIDField().should('eq', templateId);
+  pdfServiceObj.pdfTemplateEditorDescriptionField().should('eq', description);
+});
+
+When('When the user clicks "Edit" icon in editor screen', function () {
+  pdfServiceObj.pdfTemplateEditorScreenEditIcon().shadow().find('.goa-icon').click();
+});
+
+Then('the user views {string}, {string} and {string} in PDF template editor', function (name, templateId, description) {
   pdfServiceObj.pdfTemplateModalNameField().invoke('attr', 'value').should('eq', name);
   pdfServiceObj.pdfTemplateModalTemplateIdField().invoke('attr', 'value').should('eq', templateId);
   pdfServiceObj
@@ -207,4 +216,8 @@ Then('the user views the {string} preview of {string}', function (type, previewC
     default:
       expect(type.toLowerCase()).to.be.oneOf(['pdf', 'header', 'footer']);
   }
+});
+
+Then('the user views the PDF template editor screen', function () {
+  pdfServiceObj.pdfTemplateEditorScreenTitle();
 });

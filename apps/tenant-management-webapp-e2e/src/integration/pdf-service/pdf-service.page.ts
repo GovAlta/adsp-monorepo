@@ -83,6 +83,15 @@ class PDFServicePage {
     return cy.xpath('//*[contains(@data-testid, "modal-description-textarea")]');
   }
 
+  pdfTemplateEditorNameField() {
+    return cy.xpath('//*[@data-testid="template-name"]');
+  }
+  pdfTemplateEditorTemplateIDField() {
+    return cy.xpath('//*[@data-testid="template-id"]');
+  }
+  pdfTemplateEditorDescriptionField() {
+    return cy.xpath('//*[@data-testid="template-description"]');
+  }
   pdfTemplateModalSaveBtn() {
     return cy.xpath('//button[@data-testid="template-form-save"]');
   }
@@ -127,6 +136,18 @@ class PDFServicePage {
 
   pdfTemplateModalFooterPreview() {
     return cy.xpath('//iframe[@title="Footer"]');
+  }
+
+  pdfTemplateEditorScreenTitle() {
+    return cy.xpath('//div[text()="PDF / Template Editor"]');
+  }
+
+  pdfTemplateEditorPreviewTitle() {
+    return cy.xpath('//div[text()="PDF preview"]');
+  }
+
+  pdfTemplateEditorScreenEditIcon() {
+    return cy.xpath('//*[@data-testid="pdf-template-information-edit-icon"]');
   }
 }
 export default PDFServicePage;
