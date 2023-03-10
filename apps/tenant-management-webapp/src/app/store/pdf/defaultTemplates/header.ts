@@ -51,7 +51,7 @@ export const defaultTemplateHeader = `<style>
     -- learn all about how Handlebars works here:
     --    https://govalta.github.io/adsp-monorepo/tutorials/pdf/introduction.html
     --
-    -- See the JSON in the Test Variables tab for the examples used here.
+    -- See the JSON in the Test Data tab for the examples used here.
     -->
   <p>{{data.service.name}}</p>
   <div class="subtitle"><span>{{data.document.name}}</span><span>{{data.service.protection}}</span></div>
