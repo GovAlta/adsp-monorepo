@@ -15,7 +15,7 @@ The PDF service allows developers to build templates for their applications to u
 Two main components are used for managing pdf templates:
 
 - The ADSP Tenant Admin Webapp, which provides a GUI for developers to build, test and save their templates using HTML, CSS and a custom designed set of embedded template variables,
-- APIs to access the saved templates and generate a PDF document using a template and application-supplied values for the template variables.
+- APIs to access the saved templates and generate a PDF document using a template and application-supplied values for the input data.
 
 The template engine is based on [Puppeteer](https://pptr.dev/) - used for the HTML/CSS to PDF conversion process, and [Handlebars](https://handlebarsjs.com/guide/), which manages template customization.
 
