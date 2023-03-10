@@ -16,9 +16,9 @@ The PDF service is ideal for these kinds of requirements, as it enables develope
 - generate fully customized PDF documents on demand, and
 - present the final document for the user to view or download.
 
-A template -  consisting of page headers, page footers, some boiler-plate text, placeholders for customization - is built via the Template Editor within the PDF service, using HTML and CSS for page formatting.  Proficiency in those technologies is necessary for anyone wanting to build anything more than a trivial template.
+A template -  consisting of page headers, page footers, some boiler-plate text, placeholders for customization - is built via the [Template Editor](https://adsp.alberta.ca) within the PDF service, using HTML and CSS for page formatting.  Proficiency in those technologies is necessary for anyone wanting to build anything more than a trivial template.
 
-Generating the final document, and providing access to it, is done through a series of RESTful API calls to the PDF service in the language of your choice.  The examples given here are written with NodeJS.
+Generating the final document, and providing access to it, is done through a series of RESTful API calls to the [PDF service](https://api.adsp.alberta.ca/autotest/?urls.primaryName=PDF%20service) in the language of your choice.  The examples given here are written with NodeJS.
 
 You will also need to have access to GOA's Keycloak platform.  These are needed
 
@@ -118,7 +118,7 @@ Notice the code-like constructs between double curly braces. Each page of the PD
 }
 ```
 
-In our example, we have handlebars for the applicants name, alias, and date of birth, as well as the current date. Notice that the placeholder names always have a data. prefix. This is _very important_, as without the prefix the handlebar will be ignored. The rest of the name in the handlebar is used as a key, to map it to actual data when the PDF is generated.
+In our example, we have handlebars for the applicants name, alias, and date of birth, as well as the current date. Notice that the placeholder names always have a _data._ prefix. This is _very important_, as without the prefix the handlebar will be ignored. _Equally important_ though, is the fact that the JSON data does not have the _data._ prefix. With it, the data will be ignored. Its a quirk of our system. The rest of the name in the handlebar is used as a key, to map it to actual data when the PDF is generated.
 
 #### General Page Layout
 
@@ -160,17 +160,17 @@ Again, the HTML is quite simple
 
 #### Anchoring the footer
 
-In spite of setting the page margins to 0 Puppeteer still needs some coaxing to get the footer flush with the bottom of the page. To force the issue set the position to relative and push the wrapper down a bit. Trial and error found 1.37cm worked in this instance. This value depends on the height of the header and will need adjusting as the latter changes.
+In spite of setting the page margins to 0 Puppeteer still needs some coaxing to get the footer flush with the bottom of the page. To force the issue set the position to relative and push the wrapper down a bit. Trial and error found 7.6mm worked in this instance. This value depends on the height of the header and will need adjusting as the latter changes.
 
 ```css
 .footer-wrapper {
   width: 210mm;
-  border-bottom: 2mm solid #00aad2; // GOA Blue.
+  border-bottom: 2mm solid #00aad2;
   padding: 5mm 0 5mm 1cm;
   font-size: 10pt;
   background-color: lightgrey;
   position: relative;
-  top: 1.37cm;
+  top: 7.6mm;
 }
 ```
 
@@ -229,9 +229,11 @@ would yield three history blocks, each looking something like
 
 ![](/adsp-monorepo/assets/pdf/history.png)
 
+The #each iterator operates on JSON arrays, allowing you to easily collect and process lists of data.
+
 #### Avoiding Page Breaks
 
-One of the goals for the IRC template was to avoid page breaks over the history blocks. That is, if a block can fit on one page, make it do so. Pagination is controlled by Puppeteer, and it pays attention to [CSS @media directives](https://www.smashingmagazine.com/2018/05/print-stylesheets-in-2018/).
+One of the goals for the IRC template was to avoid page breaks over the history blocks. That is, if a block can fit on one page, make it do so. Pagination is controlled by Puppeteer, and it pays attention to CSS @[media directives](https://www.smashingmagazine.com/2018/05/print-stylesheets-in-2018/).
 
 ```css
 @media print {
@@ -277,7 +279,7 @@ Another interesting requirement was the placement of a title on each page that h
 
 {% endraw %}
 
-![](adsp_monorepo/assets/pdf/history_page_header.png)
+![](adsp-monorepo/assets/pdf/history_page_header.png)
 
 #### Watermarks
 
@@ -307,6 +309,10 @@ You can add watermarks to your PDF pages, which can be important for identificat
 In this example we've used text, but it's easy enough to place a background image instead, if desired. The body, with the above watermark, will look something like the following:
 
 ![](/adsp-monorepo/assets/pdf/watermarks.png)
+
+## Wrapping Up
+
+There are still things to learn about [Puppeteer](https://pptr.dev/) and [Handlebars](https://handlebarsjs.com/guide/), but the information presented here will give you a good starting point for developing your own templates. Starting with the _default template_ that initially populates your design, you should be able to craft one, or more, to suit your application needs.
 
 ## Learn More
 
