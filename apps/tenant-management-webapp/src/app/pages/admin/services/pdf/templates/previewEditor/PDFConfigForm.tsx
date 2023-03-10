@@ -25,7 +25,7 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
               <th>Name</th>
             </tr>
             <tr>
-              <td>{name}</td>
+              <td data-testid="template-name">{name}</td>
             </tr>
           </thead>
         </table>
@@ -38,7 +38,7 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
               <th>Template ID</th>
             </tr>
             <tr>
-              <td>{id}</td>
+              <td data-testid="template-id">{id}</td>
             </tr>
           </thead>
         </table>
@@ -51,7 +51,7 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
               <th>Description</th>
             </tr>
             <tr>
-              <td>{description}</td>
+              <td data-testid="template-description">{description}</td>
             </tr>
           </thead>
         </table>
