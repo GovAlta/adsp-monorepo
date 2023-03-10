@@ -14,6 +14,7 @@ export const FETCH_PDF_METRICS_SUCCESS_ACTION = 'pdf/FETCH_PDF_METRICS_SUCCESS';
 
 export const GENERATE_PDF_ACTION = 'pdf/GENERATE_PDF_ACTION';
 export const GENERATE_PDF_SUCCESS_ACTION = 'pdf/GENERATE_PDF_SUCCESS_ACTION';
+export const GENERATE_PDF_SUCCESS_PROCESSING_ACTION = 'pdf/GENERATE_PDF_SUCCESS_PROCESSING_ACTION';
 export const UPDATE_PDF_RESPONSE_ACTION = 'pdf/UPDATE_PDF_RESPONSE_ACTION';
 export const STREAM_PDF_SOCKET_ACTION = 'pdf/STREAM_PDF_SOCKET_ACTION';
 export const SHOW_CURRENT_FILE_PDF = 'pdf/SHOW_CURRENT_FILE_PDF';
@@ -35,6 +36,10 @@ export interface FetchPdfTemplatesSuccessAction {
 
 export interface GeneratePdfSuccessAction {
   type: typeof GENERATE_PDF_SUCCESS_ACTION;
+  payload: PdfGenerationResponse;
+}
+export interface GeneratePdfSuccessProcessingAction {
+  type: typeof GENERATE_PDF_SUCCESS_PROCESSING_ACTION;
   payload: PdfGenerationResponse;
 }
 
@@ -170,6 +175,10 @@ export const streamPdfSocket = (disconnect: boolean): StreamPdfSocketAction => (
 
 export const generatePdfSuccess = (results: PdfGenerationResponse): GeneratePdfSuccessAction => ({
   type: GENERATE_PDF_SUCCESS_ACTION,
+  payload: results,
+});
+export const generatePdfSuccessProcessing = (results: PdfGenerationResponse): GeneratePdfSuccessProcessingAction => ({
+  type: GENERATE_PDF_SUCCESS_PROCESSING_ACTION,
   payload: results,
 });
 

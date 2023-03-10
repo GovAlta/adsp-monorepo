@@ -51,9 +51,13 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
     return state?.pdf.files;
   });
 
+  console.log(JSON.stringify(files) + '<-----------files');
+
   const currentId = useSelector((state: RootState) => {
     return state?.pdf.currentId;
   });
+
+  console.log(JSON.stringify(currentId) + '<-----------currentId');
 
   useEffect(() => {
     const handleWindowResize = () => {

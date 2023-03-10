@@ -16,6 +16,7 @@ import {
   UPDATE_PDF_TEMPLATE_ACTION,
   GeneratePdfAction,
   generatePdfSuccess,
+  generatePdfSuccessProcessing,
   GENERATE_PDF_ACTION,
   addToStream,
   STREAM_PDF_SOCKET_ACTION,
@@ -27,6 +28,8 @@ import {
   SHOW_CURRENT_FILE_PDF,
   ShowCurrentFilePdfAction,
   showCurrentFilePdfSuccess,
+  GENERATE_PDF_SUCCESS_PROCESSING_ACTION,
+  GeneratePdfSuccessProcessingAction,
 } from './action';
 import { readFileAsync } from './readFile';
 import { io } from 'socket.io-client';
@@ -69,6 +72,30 @@ export function* fetchPdfTemplates(): SagaIterator {
         })
       );
     }
+  }
+}
+export function* generatePdfSuccessProcessingSaga(action: GeneratePdfSuccessProcessingAction): SagaIterator {
+  let jobs = yield select((state: RootState) => state.pdf?.jobs);
+
+  const newJobs = JSON.parse(JSON.stringify(jobs));
+  const index = jobs.findIndex((job) => job.id === action.payload.context?.jobId);
+  if (index > -1) {
+    if (!jobs[index].stream) {
+      jobs[index].stream = [];
+    }
+    jobs[index].stream.push(action.payload);
+    jobs[index].status = action.payload.name;
+  } else {
+    if (action.payload?.filename) {
+      jobs = [action.payload].concat(jobs);
+    }
+  }
+  console.log(JSON.stringify(jobs) + '<---jobs222---------');
+  if (JSON.stringify(jobs) !== JSON.stringify(newJobs)) {
+    console.log('Different');
+    yield put(generatePdfSuccess(action.payload));
+  } else {
+    console.log('same');
   }
 }
 
@@ -186,6 +213,7 @@ export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIte
   const pushServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pushServiceApiUrl);
   const token: string = yield call(getAccessToken);
   const tenant = yield select((state: RootState) => state?.tenant);
+  const jobs = yield select((state: RootState) => state?.pdf.jobs);
 
   // This is how a channel is created
   const createSocketChannel = (socket) =>
@@ -226,12 +254,32 @@ export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIte
       while (true) {
         const payload = yield take(socketChannel);
         currentEvents.push(payload);
+        console.log(JSON.stringify(payload) + ' <payload');
         yield put(addToStream(payload));
-        yield put(generatePdfSuccess(payload));
+        yield put(generatePdfSuccessProcessing(payload));
 
-        if (payload?.name === 'pdf-generated' || payload?.name === 'pdf-generation-failed') {
-          yield put({ type: FETCH_FILE, fileId: payload?.payload?.file?.id });
-        }
+        // let newJobs = JSON.parse(JSON.stringify(jobs));
+
+        // console.log(JSON.stringify(jobs) + ' <jobs');
+
+        // const index = newJobs.findIndex((job) => job.id === payload.context?.jobId);
+        // if (index > -1) {
+        //   if (!newJobs[index].stream) {
+        //     newJobs[index].stream = [];
+        //   }
+        //   newJobs[index].stream.push(payload);
+        //   newJobs[index].status = payload.name;
+        // } else {
+        //   if (payload?.filename) {
+        //     newJobs = [payload.payload].concat(payload);
+        //   }
+        // }
+
+        //console.log(JSON.stringify(newJobs) + ' <newJobs');
+
+        // if (payload?.name === 'pdf-generated' || payload?.name === 'pdf-generation-failed') {
+        //   yield put({ type: FETCH_FILE, fileId: payload?.payload?.file?.id });
+        // }
 
         yield fork(emitResponse, socket);
       }
@@ -342,4 +390,5 @@ export function* watchPdfSagas(): Generator {
   yield takeEvery(STREAM_PDF_SOCKET_ACTION, streamPdfSocket);
   yield takeEvery(DELETE_PDF_TEMPLATE_ACTION, deletePdfTemplate);
   yield takeEvery(SHOW_CURRENT_FILE_PDF, showCurrentFilePdf);
+  yield takeEvery(GENERATE_PDF_SUCCESS_PROCESSING_ACTION, generatePdfSuccessProcessingSaga);
 }

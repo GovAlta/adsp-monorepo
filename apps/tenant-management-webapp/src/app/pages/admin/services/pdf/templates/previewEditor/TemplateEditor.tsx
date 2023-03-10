@@ -28,6 +28,7 @@ import { RootState } from '@store/index';
 import { streamPdfSocket } from '@store/pdf/action';
 import { LogoutModal } from '@components/LogoutModal';
 import { showCurrentFilePdf, setPdfDisplayFileId } from '@store/pdf/action';
+import { FetchFileService } from '@store/file/actions';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -83,12 +84,20 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
   const jobList = useSelector((state: RootState) => state.pdf.jobs.filter((job) => job.templateId === template.id));
+  const reloadFile = useSelector((state: RootState) => state.pdf?.reloadFile);
 
   useEffect(() => {
     if (!socketChannel) {
       dispatch(streamPdfSocket(false));
     }
   }, [socketChannel]);
+
+  useEffect(() => {
+    console.log('reloadFile: ' + reloadFile);
+    if (reloadFile) {
+      dispatch(FetchFileService(reloadFile));
+    }
+  }, [reloadFile]);
 
   useEffect(() => {
     setTmpTemplate(template);

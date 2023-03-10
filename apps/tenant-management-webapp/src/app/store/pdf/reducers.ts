@@ -20,12 +20,14 @@ const defaultState: PdfState = {
   jobs: [],
   status: [],
   socketChannel: null,
+  reloadFile: null,
   files: {},
   currentFile: null,
   currentId: '',
 };
 
 export default function (state: PdfState = defaultState, action: PdfActionTypes): PdfState {
+  console.log(JSON.stringify(action.type) + ' <action.type');
   switch (action.type) {
     case FETCH_PDF_TEMPLATES_SUCCESS_ACTION:
       return {
@@ -100,9 +102,12 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
           jobs = [action.payload].concat(jobs);
         }
       }
+      console.log(JSON.stringify(jobs) + '<---jobs---------');
+
       return {
         ...state,
         jobs: jobs,
+        reloadFile: action.payload?.payload?.file?.id,
       };
     }
     case SOCKET_CHANNEL: {
