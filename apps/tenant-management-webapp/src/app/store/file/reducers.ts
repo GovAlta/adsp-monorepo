@@ -1,4 +1,3 @@
-import { StreamPayloadTable } from '@pages/admin/services/events/stream/testStream/streamPayloadTable';
 import {
   ActionTypes,
   FETCH_FILE_LIST_SUCCESSES,

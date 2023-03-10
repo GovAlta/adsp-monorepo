@@ -21,6 +21,9 @@ Feature: PDF service
 
     # # Edit a PDF template  need rewrite
     When the user clicks "Edit" icon of "autotest-pdf-template", "autotest-pdf-template" and "autotest PDF template desc" on PDF templates page
+    Then the user views the PDF template editor screen
+    Then the user views "autotest-pdf-template", "autotest-pdf-template" and "autotest PDF template desc" in PDF template editor
+    When the user clicks "Edit" icon in editor screen
     Then the user views "autotest-pdf-template", "autotest-pdf-template" and "autotest PDF template desc" in PDF template modal
     When the user enters "autotest-pdf-templateNew" as name and "autotest PDF template new desc" as description in PDF template modal
     And the user enters "autotest body {{ data.testVariable }}" for "Body" in PDF template modal
@@ -50,5 +53,6 @@ Feature: PDF service
     # When the user selects "Test generate" tab for "PDF"
     # Then no critical or serious accessibility issues on "PDF Test generate page"
     When the user clicks "Edit" icon of "autotest-accessibility-test", "autotest-accessibility-test" and "DO-NOT-DELETE" on PDF templates page
-    Then the user views "autotest-accessibility-test", "autotest-accessibility-test" and "DO-NOT-DELETE" in PDF template modal
+    Then the user views the PDF template editor screen
+    Then the user views "autotest-accessibility-test", "autotest-accessibility-test" and "DO-NOT-DELETE" in PDF template editor
     And no critical or serious accessibility issues for "PDF template modal" on "PDF templates page"

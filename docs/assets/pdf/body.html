@@ -1,0 +1,162 @@
+<style>
+  @media print {
+    .history,
+    .authorized-by {
+      page-break-inside: avoid;
+    }
+  }
+  @page {
+    margin: 220px 0 100px 0;
+  }
+  .body-wrapper {
+    padding: 0 2cm 1cm 2.3cm;
+  }
+  th div {
+    text-align: left;
+    width: 100%;
+  }
+  .title {
+    margin-top: 5mm;
+  }
+  .content table {
+    margin-bottom: 3mm;
+    margin-top: 5mm;
+    width: 60%;
+    border: 1px solid lightgrey;
+  }
+  .content thead,
+  .title {
+    background-color: lightgrey;
+  }
+  .content th {
+    border: 1px solid lightgrey;
+  }
+  .content th,
+  td {
+    text-align: left;
+    font-weight: normal;
+    padding: 1mm;
+  }
+  .title,
+  .content {
+    border: 1px solid lightgrey;
+    padding: 0.5mm 3mm;
+  }
+  table {
+    border-collapse: collapse;
+  }
+  .body-wrapper:before {
+    content: 'Government of Alberta Confidential';
+    position: fixed;
+    top: 0;
+    bottom: 120px;
+    left: 0;
+    right: 0;
+    z-index: -1;
+
+    color: #00aad2;
+    font-size: 80pt;
+    font-weight: 500px;
+    display: grid;
+    justify-content: center;
+    align-content: center;
+    opacity: 0.1;
+    transform: rotate(-45deg);
+  }
+  .caseWorker {
+    margin-bottom: 3mm;
+    font-weight: bold;
+  }
+  .caseWorker p,
+  .office p {
+    margin: 0;
+    padding: 0;
+  }
+  .history {
+    font-family: 'Times New Roman', Times, serif;
+  }
+  .history th {
+    text-align: left;
+  }
+</style>
+<div class="body-wrapper">
+  <p>Dear {{data.applicant.firstName}} {{data.applicant.middleName}} {{data.applicant.lastName}}</p>
+  <p></p>
+  <div>
+    <p>
+      A search based on all the <b>name(s) and birthdate(s)</b> submitted has indicated that there is an Intervention
+      Services record in Alberta, British Columbia and England, indicating that you might have caused a child to need
+      intervention. This search was conducted from identification and information provided by the applicant.
+    </p>
+    <p>
+      <b>Note</b>: Alberta Children’s Services Ministry cannot ensure that the information on this form is reliable for
+      screening an applicant for employment. The Ministry assumes no liability arising from using this information.
+      Anyone using the information does so at their own risk and must consider all the information provided for
+      organizations and for job seekers [direct to link: https://irc-client-uat.azurewebsites.net/irc].
+      <b>In addition, all identifications provided by the applicant have been permanantly deleted.</b>
+    </p>
+  </div>
+  <div>
+    <div class="title">Reason for requesting an IRC</div>
+    <div class="content">
+      {{data.reason}}
+      <table>
+        <thead>
+          <tr>
+            <th>Organization</th>
+            <th>Position</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each data.position}}
+          <tr>
+            <td>{{this.organization}}</td>
+            <td>{{this.position}}</td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="history">
+    <table>
+      <thead>
+        <tr>
+          <th>Summary of your involvement up to today.</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each data.history}}
+        <tr>
+          <td>
+            <div class="title">{{this.title}}</div>
+            <div class="content">
+              {{#each this.content}}
+              <p>{{this}}</p>
+              {{/each}}
+            </div>
+          </td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  <div class="authorized-by">
+    <p>
+      I {{data.caseWorker.name}} state that the results of this Intervetion Record Check is true to the best of my
+      knowlege.
+    </p>
+    <p>Yours truely,</p>
+    <img src="{{{data.caseWorker.signature}}}" width="80px" height="40px" />
+    <div class="caseWorker">
+      <p>{{data.caseWorker.name}}</p>
+      <p>Intervention Record Check Unit</p>
+      <p>Alberta Children’s Services</p>
+    </div>
+    <div class="office">
+      <p>Calgary, Alberta, Regional Office</p>
+      <p>Email Address: CS.IRCCalgary@ab.gov.ca</p>
+      <p>Phone Number: 403-297-6100</p>
+    </div>
+  </div>
+</div>
