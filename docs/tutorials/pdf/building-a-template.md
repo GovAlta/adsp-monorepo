@@ -28,6 +28,7 @@ You will also need to have access to GOA's Keycloak platform.  These are need
 The following recipe will guide you through the steps the CS team needed to go through accomplish their task. You can download the full set of HTML and test data here:
 
 - [Header](/adsp-monorepo/assets/pdf/header.html)
+- <a href="/adsp-monorepo/assets/pdf/header.html" download>Header</a>
 
 ## The Template Editor
 
