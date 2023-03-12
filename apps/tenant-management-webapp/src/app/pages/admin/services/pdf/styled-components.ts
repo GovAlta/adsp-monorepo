@@ -174,7 +174,7 @@ export const PreviewContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: 85%;
-  margin-right: 2rem;
+  margin-right: 3rem;
 `;
 
 export const SubjectPreview = styled.div`
@@ -216,6 +216,8 @@ export const PdfConfigFormWrapper = styled.div`
   background-color: #f1f1f1;
   padding-right: 1rem;
   border-bottom: solid 16px #f1f1f1;
+  border: solid 1px #dcdcdc;
+
   display: flex;
   margin-bottom: 2.5rem;
   .nameColumn {
@@ -233,6 +235,11 @@ export const PdfConfigFormWrapper = styled.div`
     width: calc(100% - 336px);
     float: left;
     height: 100%;
+    overflow: hidden;
+  }
+  .overflowContainer {
+    border-bottom: 16px solid #f1f1f1;
+    height: 64px;
     overflow: hidden;
   }
   .editColumn {
@@ -263,7 +270,7 @@ export const PdfConfigFormWrapper = styled.div`
 export const PdfEditActionLayout = styled.div`
   position fixed;
   bottom: 4rem;
-  width: calc(100% - 40vw - 5.2rem);
+  width: calc(100% - 40vw - 5.3rem);
 `;
 
 export const PdfEditActions = styled.div`
@@ -349,7 +356,6 @@ export const PDFTitle = styled.div`
   line-height: var(--lh-lg);
   font-weight: var(--fw-regular);
 `;
-
 
 export const HideTablet = styled.div`
   @media (max-width: 1439px) {

@@ -25,7 +25,7 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
               <th>Name</th>
             </tr>
             <tr>
-              <td data-testid="template-name">{name}</td>
+              <td data-testid="template-name" className="overflowContainer">{name}</td>
             </tr>
           </thead>
         </table>
@@ -38,7 +38,7 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
               <th>Template ID</th>
             </tr>
             <tr>
-              <td data-testid="template-id">{id}</td>
+              <td data-testid="template-id" className="overflowContainer">{id}</td>
             </tr>
           </thead>
         </table>
@@ -51,7 +51,9 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
               <th>Description</th>
             </tr>
             <tr>
-              <td data-testid="template-description">{description}</td>
+              <td>
+                <div data-testid="template-description" className="overflowContainer"> {description}</div>
+              </td>
             </tr>
           </thead>
         </table>
