@@ -28,6 +28,11 @@ export interface PdfGenerationResponse {
     jobId?: string;
     templateId?: string;
   };
+  payload?: {
+    file?: {
+      id?: string;
+    };
+  };
   //eslint-disable-next-line
   data: any;
   //eslint-disable-next-line
@@ -99,6 +104,7 @@ export interface PdfState {
   metrics: PdfMetrics;
   stream: Stream[];
   jobs: PdfGenerationResponse[];
+  reloadFile: string;
   status: string[];
   files: Record<string, Blob>;
   currentFile: Blob;

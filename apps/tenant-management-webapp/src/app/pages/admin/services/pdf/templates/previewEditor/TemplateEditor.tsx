@@ -20,14 +20,8 @@ import { SaveFormModal } from '@components/saveModal';
 import { PDFConfigForm } from './PDFConfigForm';
 import { getSuggestion } from '../utils/suggestion';
 import { bodyEditorConfig } from './config';
-import { useDispatch } from 'react-redux';
-import { updatePdfResponse } from '@store/pdf/action';
 import GeneratedPdfList from '../generatedPdfList';
-import { useSelector } from 'react-redux';
-import { RootState } from '@store/index';
-import { streamPdfSocket } from '@store/pdf/action';
 import { LogoutModal } from '@components/LogoutModal';
-import { showCurrentFilePdf, setPdfDisplayFileId } from '@store/pdf/action';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -75,34 +69,10 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   const [tmpTemplate, setTmpTemplate] = useState(template);
   const suggestion = template ? getSuggestion() : [];
   const [activeIndex, setActiveIndex] = useState(0);
-  const dispatch = useDispatch();
-
-  const socketChannel = useSelector((state: RootState) => {
-    return state?.pdf.socketChannel;
-  });
-
-  const fileList = useSelector((state: RootState) => state.fileService.fileList);
-  const jobList = useSelector((state: RootState) => state.pdf.jobs.filter((job) => job.templateId === template.id));
-
-  useEffect(() => {
-    if (!socketChannel) {
-      dispatch(streamPdfSocket(false));
-    }
-  }, [socketChannel]);
 
   useEffect(() => {
     setTmpTemplate(template);
   }, [template]);
-
-  useEffect(() => {
-    dispatch(updatePdfResponse({ fileList: fileList }));
-    const currentFile = fileList.find((file) => jobList.map((job) => job.id).includes(file.recordId));
-    if (currentFile) {
-      dispatch(showCurrentFilePdf(currentFile?.id));
-    } else {
-      dispatch(setPdfDisplayFileId(null));
-    }
-  }, [fileList]);
 
   useEffect(() => {
     if (monaco) {

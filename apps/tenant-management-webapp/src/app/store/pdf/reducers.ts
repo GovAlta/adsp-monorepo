@@ -20,6 +20,7 @@ const defaultState: PdfState = {
   jobs: [],
   status: [],
   socketChannel: null,
+  reloadFile: null,
   files: {},
   currentFile: null,
   currentId: '',
@@ -100,9 +101,11 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
           jobs = [action.payload].concat(jobs);
         }
       }
+
       return {
         ...state,
         jobs: jobs,
+        reloadFile: action.payload?.payload?.file?.id,
       };
     }
     case SOCKET_CHANNEL: {

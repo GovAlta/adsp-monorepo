@@ -5,6 +5,7 @@ import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '../index';
 import { select, call, put, takeEvery, take, apply, fork } from 'redux-saga/effects';
 import { eventChannel } from 'redux-saga';
+import { setTimeout } from 'timers/promises';
 import { ErrorNotification } from '@store/notifications/actions';
 import {
   fetchPdfMetricsSucceeded,
@@ -16,6 +17,7 @@ import {
   UPDATE_PDF_TEMPLATE_ACTION,
   GeneratePdfAction,
   generatePdfSuccess,
+  generatePdfSuccessProcessing,
   GENERATE_PDF_ACTION,
   addToStream,
   STREAM_PDF_SOCKET_ACTION,
@@ -27,6 +29,8 @@ import {
   SHOW_CURRENT_FILE_PDF,
   ShowCurrentFilePdfAction,
   showCurrentFilePdfSuccess,
+  GENERATE_PDF_SUCCESS_PROCESSING_ACTION,
+  GeneratePdfSuccessProcessingAction,
 } from './action';
 import { readFileAsync } from './readFile';
 import { io } from 'socket.io-client';
@@ -69,6 +73,27 @@ export function* fetchPdfTemplates(): SagaIterator {
         })
       );
     }
+  }
+}
+export function* generatePdfSuccessProcessingSaga(action: GeneratePdfSuccessProcessingAction): SagaIterator {
+  let jobs = yield select((state: RootState) => state.pdf?.jobs);
+
+  const newJobs = JSON.parse(JSON.stringify(jobs));
+  const index = jobs.findIndex((job) => job.id === action.payload.context?.jobId);
+  if (index > -1) {
+    if (!jobs[index].stream) {
+      jobs[index].stream = [];
+    }
+    jobs[index].stream.push(action.payload);
+    jobs[index].status = action.payload.name;
+  } else {
+    if (action.payload?.filename) {
+      jobs = [action.payload].concat(jobs);
+    }
+  }
+
+  if (JSON.stringify(jobs) !== JSON.stringify(newJobs)) {
+    yield put(generatePdfSuccess(action.payload));
   }
 }
 
@@ -186,6 +211,7 @@ export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIte
   const pushServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pushServiceApiUrl);
   const token: string = yield call(getAccessToken);
   const tenant = yield select((state: RootState) => state?.tenant);
+  const jobs = yield select((state: RootState) => state?.pdf.jobs);
 
   // This is how a channel is created
   const createSocketChannel = (socket) =>
@@ -222,17 +248,11 @@ export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIte
 
     try {
       const currentEvents = [];
-
       while (true) {
         const payload = yield take(socketChannel);
         currentEvents.push(payload);
         yield put(addToStream(payload));
-        yield put(generatePdfSuccess(payload));
-
-        if (payload?.name === 'pdf-generated' || payload?.name === 'pdf-generation-failed') {
-          yield put({ type: FETCH_FILE, fileId: payload?.payload?.file?.id });
-        }
-
+        yield put(generatePdfSuccessProcessing(payload));
         yield fork(emitResponse, socket);
       }
     } catch (err) {
@@ -342,4 +362,5 @@ export function* watchPdfSagas(): Generator {
   yield takeEvery(STREAM_PDF_SOCKET_ACTION, streamPdfSocket);
   yield takeEvery(DELETE_PDF_TEMPLATE_ACTION, deletePdfTemplate);
   yield takeEvery(SHOW_CURRENT_FILE_PDF, showCurrentFilePdf);
+  yield takeEvery(GENERATE_PDF_SUCCESS_PROCESSING_ACTION, generatePdfSuccessProcessingSaga);
 }
