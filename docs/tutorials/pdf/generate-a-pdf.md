@@ -29,6 +29,8 @@ The information is specific to your program area and application. Please ask you
 
 Continuing on from the tutorial on how to [build a template](/adsp-monorepo/tutorials/building-a-template.html) with the PDF service, our examples will be based on the template set up there for the Child Service's Intervention Record Check. Familiarity with that particular template is not necessary to follow along here, but the information will be useful if you want to understand how the pieces relate to each other.
 
+See the [PDF Service](https://api.adsp-dev.gov.ab.ca/autotest/?urls.primaryName=PDF%20service) Swagger documentation for detailed descriptions of the APIs.
+
 ## Get Access Token
 
 Using the information required to authenticate your application, you can grab an access token required to access the PDF Service as follows:
