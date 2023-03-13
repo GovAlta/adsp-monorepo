@@ -12,6 +12,8 @@ a *change and test* type of development cycle. Once you are satisfied with a tem
 * Initiate asynchronous *Jobs* to generate PDF documents, based on a template and data supplied by the application.  Depending on the complexity, it can take seconds to generate one.
 * Poll the status of a PDF Generation Job, and
 * Get the file ID of the completed PDF for use with the [File Service APIs](https://api.adsp.alberta.ca/platform/?urls.primaryName=File%20service) for managing the PDF file.
+
+For more, in-depth information on how to use the PDF Service please see the [tutorial](https://govalta.github.io/adsp-monorepo/tutorials/pdf/introduction.html).
 `,
   },
   tags: [

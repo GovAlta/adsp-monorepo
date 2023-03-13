@@ -279,7 +279,7 @@ Another interesting requirement was the placement of a title on each page that h
 
 {% endraw %}
 
-![](adsp-monorepo/assets/pdf/history_page_header.png)
+![](/adsp-monorepo/assets/pdf/history_page_header.png)
 
 #### Watermarks
 

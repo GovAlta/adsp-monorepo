@@ -8,7 +8,7 @@ grand_parent: Tutorials
 
 ## Getting Started
 
-The PDF Service allows you to automatically build a customized PDF document from an HTML template and a set of template variable-assignments. You can use the PDF Service's [Template Editor](https://adsp.alberta.ca) to build one interactively, and once it's in the system you can start using it in your application to generate downloadable PDF documents for your end users.
+The PDF Service allows you to automatically build a customized PDF document from an HTML template and some template variables. You can use the PDF Service's [Template Editor](/adsp-monorepo/templates/pdf/building-a-template.html) to build one interactively, and once it's in the system you can start using it in your application to generate downloadable PDF documents for your end users.
 
 PDF generation is accomplished through a series of API calls that create the PDF and store it within the [File Service](/adsp-monorepo/services/file-service.html), where you have access to it through a file ID. The main steps are:
 
@@ -21,13 +21,13 @@ Although you can call the API's from any language, the tutorial examples are wri
 
 Most of the API calls to the Platform Service require authentication via Keycloak with [Tenant Access](/adsp-monorepo/services/tenant-service.html). To make the calls described in the tutorial you will need:
 
-- A tenant, or realm ID
+- A tenant ID
 - A client ID, and
 - A client secret
 
 The information is specific to your program area and application. Please ask your team lead If you do not have it. New applications can get set up by following [these instruction](/adsp-monorepo/getting-started.html)
 
-Continuing on from the tutorial on how to [Build a Template](/adsp-monorepo/tutorials/building-a-template.html) with the PDF service, our examples will be based on the template set up there for the Child Service's Intervention Record Check. Familiarity with that particular template is not necessary to follow along here, but the information will be useful if you want to understand how the pieces relate to each other.
+Continuing on from the tutorial on how to [build a template](/adsp-monorepo/tutorials/building-a-template.html) with the PDF service, our examples will be based on the template set up there for the Child Service's Intervention Record Check. Familiarity with that particular template is not necessary to follow along here, but the information will be useful if you want to understand how the pieces relate to each other.
 
 ## Get Access Token
 
@@ -61,7 +61,7 @@ The template ID can be seen in your template editor while you are developing it.
 
 You supply the filename, which should be something that uniquely identifies the new PDF document.
 
-The file type is a unique classification for files that helps you group them. So, for example, you may want to have a file type for each of your templates. The advantage is that you can now easily manage all your generated PDF files for that particular template with the File Service. See the [File Service](/adsp-monorepo/services/file-service.html) for information on how to create a new file type.
+The _file type_ is a name classification for the PDF files that lets you associate certain properties with them, such as access permissions. If you want to allow the public to download the PDF documents generated from your template, for example, you will need to give them read-only, public-access permissions. It is _very important_ to give the correct permissions to these files or the end-users may be unable to download the documents. See the [File Service](/adsp-monorepo/services/file-service.html) for information on how to create a new file types and grant permissions.
 
 The request body for generating a new PDF will look something like this:
 
@@ -75,7 +75,7 @@ const request = {
 };
 ```
 
-where ircData is a Json object containing the data collected by the application to use for variable substitutions. Note, the data for our tutorial can be
+where ircData is a Json object containing the data collected by the application to use for variable substitutions. Note, the test data for our tutorial can be
 <a href="/adsp-monorepo/assets/pdf/test_data.json" download>downloaded here</a>.
 
 Generate the PDF file by submitting a Job
@@ -91,17 +91,23 @@ const response = await fetch('https://pdf-service.adsp.alberta.ca/pdf/v1/jobs', 
 });
 ```
 
-which places the request on the job queue and returns the job ID and its status.
+which places the request on the job queue and returns:
 
 ```typescript
-const { urn, jobId, status } = await response.json();
+const { urn, id, status } = await response.json();
 ```
+
+where
+
+- _id_ is a unique ID identifying the job spawned to generate your PDF,
+- _status_ is the job status, and can take on one of three values; _queued_, _completed_, or _failed_. Initially it will be set to _queued_,
+- _urn_ is the [Universal Resource Name](https://en.wikipedia.org/wiki/Uniform_Resource_Name) of the Job that you can use along with the [Directory Service](/adsp-monorepo/services/directory-service.html) to lookup the URL to use for polling its status.
 
 ## Test for Job Completion
 
-The status of a job will have one of three values; 'queued', 'completed', or 'failed'. Initially it is set to 'queued'. As the Job progresses it will change to one of the other values. You can poll the status to see when it has completed, or, use the Platform's Push Service.
+Depending on the complexity of your template, the job can take up to several seconds to complete. As the Job progresses the status will change from _queued_ to _completed_. You can poll the Job status to see when it has completed, or, use the Platform's [Push Service](/adsp-monorepo/services/push-service.html).
 
-Polling is done using GET /pdf/v1/jobs/{jobID} and testing to see if the returned status is 'completed'. The API will return a structure of the form
+Polling is done using GET /pdf/v1/jobs/{jobID} to see if the returned status is _completed_. The API will return a structure of the form
 
 ```typescript
 {
@@ -112,7 +118,11 @@ Polling is done using GET /pdf/v1/jobs/{jobID} and testing to see if the returne
 }
 ```
 
-where result.id is the file ID of the PDF document.
+where the first three properties are as described above, and the _result_ property contains:
+
+- _id_ the id of the PDF file generated, which can be used to access the file along with the [File Service](/adsp-monorepo/services/file-service.html)
+- _filename_ the name of the file generated
+- _urn_ the [Universal Resource Name](https://en.wikipedia.org/wiki/Uniform_Resource_Name) of the PDF file that you can use along with the [File Service](/adsp-monorepo/services/directory-service.html) to lookup the URL to use for downloading it.
 
 Polling forces the application developer to manage retrying and sleeping between tries, however. A less fussy approach would be to use the [Push Service](/adsp-monorepo/services/push-service.html). It enables applications to connect to a socket and listen for events of a specific type, such as "pdf-generated". The latter occurs when a Job successfully creates a PDF. You can connect to a Push Service socket as follows:
 
@@ -160,4 +170,4 @@ await fetch(`https://file-service.adsp.alberta.ca/file/v1/files/${fileID}/downlo
 
 ## Learn More
 
-- Learn how to [build a sophisticated template](/adsp-monorepo/tutorials/pdf/building-a-template.html) using ADSP's Template Editor
+- Learn how to [build a PDF template](/adsp-monorepo/tutorials/pdf/building-a-template.html) using ADSP's Template Editor
