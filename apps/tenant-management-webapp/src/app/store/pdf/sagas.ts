@@ -5,6 +5,7 @@ import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '../index';
 import { select, call, put, takeEvery, take, apply, fork } from 'redux-saga/effects';
 import { eventChannel } from 'redux-saga';
+import { setTimeout } from 'timers/promises';
 import { ErrorNotification } from '@store/notifications/actions';
 import {
   fetchPdfMetricsSucceeded,
@@ -90,12 +91,9 @@ export function* generatePdfSuccessProcessingSaga(action: GeneratePdfSuccessProc
       jobs = [action.payload].concat(jobs);
     }
   }
-  console.log(JSON.stringify(jobs) + '<---jobs222---------');
+
   if (JSON.stringify(jobs) !== JSON.stringify(newJobs)) {
-    console.log('Different');
     yield put(generatePdfSuccess(action.payload));
-  } else {
-    console.log('same');
   }
 }
 
@@ -250,37 +248,11 @@ export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIte
 
     try {
       const currentEvents = [];
-
       while (true) {
         const payload = yield take(socketChannel);
         currentEvents.push(payload);
-        console.log(JSON.stringify(payload) + ' <payload');
         yield put(addToStream(payload));
         yield put(generatePdfSuccessProcessing(payload));
-
-        // let newJobs = JSON.parse(JSON.stringify(jobs));
-
-        // console.log(JSON.stringify(jobs) + ' <jobs');
-
-        // const index = newJobs.findIndex((job) => job.id === payload.context?.jobId);
-        // if (index > -1) {
-        //   if (!newJobs[index].stream) {
-        //     newJobs[index].stream = [];
-        //   }
-        //   newJobs[index].stream.push(payload);
-        //   newJobs[index].status = payload.name;
-        // } else {
-        //   if (payload?.filename) {
-        //     newJobs = [payload.payload].concat(payload);
-        //   }
-        // }
-
-        //console.log(JSON.stringify(newJobs) + ' <newJobs');
-
-        // if (payload?.name === 'pdf-generated' || payload?.name === 'pdf-generation-failed') {
-        //   yield put({ type: FETCH_FILE, fileId: payload?.payload?.file?.id });
-        // }
-
         yield fork(emitResponse, socket);
       }
     } catch (err) {

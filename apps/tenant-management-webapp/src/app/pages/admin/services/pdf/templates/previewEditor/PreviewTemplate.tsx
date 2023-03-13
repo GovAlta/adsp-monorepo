@@ -1,5 +1,6 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { GoAButton, GoAIconButton } from '@abgov/react-components-new';
+import _ from 'underscore';
 
 import {
   SpinnerPadding,
@@ -12,7 +13,9 @@ import {
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
 import { DownloadFileService } from '@store/file/actions';
+import { streamPdfSocket } from '@store/pdf/action';
 import { GoAPageLoader } from '@abgov/react-components';
+
 interface PreviewTemplateProps {
   channelTitle: string;
   generateTemplate: () => void;
@@ -43,21 +46,22 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
 
   const dispatch = useDispatch();
 
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
+  const indicator = useSelector((state: RootState) => state?.session?.indicator, _.isEqual);
+
+  const files = useSelector((state: RootState) => state?.pdf.files, _.isEqual);
+
+  const currentId = useSelector((state: RootState) => state?.pdf.currentId, _.isEqual);
+
+  const fileList = useSelector((state: RootState) => state.fileService.fileList, _.isEqual);
+
+  const socketChannel = useSelector((state: RootState) => {
+    return state?.pdf.socketChannel;
   });
-
-  const files = useSelector((state: RootState) => {
-    return state?.pdf.files;
-  });
-
-  console.log(JSON.stringify(files) + '<-----------files');
-
-  const currentId = useSelector((state: RootState) => {
-    return state?.pdf.currentId;
-  });
-
-  console.log(JSON.stringify(currentId) + '<-----------currentId');
+  useEffect(() => {
+    if (!socketChannel) {
+      dispatch(streamPdfSocket(false));
+    }
+  }, [socketChannel]);
 
   useEffect(() => {
     const handleWindowResize = () => {
@@ -71,8 +75,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
     };
   });
 
-  const fileList = useSelector((state: RootState) => state.fileService.fileList);
-  const pdfList = useSelector((state: RootState) => state.pdf.jobs);
+  const pdfList = useSelector((state: RootState) => state.pdf.jobs, _.isEqual);
   const onDownloadFile = async (file) => {
     file && dispatch(DownloadFileService(file));
   };

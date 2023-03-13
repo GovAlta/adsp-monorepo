@@ -1,7 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { updatePdfTemplate, getPdfTemplates, setPdfDisplayFileId } from '@store/pdf/action';
+import {
+  updatePdfTemplate,
+  getPdfTemplates,
+  setPdfDisplayFileId,
+  showCurrentFilePdf,
+  updatePdfResponse,
+} from '@store/pdf/action';
+import { FetchFileService } from '@store/file/actions';
 import { RootState } from '@store/index';
+import _ from 'underscore';
 
 import { defaultPdfTemplate } from '@store/pdf/model';
 import {
@@ -24,9 +32,8 @@ import { useHistory, useParams } from 'react-router-dom';
 export const PdfTemplatesEditor = (): JSX.Element => {
   const { id } = useParams<{ id: string }>();
 
-  const pdfTemplate = useSelector((state: RootState) => {
-    return state?.pdf?.pdfTemplates[id];
-  });
+  const pdfTemplate = useSelector((state: RootState) => state?.pdf?.pdfTemplates[id], _.isEqual);
+  const reloadFile = useSelector((state: RootState) => state.pdf?.reloadFile);
 
   const dispatch = useDispatch();
 
@@ -48,6 +55,27 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     dispatch(generatePdf(payload, saveObject));
     setCurrentSavedTemplate(saveObject);
   };
+
+  const fileList = useSelector((state: RootState) => state.fileService.fileList);
+  const jobList = useSelector((state: RootState) =>
+    state.pdf.jobs.filter((job) => job.templateId === currentTemplate.id)
+  );
+
+  useEffect(() => {
+    if (reloadFile) {
+      dispatch(FetchFileService(reloadFile));
+    }
+  }, [reloadFile]);
+
+  useEffect(() => {
+    dispatch(updatePdfResponse({ fileList: fileList }));
+    const currentFile = fileList.find((file) => jobList.map((job) => job.id).includes(file.recordId));
+    if (currentFile) {
+      dispatch(showCurrentFilePdf(currentFile?.id));
+    } else {
+      dispatch(setPdfDisplayFileId(null));
+    }
+  }, [fileList]);
 
   useEffect(() => {
     setCurrentTemplate(pdfTemplate);
