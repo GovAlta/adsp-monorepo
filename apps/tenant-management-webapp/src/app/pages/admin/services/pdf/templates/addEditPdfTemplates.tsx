@@ -135,6 +135,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
           <GoAInput
             name="pdf-template-id"
             value={template.id}
+            testId="pdf-template-id"
             disabled={true}
             width="100%"
             // eslint-disable-next-line

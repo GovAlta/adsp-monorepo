@@ -76,11 +76,11 @@ class PDFServicePage {
   }
 
   pdfTemplateModalTemplateIdField() {
-    return cy.xpath('//input[contains(@data-testid, "modal-template-id-input")]');
+    return cy.xpath('//input[contains(@data-testid, "pdf-template-id")]');
   }
 
   pdfTemplateModalDescriptionField() {
-    return cy.xpath('//*[contains(@data-testid, "modal-description-textarea")]');
+    return cy.xpath('//*[contains(@data-testid, "pdf-template-description")]');
   }
 
   pdfTemplateEditorNameField() {

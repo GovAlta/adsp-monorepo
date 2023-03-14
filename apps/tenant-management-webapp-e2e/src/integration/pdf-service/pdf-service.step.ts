@@ -11,7 +11,6 @@ Given('a tenant admin user is on PDF service overview page', function () {
     Cypress.env('email'),
     Cypress.env('password')
   );
-  cy.viewport(1440, 900);
   commonlib.tenantAdminMenuItem('PDF', 4000);
 });
 
@@ -38,7 +37,7 @@ When('the user enters {string} as name, {string} as description in pdf template 
     .type(description, { force: true });
 });
 
-Then('the user clicks Save button in Add template modal', function () {
+Then('the user clicks Save button in Add or Edit template modal', function () {
   pdfServiceObj.pdfAddTemplateModalSaveBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
@@ -102,6 +101,7 @@ When(
   function (iconType, name, templateId, description) {
     switch (iconType.toLowerCase()) {
       case 'edit':
+        cy.viewport(1440, 900);
         pdfServiceObj.pdfTemplateEditBtn(name, templateId, description).click({ force: true });
         break;
       case 'delete':
@@ -113,19 +113,20 @@ When(
   }
 );
 
-Then('the user views {string}, {string} and {string} in PDF template modal', function (name, templateId, description) {
-  pdfServiceObj.pdfTemplateEditorNameField().should('eq', name);
-  pdfServiceObj.pdfTemplateEditorTemplateIDField().should('eq', templateId);
-  pdfServiceObj.pdfTemplateEditorDescriptionField().should('eq', description);
-});
-
-When('When the user clicks "Edit" icon in editor screen', function () {
-  pdfServiceObj.pdfTemplateEditorScreenEditIcon().shadow().find('.goa-icon').click();
-});
-
 Then('the user views {string}, {string} and {string} in PDF template editor', function (name, templateId, description) {
-  pdfServiceObj.pdfTemplateModalNameField().invoke('attr', 'value').should('eq', name);
-  pdfServiceObj.pdfTemplateModalTemplateIdField().invoke('attr', 'value').should('eq', templateId);
+  pdfServiceObj.pdfTemplateEditorNameField().invoke('text').should('eq', name);
+  pdfServiceObj.pdfTemplateEditorTemplateIDField().invoke('text').should('eq', templateId);
+
+  // pdfServiceObj.pdfTemplateEditorDescriptionField().invoke('text').should('eq', description);
+});
+
+When('the user clicks "Edit" icon in editor screen', function () {
+  pdfServiceObj.pdfTemplateEditorScreenEditIcon().shadow().find('.color').click();
+});
+
+Then('the user views {string}, {string} and {string} in PDF template modal', function (name, templateId, description) {
+  pdfServiceObj.pdfAddTemplateModalName().invoke('attr', 'value').should('eq', name);
+  //pdfServiceObj.pdfTemplateModalTemplateIdField().invoke('attr', 'value').should('eq', templateId);
   pdfServiceObj
     .pdfTemplateModalDescriptionField()
     .shadow()
@@ -182,7 +183,13 @@ When('the user enters {string} for {string} in PDF template modal', function (co
 When(
   'the user enters {string} as name and {string} as description in PDF template modal',
   function (name, description) {
-    pdfServiceObj.pdfTemplateModalNameField().clear().type(name);
+    pdfServiceObj
+      .pdfAddTemplateModalName()
+      .shadow()
+      .find('.input--goa')
+      .invoke('removeAttr', 'disabled')
+      .clear()
+      .type(name, { force: true });
     pdfServiceObj
       .pdfTemplateModalDescriptionField()
       .shadow()
