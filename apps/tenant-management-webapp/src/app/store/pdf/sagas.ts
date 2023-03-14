@@ -31,10 +31,15 @@ import {
   showCurrentFilePdfSuccess,
   GENERATE_PDF_SUCCESS_PROCESSING_ACTION,
   GeneratePdfSuccessProcessingAction,
+  DeletePdfFileServiceAction,
+  DeletePdfFilesServiceAction,
+  DELETE_PDF_FILE_SERVICE,
+  DELETE_PDF_FILES_SERVICE,
+  updateJobs,
 } from './action';
 import { readFileAsync } from './readFile';
 import { io } from 'socket.io-client';
-import { FETCH_FILE } from '@store/file/actions';
+
 import { getAccessToken } from '@store/tenant/sagas';
 import { PdfGenerationResponse } from './model';
 
@@ -95,6 +100,21 @@ export function* generatePdfSuccessProcessingSaga(action: GeneratePdfSuccessProc
   if (JSON.stringify(jobs) !== JSON.stringify(newJobs)) {
     yield put(generatePdfSuccess(action.payload));
   }
+}
+export function* deletePdfFileService(action: DeletePdfFileServiceAction): SagaIterator {
+  const jobs: PdfGenerationResponse[] = yield select((state: RootState) => state.pdf?.jobs);
+
+  const remainingJobs = jobs.filter((job) => job.id !== action.payload.data.recordId);
+
+  yield put(updateJobs(remainingJobs));
+}
+
+export function* deletePdfFilesService(action: DeletePdfFilesServiceAction): SagaIterator {
+  const jobs: PdfGenerationResponse[] = yield select((state: RootState) => state.pdf?.jobs);
+
+  const remainingJobs = jobs.filter((job) => job.templateId !== action.payload.templateId);
+
+  yield put(updateJobs(remainingJobs));
 }
 
 // wrapping function for socket.on
@@ -361,6 +381,8 @@ export function* watchPdfSagas(): Generator {
   yield takeEvery(GENERATE_PDF_ACTION, generatePdf);
   yield takeEvery(STREAM_PDF_SOCKET_ACTION, streamPdfSocket);
   yield takeEvery(DELETE_PDF_TEMPLATE_ACTION, deletePdfTemplate);
+  yield takeEvery(DELETE_PDF_FILE_SERVICE, deletePdfFileService);
+  yield takeEvery(DELETE_PDF_FILES_SERVICE, deletePdfFilesService);
   yield takeEvery(SHOW_CURRENT_FILE_PDF, showCurrentFilePdf);
   yield takeEvery(GENERATE_PDF_SUCCESS_PROCESSING_ACTION, generatePdfSuccessProcessingSaga);
 }

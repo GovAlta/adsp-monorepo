@@ -9,8 +9,9 @@ import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import InformationCircle from '@components/icons/InformationCircle';
-import { FileTableStyles } from '../styled-components';
-import { showCurrentFilePdf, setPdfDisplayFileId } from '@store/pdf/action';
+import { FileTableStyles, ButtonBox } from '../styled-components';
+import { GoABadge } from '@abgov/react-components/experimental';
+import { showCurrentFilePdf, setPdfDisplayFileId, deletePdfFileService } from '@store/pdf/action';
 
 interface GeneratedPdfListProps {
   templateId: string;
@@ -23,8 +24,15 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
   const onDownloadFile = async (file) => {
     dispatch(DownloadFileService(file));
   };
+  const onDeleteFile = async (file) => {
+    dispatch(deletePdfFileService(file));
+  };
 
   const pdfList = useSelector((state: RootState) => state.pdf.jobs.filter((job) => job.templateId === templateId));
+
+  const currentId = useSelector((state: RootState) => state?.pdf.currentId);
+
+  const currentFile = fileList.find((file) => file.id === currentId);
 
   const statusGenerator = {
     queued: 'Queued',
@@ -83,6 +91,11 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                           <div className="flex-horizontal mt-2">
                             <div className="mt-1">{iconGenerator[status]}</div>
                             <div className="flex">{statusGenerator[status]}</div>
+                            <div className="flex-auto">
+                              {currentFile?.filename === job?.filename && (
+                                <GoABadge content={'Viewing'} data-testid="viewing-badge" type="information" />
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td>
@@ -98,9 +111,19 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                             </div>
                           )}
                         </td>
-                        <td>
+                        <td className="display-flex">
                           {file?.filename ? (
                             <>
+                              {currentFile?.filename !== job?.filename ? (
+                                <GoAIconButton
+                                  title="Toggle details"
+                                  type={'eye'}
+                                  onClick={() => showCurrentPdf(file)}
+                                  testId="toggle-details-visibility"
+                                />
+                              ) : (
+                                <ButtonBox />
+                              )}
                               <GoAIconButton
                                 disabled={!file?.size}
                                 data-testid="download-icon"
@@ -109,10 +132,10 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                                 onClick={() => onDownloadFile(file)}
                               />
                               <GoAIconButton
-                                title="Toggle details"
-                                type={'eye'}
-                                onClick={() => showCurrentPdf(file)}
-                                testId="toggle-details-visibility"
+                                data-testid="delete-icon"
+                                size="medium"
+                                type="trash"
+                                onClick={() => onDeleteFile(file)}
                               />
                             </>
                           ) : (

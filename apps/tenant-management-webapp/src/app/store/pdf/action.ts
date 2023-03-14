@@ -1,4 +1,5 @@
 import { PdfMetrics, PdfTemplate, PdfGenerationResponse, PdfGenerationPayload, UpdatePDFResponse } from './model';
+import { FileItem } from '../file/models';
 
 export const FETCH_PDF_TEMPLATES_ACTION = 'pdf/FETCH_PDF_TEMPLATES_ACTION';
 export const FETCH_PDF_TEMPLATES_SUCCESS_ACTION = 'pdf/FETCH_PDF_TEMPLATES_SUCCESS_ACTION';
@@ -20,6 +21,9 @@ export const STREAM_PDF_SOCKET_ACTION = 'pdf/STREAM_PDF_SOCKET_ACTION';
 export const SHOW_CURRENT_FILE_PDF = 'pdf/SHOW_CURRENT_FILE_PDF';
 export const SHOW_CURRENT_FILE_PDF_SUCCESS = 'pdf/SHOW_CURRENT_FILE_PDF_SUCCESS';
 export const SET_PDF_DISPLAY_FILE_ID = 'pdf/SET_PDF_DISPLAY_FILE_ID';
+export const DELETE_PDF_FILES_SERVICE = 'pdf/DELETE_PDF_FILES_SERVICE';
+export const DELETE_PDF_FILE_SERVICE = 'pdf/DELETE_PDF_FILE_SERVICE';
+export const UPDATE_JOBS = 'pdf/UPDATE_JOBS';
 
 export const SOCKET_CHANNEL = 'pdf/SOCKET_CHANNEL';
 
@@ -66,6 +70,20 @@ export interface GeneratePdfAction {
   type: typeof GENERATE_PDF_ACTION;
   payload: PdfGenerationPayload;
   saveObject: PdfTemplate;
+}
+
+export interface DeletePdfFilesServiceAction {
+  type: typeof DELETE_PDF_FILES_SERVICE;
+  payload: { templateId: string };
+}
+
+export interface DeletePdfFileServiceAction {
+  type: typeof DELETE_PDF_FILE_SERVICE;
+  payload: { data: FileItem };
+}
+export interface UpdateJobsAction {
+  type: typeof UPDATE_JOBS;
+  payload: { data: PdfGenerationResponse[] };
 }
 
 export interface StreamPdfSocketAction {
@@ -131,6 +149,7 @@ export type PdfActionTypes =
   | GeneratePdfSuccessAction
   | ShowCurrentFilePdfSuccessAction
   | SetPdfDisplayFileIdAction
+  | UpdateJobsAction
   | UpdatePdfResponseAction;
 
 export const updatePdfTemplate = (template: PdfTemplate): UpdatePdfTemplatesAction => ({
@@ -210,6 +229,24 @@ export const showCurrentFilePdf = (fileId: string): ShowCurrentFilePdfAction => 
 export const setPdfDisplayFileId = (id: string): SetPdfDisplayFileIdAction => ({
   type: SET_PDF_DISPLAY_FILE_ID,
   id,
+});
+export const deletePdfFileService = (data: FileItem): DeletePdfFileServiceAction => ({
+  type: DELETE_PDF_FILE_SERVICE,
+  payload: {
+    data,
+  },
+});
+export const deletePdfFilesService = (templateId: string): DeletePdfFilesServiceAction => ({
+  type: DELETE_PDF_FILES_SERVICE,
+  payload: {
+    templateId,
+  },
+});
+export const updateJobs = (data: PdfGenerationResponse[]): UpdateJobsAction => ({
+  type: UPDATE_JOBS,
+  payload: {
+    data,
+  },
 });
 
 export const showCurrentFilePdfSuccess = (file: Blob, id: string): ShowCurrentFilePdfSuccessAction => ({
