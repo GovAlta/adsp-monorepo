@@ -8,6 +8,7 @@ import {
   PdfEditActions,
   GeneratorStyling,
   PDFTitle,
+  ButtonRight,
 } from '../../styled-components';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
@@ -22,6 +23,8 @@ import { getSuggestion } from '../utils/suggestion';
 import { bodyEditorConfig } from './config';
 import GeneratedPdfList from '../generatedPdfList';
 import { LogoutModal } from '@components/LogoutModal';
+import { deletePdfFilesService } from '@store/pdf/action';
+import { useDispatch } from 'react-redux';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -119,6 +122,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     onCssChange(savedTemplate.additionalStyles);
     onVariableChange(savedTemplate?.variables);
   };
+
+  const dispatch = useDispatch();
 
   return (
     <TemplateEditorContainerPdf>
@@ -218,6 +223,18 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             <Tab testId={`pdf-test-history`} label={<PdfEditorLabelWrapper>File history</PdfEditorLabelWrapper>}>
               <>
                 <GeneratorStyling>
+                  <ButtonRight>
+                    <GoAButton
+                      type="secondary"
+                      data-testid="form-save"
+                      size="compact"
+                      onClick={() => {
+                        dispatch(deletePdfFilesService(template.id));
+                      }}
+                    >
+                      Delete all files
+                    </GoAButton>
+                  </ButtonRight>
                   <section>{template?.id && <GeneratedPdfList templateId={template.id} />}</section>
                 </GeneratorStyling>
               </>

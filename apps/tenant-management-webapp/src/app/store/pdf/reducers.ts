@@ -10,6 +10,7 @@ import {
   SOCKET_CHANNEL,
   SHOW_CURRENT_FILE_PDF_SUCCESS,
   SET_PDF_DISPLAY_FILE_ID,
+  UPDATE_JOBS,
 } from './action';
 import { PdfState } from './model';
 
@@ -84,6 +85,12 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
       return {
         ...state,
         jobs: jobs,
+      };
+    }
+    case UPDATE_JOBS: {
+      return {
+        ...state,
+        jobs: action.payload.data,
       };
     }
     case GENERATE_PDF_SUCCESS_ACTION: {
