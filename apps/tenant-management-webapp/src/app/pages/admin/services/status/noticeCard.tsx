@@ -82,27 +82,27 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
           {props.mode === 'draft' && (
             <GoABadge
               key={`${notice.id}-badge-draft`}
-              data-testid="notice-card-mode-draft"
+              data-testid="notice-card-mode"
               content={'Draft'}
               type="information"
-              testId="notice-card-mode-draft"
+              testId="notice-card-mode"
             />
           )}
           {props.mode === 'published' && (
             <GoABadge
               key={`${notice.id}-badge-published`}
               content={'Published'}
-              data-testid="notice-card-mode-published"
+              data-testid="notice-card-mode"
               type="success"
-              testId="notice-card-mode-published"
+              testId="notice-card-mode"
             />
           )}
           {props.mode === 'archived' && (
             <GoABadge
               key={`${notice.id}-badge-archived`}
               content={'Archived'}
-              data-testid="notice-card-mode-archived"
-              testId="notice-card-mode-archived"
+              data-testid="notice-card-mode"
+              testId="notice-card-mode"
               type="midtone"
             />
           )}
