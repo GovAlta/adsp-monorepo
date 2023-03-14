@@ -11,6 +11,14 @@ export const FileTableStyles = styled.div`
     flex: 1;
   }
 
+  .display-flex {
+    display: flex;
+  }
+
+  .flex-auto {
+    flex: auto;
+  }
+
   margin: 1rem 0 1rem;
 
   .some-margin {
@@ -18,8 +26,16 @@ export const FileTableStyles = styled.div`
   }
 `;
 
+export const ButtonBox = styled.div`
+  width: 2.15rem;
+`;
+
 export const PaddingRight = styled.div`
   margin-right: 12px;
+`;
+
+export const ButtonRight = styled.div`
+  text-align: end;
 `;
 
 export const FlexRow = styled.div`
