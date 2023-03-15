@@ -24,7 +24,8 @@ import { bodyEditorConfig } from './config';
 import GeneratedPdfList from '../generatedPdfList';
 import { LogoutModal } from '@components/LogoutModal';
 import { deletePdfFilesService } from '@store/pdf/action';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@store/index';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -72,6 +73,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   const [tmpTemplate, setTmpTemplate] = useState(template);
   const suggestion = template ? getSuggestion() : [];
   const [activeIndex, setActiveIndex] = useState(0);
+  const notifications = useSelector((state: RootState) => state.notifications.notifications);
 
   useEffect(() => {
     setTmpTemplate(template);
@@ -125,6 +127,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
   const dispatch = useDispatch();
 
+  const monacoHeight = `calc(100vh - 585px${notifications.length > 0 ? ' - 80px' : ''})`;
+
   return (
     <TemplateEditorContainerPdf>
       <LogoutModal />
@@ -137,7 +141,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           <Tabs style={{ minWidth: '4.5em' }} activeIndex={activeIndex}>
             <Tab testId={`pdf-edit-header`} label={<PdfEditorLabelWrapper>Header</PdfEditorLabelWrapper>}>
               <GoAFormItem error={errors?.header ?? ''}>
-                <MonacoDivBody>
+                <MonacoDivBody style={{ height: monacoHeight }}>
                   {template && (
                     <MonacoEditor
                       language={'handlebars'}
@@ -155,7 +159,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             <Tab testId={`pdf-edit-body`} label={<PdfEditorLabelWrapper>Body</PdfEditorLabelWrapper>}>
               <>
                 <GoAFormItem error={errors?.body ?? null}>
-                  <MonacoDivBody>
+                  <MonacoDivBody style={{ height: monacoHeight }}>
                     <MonacoEditor
                       language={'handlebars'}
                       defaultValue={template?.template}
@@ -171,7 +175,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             </Tab>
             <Tab testId={`pdf-edit-footer`} label={<PdfEditorLabelWrapper>Footer</PdfEditorLabelWrapper>}>
               <GoAFormItem error={errors?.footer ?? ''}>
-                <MonacoDivBody>
+                <MonacoDivBody style={{ height: monacoHeight }}>
                   <MonacoEditor
                     language={'handlebars'}
                     defaultValue={template?.footer}
@@ -187,7 +191,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             <Tab testId={`pdf-edit-css`} label={<PdfEditorLabelWrapper>CSS</PdfEditorLabelWrapper>}>
               <>
                 <GoAFormItem error={errors?.body ?? null}>
-                  <MonacoDivBody>
+                  <MonacoDivBody style={{ height: monacoHeight }}>
                     <MonacoEditor
                       language={'handlebars'}
                       defaultValue={template?.additionalStyles}
@@ -203,7 +207,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             </Tab>
             <Tab testId={`pdf-test-generator`} label={<PdfEditorLabelWrapper>Test data</PdfEditorLabelWrapper>}>
               <GoAFormItem error={errors?.body ?? null}>
-                <MonacoDivBody>
+                <MonacoDivBody style={{ height: monacoHeight }}>
                   <MonacoEditor
                     data-testid="form-schema"
                     value={template?.variables}

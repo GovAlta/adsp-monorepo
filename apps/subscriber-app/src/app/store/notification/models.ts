@@ -55,6 +55,14 @@ export interface NotificationState {
   contactInfo: ContactInformation | undefined;
   core: NotificationType;
   metrics: NotificationMetrics;
+  notifications?: Notification[];
+}
+
+export interface Notification {
+  id: string;
+  type: string;
+  message: string;
+  expiry: number;
 }
 
 export const NOTIFICATION_INIT: NotificationState = {

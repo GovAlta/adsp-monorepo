@@ -173,7 +173,6 @@ export const MonacoDivBody = styled.div`
   border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  height: calc(100vh - 441px - 9rem);
   min-height: 2rem;
   margin: 0.5rem 0 0 0;
 `;
