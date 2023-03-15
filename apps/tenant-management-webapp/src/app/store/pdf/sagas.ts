@@ -5,7 +5,6 @@ import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '../index';
 import { select, call, put, takeEvery, take, apply, fork } from 'redux-saga/effects';
 import { eventChannel } from 'redux-saga';
-import { setTimeout } from 'timers/promises';
 import { ErrorNotification } from '@store/notifications/actions';
 import {
   fetchPdfMetricsSucceeded,
@@ -231,7 +230,6 @@ export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIte
   const pushServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pushServiceApiUrl);
   const token: string = yield call(getAccessToken);
   const tenant = yield select((state: RootState) => state?.tenant);
-  const jobs = yield select((state: RootState) => state?.pdf.jobs);
 
   // This is how a channel is created
   const createSocketChannel = (socket) =>
