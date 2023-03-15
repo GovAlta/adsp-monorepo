@@ -285,7 +285,7 @@ export const PdfConfigFormWrapper = styled.div`
 export const PdfEditActionLayout = styled.div`
   position fixed;
   bottom: 4rem;
-  width: calc(100% - 40vw - 5.3rem);
+  width: calc(100% - 40vw - 5.4rem);
 `;
 
 export const PdfEditActions = styled.div`
