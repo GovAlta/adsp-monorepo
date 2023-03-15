@@ -243,38 +243,37 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               </>
             </Tab>
           </Tabs>
+          <hr className="hr-resize-bottom" />
+          <EditTemplateActions>
+            <PdfEditActionLayout>
+              <PdfEditActions>
+                <>
+                  <GoAButton
+                    disabled={!isPDFUpdated(tmpTemplate, savedTemplate)}
+                    onClick={() => saveCurrentTemplate()}
+                    type="primary"
+                    data-testid="template-form-save"
+                  >
+                    Save
+                  </GoAButton>
+                  <GoAButton
+                    onClick={() => {
+                      if (isPDFUpdated(tmpTemplate, savedTemplate)) {
+                        setSaveModal(true);
+                      } else {
+                        cancel();
+                      }
+                    }}
+                    data-testid="template-form-close"
+                    type="tertiary"
+                  >
+                    Back
+                  </GoAButton>
+                </>
+              </PdfEditActions>
+            </PdfEditActionLayout>
+          </EditTemplateActions>
         </GoAFormItem>
-
-        <EditTemplateActions>
-          <PdfEditActionLayout>
-            <hr className="hr-resize-bottom" />
-            <PdfEditActions>
-              <>
-                <GoAButton
-                  disabled={!isPDFUpdated(tmpTemplate, savedTemplate)}
-                  onClick={() => saveCurrentTemplate()}
-                  type="primary"
-                  data-testid="template-form-save"
-                >
-                  Save
-                </GoAButton>
-                <GoAButton
-                  onClick={() => {
-                    if (isPDFUpdated(tmpTemplate, savedTemplate)) {
-                      setSaveModal(true);
-                    } else {
-                      cancel();
-                    }
-                  }}
-                  data-testid="template-form-close"
-                  type="tertiary"
-                >
-                  Back
-                </GoAButton>
-              </>
-            </PdfEditActions>
-          </PdfEditActionLayout>
-        </EditTemplateActions>
       </GoAForm>
       {/* Delete confirmation */}
       {showDeleteConfirmation && (

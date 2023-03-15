@@ -88,16 +88,7 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
       };
     }
     case UPDATE_JOBS: {
-      console.log(JSON.stringify(action.payload) + '><action.payload');
-      console.log(JSON.stringify(action.payload.data[0]?.id) + '><action.payload[0].id');
-
-      let currentId = action.payload.data[action.payload?.index]?.stream.find((x) => x.name === 'pdf-generated').payload
-        ?.file?.id;
-
-      if (!currentId) {
-        currentId = action.payload.data[action.payload?.index - 1]?.stream.find((x) => x.name === 'pdf-generated')
-          .payload?.file?.id;
-      }
+      const currentId = action.payload.data[0]?.stream.find((x) => x.name === 'pdf-generated').payload?.file?.id;
 
       return {
         ...state,

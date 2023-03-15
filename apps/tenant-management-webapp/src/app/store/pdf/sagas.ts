@@ -108,16 +108,12 @@ export function* deletePdfFileService(action: DeletePdfFileServiceAction): SagaI
   const index = Object.keys(files).findIndex((f) => f === currentId);
 
   const remainingJobs = jobs.filter((job) => job.id !== action.payload.data.recordId);
-  const remainingFiles = files.filter((file) => file.id);
-
-  action.payload.data[action.payload?.index]?.stream.find((x) => x.name === 'pdf-generated').payload?.file?.id;
 
   yield put(updateJobs(remainingJobs, index));
 }
 
 export function* deletePdfFilesService(action: DeletePdfFilesServiceAction): SagaIterator {
   const jobs: PdfGenerationResponse[] = yield select((state: RootState) => state.pdf?.jobs);
-
   const currentId: string = yield select((state: RootState) => state.pdf?.currentId);
   const files: string = yield select((state: RootState) => state?.pdf.files);
 
