@@ -57,7 +57,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
     wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
   )
-    .add('duplicate', 'id', duplicateNameCheck(templateIds, 'Template'))
+    .add('duplicate', 'name', duplicateNameCheck(templateIds, 'template'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
   return (
@@ -87,7 +87,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
               } else {
                 if (!isEdit) {
                   const validations = {
-                    duplicate: template.id,
+                    duplicate: template.name,
                   };
                   if (!validators.checkAll(validations)) {
                     return;
@@ -108,8 +108,8 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
         </GoAButtonGroup>
       }
     >
-      <GoAFormItem error={errors?.['name']} label="Name">
-        <PdfFormItem>
+      <PdfFormItem>
+        <GoAFormItem error={errors?.['name']} label="Name">
           <GoAInput
             type="text"
             name="pdf-template-name"
@@ -128,8 +128,8 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
               setTemplate(isEdit ? { ...template, name: value } : { ...template, name: value, id: toKebabName(value) });
             }}
           />
-        </PdfFormItem>
-      </GoAFormItem>
+        </GoAFormItem>
+      </PdfFormItem>
       <GoAFormItem label="Template ID">
         <PdfFormItem>
           <GoAInput
