@@ -35,6 +35,7 @@ export const PaddingRight = styled.div`
 `;
 
 export const ButtonRight = styled.div`
+  margin-top: 32px;
   text-align: end;
 `;
 

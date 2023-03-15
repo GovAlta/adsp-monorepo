@@ -81,6 +81,8 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
   };
 
   const PdfPreview = () => {
+    console.log(JSON.stringify(files) + '<files---');
+    console.log(JSON.stringify(currentId) + '<currentId---');
     const blob = files[currentId] && base64toBlob(files[currentId], 'application/pdf');
 
     const blobUrl = blob && URL.createObjectURL(blob);

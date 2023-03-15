@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { DownloadFileService } from '@store/file/actions';
 import DataTable from '@components/DataTable';
@@ -12,6 +12,7 @@ import InformationCircle from '@components/icons/InformationCircle';
 import { FileTableStyles, ButtonBox } from '../styled-components';
 import { GoABadge } from '@abgov/react-components/experimental';
 import { showCurrentFilePdf, setPdfDisplayFileId, deletePdfFileService } from '@store/pdf/action';
+import { DeleteModal } from '@components/DeleteModal';
 
 interface GeneratedPdfListProps {
   templateId: string;
@@ -24,8 +25,9 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
   const onDownloadFile = async (file) => {
     dispatch(DownloadFileService(file));
   };
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(null);
   const onDeleteFile = async (file) => {
-    dispatch(deletePdfFileService(file));
+    setShowDeleteConfirmation(file);
   };
 
   const pdfList = useSelector((state: RootState) => state.pdf.jobs.filter((job) => job.templateId === templateId));
@@ -151,6 +153,24 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
               })}
             </tbody>
           </DataTable>
+          {/* Delete confirmation */}
+          {showDeleteConfirmation && (
+            <DeleteModal
+              isOpen={showDeleteConfirmation}
+              title="Delete PDF file"
+              content={
+                <div>
+                  Are you sure you wish to delete <b>{showDeleteConfirmation.filename}?</b>
+                </div>
+              }
+              onCancel={() => setShowDeleteConfirmation(null)}
+              onDelete={() => {
+                const file = showDeleteConfirmation;
+                dispatch(deletePdfFileService(file));
+                setShowDeleteConfirmation(null);
+              }}
+            />
+          )}
         </FileTableStyles>
       </>
     );
