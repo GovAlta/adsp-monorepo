@@ -393,8 +393,8 @@ export const TabletMessage = styled.div`
 `;
 export const PdfFormItem = styled.div`
   margin-bottom: 1.5rem;
-  margin-left: 2px;
-  margin-right: 2px;
+  margin-left: 3px;
+  margin-right: 3px;
 `;
 
 export const HelpText = styled.div`
@@ -406,6 +406,6 @@ export const HelpText = styled.div`
   justify-content: space-between;
 `;
 export const DescriptionItem = styled.div`
-  margin-left: 2px;
-  margin-right: 2px;
+  margin-left: 3px;
+  margin-right: 3px;
 `;

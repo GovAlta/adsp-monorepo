@@ -65,6 +65,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
       testId="template-form"
       open={open}
       heading={`${isEdit ? 'Edit' : 'Add'} template`}
+      width="640px"
       actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
