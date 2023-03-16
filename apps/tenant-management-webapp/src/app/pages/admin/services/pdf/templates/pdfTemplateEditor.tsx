@@ -93,7 +93,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
   };
 
   const savePdfTemplate = (value) => {
-    const saveObject = JSON.parse(JSON.stringify(value));
+    const saveObject = JSON.parse(JSON.stringify(value || ''));
     dispatch(updatePdfTemplate(saveObject));
     // setCurrentSavedTemplate(currentTemplate);
     setCurrentTemplate(saveObject);

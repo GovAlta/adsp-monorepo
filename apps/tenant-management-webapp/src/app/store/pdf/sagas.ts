@@ -102,18 +102,26 @@ export function* generatePdfSuccessProcessingSaga(action: GeneratePdfSuccessProc
 }
 export function* deletePdfFileService(action: DeletePdfFileServiceAction): SagaIterator {
   const jobs: PdfGenerationResponse[] = yield select((state: RootState) => state.pdf?.jobs);
+  const currentId: string = yield select((state: RootState) => state.pdf?.currentId);
+  const files: string = yield select((state: RootState) => state?.pdf.files);
+
+  const index = Object.keys(files).findIndex((f) => f === currentId);
 
   const remainingJobs = jobs.filter((job) => job.id !== action.payload.data.recordId);
 
-  yield put(updateJobs(remainingJobs));
+  yield put(updateJobs(remainingJobs, index));
 }
 
 export function* deletePdfFilesService(action: DeletePdfFilesServiceAction): SagaIterator {
   const jobs: PdfGenerationResponse[] = yield select((state: RootState) => state.pdf?.jobs);
+  const currentId: string = yield select((state: RootState) => state.pdf?.currentId);
+  const files: string = yield select((state: RootState) => state?.pdf.files);
+
+  const index = Object.keys(files).findIndex((f) => f === currentId);
 
   const remainingJobs = jobs.filter((job) => job.templateId !== action.payload.templateId);
 
-  yield put(updateJobs(remainingJobs));
+  yield put(updateJobs(remainingJobs, index));
 }
 
 // wrapping function for socket.on

@@ -26,6 +26,7 @@ import { LogoutModal } from '@components/LogoutModal';
 import { deletePdfFilesService } from '@store/pdf/action';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
+import { DeleteModal } from '@components/DeleteModal';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -73,6 +74,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   const suggestion = template ? getSuggestion() : [];
   const [activeIndex, setActiveIndex] = useState(0);
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   useEffect(() => {
     setTmpTemplate(template);
@@ -229,7 +231,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                       data-testid="form-save"
                       size="compact"
                       onClick={() => {
-                        dispatch(deletePdfFilesService(template.id));
+                        setShowDeleteConfirmation(true);
                       }}
                     >
                       Delete all files
@@ -240,41 +242,51 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
               </>
             </Tab>
           </Tabs>
+          <hr className="hr-resize-bottom" />
+          <EditTemplateActions>
+            <PdfEditActionLayout>
+              <PdfEditActions>
+                <>
+                  <GoAButton
+                    disabled={!isPDFUpdated(tmpTemplate, template)}
+                    onClick={() => saveCurrentTemplate()}
+                    type="primary"
+                    data-testid="template-form-save"
+                  >
+                    Save
+                  </GoAButton>
+                  <GoAButton
+                    onClick={() => {
+                      if (isPDFUpdated(tmpTemplate, template)) {
+                        setSaveModal(true);
+                      } else {
+                        cancel();
+                      }
+                    }}
+                    data-testid="template-form-close"
+                    type="tertiary"
+                  >
+                    Back
+                  </GoAButton>
+                </>
+              </PdfEditActions>
+            </PdfEditActionLayout>
+          </EditTemplateActions>
         </GoAFormItem>
-
-        <EditTemplateActions>
-          <PdfEditActionLayout>
-            <hr className="hr-resize-bottom" />
-            <PdfEditActions>
-              <>
-                {/* {JSON.stringify(tmpTemplate) + '<tmpTemplate'}
-                {JSON.stringify(savedTemplate) + '<savedTemplate'} */}
-                <GoAButton
-                  disabled={!isPDFUpdated(tmpTemplate, template)}
-                  onClick={() => saveCurrentTemplate(tmpTemplate)}
-                  type="primary"
-                  data-testid="template-form-save"
-                >
-                  Save
-                </GoAButton>
-                <GoAButton
-                  onClick={() => {
-                    if (isPDFUpdated(tmpTemplate, template)) {
-                      setSaveModal(true);
-                    } else {
-                      cancel();
-                    }
-                  }}
-                  data-testid="template-form-close"
-                  type="tertiary"
-                >
-                  Back
-                </GoAButton>
-              </>
-            </PdfEditActions>
-          </PdfEditActionLayout>
-        </EditTemplateActions>
       </GoAForm>
+      {/* Delete confirmation */}
+      {showDeleteConfirmation && (
+        <DeleteModal
+          isOpen={showDeleteConfirmation}
+          title="Delete PDF file"
+          content={<div>Are you sure you wish to delete all files</div>}
+          onCancel={() => setShowDeleteConfirmation(false)}
+          onDelete={() => {
+            setShowDeleteConfirmation(false);
+            dispatch(deletePdfFilesService(template.id));
+          }}
+        />
+      )}
       <SaveFormModal
         open={saveModal}
         onDontSave={() => {
