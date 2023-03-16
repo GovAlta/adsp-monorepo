@@ -33,10 +33,8 @@ interface TemplateEditorProps {
   onHeaderChange: (value: string) => void;
   onCssChange: (value: string) => void;
   onFooterChange: (value: string) => void;
-
   template: PdfTemplate;
-  savedTemplate: PdfTemplate;
-  saveCurrentTemplate?: () => void;
+  saveCurrentTemplate?: (value: string) => void;
   // eslint-disable-next-line
   errors?: any;
   // eslint-disable-next-line
@@ -44,6 +42,8 @@ interface TemplateEditorProps {
 }
 
 const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
+  console.log(JSON.stringify(prev?.additionalStyles) + '<prev.additionalStyles');
+  console.log(JSON.stringify(next?.additionalStyles) + '<next.additionalStyles');
   return (
     prev?.template !== next?.template ||
     prev?.header !== next?.header ||
@@ -62,7 +62,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   onFooterChange,
   onCssChange,
   template,
-  savedTemplate,
   saveCurrentTemplate,
   errors,
   cancel,
@@ -70,7 +69,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   const monaco = useMonaco();
   const [saveModal, setSaveModal] = useState(false);
 
-  const [tmpTemplate, setTmpTemplate] = useState(template);
+  const [tmpTemplate, setTmpTemplate] = useState(JSON.parse(JSON.stringify(template || '')));
   const suggestion = template ? getSuggestion() : [];
   const [activeIndex, setActiveIndex] = useState(0);
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
@@ -118,11 +117,11 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   }, [modelOpen]);
 
   const resetSavedAction = () => {
-    onBodyChange(savedTemplate.template);
-    onHeaderChange(savedTemplate.header);
-    onFooterChange(savedTemplate.footer);
-    onCssChange(savedTemplate.additionalStyles);
-    onVariableChange(savedTemplate?.variables);
+    onBodyChange(template.template);
+    onHeaderChange(template.header);
+    onFooterChange(template.footer);
+    onCssChange(template.additionalStyles);
+    onVariableChange(template?.variables);
   };
 
   const dispatch = useDispatch();
@@ -147,7 +146,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                       language={'handlebars'}
                       defaultValue={template?.header}
                       onChange={(value) => {
-                        template.header = value;
+                        //template.header = value;
                         setTmpTemplate({ ...tmpTemplate, header: value });
                       }}
                       {...bodyEditorConfig}
@@ -164,7 +163,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                       language={'handlebars'}
                       defaultValue={template?.template}
                       onChange={(value) => {
-                        template.template = value;
+                        //template.template = value;
                         setTmpTemplate({ ...tmpTemplate, template: value });
                       }}
                       {...bodyEditorConfig}
@@ -180,7 +179,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     language={'handlebars'}
                     defaultValue={template?.footer}
                     onChange={(value) => {
-                      template.footer = value;
+                      // template.footer = value;
                       setTmpTemplate({ ...tmpTemplate, footer: value });
                     }}
                     {...bodyEditorConfig}
@@ -196,7 +195,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                       language={'handlebars'}
                       defaultValue={template?.additionalStyles}
                       onChange={(value) => {
-                        template.additionalStyles = value;
+                        // template.additionalStyles = value;
                         setTmpTemplate({ ...tmpTemplate, additionalStyles: value });
                       }}
                       {...bodyEditorConfig}
@@ -212,7 +211,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     data-testid="form-schema"
                     value={template?.variables}
                     onChange={(value) => {
-                      template.variables = value;
+                      //template.variables = value;
                       setTmpTemplate({ ...tmpTemplate, variables: value });
                     }}
                     language="json"
@@ -248,9 +247,11 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
             <hr className="hr-resize-bottom" />
             <PdfEditActions>
               <>
+                {/* {JSON.stringify(tmpTemplate) + '<tmpTemplate'}
+                {JSON.stringify(savedTemplate) + '<savedTemplate'} */}
                 <GoAButton
-                  disabled={!isPDFUpdated(tmpTemplate, savedTemplate)}
-                  onClick={() => saveCurrentTemplate()}
+                  disabled={!isPDFUpdated(tmpTemplate, template)}
+                  onClick={() => saveCurrentTemplate(tmpTemplate)}
                   type="primary"
                   data-testid="template-form-save"
                 >
@@ -258,7 +259,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 </GoAButton>
                 <GoAButton
                   onClick={() => {
-                    if (isPDFUpdated(tmpTemplate, savedTemplate)) {
+                    if (isPDFUpdated(tmpTemplate, template)) {
                       setSaveModal(true);
                     } else {
                       cancel();
@@ -282,7 +283,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           cancel();
         }}
         onSave={() => {
-          saveCurrentTemplate();
+          saveCurrentTemplate(tmpTemplate);
           setSaveModal(false);
           cancel();
         }}

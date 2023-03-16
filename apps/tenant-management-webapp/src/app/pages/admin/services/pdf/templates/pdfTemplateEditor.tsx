@@ -43,7 +43,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
 
   const history = useHistory();
   const [currentTemplate, setCurrentTemplate] = useState(pdfTemplate);
-  const [currentSavedTemplate, setCurrentSavedTemplate] = useState(defaultPdfTemplate);
+  // const [currentSavedTemplate, setCurrentSavedTemplate] = useState(defaultPdfTemplate);
 
   const generateTemplateFunction = () => {
     const payload = {
@@ -53,7 +53,8 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     };
     const saveObject = JSON.parse(JSON.stringify(currentTemplate));
     dispatch(generatePdf(payload, saveObject));
-    setCurrentSavedTemplate(saveObject);
+    setCurrentTemplate(saveObject);
+    // setCurrentSavedTemplate(saveObject);
   };
 
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
@@ -79,7 +80,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
 
   useEffect(() => {
     setCurrentTemplate(pdfTemplate);
-    setCurrentSavedTemplate(JSON.parse(JSON.stringify(pdfTemplate || '')));
+    // setCurrentSavedTemplate(JSON.parse(JSON.stringify(pdfTemplate || '')));
   }, [pdfTemplate]);
 
   const reset = () => {
@@ -91,10 +92,11 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     dispatch(setPdfDisplayFileId(null));
   };
 
-  const savePdfTemplate = () => {
-    const saveObject = JSON.parse(JSON.stringify(currentTemplate));
+  const savePdfTemplate = (value) => {
+    const saveObject = JSON.parse(JSON.stringify(value));
     dispatch(updatePdfTemplate(saveObject));
-    setCurrentSavedTemplate(currentTemplate);
+    // setCurrentSavedTemplate(currentTemplate);
+    setCurrentTemplate(saveObject);
   };
 
   return (
@@ -125,7 +127,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
                 <TemplateEditor
                   modelOpen={true}
                   template={currentTemplate}
-                  savedTemplate={currentSavedTemplate}
+                  //  savedTemplate={currentSavedTemplate}
                   onBodyChange={(value) => {
                     setCurrentTemplate({ ...currentTemplate, template: value });
                   }}
