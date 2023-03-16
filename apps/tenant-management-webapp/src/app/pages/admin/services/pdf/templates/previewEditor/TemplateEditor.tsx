@@ -249,7 +249,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 <>
                   <GoAButton
                     disabled={!isPDFUpdated(tmpTemplate, template)}
-                    onClick={() => saveCurrentTemplate()}
+                    onClick={() => saveCurrentTemplate(tmpTemplate)}
                     type="primary"
                     data-testid="template-form-save"
                   >
