@@ -26,7 +26,7 @@ import { LogoutModal } from '@components/LogoutModal';
 import { deletePdfFilesService } from '@store/pdf/action';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { DeleteModal } from '@components/DeleteModal';
+import { DeleteModal } from '../DeleteModal';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -280,7 +280,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
         <DeleteModal
           isOpen={showDeleteConfirmation}
           title="Delete PDF file"
-          content={<div>Are you sure you wish to delete all files</div>}
+          content={<div>Are you sure you wish to delete all files?</div>}
           onCancel={() => setShowDeleteConfirmation(false)}
           onDelete={() => {
             setShowDeleteConfirmation(false);
