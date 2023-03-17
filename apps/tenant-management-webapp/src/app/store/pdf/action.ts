@@ -83,7 +83,7 @@ export interface DeletePdfFileServiceAction {
 }
 export interface UpdateJobsAction {
   type: typeof UPDATE_JOBS;
-  payload: { data: PdfGenerationResponse[] };
+  payload: { data: PdfGenerationResponse[]; index: number };
 }
 
 export interface StreamPdfSocketAction {
@@ -242,10 +242,11 @@ export const deletePdfFilesService = (templateId: string): DeletePdfFilesService
     templateId,
   },
 });
-export const updateJobs = (data: PdfGenerationResponse[]): UpdateJobsAction => ({
+export const updateJobs = (data: PdfGenerationResponse[], index: number): UpdateJobsAction => ({
   type: UPDATE_JOBS,
   payload: {
     data,
+    index,
   },
 });
 

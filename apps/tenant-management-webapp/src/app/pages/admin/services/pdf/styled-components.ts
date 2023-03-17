@@ -35,6 +35,7 @@ export const PaddingRight = styled.div`
 `;
 
 export const ButtonRight = styled.div`
+  margin-top: 32px;
   text-align: end;
 `;
 
@@ -119,6 +120,7 @@ export const TemplateEditorContainerPdf = styled.div`
   }
   .hr-resize-bottom {
     margin-bottom: 1.5rem;
+    margin-top: 1rem;
   }
 
   .title {
@@ -285,7 +287,6 @@ export const PdfConfigFormWrapper = styled.div`
 export const PdfEditActionLayout = styled.div`
   position fixed;
   bottom: 4rem;
-  width: calc(100% - 40vw - 5.3rem);
 `;
 
 export const PdfEditActions = styled.div`

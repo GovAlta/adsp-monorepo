@@ -176,24 +176,26 @@ const Subscriptions = (): JSX.Element => {
                   ''
                 )}
               </SubscriptionListContainer>
-              {contact === undefined && indicator?.show ? (
+              {indicator?.show ? (
                 <GoASkeletonGridColumnContent rows={5}></GoASkeletonGridColumnContent>
               ) : (
-                contact && (
-                  <CalloutWrapper id="contactSupport">
-                    <GoACallout title="Need help? Contact your service admin" type="information">
-                      <div>{contact?.supportInstructions}</div>
-                      <div>
-                        Email:{' '}
-                        <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
-                          {contact?.contactEmail}
-                        </a>
-                      </div>
-                      {contact?.phoneNumber && <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>}
-                      <div data-testid="service-notice-date-range"></div>
-                    </GoACallout>
-                  </CalloutWrapper>
-                )
+                <CalloutWrapper id="contactSupport">
+                  <GoACallout title="Need help? Contact your service admin" type="information">
+                    <div>{contact?.supportInstructions}</div>
+                    <div>
+                      {contact?.contactEmail && (
+                        <>
+                          Email:{' '}
+                          <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
+                            {contact?.contactEmail}
+                          </a>
+                        </>
+                      )}
+                    </div>
+                    {contact?.phoneNumber && <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>}
+                    <div data-testid="service-notice-date-range"></div>
+                  </GoACallout>
+                </CalloutWrapper>
               )}
             </>
           </Container>

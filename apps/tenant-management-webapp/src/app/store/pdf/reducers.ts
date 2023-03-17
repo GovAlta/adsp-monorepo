@@ -88,9 +88,12 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
       };
     }
     case UPDATE_JOBS: {
+      const currentId = action.payload.data[0]?.stream.find((x) => x.name === 'pdf-generated').payload?.file?.id;
+
       return {
         ...state,
         jobs: action.payload.data,
+        currentId: currentId,
       };
     }
     case GENERATE_PDF_SUCCESS_ACTION: {
