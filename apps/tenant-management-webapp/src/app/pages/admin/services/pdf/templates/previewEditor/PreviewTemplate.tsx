@@ -1,6 +1,7 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { GoAButton, GoAIconButton } from '@abgov/react-components-new';
 import _ from 'underscore';
+import { generatePdf, updatePdfResponse, showCurrentFilePdf, setPdfDisplayFileId } from '@store/pdf/action';
 
 import {
   SpinnerPadding,
@@ -15,10 +16,10 @@ import { useSelector, useDispatch } from 'react-redux';
 import { DownloadFileService } from '@store/file/actions';
 import { streamPdfSocket } from '@store/pdf/action';
 import { GoAPageLoader } from '@abgov/react-components';
+import { useParams } from 'react-router-dom';
 
 interface PreviewTemplateProps {
   channelTitle: string;
-  generateTemplate: () => void;
 }
 
 const base64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
@@ -41,18 +42,44 @@ const base64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
   return blob;
 };
 
-export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ channelTitle, generateTemplate }) => {
+export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ channelTitle }) => {
+  const { id } = useParams<{ id: string }>();
+  const fileList = useSelector((state: RootState) => state.fileService.fileList);
+  const pdfTemplate = useSelector((state: RootState) => state?.pdf?.pdfTemplates[id]);
+  const jobList = useSelector((state: RootState) => state.pdf.jobs.filter((job) => job.templateId === pdfTemplate.id));
+
+  useEffect(() => {
+    dispatch(updatePdfResponse({ fileList: fileList }));
+    const currentFile = fileList.find((file) => jobList.map((job) => job.id).includes(file.recordId));
+    if (currentFile) {
+      dispatch(showCurrentFilePdf(currentFile?.id));
+    } else {
+      dispatch(setPdfDisplayFileId(null));
+    }
+  }, [fileList]);
+
+  const generateTemplate = () => {
+    const payload = {
+      templateId: pdfTemplate.id,
+      data: pdfTemplate.variables ? JSON.parse(pdfTemplate.variables) : {},
+      fileName: `${pdfTemplate.id}_${new Date().toJSON().slice(0, 19).replace(/:/g, '-')}.pdf`,
+    };
+    const saveObject = JSON.parse(JSON.stringify(pdfTemplate));
+    dispatch(generatePdf(payload, saveObject));
+    // setCurrentTemplate(saveObject);
+    // setCurrentSavedTemplate(saveObject);
+  };
   const [windowSize, setWindowSize] = useState(window.innerHeight);
 
   const dispatch = useDispatch();
 
   const indicator = useSelector((state: RootState) => state?.session?.indicator, _.isEqual);
 
-  const files = useSelector((state: RootState) => state?.pdf.files, _.isEqual);
+  const files = useSelector((state: RootState) => state?.pdf.files);
 
-  const currentId = useSelector((state: RootState) => state?.pdf.currentId, _.isEqual);
+  const currentId = useSelector((state: RootState) => state?.pdf.currentId);
 
-  const fileList = useSelector((state: RootState) => state.fileService.fileList, _.isEqual);
+  console.log('Refresh preview');
 
   const socketChannel = useSelector((state: RootState) => {
     return state?.pdf.socketChannel;

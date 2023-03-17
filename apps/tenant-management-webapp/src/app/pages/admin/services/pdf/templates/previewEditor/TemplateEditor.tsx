@@ -10,6 +10,7 @@ import {
   PDFTitle,
   ButtonRight,
 } from '../../styled-components';
+import { useDispatch, useSelector } from 'react-redux';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { PdfTemplate } from '@store/pdf/model';
@@ -23,23 +24,15 @@ import { getSuggestion } from '../utils/suggestion';
 import { bodyEditorConfig } from './config';
 import GeneratedPdfList from '../generatedPdfList';
 import { LogoutModal } from '@components/LogoutModal';
-import { deletePdfFilesService } from '@store/pdf/action';
-import { useDispatch, useSelector } from 'react-redux';
+import { deletePdfFilesService, getPdfTemplates, updatePdfTemplate, setPdfDisplayFileId } from '@store/pdf/action';
 import { RootState } from '@store/index';
 import { DeleteModal } from '@components/DeleteModal';
+import { FetchFileService } from '@store/file/actions';
+import { useHistory, useParams } from 'react-router-dom';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
-  onBodyChange: (value: string) => void;
-  onHeaderChange: (value: string) => void;
-  onCssChange: (value: string) => void;
-  onFooterChange: (value: string) => void;
-  template: PdfTemplate;
-  saveCurrentTemplate?: (value: string) => void;
-  // eslint-disable-next-line
   errors?: any;
-  // eslint-disable-next-line
-  cancel: () => void;
 }
 
 const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
@@ -56,29 +49,64 @@ const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
   );
 };
 
-export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
-  modelOpen,
-  onBodyChange,
-  onHeaderChange,
-  onFooterChange,
-  onCssChange,
-  template,
-  saveCurrentTemplate,
-  errors,
-  cancel,
-}) => {
+export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({ modelOpen, errors }) => {
+  const dispatch = useDispatch();
+  const { id } = useParams<{ id: string }>();
   const monaco = useMonaco();
   const [saveModal, setSaveModal] = useState(false);
 
-  const [tmpTemplate, setTmpTemplate] = useState(JSON.parse(JSON.stringify(template || '')));
-  const suggestion = template ? getSuggestion() : [];
+  const pdfTemplate = useSelector((state: RootState) => state?.pdf?.pdfTemplates[id]);
+
+  const [tmpTemplate, setTmpTemplate] = useState(JSON.parse(JSON.stringify(pdfTemplate || '')));
+  const [simulatedSaveTemplate, setSimulatedSaveTemplate] = useState(null);
+  const suggestion = pdfTemplate ? getSuggestion() : [];
   const [activeIndex, setActiveIndex] = useState(0);
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   useEffect(() => {
-    setTmpTemplate(template);
-  }, [template]);
+    if (!pdfTemplate) dispatch(getPdfTemplates());
+  }, []);
+
+  const reloadFile = useSelector((state: RootState) => state.pdf?.reloadFile);
+
+  const savePdfTemplate = (value) => {
+    const saveObject = JSON.parse(JSON.stringify(value));
+    console.log(JSON.stringify(saveObject) + ',saveObject');
+    dispatch(updatePdfTemplate(saveObject));
+    setSimulatedSaveTemplate(saveObject);
+    // setCurrentSavedTemplate(currentTemplate);
+    //setCurrentTemplate(saveObject);
+  };
+
+  const history = useHistory();
+
+  const cancel = () => {
+    history.push({
+      pathname: '/admin/services/pdf',
+      state: { activeIndex: 1 },
+    });
+    dispatch(setPdfDisplayFileId(null));
+  };
+
+  // useEffect(() => {
+  //   setCurrentTemplate(pdfTemplate);
+  //   //setCurrentTemplate2(pdfTemplate);
+  //   // setCurrentSavedTemplate(JSON.parse(JSON.stringify(pdfTemplate || '')));
+  // }, [pdfTemplate]);
+
+  useEffect(() => {
+    if (reloadFile) {
+      dispatch(FetchFileService(reloadFile));
+    }
+  }, [reloadFile]);
+
+  useEffect(() => {
+    console.log(JSON.stringify('resetting pdf template'));
+    setTmpTemplate(pdfTemplate);
+  }, [pdfTemplate]);
+
+  const template = simulatedSaveTemplate || pdfTemplate;
 
   useEffect(() => {
     if (monaco) {
@@ -119,14 +147,13 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   }, [modelOpen]);
 
   const resetSavedAction = () => {
-    onBodyChange(template.template);
-    onHeaderChange(template.header);
-    onFooterChange(template.footer);
-    onCssChange(template.additionalStyles);
-    onVariableChange(template?.variables);
+    // onBodyChange(template.template);
+    // onHeaderChange(template.header);
+    // onFooterChange(template.footer);
+    // onCssChange(template.additionalStyles);
+    // onVariableChange(template?.variables);
+    //setTmpTemplate(pdfTemplate);
   };
-
-  const dispatch = useDispatch();
 
   const monacoHeight = `calc(100vh - 585px${notifications.length > 0 ? ' - 80px' : ''})`;
 
@@ -146,9 +173,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   {template && (
                     <MonacoEditor
                       language={'handlebars'}
-                      defaultValue={template?.header}
+                      value={tmpTemplate?.header}
                       onChange={(value) => {
-                        //template.header = value;
                         setTmpTemplate({ ...tmpTemplate, header: value });
                       }}
                       {...bodyEditorConfig}
@@ -163,9 +189,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   <MonacoDivBody style={{ height: monacoHeight }}>
                     <MonacoEditor
                       language={'handlebars'}
-                      defaultValue={template?.template}
+                      value={tmpTemplate?.template}
                       onChange={(value) => {
-                        //template.template = value;
                         setTmpTemplate({ ...tmpTemplate, template: value });
                       }}
                       {...bodyEditorConfig}
@@ -179,9 +204,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 <MonacoDivBody style={{ height: monacoHeight }}>
                   <MonacoEditor
                     language={'handlebars'}
-                    defaultValue={template?.footer}
+                    value={tmpTemplate?.footer}
                     onChange={(value) => {
-                      // template.footer = value;
                       setTmpTemplate({ ...tmpTemplate, footer: value });
                     }}
                     {...bodyEditorConfig}
@@ -195,9 +219,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                   <MonacoDivBody style={{ height: monacoHeight }}>
                     <MonacoEditor
                       language={'handlebars'}
-                      defaultValue={template?.additionalStyles}
+                      value={tmpTemplate?.additionalStyles}
                       onChange={(value) => {
-                        // template.additionalStyles = value;
                         setTmpTemplate({ ...tmpTemplate, additionalStyles: value });
                       }}
                       {...bodyEditorConfig}
@@ -211,9 +234,9 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 <MonacoDivBody style={{ height: monacoHeight }}>
                   <MonacoEditor
                     data-testid="form-schema"
-                    value={template?.variables}
+                    value={tmpTemplate?.variables}
                     onChange={(value) => {
-                      //template.variables = value;
+                      template.variables = value;
                       setTmpTemplate({ ...tmpTemplate, variables: value });
                     }}
                     language="json"
@@ -249,7 +272,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 <>
                   <GoAButton
                     disabled={!isPDFUpdated(tmpTemplate, template)}
-                    onClick={() => saveCurrentTemplate(tmpTemplate)}
+                    onClick={() => savePdfTemplate(tmpTemplate)}
                     type="primary"
                     data-testid="template-form-save"
                   >
@@ -291,11 +314,11 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
         open={saveModal}
         onDontSave={() => {
           setSaveModal(false);
-          resetSavedAction();
+          // resetSavedAction();
           cancel();
         }}
         onSave={() => {
-          saveCurrentTemplate(tmpTemplate);
+          savePdfTemplate(tmpTemplate);
           setSaveModal(false);
           cancel();
         }}

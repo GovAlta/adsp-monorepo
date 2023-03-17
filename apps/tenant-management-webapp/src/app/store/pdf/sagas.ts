@@ -154,9 +154,14 @@ const connect = (pushServiceUrl, token, stream, tenantName) => {
 export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const token: string = yield call(getAccessToken);
-
   if (baseUrl && token) {
     try {
+      // yield put(
+      //   UpdateIndicator({
+      //     show: true,
+      //     message: 'Saving template...',
+      //   })
+      // );
       const pdfTemplate = {
         [template.id]: {
           ...template,
@@ -168,6 +173,7 @@ export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): Saga
       } = yield call(axios.patch, `${baseUrl}/configuration/v2/configuration/platform/pdf-service`, body, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log('latest');
       yield put(
         updatePdfTemplateSuccess({
           ...latest.configuration,
