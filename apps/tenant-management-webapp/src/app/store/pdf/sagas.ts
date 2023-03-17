@@ -1,4 +1,3 @@
-import axios from 'axios';
 import moment from 'moment';
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
@@ -40,7 +39,16 @@ import { readFileAsync } from './readFile';
 import { io } from 'socket.io-client';
 
 import { getAccessToken } from '@store/tenant/sagas';
-import { PdfGenerationResponse } from './model';
+import { PdfGenerationResponse, UpdatePdfConfig, DeletePdfConfig, CreatePdfConfig } from './model';
+import {
+  fetchPdfTemplatesApi,
+  updatePDFTemplateApi,
+  fetchPdfFileApi,
+  deletePdfFileApi,
+  generatePdfApi,
+  createPdfJobApi,
+  fetchPdfMetricsApi,
+} from './api';
 
 export function* fetchPdfTemplates(): SagaIterator {
   yield put(
@@ -56,14 +64,9 @@ export function* fetchPdfTemplates(): SagaIterator {
   const token: string = yield call(getAccessToken);
   if (configBaseUrl && token) {
     try {
-      const { data } = yield call(
-        axios.get,
-        `${configBaseUrl}/configuration/v2/configuration/platform/pdf-service/latest`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      yield put(getPdfTemplatesSuccess(data));
+      const url = `${configBaseUrl}/configuration/v2/configuration/platform/pdf-service/latest`;
+      const templates = yield call(fetchPdfTemplatesApi, token, url);
+      yield put(getPdfTemplatesSuccess(templates));
       yield put(
         UpdateIndicator({
           show: false,
@@ -162,12 +165,10 @@ export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): Saga
           ...template,
         },
       };
-      const body = { operation: 'UPDATE', update: { ...pdfTemplate } };
-      const {
-        data: { latest },
-      } = yield call(axios.patch, `${baseUrl}/configuration/v2/configuration/platform/pdf-service`, body, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const body: UpdatePdfConfig = { operation: 'UPDATE', update: { ...pdfTemplate } };
+      const url = `${baseUrl}/configuration/v2/configuration/platform/pdf-service`;
+      const { latest } = yield call(updatePDFTemplateApi, token, url, body);
+
       yield put(
         updatePdfTemplateSuccess({
           ...latest.configuration,
@@ -187,12 +188,8 @@ export function* showCurrentFilePdf(action: ShowCurrentFilePdfAction): SagaItera
   if (fileUrl && token) {
     try {
       const url = `${fileUrl}/file/v1/files/${action.fileId}/download?unsafe=true`;
-      const response = yield call(axios.get, url, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob',
-      });
-
-      const responseFile = yield call(readFileAsync, response.data);
+      const data = yield call(fetchPdfFileApi, token, url);
+      const responseFile = yield call(readFileAsync, data);
 
       yield put(showCurrentFilePdfSuccess(responseFile, action.fileId));
       yield put(
@@ -212,16 +209,9 @@ export function* deletePdfTemplate({ template }: DeletePdfTemplatesAction): Saga
 
   if (baseUrl && token) {
     try {
-      const {
-        data: { latest },
-      } = yield call(
-        axios.patch,
-        `${baseUrl}/configuration/v2/configuration/platform/pdf-service`,
-        { operation: 'DELETE', property: template.id },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const payload: DeletePdfConfig = { operation: 'DELETE', property: template.id };
+      const url = `${baseUrl}/configuration/v2/configuration/platform/pdf-service`;
+      const { latest } = yield call(deletePdfFileApi, token, url, payload);
 
       yield put(
         deletePdfTemplateSuccess({
@@ -312,22 +302,20 @@ export function* generatePdf({ payload, saveObject }: GeneratePdfAction): SagaIt
           ...saveObject,
         },
       };
-      const saveBody = { operation: 'UPDATE', update: { ...pdfTemplate } };
-      yield call(axios.patch, `${baseUrl}/configuration/v2/configuration/platform/pdf-service`, saveBody, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
+      const saveBody: UpdatePdfConfig = { operation: 'UPDATE', update: { ...pdfTemplate } };
+      const url = `${baseUrl}/configuration/v2/configuration/platform/pdf-service`;
+      yield call(generatePdfApi, token, url, saveBody);
       // generate after
       const pdfData = {
         templateId: payload.templateId,
         data: payload.data,
         filename: payload.fileName,
       };
-      const body = { operation: 'generate', ...pdfData };
-      const response: PdfGenerationResponse = yield call(axios.post, `${pdfServiceUrl}/pdf/v1/jobs`, body, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const pdfResponse = { ...body, ...response?.data };
+
+      const createJobUrl = `${pdfServiceUrl}/pdf/v1/jobs`;
+      const body: CreatePdfConfig = { operation: 'generate', ...pdfData };
+      const data = yield call(createPdfJobApi, token, createJobUrl, body);
+      const pdfResponse = { ...body, ...data };
       yield put(generatePdfSuccess(pdfResponse));
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));
@@ -338,10 +326,6 @@ export function* generatePdf({ payload, saveObject }: GeneratePdfAction): SagaIt
       );
     }
   }
-}
-
-interface MetricResponse {
-  values: { sum: string; avg: string }[];
 }
 
 export function* fetchPdfMetrics(): SagaIterator {
@@ -356,11 +340,8 @@ export function* fetchPdfMetrics(): SagaIterator {
         metricLike: 'pdf-service',
       });
 
-      const { data: metrics }: { data: Record<string, MetricResponse> } = yield call(
-        axios.get,
-        `${baseUrl}/value/v1/event-service/values/event/metrics?interval=weekly&criteria=${criteria}`,
-        { headers: { Authorization: `Bearer ${token}`, 'Access-Control-Allow-Origin': '' } }
-      );
+      const url = `${baseUrl}/value/v1/event-service/values/event/metrics?interval=weekly&criteria=${criteria}`;
+      const metrics = yield call(fetchPdfMetricsApi, token, url);
 
       const generatedMetric = 'pdf-service:pdf-generated:count';
       const failedMetric = 'pdf-service:pdf-generation-failed:count';
