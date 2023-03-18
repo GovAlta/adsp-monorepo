@@ -40,7 +40,7 @@ import { readFileAsync } from './readFile';
 import { io } from 'socket.io-client';
 
 import { getAccessToken } from '@store/tenant/sagas';
-import { PdfGenerationResponse } from './model';
+import { PdfGenerationResponse, PdfTemplate } from './model';
 
 export function* fetchPdfTemplates(): SagaIterator {
   yield put(
@@ -300,6 +300,7 @@ function* emitResponse(socket) {
 export function* generatePdf({ payload, saveObject }: GeneratePdfAction): SagaIterator {
   const pdfServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pdfServiceApiUrl);
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const tempTemplate: PdfTemplate = yield select((state: RootState) => state.pdf.tempTemplate);
 
   const token: string = yield call(getAccessToken);
 
@@ -315,7 +316,7 @@ export function* generatePdf({ payload, saveObject }: GeneratePdfAction): SagaIt
       // save first
       const pdfTemplate = {
         [saveObject.id]: {
-          ...saveObject,
+          ...tempTemplate,
         },
       };
       const saveBody = { operation: 'UPDATE', update: { ...pdfTemplate } };

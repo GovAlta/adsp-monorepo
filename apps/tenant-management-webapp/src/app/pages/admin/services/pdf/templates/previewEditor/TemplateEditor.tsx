@@ -24,7 +24,13 @@ import { getSuggestion } from '../utils/suggestion';
 import { bodyEditorConfig } from './config';
 import GeneratedPdfList from '../generatedPdfList';
 import { LogoutModal } from '@components/LogoutModal';
-import { deletePdfFilesService, getPdfTemplates, updatePdfTemplate, setPdfDisplayFileId } from '@store/pdf/action';
+import {
+  deletePdfFilesService,
+  getPdfTemplates,
+  updatePdfTemplate,
+  setPdfDisplayFileId,
+  updateTempTemplate,
+} from '@store/pdf/action';
 import { RootState } from '@store/index';
 import { DeleteModal } from '@components/DeleteModal';
 import { FetchFileService } from '@store/file/actions';
@@ -105,6 +111,11 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({ modelOp
     console.log(JSON.stringify('resetting pdf template'));
     setTmpTemplate(pdfTemplate);
   }, [pdfTemplate]);
+
+  useEffect(() => {
+    console.log(JSON.stringify('updating pdf template'));
+    dispatch(updateTempTemplate(tmpTemplate));
+  }, [tmpTemplate]);
 
   const template = simulatedSaveTemplate || pdfTemplate;
 

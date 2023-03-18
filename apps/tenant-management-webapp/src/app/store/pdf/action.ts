@@ -24,6 +24,7 @@ export const SET_PDF_DISPLAY_FILE_ID = 'pdf/SET_PDF_DISPLAY_FILE_ID';
 export const DELETE_PDF_FILES_SERVICE = 'pdf/DELETE_PDF_FILES_SERVICE';
 export const DELETE_PDF_FILE_SERVICE = 'pdf/DELETE_PDF_FILE_SERVICE';
 export const UPDATE_JOBS = 'pdf/UPDATE_JOBS';
+export const UPDATE_TEMP_TEMPLATE = 'pdf/UPDATE_TEMP_TEMPLATE';
 
 export const SOCKET_CHANNEL = 'pdf/SOCKET_CHANNEL';
 
@@ -84,6 +85,10 @@ export interface DeletePdfFileServiceAction {
 export interface UpdateJobsAction {
   type: typeof UPDATE_JOBS;
   payload: { data: PdfGenerationResponse[]; index: number };
+}
+export interface UpdateTempTemplateAction {
+  type: typeof UPDATE_TEMP_TEMPLATE;
+  payload: PdfTemplate;
 }
 
 export interface StreamPdfSocketAction {
@@ -150,11 +155,16 @@ export type PdfActionTypes =
   | ShowCurrentFilePdfSuccessAction
   | SetPdfDisplayFileIdAction
   | UpdateJobsAction
+  | UpdateTempTemplateAction
   | UpdatePdfResponseAction;
 
 export const updatePdfTemplate = (template: PdfTemplate): UpdatePdfTemplatesAction => ({
   type: UPDATE_PDF_TEMPLATE_ACTION,
   template,
+});
+export const updateTempTemplate = (payload: PdfTemplate): UpdateTempTemplateAction => ({
+  type: UPDATE_TEMP_TEMPLATE,
+  payload,
 });
 
 export const updatePdfTemplateSuccess = (template: Record<string, PdfTemplate>): UpdatePdfTemplatesSuccessAction => ({
