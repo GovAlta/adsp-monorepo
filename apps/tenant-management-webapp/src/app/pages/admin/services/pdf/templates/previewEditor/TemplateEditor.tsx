@@ -35,6 +35,8 @@ import { RootState } from '@store/index';
 import { DeleteModal } from '@components/DeleteModal';
 import { FetchFileService } from '@store/file/actions';
 import { useHistory, useParams } from 'react-router-dom';
+import { useDebounce } from '@lib/useDebounce';
+const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -70,6 +72,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({ modelOp
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
+  const debouncedTmpTemplate = useDebounce(tmpTemplate, TEMPLATE_RENDER_DEBOUNCE_TIMER);
+
   useEffect(() => {
     if (!pdfTemplate) dispatch(getPdfTemplates());
   }, []);
@@ -95,6 +99,11 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({ modelOp
     dispatch(setPdfDisplayFileId(null));
   };
 
+  useEffect(() => {
+    console.log(JSON.stringify('updating pdf template'));
+    dispatch(updateTempTemplate(tmpTemplate));
+  }, [debouncedTmpTemplate]);
+
   // useEffect(() => {
   //   setCurrentTemplate(pdfTemplate);
   //   //setCurrentTemplate2(pdfTemplate);
@@ -112,10 +121,10 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({ modelOp
     setTmpTemplate(pdfTemplate);
   }, [pdfTemplate]);
 
-  useEffect(() => {
-    console.log(JSON.stringify('updating pdf template'));
-    dispatch(updateTempTemplate(tmpTemplate));
-  }, [tmpTemplate]);
+  // useEffect(() => {
+  //   console.log(JSON.stringify('updating pdf template'));
+  //   dispatch(updateTempTemplate(tmpTemplate));
+  // }, [tmpTemplate]);
 
   const template = simulatedSaveTemplate || pdfTemplate;
 
