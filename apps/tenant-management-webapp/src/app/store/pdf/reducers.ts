@@ -30,7 +30,6 @@ const defaultState: PdfState = {
 };
 
 export default function (state: PdfState = defaultState, action: PdfActionTypes): PdfState {
-  console.log(JSON.stringify(action.type) + '<action.type');
   switch (action.type) {
     case FETCH_PDF_TEMPLATES_SUCCESS_ACTION:
       return {
@@ -41,21 +40,7 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
       state.tempTemplate = action.payload;
       return state;
     case UPDATE_PDF_TEMPLATE_SUCCESS_ACTION:
-      // return {
-      //   ...state,
-      //   pdfTemplates: {
-      //     ...action.payload,
-      //   },
-      // };
-      // return {
-      //   ...state,
-      //   pdfTemplates: {
-      //     ...state.pdfTemplates, // copy the existing pdfTemplates
-      //     ...action.payload, // apply the changes from action.payload
-      //   },
-      // };
       state.pdfTemplates = { ...state.pdfTemplates, ...action.payload };
-
       return state;
     case DELETE_PDF_TEMPLATE_SUCCESS_ACTION:
       return {

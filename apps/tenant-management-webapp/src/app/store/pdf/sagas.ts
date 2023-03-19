@@ -156,12 +156,6 @@ export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): Saga
   const token: string = yield call(getAccessToken);
   if (baseUrl && token) {
     try {
-      // yield put(
-      //   UpdateIndicator({
-      //     show: true,
-      //     message: 'Saving template...',
-      //   })
-      // );
       const pdfTemplate = {
         [template.id]: {
           ...template,
@@ -173,7 +167,7 @@ export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): Saga
       } = yield call(axios.patch, `${baseUrl}/configuration/v2/configuration/platform/pdf-service`, body, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log('latest');
+
       yield put(
         updatePdfTemplateSuccess({
           ...latest.configuration,
@@ -297,7 +291,7 @@ function* emitResponse(socket) {
   yield apply(socket, socket.emit, ['message received']);
 }
 
-export function* generatePdf({ payload, saveObject }: GeneratePdfAction): SagaIterator {
+export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
   const pdfServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pdfServiceApiUrl);
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const tempTemplate: PdfTemplate = yield select((state: RootState) => state.pdf.tempTemplate);
@@ -315,7 +309,7 @@ export function* generatePdf({ payload, saveObject }: GeneratePdfAction): SagaIt
     try {
       // save first
       const pdfTemplate = {
-        [saveObject.id]: {
+        [tempTemplate.id]: {
           ...tempTemplate,
         },
       };

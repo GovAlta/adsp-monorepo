@@ -70,7 +70,6 @@ export interface SocketChannelAction {
 export interface GeneratePdfAction {
   type: typeof GENERATE_PDF_ACTION;
   payload: PdfGenerationPayload;
-  saveObject: PdfTemplate;
 }
 
 export interface DeletePdfFilesServiceAction {
@@ -191,10 +190,9 @@ export const getPdfTemplatesSuccess = (results: Record<string, PdfTemplate>): Fe
   payload: results,
 });
 
-export const generatePdf = (payload: PdfGenerationPayload, saveObject: PdfTemplate): GeneratePdfAction => ({
+export const generatePdf = (payload: PdfGenerationPayload): GeneratePdfAction => ({
   type: GENERATE_PDF_ACTION,
   payload: payload,
-  saveObject: saveObject,
 });
 
 export const streamPdfSocket = (disconnect: boolean): StreamPdfSocketAction => ({

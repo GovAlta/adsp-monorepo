@@ -64,10 +64,8 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
       data: pdfTemplate.variables ? JSON.parse(pdfTemplate.variables) : {},
       fileName: `${pdfTemplate.id}_${new Date().toJSON().slice(0, 19).replace(/:/g, '-')}.pdf`,
     };
-    const saveObject = JSON.parse(JSON.stringify(pdfTemplate));
-    dispatch(generatePdf(payload, saveObject));
-    // setCurrentTemplate(saveObject);
-    // setCurrentSavedTemplate(saveObject);
+
+    dispatch(generatePdf(payload));
   };
   const [windowSize, setWindowSize] = useState(window.innerHeight);
 
@@ -78,8 +76,6 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
   const files = useSelector((state: RootState) => state?.pdf.files);
 
   const currentId = useSelector((state: RootState) => state?.pdf.currentId);
-
-  console.log('Refresh preview');
 
   const socketChannel = useSelector((state: RootState) => {
     return state?.pdf.socketChannel;

@@ -12,6 +12,9 @@
   "editor.trimAutoWhitespace": true,
   "editor.tabSize": 2,
   "files.trimTrailingWhitespace": true,
+  "files.exclude": {
+    "**/node_modules": true
+  },
   "[html]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },

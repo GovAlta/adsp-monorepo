@@ -44,8 +44,6 @@ interface TemplateEditorProps {
 }
 
 const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
-  console.log(JSON.stringify(prev?.additionalStyles) + '<prev.additionalStyles');
-  console.log(JSON.stringify(next?.additionalStyles) + '<next.additionalStyles');
   return (
     prev?.template !== next?.template ||
     prev?.header !== next?.header ||
@@ -82,11 +80,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({ modelOp
 
   const savePdfTemplate = (value) => {
     const saveObject = JSON.parse(JSON.stringify(value));
-    console.log(JSON.stringify(saveObject) + ',saveObject');
     dispatch(updatePdfTemplate(saveObject));
     setSimulatedSaveTemplate(saveObject);
-    // setCurrentSavedTemplate(currentTemplate);
-    //setCurrentTemplate(saveObject);
   };
 
   const history = useHistory();
@@ -100,15 +95,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({ modelOp
   };
 
   useEffect(() => {
-    console.log(JSON.stringify('updating pdf template'));
     dispatch(updateTempTemplate(tmpTemplate));
   }, [debouncedTmpTemplate]);
-
-  // useEffect(() => {
-  //   setCurrentTemplate(pdfTemplate);
-  //   //setCurrentTemplate2(pdfTemplate);
-  //   // setCurrentSavedTemplate(JSON.parse(JSON.stringify(pdfTemplate || '')));
-  // }, [pdfTemplate]);
 
   useEffect(() => {
     if (reloadFile) {
@@ -117,14 +105,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({ modelOp
   }, [reloadFile]);
 
   useEffect(() => {
-    console.log(JSON.stringify('resetting pdf template'));
     setTmpTemplate(pdfTemplate);
   }, [pdfTemplate]);
-
-  // useEffect(() => {
-  //   console.log(JSON.stringify('updating pdf template'));
-  //   dispatch(updateTempTemplate(tmpTemplate));
-  // }, [tmpTemplate]);
 
   const template = simulatedSaveTemplate || pdfTemplate;
 
@@ -154,10 +136,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({ modelOp
     }
   }, [monaco, suggestion]);
 
-  const onVariableChange = (value) => {
-    setTmpTemplate({ ...tmpTemplate, variables: value });
-  };
-
   useEffect(() => {
     if (modelOpen) {
       setActiveIndex(0);
@@ -165,15 +143,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({ modelOp
       setActiveIndex(-1);
     }
   }, [modelOpen]);
-
-  const resetSavedAction = () => {
-    // onBodyChange(template.template);
-    // onHeaderChange(template.header);
-    // onFooterChange(template.footer);
-    // onCssChange(template.additionalStyles);
-    // onVariableChange(template?.variables);
-    //setTmpTemplate(pdfTemplate);
-  };
 
   const monacoHeight = `calc(100vh - 585px${notifications.length > 0 ? ' - 80px' : ''})`;
 

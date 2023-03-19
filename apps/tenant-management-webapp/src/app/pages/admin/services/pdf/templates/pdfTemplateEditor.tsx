@@ -1,17 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import {
-  updatePdfTemplate,
-  getPdfTemplates,
-  setPdfDisplayFileId,
-  showCurrentFilePdf,
-  updatePdfResponse,
-} from '@store/pdf/action';
-
-import { RootState } from '@store/index';
-import _ from 'underscore';
-
-import { defaultPdfTemplate } from '@store/pdf/model';
+import React from 'react';
 import {
   PreviewTemplateContainer,
   NotificationTemplateEditorContainer,
@@ -23,23 +10,18 @@ import {
   HideTablet,
 } from '../styled-components';
 import { GoAButton } from '@abgov/react-components-new';
-
 import { TemplateEditor } from './previewEditor/TemplateEditor';
 import { PreviewTemplate } from './previewEditor/PreviewTemplate';
-
 import { useHistory } from 'react-router-dom';
 
 export const PdfTemplatesEditor = (): JSX.Element => {
   const history = useHistory();
-  //const [currentTemplate, setCurrentTemplate] = useState(pdfTemplate);
 
   const goBack = () => {
-    //setCurrentTemplate(defaultPdfTemplate);
     history.push({
       pathname: '/admin/services/pdf',
       state: { activeIndex: 1 },
     });
-    //dispatch(setPdfDisplayFileId(null));
   };
 
   return (
