@@ -32,11 +32,11 @@ import {
   updateTempTemplate,
 } from '@store/pdf/action';
 import { RootState } from '@store/index';
-import { DeleteModal } from '@components/DeleteModal';
 import { FetchFileService } from '@store/file/actions';
 import { useHistory, useParams } from 'react-router-dom';
 import { useDebounce } from '@lib/useDebounce';
 const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
+import { DeleteModal } from '../DeleteModal';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -69,7 +69,6 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({ modelOp
   const [activeIndex, setActiveIndex] = useState(0);
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-
   const debouncedTmpTemplate = useDebounce(tmpTemplate, TEMPLATE_RENDER_DEBOUNCE_TIMER);
 
   useEffect(() => {
@@ -291,7 +290,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({ modelOp
         <DeleteModal
           isOpen={showDeleteConfirmation}
           title="Delete PDF file"
-          content={<div>Are you sure you wish to delete all files</div>}
+          content={<div>Are you sure you wish to delete all files?</div>}
           onCancel={() => setShowDeleteConfirmation(false)}
           onDelete={() => {
             setShowDeleteConfirmation(false);

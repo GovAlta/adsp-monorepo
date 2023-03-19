@@ -123,3 +123,20 @@ export const defaultPdfTemplate: PdfTemplate = {
   footer: defaultTemplateFooter,
   variables: defaultAssignments,
 };
+
+export interface UpdatePdfConfig {
+  operation: string;
+  update: Record<string, PdfTemplate>;
+}
+export interface DeletePdfConfig {
+  operation: string;
+  property: string;
+}
+
+export interface CreatePdfConfig {
+  operation: string;
+  templateId: string;
+  // eslint-disable-next-line
+  data: Record<string, any>;
+  filename: string;
+}

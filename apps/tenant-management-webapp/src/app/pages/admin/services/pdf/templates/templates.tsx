@@ -9,7 +9,7 @@ import { PdfTemplatesTable } from './templatesList';
 import { PageIndicator } from '@components/Indicator';
 import { defaultPdfTemplate } from '@store/pdf/model';
 
-import { DeleteModal } from '@components/DeleteModal';
+import { DeleteModal } from './DeleteModal';
 
 interface PdfTemplatesProps {
   openAddTemplate: boolean;
