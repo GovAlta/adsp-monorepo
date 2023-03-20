@@ -16,6 +16,7 @@ export const hasProperHtmlWrapper = (content: string): boolean => {
 };
 
 export const getTemplateBody = (body: string, channel: string, context?: Record<string, unknown>): string => {
+  console.log('body', body);
   if (channel === 'pdf-footer') {
     return pdfFooterTemplate({ content: body, ...context });
   } else if (channel === 'pdf-header') {
@@ -23,7 +24,7 @@ export const getTemplateBody = (body: string, channel: string, context?: Record<
   } else {
     if (!hasProperHtmlWrapper(body)) {
       if (channel === 'email') {
-        return emailWrapperTemplate({ content: body, ...context });
+        return body ? emailWrapperTemplate({ content: body, ...context }) : body;
       } else if (channel === 'pdf') {
         return pdfWrapperTemplate({ content: body, ...context });
       } else {
