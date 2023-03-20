@@ -147,7 +147,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
       try {
         setSubjectPreview('');
-        const combinedPreview = ('<style>' + template?.additionalStyles + '</style>').concat(template?.body);
+        const combinedPreview = template?.body
+          ? ('<style>' + template?.additionalStyles + '</style>').concat(template?.body)
+          : template?.body;
         const bodyPreview = generateMessage(getTemplateBody(combinedPreview, currentChannel, htmlPayload), htmlPayload);
         setBodyPreview(bodyPreview);
         setTemplateEditErrors({

@@ -23,7 +23,7 @@ export const getTemplateBody = (body: string, channel: string, context?: Record<
   } else {
     if (!hasProperHtmlWrapper(body)) {
       if (channel === 'email') {
-        return emailWrapperTemplate({ content: body, ...context });
+        return body ? emailWrapperTemplate({ content: body, ...context }) : body;
       } else if (channel === 'pdf') {
         return pdfWrapperTemplate({ content: body, ...context });
       } else {

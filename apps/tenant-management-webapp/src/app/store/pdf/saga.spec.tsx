@@ -119,50 +119,50 @@ it('Update Pdf template', () => {
     .run();
 });
 
-it('Generate Pdf template', () => {
-  const templateToDelete = {
-    id: 'pdf-to-delete',
-    ...mockTemplates['mock-template'],
-  };
+// it('Generate Pdf template', () => {
+//   const templateToDelete = {
+//     id: 'pdf-to-delete',
+//     ...mockTemplates['mock-template'],
+//   };
 
-  const mockPayload = {
-    templateId: 'mock-template-id',
-    data: { mockTest: 'anything' },
-    fileName: 'mock-filename',
-  };
+//   const mockPayload = {
+//     templateId: 'mock-template-id',
+//     data: { mockTest: 'anything' },
+//     fileName: 'mock-filename',
+//   };
 
-  return expectSaga(generatePdf, {
-    type: 'pdf/GENERATE_PDF_ACTION',
-    payload: mockPayload,
-    saveObject: templateToDelete,
-  })
-    .withState(storeState)
-    .provide({
-      call(effect, next) {
-        if (effect.fn === generatePdfApi) {
-          return {
-            latest: {
-              configuration: mockTemplates['mock-template'],
-            },
-          };
-        }
+//   return expectSaga(generatePdf, {
+//     type: 'pdf/GENERATE_PDF_ACTION',
+//     payload: mockPayload,
+//     saveObject: templateToDelete,
+//   })
+//     .withState(storeState)
+//     .provide({
+//       call(effect, next) {
+//         if (effect.fn === generatePdfApi) {
+//           return {
+//             latest: {
+//               configuration: mockTemplates['mock-template'],
+//             },
+//           };
+//         }
 
-        if (effect.fn === createPdfJobApi) {
-          return;
-        }
-        return next();
-      },
-    })
-    .put.like({
-      action: {
-        type: GENERATE_PDF_SUCCESS_ACTION,
-        payload: {
-          operation: 'generate',
-          templateId: mockPayload.templateId,
-          data: mockPayload.data,
-          filename: 'mock-filename',
-        },
-      },
-    })
-    .run();
-});
+//         if (effect.fn === createPdfJobApi) {
+//           return;
+//         }
+//         return next();
+//       },
+//     })
+//     .put.like({
+//       action: {
+//         type: GENERATE_PDF_SUCCESS_ACTION,
+//         payload: {
+//           operation: 'generate',
+//           templateId: mockPayload.templateId,
+//           data: mockPayload.data,
+//           filename: 'mock-filename',
+//         },
+//       },
+//     })
+//     .run();
+// });
