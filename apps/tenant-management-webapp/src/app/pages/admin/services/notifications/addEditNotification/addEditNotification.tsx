@@ -103,9 +103,11 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                   const validations = {
                     name: value,
                   };
-                  validators.remove('name');
-                  validations['duplicated'] = value;
-                  validators.checkAll(validations);
+                  if (!isEdit) {
+                    validators.remove('name');
+                    validations['duplicated'] = value;
+                    validators.checkAll(validations);
+                  }
                   setType({ ...type, name: value, id: isEdit ? type.id : toKebabName(value) });
                 }}
               />

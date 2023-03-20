@@ -40,6 +40,7 @@ const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
 
 interface TemplateEditorProps {
   modelOpen: boolean;
+  //eslint-disable-next-line
   errors?: any;
 }
 
