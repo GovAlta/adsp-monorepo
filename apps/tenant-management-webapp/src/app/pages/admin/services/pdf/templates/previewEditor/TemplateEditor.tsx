@@ -23,6 +23,7 @@ import { PDFConfigForm } from './PDFConfigForm';
 import { getSuggestion } from '../utils/suggestion';
 import { bodyEditorConfig } from './config';
 import GeneratedPdfList from '../generatedPdfList';
+import { DeleteModal } from '../DeleteModal';
 import { LogoutModal } from '@components/LogoutModal';
 import {
   deletePdfFilesService,
@@ -36,7 +37,6 @@ import { FetchFileService } from '@store/file/actions';
 import { useHistory, useParams } from 'react-router-dom';
 import { useDebounce } from '@lib/useDebounce';
 const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
-import { DeleteModal } from '../DeleteModal';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
