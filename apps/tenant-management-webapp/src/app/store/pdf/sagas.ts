@@ -286,7 +286,7 @@ export function* generatePdf({ payload, saveObject }: GeneratePdfAction): SagaIt
     })
   );
 
-  if (pdfServiceUrl && token) {
+  if (pdfServiceUrl && token && baseUrl) {
     try {
       // save first
       const pdfTemplate = {
