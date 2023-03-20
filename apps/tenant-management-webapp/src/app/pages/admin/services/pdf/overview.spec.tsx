@@ -2,10 +2,9 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import { PdfOverview } from './overview';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { PdfMetrics } from './metrics';
 import { defaultState } from '@store/pdf/reducers';
-import { fn } from 'moment';
 
 describe('Test Pdf overview page', () => {
   const mockStore = configureStore([]);
@@ -43,7 +42,9 @@ describe('Test Pdf overview page', () => {
     const { queryByTestId } = render(
       <Provider store={store}>
         <PdfOverview
+          // eslint-disable-next-line
           updateActiveIndex={jest.fn((index: number) => {})}
+          // eslint-disable-next-line
           setOpenAddTemplate={jest.fn((val: boolean) => {})}
         />
       </Provider>
