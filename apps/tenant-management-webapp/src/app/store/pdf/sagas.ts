@@ -37,9 +37,8 @@ import {
 } from './action';
 import { readFileAsync } from './readFile';
 import { io } from 'socket.io-client';
-
 import { getAccessToken } from '@store/tenant/sagas';
-import { PdfGenerationResponse, UpdatePdfConfig, DeletePdfConfig, CreatePdfConfig } from './model';
+import { PdfGenerationResponse, PdfTemplate, UpdatePdfConfig, DeletePdfConfig, CreatePdfConfig } from './model';
 import {
   fetchPdfTemplatesApi,
   updatePDFTemplateApi,
@@ -157,7 +156,6 @@ const connect = (pushServiceUrl, token, stream, tenantName) => {
 export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const token: string = yield call(getAccessToken);
-
   if (baseUrl && token) {
     try {
       const pdfTemplate = {
@@ -165,6 +163,7 @@ export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): Saga
           ...template,
         },
       };
+
       const body: UpdatePdfConfig = { operation: 'UPDATE', update: { ...pdfTemplate } };
       const url = `${baseUrl}/configuration/v2/configuration/platform/pdf-service`;
       const { latest } = yield call(updatePDFTemplateApi, token, url, body);
@@ -281,9 +280,10 @@ function* emitResponse(socket) {
   yield apply(socket, socket.emit, ['message received']);
 }
 
-export function* generatePdf({ payload, saveObject }: GeneratePdfAction): SagaIterator {
+export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
   const pdfServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pdfServiceApiUrl);
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const tempTemplate: PdfTemplate = yield select((state: RootState) => state.pdf.tempTemplate);
 
   const token: string = yield call(getAccessToken);
 
@@ -298,8 +298,8 @@ export function* generatePdf({ payload, saveObject }: GeneratePdfAction): SagaIt
     try {
       // save first
       const pdfTemplate = {
-        [saveObject.id]: {
-          ...saveObject,
+        [tempTemplate.id]: {
+          ...tempTemplate,
         },
       };
       const saveBody: UpdatePdfConfig = { operation: 'UPDATE', update: { ...pdfTemplate } };

@@ -11,6 +11,7 @@ import {
   SHOW_CURRENT_FILE_PDF_SUCCESS,
   SET_PDF_DISPLAY_FILE_ID,
   UPDATE_JOBS,
+  UPDATE_TEMP_TEMPLATE,
 } from './action';
 import { PdfState } from './model';
 
@@ -25,6 +26,7 @@ const defaultState: PdfState = {
   files: {},
   currentFile: null,
   currentId: '',
+  tempTemplate: null,
 };
 
 export default function (state: PdfState = defaultState, action: PdfActionTypes): PdfState {
@@ -34,13 +36,12 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
         ...state,
         pdfTemplates: action.payload,
       };
+    case UPDATE_TEMP_TEMPLATE:
+      state.tempTemplate = action.payload;
+      return state;
     case UPDATE_PDF_TEMPLATE_SUCCESS_ACTION:
-      return {
-        ...state,
-        pdfTemplates: {
-          ...action.payload,
-        },
-      };
+      state.pdfTemplates = { ...state.pdfTemplates, ...action.payload };
+      return state;
     case DELETE_PDF_TEMPLATE_SUCCESS_ACTION:
       return {
         ...state,

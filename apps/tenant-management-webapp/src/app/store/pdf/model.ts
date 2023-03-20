@@ -110,6 +110,7 @@ export interface PdfState {
   currentFile: Blob;
   currentId: string;
   socketChannel: SocketChannel;
+  tempTemplate: PdfTemplate;
 }
 
 export const defaultPdfTemplate: PdfTemplate = {
