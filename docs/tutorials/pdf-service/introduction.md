@@ -8,7 +8,7 @@ grand_parent: Tutorials
 
 ## Introduction
 
-The PDF service allows developers to build templates for their applications to use in generating customized, PDF, documentation for their end users. It bundles together two powerful technologies - [Puppeteer](https://pptr.dev/) and [Handlebars](https://handlebarsjs.com/guide/) - to yield a simple, effective, technique for managing documents requested by end users such as *client reports, registrations, certifications*, and other official GOA documentation.
+The ADSP PDF service allows developers to build templates for their applications to use in generating customized, PDF, documentation for their end users. It bundles together two powerful technologies - [Puppeteer](https://pptr.dev/) and [Handlebars](https://handlebarsjs.com/guide/) - to yield a simple, effective, technique for managing documents requested by end users such as *client reports, registrations, certifications*, and other official GOA documentation.
 
 #### Components
 
