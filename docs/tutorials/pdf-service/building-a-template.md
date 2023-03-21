@@ -25,7 +25,7 @@ You will also need to have access to GOA's Keycloak platform.  These are need
 - by the template designer to login to ADSP's Tenant Admin webapp, to access the PDF template editor, and
 - by the application using the template to acquire access tokens for the API calls.
 
-The following discussion will guide you through the steps needed to build a fairly complex template. There are a few pitfalls to navigate through, as Puppeteer can be a bit quirky, and we take full advantage of the [Handlebars](/adsp-monorepo/tutorials/pdf/handlebars.html) template engine. If you want to follow along and try it yourself, login to our [Template Editor](https://adsp.alberta.ca) and use the following set of HTML, CSS and test data files:
+The following discussion will guide you through the steps needed to build a fairly complex template. There are a few pitfalls to navigate through, as Puppeteer can be a bit quirky, and we take full advantage of the [Handlebars](/adsp-monorepo/tutorials/pdf-service/handlebars.html) template engine. If you want to follow along and try it yourself, login to our [Template Editor](https://adsp.alberta.ca) and use the following set of HTML, CSS and test data files:
 
 - <a href="/adsp-monorepo/assets/pdf/header.html" download>Header</a>
 - <a href="/adsp-monorepo/assets/pdf/footer.html" download>Footer</a>
@@ -52,13 +52,13 @@ To give template designers a head start, when a new template is created it will 
 
 #### Testing Your Design
 
-When building a complex template it is important to be able to visualize how it is looking as you progress in your work, much like with web-design. The right-hand pane of the Template Editor contains an area for previewing PDF's. When you want to check your progress you can specify "typical" values for your [Handlebars](/adsp-monorepo/tutorials/pdf/handlebars.html) variables on the _Test Data_ tab, then click Generate PDF on the top right. It may take a few seconds, but the PDF will soon show up in the pane.
+When building a complex template it is important to be able to visualize how it is looking as you progress in your work, much like with web-design. The right-hand pane of the Template Editor contains an area for previewing PDF's. When you want to check your progress you can specify "typical" values for your [Handlebars](/adsp-monorepo/tutorials/pdf-service/handlebars.html) variables on the _Test Data_ tab, then click Generate PDF on the top right. It may take a few seconds, but the PDF will soon show up in the pane.
 
 The editor also keeps a list of the last few PDF files generated in your session, on the _File History_ tab, so you can look back at them if the need arises. The list is short, and temporary, so please download any files you may want to keep around for prosperity.
 
 ## Define Page Attributes
 
-The first step is to define the boundaries for the page. [Puppeteer](/adsp-monorepo/tutorials/pdf/puppeteer.html) – the PDF generation engine used by the PDF service – allocates room for headers and footers via page margins. The header defaults to 10px in height. Since the IRC header is much higher than 10px these margins must be changed, or the lower portion of the header block will be obscured with body content. We can do this by setting the page margins on the body tab:
+The first step is to define the boundaries for the page. [Puppeteer](/adsp-monorepo/tutorials/pdf-service/puppeteer.html) – the PDF generation engine used by the PDF service – allocates room for headers and footers via page margins. The header defaults to 10px in height. Since the IRC header is much higher than 10px these margins must be changed, or the lower portion of the header block will be obscured with body content. We can do this by setting the page margins on the body tab:
 
 ```css
 @page {
@@ -109,7 +109,7 @@ The HTML for the header is quite simple;
 
 #### Handlebars Placeholders
 
-Notice the code-like constructs between double curly braces. Each page of the PDF is required to have the applicant's identification – name, alias and date of birth – so it makes sense to put the information into the header. But the information is supplied dynamically, since it is different for each user. This is where a component of the PDF service comes in handy – [Handlebars](/adsp-monorepo/tutorials/pdf/handlebars.html)! It’s a template tool that allows us to specify placeholders for the real data. When the PDF is generated, you provide the system with actual values as a JSON object, thereby customizing the document. The JSON object for this example might look something like this:
+Notice the code-like constructs between double curly braces. Each page of the PDF is required to have the applicant's identification – name, alias and date of birth – so it makes sense to put the information into the header. But the information is supplied dynamically, since it is different for each user. This is where a component of the PDF service comes in handy – [Handlebars](/adsp-monorepo/tutorials/pdf-service/handlebars.html)! It’s a template tool that allows us to specify placeholders for the real data. When the PDF is generated, you provide the system with actual values as a JSON object, thereby customizing the document. The JSON object for this example might look something like this:
 
 ```json
 {
@@ -316,4 +316,4 @@ There are still things to learn about [Puppeteer](https://pptr.dev/) and [Handle
 
 ## Learn More
 
-- Learn how to [generate a PDF from a template](/adsp-monorepo/tutorials/pdf/generate-a-pdf.html)
+- Learn how to [generate a PDF from a template](/adsp-monorepo/tutorials/pdf-service/generate-a-pdf.html)

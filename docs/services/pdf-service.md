@@ -7,7 +7,7 @@ parent: Services
 
 # PDF service
 
-PDF service provides utility PDF operations like generation of PDFs from templates. For a more in-depth description of how the service works, please see the [PDF Tutorial](/adsp-monorepo/tutorials/pdf/introduction.html)
+PDF service provides utility PDF operations like generation of PDFs from templates. For a more in-depth description of how the service works, please see the [PDF Tutorial](/adsp-monorepo/tutorials/pdf-service/introduction.html)
 
 ## Client roles
 

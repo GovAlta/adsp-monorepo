@@ -31,7 +31,7 @@ Metadata - or File Properties - is stored along with the file. Metadata includes
 | urn          | Logical URN of the file. You can map the URN to a URL using the [ADSP SDK's](https://github.com/GovAlta/adsp-monorepo/blob/main/libs/adsp-service-sdk/src/directory/serviceDirectory.ts) getResourceUrl() method. |
 | size         | File Size                                                                                                                                                                                                         |
 | typeName     | Name of the File Type collection to which the file belongs to.                                                                                                                                                    |
-| record ID    | An optional application ID that can be used to cross reference the file with application data.                                                                                                                    |
+| record ID    | An optional, arbitrary, application record-ID that can be used to cross reference the file with application data.                                                                                                 |
 | created date | Date the file was uploaded.                                                                                                                                                                                       |
 | created by   | The name and ID of the authenticated user that uploaded the file.                                                                                                                                                 |
 | scanned      | True if the file was scanned when uploaded.                                                                                                                                                                       |
@@ -41,8 +41,8 @@ Metadata - or File Properties - is stored along with the file. Metadata includes
 
 You can search through your uploaded files using the following criteria
 
-- those matching, or partially matching, a file name
-- those matching a specific record ID
+- file names matching, or partially matching, an input string
+- metadata matching a specific record ID
 - those files in a specific File Type collection
 
 ### Downloading

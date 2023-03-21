@@ -47,5 +47,5 @@ See the [Handlebars Documentation](https://handlebarsjs.com/guide/) for more inf
 
 #### Learn More
 
-- Learn how to [build a sophisticated template](/adsp-monorepo/tutorials/pdf/building-a-template.html) using ADSP's Template Editor
-- Learn how to [generate a PDF from a template](/adsp-monorepo/tutorials/pdf/generate-a-pdf.html)
+- Learn how to [build a sophisticated template](/adsp-monorepo/tutorials/pdf-service/building-a-template.html) using ADSP's Template Editor
+- Learn how to [generate a PDF from a template](/adsp-monorepo/tutorials/pdf-service/generate-a-pdf.html)
