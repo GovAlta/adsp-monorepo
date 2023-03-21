@@ -236,7 +236,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({ modelOp
             </Tab>
             <Tab testId={`pdf-test-history`} label={<PdfEditorLabelWrapper>File history</PdfEditorLabelWrapper>}>
               <>
-                <GeneratorStyling>
+                <GeneratorStyling style={{ height: `calc(${monacoHeight} - 1.5em` }}>
                   <ButtonRight>
                     <GoAButton
                       type="secondary"
