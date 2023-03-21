@@ -17,6 +17,9 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Install
+      shell: bash
+      run: npx nx affected --target=install --base=${{ inputs.affected-base }}
     - name: Lint
       shell: bash
       run: npx nx affected --target=lint --base=${{ inputs.affected-base }}
