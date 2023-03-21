@@ -73,5 +73,6 @@
   ],
   "omnisharp.enableRoslynAnalyzers": true,
   "dotnet-test-explorer.testProjectPath": "libs/adsp-service-net-sdk/",
-  "java.configuration.updateBuildConfiguration": "automatic"
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.compile.nullAnalysis.mode": "automatic"
 }
