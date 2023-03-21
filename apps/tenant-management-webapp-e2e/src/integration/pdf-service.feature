@@ -27,6 +27,7 @@ Feature: PDF service
     Then the user views "autotest-pdf-template", "autotest-pdf-template" and "autotest PDF template desc" in PDF template modal
     When the user enters "autotest-pdf-templateNew" as name and "autotest PDF template new desc" as description in PDF template modal
     And the user clicks Save button in Add or Edit template modal
+
    # And the user enters "autotest body {{ data.testVariable }}" for "Body" in PDF template modal
    # Then the user views the "PDF" preview of "autotest body "
    # When the user enters "autotest header" for "Header" in PDF template modal

@@ -71,12 +71,8 @@ class PDFServicePage {
     );
   }
 
-  pdfTemplateModalNameField() {
-    return cy.xpath('//input[contains(@data-testid, "modal-name-input")]');
-  }
-
   pdfTemplateModalTemplateIdField() {
-    return cy.xpath('//input[contains(@data-testid, "pdf-template-id")]');
+    return cy.get('[data-testid="pdf-template-id"]');
   }
 
   pdfTemplateModalDescriptionField() {
