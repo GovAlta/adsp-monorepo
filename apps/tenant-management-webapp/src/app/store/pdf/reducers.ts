@@ -15,7 +15,7 @@ import {
 } from './action';
 import { PdfState } from './model';
 
-const defaultState: PdfState = {
+export const defaultState: PdfState = {
   pdfTemplates: {},
   metrics: {},
   stream: [],
