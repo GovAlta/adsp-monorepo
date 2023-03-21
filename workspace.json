@@ -1,6 +1,89 @@
 {
   "version": 1,
   "projects": {
+    "adsp-service-flask-sdk": {
+      "root": "libs/adsp-service-flask-sdk",
+      "projectType": "library",
+      "sourceRoot": "libs/adsp-service-flask-sdk/adsp_service_flask_sdk",
+      "architect": {
+        "docs": {
+          "builder": "nx:run-commands",
+          "options": {
+            "command": "pydoc-markdown -p adsp_service_flask_sdk --render-toc > docs/source/api.md",
+            "cwd": "libs/adsp-service-flask-sdk"
+          }
+        },
+        "lock": {
+          "builder": "nx:run-commands",
+          "options": {
+            "command": "poetry lock --no-update",
+            "cwd": "libs/adsp-service-flask-sdk"
+          }
+        },
+        "add": {
+          "builder": "@nxlv/python:add",
+          "options": {}
+        },
+        "update": {
+          "builder": "@nxlv/python:update",
+          "options": {}
+        },
+        "remove": {
+          "builder": "@nxlv/python:remove",
+          "options": {}
+        },
+        "build": {
+          "builder": "@nxlv/python:build",
+          "outputs": ["{projectRoot}/dist"],
+          "options": {
+            "outputPath": "libs/adsp-service-flask-sdk/dist",
+            "publish": true,
+            "lockedVersions": true,
+            "bundleLocalDependencies": true
+          }
+        },
+        "install": {
+          "builder": "@nxlv/python:install",
+          "options": {
+            "silent": false,
+            "args": "",
+            "cacheDir": ".cache/pypoetry",
+            "verbose": false,
+            "debug": false
+          }
+        },
+        "lint": {
+          "builder": "@nxlv/python:flake8",
+          "outputs": ["{workspaceRoot}/reports/libs/adsp-service-flask-sdk/pylint.txt"],
+          "options": {
+            "outputFile": "reports/libs/adsp-service-flask-sdk/pylint.txt"
+          }
+        },
+        "test": {
+          "builder": "nx:run-commands",
+          "outputs": [
+            "{workspaceRoot}/reports/libs/adsp-service-flask-sdk/unittests",
+            "{workspaceRoot}/coverage/libs/adsp-service-flask-sdk"
+          ],
+          "options": {
+            "command": "poetry run pytest tests/",
+            "cwd": "libs/adsp-service-flask-sdk"
+          }
+        },
+        "tox": {
+          "builder": "@nxlv/python:tox",
+          "outputs": [
+            "{workspaceRoot}/reports/libs/adsp-service-flask-sdk/unittests",
+            "{workspaceRoot}/coverage/libs/adsp-service-flask-sdk"
+          ],
+          "options": {
+            "silent": false,
+            "args": ""
+          }
+        }
+      },
+      "tags": []
+    },
     "adsp-service-net-sdk": {
       "root": "libs/adsp-service-net-sdk",
       "projectType": "library",

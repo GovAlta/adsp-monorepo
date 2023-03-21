@@ -78,7 +78,7 @@
       }
     }
   },
-  "plugins": ["@nx-dotnet/core", "@nxrocks/nx-spring-boot"],
+  "plugins": ["@nx-dotnet/core", "@nxlv/python", "@nxrocks/nx-spring-boot"],
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "targetDefaults": {
     "build": {
