@@ -10,7 +10,7 @@ grand_parent: Tutorials
 
 ### Uploading
 
-Files are uploaded to Azure Blob Storage and stored as octet streams.
+Files are uploaded to Azure Blob Storage and stored as octet streams. In addition to the file, there is a small amount of metadata that gets created and stored along with it, as discussed below.
 
 ### Scanning
 
@@ -18,23 +18,33 @@ When you upload a file, you can specify whether or not it should be scanned for 
 
 ### Access Permission
 
-Using File Type collections you can specify access permissions based on your tenant (Keycloak) roles. See ADSP [File Types](/adsp-monorepo/tutorials/file-service/file-types.md) for more information.
+Using File Type collections you can specify access permissions based on your tenant (Keycloak) roles. See ADSP [File Types](/adsp-monorepo/tutorials/file-service/file-types.html) for more information.
 
 ### Metadata
 
 Metadata - or File Properties - is stored along with the file. Metadata includes
-| Name | Description |
-| id | The file ID with which which you can refer to the file when performing File Service API calls. |
-| filename | The name of the file. |
-| urn | Logical URN of the file. You can map the URN to a URL using the [ADSP SDK's](https://github.com/GovAlta/adsp-monorepo/blob/main/libs/adsp-service-sdk/src/directory/serviceDirectory.ts) getResourceUrl() method. |
-| size | File Size |
-| typeName | Name of the File Type collection to which the file belongs to. |
-| record ID | An optional application ID that can be used to cross reference the file with application data. |
-| created date | Date the file was uploaded. |
-| created by | The name and ID of the authenticated user that uploaded the file. |
-| scanned | True if the file was scanned when uploaded. |
-| infected | True if a virus or other malware was found in the file contents. |
+
+| Name         | Description                                                                                                                                                                                                       |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| id           | The file ID with which which you can refer to the file when performing File Service API calls.                                                                                                                    |
+| filename     | The name of the file.                                                                                                                                                                                             |
+| urn          | Logical URN of the file. You can map the URN to a URL using the [ADSP SDK's](https://github.com/GovAlta/adsp-monorepo/blob/main/libs/adsp-service-sdk/src/directory/serviceDirectory.ts) getResourceUrl() method. |
+| size         | File Size                                                                                                                                                                                                         |
+| typeName     | Name of the File Type collection to which the file belongs to.                                                                                                                                                    |
+| record ID    | An optional application ID that can be used to cross reference the file with application data.                                                                                                                    |
+| created date | Date the file was uploaded.                                                                                                                                                                                       |
+| created by   | The name and ID of the authenticated user that uploaded the file.                                                                                                                                                 |
+| scanned      | True if the file was scanned when uploaded.                                                                                                                                                                       |
+| infected     | True if a virus or other malware was found in the file contents.                                                                                                                                                  |
 
 ### Searching
 
+You can search through your uploaded files using the following criteria
+
+- those matching, or partially matching, a file name
+- those matching a specific record ID
+- those files in a specific File Type collection
+
 ### Downloading
+
+Files are stored, and downloaded, as octet streams.
