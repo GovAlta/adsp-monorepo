@@ -23,14 +23,13 @@ interface SubscribersProps {
 
 export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
   const dispatch = useDispatch();
-  const isFetchConfigCompleted = useActionStateCheck(FETCH_NOTIFICATION_CONFIGURATION);
-
+  const isFetchLoading = useActionStateCheck(FETCH_NOTIFICATION_CONFIGURATION, 'start');
   useEffect(() => {
     dispatch(FetchNotificationConfigurationService());
   }, []);
 
   // eslint-disable-next-line
-  useEffect(() => {}, [isFetchConfigCompleted]);
+  useEffect(() => {}, [isFetchLoading]);
 
   const contact = useSelector((state: RootState) => state.notification.supportContact);
   const hasConfigurationAdminRole = useSelector((state: RootState) =>
@@ -84,27 +83,23 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
         <Grid>
           <GridItem data-testid="email" className="word-break contact-border" md={8} vSpacing={1} hSpacing={0.5}>
             <h4>Contact email</h4>
-            {!isFetchConfigCompleted && (
-              <GoASkeletonGridColumnContent key="email" rows={1}></GoASkeletonGridColumnContent>
-            )}
-            {isFetchConfigCompleted && contact?.contactEmail}
+            {isFetchLoading && <GoASkeletonGridColumnContent key="email" rows={1}></GoASkeletonGridColumnContent>}
+            {!isFetchLoading && contact?.contactEmail}
           </GridItem>
           <GridItem data-testid="phone" className="contact-border" md={4} vSpacing={1} hSpacing={0.5}>
             <h4>Phone number</h4>
-            {!isFetchConfigCompleted && (
-              <GoASkeletonGridColumnContent key="Phone" rows={1}></GoASkeletonGridColumnContent>
-            )}
+            {isFetchLoading && <GoASkeletonGridColumnContent key="Phone" rows={1}></GoASkeletonGridColumnContent>}
 
-            {isFetchConfigCompleted && phoneWrapper(contact?.phoneNumber)}
+            {!isFetchLoading && phoneWrapper(contact?.phoneNumber)}
           </GridItem>
         </Grid>
         <Grid>
           <GridItem data-testid="support-instructions" className="contact-border" md={12} vSpacing={1} hSpacing={0}>
             <h4>Support instructions</h4>
-            {!isFetchConfigCompleted && (
+            {isFetchLoading && (
               <GoASkeletonGridColumnContent key="instructions" rows={1}></GoASkeletonGridColumnContent>
             )}
-            {isFetchConfigCompleted && contact?.supportInstructions}
+            {!isFetchLoading && contact?.supportInstructions}
           </GridItem>
         </Grid>
         <ContactInformationModalForm
