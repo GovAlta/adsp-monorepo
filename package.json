@@ -147,6 +147,7 @@
     "@nrwl/webpack": "15.2.1",
     "@nrwl/workspace": "15.2.1",
     "@nx-dotnet/core": "^1.16.0",
+    "@nxlv/python": "^15.6.0",
     "@nxrocks/nx-spring-boot": "^6.3.0",
     "@redux-devtools/extension": "^3.2.2",
     "@reduxjs/toolkit": "1.8.4",

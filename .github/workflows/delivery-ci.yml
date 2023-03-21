@@ -34,6 +34,12 @@ jobs:
           java-version: "11"
           distribution: temurin
           cache: maven
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - uses: snok/install-poetry@v1
+        with:
+          version: "1.4"
       - run: npm ci
       - name: Get last successful commit
         id: last_successful_commit
