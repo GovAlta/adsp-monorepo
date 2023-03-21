@@ -6,7 +6,7 @@ export const defaultTemplateBody = `<!--
 -- be a starting point which should be modified to suit your needs.  It also serves
 -- as a short, somewhat cryptic, tutorial for some of the more esoteric
 -- points of template authoring.  For a more in depth tutorial, see
---   https://govalta.github.io/adsp-monorepo/tutorials/pdf/introduction.html
+--   https://govalta.github.io/adsp-monorepo/tutorials/pdf-service/introduction.html
 --
 -- Quick Start:
 --

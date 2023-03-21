@@ -172,4 +172,4 @@ await fetch(`https://file-service.adsp.alberta.ca/file/v1/files/${fileID}/downlo
 
 ## Learn More
 
-- Learn how to [build a PDF template](/adsp-monorepo/tutorials/pdf/building-a-template.html) using ADSP's Template Editor
+- Learn how to [build a PDF template](/adsp-monorepo/tutorials/pdf-service/building-a-template.html) using ADSP's Template Editor

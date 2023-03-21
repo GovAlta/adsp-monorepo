@@ -49,7 +49,7 @@ export const defaultTemplateHeader = `<style>
     -- ability to customize documents.  Placeholder names must always start with the prefix data. or they
     -- will be ignored.  Data to be substituted for the placeholders is written as a Json object.  You can
     -- learn all about how Handlebars works here:
-    --    https://govalta.github.io/adsp-monorepo/tutorials/pdf/introduction.html
+    --    https://govalta.github.io/adsp-monorepo/tutorials/pdf-service/introduction.html
     --
     -- See the JSON in the Test Data tab for the examples used here.
     -->
