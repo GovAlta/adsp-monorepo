@@ -287,10 +287,6 @@ export const PdfConfigFormWrapper = styled.div`
 export const PdfEditActionLayout = styled.div`
   position fixed;
   bottom: 4rem;
-<<<<<<< HEAD
-=======
-  width: calc(100% - 40vw - 5.4rem);
->>>>>>> 0f8a90e80... reduce bar length by 1 pixed
 `;
 
 export const PdfEditActions = styled.div`
