@@ -4,7 +4,7 @@ from threading import Lock
 from typing import Any, Callable, Dict, Optional
 
 from cachetools import TTLCache, cachedmethod
-from httpx import get
+from httpx import RequestError, get
 
 from ._constants import PLATFORM_CONFIGURATION_API
 from .adsp_id import AdspId
@@ -20,7 +20,7 @@ def _default_convert_config(
     if tenant:
         combined.update(tenant)
     if core:
-        combined.update(tenant)
+        combined.update(core)
     return combined
 
 
@@ -81,7 +81,7 @@ class ConfigurationService:
                 tenant_id,
             )
             return configuration
-        except BaseException as err:
+        except RequestError as err:
             self._logger.error(
                 "Error encountered retrieving configuration for service %s. %s",
                 service_id,

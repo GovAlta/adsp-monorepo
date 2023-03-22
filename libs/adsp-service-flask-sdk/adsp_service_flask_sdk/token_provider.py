@@ -60,13 +60,12 @@ class TokenProvider:
                 ).json()
 
                 access_token, expires_in = self.__response_values_getter(result)
-                if type(access_token) is str and type(expires_in) is int:
-                    self._set_cached_token(
-                        access_token,
-                        datetime.now() + timedelta(seconds=(expires_in - 60)),
-                    )
+                self._set_cached_token(
+                    access_token,
+                    datetime.now() + timedelta(seconds=(expires_in - 60)),
+                )
 
-                return access_token
+                token = access_token
             except RequestError as err:
                 self._logger.error("Error encountered retrieving access token. %s", err)
                 raise
