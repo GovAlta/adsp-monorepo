@@ -100,7 +100,7 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
     case GENERATE_PDF_SUCCESS_ACTION: {
       let jobs = JSON.parse(JSON.stringify(state.jobs));
 
-      const index = jobs.findIndex((job) => job.id === action.payload.context?.jobId);
+      let index = jobs.findIndex((job) => job.id === action.payload.context?.jobId);
       if (index > -1) {
         if (!jobs[index].stream) {
           jobs[index].stream = [];
@@ -111,12 +111,13 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
         if (action.payload?.filename) {
           jobs = [action.payload].concat(jobs);
         }
+        index = 0;
       }
 
       return {
         ...state,
         jobs: jobs,
-        reloadFile: action.payload?.payload?.file?.id,
+        reloadFile: { ...state.reloadFile, [jobs[index].templateId]: action.payload?.payload?.file?.id },
       };
     }
     case SOCKET_CHANNEL: {

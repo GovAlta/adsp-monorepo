@@ -104,7 +104,7 @@ export interface PdfState {
   metrics: PdfMetrics;
   stream: Stream[];
   jobs: PdfGenerationResponse[];
-  reloadFile: string;
+  reloadFile: Record<string, string>;
   status: string[];
   files: Record<string, Blob>;
   currentFile: Blob;

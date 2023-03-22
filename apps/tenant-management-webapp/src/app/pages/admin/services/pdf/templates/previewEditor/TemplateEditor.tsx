@@ -99,8 +99,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({ modelOp
   }, [debouncedTmpTemplate]);
 
   useEffect(() => {
-    if (reloadFile) {
-      dispatch(FetchFileService(reloadFile));
+    if (reloadFile && reloadFile[pdfTemplate.id]) {
+      dispatch(FetchFileService(reloadFile[pdfTemplate.id]));
     }
   }, [reloadFile]);
 
