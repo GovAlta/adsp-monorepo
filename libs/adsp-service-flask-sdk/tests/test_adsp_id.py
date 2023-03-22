@@ -20,3 +20,8 @@ def test_eq():
     z = AdspId.parse("urn:ads:platform:test-service:v1")
     assert x == y
     assert x != z
+
+
+def test_hash():
+    x = AdspId.parse("urn:ads:platform:test-service:v1:/tests")
+    assert hash(x)

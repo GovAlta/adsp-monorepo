@@ -7,7 +7,7 @@ exclude_lines = [ "if TYPE_CHECKING:" ]
 show_missing = true
 
 [tool.pytest.ini_options]
-addopts = "--cov --cov-fail-under=0 --cov-report html:'../../coverage/packages/hello-world-service/html' --cov-report xml:'../../coverage/packages/hello-world-service/coverage.xml' --junitxml='../../reports/packages/hello-world-service/unittests/junit.xml' --html='../../reports/packages/hello-world-service/unittests/html/index.html'"
+addopts = "--cov --cov-fail-under=0 --cov-report html:'../../coverage/libs/adsp-service-flask-sdk/html' --cov-report xml:'../../coverage/libs/adsp-service-flask-sdk/coverage.xml' --junitxml='../../reports/libs/adsp-service-flask-sdk/unittests/junit.xml' --html='../../reports/libs/adsp-service-flask-sdk/unittests/html/index.html'"
 log_cli = true
 log_cli_level = "DEBUG"
 
