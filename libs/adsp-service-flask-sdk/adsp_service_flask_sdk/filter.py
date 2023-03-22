@@ -4,7 +4,7 @@ from typing import Any, Callable, Dict, Optional, Tuple, TypeVar
 
 from flask import globals, Request, request
 from jwt import decode
-from werkzeug.exceptions import Forbidden, Unauthorized
+from werkzeug.exceptions import Forbidden, HTTPException, Unauthorized
 from werkzeug.local import LocalProxy
 
 from ._constants import CONTEXT_TENANT, CONTEXT_USER
@@ -39,13 +39,13 @@ class AccessRequestFilter:
         if not token_value:
             return None, None
 
-        raw = decode(token_value, options={"verify_signature": False})
-        iss = self.__token_iss_getter(raw)
-        token_issuer = self.__issuer_cache.get_issuer(iss)
-        if token_issuer is None:
-            raise Unauthorized()
-
         try:
+            raw = decode(token_value, options={"verify_signature": False})
+            iss = self.__token_iss_getter(raw)
+            token_issuer = self.__issuer_cache.get_issuer(iss)
+            if token_issuer is None:
+                raise Unauthorized()
+
             result = decode(
                 token_value,
                 token_issuer.jwk_client.get_signing_key_from_jwt(token_value).key,
@@ -56,8 +56,10 @@ class AccessRequestFilter:
 
             return token_issuer.tenant, result
         except BaseException as err:
-            self._logger.warn("Error encountered validating access token. %s", err)
-            raise Unauthorized()
+            if not isinstance(err, HTTPException):
+                self._logger.warning("Error encountered validating access token. %s", err)
+                raise Unauthorized()
+            raise
 
     def _map_claims(self, tenant: Optional[Tenant], payload: Dict[str, Any]) -> User:
         roles = payload.get("realm_access", {}).get("roles", [])
@@ -66,7 +68,7 @@ class AccessRequestFilter:
         for client, client_details in payload.get("resource_access", {}).items():
             client_roles = client_details.get("roles", [])
             service_roles = (
-                [f"{service_id}:{cr}" for cr in client_roles]
+                [f"{client}:{cr}" for cr in client_roles]
                 if client != service_id
                 else [cr for cr in client_roles]
             )

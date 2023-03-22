@@ -20,6 +20,11 @@ def create_metadata_blueprint(service_id: AdspId, registration: AdspRegistration
                 "health"
             ] = f"{request_url.scheme}://{request_url.netloc}{registration.health_endpoint_path}"
 
+        if registration.docs_endpoint_path:
+            links[
+                "docs"
+            ] = f"{request_url.scheme}://{request_url.netloc}{registration.docs_endpoint_path}"
+
         return jsonify(
             {
                 "name": display_name or service_id.service,
