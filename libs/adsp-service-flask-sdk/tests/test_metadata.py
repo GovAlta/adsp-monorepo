@@ -14,7 +14,13 @@ def test_create_metadata_blueprint():
 def test_metadata_blueprint_get_metadata():
     blueprint = create_metadata_blueprint(
         AdspId.parse("urn:ads:platform:test-service"),
-        AdspRegistration("test service", "testing 123", health_endpoint_path="/health", docs_endpoint_path="/docs"),
+        AdspRegistration(
+            "test service",
+            "testing 123",
+            health_endpoint_path="/health",
+            docs_endpoint_path="/docs",
+            api_endpoint_path="/test/v1",
+        ),
     )
 
     app = Flask(__name__)
