@@ -1,11 +1,11 @@
 import { expectSaga } from 'redux-saga-test-plan';
-import { fetchPdfTemplates, deletePdfTemplate, updatePdfTemplate, generatePdf } from './sagas';
-import { fetchPdfTemplatesApi, deletePdfFileApi, updatePDFTemplateApi, generatePdfApi, createPdfJobApi } from './api';
+import { fetchPdfTemplates, deletePdfTemplate, updatePdfTemplate } from './sagas';
+import { fetchPdfTemplatesApi, deletePdfFileApi, updatePDFTemplateApi } from './api';
 import {
   FETCH_PDF_TEMPLATES_SUCCESS_ACTION,
   DELETE_PDF_TEMPLATE_SUCCESS_ACTION,
   UPDATE_PDF_TEMPLATE_SUCCESS_ACTION,
-  GENERATE_PDF_SUCCESS_ACTION,
+  // GENERATE_PDF_SUCCESS_ACTION,
 } from './action';
 
 const storeState = {

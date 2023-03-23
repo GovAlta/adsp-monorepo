@@ -4,10 +4,18 @@ import { PdfTemplate } from '@store/pdf/model';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
-import { SpinnerPadding, PdfFormItem, HelpText, DescriptionItem } from '../styled-components';
+import { SpinnerPadding, PdfFormItem, HelpText, DescriptionItem, ErrorMsg } from '../styled-components';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
-import { GoATextArea, GoAInput, GoAModal, GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components-new';
+import {
+  GoATextArea,
+  GoAInput,
+  GoAModal,
+  GoAButtonGroup,
+  GoAFormItem,
+  GoAButton,
+  GoAIcon,
+} from '@abgov/react-components-new';
 interface AddEditPdfTemplateProps {
   open: boolean;
   isEdit: boolean;
@@ -145,7 +153,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
         </PdfFormItem>
       </GoAFormItem>
 
-      <GoAFormItem label="Description" error={errors?.['description']}>
+      <GoAFormItem label="Description">
         <DescriptionItem>
           <GoATextArea
             name="pdf-template-description"
@@ -159,12 +167,18 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
               setTemplate({ ...template, description: value });
             }}
           />
-          {template.description.length < 180 && (
-            <HelpText>
+
+          <HelpText>
+            {template.description.length <= 180 ? (
               <div> {descErrMessage} </div>
-              <div>{`${template.description.length}/180`}</div>
-            </HelpText>
-          )}
+            ) : (
+              <ErrorMsg>
+                <GoAIcon type="warning" size="small" theme="filled" />
+                {`  ${errors?.['description']}`}
+              </ErrorMsg>
+            )}
+            <div>{`${template.description.length}/180`}</div>
+          </HelpText>
         </DescriptionItem>
       </GoAFormItem>
     </GoAModal>

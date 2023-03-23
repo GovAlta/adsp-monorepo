@@ -405,8 +405,18 @@ export const HelpText = styled.div`
   display: flex;
   display-direction: row;
   justify-content: space-between;
+  margin-top: 2px;
 `;
 export const DescriptionItem = styled.div`
   margin-left: 3px;
   margin-right: 3px;
+`;
+
+export const ErrorMsg = styled.div`
+   {
+    display: inline-flex;
+    color: var(--color-red);
+    pointer-events: none;
+    gap: 0.25rem;
+  }
 `;
