@@ -36,6 +36,7 @@ class AdspRegistration(NamedTuple):
     description: Optional[str] = None
     health_endpoint_path: Optional[str] = None
     docs_endpoint_path: Optional[str] = None
+    api_endpoint_path: Optional[str] = None
     configuration: Optional[ConfigurationDefinition] = None
     roles: Optional[List[ServiceRole]] = []
     events: Optional[List[DomainEventDefinition]] = []
