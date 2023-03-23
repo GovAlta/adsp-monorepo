@@ -80,6 +80,12 @@
             "silent": false,
             "args": ""
           }
+        },
+        "release": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "command": "npx semantic-release -e ./libs/adsp-service-flask-sdk/.releaserc.json"
+          }
         }
       },
       "tags": []

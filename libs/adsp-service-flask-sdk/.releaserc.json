@@ -1,0 +1,20 @@
+{
+  "extends": "../../.releaserc.json",
+  "tagFormat": "adsp-service-flask-sdk-v${version}",
+  "plugins": [
+    [
+      "@abgov/nx-release",
+      {
+        "project": "adsp-service-flask-sdk"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "releasedLabels": false,
+        "successComment": false,
+        "assets": "libs/adsp-service-flask-sdk/dist/"
+      }
+    ]
+  ]
+}
