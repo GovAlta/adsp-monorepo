@@ -38,8 +38,14 @@ function Tabs(props: TabsProps): JSX.Element {
         {
           // eslint-disable-next-line
           Children.map<JSX.Element, any>(props.children, (child: any, index: number) => {
+            const testId = child.props?.testId ? `${child.props?.testId}-tab-btn` : `tab-btn-${index}`;
             return (
-              <TabItem style={props.style} active={activeTabIndex === index} onSelect={() => selectTab(index)}>
+              <TabItem
+                testId={testId}
+                style={props.style}
+                active={activeTabIndex === index}
+                onSelect={() => selectTab(index)}
+              >
                 {child.props.label}
               </TabItem>
             );
@@ -76,6 +82,7 @@ interface TabItemProps {
   onSelect: () => void;
   active?: boolean;
   style?: React.CSSProperties;
+  testId?: string;
 }
 
 function TabItem(props: TabItemProps & { children: ReactNode }) {
@@ -84,7 +91,12 @@ function TabItem(props: TabItemProps & { children: ReactNode }) {
   }
 
   return (
-    <SCTab className={props.active && 'active'} style={props.style} onClick={() => selectTab()}>
+    <SCTab
+      data-testid={props?.testId}
+      className={props.active && 'active'}
+      style={props.style}
+      onClick={() => selectTab()}
+    >
       {props.children}
     </SCTab>
   );
