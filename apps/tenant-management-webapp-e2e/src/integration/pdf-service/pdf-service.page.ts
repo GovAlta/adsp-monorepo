@@ -145,5 +145,11 @@ class PDFServicePage {
   pdfTemplateEditorScreenEditIcon() {
     return cy.xpath('//*[@data-testid="pdf-template-information-edit-icon"]');
   }
+  pdfTemplateEditorScreenBackButton() {
+    return cy.xpath('//*[@data-testid="template-form-close"]');
+  }
+  pdfTemplateEditorScreenSaveButton() {
+    return cy.xpath('//*[@data-testid="template-form-save"]');
+  }
 }
 export default PDFServicePage;

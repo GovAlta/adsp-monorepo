@@ -28,7 +28,7 @@ Then('the user views Add template modal', function () {
 });
 
 When('the user enters {string} as name, {string} as description in pdf template modal', function (name, description) {
-  pdfServiceObj.pdfAddTemplateModalName().shadow().find('.input--goa').type(name);
+  pdfServiceObj.pdfAddTemplateModalName().shadow().find('.input--goa').type(name, { force: true });
   pdfServiceObj
     .pdfAddTemplateModalDescription()
     .shadow()
@@ -39,7 +39,7 @@ When('the user enters {string} as name, {string} as description in pdf template 
 
 Then('the user clicks Save button in Add or Edit template modal', function () {
   pdfServiceObj.pdfAddTemplateModalSaveBtn().shadow().find('button').click({ force: true });
-  cy.wait(2000);
+  cy.wait(5000);
 });
 
 Then('the user clicks Cancel button in Add template modal', function () {
@@ -140,7 +140,7 @@ Then('the user views {string}, {string} and {string} in PDF template modal', fun
 
 When('the user clicks Save button in PDF template modal', function () {
   pdfServiceObj.pdfTemplateModalSaveBtn().shadow().find('button').click();
-  cy.wait(1000);
+  cy.wait(2000);
 });
 
 When('the user enters {string} for {string} in PDF template modal', function (content, tab) {
@@ -230,4 +230,8 @@ Then('the user views the {string} preview of {string}', function (type, previewC
 
 Then('the user views the PDF template editor screen', function () {
   pdfServiceObj.pdfTemplateEditorScreenTitle();
+});
+
+Then('the user clicks Back button in editor screen', function () {
+  pdfServiceObj.pdfTemplateEditorScreenBackButton().shadow().find('button').click({ force: true });
 });
