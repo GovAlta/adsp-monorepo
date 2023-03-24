@@ -13,7 +13,7 @@ from ._constants import (
 )
 from .access import IssuerCache
 from .adsp_id import AdspId
-from .configuration import ConfigurationService, create_get_configuration
+from .configuration import TC, ConfigurationService, create_get_configuration
 from .directory import ServiceDirectory
 from .filter import AccessRequestFilter, TenantRequestFilter
 from .metadata import create_metadata_blueprint
@@ -27,7 +27,7 @@ class AdspServices(NamedTuple):
     token_provider: TokenProvider
     tenant_service: TenantService
     configuration_service: ConfigurationService
-    get_configuration: Callable[[Optional[AdspId]], Dict[str, Any]]
+    get_configuration: Callable[[Optional[AdspId]], TC]
     event_service: EventService
     metadata_blueprint: Blueprint
 
@@ -38,9 +38,6 @@ class AdspExtension:
         app: Flask,
         registration: AdspRegistration,
         config: Optional[Dict[str, Any]] = None,
-        convert_config: Callable[
-            [Dict[str, Any], Dict[str, Any]], Dict[str, Any]
-        ] = None,
     ) -> AdspServices:
         base_config = app.config.copy()
         if config:
@@ -75,7 +72,11 @@ class AdspExtension:
         tenant_service = TenantService(directory, token_provider)
         issuer_cache = IssuerCache(access_url, tenant_service, allow_core)
         configuration_service = ConfigurationService(
-            directory, token_provider, convert_config
+            directory,
+            token_provider,
+            registration.configuration.convert_config
+            if registration and registration.configuration
+            else None,
         )
         get_configuration = create_get_configuration(configuration_service, service_id)
 

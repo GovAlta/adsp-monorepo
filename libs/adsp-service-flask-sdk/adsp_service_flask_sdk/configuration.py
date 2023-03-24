@@ -1,7 +1,7 @@
 import logging
 from operator import attrgetter
 from threading import Lock
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Tuple, TypeVar
 
 from cachetools import TTLCache, cachedmethod
 from httpx import RequestError, get
@@ -13,15 +13,13 @@ from .filter import request_tenant
 from .token_provider import TokenProvider
 
 
+TC = TypeVar("TC")
+
+
 def _default_convert_config(
     tenant: Dict[str, Any], core: Dict[str, Any]
-) -> Dict[str, Any]:
-    combined: Dict[str, Any] = {}
-    if tenant:
-        combined.update(tenant)
-    if core:
-        combined.update(core)
-    return combined
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    return tenant, core
 
 
 class ConfigurationService:
@@ -32,7 +30,7 @@ class ConfigurationService:
         directory: ServiceDirectory,
         token_provider: TokenProvider,
         convert_config: Callable[
-            [Dict[str, Any], Dict[str, Any]], Dict[str, Any]
+            [Dict[str, Any], Dict[str, Any]], TC
         ] = _default_convert_config,
     ) -> None:
         self._cache = TTLCache(100, 900)
@@ -47,11 +45,11 @@ class ConfigurationService:
         self,
         service_id: AdspId,
         tenant_id: Optional[AdspId] = None,
-    ) -> Dict[str, Any]:
+    ) -> TC:
         tenant_config = (
             self._retrieve_configuration(service_id, tenant_id)
             if tenant_id is not None
-            else None
+            else {}
         )
         core_config = self._retrieve_configuration(service_id)
         return self.__convert_config(tenant_config, core_config)
@@ -80,7 +78,7 @@ class ConfigurationService:
                 service_id,
                 tenant_id,
             )
-            return configuration
+            return configuration or {}
         except RequestError as err:
             self._logger.error(
                 "Error encountered retrieving configuration for service %s. %s",
@@ -92,7 +90,7 @@ class ConfigurationService:
 
 def create_get_configuration(
     configuration_service: ConfigurationService, default_service_id: AdspId
-) -> Callable[[Optional[AdspId]], Dict[str, Any]]:
+) -> Callable[[Optional[AdspId]], TC]:
     def get_configuration(
         service_id: Optional[AdspId] = default_service_id,
     ) -> Dict[str, Any]:
