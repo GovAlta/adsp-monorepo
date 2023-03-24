@@ -240,7 +240,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({ modelOp
                   <ButtonRight>
                     <GoAButton
                       type="secondary"
-                      data-testid="form-save"
+                      testId="form-save"
                       size="compact"
                       onClick={() => {
                         setShowDeleteConfirmation(true);
@@ -263,7 +263,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({ modelOp
                     disabled={!isPDFUpdated(tmpTemplate, template)}
                     onClick={() => savePdfTemplate(tmpTemplate)}
                     type="primary"
-                    data-testid="template-form-save"
+                    testId="template-form-save"
                   >
                     Save
                   </GoAButton>
@@ -275,7 +275,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({ modelOp
                         cancel();
                       }
                     }}
-                    data-testid="template-form-close"
+                    testId="template-form-close"
                     type="tertiary"
                   >
                     Back
