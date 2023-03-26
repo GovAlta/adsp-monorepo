@@ -1,5 +1,6 @@
 import logging
-from typing import Any, Dict, List, NamedTuple, Optional
+from typing import Any, Callable, Dict, List, NamedTuple, Optional
+from adsp_service_flask_sdk.configuration import TC
 
 from httpx import RequestError, post
 
@@ -17,6 +18,7 @@ from .token_provider import TokenProvider
 class ConfigurationDefinition(NamedTuple):
     description: str
     schema: Dict[str, Any]
+    convert_config: Callable[[Dict[str, Any], Dict[str, Any]], TC] = None
 
 
 class ServiceRole(NamedTuple):
@@ -36,6 +38,7 @@ class AdspRegistration(NamedTuple):
     description: Optional[str] = None
     health_endpoint_path: Optional[str] = None
     docs_endpoint_path: Optional[str] = None
+    api_endpoint_path: Optional[str] = None
     configuration: Optional[ConfigurationDefinition] = None
     roles: Optional[List[ServiceRole]] = []
     events: Optional[List[DomainEventDefinition]] = []
@@ -116,7 +119,9 @@ class ServiceRegistrar:
                 headers={"Authorization": f"Bearer {token}"},
             )
 
-            self._logger.info("Updated registration configuration for service %s", service_id)
+            self._logger.info(
+                "Updated registration configuration for service %s", service_id
+            )
         except RequestError as err:
             self._logger.error(
                 "Error encountered updating registration configuration for service %s. %s",

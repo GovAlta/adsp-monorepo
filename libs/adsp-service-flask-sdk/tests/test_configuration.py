@@ -23,11 +23,13 @@ def test_get_configuration():
         response = Mock(Response)
         response.json.return_value = configuration
         mock_get.return_value = response
-        result = configuration_service.get_configuration(
+        tenant_config, core_config = configuration_service.get_configuration(
             AdspId.parse("urn:ads:platform:test-service")
         )
-    assert result
-    assert result["testing"] == 123
+    assert tenant_config is not None
+    assert not tenant_config
+    assert core_config
+    assert core_config["testing"] == 123
 
 
 def test_get_configuration_tenant():
@@ -42,12 +44,14 @@ def test_get_configuration_tenant():
         response = Mock(Response)
         response.json.return_value = configuration
         mock_get.return_value = response
-        result = configuration_service.get_configuration(
+        tenant_config, core_config = configuration_service.get_configuration(
             AdspId.parse("urn:ads:platform:test-service"),
             AdspId.parse("urn:ads:platform:tenant-service:v2:/tenants/test"),
         )
-    assert result
-    assert result["testing"] == 123
+    assert tenant_config
+    assert tenant_config["testing"] == 123
+    assert core_config
+    assert core_config["testing"] == 123
 
 
 def test_get_configuration_request_error():
@@ -86,8 +90,10 @@ def test_get_configuration_context():
         get_configuration = create_get_configuration(configuration_service, service_id)
 
         configuration = {"testing": 123}
-        configuration_service.get_configuration.return_value = configuration
-        result = get_configuration()
-        assert result
-        assert result["testing"] == 123
+        configuration_service.get_configuration.return_value = (configuration, {})
+        tenant_config, core_config = get_configuration()
+        assert tenant_config
+        assert tenant_config["testing"] == 123
+        assert core_config is not None
+        assert not core_config
         configuration_service.get_configuration.assert_called_once_with(service_id, tenant.id)

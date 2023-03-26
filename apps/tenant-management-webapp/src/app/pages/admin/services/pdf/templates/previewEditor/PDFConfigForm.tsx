@@ -17,7 +17,7 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
 
   const dispatch = useDispatch();
   return (
-    <PdfConfigFormWrapper>
+    <PdfConfigFormWrapper data-testid="pdf-config-form">
       <div className="nameColumn">
         <table>
           <thead>
@@ -25,7 +25,9 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
               <th>Name</th>
             </tr>
             <tr>
-              <td data-testid="template-name" className="overflowContainer">{name}</td>
+              <td data-testid="template-name" className="overflowContainer">
+                {name}
+              </td>
             </tr>
           </thead>
         </table>
@@ -38,7 +40,9 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
               <th>Template ID</th>
             </tr>
             <tr>
-              <td data-testid="template-id" className="overflowContainer">{id}</td>
+              <td data-testid="template-id" className="overflowContainer">
+                {id}
+              </td>
             </tr>
           </thead>
         </table>
@@ -52,7 +56,10 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
             </tr>
             <tr>
               <td>
-                <div data-testid="template-description" className="overflowContainer"> {description}</div>
+                <div data-testid="template-description" className="overflowContainer">
+                  {' '}
+                  {description}
+                </div>
               </td>
             </tr>
           </thead>
