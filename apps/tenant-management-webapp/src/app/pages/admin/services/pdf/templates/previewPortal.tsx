@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { sanitizeHtml } from '@lib/sanitize';
 
 interface PreviewPortalProps {
@@ -7,7 +7,7 @@ interface PreviewPortalProps {
   className?: string;
 }
 
-export const PreviewPortal: FunctionComponent<PreviewPortalProps> = ({ className, title, html }) => {
+export const PreviewPortal = ({ className, title, html }: PreviewPortalProps) => {
   return (
     <iframe
       sandbox=""

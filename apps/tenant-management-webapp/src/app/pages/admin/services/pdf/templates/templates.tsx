@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AddEditPdfTemplate } from './addEditPdfTemplates';
 import { GoAButton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
@@ -14,7 +14,7 @@ import { DeleteModal } from './DeleteModal';
 interface PdfTemplatesProps {
   openAddTemplate: boolean;
 }
-export const PdfTemplates: FunctionComponent<PdfTemplatesProps> = ({ openAddTemplate }) => {
+export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
   const [openAddPdfTemplate, setOpenAddPdfTemplate] = useState(false);
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
