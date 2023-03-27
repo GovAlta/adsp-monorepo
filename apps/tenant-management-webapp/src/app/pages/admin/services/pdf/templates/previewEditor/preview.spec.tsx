@@ -7,8 +7,15 @@ import { PDFConfigForm } from './PDFConfigForm';
 import '@testing-library/jest-dom';
 import { TemplateEditor } from './TemplateEditor';
 import { getPdfTemplates } from '@store/pdf/action';
+import { PreviewTemplate } from './PreviewTemplate';
 describe('Test pdf template preview', () => {
   const mockStore = configureStore([]);
+
+  window.URL.createObjectURL = jest.fn();
+
+  afterEach(() => {
+    window.URL.createObjectURL.mockReset();
+  });
 
   const templateMock = {
     additionalStyles: '<div>Shared CSS</div>',
@@ -152,5 +159,122 @@ describe('Test pdf template preview', () => {
     fireEvent.click(fileHistoryBtn);
     const fileHistoryTab = await screen.findByTestId('pdf-test-generator');
     expect(fileHistoryTab).toBeDefined();
+  });
+  it('Can create the preview template', async () => {
+    const fileList = {
+      fileService: {
+        fileList: [
+          {
+            urn: 'urn:ads:platform:file-service:v1:/files/mock-id',
+            id: 'mock-id',
+            filename: 'mock-23_2023-03-27T16-57-45.pdf',
+            size: 89378,
+            typeName: 'Generated PDF',
+            recordId: '331f35e2-f04f-443a-87ca-28eef37bd85c',
+            created: '2023-03-27T16:57:50.289Z',
+            createdBy: {
+              id: '21fabd96-34f7-4b0f-a8b6-9f80b9a9ab0d',
+              name: 'service-account-urn:ads:platform:pdf-service',
+            },
+            lastAccessed: '2023-03-27T16:57:51.747Z',
+            scanned: false,
+            infected: false,
+          },
+        ],
+      },
+    };
+    const pdfFileAndJobs = {
+      session: {
+        indicator: {
+          show: true,
+        },
+      },
+      pdf: {
+        currentId: 'mock-id',
+        pdfTemplates: {
+          'mock-id': {
+            id: 'mock-id',
+            name: 'mock-name',
+            description: '',
+            template: '<div>template</div>',
+            useWrapper: true,
+            header: '<div>header</div>',
+            footer: '<div>footer</div>',
+          },
+        },
+        files: {
+          'mock-id': 'mock base 64 pdf stream',
+        },
+        jobs: [
+          {
+            operation: 'generate',
+            templateId: 'mock-id',
+            data: {
+              service: {
+                name: 'My Service',
+                protection: 'Protected B',
+              },
+              document: {
+                name: 'Your Document',
+              },
+              paragraph2: 'The rain in Spain stays mainly in the plain.',
+              table: {},
+              bobs: ['Bob Woodward', 'Bob McDonald', 'Bob Jordan', 'Bob Redford'],
+              caseWorker: {
+                name: 'Bob Bing',
+                emailAddress: 'bob.bing@gov.ab.ca',
+                phoneNumber: '1-800-call-bob',
+                office: 'Calgary, Alberta, Regional Office',
+                signature: 'https://drive.google.com/uc?export=view&id=1BRi8Acu3RMNTMpHjzjRh51H3QDhshicC',
+              },
+            },
+            filename: 'Aardvark-23_2023-03-27T16-57-45.pdf',
+            urn: 'urn:ads:platform:pdf-service:v1:/jobs/331f35e2-f04f-443a-87ca-28eef37bd85c',
+            id: '331f35e2-f04f-443a-87ca-28eef37bd85c',
+            status: 'pdf-generated',
+            result: null,
+            stream: [
+              {
+                namespace: 'pdf-service',
+                name: 'pdf-generation-queued',
+                correlationId: '331f35e2-f04f-443a-87ca-28eef37bd85c',
+                context: {
+                  jobId: '331f35e2-f04f-443a-87ca-28eef37bd85c',
+                  templateId: 'Aardvark-23',
+                },
+                timestamp: '2023-03-27T16:57:48.066Z',
+                payload: {
+                  jobId: '331f35e2-f04f-443a-87ca-28eef37bd85c',
+                  templateId: 'Aardvark-23',
+                  requestedBy: {
+                    id: '07ec41de-469e-4c77-987d-c734d59830a4',
+                    name: 'auto.test@gov.ab.ca',
+                  },
+                },
+              },
+            ],
+            fileWasGenerated: true,
+          },
+        ],
+      },
+    };
+
+    const store = mockStore({
+      ...fileList,
+      ...pdfFileAndJobs,
+    });
+
+    const { queryByTestId } = render(
+      <Provider store={store}>
+        <MemoryRouter initialEntries={['https://mock-host.com/admin/services/pdf/edit/mock-id']}>
+          <Route path="https://mock-host.com/admin/services/pdf/edit/:id">
+            <PreviewTemplate channelTitle={'test'} />
+          </Route>
+        </MemoryRouter>
+      </Provider>
+    );
+
+    expect(await queryByTestId('form-save')).toBeDefined();
+    expect(await queryByTestId('download-icon')).toBeDefined();
   });
 });
