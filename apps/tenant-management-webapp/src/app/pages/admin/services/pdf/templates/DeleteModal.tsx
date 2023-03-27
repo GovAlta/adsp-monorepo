@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
 interface deleteModalProps {
   title: string;
@@ -8,7 +8,7 @@ interface deleteModalProps {
   onCancel: () => void;
 }
 
-export const DeleteModal: FunctionComponent<deleteModalProps> = ({ isOpen, title, content, onDelete, onCancel }) => {
+export const DeleteModal = ({ isOpen, title, content, onDelete, onCancel }: deleteModalProps) => {
   return (
     <GoAModal
       testId="delete-confirmation"

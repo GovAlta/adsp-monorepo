@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { PdfTemplate } from '@store/pdf/model';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Edit, OverflowWrap } from '../styled-components';
@@ -10,7 +10,7 @@ interface PdfTemplateItemProps {
   pdfTemplate: PdfTemplate;
   onDelete?: (PdfTemplate) => void;
 }
-export const PdfTemplateItem: FunctionComponent<PdfTemplateItemProps> = ({ pdfTemplate, onDelete }) => {
+export const PdfTemplateItem = ({ pdfTemplate, onDelete }: PdfTemplateItemProps): JSX.Element => {
   const { url } = useRouteMatch();
   const history = useHistory();
 
