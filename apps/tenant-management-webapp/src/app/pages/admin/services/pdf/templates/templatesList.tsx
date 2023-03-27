@@ -7,7 +7,7 @@ export interface PdfTemplatesTableProps {
   templates: Record<string, PdfTemplate>;
   onDelete?: (PdfTemplate) => void;
 }
-export const PdfTemplatesTable: FunctionComponent<PdfTemplatesTableProps> = ({ templates, edit, onDelete }) => {
+export const PdfTemplatesTable: FunctionComponent<PdfTemplatesTableProps> = ({ templates, onDelete }) => {
   const newTemplates = JSON.parse(JSON.stringify(templates));
 
   return (

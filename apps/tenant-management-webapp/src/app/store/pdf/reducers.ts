@@ -40,8 +40,12 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
       state.tempTemplate = action.payload;
       return state;
     case UPDATE_PDF_TEMPLATE_SUCCESS_ACTION:
-      state.pdfTemplates = { ...state.pdfTemplates, ...action.payload };
-      return state;
+      return {
+        ...state,
+        pdfTemplates: {
+          ...action.payload,
+        },
+      };
     case DELETE_PDF_TEMPLATE_SUCCESS_ACTION:
       return {
         ...state,
