@@ -8,6 +8,8 @@ from ._constants import (
     PLATFORM_CONFIGURATION_API,
     PLATFORM_CONFIGURATION_SERVICE,
     PLATFORM_EVENT_SERVICE,
+    PLATFORM_FILE_SERVICE,
+    PLATFORM_PUSH_SERVICE,
     PLATFORM_TENANT_SERVICE,
 )
 from .adsp_id import AdspId
@@ -33,6 +35,34 @@ class DomainEventDefinition(NamedTuple):
     payload_schema: Dict[str, Any]
 
 
+class EventIdentityCriteria(NamedTuple):
+    correlationId: Optional[str] = None
+    context: Optional[Dict[str, Any]] = None
+
+
+class EventIdentity(NamedTuple):
+    namespace: str
+    name: str
+    criteria: Optional[EventIdentityCriteria] = None
+
+
+class StreamDefinition(NamedTuple):
+    id: str
+    name: str
+    description: str
+    public_subscribe: bool = False
+    subscriber_roles: List[str] = []
+    events: List[EventIdentity] = []
+
+
+class FileType(NamedTuple):
+    id: str
+    name: str
+    anonymous_read: bool = False
+    read_roles: List[str] = []
+    update_roles: List[str] = []
+
+
 class AdspRegistration(NamedTuple):
     display_name: Optional[str] = None
     description: Optional[str] = None
@@ -42,6 +72,8 @@ class AdspRegistration(NamedTuple):
     configuration: Optional[ConfigurationDefinition] = None
     roles: Optional[List[ServiceRole]] = []
     events: Optional[List[DomainEventDefinition]] = []
+    event_streams: Optional[List[StreamDefinition]] = []
+    file_types: Optional[List[FileType]] = []
 
 
 class ServiceRegistrar:
@@ -101,6 +133,37 @@ class ServiceRegistrar:
                             for event in registration.events
                         },
                     }
+                },
+            )
+
+        if registration.event_streams:
+            self._updated_service_configuration(
+                PLATFORM_PUSH_SERVICE,
+                {
+                    stream.id: {
+                        "id": stream.id,
+                        "name": stream.name,
+                        "description": stream.description,
+                        "events": stream.events,
+                        "subscriberRoles": stream.subscriber_roles,
+                        "publicSubscribe": stream.public_subscribe,
+                    }
+                    for stream in registration.event_streams
+                },
+            )
+
+        if registration.file_types:
+            self._updated_service_configuration(
+                PLATFORM_FILE_SERVICE,
+                {
+                    file_type.id: {
+                        "id": file_type.id,
+                        "name": file_type.name,
+                        "anonymousRead": file_type.anonymous_read,
+                        "readRoles": file_type.read_roles,
+                        "updateRoles": file_type.update_roles,
+                    }
+                    for file_type in registration.file_types
                 },
             )
 
