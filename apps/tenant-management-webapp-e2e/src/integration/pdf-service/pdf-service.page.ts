@@ -2,7 +2,9 @@ class PDFServicePage {
   pdfOverviewContent() {
     return cy.xpath('//h1[text()="PDF service"]/parent::main//p');
   }
-
+  serviceTab(service, text) {
+    return cy.xpath(`//h1[contains(text(),"${service}")]/ancestor::main//div[text()="${text}"]`);
+  }
   pdfAddTemplateBtn() {
     return cy.get('[data-testid="add-templates"]');
   }
@@ -57,18 +59,16 @@ class PDFServicePage {
     );
   }
 
-  pdfTemplateDeleteConfirmationModalTitle() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//div[@class="modal-title"]');
+  pdfTemplateDeleteConfirmationModal() {
+    return cy.xpath('//*[@data-testid="delete-confirmation"]');
   }
 
   pdfTemplateDeleteConfirmationModalContent() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//div[@class="goa-scrollable"]');
+    return cy.xpath('//*[@data-testid="delete-confirmation" ]//div[2]');
   }
 
   pdfTemplateDeleteConfirmationModalDeleteBtn() {
-    return cy.xpath(
-      '//*[@data-testid="delete-confirmation" and @data-state="visible"]//button[@data-testid="delete-confirm"]'
-    );
+    return cy.xpath('//*[@data-testid="delete-confirm"]');
   }
 
   pdfTemplateModalTemplateIdField() {

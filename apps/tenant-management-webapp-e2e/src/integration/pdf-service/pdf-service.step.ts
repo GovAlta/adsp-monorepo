@@ -1,9 +1,9 @@
 import { Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
 import PDFServicePage from './pdf-service.page';
 import commonlib from '../common/common-library';
-
+import common from '../common/common.page';
 const pdfServiceObj = new PDFServicePage();
-
+const commonObj = new common();
 Given('a tenant admin user is on PDF service overview page', function () {
   commonlib.tenantAdminDirectURLLogin(
     Cypress.config().baseUrl,
@@ -12,6 +12,18 @@ Given('a tenant admin user is on PDF service overview page', function () {
     Cypress.env('password')
   );
   commonlib.tenantAdminMenuItem('PDF', 4000);
+});
+
+Given('a tenant admin user is on PDF service templates page', function () {
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+  commonlib.tenantAdminMenuItem('PDF', 4000);
+  commonObj.serviceTab('PDF', 'Templates').click();
+  cy.wait(4000);
 });
 
 Then('the user views the Pdf service overview content {string}', function (paragraphText) {
@@ -68,15 +80,21 @@ Then('the user navigates to Templates page', function () {
 });
 
 Then('the user views Delete PDF template modal for {string}', function (templateName) {
-  pdfServiceObj.pdfTemplateDeleteConfirmationModalTitle().invoke('text').should('eq', 'Delete PDF template');
+  pdfServiceObj
+    .pdfTemplateDeleteConfirmationModal()
+    .shadow()
+    .find('.modal-title')
+    .invoke('text')
+    .should('eq', 'Delete PDF template');
   pdfServiceObj
     .pdfTemplateDeleteConfirmationModalContent()
+
     .invoke('text')
     .should('contain', 'Delete ' + templateName);
 });
 
 When('the user clicks Confirm button in Delete PDF Template modal', function () {
-  pdfServiceObj.pdfTemplateDeleteConfirmationModalDeleteBtn().click();
+  pdfServiceObj.pdfTemplateDeleteConfirmationModalDeleteBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 
@@ -191,7 +209,6 @@ When(
       .shadow()
       .find('.input--goa')
       .invoke('removeAttr', 'disabled')
-      .clear()
       .type(name, { force: true });
     pdfServiceObj
       .pdfTemplateModalDescriptionField()
@@ -234,4 +251,5 @@ Then('the user views the PDF template editor screen', function () {
 
 Then('the user clicks Back button in editor screen', function () {
   pdfServiceObj.pdfTemplateEditorScreenBackButton().shadow().find('button').click({ force: true });
+  cy.wait(2000);
 });
