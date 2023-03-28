@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   TemplateEditorContainerPdf,
   EditTemplateActions,
@@ -56,7 +56,7 @@ const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
   );
 };
 
-export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({ modelOpen, errors }) => {
+export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.Element => {
   const dispatch = useDispatch();
   const { id } = useParams<{ id: string }>();
   const monaco = useMonaco();

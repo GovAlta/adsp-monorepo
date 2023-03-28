@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GoAButton, GoAIconButton } from '@abgov/react-components-new';
 import _ from 'underscore';
 import { generatePdf, updatePdfResponse, showCurrentFilePdf, setPdfDisplayFileId } from '@store/pdf/action';
@@ -42,11 +42,13 @@ const base64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
   return blob;
 };
 
-export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ channelTitle }) => {
+export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
   const { id } = useParams<{ id: string }>();
-  const fileList = useSelector((state: RootState) => state.fileService.fileList);
+  const fileList = useSelector((state: RootState) => state?.fileService?.fileList);
   const pdfTemplate = useSelector((state: RootState) => state?.pdf?.pdfTemplates[id]);
-  const jobList = useSelector((state: RootState) => state.pdf.jobs.filter((job) => job.templateId === pdfTemplate.id));
+  const jobList = useSelector((state: RootState) =>
+    state?.pdf?.jobs.filter((job) => job.templateId === pdfTemplate.id)
+  );
 
   useEffect(() => {
     dispatch(updatePdfResponse({ fileList: fileList }));
@@ -75,7 +77,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
 
   const files = useSelector((state: RootState) => state?.pdf.files);
 
-  const currentId = useSelector((state: RootState) => state?.pdf.currentId);
+  const currentId = useSelector((state: RootState) => state?.pdf?.currentId);
 
   const socketChannel = useSelector((state: RootState) => {
     return state?.pdf.socketChannel;
@@ -111,7 +113,7 @@ export const PreviewTemplate: FunctionComponent<PreviewTemplateProps> = ({ chann
     return (
       <>
         <PreviewTop title={channelTitle} />
-        {indicator.show ? (
+        {indicator?.show ? (
           <SpinnerPadding>
             <GoAPageLoader visible={true} type="infinite" message={indicator.message} />
           </SpinnerPadding>

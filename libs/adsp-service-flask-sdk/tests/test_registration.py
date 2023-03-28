@@ -6,7 +6,9 @@ from adsp_service_flask_sdk import (
     AdspRegistration,
     ConfigurationDefinition,
     DomainEventDefinition,
+    FileType,
     ServiceRole,
+    StreamDefinition,
 )
 from adsp_service_flask_sdk.directory import ServiceDirectory
 from adsp_service_flask_sdk.registration import ServiceRegistrar
@@ -26,7 +28,7 @@ def test_register():
 
 
 def test_register_configuration():
-    with patch("adsp_service_flask_sdk.registration.post"):
+    with patch("adsp_service_flask_sdk.registration.post") as mock_post:
         directory = Mock(ServiceDirectory)
         directory.get_service_url.return_value = "https://tenant-service"
         token_provider = Mock(TokenProvider)
@@ -42,10 +44,11 @@ def test_register_configuration():
                 ),
             )
         )
+        mock_post.assert_called_once()
 
 
 def test_register_roles():
-    with patch("adsp_service_flask_sdk.registration.post"):
+    with patch("adsp_service_flask_sdk.registration.post") as mock_post:
         directory = Mock(ServiceDirectory)
         directory.get_service_url.return_value = "https://tenant-service"
         token_provider = Mock(TokenProvider)
@@ -59,10 +62,11 @@ def test_register_roles():
                 roles=[ServiceRole("tester", "Tester role")],
             )
         )
+        mock_post.assert_called_once()
 
 
 def test_register_events():
-    with patch("adsp_service_flask_sdk.registration.post"):
+    with patch("adsp_service_flask_sdk.registration.post") as mock_post:
         directory = Mock(ServiceDirectory)
         directory.get_service_url.return_value = "https://tenant-service"
         token_provider = Mock(TokenProvider)
@@ -80,6 +84,45 @@ def test_register_events():
                 ],
             )
         )
+        mock_post.assert_called_once()
+
+
+def test_register_streams():
+    with patch("adsp_service_flask_sdk.registration.post") as mock_post:
+        directory = Mock(ServiceDirectory)
+        directory.get_service_url.return_value = "https://tenant-service"
+        token_provider = Mock(TokenProvider)
+        token_provider.get_access_token.return_value = "token"
+        registrar = ServiceRegistrar(
+            AdspId.parse("urn:ads:platform:test-service"), directory, token_provider
+        )
+        registrar.register(
+            AdspRegistration(
+                "test service",
+                event_streams=[
+                    StreamDefinition("test-stream", "Test stream", "Stream for testing")
+                ],
+            )
+        )
+        mock_post.assert_called_once()
+
+
+def test_register_file_types():
+    with patch("adsp_service_flask_sdk.registration.post") as mock_post:
+        directory = Mock(ServiceDirectory)
+        directory.get_service_url.return_value = "https://tenant-service"
+        token_provider = Mock(TokenProvider)
+        token_provider.get_access_token.return_value = "token"
+        registrar = ServiceRegistrar(
+            AdspId.parse("urn:ads:platform:test-service"), directory, token_provider
+        )
+        registrar.register(
+            AdspRegistration(
+                "test service",
+                file_types=[FileType("test-file-type", "Test file type")],
+            )
+        )
+        mock_post.assert_called_once()
 
 
 def test_register_request_error():
