@@ -9,7 +9,7 @@ import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import InformationCircle from '@components/icons/InformationCircle';
-import { FileTableStyles, ButtonBox } from '../styled-components';
+import { FileTableStyles, ButtonBox, BadgeWrapper } from '../styled-components';
 import { GoABadge } from '@abgov/react-components/experimental';
 import { showCurrentFilePdf, setPdfDisplayFileId, deletePdfFileService } from '@store/pdf/action';
 import { DeleteModal } from './DeleteModal';
@@ -95,7 +95,9 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                             <div className="flex">{statusGenerator[status]}</div>
                             <div className="flex-auto">
                               {currentFile?.filename === job?.filename && (
-                                <GoABadge content={'Viewing'} data-testid="viewing-badge" type="information" />
+                                <BadgeWrapper>
+                                  <GoABadge content={'Viewing'} data-testid="viewing-badge" type="information" />
+                                </BadgeWrapper>
                               )}
                             </div>
                           </div>
