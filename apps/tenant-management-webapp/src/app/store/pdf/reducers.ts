@@ -4,6 +4,7 @@ import {
   FETCH_PDF_TEMPLATES_SUCCESS_ACTION,
   PdfActionTypes,
   UPDATE_PDF_TEMPLATE_SUCCESS_ACTION,
+  UPDATE_PDF_TEMPLATE_SUCCESS_NO_REFRESH_ACTION,
   DELETE_PDF_TEMPLATE_SUCCESS_ACTION,
   UPDATE_PDF_RESPONSE_ACTION,
   GENERATE_PDF_SUCCESS_ACTION,
@@ -46,6 +47,9 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
           ...action.payload,
         },
       };
+    case UPDATE_PDF_TEMPLATE_SUCCESS_NO_REFRESH_ACTION:
+      state.pdfTemplates = { ...state.pdfTemplates, ...action.payload };
+      return state;
     case DELETE_PDF_TEMPLATE_SUCCESS_ACTION:
       return {
         ...state,
@@ -103,6 +107,12 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
     }
     case GENERATE_PDF_SUCCESS_ACTION: {
       let jobs = JSON.parse(JSON.stringify(state.jobs));
+      const actionKey = action.pdfTemplate && Object.keys(action.pdfTemplate)[0];
+      const pdfTemplate = state.pdfTemplates;
+
+      if (actionKey) {
+        pdfTemplate[actionKey] = action.pdfTemplate[actionKey];
+      }
 
       let index = jobs.findIndex((job) => job.id === action.payload.context?.jobId);
       if (index > -1) {
@@ -122,6 +132,7 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
         ...state,
         jobs: jobs,
         reloadFile: { ...state.reloadFile, [jobs[index].templateId]: action.payload?.payload?.file?.id },
+        pdfTemplates: { ...pdfTemplate },
       };
     }
     case SOCKET_CHANNEL: {

@@ -12,6 +12,7 @@ import {
   getPdfTemplatesSuccess,
   UpdatePdfTemplatesAction,
   updatePdfTemplateSuccess,
+  updatePdfTemplateSuccessNoRefresh,
   UPDATE_PDF_TEMPLATE_ACTION,
   GeneratePdfAction,
   generatePdfSuccess,
@@ -153,7 +154,7 @@ const connect = (pushServiceUrl, token, stream, tenantName) => {
   });
 };
 
-export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): SagaIterator {
+export function* updatePdfTemplate({ template, options }: UpdatePdfTemplatesAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const token: string = yield call(getAccessToken);
   if (baseUrl && token) {
@@ -168,11 +169,21 @@ export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): Saga
       const url = `${baseUrl}/configuration/v2/configuration/platform/pdf-service`;
       const { latest } = yield call(updatePDFTemplateApi, token, url, body);
 
-      yield put(
-        updatePdfTemplateSuccess({
-          ...latest.configuration,
-        })
-      );
+      console.log(JSON.stringify(options) + '<options');
+
+      if (options === 'no-refresh') {
+        yield put(
+          updatePdfTemplateSuccessNoRefresh({
+            ...latest.configuration,
+          })
+        );
+      } else {
+        yield put(
+          updatePdfTemplateSuccess({
+            ...latest.configuration,
+          })
+        );
+      }
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));
     }
@@ -316,7 +327,7 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
       const body: CreatePdfConfig = { operation: 'generate', ...pdfData };
       const data = yield call(createPdfJobApi, token, createJobUrl, body);
       const pdfResponse = { ...body, ...data };
-      yield put(generatePdfSuccess(pdfResponse));
+      yield put(generatePdfSuccess(pdfResponse, saveBody.update));
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));
       yield put(
