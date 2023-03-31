@@ -1,3 +1,7 @@
+export const DeleteModalType = 'directory-delete-model';
+export const EditModalType = 'directory-edit-modal';
+export const AddModalType = 'directory-add-modal';
+
 export interface Directory {
   directory: Service[];
 }
@@ -11,6 +15,7 @@ export interface Service {
   metadata?: Metadata;
   isCore?: boolean;
   loaded?: boolean;
+  hasApi?: boolean;
 }
 
 export interface Metadata {

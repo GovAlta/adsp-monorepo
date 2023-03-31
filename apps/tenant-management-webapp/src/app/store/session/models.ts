@@ -11,6 +11,12 @@ export enum ActionState {
   error,
 }
 
+export interface ModalState {
+  id: string;
+  type: string;
+  isOpen: boolean;
+}
+
 export interface ElementIndicator {
   show: boolean;
 }
@@ -35,6 +41,7 @@ export interface Session {
   loadingStates?: LoadingStates;
   isExpired?: boolean;
   isWillExpired?: boolean;
+  modal?: Record<string, ModalState>;
 }
 
 export interface Credentials {
@@ -63,4 +70,5 @@ export const SESSION_INIT: Session = {
   },
   loadingStates: [],
   isExpired: null,
+  modal: {},
 };
