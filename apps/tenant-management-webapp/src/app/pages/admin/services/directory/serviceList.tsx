@@ -1,31 +1,23 @@
-import React, { FunctionComponent, useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { GoAElementLoader } from '@abgov/react-components';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { GoAIconButton } from '@abgov/react-components/experimental';
-import { Service } from '@store/directory/models';
+import { Service, DeleteModalType, EditModalType, AddModalType } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchEntryDetail } from '@store/directory/actions';
 import DataTable from '@components/DataTable';
+import { UpdateModalState } from '@store/session/actions';
 
 interface serviceItemProps {
   service: Service;
-  directory?: Service[];
-  onEdit: (service: Service) => void;
-  onDelete: (service: Service) => void;
-  onQuickAdd: (service: Service) => void;
 }
 
-const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({
-  service,
-  directory,
-  onEdit,
-  onDelete,
-  onQuickAdd,
-}) => {
+const ServiceItemComponent = ({ service }: serviceItemProps): JSX.Element => {
   const [showDetails, setShowDetails] = useState(false);
   const dispatch = useDispatch();
+
   const setDetails = (service: Service) => {
     if (!showDetails) {
       dispatch(fetchEntryDetail(service));
@@ -35,21 +27,6 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({
   const elementIndicator = useSelector((state: RootState) => {
     return state?.session?.elementIndicator;
   });
-
-  const quickAdd = (service) => {
-    const shortCutService = {} as Service;
-    shortCutService['namespace'] = service.namespace;
-    shortCutService['service'] = service.service;
-    shortCutService['url'] = service.metadata._links.api.href;
-    shortCutService['api'] = service.metadata._links.api.href.split('/').slice(-1)[0];
-    onQuickAdd(shortCutService);
-  };
-  const hasApi = (service) => {
-    const filteredDirectory = directory.filter((dir) => dir.service === service.service);
-    const api = service.metadata._links.api.href.split('/').slice(-1)[0];
-
-    return filteredDirectory.length < 2 || !filteredDirectory.find((dir) => dir.api === api);
-  };
 
   const renderNoItem = () => {
     return (
@@ -76,10 +53,18 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({
         <td headers="directory-actions">
           <IconDiv>
             <GoAContextMenu>
-              {!service.isCore && service.metadata?._links?.api && !service.api && hasApi(service) && (
+              {!service.isCore && service.metadata?._links?.api && !service.api && service.hasApi && (
                 <GoAContextMenuIcon
                   type="add"
-                  onClick={() => quickAdd(service)}
+                  onClick={() => {
+                    dispatch(
+                      UpdateModalState({
+                        type: AddModalType,
+                        id: service.urn,
+                        isOpen: true,
+                      })
+                    );
+                  }}
                   testId="directory-toggle-details-visibility"
                 />
               )}
@@ -96,7 +81,13 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({
                   title="Edit"
                   testId={`directory-edit-${service.service}`}
                   onClick={() => {
-                    onEdit(service);
+                    dispatch(
+                      UpdateModalState({
+                        type: EditModalType,
+                        id: service.urn,
+                        isOpen: true,
+                      })
+                    );
                   }}
                 />
               )}
@@ -106,9 +97,15 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({
                   title="Delete"
                   size="medium"
                   type="trash"
+                  key={service.urn}
                   onClick={() => {
-                    setShowDetails(false);
-                    onDelete(service);
+                    dispatch(
+                      UpdateModalState({
+                        id: service.urn,
+                        type: DeleteModalType,
+                        isOpen: true,
+                      })
+                    );
                   }}
                 />
               )}
@@ -140,28 +137,12 @@ const ServiceItemComponent: FunctionComponent<serviceItemProps> = ({
 };
 
 interface serviceTableProps {
-  namespace: string;
   directory: Service[];
-  isCore: boolean;
-  onEdit: (service: Service) => void;
-  onDelete: (service: Service) => void;
-  onQuickAdd: (service: Service) => void;
 }
 
-export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({
-  namespace,
-  directory,
-  isCore,
-  onEdit,
-  onDelete,
-  onQuickAdd,
-}) => {
-  const memoizedDirectory = useMemo(() => {
-    return [...directory].sort((a, b) => (a.service < b.service ? -1 : 1));
-  }, [directory]);
-
+export const ServiceTableComponent = ({ directory }: serviceTableProps): JSX.Element => {
   return (
-    <TableDiv key={namespace}>
+    <TableDiv>
       <DataTable data-testid="directory-table">
         <thead data-testid="directory-table-header">
           <tr>
@@ -176,25 +157,10 @@ export const ServiceTableComponent: FunctionComponent<serviceTableProps> = ({
           </tr>
         </thead>
 
-        <tbody key={`${namespace}:${isCore}`}>
-          {isCore
-            ? memoizedDirectory
-                .filter((dir) => dir.namespace === namespace)
-                .map((dir: Service) => (
-                  <ServiceItemComponent service={dir} onEdit={onEdit} onDelete={onDelete} onQuickAdd={onQuickAdd} />
-                ))
-            : directory
-                .filter((dir) => dir.namespace === namespace)
-                .sort((a, b) => (a.service < b.service ? -1 : 1))
-                .map((dir: Service) => (
-                  <ServiceItemComponent
-                    service={dir}
-                    directory={directory.filter((dir) => dir.namespace === namespace)}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    onQuickAdd={onQuickAdd}
-                  />
-                ))}
+        <tbody>
+          {directory.map((dir: Service) => {
+            return <ServiceItemComponent key={`directory-list-item-${dir.urn}`} service={dir} />;
+          })}
         </tbody>
       </DataTable>
       <br />
@@ -211,7 +177,7 @@ const EntryDetail = styled.div`
   padding: 16px;
 `;
 
-const TableDiv = styled.div`
+const TableDiv = memo(styled.div`
   & td:first-child {
     width: 100px;
     white-space: nowrap;
@@ -229,7 +195,7 @@ const TableDiv = styled.div`
   & .meta {
     padding: 0;
   }
-`;
+`);
 
 const IconDiv = styled.div`
   width: 100%;
