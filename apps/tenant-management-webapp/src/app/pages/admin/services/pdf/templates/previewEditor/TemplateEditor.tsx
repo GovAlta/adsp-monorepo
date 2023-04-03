@@ -240,7 +240,7 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
                   <ButtonRight>
                     <GoAButton
                       type="secondary"
-                      testId="form-save"
+                      testId="pdf-delete-all-files"
                       size="compact"
                       onClick={() => {
                         setShowDeleteConfirmation(true);
