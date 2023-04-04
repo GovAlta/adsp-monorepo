@@ -152,6 +152,8 @@ components:
                 lockedBefore:
                   type: string
                   format: date-time
+                createdByIdEquals:
+                  type: string
     responses:
       200:
         description: Successfully created a form.
