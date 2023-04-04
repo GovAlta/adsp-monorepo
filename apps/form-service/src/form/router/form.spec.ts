@@ -70,6 +70,7 @@ describe('form router', () => {
     repositoryMock.save.mockClear();
     repositoryMock.get.mockReset();
     repositoryMock.delete.mockReset();
+    repositoryMock.find.mockReset();
     notificationServiceMock.subscribe.mockReset();
     notificationServiceMock.sendCode.mockReset();
     notificationServiceMock.verifyCode.mockReset();
@@ -174,6 +175,7 @@ describe('form router', () => {
       const req = {
         user,
         query: {},
+        tenant: { id: tenantId },
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -186,7 +188,7 @@ describe('form router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
     });
 
-    it('can call next for unauthorized user', async () => {
+    it('can limit non-admin user to own forms', async () => {
       const user = {
         tenantId,
         id: 'tester',
@@ -195,6 +197,7 @@ describe('form router', () => {
       const req = {
         user,
         query: {},
+        tenant: { id: tenantId },
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -204,8 +207,12 @@ describe('form router', () => {
 
       const handler = findForms(apiId, repositoryMock);
       await handler(req as Request, res as unknown as Response, next);
-      expect(res.send).not.toHaveBeenCalled();
-      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
+      expect(repositoryMock.find).toHaveBeenCalledWith(
+        expect.any(Number),
+        undefined,
+        expect.objectContaining({ createdByIdEquals: user.id })
+      );
     });
   });
 

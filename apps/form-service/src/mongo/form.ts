@@ -45,6 +45,10 @@ export class MongoFormRepository implements FormRepository {
       query.hash = criteria.hashEquals;
     }
 
+    if (criteria?.createdByIdEquals) {
+      query["createdBy.id"] = criteria.createdByIdEquals;
+    }
+
     return new Promise<FormEntity[]>((resolve, reject) => {
       this.model
         .find(query, null, { lean: true })

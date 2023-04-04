@@ -30,5 +30,6 @@ export interface FormCriteria {
   statusEquals?: FormStatus;
   lastAccessedBefore?: Date;
   lockedBefore?: Date;
+  createdByIdEquals?: string;
   hashEquals?: string;
 }
