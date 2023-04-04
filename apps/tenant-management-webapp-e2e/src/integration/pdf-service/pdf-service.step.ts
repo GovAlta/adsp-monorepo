@@ -161,43 +161,76 @@ When('the user clicks Save button in PDF template modal', function () {
   cy.wait(2000);
 });
 
-When('the user enters {string} for {string} in PDF template modal', function (content, tab) {
+When('the user clicks the {string} tab in PDF template editor and view content', function (tab) {
+  cy.wait(1000);
   switch (tab.toLowerCase()) {
     case 'body':
       pdfServiceObj
-        .pdfTemplateModalBodyTab()
+        .pdfTemplateBodyTab()
         .invoke('attr', 'class')
         .then((classAttr) => {
           if (!classAttr?.includes('active')) {
-            pdfServiceObj.pdfTemplateModalBodyTab().click();
+            pdfServiceObj.pdfTemplateBodyTab().click();
           }
         });
-      pdfServiceObj.pdfTemplateModalBodyEditor().type(content, { parseSpecialCharSequences: false });
+      pdfServiceObj.pdfTemplateBodyEditor().invoke('text').should('exist');
       break;
     case 'header':
       pdfServiceObj
-        .pdfTemplateModalHeaderTab()
+        .pdfTemplateHeaderTab()
         .invoke('attr', 'class')
         .then((classAttr) => {
           if (!classAttr?.includes('active')) {
-            pdfServiceObj.pdfTemplateModalHeaderTab().click();
+            pdfServiceObj.pdfTemplateHeaderTab().click();
           }
         });
-      pdfServiceObj.pdfTemplateModalHeaderEditor().type(content), { parseSpecialCharSequences: false };
+      pdfServiceObj.pdfTemplateHeaderEditor().contains('header-wrapper');
       break;
     case 'footer':
       pdfServiceObj
-        .pdfTemplateModalFooterTab()
+        .pdfTemplateFooterTab()
         .invoke('attr', 'class')
         .then((classAttr) => {
           if (!classAttr?.includes('active')) {
-            pdfServiceObj.pdfTemplateModalFooterTab().click();
+            pdfServiceObj.pdfTemplateFooterTab().click();
           }
         });
-      pdfServiceObj.pdfTemplateModalFooterEditor().type(content, { parseSpecialCharSequences: false });
+      pdfServiceObj.pdfTemplateFooterEditor().contains('footer-wrapper');
+      break;
+    case 'css':
+      pdfServiceObj
+        .pdfTemplateCssTab()
+        .invoke('attr', 'class')
+        .then((classAttr) => {
+          if (!classAttr?.includes('active')) {
+            pdfServiceObj.pdfTemplateCssTab().click();
+          }
+        });
+      pdfServiceObj.pdfTemplateCssEditor().contains('style');
+      break;
+    case 'test data':
+      pdfServiceObj
+        .pdfTemplateTestDataTab()
+        .invoke('attr', 'class')
+        .then((classAttr) => {
+          if (!classAttr?.includes('active')) {
+            pdfServiceObj.pdfTemplateTestDataTab().click();
+          }
+        });
+      pdfServiceObj.pdfTemplateTestDataEditor().contains('service');
+      break;
+    case 'file history':
+      pdfServiceObj
+        .pdfTemplateFileHistoryTab()
+        .invoke('attr', 'class')
+        .then((classAttr) => {
+          if (!classAttr?.includes('active')) {
+            pdfServiceObj.pdfTemplateFileHistoryTab().click();
+          }
+        });
       break;
     default:
-      expect(tab.toLowerCase()).to.be.oneOf(['body', 'header', 'footer']);
+      expect(tab.toLowerCase()).to.be.oneOf(['body', 'header', 'footer', 'css', 'test data', 'file history']);
   }
 });
 
@@ -219,30 +252,25 @@ When(
   }
 );
 
-Then('the user views the {string} preview of {string}', function (type, previewContent) {
-  cy.wait(2000);
-  switch (type.toLowerCase()) {
-    case 'pdf':
-      pdfServiceObj.pdfTemplateModalPDFPreview().then(function ($iFrame) {
-        const iFrameContent = $iFrame.contents().find('body');
-        cy.wrap(iFrameContent).should('include.text', previewContent);
-      });
-      break;
-    case 'header':
-      pdfServiceObj.pdfTemplateModalHeaderPreview().then(function ($iFrame) {
-        const iFrameContent = $iFrame.contents().find('body');
-        cy.wrap(iFrameContent).should('include.text', previewContent);
-      });
-      break;
-    case 'footer':
-      pdfServiceObj.pdfTemplateModalFooterPreview().then(function ($iFrame) {
-        const iFrameContent = $iFrame.contents().find('body');
-        cy.wrap(iFrameContent).invoke('text').should('contain', previewContent);
-      });
-      break;
-    default:
-      expect(type.toLowerCase()).to.be.oneOf(['pdf', 'header', 'footer']);
-  }
+Then('the user views {string}', (content) => {
+  pdfServiceObj.pdfNoFilesLists().invoke('text').should('contain', content);
+});
+
+When('the user clicks Generate PDF button in PDF template editor screen', () => {
+  pdfServiceObj.pdfGeneratePDFButton().shadow().find('button').click({ force: true });
+});
+
+Then('the user can preview pdf file that generated in iframe', () => {
+  cy.wait(10000);
+  pdfServiceObj.pdfTemplatePDFPreview().should('exist');
+});
+
+Then('the file information is list in table', () => {
+  pdfServiceObj.pdfNoFilesLists().should('not.exist');
+});
+
+When('the user clicks download button in PDF template editor', () => {
+  pdfServiceObj.pdfDownloadIconOnTopIframe().shadow().find('.color').click({ force: true });
 });
 
 Then('the user views the PDF template editor screen', function () {

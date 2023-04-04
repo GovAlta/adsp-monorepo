@@ -82,58 +82,88 @@ class PDFServicePage {
   pdfTemplateEditorNameField() {
     return cy.xpath('//*[@data-testid="template-name"]');
   }
+
   pdfTemplateEditorTemplateIDField() {
     return cy.xpath('//*[@data-testid="template-id"]');
   }
+
   pdfTemplateEditorDescriptionField() {
     return cy.xpath('//*[@data-testid="template-description"]');
   }
+
   pdfTemplateModalSaveBtn() {
     return cy.xpath('//button[@data-testid="template-form-save"]');
   }
 
-  pdfTemplateModalBodyTab() {
+  pdfTemplateBodyTab() {
     return cy.xpath('//div[text()="Body"]/parent::div');
   }
 
-  pdfTemplateModalHeaderTab() {
+  pdfTemplateHeaderTab() {
     return cy.xpath('//div[text()="Header"]/parent::div');
   }
 
-  pdfTemplateModalFooterTab() {
+  pdfTemplateFooterTab() {
     return cy.xpath('//div[text()="Footer"]/parent::div');
   }
 
-  pdfTemplateModalBodyEditor() {
+  pdfTemplateCssTab() {
+    return cy.xpath('//div[text()="CSS"]/parent::div');
+  }
+
+  pdfTemplateTestDataTab() {
+    return cy.xpath('//div[text()="Test data"]/parent::div');
+  }
+
+  pdfTemplateFileHistoryTab() {
+    return cy.xpath('//div[text()="File history"]/parent::div');
+  }
+
+  pdfTemplateBodyEditor() {
     return cy.xpath(
-      '//div[text()="Body"]//ancestor::div[@class="goa-form"]//*[@class="monaco-scrollable-element editor-scrollable vs"]'
+      '//div[text()="Body"]//ancestor::div[@class="goa-form"]//*[@class="monaco-scrollable-element editor-scrollable vs mac"]'
     );
   }
 
-  pdfTemplateModalHeaderEditor() {
+  pdfTemplateHeaderEditor() {
     return cy.xpath(
-      '//div[text()="Header"]/following-sibling::div//*[@class="monaco-scrollable-element editor-scrollable vs"]'
+      '//div[text()="Header"]//ancestor::div[@class="goa-form"]//*[@class="monaco-scrollable-element editor-scrollable vs mac"]'
     );
   }
 
-  pdfTemplateModalFooterEditor() {
+  pdfTemplateFooterEditor() {
     return cy.xpath(
-      '//div[text()="Footer"]/following-sibling::div//*[@class="monaco-scrollable-element editor-scrollable vs"]'
+      '//div[text()="Footer"]//ancestor::div[@class="goa-form"]//*[@class="monaco-scrollable-element editor-scrollable vs mac"]'
     );
   }
 
-  pdfTemplateModalPDFPreview() {
+  pdfTemplateCssEditor() {
+    return cy.xpath(
+      '//div[text()="CSS"]//ancestor::div[@class="goa-form"]//*[@class="monaco-scrollable-element editor-scrollable vs mac"]'
+    );
+  }
+
+  pdfTemplateTestDataEditor() {
+    return cy.xpath(
+      '//div[text()="Test data"]//ancestor::div[@class="goa-form"]//*[@class="monaco-scrollable-element editor-scrollable vs mac"]'
+    );
+  }
+
+  pdfTemplatePDFPreview() {
     return cy.xpath('//iframe[@title="PDF preview"]');
   }
 
-  pdfTemplateModalHeaderPreview() {
-    return cy.xpath('//iframe[@title="Header"]');
+  pdfNoFilesLists() {
+    return cy.xpath('//*[@data-testid="no-pdf-file-generated"]');
   }
 
-  pdfTemplateModalFooterPreview() {
-    return cy.xpath('//iframe[@title="Footer"]');
+  pdfDownloadIconOnTopIframe() {
+    return cy.xpath('//*[@data-testid="download-template-icon"]');
   }
 
+  pdfGeneratePDFButton() {
+    return cy.xpath('//*[@data-testid="generate-template"]');
+  }
   pdfTemplateEditorScreenTitle() {
     return cy.xpath('//div[text()="PDF / Template Editor"]');
   }
