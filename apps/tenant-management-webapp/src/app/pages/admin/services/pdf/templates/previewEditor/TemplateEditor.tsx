@@ -80,7 +80,7 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
 
   const savePdfTemplate = (value) => {
     const saveObject = JSON.parse(JSON.stringify(value));
-    dispatch(updatePdfTemplate(saveObject));
+    dispatch(updatePdfTemplate(saveObject, 'no-refresh'));
     setSimulatedSaveTemplate(saveObject);
   };
 
@@ -106,9 +106,10 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
 
   useEffect(() => {
     setTmpTemplate(pdfTemplate);
+    setSimulatedSaveTemplate(pdfTemplate);
   }, [pdfTemplate]);
 
-  const template = simulatedSaveTemplate || pdfTemplate;
+  const template = simulatedSaveTemplate;
 
   useEffect(() => {
     if (monaco) {
@@ -225,7 +226,6 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
                     data-testid="form-schema"
                     value={tmpTemplate?.variables}
                     onChange={(value) => {
-                      template.variables = value;
                       setTmpTemplate({ ...tmpTemplate, variables: value });
                     }}
                     language="json"

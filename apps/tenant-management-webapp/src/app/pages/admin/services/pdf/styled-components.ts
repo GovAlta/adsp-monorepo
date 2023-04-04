@@ -26,6 +26,10 @@ export const FileTableStyles = styled.div`
   }
 `;
 
+export const BadgeWrapper = styled.div`
+  margin-left: 1rem;
+`;
+
 export const ButtonBox = styled.div`
   width: 2.15rem;
 `;

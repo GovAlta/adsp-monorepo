@@ -23,6 +23,7 @@ import {
 } from './styled-components';
 import { phoneWrapper } from '@lib/wrappers';
 import { ContactInfoCard } from './ContactInfoCard';
+import { KeycloakCheckSSOWithLogout } from '@store/tenant/actions';
 
 interface SubscriptionsProps {
   realm: string;
@@ -42,13 +43,28 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
     return state?.session?.indicator;
   });
 
+  // we need to wait for userInfo api call so that the followup api calls can make use of the jwt token
+  const userInfo = useSelector((state: RootState) => state.session?.userInfo);
+  console.log('userInfo', userInfo);
+  console.log('subscriber', subscriber);
+
+  // call that gets user jwt token
   useEffect(() => {
-    dispatch(getMySubscriberDetails());
+    dispatch(KeycloakCheckSSOWithLogout(realm));
   }, []);
 
+  // only make the following 2 effects once we have user info and token ready
   useEffect(() => {
-    dispatch(FetchContactInfoService({ realm }));
-  }, []);
+    if (userInfo !== undefined) {
+      dispatch(getMySubscriberDetails());
+    }
+  }, [userInfo]);
+
+  useEffect(() => {
+    if (userInfo !== undefined) {
+      dispatch(FetchContactInfoService({ realm }));
+    }
+  }, [userInfo]);
 
   const unSubscribe = (typeId: string) => {
     setShowUnSubscribeModal(true);
@@ -130,7 +146,7 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
               <tbody>
                 {subscriber ? (
                   <SubscriptionsList onUnsubscribe={unSubscribe} subscriber={subscriber} />
-                ) : indicator?.show ? (
+                ) : indicator?.show || subscriber === undefined ? (
                   <tr>
                     <td colSpan={4}>
                       <GoASkeletonGridColumnContent rows={5}></GoASkeletonGridColumnContent>

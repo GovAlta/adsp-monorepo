@@ -4,7 +4,6 @@ import {
   DomainEvent,
   EventService,
   isAllowedUser,
-  UnauthorizedUserError,
 } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
@@ -101,8 +100,9 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
       const top = topValue ? parseInt(topValue as string) : 10;
       const criteria: FormCriteria = criteriaValue ? JSON.parse(criteriaValue as string) : {};
 
-      if (!isAllowedUser(user, user.tenantId, FormServiceRoles.Admin)) {
-        throw new UnauthorizedUserError('find forms', user);
+      if (!isAllowedUser(user, req.tenant.id, FormServiceRoles.Admin)) {
+        // If user is not a form service admin, then limit search to only forms created by the user.
+        criteria.createdByIdEquals = user.id;
       }
 
       if (user.tenantId) {

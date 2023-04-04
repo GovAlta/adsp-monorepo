@@ -55,7 +55,7 @@ Feature: PDF service
     Then the user views the PDF template editor screen
     Then the user views "autotest-accessibility-test", "autotest-accessibility-test" and "DO-NOT-DELETE" in PDF template editor
     And no critical or serious accessibility issues for "PDF template modal" on "PDF templates page"
-
+    
   @TEST_CS-2063 @regression
    Scenario: As a tenant admin, I can edit templates in header, footer,body and CSS section, and generate pdf files.
     Given a tenant admin user is on PDF service templates page
@@ -65,3 +65,4 @@ Feature: PDF service
     When the user clicks download button in PDF template editor
     When the user clicks the "File history" tab in PDF template editor and view content
     Then the file information is list in table
+

@@ -6,15 +6,27 @@ module.exports = {
   info: {
     title: 'File service',
     version: '1.0.0',
-    description:
-      'The file service provides the capability to upload and download files. ' +
-      'Tenants are registered with their own space  containing file types that include ' +
-      'role based access policy.',
+    description: `ADSP's _File Service_ is one that you can use for storing and managing file-based data.
+From uploading end-user documentation to storing content for presentation, the service gives you massively scalable,
+secure, storage for your data. Based on Microsoft's Azure Blob Storage and, coupled with our
+[File Type collections](/adsp-monorepo/tutorials/file-service/file-types.html), the file service gives you full control
+over who has access to your data, and who doesn't.
+
+The service provides APIs that allow you to:
+
+- Upload files to Azure Blob cloud Storage
+- Scan files for viruses and other malware
+- Grant file access permissions
+- Associate meta-data with a file, such as its unique ID, who uploaded it, whether or not it was infected, etc.
+- Search for files
+- Download files as streams
+
+For more information see the [File Service tutorial](/adsp-monorepo/tutorials/file-service/introduction.html).`,
   },
   tags: [
     {
       name: 'File Type',
-      description: 'API to retrieve file types. Types are configured via the configuration service.',
+      description: 'API to retrieve File Type collections. Types are configured via the configuration service.',
     },
     {
       name: 'File',
