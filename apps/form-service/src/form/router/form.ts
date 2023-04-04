@@ -4,7 +4,6 @@ import {
   DomainEvent,
   EventService,
   isAllowedUser,
-  UnauthorizedUserError,
 } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
