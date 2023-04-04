@@ -5,46 +5,58 @@ components:
       properties:
         id:
           description: A unique id for a File Type collection.
+          example: my-file-type-collection
           type: string
         name:
           description: A unique name for the File Type collection.
+          example: My File Type Collection
           type: string
         anonymousRead:
           description: True if public read access has been granted to files within the collection.
+          example: true
           type: boolean
         readRoles:
           type: array
           items:
-            description: A list of keycloak roles that have read access to files within the collection.
+            description: A keycloak role that has read access to files within the collection.
+            example: urn:ads:platform:pdf-service:pdf-generator
             type: string
         updateRoles:
           type: array
           items:
-            description: A list of keycloak roles that can update files within the collection.
+            description: A keycloak role that can update files within the collection.
+            example: urn:ads:platform:tenant-service:platform-service
             type: string
     File:
       type: object
       properties:
         urn:
           description: A unique, Universal Resource Name, identifying the file.  The URN can be used to lookup the files URL with ADSP's Directory Service
+          example: urn:ads:platform:file-service:v1:/files/ced3fbdd-7597-455e-84c6-1d0b3d03a274
           type: string
         id:
           description: A unique file identifier, used in by the APIs to identify a file.
+          example: ced3fbdd-7597-455e-84c6-1d0b3d03a274
           type: string
         filename:
           description: The name of the file, specified when it is uploaded; used to provide a human-readable identifier for the file.
+          example: test_2023-04-03T21-27-13.pdf
           type: string
         size:
-          description: The size of the file.
+          description: The size of the file, in bytes.
+          example: 112845
           type: number
         typeName:
           description: The File Type collection name to which the file belongs, if any.
+          example: Generated PDF
           type: string
         recordId:
           description: An optional, application supplied ID, for use in cross-referencing the file.
+          example: 864f975b-8d57-450b-b581-72ff42299bdf
           type: string
         created:
           description: Date the file was uploaded.
+          example: 2023-04-03T21:27:17.102Z
           type: string
           format: date-time
         createdBy:
@@ -52,18 +64,23 @@ components:
           properties:
             id:
               description: ID of user that uploaded the file.
+              example: 21fabd96-34f7-4b0f-a8b6-9f80b9a9ab0d
               type: string
             name:
-              description: Name of the user that uploaded the file.
+              description: Name of the user, that uploaded the file.
+              example: service-account-urn:ads:platform:pdf-service
               type: string
         scanned:
           description: True if the file was scanned for malware when uploaded.
+          example: true
           type: boolean
         infected:
           description: True if the file was scanned when uploaded, and malware was found.
+          example: false
           type: boolean
         lastAccessed:
           description: Date the file was last accessed via the File Service APIs.
+          example: 2023-04-03T21:27:20.245Z
           type: string
           format: date-time
 
@@ -92,6 +109,7 @@ components:
     parameters:
       - name: typeId
         description: ID of the file type.
+        example: generated-pdf
         in: path
         required: true
         schema:
@@ -118,13 +136,16 @@ components:
             type: object
             properties:
               type:
-                description: The File Type collection the file is associated with, if any.
+                description: ID of the File Type collection the file is associated with, if any.
+                example: generated-pdf
                 type: string
               recordId:
                 description: An optional, application-supplied ID, for use in cross-referencing the file.
+                example: 864f975b-8d57-450b-b581-72ff42299bdf
                 type: string
               filename:
                 description: The application-supplied name of the file.
+                example: TestFile23
                 type: string
               file:
                 description: File contents.
@@ -157,18 +178,21 @@ components:
     parameters:
       - name: top
         description: Number of files to return in the page, e.g. the top N files.
+        example: 10
         in: query
         required: false
         schema:
           type: number
       - name: after
         description: Cursor for retrieving additional pages.  Use the **next** value returned by the previous call to GET /file/v1/files.
+        example: Mw==
         in: query
         required: false
         schema:
           type: string
       - name: criteria
         description: Criteria for files to retrieve.
+        example: { 'fileNameContains': 'Bob' }
         in: query
         required: false
         content:
@@ -202,14 +226,17 @@ components:
                   properties:
                     next:
                       description: Cursor for requesting the next next page, if any.  Next will be undefined if no more results are available.
+                      example: Mw==
                       type: string
                     size:
                       description: The number of files returned.
+                      example: 10
                       type: number
                     after:
                       description: |
                         The cursor used to generate the current page. Note - Do not use this as the *after* parameter in subsequent calls,
                         as it will just repeat the set just returned.
+                      example: Ng==
                       type: string
       401:
         description: User not authorized.
@@ -218,6 +245,7 @@ components:
   parameters:
     - name: fileId
       description: ID of the file.
+      example: 53fca659-362d-407f-9c4d-c2c8c6427bdb
       in: path
       required: true
       schema:
@@ -244,6 +272,7 @@ components:
     tags:
       - File
     description: Retrieves a file's metadata.
+    example: 53fca659-362d-407f-9c4d-c2c8c6427bdb
     responses:
       200:
         description: File metadata
@@ -273,18 +302,21 @@ components:
     parameters:
       - name: fileId
         description: ID of the file to download.
+        example: 53fca659-362d-407f-9c4d-c2c8c6427bdb
         in: path
         required: true
         schema:
           type: string
       - name: embed
-        description: Flag indicating whether to inline the file.
+        description: Flag indicating whether to inline the file.  Defaults to false.
+        example: true
         in: query
         required: false
         schema:
           type: boolean
       - name: unsafe
-        description: Flag indicating whether to download file not yet virus scanned.
+        description: Flag indicating whether to download file not yet virus scanned. Defaults to false.
+        example: false
         in: query
         required: false
         schema:
