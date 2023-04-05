@@ -73,7 +73,7 @@ export function* fetchFiles(action: FetchFilesAction): SagaIterator {
     const token = yield call(getAccessToken);
     const api = new FileApi(state.config, token, action.after);
 
-    const files = yield call([api, api.fetchFiles]);
+    const files = yield call([api, api.fetchFiles], action.criteria);
     yield put(FetchFilesSuccessService({ data: files.results, after: files.page.after, next: files.page.next }));
 
     yield put(
