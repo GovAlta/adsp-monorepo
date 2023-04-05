@@ -62,7 +62,7 @@ export const DirectoryModal = (): JSX.Element => {
   const isQuickAdd = addModal?.isOpen && addModal?.id !== null;
   const isEdit = editModal?.isOpen;
 
-  const title = isNew || isEdit ? 'Add entry' : 'Edit entry';
+  const title = isNew || isQuickAdd ? 'Add entry' : 'Edit entry';
   const { directory } = useSelector((state: RootState) => state.directory);
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const dispatch = useDispatch();

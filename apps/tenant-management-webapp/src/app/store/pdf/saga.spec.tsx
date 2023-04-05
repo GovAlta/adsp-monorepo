@@ -1,35 +1,12 @@
 import { expectSaga } from 'redux-saga-test-plan';
-import { fetchPdfTemplates, deletePdfTemplate, updatePdfTemplate } from './sagas';
-import { fetchPdfTemplatesApi, deletePdfFileApi, updatePDFTemplateApi } from './api';
+import { fetchPdfTemplates, deletePdfTemplate, updatePdfTemplate, generatePdf } from './sagas';
+import { fetchPdfTemplatesApi, deletePdfFileApi, updatePDFTemplateApi, generatePdfApi, createPdfJobApi } from './api';
 import {
   FETCH_PDF_TEMPLATES_SUCCESS_ACTION,
   DELETE_PDF_TEMPLATE_SUCCESS_ACTION,
   UPDATE_PDF_TEMPLATE_SUCCESS_ACTION,
-  // GENERATE_PDF_SUCCESS_ACTION,
+  GENERATE_PDF_SUCCESS_ACTION,
 } from './action';
-
-const storeState = {
-  config: {
-    serviceUrls: {
-      configurationServiceApiUrl: 'http://mock-configuration-service.com',
-      pdfServiceApiUrl: 'http://mock-pdf-servie.com',
-    },
-  },
-  session: {
-    credentials: {
-      tokenExp: Date.now() / 1000 + 1000,
-      token: 'mock-token',
-    },
-  },
-  serviceStatus: {
-    applications: [
-      {
-        appKey: 'mock-test#2  ',
-        name: 'mock-test',
-      },
-    ],
-  },
-};
 
 const mockTemplates = {
   'mock-template': {
@@ -60,6 +37,32 @@ it('Fetch Pdf templates', () => {
     })
     .run();
 });
+
+const storeState = {
+  config: {
+    serviceUrls: {
+      configurationServiceApiUrl: 'http://mock-configuration-service.com',
+      pdfServiceApiUrl: 'http://mock-pdf-servie.com',
+    },
+  },
+  session: {
+    credentials: {
+      tokenExp: Date.now() / 1000 + 1000,
+      token: 'mock-token',
+    },
+  },
+  serviceStatus: {
+    applications: [
+      {
+        appKey: 'mock-test#2  ',
+        name: 'mock-test',
+      },
+    ],
+  },
+  pdf: {
+    tempTemplate: mockTemplates,
+  },
+};
 
 it('Delete Pdf template', () => {
   const templateToDelete = {
@@ -119,50 +122,44 @@ it('Update Pdf template', () => {
     .run();
 });
 
-// it('Generate Pdf template', () => {
-//   const templateToDelete = {
-//     id: 'pdf-to-delete',
-//     ...mockTemplates['mock-template'],
-//   };
+it('Generate Pdf template', () => {
+  const mockPayload = {
+    templateId: 'mock-template-id',
+    data: { mockTest: 'anything' },
+    fileName: 'mock-filename',
+  };
 
-//   const mockPayload = {
-//     templateId: 'mock-template-id',
-//     data: { mockTest: 'anything' },
-//     fileName: 'mock-filename',
-//   };
+  return expectSaga(generatePdf, {
+    type: 'pdf/GENERATE_PDF_ACTION',
+    payload: mockPayload,
+  })
+    .withState(storeState)
+    .provide({
+      call(effect, next) {
+        if (effect.fn === generatePdfApi) {
+          return {
+            latest: {
+              configuration: mockTemplates['mock-template'],
+            },
+          };
+        }
 
-//   return expectSaga(generatePdf, {
-//     type: 'pdf/GENERATE_PDF_ACTION',
-//     payload: mockPayload,
-//     saveObject: templateToDelete,
-//   })
-//     .withState(storeState)
-//     .provide({
-//       call(effect, next) {
-//         if (effect.fn === generatePdfApi) {
-//           return {
-//             latest: {
-//               configuration: mockTemplates['mock-template'],
-//             },
-//           };
-//         }
-
-//         if (effect.fn === createPdfJobApi) {
-//           return;
-//         }
-//         return next();
-//       },
-//     })
-//     .put.like({
-//       action: {
-//         type: GENERATE_PDF_SUCCESS_ACTION,
-//         payload: {
-//           operation: 'generate',
-//           templateId: mockPayload.templateId,
-//           data: mockPayload.data,
-//           filename: 'mock-filename',
-//         },
-//       },
-//     })
-//     .run();
-// });
+        if (effect.fn === createPdfJobApi) {
+          return;
+        }
+        return next();
+      },
+    })
+    .put.like({
+      action: {
+        type: GENERATE_PDF_SUCCESS_ACTION,
+        payload: {
+          operation: 'generate',
+          templateId: mockPayload.templateId,
+          data: mockPayload.data,
+          filename: 'mock-filename',
+        },
+      },
+    })
+    .run();
+});
