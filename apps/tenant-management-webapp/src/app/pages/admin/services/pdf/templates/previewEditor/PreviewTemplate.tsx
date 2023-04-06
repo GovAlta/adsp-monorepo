@@ -141,7 +141,7 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
           <GoAButton
             disabled={indicator.show}
             type="secondary"
-            data-testid="form-save"
+            testId="generate-template"
             size="compact"
             onClick={() => {
               generateTemplate();
@@ -153,7 +153,7 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
           <GoAIconButton
             icon="download"
             title="Download"
-            data-testid="download-icon"
+            testId="download-template-icon"
             size="medium"
             onClick={() => {
               const file = fileList[0];

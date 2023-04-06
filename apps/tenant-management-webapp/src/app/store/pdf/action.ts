@@ -9,6 +9,7 @@ export const DELETE_PDF_TEMPLATE_SUCCESS_ACTION = 'pdf/DELETE_PDF_TEMPLATE_SUCCE
 
 export const UPDATE_PDF_TEMPLATE_ACTION = 'pdf/UPDATE_PDF_TEMPLATE_ACTION';
 export const UPDATE_PDF_TEMPLATE_SUCCESS_ACTION = 'pdf/UPDATE_PDF_TEMPLATE_SUCCESS_ACTION';
+export const UPDATE_PDF_TEMPLATE_SUCCESS_NO_REFRESH_ACTION = 'pdf/UPDATE_PDF_TEMPLATE_SUCCESS_NO_REFRESH_ACTION';
 
 export const FETCH_PDF_METRICS_ACTION = 'pdf/FETCH_PDF_METRICS';
 export const FETCH_PDF_METRICS_SUCCESS_ACTION = 'pdf/FETCH_PDF_METRICS_SUCCESS';
@@ -42,6 +43,7 @@ export interface FetchPdfTemplatesSuccessAction {
 export interface GeneratePdfSuccessAction {
   type: typeof GENERATE_PDF_SUCCESS_ACTION;
   payload: PdfGenerationResponse;
+  pdfTemplate?: Record<string, PdfTemplate>;
 }
 export interface GeneratePdfSuccessProcessingAction {
   type: typeof GENERATE_PDF_SUCCESS_PROCESSING_ACTION;
@@ -98,10 +100,15 @@ export interface StreamPdfSocketAction {
 export interface UpdatePdfTemplatesAction {
   type: typeof UPDATE_PDF_TEMPLATE_ACTION;
   template: PdfTemplate;
+  options?: string;
 }
 
 export interface UpdatePdfTemplatesSuccessAction {
   type: typeof UPDATE_PDF_TEMPLATE_SUCCESS_ACTION;
+  payload: Record<string, PdfTemplate>;
+}
+export interface UpdatePdfTemplatesSuccessNoRefreshAction {
+  type: typeof UPDATE_PDF_TEMPLATE_SUCCESS_NO_REFRESH_ACTION;
   payload: Record<string, PdfTemplate>;
 }
 
@@ -143,6 +150,7 @@ export type PdfActionTypes =
   | FetchPdfTemplatesAction
   | UpdatePdfTemplatesAction
   | UpdatePdfTemplatesSuccessAction
+  | UpdatePdfTemplatesSuccessNoRefreshAction
   | DeletePdfTemplatesAction
   | DeletePdfTemplatesSuccessAction
   | FetchPdfMetricsAction
@@ -157,9 +165,10 @@ export type PdfActionTypes =
   | UpdateTempTemplateAction
   | UpdatePdfResponseAction;
 
-export const updatePdfTemplate = (template: PdfTemplate): UpdatePdfTemplatesAction => ({
+export const updatePdfTemplate = (template: PdfTemplate, options?: string): UpdatePdfTemplatesAction => ({
   type: UPDATE_PDF_TEMPLATE_ACTION,
   template,
+  options,
 });
 export const updateTempTemplate = (payload: PdfTemplate): UpdateTempTemplateAction => ({
   type: UPDATE_TEMP_TEMPLATE,
@@ -168,6 +177,12 @@ export const updateTempTemplate = (payload: PdfTemplate): UpdateTempTemplateActi
 
 export const updatePdfTemplateSuccess = (template: Record<string, PdfTemplate>): UpdatePdfTemplatesSuccessAction => ({
   type: UPDATE_PDF_TEMPLATE_SUCCESS_ACTION,
+  payload: template,
+});
+export const updatePdfTemplateSuccessNoRefresh = (
+  template: Record<string, PdfTemplate>
+): UpdatePdfTemplatesSuccessNoRefreshAction => ({
+  type: UPDATE_PDF_TEMPLATE_SUCCESS_NO_REFRESH_ACTION,
   payload: template,
 });
 
@@ -200,9 +215,13 @@ export const streamPdfSocket = (disconnect: boolean): StreamPdfSocketAction => (
   disconnect: disconnect,
 });
 
-export const generatePdfSuccess = (results: PdfGenerationResponse): GeneratePdfSuccessAction => ({
+export const generatePdfSuccess = (
+  results: PdfGenerationResponse,
+  pdfTemplate?: Record<string, PdfTemplate>
+): GeneratePdfSuccessAction => ({
   type: GENERATE_PDF_SUCCESS_ACTION,
   payload: results,
+  pdfTemplate: pdfTemplate,
 });
 export const generatePdfSuccessProcessing = (results: PdfGenerationResponse): GeneratePdfSuccessProcessingAction => ({
   type: GENERATE_PDF_SUCCESS_PROCESSING_ACTION,

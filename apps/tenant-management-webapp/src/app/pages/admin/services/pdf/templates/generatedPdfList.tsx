@@ -9,7 +9,7 @@ import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import InformationCircle from '@components/icons/InformationCircle';
-import { FileTableStyles, ButtonBox } from '../styled-components';
+import { FileTableStyles, ButtonBox, BadgeWrapper } from '../styled-components';
 import { GoABadge } from '@abgov/react-components/experimental';
 import { showCurrentFilePdf, setPdfDisplayFileId, deletePdfFileService } from '@store/pdf/action';
 import { DeleteModal } from './DeleteModal';
@@ -66,7 +66,7 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
     return (
       <>
         <FileTableStyles>
-          <DataTable id="files-information">
+          <DataTable id="pdf-files-information" data-testid="pdf-files-information">
             <thead>
               <tr>
                 <th>File Name</th>
@@ -76,7 +76,11 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
               </tr>
             </thead>
             <tbody>
-              {jobList.length === 0 && <div className="some-margin">No PDF's have been generated yet</div>}
+              {jobList.length === 0 && (
+                <div className="some-margin" data-testid="no-pdf-file-generated">
+                  No PDF's have been generated yet
+                </div>
+              )}
               {jobList.map((job) => {
                 const file = fileList.find(
                   (file) => file.recordId === job.id && file.filename.indexOf(templateId) > -1
@@ -95,7 +99,9 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                             <div className="flex">{statusGenerator[status]}</div>
                             <div className="flex-auto">
                               {currentFile?.filename === job?.filename && (
-                                <GoABadge content={'Viewing'} data-testid="viewing-badge" type="information" />
+                                <BadgeWrapper>
+                                  <GoABadge content={'Viewing'} data-testid="viewing-badge" type="information" />
+                                </BadgeWrapper>
                               )}
                             </div>
                           </div>
@@ -128,7 +134,7 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                               )}
                               <GoAIconButton
                                 disabled={!file?.size}
-                                data-testid="download-icon"
+                                testId="download-icon"
                                 size="medium"
                                 type="download"
                                 onClick={() => onDownloadFile(file)}
@@ -137,6 +143,7 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                                 data-testid="delete-icon"
                                 size="medium"
                                 type="trash"
+                                testId="delete-file-icon"
                                 onClick={() => onDeleteFile(file)}
                               />
                             </>

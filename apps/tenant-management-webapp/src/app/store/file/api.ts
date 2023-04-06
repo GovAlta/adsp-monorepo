@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { ConfigState, FileApi as FileApiConfig } from '@store/config/models';
-import { FileService } from './models';
+import { FileService, FileCriteria } from './models';
 
 export class FileApi {
   private http: AxiosInstance;
@@ -27,9 +27,18 @@ export class FileApi {
     return res.data;
   }
 
-  async fetchFiles(): Promise<FileService> {
+  async fetchFiles(criteria: FileCriteria): Promise<FileService> {
     const url = this.fileConfig.endpoints.fileAdmin;
-    const res = await this.http.get(`${url}?after=${this.after || ''}`);
+    let getParam = `${url}?`;
+
+    if (this?.after) {
+      getParam = getParam + `after=${this.after || ''}&`;
+    }
+    if (criteria) {
+      getParam = getParam + `criteria=${JSON.stringify(criteria)}`;
+    }
+
+    const res = await this.http.get(getParam);
     return res.data;
   }
 

@@ -1,4 +1,10 @@
-import { ActionType, SET_SESSION_EXPIRED, SET_SESSION_WILL_EXPIRED } from './actions';
+import {
+  ActionType,
+  SET_SESSION_EXPIRED,
+  SET_SESSION_WILL_EXPIRED,
+  UPDATE_MODAL_STATE,
+  RESET_MODAL_STATE,
+} from './actions';
 import { Session, SESSION_INIT } from './models';
 
 export default function (state: Session = SESSION_INIT, action: ActionType): Session {
@@ -84,6 +90,21 @@ export default function (state: Session = SESSION_INIT, action: ActionType): Ses
         }
       }
       return state;
+    }
+
+    case UPDATE_MODAL_STATE: {
+      state.modal = {
+        ...state.modal,
+      };
+
+      state.modal[action.payload.type] = action.payload;
+
+      return { ...state };
+    }
+
+    case RESET_MODAL_STATE: {
+      state.modal = {};
+      return { ...state };
     }
 
     case SET_SESSION_EXPIRED:

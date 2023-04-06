@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom-6';
 import Header from '@components/AppHeader';
 import { HeaderCtx } from '@lib/headerContext';
-import { RootState } from '@store/index';
-import { KeycloakCheckSSOWithLogout, KeycloakRefreshToken } from '@store/tenant/actions';
+import { KeycloakRefreshToken } from '@store/tenant/actions';
 import { NotificationBanner } from './notificationBanner';
 import { UpdateConfigRealm } from '@store/config/actions';
 import GoaLogo from '../assets/goa-logo.svg';
@@ -21,16 +20,13 @@ export function PrivateApp(): JSX.Element {
     setInterval(async () => {
       dispatch(KeycloakRefreshToken(realm));
     }, 120 * 1000);
-    dispatch(KeycloakCheckSSOWithLogout(realm));
   }, []);
-  const userInfo = useSelector((state: RootState) => state.session?.userInfo);
-  const ready = userInfo !== undefined;
 
   return (
     <HeaderCtx.Provider value={{ setTitle }}>
       <Header serviceName={title} />
       <NotificationBanner />
-      {ready ? <Subscriptions realm={realm} /> : ''}
+      {<Subscriptions realm={realm} />}
 
       <Footer logoSrc={GoaLogo} />
     </HeaderCtx.Provider>

@@ -19,35 +19,11 @@ PDF generation is accomplished through a series of API calls that create the PDF
 
 Although you can call the API's from any language, the tutorial examples are written in Node.js. Familiarity with the latter (or Javascript) is desirable, but not absolutely necessary.
 
-Most of the API calls to the Platform Service require authentication via Keycloak with [Tenant Access](/adsp-monorepo/services/tenant-service.html). To make the calls described in the tutorial you will need:
-
-- A tenant ID
-- A client ID, and
-- A client secret
-
-The information is specific to your program area and application. Please ask your team lead If you do not have it. New applications can get set up by following [these instruction](/adsp-monorepo/getting-started.html)
+The API calls to the Platform Service require authentication, via Keycloak. See the instructions for [setting up a tenant and getting access tokens](/adsp-monorepo/tutorials/access-service/introduction.html) for details on how to do this.
 
 Continuing on from the tutorial on how to [build a template](/adsp-monorepo/tutorials/building-a-template.html) with the PDF service, our examples will be based on the template set up there for the Child Service's Intervention Record Check. Familiarity with that particular template is not necessary to follow along here, but the information will be useful if you want to understand how the pieces relate to each other.
 
 See the [PDF Service](https://api.adsp-dev.gov.ab.ca/autotest/?urls.primaryName=PDF%20service) Swagger documentation for detailed descriptions of the APIs.
-
-## Get Access Token
-
-Using the information required to authenticate your application, you can grab an access token required to access the PDF Service as follows:
-
-```typescript
-const accessUrl = `https://access.alberta.ca/auth/realms/${realmID}/protocol/openid-connect/token`;
-const response = await fetch(accessUrl, {
-  method: 'POST',
-  body: new URLSearchParams({
-    grant_type: 'client_credentials',
-    client_id: clientId,
-    client_secret: clientSecret,
-  }),
-});
-
-const { access_token, expires_in } = await response.json();
-```
 
 ## Submit a PDF Generator Job
 
@@ -55,7 +31,7 @@ Generating a PDF is an expensive operation and can take up to several seconds, d
 
 - the template ID
 - a file name, and
-- a file type
+- a File Type collection (optional)
 
 The template ID can be seen in your template editor while you are developing it.
 
@@ -63,7 +39,7 @@ The template ID can be seen in your template editor while you are developing it.
 
 You supply the filename, which should be something that uniquely identifies the new PDF document.
 
-The _file type_ is a name classification for the PDF files that lets you associate certain properties with them, such as access permissions. If you want to allow the public to download the PDF documents generated from your template, for example, you will need to give them read-only, public-access permissions. It is _very important_ to give the correct permissions to these files or the end-users may be unable to download the documents. See the [File Service](/adsp-monorepo/services/file-service.html) for information on how to create a new file types and grant permissions.
+The _File Type_ collection lets you manage access permissions to your PDF files. By default the File Type is _Generated PDF_, which has the correct permissions for the PDF Service to access files. When using your own File Type it is _very important_ to give the correct permissions to these files. At a minimum you must grant read permission to _Urn:Ads:Platform:Pdf-Service:Pdf-Generator_ and write permission to _Urn:Ads:Platform:Tenant-Service:Platform-Service_. See the [File Service](/adsp-monorepo/services/file-service.html) for information on how to create a new File Type collections and grant permissions.
 
 The request body for generating a new PDF will look something like this:
 
@@ -72,7 +48,6 @@ const request = {
   operation: 'generate',
   templateId: 'intervention-record-check',
   filename: 'bobs-intervention-record-check.pdf',
-  fileType: 'intervention-record-checks',
   data: ircData,
 };
 ```

@@ -1,9 +1,9 @@
 import { Given, Then, When } from 'cypress-cucumber-preprocessor/steps';
 import PDFServicePage from './pdf-service.page';
 import commonlib from '../common/common-library';
-
+import common from '../common/common.page';
 const pdfServiceObj = new PDFServicePage();
-
+const commonObj = new common();
 Given('a tenant admin user is on PDF service overview page', function () {
   commonlib.tenantAdminDirectURLLogin(
     Cypress.config().baseUrl,
@@ -12,6 +12,18 @@ Given('a tenant admin user is on PDF service overview page', function () {
     Cypress.env('password')
   );
   commonlib.tenantAdminMenuItem('PDF', 4000);
+});
+
+Given('a tenant admin user is on PDF service templates page', function () {
+  commonlib.tenantAdminDirectURLLogin(
+    Cypress.config().baseUrl,
+    Cypress.env('realm'),
+    Cypress.env('email'),
+    Cypress.env('password')
+  );
+  commonlib.tenantAdminMenuItem('PDF', 4000);
+  commonObj.serviceTab('PDF', 'Templates').click();
+  cy.wait(4000);
 });
 
 Then('the user views the Pdf service overview content {string}', function (paragraphText) {
@@ -68,15 +80,21 @@ Then('the user navigates to Templates page', function () {
 });
 
 Then('the user views Delete PDF template modal for {string}', function (templateName) {
-  pdfServiceObj.pdfTemplateDeleteConfirmationModalTitle().invoke('text').should('eq', 'Delete PDF template');
+  pdfServiceObj
+    .pdfTemplateDeleteConfirmationModal()
+    .shadow()
+    .find('.modal-title')
+    .invoke('text')
+    .should('eq', 'Delete PDF template');
   pdfServiceObj
     .pdfTemplateDeleteConfirmationModalContent()
+
     .invoke('text')
     .should('contain', 'Delete ' + templateName);
 });
 
 When('the user clicks Confirm button in Delete PDF Template modal', function () {
-  pdfServiceObj.pdfTemplateDeleteConfirmationModalDeleteBtn().click();
+  pdfServiceObj.pdfTemplateDeleteConfirmationModalDeleteBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 
@@ -143,43 +161,76 @@ When('the user clicks Save button in PDF template modal', function () {
   cy.wait(2000);
 });
 
-When('the user enters {string} for {string} in PDF template modal', function (content, tab) {
+When('the user clicks the {string} tab in PDF template editor and view content', function (tab) {
+  cy.wait(1000);
   switch (tab.toLowerCase()) {
     case 'body':
       pdfServiceObj
-        .pdfTemplateModalBodyTab()
+        .pdfTemplateBodyTab()
         .invoke('attr', 'class')
         .then((classAttr) => {
           if (!classAttr?.includes('active')) {
-            pdfServiceObj.pdfTemplateModalBodyTab().click();
+            pdfServiceObj.pdfTemplateBodyTab().click();
           }
         });
-      pdfServiceObj.pdfTemplateModalBodyEditor().type(content, { parseSpecialCharSequences: false });
+      pdfServiceObj.pdfTemplateBodyEditor().invoke('text').should('exist');
       break;
     case 'header':
       pdfServiceObj
-        .pdfTemplateModalHeaderTab()
+        .pdfTemplateHeaderTab()
         .invoke('attr', 'class')
         .then((classAttr) => {
           if (!classAttr?.includes('active')) {
-            pdfServiceObj.pdfTemplateModalHeaderTab().click();
+            pdfServiceObj.pdfTemplateHeaderTab().click();
           }
         });
-      pdfServiceObj.pdfTemplateModalHeaderEditor().type(content), { parseSpecialCharSequences: false };
+      pdfServiceObj.pdfTemplateHeaderEditor().contains('header-wrapper');
       break;
     case 'footer':
       pdfServiceObj
-        .pdfTemplateModalFooterTab()
+        .pdfTemplateFooterTab()
         .invoke('attr', 'class')
         .then((classAttr) => {
           if (!classAttr?.includes('active')) {
-            pdfServiceObj.pdfTemplateModalFooterTab().click();
+            pdfServiceObj.pdfTemplateFooterTab().click();
           }
         });
-      pdfServiceObj.pdfTemplateModalFooterEditor().type(content, { parseSpecialCharSequences: false });
+      pdfServiceObj.pdfTemplateFooterEditor().contains('footer-wrapper');
+      break;
+    case 'css':
+      pdfServiceObj
+        .pdfTemplateCssTab()
+        .invoke('attr', 'class')
+        .then((classAttr) => {
+          if (!classAttr?.includes('active')) {
+            pdfServiceObj.pdfTemplateCssTab().click();
+          }
+        });
+      pdfServiceObj.pdfTemplateCssEditor().contains('style');
+      break;
+    case 'test data':
+      pdfServiceObj
+        .pdfTemplateTestDataTab()
+        .invoke('attr', 'class')
+        .then((classAttr) => {
+          if (!classAttr?.includes('active')) {
+            pdfServiceObj.pdfTemplateTestDataTab().click();
+          }
+        });
+      pdfServiceObj.pdfTemplateTestDataEditor().contains('service');
+      break;
+    case 'file history':
+      pdfServiceObj
+        .pdfTemplateFileHistoryTab()
+        .invoke('attr', 'class')
+        .then((classAttr) => {
+          if (!classAttr?.includes('active')) {
+            pdfServiceObj.pdfTemplateFileHistoryTab().click();
+          }
+        });
       break;
     default:
-      expect(tab.toLowerCase()).to.be.oneOf(['body', 'header', 'footer']);
+      expect(tab.toLowerCase()).to.be.oneOf(['body', 'header', 'footer', 'css', 'test data', 'file history']);
   }
 });
 
@@ -191,7 +242,6 @@ When(
       .shadow()
       .find('.input--goa')
       .invoke('removeAttr', 'disabled')
-      .clear()
       .type(name, { force: true });
     pdfServiceObj
       .pdfTemplateModalDescriptionField()
@@ -202,30 +252,25 @@ When(
   }
 );
 
-Then('the user views the {string} preview of {string}', function (type, previewContent) {
-  cy.wait(2000);
-  switch (type.toLowerCase()) {
-    case 'pdf':
-      pdfServiceObj.pdfTemplateModalPDFPreview().then(function ($iFrame) {
-        const iFrameContent = $iFrame.contents().find('body');
-        cy.wrap(iFrameContent).should('include.text', previewContent);
-      });
-      break;
-    case 'header':
-      pdfServiceObj.pdfTemplateModalHeaderPreview().then(function ($iFrame) {
-        const iFrameContent = $iFrame.contents().find('body');
-        cy.wrap(iFrameContent).should('include.text', previewContent);
-      });
-      break;
-    case 'footer':
-      pdfServiceObj.pdfTemplateModalFooterPreview().then(function ($iFrame) {
-        const iFrameContent = $iFrame.contents().find('body');
-        cy.wrap(iFrameContent).invoke('text').should('contain', previewContent);
-      });
-      break;
-    default:
-      expect(type.toLowerCase()).to.be.oneOf(['pdf', 'header', 'footer']);
-  }
+Then('the user views {string}', (content) => {
+  pdfServiceObj.pdfNoFilesLists().invoke('text').should('contain', content);
+});
+
+When('the user clicks Generate PDF button in PDF template editor screen', () => {
+  pdfServiceObj.pdfGeneratePDFButton().shadow().find('button').click({ force: true });
+});
+
+Then('the user can preview pdf file that generated in iframe', () => {
+  cy.wait(10000);
+  pdfServiceObj.pdfTemplatePDFPreview().should('exist');
+});
+
+Then('the file information is list in table', () => {
+  pdfServiceObj.pdfNoFilesLists().should('not.exist');
+});
+
+When('the user clicks download button in PDF template editor', () => {
+  pdfServiceObj.pdfDownloadIconOnTopIframe().shadow().find('.color').click({ force: true });
 });
 
 Then('the user views the PDF template editor screen', function () {
@@ -234,4 +279,5 @@ Then('the user views the PDF template editor screen', function () {
 
 Then('the user clicks Back button in editor screen', function () {
   pdfServiceObj.pdfTemplateEditorScreenBackButton().shadow().find('button').click({ force: true });
+  cy.wait(2000);
 });

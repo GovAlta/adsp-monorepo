@@ -41,6 +41,15 @@ export interface RequestBodySchema {
   };
 }
 
+export interface FileCriteria {
+  filenameContains?: string;
+  scanned?: boolean;
+  deleted?: boolean;
+  infected?: boolean;
+  typeEquals?: string;
+  recordIdEquals?: string;
+}
+
 export interface FileMetrics {
   filesUploaded?: number;
   fileLifetime?: number;

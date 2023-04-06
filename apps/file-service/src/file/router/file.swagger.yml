@@ -4,49 +4,83 @@ components:
       type: object
       properties:
         id:
+          description: A unique id for a File Type collection.
+          example: my-file-type-collection
           type: string
         name:
+          description: A unique name for the File Type collection.
+          example: My File Type Collection
           type: string
         anonymousRead:
+          description: True if public read access has been granted to files within the collection.
+          example: true
           type: boolean
         readRoles:
           type: array
           items:
+            description: A keycloak role that has read access to files within the collection.
+            example: urn:ads:platform:pdf-service:pdf-generator
             type: string
         updateRoles:
           type: array
           items:
+            description: A keycloak role that can update files within the collection.
+            example: urn:ads:platform:tenant-service:platform-service
             type: string
     File:
       type: object
       properties:
         urn:
+          description: A unique, Universal Resource Name, identifying the file.  The URN can be used to lookup the files URL with ADSP's Directory Service
+          example: urn:ads:platform:file-service:v1:/files/ced3fbdd-7597-455e-84c6-1d0b3d03a274
           type: string
         id:
+          description: A unique file identifier, used in by the APIs to identify a file.
+          example: ced3fbdd-7597-455e-84c6-1d0b3d03a274
           type: string
         filename:
+          description: The name of the file, specified when it is uploaded; used to provide a human-readable identifier for the file.
+          example: test_2023-04-03T21-27-13.pdf
           type: string
         size:
+          description: The size of the file, in bytes.
+          example: 112845
           type: number
         typeName:
+          description: The File Type collection name to which the file belongs, if any.
+          example: Generated PDF
           type: string
         recordId:
+          description: An optional, application supplied ID, for use in cross-referencing the file.
+          example: 864f975b-8d57-450b-b581-72ff42299bdf
           type: string
         created:
+          description: Date the file was uploaded.
+          example: 2023-04-03T21:27:17.102Z
           type: string
           format: date-time
         createdBy:
           type: object
           properties:
             id:
+              description: ID of user that uploaded the file.
+              example: 21fabd96-34f7-4b0f-a8b6-9f80b9a9ab0d
               type: string
             name:
+              description: Name of the user, that uploaded the file.
+              example: service-account-urn:ads:platform:pdf-service
               type: string
         scanned:
+          description: True if the file was scanned for malware when uploaded.
+          example: true
           type: boolean
         infected:
+          description: True if the file was scanned when uploaded, and malware was found.
+          example: false
           type: boolean
         lastAccessed:
+          description: Date the file was last accessed via the File Service APIs.
+          example: 2023-04-03T21:27:20.245Z
           type: string
           format: date-time
 
@@ -63,7 +97,7 @@ components:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/FileType"
+                $ref: '#/components/schemas/FileType'
       401:
         description: User not authorized.
 
@@ -75,6 +109,7 @@ components:
     parameters:
       - name: typeId
         description: ID of the file type.
+        example: generated-pdf
         in: path
         required: true
         schema:
@@ -85,7 +120,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/FileType"
+              $ref: '#/components/schemas/FileType'
       401:
         description: User not authorized.
 
@@ -94,25 +129,6 @@ components:
     tags:
       - File
     description: Upload a file.
-    parameters:
-      - name: type
-        description: ID of the type.
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: filename
-        description: Name of the file.
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: recordId
-        description: ID of the associated record.
-        in: query
-        required: false
-        schema:
-          type: string
     requestBody:
       content:
         multipart/form-data:
@@ -120,18 +136,21 @@ components:
             type: object
             properties:
               type:
+                description: ID of the File Type collection the file is associated with, if any.
+                example: generated-pdf
                 type: string
-                description: Type of the file.
               recordId:
+                description: An optional, application-supplied ID, for use in cross-referencing the file.
+                example: 864f975b-8d57-450b-b581-72ff42299bdf
                 type: string
-                description: ID of the record associated with the file.
               filename:
+                description: The application-supplied name of the file.
+                example: TestFile23
                 type: string
-                description: Name of the file.
               file:
+                description: File contents.
                 type: string
                 format: binary
-                description: Contents of the file.
             required: [file]
     responses:
       200:
@@ -139,7 +158,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/File"
+              $ref: '#/components/schemas/File'
       400:
         description: Invalid parameters.
       401:
@@ -149,16 +168,24 @@ components:
   get:
     tags:
       - File
-    description: Retrieves files.
+    description: |
+      Retrieves files using a simple paging algorithm, which works as follows:
+      - You begin by asking for the top (first) N files, e.g. ```top=N&criteria={"fileNameContains": "Bob"}```.  If unspecified, top defaults to 50.
+      - The API responds by returning the files and the starting point for the **next** set of results, if any more are available.
+      - In subsequent calls, pass the returned **next** value as the *after* parameter, e.g. ```top=N&after=next&criteria={"fileNameContains": "Bob"}```
+      - Continue iterating until **next** is undefined.
+
     parameters:
       - name: top
-        description: Number of files to return in a page.
+        description: Number of files to return in the page, e.g. the top N files.
+        example: 10
         in: query
         required: false
         schema:
           type: number
       - name: after
-        description: Cursor for retrieving additional pages.
+        description: Cursor for retrieving additional pages.  Use the **next** value returned by the previous call to GET /file/v1/files.
+        example: Mw==
         in: query
         required: false
         schema:
@@ -173,10 +200,16 @@ components:
               type: object
               properties:
                 typeEquals:
+                  description: The name of a File Type collection; associated with a file when it is created. There is a one-to-many relationship between a File Type collection and files.
+                  example: Generated PDF
                   type: string
                 recordIdEquals:
+                  description: An application-defined record ID; associated with a file when it is created. There is a one-to-many relationship between a record ID and files.
+                  example: 53fca659-362d-407f-9c4d-c2c8c6427bdb
                   type: string
                 filenameContains:
+                  description: Returns all files that have a file name matching "*.${inputString}*.", e.g. "Bobs" will match "Bobs PDF file", and "Word file of Bobs".
+                  example: Bob
                   type: string
     responses:
       200:
@@ -189,16 +222,24 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/File"
+                    $ref: '#/components/schemas/File'
                 page:
                   type: object
                   properties:
-                    after:
-                      type: string
                     next:
+                      description: Cursor for requesting the next next page, if any.  Next will be undefined if no more results are available.
+                      example: Mw==
                       type: string
                     size:
+                      description: The number of files returned.
+                      example: 10
                       type: number
+                    after:
+                      description: |
+                        The cursor used to generate the current page. Note - Do not use this as the *after* parameter in subsequent calls,
+                        as it will just repeat the set just returned.
+                      example: Ng==
+                      type: string
       401:
         description: User not authorized.
 
@@ -206,6 +247,7 @@ components:
   parameters:
     - name: fileId
       description: ID of the file.
+      example: 53fca659-362d-407f-9c4d-c2c8c6427bdb
       in: path
       required: true
       schema:
@@ -213,7 +255,7 @@ components:
   delete:
     tags:
       - File
-    description: Marks a file for deletion.
+    description: Marks a file for deletion.  File deletion is not immediate, but it will eventually disappear.
     responses:
       200:
         description: Delete result
@@ -238,7 +280,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/File"
+              $ref: '#/components/schemas/File'
       404:
         description: File not found
       401:
@@ -248,22 +290,34 @@ components:
   get:
     tags:
       - File
-    description: Downloads a file.
+    description: |
+      Downloads a file.  The file is normally downloaded as an octet stream, and this call can safely be used in an anchor tag to trigger a browser download, e.g.
+
+      ```<a href="https://adsp.alberta.ca/file/v1/files/{fileId}/download"/>```
+
+      However, to embed images and other documents into a browser page, you would use the *embed* query parameter, e.g.
+
+      ```<img src="https://adsp.alberta.ca/file/v1/files/{fileId}/download?embed=true"/>```
+
+      A file that was not scanned when it was uploaded is considered unsafe, and will not download by default.  You can override this behaviour by setting unsafe=true.
     parameters:
       - name: fileId
         description: ID of the file to download.
+        example: 53fca659-362d-407f-9c4d-c2c8c6427bdb
         in: path
         required: true
         schema:
           type: string
       - name: embed
-        description: Flag indicating whether to inline the file.
+        description: Flag indicating whether to inline the file.  Defaults to false.
+        example: true
         in: query
         required: false
         schema:
           type: boolean
       - name: unsafe
-        description: Flag indicating whether to download file not yet virus scanned.
+        description: Flag indicating whether to download file not yet virus scanned. Defaults to false.
+        example: false
         in: query
         required: false
         schema:

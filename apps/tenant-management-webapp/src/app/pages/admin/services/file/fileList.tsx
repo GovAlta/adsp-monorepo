@@ -8,19 +8,28 @@ import {
   DownloadFileService,
 } from '@store/file/actions';
 import { GoAButton, GoADropdown, GoADropdownOption } from '@abgov/react-components';
-import { GoAForm } from '@abgov/react-components/experimental';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
-import { GoAIconButton } from '@abgov/react-components/experimental';
+import {
+  GoAIconButton,
+  GoAForm,
+  GoAFormItem,
+  GoAFlexRow,
+  GoAInputText,
+  GoAFormActions,
+} from '@abgov/react-components/experimental';
 import { renderNoItem } from '@components/NoItem';
 import { DeleteModal } from '@components/DeleteModal';
 import { FileItem } from '@store/file/models';
 import { PageIndicator } from '@components/Indicator';
+
 import styled from 'styled-components';
 
 const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<FileItem>(null);
   const [uploadFileType, setUploadFileType] = useState<string[]>([]);
+  const [filterFileType, setFilterFileType] = useState<string>(null);
+  const [searchName, setSearchName] = useState<string>('');
   const dispatch = useDispatch();
   const fileName = useRef() as React.MutableRefObject<HTMLInputElement>;
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
@@ -29,6 +38,14 @@ const FileList = (): JSX.Element => {
   const isLoading = useSelector((state: RootState) => state.fileService.isLoading);
   const coreFileTypes = useSelector((state: RootState) => state.fileService.coreFileTypes);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+
+  const criteria: Criteria = {};
+  if (searchName.length > 0) {
+    criteria.filenameContains = searchName;
+  }
+  if (filterFileType) {
+    criteria.typeEquals = filterFileType;
+  }
 
   const getFileTypesValues = () => {
     let dropdownFileTypes = [];
@@ -56,7 +73,7 @@ const FileList = (): JSX.Element => {
   };
 
   const onNext = () => {
-    dispatch(FetchFilesService(next));
+    dispatch(FetchFilesService(next, criteria));
   };
 
   const onDownloadFile = async (file) => {
@@ -72,8 +89,24 @@ const FileList = (): JSX.Element => {
     dispatch(FetchFileTypeService());
   }, [dispatch]);
 
+  interface Criteria {
+    filenameContains?: string;
+    typeEquals?: string;
+  }
+
+  const getFilteredFiles = () => {
+    dispatch(FetchFilesService(null, criteria));
+  };
+
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
+
+  const filteredFileList = fileList
+    .filter((f) => searchName.length === 0 || f.filename?.toLowerCase().includes(searchName?.toLowerCase()))
+    .filter((f2) => {
+      console.log(JSON.stringify(f2));
+      return !filterFileType || f2.typeName === filterFileType;
+    });
 
   const renderFileTable = () => {
     return (
@@ -159,6 +192,50 @@ const FileList = (): JSX.Element => {
         <GoAButton type="submit" disabled={!(selectedFile && uploadFileType.length > 0)} onClick={onUploadSubmit}>
           Upload
         </GoAButton>
+      </GoAForm>
+      <hr />
+
+      <GoAForm>
+        <GoAFlexRow gap="small">
+          <GoAFormItem>
+            <label htmlFor="name">File Name Search</label>
+            <GoAInputText name="name" id="name" value={searchName} onChange={(_, value) => setSearchName(value)} />
+          </GoAFormItem>
+          <GoAFormItem>
+            <label htmlFor="name">File Type Filter</label>
+
+            <GoADropdown
+              name="fileType"
+              selectedValues={[filterFileType]}
+              multiSelect={false}
+              onChange={(name, values) => {
+                console.log(JSON.stringify(name) + '<name');
+                console.log(JSON.stringify(values) + '<values');
+                setFilterFileType(values[0]);
+              }}
+            >
+              {getFileTypesValues().map((item, key) => (
+                <GoADropdownOption label={item.name} value={item.id} key={key} data-testid={item.id} />
+              ))}
+            </GoADropdown>
+          </GoAFormItem>
+        </GoAFlexRow>
+        <GoAFormActions alignment="right">
+          <GoAButton
+            buttonType="secondary"
+            title="Reset"
+            onClick={() => {
+              setSearchName('');
+              setFilterFileType(null);
+              dispatch(FetchFilesService(null));
+            }}
+          >
+            Reset
+          </GoAButton>
+          <GoAButton title="Search" onClick={getFilteredFiles}>
+            Search
+          </GoAButton>
+        </GoAFormActions>
       </GoAForm>
       <br />
       {!indicator.show && fileList?.length === 0 && renderNoItem('file')}
