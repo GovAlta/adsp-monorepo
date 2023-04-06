@@ -151,7 +151,7 @@ Getting tenancy from the context:
 
   @RestController
   public class HelloWorldController {
-    @GetMapping('/hello')
+    @GetMapping("/hello")
     public String helloWorld() {
       var tenant = AdspRequestContextHolder.current().getTenant().blockOptional();
       ...
@@ -173,7 +173,7 @@ Getting tenant information using the tenant service:
       this.tenantService = tenantService;
     }
 
-    @GetMapping('/hello')
+    @GetMapping("/hello")
     public String helloWorld(String tenantId) {
       var tenant = this.tenantService.getTenant(AdspId.parse(tenantId)).blockOptional();
       ...
@@ -196,7 +196,7 @@ Getting a service URL from the directory:
       this.directory = directory;
     }
 
-    @GetMapping('/hello')
+    @GetMapping("/hello")
     public String helloWorld(String serviceId)
     {
       var serviceUrl = this.directory.getServiceUrl(AdspId.parse(serviceId)).blockOptional();
@@ -231,7 +231,7 @@ Getting configuration via the context:
   @RestController
   public class HelloWorldController {
 
-    @GetMapping('/hello')
+    @GetMapping("/hello")
     public String helloWorld()
     {
       var configuration = AdspRequestContextHolder.current()
@@ -256,7 +256,7 @@ Getting configuration using the configuration service:
       this.configurationService = configurationService;
     }
 
-    @GetMapping('/hello')
+    @GetMapping("/hello")
     public String helloWorld(String serviceId, String tenantId)
     {
       var serviceUrl = this.configurationService.getConfiguration(AdspId.parse(serviceId), Optional.of(AdspId.parse(tenantId)), HelloConfiguration.TypeReference)
@@ -308,7 +308,7 @@ Domain events can be sent using the event service which is available via depende
       this.eventService = eventService;
     }
 
-    @GetMapping('/hello')
+    @GetMapping("/hello")
     public String helloWorld(String message)
     {
       this.eventService.send(new DomainEvent<HelloWorldExecuted>(
