@@ -121,31 +121,31 @@ class PDFServicePage {
 
   pdfTemplateBodyEditor() {
     return cy.xpath(
-      '//div[text()="Body"]//ancestor::div[@class="goa-form"]//*[@class="monaco-scrollable-element editor-scrollable vs mac"]'
+      '//div[text()="Body"]//ancestor::div[@class="goa-form"]//*[@class="monaco-scrollable-element editor-scrollable vs"]'
     );
   }
 
   pdfTemplateHeaderEditor() {
     return cy.xpath(
-      '//div[text()="Header"]//ancestor::div[@class="goa-form"]//*[@class="monaco-scrollable-element editor-scrollable vs mac"]'
+      '//div[text()="Header"]//ancestor::div[@class="goa-form"]//*[@class="monaco-scrollable-element editor-scrollable vs"]'
     );
   }
 
   pdfTemplateFooterEditor() {
     return cy.xpath(
-      '//div[text()="Footer"]//ancestor::div[@class="goa-form"]//*[@class="monaco-scrollable-element editor-scrollable vs mac"]'
+      '//div[text()="Footer"]//ancestor::div[@class="goa-form"]//*[@class="monaco-scrollable-element editor-scrollable vs"]'
     );
   }
 
   pdfTemplateCssEditor() {
     return cy.xpath(
-      '//div[text()="CSS"]//ancestor::div[@class="goa-form"]//*[@class="monaco-scrollable-element editor-scrollable vs mac"]'
+      '//div[text()="CSS"]//ancestor::div[@class="goa-form"]//*[@class="monaco-scrollable-element editor-scrollable vs"]'
     );
   }
 
   pdfTemplateTestDataEditor() {
     return cy.xpath(
-      '//div[text()="Test data"]//ancestor::div[@class="goa-form"]//*[@class="monaco-scrollable-element editor-scrollable vs mac"]'
+      '//div[text()="Test data"]//ancestor::div[@class="goa-form"]//*[@class="monaco-scrollable-element editor-scrollable vs"]'
     );
   }
 
