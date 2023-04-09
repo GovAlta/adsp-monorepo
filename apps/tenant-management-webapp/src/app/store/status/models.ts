@@ -44,6 +44,7 @@ export interface ApplicationStatus {
   status?: ServiceStatusType;
   internalStatus?: InternalServiceStatusType;
   endpoint?: ServiceStatusEndpoint;
+  monitorOnly?: boolean;
 }
 
 export interface ServiceStatusEndpoint {

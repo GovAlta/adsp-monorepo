@@ -43,6 +43,7 @@ export const getApplicationsByName =
           name: app.name,
           description: app.description,
           status: status?.status || '',
+          monitorOnly: app.monitorOnly,
           lastUpdated: status?.statusTimestamp ? new Date(status.statusTimestamp) : null,
         };
       });

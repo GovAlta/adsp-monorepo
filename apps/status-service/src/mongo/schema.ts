@@ -134,6 +134,7 @@ export const configurationSchema = {
         name: { type: 'string', description: 'Name of the application' },
         url: { type: 'string', description: 'URL to be checked' },
         description: { type: 'string', description: 'Tell us about your application' },
+        monitorOnly: { type: 'boolean', description: 'If selected, do not show publicly' },
       },
       required: ['name', 'url'],
       additionalProperties: false,

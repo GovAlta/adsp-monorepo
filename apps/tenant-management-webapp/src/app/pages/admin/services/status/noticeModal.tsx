@@ -50,6 +50,8 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
     notices: state.notice.notices,
   }));
 
+  const noMonitorOnlyApplications = applications.filter((application) => !application.monitorOnly);
+
   useEffect(() => {
     if (props.noticeId) {
       const notice = notices.find((nt) => props.noticeId === nt.id);
@@ -182,7 +184,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
                 {isAllApplications === false && (
                   <MultiDropdownStyle>
                     <Multiselect
-                      options={applications}
+                      options={noMonitorOnlyApplications}
                       onSelect={onSelect}
                       onRemove={onSelect}
                       displayValue="name"
