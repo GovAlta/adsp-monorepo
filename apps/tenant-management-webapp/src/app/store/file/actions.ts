@@ -1,4 +1,4 @@
-import { FileItem, FileMetrics, FileTypeItem } from './models';
+import { FileCriteria, FileItem, FileMetrics, FileTypeItem } from './models';
 
 export const UPLOAD_FILE = 'tenant/file-service/upload';
 export const UPLOAD_FILE_SUCCESSES = 'tenant/file-service/upload/success';
@@ -87,6 +87,7 @@ interface UploadFileFailAction {
 export interface FetchFilesAction {
   type: typeof FETCH_FILE_LIST;
   after: string;
+  criteria: FileCriteria;
 }
 export interface FetchFileAction {
   type: typeof FETCH_FILE;
@@ -227,9 +228,10 @@ export const UploadFileSuccessService = (result: { data: FileItem }): UploadFile
   },
 });
 
-export const FetchFilesService = (after?: string): FetchFilesAction => ({
+export const FetchFilesService = (after?: string, criteria?: FileCriteria): FetchFilesAction => ({
   type: FETCH_FILE_LIST,
   after,
+  criteria,
 });
 
 export const FetchFilesSuccessService = (results: {

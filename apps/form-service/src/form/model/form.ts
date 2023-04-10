@@ -116,12 +116,13 @@ export class FormEntity implements Form {
   async accessByUser(user: User): Promise<FormEntity> {
     if (
       this.status === FormStatus.Draft &&
-      (!isAllowedUser(user, this.tenantId, this.definition.applicantRoles) || user.id !== this.createdBy.id)
+      !(isAllowedUser(user, this.tenantId, this.definition.applicantRoles) && user.id === this.createdBy.id)
     ) {
       throw new UnauthorizedUserError('access draft form', user);
     }
 
-    if (this.status === FormStatus.Submitted && !this.canAssess(user)) {
+    if (this.status === FormStatus.Submitted && !this.canAssess(user) &&
+      !(isAllowedUser(user, this.tenantId, this.definition.applicantRoles) && user.id === this.createdBy.id)) {
       throw new UnauthorizedUserError('access submitted form', user);
     }
 

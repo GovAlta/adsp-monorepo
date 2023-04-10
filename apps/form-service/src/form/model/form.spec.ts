@@ -251,6 +251,15 @@ describe('FormEntity', () => {
       ).rejects.toThrow(UnauthorizedUserError);
     });
 
+    it('can return true for applicant on submitted form', async () => {
+      const submitted = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      submitted.status = FormStatus.Submitted;
+
+      const before = entity.lastAccessed;
+      const result = await submitted.accessByUser({ tenantId, id: 'tester', roles: ['test-applicant'] } as User);
+      expect(result.lastAccessed.valueOf()).toBeGreaterThan(before.valueOf());
+    });
+
     it('can return true for assessor on submitted form', async () => {
       const submitted = new FormEntity(repositoryMock, definition, subscriber, formInfo);
       submitted.status = FormStatus.Submitted;
