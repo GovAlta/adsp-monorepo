@@ -23,6 +23,7 @@ export interface ApplicationConfiguration {
   name: string;
   url: string;
   description?: string;
+  monitorOnly?: boolean;
 }
 
 // Add the tenant to the configuration.
@@ -41,6 +42,7 @@ export interface ApplicationData {
   description?: string;
   status: PublicServiceStatusType;
   metadata: unknown;
+  monitorOnly?: boolean;
   statusTimestamp: number;
   enabled: boolean;
 }

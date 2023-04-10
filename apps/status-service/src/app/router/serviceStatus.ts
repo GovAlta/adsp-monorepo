@@ -96,7 +96,7 @@ export const createNewApplication =
   async (req, res, next) => {
     const user = req.user as User;
     const tenant = await tenantService.getTenant(user.tenantId);
-    const { name, description, endpoint, appKey } = req.body;
+    const { name, description, endpoint, appKey, monitorOnly } = req.body;
 
     try {
       const newAppKey = appKey ? appKey : ApplicationRepo.getApplicationKey(name);
@@ -107,7 +107,7 @@ export const createNewApplication =
         }
       });
 
-      const newApp = await applicationRepo.createApp(newAppKey, name, description, endpoint.url, tenant);
+      const newApp = await applicationRepo.createApp(newAppKey, name, description, endpoint.url, monitorOnly, tenant);
       res.status(201).json(newApp);
     } catch (err) {
       logger.error(`Failed to create new application: ${err.message}`);
@@ -122,7 +122,7 @@ export const updateApplication =
       logger.info(`${req.method} - ${req.url}`);
 
       const user = req.user as User;
-      const { name, description, endpoint } = req.body;
+      const { name, description, endpoint, monitorOnly } = req.body;
       const { appKey } = req.params;
       const tenantId = user.tenantId?.toString() ?? '';
 
@@ -139,6 +139,7 @@ export const updateApplication =
         name,
         url: endpoint.url,
         description,
+        monitorOnly,
       };
       await applicationRepo.updateApp(update, tenantId);
 
