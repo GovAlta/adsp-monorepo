@@ -19,9 +19,7 @@ export const DirectoryService = (): JSX.Element => {
   const { tenantDirectory, coreDirectory } = useSelector(selectSortedDirectory);
 
   useEffect(() => {
-    if (coreDirectory.length === 0) {
-      dispatch(fetchDirectory());
-    }
+    dispatch(fetchDirectory());
   }, []);
 
   const coreTenant = 'Platform';
