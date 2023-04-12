@@ -89,6 +89,7 @@ When('the user clicks Cancel button in Entry modal', function () {
 
 Then(
   'the user {string} the entry of {string} in Service, {string} in API, {string} in URL',
+
   function (viewOrNot, entryName, api, url) {
     switch (viewOrNot) {
       case 'views':
@@ -99,6 +100,7 @@ Then(
         }
         break;
       case 'should not view':
+        cy.wait(2000);
         if (api.toLowerCase() == 'empty') {
           directoryObj.directoryEntryWithNameUrl(entryName, url).should('not.exist');
         } else {
