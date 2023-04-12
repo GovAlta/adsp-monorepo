@@ -59,6 +59,8 @@ const ServiceStatusPage = (): JSX.Element => {
     allApplicationsNotices: state.notice?.allApplicationsNotices,
   }));
 
+  const noMonitorOnlyApplications = applications?.filter((application) => !application.monitorOnly);
+
   useEffect(() => {
     dispatch(fetchApplications(realm));
   }, [realm]);
@@ -93,7 +95,7 @@ const ServiceStatusPage = (): JSX.Element => {
           {applications?.length === 0 && <div>There are no services available by this provider</div>}
         </div>
 
-        {applications?.length > 0 && (
+        {noMonitorOnlyApplications?.length > 0 && (
           <div className="title-line">
             <Grid>
               <GridItem md={7}>
@@ -110,7 +112,7 @@ const ServiceStatusPage = (): JSX.Element => {
         )}
 
         <Grid>
-          {applications.map((app, index) => {
+          {noMonitorOnlyApplications.map((app, index) => {
             return (
               <GridItem key={index} md={12} vSpacing={1} hSpacing={0.5}>
                 <ServiceStatus
@@ -187,7 +189,7 @@ const ServiceStatusPage = (): JSX.Element => {
         </div>
         {allApplicationsNotices.map((notice) => {
           return (
-            <div data-testid="all-application-notice">
+            <div data-testid="all-application-notice" className="mb-1">
               <GoACallout title="Notice" type="important" key={`{notice-${notice.id}}`}>
                 <div data-testid="all-application-notice-message">{notice.message}</div>
                 <br />
@@ -368,6 +370,10 @@ const AllApplications = styled.div`
     color: #666666;
     line-height: 2rem;
     text-align: right;
+  }
+
+  .mb-1 {
+    margin-bottom: 1rem;
   }
 `;
 

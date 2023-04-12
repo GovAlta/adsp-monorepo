@@ -28,6 +28,7 @@ export interface ServiceStatusApplication {
   lastUpdated: string;
   status: ServiceStatusType;
   notices?: Notice[];
+  monitorOnly?: boolean;
 }
 
 export interface ServiceStatusEndpoint {

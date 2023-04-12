@@ -109,6 +109,7 @@ export class ApplicationRepo {
       appKey: app.appKey,
       name: app.name,
       description: app.description,
+      monitorOnly: app.monitorOnly,
       tenantId: tenantId,
       metadata: status?.metadata ?? '',
       enabled: status?.enabled ?? false,
@@ -122,12 +123,20 @@ export class ApplicationRepo {
     };
   };
 
-  createApp = async (appKey: string, appName: string, description: string, url: string, tenant: Tenant) => {
+  createApp = async (
+    appKey: string,
+    appName: string,
+    description: string,
+    url: string,
+    monitorOnly: boolean,
+    tenant: Tenant
+  ) => {
     const newApp = {
       appKey: appKey,
       name: appName,
       url: url,
       description: description,
+      monitorOnly: monitorOnly,
     };
     await this.updateApp(newApp, tenant.id.toString());
     return this.mergeApplicationData(tenant.id.toString(), newApp);

@@ -9,6 +9,7 @@ const ApplicationDefinition = {
     name: { type: ['string', 'null'] },
     description: { type: ['string', 'null'] },
     url: { type: ['string', 'null'] },
+    monitorOnly: { type: ['boolean', 'null'] },
   },
 };
 
@@ -268,6 +269,7 @@ export const applicationStatusChange = (
       id: app.appKey,
       name: app.name,
       description: app.description,
+      monitorOnly: app.monitorOnly,
       originalStatus: originalStatus,
       newStatus: newStatus,
       updatedBy: {

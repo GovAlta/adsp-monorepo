@@ -21,6 +21,7 @@ export interface ServiceStatusApplication {
   statusTimestamp?: number;
   status: ServiceStatusType;
   endpoints: ServiceStatusEndpoint[];
+  monitorOnly: boolean;
 }
 
 export interface ServiceStatusEndpoint {

@@ -1,24 +1,11 @@
-import {
-  adspId,
-  AdspId,
-  ConfigurationService,
-  ServiceDirectory,
-  Tenant,
-  TenantService,
-  TokenProvider,
-} from '@abgov/adsp-service-sdk';
-import axios from 'axios';
+import { AdspId, ConfigurationService, ServiceDirectory, TenantService, TokenProvider } from '@abgov/adsp-service-sdk';
+
 import { Logger } from 'winston';
 import { isApp } from '../../mongo/schema';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { ApplicationRepo } from '../router/ApplicationRepo';
-import {
-  ApplicationConfiguration,
-  StaticApplicationData,
-  StatusServiceApplications,
-  StatusServiceConfiguration,
-} from './serviceStatus';
+import { StaticApplicationData, StatusServiceApplications, StatusServiceConfiguration } from './serviceStatus';
 import { StatusApplications } from './statusApplications';
 
 type ConfigurationFinder = (tenantId: AdspId) => Promise<StatusServiceApplications>;
@@ -113,73 +100,5 @@ export class ApplicationManager {
       });
       return apps;
     };
-  };
-
-  /**
-   * This is here to convert application data to a new form.
-   * Ideally it only needs to be run once.  Nov 15, 2022.
-   * @param logger - its a logger.
-   */
-  synchronizeData = async () => {
-    const tenants = await this.#tenantService.getTenants();
-    tenants.forEach(async (tenant: Tenant) => {
-      this.#updateAppDefinition(tenant);
-    });
-  };
-
-  // TODO remove this code after next production release (Dec. 8, 2022).
-  #updateAppDefinition = async (tenant: Tenant) => {
-    const config: StatusServiceConfiguration = await this.#getConfiguration(tenant.id);
-    const ids = Object.keys(config);
-    let needsUpdate = false;
-    ids.forEach(async (appId) => {
-      const app = config[appId];
-      // Fix up he app's configuration data.
-      if (isApp(app)) {
-        needsUpdate = true;
-        const appKey = ApplicationRepo.getApplicationKey(app.name);
-        const replacement: ApplicationConfiguration = {
-          appKey: appKey,
-          name: app.name,
-          description: app.description,
-          url: app.url,
-        };
-        delete config[appId];
-        config[appKey] = replacement;
-      }
-    });
-    if (needsUpdate) {
-      this.#logger.info(`Updating status-service configuration for tenant ${tenant.name}`);
-      try {
-        await this.#updateConfig(config, tenant);
-      } catch (e) {
-        this.#logger.info(`Error updating configuration for tenant ${tenant.name}...${e.message}`);
-      }
-    }
-  };
-
-  #getConfiguration = async (tenantId: AdspId): Promise<StatusServiceConfiguration> => {
-    const token = await this.#tokenProvider.getAccessToken();
-    return this.configurationService.getConfiguration<StatusServiceConfiguration, StatusServiceConfiguration>(
-      this.serviceId,
-      token,
-      tenantId
-    );
-  };
-
-  #updateConfig = async (config: StatusServiceConfiguration, tenant: Tenant) => {
-    const baseUrl = await this.#directory.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
-    const token = await this.#tokenProvider.getAccessToken();
-    const configUrl = new URL(`/configuration/v2/configuration/platform/status-service?tenantId=${tenant.id}`, baseUrl);
-    await axios.patch(
-      configUrl.href,
-      {
-        operation: 'REPLACE',
-        configuration: config,
-      },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
   };
 }

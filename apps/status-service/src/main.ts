@@ -134,8 +134,6 @@ app.use(express.json({ limit: '1mb' }));
 
   // start the endpoint checking jobs
   if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.job)) {
-    // TODO remove this (see comments in ApplicationManager).
-    await applicationManager.synchronizeData();
     // clear the health status database every midnight
     const scheduleDataReset = async () => {
       scheduleJob('0 0 * * *', async () => {
