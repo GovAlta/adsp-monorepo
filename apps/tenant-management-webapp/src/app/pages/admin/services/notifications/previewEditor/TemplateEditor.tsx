@@ -81,6 +81,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           const suggestions = triggerInScope(textUntilPosition, position.lineNumber)
             ? buildSuggestions(monaco, eventSuggestion, model, position)
             : [];
+
+          console.log(JSON.stringify(suggestions) + '<suggestions2--');
           return {
             suggestions,
           } as languages.ProviderResult<languages.CompletionList>;
