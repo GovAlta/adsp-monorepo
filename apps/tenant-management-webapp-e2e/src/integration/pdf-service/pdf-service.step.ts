@@ -45,6 +45,7 @@ When('the user enters {string} as name, {string} as description in pdf template 
     .pdfAddTemplateModalDescription()
     .shadow()
     .find('.goa-textarea')
+    .invoke('removeAttr', 'disabled')
     .clear()
     .type(description, { force: true });
 });
