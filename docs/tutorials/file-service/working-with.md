@@ -8,6 +8,21 @@ grand_parent: Tutorials
 
 ## Working With Files
 
+The _File Service_ has two main components;
+
+- APIs, with which your application can mange files, and
+- the Tenant Admin Webapp, which lets you configure the service to meet your needs.
+
+### Tenant Admin Webapp
+
+Configuring the _File Service_ is about creating _File Type collections_, and setting up permissions and retention policies for them. You do this through our [Tenant Admin Webapp](https://adsp.alberta.ca). See [File Type collections](/adsp-monorepo/tutorials/access-service/file-types.html) for more information.
+
+### API
+
+You can learn the specific details of how an API works from our [Swagger Documentation](https://api.adsp.alberta.ca/autotest/?urls.primaryName=File%20service); here we'll just give a brief overview of the functionality supplied through them.
+
+All API calls to the _File Service_ require authentication via Keycloak. See the instructions for [setting up a tenant and getting access tokens](/adsp-monorepo/tutorials/access-service/introduction.html) for details on how to do this.
+
 ### Uploading
 
 Files are uploaded to Azure Blob Storage and stored as octet streams. In addition to the file, there is a small amount of metadata that gets created and stored along with it, as discussed below.
