@@ -62,4 +62,4 @@ You can search through your uploaded files using the following criteria
 
 ### Downloading
 
-Files are stored, and downloaded, as octet streams.
+Files are stored, and downloaded, as octet streams. Please see the [Swagger Documentation](https://api.adsp.alberta.ca/autotest/?urls.primaryName=File%20service#/File/get_file_v1_files__fileId__download) for more information on downloading via the APIs.
