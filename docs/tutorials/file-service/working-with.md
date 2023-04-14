@@ -12,13 +12,13 @@ grand_parent: Tutorials
 
 Files are uploaded to Azure Blob Storage and stored as octet streams. In addition to the file, there is a small amount of metadata that gets created and stored along with it, as discussed below.
 
-### Scanning
+### File Scanning
 
-When you upload a file, you can specify whether or not it should be scanned for viruses or other malicious software (default's to scan).
+When you upload a file, you can specify whether or not it should be scanned for viruses or other malicious software (defaults to scan). Scanning is provided by [ClamAV](https://docs.clamav.net/Introduction.html), an open-source anti-virus toolkit maintained by Cisco Systems Inc. The database is updated frequently, so you can be sure the File Service will be looking for the latest threats. The service is designed to be fast, but you may find there is some delay between uploading and being able to access your file. This should not be an issue with small files.
 
 ### Access Permission
 
-Using File Type collections you can specify access permissions based on your tenant (Keycloak) roles. See ADSP [File Types](/adsp-monorepo/tutorials/file-service/file-types.html) for more information.
+Using File Type collections you can specify access permissions based on your tenant (Keycloak) roles. See ADSP [File Type collections](/adsp-monorepo/tutorials/file-service/file-types.html) for more information.
 
 ### Metadata
 
