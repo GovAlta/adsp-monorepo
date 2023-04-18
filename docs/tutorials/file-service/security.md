@@ -20,12 +20,12 @@ Only _File Service_ has direct access to the files stored in Azure Blob. Applica
 
 Multiple copies of your files are stored by Azure Blob Storage in order to assure high durability. For the curious, we use [RA-GRS redundancy](https://learn.microsoft.com/en-us/azure/storage/common/storage-redundancy#geo-redundant-storage) which gives you 99.(13)9% (13 9's) durability. It achieves this by storing 3 copies of the data in a single location (on separate servers) and 1 copy at a geographically separate location.
 
-#### Encryption
+### Encryption
 
 All data stored in Azure Blob is [encrypted](https://learn.microsoft.com/en-us/azure/storage/common/storage-service-encryption?toc=%2Fazure%2Fstorage%2Fblobs%2Ftoc.json&bc=%2Fazure%2Fstorage%2Fblobs%2Fbreadcrumb%2Ftoc.json) using 256 bit AES encryption.
 
-#### Retention
+### Retention
 
 The _File Service_ gives you fine grained control of file retention through our [File Type collections](/adsp-monorepo/tutorials/file-service/file-types.html). You can set the retention policy for files in the collection, and those that have been untouched for longer than the retention period will be automatically deleted.
 
-Note: this policy does support any specific retention policies for _deleted files_ that may be required for your application. i.e. Once a file has been deleted from the File Service the data will be lost. Please [let us know](adsp@gov.ab.ca) if you need something more robust.
+Note: this policy does support any specific retention policies for _deleted files_ that may be required for your application. i.e. Once a file has been deleted from the File Service the data will be lost after a 7 day retention period that is set in the _Azure Blob_ configuration. You can, however, define the required retention period in your _File Type collection_ and let the _File Service_ mange the lifecycle. The file will only be deleted once it has been untouched for the defined period of time.
