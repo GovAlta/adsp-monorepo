@@ -47,6 +47,25 @@ describe('File Type Entity', () => {
     expect(entity).toBeTruthy();
   });
 
+  it('can create new with rules', () => {
+    const entity = FileTypeEntity.create(
+      tenantId,
+      type.id,
+      type.name,
+      type.anonymousRead,
+      type.readRoles,
+      type.updateRoles,
+      {
+        retention: {
+          active: true,
+          deleteInDays: 3,
+          createdAt: '2023-04-18T18:00:53+00:00',
+        },
+      }
+    );
+    expect(entity).toBeTruthy();
+  });
+
   describe('instance', () => {
     let entity: FileTypeEntity = null;
 
