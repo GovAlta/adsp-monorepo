@@ -12,7 +12,7 @@ export type {
   EventService,
   IntervalDefinition,
 } from './event';
-export type { FileType } from './file';
+export type { FileType, FileTypeRules } from './file';
 export type { EventCriteria, StreamEvent, Stream } from './push';
 export { Channel } from './notification';
 export type { Template, NotificationType, NotificationTypeEvent } from './notification';

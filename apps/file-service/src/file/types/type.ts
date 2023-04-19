@@ -1,4 +1,5 @@
 import type { AdspId, FileType as BaseFileType } from '@abgov/adsp-service-sdk';
+export type { FileTypeRules } from '@abgov/adsp-service-sdk';
 
 export interface FileType extends BaseFileType {
   tenantId: AdspId;
