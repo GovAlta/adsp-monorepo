@@ -41,23 +41,37 @@ const initializeApp = async (): Promise<express.Application> => {
     app.set('trust proxy', environment.TRUSTED_PROXY);
   }
 
-  const templateService = createTemplateService();
-  const pdfService = await createPdfService();
-
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
+
+  const { directory, tokenProvider, ...sdkCapabilities } = await initializePlatform(
+    {
+      serviceId,
+      displayName: 'PDF service',
+      description: 'Provides utility PDF capabilities.',
+      clientSecret: environment.CLIENT_SECRET,
+      accessServiceUrl,
+
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+    },
+    { logger }
+  );
+
+  const token = await tokenProvider.getAccessToken();
+
+  const templateService = createTemplateService(directory);
+  const pdfService = await createPdfService();
+
   const {
     clearCached,
     configurationHandler,
     configurationService,
     coreStrategy,
-    directory,
     eventService,
     healthCheck,
     metricsHandler,
     tenantHandler,
     tenantStrategy,
-    tokenProvider,
   } = await initializePlatform(
     {
       serviceId,
@@ -75,6 +89,10 @@ const initializeApp = async (): Promise<express.Application> => {
           }),
           {}
         ),
+      // combineConfiguration: (tenant: Record<string, unknown>, _core: Record<string, unknown>) => ({
+      //   ...core,
+      //   ...tenant,
+      // }),
       roles: [
         {
           role: ServiceRoles.PdfGenerator,
