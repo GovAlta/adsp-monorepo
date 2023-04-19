@@ -100,6 +100,7 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
             anonymousRead: type.anonymousRead,
             readRoles: type.readRoles,
             updateRoles: type.updateRoles,
+            rules: type?.rules,
           },
         }),
         {}

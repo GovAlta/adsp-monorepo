@@ -9,6 +9,19 @@ export const configurationSchema = {
         anonymousRead: { type: 'boolean' },
         readRoles: { type: 'array', items: { type: 'string' } },
         updateRoles: { type: 'array', items: { type: 'string' } },
+        rules: {
+          type: ['object', 'null'],
+          properties: {
+            retention: {
+              type: ['object', 'null'],
+              properties: {
+                createdAt: { type: 'string' },
+                active: { type: 'boolean' },
+                deleteInDays: { type: 'integer' },
+              },
+            },
+          },
+        },
       },
       required: ['id', 'name', 'anonymousRead', 'readRoles', 'updateRoles'],
       additionalProperties: false,
