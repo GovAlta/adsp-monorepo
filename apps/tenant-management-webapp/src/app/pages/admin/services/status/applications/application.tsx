@@ -118,21 +118,19 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
         </GoAButton>
       </AppHealth>
 
-      <GoAFormItem>
-        <GoACheckbox
-          checked={app.monitorOnly}
-          name="monitor-only-checkbox"
-          data-testid="monitor-only-checkbox"
-          onChange={() => {
-            const application: ApplicationStatus = JSON.parse(JSON.stringify(app));
-            application.monitorOnly = !app.monitorOnly;
-            dispatch(saveApplication(application));
-          }}
-          ariaLabel={`monitor-only-checkbox`}
-        >
-          Monitor only (the application will not be publicly displayed in the status app)
-        </GoACheckbox>
-      </GoAFormItem>
+      <GoACheckbox
+        checked={app.monitorOnly}
+        name="monitor-only-checkbox"
+        data-testid="monitor-only-checkbox"
+        onChange={() => {
+          const application: ApplicationStatus = JSON.parse(JSON.stringify(app));
+          application.monitorOnly = !app.monitorOnly;
+          dispatch(saveApplication(application));
+        }}
+        ariaLabel={`monitor-only-checkbox`}
+      >
+        Monitor only (the application will not be publicly displayed)
+      </GoACheckbox>
 
       {/* GoAModals */}
 
