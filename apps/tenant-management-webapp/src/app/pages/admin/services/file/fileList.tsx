@@ -100,13 +100,6 @@ const FileList = (): JSX.Element => {
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
 
-  const filteredFileList = fileList
-    .filter((f) => searchName.length === 0 || f.filename?.toLowerCase().includes(searchName?.toLowerCase()))
-    .filter((f2) => {
-      console.log(JSON.stringify(f2));
-      return !filterFileType || f2.typeName === filterFileType;
-    });
-
   const renderFileTable = () => {
     return (
       <FileTableStyles>
