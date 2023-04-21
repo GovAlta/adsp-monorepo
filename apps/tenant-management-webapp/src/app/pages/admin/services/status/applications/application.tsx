@@ -20,6 +20,8 @@ import { setApplicationStatus } from '@store/status/actions/setApplicationStatus
 import { DeleteModal } from '@components/DeleteModal';
 import { HealthBar } from './healthBar';
 import { App, AppHeader, AppHealth, AppStatus, AppName } from './styled-components';
+import { GoACheckbox } from '@abgov/react-components-new';
+import { saveApplication } from '@store/status/actions';
 
 export const Application = (app: ApplicationStatus): JSX.Element => {
   const dispatch = useDispatch();
@@ -115,6 +117,20 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
           {app.enabled ? 'Stop health check' : 'Start health check'}
         </GoAButton>
       </AppHealth>
+
+      <GoACheckbox
+        checked={app.monitorOnly}
+        name="monitor-only-checkbox"
+        data-testid="monitor-only-checkbox"
+        onChange={() => {
+          const application: ApplicationStatus = JSON.parse(JSON.stringify(app));
+          application.monitorOnly = !app.monitorOnly;
+          dispatch(saveApplication(application));
+        }}
+        ariaLabel={`monitor-only-checkbox`}
+      >
+        Monitor only (the application will not be publicly displayed)
+      </GoACheckbox>
 
       {/* GoAModals */}
 

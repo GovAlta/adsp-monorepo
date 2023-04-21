@@ -250,22 +250,6 @@ export const ApplicationFormModal: FC<Props> = ({
               </DropdownListContainer>
             )}
           </GoAFormItem>
-          <GoAFormItem>
-            <GoACheckbox
-              checked={application.monitorOnly}
-              name="monitor-only-checkbox"
-              data-testid="monitor-only-checkbox"
-              onChange={() => {
-                setApplication({
-                  ...application,
-                  monitorOnly: !application.monitorOnly,
-                });
-              }}
-              ariaLabel={`monitor-only-checkbox`}
-            >
-              Monitor only (the application will not be publicly displayed in the status app)
-            </GoACheckbox>
-          </GoAFormItem>
         </GoAForm>
       </GoAModalContent>
       <GoAModalActions>
