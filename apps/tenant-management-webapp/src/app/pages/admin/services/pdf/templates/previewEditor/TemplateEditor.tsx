@@ -68,6 +68,7 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
   const [tmpTemplate, setTmpTemplate] = useState(JSON.parse(JSON.stringify(pdfTemplate || '')));
   const [simulatedSaveTemplate, setSimulatedSaveTemplate] = useState(null);
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
+
   const suggestion = pdfTemplate ? (fileList ? getSuggestion(fileList) : getSuggestion()) : [];
 
   const [activeIndex, setActiveIndex] = useState(0);
@@ -77,6 +78,9 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
 
   useEffect(() => {
     if (!pdfTemplate) dispatch(getPdfTemplates());
+  }, []);
+
+  useEffect(() => {
     dispatch(FetchFilesService());
   }, []);
 

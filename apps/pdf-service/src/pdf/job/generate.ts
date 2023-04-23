@@ -17,19 +17,6 @@ export interface GenerateJobProps {
   eventService: EventService;
 }
 
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (key, value) => {
-    if (typeof value === "object" && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};
-
 const context = 'GenerateJob';
 export function createGenerateJob({
   logger,
@@ -51,8 +38,7 @@ export function createGenerateJob({
     });
 
     const tenantId = AdspId.parse(tenantIdValue);
-    console.log(JSON.stringify(tenantId, getCircularReplacer()) + "<-tenantId")
-   
+
     try {
       const token = await tokenProvider.getAccessToken();
       const [configuration] = await configurationService.getConfiguration<Record<string, PdfTemplateEntity>>(
@@ -61,26 +47,14 @@ export function createGenerateJob({
         tenantId
       );
 
-       console.log(JSON.stringify(token, getCircularReplacer()) + "<-tokentokentokentokentoken")
-
-     // console.log(JSON.stringify(configuration, getCircularReplacer()) + "<-configuration")
-
       const pdfTemplate = configuration[templateId];
       if (!pdfTemplate) {
         throw new NotFoundError('PDF Template', templateId);
       }
 
-      console.log(JSON.stringify(pdfTemplate, getCircularReplacer()) + "<-pdfTemplate")
+      await pdfTemplate.populateFileList(token, tenantIdValue);
 
-      console.log(JSON.stringify("going to populate"))
-
-      await pdfTemplate.populateFileList(token)
-
-      console.log(JSON.stringify("populated"))
-
-      await pdfTemplate.evaluateTemplates()
-
-      console.log(JSON.stringify("evaluated"))
+      await pdfTemplate.evaluateTemplates();
 
       const pdf = await pdfTemplate.generate({ data });
       //const pdf = null;
@@ -89,11 +63,9 @@ export function createGenerateJob({
         tenant: tenantId,
       });
 
-     // console.log(JSON.stringify(pdf, getCircularReplacer()) + "<-pdf")
+      // console.log(JSON.stringify(pdf, getCircularReplacer()) + "<-pdf")
 
       const result = await fileService.upload(tenantId, fileType, recordId, filename, pdf);
-
-      console.log(JSON.stringify(result, getCircularReplacer()) + "<-result")
 
       eventService.send(pdfGenerated(tenantId, jobId, templateId, result, requestedBy));
 

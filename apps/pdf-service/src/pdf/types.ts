@@ -6,7 +6,7 @@ export interface TemplateService {
   setTenantToken(token: string): void;
   getTenantToken(): string;
   getFileServiceCache(): NodeCache;
-  populateFileList(token: string): Promise<File[]>;
+  populateFileList(token: string, tenantIdValue: string): Promise<File[]>;
 }
 
 export interface PdfServiceProps {

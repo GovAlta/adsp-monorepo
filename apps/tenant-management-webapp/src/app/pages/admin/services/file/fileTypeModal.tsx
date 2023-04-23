@@ -291,9 +291,11 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
 
               let elementNames = [];
               elements.forEach((e) => {
-                elementNames = elementNames.concat(
-                  e.roleNames.map((roleName) => (e.clientId ? `${e.clientId}:${roleName}` : roleName))
-                );
+                if (e) {
+                  elementNames = elementNames.concat(
+                    e.roleNames.map((roleName) => (e.clientId ? `${e.clientId}:${roleName}` : roleName))
+                  );
+                }
               });
               const cleanReadRoles = fileType.readRoles.filter((readRole) => {
                 return elementNames.includes(readRole);

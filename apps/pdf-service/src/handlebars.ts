@@ -105,28 +105,19 @@ class HandlebarsTemplateService implements TemplateService {
     return this.fileServiceCache;
   }
 
-  async populateFileList(token: string): Promise<File[]> {
+  async populateFileList(token: string, tenantIdValue: string): Promise<File[]> {
     const headers = {
       headers: { Authorization: `Bearer ${token}` },
     };
 
-    return new Promise((resolve, reject) => {
-      console.log(JSON.stringify(headers) + ' <headers');
+    return new Promise((resolve) => {
       axios
-        .get(
-          `${this.fileServiceCache.get(
-            'fileServiceUrl'
-          )}file/v1/files?tenantId=urn:ads:platform:tenant-service:v2:/tenants/63f54755a1f047f190ab5882`,
-          headers
-        )
+        .get(`${this.fileServiceCache.get('fileServiceUrl')}file/v1/files?tenantId=${tenantIdValue}`, headers)
         .then((response) => {
           this.fileList.set('fileList', response.data.results);
-          console.log(JSON.stringify(this.fileList, getCircularReplacer()) + ' <responseresponseresponseresponse');
           resolve(response.data.results);
         })
         .catch((error) => {
-          console.log(JSON.stringify(error) + '<---QQQ');
-          //resolve("42");
           console.error(error);
         });
     });
@@ -138,7 +129,8 @@ class HandlebarsTemplateService implements TemplateService {
 
     console.log(JSON.stringify(this.token) + '<----this.token0');
 
-    //const newToken = this.token;
+    const fileList = this.fileList.get('fileList');
+    const fileServiceUrl = this.fileServiceCache.get('fileServiceUrl');
 
     handlebars.registerHelper('fileId', function (value: string, { hash = {} }: { hash: Record<string, string> }) {
       const getCircularReplacer = () => {
@@ -154,79 +146,41 @@ class HandlebarsTemplateService implements TemplateService {
         };
       };
 
-      //console.log(JSON.stringify(newToken) + '<----this.token (newtoken)');
+      let returnValue = '';
 
-      // if (newToken) {
       try {
-        console.log(JSON.stringify(value) + '<-valXZue');
-        console.log(JSON.stringify(hash) + '<-hash');
-
         const valueArray = value.split('.');
 
-        value = valueArray[valueArray.length - 1];
-
-        console.log(JSON.stringify(value) + '<-valXZue2');
-        console.log(JSON.stringify(valueArray) + '<-valueArray22');
-
-        //  const type = valueArray[valueArray.length - 2];
-
-        console.log(JSON.stringify(this, getCircularReplacer()) + '<this--------');
-
-        //console.log(JSON.stringify(type,getCircularReplacer()) + "<typetype--------")
-
         if (valueArray.find((v) => v === 'fileId')) {
-          console.log(JSON.stringify('fileId') + '<fileId--------');
-          // https://file-service.adsp-dev.gov.ab.ca/file/v1/files/87b954b4-6691-4498-9bc9-c3aee332f8da/download
-          return `${this.fileServiceCache.get('fileServiceUrl')}file/v1/files/${value}/download`;
-          // file-service
-          // file host is resolved using the directory service
+          returnValue = value;
         } else if (valueArray.find((v) => v === 'name')) {
-          // const filesData = JSON.parse(fileServiceCache.get('filesData'));
-          console.log('nameeee');
-          console.log(JSON.stringify(this.fileList.get('fileList')) + '<filesDatafilesData');
-          console.log('nameeee2');
+          const fileName = valueArray[valueArray.length - 2] + '.' + valueArray[valueArray.length - 1];
 
-          const id = (this.fileList.get('fileList') as unknown as Array<any>).find(
-            (file) => file.filename === value
-          ).id;
+          const id = (fileList as unknown as Array<any>).find((file) => {
+            return file.filename === fileName;
+          })?.id;
           console.log(JSON.stringify(id) + '<-------id');
-          return id;
-
-          console.log(JSON.stringify('name') + '<name--------');
-          // const headers = {
-          //   headers: { Authorization: `Bearer ${newToken}` },
-          // };
-
-          try {
-            //return axiosGet(headers,value);
-          } catch (e) {
-            console.error(JSON.stringify(e) + '<---eee');
-          }
-
-          //const x =
-          // return (
-
-          //)
-
-          // return {
-          //  x
-          // }
-
-          // https://file-service.adsp-dev.gov.ab.ca/file/v1/files/87b954b4-6691-4498-9bc9-c3aee332f8da/download
-          //  ------return `${fileServiceCache.get('fileServiceUrl')}file/v1/files/${id}/download`;
-          // file-service
-          // file host is resolved using the directory service
+          returnValue = id;
         } else if (valueArray.find((v) => v === 'urn')) {
-          // https://file-service.adsp-dev.gov.ab.ca/file/v1/files/87b954b4-6691-4498-9bc9-c3aee332f8da/download
-          return `${this.fileServiceCache.get('fileServiceUrl')}file/v1/files/${value}/download`;
-          // file-service
-          // file host is resolved using the directory service
+          console.log('urn  ');
+
+          const uri = valueArray[valueArray.length - 1];
+
+          const id = (fileList as unknown as Array<any>).find((file) => {
+            return file.urn === uri;
+          })?.id;
+
+          returnValue = id;
+
+          returnValue = id;
+        } else {
+          return value;
         }
       } catch (err) {
-        // If this fails, then just fallback to default.
+        console.error(err);
       }
-      return value;
-      //}
+
+      return `${fileServiceUrl}file/v1/files/${returnValue}/download?unsafe=true`;
     });
 
     console.log("we're gonna compile now");
@@ -235,35 +189,6 @@ class HandlebarsTemplateService implements TemplateService {
   }
 }
 
-// const axiosGet = async (headers, value) => {
-//   console.log("asiosget")
-//   console.log(JSON.stringify(headers) + "<>header")
-
-//   const x = await axios.get(`${this.fileServiceCache.get('fileServiceUrl')}file/v1/files`,headers).then((files) => {
-//       console.log(JSON.stringify(files) + "<-------files")
-
-//       const id = (files as unknown as Array<any>).find((file) => file.filename === value).id
-//       console.log(JSON.stringify(id) + "<-------id")
-
-//       return (id)
-//     })
-//   return x;
-// }
-
 export function createTemplateService(directory: ServiceDirectory): TemplateService {
-  console.log('we are creating template service');
   return new HandlebarsTemplateService(directory);
 }
-
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};

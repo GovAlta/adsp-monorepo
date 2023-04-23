@@ -36,30 +36,16 @@ export class PdfTemplateEntity implements PdfTemplate {
     this.fileList = null;
 
     this.additionalStylesWrapped = '<style>' + additionalStyles + '</style>';
-
-    const additionalStylesWrapped = '<style>' + additionalStyles + '</style>';
-
-    // this.evaluateTemplate = this.templateService.getTemplateFunction(additionalStylesWrapped.concat(template));
-    // this.evaluateFooterTemplate = this.templateService.getTemplateFunction(
-    //   additionalStylesWrapped.concat(footer),
-    //   'pdf-footer'
-    // );
-    // this.evaluateHeaderTemplate = this.templateService.getTemplateFunction(
-    //   additionalStylesWrapped.concat(header),
-    //   'pdf-header'
-    // );
   }
 
-  async populateFileList(token: string) {
-
-    this.fileList = await this.templateService.populateFileList(token);
-    console.log(JSON.stringify(this.fileList) + "<----this.fileList")
+  async populateFileList(token: string, tenantIdValue: string) {
+    this.fileList = await this.templateService.populateFileList(token, tenantIdValue);
   }
 
   evaluateTemplates() {
-   // console.log(JSON.stringify(token) + '<-tokentoken');
-   // this.templateService.setTenantToken(token);
-    this.evaluateTemplate = this.templateService.getTemplateFunction(this.additionalStylesWrapped.concat(this.template));
+    this.evaluateTemplate = this.templateService.getTemplateFunction(
+      this.additionalStylesWrapped.concat(this.template)
+    );
     this.evaluateFooterTemplate = this.templateService.getTemplateFunction(
       this.additionalStylesWrapped.concat(this.footer),
       'pdf-footer'
@@ -68,25 +54,9 @@ export class PdfTemplateEntity implements PdfTemplate {
       this.additionalStylesWrapped.concat(this.header),
       'pdf-header'
     );
-  } 
+  }
 
   generate(context: unknown): Promise<Buffer> {
-   
-    
-
-    console.log(JSON.stringify(this.templateService.getTenantToken()) + '<-getTenantToken');
-    console.log(JSON.stringify(context) + '<-context');
-
-    // const content = this.templateService.getTemplateFunction(this.additionalStylesWrapped.concat(this.template))(
-    //   context
-    // );
-    // const footer = this.templateService.getTemplateFunction(this.additionalStylesWrapped.concat(this.template))(
-    //   context
-    // );
-    // const header = this.templateService.getTemplateFunction(this.additionalStylesWrapped.concat(this.template))(
-    //   context
-    // ); 
-
     const content = this.evaluateTemplate(context);
     const footer = this.evaluateFooterTemplate(context);
     const header = this.evaluateHeaderTemplate(context);
