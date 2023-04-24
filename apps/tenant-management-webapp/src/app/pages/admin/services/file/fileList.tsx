@@ -108,7 +108,7 @@ const FileList = (): JSX.Element => {
             <tr>
               <th>File name</th>
               <th>Size (KB)</th>
-              <th>type</th>
+              <th>Type</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -167,6 +167,7 @@ const FileList = (): JSX.Element => {
         <h2>Please upload a file</h2>
         <input type="file" onChange={onChange} aria-label="file upload" ref={fileName} />
         <FileTypeDropdown>
+          <label className="dropdown-label">Select a file type</label>
           <GoADropdown
             name="fileType"
             selectedValues={uploadFileType}
@@ -186,15 +187,15 @@ const FileList = (): JSX.Element => {
         </GoAButton>
       </GoAForm>
 
-      <div className="mt-24">
+      <div className="mt-48">
         <GoAForm>
           <h2>File filtering</h2>
           <GoAFormItem>
-            <label htmlFor="name">File name search</label>
+            <label htmlFor="name">Search file name</label>
             <GoAInputText name="name" id="name" value={searchName} onChange={(_, value) => setSearchName(value)} />
           </GoAFormItem>
           <GoAFormItem>
-            <label htmlFor="name">File type filter</label>
+            <label htmlFor="name">Filter file type</label>
 
             <GoADropdown
               name="fileType"
@@ -262,8 +263,13 @@ const FileTableStyles = styled.div`
 `;
 
 const FileTable = styled.div`
-  .mt-24 {
-    margin-top: 24px;
+  .mt-48 {
+    margin-top: 48px;
+  }
+
+  .dropdown-label {
+    font-weight: bold;
+    line-height: 34px;
   }
 `;
 
