@@ -32,6 +32,7 @@ import {
   setPdfDisplayFileId,
   updateTempTemplate,
 } from '@store/pdf/action';
+import { FetchFilesService } from '@store/file/actions';
 import { RootState } from '@store/index';
 import { FetchFileService } from '@store/file/actions';
 import { useHistory, useParams } from 'react-router-dom';
@@ -66,7 +67,10 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
 
   const [tmpTemplate, setTmpTemplate] = useState(JSON.parse(JSON.stringify(pdfTemplate || '')));
   const [simulatedSaveTemplate, setSimulatedSaveTemplate] = useState(null);
-  const suggestion = pdfTemplate ? getSuggestion() : [];
+  const fileList = useSelector((state: RootState) => state.fileService.fileList);
+
+  const suggestion = pdfTemplate ? (fileList ? getSuggestion(fileList) : getSuggestion()) : [];
+
   const [activeIndex, setActiveIndex] = useState(0);
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -74,6 +78,10 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
 
   useEffect(() => {
     if (!pdfTemplate) dispatch(getPdfTemplates());
+  }, []);
+
+  useEffect(() => {
+    dispatch(FetchFilesService());
   }, []);
 
   const reloadFile = useSelector((state: RootState) => state.pdf?.reloadFile);

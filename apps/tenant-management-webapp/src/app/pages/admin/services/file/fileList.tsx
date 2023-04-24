@@ -201,8 +201,6 @@ const FileList = (): JSX.Element => {
               selectedValues={[filterFileType]}
               multiSelect={false}
               onChange={(name, values) => {
-                console.log(JSON.stringify(name) + '<name');
-                console.log(JSON.stringify(values) + '<values');
                 setFilterFileType(values[0]);
               }}
             >

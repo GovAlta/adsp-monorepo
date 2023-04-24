@@ -5,7 +5,7 @@ import { fetchDirectory, fetchDirectoryDetailByURNs } from '@store/directory/act
 import { ApplicationStatus } from '@store/status/models';
 import { GoAButton, GoADropdownOption } from '@abgov/react-components';
 import { useValidators } from '@lib/validation/useValidators';
-import { GoACheckbox } from '@abgov/react-components-new';
+
 import {
   characterCheck,
   validationPattern,

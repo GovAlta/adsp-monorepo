@@ -5,6 +5,10 @@ describe('PdfTemplateEntity', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const templateServiceMock = {
     getTemplateFunction: jest.fn(),
+    setTenantToken: jest.fn(),
+    getTenantToken: jest.fn(),
+    getFileServiceCache: jest.fn(),
+    populateFileList: jest.fn(),
   };
 
   const pdfServiceMock = {
@@ -39,6 +43,7 @@ describe('PdfTemplateEntity', () => {
     const context = {};
     const stream = {};
     pdfServiceMock.generatePdf.mockResolvedValueOnce(stream);
+    entity.evaluateTemplates();
     const result = await entity.generate(context);
     expect(template).toHaveBeenCalledWith(context);
     expect(pdfServiceMock.generatePdf).toHaveBeenCalledWith({
