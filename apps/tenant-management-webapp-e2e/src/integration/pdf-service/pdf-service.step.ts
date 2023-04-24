@@ -45,6 +45,7 @@ When('the user enters {string} as name, {string} as description in pdf template 
     .pdfAddTemplateModalDescription()
     .shadow()
     .find('.goa-textarea')
+    .invoke('removeAttr', 'disabled')
     .clear()
     .type(description, { force: true });
 });
@@ -243,12 +244,7 @@ When(
       .find('.input--goa')
       .invoke('removeAttr', 'disabled')
       .type(name, { force: true });
-    pdfServiceObj
-      .pdfTemplateModalDescriptionField()
-      .shadow()
-      .find('.goa-textarea')
-      .clear()
-      .type(description, { force: true });
+    pdfServiceObj.pdfTemplateModalDescriptionField().shadow().find('.goa-textarea').type(description, { force: true });
   }
 );
 

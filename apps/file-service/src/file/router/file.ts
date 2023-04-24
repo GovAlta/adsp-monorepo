@@ -40,6 +40,7 @@ function mapFileType(entity: FileTypeEntity) {
     anonymousRead: entity.anonymousRead,
     updateRoles: entity.updateRoles,
     readRoles: entity.readRoles,
+    rules: entity?.rules,
   };
 }
 
