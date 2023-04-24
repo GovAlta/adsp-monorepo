@@ -8,7 +8,7 @@ module.exports = {
   tags: [
     {
       name: 'Status',
-      description: 'API to access and updated service status.',
+      description: 'API to access and update service status.',
     },
     {
       name: 'Public status',
@@ -16,7 +16,7 @@ module.exports = {
     },
     {
       name: 'Notice',
-      description: 'API to access and updated service notices.',
+      description: 'API to access and update service notices.',
     },
   ],
   components: {
