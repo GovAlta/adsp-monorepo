@@ -57,13 +57,11 @@ export function createGenerateJob({
       await pdfTemplate.evaluateTemplates();
 
       const pdf = await pdfTemplate.generate({ data });
-      //const pdf = null;
+
       logger.debug(`Generation of PDF (ID: ${jobId}) completed PDF creation from content with ${pdf.length} bytes...`, {
         context,
         tenant: tenantId,
       });
-
-      // console.log(JSON.stringify(pdf, getCircularReplacer()) + "<-pdf")
 
       const result = await fileService.upload(tenantId, fileType, recordId, filename, pdf);
 

@@ -1,6 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { PdfService, PdfTemplate, TemplateService } from '../types';
-import axios from 'axios';
+import { PdfService, PdfTemplate, TemplateService, File } from '../types';
 
 export class PdfTemplateEntity implements PdfTemplate {
   tenantId: AdspId;
@@ -13,7 +12,7 @@ export class PdfTemplateEntity implements PdfTemplate {
   footer?: string;
   additionalStyles?: string;
   additionalStylesWrapped?: string;
-  fileList: any;
+  fileList: File[];
 
   private evaluateTemplate: (context: unknown) => string;
   private evaluateFooterTemplate: (context: unknown) => string;
@@ -24,7 +23,6 @@ export class PdfTemplateEntity implements PdfTemplate {
     private readonly pdfService: PdfService,
     { tenantId, id, name, description, template, header, footer, additionalStyles }: PdfTemplate
   ) {
-    console.log(JSON.stringify('constructing') + '<>constructing');
     this.tenantId = tenantId;
     this.id = id;
     this.name = name;
@@ -60,7 +58,6 @@ export class PdfTemplateEntity implements PdfTemplate {
     const content = this.evaluateTemplate(context);
     const footer = this.evaluateFooterTemplate(context);
     const header = this.evaluateHeaderTemplate(context);
-    console.log(JSON.stringify(content) + '<-contentxx');
     return this.pdfService.generatePdf({
       content,
       footer,

@@ -23,14 +23,13 @@ export interface File {
   createdBy: UserInfo;
   created: Date;
   lastAccessed?: Date;
+  urn?: string;
 }
 
 export interface UserInfo {
   id: string;
   name: string;
 }
-
-
 
 export interface PdfService {
   generatePdf({ content, footer, header }: PdfServiceProps): Promise<Buffer>;

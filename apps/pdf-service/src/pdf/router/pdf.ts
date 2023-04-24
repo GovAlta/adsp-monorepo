@@ -52,38 +52,20 @@ export const getTemplates: RequestHandler = async (req, res, next) => {
   }
 };
 
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};
-
 const TEMPLATE = 'template';
 export function getTemplate(templateIn: 'params' | 'body'): RequestHandler {
   return async (req, res, next) => {
     try {
-      console.log('1');
       const { templateId } = req[templateIn];
-      console.log('2');
       const [configuration] = await req.getConfiguration<Record<string, PdfTemplateEntity>>();
-      //const x = await req.getConfiguration<Record<string, PdfTemplateEntity>>();
-      //console.log(JSON.stringify(x, getCircularReplacer()));
-      console.log('3');
       const template = configuration[templateId];
-      console.log('4');
+
       if (!template) {
         throw new NotFoundError('PDF Template', templateId);
       }
 
       req[TEMPLATE] = template;
-      console.log('5');
+
       next();
     } catch (err) {
       next(err);
@@ -103,9 +85,7 @@ export function generatePdf(
       const user = req.user;
       const tenantId = req.tenant.id;
       const { templateId, fileType, filename, recordId, data } = req.body;
-      console.log(JSON.stringify(TEMPLATE) + '<-TEMPLATE');
       const template: PdfTemplateEntity = req[TEMPLATE];
-      console.log(JSON.stringify(user.token.bearer) + '< user toekn');
 
       if (!isAllowedUser(user, template.tenantId, ServiceRoles.PdfGenerator)) {
         throw new UnauthorizedUserError('generate pdf', user);

@@ -101,13 +101,6 @@ const FileList = (): JSX.Element => {
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
 
-  const filteredFileList = fileList
-    .filter((f) => searchName.length === 0 || f.filename?.toLowerCase().includes(searchName?.toLowerCase()))
-    .filter((f2) => {
-      console.log(JSON.stringify(f2));
-      return !filterFileType || f2.typeName === filterFileType;
-    });
-
   const renderFileTable = () => {
     return (
       <FileTableStyles>
@@ -209,8 +202,6 @@ const FileList = (): JSX.Element => {
               selectedValues={[filterFileType]}
               multiSelect={false}
               onChange={(name, values) => {
-                console.log(JSON.stringify(name) + '<name');
-                console.log(JSON.stringify(values) + '<values');
                 setFilterFileType(values[0]);
               }}
             >
