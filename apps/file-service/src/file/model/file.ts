@@ -62,6 +62,7 @@ export class FileEntity implements File {
     this.filename = values.filename;
     this.createdBy = values.createdBy;
     this.created = values.created;
+    this.lastAccessed = values.created;
     const record = values as FileRecord;
 
     if (record.id) {

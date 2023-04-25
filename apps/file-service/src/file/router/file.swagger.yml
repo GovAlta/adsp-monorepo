@@ -211,6 +211,11 @@ components:
                   description: Returns all files that have a file name matching "*.${inputString}*.", e.g. "Bobs" will match "Bobs PDF file", and "Word file of Bobs".
                   example: Bob
                   type: string
+                lastAccessedBefore:
+                  description: Returns all files with lastAccessed before (exclusive) the ISO 8061 timestamp provided.
+                lastAccessedAfter:
+                  description: Returns all files with lastAccessed after (exclusive) the ISO 8061 timestamp provided.
+
     responses:
       200:
         description: Request successful.
