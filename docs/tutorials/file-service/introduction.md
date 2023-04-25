@@ -6,8 +6,6 @@ parent: File Service
 grand_parent: Tutorials
 ---
 
-# <span style="color: red">---- under construction ----</span>
-
 ## Introduction
 
 ADSP's _File Service_ is one that you can use for storing and managing file-based data. From uploading end-user documentation to storing content for presentation, the service gives you massively scalable, secure, storage for your data. Based on Microsoft's [Azure Blob Storage](https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blobs-introduction) and, coupled with our [File Type collections](/adsp-monorepo/tutorials/file-service/file-types.html), the file service gives you full control over who has access to your data, and who doesn't.

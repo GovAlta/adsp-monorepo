@@ -24,6 +24,7 @@ export interface FileItem {
   filename: string;
   size: number;
   fileURN: string;
+  urn: string;
   typeName?: string;
   recordId?: string;
   created?: string;
