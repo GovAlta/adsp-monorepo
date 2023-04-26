@@ -1,20 +1,40 @@
 components:
   schemas:
     Notice:
+      description: Detailed information to be posted about an application's status.  The notice may include a message, a time period to which the notice applies, and the application status for the period.
       type: object
       properties:
         message:
+          description: The message portion the notice.
+          required: false
           type: string
+          example: My Application will be down for weekly maintenance during the following hours.
         tennantServRef:
-          type: string
+          description: The tennantServRef (sic) identifies which applications the notice applies to.
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                description: The application's appKey (or ID).
+                type: string
+                example: my-application
+              name:
+                description: The name of the Application.
+                type: string
+                example: My Application
         startDate:
+          description: The start of the time period to which the notice applies.
           type: string
           format: date-time
         endDate:
+          description: The end of the time period to which the notice applies.
           type: string
           format: date-time
         mode:
+          description: A notice may be in draft or published mode.  Only published notices are displayed on the public microsite.
           type: string
+          example: draft
   responses:
     BadRequest:
       description: Bad request
@@ -64,16 +84,16 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Notice"
+            $ref: '#/components/schemas/Notice'
     responses:
       200:
         description: Notice successfully created.
       400:
-        $ref: "#/components/responses/BadRequest"
+        $ref: '#/components/responses/BadRequest'
       401:
-        $ref: "#/components/responses/Unauthorized"
+        $ref: '#/components/responses/Unauthorized'
       500:
-        $ref: "#/components/responses/InternalServerError"
+        $ref: '#/components/responses/InternalServerError'
 
 /notice/v1/notices/{id}:
   parameters:
@@ -98,12 +118,12 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Notice"
+            $ref: '#/components/schemas/Notice'
     responses:
       200:
         description: Notice successfully updated.
       401:
-        $ref: "#/components/responses/Unauthorized"
+        $ref: '#/components/responses/Unauthorized'
   delete:
     tags: [Notice]
     description: Deletes a notice.
@@ -111,6 +131,6 @@ components:
       200:
         description: Notice successfully deleted.
       401:
-        $ref: "#/components/responses/Unauthorized"
+        $ref: '#/components/responses/Unauthorized'
       404:
         description: Notice not found.

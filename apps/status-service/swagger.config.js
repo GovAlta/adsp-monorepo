@@ -7,15 +7,19 @@ module.exports = {
   },
   tags: [
     {
-      name: 'Status',
-      description: 'API to access and update service status.',
+      name: 'Managing Applications',
+      description: 'API to manage which applications and services are being monitored.',
     },
     {
-      name: 'Public status',
+      name: 'Monitoring Applications',
+      description: 'API to manage application monitoring.',
+    },
+    {
+      name: 'Application Status',
       description: 'API to access published application statuses.',
     },
     {
-      name: 'Notice',
+      name: 'Notices',
       description: 'API to access and update service notices.',
     },
   ],
