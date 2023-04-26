@@ -20,6 +20,10 @@ interface QueryProps {
   deleted: boolean;
   infected: boolean;
   recordId: string;
+  lastAccessed?: {
+    $gt?: string;
+    $lt?: string;
+  };
 }
 
 export class MongoFileRepository implements FileRepository {
@@ -33,6 +37,8 @@ export class MongoFileRepository implements FileRepository {
     const skip = decodeAfter(after);
     const query: QueryProps = this.getQuery(tenantId, criteria);
     const types = await this.typeRepository.getTypes(tenantId);
+
+    console.log(query);
 
     const docs = await this.model.find(query, null, { lean: true }).skip(skip).limit(top).sort({ created: -1 }).exec();
     const results = docs.map((doc) => this.fromDoc(types[doc.typeId], doc as FileDoc));
@@ -149,6 +155,16 @@ export class MongoFileRepository implements FileRepository {
         $regex: criteria.filenameContains,
         $options: 'i',
       };
+    }
+
+    if (criteria?.lastAccessedBefore || criteria?.lastAccessedAfter) {
+      query.lastAccessed = {};
+      if (criteria?.lastAccessedBefore) {
+        query.lastAccessed.$lt = criteria?.lastAccessedBefore;
+      }
+      if (criteria?.lastAccessedAfter) {
+        query.lastAccessed.$gt = criteria?.lastAccessedAfter;
+      }
     }
     return query;
   }
