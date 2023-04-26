@@ -4,7 +4,7 @@ components:
       type: object
       properties:
         id:
-          description: A unique ID generated when the application is added to the Status Service for monitoring.
+          description: A unique ID used to identify an application.
           example: my-application
           type: string
         name:
@@ -26,7 +26,7 @@ components:
 
 /public_status/v1/applications/{tenant}:
   get:
-    tags: ['Public status']
+    tags: ['Application Status']
     description: Retrieves tenant applications and their statuses.
     parameters:
       - name: tenant
@@ -46,3 +46,30 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Public-application'
+
+/status/v1/applications/{appKey}/status:
+  patch:
+    tags: ['Application Status']
+    description: Sets the operational status to the input value
+    parameters:
+      - name: appKey
+        description: Identifies the application on which to set the status.
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            description:
+            type: string
+            enum: [operational, outage, maintenance, reported-issues]
+    responses:
+      200:
+        description: Successfully updated status.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Application'

@@ -32,7 +32,7 @@ components:
 
 /status/v1/applications:
   get:
-    tags: ['Status']
+    tags: ['Managing Applications']
     description: Retrieves tenant applications and their statuses.
     responses:
       200:
@@ -46,7 +46,7 @@ components:
 
 /status/v1/applications/{appKey}/enable:
   patch:
-    tags: ['Status']
+    tags: ['Monitoring Applications']
     description: Request to start monitoring the application.
     responses:
       200:
@@ -58,7 +58,7 @@ components:
 
 /status/v1/applications/{appKey}/disable:
   patch:
-    tags: ['Status']
+    tags: ['Monitoring Applications']
     description: Request to stop monitoring the application.
     responses:
       200:
@@ -70,7 +70,7 @@ components:
 
 /status/v1/applications/{appKey}/toggle:
   patch:
-    tags: ['Status']
+    tags: ['Monitoring Applications']
     description: Request to toggle application monitoring; from enabled to disabled or vice versa.
     responses:
       200:
