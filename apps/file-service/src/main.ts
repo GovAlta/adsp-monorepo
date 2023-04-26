@@ -53,6 +53,7 @@ async function initializeApp(): Promise<express.Application> {
     healthCheck,
     eventService,
     metricsHandler,
+    tenantService,
   } = await initializePlatform(
     {
       serviceId,
@@ -120,10 +121,10 @@ async function initializeApp(): Promise<express.Application> {
     storageProvider,
   });
 
-  const scanService = createScanService(environment.AV_PROVIDER, {
-    host: environment.AV_HOST,
-    port: environment.AV_PORT,
-  });
+  // const scanService = createScanService(environment.AV_PROVIDER, {
+  //   host: environment.AV_HOST,
+  //   port: environment.AV_PORT,
+  // });
 
   const queueService = await createFileQueueService({ ...environment, logger });
 
@@ -138,12 +139,14 @@ async function initializeApp(): Promise<express.Application> {
   });
 
   applyFileMiddleware(app, {
+    tokenProvider,
     serviceId,
     logger,
     storageProvider,
-    scanService,
     eventService,
     queueService,
+    tenantService,
+    configurationService,
     ...repositories,
   });
 

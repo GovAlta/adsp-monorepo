@@ -12,3 +12,7 @@ export interface FileTypeCriteria {
   spaceEquals?: string;
   typeEquals?: string;
 }
+
+export interface FileService {
+  delete(tenantId: AdspId, urn: AdspId): Promise<boolean>;
+}
