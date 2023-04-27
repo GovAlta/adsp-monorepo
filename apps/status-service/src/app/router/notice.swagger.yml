@@ -128,11 +128,11 @@ responses:
             schema:
               $ref: '#/components/schemas/Notice'
       400:
-        $ref: '#/components/responses/BadRequest'
+        description: Bad Request
       401:
-        $ref: '#/components/responses/Unauthorized'
+        description: Unauthorized
       500:
-        $ref: '#/components/responses/InternalServerError'
+        description: InternalServerError
 
 /notice/v1/notices/{id}:
   parameters:
@@ -170,7 +170,7 @@ responses:
             schema:
               $ref: '#/components/schemas/Notice'
       401:
-        $ref: '#/components/responses/Unauthorized'
+        description: Unauthorized
   delete:
     tags: [Notices]
     description: Deletes a notice.
@@ -178,6 +178,6 @@ responses:
       200:
         description: Notice successfully deleted.
       401:
-        $ref: '#/components/responses/Unauthorized'
+        description: Unauthorized
       404:
         description: Notice not found.
