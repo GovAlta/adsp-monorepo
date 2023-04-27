@@ -35,21 +35,25 @@ class AccessJwtGrantedAuthoritiesConverter implements Converter<Jwt, Collection<
     authorities.add((new AccessTenancyAuthority(this.issuer)));
 
     JSONObject realmAccess = source.getClaim(REALM_ACCESS_ROLES_CLAIM);
-    var realmRoles = (JSONArray) realmAccess.get("roles");
-    if (realmRoles != null) {
-      realmRoles.forEach(role -> authorities.add(new SimpleGrantedAuthority(ROLE_AUTHORITY_PREFIX + role)));
+    if (realmAccess != null) {
+        var realmRoles = (JSONArray) realmAccess.get("roles");
+        if (realmRoles != null) {
+          realmRoles.forEach(role -> authorities.add(new SimpleGrantedAuthority(ROLE_AUTHORITY_PREFIX + role)));
+        }
     }
 
     JSONObject clientAccesses = source.getClaim(RESOURCE_ACCESS_CLAIM);
-    var keys = clientAccesses.keySet();
-    for (var key : keys) {
-      var clientAccess = (JSONObject) clientAccesses.get(key);
-      var clientRoles = (JSONArray) clientAccess.get("roles");
-      if (clientRoles != null) {
-        clientRoles.forEach(role -> authorities.add(
-            new SimpleGrantedAuthority(
-                ROLE_AUTHORITY_PREFIX + (key.equals(this.serviceId) ? role : (key + ":" + role)))));
-      }
+    if (clientAccesses != null) {
+        var keys = clientAccesses.keySet();
+        for (var key : keys) {
+          var clientAccess = (JSONObject) clientAccesses.get(key);
+          var clientRoles = (JSONArray) clientAccess.get("roles");
+          if (clientRoles != null) {
+            clientRoles.forEach(role -> authorities.add(
+                new SimpleGrantedAuthority(
+                    ROLE_AUTHORITY_PREFIX + (key.equals(this.serviceId) ? role : (key + ":" + role)))));
+          }
+        }
     }
 
     return authorities;
