@@ -32,7 +32,7 @@ components:
 
 /status/v1/applications:
   get:
-    tags: ['Managing Applications']
+    tags: ['Monitoring Applications']
     description: Retrieves tenant applications and their statuses.
     responses:
       200:
