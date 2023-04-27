@@ -63,7 +63,7 @@ components:
       content:
         application/json:
           schema:
-            description:
+            description: The application status.
             type: string
             enum: [operational, outage, maintenance, reported-issues]
     responses:

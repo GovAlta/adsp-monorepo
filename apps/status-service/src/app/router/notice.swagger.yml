@@ -6,11 +6,10 @@ components:
       properties:
         message:
           description: The message portion the notice.
-          required: false
           type: string
           example: My Application will be down for weekly maintenance during the following hours.
         tennantServRef:
-          description: The tennantServRef (sic) identifies which applications the notice applies to.
+          description: The tennantServRef (sic) identifies which applications the notice applies to.  If the list is empty then the notice will apply to all applications being monitored for the tenant.
           type: array
           items:
             type: object
@@ -34,18 +33,39 @@ components:
         mode:
           description: A notice may be in draft or published mode.  Only published notices are displayed on the public microsite.
           type: string
+          enum: [active, draft, published]
           example: draft
-  responses:
-    BadRequest:
-      description: Bad request
-    Unauthorized:
-      description: Unauthorized
-    InternalServerError:
-      description: Internal server error
+    Page:
+      description: Page descriptor, used when paging through a list of items.
+      type: object
+      properties:
+        after:
+          description: Cursor describing where this page starts.
+          type: string
+          example: ==Qw
+        size:
+          description: The number of list items fetched.
+          type: number
+          example: 10
+        next:
+          description: Cursor describing the next page to fetch.
+          type: string
+          example: ==Mw
+        total:
+          description: The total number of items in the list.
+          type: number
+          example: 231
+responses:
+  BadRequest:
+    description: Bad request
+  Unauthorized:
+    description: Unauthorized
+  InternalServerError:
+    description: Internal server error
 
 /notice/v1/notices:
   get:
-    tags: [Notice]
+    tags: [Notices]
     description: Retrieves all published (mode=active) notices for public user;
       Retrieves all of notices of a tenant for tenant admin;
       Retrieves published notices of a tenant for non tenant admin.
@@ -56,18 +76,21 @@ components:
         required: false
         schema:
           type: number
+          example: 20
       - name: after
-        description: Cursor for next set of results.
+        description: Cursor for next set of results, returned as _next_ in a previous call to the endpoint.
         in: query
         required: false
         schema:
           type: string
+          example: ==Mw
       - name: mode
         description: Mode type.
         in: query
         required: false
         schema:
           type: string
+          enum: [active, draft, published]
       - name: name
         description: Fetch public (active) notices by tenant name.
         in: query
@@ -77,8 +100,20 @@ components:
     responses:
       200:
         description: Notices successfully retrieved.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  description: A list of notices that match the query
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Notice'
+                page:
+                  $ref: '#/components/schemas/Page'
   post:
-    tags: [Notice]
+    tags: [Notices]
     description: Creates a notice.
     requestBody:
       content:
@@ -104,7 +139,7 @@ components:
       schema:
         type: string
   get:
-    tags: [Notice]
+    tags: [Notices]
     description: Retrieves a single notice.
     responses:
       200:
@@ -112,7 +147,7 @@ components:
       404:
         description: Notice not found.
   patch:
-    tags: [Notice]
+    tags: [Notices]
     description: Update a notice.
     requestBody:
       content:
@@ -125,7 +160,7 @@ components:
       401:
         $ref: '#/components/responses/Unauthorized'
   delete:
-    tags: [Notice]
+    tags: [Notices]
     description: Deletes a notice.
     responses:
       200:
