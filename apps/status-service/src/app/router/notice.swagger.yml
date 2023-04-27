@@ -123,6 +123,10 @@ responses:
     responses:
       200:
         description: Notice successfully created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notice'
       400:
         $ref: '#/components/responses/BadRequest'
       401:
@@ -144,6 +148,10 @@ responses:
     responses:
       200:
         description: Notice successfully retrieved.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notice'
       404:
         description: Notice not found.
   patch:
@@ -157,6 +165,10 @@ responses:
     responses:
       200:
         description: Notice successfully updated.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notice'
       401:
         $ref: '#/components/responses/Unauthorized'
   delete:
