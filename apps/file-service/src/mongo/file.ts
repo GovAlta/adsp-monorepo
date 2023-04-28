@@ -38,8 +38,6 @@ export class MongoFileRepository implements FileRepository {
     const query: QueryProps = this.getQuery(tenantId, criteria);
     const types = await this.typeRepository.getTypes(tenantId);
 
-    console.log(query);
-
     const docs = await this.model.find(query, null, { lean: true }).skip(skip).limit(top).sort({ created: -1 }).exec();
     const results = docs.map((doc) => this.fromDoc(types[doc.typeId], doc as FileDoc));
 

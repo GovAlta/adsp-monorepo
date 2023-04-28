@@ -26,6 +26,7 @@ interface FileMiddlewareProps extends Repositories {
   tenantService: TenantService;
   configurationService: ConfigurationService;
   tokenProvider: TokenProvider;
+  scanService: ScanService;
 }
 
 export const applyFileMiddleware = (app: Application, { ...props }: FileMiddlewareProps): Application => {
