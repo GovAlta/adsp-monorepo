@@ -63,6 +63,34 @@ class AccessJwtGrantedAuthoritiesConverterTests {
   }
 
   @Test
+  public void canConvertCoreAuthorityNoRoles(@Mock Jwt token) throws ParseException {
+    var serviceId = AdspId.parse("urn:ads:platform:test-service");
+    var issuer = new AccessIssuer(true, null);
+
+    when(token.getClaim("realm_access")).thenReturn(null);
+    when(token.getClaim("resource_access")).thenReturn(null);
+
+    var converter = new AccessJwtGrantedAuthoritiesConverter(serviceId, issuer);
+    var result = converter.convert(token);
+    assertNotNull(result);
+    assertTrue(result.stream().anyMatch(auth -> StringUtils.equals(auth.getAuthority(), "ADSP_CROSS_TENANT")));
+  }
+
+  @Test
+  public void canReactiveConvertNoRoles(@Mock Jwt token) throws ParseException {
+    var serviceId = AdspId.parse("urn:ads:platform:test-service");
+    var issuer = new AccessIssuer(true, null);
+
+    when(token.getClaim("realm_access")).thenReturn(null);
+    when(token.getClaim("resource_access")).thenReturn(null);
+
+    var converter = new AccessJwtGrantedAuthoritiesConverter(serviceId, issuer);
+    var result = converter.asReactive().convert(token);
+    assertNotNull(result);
+    assertTrue(result.toStream().anyMatch(auth -> StringUtils.equals(auth.getAuthority(), "ADSP_CROSS_TENANT")));
+  }
+
+  @Test
   public void canReactiveConvert(@Mock Jwt token) throws ParseException {
     var serviceId = AdspId.parse("urn:ads:platform:test-service");
     var tenant = new Tenant();
