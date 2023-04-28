@@ -128,7 +128,7 @@ responses:
             schema:
               $ref: '#/components/schemas/Notice'
       400:
-        description: Bad Request
+        description: BadRequest
       401:
         description: Unauthorized
       500:
