@@ -29,6 +29,32 @@ components:
         enabled:
           description: Indicates whether or not monitoring for the application has been turned on.
           type: boolean
+    PingData:
+      type: object
+      properties:
+        url:
+          description: The URL pinged.
+          type: string
+          example: 'http://google.com'
+        ok:
+          description: The success of the ping; set to false if the ping resulted in a 400 or 500 error.
+          type: boolean
+        timestamp:
+          description: The time of the ping.
+          type: string
+          format: date-time
+        responseTime:
+          description: The response time of the ping, in ms.
+          type: number
+          example: 178
+        status:
+          description: The http status-code of the response.
+          type: string
+          example: 200
+        applicationId:
+          description: The application key, AKA application ID.
+          type: string
+          example: my-application
 
 /status/v1/applications:
   get:
@@ -48,6 +74,14 @@ components:
   patch:
     tags: ['Monitoring Applications']
     description: Request to start monitoring the application.
+    parameters:
+      - name: appKey
+        description: The application key, AKA application ID.
+        in: path
+        required: true
+        schema:
+          type: string
+          example: my-application
     responses:
       200:
         description: Monitoring has been enabled.
@@ -60,6 +94,14 @@ components:
   patch:
     tags: ['Monitoring Applications']
     description: Request to stop monitoring the application.
+    parameters:
+      - name: appKey
+        description: The application key, AKA application ID.
+        in: path
+        required: true
+        schema:
+          type: string
+          example: my-application
     responses:
       200:
         description: Monitoring has been disabled.
@@ -71,7 +113,15 @@ components:
 /status/v1/applications/{appKey}/toggle:
   patch:
     tags: ['Monitoring Applications']
-    description: Request to toggle application monitoring; from enabled to disabled or vice versa.
+    description: Request to toggle application monitoring, from enabled to disabled or vice versa.
+    parameters:
+      - name: appKey
+        description: The application key, AKA application ID.
+        in: path
+        required: true
+        schema:
+          type: string
+          example: my-application
     responses:
       200:
         description: Monitoring has been toggled.
@@ -79,3 +129,32 @@ components:
           application/json:
             schema:
               $ref: '#/components/schemas/Application'
+
+/status/v1/applications/{appKey}/endpoint-status-entries:
+  get:
+    tags: ['Monitoring Applications']
+    description: Retrieves the raw results of the _pings_, gathered for the specified application.
+    parameters:
+      - name: appKey
+        description: The application key, AKA application ID.
+        in: path
+        required: true
+        schema:
+          type: string
+          example: my-application
+      - name: top
+        description: Number of results to read, defaults to 200
+        in: query
+        required: false
+        schema:
+          type: number
+          example: 20
+    responses:
+      200:
+        description: Data retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/PingData'
