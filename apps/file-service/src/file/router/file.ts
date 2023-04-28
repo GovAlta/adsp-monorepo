@@ -24,6 +24,7 @@ import { fileDeleted, fileUploaded } from '../events';
 import { ServiceConfiguration } from '../configuration';
 import { FileStorageProvider } from '../storage';
 import { FileCriteria } from '../types';
+import validator from 'validator';
 
 interface FileRouterProps {
   serviceId: AdspId;
@@ -309,6 +310,21 @@ export const createFileRouter = ({
         .isString()
         .custom((val) => {
           return !isNaN(decodeAfter(val));
+        }),
+      query('criteria')
+        .optional()
+        .custom(async (value) => {
+          const criteria = JSON.parse(value);
+          if (criteria?.lastAccessedBefore !== undefined) {
+            if (!validator.isISO8601(criteria?.lastAccessedBefore)) {
+              throw new InvalidOperationError('lastAccessedBefore requires ISO-8061 date string.');
+            }
+          }
+          if (criteria?.lastAccessedAfter !== undefined) {
+            if (!validator.isISO8601(criteria?.lastAccessedAfter)) {
+              throw new InvalidOperationError('lastAccessedBefore requires ISO-8061 date string.');
+            }
+          }
         })
     ),
     getFiles(apiId, fileRepository)
