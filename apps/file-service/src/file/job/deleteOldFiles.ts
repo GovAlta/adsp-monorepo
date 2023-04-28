@@ -66,7 +66,7 @@ export function createDeleteOldFilesJob({
   
            Object.keys(configuration).forEach(async (key) => {
               if (configuration[key].rules?.retention?.active) {
-                let now = new Date();
+                const now = new Date();
                 const retention = configuration[key].rules?.retention?.deleteInDays
                 const backdate = new Date(now.setDate(now.getDate() - retention));
             
@@ -78,9 +78,11 @@ export function createDeleteOldFilesJob({
                   if (!file.deleted) {
                     try {
                       jobUser.tenantId = file.tenantId;
+                   
                       
                       const deleted = await file.markForDeletion(jobUser);
                       if (deleted) {
+                        deleted.retentionDays = retention;
                         numberDeleted++;
                         eventService.send(
                           fileDeleted(jobUser, {
