@@ -29,6 +29,8 @@ export interface FileCriteria {
   infected?: boolean;
   typeEquals?: string;
   recordIdEquals?: string;
+  lastAccessedBefore?: string;
+  lastAccessedAfter?: string;
 }
 
 export type NewFile = {

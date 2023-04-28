@@ -244,12 +244,7 @@ When(
       .find('.input--goa')
       .invoke('removeAttr', 'disabled')
       .type(name, { force: true });
-    pdfServiceObj
-      .pdfTemplateModalDescriptionField()
-      .shadow()
-      .find('.goa-textarea')
-      .clear()
-      .type(description, { force: true });
+    pdfServiceObj.pdfTemplateModalDescriptionField().shadow().find('.goa-textarea').type(description, { force: true });
   }
 );
 

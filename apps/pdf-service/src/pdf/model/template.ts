@@ -1,5 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { PdfService, PdfTemplate, TemplateService } from '../types';
+import { PdfService, PdfTemplate, TemplateService, File } from '../types';
 
 export class PdfTemplateEntity implements PdfTemplate {
   tenantId: AdspId;
@@ -7,9 +7,12 @@ export class PdfTemplateEntity implements PdfTemplate {
   name: string;
   description: string;
   template: string;
+  templateService: TemplateService;
   header?: string;
   footer?: string;
   additionalStyles?: string;
+  additionalStylesWrapped?: string;
+  fileList: File[];
 
   private evaluateTemplate: (context: unknown) => string;
   private evaluateFooterTemplate: (context: unknown) => string;
@@ -27,15 +30,26 @@ export class PdfTemplateEntity implements PdfTemplate {
     this.template = template;
     this.header = header;
     this.footer = footer;
+    this.templateService = templateService;
+    this.fileList = null;
 
-    const additionalStylesWrapped = '<style>' + additionalStyles + '</style>';
-    this.evaluateTemplate = templateService.getTemplateFunction(additionalStylesWrapped.concat(template));
-    this.evaluateFooterTemplate = templateService.getTemplateFunction(
-      additionalStylesWrapped.concat(footer),
+    this.additionalStylesWrapped = '<style>' + additionalStyles + '</style>';
+  }
+
+  async populateFileList(token: string, tenantIdValue: string) {
+    this.fileList = await this.templateService.populateFileList(token, tenantIdValue);
+  }
+
+  evaluateTemplates() {
+    this.evaluateTemplate = this.templateService.getTemplateFunction(
+      this.additionalStylesWrapped.concat(this.template)
+    );
+    this.evaluateFooterTemplate = this.templateService.getTemplateFunction(
+      this.additionalStylesWrapped.concat(this.footer),
       'pdf-footer'
     );
-    this.evaluateHeaderTemplate = templateService.getTemplateFunction(
-      additionalStylesWrapped.concat(header),
+    this.evaluateHeaderTemplate = this.templateService.getTemplateFunction(
+      this.additionalStylesWrapped.concat(this.header),
       'pdf-header'
     );
   }

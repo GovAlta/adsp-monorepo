@@ -61,6 +61,20 @@ describe('Test pdf template preview', () => {
           'mock-id': templateMock,
         },
       },
+      fileService: {
+        fileList: [
+          {
+            id: '111',
+            recordId: '111',
+            filename: '111.jpg',
+            size: 123123,
+            createdBy: 'UserInfo',
+            created: new Date(),
+            lastAccessed: new Date(),
+            urn: 'urn:urn',
+          },
+        ],
+      },
     });
 
     const { queryByTestId } = render(
@@ -84,6 +98,20 @@ describe('Test pdf template preview', () => {
         pdfTemplates: {
           'mock-id': templateMock,
         },
+      },
+      fileService: {
+        fileList: [
+          {
+            id: '111',
+            recordId: '111',
+            filename: '111.jpg',
+            size: 123123,
+            createdBy: 'UserInfo',
+            created: new Date(),
+            lastAccessed: new Date(),
+            urn: 'urn:urn',
+          },
+        ],
       },
     });
 
@@ -111,6 +139,20 @@ describe('Test pdf template preview', () => {
         pdfTemplates: {
           'mock-id': templateMock,
         },
+      },
+      fileService: {
+        fileList: [
+          {
+            id: '111',
+            recordId: '111',
+            filename: '111.jpg',
+            size: 123123,
+            createdBy: 'UserInfo',
+            created: new Date(),
+            lastAccessed: new Date(),
+            urn: 'urn:urn',
+          },
+        ],
       },
     });
 

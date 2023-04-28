@@ -67,6 +67,8 @@ describe('generate', () => {
 
     const templateEntity = {
       generate: jest.fn(),
+      populateFileList: jest.fn(),
+      evaluateTemplates: jest.fn(),
     };
 
     beforeEach(() => {
@@ -74,6 +76,9 @@ describe('generate', () => {
       tokenProviderMock.getAccessToken.mockReset();
       configurationServiceMock.getConfiguration.mockReset();
       templateEntity.generate.mockReset();
+      templateEntity.populateFileList.mockReset();
+      templateEntity.evaluateTemplates.mockReset();
+
       fileServiceMock.upload.mockReset();
       repositoryMock.update.mockReset();
     });
@@ -98,6 +103,8 @@ describe('generate', () => {
       tokenProviderMock.getAccessToken.mockResolvedValueOnce('token');
       configurationServiceMock.getConfiguration.mockResolvedValueOnce([{ 'test-template': templateEntity }]);
       templateEntity.generate.mockResolvedValueOnce('content');
+      templateEntity.populateFileList.mockResolvedValueOnce('');
+      templateEntity.evaluateTemplates.mockResolvedValueOnce('');
       const fileResult = {};
       fileServiceMock.upload.mockResolvedValueOnce(fileResult);
 

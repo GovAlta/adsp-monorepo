@@ -7,17 +7,12 @@ import {
   DeleteFileService,
   DownloadFileService,
 } from '@store/file/actions';
-import { GoAButton, GoADropdown, GoADropdownOption } from '@abgov/react-components';
+//import { GoADropdownOption } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
-import {
-  GoAIconButton,
-  GoAForm,
-  GoAFormItem,
-  GoAFlexRow,
-  GoAInputText,
-  GoAFormActions,
-} from '@abgov/react-components/experimental';
+import { GoAIconButton, GoAForm, GoAFormActions } from '@abgov/react-components/experimental';
+import { GoAInput, GoAFormItem, GoADropdown, GoADropdownOption } from '@abgov/react-components-new';
 import { renderNoItem } from '@components/NoItem';
 import { DeleteModal } from '@components/DeleteModal';
 import { FileItem } from '@store/file/models';
@@ -27,8 +22,8 @@ import styled from 'styled-components';
 
 const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<FileItem>(null);
-  const [uploadFileType, setUploadFileType] = useState<string[]>([]);
-  const [filterFileType, setFilterFileType] = useState<string>(null);
+  const [uploadFileType, setUploadFileType] = useState<string>('');
+  const [filterFileType, setFilterFileType] = useState<string>('');
   const [searchName, setSearchName] = useState<string>('');
   const dispatch = useDispatch();
   const fileName = useRef() as React.MutableRefObject<HTMLInputElement>;
@@ -59,11 +54,10 @@ const FileList = (): JSX.Element => {
     return state?.session?.indicator;
   });
 
-  const onUploadSubmit = (event) => {
-    event.preventDefault();
-    const fileInfo = { file: selectedFile, type: uploadFileType[0] };
+  const onUploadSubmit = () => {
+    const fileInfo = { file: selectedFile, type: uploadFileType };
     dispatch(UploadFileService(fileInfo));
-    setUploadFileType([]);
+    setUploadFileType('');
     setSelectFile(null);
     fileName.current.value = '';
   };
@@ -101,22 +95,15 @@ const FileList = (): JSX.Element => {
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
 
-  const filteredFileList = fileList
-    .filter((f) => searchName.length === 0 || f.filename?.toLowerCase().includes(searchName?.toLowerCase()))
-    .filter((f2) => {
-      console.log(JSON.stringify(f2));
-      return !filterFileType || f2.typeName === filterFileType;
-    });
-
   const renderFileTable = () => {
     return (
       <FileTableStyles>
         <DataTable id="files-information">
           <thead>
             <tr>
-              <th>File Name</th>
+              <th>File name</th>
               <th>Size (KB)</th>
-              <th>type</th>
+              <th>Type</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -170,48 +157,42 @@ const FileList = (): JSX.Element => {
     );
   };
   return (
-    <>
+    <FileTable>
       <GoAForm>
-        <UploadHeading>Please upload a file</UploadHeading>
-        <input type="file" onChange={onChange} aria-label="file upload" ref={fileName} />
-        <FileTypeDropdown>
-          <GoADropdown
-            name="fileType"
-            selectedValues={uploadFileType}
-            multiSelect={false}
-            onChange={(name, values) => {
-              setUploadFileType(values);
+        <h2>Please upload a file</h2>
+        <>
+          <input
+            id="file-uploads"
+            name="inputFile"
+            type="file"
+            onChange={onChange}
+            aria-label="file upload"
+            ref={fileName}
+            data-testid="import-input"
+            style={{ display: 'none' }}
+            onClick={(event: React.MouseEvent<HTMLInputElement, MouseEvent>) => {
+              const element = event.target as HTMLInputElement;
+              element.value = '';
             }}
-          >
-            {getFileTypesValues().map((item, key) => (
-              <GoADropdownOption label={item.name} value={item.id} key={key} data-testid={item.id} />
-            ))}
-          </GoADropdown>
-        </FileTypeDropdown>
+          />
+          <div className="row-flex">
+            <button className="choose-button" data-testid="file-input-button" onClick={() => fileName.current.click()}>
+              {' Choose a file'}
+            </button>
 
-        <GoAButton type="submit" disabled={!(selectedFile && uploadFileType.length > 0)} onClick={onUploadSubmit}>
-          Upload
-        </GoAButton>
-      </GoAForm>
-      <hr />
-
-      <GoAForm>
-        <GoAFlexRow gap="small">
-          <GoAFormItem>
-            <label htmlFor="name">File Name Search</label>
-            <GoAInputText name="name" id="name" value={searchName} onChange={(_, value) => setSearchName(value)} />
-          </GoAFormItem>
-          <GoAFormItem>
-            <label htmlFor="name">File Type Filter</label>
-
+            <div className="margin-left">
+              {fileName?.current?.value ? fileName.current.value.split('\\').pop() : 'No file was chosen'}
+            </div>
+          </div>
+        </>
+        <FileTypeDropdown>
+          <GoAFormItem label="Select a file type">
             <GoADropdown
               name="fileType"
-              selectedValues={[filterFileType]}
-              multiSelect={false}
-              onChange={(name, values) => {
-                console.log(JSON.stringify(name) + '<name');
-                console.log(JSON.stringify(values) + '<values');
-                setFilterFileType(values[0]);
+              value={uploadFileType}
+              width="100%"
+              onChange={(name, values: string | string[]) => {
+                setUploadFileType(values.toString());
               }}
             >
               {getFileTypesValues().map((item, key) => (
@@ -219,34 +200,69 @@ const FileList = (): JSX.Element => {
               ))}
             </GoADropdown>
           </GoAFormItem>
-        </GoAFlexRow>
-        <GoAFormActions alignment="right">
-          <GoAButton
-            buttonType="secondary"
-            title="Reset"
-            onClick={() => {
-              setSearchName('');
-              setFilterFileType(null);
-              dispatch(FetchFilesService(null));
-            }}
-          >
-            Reset
-          </GoAButton>
-          <GoAButton title="Search" onClick={getFilteredFiles}>
-            Search
-          </GoAButton>
-        </GoAFormActions>
+        </FileTypeDropdown>
+
+        <GoAButton type="submit" onClick={onUploadSubmit} disabled={!(selectedFile && uploadFileType.length > 0)}>
+          Upload
+        </GoAButton>
       </GoAForm>
+
+      <div className="mt-48">
+        <GoAForm>
+          <h2>File filtering</h2>
+
+          <GoAFormItem label="Search file name">
+            <GoAInput
+              type="text"
+              name="name"
+              id="name"
+              value={searchName}
+              width="100%"
+              onChange={(_, value) => setSearchName(value)}
+            />
+          </GoAFormItem>
+
+          <GoAFormItem label="Filter file type">
+            <GoADropdown
+              name="fileType"
+              value={filterFileType}
+              width="100%"
+              onChange={(name, value: string | string[]) => {
+                setFilterFileType(value.toString());
+              }}
+            >
+              {getFileTypesValues().map((item, key) => (
+                <GoADropdownOption label={item.name} value={item.id} key={key} data-testid={item.id} />
+              ))}
+            </GoADropdown>
+          </GoAFormItem>
+          <GoAFormActions alignment="right">
+            <GoaButtonPadding>
+              <GoAButton
+                type="secondary"
+                onClick={() => {
+                  setSearchName('');
+                  setFilterFileType(null);
+                  dispatch(FetchFilesService(null));
+                }}
+              >
+                Reset
+              </GoAButton>
+            </GoaButtonPadding>
+            <GoAButton onClick={getFilteredFiles}>Search</GoAButton>
+          </GoAFormActions>
+        </GoAForm>
+      </div>
       <br />
       {!indicator.show && fileList?.length === 0 && renderNoItem('file')}
-      {(!indicator.show || fileList?.length > 0) && renderFileTable()}
+      {!indicator.show && fileList?.length > 0 && renderFileTable()}
       {indicator.show && <PageIndicator />}
       {next && (
         <GoAButton disabled={isLoading} onClick={onNext}>
           Load more...
         </GoAButton>
       )}
-    </>
+    </FileTable>
   );
 };
 
@@ -255,12 +271,7 @@ export default FileList;
 const FileTypeDropdown = styled.div`
   margin-bottom: 1rem;
   margin-top: 1rem;
-  width: '500px';
-`;
-
-const UploadHeading = styled.div`
-  margin-bottom: 1rem;
-  font-weight: var(--fw-bold);
+  width: 100%;
 `;
 
 const FileTableStyles = styled.div`
@@ -272,4 +283,33 @@ const FileTableStyles = styled.div`
   .flex {
     flex: 1;
   }
+`;
+
+const FileTable = styled.div`
+  .mt-48 {
+    margin-top: 48px;
+  }
+
+  .choose-button {
+    border-radius: 4px;
+    background: #f1f1f1;
+  }
+
+  .dropdown-label {
+    font-weight: bold;
+    line-height: 34px;
+  }
+
+  .margin-left {
+    margin-left: 0.5rem;
+    margin-top: 0.25rem;
+  }
+
+  .row-flex {
+    display: flex;
+  }
+`;
+
+const GoaButtonPadding = styled.div`
+  margin-right: 16px;
 `;

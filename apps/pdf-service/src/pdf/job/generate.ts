@@ -38,6 +38,7 @@ export function createGenerateJob({
     });
 
     const tenantId = AdspId.parse(tenantIdValue);
+
     try {
       const token = await tokenProvider.getAccessToken();
       const [configuration] = await configurationService.getConfiguration<Record<string, PdfTemplateEntity>>(
@@ -51,7 +52,12 @@ export function createGenerateJob({
         throw new NotFoundError('PDF Template', templateId);
       }
 
+      await pdfTemplate.populateFileList(token, tenantIdValue);
+
+      await pdfTemplate.evaluateTemplates();
+
       const pdf = await pdfTemplate.generate({ data });
+
       logger.debug(`Generation of PDF (ID: ${jobId}) completed PDF creation from content with ${pdf.length} bytes...`, {
         context,
         tenant: tenantId,

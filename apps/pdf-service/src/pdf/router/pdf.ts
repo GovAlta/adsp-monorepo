@@ -59,11 +59,13 @@ export function getTemplate(templateIn: 'params' | 'body'): RequestHandler {
       const { templateId } = req[templateIn];
       const [configuration] = await req.getConfiguration<Record<string, PdfTemplateEntity>>();
       const template = configuration[templateId];
+
       if (!template) {
         throw new NotFoundError('PDF Template', templateId);
       }
 
       req[TEMPLATE] = template;
+
       next();
     } catch (err) {
       next(err);
