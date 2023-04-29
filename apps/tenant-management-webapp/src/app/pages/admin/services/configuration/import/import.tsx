@@ -158,16 +158,18 @@ export const ConfigurationImport: FunctionComponent = () => {
                   element.value = '';
                 }}
               />
-              <button
-                className="choose-button"
-                data-testid="import-input-button"
-                onClick={() => fileName.current.click()}
-              >
-                {' Choose a file'}
-              </button>
+              <div className="row-flex">
+                <button
+                  className="choose-button"
+                  data-testid="import-input-button"
+                  onClick={() => fileName.current.click()}
+                >
+                  {' Choose a file'}
+                </button>
 
-              <div style={{ marginTop: '0.5rem' }}>
-                {fileName?.current?.value ? fileName.current.value.split('\\').pop() : 'No file was chosen'}
+                <div className="margin-left">
+                  {fileName?.current?.value ? fileName.current.value.split('\\').pop() : 'No file was chosen'}
+                </div>
               </div>
             </GoAFormItem>
             <GoAButton

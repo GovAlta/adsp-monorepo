@@ -49,6 +49,15 @@ export const Import = styled.div`
     border-radius: 4px;
     background: #f1f1f1;
   }
+
+  .row-flex {
+    display: flex;
+  }
+
+  .margin-left {
+    margin-left: 0.5rem;
+    margin-top: 0.25rem;
+  }
 `;
 
 export const IconDiv = styled.div`

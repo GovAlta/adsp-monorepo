@@ -12,7 +12,7 @@ import { GoAButton } from '@abgov/react-components-new';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
 import { GoAIconButton, GoAForm, GoAFormActions } from '@abgov/react-components/experimental';
-import { GoAInput, GoAFormItem, GoADropdown, GoADropdownOption } from '@abgov/react-components-new';
+import { GoAInput, GoAFormItem, GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { renderNoItem } from '@components/NoItem';
 import { DeleteModal } from '@components/DeleteModal';
 import { FileItem } from '@store/file/models';
@@ -24,6 +24,7 @@ const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<FileItem>(null);
   const [uploadFileType, setUploadFileType] = useState<string>('');
   const [filterFileType, setFilterFileType] = useState<string>('');
+  const [resetFilter, setResetFilter] = useState<string>('visible');
   const [searchName, setSearchName] = useState<string>('');
   const dispatch = useDispatch();
   const fileName = useRef() as React.MutableRefObject<HTMLInputElement>;
@@ -82,6 +83,12 @@ const FileList = (): JSX.Element => {
     dispatch(FetchFilesService());
     dispatch(FetchFileTypeService());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (resetFilter === 'switch') {
+      setResetFilter('visible');
+    }
+  }, [resetFilter]);
 
   interface Criteria {
     filenameContains?: string;
@@ -196,7 +203,7 @@ const FileList = (): JSX.Element => {
               }}
             >
               {getFileTypesValues().map((item, key) => (
-                <GoADropdownOption label={item.name} value={item.id} key={key} data-testid={item.id} />
+                <GoADropdownItem label={item.name} value={item.id} key={key} data-testid={item.id} />
               ))}
             </GoADropdown>
           </GoAFormItem>
@@ -210,7 +217,6 @@ const FileList = (): JSX.Element => {
       <div className="mt-48">
         <GoAForm>
           <h2>File filtering</h2>
-
           <GoAFormItem label="Search file name">
             <GoAInput
               type="text"
@@ -221,20 +227,21 @@ const FileList = (): JSX.Element => {
               onChange={(_, value) => setSearchName(value)}
             />
           </GoAFormItem>
-
           <GoAFormItem label="Filter file type">
-            <GoADropdown
-              name="fileType"
-              value={filterFileType}
-              width="100%"
-              onChange={(name, value: string | string[]) => {
-                setFilterFileType(value.toString());
-              }}
-            >
-              {getFileTypesValues().map((item, key) => (
-                <GoADropdownOption label={item.name} value={item.id} key={key} data-testid={item.id} />
-              ))}
-            </GoADropdown>
+            {resetFilter === 'visible' && (
+              <GoADropdown
+                name="fileType"
+                value={filterFileType}
+                width="100%"
+                onChange={(name, value: string | string[]) => {
+                  setFilterFileType(value.toString());
+                }}
+              >
+                {getFileTypesValues().map((item, key) => (
+                  <GoADropdownItem label={item.name} value={item.id} key={key} data-testid={item.id} />
+                ))}
+              </GoADropdown>
+            )}
           </GoAFormItem>
           <GoAFormActions alignment="right">
             <GoaButtonPadding>
@@ -242,7 +249,8 @@ const FileList = (): JSX.Element => {
                 type="secondary"
                 onClick={() => {
                   setSearchName('');
-                  setFilterFileType(null);
+                  setFilterFileType('');
+                  setResetFilter('switch');
                   dispatch(FetchFilesService(null));
                 }}
               >
