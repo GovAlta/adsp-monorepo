@@ -1,11 +1,13 @@
-import { AdspId, EventService } from '@abgov/adsp-service-sdk';
+import { AdspId, EventService, TenantService, TokenProvider, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { WorkQueueService } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { FileRepository } from '../repository';
 import { ScanService } from '../scan';
 import { File } from '../types';
 import { createDeleteJob } from './delete';
+import { createDeleteOldFilesJob } from './deleteOldFiles';
 import { createScanJob } from './scan';
+import * as schedule from 'node-schedule';
 
 export interface FileServiceWorkItem {
   work: 'scan' | 'delete' | 'unknown';
@@ -15,16 +17,24 @@ export interface FileServiceWorkItem {
 }
 
 interface FileJobProps {
+  serviceId: AdspId;
   logger: Logger;
   fileRepository: FileRepository;
   scanService: ScanService;
   queueService: WorkQueueService<FileServiceWorkItem>;
   eventService: EventService;
+  tenantService: TenantService;
+  tokenProvider: TokenProvider;
+  configurationService: ConfigurationService;
 }
 
 export const createFileJobs = (props: FileJobProps): void => {
   const scanJob = createScanJob(props);
   const deleteJob = createDeleteJob(props);
+  const deleteOldFilesJob = createDeleteOldFilesJob(props);
+
+  schedule.scheduleJob('0 2 * * *', deleteOldFilesJob);
+  props.logger.info(`Scheduled daily delete job.`);
 
   props.queueService.getItems().subscribe(({ item, done }) => {
     switch (item.work) {

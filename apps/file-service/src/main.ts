@@ -53,6 +53,7 @@ async function initializeApp(): Promise<express.Application> {
     healthCheck,
     eventService,
     metricsHandler,
+    tenantService,
   } = await initializePlatform(
     {
       serviceId,
@@ -138,12 +139,15 @@ async function initializeApp(): Promise<express.Application> {
   });
 
   applyFileMiddleware(app, {
+    tokenProvider,
     serviceId,
     logger,
     storageProvider,
-    scanService,
     eventService,
+    scanService,
     queueService,
+    tenantService,
+    configurationService,
     ...repositories,
   });
 

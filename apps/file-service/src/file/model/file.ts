@@ -19,6 +19,7 @@ export class FileEntity implements File {
   scanned = false;
   deleted = false;
   infected = false;
+  retentionDays?: number;
 
   static async create(
     storageProvider: FileStorageProvider,
