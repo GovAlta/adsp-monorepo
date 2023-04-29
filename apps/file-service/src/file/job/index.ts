@@ -3,7 +3,6 @@ import { WorkQueueService } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { FileRepository } from '../repository';
 import { ScanService } from '../scan';
-import { FileService } from '../types';
 import { File } from '../types';
 import { createDeleteJob } from './delete';
 import { createDeleteOldFilesJob } from './deleteOldFiles';
@@ -26,7 +25,7 @@ interface FileJobProps {
   eventService: EventService;
   tenantService: TenantService;
   tokenProvider: TokenProvider;
-  configurationService: ConfigurationService
+  configurationService: ConfigurationService;
 }
 
 export const createFileJobs = (props: FileJobProps): void => {

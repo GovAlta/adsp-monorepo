@@ -1,20 +1,10 @@
 import { AdspId, TokenProvider } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { FileRepository } from '../repository';
-//import { File } from '../types';
-
 import { EventService, TenantService, ConfigurationService } from '@abgov/adsp-service-sdk';
-// import { DateTime, Duration } from 'luxon';
-// import { Logger } from 'winston';
-import { FileService, FileCriteria } from '../types';
 import { ServiceConfiguration } from '../configuration';
 import { fileDeleted } from '../events';
 
-
-// import { NotificationService } from '../../notification';
-// import { formDeleted } from '../events';
-// import { FormRepository } from '../repository';
-// import { FormStatus } from '../types';
 import { jobUser } from './user';
 
 interface DeleteJobProps {
@@ -25,21 +15,7 @@ interface DeleteJobProps {
   eventService: EventService;
   tenantService: TenantService;
   configurationService: ConfigurationService;
-  // notificationService: NotificationService;
 }
-
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (key, value) => {
-    if (typeof value === "object" && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};
 
 export function createDeleteOldFilesJob({
   serviceId,
@@ -54,13 +30,11 @@ export function createDeleteOldFilesJob({
     try {
       logger.debug('Starting delete job...');
 
-      // Load all tenants
       const tenants = await tenantService.getTenants();
       const token = await tokenProvider.getAccessToken();
 
        let numberDeleted = 0;
 
-      // For each tenant, load file configuration (and core file configuration)
       tenants.forEach(async (tenant) => {
           const configuration = await configurationService.getConfiguration<ServiceConfiguration,ServiceConfiguration>(serviceId, token, tenant.id );
   
