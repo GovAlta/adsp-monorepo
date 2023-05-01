@@ -108,6 +108,7 @@ export function fileDeleted(user: User, file: File): DomainEvent {
       deletedBy: {
         id: user.id,
         name: user.name,
+        retention: file.retentionDays,
       },
     },
   };
