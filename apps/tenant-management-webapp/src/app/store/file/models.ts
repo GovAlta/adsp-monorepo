@@ -1,3 +1,8 @@
+interface RetentionPolicy {
+  active: boolean;
+  deleteInDays: number;
+  createdAt: string;
+}
 export interface FileTypeItem {
   id: string;
   name: string;
@@ -7,6 +12,9 @@ export interface FileTypeItem {
   hasFile?: boolean;
   tableData?: {
     id: string;
+  };
+  rules?: {
+    retention: RetentionPolicy;
   };
 }
 
