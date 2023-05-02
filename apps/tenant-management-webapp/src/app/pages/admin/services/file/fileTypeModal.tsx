@@ -17,6 +17,7 @@ import { ConfigServiceRole } from '@store/access/models';
 import { useValidators } from '@lib/validation/useValidators';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { ActionState } from '@store/session/models';
+import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 interface FileTypeModalProps {
   fileType?: FileTypeItem;
@@ -35,6 +36,52 @@ interface ClientRoleTableProps {
   anonymousRead: boolean;
   clientId: string;
 }
+
+interface DeleteInDaysInputProps {
+  updateFunc: (name: string, day: string) => void;
+  value: number;
+  disabled: boolean;
+}
+
+const DeleteInDaysLabel = styled.label`
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.5rem;
+  font-size: 18px;
+  padding-bottom: 0.5rem;
+  background: #f1f1f1;
+  border-width: 1px 0px 1px 1px;
+  border-style: solid;
+  border-color: #666666;
+  border-radius: 4px 0px 0px 4px;
+`;
+
+const DeleteInDaysInputWrapper = styled.div`
+  display: inline-block;
+  width: 10rem;
+  .goa-input {
+    border-radius: 0px 4px 4px 0px !important;
+  }
+`;
+
+const DeleteInDaysItem = ({ value, updateFunc, disabled }: DeleteInDaysInputProps): JSX.Element => {
+  const day = value === undefined ? '' : value.toString();
+  return (
+    <>
+      <DeleteInDaysLabel>Days</DeleteInDaysLabel>
+      <DeleteInDaysInputWrapper>
+        <GoAInput
+          onChange={updateFunc}
+          data-testid={'delete-in-days-input'}
+          name="delete-in-days"
+          value={day}
+          type="number"
+          disabled={disabled}
+        />
+      </DeleteInDaysInputWrapper>
+    </>
+  );
+};
 
 const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
   const [readRoles, setReadRoles] = useState(props.readRoles);
@@ -237,7 +284,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
           <GoAFormItem>
             <label>Type ID</label>
             <IdField data-testid={`file-type-modal-id`}>{fileType.id || ''}</IdField>
-          </GoAFormItem>
+          </GoAFormItem>{' '}
           <AnonymousReadWrapper>
             <GoACheckbox
               checked={fileType.anonymousRead}
@@ -250,13 +297,59 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
                   anonymousRead: !fileType.anonymousRead,
                 });
               }}
+              text={'Make public (read only)'}
             />
-            Make public (read only)
           </AnonymousReadWrapper>
+          <GoAFormItem>
+            <label>
+              Retention policy
+              <InfoCircleWrapper className="tooltip">
+                <InfoCircle />
+              </InfoCircleWrapper>
+            </label>
+            <GoACheckbox
+              name="retentionActive"
+              key="retention-period-active-checkbox"
+              checked={fileType?.rules?.retention?.active === true}
+              onChange={(name, checked) => {
+                setFileType({
+                  ...fileType,
+                  rules: {
+                    ...fileType?.rules,
+                    retention: {
+                      ...fileType?.rules?.retention,
+                      active: checked,
+                    },
+                  },
+                });
+              }}
+              text={'Active retention policy'}
+            />
+            <b>Enter retention period</b>
+          </GoAFormItem>
+          <DeleteInDaysItem
+            value={fileType?.rules?.retention?.deleteInDays}
+            disabled={fileType?.rules?.retention?.active === false}
+            updateFunc={(name, day: string) => {
+              if (parseInt(day) > 0) {
+                setFileType({
+                  ...fileType,
+                  rules: {
+                    ...fileType?.rules,
+                    retention: {
+                      ...fileType?.rules?.retention,
+                      deleteInDays: parseInt(day),
+                      active: fileType?.rules?.retention?.active || false,
+                      createdAt: fileType?.rules?.retention?.createdAt || new Date().toISOString(),
+                    },
+                  },
+                });
+              }
+            }}
+          />
           {elements.map((e, key) => {
             return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
           })}
-
           {fetchKeycloakRolesState === ActionState.inProcess && (
             <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
           )}
@@ -408,4 +501,12 @@ export const TextLoadingIndicator = styled.div`
       opacity: 0;
     }
   }
+`;
+
+const InfoCircleWrapper = styled.div`
+  position: relative;
+  top: 3px;
+  transform: scale(1.2);
+  margin-left: 0.5rem;
+  display: inline-block;
 `;

@@ -58,7 +58,7 @@ components:
 
 /status/v1/applications:
   get:
-    tags: ['Monitoring Applications']
+    tags: ['Application Monitoring']
     description: Retrieves tenant applications and their statuses.
     responses:
       200:
@@ -72,7 +72,7 @@ components:
 
 /status/v1/applications/{appKey}/enable:
   patch:
-    tags: ['Monitoring Applications']
+    tags: ['Application Monitoring']
     description: Request to start monitoring the application.
     parameters:
       - name: appKey
@@ -92,7 +92,7 @@ components:
 
 /status/v1/applications/{appKey}/disable:
   patch:
-    tags: ['Monitoring Applications']
+    tags: ['Application Monitoring']
     description: Request to stop monitoring the application.
     parameters:
       - name: appKey
@@ -112,7 +112,7 @@ components:
 
 /status/v1/applications/{appKey}/toggle:
   patch:
-    tags: ['Monitoring Applications']
+    tags: ['Application Monitoring']
     description: Request to toggle application monitoring, from enabled to disabled or vice versa.
     parameters:
       - name: appKey
@@ -132,7 +132,7 @@ components:
 
 /status/v1/applications/{appKey}/endpoint-status-entries:
   get:
-    tags: ['Monitoring Applications']
+    tags: ['Application Monitoring']
     description: Retrieves the raw results of the _pings_, gathered for the specified application.
     parameters:
       - name: appKey

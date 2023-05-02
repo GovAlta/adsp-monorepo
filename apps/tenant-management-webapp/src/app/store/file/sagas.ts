@@ -236,6 +236,7 @@ export function* createFileType({ payload }: CreateFileTypeAction): SagaIterator
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
   const token: string = yield call(getAccessToken);
+  const { hasFile, ...config } = payload;
 
   if (configBaseUrl && token) {
     try {
@@ -245,13 +246,7 @@ export function* createFileType({ payload }: CreateFileTypeAction): SagaIterator
         {
           operation: 'UPDATE',
           update: {
-            [payload.id]: {
-              id: payload.id,
-              name: payload.name,
-              anonymousRead: payload.anonymousRead,
-              readRoles: payload.readRoles,
-              updateRoles: payload.updateRoles,
-            },
+            [payload.id]: config
           },
         },
         {
@@ -272,6 +267,8 @@ export function* updateFileType({ payload }: UpdateFileTypeAction): SagaIterator
   const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
+    const { hasFile, ...config } = payload;
+
     try {
       yield call(
         axios.patch,
@@ -279,13 +276,7 @@ export function* updateFileType({ payload }: UpdateFileTypeAction): SagaIterator
         {
           operation: 'UPDATE',
           update: {
-            [payload.id]: {
-              id: payload.id,
-              name: payload.name,
-              anonymousRead: payload.anonymousRead,
-              readRoles: payload.readRoles,
-              updateRoles: payload.updateRoles,
-            },
+            [payload.id]: config,
           },
         },
         {

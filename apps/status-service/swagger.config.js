@@ -17,7 +17,7 @@ that you wish to be monitored.  For more information on how the _Status Service_
   },
   tags: [
     {
-      name: 'Monitoring Applications',
+      name: 'Application Monitoring',
       description:
         'To control application _monitoring_. Note: You can manage which applications are monitored through the [Tenant Admin Webapp](https://adsp.alberta.ca).',
     },
