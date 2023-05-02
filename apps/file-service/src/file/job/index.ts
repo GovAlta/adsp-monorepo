@@ -35,8 +35,6 @@ export const createFileJobs = (props: FileJobProps): void => {
   const deleteOldFilesJob = createDeleteOldFilesJob(props);
 
   if (environment.APP_NAME === 'file-service-job') {
-    console.log('we are running the jobs');
-    console.log('-> Delete job below');
     schedule.scheduleJob('0 2 * * *', deleteOldFilesJob);
     props.logger.info(`Scheduled daily delete job.`);
   } else {

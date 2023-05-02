@@ -156,8 +156,6 @@ async function initializeApp(): Promise<express.Application> {
     ...repositories,
   });
 
-  console.log(JSON.stringify(environment.APP_NAME) + '<-----environment.APP_NAME');
-
   if (environment.APP_NAME !== 'file-service-job') {
     const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
     app.use('/swagger/docs/v1', (_req, res) => {
