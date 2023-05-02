@@ -124,7 +124,7 @@ async function initializeApp(): Promise<express.Application> {
 
   let scanService: ScanService = null;
 
-  if (environment.APP_NAME !== 'file-service-jobs') {
+  if (environment.APP_NAME !== 'file-service-job') {
     scanService = createScanService(environment.AV_PROVIDER, {
       host: environment.AV_HOST,
       port: environment.AV_PORT,
@@ -158,7 +158,7 @@ async function initializeApp(): Promise<express.Application> {
 
   console.log(JSON.stringify(environment.APP_NAME) + '<-----environment.APP_NAME');
 
-  if (environment.APP_NAME !== 'file-service-jobs') {
+  if (environment.APP_NAME !== 'file-service-job') {
     const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
     app.use('/swagger/docs/v1', (_req, res) => {
       res.json(swagger);

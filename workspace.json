@@ -541,7 +541,7 @@
       },
       "tags": []
     },
-    "file-service-jobs": {
+    "file-service-job": {
       "root": "apps/file-service",
       "sourceRoot": "apps/file-service/src",
       "projectType": "application",
