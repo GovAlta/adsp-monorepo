@@ -55,6 +55,7 @@ export interface PdfTemplate {
   footer?: string;
   header?: string;
   additionalStyles?: string;
+  startWithDefault?: boolean;
 }
 
 export type PdfJobStatus = 'queued' | 'completed' | 'failed';

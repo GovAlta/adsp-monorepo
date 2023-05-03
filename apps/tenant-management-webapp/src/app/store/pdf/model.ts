@@ -13,6 +13,7 @@ export interface PdfTemplate {
   additionalStyles: string;
   footer: string;
   variables?: string;
+  startWithDefault?: boolean;
 }
 
 export interface PdfGenerationResponse {
@@ -118,6 +119,7 @@ export const defaultPdfTemplate: PdfTemplate = {
   name: '',
   description: '',
   template: defaultTemplateBody,
+  startWithDefault: true,
   additionalStyles: defaultTemplateCss,
   header: defaultTemplateHeader,
   footer: defaultTemplateFooter,
