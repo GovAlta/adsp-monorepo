@@ -541,6 +541,59 @@
       },
       "tags": []
     },
+    "file-service-job": {
+      "root": "apps/file-service",
+      "sourceRoot": "apps/file-service/src",
+      "projectType": "application",
+      "prefix": "file-service",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/webpack:webpack",
+          "options": {
+            "webpackConfig": "apps/file-service/webpack.config.js",
+            "outputPath": "dist/apps/file-service",
+            "main": "apps/file-service/src/main.ts",
+            "tsConfig": "apps/file-service/tsconfig.app.json",
+            "assets": [],
+            "target": "node",
+            "compiler": "tsc"
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          },
+          "outputs": ["{options.outputPath}"]
+        },
+        "serve": {
+          "builder": "@nrwl/node:node",
+          "options": {
+            "buildTarget": "file-service:build",
+            "port": 7770
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/file-service/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/file-service/jest.config.ts",
+            "passWithNoTests": true,
+            "runInBand": true
+          },
+          "outputs": ["{workspaceRoot}/coverage/apps/file-service"]
+        }
+      },
+      "tags": []
+    },
     "form-service": {
       "root": "apps/form-service",
       "sourceRoot": "apps/form-service/src",
