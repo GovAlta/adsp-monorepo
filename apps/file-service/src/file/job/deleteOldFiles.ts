@@ -33,55 +33,63 @@ export function createDeleteOldFilesJob({
       const tenants = await tenantService.getTenants();
       const token = await tokenProvider.getAccessToken();
 
-       let numberDeleted = 0;
+      let numberDeleted = 0;
 
-      tenants.forEach(async (tenant) => {
-          const configuration = await configurationService.getConfiguration<ServiceConfiguration,ServiceConfiguration>(serviceId, token, tenant.id );
-  
-           Object.keys(configuration).forEach(async (key) => {
+      await Promise.all(
+        tenants.map(async (tenant) => {
+          const configuration = await configurationService.getConfiguration<ServiceConfiguration, ServiceConfiguration>(
+            serviceId,
+            token,
+            tenant.id
+          );
+
+          return await Promise.all(
+            Object.keys(configuration).map(async (key) => {
               if (configuration[key].rules?.retention?.active) {
                 const now = new Date();
-                const retention = configuration[key].rules?.retention?.deleteInDays
+                const retention = configuration[key].rules?.retention?.deleteInDays;
                 const backdate = new Date(now.setDate(now.getDate() - retention));
-            
+
                 let after = null;
                 do {
-                const { results, page }  = await fileRepository.find(tenant.id, 20, after as string, {lastAccessedBefore: backdate.toDateString()});
+                  const { results, page } = await fileRepository.find(tenant.id, 20, after as string, {
+                    lastAccessedBefore: backdate.toDateString(),
+                  });
 
-                for (const file of results) {
-                  if (!file.deleted) {
-                    try {
-                      jobUser.tenantId = file.tenantId;
-                   
-                      
-                      const deleted = await file.markForDeletion(jobUser);
-                      if (deleted) {
-                        deleted.retentionDays = retention;
-                        numberDeleted++;
-                        eventService.send(
-                          fileDeleted(jobUser, {
-                            id: deleted.id,
-                            filename: deleted.filename,
-                            size: deleted.size,
-                            recordId: deleted.recordId,
-                            created: deleted.created,
-                            lastAccessed: deleted.lastAccessed,
-                            createdBy: deleted.createdBy,
-                          })
-                        );
+                  for (const file of results) {
+                    if (!file.deleted) {
+                      try {
+                        jobUser.tenantId = file.tenantId;
+                        const deleted = await file.markForDeletion(jobUser);
+                        if (deleted) {
+                          deleted.retentionDays = retention;
+                          numberDeleted++;
+                          eventService.send(
+                            fileDeleted(jobUser, {
+                              id: deleted.id,
+                              filename: deleted.filename,
+                              size: deleted.size,
+                              recordId: deleted.recordId,
+                              created: deleted.created,
+                              lastAccessed: deleted.lastAccessed,
+                              createdBy: deleted.createdBy,
+                              retentionDays: deleted.retentionDays,
+                            })
+                          );
+                        }
+                      } catch (err) {
+                        logger.error(`Error deleting file with ID: ${file.id}. ${err}`);
                       }
-                    } catch (err) {
-                      logger.error(`Error deleting file with ID: ${file.id}. ${err}`);
                     }
-                  } 
-                }
+                  }
 
-                 after = page.next;
+                  after = page.next;
                 } while (after);
               }
-           })
-
-      })  
+            })
+          );
+        })
+      );
 
       logger.info(`Completed file delete job and deleted ${numberDeleted} files.`);
     } catch (err) {
@@ -89,4 +97,3 @@ export function createDeleteOldFilesJob({
     }
   };
 }
-
