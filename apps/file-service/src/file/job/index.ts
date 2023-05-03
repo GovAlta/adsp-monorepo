@@ -8,7 +8,6 @@ import { createDeleteJob } from './delete';
 import { createDeleteOldFilesJob } from './deleteOldFiles';
 import { createScanJob } from './scan';
 import * as schedule from 'node-schedule';
-import { environment } from '../../environments/environment';
 
 export interface FileServiceWorkItem {
   work: 'scan' | 'delete' | 'unknown';
@@ -34,26 +33,24 @@ export const createFileJobs = (props: FileJobProps): void => {
   const deleteJob = createDeleteJob(props);
   const deleteOldFilesJob = createDeleteOldFilesJob(props);
 
-  if (environment.APP_NAME === 'file-service-job') {
-    schedule.scheduleJob('0 2 * * *', deleteOldFilesJob);
-    props.logger.info(`Scheduled daily delete job.`);
-  } else {
-    props.queueService.getItems().subscribe(({ item, done }) => {
-      switch (item.work) {
-        case 'scan':
-          scanJob(item.tenantId, item.file, done);
-          break;
-        case 'delete':
-          deleteJob(item.tenantId, item.file, done);
-          break;
-        default: {
-          props.logger.warn(
-            `Received unrecognized file job '${item.work}' for file ${item.file.filename} (ID: ${item.file.id}).`
-          );
-          done();
-          break;
-        }
+  schedule.scheduleJob('0 2 * * *', deleteOldFilesJob);
+  props.logger.info(`Scheduled daily delete job.`);
+
+  props.queueService.getItems().subscribe(({ item, done }) => {
+    switch (item.work) {
+      case 'scan':
+        scanJob(item.tenantId, item.file, done);
+        break;
+      case 'delete':
+        deleteJob(item.tenantId, item.file, done);
+        break;
+      default: {
+        props.logger.warn(
+          `Received unrecognized file job '${item.work}' for file ${item.file.filename} (ID: ${item.file.id}).`
+        );
+        done();
+        break;
       }
-    });
-  }
+    }
+  });
 };
