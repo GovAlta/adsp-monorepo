@@ -20,6 +20,7 @@ describe('Test pdf template preview', () => {
   const templateMock = {
     additionalStyles: '<div>Shared CSS</div>',
     description: 'mock PDF template',
+    startWithDefault: true,
     footer: '<div>Footer</div>',
     header: '<div>Header</div>',
     name: 'mock-template',
@@ -31,6 +32,7 @@ describe('Test pdf template preview', () => {
     const templateMock = {
       additionalStyles: '<div>Shared CSS</div>',
       description: 'mock PDF template',
+      startWithDefault: true,
       footer: '<div>Footer</div>',
       header: '<div>Header</div>',
       name: 'mock-template',

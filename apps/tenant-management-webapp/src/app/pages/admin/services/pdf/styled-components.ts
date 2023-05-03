@@ -26,6 +26,11 @@ export const FileTableStyles = styled.div`
   }
 `;
 
+export const PopulateTemplateWrapper = styled.div`
+  display: flex;
+  margin-left: 3px;
+`;
+
 export const BadgeWrapper = styled.div`
   margin-left: 1rem;
 `;

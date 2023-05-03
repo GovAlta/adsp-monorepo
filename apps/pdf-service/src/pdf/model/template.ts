@@ -11,6 +11,7 @@ export class PdfTemplateEntity implements PdfTemplate {
   header?: string;
   footer?: string;
   additionalStyles?: string;
+  startWithDefault?: boolean;
   additionalStylesWrapped?: string;
   fileList: File[];
 
@@ -21,7 +22,7 @@ export class PdfTemplateEntity implements PdfTemplate {
   constructor(
     templateService: TemplateService,
     private readonly pdfService: PdfService,
-    { tenantId, id, name, description, template, header, footer, additionalStyles }: PdfTemplate
+    { tenantId, id, name, description, template, header, footer, additionalStyles, startWithDefault }: PdfTemplate
   ) {
     this.tenantId = tenantId;
     this.id = id;
@@ -32,6 +33,7 @@ export class PdfTemplateEntity implements PdfTemplate {
     this.footer = footer;
     this.templateService = templateService;
     this.fileList = null;
+    this.startWithDefault = startWithDefault;
 
     this.additionalStylesWrapped = '<style>' + additionalStyles + '</style>';
   }
