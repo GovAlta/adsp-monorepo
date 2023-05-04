@@ -25,7 +25,6 @@ import { FileSystemStorageProvider } from './storage/file-system';
 import { createScanService } from './scan';
 import { AzureBlobStorageProvider } from './storage';
 import { createFileQueueService } from './amqp';
-import { ScanService } from './file';
 
 const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
 
@@ -122,14 +121,10 @@ async function initializeApp(): Promise<express.Application> {
     storageProvider,
   });
 
-  let scanService: ScanService = null;
-
-  if (environment.APP_NAME !== 'file-service-job') {
-    scanService = createScanService(environment.AV_PROVIDER, {
-      host: environment.AV_HOST,
-      port: environment.AV_PORT,
-    });
-  }
+  const scanService = createScanService(environment.AV_PROVIDER, {
+    host: environment.AV_HOST,
+    port: environment.AV_PORT,
+  });
 
   const queueService = await createFileQueueService({ ...environment, logger });
 
@@ -156,34 +151,32 @@ async function initializeApp(): Promise<express.Application> {
     ...repositories,
   });
 
-  if (environment.APP_NAME !== 'file-service-job') {
-    const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
-    app.use('/swagger/docs/v1', (_req, res) => {
-      res.json(swagger);
-    });
+  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
+  app.use('/swagger/docs/v1', (_req, res) => {
+    res.json(swagger);
+  });
 
-    app.get('/health', async (_req, res) => {
-      const platform = await healthCheck();
-      res.json({
-        ...platform,
-        db: repositories.isConnected(),
-      });
+  app.get('/health', async (_req, res) => {
+    const platform = await healthCheck();
+    res.json({
+      ...platform,
+      db: repositories.isConnected(),
     });
+  });
 
-    app.get('/', async (req, res) => {
-      const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
-      res.json({
-        name: 'File service',
-        description: 'Service for upload and download of files.',
-        _links: {
-          self: { href: new URL(req.originalUrl, rootUrl).href },
-          health: { href: new URL('/health', rootUrl).href },
-          api: { href: new URL('/file/v1', rootUrl).href },
-          docs: { href: new URL('/swagger/docs/v1', rootUrl).href },
-        },
-      });
+  app.get('/', async (req, res) => {
+    const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
+    res.json({
+      name: 'File service',
+      description: 'Service for upload and download of files.',
+      _links: {
+        self: { href: new URL(req.originalUrl, rootUrl).href },
+        health: { href: new URL('/health', rootUrl).href },
+        api: { href: new URL('/file/v1', rootUrl).href },
+        docs: { href: new URL('/swagger/docs/v1', rootUrl).href },
+      },
     });
-  }
+  });
 
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);
