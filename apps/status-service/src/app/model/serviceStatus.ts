@@ -24,6 +24,7 @@ export interface ApplicationConfiguration {
   url: string;
   description?: string;
   monitorOnly?: boolean;
+  status?: PublicServiceStatusType;
 }
 
 // Add the tenant to the configuration.
