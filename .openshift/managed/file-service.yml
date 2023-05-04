@@ -622,6 +622,8 @@ objects:
                     secretKeyRef:
                       key: database-name
                       name: file-service-mongodb${NAME_SUFFIX}
+                - name: POD_TYPE
+                  value: 'job'
               imagePullPolicy: IfNotPresent
               name: file-service
               ports:
