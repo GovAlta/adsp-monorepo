@@ -21,9 +21,9 @@ End users interested in the applications status are also able to get notified wh
 
 ## Health and Status
 
-- Application health is determined by pinging a developer-supplied URL every minute or so, and is either _healthy_ or _unhealthy_. Developers can be notified, by text or email, when an applications health changes
+- Application _health_ is determined by pinging a developer-supplied URL every minute or so, and is either _healthy_ or _unhealthy_. Developers can be notified, by text or email, when an applications health changes
 
-- Application status is set by developers to inform end-users about planned (or otherwise) service outages. The status can be set to _operational_, _maintenance_, _outage_, or _reported issues_.
+- Application _status_ is set by developers to inform end-users about planned (or otherwise) service outages. The status can be set to _operational_, _maintenance_, _outage_, or _reported issues_.
 
 ## Notices and Notifications
 
