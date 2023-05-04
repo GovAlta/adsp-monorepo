@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useState, useRef } from 'react';
+import React, { FunctionComponent, useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components';
 import { PdfMetrics } from './metrics';
 import { useDispatch } from 'react-redux';
