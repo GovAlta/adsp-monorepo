@@ -10,13 +10,35 @@ grand_parent: Tutorials
 
 ## Introduction
 
-The _Status Service_ gives developers the ability to monitor the health of their applications and services, including
+The _Status Service_ helps you monitor the health of your applications and services, and includes
 
-- getting notified when the health changes,
-- setting the application's status,
-- getting notified when the status changes,
-- the ability to post notices regarding an application's status (such as _under maintenance_, or _service outage_) on their website
+- notification when an application's _health_ changes,
+- a public, static status page that can be used to inform end users about Application Status,
+- notification when an application's _status_ changes,
+- customized notification messages
 
-End users interested in the applications status are also able to get notified when the application's health changes.
+End users interested in the applications status are also able to get notified when the application's status changes.
+
+## Health and Status
+
+- Application health is determined by pinging a developer-supplied URL every minute or so, and is either _healthy_ or _unhealthy_. Developers can be notified, by text or email, when an applications health changes
+
+- Application status is set by developers to inform end-users about planned (or otherwise) service outages. The status can be set to _operational_, _maintenance_, _outage_, or _reported issues_.
+
+## Notices and Notifications
+
+Notices are used to inform end-users about an Application's Status. They may include
+
+- reasons for the outage
+- a time-frame for planned outages
+
+Notices are displayed on a public, static webpage that applications can link to, so users can quickly determine their status.
+
+Notifications are triggered when an application's health or status changes. Developers can subscribe to be notified about health changes, while end-users can subscribe to be notified when the status changes. The latter is a self-serve operation available through the public status page mentioned above, and is delivered by email. Developers can be notified by either text or email.
 
 ## Learn More
+
+- Learn more about [Application Health](/adsp-monorepo/tutorials/status-service/health.html).
+- Learn more about [Application Status](/adsp-monorepo/tutorials/status-service/health.html)
+- Learn more about [Notices](/adsp-monorepo/tutorials/status-service/notices.html)
+- Learn more about [Notifications](/adsp-monorepo/tutorials/status-service/notifications.html)

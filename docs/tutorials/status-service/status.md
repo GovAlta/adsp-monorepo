@@ -36,5 +36,3 @@ Teams can use this notification type to monitor and address application issues.
 ### Status updates
 
 Provides notifications of application status updates and new published notices. Public users can subscribe to this notification type from the status application.
-
-####
