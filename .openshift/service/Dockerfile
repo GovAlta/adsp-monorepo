@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/nodejs-16
+FROM registry.redhat.io/rhel9/nodejs-18
 
 ARG SERVICE
 COPY . .
