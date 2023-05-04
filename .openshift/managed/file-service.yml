@@ -22,7 +22,7 @@ parameters:
   - name: NAME_SUFFIX
     description: Suffix applied to the names of the objects created.
     displayName: Name Suffix
-    value: ""
+    value: ''
   - name: BUILD_TAG
     description: Name of the ImageStreamTag to build.
     displayName: Build Tag
@@ -34,7 +34,7 @@ parameters:
   - name: ROUTE_HOST
     description: Host for the route.
     displayName: Route Host
-    value: ""
+    value: ''
   - description: Username for MongoDB user that will be used for accessing the database.
     displayName: MongoDB Connection Username
     from: user[A-Z0-9]{3}
@@ -43,13 +43,13 @@ parameters:
     required: true
   - description: Password for the MongoDB connection user.
     displayName: MongoDB Connection Password
-    from: "[a-zA-Z0-9]{16}"
+    from: '[a-zA-Z0-9]{16}'
     generate: expression
     name: MONGODB_PASSWORD
     required: true
   - description: Password for the database admin user.
     displayName: MongoDB Admin Password
-    from: "[a-zA-Z0-9]{16}"
+    from: '[a-zA-Z0-9]{16}'
     generate: expression
     name: MONGODB_ADMIN_PASSWORD
     required: true
@@ -67,8 +67,8 @@ objects:
       labels:
         app: file-service${NAME_SUFFIX}
         component: database
-        apply-init: "true"
-        apply-branch: "true"
+        apply-init: 'true'
+        apply-branch: 'true'
       name: file-service-mongodb${NAME_SUFFIX}
     stringData:
       database-admin-password: ${MONGODB_ADMIN_PASSWORD}
@@ -76,7 +76,7 @@ objects:
       database-password: ${MONGODB_PASSWORD}
       database-user: ${MONGODB_USER}
       database-uri: mongodb://file-service-mongodb${NAME_SUFFIX}:27017
-      database-tls: "false"
+      database-tls: 'false'
   # PersistentVolumeClaim is only generated for branch deployment to avoid losing persistent data.
   - apiVersion: v1
     kind: PersistentVolumeClaim
@@ -84,8 +84,8 @@ objects:
       labels:
         app: file-service${NAME_SUFFIX}
         component: database
-        apply-init: "true"
-        apply-branch: "true"
+        apply-init: 'true'
+        apply-branch: 'true'
       name: file-service-mongodb${NAME_SUFFIX}
     spec:
       storageClassName: azure-disk
@@ -102,11 +102,11 @@ objects:
       labels:
         app: file-service${NAME_SUFFIX}
         component: database
-        apply-branch: "true"
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-branch: 'true'
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-staging: 'true'
+        apply-prod: 'true'
       name: file-service-mongodb${NAME_SUFFIX}
     spec:
       ports:
@@ -126,15 +126,15 @@ objects:
     kind: DeploymentConfig
     metadata:
       annotations:
-        template.alpha.openshift.io/wait-for-ready: "true"
+        template.alpha.openshift.io/wait-for-ready: 'true'
       labels:
         app: file-service${NAME_SUFFIX}
         component: database
-        apply-branch: "true"
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-branch: 'true'
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-staging: 'true'
+        apply-prod: 'true'
       name: file-service-mongodb${NAME_SUFFIX}
     spec:
       replicas: 1
@@ -177,7 +177,7 @@ objects:
                     secretKeyRef:
                       key: database-tls
                       name: file-service-mongodb${NAME_SUFFIX}
-              image: " "
+              image: ' '
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 initialDelaySeconds: 30
@@ -237,7 +237,7 @@ objects:
       labels:
         app: file-service
         component: av
-        apply-infra: "true"
+        apply-infra: 'true'
       name: file-av-scanner
       namespace: ${INFRA_NAMESPACE}
 
@@ -246,7 +246,7 @@ objects:
     labels:
       app: file-service
       component: av
-      apply-infra: "true"
+      apply-infra: 'true'
     metadata:
       name: file-av-scanner
       namespace: ${INFRA_NAMESPACE}
@@ -254,7 +254,7 @@ objects:
       output:
         to:
           kind: ImageStreamTag
-          name: "file-av-scanner:latest"
+          name: 'file-av-scanner:latest'
       resources:
         limits:
           cpu: 200m
@@ -269,7 +269,7 @@ objects:
       source:
         type: Git
         git:
-          uri: "git@github.com:GovAlta/adsp-monorepo.git"
+          uri: 'git@github.com:GovAlta/adsp-monorepo.git'
           ref: main
         contextDir: apps/file-service/av-scanner
         sourceSecret:
@@ -284,7 +284,7 @@ objects:
       labels:
         app: file-service
         component: av
-        apply-init: "true"
+        apply-init: 'true'
       name: file-av-db
     spec:
       storageClassName: azure-disk
@@ -323,10 +323,10 @@ objects:
       labels:
         app: file-service
         component: av
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-staging: 'true'
+        apply-prod: 'true'
     spec:
       strategy:
         type: Recreate
@@ -349,7 +349,7 @@ objects:
             from:
               kind: ImageStreamTag
               namespace: adsp-build
-              name: "file-av-scanner:latest"
+              name: 'file-av-scanner:latest'
       replicas: 1
       revisionHistoryLimit: 10
       test: false
@@ -401,7 +401,7 @@ objects:
       labels:
         app: file-service
         component: api
-        apply-infra: "true"
+        apply-infra: 'true'
       name: file-service
       namespace: ${INFRA_NAMESPACE}
     spec:
@@ -420,8 +420,8 @@ objects:
       labels:
         app: file-service${NAME_SUFFIX}
         component: api
-        apply-init: "true"
-        apply-branch: "true"
+        apply-init: 'true'
+        apply-branch: 'true'
       name: file-service-files${NAME_SUFFIX}
     spec:
       storageClassName: azure-file
@@ -439,11 +439,11 @@ objects:
       labels:
         app: file-service${NAME_SUFFIX}
         component: api
-        apply-branch: "true"
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-branch: 'true'
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-staging: 'true'
+        apply-prod: 'true'
       name: file-service${NAME_SUFFIX}
     spec:
       replicas: 3
@@ -479,7 +479,7 @@ objects:
                     name: file-service
               env:
                 - name: PORT
-                  value: "3333"
+                  value: '3333'
                 - name: FILE_PATH
                   value: /data/files
                 - name: MONGO_USER
@@ -552,17 +552,138 @@ objects:
               name: file-service:${DEPLOY_TAG}
               namespace: ${INFRA_NAMESPACE}
           type: ImageChange
+
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      labels:
+        app: file-service${NAME_SUFFIX}
+        component: job
+        apply-branch: 'true'
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-staging: 'true'
+        apply-prod: 'true'
+      name: file-service${NAME_SUFFIX}-job
+    spec:
+      replicas: 1
+      revisionHistoryLimit: 3
+      selector:
+        app: file-service${NAME_SUFFIX}
+        component: job
+      strategy:
+        type: Rolling
+        rollingParams:
+          timeoutSeconds: 600
+          maxUnavailable: 25%
+          maxSurge: 25%
+        activeDeadlineSeconds: 21600
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 20m
+            memory: 50Mi
+      template:
+        metadata:
+          labels:
+            app: file-service${NAME_SUFFIX}
+            component: job
+        spec:
+          containers:
+            - envFrom:
+                - configMapRef:
+                    name: file-service
+                - secretRef:
+                    name: file-service
+              env:
+                - name: PORT
+                  value: '3333'
+                - name: FILE_PATH
+                  value: /data/files
+                - name: MONGO_USER
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-user
+                      name: file-service-mongodb${NAME_SUFFIX}
+                - name: MONGO_URI
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-uri
+                      name: file-service-mongodb${NAME_SUFFIX}
+                - name: MONGO_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-password
+                      name: file-service-mongodb${NAME_SUFFIX}
+                - name: MONGO_DB
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-name
+                      name: file-service-mongodb${NAME_SUFFIX}
+              imagePullPolicy: IfNotPresent
+              name: file-service
+              ports:
+                - containerPort: 3333
+                  name: http
+                  protocol: TCP
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 200Mi
+                requests:
+                  cpu: 20m
+                  memory: 50Mi
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              readinessProbe:
+                httpGet:
+                  path: /
+                  port: 3333
+                  scheme: HTTP
+                initialDelaySeconds: 2
+                timeoutSeconds: 1
+                periodSeconds: 5
+                successThreshold: 1
+                failureThreshold: 20
+              livenessProbe:
+                httpGet:
+                  path: /
+                  port: 3333
+                  scheme: HTTP
+                initialDelaySeconds: 60
+                timeoutSeconds: 2
+                periodSeconds: 60
+                successThreshold: 1
+                failureThreshold: 5
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+      test: false
+      triggers:
+        - imageChangeParams:
+            containerNames:
+              - file-service
+            from:
+              kind: ImageStreamTag
+              name: file-service:${DEPLOY_TAG}
+              namespace: ${INFRA_NAMESPACE}
+          type: ImageChange
+
   - apiVersion: v1
     kind: Service
     metadata:
       labels:
         app: file-service${NAME_SUFFIX}
         component: api
-        apply-branch: "true"
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-branch: 'true'
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-staging: 'true'
+        apply-prod: 'true'
       name: file-service${NAME_SUFFIX}
     spec:
       ports:
@@ -581,11 +702,11 @@ objects:
       labels:
         app: file-service${NAME_SUFFIX}
         component: api
-        apply-branch: "true"
-        apply-dev: "true"
-        apply-test: "true"
-        apply-staging: "true"
-        apply-prod: "true"
+        apply-branch: 'true'
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-staging: 'true'
+        apply-prod: 'true'
       name: file-service${NAME_SUFFIX}
     spec:
       host: ${ROUTE_HOST}
