@@ -1,5 +1,5 @@
 ---
-title: Managing Applications
+title: Application Health
 layout: page
 nav_order: 2
 parent: Status Service
