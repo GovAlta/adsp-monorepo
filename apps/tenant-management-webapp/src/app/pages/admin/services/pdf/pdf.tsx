@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useState, useEffect } from 'react';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { PdfOverview } from './overview';
@@ -6,23 +6,23 @@ import { PdfTemplates } from './templates/templates';
 import SupportLinks from '@components/SupportLinks';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { useLocation } from 'react-router-dom';
 
 export const Pdf: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
-  const [activeIndex, setActiveIndex] = useState<number>(0);
   const [openAddTemplate, setOpenAddTemplate] = useState(false);
-  const location = useLocation();
-  const locationParser = location.state ? JSON.parse(JSON.stringify(location.state)) : '';
+
+  const searchParams = new URLSearchParams(document.location.search);
+
+  const templates = tenantName && searchParams.get('templates');
 
   return (
     <Page>
       <Main>
         <h1 data-testid="pdf-service-title">PDF service</h1>
-        <Tabs activeIndex={locationParser ? 1 : activeIndex}>
+        <Tabs activeIndex={templates === 'true' ? 1 : 0}>
           <Tab label="Overview">
-            <PdfOverview updateActiveIndex={setActiveIndex} setOpenAddTemplate={setOpenAddTemplate} />
+            <PdfOverview setOpenAddTemplate={setOpenAddTemplate} />
           </Tab>
           <Tab label="Templates">
             <PdfTemplates openAddTemplate={openAddTemplate} />

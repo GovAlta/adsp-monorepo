@@ -1,22 +1,26 @@
-import React, { FunctionComponent, useEffect } from 'react';
+import React, { FunctionComponent, useEffect, useState, useRef } from 'react';
 import { GoAButton } from '@abgov/react-components';
 import { PdfMetrics } from './metrics';
 import { useDispatch } from 'react-redux';
 import { fetchPdfMetrics } from '@store/pdf/action';
 import { OverviewLayout } from '@components/Overview';
+import { useHistory } from 'react-router-dom';
 
 interface PdfOverviewProps {
-  updateActiveIndex: (index: number) => void;
   setOpenAddTemplate: (val: boolean) => void;
 }
 
-export const PdfOverview: FunctionComponent<PdfOverviewProps> = ({ updateActiveIndex, setOpenAddTemplate }) => {
+export const PdfOverview: FunctionComponent<PdfOverviewProps> = ({ setOpenAddTemplate }) => {
   const dispatch = useDispatch();
   useEffect(() => {
-    updateActiveIndex(0);
     setOpenAddTemplate(false);
     dispatch(fetchPdfMetrics());
+    history.push({
+      pathname: '/admin/services/pdf',
+    });
   }, []);
+
+  const history = useHistory();
   const description =
     'The PDF service provides PDF operations like generating new PDFs from templates. It runs operations as asynchronous jobs and uploads the output PDF files to the file service.';
   return (
@@ -28,7 +32,10 @@ export const PdfOverview: FunctionComponent<PdfOverviewProps> = ({ updateActiveI
           <GoAButton
             data-testid="add-templates"
             onClick={() => {
-              updateActiveIndex(1); // to switch to templates tab
+              history.push({
+                pathname: '/admin/services/pdf',
+                search: '?templates=true',
+              });
               setOpenAddTemplate(true);
             }}
           >

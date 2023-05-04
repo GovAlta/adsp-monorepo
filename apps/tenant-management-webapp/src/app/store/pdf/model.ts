@@ -112,6 +112,7 @@ export interface PdfState {
   currentId: string;
   socketChannel: SocketChannel;
   tempTemplate: PdfTemplate;
+  openEditor: string;
 }
 
 export const defaultPdfTemplate: PdfTemplate = {

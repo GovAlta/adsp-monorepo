@@ -8,6 +8,8 @@ import { renderNoItem } from '@components/NoItem';
 import { PdfTemplatesTable } from './templatesList';
 import { PageIndicator } from '@components/Indicator';
 import { defaultPdfTemplate } from '@store/pdf/model';
+import { useHistory } from 'react-router-dom';
+import { useRouteMatch } from 'react-router';
 
 import { DeleteModal } from './DeleteModal';
 
@@ -16,6 +18,15 @@ interface PdfTemplatesProps {
 }
 export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
   const [openAddPdfTemplate, setOpenAddPdfTemplate] = useState(false);
+  const openEditor = useSelector((state: RootState) => state.pdf.openEditor);
+  const history = useHistory();
+  const { url } = useRouteMatch();
+
+  useEffect(() => {
+    if (openEditor) {
+      history.push({ pathname: `${url}/edit/${openEditor}` });
+    }
+  }, [openEditor]);
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const pdfTemplates = useSelector((state: RootState) => {

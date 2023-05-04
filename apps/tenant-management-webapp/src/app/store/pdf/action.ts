@@ -106,6 +106,7 @@ export interface UpdatePdfTemplatesAction {
 export interface UpdatePdfTemplatesSuccessAction {
   type: typeof UPDATE_PDF_TEMPLATE_SUCCESS_ACTION;
   payload: Record<string, PdfTemplate>;
+  option: { templateId: string };
 }
 export interface UpdatePdfTemplatesSuccessNoRefreshAction {
   type: typeof UPDATE_PDF_TEMPLATE_SUCCESS_NO_REFRESH_ACTION;
@@ -175,9 +176,13 @@ export const updateTempTemplate = (payload: PdfTemplate): UpdateTempTemplateActi
   payload,
 });
 
-export const updatePdfTemplateSuccess = (template: Record<string, PdfTemplate>): UpdatePdfTemplatesSuccessAction => ({
+export const updatePdfTemplateSuccess = (
+  template: Record<string, PdfTemplate>,
+  option: { templateId: string }
+): UpdatePdfTemplatesSuccessAction => ({
   type: UPDATE_PDF_TEMPLATE_SUCCESS_ACTION,
   payload: template,
+  option: option,
 });
 export const updatePdfTemplateSuccessNoRefresh = (
   template: Record<string, PdfTemplate>
