@@ -29,7 +29,7 @@ export const environment = envalid.cleanEnv(
     AMQP_HOST: envalid.str({ default: 'localhost' }),
     AMQP_USER: envalid.str({ default: 'guest' }),
     AMQP_PASSWORD: envalid.str({ default: 'guest' }),
-    PORT: envalid.num({ default: 3357 }),
+    PORT: envalid.num({ default: 3337 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
   },
   {
