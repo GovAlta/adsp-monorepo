@@ -20,6 +20,7 @@ export const configurationSchema = {
         footer: { type: ['string', 'null'] },
         header: { type: ['string', 'null'] },
         additionalStyles: { type: ['string', 'null'] },
+        startWithDefault: { type: ['boolean'] },
       },
       required: ['id', 'name', 'template'],
     },

@@ -97,7 +97,7 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
   const cancel = () => {
     history.push({
       pathname: '/admin/services/pdf',
-      state: { activeIndex: 1 },
+      search: '?templates=true',
     });
     dispatch(setPdfDisplayFileId(null));
   };

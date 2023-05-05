@@ -11,6 +11,7 @@ describe('Test Pdf list page', () => {
   const templateMock = {
     additionalStyles: '<div>Shared CSS</div>',
     description: 'mock PDF template',
+    startWithDefault: true,
     footer: '<div>Footer</div>',
     header: '<div>Header</div>',
     name: 'mock-template',

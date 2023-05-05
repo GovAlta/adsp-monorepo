@@ -13,6 +13,7 @@ export interface PdfTemplate {
   additionalStyles: string;
   footer: string;
   variables?: string;
+  startWithDefault?: boolean;
 }
 
 export interface PdfGenerationResponse {
@@ -111,6 +112,7 @@ export interface PdfState {
   currentId: string;
   socketChannel: SocketChannel;
   tempTemplate: PdfTemplate;
+  openEditor: string;
 }
 
 export const defaultPdfTemplate: PdfTemplate = {
@@ -118,6 +120,7 @@ export const defaultPdfTemplate: PdfTemplate = {
   name: '',
   description: '',
   template: defaultTemplateBody,
+  startWithDefault: true,
   additionalStyles: defaultTemplateCss,
   header: defaultTemplateHeader,
   footer: defaultTemplateFooter,

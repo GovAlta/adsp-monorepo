@@ -20,7 +20,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
   const goBack = () => {
     history.push({
       pathname: '/admin/services/pdf',
-      state: { activeIndex: 1 },
+      search: '?templates=true',
     });
   };
 

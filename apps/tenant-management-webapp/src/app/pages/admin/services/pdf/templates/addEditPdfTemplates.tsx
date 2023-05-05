@@ -4,9 +4,17 @@ import { PdfTemplate } from '@store/pdf/model';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
-import { SpinnerPadding, PdfFormItem, HelpText, DescriptionItem, ErrorMsg } from '../styled-components';
+import {
+  SpinnerPadding,
+  PdfFormItem,
+  HelpText,
+  DescriptionItem,
+  ErrorMsg,
+  PopulateTemplateWrapper,
+} from '../styled-components';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
+import { GoACheckbox } from '@abgov/react-components-new';
 import {
   GoATextArea,
   GoAInput,
@@ -57,6 +65,10 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
+
+  useEffect(() => {
+    setTemplate(initialValue);
+  }, [open]);
 
   const { errors, validators } = useValidators(
     'name',
@@ -181,6 +193,33 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
           </HelpText>
         </DescriptionItem>
       </GoAFormItem>
+      <PopulateTemplateWrapper>
+        <GoACheckbox
+          name={'populate-template'}
+          key={'populate-template'}
+          ariaLabel={'populate-template-checkbox'}
+          checked={template.startWithDefault}
+          data-testid={'populate-template'}
+          onChange={() => {
+            template.startWithDefault = !template.startWithDefault;
+            if (template.startWithDefault) {
+              template.footer = initialValue.footer;
+              template.header = initialValue.header;
+              template.additionalStyles = initialValue.additionalStyles;
+              template.template = initialValue.template;
+              template.variables = initialValue.variables;
+            } else {
+              template.footer = '';
+              template.header = '';
+              template.additionalStyles = '';
+              template.template = '';
+              template.variables = '';
+            }
+          }}
+        >
+          Populate template with ADSP default html
+        </GoACheckbox>
+      </PopulateTemplateWrapper>
     </GoAModal>
   );
 };

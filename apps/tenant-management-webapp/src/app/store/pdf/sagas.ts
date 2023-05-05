@@ -179,9 +179,12 @@ export function* updatePdfTemplate({ template, options }: UpdatePdfTemplatesActi
         );
       } else {
         yield put(
-          updatePdfTemplateSuccess({
-            ...latest.configuration,
-          })
+          updatePdfTemplateSuccess(
+            {
+              ...latest.configuration,
+            },
+            { templateId: template.id }
+          )
         );
       }
     } catch (err) {
