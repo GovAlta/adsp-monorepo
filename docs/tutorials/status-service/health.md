@@ -41,3 +41,11 @@ Click _start health check_ to begin pinging. The status bar will update every mi
 ### APIs
 
 You can also monitor and control an application's health, via the [Status Service APIs](https://api.adsp-uat.alberta.ca/autotest/?urls.primaryName=Status%20service), from another application. This would only be necessary if you wished to provide your own interface to keep user's notified, or perhaps to perform some sort of automated diagnostic on the application in question.
+
+## Learn More
+
+Learn how to
+
+- use [status](/adsp-monorepo/tutorials/status-service/status.html) codes to keep users informed about application health.
+- provide [notices](/adsp-monorepo/tutorials/status-service/notices.html) about application status to end users.
+- get [notified](/adsp-monorepo/tutorials/status-service/notifications.html) about changes in application health and status.
