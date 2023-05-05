@@ -28,6 +28,7 @@ export const defaultState: PdfState = {
   currentFile: null,
   currentId: '',
   tempTemplate: null,
+  openEditor: null,
 };
 
 export default function (state: PdfState = defaultState, action: PdfActionTypes): PdfState {
@@ -46,6 +47,7 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
         pdfTemplates: {
           ...action.payload,
         },
+        openEditor: action.option.templateId,
       };
     case UPDATE_PDF_TEMPLATE_SUCCESS_NO_REFRESH_ACTION:
       state.pdfTemplates = { ...state.pdfTemplates, ...action.payload };
@@ -61,6 +63,7 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
       return {
         ...state,
         currentId: action.id,
+        openEditor: null,
       };
     case SHOW_CURRENT_FILE_PDF_SUCCESS:
       return {

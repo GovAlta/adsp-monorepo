@@ -5,6 +5,7 @@ import { PdfOverview } from './overview';
 import { render, screen } from '@testing-library/react';
 import { PdfMetrics } from './metrics';
 import { defaultState } from '@store/pdf/reducers';
+import { MemoryRouter, Route } from 'react-router-dom';
 
 describe('Test Pdf overview page', () => {
   const mockStore = configureStore([]);
@@ -41,12 +42,14 @@ describe('Test Pdf overview page', () => {
     const store = mockStore({ pdf: { ...metricsFakeData } });
     const { queryByTestId } = render(
       <Provider store={store}>
-        <PdfOverview
-          // eslint-disable-next-line
-          updateActiveIndex={jest.fn((index: number) => {})}
-          // eslint-disable-next-line
-          setOpenAddTemplate={jest.fn((val: boolean) => {})}
-        />
+        <MemoryRouter initialEntries={['https://mock-host.com/admin/services/pdf/edit/mock-id']}>
+          <Route>
+            <PdfOverview
+              // eslint-disable-next-line
+              setOpenAddTemplate={jest.fn((val: boolean) => {})}
+            />
+          </Route>
+        </MemoryRouter>
       </Provider>
     );
 
