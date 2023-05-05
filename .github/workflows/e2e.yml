@@ -14,7 +14,7 @@ on:
         required: true
 jobs:
   e2e:
-    runs-on: ubuntu-22
+    runs-on: ubuntu-22.04
     environment:
       name: ${{ github.event.inputs.ENVIRONMENT }}-e2e
     steps:
