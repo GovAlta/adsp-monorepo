@@ -97,3 +97,11 @@ In addition to the properties above, the individual, unique event types have:
 - event.payload.postedBy.userName
 
 There are out-of-the-box default templates that you can start using right away. For a custom user experience though, consider building and managing your own.
+
+## Learn More
+
+Learn how to
+
+- [monitor](/adsp-monorepo/tutorials/status-service/health.html) your application's health.
+- use [status](/adsp-monorepo/tutorials/status-service/status.html) codes to keep users informed about application health.
+- provide [notices](/adsp-monorepo/tutorials/status-service/notices.html) about application status to end users.

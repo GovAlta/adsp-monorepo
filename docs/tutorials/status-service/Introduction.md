@@ -38,7 +38,9 @@ Notifications are triggered when an application's health or status changes. Deve
 
 ## Learn More
 
-- Learn more about [Application Health](/adsp-monorepo/tutorials/status-service/health.html).
-- Learn more about [Application Status](/adsp-monorepo/tutorials/status-service/health.html)
-- Learn more about [Notices](/adsp-monorepo/tutorials/status-service/notices.html)
-- Learn more about [Notifications](/adsp-monorepo/tutorials/status-service/notifications.html)
+Learn how to
+
+- [monitor](/adsp-monorepo/tutorials/status-service/health.html) your application's health.
+- use [status](/adsp-monorepo/tutorials/status-service/status.html) codes to keep users informed about application health.
+- provide [notices](/adsp-monorepo/tutorials/status-service/notices.html) about application status to end users.
+- get [notified](/adsp-monorepo/tutorials/status-service/notifications.html) about changes in application health and status.
