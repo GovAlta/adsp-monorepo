@@ -29,3 +29,7 @@ Changing an application's status can affect users in a couple of ways. It will
 The public status page for your tenant can be found at at https://status.adsp.alberta.ca/{tenant-name}. Linking to this will give your users information about your tenant applications, including any [notices](/adsp-monorepo/tutorials/status-service/notifications.html) you may have posted. The latter gives you the ability to post information about a status change, including expected times. This is useful, for example, to inform users of upcoming maintenance windows or current outages.
 
 ## Learn More
+
+- Learn how to [monitor](/adsp-monorepo/tutorials/status-service/health.html) your application's health.
+- Learn how to provide [Notices](/adsp-monorepo/tutorials/status-service/notices.html) about application status to end users.
+- Learn how to [get notified](/adsp-monorepo/tutorials/status-service/notifications.html) about changes in application health and status.
