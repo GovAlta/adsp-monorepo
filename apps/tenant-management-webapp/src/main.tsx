@@ -4,8 +4,6 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './app/app';
 import '@abgov/styles/styles.esm.css';
 
-//build
-
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
   <BrowserRouter>

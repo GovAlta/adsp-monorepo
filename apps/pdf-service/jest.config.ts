@@ -12,6 +12,9 @@ export default {
     '^.+\\.hbs$': '../../hbs-raw-loader.js',
     '^.+\\.[tj]s$': 'ts-jest',
   },
+  moduleNameMapper: {
+    '^uuid$': require.resolve('uuid'),
+  },
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../coverage/apps/pdf-service',
 };
