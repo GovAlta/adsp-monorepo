@@ -10,6 +10,9 @@ export default {
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../coverage/apps/file-service',
+  moduleNameMapper: {
+    '^uuid$': require.resolve('uuid'),
+  },
   testEnvironment: 'node',
   watchPathIgnorePatterns: ['globalConfig'],
 };
