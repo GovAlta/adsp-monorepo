@@ -5,7 +5,7 @@ import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import {
-  SpinnerPadding,
+  SpinnerPaddingSmall,
   PdfFormItem,
   HelpText,
   DescriptionItem,
@@ -114,16 +114,20 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
                     return;
                   }
                 }
+                setSpinner(true);
                 onSave(template);
-                onClose();
+
+                if (isEdit) {
+                  onClose();
+                }
               }
             }}
           >
             Save
             {spinner && (
-              <SpinnerPadding>
+              <SpinnerPaddingSmall>
                 <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
-              </SpinnerPadding>
+              </SpinnerPaddingSmall>
             )}
           </GoAButton>
         </GoAButtonGroup>
@@ -193,33 +197,35 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
           </HelpText>
         </DescriptionItem>
       </GoAFormItem>
-      <PopulateTemplateWrapper>
-        <GoACheckbox
-          name={'populate-template'}
-          key={'populate-template'}
-          ariaLabel={'populate-template-checkbox'}
-          checked={template.startWithDefault}
-          data-testid={'populate-template'}
-          onChange={() => {
-            template.startWithDefault = !template.startWithDefault;
-            if (template.startWithDefault) {
-              template.footer = initialValue.footer;
-              template.header = initialValue.header;
-              template.additionalStyles = initialValue.additionalStyles;
-              template.template = initialValue.template;
-              template.variables = initialValue.variables;
-            } else {
-              template.footer = '';
-              template.header = '';
-              template.additionalStyles = '';
-              template.template = '';
-              template.variables = '';
-            }
-          }}
-        >
-          Populate template with ADSP default html
-        </GoACheckbox>
-      </PopulateTemplateWrapper>
+      {!isEdit && (
+        <PopulateTemplateWrapper>
+          <GoACheckbox
+            name={'populate-template'}
+            key={'populate-template'}
+            ariaLabel={'populate-template-checkbox'}
+            checked={template.startWithDefault}
+            data-testid={'populate-template'}
+            onChange={() => {
+              template.startWithDefault = !template.startWithDefault;
+              if (template.startWithDefault) {
+                template.footer = initialValue.footer;
+                template.header = initialValue.header;
+                template.additionalStyles = initialValue.additionalStyles;
+                template.template = initialValue.template;
+                template.variables = initialValue.variables;
+              } else {
+                template.footer = '';
+                template.header = '';
+                template.additionalStyles = '';
+                template.template = '';
+                template.variables = '';
+              }
+            }}
+          >
+            Populate template with ADSP default html
+          </GoACheckbox>
+        </PopulateTemplateWrapper>
+      )}
     </GoAModal>
   );
 };
