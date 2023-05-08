@@ -6,24 +6,24 @@ parent: Status Service
 grand_parent: Tutorials
 ---
 
-# <span style="color:red">-- Under Construction --</span>
-
 ## Introduction
 
-The _Status Service_ helps you monitor the health of your applications and services, and includes
+The _Status Service_ lets you
 
-- notification when an application's _health_ changes,
-- a public, static status page that can be used to inform end users about Application Status,
-- notification when an application's _status_ changes,
-- customized notification messages
+- monitor the _health_ of your applications, and
+- keep your users informed of an application's _status_.
 
-End users interested in the applications status are also able to get notified when the application's status changes.
+For our purposes:
 
-## Health and Status
+- Application _health_ is defined by pinging a developer-supplied URL every minute or so, and based on the response is either _healthy_ or _unhealthy_.
+- Application _status_ is set by developers to inform end-users about planned (or otherwise) service outages.
 
-- Application _health_ is determined by pinging a developer-supplied URL every minute or so, and is either _healthy_ or _unhealthy_. Developers can be notified, by text or email, when an applications health changes
+In addition, the Status Service
 
-- Application _status_ is set by developers to inform end-users about planned (or otherwise) service outages. The status can be set to _operational_, _maintenance_, _outage_, or _reported issues_.
+- sends notifications to developers when an application's _health_ changes,
+- sends notifications to developers and end-users when an application's _status_ changes,
+- lets you customize notification messages (email or text),
+- provides a public, static status page for your tenant that can be used to inform end users about an Application's Status.
 
 ## Notices and Notifications
 
@@ -38,7 +38,9 @@ Notifications are triggered when an application's health or status changes. Deve
 
 ## Learn More
 
-- Learn more about [Application Health](/adsp-monorepo/tutorials/status-service/health.html).
-- Learn more about [Application Status](/adsp-monorepo/tutorials/status-service/health.html)
-- Learn more about [Notices](/adsp-monorepo/tutorials/status-service/notices.html)
-- Learn more about [Notifications](/adsp-monorepo/tutorials/status-service/notifications.html)
+Learn how to
+
+- [monitor](/adsp-monorepo/tutorials/status-service/health.html) your application's health.
+- use [status codes](/adsp-monorepo/tutorials/status-service/status.html) to keep users informed about application health.
+- provide [notices](/adsp-monorepo/tutorials/status-service/notices.html) about application status to end users.
+- get [notified](/adsp-monorepo/tutorials/status-service/notifications.html) about changes in application health and status.

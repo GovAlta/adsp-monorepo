@@ -11,6 +11,9 @@ export default {
   transform: {
     '^.+\\.[tj]s$': 'ts-jest',
   },
+  moduleNameMapper: {
+    '^uuid$': require.resolve('uuid'),
+  },
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../coverage/apps/form-service',
 };
