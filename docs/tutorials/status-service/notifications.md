@@ -8,7 +8,7 @@ grand_parent: Tutorials
 
 ## Notifications
 
-Developers can subscribe to be notified of _health check_ or _status_ changes to their applications. Additionally, it is possible for end users to be notified of changes to an application's status.
+Developers can subscribe to be notified for _health check_ or _status_ changes to their applications. Additionally, it is possible for end users to be notified of changes to an application's status.
 
 ### Health Check Change
 

@@ -20,13 +20,13 @@ You can see how your application has responded over the last half hour by visiti
 
 You can use the [Tenant Admin Webapp](https://adsp.alberta.ca) to
 
-- configure which applications you want monitored
+- register which applications you want monitored
 - control monitoring
 - view health checks
 
 in addition to working with the application status. The latter is covered [here](/adsp-monorepo/tutorials/status-service/status.html).
 
-### Monitoring an Application
+### Registering an Application
 
 To monitor an application's health you simply got to the Tenant Admin Webapp's _Status Service_ page and click the _Add Application_ button.
 
@@ -36,11 +36,11 @@ Enter the application name and description - something to identify the applicati
 
 ![](/adsp-monorepo/assets/status-service/monitoring.png)
 
-Click _start health check_ to begin pinging. The status bar will update every minute, and you will be able see the results pile in for the next 1/2 hour. The status bar is really just for testing purposes; the status service comes into its own when you start using [notifications](/adsp-monorepo/tutorials/status-service/notifications.html) to keep abreast of health changes.
+Click _start health check_ to begin the pinging. The status bar will update every minute, and you will be able see the results pile in for the next 1/2 hour. The status bar is really just for testing purposes; the status service comes into its own when you start using [notifications](/adsp-monorepo/tutorials/status-service/notifications.html) to keep abreast of health changes.
 
 ### APIs
 
-You can also monitor and control an application's health, via the [Status Service APIs](https://api.adsp-uat.alberta.ca/autotest/?urls.primaryName=Status%20service), from another application. This would only be necessary if you wished to provide your own interface to keep user's notified, or perhaps to perform some sort of automated diagnostic on the application in question.
+You can also monitor and control the pings via the [Status Service APIs](https://api.adsp-uat.alberta.ca/autotest/?urls.primaryName=Status%20service), from another application. This would only be necessary if you wished to automate control, provide your own interface to keep user's notified, or perhaps to perform automated diagnostic on the application in question. The [Tenant Management Webapp](https://adsp.alberta.ca) provides basic capabilities for doing these things manually.
 
 ## Learn More
 
