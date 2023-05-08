@@ -6,6 +6,9 @@ export default {
     'ts-jest': { tsconfig: '<rootDir>/tsconfig.spec.json' },
   },
   coverageDirectory: '../../coverage/apps/tenant-management-api',
+  moduleNameMapper: {
+    '^uuid$': require.resolve('uuid'),
+  },
   testEnvironment: 'node',
   setupFiles: ['./.jest/setEnvVars.js'],
 };

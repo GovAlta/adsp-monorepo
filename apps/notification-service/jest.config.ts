@@ -7,6 +7,9 @@ export default {
   },
   coverageDirectory: '../../coverage/apps/notification-service',
   testEnvironment: 'node',
+  moduleNameMapper: {
+    '^uuid$': require.resolve('uuid'),
+  },
   transform: {
     '^.+\\.hbs$': '../../hbs-raw-loader.js',
   },

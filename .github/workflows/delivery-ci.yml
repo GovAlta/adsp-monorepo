@@ -25,21 +25,21 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: "npm"
+          cache: 'npm'
       - uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: "7"
+          dotnet-version: '7'
       - uses: actions/setup-java@v3
         with:
-          java-version: "11"
+          java-version: '11'
           distribution: temurin
           cache: maven
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: '3.10'
       - uses: snok/install-poetry@v1
         with:
-          version: "1.4.0"
+          version: '1.4.0'
       - run: npm ci
       - name: Get last successful commit
         id: last_successful_commit
@@ -110,7 +110,7 @@ jobs:
         run: |
           for app in $AFFECTED_APPS
           do
-            oc import-image ghcr.io/govalta/$app:latest --reference-policy='local'
+            oc import-image ghcr.io/govalta/$app:latest --reference-policy='local' --confirm
             oc tag $app:latest $app:dev --reference-policy='local'
           done
       - run: oc project adsp-dev
@@ -142,13 +142,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: "npm"
+          cache: 'npm'
       - name: E2E Test
         uses: ./.github/actions/nx-cypress-e2e
         with:
           app: ${{ matrix.app }}
           environment: dev
-          tags: "@smoke-test and not @ignore"
+          tags: '@smoke-test and not @ignore'
           core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
           core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
           api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
@@ -207,13 +207,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: "npm"
+          cache: 'npm'
       - name: E2E Test
         uses: ./.github/actions/nx-cypress-e2e
         with:
           app: ${{ matrix.app }}
           environment: staging
-          tags: "@smoke-test and not @ignore"
+          tags: '@smoke-test and not @ignore'
           core-api-client-secret: ${{ secrets.CY_CORE_API_CLIENT_SECRET }}
           core-api-user-password: ${{ secrets.CY_CORE_API_USER_PASSWORD }}
           api-client-secret: ${{ secrets.CY_CLIENT_SECRET }}
