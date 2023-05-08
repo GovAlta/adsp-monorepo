@@ -29,6 +29,7 @@ export const FileTableStyles = styled.div`
 export const PopulateTemplateWrapper = styled.div`
   display: flex;
   margin-left: 3px;
+  margin-top: 24px;
 `;
 
 export const BadgeWrapper = styled.div`
