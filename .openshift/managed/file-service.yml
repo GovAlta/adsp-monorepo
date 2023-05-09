@@ -622,6 +622,13 @@ objects:
                     secretKeyRef:
                       key: database-name
                       name: file-service-mongodb${NAME_SUFFIX}
+                - name: MONGO_TLS
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-tls
+                      name: file-service-mongodb${NAME_SUFFIX}
+                - name: APP_NAME
+                  value: 'file-service-job'
                 - name: POD_TYPE
                   value: 'job'
               imagePullPolicy: IfNotPresent
