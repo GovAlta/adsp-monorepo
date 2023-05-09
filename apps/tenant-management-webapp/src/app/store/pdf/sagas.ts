@@ -169,8 +169,6 @@ export function* updatePdfTemplate({ template, options }: UpdatePdfTemplatesActi
       const url = `${baseUrl}/configuration/v2/configuration/platform/pdf-service`;
       const { latest } = yield call(updatePDFTemplateApi, token, url, body);
 
-      console.log(JSON.stringify(options) + '<options');
-
       if (options === 'no-refresh') {
         yield put(
           updatePdfTemplateSuccessNoRefresh({
