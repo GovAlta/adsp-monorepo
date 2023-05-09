@@ -3,11 +3,13 @@ module.exports = {
   info: {
     title: 'Calendar service',
     version: '0.0.0',
-    description: `## Calendar Events
+    description: `
 
 The _Calendar Service_ is a set of API's that gives developers a means to create and manage
-time based events for general use in calendars.  An event is defined by:
+time based events for general use in calendars.
 
+### Calendar Events
+A _calendar event_ is defined by:
 - a name,
 - a description,
 - a start time,
@@ -16,15 +18,13 @@ time based events for general use in calendars.  An event is defined by:
 - an indication of whether or not it's an all day event.
 
 Events can also be associated with a list of attendees, with each attendee defined by
-
 - a name,
 - an email address
 
-## Special Dates
+### Special Dates
 
 The service also includes an API you can use to populate a calendar with special dates, so that you can display them on your calendars.
 Any date returned by the API will indicate whether or not;
-
 - it's a weekend,
 - it's a holiday,
 - it's a business day,
