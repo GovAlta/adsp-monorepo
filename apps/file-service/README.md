@@ -56,3 +56,5 @@ Secrets of dev keycloak which might be used during development are listed as fol
 | KEYCLOAK_TENANT_API_CLIENT_SECRET | [Click](https://console.os99.gov.ab.ca:8443/console/project/core-services-dev/browse/secrets/tenant-management-api) |
 
 Please do not commit .env to the repository.
+
+## Modifying this to force a deployment
