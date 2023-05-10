@@ -3,7 +3,7 @@ import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgo
 import { Role } from '@store/tenant/models';
 import { GoAButton } from '@abgov/react-components';
 import { GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
-import { GoACheckbox } from '@abgov/react-components-new';
+import { GoACheckbox, GoAPopover } from '@abgov/react-components-new';
 import styled from 'styled-components';
 import { UpdateFileTypeService, CreateFileTypeService } from '@store/file/actions';
 import { FileTypeItem } from '@store/file/models';
@@ -303,8 +303,12 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
           <GoAFormItem>
             <label>
               Retention policy
-              <InfoCircleWrapper className="tooltip">
-                <InfoCircle />
+              <InfoCircleWrapper>
+                <GoAPopover testId={'file-type-retention-tooltip'} target={<InfoCircle />}>
+                  <RetentionToolTip>
+                    The untouched files within the file type will be deleted after the retention period provided.
+                  </RetentionToolTip>
+                </GoAPopover>
               </InfoCircleWrapper>
             </label>
             <GoACheckbox
@@ -509,4 +513,10 @@ const InfoCircleWrapper = styled.div`
   transform: scale(1.2);
   margin-left: 0.5rem;
   display: inline-block;
+`;
+
+const RetentionToolTip = styled.p`
+  font-size: 16px !important;
+  font-weight: normal;
+  line-height: 1.5rem;
 `;
