@@ -41,6 +41,7 @@ Probably the easiest way to build and test a new theme is:
 - branch off of the _aro_ branch in the repository. This is _important_! The main branch is _not being used_.
 - create a new folder in the _themes_ directory
 - copy the Login folder from another theme to use as a starting point
-- modify as needed
+- modify as needed.
+- Note: You will need to copy the theme you are developing to the appropriate folder in your local copy of keycloak for testing purposes.
 
 Once you are happy with it create a new PR and merge back into the _aro_ branch.
