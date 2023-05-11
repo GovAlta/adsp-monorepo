@@ -56,11 +56,28 @@ const DeleteInDaysLabel = styled.label`
   border-radius: 4px 0px 0px 4px;
 `;
 
+const RetentionPolicyLabel = styled.label`
+  font-size: 24px !important;
+  line-height: 32px;
+  margin-top: 24px;
+  font-weight: normal !important;
+`;
+
 const DeleteInDaysInputWrapper = styled.div`
   display: inline-block;
   width: 10rem;
   .goa-input {
     border-radius: 0px 4px 4px 0px !important;
+  }
+`;
+
+const FileIdItem = styled.div`
+  background: #f1f1f1;
+  .goa-input {
+    background: #f1f1f1 !important;
+  }
+  .input--goa {
+    background: #f1f1f1 !important;
   }
 `;
 
@@ -163,10 +180,6 @@ const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
     </DataTableWrapper>
   );
 };
-
-const IdField = styled.div`
-  min-height: 1.6rem;
-`;
 
 const selectServiceKeycloakRoles = createSelector(
   (state: RootState) => state.serviceRoles,
@@ -283,7 +296,17 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
           </GoAFormItem>
           <GoAFormItem>
             <label>Type ID</label>
-            <IdField data-testid={`file-type-modal-id`}>{fileType.id || ''}</IdField>
+            <FileIdItem>
+              <GoAInput
+                data-testid={`file-type-modal-id`}
+                value={fileType.id || ''}
+                disabled={true}
+                name="file-type-id"
+                type="text"
+                //eslint-disable-next-line
+                onChange={() => {}}
+              />
+            </FileIdItem>
           </GoAFormItem>{' '}
           <AnonymousReadWrapper>
             <GoACheckbox
@@ -301,7 +324,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
             />
           </AnonymousReadWrapper>
           <GoAFormItem>
-            <label>
+            <RetentionPolicyLabel>
               Retention policy
               <InfoCircleWrapper>
                 <GoAPopover testId={'file-type-retention-tooltip'} target={<InfoCircle />}>
@@ -310,7 +333,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
                   </RetentionToolTip>
                 </GoAPopover>
               </InfoCircleWrapper>
-            </label>
+            </RetentionPolicyLabel>
             <GoACheckbox
               name="retentionActive"
               key="retention-period-active-checkbox"
@@ -333,7 +356,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
           </GoAFormItem>
           <DeleteInDaysItem
             value={fileType?.rules?.retention?.deleteInDays}
-            disabled={fileType?.rules?.retention?.active === false}
+            disabled={fileType?.rules?.retention?.active !== true}
             updateFunc={(name, day: string) => {
               if (parseInt(day) > 0) {
                 setFileType({
