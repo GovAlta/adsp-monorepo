@@ -34,6 +34,21 @@ export const configurationSchema = {
             required: ['namespace', 'name'],
           },
         },
+        webhooks: {
+          type: 'array',
+          items: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+            url: { type: 'string' },
+            targetId: { type: 'string' },
+            eventTypes: {
+              type: 'array',
+              items: {
+                id: { type: 'string' },
+              },
+            },
+          },
+        },
         subscriberRoles: { type: 'array', items: { type: 'string' } },
         publicSubscribe: { type: 'boolean' },
       },
