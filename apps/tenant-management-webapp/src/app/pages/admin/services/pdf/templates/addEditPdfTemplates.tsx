@@ -1,5 +1,4 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
-import { GoAElementLoader } from '@abgov/react-components';
 import { PdfTemplate } from '@store/pdf/model';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
