@@ -181,13 +181,6 @@ const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
   );
 };
 
-const IdField = styled.div`
-  height: 2rem;
-  background: #f1f1f1;
-  border: 1px solid #dcdcdc;
-  border-radius: 4px;
-`;
-
 const selectServiceKeycloakRoles = createSelector(
   (state: RootState) => state.serviceRoles,
   (serviceRoles) => {
@@ -310,6 +303,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
                 disabled={true}
                 name="file-type-id"
                 type="text"
+                //eslint-disable-next-line
                 onChange={() => {}}
               />
             </FileIdItem>
