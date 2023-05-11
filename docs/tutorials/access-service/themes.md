@@ -17,7 +17,7 @@ Keycloak allows you to customize the look and feel it's webpages via themes, and
 The _Access Service_ includes several themes that you can use for applications in your realm. You can choose one by logging in to Keycloak as an admin, and then
 navigating to _Realm Settings_ / _Themes_. There you can select a theme for the various pages that your end users can have access to.
 
-![](adsp-monorepo/assets/access-service/keycloak-themes.png)
+![](/adsp-monorepo/assets/access-service/keycloak-themes.png)
 
 The existing set of themes may not suit you needs, however, and you may want to build your own. The _Access Service_ supports this idea, allowing developers to build and test their themes, and then check them into github for deployment.
 
@@ -37,10 +37,11 @@ Probably the easiest way to build and test a new theme is:
 
 - read the [keycloak guide](https://www.keycloak.org/docs/18.0/server_development/) for developing themes
 - [install](https://www.keycloak.org/docs/18.0/server_installation/) a local copy of keycloak
-- clone the [access-service git repository](<(https://github.com/GovAlta/access-service)>)
+- clone the [access-service git repository](https://github.com/GovAlta/access-service/tree/aro)
 - branch off of the _aro_ branch in the repository. This is _important_! The main branch is _not being used_.
 - create a new folder in the _themes_ directory
 - copy the Login folder from another theme to use as a starting point
-- modify as needed
+- modify as needed.
+- Note: You will need to copy the theme you are developing to the appropriate folder in your local copy of keycloak for testing purposes.
 
 Once you are happy with it create a new PR and merge back into the _aro_ branch.
