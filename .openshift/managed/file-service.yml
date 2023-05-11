@@ -678,7 +678,7 @@ objects:
               - file-service
             from:
               kind: ImageStreamTag
-              name: file-service:${DEPLOY_TAG}
+              name: file-service-job:${DEPLOY_TAG}
               namespace: ${INFRA_NAMESPACE}
           type: ImageChange
 
