@@ -8,8 +8,6 @@ grand_parent: Tutorials
 
 ## Keycloak Themes
 
-<span style="color:red">Under Construction</span>
-
 Keycloak allows you to customize the look and feel it's webpages via themes, and developers can choose a specific theme for the realm being used with their application. So, for example, if the application redirects users to the keycloak login page to sign in, they may want it to match the application's theme.
 
 ### Choosing a Theme
@@ -45,3 +43,5 @@ Probably the easiest way to build and test a new theme is:
 - Note: You will need to copy the theme you are developing to the appropriate folder in your local copy of keycloak for testing purposes.
 
 Once you are happy with it create a new PR and merge back into the _aro_ branch.
+
+Note: Merging your new template will trigger an automatic deployment to the DEV and UAT keycloak servers. When you are ready to deploy to production please contact the ADSP team on slack (#adsp-connect) or email us at [ADSP Support](adsp@gov.ab.ca) to schedule it.
