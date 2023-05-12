@@ -49,7 +49,7 @@ export const getApplicationsByName =
           };
         })
         .sort((a, b) => {
-          return a.name.localeCompare(b.name);
+          return a.name.toLowerCase().localeCompare(b.name.toLocaleLowerCase());
         });
 
       res.json(results);
