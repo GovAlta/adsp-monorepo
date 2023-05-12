@@ -34,14 +34,7 @@ Keycloak uses FreeMarker files to build server-side webpages that then get serve
 Probably the easiest way to build and test a new theme is:
 
 - read the [keycloak guide](https://www.keycloak.org/docs/18.0/server_development/) for developing themes
-- [install](https://www.keycloak.org/docs/18.0/server_installation/) a local copy of keycloak
 - clone the [access-service git repository](https://github.com/GovAlta/access-service/tree/aro)
-- branch off of the _aro_ branch in the repository. This is _important_! The main branch is _not being used_.
-- create a new folder in the _themes_ directory
-- copy the Login folder from another theme to use as a starting point
-- modify as needed.
-- Note: You will need to copy the theme you are developing to the appropriate folder in your local copy of keycloak for testing purposes.
+- follow the instructions in the repository to build, test, and deploy your new templates.
 
-Once you are happy with it create a new PR and merge back into the _aro_ branch.
-
-Note: Merging your new template will trigger an automatic deployment to the DEV and UAT keycloak servers. When you are ready to deploy to production please contact the ADSP team on slack (#adsp-connect) or email us at [ADSP Support](adsp@gov.ab.ca) to schedule it.
+If you have any questions please contact the ADSP team on slack (#adsp-connect) or email us at [ADSP Support](adsp@gov.ab.ca).
