@@ -1,5 +1,4 @@
 FROM mkodockx/docker-clamav:alpine
-USER 0
 COPY clamd.conf /etc/clamav/
 # Update permissions so the arbitrary UID running the container process can access paths
 RUN mkdir /store && \
