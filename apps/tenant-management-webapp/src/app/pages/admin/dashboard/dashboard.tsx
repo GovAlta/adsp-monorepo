@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { GoACallout } from '@abgov/react-components';
 import { GoACard } from '@abgov/react-components/experimental';
 import { Link } from 'react-router-dom';
@@ -7,82 +7,11 @@ import { Grid, GridItem } from '@components/Grid';
 import { Main, Page } from '@components/Html';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { GoAButton as GoAButtonV2 } from '@abgov/react-components-new';
-import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
 import { ExternalLink } from '@components/icons/ExternalLink';
 import BetaBadge from '@icons/beta-badge.svg';
-import {
-  CopyLinkToolTipWrapper,
-  DashboardAside,
-  DashboardDiv,
-  HeadingDiv,
-  LinkCopyComponentWrapper,
-  ListWrapper,
-} from './styled-components';
+import { DashboardAside, DashboardDiv, HeadingDiv, ListWrapper } from './styled-components';
 import SupportLinks from '@components/SupportLinks';
-
-interface LinkCopyComponentProps {
-  link: string;
-}
-
-const LinkCopyComponent = ({ link }: LinkCopyComponentProps): JSX.Element => {
-  const [isCopied, setIsCopied] = useState<boolean>(false);
-  const [isShowURL, setIsShowURL] = useState<boolean>(false);
-
-  useEffect(() => {
-    let tooltipTimer = null;
-    if (isCopied === true) {
-      tooltipTimer = setTimeout(() => {
-        setIsCopied(false);
-      }, 8 * 1000);
-    }
-    return () => {
-      if (tooltipTimer !== null) {
-        clearTimeout(tooltipTimer);
-      }
-    };
-  }, [isCopied]);
-
-  return (
-    <LinkCopyComponentWrapper
-      onMouseEnter={() => {
-        setIsShowURL(true);
-      }}
-      onMouseLeave={() => {
-        setIsShowURL(false);
-      }}
-    >
-      {isCopied && (
-        <CopyLinkToolTipWrapper>
-          <p>
-            <div className="checkmark-icon">
-              <GreenCircleCheckMark />
-            </div>
-            <div className="message">Link copied to clipboard</div>
-          </p>
-        </CopyLinkToolTipWrapper>
-      )}
-
-      {!isCopied && isShowURL && (
-        <CopyLinkToolTipWrapper>
-          <p className="URL-tooltip">
-            <div className="message">{link}</div>
-          </p>
-        </CopyLinkToolTipWrapper>
-      )}
-      <GoAButtonV2
-        type="secondary"
-        leadingIcon="link"
-        onClick={() => {
-          navigator.clipboard.writeText(link);
-          setIsCopied(true);
-        }}
-      >
-        Copy login link
-      </GoAButtonV2>
-    </LinkCopyComponentWrapper>
-  );
-};
+import LinkCopyComponent from '@components/CopyLink/CopyLink';
 
 const Dashboard = (): JSX.Element => {
   const tenantAdminRole = 'tenant-admin';
@@ -274,7 +203,7 @@ const Dashboard = (): JSX.Element => {
                 <li>
                   Once granted the role, the user can access tenant admin using the URL below.
                   <br />
-                  <LinkCopyComponent link={loginUrl} />
+                  <LinkCopyComponent text={'Copy login link'} link={loginUrl} />
                 </li>
               </ListWrapper>
             </p>
