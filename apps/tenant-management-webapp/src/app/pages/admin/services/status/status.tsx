@@ -19,6 +19,7 @@ import { createSelector } from 'reselect';
 import { StatusOverview } from './overview';
 import { useActionStateCheck } from '@components/Indicator';
 import { ApplicationList } from './styled-components';
+import LinkCopyComponent from '@components/CopyLink/CopyLink';
 
 const userHealthSubscriptionSelector = createSelector(
   (state: RootState) => state.session.userInfo?.sub,
@@ -39,12 +40,17 @@ const userHealthSubscriptionSelector = createSelector(
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
-  const { applications, serviceStatusAppUrl, tenantName } = useSelector((state: RootState) => ({
-    applications: state.serviceStatus.applications,
-    serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
-    tenantName: state.tenant.name,
-  }));
+  const { session, applications, serviceStatusAppUrl, tenantManagementWebApp, tenantName } = useSelector(
+    (state: RootState) => ({
+      applications: state.serviceStatus.applications,
+      serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
+      tenantName: state.tenant.name,
+      session: state.session,
+      tenantManagementWebApp: state.config.serviceUrls.tenantManagementWebApp,
+    })
+  );
   const subscription = useSelector(userHealthSubscriptionSelector);
+  const loginUrl = `${tenantManagementWebApp}/${session.realm}/login`;
 
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [showAddApplicationModal, setShowAddApplicationModal] = useState<boolean>(false);
@@ -192,15 +198,7 @@ function Status(): JSX.Element {
         <h3>Public status page</h3>
 
         <p>Url of the current tenant's public status page:</p>
-
-        <div className="copy-url">
-          <a target="_blank" href={publicStatusUrl} rel="noreferrer">
-            {publicStatusUrl}
-          </a>
-        </div>
-        <GoAButton data-tip="Copied!" data-for="registerTipUrl">
-          Click to copy
-        </GoAButton>
+        <LinkCopyComponent text={'Copy status page link'} link={publicStatusUrl} />
         <ReactTooltip
           id="registerTipUrl"
           place="top"
