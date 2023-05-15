@@ -11,6 +11,7 @@ import { Subscriptions } from './subscriptions';
 import { Subscribers } from './subscribers';
 import { GoAButton } from '@abgov/react-components';
 import { subscriberAppUrlSelector } from './selectors';
+import LinkCopyComponent from '@components/CopyLink/CopyLink';
 
 export const Notifications: FunctionComponent = () => {
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
@@ -76,14 +77,7 @@ export const Notifications: FunctionComponent = () => {
 
         <h3>Manage subscriptions</h3>
         <p>Subscribers can manage their subscriptions here:</p>
-        <div className="copy-url">
-          <a target="_blank" href={loginUrl} rel="noreferrer">
-            {loginUrl}
-          </a>
-        </div>
-        <GoAButton data-tip="Copied!" data-for="registerTipUrl">
-          Click to copy
-        </GoAButton>
+        <LinkCopyComponent text={'Copy subscriber app link'} link={loginUrl} />
         <ReactTooltip
           id="registerTipUrl"
           place="top"
