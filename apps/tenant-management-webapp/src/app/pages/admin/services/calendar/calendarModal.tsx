@@ -6,7 +6,7 @@ import { CalendarItem } from '@store/calendar/models';
 import { GoATextArea } from '@abgov/react-components-new';
 import { useSelector } from 'react-redux';
 import { Role } from '@store/tenant/models';
-import { ClientRoleTable } from '@components/ClientRoleTable';
+import { ClientRoleTable } from '@components/RoleTable';
 import { ConfigServiceRole } from '@store/access/models';
 import { useValidators } from '@lib/validation/useValidators';
 import { toKebabName } from '@lib/kebabName';
@@ -113,8 +113,11 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
               });
             }
           }}
-          readRoles={calendar?.readRoles}
-          updateRoles={calendar?.updateRoles}
+          service="Calendar"
+          checkedRoles={[
+            { title: 'read', selectedRoles: calendar?.readRoles },
+            { title: 'modify', selectedRoles: calendar?.updateRoles },
+          ]}
         />
       </>
     );
