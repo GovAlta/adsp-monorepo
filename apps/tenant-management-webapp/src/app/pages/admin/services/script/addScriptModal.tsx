@@ -14,8 +14,8 @@ import { isNotEmptyCheck, wordMaxLengthCheck, duplicateNameCheck, badCharsCheck 
 import { IdField } from './styled-components';
 import { ServiceRoleConfig } from '@store/access/models';
 import { RootState } from '@store/index';
-import { UseServiceAccountWrapper, DataTableWrapper } from './styled-components';
-import DataTable from '@components/DataTable';
+import { UseServiceAccountWrapper } from './styled-components';
+import { ClientRoleTable } from '@components/RoleTable';
 
 interface AddScriptModalProps {
   initialValue?: ScriptItem;
@@ -91,16 +91,17 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
   const RunnerRole = ({ roleNames, clientId }) => {
     return (
       <>
-        <RunnerRoleTable
+        <ClientRoleTable
           roles={roleNames}
           clientId={clientId}
-          roleSelectFunc={(roles, type) => {
+          roleSelectFunc={(roles) => {
             setScript({
               ...script,
               runnerRoles: roles,
             });
           }}
-          runnerRoles={script?.runnerRoles}
+          service="Script"
+          checkedRoles={[{ title: 'runner', selectedRoles: script?.runnerRoles }]}
         />
       </>
     );
@@ -200,67 +201,5 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
         </GoAButton>
       </GoAModalActions>
     </GoAModal>
-  );
-};
-
-interface RunnerRoleTableProps {
-  roles: string[];
-  roleSelectFunc: (roles: string[], type: string) => void;
-  runnerRoles: string[];
-
-  clientId: string;
-}
-
-const RunnerRoleTable = (props: RunnerRoleTableProps): JSX.Element => {
-  const [runnerRoles, setRunnerRoles] = useState(props.runnerRoles);
-
-  return (
-    <DataTableWrapper>
-      <DataTable noScroll={true}>
-        <thead>
-          <tr>
-            <th id="script-runner-roles" className="role-name">
-              {props.clientId ? props.clientId + ' roles' : 'Roles'}
-            </th>
-            <th id="script-runner-role-action" className="role">
-              Runner
-            </th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {props.roles?.map((role): JSX.Element => {
-            const compositeRole = props.clientId ? `${props.clientId}:${role}` : role;
-            return (
-              <tr key={`add-script-role-row-${role}`}>
-                <td className="role-name">{role}</td>
-                <td className="role-checkbox">
-                  <GoACheckbox
-                    name={`script-runner-role-checkbox-${role}`}
-                    key={`script-runner-role-checkbox-${compositeRole}`}
-                    checked={runnerRoles.includes(compositeRole)}
-                    data-testid={`script-runner-role-checkbox-${role}`}
-                    ariaLabel={`script-use-service-account-checkbox`}
-                    onChange={() => {
-                      if (runnerRoles.includes(compositeRole)) {
-                        const newRoles = runnerRoles.filter((runnerRole) => {
-                          return runnerRole !== compositeRole;
-                        });
-                        setRunnerRoles(newRoles);
-                        props.roleSelectFunc(newRoles, 'read');
-                      } else {
-                        const newRoles = [...runnerRoles, compositeRole];
-                        setRunnerRoles(newRoles);
-                        props.roleSelectFunc(newRoles, 'read');
-                      }
-                    }}
-                  />
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </DataTable>
-    </DataTableWrapper>
   );
 };
