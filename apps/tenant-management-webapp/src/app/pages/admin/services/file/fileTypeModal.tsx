@@ -60,6 +60,8 @@ const DeleteInDaysInputWrapper = styled.div`
   .goa-input {
     border-radius: 0px 4px 4px 0px !important;
   }
+  z-index: -1;
+  position: relative;
   margin-bottom: 2rem;
 `;
 
@@ -408,4 +410,5 @@ const RetentionToolTip = styled.p`
   font-size: 16px !important;
   font-weight: normal;
   line-height: 1.5rem;
+  z-index: 1000;
 `;
