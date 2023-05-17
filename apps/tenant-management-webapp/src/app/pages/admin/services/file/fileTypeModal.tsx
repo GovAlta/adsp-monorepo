@@ -60,6 +60,7 @@ const DeleteInDaysInputWrapper = styled.div`
   .goa-input {
     border-radius: 0px 4px 4px 0px !important;
   }
+  margin-bottom: 2rem;
 `;
 
 const FileIdItem = styled.div`
@@ -90,12 +91,6 @@ const DeleteInDaysItem = ({ value, updateFunc, disabled }: DeleteInDaysInputProp
     </>
   );
 };
-
-
-const IdField = styled.div`
-  min-height: 1.6rem;
-`;
-
 
 const selectServiceKeycloakRoles = createSelector(
   (state: RootState) => state.serviceRoles,
@@ -253,25 +248,27 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
                 </GoAPopover>
               </InfoCircleWrapper>
             </RetentionPolicyLabel>
-            <GoACheckbox
-              name="retentionActive"
-              key="retention-period-active-checkbox"
-              checked={fileType?.rules?.retention?.active === true}
-              onChange={(name, checked) => {
-                setFileType({
-                  ...fileType,
-                  rules: {
-                    ...fileType?.rules,
-                    retention: {
-                      ...fileType?.rules?.retention,
-                      active: checked,
+            <RetentionPolicyWrapper>
+              <GoACheckbox
+                name="retentionActive"
+                key="retention-period-active-checkbox"
+                checked={fileType?.rules?.retention?.active === true}
+                onChange={(name, checked) => {
+                  setFileType({
+                    ...fileType,
+                    rules: {
+                      ...fileType?.rules,
+                      retention: {
+                        ...fileType?.rules?.retention,
+                        active: checked,
+                      },
                     },
-                  },
-                });
-              }}
-              text={'Active retention policy'}
-            />
-            <b>Enter retention period</b>
+                  });
+                }}
+                text={'Active retention policy'}
+              />
+              <b>Enter retention period</b>
+            </RetentionPolicyWrapper>
           </GoAFormItem>
           <DeleteInDaysItem
             value={fileType?.rules?.retention?.deleteInDays}
@@ -380,6 +377,11 @@ const ModalOverwrite = styled.div`
 const AnonymousReadWrapper = styled.div`
   line-height: 2.5em;
   display: flex;
+`;
+
+const RetentionPolicyWrapper = styled.div`
+  margin-top: 12px;
+  margin-bottom: 12px;
 `;
 
 export const TextLoadingIndicator = styled.div`
