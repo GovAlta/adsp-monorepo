@@ -111,6 +111,7 @@ const FileList = (): JSX.Element => {
               <th>File name</th>
               <th>Size (KB)</th>
               <th>Type</th>
+              <th>File ID</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -122,6 +123,7 @@ const FileList = (): JSX.Element => {
                   {/* Use ceil here to make sure people will allocate enough resouces */}
                   <td>{Math.ceil(file.size / 1024)}</td>
                   <td>{file.typeName}</td>
+                  <td>{file.id}</td>
                   <td>
                     <div className="flex-horizontal">
                       <div className="flex">
