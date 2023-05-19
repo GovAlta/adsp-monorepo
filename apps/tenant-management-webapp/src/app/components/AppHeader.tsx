@@ -134,21 +134,6 @@ const SidebarWrapper = styled.div<MenuState>`
   }
 `;
 
-const UserIconBox = styled.div`
-  display: flex;
-  white-space: nowrap;
-  align-items: center;
-  svg {
-    position: relative;
-    width: 1.5rem;
-    height: auto;
-    margin-right: 0.25rem;
-  }
-  a {
-    text-decoration: none;
-  }
-`;
-
 const HeaderContainer = styled.div`
   position: relative;
   border-bottom: 1px solid #dcdcdc;

@@ -150,7 +150,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
               });
             }
           }}
-          service="Calendar"
+          service="FileType"
           checkedRoles={[
             { title: 'read', selectedRoles: fileType?.readRoles },
             { title: 'modify', selectedRoles: fileType?.updateRoles },

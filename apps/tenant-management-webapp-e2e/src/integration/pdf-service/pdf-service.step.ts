@@ -36,7 +36,7 @@ When('the user clicks Add template button', function () {
 });
 
 Then('the user views Add template modal', function () {
-  pdfServiceObj.pdfAddTemplateModal().shadow().find('.modal-title').invoke('text').should('eq', 'Add template');
+  pdfServiceObj.pdfAddTemplateModal().shadow().get('div[slot="heading"]').invoke('text').should('eq', 'Add template');
 });
 
 When('the user enters {string} as name, {string} as description in pdf template modal', function (name, description) {

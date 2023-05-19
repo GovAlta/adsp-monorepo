@@ -40,17 +40,14 @@ const userHealthSubscriptionSelector = createSelector(
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
-  const { session, applications, serviceStatusAppUrl, tenantManagementWebApp, tenantName } = useSelector(
-    (state: RootState) => ({
-      applications: state.serviceStatus.applications,
-      serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
-      tenantName: state.tenant.name,
-      session: state.session,
-      tenantManagementWebApp: state.config.serviceUrls.tenantManagementWebApp,
-    })
-  );
+  const { applications, serviceStatusAppUrl, tenantName } = useSelector((state: RootState) => ({
+    applications: state.serviceStatus.applications,
+    serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
+    tenantName: state.tenant.name,
+    session: state.session,
+    tenantManagementWebApp: state.config.serviceUrls.tenantManagementWebApp,
+  }));
   const subscription = useSelector(userHealthSubscriptionSelector);
-  const loginUrl = `${tenantManagementWebApp}/${session.realm}/login`;
 
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [showAddApplicationModal, setShowAddApplicationModal] = useState<boolean>(false);
