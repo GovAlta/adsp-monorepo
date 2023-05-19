@@ -24,7 +24,7 @@ Given('the user is on the tenant management welcome page', function () {
 });
 
 When('the user clicks the sign in button', function () {
-  welcomPageObj.signinDiv().click();
+  welcomPageObj.signinButton().shadow().find('button').click({ force: true });
   cy.wait(5000);
 });
 

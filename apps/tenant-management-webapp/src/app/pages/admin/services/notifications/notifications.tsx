@@ -9,7 +9,6 @@ import { NotificationsOverview } from './overview';
 import { NotificationTypes } from './notificationTypes';
 import { Subscriptions } from './subscriptions';
 import { Subscribers } from './subscribers';
-import { GoAButton } from '@abgov/react-components';
 import { subscriberAppUrlSelector } from './selectors';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
 

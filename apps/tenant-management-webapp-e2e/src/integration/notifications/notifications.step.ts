@@ -883,7 +883,7 @@ When(
       .focus()
       .type('{ctrl}a')
       .clear()
-      .type(bodyText, { parseSpecialCharSequences: false });
+      .type(bodyText, { parseSpecialCharSequences: false }, { force: true });
   }
 );
 
