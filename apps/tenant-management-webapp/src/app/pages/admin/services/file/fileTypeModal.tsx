@@ -61,6 +61,7 @@ const DeleteInDaysInputWrapper = styled.div`
     border-radius: 0px 4px 4px 0px !important;
   }
   z-index: -1;
+  position: relative;
   margin-bottom: 2rem;
 `;
 
