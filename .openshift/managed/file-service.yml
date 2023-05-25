@@ -553,134 +553,134 @@ objects:
               namespace: ${INFRA_NAMESPACE}
           type: ImageChange
 
-  # - apiVersion: v1
-  #   kind: DeploymentConfig
-  #   metadata:
-  #     labels:
-  #       app: file-service${NAME_SUFFIX}
-  #       component: job
-  #       apply-branch: 'true'
-  #       apply-dev: 'true'
-  #       apply-test: 'true'
-  #       apply-staging: 'true'
-  #       apply-prod: 'true'
-  #     name: file-service${NAME_SUFFIX}-job
-  #   spec:
-  #     replicas: 1
-  #     revisionHistoryLimit: 3
-  #     selector:
-  #       app: file-service${NAME_SUFFIX}
-  #       component: job
-  #     strategy:
-  #       type: Rolling
-  #       rollingParams:
-  #         timeoutSeconds: 600
-  #         maxUnavailable: 25%
-  #         maxSurge: 25%
-  #       activeDeadlineSeconds: 21600
-  #       resources:
-  #         limits:
-  #           cpu: 200m
-  #           memory: 200Mi
-  #         requests:
-  #           cpu: 20m
-  #           memory: 50Mi
-  #     template:
-  #       metadata:
-  #         labels:
-  #           app: file-service${NAME_SUFFIX}
-  #           component: job
-  #       spec:
-  #         containers:
-  #           - envFrom:
-  #               - configMapRef:
-  #                   name: file-service
-  #               - secretRef:
-  #                   name: file-service
-  #             env:
-  #               - name: PORT
-  #                 value: '3333'
-  #               - name: FILE_PATH
-  #                 value: /data/files
-  #               - name: MONGO_USER
-  #                 valueFrom:
-  #                   secretKeyRef:
-  #                     key: database-user
-  #                     name: file-service-mongodb${NAME_SUFFIX}
-  #               - name: MONGO_URI
-  #                 valueFrom:
-  #                   secretKeyRef:
-  #                     key: database-uri
-  #                     name: file-service-mongodb${NAME_SUFFIX}
-  #               - name: MONGO_PASSWORD
-  #                 valueFrom:
-  #                   secretKeyRef:
-  #                     key: database-password
-  #                     name: file-service-mongodb${NAME_SUFFIX}
-  #               - name: MONGO_DB
-  #                 valueFrom:
-  #                   secretKeyRef:
-  #                     key: database-name
-  #                     name: file-service-mongodb${NAME_SUFFIX}
-  #               - name: MONGO_TLS
-  #                 valueFrom:
-  #                   secretKeyRef:
-  #                     key: database-tls
-  #                     name: file-service-mongodb${NAME_SUFFIX}
-  #               - name: APP_NAME
-  #                 value: 'file-service-job'
-  #               - name: POD_TYPE
-  #                 value: 'job'
-  #             imagePullPolicy: IfNotPresent
-  #             name: file-service
-  #             ports:
-  #               - containerPort: 3333
-  #                 name: http
-  #                 protocol: TCP
-  #             resources:
-  #               limits:
-  #                 cpu: 100m
-  #                 memory: 200Mi
-  #               requests:
-  #                 cpu: 20m
-  #                 memory: 50Mi
-  #             terminationMessagePath: /dev/termination-log
-  #             terminationMessagePolicy: File
-  #             readinessProbe:
-  #               httpGet:
-  #                 path: /
-  #                 port: 3333
-  #                 scheme: HTTP
-  #               initialDelaySeconds: 2
-  #               timeoutSeconds: 1
-  #               periodSeconds: 5
-  #               successThreshold: 1
-  #               failureThreshold: 20
-  #             livenessProbe:
-  #               httpGet:
-  #                 path: /
-  #                 port: 3333
-  #                 scheme: HTTP
-  #               initialDelaySeconds: 60
-  #               timeoutSeconds: 2
-  #               periodSeconds: 60
-  #               successThreshold: 1
-  #               failureThreshold: 5
-  #         dnsPolicy: ClusterFirst
-  #         restartPolicy: Always
-  #         schedulerName: default-scheduler
-  #         securityContext: {}
-  #         terminationGracePeriodSeconds: 30
-  #     test: false
-  #     triggers:
-  #       - imageChangeParams:
-  #           containerNames:
-  #             - file-service
-  #           from:
-  #             kind: ImageStreamTag
-  #             name: file-service-job:${DEPLOY_TAG}
-  #             namespace: ${INFRA_NAMESPACE}
-  #         type: ImageChange
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      labels:
+        app: file-service${NAME_SUFFIX}
+        component: job
+        apply-branch: 'true'
+        apply-dev: 'true'
+        apply-test: 'true'
+        apply-staging: 'true'
+        apply-prod: 'true'
+      name: file-service${NAME_SUFFIX}-job
+    spec:
+      replicas: 1
+      revisionHistoryLimit: 3
+      selector:
+        app: file-service${NAME_SUFFIX}
+        component: job
+      strategy:
+        type: Rolling
+        rollingParams:
+          timeoutSeconds: 600
+          maxUnavailable: 25%
+          maxSurge: 25%
+        activeDeadlineSeconds: 21600
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 20m
+            memory: 50Mi
+      template:
+        metadata:
+          labels:
+            app: file-service${NAME_SUFFIX}
+            component: job
+        spec:
+          containers:
+            - envFrom:
+                - configMapRef:
+                    name: file-service
+                - secretRef:
+                    name: file-service
+              env:
+                - name: PORT
+                  value: '3333'
+                - name: FILE_PATH
+                  value: /data/files
+                - name: MONGO_USER
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-user
+                      name: file-service-mongodb${NAME_SUFFIX}
+                - name: MONGO_URI
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-uri
+                      name: file-service-mongodb${NAME_SUFFIX}
+                - name: MONGO_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-password
+                      name: file-service-mongodb${NAME_SUFFIX}
+                - name: MONGO_DB
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-name
+                      name: file-service-mongodb${NAME_SUFFIX}
+                - name: MONGO_TLS
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-tls
+                      name: file-service-mongodb${NAME_SUFFIX}
+                - name: APP_NAME
+                  value: 'file-service-job'
+                - name: POD_TYPE
+                  value: 'job'
+              imagePullPolicy: IfNotPresent
+              name: file-service
+              ports:
+                - containerPort: 3333
+                  name: http
+                  protocol: TCP
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 200Mi
+                requests:
+                  cpu: 20m
+                  memory: 50Mi
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              readinessProbe:
+                httpGet:
+                  path: /
+                  port: 3333
+                  scheme: HTTP
+                initialDelaySeconds: 2
+                timeoutSeconds: 1
+                periodSeconds: 5
+                successThreshold: 1
+                failureThreshold: 20
+              livenessProbe:
+                httpGet:
+                  path: /
+                  port: 3333
+                  scheme: HTTP
+                initialDelaySeconds: 60
+                timeoutSeconds: 2
+                periodSeconds: 60
+                successThreshold: 1
+                failureThreshold: 5
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+      test: false
+      triggers:
+        - imageChangeParams:
+            containerNames:
+              - file-service
+            from:
+              kind: ImageStreamTag
+              name: file-service-job:${DEPLOY_TAG}
+              namespace: ${INFRA_NAMESPACE}
+          type: ImageChange
 
   - apiVersion: v1
     kind: Service
