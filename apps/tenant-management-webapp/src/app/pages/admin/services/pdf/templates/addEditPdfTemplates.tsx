@@ -49,7 +49,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
-  const descErrMessage = 'Description could not over 180 characters';
+  const descErrMessage = 'Description can not be over 180 characters';
 
   useEffect(() => {
     if (spinner && Object.keys(templates).length > 0) {

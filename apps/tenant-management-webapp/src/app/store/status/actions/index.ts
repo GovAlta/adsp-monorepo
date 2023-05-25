@@ -1,6 +1,9 @@
 import * as fetch from './fetchApplications';
 import * as get from './getApplication';
 import * as save from './saveApplication';
+import * as saveHook from './saveWebhook';
+import * as fetchHook from './fetchWebhooks';
+import * as deleteHook from './deleteWebhooks';
 import * as destroy from './deleteApplication';
 import * as status from './setApplicationStatus';
 import * as toggle from './toggleApplication';
@@ -9,8 +12,11 @@ import * as metrics from './metrics';
 import * as statusSupportInstructions from './statusSupportInstructions';
 
 export * from './fetchApplications';
+export * from './fetchWebhooks';
 export * from './getApplication';
 export * from './saveApplication';
+export * from './saveWebhook';
+export * from './deleteWebhooks';
 export * from './deleteApplication';
 export * from './setApplicationStatus';
 export * from './toggleApplication';
@@ -31,4 +37,7 @@ export type ActionTypes =
   | metrics.FetchStatusMetricsAction
   | metrics.FetchStatusMetricsSuccessAction
   | statusSupportInstructions.FetchNotificationConfigurationSucceededAction
-  | statusSupportInstructions.UpdateStatusContactInformationAction;
+  | statusSupportInstructions.UpdateStatusContactInformationAction
+  | saveHook.SaveWebhookSuccessAction
+  | deleteHook.DeleteWebhookSuccessAction
+  | fetchHook.FetchWebhooksSuccessAction;

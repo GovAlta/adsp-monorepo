@@ -17,6 +17,8 @@ export interface ValueCriteria {
   timestampMax?: Date;
   correlationId?: string;
   context?: Record<string, boolean | string | number>;
+  value?: boolean | string | number;
+  url?: string;
 }
 
 export const VALUES_READ = 'READ';

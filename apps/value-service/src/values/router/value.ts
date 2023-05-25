@@ -61,6 +61,8 @@ export function readValue(repository: ValuesRepository): RequestHandler {
         timestampMin: timestampMinValue,
         context: contextValue,
         correlationId,
+        value,
+        url,
       } = req.query;
 
       if (!tenant) {
@@ -80,6 +82,8 @@ export function readValue(repository: ValuesRepository): RequestHandler {
         context: contextValue ? JSON.parse(contextValue as string) : null,
         correlationId: correlationId as string,
         tenantId: tenant.id,
+        value: value as string,
+        url: url as string,
       };
 
       const result = await repository.readValues(top, after as string, criteria);
@@ -164,6 +168,7 @@ export function readMetric(repository: ValuesRepository): RequestHandler {
 
 export const assertUserCanWrite: RequestHandler = async (req, _res, next) => {
   try {
+    console.log('user can write?');
     const user = req.user;
     const { tenantId: tenantIdValue } = req.body;
 

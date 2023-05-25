@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import addAuthTokenInterceptor from './authTokenInterceptor';
-import { EndpointStatusEntry, ApplicationStatus, MetricResponse } from './models';
+import { EndpointStatusEntry, ApplicationStatus, MetricResponse, Webhooks } from './models';
 
 export class StatusApi {
   private http: AxiosInstance;
@@ -50,3 +50,35 @@ export const fetchStatusMetricsApi = async (url: string, token: string): Promise
   const res = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
   return res.data;
 };
+
+export class WebhookApi {
+  private http: AxiosInstance;
+  constructor(baseUrl: string, token: string) {
+    this.http = axios.create({ baseURL: `${baseUrl}/configuration/v2/configuration/platform` });
+    addAuthTokenInterceptor(this.http, token);
+  }
+
+  async saveWebhook(props: Record<string, Webhooks>): Promise<any> {
+    const body = {
+      operation: 'UPDATE',
+      update: props,
+    };
+
+    const res = await this.http.patch(`/push-service`, body);
+    return res.data;
+  }
+  async fetchWebhook(): Promise<any> {
+    const res = await this.http.get(`/push-service`);
+
+    return res.data;
+  }
+
+  async deleteWebhook(id: string): Promise<any> {
+    const res = await this.http.patch(`/push-service`, {
+      operation: 'DELETE',
+      property: id,
+    });
+
+    return res.data;
+  }
+}

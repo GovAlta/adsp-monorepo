@@ -41,6 +41,8 @@ export const configurationSchema = {
             name: { type: 'string' },
             url: { type: 'string' },
             targetId: { type: 'string' },
+            intervalSeconds: { type: 'number' },
+            description: { type: 'string' },
             eventTypes: {
               type: 'array',
               items: {
@@ -52,7 +54,7 @@ export const configurationSchema = {
         subscriberRoles: { type: 'array', items: { type: 'string' } },
         publicSubscribe: { type: 'boolean' },
       },
-      required: ['id', 'name', 'events', 'subscriberRoles', 'publicSubscribe'],
+      required: ['id', 'name'],
     },
   },
   additionalProperties: false,

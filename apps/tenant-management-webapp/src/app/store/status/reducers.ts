@@ -10,11 +10,15 @@ import {
   UPDATE_FORM_DATA_ACTION,
   FETCH_STATUS_CONFIGURATION_SUCCEEDED,
   UPDATE_STATUS_CONTACT_INFORMATION,
+  FETCH_WEBHOOK_SUCCESS_ACTION,
+  DELETE_WEBHOOK_SUCCESS_ACTION,
+  SAVE_WEBHOOK_SUCCESS_ACTION,
 } from './actions';
 import { ServiceStatus } from './models';
 
 const initialState: ServiceStatus = {
   applications: [],
+  webhooks: {},
   endpointHealth: {},
   currentFormData: {
     name: '',
@@ -62,6 +66,9 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
       }
       return { ...state };
     }
+    case SAVE_WEBHOOK_SUCCESS_ACTION:
+      state.webhooks = action.payload;
+      return { ...state, webhooks: { ...state.webhooks } };
     case TOGGLE_APPLICATION_SUCCESS_STATUS_ACTION:
       return {
         ...state,
@@ -73,7 +80,17 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
           )
           .sort(compareIds),
       };
+    case FETCH_WEBHOOK_SUCCESS_ACTION:
+      return {
+        ...state,
+        webhooks: action.payload,
+      };
+    case DELETE_WEBHOOK_SUCCESS_ACTION: {
+      const deletedWebhook = Object.keys(state.webhooks).find((hook) => hook === action.payload);
 
+      delete state.webhooks[deletedWebhook];
+      return { ...state, webhooks: { ...state.webhooks } };
+    }
     case UPDATE_FORM_DATA_ACTION:
       return {
         ...state,

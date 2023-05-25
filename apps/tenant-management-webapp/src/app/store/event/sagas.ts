@@ -202,6 +202,12 @@ export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaI
         const maxDate = new Date(action.searchCriteria.timestampMax);
         eventUrl = `${eventUrl}&timestampMax=${maxDate.toISOString()}`;
       }
+      if (action.searchCriteria.applications) {
+        eventUrl = `${eventUrl}&value=${action.searchCriteria.applications}`;
+      }
+      if (action.searchCriteria.url) {
+        eventUrl = `${eventUrl}&url=${action.searchCriteria.url}`;
+      }
       if (action.searchCriteria.timestampMin) {
         const minDate = new Date(action.searchCriteria.timestampMin);
         eventUrl = `${eventUrl}&timestampMin=${minDate.toISOString()}`;
