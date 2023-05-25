@@ -253,11 +253,12 @@ Then('the user views {string}', (content) => {
 });
 
 When('the user clicks Generate PDF button in PDF template editor screen', () => {
+  cy.wait(1000);
   pdfServiceObj.pdfGeneratePDFButton().shadow().find('button').click({ force: true });
 });
 
 Then('the user can preview pdf file that generated in iframe', () => {
-  cy.wait(10000);
+  cy.wait(50000);
   pdfServiceObj.pdfTemplatePDFPreview().should('exist');
 });
 

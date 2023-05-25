@@ -54,7 +54,7 @@ class FileServicePage {
   }
 
   fileTypeModalModifyCheckboxes() {
-    return cy.xpath('//*[@data-testid="file-type-modal"]//goa-checkbox[contains(@name, "update-role")]');
+    return cy.xpath('//*[@data-testid="file-type-modal"]//goa-checkbox[contains(@name, "modify-role")]');
   }
 
   fileTypeModalSaveButton() {
