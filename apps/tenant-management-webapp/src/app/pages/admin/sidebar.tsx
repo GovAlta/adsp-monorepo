@@ -220,7 +220,6 @@ const Title = styled.div`
   font-weight: var(--fw-bold);
   text-transform: capitalize;
   padding: 0 0.5rem;
-  overflow-x: hidden;
   white-space: nowrap;
   display: none;
   @media (min-width: 768px) {
