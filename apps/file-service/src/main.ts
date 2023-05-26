@@ -183,6 +183,18 @@ async function initializeApp(): Promise<express.Application> {
         },
       });
     });
+  } else {
+    app.get('/', async (req, res) => {
+      const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
+      res.json({
+        name: 'File service job',
+        description: 'File service job side pod.',
+        _links: {
+          self: { href: new URL(req.originalUrl, rootUrl).href },
+          health: { href: new URL('/health', rootUrl).href },
+        },
+      });
+    });
   }
 
   const errorHandler = createErrorHandler(logger);
