@@ -60,7 +60,8 @@ const DeleteInDaysInputWrapper = styled.div`
   .goa-input {
     border-radius: 0px 4px 4px 0px !important;
   }
-  z-index: -1;
+  z-index: 0;
+  position: revert;
   margin-bottom: 2rem;
 `;
 

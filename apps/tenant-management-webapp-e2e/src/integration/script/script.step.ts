@@ -149,7 +149,7 @@ When(
       cy.wait(1000); // Wait for buttons to show up
       switch (button.toLowerCase()) {
         case 'edit':
-          scriptObj.scriptEditButton(rowNumber).click();
+          scriptObj.scriptEditButton(rowNumber).click({ force: true });
           break;
           break;
         case 'delete':
@@ -174,7 +174,7 @@ When('the user enters {string} as name {string} as description in Edit script mo
 When('the user enters {string} as lua script', function (script) {
   scriptObj
     .editScriptModalLuaScriptEditor()
-    .click()
+    .click({ force: true })
     .focus()
     .type('{ctrl}a')
     .clear()

@@ -150,7 +150,7 @@ When('the user enters {string} in description in configuration definition modal'
     .addConfigurationDefinitionModalDescField()
     .shadow()
     .find('.goa-textarea')
-    .clear()
+    .clear({ force: true })
     .type(desc, { force: true });
 });
 
@@ -166,10 +166,9 @@ When('the user enters "{string}" in payload schema in configuration definition m
 When('the user enters {string} in payload schema in configuration definition modal', function (payload) {
   configurationObj
     .configurationDefinitionModalPayloadEditor()
-    .click()
+    .click({ force: true })
     .focus()
-    .type('{ctrl}a')
-    .clear()
+    .clear({ force: true })
     .type(payload, { force: true });
 });
 
