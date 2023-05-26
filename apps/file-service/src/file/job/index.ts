@@ -8,7 +8,7 @@ import { createDeleteJob } from './delete';
 import { createDeleteOldFilesJob } from './deleteOldFiles';
 import { createScanJob } from './scan';
 import * as schedule from 'node-schedule';
-import { environment } from '../../environments/environment';
+import { environment, POD_TYPES } from '../../environments/environment';
 
 export interface FileServiceWorkItem {
   work: 'scan' | 'delete' | 'unknown';
@@ -34,7 +34,7 @@ export const createFileJobs = (props: FileJobProps): void => {
   const deleteJob = createDeleteJob(props);
   const deleteOldFilesJob = createDeleteOldFilesJob(props);
 
-  if (environment.APP_NAME === 'file-service-job') {
+  if (environment.POD_TYPE === POD_TYPES.job) {
     schedule.scheduleJob('0 2 * * *', deleteOldFilesJob);
     props.logger.info(`Scheduled daily delete job.`);
   } else {
