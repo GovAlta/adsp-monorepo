@@ -144,6 +144,14 @@ describe('generate', () => {
         expect(err).toBeTruthy();
         expect(repositoryMock.update).toHaveBeenCalledWith(item.jobId, 'failed');
         expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: PDF_GENERATION_FAILED }));
+        expect(eventServiceMock.send).toHaveBeenCalledWith(
+          expect.objectContaining({
+            payload: expect.objectContaining({
+              error: 'Error: oh noes!',
+            }),
+          })
+        );
+
         done();
       });
     });
