@@ -7,7 +7,7 @@ import * as compression from 'compression';
 import * as helmet from 'helmet';
 import { createLogger, createErrorHandler, createAmqpConfigUpdateService } from '@core-services/core-common';
 import { AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
-import { environment } from './environments/environment';
+import { environment, POD_TYPES } from './environments/environment';
 import {
   applyFileMiddleware,
   configurationSchema,
@@ -124,7 +124,7 @@ async function initializeApp(): Promise<express.Application> {
 
   let scanService: ScanService = null;
 
-  if (environment.APP_NAME !== 'file-service-job') {
+  if (environment.POD_TYPE !== 'file-service-job') {
     scanService = createScanService(environment.AV_PROVIDER, {
       host: environment.AV_HOST,
       port: environment.AV_PORT,
@@ -164,7 +164,7 @@ async function initializeApp(): Promise<express.Application> {
     });
   });
 
-  if (environment.APP_NAME !== 'file-service-job') {
+  if (environment.POD_TYPE !== POD_TYPES.job) {
     const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
     app.use('/swagger/docs/v1', (_req, res) => {
       res.json(swagger);
