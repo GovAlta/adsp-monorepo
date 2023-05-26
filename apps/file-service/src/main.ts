@@ -156,18 +156,18 @@ async function initializeApp(): Promise<express.Application> {
     ...repositories,
   });
 
+  app.get('/health', async (_req, res) => {
+    const platform = await healthCheck();
+    res.json({
+      ...platform,
+      db: repositories.isConnected(),
+    });
+  });
+
   if (environment.APP_NAME !== 'file-service-job') {
     const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
     app.use('/swagger/docs/v1', (_req, res) => {
       res.json(swagger);
-    });
-
-    app.get('/health', async (_req, res) => {
-      const platform = await healthCheck();
-      res.json({
-        ...platform,
-        db: repositories.isConnected(),
-      });
     });
 
     app.get('/', async (req, res) => {
