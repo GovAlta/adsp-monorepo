@@ -36,7 +36,7 @@ interface ClientRoleTableProps {
 export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
   const [checkedRoles, setCheckedRoles] = useState(props.checkedRoles);
   const service = props.service;
-
+  console.log('roles: ', checkedRoles);
   return (
     <DataTableWrapper>
       <DataTable noScroll={true}>
@@ -69,7 +69,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
                         key={`${service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
                         checked={checkedRole.selectedRoles.includes(compositeRole)}
                         data-testid={`${service}-${checkedRole.title}-role-checkbox-${role}`}
-                        disabled={props.anonymousRead}
+                        disabled={props.anonymousRead && checkedRole.title === 'read'}
                         ariaLabel={`${service}-${checkedRole.title}-role-checkbox-${role}`}
                         onChange={() => {
                           if (checkedRole.selectedRoles.includes(compositeRole)) {
