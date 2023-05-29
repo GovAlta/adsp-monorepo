@@ -4,10 +4,14 @@ import * as util from 'util';
 
 dotenv.config();
 
+export const POD_TYPES = {
+  api: 'api',
+  job: 'job',
+};
+
 export const environment = envalid.cleanEnv(
   process.env,
   {
-    APP_NAME: envalid.str({ default: 'file-service' }),
     KEYCLOAK_ROOT_URL: envalid.str({ default: 'https://access.adsp-dev.gov.ab.ca' }),
     DIRECTORY_URL: envalid.str({ default: 'https://localhost:3331' }),
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:file-service' }),
@@ -31,6 +35,7 @@ export const environment = envalid.cleanEnv(
     AMQP_PASSWORD: envalid.str({ default: 'guest' }),
     PORT: envalid.num({ default: 3337 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
+    POD_TYPE: envalid.str({ default: POD_TYPES.api }),
   },
   {
     reporter: ({ errors }) => {
