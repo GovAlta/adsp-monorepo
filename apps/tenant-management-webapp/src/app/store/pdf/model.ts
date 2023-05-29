@@ -33,6 +33,7 @@ export interface PdfGenerationResponse {
     file?: {
       id?: string;
     };
+    error?: string;
   };
   //eslint-disable-next-line
   data: any;
@@ -93,6 +94,7 @@ interface Stream {
       id: string;
       filename: string;
     };
+    error?: string;
     requestedBy: {
       id: string;
       name: string;
