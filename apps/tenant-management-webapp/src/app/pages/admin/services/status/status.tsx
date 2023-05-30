@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Page, Main, Aside } from '@components/Html';
 import { fetchServiceStatusApps, fetchStatusMetrics, FETCH_SERVICE_STATUS_APPS_ACTION } from '@store/status/actions';
 import { RootState } from '@store/index';
-import ReactTooltip from 'react-tooltip';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton } from '@abgov/react-components';
 import { GoACheckbox } from '@abgov/react-components-new';
@@ -40,14 +39,17 @@ const userHealthSubscriptionSelector = createSelector(
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
-  const { applications, serviceStatusAppUrl, tenantName } = useSelector((state: RootState) => ({
-    applications: state.serviceStatus.applications,
-    serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
-    tenantName: state.tenant.name,
-    session: state.session,
-    tenantManagementWebApp: state.config.serviceUrls.tenantManagementWebApp,
-  }));
+  const { session, applications, serviceStatusAppUrl, tenantManagementWebApp, tenantName } = useSelector(
+    (state: RootState) => ({
+      applications: state.serviceStatus.applications,
+      serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
+      tenantName: state.tenant.name,
+      session: state.session,
+      tenantManagementWebApp: state.config.serviceUrls.tenantManagementWebApp,
+    })
+  );
   const subscription = useSelector(userHealthSubscriptionSelector);
+  const loginUrl = `${tenantManagementWebApp}/${session.realm}/login`;
 
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [showAddApplicationModal, setShowAddApplicationModal] = useState<boolean>(false);
@@ -195,15 +197,8 @@ function Status(): JSX.Element {
         <h3>Public status page</h3>
 
         <p>Url of the current tenant's public status page:</p>
-        <LinkCopyComponent text={'Copy status page link'} link={publicStatusUrl} />
-        <ReactTooltip
-          id="registerTipUrl"
-          place="top"
-          event="click"
-          eventOff="blur"
-          effect="solid"
-          afterShow={() => _afterShow(publicStatusUrl)}
-        />
+        <h3>Status page link</h3>
+        <LinkCopyComponent text={'Copy link'} link={publicStatusUrl} />
       </Aside>
     </Page>
   );

@@ -186,28 +186,26 @@ const Dashboard = (): JSX.Element => {
           <DashboardAside>
             <SupportLinks />
             <h3>Sharing tenant access</h3>
-            <p>To give another user limited access to your realm:</p>
-
-            <p>
-              <ListWrapper>
-                <li>
-                  Share the login URL below and have your user <ExternalLink link={loginUrl} text="login" /> once to
-                  create their account.
-                </li>
-                <li>
-                  Add the 'tenant-admin' role to the user's assigned roles from{' '}
-                  <ExternalLink link={getKeycloakAdminPortalUsers()} text="here" />
-                  <br />
-                  (Role Mapping › Client Roles › urn:ads:platform:tenant-service › Add selected)
-                </li>
-                <li>
-                  Once granted the role, the user can access tenant admin using the URL below.
-                  <br />
-                  <LinkCopyComponent text={'Copy login link'} link={loginUrl} />
-                </li>
-              </ListWrapper>
-            </p>
-            <br />
+            <div>
+              <p>To give another user limited access to your realm:</p>
+              <p>
+                <ListWrapper>
+                  <li>
+                    Share the login URL below and have your user <ExternalLink link={loginUrl} text="login" /> once to
+                    create their account.
+                  </li>
+                  <li>
+                    Add the 'tenant-admin' role to the user's assigned roles from{' '}
+                    <ExternalLink link={getKeycloakAdminPortalUsers()} text="here" />
+                    <br />
+                    (Role Mapping › Client Roles › urn:ads:platform:tenant-service › Add selected)
+                  </li>
+                  <li>Once granted the role, the user can access tenant admin using the URL below.</li>
+                </ListWrapper>
+              </p>
+            </div>
+            <h3>Login link</h3>
+            <LinkCopyComponent text={'Copy link'} link={loginUrl} />
           </DashboardAside>
         </Page>
       </DashboardDiv>
