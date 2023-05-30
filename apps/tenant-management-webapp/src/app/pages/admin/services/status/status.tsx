@@ -198,15 +198,8 @@ function Status(): JSX.Element {
         <h3>Public status page</h3>
 
         <p>Url of the current tenant's public status page:</p>
-        <LinkCopyComponent text={'Copy status page link'} link={publicStatusUrl} />
-        <ReactTooltip
-          id="registerTipUrl"
-          place="top"
-          event="click"
-          eventOff="blur"
-          effect="solid"
-          afterShow={() => _afterShow(publicStatusUrl)}
-        />
+        <h3>Status page link</h3>
+        <LinkCopyComponent text={'Copy link'} link={publicStatusUrl} />
       </Aside>
     </Page>
   );

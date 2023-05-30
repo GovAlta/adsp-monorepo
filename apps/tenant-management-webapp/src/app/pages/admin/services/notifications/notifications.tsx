@@ -77,15 +77,8 @@ export const Notifications: FunctionComponent = () => {
 
         <h3>Manage subscriptions</h3>
         <p>Subscribers can manage their subscriptions here:</p>
-        <LinkCopyComponent text={'Copy subscriber app link'} link={loginUrl} />
-        <ReactTooltip
-          id="registerTipUrl"
-          place="top"
-          event="click"
-          eventOff="blur"
-          effect="solid"
-          afterShow={() => _afterShow(loginUrl)}
-        />
+        <h3>Subscriber app link</h3>
+        <LinkCopyComponent text={'Copy link'} link={loginUrl} />
       </Aside>
     </Page>
   );

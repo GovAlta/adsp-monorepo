@@ -2,7 +2,6 @@ import styled from 'styled-components';
 
 export const LinkCopyComponentWrapper = styled.div`
   position: relative;
-  padding-top: 1.5rem;
 
   p:before {
     content: '';
@@ -35,14 +34,14 @@ export const CopyLinkToolTipWrapper = styled.div`
     padding: 5px 18px;
   }
   .url-tooltip {
-    left: -5.5rem;
+    left: -3rem; // change this for
     font-size: 10px;
   }
   p {
     position: absolute;
     width: 12rem;
     height: 2.2rem;
-    top: -1.8rem;
+    top: -3rem;
     left: 1rem;
   }
 `;
@@ -68,7 +67,7 @@ export const CopyLinkToolTipClipboardWrapper = styled.div`
     border-radius: 30px;
     width: 12rem;
     height: 2.2rem;
-    top: -1.5rem;
+    top: -3rem;
     left: 1rem;
   }
 `;
