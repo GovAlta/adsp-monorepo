@@ -20,17 +20,19 @@ export interface ModalState {
 export interface ElementIndicator {
   show: boolean;
 }
+
+export interface UserInfo {
+  name?: string;
+  preferredUsername?: string;
+  email?: string;
+  emailVerified?: boolean;
+  sub?: string;
+}
 export interface Session {
   authenticated?: boolean;
   clientId?: string;
   realm?: string;
-  userInfo?: {
-    sub?: string;
-    name?: string;
-    preferredUsername?: string;
-    email?: string;
-    emailVerified?: boolean;
-  };
+  userInfo?: UserInfo;
   realmAccess?: {
     roles?: string[];
   };

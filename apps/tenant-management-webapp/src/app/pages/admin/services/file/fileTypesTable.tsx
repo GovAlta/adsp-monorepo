@@ -7,13 +7,9 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { FileTypeDeleteModal } from './fileTypeDeleteModal';
 import styled from 'styled-components';
 import { GoABadge } from '@abgov/react-components/experimental';
+import { FileTypeItem } from '@store/file/models';
 
-interface FileTypeRowProps {
-  name: string;
-  readRoles: string[];
-  updateRoles: string[];
-  anonymousRead: boolean;
-  id: string;
+interface FileTypeRowProps extends FileTypeItem {
   editId: string;
   editable?: boolean;
   roles?: Role[];
@@ -33,6 +29,7 @@ const FileTypeTableRow = ({
   readRoles,
   updateRoles,
   anonymousRead,
+  rules,
   onEdit,
   onDelete,
 }: FileTypeRowProps): JSX.Element => {
@@ -55,6 +52,7 @@ const FileTypeTableRow = ({
           return <GoABadge key={`update-roles-${id}-${role}`} type="information" content={role} />;
         })}
       </td>
+      <td>{rules?.retention?.active ? rules?.retention?.deleteInDays : 'N/A'}</td>
       <td className="actionCol">
         <GoAContextMenu>
           <GoAContextMenuIcon
@@ -86,6 +84,7 @@ const CoreFileTypeTableRow = ({
   readRoles,
   updateRoles,
   anonymousRead,
+  rules,
   onEdit,
   onDelete,
 }: FileTypeRowProps): JSX.Element => {
@@ -108,6 +107,7 @@ const CoreFileTypeTableRow = ({
           return <GoABadge key={`update-roles-${id}-${role}`} type="information" content={role} />;
         })}
       </td>
+      <td>{rules?.retention?.active ? rules?.retention?.deleteInDays : 'N/A'}</td>
     </tr>
   );
 };
@@ -144,6 +144,7 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
                 </th>
                 <th id="read-roles">Read roles</th>
                 <th id="write-roles">Modify roles</th>
+                <th id="retention-policy">Retention period</th>
                 <th className="actionsCol" id="actions">
                   Actions
                 </th>
@@ -184,6 +185,7 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
                   </th>
                   <th id="read-roles">Read roles</th>
                   <th id="write-roles">Modify roles</th>
+                  <th id="retention-policy">Retention period</th>
                 </tr>
               </thead>
               <tbody>

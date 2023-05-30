@@ -148,7 +148,8 @@ export const pdfGenerationFailed = (
   tenantId: AdspId,
   jobId: string,
   templateId: string,
-  requestedBy: { id: string; name: string }
+  requestedBy: { id: string; name: string },
+  payload: { [key: string]: string }
 ): DomainEvent => ({
   name: PDF_GENERATION_FAILED,
   tenantId,
@@ -159,5 +160,6 @@ export const pdfGenerationFailed = (
     jobId,
     templateId,
     requestedBy,
+    ...payload,
   },
 });

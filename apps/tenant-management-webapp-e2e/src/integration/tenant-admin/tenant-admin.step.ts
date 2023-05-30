@@ -367,7 +367,7 @@ Then('the user views the tenant name of {string}', function (tenantName) {
 });
 
 When('the user clicks Copy login link', function () {
-  tenantAdminObj.copyLoginLinkButton().shadow().find('button').scrollIntoView().click({ force: true });
+  tenantAdminObj.copyLoginLinkButton().shadow().find('button').scrollIntoView().trigger('mouseover');
 });
 
 Then('the user views the message of {string} from clicking Copy login link', function (message) {

@@ -34,7 +34,7 @@ export const CopyLinkToolTipWrapper = styled.div`
     padding: 5px 18px;
   }
   .url-tooltip {
-    left: -3rem; // change this for
+    left: -3rem;
     font-size: 10px;
   }
   p {

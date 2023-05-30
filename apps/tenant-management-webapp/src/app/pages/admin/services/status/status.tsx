@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Page, Main, Aside } from '@components/Html';
 import { fetchServiceStatusApps, fetchStatusMetrics, FETCH_SERVICE_STATUS_APPS_ACTION } from '@store/status/actions';
 import { RootState } from '@store/index';
-import ReactTooltip from 'react-tooltip';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton } from '@abgov/react-components';
 import { GoACheckbox } from '@abgov/react-components-new';

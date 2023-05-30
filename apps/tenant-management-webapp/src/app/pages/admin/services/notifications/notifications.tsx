@@ -2,14 +2,12 @@ import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import { Tab, Tabs } from '@components/Tabs';
 import { RootState } from '@store/index';
-import ReactTooltip from 'react-tooltip';
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { NotificationsOverview } from './overview';
 import { NotificationTypes } from './notificationTypes';
 import { Subscriptions } from './subscriptions';
 import { Subscribers } from './subscribers';
-import { GoAButton } from '@abgov/react-components';
 import { subscriberAppUrlSelector } from './selectors';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
 
@@ -25,10 +23,6 @@ export const Notifications: FunctionComponent = () => {
   const activateEdit = (edit: boolean) => {
     setActiveIndex(1);
     setActivateEditState(edit);
-  };
-
-  const _afterShow = (copyText) => {
-    navigator.clipboard.writeText(copyText);
   };
 
   useEffect(() => {

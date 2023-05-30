@@ -150,7 +150,7 @@ When('the user enters {string} in description in configuration definition modal'
     .addConfigurationDefinitionModalDescField()
     .shadow()
     .find('.goa-textarea')
-    .clear()
+    .clear({ force: true })
     .type(desc, { force: true });
 });
 
@@ -164,7 +164,12 @@ When('the user enters "{string}" in payload schema in configuration definition m
 });
 
 When('the user enters {string} in payload schema in configuration definition modal', function (payload) {
-  configurationObj.configurationDefinitionModalPayloadEditor().click().focus().type('{ctrl}a').clear().type(payload);
+  configurationObj
+    .configurationDefinitionModalPayloadEditor()
+    .click({ force: true })
+    .focus()
+    .clear({ force: true })
+    .type(payload, { force: true });
 });
 
 // payload parameter has payload content without "{}"
