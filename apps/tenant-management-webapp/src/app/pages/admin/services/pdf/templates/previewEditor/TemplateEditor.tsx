@@ -75,6 +75,9 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const debouncedTmpTemplate = useDebounce(tmpTemplate, TEMPLATE_RENDER_DEBOUNCE_TIMER);
+  const [EditorError, setEditorError] = useState<Record<string, string>>({
+    testData: null,
+  });
 
   useEffect(() => {
     if (!pdfTemplate) dispatch(getPdfTemplates());
@@ -175,7 +178,6 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
                       onChange={(value) => {
                         setTmpTemplate({ ...tmpTemplate, header: value });
                       }}
-                      {...bodyEditorConfig}
                     />
                   )}
                 </MonacoDivBody>
@@ -228,13 +230,24 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
               </>
             </Tab>
             <Tab testId={`pdf-test-generator`} label={<PdfEditorLabelWrapper>Test data</PdfEditorLabelWrapper>}>
-              <GoAFormItem error={errors?.body ?? null}>
+              <GoAFormItem error={errors?.body ?? EditorError?.testData ?? null}>
                 <MonacoDivBody style={{ height: monacoHeight }}>
                   <MonacoEditor
                     data-testid="form-schema"
                     value={tmpTemplate?.variables}
                     onChange={(value) => {
                       setTmpTemplate({ ...tmpTemplate, variables: value });
+                    }}
+                    onValidate={(makers) => {
+                      if (makers.length !== 0) {
+                        setEditorError({
+                          testData: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
+                        });
+                      } else {
+                        setEditorError({
+                          testData: null,
+                        });
+                      }
                     }}
                     language="json"
                     {...bodyEditorConfig}
@@ -268,7 +281,7 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
               <PdfEditActions>
                 <>
                   <GoAButton
-                    disabled={!isPDFUpdated(tmpTemplate, template)}
+                    disabled={!isPDFUpdated(tmpTemplate, template) || EditorError?.testData !== null}
                     onClick={() => savePdfTemplate(tmpTemplate)}
                     type="primary"
                     testId="template-form-save"
