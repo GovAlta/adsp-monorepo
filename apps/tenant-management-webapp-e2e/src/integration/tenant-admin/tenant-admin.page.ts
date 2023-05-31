@@ -48,7 +48,7 @@ class TenantAdminPage {
   }
 
   copyLoginLinkButtonMessage() {
-    return cy.xpath('//goa-button[@leadingicon="link"]/preceding-sibling::div//*[@class="message"]');
+    return cy.xpath('//goa-button[@leadingicon="link"]');
   }
 
   goaCardTitles() {
@@ -68,11 +68,11 @@ class TenantAdminPage {
   }
 
   roleInstructionParagragh() {
-    return cy.xpath('(//h3[contains(text(), "Sharing tenant access")]/following-sibling::p)[2]'); // 2nd sibling paragrah of the title
+    return cy.xpath('(//h3[contains(text(), "Sharing tenant access")]/following-sibling::div/p[2])'); // 2nd sibling paragraph of the title
   }
 
   hereLinkForManageUsers() {
-    return cy.xpath('(//h3[contains(text(), "Sharing tenant access")]/following-sibling::p)[2]//a[text()="here"]');
+    return cy.xpath('(//h3[contains(text(), "Sharing tenant access")]/following-sibling::div/p[2]//a[text()="here"])');
   }
 
   dashboardCalloutContenth3Title() {
