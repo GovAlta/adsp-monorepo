@@ -235,15 +235,19 @@ The #each iterator operates on JSON arrays, allowing you to easily collect and p
 
 The PDF service makes it easy to use images uploaded to the [File Service](/adsp-monorepo/tutorials/file-service/introduction.html) in your documents. You can refer to an image by its name, its file ID, or its URN as follows:
 
-- {{ fileId ".file.name.<the file name> }}
-- {{ fileId ".file.fileId.<the file id> }}
-- {{ fileId ".file.urn.<the file URN> }}
+- {% raw %} {{ fileId ".file.name.<the file name> }} {% endraw %}
+- {% raw %} {{ fileId ".file.fileId.<the file id> }} {% endraw %}
+- {% raw %} {{ fileId ".file.urn.<the file URN> }} {% endraw %}
 
 for example, if you upload the GOA _Alberta_ logo to the file service, you can display it in your PDF via:
+
+{% raw %}
 
 ```
 <img src="{{ fileId ".file.name.goa_logo.png" }}" alt="Alberta logo" />
 ```
+
+{% endraw %}
 
 Note: the image must be uploaded in the same environment as the PDF service; i.e. PROD does not look for images uploaded in the UAT environment.
 
