@@ -36,7 +36,7 @@ When('the user clicks Add template button', function () {
 });
 
 Then('the user views Add template modal', function () {
-  pdfServiceObj.pdfAddTemplateModal().shadow().find('.modal-title').invoke('text').should('eq', 'Add template');
+  pdfServiceObj.pdfAddTemplateModal().shadow().get('div[slot="heading"]').invoke('text').should('eq', 'Add template');
 });
 
 When('the user enters {string} as name, {string} as description in pdf template modal', function (name, description) {
@@ -253,11 +253,12 @@ Then('the user views {string}', (content) => {
 });
 
 When('the user clicks Generate PDF button in PDF template editor screen', () => {
+  cy.wait(1000);
   pdfServiceObj.pdfGeneratePDFButton().shadow().find('button').click({ force: true });
 });
 
 Then('the user can preview pdf file that generated in iframe', () => {
-  cy.wait(10000);
+  cy.wait(50000);
   pdfServiceObj.pdfTemplatePDFPreview().should('exist');
 });
 

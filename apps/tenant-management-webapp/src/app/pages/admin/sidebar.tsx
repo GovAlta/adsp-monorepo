@@ -3,21 +3,9 @@ import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
-
-import BarChartIcon from '@icons/bar-chart-outline.svg';
-import KeyIcon from '@icons/key-outline.svg';
-import FileIcon from '@icons/file-tray-stacked-outline.svg';
-import ReceiptIcon from '@icons/receipt-outline.svg';
-import DashboardIcon from '@icons/home-outline.svg';
 import LogoutIcon from '@icons/log-out-outline.svg';
-import FitnessIcon from '@icons/fitness-outline.svg';
-import MegaphoneIcon from '@icons/megaphone-outline.svg';
-import NotificationsIcon from '@icons/notifications-outline.svg';
-import DirectoryIcon from '@icons/list-outline.svg';
-import CalendarIcon from '@icons/calendar-symbol-svgrepo-com.svg';
-import ScriptIcon from '@icons/script.svg';
+
 import BetaBadge from '@icons/beta-badge.svg';
-import { GoAIcon } from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
 import { TenantAdminLogin, TenantLogout, FetchTenant } from '@store/tenant/actions';
 import { getIdpHint } from '@lib/keycloak';
@@ -56,31 +44,27 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
     <Links>
       {authenticated && (
         <>
-          <Title>{tenantName}</Title>
+          <div style={{ paddingBottom: '1rem' }}>
+            <Title>{tenantName}</Title>
+          </div>
           <NavLink to="/admin" exact={true} activeClassName="current" title="Dashboard" data-testid="menu-dashboard">
-            <img src={DashboardIcon} width="16" alt="Admin Dashboard" />
             <span>Dashboard</span>
           </NavLink>
           {hasAdminRole && (
             <>
               <NavLink to="/admin/event-log" activeClassName="current" title="Event log" data-testid="menu-eventLog">
-                <img src={ReceiptIcon} width="16" alt="Admin Event log" />
                 <span>Event log</span>
               </NavLink>
-
               <NavLink
                 to="/admin/service-metrics"
                 activeClassName="current"
                 title="Service metrics"
                 data-testid="menu-service-metrics"
               >
-                <img src={BarChartIcon} width="16" alt="Service metrics" />
                 <span>Service metrics</span>
               </NavLink>
-
               <Title>Services</Title>
               <NavLink to="/admin/access" activeClassName="current" title="Access" data-testid="menu-access">
-                <img src={KeyIcon} width="16" alt="Access Service " />
                 <span>Access</span>
               </NavLink>
               <NavLink
@@ -89,7 +73,6 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
                 title="Calendar"
                 data-testid="menu-calendar"
               >
-                <img src={CalendarIcon} width="16" alt="Calendar Service " />
                 <span>Calendar</span>
                 {betaBadge()}
               </NavLink>
@@ -99,7 +82,6 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
                 title="Configuration"
                 data-testid="menu-configuration"
               >
-                <GoAIcon type="settings" />
                 <span>Configuration</span>
               </NavLink>
               <NavLink
@@ -108,15 +90,12 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
                 title="Directory"
                 data-testid="menu-directory"
               >
-                <img src={DirectoryIcon} width="16" alt="Directory Service " />
                 <span>Directory</span>
               </NavLink>
               <NavLink to="/admin/services/event" activeClassName="current" title="Event" data-testid="menu-event">
-                <img src={MegaphoneIcon} width="16" alt="Events Service" />
                 <span>Event</span>
               </NavLink>
               <NavLink to="/admin/services/file" activeClassName="current" title="File" data-testid="menu-file">
-                <img src={FileIcon} width="16" alt="Files Service" />
                 <span>File</span>
               </NavLink>
               <NavLink
@@ -125,20 +104,16 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
                 title="Notification"
                 data-testid="menu-notification"
               >
-                <img src={NotificationsIcon} width="16" alt="Notifications Service" />
                 <span>Notification</span>
               </NavLink>
               <NavLink to="/admin/services/pdf" activeClassName="current" title="Pdf" data-testid="menu-pdf">
-                <GoAIcon type="document" />
                 <span>PDF</span>
               </NavLink>
               <NavLink to="/admin/services/script" activeClassName="current" title="Script" data-testid="menu-script">
-                <img src={ScriptIcon} width="16" alt="Script Service" />
                 <span>Script</span>
                 {betaBadge()}
               </NavLink>
               <NavLink to="/admin/services/status" activeClassName="current" title="Status" data-testid="menu-status">
-                <img src={FitnessIcon} width="16" alt="Status Service" />
                 <span>Status</span>
               </NavLink>
             </>
@@ -210,19 +185,20 @@ const Links = styled.div`
       margin-top: 0;
     }
 
-    &:hover,
+    &:hover {
+      background: #dcdcdc;
+    }
     &:focus {
       box-shadow: 0 0 1px rgba(0, 0, 0, 0.8);
       outline: none;
       text-decoration: none;
-      color: initial;
+      color: #c8eefa;
     }
     &.current {
-      background: rgba(0, 0, 0, 0.05);
+      background: #c8eefa;
       box-shadow: none;
       outline: none;
       text-decoration: none;
-      color: initial;
     }
     &:visited {
       color: initial;
@@ -240,14 +216,12 @@ const Links = styled.div`
 `;
 
 const Title = styled.div`
-  font-size: var(--fs-xs);
+  font-size: var(--fs-base);
   font-weight: var(--fw-bold);
-  text-transform: uppercase;
+  text-transform: capitalize;
   padding: 0 0.5rem;
-  overflow-x: hidden;
   white-space: nowrap;
   display: none;
-
   @media (min-width: 768px) {
     display: block;
   }

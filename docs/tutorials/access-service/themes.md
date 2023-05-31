@@ -15,7 +15,7 @@ Keycloak allows you to customize the look and feel it's webpages via themes, and
 The _Access Service_ includes several themes that you can use for applications in your realm. You can choose one by logging in to Keycloak as an admin, and then
 navigating to _Realm Settings_ / _Themes_. There you can select a theme for the various pages that your end users can have access to.
 
-![](adsp-monorepo/assets/access-service/keycloak-themes.png)
+![](/adsp-monorepo/assets/access-service/keycloak-themes.png)
 
 The existing set of themes may not suit you needs, however, and you may want to build your own. The _Access Service_ supports this idea, allowing developers to build and test their themes, and then check them into github for deployment.
 
@@ -31,4 +31,10 @@ Keycloak manages themes using Apache's [FreeMarker](https://freemarker.apache.or
 
 Keycloak uses FreeMarker files to build server-side webpages that then get served up to your users.
 
-Probably the easiest way to build and test a new theme is on a local [installation](https://www.keycloak.org/docs/18.0/server_installation/) of Keycloak, using [their guide](https://www.keycloak.org/docs/18.0/server_development/) for developing themes. Once you are happy with it you can deploy it to the UAT server by checking in the theme to [the access-service repository](https://github.com/GovAlta/access-service) on github. Put your folder in the _themes_ directory. It will be deployed automatically when you merge your branch with main.
+Probably the easiest way to build and test a new theme is:
+
+- read the [keycloak guide](https://www.keycloak.org/docs/18.0/server_development/) for developing themes
+- clone the [access-service git repository](https://github.com/GovAlta/access-service/tree/aro)
+- follow the instructions in the repository to build, test, and deploy your new templates.
+
+If you have any questions please contact the ADSP team on slack (#adsp-connect) or email us at [ADSP Support](adsp@gov.ab.ca).

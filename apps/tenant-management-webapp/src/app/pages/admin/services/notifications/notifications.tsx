@@ -2,15 +2,14 @@ import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import { Tab, Tabs } from '@components/Tabs';
 import { RootState } from '@store/index';
-import ReactTooltip from 'react-tooltip';
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { NotificationsOverview } from './overview';
 import { NotificationTypes } from './notificationTypes';
 import { Subscriptions } from './subscriptions';
 import { Subscribers } from './subscribers';
-import { GoAButton } from '@abgov/react-components';
 import { subscriberAppUrlSelector } from './selectors';
+import LinkCopyComponent from '@components/CopyLink/CopyLink';
 
 export const Notifications: FunctionComponent = () => {
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
@@ -24,10 +23,6 @@ export const Notifications: FunctionComponent = () => {
   const activateEdit = (edit: boolean) => {
     setActiveIndex(1);
     setActivateEditState(edit);
-  };
-
-  const _afterShow = (copyText) => {
-    navigator.clipboard.writeText(copyText);
   };
 
   useEffect(() => {
@@ -76,22 +71,8 @@ export const Notifications: FunctionComponent = () => {
 
         <h3>Manage subscriptions</h3>
         <p>Subscribers can manage their subscriptions here:</p>
-        <div className="copy-url">
-          <a target="_blank" href={loginUrl} rel="noreferrer">
-            {loginUrl}
-          </a>
-        </div>
-        <GoAButton data-tip="Copied!" data-for="registerTipUrl">
-          Click to copy
-        </GoAButton>
-        <ReactTooltip
-          id="registerTipUrl"
-          place="top"
-          event="click"
-          eventOff="blur"
-          effect="solid"
-          afterShow={() => _afterShow(loginUrl)}
-        />
+        <h3>Subscriber app link</h3>
+        <LinkCopyComponent text={'Copy link'} link={loginUrl} />
       </Aside>
     </Page>
   );

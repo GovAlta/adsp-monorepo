@@ -49,12 +49,12 @@ class FileServicePage {
 
   fileTypeModalModifyCheckbox(roleName) {
     return cy.xpath(
-      `//*[@data-testid="file-type-modal"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "update-role")]`
+      `//*[@data-testid="file-type-modal"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "modify-role")]`
     );
   }
 
   fileTypeModalModifyCheckboxes() {
-    return cy.xpath('//*[@data-testid="file-type-modal"]//goa-checkbox[contains(@name, "update-role")]');
+    return cy.xpath('//*[@data-testid="file-type-modal"]//goa-checkbox[contains(@name, "modify-role")]');
   }
 
   fileTypeModalSaveButton() {

@@ -4,15 +4,26 @@ import { Role } from '@store/tenant/models';
 import { GoAButton } from '@abgov/react-components';
 import { GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { GoACheckbox, GoAPopover } from '@abgov/react-components-new';
-import styled from 'styled-components';
+import {
+  DeleteInDaysLabel,
+  RetentionPolicyLabel,
+  DeleteInDaysInputWrapper,
+  FileIdItem,
+  ModalOverwrite,
+  AnonymousReadWrapper,
+  RetentionPolicyWrapper,
+  TextLoadingIndicator,
+  InfoCircleWrapper,
+  RetentionToolTip,
+} from './styled-components';
 import { UpdateFileTypeService, CreateFileTypeService } from '@store/file/actions';
 import { FileTypeItem } from '@store/file/models';
 import { useDispatch } from 'react-redux';
-import DataTable from '@components/DataTable';
 import { toKebabName } from '@lib/kebabName';
 import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
+import { ClientRoleTable } from '@components/RoleTable';
 import { ConfigServiceRole } from '@store/access/models';
 import { useValidators } from '@lib/validation/useValidators';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
@@ -28,58 +39,11 @@ interface FileTypeModalProps {
   onSwitch?: () => void;
 }
 
-interface ClientRoleTableProps {
-  roles: string[];
-  roleSelectFunc: (roles: string[], type: string) => void;
-  readRoles: string[];
-  updateRoles: string[];
-  anonymousRead: boolean;
-  clientId: string;
-}
-
 interface DeleteInDaysInputProps {
   updateFunc: (name: string, day: string) => void;
   value: number;
   disabled: boolean;
 }
-
-const DeleteInDaysLabel = styled.label`
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
-  padding-top: 0.5rem;
-  font-size: 18px;
-  padding-bottom: 0.5rem;
-  background: #f1f1f1;
-  border-width: 1px 0px 1px 1px;
-  border-style: solid;
-  border-color: #666666;
-  border-radius: 4px 0px 0px 4px;
-`;
-
-const RetentionPolicyLabel = styled.label`
-  font-size: 24px !important;
-  line-height: 32px;
-  margin-top: 24px;
-  font-weight: normal !important;
-`;
-
-const DeleteInDaysInputWrapper = styled.div`
-  display: inline-block;
-  width: 10rem;
-  .goa-input {
-    border-radius: 0px 4px 4px 0px !important;
-  }
-`;
-
-const FileIdItem = styled.div`
-  background: #f1f1f1;
-  .goa-input {
-    background: #f1f1f1 !important;
-  }
-  .input--goa {
-    background: #f1f1f1 !important;
-  }
-`;
 
 const DeleteInDaysItem = ({ value, updateFunc, disabled }: DeleteInDaysInputProps): JSX.Element => {
   const day = value === undefined ? '' : value.toString();
@@ -97,87 +61,6 @@ const DeleteInDaysItem = ({ value, updateFunc, disabled }: DeleteInDaysInputProp
         />
       </DeleteInDaysInputWrapper>
     </>
-  );
-};
-
-const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
-  const [readRoles, setReadRoles] = useState(props.readRoles);
-  const [updateRoles, setUpdateRoles] = useState(props.updateRoles);
-
-  return (
-    <DataTableWrapper>
-      <DataTable noScroll={true}>
-        <thead>
-          <tr>
-            <th id="file-type-roles" className="role-name">
-              {props.clientId ? props.clientId + ' roles' : 'Roles'}
-            </th>
-            <th id="read-role-action" className="role">
-              Read
-            </th>
-            <th id="write-role-action" className="role">
-              Modify
-            </th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {props.roles?.map((role): JSX.Element => {
-            const compositeRole = props.clientId ? `${props.clientId}:${role}` : role;
-            return (
-              <tr key={`file-type-row-${role}`}>
-                <td className="role-name">{role}</td>
-                <td className="role">
-                  <GoACheckbox
-                    name={`file-type-read-role-checkbox-${role}`}
-                    key={`file-type-read-role-checkbox-${compositeRole}`}
-                    checked={readRoles.includes(compositeRole)}
-                    data-testid={`file-type-read-role-checkbox-${role}`}
-                    ariaLabel={`file-type-read-role-checkbox-${role}-checkbox`}
-                    disabled={props.anonymousRead}
-                    onChange={() => {
-                      if (readRoles.includes(compositeRole)) {
-                        const newRoles = readRoles.filter((readRole) => {
-                          return readRole !== compositeRole;
-                        });
-                        setReadRoles(newRoles);
-                        props.roleSelectFunc(newRoles, 'read');
-                      } else {
-                        const newRoles = [...readRoles, compositeRole];
-                        setReadRoles(newRoles);
-                        props.roleSelectFunc(newRoles, 'read');
-                      }
-                    }}
-                  />
-                </td>
-                <td className="role">
-                  <GoACheckbox
-                    name={`file-type-update-role-checkbox-${role}`}
-                    key={`file-type-update-role-checkbox-${role}`}
-                    checked={updateRoles.includes(compositeRole)}
-                    data-testid={`file-type-update-role-checkbox-${role}`}
-                    ariaLabel={`file-type-update-role-checkbox-${role}-checkbox`}
-                    onChange={() => {
-                      if (updateRoles.includes(compositeRole)) {
-                        const newRoles = updateRoles.filter((updateRole) => {
-                          return updateRole !== compositeRole;
-                        });
-                        setUpdateRoles(newRoles);
-                        props.roleSelectFunc(newRoles, 'write');
-                      } else {
-                        const newRoles = [...updateRoles, compositeRole];
-                        setUpdateRoles(newRoles);
-                        props.roleSelectFunc(newRoles, 'write');
-                      }
-                    }}
-                  />
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </DataTable>
-    </DataTableWrapper>
   );
 };
 
@@ -237,8 +120,11 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
               });
             }
           }}
-          readRoles={fileType?.readRoles}
-          updateRoles={fileType?.updateRoles}
+          service="FileType"
+          checkedRoles={[
+            { title: 'read', selectedRoles: fileType?.readRoles },
+            { title: 'modify', selectedRoles: fileType?.updateRoles },
+          ]}
         />
       </>
     );
@@ -334,25 +220,27 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
                 </GoAPopover>
               </InfoCircleWrapper>
             </RetentionPolicyLabel>
-            <GoACheckbox
-              name="retentionActive"
-              key="retention-period-active-checkbox"
-              checked={fileType?.rules?.retention?.active === true}
-              onChange={(name, checked) => {
-                setFileType({
-                  ...fileType,
-                  rules: {
-                    ...fileType?.rules,
-                    retention: {
-                      ...fileType?.rules?.retention,
-                      active: checked,
+            <RetentionPolicyWrapper>
+              <GoACheckbox
+                name="retentionActive"
+                key="retention-period-active-checkbox"
+                checked={fileType?.rules?.retention?.active === true}
+                onChange={(name, checked) => {
+                  setFileType({
+                    ...fileType,
+                    rules: {
+                      ...fileType?.rules,
+                      retention: {
+                        ...fileType?.rules?.retention,
+                        active: checked,
+                      },
                     },
-                  },
-                });
-              }}
-              text={'Active retention policy'}
-            />
-            <b>Enter retention period</b>
+                  });
+                }}
+                text={'Active retention policy'}
+              />
+              <b>Enter retention period</b>
+            </RetentionPolicyWrapper>
           </GoAFormItem>
           <DeleteInDaysItem
             value={fileType?.rules?.retention?.deleteInDays}
@@ -443,103 +331,3 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
     </ModalOverwrite>
   );
 };
-
-const ModalOverwrite = styled.div`
-  .modal {
-    max-height: 95% !important;
-    min-width: 37.5em;
-    max-width: 2000px;
-  }
-
-  .title {
-    font-weight: 700;
-    font-size: var(--fs-lg);
-    margin-top: 15px;
-  }
-`;
-
-const AnonymousReadWrapper = styled.div`
-  line-height: 2.5em;
-  display: flex;
-`;
-
-const DataTableWrapper = styled.div`
-  .goa-checkbox input[type='checkbox'] {
-    display: none !important;
-  }
-
-  .goa-checkbox {
-    margin-left: 10px;
-    min-height: calc(3rem - 10px);
-  }
-
-  th {
-    position: -webkit-sticky;
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background-color: white;
-    padding-left: 0em !important;
-  }
-  thead,
-  tbody {
-    display: block;
-  }
-
-  tbody {
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
-  .role-name {
-    width: 40em;
-  }
-
-  .role {
-    width: 3em;
-  }
-
-  td {
-    // padding-left: 0em !important;
-    padding: 0em !important;
-  }
-
-  table {
-    border-collapse: collapse !important;
-    width: 100%;
-  }
-
-  th {
-    white-space: pre-wrap;
-  }
-
-  thead {
-    padding-top: 1.25rem;
-  }
-`;
-
-export const TextLoadingIndicator = styled.div`
-  animation: blinker 1s linear infinite;
-  font-size: 16px;
-  font-style: italic;
-  text-align: center;
-  @keyframes blinker {
-    50% {
-      opacity: 0;
-    }
-  }
-`;
-
-const InfoCircleWrapper = styled.div`
-  position: relative;
-  top: 3px;
-  transform: scale(1.2);
-  margin-left: 0.5rem;
-  display: inline-block;
-`;
-
-const RetentionToolTip = styled.p`
-  font-size: 16px !important;
-  font-weight: normal;
-  line-height: 1.5rem;
-`;

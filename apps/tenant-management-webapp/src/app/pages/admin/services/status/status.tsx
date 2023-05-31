@@ -7,7 +7,6 @@ import {
   fetchWebhooks,
 } from '@store/status/actions';
 import { RootState } from '@store/index';
-import ReactTooltip from 'react-tooltip';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton } from '@abgov/react-components';
 import { GoACheckbox } from '@abgov/react-components-new';
@@ -26,7 +25,10 @@ import { createSelector } from 'reselect';
 import { StatusOverview } from './overview';
 import { useActionStateCheck } from '@components/Indicator';
 import { ApplicationList } from './styled-components';
+
 import { WebhookFormModal } from './webhookForm';
+
+import LinkCopyComponent from '@components/CopyLink/CopyLink';
 
 const userHealthSubscriptionSelector = createSelector(
   (state: RootState) => state.session.userInfo?.sub,
@@ -47,12 +49,14 @@ const userHealthSubscriptionSelector = createSelector(
 
 function Status(): JSX.Element {
   const dispatch = useDispatch();
+
   const { applications, serviceStatusAppUrl, tenantName, webhooks } = useSelector((state: RootState) => ({
     applications: state.serviceStatus.applications,
     webhooks: state.serviceStatus.webhooks,
     serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
     tenantName: state.tenant.name,
   }));
+
   const subscription = useSelector(userHealthSubscriptionSelector);
 
   const [activeIndex, setActiveIndex] = useState<number>(0);
@@ -245,23 +249,8 @@ function Status(): JSX.Element {
         <h3>Public status page</h3>
 
         <p>Url of the current tenant's public status page:</p>
-
-        <div className="copy-url">
-          <a target="_blank" href={publicStatusUrl} rel="noreferrer">
-            {publicStatusUrl}
-          </a>
-        </div>
-        <GoAButton data-tip="Copied!" data-for="registerTipUrl">
-          Click to copy
-        </GoAButton>
-        <ReactTooltip
-          id="registerTipUrl"
-          place="top"
-          event="click"
-          eventOff="blur"
-          effect="solid"
-          afterShow={() => _afterShow(publicStatusUrl)}
-        />
+        <h3>Status page link</h3>
+        <LinkCopyComponent text={'Copy link'} link={publicStatusUrl} />
       </Aside>
     </Page>
   );

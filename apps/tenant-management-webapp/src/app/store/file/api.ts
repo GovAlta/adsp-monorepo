@@ -49,7 +49,7 @@ export class FileApi {
   }
 
   async downloadFiles(id: string): Promise<FileService> {
-    const url = `${this.fileConfig.endpoints.fileAdmin}/${id}/download`;
+    const url = `${this.fileConfig.endpoints.fileAdmin}/${id}/download?unsafe=true`;
     const res = await this.http.get(url, { responseType: 'blob' });
     return res.data;
   }

@@ -77,7 +77,7 @@ export function createGenerateJob({
     } catch (err) {
       if (!retryOnError) {
         await repository.update(jobId, 'failed');
-        eventService.send(pdfGenerationFailed(tenantId, jobId, templateId, requestedBy));
+        eventService.send(pdfGenerationFailed(tenantId, jobId, templateId, requestedBy, { error: err.toString() }));
         logger.error(`Generation of PDF (ID: ${jobId}) failed with error. ${err}`);
       }
 

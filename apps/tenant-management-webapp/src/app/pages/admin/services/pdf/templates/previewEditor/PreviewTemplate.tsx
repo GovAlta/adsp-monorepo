@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GoAButton, GoAIconButton } from '@abgov/react-components-new';
+import { GoAButton, GoAIconButton, GoACallout } from '@abgov/react-components-new';
 import _ from 'underscore';
 import { generatePdf, updatePdfResponse, showCurrentFilePdf, setPdfDisplayFileId } from '@store/pdf/action';
 
@@ -49,6 +49,8 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
   const jobList = useSelector((state: RootState) =>
     state?.pdf?.jobs.filter((job) => job.templateId === pdfTemplate.id)
   );
+  const pdfGenerationError = jobList?.[0]?.payload?.error;
+  const hasError = pdfGenerationError && pdfGenerationError.length > 0;
 
   useEffect(() => {
     dispatch(updatePdfResponse({ fileList: fileList }));
@@ -113,20 +115,26 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
     return (
       <>
         <PreviewTop title={channelTitle} />
-        {indicator?.show ? (
+        {indicator?.show && (
           <SpinnerPadding>
             <GoAPageLoader visible={true} type="infinite" message={indicator.message} />
           </SpinnerPadding>
-        ) : (
-          blobUrl && (
+        )}
+        {!indicator?.show && !hasError && blobUrl && (
+          <div>
             <div>
-              <div>
-                <object type="application/pdf" data={blobUrl} height={windowSize - 200} style={{ width: '100%' }}>
-                  <iframe title={'PDF preview'} src={blobUrl} height="100%" width="100%"></iframe>
-                </object>
-              </div>
+              <object type="application/pdf" data={blobUrl} height={windowSize - 200} style={{ width: '100%' }}>
+                <iframe title={'PDF preview'} src={blobUrl} height="100%" width="100%"></iframe>
+              </object>
             </div>
-          )
+          </div>
+        )}
+        {!indicator?.show && hasError && (
+          <>
+            <GoACallout type="emergency" heading="Error in PDF generation">
+              {pdfGenerationError}
+            </GoACallout>
+          </>
         )}
       </>
     );
