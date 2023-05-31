@@ -231,6 +231,22 @@ would yield three history blocks, each looking something like
 
 The #each iterator operates on JSON arrays, allowing you to easily collect and process lists of data.
 
+#### Adding Images
+
+The PDF service makes it easy to use images uploaded to the [File Service](/adsp-monorepo/tutorials/file-service/introduction.html) in your documents. You can refer to an image by its name, its file ID, or its URN as follows:
+
+- {{ fileId ".file.name.<the file name> }}
+- {{ fileId ".file.fileId.<the file id> }}
+- {{ fileId ".file.urn.<the file URN> }}
+
+for example, if you upload the GOA _Alberta_ logo to the file service, you can display it in your PDF via:
+
+```
+<img src="{{ fileId ".file.name.goa_logo.png" }}" alt="Alberta logo" />
+```
+
+Note: the image must be uploaded in the same environment as the PDF service; i.e. PROD does not look for images uploaded in the UAT environment.
+
 #### Avoiding Page Breaks
 
 One of the goals for the IRC template was to avoid page breaks over the history blocks. That is, if a block can fit on one page, make it do so. Pagination is controlled by Puppeteer, and it pays attention to CSS @[media directives](https://www.smashingmagazine.com/2018/05/print-stylesheets-in-2018/).
