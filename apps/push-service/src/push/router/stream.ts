@@ -283,7 +283,7 @@ export const createStreamRouter = (
                     try {
                       if (isValidUrl(endpointWebsocket)) {
                         const beforeWebhook = new Date().getTime();
-                        response = await axios.post(endpointWebsocket, next);
+                        response = await axios.post(endpointWebsocket, next, { timeout: 5000 });
                         callResponseTime = new Date().getTime() - beforeWebhook;
                       }
                     } catch (err) {

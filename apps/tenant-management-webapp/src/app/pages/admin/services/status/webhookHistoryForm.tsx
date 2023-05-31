@@ -192,17 +192,12 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
     setSearchCriteria(criteria);
     setViewWebhooks(true);
   };
-  const onSearchCancel = () => {
-    setSearched(false);
-    dispatch(getEventLogEntries());
-  };
+
   const onNext = () => {
     searched ? dispatch(getEventLogEntries(next, searchCriteria)) : dispatch(getEventLogEntries(next));
   };
 
   const entries = useSelector((state: RootState) => state.event.entries);
-
-  const filtedByApplicationEntries = entries?.filter((entry) => entry.details.targetId === searchCriteria.applications);
 
   return (
     <GoAModalStyle>
@@ -289,32 +284,36 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
               </SearchButtonPadding>
               {viewWebhooks && (
                 <GoAFormItem>
-                  <DataTable>
-                    <colgroup>
-                      <col className="data-col" />
-                      <col className="data-col" />
-                      <col className="data-col" />
-                      <col className="data-col" />
-                    </colgroup>
-                    <thead>
-                      <tr>
-                        <th id="name">Name</th>
-                        <th id="url">URL</th>
-                        <th id="status">Status</th>
-                        <th id="timestamp">Occurred</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {entries !== null &&
-                        entries.map((entry) => (
-                          <EventLogEntryComponent
-                            key={`${entry.timestamp}${entry.namespace}${entry.name}`}
-                            entry={entry}
-                            onSearchRelated={(correlationId) => onSearch({ correlationId })}
-                          />
-                        ))}
-                    </tbody>
-                  </DataTable>
+                  {entries?.length > 0 ? (
+                    <DataTable>
+                      <colgroup>
+                        <col className="data-col" />
+                        <col className="data-col" />
+                        <col className="data-col" />
+                        <col className="data-col" />
+                      </colgroup>
+                      <thead>
+                        <tr>
+                          <th id="name">Name</th>
+                          <th id="url">URL</th>
+                          <th id="status">Status</th>
+                          <th id="timestamp">Occurred</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {entries !== null &&
+                          entries.map((entry) => (
+                            <EventLogEntryComponent
+                              key={`${entry.timestamp}${entry.namespace}${entry.name}`}
+                              entry={entry}
+                              onSearchRelated={(correlationId) => onSearch({ correlationId })}
+                            />
+                          ))}
+                      </tbody>
+                    </DataTable>
+                  ) : (
+                    'No webhook history'
+                  )}
                   {next && (
                     <GoAButton disabled={isLoading} onClick={onNext}>
                       Load more...
