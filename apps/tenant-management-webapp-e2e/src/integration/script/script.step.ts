@@ -176,9 +176,8 @@ When('the user enters {string} as lua script', function (script) {
     .editScriptModalLuaScriptEditor()
     .click({ force: true })
     .focus()
-    .type('{ctrl}a')
-    .clear()
-    .type(script, { parseSpecialCharSequences: false });
+    .clear({ force: true })
+    .type(script, { force: true });
 });
 
 When('the user clicks Save button in Edit script modal', function () {
