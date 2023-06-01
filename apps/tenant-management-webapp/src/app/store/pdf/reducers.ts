@@ -51,6 +51,7 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
       };
     case UPDATE_PDF_TEMPLATE_SUCCESS_NO_REFRESH_ACTION:
       state.pdfTemplates = { ...state.pdfTemplates, ...action.payload };
+      state.currentId = null;
       return state;
     case DELETE_PDF_TEMPLATE_SUCCESS_ACTION:
       return {
@@ -124,6 +125,7 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
         }
         jobs[index].stream.push(action.payload);
         jobs[index].status = action.payload.name;
+        jobs[index].payload = { ...action.payload?.payload };
       } else {
         if (action.payload?.filename) {
           jobs = [action.payload].concat(jobs);

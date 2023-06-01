@@ -2,7 +2,6 @@ import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import { Tab, Tabs } from '@components/Tabs';
 import { RootState } from '@store/index';
-import ReactTooltip from 'react-tooltip';
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { NotificationsOverview } from './overview';
@@ -24,10 +23,6 @@ export const Notifications: FunctionComponent = () => {
   const activateEdit = (edit: boolean) => {
     setActiveIndex(1);
     setActivateEditState(edit);
-  };
-
-  const _afterShow = (copyText) => {
-    navigator.clipboard.writeText(copyText);
   };
 
   useEffect(() => {
@@ -76,15 +71,8 @@ export const Notifications: FunctionComponent = () => {
 
         <h3>Manage subscriptions</h3>
         <p>Subscribers can manage their subscriptions here:</p>
-        <LinkCopyComponent text={'Copy subscriber app link'} link={loginUrl} />
-        <ReactTooltip
-          id="registerTipUrl"
-          place="top"
-          event="click"
-          eventOff="blur"
-          effect="solid"
-          afterShow={() => _afterShow(loginUrl)}
-        />
+        <h3>Subscriber app link</h3>
+        <LinkCopyComponent text={'Copy link'} link={loginUrl} />
       </Aside>
     </Page>
   );

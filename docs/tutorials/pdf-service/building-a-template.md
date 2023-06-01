@@ -231,6 +231,34 @@ would yield three history blocks, each looking something like
 
 The #each iterator operates on JSON arrays, allowing you to easily collect and process lists of data.
 
+#### Adding Images
+
+The PDF service makes it easy to use images uploaded to the [File Service](/adsp-monorepo/tutorials/file-service/introduction.html) in your documents. You can refer to an image, through handlebars, by its file ID, its name, or its URN as follows:
+
+- {% raw %} {{ fileId ".file.name.[the file name] }} {% endraw %}
+- {% raw %} {{ fileId ".file.fileId.[the file id] }} {% endraw %}
+- {% raw %} {{ fileId ".file.urn.[the file URN] }} {% endraw %}
+
+For example, if you upload the GOA _Alberta_ logo to the file service, you can display it in your PDF by ID like this:
+{% raw %}
+
+```
+<img src="{{ fileId ".file.fileId.27d6c5f2-924f-4dd3-9225-10d019ca23b6" }}" alt="Alberta logo" />
+```
+
+{% endraw %}
+or by name, like this:
+{% raw %}
+
+```
+<img src="{{ fileId ".file.name.goa_logo.png" }}" alt="Alberta logo" />
+```
+
+{% endraw %}
+The former ensures that you are referring to a unique file, as the file service allows duplicate file names. We recommend that you always use the file ID.
+
+Note: the image must be uploaded in the same environment as the PDF service; i.e. PROD does not look for images uploaded in the UAT environment and vise versa.
+
 #### Avoiding Page Breaks
 
 One of the goals for the IRC template was to avoid page breaks over the history blocks. That is, if a block can fit on one page, make it do so. Pagination is controlled by Puppeteer, and it pays attention to CSS @[media directives](https://www.smashingmagazine.com/2018/05/print-stylesheets-in-2018/).
