@@ -58,7 +58,7 @@ export class WebhookApi {
     addAuthTokenInterceptor(this.http, token);
   }
 
-  async saveWebhook(props: Record<string, Webhooks>): Promise<any> {
+  async saveWebhook(props: Record<string, Webhooks>): Promise<object> {
     const body = {
       operation: 'UPDATE',
       update: props,
@@ -67,13 +67,13 @@ export class WebhookApi {
     const res = await this.http.patch(`/push-service`, body);
     return res.data;
   }
-  async fetchWebhook(): Promise<any> {
+  async fetchWebhook(): Promise<object> {
     const res = await this.http.get(`/push-service`);
 
     return res.data;
   }
 
-  async deleteWebhook(id: string): Promise<any> {
+  async deleteWebhook(id: string): Promise<object> {
     const res = await this.http.patch(`/push-service`, {
       operation: 'DELETE',
       property: id,

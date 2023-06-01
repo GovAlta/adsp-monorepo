@@ -31,7 +31,6 @@ interface StreamRouterProps {
   logger: Logger;
   eventServiceAmp: DomainEventSubscriberService;
   tenantService: TenantService;
-  configurationService: ConfigurationService;
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
   eventService: EventService;
@@ -278,7 +277,7 @@ export const createStreamRouter = (
                   const endpointWebsocket = webhooks[key].url;
 
                   if (eventMatches.length > 0) {
-                    let response: any;
+                    let response;
                     let callResponseTime = 0;
                     try {
                       if (isValidUrl(endpointWebsocket)) {

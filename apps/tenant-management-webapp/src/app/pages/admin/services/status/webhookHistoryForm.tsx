@@ -1,26 +1,15 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { saveWebhook } from '../../../../store/status/actions';
 import { EventLogEntry, EventSearchCriteria } from '@store/event/models';
 import { Webhooks } from '../../../../store/status/models';
 import DataTable from '@components/DataTable';
 import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
-import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
-import { GoACheckbox, GoADropdown, GoADropdownOption } from '@abgov/react-components';
+import { GoADropdown, GoADropdownOption } from '@abgov/react-components';
 import { getEventDefinitions } from '@store/event/actions';
-import { useValidators } from '@lib/validation/useValidators';
-import { renderNoItem } from '@components/NoItem';
+
 import { GoABadge } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
 import { GoAButton } from '@abgov/react-components/experimental';
-
-import {
-  characterCheck,
-  validationPattern,
-  isNotEmptyCheck,
-  Validator,
-  wordMaxLengthCheck,
-} from '@lib/validation/checkInput';
 
 import {
   GoAForm,
@@ -32,24 +21,7 @@ import {
   GoAModalTitle,
 } from '@abgov/react-components/experimental';
 
-import { GoATextArea } from '@abgov/react-components-new';
 import { RootState } from '../../../../store/index';
-import { createSelector } from 'reselect';
-import { DropdownListContainer, DropdownList } from './styled-components';
-import { Application } from 'express-serve-static-core';
-interface CorrelationIndicatorProps {
-  color: string;
-}
-
-const IndicatorDiv = styled.div`
-  width: 12px;
-  height: 12px;
-  background: ${(props) => props.color};
-  border-radius: 100%;
-`;
-const CorrelationIndicator: FunctionComponent<CorrelationIndicatorProps> = ({ color }) => {
-  return color && <IndicatorDiv color={color} />;
-};
 
 interface Props {
   onCancel: () => void;
@@ -93,8 +65,6 @@ const EventLogEntryComponent: FunctionComponent<EventLogEntryComponentProps> = (
   entry,
   onSearchRelated,
 }: EventLogEntryComponentProps) => {
-  const [showDetails, setShowDetails] = useState(false);
-
   const dateArray = entry.timestamp.toDateString().split(' ');
   const date = dateArray[1] + ' ' + ordinal_suffix_of(dateArray[2]);
 
@@ -115,29 +85,14 @@ const EventLogEntryComponent: FunctionComponent<EventLogEntryComponentProps> = (
           <span>{entry.timestamp.toLocaleTimeString()}</span>
         </td>
       </tr>
-      {showDetails && (
-        <tr>
-          <td headers="correlation timestamp namespace name details" colSpan={5} className="event-details">
-            <div>{JSON.stringify(entry.details, null, 2)}</div>
-          </td>
-        </tr>
-      )}
     </>
   );
 };
 
 export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhook }: Props): JSX.Element => {
   const dispatch = useDispatch();
-  //const [webhook, setWebhook] = useState<Webhooks>({ ...defaultWebhooks });
-
-  const [selectedApplications, setSelectedApplications] = useState();
-  const [open, setOpen] = useState(false);
   const [viewWebhooks, setViewWebhooks] = useState(false);
-  const [selectedUrl, setSelectedURL] = useState('');
-  const [timeStampMin, setTimeStampMin] = useState('');
-  const [timeStampMax, setTimeStampMax] = useState('');
   const [searched, setSearched] = useState(false);
-  const [colors, setColors] = useState({});
   const initCriteria: EventSearchCriteria = {
     name: 'webhook-triggered',
     namespace: 'push-service',
@@ -153,37 +108,11 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
   const isLoading = useSelector((state: RootState) => state.event.isLoading.log);
   const today = new Date().toLocaleDateString().split('/').reverse().join('-');
 
-  const { directory } = useSelector((state: RootState) => state.directory);
-  const { webhooks } = useSelector((state: RootState) => state.serviceStatus);
   const { applications } = useSelector((state: RootState) => state.serviceStatus);
-  const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
 
   useEffect(() => {
     dispatch(getEventDefinitions());
   }, [dispatch]);
-
-  const { errors, validators } = useValidators(
-    'nameAppKey',
-    'name',
-    checkForBadChars,
-    wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('nameAppKey')
-  )
-    .add('nameOnly', 'name', checkForBadChars)
-    .add(
-      'url',
-      'url',
-      wordMaxLengthCheck(150, 'URL'),
-      characterCheck(validationPattern.validURL),
-      isNotEmptyCheck('url')
-    )
-    .build();
-
-  useEffect(() => {
-    if (directory.length === 0) {
-      //dispatch(fetchDirectory());
-    }
-  }, []);
 
   const onSearch = (criteria: EventSearchCriteria) => {
     dispatch(clearEventLogEntries());
@@ -229,7 +158,7 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
                 </GoADropdown>
               </GoAFormItem>
 
-              <GoAFormItem error={errors?.['description']}>
+              <GoAFormItem>
                 <label>URL</label>
                 <GoAInput
                   name="url"
@@ -252,7 +181,6 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
                       aria-label="timestampMin"
                       value={searchCriteria.timestampMin}
                       onChange={(e) => setSearchCriteria({ ...searchCriteria, timestampMin: e.target.value })}
-                      onClick={() => setOpen(false)}
                     />
                   </GoAFormItem>
                 </StartDate>
@@ -266,7 +194,6 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
                       aria-label="timestampMax"
                       value={searchCriteria.timestampMax}
                       onChange={(e) => setSearchCriteria({ ...searchCriteria, timestampMax: e.target.value })}
-                      onClick={() => setOpen(false)}
                     />
                   </GoAFormItem>
                 </EndDate>
@@ -312,7 +239,7 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
                       </tbody>
                     </DataTable>
                   ) : (
-                    'No webhook history'
+                    'No webhook history found'
                   )}
                   {next && (
                     <GoAButton disabled={isLoading} onClick={onNext}>
@@ -329,8 +256,7 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
             buttonType="secondary"
             onClick={() => {
               setViewWebhooks(false);
-              if (onCancel) onCancel();
-              // setWebhook({ ...defaultWebhooks });
+              onCancel();
             }}
           >
             Cancel

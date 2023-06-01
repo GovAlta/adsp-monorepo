@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { Webhooks } from '@store/status/models';
 import DataTable from '@components/DataTable';

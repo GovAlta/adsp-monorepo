@@ -93,10 +93,6 @@ function Status(): JSX.Element {
 
   const publicStatusUrl = `${serviceStatusAppUrl}/${tenantName.replace(/\s/g, '-').toLowerCase()}`;
 
-  const _afterShow = (copyText) => {
-    navigator.clipboard.writeText(copyText);
-  };
-
   useEffect(() => {
     dispatch(getNotices());
     dispatch(GetMySubscriber());
