@@ -48,7 +48,11 @@ When(
       .then((publicCheckboxClassName) => {
         if (role.toLowerCase() == 'public') {
           if (!publicCheckboxClassName?.includes('--selected')) {
-            notificationsObj.notificationTypeModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
+            notificationsObj
+              .notificationTypeModalPublicCheckbox()
+              .shadow()
+              .find('.goa-checkbox-container')
+              .click({ force: true });
           }
         } else {
           if (publicCheckboxClassName?.includes('--selected')) {
@@ -101,7 +105,11 @@ When(
               if (classAttVal.includes('selected')) {
                 cy.log('Bot check box is already selected. ');
               } else {
-                notificationsObj.notificationChannelCheckbox('bot').shadow().find('.goa-checkbox-container').click();
+                notificationsObj
+                  .notificationChannelCheckbox('bot')
+                  .shadow()
+                  .find('.goa-checkbox-container')
+                  .click({ force: true });
               }
               break;
             case 'no':
@@ -109,7 +117,11 @@ When(
                 if (!classAttVal.includes('selected')) {
                   cy.log('Bot check box is already not selected. ');
                 } else {
-                  notificationsObj.notificationChannelCheckbox('bot').shadow().find('.goa-checkbox-container').click();
+                  notificationsObj
+                    .notificationChannelCheckbox('bot')
+                    .shadow()
+                    .find('.goa-checkbox-container')
+                    .click({ force: true });
                 }
               }
               break;
@@ -874,16 +886,15 @@ When(
       .eventTemplateModalSubject(channelNameInTitle)
       .click()
       .focus()
-      .type('{ctrl}a')
-      .clear()
-      .type(subjectText, { parseSpecialCharSequences: false });
+      .clear({ force: true })
+      .type(subjectText, { force: true });
+
     notificationsObj
       .eventTemplateModalBody(channelNameInTitle)
       .click()
       .focus()
-      .type('{ctrl}a')
-      .clear()
-      .type(bodyText, { parseSpecialCharSequences: false });
+      .clear({ force: true })
+      .type(bodyText, { force: true });
   }
 );
 
