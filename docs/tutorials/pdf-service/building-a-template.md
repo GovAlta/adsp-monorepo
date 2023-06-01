@@ -233,14 +233,21 @@ The #each iterator operates on JSON arrays, allowing you to easily collect and p
 
 #### Adding Images
 
-The PDF service makes it easy to use images uploaded to the [File Service](/adsp-monorepo/tutorials/file-service/introduction.html) in your documents. You can refer to an image by its name, its file ID, or its URN as follows:
+The PDF service makes it easy to use images uploaded to the [File Service](/adsp-monorepo/tutorials/file-service/introduction.html) in your documents. You can refer to an image, through handlebars, by its file ID, its name, or its URN as follows:
 
 - {% raw %} {{ fileId ".file.name.[the file name] }} {% endraw %}
 - {% raw %} {{ fileId ".file.fileId.[the file id] }} {% endraw %}
 - {% raw %} {{ fileId ".file.urn.[the file URN] }} {% endraw %}
 
-for example, if you upload the GOA _Alberta_ logo to the file service, you can display it in your PDF via:
+For example, if you upload the GOA _Alberta_ logo to the file service, you can display it in your PDF by ID like this:
+{% raw %}
 
+```
+<img src="{{ fileId ".file.fileId.27d6c5f2-924f-4dd3-9225-10d019ca23b6" }}" alt="Alberta logo" />
+```
+
+{% endraw %}
+or by name, like this:
 {% raw %}
 
 ```
@@ -248,8 +255,9 @@ for example, if you upload the GOA _Alberta_ logo to the file service, you can d
 ```
 
 {% endraw %}
+The former ensures that you are referring to a unique file, as the file service allows duplicate file names. We recommend that you always use the file ID.
 
-Note: the image must be uploaded in the same environment as the PDF service; i.e. PROD does not look for images uploaded in the UAT environment.
+Note: the image must be uploaded in the same environment as the PDF service; i.e. PROD does not look for images uploaded in the UAT environment and vise versa.
 
 #### Avoiding Page Breaks
 
