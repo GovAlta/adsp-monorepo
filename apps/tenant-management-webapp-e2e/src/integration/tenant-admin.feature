@@ -73,7 +73,7 @@ Feature: Tenant admin
     And the user views the link of "Get support" under Support
     And the user views an instruction of role requirement indicating user needs tenant-admin
     When the user clicks Copy login link
-    Then the user views the message of "Link copied to clipboard" from clicking Copy login link
+    Then the user views the message of "Copy link" from clicking Copy login link
     # Getting content from clipboard doesn't work on build agent. Commented out this validation.
     # Then the login link is copied to the clipboard
     And the user views introductions and links for "Access", "Calendar", "Configuration", "Directory", "Event", "File", "Notification", "PDF", "Script" and "Status"

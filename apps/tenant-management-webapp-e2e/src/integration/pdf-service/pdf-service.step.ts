@@ -4,6 +4,7 @@ import commonlib from '../common/common-library';
 import common from '../common/common.page';
 const pdfServiceObj = new PDFServicePage();
 const commonObj = new common();
+
 Given('a tenant admin user is on PDF service overview page', function () {
   commonlib.tenantAdminDirectURLLogin(
     Cypress.config().baseUrl,
@@ -120,7 +121,7 @@ When(
   function (iconType, name, templateId, description) {
     switch (iconType.toLowerCase()) {
       case 'edit':
-        cy.viewport(1440, 900);
+        cy.viewport(1441, 901);
         pdfServiceObj.pdfTemplateEditBtn(name, templateId, description).click({ force: true });
         break;
       case 'delete':
