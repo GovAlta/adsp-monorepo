@@ -56,7 +56,11 @@ When(
           }
         } else {
           if (publicCheckboxClassName?.includes('--selected')) {
-            notificationsObj.notificationTypeModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
+            notificationsObj
+              .notificationTypeModalPublicCheckbox()
+              .shadow()
+              .find('.goa-checkbox-container')
+              .click({ force: true });
           }
           // Deselect all previously selected roles and then select new roles
           notificationsObj
@@ -182,7 +186,7 @@ When(
                   .shadow()
                   .find('.goa-checkbox-container')
                   .click();
-                notificationsObj.notificationTypeModalSelfServiceCalloutContent().should('be.visible');
+                notificationsObj.notificationTypeModalSelfServiceCalloutContent().scrollIntoView().should('be.visible');
               }
               break;
             case 'no':
@@ -884,14 +888,14 @@ When(
     }
     notificationsObj
       .eventTemplateModalSubject(channelNameInTitle)
-      .click()
+      .click({ force: true })
       .focus()
       .clear({ force: true })
       .type(subjectText, { force: true });
 
     notificationsObj
       .eventTemplateModalBody(channelNameInTitle)
-      .click()
+      .click({ force: true })
       .focus()
       .clear({ force: true })
       .type(bodyText, { force: true });
