@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import Sidebar from '@pages/admin/sidebar';
 import MenuIcon from '@icons/menu-outline.svg';
 import CloseIcon from '@icons/close-outline.svg';
-import { GoAButton, GoABadge } from '@abgov/react-components-new';
+import { GoAButton } from '@abgov/react-components-new';
 import { TenantAdminLogin, TenantLogout } from '@store/tenant/actions';
 import { getIdpHint } from '@lib/keycloak';
 import { selectUserName, selectUserEmail, selectIsAuthenticated } from '@store/session/selectors';
