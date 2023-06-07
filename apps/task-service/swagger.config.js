@@ -20,7 +20,10 @@ You can combine tasks into  a _queue_ of work units that represents:
 Queues are further organized into namespaces, which allows applications to keep tasks and queues separated by things like projects,
 applications, or features.`,
   },
-  tags: [],
+  tags: [
+    { name: 'Queue', description: 'Managing Task Queues' },
+    { name: 'Task', description: 'Managing Tasks' },
+  ],
   components: {
     securitySchemes: {
       accessToken: {
