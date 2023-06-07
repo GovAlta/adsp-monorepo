@@ -22,7 +22,6 @@ interface HeaderProps {
 const SignoutBadgeWrapper = styled.div`
   display: inline-block;
   position: relative;
-  top: 0.25rem;
 `;
 
 const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
@@ -56,11 +55,7 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
           {/* For admin pages, only logout is required */}
           {(authenticated || props.admin) && (
             <div>
-              {displayName && (
-                <SignoutBadgeWrapper>
-                  <GoABadge type="information" content={displayName as string} />
-                </SignoutBadgeWrapper>
-              )}
+              {displayName && <SignoutBadgeWrapper>{displayName}</SignoutBadgeWrapper>}
               <GoAButton type="tertiary" testId="sign-out-btn" onClick={() => dispatch(TenantLogout())}>
                 Sign out
               </GoAButton>

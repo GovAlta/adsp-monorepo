@@ -71,6 +71,13 @@ const selectServiceKeycloakRoles = createSelector(
   }
 );
 
+const validateRetentionPolicy = (type: FileTypeItem): boolean => {
+  if (type?.rules?.retention?.active) {
+    return type?.rules?.retention?.deleteInDays !== undefined;
+  }
+  return true;
+};
+
 export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   const isNew = props.type === 'new';
   const [fileType, setFileType] = useState(props.fileType);
@@ -282,7 +289,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
           </GoAButton>
           <GoAButton
             buttonType="primary"
-            disabled={!fileType.name || validators.haveErrors()}
+            disabled={!fileType.name || validators.haveErrors() || !validateRetentionPolicy(fileType)}
             data-testid="file-type-modal-save"
             onClick={() => {
               const validations = {
