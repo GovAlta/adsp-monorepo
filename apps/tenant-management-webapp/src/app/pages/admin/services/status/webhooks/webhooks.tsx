@@ -33,8 +33,8 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
   const [historyId, setHistoryId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const onEditCancel = () => {
-    setEditId(null);
+  const onDeleteCancel = () => {
+    setDeleteId(null);
   };
   const onHistoryCancel = () => {
     setHistoryId(null);
@@ -191,7 +191,7 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
           }}
         />
       )}
-      {deleteId && <WebhookDeleteModal webhook={webhooks[deleteId]} onCancel={() => onEditCancel()} />}
+      {deleteId && <WebhookDeleteModal webhook={webhooks[deleteId]} onCancel={() => onDeleteCancel()} />}
       {historyId && <WebhookHistoryModal webhook={webhooks[historyId]} onCancel={() => onHistoryCancel()} />}
     </div>
   );

@@ -178,13 +178,13 @@ export function* deleteApplication(action: DeleteApplicationAction): SagaIterato
 }
 
 export function* deleteWebhook(action: DeleteWebhookAction): SagaIterator {
-  const currentState: RootState = yield select();
-
-  const baseUrl = getServiceStatusUrl(currentState.config);
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
   const token = yield call(getAccessToken);
 
   try {
-    const api = new WebhookApi(baseUrl, token);
+    const api = new WebhookApi(configBaseUrl, token);
     yield call([api, api.deleteWebhook], action.payload.id);
 
     yield put(deleteWebhookSuccess(action.payload.id));

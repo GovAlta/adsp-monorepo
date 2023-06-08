@@ -16,6 +16,7 @@ import {
   fetchStatusConfiguration,
   saveWebhook,
   fetchWebhook,
+  deleteWebhook,
 } from './status/sagas';
 import { watchEventSagas } from './event/sagas';
 import { watchPdfSagas } from './pdf/sagas';
@@ -57,6 +58,7 @@ import {
   UPDATE_STATUS_CONTACT_INFORMATION,
   FETCH_STATUS_CONFIGURATION,
   FETCH_WEBHOOK_ACTION,
+  DELETE_WEBHOOK_ACTION,
 } from './status/actions';
 import { SAVE_NOTICE_ACTION, GET_NOTICES_ACTION, DELETE_NOTICE_ACTION } from './notice/actions';
 import { saveNotice, getNotices, deleteNotice } from './notice/sagas';
@@ -85,6 +87,7 @@ export function* watchSagas() {
   yield takeEvery(SAVE_APPLICATION_ACTION, saveApplication);
   yield takeEvery(SAVE_WEBHOOK_ACTION, saveWebhook);
   yield takeEvery(FETCH_WEBHOOK_ACTION, fetchWebhook);
+  yield takeEvery(DELETE_WEBHOOK_ACTION, deleteWebhook);
 
   yield takeEvery(DELETE_APPLICATION_ACTION, deleteApplication);
   yield takeEvery(SET_APPLICATION_STATUS_ACTION, setApplicationStatus);

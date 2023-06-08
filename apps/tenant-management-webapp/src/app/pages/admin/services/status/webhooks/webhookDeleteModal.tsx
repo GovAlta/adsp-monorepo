@@ -15,7 +15,7 @@ export const WebhookDeleteModal = ({ onCancel, webhook }: WebhookDeleteModalProp
 
   return (
     <GoAModal testId="webhook-delete-modal" isOpen={true}>
-      <GoAModalTitle testId="webhook-delete-modal-title">Delete file type</GoAModalTitle>
+      <GoAModalTitle testId="webhook-delete-modal-title">Delete webhook</GoAModalTitle>
       <GoAModalContent testId="webhook-delete-modal-content">
         <p>
           Deleting the webhook <b>{`${webhook.name}`}</b> cannot be undone.

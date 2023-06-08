@@ -172,6 +172,69 @@ export const ApplicationStatusChangedDefinition: DomainEventDefinition = {
   },
 };
 
+export const ApplicationStatusWebhookDownDefinition: DomainEventDefinition = {
+  name: 'application-status-down-for-waittime',
+  description: 'Signalled when an application status is down for a specified period',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      application: {
+        type: 'object',
+        properties: {
+          id: {
+            type: 'string',
+          },
+          name: {
+            type: 'string',
+          },
+          description: {
+            type: 'string',
+          },
+
+          updatedBy: {
+            type: 'object',
+            properties: {
+              userId: { type: 'string' },
+              userName: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const ApplicationStatusWebhookUpDefinition: DomainEventDefinition = {
+  name: 'application-status-up-for-waittime',
+  description: 'Signalled when an application status is up for a specified period',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      application: {
+        type: 'object',
+        properties: {
+          id: {
+            type: 'string',
+          },
+          name: {
+            type: 'string',
+          },
+          description: {
+            type: 'string',
+          },
+          updatedBy: {
+            type: 'object',
+            properties: {
+              userId: { type: 'string' },
+              userName: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
 const mapNotice = (notice: NoticeApplicationEntity): ApplicationNotificationEvent => {
   return {
     description: notice.message,
@@ -247,6 +310,50 @@ export const applicationStatusToHealthy = (app: StaticApplicationData, tenantId:
   },
   payload: {
     application: app,
+  },
+});
+
+export const applicationStatusWebhookDown = (app: StaticApplicationData, user: User): DomainEvent => ({
+  name: 'application-status-down-for-waittime',
+  timestamp: new Date(),
+  tenantId: user.tenantId,
+  correlationId: app.appKey,
+  context: {
+    applicationId: app.appKey,
+    applicationName: app.name,
+  },
+  payload: {
+    application: {
+      id: app.appKey,
+      name: app.name,
+      description: app.description,
+      updatedBy: {
+        userId: user.id,
+        userName: user.name,
+      },
+    },
+  },
+});
+
+export const applicationStatusWebhookUp = (app: StaticApplicationData, user: User): DomainEvent => ({
+  name: 'application-status-up-for-waittime',
+  timestamp: new Date(),
+  tenantId: user.tenantId,
+  correlationId: app.appKey,
+  context: {
+    applicationId: app.appKey,
+    applicationName: app.name,
+  },
+  payload: {
+    application: {
+      id: app.appKey,
+      name: app.name,
+      description: app.description,
+      updatedBy: {
+        userId: user.id,
+        userName: user.name,
+      },
+    },
   },
 });
 

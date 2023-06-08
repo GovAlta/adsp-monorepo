@@ -5,8 +5,13 @@ import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { EndpointStatusEntry, EndpointStatusType } from '../types';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
-import { AdspId, EventService } from '@abgov/adsp-service-sdk';
-import { applicationStatusToHealthy, applicationStatusToUnhealthy } from '../events';
+import { AdspId, EventService, ServiceDirectory, TokenProvider, adspId, User } from '@abgov/adsp-service-sdk';
+import {
+  applicationStatusToHealthy,
+  applicationStatusToUnhealthy,
+  applicationStatusWebhookDown,
+  applicationStatusWebhookUp,
+} from '../events';
 import { StaticApplicationData } from '../model';
 
 const ENTRY_SAMPLE_SIZE = 5;
@@ -20,7 +25,23 @@ export interface CreateCheckEndpointProps {
   serviceStatusRepository: ServiceStatusRepository;
   endpointStatusEntryRepository: EndpointStatusEntryRepository;
   eventService: EventService;
+  directory: ServiceDirectory;
+  tokenProvider: TokenProvider;
   getEndpointResponse: GetEndpointResponse;
+}
+
+export interface Webhooks {
+  id: string;
+  url: string;
+  name: string;
+  targetId: string;
+  intervalSeconds: number;
+  eventTypes: { id: string }[];
+  description: string;
+}
+
+export enum ServiceUserRoles {
+  Admin = 'status-service-admin',
 }
 
 export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
@@ -90,11 +111,103 @@ export const getNewEndpointStatus = (
 };
 
 async function saveStatus(props: CreateCheckEndpointProps, statusEntry: EndpointStatusEntry, tenantId: AdspId) {
-  const { app, serviceStatusRepository, endpointStatusEntryRepository, eventService, logger } = props;
+  const {
+    app,
+    serviceStatusRepository,
+    endpointStatusEntryRepository,
+    eventService,
+    logger,
+    directory,
+    tokenProvider,
+  } = props;
   // create endpoint status entry before determining if the state is changed
 
   await EndpointStatusEntryEntity.create(endpointStatusEntryRepository, statusEntry);
   // verify that in the last [ENTRY_SAMPLE_SIZE] minutes, at least [MIN_OK_COUNT] are ok
+
+  const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
+  const token = await tokenProvider.getAccessToken();
+  const webhooksUrl = new URL(
+    `/configuration/v2/configuration/platform/push-service?tenantId=${app.tenantId}`,
+    configurationServiceUrl
+  );
+
+  const user = {
+    tenantId,
+    roles: [ServiceUserRoles.Admin],
+  } as User;
+
+  const response = (await axios.get(webhooksUrl.href, { headers: { Authorization: `Bearer ${token}` } })) as any;
+
+  const webhooks = response.data.latest.configuration;
+  console.log(JSON.stringify(webhooks) + '---<webhook22');
+
+  Object.keys(webhooks).map(async (key) => {
+    const webhook = webhooks[key] as Webhooks;
+    if (webhook.targetId === app.appKey) {
+      const eventTypes = webhook.eventTypes;
+      const waitTime = 2 * (webhook.intervalSeconds / 60);
+
+      console.log(JSON.stringify(webhook) + '---<webhook');
+
+      const waitTimeHistoryDouble = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
+        app.url,
+        app.appKey,
+        waitTime
+      );
+
+      console.log(JSON.stringify(waitTime) + '<waitTime');
+
+      console.log(JSON.stringify(waitTimeHistoryDouble) + '<---waitTimeHistory');
+
+      console.log(JSON.stringify(waitTimeHistoryDouble.map((w) => w.ok)) + '<--status');
+
+      let switchOffCount = 0;
+      let switchOnCount = 0;
+      waitTimeHistoryDouble.forEach((w, index) => {
+        if (w.ok && index === waitTimeHistoryDouble.length / 2) {
+          switchOffCount++;
+        } else if (!w.ok && index < waitTimeHistoryDouble.length / 2) {
+          switchOffCount++;
+        }
+
+        if (!w.ok && index >= waitTimeHistoryDouble.length / 2) {
+          switchOnCount++;
+        } else if (w.ok && index < waitTimeHistoryDouble.length / 2) {
+          switchOnCount++;
+        }
+      });
+      const waitTimeHistoryCount = waitTimeHistoryDouble.length / 2;
+
+      console.log(JSON.stringify(switchOffCount) + '<--switchOffCount');
+      console.log(JSON.stringify(switchOnCount) + '<--switchOnCount');
+
+      console.log(
+        JSON.stringify(waitTimeHistoryDouble.length) + '<--waitTimeHistoryCount (waitTimeHistoryDouble.length)'
+      );
+      console.log(JSON.stringify(waitTime) + '<--waitTime');
+
+      // Every check is invalid except the one previous to the checked window - app has been down for waitTime number of minutes
+      if (switchOffCount === waitTimeHistoryCount + 1 && waitTimeHistoryDouble.length === waitTime) {
+        eventTypes.map((et) => {
+          if (et.id === 'status-service:application-status-down-for-waittime') {
+            console.log('Sending app down');
+            eventService.send(applicationStatusWebhookDown(app, user));
+          }
+        });
+      }
+
+      // Every check within the checked window is valid - every check for an equivalent length of window beforehand is invalid
+      if (switchOnCount === waitTimeHistoryDouble.length && waitTimeHistoryDouble.length === waitTime) {
+        eventTypes.map((et) => {
+          if (et.id === 'status-service:application-status-up-for-waittime') {
+            console.log('Sending app up');
+            eventService.send(applicationStatusWebhookUp(app, user));
+          }
+        });
+      }
+    }
+  });
 
   const recentHistory = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
     app.url,
@@ -110,6 +223,8 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
   }
 
   const oldStatus = status.endpoint.status;
+
+  console.log(JSON.stringify(recentHistory) + '<---recentHistory----');
 
   const newStatus = getNewEndpointStatus(oldStatus, recentHistory);
 
