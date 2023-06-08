@@ -332,7 +332,7 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
           setSaveModal(false);
           cancel();
         }}
-        saveDisable={false}
+        saveDisable={!isPDFUpdated(tmpTemplate, template) || EditorError?.testData !== null}
         onCancel={() => {
           setSaveModal(false);
         }}
