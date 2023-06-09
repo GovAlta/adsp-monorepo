@@ -133,6 +133,21 @@ describe('calendar router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining(calendar)]));
       expect(res.send.mock.calls[0][0]).toMatchSnapshot();
     });
+
+    it('can handle no configuration', async () => {
+      const req = {
+        getConfiguration: jest.fn(),
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      req.getConfiguration.mockResolvedValueOnce([]);
+      await getCalendars(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(expect.arrayContaining([]));
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot();
+    });
   });
 
   describe('getCalendar', () => {

@@ -60,7 +60,7 @@ export const getCalendars: RequestHandler = async (req, res, next) => {
   try {
     const [calendars] = await req.getConfiguration<CalendarServiceConfiguration>();
 
-    const results = Object.entries(calendars).map(([_k, calender]) => mapCalendar(calender));
+    const results = Object.entries(calendars || {}).map(([_k, calender]) => mapCalendar(calender));
     res.send(results);
   } catch (err) {
     next(err);
@@ -396,7 +396,12 @@ export const createCalendarRouter = ({
     res.send(mapCalendar(req[CALENDAR_KEY]))
   );
 
-  router.get('/calendars/:name/export', validateNameHandler, getCalendar(tenantService), exportCalendar(serviceId, directory));
+  router.get(
+    '/calendars/:name/export',
+    validateNameHandler,
+    getCalendar(tenantService),
+    exportCalendar(serviceId, directory)
+  );
 
   router.get('/calendars/:name/events', validateNameHandler, getCalendar(tenantService), getCalendarEvents);
   router.post(
