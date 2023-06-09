@@ -44,6 +44,7 @@ export interface Webhooks {
   intervalSeconds: number;
   eventTypes: { id: string }[];
   description: string;
+  generatedByTest?: boolean;
 }
 
 interface NextPayload {

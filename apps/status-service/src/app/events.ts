@@ -1,6 +1,7 @@
 import { AdspId, DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
 import { NoticeApplicationEntity } from './model/notice';
 import { StaticApplicationData } from './model';
+import { Webhooks } from './jobs/checkEndpoint';
 
 const ApplicationDefinition = {
   type: 'object',
@@ -172,8 +173,8 @@ export const ApplicationStatusChangedDefinition: DomainEventDefinition = {
   },
 };
 
-export const ApplicationStatusWebhookDownDefinition: DomainEventDefinition = {
-  name: 'application-status-down-for-waittime',
+export const MonitoredServiceDownDefinition: DomainEventDefinition = {
+  name: 'monitored-service-down',
   description: 'Signalled when an application status is down for a specified period',
   payloadSchema: {
     type: 'object',
@@ -204,8 +205,8 @@ export const ApplicationStatusWebhookDownDefinition: DomainEventDefinition = {
   },
 };
 
-export const ApplicationStatusWebhookUpDefinition: DomainEventDefinition = {
-  name: 'application-status-up-for-waittime',
+export const MonitoredServiceUpDefinition: DomainEventDefinition = {
+  name: 'monitored-service-up',
   description: 'Signalled when an application status is up for a specified period',
   payloadSchema: {
     type: 'object',
@@ -313,8 +314,8 @@ export const applicationStatusToHealthy = (app: StaticApplicationData, tenantId:
   },
 });
 
-export const applicationStatusWebhookDown = (app: StaticApplicationData, user: User): DomainEvent => ({
-  name: 'application-status-down-for-waittime',
+export const monitoredServiceDown = (app: StaticApplicationData, user: User, webhook: Webhooks): DomainEvent => ({
+  name: 'monitored-service-down',
   timestamp: new Date(),
   tenantId: user.tenantId,
   correlationId: app.appKey,
@@ -327,6 +328,10 @@ export const applicationStatusWebhookDown = (app: StaticApplicationData, user: U
       id: app.appKey,
       name: app.name,
       description: app.description,
+      targetId: webhook.targetId,
+      eventTypes: webhook.eventTypes,
+      waitTimeInterval: webhook.intervalSeconds / 60,
+      generatedByTest: webhook.generatedByTest,
       updatedBy: {
         userId: user.id,
         userName: user.name,
@@ -335,8 +340,8 @@ export const applicationStatusWebhookDown = (app: StaticApplicationData, user: U
   },
 });
 
-export const applicationStatusWebhookUp = (app: StaticApplicationData, user: User): DomainEvent => ({
-  name: 'application-status-up-for-waittime',
+export const monitoredServiceUp = (app: StaticApplicationData, user: User, webhook: Webhooks): DomainEvent => ({
+  name: 'monitored-service-up',
   timestamp: new Date(),
   tenantId: user.tenantId,
   correlationId: app.appKey,
@@ -349,6 +354,10 @@ export const applicationStatusWebhookUp = (app: StaticApplicationData, user: Use
       id: app.appKey,
       name: app.name,
       description: app.description,
+      targetId: webhook.targetId,
+      eventTypes: webhook.eventTypes,
+      waitTimeInterval: webhook.intervalSeconds / 60,
+      generatedByTest: webhook.generatedByTest,
       updatedBy: {
         userId: user.id,
         userName: user.name,

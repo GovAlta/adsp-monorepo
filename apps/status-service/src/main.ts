@@ -20,8 +20,8 @@ import {
   HealthCheckHealthyDefinition,
   ApplicationStatusChangedDefinition,
   ApplicationNoticePublishedDefinition,
-  ApplicationStatusWebhookDownDefinition,
-  ApplicationStatusWebhookUpDefinition,
+  MonitoredServiceUpDefinition,
+  MonitoredServiceDownDefinition,
 } from './app/events';
 
 import { StatusApplicationHealthChange, StatusApplicationStatusChange } from './app/notificationTypes';
@@ -56,7 +56,6 @@ app.use(express.json({ limit: '1mb' }));
     tokenProvider,
     directory,
     healthCheck,
-
   } = await initializePlatform(
     {
       serviceId,
@@ -86,8 +85,8 @@ app.use(express.json({ limit: '1mb' }));
         HealthCheckHealthyDefinition,
         ApplicationStatusChangedDefinition,
         ApplicationNoticePublishedDefinition,
-        ApplicationStatusWebhookDownDefinition,
-        ApplicationStatusWebhookUpDefinition,
+        MonitoredServiceUpDefinition,
+        MonitoredServiceDownDefinition,
       ],
       notifications: [StatusApplicationHealthChange, StatusApplicationStatusChange],
       clientSecret: environment.CLIENT_SECRET,
@@ -134,14 +133,14 @@ app.use(express.json({ limit: '1mb' }));
     endpointStatusEntryRepository: repositories.endpointStatusEntryRepository,
     applicationManager,
     directory,
-    tokenProvider
+    tokenProvider,
   };
 
   const scheduler = new HealthCheckJobScheduler(healthCheckSchedulingProps);
 
   // start the endpoint checking jobs
   if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.job)) {
-     logger.info(`Running Jobs`);
+    logger.info(`Running Jobs`);
     // clear the health status database every midnight
     const scheduleDataReset = async () => {
       scheduleJob('0 0 * * *', async () => {

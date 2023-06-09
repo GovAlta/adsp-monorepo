@@ -9,8 +9,8 @@ import { AdspId, EventService, ServiceDirectory, TokenProvider, adspId, User } f
 import {
   applicationStatusToHealthy,
   applicationStatusToUnhealthy,
-  applicationStatusWebhookDown,
-  applicationStatusWebhookUp,
+  monitoredServiceDown,
+  monitoredServiceUp,
 } from '../events';
 import { StaticApplicationData } from '../model';
 
@@ -38,6 +38,7 @@ export interface Webhooks {
   intervalSeconds: number;
   eventTypes: { id: string }[];
   description: string;
+  generatedByTest?: boolean;
 }
 
 export enum ServiceUserRoles {
@@ -140,7 +141,6 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
   const response = (await axios.get(webhooksUrl.href, { headers: { Authorization: `Bearer ${token}` } })) as any;
 
   const webhooks = response.data.latest.configuration;
-  console.log(JSON.stringify(webhooks) + '---<webhook22');
 
   Object.keys(webhooks).map(async (key) => {
     const webhook = webhooks[key] as Webhooks;
@@ -148,19 +148,11 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
       const eventTypes = webhook.eventTypes;
       const waitTime = 2 * (webhook.intervalSeconds / 60);
 
-      console.log(JSON.stringify(webhook) + '---<webhook');
-
       const waitTimeHistoryDouble = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
         app.url,
         app.appKey,
         waitTime
       );
-
-      console.log(JSON.stringify(waitTime) + '<waitTime');
-
-      console.log(JSON.stringify(waitTimeHistoryDouble) + '<---waitTimeHistory');
-
-      console.log(JSON.stringify(waitTimeHistoryDouble.map((w) => w.ok)) + '<--status');
 
       let switchOffCount = 0;
       let switchOnCount = 0;
@@ -179,20 +171,11 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
       });
       const waitTimeHistoryCount = waitTimeHistoryDouble.length / 2;
 
-      console.log(JSON.stringify(switchOffCount) + '<--switchOffCount');
-      console.log(JSON.stringify(switchOnCount) + '<--switchOnCount');
-
-      console.log(
-        JSON.stringify(waitTimeHistoryDouble.length) + '<--waitTimeHistoryCount (waitTimeHistoryDouble.length)'
-      );
-      console.log(JSON.stringify(waitTime) + '<--waitTime');
-
       // Every check is invalid except the one previous to the checked window - app has been down for waitTime number of minutes
       if (switchOffCount === waitTimeHistoryCount + 1 && waitTimeHistoryDouble.length === waitTime) {
         eventTypes.map((et) => {
-          if (et.id === 'status-service:application-status-down-for-waittime') {
-            console.log('Sending app down');
-            eventService.send(applicationStatusWebhookDown(app, user));
+          if (et.id === 'status-service:monitored-service-down') {
+            eventService.send(monitoredServiceDown(app, user, webhook));
           }
         });
       }
@@ -200,9 +183,8 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
       // Every check within the checked window is valid - every check for an equivalent length of window beforehand is invalid
       if (switchOnCount === waitTimeHistoryDouble.length && waitTimeHistoryDouble.length === waitTime) {
         eventTypes.map((et) => {
-          if (et.id === 'status-service:application-status-up-for-waittime') {
-            console.log('Sending app up');
-            eventService.send(applicationStatusWebhookUp(app, user));
+          if (et.id === 'status-service:monitored-service-up') {
+            eventService.send(monitoredServiceUp(app, user, webhook));
           }
         });
       }
@@ -223,8 +205,6 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
   }
 
   const oldStatus = status.endpoint.status;
-
-  console.log(JSON.stringify(recentHistory) + '<---recentHistory----');
 
   const newStatus = getNewEndpointStatus(oldStatus, recentHistory);
 
