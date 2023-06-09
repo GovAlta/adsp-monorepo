@@ -65,6 +65,8 @@ Array [
 ]
 `;
 
+exports[`calendar router getCalendars can handle no configuration 1`] = `Array []`;
+
 exports[`calendar router getEventAttendee can delete attendee 1`] = `
 Object {
   "email": "tester@test.co",
