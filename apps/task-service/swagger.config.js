@@ -17,8 +17,10 @@ You can combine tasks into  a _queue_ of work units that represents:
 - reminders for a user,
 - etc.
 
-Queues are further organized into namespaces, which allows applications to keep tasks and queues separated by things like projects,
-applications, or features.`,
+Tasks and queues reside within _namespaces_, like a domain. A namespace might represent an application,
+a specific workflow, or even an end-user role.  A well chosen namespace name can help ensure you're working
+on the same tasks across an application or applications.
+`,
   },
   tags: [
     { name: 'Queue', description: 'Managing Task Queues' },

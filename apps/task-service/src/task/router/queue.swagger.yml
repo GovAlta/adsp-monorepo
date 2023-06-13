@@ -5,6 +5,7 @@ components:
       properties:
         namespace:
           type: string
+          description:
         name:
           type: string
         description:
@@ -38,7 +39,7 @@ components:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/Queue"
+                $ref: '#/components/schemas/Queue'
 
 /task/v1/queues/{namespace}/{name}:
   get:
@@ -66,7 +67,7 @@ components:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/Queue"
+                $ref: '#/components/schemas/Queue'
       404:
         description: Queue not found.
 
@@ -111,7 +112,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Task"
+                    $ref: '#/components/schemas/Task'
                 page:
                   type: object
                   properties:
@@ -171,7 +172,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Task"
+              $ref: '#/components/schemas/Task'
 
 /task/v1/queues/{namespace}/{name}/tasks/{id}:
   get:
@@ -203,7 +204,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Task"
+              $ref: '#/components/schemas/Task'
       404:
         description: Queue not found.
   patch:
@@ -253,7 +254,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Task"
+              $ref: '#/components/schemas/Task'
       404:
         description: Task not found.
   post:
@@ -285,26 +286,26 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: "#/components/schemas/AssignTask"
-              - $ref: "#/components/schemas/SetTaskPriority"
-              - $ref: "#/components/schemas/StartTask"
-              - $ref: "#/components/schemas/CompleteTask"
-              - $ref: "#/components/schemas/CancelTask"
+              - $ref: '#/components/schemas/AssignTask'
+              - $ref: '#/components/schemas/SetTaskPriority'
+              - $ref: '#/components/schemas/StartTask'
+              - $ref: '#/components/schemas/CompleteTask'
+              - $ref: '#/components/schemas/CancelTask'
             discriminator:
               propertyName: operation
               mapping:
-                assign: "#/components/schemas/AssignTask"
-                set-priority: "#/components/schemas/SetTaskPriority"
-                start: "#/components/schemas/StartTask"
-                complete: "#/components/schemas/CompleteTask"
-                cancel: "#/components/schemas/CancelTask"
+                assign: '#/components/schemas/AssignTask'
+                set-priority: '#/components/schemas/SetTaskPriority'
+                start: '#/components/schemas/StartTask'
+                complete: '#/components/schemas/CompleteTask'
+                cancel: '#/components/schemas/CancelTask'
     responses:
       200:
         description: Request completed successfully.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Task"
+              $ref: '#/components/schemas/Task'
       404:
         description: Task not found.
 
