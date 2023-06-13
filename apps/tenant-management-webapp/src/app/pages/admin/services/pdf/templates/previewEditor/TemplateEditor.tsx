@@ -106,8 +106,13 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
   };
 
   useEffect(() => {
+    // If there are any errors in the temp template, we shall prevent preview and PDF generation.
+    if (EditorError?.testData) {
+      dispatch(updateTempTemplate(null));
+      return;
+    }
     dispatch(updateTempTemplate(tmpTemplate));
-  }, [debouncedTmpTemplate]);
+  }, [debouncedTmpTemplate, EditorError.testData]);
 
   useEffect(() => {
     if (reloadFile && reloadFile[pdfTemplate.id]) {
