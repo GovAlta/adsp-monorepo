@@ -5,12 +5,16 @@ components:
       properties:
         namespace:
           type: string
+          description: The namespace in which the queue resides.
         name:
           type: string
+          description: The name of the queue.
         description:
           type: string
+          description: A brief summary of the queue's purpose.
         context:
           type: object
+          description: an application-defined JSON object to describe the context for the queue.
           additionalProperties:
             oneOf:
               - type: string
@@ -18,10 +22,12 @@ components:
               - type: boolean
         assignerRoles:
           type: array
+          description: Roles that allow a user to assign tasks.
           items:
             type: string
         workerRoles:
           type: array
+          description: Roles that allow a user to be assigned a task.
           items:
             type: string
 
@@ -29,7 +35,7 @@ components:
   get:
     tags:
       - Queue
-    description: Retrieves queues.
+    description: Retrieve all queues for the tenant.
     responses:
       200:
         description: Request completed successfully.
@@ -38,7 +44,7 @@ components:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/Queue"
+                $ref: '#/components/schemas/Queue'
 
 /task/v1/queues/{namespace}/{name}:
   get:
@@ -66,7 +72,7 @@ components:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/Queue"
+                $ref: '#/components/schemas/Queue'
       404:
         description: Queue not found.
 
@@ -95,7 +101,7 @@ components:
         schema:
           type: number
       - name: after
-        description: Cursor for the page to retrieve.
+        description: Cursor for the page to retrieve.  Use the _page.next_ value returned in the previous call to page sequentially through the data.
         in: query
         required: false
         schema:
@@ -111,15 +117,21 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Task"
+                    $ref: '#/components/schemas/Task'
                 page:
                   type: object
                   properties:
                     after:
                       type: string
+                      description: cursor representing the set of data returned.
+                      example: Mw==
                     next:
                       type: string
+                      description: cursor representing the next set of data to be returned.
+                      example: Ng==
                     size:
+                      description: The number of tasks returned by the query.
+                      example: 10
                       type: number
       404:
         description: Queue not found.
@@ -149,12 +161,20 @@ components:
             properties:
               name:
                 type: string
+                description: The name of the task.
+                example: Signature Required.
               description:
                 type: string
+                description: A short summary of the task to be performed.
+                example: Please sign document number 42
               recordId:
                 type: string
+                description: An optional, application defined ID for cross-referencing purposes.
+                example: 3458763-42
               context:
                 type: object
+                description: A JSON object used to provide an application-defined context for the task.  Defaults to {}.
+                example: { 'application': 'IRC-Intervention-Check' }
                 additionalProperties:
                   oneOf:
                     - type: string
@@ -162,6 +182,7 @@ components:
                     - type: boolean
               priority:
                 type: string
+                description: The task priority
                 enum: [Normal, High, Urgent]
             required: [name]
 
@@ -171,7 +192,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Task"
+              $ref: '#/components/schemas/Task'
 
 /task/v1/queues/{namespace}/{name}/tasks/{id}:
   get:
@@ -203,7 +224,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Task"
+              $ref: '#/components/schemas/Task'
       404:
         description: Queue not found.
   patch:
@@ -238,10 +259,13 @@ components:
             properties:
               name:
                 type: string
+                description: The new name of the task.
               description:
                 type: string
+                description: The new task description.
               context:
                 type: object
+                description: A new context for the task.
                 additionalProperties:
                   oneOf:
                     - type: string
@@ -253,7 +277,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Task"
+              $ref: '#/components/schemas/Task'
       404:
         description: Task not found.
   post:
@@ -285,26 +309,26 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: "#/components/schemas/AssignTask"
-              - $ref: "#/components/schemas/SetTaskPriority"
-              - $ref: "#/components/schemas/StartTask"
-              - $ref: "#/components/schemas/CompleteTask"
-              - $ref: "#/components/schemas/CancelTask"
+              - $ref: '#/components/schemas/AssignTask'
+              - $ref: '#/components/schemas/SetTaskPriority'
+              - $ref: '#/components/schemas/StartTask'
+              - $ref: '#/components/schemas/CompleteTask'
+              - $ref: '#/components/schemas/CancelTask'
             discriminator:
               propertyName: operation
               mapping:
-                assign: "#/components/schemas/AssignTask"
-                set-priority: "#/components/schemas/SetTaskPriority"
-                start: "#/components/schemas/StartTask"
-                complete: "#/components/schemas/CompleteTask"
-                cancel: "#/components/schemas/CancelTask"
+                assign: '#/components/schemas/AssignTask'
+                set-priority: '#/components/schemas/SetTaskPriority'
+                start: '#/components/schemas/StartTask'
+                complete: '#/components/schemas/CompleteTask'
+                cancel: '#/components/schemas/CancelTask'
     responses:
       200:
         description: Request completed successfully.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Task"
+              $ref: '#/components/schemas/Task'
       404:
         description: Task not found.
 
@@ -338,10 +362,13 @@ components:
                 properties:
                   id:
                     type: string
+                    description: The assigner's ID
                   name:
                     type: string
+                    description: The assigner's name
                   email:
                     type: string
+                    description: The assigner's email address
       404:
         description: Queue not found.
 
@@ -375,9 +402,12 @@ components:
                 properties:
                   id:
                     type: string
+                    description: The worker's ID
                   name:
                     type: string
+                    description: The worker's name
                   email:
                     type: string
+                    description: The worker's email address
       404:
         description: Queue not found.

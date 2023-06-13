@@ -1,43 +1,42 @@
 components:
   schemas:
-    TaskDefinition:
-      type: object
-      properties:
-        namespace:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
     Task:
       type: object
+      description: A task represents an action that a user must perform within a specified period of time.
       properties:
         id:
           type: string
+          description: Used to uniquely identify the task in the system.  Generated when the task is created, use this ID in subsequent API calls.
+          example: f3a3bc74-494e-4bb5-b5f3-d29a34edd275
         name:
           type: string
+          description: The name of the task, unique to the namespace in which it resides.
+          example: IRC-approval
         description:
           type: string
-        definition:
-          type: object
-          properties:
-            namespace:
-              type: string
-            name:
-              type: string
-          required: [namespace, name]
+          description: A brief description of the task to be performed.
+          example: Please sign off on the completed IRC
         queue:
           type: object
+          description: The queue to which the task has been submitted.
           properties:
             namespace:
               type: string
+              description: The namespace in which the queue resides.
+              example: IRC-application
             name:
               type: string
+              description: The name of the queue.
+              example: IRC-approvals
           required: [namespace, name]
         recordId:
           type: string
+          description: An optional value for additional application defined context.
+          example: cedea364-7c33-40f6-97fc-fba37330d68a
         context:
           type: object
+          description: A JSON object used to provide an application-defined context for the task.  Defaults to {}.
+          example: { 'application': 'IRC' }
           additionalProperties:
             oneOf:
               - type: string
@@ -45,54 +44,71 @@ components:
               - type: boolean
         data:
           type: object
+          description: An optional, JSON object containing application-defined data to further define the task.
+          example: {}
         priority:
           type: string
+          description: Tasks can be prioritized in a queue.  Higher priority tasks are pushed to the front.
           enum:
             - Normal
             - High
             - Urgent
         status:
           type: string
+          description: Applications can use the task's status to mark its progress through some workflow.
           enum:
             - Pending
             - In Progress
             - Completed
             - Cancelled
         assignment:
-          $ref: "#/components/schemas/TaskAssignment"
+          $ref: '#/components/schemas/TaskAssignment'
         createdOn:
           type: string
           format: date-time
+          description: Task creation date
         startedOn:
           type: string
           format: date-time
+          description: task start date
         endedOn:
           type: string
           format: date-time
+          description: task completion  date
     TaskAssignment:
       type: object
+      description: Tasks are assigned to users for completion, by the task manager.  The assignment property identifies these individuals.
       properties:
         assignedTo:
           type: object
+          description: Identifies the user to which the task has been assigned by ID, name, or email address.
           properties:
             id:
               type: string
+              example: cedea364-7c33-40f6-97fc-fba37330d68a
             name:
               type: string
+              example: Bob Bing
             email:
               type: string
+              example: bobbing@gmail.com
         assignedBy:
           type: object
+          description: Identifies the user that assigned the task by ID, or name.
           properties:
             id:
               type: string
+              example: cedea364-7c33-40f6-97fc-fba37330d68a
             name:
               type: string
+              example: Bob Bing
         assignedOn:
           type: string
           format: date-time
+          description: Date then task was assigned
     AssignTask:
       type: object
+      description: Used when assigning a task to a user
       properties:
         operation:
           type: string
@@ -102,13 +118,17 @@ components:
           properties:
             id:
               type: string
+              example: cedea364-7c33-40f6-97fc-fba37330d68a
             name:
               type: string
+              example: Bob Bing
             email:
               type: string
+              example: bobbing@gmail.ca
       required: [operation, assignTo]
     SetTaskPriority:
       type: object
+      description: Used when setting a task's priority.
       properties:
         operation:
           type: string
@@ -118,6 +138,7 @@ components:
       required: [operation, priority]
     StartTask:
       type: object
+      description: Used to set the time that the user began working on the task.
       properties:
         operation:
           type: string
@@ -125,6 +146,7 @@ components:
       required: [operation]
     CompleteTask:
       type: object
+      description: Used to set the time that the user completed the task.
       properties:
         operation:
           type: string
@@ -132,28 +154,32 @@ components:
       required: [operation]
     CancelTask:
       type: object
+      description: Used to cancel, or invalidate, the task.
       properties:
         operation:
           type: string
           enum: [cancel]
         reason:
           type: string
+          description: Indicates why the task was cancelled.
       required: [operation]
 
 /task/v1/tasks:
   get:
     tags:
       - Task
-    description: Retrieves tasks.
+    description: Retrieves tasks defined for for the tenant
     parameters:
       - name: top
-        description: Number of definitions to return in a page.
+        description: Number of task definitions to return in a page.
+        example: 10
         in: query
         required: false
         schema:
           type: number
       - name: after
-        description: Cursor for retrieving additional pages.
+        description: Cursor for retrieving additional pages.  Use the _page.next_ value returned in the previous call to page sequentially through the data.
+        example: Mw==
         in: query
         required: false
         schema:
@@ -165,20 +191,27 @@ components:
           application/json:
             schema:
               type: object
+              description: The set of tasks matching the query.
               properties:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Task"
+                    $ref: '#/components/schemas/Task'
                 page:
                   type: object
                   properties:
                     after:
                       type: string
+                      description: cursor representing the set of data returned.
+                      example: Mw==
                     next:
                       type: string
+                      description: cursor representing the next set of data to be returned.
+                      example: Ng==
                     size:
                       type: number
+                      description: The number of tasks returned by the query.
+                      example: 10
 
 /task/v1/tasks/{id}:
   get:
@@ -198,7 +231,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Task"
+              $ref: '#/components/schemas/Task'
       404:
         description: Task not found.
   patch:
@@ -221,10 +254,16 @@ components:
             properties:
               name:
                 type: string
+                description: New name for the task
+                example: Signature-required
               description:
                 type: string
+                description: New description for the task
+                example: Please sign IRC number 42
               context:
                 type: object
+                description: New task context
+                example: {}
                 additionalProperties:
                   oneOf:
                     - type: string
@@ -232,13 +271,15 @@ components:
                     - type: boolean
               data:
                 type: object
+                description: Application-defined JSON object to further define the task.
+                example: {}
     responses:
       200:
         description: Request completed successfully.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Task"
+              $ref: '#/components/schemas/Task'
       404:
         description: Task not found.
   post:
@@ -258,25 +299,25 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: "#/components/schemas/AssignTask"
-              - $ref: "#/components/schemas/SetTaskPriority"
-              - $ref: "#/components/schemas/StartTask"
-              - $ref: "#/components/schemas/CompleteTask"
-              - $ref: "#/components/schemas/CancelTask"
+              - $ref: '#/components/schemas/AssignTask'
+              - $ref: '#/components/schemas/SetTaskPriority'
+              - $ref: '#/components/schemas/StartTask'
+              - $ref: '#/components/schemas/CompleteTask'
+              - $ref: '#/components/schemas/CancelTask'
             discriminator:
               propertyName: operation
               mapping:
-                assign: "#/components/schemas/AssignTask"
-                set-priority: "#/components/schemas/SetTaskPriority"
-                start: "#/components/schemas/StartTask"
-                complete: "#/components/schemas/CompleteTask"
-                cancel: "#/components/schemas/CancelTask"
+                assign: '#/components/schemas/AssignTask'
+                set-priority: '#/components/schemas/SetTaskPriority'
+                start: '#/components/schemas/StartTask'
+                complete: '#/components/schemas/CompleteTask'
+                cancel: '#/components/schemas/CancelTask'
     responses:
       200:
         description: Request completed successfully.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Task"
+              $ref: '#/components/schemas/Task'
       404:
         description: Task not found.
