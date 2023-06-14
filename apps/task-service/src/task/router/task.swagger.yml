@@ -32,7 +32,7 @@ components:
         recordId:
           type: string
           description: An optional value for additional application defined context.
-          example: cedea364-7c33-40f6-97fc-fba37330d68a
+          example: irc-document-number-42
         context:
           type: object
           description: A JSON object used to provide an application-defined context for the task.  Defaults to {}.
