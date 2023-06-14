@@ -44,6 +44,43 @@ Feature: File service
       | /file/v1/files/<fileid> | GET          | autotest-type3 | autotest-file3.pdf | autotest-recordid-3 | 200         |
   #     | /file/v1/files/<fileid> | GET          | autotest-type4 | autotest-file4.pdf | autotest-recordid-4 | 200         |
 
+ @TEST_CS-2110 @REQ_CS-2069 @regression @api
+  Scenario Outline: As a developer of a GoA digital service, I can consume the file type API to set and disable file retention
+    When a developer of a GoA digital service set autotype7 request with "<Request Endpoint>" retention
+    Then "<Status Code>" is returned after file retention be set.
+    When a developer of a GoA digital service set disable autotype7 request with "<Request Endpoint>" retention
+    Then "<Status Code>" is returned after file retention be set.
+
+    Examples:
+      | Request Endpoint                                       | Status Code |
+      | /configuration/v2/configuration/platform/file-service  | 200         |
+
+@TEST_CS-2075 @REQ_CS-2069 @regression @api
+  Scenario Outline: As a developer of a GoA digital service, I can test the default PDF file type configuration through API
+      When a developer of a GoA digital service get default PDF file type configuration request with "<Request Endpoint>"
+      Then "<Status Code>" is returned after file retention be set.
+      Then check Generated PDF file type retention days is 30
+
+   Examples:
+      | Request Endpoint                                            | Status Code |
+      | /configuration/v2/configuration/platform/file-service?core  | 200         |
+
+@TEST_CS-2110 @REQ_CS-2037 @regression @api
+
+  Scenario Outline: As a developer, I can query files by last accessed time criteria, so I can file stale files
+    When a developer of a GoA digital service can query files by last accessed time criteria with "<Request Endpoint>" for before yesterday
+    Then "<Status Code>" is returned after file retention be set.
+    Then check the file data before yesterday.
+    When a developer of a GoA digital service can query files by last accessed time criteria with "<Request Endpoint>" for after month ago
+    Then "<Status Code>" is returned after file retention be set.
+    Then check the file data with in recent 30 days.
+
+
+    Examples:
+      | Request Endpoint| Status Code |
+      | /file/v1/files/ | 200         |
+
+
   # TODO: Test is no longer relevant with removal of file service enable/disable
   @TEST_CS-305 @REQ_CS-195 @regression @ignore
   Scenario: As a tenant admin, I can enable and disable the file service to my tenant
@@ -125,3 +162,17 @@ Feature: File service
     When the user selects "File types" tab for "File"
     Then the user views file types page
     And the user views the core file types with no actions
+
+
+  @TEST_CS-316 @REQ_CS-196 @FileTypes @regression
+  Scenario: As a tenant admin, I can add /edit the file retention policy through the file type modal
+    Given a service owner user is on Files overview page
+    When the user selects "File types" tab for "File"
+    Then the user views file types page
+    When the user clicks "Edit" button for the file type of "autotype7", "public", "file-service-admin"
+    Then the user clicks Active retention policy checkbox
+    And the user clicks Save button on file type modal
+    When the user clicks "Edit" button for the file type of "autotype7", "public", "file-service-admin"
+    Then the user view retention policy 30 days in file type modal
+    Then the user uncheck Active retention policy checkbox
+    And the user clicks Save button on file type modal
