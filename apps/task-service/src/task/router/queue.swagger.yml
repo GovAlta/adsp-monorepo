@@ -6,15 +6,19 @@ components:
         namespace:
           type: string
           description: The namespace in which the queue resides.
+          example: IRC Applications
         name:
           type: string
           description: The name of the queue.
+          example: signatures-required
         description:
           type: string
           description: A brief summary of the queue's purpose.
+          example: All IRC documents requiring signatures
         context:
           type: object
           description: an application-defined JSON object to describe the context for the queue.
+          example: {}
           additionalProperties:
             oneOf:
               - type: string
@@ -25,9 +29,11 @@ components:
           description: Roles that allow a user to assign tasks.
           items:
             type: string
+            example: intake-supervisor
         workerRoles:
           type: array
           description: Roles that allow a user to be assigned a task.
+          example: intake-assessor
           items:
             type: string
 
@@ -260,12 +266,15 @@ components:
               name:
                 type: string
                 description: The new name of the task.
+                example: Signature Required.
               description:
                 type: string
                 description: The new task description.
+                example: Please sign document number 43!
               context:
                 type: object
                 description: A new context for the task.
+                example: {}
                 additionalProperties:
                   oneOf:
                     - type: string
@@ -363,12 +372,15 @@ components:
                   id:
                     type: string
                     description: The assigner's ID
+                    example: cedea364-7c33-40f6-97fc-fba37330d68a
                   name:
                     type: string
                     description: The assigner's name
+                    example: Bob Bing
                   email:
                     type: string
                     description: The assigner's email address
+                    example: bobbing@gmail.ca
       404:
         description: Queue not found.
 
@@ -403,11 +415,14 @@ components:
                   id:
                     type: string
                     description: The worker's ID
+                    example: cedea364-7c33-40f6-97fc-fba37330d68a
                   name:
                     type: string
                     description: The worker's name
+                    example: Bob Bing
                   email:
                     type: string
                     description: The worker's email address
+                    example: bobbing@gmail.ca
       404:
         description: Queue not found.
