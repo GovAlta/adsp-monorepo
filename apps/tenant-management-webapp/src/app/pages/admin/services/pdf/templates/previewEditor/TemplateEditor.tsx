@@ -180,9 +180,11 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
                     <MonacoEditor
                       language={'handlebars'}
                       value={tmpTemplate?.header}
+                      data-testid="templateForm-header"
                       onChange={(value) => {
                         setTmpTemplate({ ...tmpTemplate, header: value });
                       }}
+                      {...bodyEditorConfig}
                     />
                   )}
                 </MonacoDivBody>
@@ -195,6 +197,7 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
                     <MonacoEditor
                       language={'handlebars'}
                       value={tmpTemplate?.template}
+                      data-testid="templateForm-body"
                       onChange={(value) => {
                         setTmpTemplate({ ...tmpTemplate, template: value });
                       }}
@@ -210,6 +213,7 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
                   <MonacoEditor
                     language={'handlebars'}
                     value={tmpTemplate?.footer}
+                    data-testid="templateForm-footer"
                     onChange={(value) => {
                       setTmpTemplate({ ...tmpTemplate, footer: value });
                     }}
@@ -225,6 +229,7 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
                     <MonacoEditor
                       language={'handlebars'}
                       value={tmpTemplate?.additionalStyles}
+                      data-testid="templateForm-css"
                       onChange={(value) => {
                         setTmpTemplate({ ...tmpTemplate, additionalStyles: value });
                       }}
