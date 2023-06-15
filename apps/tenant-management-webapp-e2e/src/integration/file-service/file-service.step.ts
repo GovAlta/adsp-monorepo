@@ -604,3 +604,140 @@ Then('the user views the core file types with no actions', function () {
   // Verify at least one core file type
   fileServiceObj.coreFileTypesTable().find('tr').its('length').should('be.gte', 1);
 });
+function setOrDisableFileRetention(reqEndPoint, setRetention) {
+  const requestURL = Cypress.env('configurationServiceApiUrl') + reqEndPoint;
+
+  cy.request({
+    method: 'PATCH',
+    url: requestURL,
+    auth: {
+      bearer: Cypress.env('autotest-admin-token'),
+    },
+    body: {
+      operation: 'UPDATE',
+      update: {
+        autotype7: {
+          name: 'autotype7',
+          updateRoles: ['file-service-admin'],
+          readRoles: [],
+          anonymousRead: true,
+          id: 'autotype7',
+          rules: {
+            retention: {
+              active: Boolean(setRetention),
+              deleteInDays: 1,
+              createdAt: new Date(),
+            },
+          },
+        },
+      },
+    },
+    timeout: 1200000,
+  }).then(function (response) {
+    responseObj = response;
+  });
+}
+When('a developer of a GoA digital service set autotype7 request with {string} retention', function (reqEndPoint) {
+  setOrDisableFileRetention(reqEndPoint, true);
+});
+When(
+  'a developer of a GoA digital service set disable autotype7 request with {string} retention',
+  function (reqEndPoint) {
+    setOrDisableFileRetention(reqEndPoint, false);
+  }
+);
+
+Then('{string} is returned after file retention be set.', function (statusCode) {
+  // Verify the response has 200 status and an array of mappings
+  expect(responseObj.status).to.eq(Number(statusCode));
+});
+
+Then('check Generated PDF file type retention days is 30', function () {
+  const days = responseObj.body.latest.configuration['generated-pdf'].rules.retention.deleteInDays;
+  expect(Number(days)).to.eq(30);
+});
+
+When(
+  'a developer of a GoA digital service get default PDF file type configuration request with {string}',
+  function (reqEndPoint) {
+    const requestURL = Cypress.env('configurationServiceApiUrl') + reqEndPoint;
+    cy.request({
+      method: 'GET',
+      url: requestURL,
+      auth: {
+        bearer: Cypress.env('autotest-admin-token'),
+      },
+      failOnStatusCode: false,
+    }).then(function (response) {
+      responseObj = response;
+    });
+  }
+);
+
+When(
+  'a developer of a GoA digital service can query files by last accessed time criteria with {string} for before yesterday',
+  function (reqEndPoint) {
+    const date = new Date();
+
+    date.setDate(date.getDate() - 1);
+    const requestURL = Cypress.env('fileApi') + reqEndPoint;
+    +'?criteria={"lastAccessedBefore":' + '"' + date.toISOString() + '"' + '}';
+    cy.request({
+      method: 'GET',
+      url: requestURL,
+      auth: {
+        bearer: Cypress.env('autotest-admin-token'),
+      },
+      failOnStatusCode: false,
+    }).then(function (response) {
+      responseObj = response;
+    });
+  }
+);
+
+Then('check the file data before yesterday.', function () {
+  const checkedDate = new Date(responseObj.body.results[0].lastAccessed);
+  const yesterday = new Date().setDate(new Date().getDate() - 1);
+  cy.wrap(checkedDate).should('be.greaterThan', new Date(yesterday));
+});
+
+When(
+  'a developer of a GoA digital service can query files by last accessed time criteria with {string} for after month ago',
+  function (reqEndPoint) {
+    const date = new Date();
+
+    date.setDate(date.getDate() - 30);
+    const requestURL = Cypress.env('fileApi') + reqEndPoint;
+    +'?criteria={"lastAccessedAfter":' + '"' + date.toISOString() + '"' + '}';
+    cy.request({
+      method: 'GET',
+      url: requestURL,
+      auth: {
+        bearer: Cypress.env('autotest-admin-token'),
+      },
+      failOnStatusCode: false,
+    }).then(function (response) {
+      responseObj = response;
+    });
+  }
+);
+
+Then('check the file data with in recent 30 days.', function () {
+  const checkedDate = new Date(responseObj.body.results[0].lastAccessed);
+  const monthTime = new Date().setDate(new Date().getDate() - 30);
+  cy.wrap(checkedDate).should('be.greaterThan', new Date(monthTime));
+});
+
+Then('the user clicks Active retention policy checkbox', function () {
+  cy.wait(1000); // Wait for modal
+  fileServiceObj.fileRetentionCheckBox().shadow().find('.goa-checkbox-container').click({ force: true });
+});
+
+Then('the user view retention policy 30 days in file type modal', function () {
+  cy.wait(1000);
+  fileServiceObj.fileRetentionDelayInput().invoke('val').should('equal', '30');
+});
+Then('the user uncheck Active retention policy checkbox', function () {
+  cy.wait(1000); // Wait for modal
+  fileServiceObj.fileRetentionCheckBox().shadow().find('.goa-checkbox-container').click({ force: true });
+});

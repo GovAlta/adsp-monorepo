@@ -40,7 +40,7 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
       };
     case UPDATE_TEMP_TEMPLATE:
       state.tempTemplate = action.payload;
-      return state;
+      return { ...state };
     case UPDATE_PDF_TEMPLATE_SUCCESS_ACTION:
       return {
         ...state,
