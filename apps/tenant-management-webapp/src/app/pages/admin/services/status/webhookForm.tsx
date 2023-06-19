@@ -1,10 +1,8 @@
 import React, { FC, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { saveWebhook, TestWebhooks } from '../../../../store/status/actions';
+import { saveWebhook } from '../../../../store/status/actions';
 import { Webhooks } from '../../../../store/status/models';
 import DataTable from '@components/DataTable';
-import { EventSearchCriteria } from '@store/event/models';
-import { getEventLogEntries } from '@store/event/actions';
 import { GoAButton, GoACheckbox, GoADropdown, GoADropdownOption } from '@abgov/react-components';
 import { getEventDefinitions } from '@store/event/actions';
 import { useValidators } from '@lib/validation/useValidators';
@@ -53,21 +51,10 @@ export const WebhookFormModal: FC<Props> = ({
 }: Props) => {
   const dispatch = useDispatch();
   const [webhook, setWebhook] = useState<Webhooks>({ ...defaultWebhooks });
-  const [showEntries, setShowEntries] = useState<boolean>(false);
 
   const { applications, webhooks } = useSelector((state: RootState) => state.serviceStatus);
 
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
-
-  const initCriteria: EventSearchCriteria = {
-    name: 'webhook-triggered',
-    namespace: 'push-service',
-    timestampMax: '',
-    timestampMin: '',
-    url: webhook.url,
-    applications: webhook.targetId,
-    value: webhook.targetId,
-  };
 
   const entries = useSelector((state: RootState) => state.event.entries);
 
@@ -82,15 +69,6 @@ export const WebhookFormModal: FC<Props> = ({
     if (onSave) onSave();
   }
 
-  const delay = (ms) => new Promise((res) => setTimeout(res, ms));
-
-  const test = async (eventName: string) => {
-    dispatch(TestWebhooks(webhook, eventName));
-    await delay(5000);
-    dispatch(getEventLogEntries('', initCriteria));
-    setShowEntries(true);
-  };
-
   const isDuplicateWebhookKey = (): Validator => {
     return (appKey: string) => {
       const existingWebhooks = Object.keys(webhooks).filter((hook) => webhooks[hook].id === appKey);
@@ -100,7 +78,6 @@ export const WebhookFormModal: FC<Props> = ({
 
   const isMoreThanZero = (): Validator => {
     return (interval: number) => {
-      console.log(interval + '<interval');
       return interval < 1 ? 'wait interval must be more than 0' : '';
     };
   };
@@ -169,7 +146,6 @@ export const WebhookFormModal: FC<Props> = ({
                 onChange={(name, value) => {
                   if (!isEdit) {
                     const id = toKebabName(value);
-                    // check for duplicate appKey
                     validators['nameAppKey'].check(id);
                     setWebhook({
                       ...webhook,
@@ -177,7 +153,6 @@ export const WebhookFormModal: FC<Props> = ({
                       id,
                     });
                   } else {
-                    // should not update appKey during update
                     validators['nameOnly'].check(value);
                     setWebhook({
                       ...webhook,
@@ -317,9 +292,7 @@ export const WebhookFormModal: FC<Props> = ({
                 })}
               </DataTable>
             </GoAFormItem>
-            <GoAFormItem>
-              {showEntries && <EntryDetail>{JSON.stringify(entries && [entries[0]], null, 2)}</EntryDetail>}
-            </GoAFormItem>
+            <GoAFormItem>{entries && <EntryDetail>{JSON.stringify([entries[0]], null, 2)}</EntryDetail>}</GoAFormItem>
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>

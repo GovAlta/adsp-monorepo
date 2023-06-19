@@ -214,8 +214,6 @@ export function* testWebhook(action: TestWebhookAction): SagaIterator {
 
     const response = yield call([api, api.testWebhook], action.webhook, action.eventName); // webhook: Webhooks, eventName
 
-    console.log(JSON.stringify(response) + '<---response');
-
     yield put(
       UpdateIndicator({
         show: false,

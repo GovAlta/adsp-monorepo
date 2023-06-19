@@ -63,10 +63,6 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
   }, [dispatch]);
 
   useEffect(() => {
-    console.log(testSuccess + ' <testSuccess');
-
-    console.log(JSON.stringify(initCriteria) + '<criteria');
-
     dispatch(getEventLogEntries('', initCriteria));
     setShowEntries(true);
   }, [testSuccess]);

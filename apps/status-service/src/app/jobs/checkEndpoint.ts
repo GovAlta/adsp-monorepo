@@ -143,7 +143,6 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
 
   const webhooks = response.data.latest.configuration;
 
-  console.log('|111');
   Object.keys(webhooks).map(async (key) => {
     const webhook = webhooks[key] as Webhooks;
     if (webhook.targetId === app.appKey) {
@@ -157,39 +156,22 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
 
       let switchOffCount = 0;
       let switchOnCount = 0;
-      waitTimePings.forEach((w) => {
-        if (w.ok) {
+      waitTimePings.forEach((ping) => {
+        if (ping.ok) {
           switchOnCount++;
         } else {
           switchOffCount++;
         }
       });
 
-      console.log('|222');
-
-      console.log(
-        JSON.stringify(switchOffCount === waitTimePings.length) + '< switchOffCount === waitTimePings.length'
-      );
-      console.log(JSON.stringify(switchOffCount) + '< switchOffCount = ');
-      console.log(JSON.stringify(switchOnCount) + '< switchOnCount = ');
-      console.log(JSON.stringify(waitTimePings.length) + '<   waitTimePings.length');
-      console.log(JSON.stringify(webhook.intervalMinutes) + '<    webhook.intervalMinutes');
-
       if (switchOffCount === waitTimePings.length && switchOffCount === webhook.intervalMinutes) {
         eventTypes.map((et) => {
-          console.log('|0');
           if (et.id === 'status-service:monitored-service-down') {
-            console.log('vice:monitored-service-down');
-            console.log(JSON.stringify(webhook) + ' <webhook000--');
-
             if (webhook.appCurrentlyUp || webhook.appCurrentlyUp === undefined) {
-              console.log(JSON.stringify(webhook) + ' <webhook--');
               const updatedWebhook: Webhooks = JSON.parse(JSON.stringify(webhook));
               updatedWebhook.appCurrentlyUp = false;
               updateAppStatus(directory, tenantId, tokenProvider, updatedWebhook, key);
-              console.log(JSON.stringify(updatedWebhook) + ' <updatedWebhook2--');
-              console.log(JSON.stringify(user) + ' <user3--');
-              console.log(JSON.stringify(app) + ' <app4--');
+
               eventService.send(monitoredServiceDown(app, user, updatedWebhook));
             }
           }
@@ -198,17 +180,11 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
 
       if (switchOnCount === waitTimePings.length && switchOnCount === webhook.intervalMinutes) {
         eventTypes.map((et) => {
-          console.log('|1');
           if (et.id === 'status-service:monitored-service-up') {
-            console.log('vice:monitored-service-');
             if (webhook.appCurrentlyUp === false || webhook.appCurrentlyUp === undefined) {
-              console.log(JSON.stringify(webhook) + ' <webhook--');
               const updatedWebhook: Webhooks = JSON.parse(JSON.stringify(webhook));
               updatedWebhook.appCurrentlyUp = true;
               updateAppStatus(directory, tenantId, tokenProvider, updatedWebhook, key);
-              console.log(JSON.stringify(updatedWebhook) + ' <updatedWebhook--');
-              console.log(JSON.stringify(user) + ' <user--');
-              console.log(JSON.stringify(app) + ' <app--');
 
               eventService.send(monitoredServiceUp(app, user, updatedWebhook));
             }
@@ -283,19 +259,5 @@ const updateAppStatus = async (
     }
   );
 
-  console.log(JSON.stringify(response, getCircularReplacer()) + ' <--response');
   return response;
-};
-
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
 };
