@@ -7,6 +7,7 @@ import { GoAIconButton } from '@abgov/react-components/experimental';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { WebhookFormModal } from '../webhookForm';
 import { WebhookHistoryModal } from '../webhookHistoryForm';
+import { TestWebhookModal } from '../testWebhook';
 
 import { WebhookDeleteModal } from './webhookDeleteModal';
 
@@ -31,6 +32,7 @@ export const NoPaddingTd = styled.td`
 export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element => {
   const [editId, setEditId] = useState<string | null>(null);
   const [historyId, setHistoryId] = useState<string | null>(null);
+  const [testId, setTestId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const onDeleteCancel = () => {
@@ -45,11 +47,12 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
     name: string;
     url: string;
     targetId: string;
-    intervalSeconds: number;
+    intervalMinutes: number;
     description: string;
     eventTypes: { id: string }[];
     onEdit?: () => void;
     onDelete?: () => void;
+    onTest?: () => void;
     onHistory?: () => void;
   }
 
@@ -58,12 +61,13 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
     name,
     url,
     targetId,
-    intervalSeconds,
+    intervalMinutes,
     eventTypes,
     description,
     onEdit,
     onDelete,
     onHistory,
+    onTest,
   }: FileTypeRowProps): JSX.Element => {
     const [showDetails, setShowDetails] = useState<boolean>(false);
 
@@ -72,7 +76,7 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
       name,
       url,
       targetId,
-      intervalSeconds,
+      intervalMinutes,
       eventTypes,
       description,
     };
@@ -83,7 +87,7 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
           <td>{name}</td>
           <td className="url"> {url}</td>
 
-          <td className="waitInterval">{intervalSeconds / 60} min</td>
+          <td className="waitInterval">{intervalMinutes} min</td>
           <td className="actionCol">
             <GoAContextMenu>
               <GoAIconButton
@@ -102,6 +106,15 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
                 type="time"
                 onClick={() => {
                   onHistory();
+                }}
+              />
+              <GoAIconButton
+                testId={`webhook-test-${id}`}
+                title="History"
+                size="medium"
+                type="ticket"
+                onClick={() => {
+                  onTest();
                 }}
               />
               <GoAContextMenuIcon
@@ -147,7 +160,7 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
               <th id="URL" data-testid="events-definitions-table-header-name">
                 URL
               </th>
-              <th id="intervalSeconds" data-testid="events-definitions-table-header-name">
+              <th id="intervalMinutes" data-testid="events-definitions-table-header-name">
                 Wait Interval
               </th>
               <th className="actionsCol" id="actions">
@@ -170,6 +183,9 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
                   onHistory={() => {
                     setHistoryId(webhooks[key].id);
                   }}
+                  onTest={() => {
+                    setTestId(webhooks[key].id);
+                  }}
                 />
               );
             })}
@@ -188,6 +204,17 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
           }}
           onSave={() => {
             setEditId(null);
+          }}
+        />
+      )}
+      {testId && (
+        <TestWebhookModal
+          isOpen={testId !== null}
+          testId={'test-webhook'}
+          defaultWebhooks={webhooks[testId]}
+          title="Test webhook"
+          onClose={() => {
+            setTestId(null);
           }}
         />
       )}

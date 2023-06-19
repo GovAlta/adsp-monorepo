@@ -70,7 +70,7 @@ function Status(): JSX.Element {
     name: '',
     url: '',
     targetId: '',
-    intervalSeconds: 300,
+    intervalMinutes: 5,
     description: '',
     eventTypes: [],
   };

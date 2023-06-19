@@ -22,11 +22,15 @@ import {
   FETCH_SERVICE_STATUS_APPS_ACTION,
   saveWebhookAction,
   fetchWebhooksSuccess,
+  TestWebhooksSuccess,
   deleteWebhookSuccess,
   DeleteWebhookAction,
   SaveWebhookSuccess,
+  TestWebhookAction,
+  TEST_WEBHOOK_ACTION,
 } from './actions';
 import { ConfigState } from '@store/config/models';
+import { UpdateIndicator } from '@store/session/actions';
 import { SetApplicationStatusAction, setApplicationStatusSuccess } from './actions/setApplicationStatus';
 import { EndpointStatusEntry, ApplicationStatus, MetricResponse, Webhooks } from './models';
 import { SagaIterator } from '@redux-saga/core';
@@ -118,7 +122,7 @@ export function* saveWebhook(action: saveWebhookAction): SagaIterator {
   try {
     const api = new WebhookApi(baseUrl, token);
 
-    const { name, url, targetId, eventTypes, intervalSeconds, id, description } = action.payload;
+    const { name, url, targetId, eventTypes, intervalMinutes, id, description } = action.payload;
 
     const pushService: Record<string, Webhooks> = {
       [id]: {
@@ -126,7 +130,7 @@ export function* saveWebhook(action: saveWebhookAction): SagaIterator {
         name: name,
         url: url,
         targetId: targetId,
-        intervalSeconds: intervalSeconds,
+        intervalMinutes: intervalMinutes,
         description: description,
         eventTypes: eventTypes,
       },
@@ -189,6 +193,42 @@ export function* deleteWebhook(action: DeleteWebhookAction): SagaIterator {
 
     yield put(deleteWebhookSuccess(action.payload.id));
   } catch (e) {
+    yield put(ErrorNotification({ message: e.message }));
+  }
+}
+export function* testWebhook(action: TestWebhookAction): SagaIterator {
+  const currentState: RootState = yield select();
+
+  const token = yield call(getAccessToken);
+  const statusServiceUrl = getServiceStatusUrl(currentState.config);
+
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Running test...',
+    })
+  );
+
+  try {
+    const api = new StatusApi(statusServiceUrl, token);
+
+    const response = yield call([api, api.testWebhook], action.webhook, action.eventName); // webhook: Webhooks, eventName
+
+    console.log(JSON.stringify(response) + '<---response');
+
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
+
+    yield put(TestWebhooksSuccess(response));
+  } catch (e) {
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
     yield put(ErrorNotification({ message: e.message }));
   }
 }

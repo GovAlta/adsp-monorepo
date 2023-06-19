@@ -183,7 +183,9 @@ export function* deleteEventDefinition({ definition }: UpdateEventDefinitionActi
 export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaIterator {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
   const token: string = yield call(getAccessToken);
-  let eventUrl = `${baseUrl}/value/v1/event-service/values/event?top=10&after=${action.after || ''}`;
+  let eventUrl = `${baseUrl}/value/v1/event-service/values/event?top=${action.searchCriteria?.top || 10}&after=${
+    action.after || ''
+  }`;
   if (baseUrl && token) {
     if (action.searchCriteria) {
       const contextObj = {};

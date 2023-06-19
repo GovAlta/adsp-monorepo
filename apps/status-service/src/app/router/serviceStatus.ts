@@ -14,6 +14,8 @@ import { PublicServiceStatusType } from '../types';
 import { TenantService, EventService } from '@abgov/adsp-service-sdk';
 import { applicationStatusToStarted, applicationStatusToStopped, applicationStatusChange } from '../events';
 import { ApplicationRepo } from './ApplicationRepo';
+import { WebhookRepo } from './WebhookRepo';
+import { monitoredServiceDown, monitoredServiceUp } from '../events';
 
 export interface ServiceStatusRouterProps {
   logger: Logger;
@@ -286,6 +288,51 @@ export const getApplicationEntries =
     }
   };
 
+function delay(time) {
+  return new Promise((resolve) => setTimeout(resolve, time));
+}
+
+export const testWebhook =
+  (
+    logger: Logger,
+    webhookRepo: WebhookRepo,
+    applicationRepo: ApplicationRepo,
+    eventService: EventService
+  ): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      const user = req.user as User;
+      const { id, eventName } = req.params;
+
+      const webhook = await webhookRepo.getWebhook(id, user.tenantId);
+      if (!webhook) {
+        throw new NotFoundError('Webhook', id);
+      }
+
+      const app = await applicationRepo.getApp(webhook.targetId, user.tenantId);
+      if (!app) {
+        throw new NotFoundError('Status application', webhook.targetId);
+      }
+
+      webhook.generatedByTest = true;
+
+      if (eventName === 'monitored-service-down') {
+        eventService.send(monitoredServiceDown(app, user, webhook));
+      } else {
+        eventService.send(monitoredServiceUp(app, user, webhook));
+      }
+      await delay(300);
+      res.json(
+        `event is sent - app: ${JSON.stringify(app)}, user: ${JSON.stringify(user)}, webhook: ${JSON.stringify(
+          webhook
+        )}`
+      );
+    } catch (err) {
+      logger.error(`Failed to toggle application: ${err.message}`);
+      next(err);
+    }
+  };
+
 export function createServiceStatusRouter({
   logger,
   serviceStatusRepository,
@@ -298,6 +345,14 @@ export function createServiceStatusRouter({
 }: ServiceStatusRouterProps): Router {
   const router = Router();
   const applicationRepo = new ApplicationRepo(
+    serviceStatusRepository,
+    endpointStatusEntryRepository,
+    serviceId,
+    directory,
+    tokenProvider
+  );
+
+  const webhookRepo = new WebhookRepo(
     serviceStatusRepository,
     endpointStatusEntryRepository,
     serviceId,
@@ -344,6 +399,12 @@ export function createServiceStatusRouter({
   router.get(
     '/applications/:appKey/endpoint-status-entries',
     getApplicationEntries(logger, applicationRepo, endpointStatusEntryRepository)
+  );
+
+  router.get(
+    '/webhook/:id/test/:eventName',
+    assertAuthenticatedHandler,
+    testWebhook(logger, webhookRepo, applicationRepo, eventService)
   );
 
   return router;

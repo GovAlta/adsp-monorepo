@@ -41,14 +41,14 @@ export interface Webhooks {
   url: string;
   name: string;
   targetId: string;
-  intervalSeconds: number;
+  intervalMinutes: number;
   eventTypes: { id: string }[];
   description: string;
   generatedByTest?: boolean;
 }
 
 interface NextPayload {
-  application: { appKey: string };
+  application: { appKey?: string; id?: string };
 }
 
 export enum ServiceUserRoles {
@@ -184,6 +184,19 @@ export function subscribeBySse(logger: Logger, events: Observable<DomainEvent>):
   };
 }
 
+const getCircularReplacer = () => {
+  const seen = new WeakSet();
+  return (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return;
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+};
+
 export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) {
   return async (socket: Socket): Promise<void> => {
     try {
@@ -219,6 +232,14 @@ export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) 
       logger.warn(`Error encountered on socket.io connection. ${err}`);
       socket.disconnect(true);
     }
+  };
+}
+
+export interface StatusResponse {
+  statusText?: string;
+  status?: number;
+  headers?: {
+    date: Date;
   };
 }
 
@@ -260,6 +281,7 @@ export const createStreamRouter = (
               })
               .then(({ data }) => {
                 const webhooks = data.latest.configuration;
+                console.log(JSON.stringify(webhooks) + '<---webhooks');
 
                 Object.keys(webhooks).map(async (key) => {
                   const eventMatches = [];
@@ -268,8 +290,20 @@ export const createStreamRouter = (
 
                   eventTypes.map((et) => {
                     const nextPayload = next.payload as unknown as NextPayload;
+                    // console.log(JSON.stringify(nextPayload) + '<---nextPayload');
+                    // console.log(
+                    //   JSON.stringify(`${next.namespace}:${next.name}`) + '<---`${next.namespace}:${next.name}`'
+                    // );
+                    // console.log(JSON.stringify(et.id) + '<---`et.id');
                     if (`${next.namespace}:${next.name}` === et.id && et.id !== 'push-service:webhook-triggered') {
-                      if (!nextPayload?.application?.appKey || nextPayload?.application?.appKey === webhook.targetId) {
+                      // console.log(JSON.stringify(webhook.targetId) + '<---`webhook.targetId');
+                      // console.log(
+                      //   JSON.stringify(nextPayload?.application?.appKey) + '<---`nextPayload?.application?.appKey'
+                      // );
+                      if (
+                        (nextPayload?.application?.appKey && nextPayload?.application?.appKey === webhook.targetId) ||
+                        (nextPayload?.application?.id && nextPayload?.application?.id === webhook.targetId)
+                      ) {
                         next.payload;
                         eventMatches.push(et.id);
                       }
@@ -278,18 +312,31 @@ export const createStreamRouter = (
                   const endpointWebsocket = webhooks[key].url;
 
                   if (eventMatches.length > 0) {
-                    let response;
+                    let response: StatusResponse = {};
                     let callResponseTime = 0;
+                    const beforeWebhook = new Date().getTime();
                     try {
+                      console.log(JSON.stringify(callResponseTime) + '<---callResponseTime---');
+                      console.log(JSON.stringify(endpointWebsocket) + '<---endpointWebsocket---');
+                      console.log(
+                        JSON.stringify(isValidUrl(endpointWebsocket)) + '<---isValidUrl(endpointWebsocket)---'
+                      );
                       if (isValidUrl(endpointWebsocket)) {
-                        const beforeWebhook = new Date().getTime();
-                        response = await axios.post(endpointWebsocket, next, { timeout: 5000 });
+                        console.log(JSON.stringify(beforeWebhook) + '<---beforeWebhook---');
+                        response = await axios.post(endpointWebsocket, next);
                         callResponseTime = new Date().getTime() - beforeWebhook;
+                        console.log(JSON.stringify(response, getCircularReplacer()) + '<---response---');
                       }
                     } catch (err) {
+                      response.statusText = `xx${err.message}`;
+                      response.status = 400;
+                      response.headers = { date: new Date() };
                       logger.info(`Failed sending request from status.`);
-                      logger.info(`Error: ${JSON.stringify(err)}`);
+                      logger.info(`Errorx: ${JSON.stringify(err.message, getCircularReplacer())}`);
+                      logger.info(`Error: ${JSON.stringify(err, getCircularReplacer())}`);
+                      callResponseTime = new Date().getTime() - beforeWebhook;
                     } finally {
+                      console.log(JSON.stringify('are we still sending'));
                       eventService.send(
                         webhookTriggered(
                           user,

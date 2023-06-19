@@ -41,7 +41,7 @@ export const configurationSchema = {
             name: { type: 'string' },
             url: { type: 'string' },
             targetId: { type: 'string' },
-            intervalSeconds: { type: 'number' },
+            intervalMinutes: { type: 'number' },
             description: { type: 'string' },
             eventTypes: {
               type: 'array',

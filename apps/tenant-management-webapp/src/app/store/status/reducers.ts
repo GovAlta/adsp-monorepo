@@ -13,6 +13,7 @@ import {
   FETCH_WEBHOOK_SUCCESS_ACTION,
   DELETE_WEBHOOK_SUCCESS_ACTION,
   SAVE_WEBHOOK_SUCCESS_ACTION,
+  TEST_WEBHOOK_SUCCESS_ACTION,
 } from './actions';
 import { ServiceStatus } from './models';
 
@@ -32,6 +33,7 @@ const initialState: ServiceStatus = {
   contact: {
     contactEmail: null,
   },
+  testSuccess: 0,
 };
 
 const compareIds = (a: { appKey?: string }, b: { appKey?: string }): number => (a.appKey > b.appKey ? 1 : -1);
@@ -51,6 +53,9 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
           [action.payload.appKey]: { url: action.payload.url, entries: action.payload.entries || [] },
         },
       };
+    case TEST_WEBHOOK_SUCCESS_ACTION: {
+      return { ...state, testSuccess: state.testSuccess + 1 };
+    }
     case DELETE_APPLICATION_SUCCESS_ACTION:
       return {
         ...state,

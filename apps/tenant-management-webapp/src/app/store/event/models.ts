@@ -40,6 +40,7 @@ export interface EventSearchCriteria {
   url?: string;
   applications?: string;
   value?: string;
+  top?: number;
 }
 
 export const defaultEventDefinition: EventDefinition = {

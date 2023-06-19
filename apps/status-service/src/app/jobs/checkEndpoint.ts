@@ -35,10 +35,11 @@ export interface Webhooks {
   url: string;
   name: string;
   targetId: string;
-  intervalSeconds: number;
+  intervalMinutes: number;
   eventTypes: { id: string }[];
   description: string;
   generatedByTest?: boolean;
+  appCurrentlyUp: boolean;
 }
 
 export enum ServiceUserRoles {
@@ -142,49 +143,75 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
 
   const webhooks = response.data.latest.configuration;
 
+  console.log('|111');
   Object.keys(webhooks).map(async (key) => {
     const webhook = webhooks[key] as Webhooks;
     if (webhook.targetId === app.appKey) {
       const eventTypes = webhook.eventTypes;
-      const waitTime = 2 * (webhook.intervalSeconds / 60);
 
-      const waitTimeHistoryDouble = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
+      const waitTimePings = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
         app.url,
         app.appKey,
-        waitTime
+        webhook.intervalMinutes
       );
 
       let switchOffCount = 0;
       let switchOnCount = 0;
-      waitTimeHistoryDouble.forEach((w, index) => {
-        if (w.ok && index === waitTimeHistoryDouble.length / 2) {
-          switchOffCount++;
-        } else if (!w.ok && index < waitTimeHistoryDouble.length / 2) {
-          switchOffCount++;
-        }
-
-        if (!w.ok && index >= waitTimeHistoryDouble.length / 2) {
+      waitTimePings.forEach((w) => {
+        if (w.ok) {
           switchOnCount++;
-        } else if (w.ok && index < waitTimeHistoryDouble.length / 2) {
-          switchOnCount++;
+        } else {
+          switchOffCount++;
         }
       });
-      const waitTimeHistoryCount = waitTimeHistoryDouble.length / 2;
 
-      // Every check is invalid except the one previous to the checked window - app has been down for waitTime number of minutes
-      if (switchOffCount === waitTimeHistoryCount + 1 && waitTimeHistoryDouble.length === waitTime) {
+      console.log('|222');
+
+      console.log(
+        JSON.stringify(switchOffCount === waitTimePings.length) + '< switchOffCount === waitTimePings.length'
+      );
+      console.log(JSON.stringify(switchOffCount) + '< switchOffCount = ');
+      console.log(JSON.stringify(switchOnCount) + '< switchOnCount = ');
+      console.log(JSON.stringify(waitTimePings.length) + '<   waitTimePings.length');
+      console.log(JSON.stringify(webhook.intervalMinutes) + '<    webhook.intervalMinutes');
+
+      if (switchOffCount === waitTimePings.length && switchOffCount === webhook.intervalMinutes) {
         eventTypes.map((et) => {
+          console.log('|0');
           if (et.id === 'status-service:monitored-service-down') {
-            eventService.send(monitoredServiceDown(app, user, webhook));
+            console.log('vice:monitored-service-down');
+            console.log(JSON.stringify(webhook) + ' <webhook000--');
+
+            if (webhook.appCurrentlyUp || webhook.appCurrentlyUp === undefined) {
+              console.log(JSON.stringify(webhook) + ' <webhook--');
+              const updatedWebhook: Webhooks = JSON.parse(JSON.stringify(webhook));
+              updatedWebhook.appCurrentlyUp = false;
+              updateAppStatus(directory, tenantId, tokenProvider, updatedWebhook, key);
+              console.log(JSON.stringify(updatedWebhook) + ' <updatedWebhook2--');
+              console.log(JSON.stringify(user) + ' <user3--');
+              console.log(JSON.stringify(app) + ' <app4--');
+              eventService.send(monitoredServiceDown(app, user, updatedWebhook));
+            }
           }
         });
       }
 
-      // Every check within the checked window is valid - every check for an equivalent length of window beforehand is invalid
-      if (switchOnCount === waitTimeHistoryDouble.length && waitTimeHistoryDouble.length === waitTime) {
+      if (switchOnCount === waitTimePings.length && switchOnCount === webhook.intervalMinutes) {
         eventTypes.map((et) => {
+          console.log('|1');
           if (et.id === 'status-service:monitored-service-up') {
-            eventService.send(monitoredServiceUp(app, user, webhook));
+            console.log('vice:monitored-service-');
+            if (webhook.appCurrentlyUp === false || webhook.appCurrentlyUp === undefined) {
+              console.log(JSON.stringify(webhook) + ' <webhook--');
+              const updatedWebhook: Webhooks = JSON.parse(JSON.stringify(webhook));
+              updatedWebhook.appCurrentlyUp = true;
+              updateAppStatus(directory, tenantId, tokenProvider, updatedWebhook, key);
+              console.log(JSON.stringify(updatedWebhook) + ' <updatedWebhook--');
+              console.log(JSON.stringify(user) + ' <user--');
+              console.log(JSON.stringify(app) + ' <app--');
+
+              eventService.send(monitoredServiceUp(app, user, updatedWebhook));
+            }
           }
         });
       }
@@ -228,3 +255,47 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
     }
   }
 }
+
+const updateAppStatus = async (
+  directory: ServiceDirectory,
+  tenantId: AdspId,
+  tokenProvider: TokenProvider,
+  webhook: Webhooks,
+  key: string
+) => {
+  const token = await tokenProvider.getAccessToken();
+  const baseUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
+  const pushConfiguration = new URL(
+    `/configuration/v2/configuration/platform/push-service?tenantId=${tenantId}`,
+    baseUrl
+  );
+
+  const response = await axios.patch(
+    pushConfiguration.href,
+    {
+      operation: 'UPDATE',
+      update: {
+        [key]: webhook,
+      },
+    },
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+
+  console.log(JSON.stringify(response, getCircularReplacer()) + ' <--response');
+  return response;
+};
+
+const getCircularReplacer = () => {
+  const seen = new WeakSet();
+  return (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return;
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+};

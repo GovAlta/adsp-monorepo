@@ -330,7 +330,7 @@ export const monitoredServiceDown = (app: StaticApplicationData, user: User, web
       description: app.description,
       targetId: webhook.targetId,
       eventTypes: webhook.eventTypes,
-      waitTimeInterval: webhook.intervalSeconds / 60,
+      waitTimeInterval: webhook.intervalMinutes,
       generatedByTest: webhook.generatedByTest,
       updatedBy: {
         userId: user.id,
@@ -356,7 +356,7 @@ export const monitoredServiceUp = (app: StaticApplicationData, user: User, webho
       description: app.description,
       targetId: webhook.targetId,
       eventTypes: webhook.eventTypes,
-      waitTimeInterval: webhook.intervalSeconds / 60,
+      waitTimeInterval: webhook.intervalMinutes,
       generatedByTest: webhook.generatedByTest,
       updatedBy: {
         userId: user.id,

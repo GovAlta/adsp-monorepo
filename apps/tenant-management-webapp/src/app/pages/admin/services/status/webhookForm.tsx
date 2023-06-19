@@ -1,8 +1,10 @@
 import React, { FC, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { saveWebhook } from '../../../../store/status/actions';
+import { saveWebhook, TestWebhooks } from '../../../../store/status/actions';
 import { Webhooks } from '../../../../store/status/models';
 import DataTable from '@components/DataTable';
+import { EventSearchCriteria } from '@store/event/models';
+import { getEventLogEntries } from '@store/event/actions';
 import { GoAButton, GoACheckbox, GoADropdown, GoADropdownOption } from '@abgov/react-components';
 import { getEventDefinitions } from '@store/event/actions';
 import { useValidators } from '@lib/validation/useValidators';
@@ -51,10 +53,23 @@ export const WebhookFormModal: FC<Props> = ({
 }: Props) => {
   const dispatch = useDispatch();
   const [webhook, setWebhook] = useState<Webhooks>({ ...defaultWebhooks });
+  const [showEntries, setShowEntries] = useState<boolean>(false);
 
   const { applications, webhooks } = useSelector((state: RootState) => state.serviceStatus);
 
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
+
+  const initCriteria: EventSearchCriteria = {
+    name: 'webhook-triggered',
+    namespace: 'push-service',
+    timestampMax: '',
+    timestampMin: '',
+    url: webhook.url,
+    applications: webhook.targetId,
+    value: webhook.targetId,
+  };
+
+  const entries = useSelector((state: RootState) => state.event.entries);
 
   useEffect(() => {
     dispatch(getEventDefinitions());
@@ -66,6 +81,15 @@ export const WebhookFormModal: FC<Props> = ({
     dispatch(saveWebhook(webhook));
     if (onSave) onSave();
   }
+
+  const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+
+  const test = async (eventName: string) => {
+    dispatch(TestWebhooks(webhook, eventName));
+    await delay(5000);
+    dispatch(getEventLogEntries('', initCriteria));
+    setShowEntries(true);
+  };
 
   const isDuplicateWebhookKey = (): Validator => {
     return (appKey: string) => {
@@ -193,12 +217,12 @@ export const WebhookFormModal: FC<Props> = ({
                 <GoAInput
                   name="interval"
                   type="number"
-                  value={(webhook?.intervalSeconds / 60).toString()}
+                  value={(webhook?.intervalMinutes || '').toString()}
                   onChange={(name, value) => {
-                    validators['waitInterval'].check(parseInt(value) * 60);
+                    validators['waitInterval'].check(parseInt(value));
                     setWebhook({
                       ...webhook,
-                      intervalSeconds: parseInt(value) * 60,
+                      intervalMinutes: parseInt(value),
                     });
                   }}
                   aria-label="description"
@@ -266,30 +290,35 @@ export const WebhookFormModal: FC<Props> = ({
               <DataTable data-testid="events-definitions-table">
                 {['monitored-service-down', 'monitored-service-up'].map((name) => {
                   return (
-                    <GoACheckbox
-                      name={name}
-                      key={`${name}:${Math.random()}`}
-                      checked={webhook.eventTypes?.map((e) => e.id).includes(`status-service:${name}`)}
-                      onChange={(value: string) => {
-                        const eventTypes = webhook.eventTypes?.map((e) => e.id);
-                        const elementLocation = eventTypes.indexOf(`status-service:${name}`);
-                        if (elementLocation === -1) {
-                          eventTypes.push(`status-service:${value}`);
-                        } else {
-                          eventTypes.splice(elementLocation, 1);
-                        }
+                    <Events>
+                      <GoACheckbox
+                        name={name}
+                        key={`${name}:${Math.random()}`}
+                        checked={webhook.eventTypes?.map((e) => e.id).includes(`status-service:${name}`)}
+                        onChange={(value: string) => {
+                          const eventTypes = webhook.eventTypes?.map((e) => e.id);
+                          const elementLocation = eventTypes.indexOf(`status-service:${name}`);
+                          if (elementLocation === -1) {
+                            eventTypes.push(`status-service:${value}`);
+                          } else {
+                            eventTypes.splice(elementLocation, 1);
+                          }
 
-                        setWebhook({
-                          ...webhook,
-                          eventTypes: eventTypes.map((e) => ({ id: e })),
-                        });
-                      }}
-                    >
-                      {name}
-                    </GoACheckbox>
+                          setWebhook({
+                            ...webhook,
+                            eventTypes: eventTypes.map((e) => ({ id: e })),
+                          });
+                        }}
+                      >
+                        {name}
+                      </GoACheckbox>
+                    </Events>
                   );
                 })}
               </DataTable>
+            </GoAFormItem>
+            <GoAFormItem>
+              {showEntries && <EntryDetail>{JSON.stringify(entries && [entries[0]], null, 2)}</EntryDetail>}
             </GoAFormItem>
           </GoAForm>
         </GoAModalContent>
@@ -355,4 +384,24 @@ export const ErrorMsg = styled.div`
     pointer-events: none;
     gap: 0.25rem;
   }
+`;
+
+export const Events = styled.div`
+   {
+    display: flex;
+  }
+`;
+
+export const NoPaddingTd = styled.td`
+  padding: 0px !important;
+`;
+
+export const EntryDetail = styled.div`
+  background: #f3f3f3;
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 12px;
+  padding: 16px;
+  text-align: left;
 `;

@@ -18,6 +18,7 @@ export interface ServiceStatus {
   endpointHealth: Record<string, { url: string; entries: EndpointStatusEntry[] }>;
   metrics: ServiceStatusMetrics;
   contact: ContactInformation;
+  testSuccess: number;
 }
 
 export interface FormData {
@@ -53,7 +54,7 @@ export interface Webhooks {
   url: string;
   name: string;
   targetId: string;
-  intervalSeconds: number;
+  intervalMinutes: number;
   eventTypes: { id: string }[];
   description: string;
   generatedByTest?: boolean;

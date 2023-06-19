@@ -43,6 +43,11 @@ export class StatusApi {
     const res = await this.http.patch(`/applications/${applicationId}/toggle`, { enabled });
     return res.data;
   }
+
+  async testWebhook(webhook: Webhooks, eventName: string): Promise<object> {
+    const res = await this.http.get(`/webhook/${webhook.id}/test/${eventName}`);
+    return res.data;
+  }
 }
 
 // Paul: 2023-Jan-03, we start to use simple function for Apis.
