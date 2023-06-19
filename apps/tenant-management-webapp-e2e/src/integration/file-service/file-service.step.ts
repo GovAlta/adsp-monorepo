@@ -733,9 +733,9 @@ Then('the user clicks Active retention policy checkbox', function () {
   fileServiceObj.fileRetentionCheckBox().shadow().find('.goa-checkbox-container').click({ force: true });
 });
 
-Then('the user view retention policy 30 days in file type modal', function () {
+Then('the user view retention policy 1 days in file type modal', function () {
   cy.wait(1000);
-  fileServiceObj.fileRetentionDelayInput().invoke('val').should('equal', '30');
+  fileServiceObj.fileRetentionDelayInput().invoke('val').should('equal', '1');
 });
 Then('the user uncheck Active retention policy checkbox', function () {
   cy.wait(1000); // Wait for modal
