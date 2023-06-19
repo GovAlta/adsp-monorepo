@@ -7,7 +7,7 @@ import { StatusServiceConfiguration } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 
-import { Webhooks } from '../jobs/checkEndpoint';
+import { Webhooks } from '../model';
 
 /**
  * Applications are stored in both the status-repository (for

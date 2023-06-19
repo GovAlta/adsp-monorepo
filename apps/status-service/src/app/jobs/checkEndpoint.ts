@@ -12,7 +12,7 @@ import {
   monitoredServiceDown,
   monitoredServiceUp,
 } from '../events';
-import { StaticApplicationData } from '../model';
+import { Configuration, StaticApplicationData, Webhooks } from '../model';
 
 const ENTRY_SAMPLE_SIZE = 5;
 const HEALTHY_MAX_FAIL_COUNT = 0;
@@ -28,18 +28,6 @@ export interface CreateCheckEndpointProps {
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
   getEndpointResponse: GetEndpointResponse;
-}
-
-export interface Webhooks {
-  id: string;
-  url: string;
-  name: string;
-  targetId: string;
-  intervalMinutes: number;
-  eventTypes: { id: string }[];
-  description: string;
-  generatedByTest?: boolean;
-  appCurrentlyUp: boolean;
 }
 
 export enum ServiceUserRoles {
@@ -139,12 +127,14 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
     roles: [ServiceUserRoles.Admin],
   } as User;
 
-  const response = (await axios.get(webhooksUrl.href, { headers: { Authorization: `Bearer ${token}` } })) as any;
+  const response = (await axios.get(webhooksUrl.href, { headers: { Authorization: `Bearer ${token}` } })) as {
+    data: Configuration;
+  };
 
   const webhooks = response.data.latest.configuration;
 
   Object.keys(webhooks).map(async (key) => {
-    const webhook = webhooks[key] as Webhooks;
+    const webhook = webhooks[key];
     if (webhook.targetId === app.appKey) {
       const eventTypes = webhook.eventTypes;
 

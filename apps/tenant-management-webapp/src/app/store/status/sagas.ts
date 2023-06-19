@@ -27,7 +27,6 @@ import {
   DeleteWebhookAction,
   SaveWebhookSuccess,
   TestWebhookAction,
-  TEST_WEBHOOK_ACTION,
 } from './actions';
 import { ConfigState } from '@store/config/models';
 import { UpdateIndicator } from '@store/session/actions';

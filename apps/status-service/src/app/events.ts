@@ -1,7 +1,7 @@
 import { AdspId, DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
 import { NoticeApplicationEntity } from './model/notice';
 import { StaticApplicationData } from './model';
-import { Webhooks } from './jobs/checkEndpoint';
+import { Webhooks } from './model';
 
 const ApplicationDefinition = {
   type: 'object',

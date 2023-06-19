@@ -1,6 +1,5 @@
 import {
   adspId,
-  ConfigurationService,
   TenantService,
   UnauthorizedUserError,
   User,
@@ -337,7 +336,7 @@ export const createStreamRouter = (
                 });
               });
           } catch (e) {
-            console.error(JSON.stringify(e) + '< eee---');
+            console.error('Error: ' + JSON.stringify(e));
           }
         });
       });
