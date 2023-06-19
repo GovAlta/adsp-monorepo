@@ -15,4 +15,4 @@ to see how easy it is to generate PDF files from HTML templates.
   Your browser does not support the video tag.
 </video>
 
-Then take a look at the [rest of the tutorial](/adsp-monorepo/tutorials/pdf-service/introduction.html) to get the details.
+Then take a look at the rest of the tutorial to [get the details](/adsp-monorepo/tutorials/pdf-service/introduction.html).
