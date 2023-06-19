@@ -116,5 +116,13 @@ class FileServicePage {
   coreFileTypesTable() {
     return cy.xpath('//*[text()="Core file types"]/parent::*//*[@data-testid="file-types-table"]//tbody');
   }
+
+  fileRetentionCheckBox() {
+    return cy.xpath('//*[@data-testid="file-type-modal"]//goa-checkbox[@name="retentionActive"]');
+  }
+
+  fileRetentionDelayInput() {
+    return cy.xpath('//*[@data-testid="file-type-modal"]//input[@data-testid="delete-in-days-input"]');
+  }
 }
 export default FileServicePage;

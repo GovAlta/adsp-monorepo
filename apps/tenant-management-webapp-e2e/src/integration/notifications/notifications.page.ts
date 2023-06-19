@@ -27,7 +27,7 @@ class NotificationsPage {
 
   notificationTypeModalRolesCheckboxes() {
     return cy.xpath(
-      '//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-label"]/following-sibling::td//goa-checkbox'
+      '//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-name"]/following-sibling::td//goa-checkbox'
     );
   }
 

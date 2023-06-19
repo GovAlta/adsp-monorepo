@@ -55,7 +55,7 @@ export const File: FunctionComponent = () => {
             <Tab label="File types">
               <FileTypes activeEdit={activateEditState} />
             </Tab>
-            <Tab label="Test files">
+            <Tab label="Uploaded files">
               <FileList />
             </Tab>
           </Tabs>
