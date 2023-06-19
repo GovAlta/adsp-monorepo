@@ -46,7 +46,11 @@ export class MongoFormRepository implements FormRepository {
     }
 
     if (criteria?.createdByIdEquals) {
-      query["createdBy.id"] = criteria.createdByIdEquals;
+      query['createdBy.id'] = criteria.createdByIdEquals;
+    }
+
+    if (criteria?.anonymousApplicantEquals !== undefined) {
+      query.anonymousApplicant = criteria.anonymousApplicantEquals;
     }
 
     return new Promise<FormEntity[]>((resolve, reject) => {
@@ -110,6 +114,7 @@ export class MongoFormRepository implements FormRepository {
       tenantId: entity.tenantId.toString(),
       id: entity.id,
       formDraftUrl: entity.formDraftUrl,
+      anonymousApplicant: entity.anonymousApplicant,
       definitionId: entity.definition.id,
       applicantId: entity.applicant?.urn.toString(),
       status: entity.status,
@@ -137,6 +142,7 @@ export class MongoFormRepository implements FormRepository {
       {
         id: doc.id,
         formDraftUrl: doc.formDraftUrl,
+        anonymousApplicant: doc.anonymousApplicant,
         status: doc.status,
         created: doc.created,
         createdBy: doc.createdBy,

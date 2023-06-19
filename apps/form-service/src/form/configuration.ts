@@ -11,6 +11,7 @@ export const configurationSchema = {
         anonymousApply: { type: 'boolean' },
         applicantRoles: { type: 'array', items: { type: 'string' } },
         assessorRoles: { type: 'array', items: { type: 'string' } },
+        clerkRoles: { type: 'array', items: { type: 'string' } },
       },
       required: ['id', 'name', 'formDraftUrlTemplate', 'anonymousApply', 'applicantRoles', 'assessorRoles'],
     },

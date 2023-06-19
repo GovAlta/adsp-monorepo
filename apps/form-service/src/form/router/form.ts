@@ -32,6 +32,7 @@ export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition 
     anonymousApply: entity.anonymousApply,
     applicantRoles: entity.applicantRoles,
     assessorRoles: entity.assessorRoles,
+    clerkRoles: entity.clerkRoles,
     formDraftUrlTemplate: entity.formDraftUrlTemplate,
   };
 }
@@ -44,6 +45,7 @@ export function mapForm(
     urn: adspId`${apiId}:/forms/${entity.id}`.toString(),
     id: entity.id,
     formDraftUrl: entity.formDraftUrl,
+    anonymousApplicant: entity.anonymousApplicant,
     status: entity.status,
     created: entity.created,
     createdBy: entity.createdBy,

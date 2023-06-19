@@ -55,6 +55,7 @@ describe('lock', () => {
       anonymousApply: false,
       applicantRoles: [],
       assessorRoles: [],
+      clerkRoles: [],
       formDraftUrlTemplate: '',
     }),
     subscriber,
@@ -65,6 +66,7 @@ describe('lock', () => {
         test: adspId`urn:ads:platform:file-service:v1:/files/test`,
       },
       formDraftUrl: '',
+      anonymousApplicant: true,
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       locked: null,
@@ -103,6 +105,14 @@ describe('lock', () => {
     repositoryMock.save.mockResolvedValueOnce({});
 
     await job();
+    expect(repositoryMock.find).toHaveBeenCalledWith(
+      expect.any(Number),
+      expect.any(String),
+      expect.objectContaining({
+        statusEquals: FormStatus.Draft,
+        anonymousApplicantEquals: true,
+      })
+    );
     expect(repositoryMock.save).toHaveBeenCalledTimes(1);
   });
 
