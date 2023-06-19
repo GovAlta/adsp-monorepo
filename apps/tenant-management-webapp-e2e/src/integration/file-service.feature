@@ -173,6 +173,6 @@ Feature: File service
     Then the user clicks Active retention policy checkbox
     And the user clicks Save button on file type modal
     When the user clicks "Edit" button for the file type of "autotype7", "public", "file-service-admin"
-    Then the user view retention policy 30 days in file type modal
+    Then the user view retention policy 1 days in file type modal
     Then the user uncheck Active retention policy checkbox
     And the user clicks Save button on file type modal
