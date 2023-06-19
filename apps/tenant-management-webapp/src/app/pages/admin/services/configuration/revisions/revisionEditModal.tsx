@@ -26,6 +26,7 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
   );
 
   const errorMsg = `Configuration ${service} does not match the definition schema `;
+  const invalidJsonMsg = `Please provide a valid json configuration`;
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -33,8 +34,20 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
   }, [debouncedRenderConfiguration]);
 
   const validateSchema = (configuration) => {
+    if (!isInputJson(configuration)) {
+      setError(invalidJsonMsg);
+      return;
+    }
     const jsonSchemaValidation = jsonSchemaCheck(definition?.['configurationSchema'], JSON.parse(configuration));
     setError(jsonSchemaValidation ? '' : errorMsg);
+  };
+  const isInputJson = (input) => {
+    try {
+      JSON.parse(input);
+      return true;
+    } catch (error) {
+      return false;
+    }
   };
 
   return (
@@ -58,7 +71,7 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
             <GoAButton
               type="primary"
               data-testid="form-save"
-              disabled={error?.length > 0}
+              disabled={error?.length > 0 || !configuration}
               onClick={() => {
                 const serviceSplit = service.split(':');
 
