@@ -18,6 +18,10 @@ export const formSchema = new Schema(
     formDraftUrl: {
       type: String,
     },
+    anonymousApplicant: {
+      type: Boolean,
+      default: false,
+    },
     applicantId: {
       type: String,
       required: true,

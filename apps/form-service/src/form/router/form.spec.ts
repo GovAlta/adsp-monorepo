@@ -18,6 +18,7 @@ describe('form router', () => {
     anonymousApply: false,
     applicantRoles: ['test-applicant'],
     assessorRoles: ['test-assessor'],
+    clerkRoles: [],
   });
 
   const subscriberId = adspId`urn:ads:platform:notification-service:v1:/subscribers/test`;
@@ -55,6 +56,7 @@ describe('form router', () => {
   const formInfo = {
     id: 'test-form',
     formDraftUrl: 'https://my-form/test-form',
+    anonymousApplicant: false,
     created: new Date(),
     createdBy: { id: 'tester', name: 'tester' },
     status: FormStatus.Draft,
@@ -599,6 +601,7 @@ describe('form router', () => {
       const formInfo = {
         id: 'test-form',
         formDraftUrl: 'https://my-form/test-form',
+        anonymousApplicant: true,
         created: new Date(),
         createdBy: { id: 'tester', name: 'tester' },
         status: FormStatus.Locked,
