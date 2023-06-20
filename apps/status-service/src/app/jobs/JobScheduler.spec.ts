@@ -118,12 +118,23 @@ describe('JobScheduler', () => {
     foo: 'foo',
   } as unknown as EventService;
 
+  const mockTokenProvider = {
+    getAccessToken: jest.fn(),
+  };
+
+  const serviceDirectoryMock = {
+    getServiceUrl: jest.fn(() => Promise.resolve(new URL('http:/localhost:80'))),
+    getResourceUrl: jest.fn(() => Promise.resolve(new URL('http:/localhost:80'))),
+  };
+
   const props: HealthCheckSchedulingProps = {
     logger: loggerMock,
     serviceStatusRepository: statusRepoMock,
     endpointStatusEntryRepository: endpointRepoMock,
     eventService: eventServiceMock,
     applicationManager: appManagerFactory('urn:ads:mock-tenant:mock-service'),
+    tokenProvider: mockTokenProvider,
+    directory: serviceDirectoryMock,
   };
   const jobScheduler = new HealthCheckJobScheduler(props);
 

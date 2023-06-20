@@ -5,9 +5,14 @@ import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { EndpointStatusEntry, EndpointStatusType } from '../types';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
-import { AdspId, EventService } from '@abgov/adsp-service-sdk';
-import { applicationStatusToHealthy, applicationStatusToUnhealthy } from '../events';
-import { StaticApplicationData } from '../model';
+import { AdspId, EventService, ServiceDirectory, TokenProvider, adspId, User } from '@abgov/adsp-service-sdk';
+import {
+  applicationStatusToHealthy,
+  applicationStatusToUnhealthy,
+  monitoredServiceDown,
+  monitoredServiceUp,
+} from '../events';
+import { Configuration, StaticApplicationData, Webhooks } from '../model';
 
 const ENTRY_SAMPLE_SIZE = 5;
 const HEALTHY_MAX_FAIL_COUNT = 0;
@@ -20,7 +25,13 @@ export interface CreateCheckEndpointProps {
   serviceStatusRepository: ServiceStatusRepository;
   endpointStatusEntryRepository: EndpointStatusEntryRepository;
   eventService: EventService;
+  directory: ServiceDirectory;
+  tokenProvider: TokenProvider;
   getEndpointResponse: GetEndpointResponse;
+}
+
+export enum ServiceUserRoles {
+  Admin = 'status-service-admin',
 }
 
 export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
@@ -90,11 +101,88 @@ export const getNewEndpointStatus = (
 };
 
 async function saveStatus(props: CreateCheckEndpointProps, statusEntry: EndpointStatusEntry, tenantId: AdspId) {
-  const { app, serviceStatusRepository, endpointStatusEntryRepository, eventService, logger } = props;
+  const {
+    app,
+    serviceStatusRepository,
+    endpointStatusEntryRepository,
+    eventService,
+    logger,
+    directory,
+    tokenProvider,
+  } = props;
   // create endpoint status entry before determining if the state is changed
 
   await EndpointStatusEntryEntity.create(endpointStatusEntryRepository, statusEntry);
   // verify that in the last [ENTRY_SAMPLE_SIZE] minutes, at least [MIN_OK_COUNT] are ok
+
+  const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
+  const token = await tokenProvider.getAccessToken();
+  const webhooksUrl = new URL(
+    `/configuration/v2/configuration/platform/push-service?tenantId=${app.tenantId}`,
+    configurationServiceUrl
+  );
+
+  const user = {
+    tenantId,
+    roles: [ServiceUserRoles.Admin],
+  } as User;
+
+  const response = (await axios.get(webhooksUrl.href, { headers: { Authorization: `Bearer ${token}` } })) as {
+    data: Configuration;
+  };
+
+  const webhooks = response.data.latest.configuration;
+
+  Object.keys(webhooks).map(async (key) => {
+    const webhook = webhooks[key];
+    if (webhook.targetId === app.appKey) {
+      const eventTypes = webhook.eventTypes;
+
+      const waitTimePings = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
+        app.url,
+        app.appKey,
+        webhook.intervalMinutes
+      );
+
+      let switchOffCount = 0;
+      let switchOnCount = 0;
+      waitTimePings.forEach((ping) => {
+        if (ping.ok) {
+          switchOnCount++;
+        } else {
+          switchOffCount++;
+        }
+      });
+
+      if (switchOffCount === waitTimePings.length && switchOffCount === webhook.intervalMinutes) {
+        eventTypes.map((et) => {
+          if (et.id === 'status-service:monitored-service-down') {
+            if (webhook.appCurrentlyUp || webhook.appCurrentlyUp === undefined) {
+              const updatedWebhook: Webhooks = JSON.parse(JSON.stringify(webhook));
+              updatedWebhook.appCurrentlyUp = false;
+              updateAppStatus(directory, tenantId, tokenProvider, updatedWebhook, key);
+
+              eventService.send(monitoredServiceDown(app, user, updatedWebhook));
+            }
+          }
+        });
+      }
+
+      if (switchOnCount === waitTimePings.length && switchOnCount === webhook.intervalMinutes) {
+        eventTypes.map((et) => {
+          if (et.id === 'status-service:monitored-service-up') {
+            if (webhook.appCurrentlyUp === false || webhook.appCurrentlyUp === undefined) {
+              const updatedWebhook: Webhooks = JSON.parse(JSON.stringify(webhook));
+              updatedWebhook.appCurrentlyUp = true;
+              updateAppStatus(directory, tenantId, tokenProvider, updatedWebhook, key);
+
+              eventService.send(monitoredServiceUp(app, user, updatedWebhook));
+            }
+          }
+        });
+      }
+    }
+  });
 
   const recentHistory = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
     app.url,
@@ -133,3 +221,33 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
     }
   }
 }
+
+const updateAppStatus = async (
+  directory: ServiceDirectory,
+  tenantId: AdspId,
+  tokenProvider: TokenProvider,
+  webhook: Webhooks,
+  key: string
+) => {
+  const token = await tokenProvider.getAccessToken();
+  const baseUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
+  const pushConfiguration = new URL(
+    `/configuration/v2/configuration/platform/push-service?tenantId=${tenantId}`,
+    baseUrl
+  );
+
+  const response = await axios.patch(
+    pushConfiguration.href,
+    {
+      operation: 'UPDATE',
+      update: {
+        [key]: webhook,
+      },
+    },
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+
+  return response;
+};

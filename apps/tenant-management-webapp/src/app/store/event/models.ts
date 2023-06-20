@@ -37,6 +37,10 @@ export interface EventSearchCriteria {
   namespace?: string;
   name?: string;
   correlationId?: string;
+  url?: string;
+  applications?: string;
+  value?: string;
+  top?: number;
 }
 
 export const defaultEventDefinition: EventDefinition = {

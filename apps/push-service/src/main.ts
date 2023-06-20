@@ -20,6 +20,7 @@ import { promisify } from 'util';
 import { createAmqpEventService } from './amqp';
 import { environment } from './environments/environment';
 import { applyPushMiddleware, configurationSchema, PushServiceRoles, Stream, StreamEntity } from './push';
+import { WebhookTriggeredDefinition } from './push/events';
 
 const logger = createLogger('push-service', environment.LOG_LEVEL || 'info');
 
@@ -38,34 +39,45 @@ const initializeApp = async (): Promise<Server> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { tenantService, tenantStrategy, coreStrategy, configurationHandler, clearCached, healthCheck } =
-    await initializePlatform(
-      {
-        serviceId,
-        displayName: 'Push service',
-        description: 'Service for push mode connections.',
-        roles: [
-          {
-            role: PushServiceRoles.StreamListener,
-            description: 'Role used to allow an account to listen to all streams.',
-            inTenantAdmin: true,
-          },
-        ],
-        configuration: {
-          description: 'Streams available by websocket with configuration of the included events.',
-          schema: configurationSchema,
+  const {
+    tenantService,
+    tenantStrategy,
+    coreStrategy,
+    configurationHandler,
+    clearCached,
+    healthCheck,
+    configurationService,
+    directory,
+    tokenProvider,
+    eventService,
+  } = await initializePlatform(
+    {
+      serviceId,
+      displayName: 'Push service',
+      description: 'Service for push mode connections.',
+      roles: [
+        {
+          role: PushServiceRoles.StreamListener,
+          description: 'Role used to allow an account to listen to all streams.',
+          inTenantAdmin: true,
         },
-        combineConfiguration: (tenant: Record<string, Stream>, core: Record<string, Stream>, tenantId) =>
-          Object.entries({ ...tenant, ...core }).reduce(
-            (c, [k, s]) => ({ ...c, [k]: new StreamEntity(tenantId, s) }),
-            {}
-          ),
-        clientSecret: environment.CLIENT_SECRET,
-        accessServiceUrl,
-        directoryUrl: new URL(environment.DIRECTORY_URL),
+      ],
+      configuration: {
+        description: 'Streams available by websocket with configuration of the included events.',
+        schema: configurationSchema,
       },
-      { logger }
-    );
+      combineConfiguration: (tenant: Record<string, Stream>, core: Record<string, Stream>, tenantId) =>
+        Object.entries({ ...tenant, ...core }).reduce(
+          (c, [k, s]) => ({ ...c, [k]: new StreamEntity(tenantId, s) }),
+          {}
+        ),
+      events: [WebhookTriggeredDefinition],
+      clientSecret: environment.CLIENT_SECRET,
+      accessServiceUrl,
+      directoryUrl: new URL(environment.DIRECTORY_URL),
+    },
+    { logger }
+  );
 
   const configurationSync = await createAmqpConfigUpdateService({
     ...environment,
@@ -125,9 +137,17 @@ const initializeApp = async (): Promise<Server> => {
   io.use(wrapForIo(passport.authenticate(['core', 'jwt', 'anonymous'], { session: false })));
   io.use(wrapForIo(configurationHandler));
 
-  const eventService = await createAmqpEventService({ ...environment, logger });
+  const eventServiceAmp = await createAmqpEventService({ ...environment, logger });
 
-  applyPushMiddleware(app, [defaultIo, io], { logger, eventService, tenantService });
+  applyPushMiddleware(app, [defaultIo, io], {
+    logger,
+    eventServiceAmp,
+    tenantService,
+    configurationService,
+    directory,
+    tokenProvider,
+    eventService,
+  });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
   app.use('/swagger/docs/v1', (_req, res) => {
@@ -138,7 +158,7 @@ const initializeApp = async (): Promise<Server> => {
     const platform = await healthCheck();
     res.json({
       ...platform,
-      msg: eventService.isConnected(),
+      msg: eventServiceAmp.isConnected(),
     });
   });
 
