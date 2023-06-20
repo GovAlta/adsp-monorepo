@@ -46,7 +46,7 @@ When(
       .find('.goa-checkbox-container')
       .invoke('attr', 'class')
       .then((publicCheckboxClassName) => {
-        if (role.toLowerCase() == 'public') {
+        if (role.toLowerCase() === 'public') {
           if (!publicCheckboxClassName?.includes('--selected')) {
             notificationsObj
               .notificationTypeModalPublicCheckbox()
@@ -437,8 +437,8 @@ Given('a tenant admin user is on notification subscriptions page', function () {
 When(
   'the user types {string} in Search subuscriber address as field and {string} in Search subscriber email field',
   function (addressAs, email) {
-    notificationsObj.searchSubscriberAddressAs().clear().type(addressAs);
-    notificationsObj.searchSubscriberEmail().clear().type(email);
+    notificationsObj.searchSubscriberAddressAs().clear({ force: true }).type(addressAs);
+    notificationsObj.searchSubscriberEmail().clear({ force: true }).type(email);
   }
 );
 
