@@ -328,7 +328,7 @@ export const testWebhook =
         )}`
       );
     } catch (err) {
-      logger.error(`Failed to toggle application: ${err.message}`);
+      logger.error(`Failed to send event: ${err.message}`);
       next(err);
     }
   };
