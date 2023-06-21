@@ -1,5 +1,5 @@
 import { adspId, Channel, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError, NotFoundError, ValidationService } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { accessForm, deleteForm, findForms, formOperation, getForm, getFormDefinition, updateFormData } from '.';
 import { FormServiceRoles, FormStatus, FORM_SUBMITTED } from '..';
@@ -10,7 +10,11 @@ describe('form router', () => {
   const serviceId = adspId`urn:ads:platform:form-service`;
   const apiId = adspId`${serviceId}:v1`;
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
-  const definition = new FormDefinitionEntity(tenantId, {
+  const validationService: ValidationService = {
+    validate: jest.fn(),
+    setSchema: jest.fn(),
+  };
+  const definition = new FormDefinitionEntity(validationService, tenantId, {
     id: 'test',
     name: 'test-form-definition',
     description: null,
@@ -19,6 +23,7 @@ describe('form router', () => {
     applicantRoles: ['test-applicant'],
     assessorRoles: ['test-assessor'],
     clerkRoles: [],
+    dataSchema: null,
   });
 
   const subscriberId = adspId`urn:ads:platform:notification-service:v1:/subscribers/test`;

@@ -156,6 +156,8 @@ export class FormEntity implements Form {
     }
 
     if (data) {
+      this.definition.validateData(data);
+
       this.data = data;
     }
 

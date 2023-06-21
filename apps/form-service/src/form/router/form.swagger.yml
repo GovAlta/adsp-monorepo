@@ -23,6 +23,8 @@ components:
           type: array
           items:
             type: string
+        dataSchema:
+          type: object
     Form:
       type: object
       properties:

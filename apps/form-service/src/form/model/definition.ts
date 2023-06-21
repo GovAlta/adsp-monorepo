@@ -1,4 +1,5 @@
 import { AdspId, Channel, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { ValidationService } from '@core-services/core-common';
 import { compile } from 'handlebars';
 import { v4 as uuidv4 } from 'uuid';
 import { NotificationService, Subscriber } from '../../notification';
@@ -16,9 +17,10 @@ export class FormDefinitionEntity implements FormDefinition {
   assessorRoles: string[];
   clerkRoles: string[];
   formDraftUrlTemplate: string;
+  dataSchema: Record<string, unknown>;
   private urlTemplate: HandlebarsTemplateDelegate<{ id: string }>;
 
-  constructor(public tenantId: AdspId, definition: FormDefinition) {
+  constructor(private validationService: ValidationService, public tenantId: AdspId, definition: FormDefinition) {
     this.id = definition.id;
     this.name = definition.name;
     this.description = definition.description;
@@ -28,6 +30,8 @@ export class FormDefinitionEntity implements FormDefinition {
     this.clerkRoles = definition.clerkRoles || [];
     this.formDraftUrlTemplate = definition.formDraftUrlTemplate;
     this.urlTemplate = compile(definition.formDraftUrlTemplate || '');
+    this.dataSchema = definition.dataSchema || {};
+    this.validationService.setSchema(this.id, this.dataSchema);
   }
 
   public canApply(user: User): boolean {
@@ -45,6 +49,10 @@ export class FormDefinitionEntity implements FormDefinition {
 
     // User does not have one of the assisted application roles.
     return user && !user.roles.find((role) => assistRoles.includes(role));
+  }
+
+  public validateData(data: Record<string, unknown>) {
+    return this.validationService.validate('form data update', this.id, data);
   }
 
   public async createForm(

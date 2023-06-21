@@ -1,4 +1,5 @@
 import { adspId, Channel } from '@abgov/adsp-service-sdk';
+import { ValidationService } from '@core-services/core-common';
 import { Logger } from 'winston';
 import { FormDefinitionEntity, FormEntity } from '../model';
 import { FormStatus } from '../types';
@@ -32,6 +33,11 @@ describe('lock', () => {
     verifyCode: jest.fn(),
   };
 
+  const validationService: ValidationService = {
+    validate: jest.fn(),
+    setSchema: jest.fn(),
+  };
+
   const subscriberId = adspId`urn:ads:platform:notification-service:v1:/subscribers/test`;
   const subscriber = {
     id: 'test',
@@ -48,7 +54,7 @@ describe('lock', () => {
 
   const form = new FormEntity(
     repositoryMock,
-    new FormDefinitionEntity(tenantId, {
+    new FormDefinitionEntity(validationService, tenantId, {
       id: 'my-test-form',
       name: 'My test form',
       description: null,
@@ -57,6 +63,7 @@ describe('lock', () => {
       assessorRoles: [],
       clerkRoles: [],
       formDraftUrlTemplate: '',
+      dataSchema: null,
     }),
     subscriber,
     {
