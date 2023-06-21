@@ -28,12 +28,19 @@ components:
     Form:
       type: object
       properties:
+        urn:
+          type: string
         id:
           type: string
         definitionId:
           type: string
         anonymousApplicant:
           type: boolean
+        applicant:
+          type: object
+          properties:
+            addressAs:
+              type: string
         status:
           type: string
           enum: [draft, locked, submitted, archived]
@@ -49,6 +56,9 @@ components:
               type: string
           required: [id, name]
         lastAccessed:
+          type: string
+          format: date-time
+        locked:
           type: string
           format: date-time
         submitted:
