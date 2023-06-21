@@ -100,55 +100,53 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
   return (
     <GoAModalStyle>
       <GoAModal isOpen={isOpen} testId={testId}>
-        <div className="modal-styles">
-          <GoAModalTitle>
-            {title} - {webhook.name}
-          </GoAModalTitle>
-          <GoAModalContent>
-            <GoAForm>
-              <GoAFormItem>
-                <label className="margin-bottom">Events</label>
-                {!orderedGroupNames && renderNoItem('event definition')}
+        <GoAModalTitle>
+          {title} - {webhook.name}
+        </GoAModalTitle>
+        <GoAModalContent>
+          <GoAForm>
+            <GoAFormItem>
+              <label className="margin-bottom">Events</label>
+              {!orderedGroupNames && renderNoItem('event definition')}
 
-                <DataTable data-testid="events-definitions-table">
-                  {['monitored-service-down', 'monitored-service-up'].map((name) => {
-                    return (
-                      <Events>
-                        {name}
-                        <TestButtonWrapper>
-                          <GoAButton buttonType="secondary" buttonSize="small" onClick={() => test(name)}>
-                            Test
-                          </GoAButton>
-                        </TestButtonWrapper>
-                      </Events>
-                    );
-                  })}
-                </DataTable>
-              </GoAFormItem>
-              <GoAFormItem>
-                <EntryDetail>
-                  {indicator.show ? (
-                    <div className="loading-border">
-                      <GoAPageLoader visible={true} type="infinite" message={indicator.message} pagelock={true} />
-                    </div>
-                  ) : (
-                    showEntries && JSON.stringify(entries && entries[0], null, 2)
-                  )}
-                </EntryDetail>
-              </GoAFormItem>
-            </GoAForm>
-          </GoAModalContent>
-          <GoAModalActions>
-            <GoAButton
-              buttonType="secondary"
-              onClick={() => {
-                onClose();
-              }}
-            >
-              Close
-            </GoAButton>
-          </GoAModalActions>
-        </div>
+              <DataTable data-testid="events-definitions-table">
+                {['monitored-service-down', 'monitored-service-up'].map((name) => {
+                  return (
+                    <Events>
+                      {name}
+                      <TestButtonWrapper>
+                        <GoAButton buttonType="secondary" buttonSize="small" onClick={() => test(name)}>
+                          Test
+                        </GoAButton>
+                      </TestButtonWrapper>
+                    </Events>
+                  );
+                })}
+              </DataTable>
+            </GoAFormItem>
+            <GoAFormItem>
+              <EntryDetail>
+                {indicator.show ? (
+                  <div className="loading-border">
+                    <GoAPageLoader visible={true} type="infinite" message={indicator.message} pagelock={true} />
+                  </div>
+                ) : (
+                  showEntries && JSON.stringify(entries && entries[0], null, 2)
+                )}
+              </EntryDetail>
+            </GoAFormItem>
+          </GoAForm>
+        </GoAModalContent>
+        <GoAModalActions>
+          <GoAButton
+            buttonType="secondary"
+            onClick={() => {
+              onClose();
+            }}
+          >
+            Close
+          </GoAButton>
+        </GoAModalActions>
       </GoAModal>
     </GoAModalStyle>
   );
@@ -173,12 +171,8 @@ const GoAModalStyle = styled.div`
     margin-left: -3px;
   }
 
-  .modal-styles {
-    min-height: 800px;
-  }
-
   .loading-border {
-    margin-top: 150px;
+    margin-top: 75px;
   }
 
   .progress-container--large {
@@ -238,5 +232,5 @@ export const EntryDetail = styled.div`
   line-height: 12px;
   padding: 16px;
   text-align: left;
-  min-height: 550px;
+  min-height: 320px;
 `;

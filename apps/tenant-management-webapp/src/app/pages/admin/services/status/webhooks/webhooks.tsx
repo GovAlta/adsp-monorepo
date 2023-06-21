@@ -47,7 +47,7 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
     name: string;
     url: string;
     targetId: string;
-    intervalMinutes: number;
+    intervalMinutes?: number;
     description: string;
     eventTypes: { id: string }[];
     onEdit?: () => void;
