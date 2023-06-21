@@ -7,7 +7,11 @@ import { FormEntity } from './form';
 
 describe('FormEntity', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
-  const definition = new FormDefinitionEntity(tenantId, {
+  const validationService = {
+    validate: jest.fn(),
+    setSchema: jest.fn(),
+  };
+  const definition = new FormDefinitionEntity(validationService, tenantId, {
     id: 'test',
     name: 'test-form-definition',
     formDraftUrlTemplate: 'https://my-form/{{ id }}',
@@ -16,6 +20,7 @@ describe('FormEntity', () => {
     applicantRoles: ['test-applicant'],
     assessorRoles: ['test-assessor'],
     clerkRoles: ['test-clerk'],
+    dataSchema: null,
   });
 
   const subscriberId = adspId`urn:ads:platform:notification-service:v1:/subscribers/test`;
@@ -51,6 +56,7 @@ describe('FormEntity', () => {
     repositoryMock.delete.mockClear();
     notificationMock.sendCode.mockReset();
     notificationMock.verifyCode.mockReset();
+    validationService.validate.mockReset();
   });
 
   it('it can be created', () => {
@@ -359,6 +365,7 @@ describe('FormEntity', () => {
       const updated = await entity.update({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, data, files);
       expect(updated.data).toBe(data);
       expect(updated.files).toBe(files);
+      expect(validationService.validate).toHaveBeenCalledWith(expect.any(String), definition.id, data);
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
     });
 

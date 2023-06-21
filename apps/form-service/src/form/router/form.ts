@@ -34,6 +34,7 @@ export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition 
     assessorRoles: entity.assessorRoles,
     clerkRoles: entity.clerkRoles,
     formDraftUrlTemplate: entity.formDraftUrlTemplate,
+    dataSchema: entity.dataSchema,
   };
 }
 
