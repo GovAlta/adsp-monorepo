@@ -481,7 +481,7 @@ describe('form router', () => {
 
   describe('deleteForm', () => {
     it('can create handler', () => {
-      const handler = deleteForm(fileServiceMock, notificationServiceMock);
+      const handler = deleteForm(eventServiceMock, fileServiceMock, notificationServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -501,7 +501,7 @@ describe('form router', () => {
 
       repositoryMock.delete.mockResolvedValueOnce(true);
 
-      const handler = deleteForm(fileServiceMock, notificationServiceMock);
+      const handler = deleteForm(eventServiceMock, fileServiceMock, notificationServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.delete).toHaveBeenCalledWith(entity);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
@@ -521,7 +521,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = deleteForm(fileServiceMock, notificationServiceMock);
+      const handler = deleteForm(eventServiceMock, fileServiceMock, notificationServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));

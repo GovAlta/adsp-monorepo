@@ -7,6 +7,7 @@ export const FORM_DELETED = 'form-deleted';
 export const FORM_LOCKED = 'form-locked';
 export const FORM_UNLOCKED = 'form-unlocked';
 export const FORM_SUBMITTED = 'form-submitted';
+export const FORM_ARCHIVED = 'form-archived';
 
 const userInfoSchema = {
   type: 'object',
@@ -93,6 +94,18 @@ export const FormStatusSubmittedDefinition: DomainEventDefinition = {
     properties: {
       form: formSchema,
       submittedBy: userInfoSchema,
+    },
+  },
+};
+
+export const FormStatusArchivedDefinition: DomainEventDefinition = {
+  name: FORM_ARCHIVED,
+  description: 'Signalled when a form is archived.',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      archivedBy: userInfoSchema,
     },
   },
 };
@@ -193,6 +206,23 @@ export const formSubmitted = (user: User, form: FormEntity): DomainEvent => ({
   payload: {
     form: mapForm(form),
     submittedBy: {
+      id: user.id,
+      name: user.name,
+    },
+  },
+});
+
+export const formArchived = (user: User, form: FormEntity): DomainEvent => ({
+  name: FORM_ARCHIVED,
+  timestamp: new Date(),
+  tenantId: form.tenantId,
+  correlationId: form.id,
+  context: {
+    definitionId: form.definition.id,
+  },
+  payload: {
+    id: form.id,
+    archivedBy: {
       id: user.id,
       name: user.name,
     },
