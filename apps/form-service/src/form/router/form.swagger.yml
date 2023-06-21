@@ -19,6 +19,12 @@ components:
           type: array
           items:
             type: string
+        clerkRoles:
+          type: array
+          items:
+            type: string
+        dataSchema:
+          type: object
     Form:
       type: object
       properties:
@@ -26,6 +32,8 @@ components:
           type: string
         definitionId:
           type: string
+        anonymousApplicant:
+          type: boolean
         status:
           type: string
           enum: [draft, locked, submitted, archived]
@@ -141,6 +149,8 @@ components:
             schema:
               type: object
               properties:
+                anonymousApplicant:
+                  type: boolean
                 definitionIdEquals:
                   type: string
                 statusEquals:

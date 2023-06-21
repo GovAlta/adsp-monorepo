@@ -11,7 +11,7 @@ grand_parent: Tutorials
 to see how easy it is to generate PDF files from HTML templates.
 
 <video width="960" height="540" controls>
-  <source src="https://file-service.adsp-dev.gov.ab.ca/file/v1/files/658f7b1a-eed9-4328-935c-bf36343ce9ca/download" type="video/mp4">
+  <source src="/adsp-monorepo/assets/pdf/pdf-demo.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
 

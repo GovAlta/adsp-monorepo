@@ -183,7 +183,9 @@ export function* deleteEventDefinition({ definition }: UpdateEventDefinitionActi
 export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaIterator {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
   const token: string = yield call(getAccessToken);
-  let eventUrl = `${baseUrl}/value/v1/event-service/values/event?top=10&after=${action.after || ''}`;
+  let eventUrl = `${baseUrl}/value/v1/event-service/values/event?top=${action.searchCriteria?.top || 10}&after=${
+    action.after || ''
+  }`;
   if (baseUrl && token) {
     if (action.searchCriteria) {
       const contextObj = {};
@@ -201,6 +203,12 @@ export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaI
       if (action.searchCriteria.timestampMax) {
         const maxDate = new Date(action.searchCriteria.timestampMax);
         eventUrl = `${eventUrl}&timestampMax=${maxDate.toISOString()}`;
+      }
+      if (action.searchCriteria.applications) {
+        eventUrl = `${eventUrl}&value=${action.searchCriteria.applications}`;
+      }
+      if (action.searchCriteria.url) {
+        eventUrl = `${eventUrl}&url=${action.searchCriteria.url}`;
       }
       if (action.searchCriteria.timestampMin) {
         const minDate = new Date(action.searchCriteria.timestampMin);

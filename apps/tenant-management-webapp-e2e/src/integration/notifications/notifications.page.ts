@@ -33,12 +33,13 @@ class NotificationsPage {
 
   notificationTypeModalRolesCheckbox(roleLabel) {
     return cy.xpath(
-      `//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-label" and text()="${roleLabel}"]/following-sibling::td//goa-checkbox`
+      `//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-name" and text()="${roleLabel}"]/following-sibling::td//goa-checkbox`
     );
   }
 
   notificationTypeModalClientRoleCheckbox(clientRole) {
-    return cy.xpath(`//goa-checkbox[@value="${clientRole}"]`);
+    const role = `Notifications-type-subscribe-role-checkbox-${clientRole}`;
+    return cy.xpath(`//goa-checkbox[@name="${role}"]`);
   }
 
   notificationChannelCheckbox(channelName) {

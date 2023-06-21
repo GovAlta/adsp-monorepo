@@ -1,7 +1,7 @@
 import { put, select, call, fork, take } from 'redux-saga/effects';
 import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
-import { StatusApi, fetchStatusMetricsApi } from './api';
+import { StatusApi, fetchStatusMetricsApi, WebhookApi } from './api';
 import {
   SaveApplicationAction,
   saveApplicationSuccess,
@@ -20,10 +20,18 @@ import {
   FetchStatusConfigurationSucceededService,
   toggleApplicationStatusSuccess,
   FETCH_SERVICE_STATUS_APPS_ACTION,
+  saveWebhookAction,
+  fetchWebhooksSuccess,
+  TestWebhooksSuccess,
+  deleteWebhookSuccess,
+  DeleteWebhookAction,
+  SaveWebhookSuccess,
+  TestWebhookAction,
 } from './actions';
 import { ConfigState } from '@store/config/models';
+import { UpdateIndicator } from '@store/session/actions';
 import { SetApplicationStatusAction, setApplicationStatusSuccess } from './actions/setApplicationStatus';
-import { EndpointStatusEntry, ApplicationStatus, MetricResponse } from './models';
+import { EndpointStatusEntry, ApplicationStatus, MetricResponse, Webhooks } from './models';
 import { SagaIterator } from '@redux-saga/core';
 import moment from 'moment';
 import axios from 'axios';
@@ -106,6 +114,56 @@ export function* saveApplication(action: SaveApplicationAction): SagaIterator {
   }
 }
 
+export function* saveWebhook(action: saveWebhookAction): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+
+  const token = yield call(getAccessToken);
+  try {
+    const api = new WebhookApi(baseUrl, token);
+
+    const { name, url, targetId, eventTypes, intervalMinutes, id, description } = action.payload;
+
+    const pushService: Record<string, Webhooks> = {
+      [id]: {
+        id: id,
+        name: name,
+        url: url,
+        targetId: targetId,
+        intervalMinutes: intervalMinutes,
+        description: description,
+        eventTypes: eventTypes,
+      },
+    };
+
+    const data = yield call([api, api.saveWebhook], pushService);
+
+    yield put(SaveWebhookSuccess(data.latest.configuration));
+    yield put(refreshServiceStatusApps());
+  } catch (e) {
+    yield put(ErrorNotification({ message: e.message }));
+  }
+}
+
+export function* fetchWebhook(action: saveWebhookAction): SagaIterator {
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
+
+  const token = yield call(getAccessToken);
+  try {
+    const api = new WebhookApi(configBaseUrl, token);
+
+    const data = yield call([api, api.fetchWebhook]);
+
+    const configuration = data?.latest?.configuration;
+
+    yield put(fetchWebhooksSuccess(configuration));
+    yield put(refreshServiceStatusApps());
+  } catch (e) {
+    yield put(ErrorNotification({ message: e.message }));
+  }
+}
+
 export function* deleteApplication(action: DeleteApplicationAction): SagaIterator {
   const currentState: RootState = yield select();
 
@@ -118,6 +176,56 @@ export function* deleteApplication(action: DeleteApplicationAction): SagaIterato
 
     yield put(deleteApplicationSuccess(action.payload.appKey));
   } catch (e) {
+    yield put(ErrorNotification({ message: e.message }));
+  }
+}
+
+export function* deleteWebhook(action: DeleteWebhookAction): SagaIterator {
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
+  const token = yield call(getAccessToken);
+
+  try {
+    const api = new WebhookApi(configBaseUrl, token);
+    yield call([api, api.deleteWebhook], action.payload.id);
+
+    yield put(deleteWebhookSuccess(action.payload.id));
+  } catch (e) {
+    yield put(ErrorNotification({ message: e.message }));
+  }
+}
+export function* testWebhook(action: TestWebhookAction): SagaIterator {
+  const currentState: RootState = yield select();
+
+  const token = yield call(getAccessToken);
+  const statusServiceUrl = getServiceStatusUrl(currentState.config);
+
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Running test...',
+    })
+  );
+
+  try {
+    const api = new StatusApi(statusServiceUrl, token);
+
+    const response = yield call([api, api.testWebhook], action.webhook, action.eventName); // webhook: Webhooks, eventName
+
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
+
+    yield put(TestWebhooksSuccess(response));
+  } catch (e) {
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
     yield put(ErrorNotification({ message: e.message }));
   }
 }

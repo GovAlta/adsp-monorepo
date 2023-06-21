@@ -13,7 +13,7 @@ export interface Subscriber {
 
 export interface NotificationService {
   getSubscriber(tenantId: AdspId, urn: AdspId): Promise<Subscriber>;
-  subscribe(tenantId: AdspId, formId: string, subscriber: Omit<Subscriber, 'urn'>): Promise<Subscriber>;
+  subscribe(tenantId: AdspId, formId: string, subscriber?: Omit<Subscriber, 'urn'>): Promise<Subscriber>;
   unsubscribe(tenantId: AdspId, urn: AdspId): Promise<boolean>;
   sendCode(tenantId: AdspId, subscriber: Subscriber): Promise<void>;
   verifyCode(tenantId: AdspId, subscriber: Subscriber, code: string): Promise<boolean>;

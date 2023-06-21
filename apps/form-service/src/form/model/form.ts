@@ -8,10 +8,16 @@ import { Form, FormStatus } from '../types';
 import { NotificationService, Subscriber } from '../../notification';
 import { FileService } from '../../file';
 
+// Any form created by user with the intake app role is treated as anonymous.
+function isAnonymousApplicant(user: User, applicant: Subscriber): boolean {
+  return user?.roles.find((role) => role === FormServiceRoles.IntakeApp) && applicant.userId !== user.id;
+}
+
 export class FormEntity implements Form {
   tenantId: AdspId;
   id: string;
   formDraftUrl: string;
+  anonymousApplicant: boolean;
   created: Date;
   createdBy: { id: string; name: string };
   locked: Date;
@@ -36,6 +42,7 @@ export class FormEntity implements Form {
     const form = new FormEntity(repository, definition, applicant, {
       id,
       formDraftUrl,
+      anonymousApplicant: isAnonymousApplicant(user, applicant),
       created: new Date(),
       createdBy: { id: user.id, name: user.name },
       locked: null,
@@ -59,6 +66,7 @@ export class FormEntity implements Form {
     this.tenantId = definition.tenantId;
     this.id = form.id;
     this.formDraftUrl = form.formDraftUrl;
+    this.anonymousApplicant = form.anonymousApplicant;
     this.created = form.created;
     this.createdBy = form.createdBy;
     this.locked = form.locked;
@@ -116,13 +124,19 @@ export class FormEntity implements Form {
   async accessByUser(user: User): Promise<FormEntity> {
     if (
       this.status === FormStatus.Draft &&
-      !(isAllowedUser(user, this.tenantId, this.definition.applicantRoles) && user.id === this.createdBy.id)
+      !(
+        isAllowedUser(user, this.tenantId, this.definition.clerkRoles) ||
+        (isAllowedUser(user, this.tenantId, this.definition.applicantRoles) && user.id === this.createdBy.id)
+      )
     ) {
       throw new UnauthorizedUserError('access draft form', user);
     }
 
-    if (this.status === FormStatus.Submitted && !this.canAssess(user) &&
-      !(isAllowedUser(user, this.tenantId, this.definition.applicantRoles) && user.id === this.createdBy.id)) {
+    if (
+      this.status === FormStatus.Submitted &&
+      !this.canAssess(user) &&
+      !(isAllowedUser(user, this.tenantId, this.definition.applicantRoles) && user.id === this.createdBy.id)
+    ) {
       throw new UnauthorizedUserError('access submitted form', user);
     }
 
@@ -134,11 +148,16 @@ export class FormEntity implements Form {
       throw new InvalidOperationError('Cannot update form not in draft.');
     }
 
-    if (!this.definition.canApply(user) || user.id !== this.createdBy.id) {
+    if (
+      !isAllowedUser(user, this.tenantId, this.definition.clerkRoles) &&
+      !(this.definition.canApply(user) && user.id === this.createdBy.id)
+    ) {
       throw new UnauthorizedUserError('update form', user);
     }
 
     if (data) {
+      this.definition.validateData(data);
+
       this.data = data;
     }
 
@@ -183,7 +202,14 @@ export class FormEntity implements Form {
   }
 
   async submit(user: User): Promise<FormEntity> {
-    if (!this.definition.canApply(user) || user.id !== this.createdBy.id) {
+    if (this.status !== FormStatus.Draft) {
+      throw new InvalidOperationError('Cannot submit form not in draft.');
+    }
+
+    if (
+      !isAllowedUser(user, this.tenantId, this.definition.clerkRoles) &&
+      !(this.definition.canApply(user) && user.id === this.createdBy.id)
+    ) {
       throw new UnauthorizedUserError('update form', user);
     }
 

@@ -13,10 +13,12 @@ export interface ServiceStatusMetrics {
 
 export interface ServiceStatus {
   applications: ApplicationStatus[];
+  webhooks: Record<string, Webhooks>;
   currentFormData: ApplicationStatus;
   endpointHealth: Record<string, { url: string; entries: EndpointStatusEntry[] }>;
   metrics: ServiceStatusMetrics;
   contact: ContactInformation;
+  testSuccess: number;
 }
 
 export interface FormData {
@@ -45,6 +47,22 @@ export interface ApplicationStatus {
   internalStatus?: InternalServiceStatusType;
   endpoint?: ServiceStatusEndpoint;
   monitorOnly?: boolean;
+}
+
+export interface Webhooks {
+  id: string;
+  url: string;
+  name: string;
+  targetId: string;
+  intervalMinutes: number;
+  eventTypes: { id: string }[];
+  description: string;
+  generatedByTest?: boolean;
+}
+
+export interface UpdatePushConfig {
+  operation: string;
+  update: Record<string, Webhooks>;
 }
 
 export interface ServiceStatusEndpoint {

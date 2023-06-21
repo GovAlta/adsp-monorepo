@@ -32,6 +32,22 @@ export interface StaticApplicationData extends ApplicationConfiguration {
   tenantId: AdspId;
 }
 
+export interface Configuration {
+  latest: { configuration: Record<string, Webhooks> };
+}
+
+export interface Webhooks {
+  id: string;
+  url: string;
+  name: string;
+  targetId: string;
+  intervalMinutes: number;
+  eventTypes: { id: string }[];
+  description: string;
+  generatedByTest?: boolean;
+  appCurrentlyUp: boolean;
+}
+
 export type StatusServiceApplications = Record<string, StaticApplicationData>;
 
 // Application data, combines the static
