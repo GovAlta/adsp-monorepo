@@ -31,7 +31,7 @@ import {
 import { ConfigState } from '@store/config/models';
 import { UpdateIndicator } from '@store/session/actions';
 import { SetApplicationStatusAction, setApplicationStatusSuccess } from './actions/setApplicationStatus';
-import { EndpointStatusEntry, ApplicationStatus, MetricResponse, Webhooks } from './models';
+import { EndpointStatusEntry, ApplicationStatus, MetricResponse, Webhooks, ApplicationWebhooks } from './models';
 import { SagaIterator } from '@redux-saga/core';
 import moment from 'moment';
 import axios from 'axios';
@@ -120,6 +120,9 @@ export function* saveWebhook(action: saveWebhookAction): SagaIterator {
   const token = yield call(getAccessToken);
   try {
     const api = new WebhookApi(baseUrl, token);
+    const statusData = yield call([api, api.fetchWebhookStatus]);
+
+    const hookIntervals = statusData?.latest?.configuration.applicationWebhookIntervals;
 
     const { name, url, targetId, eventTypes, intervalMinutes, id, description } = action.payload;
 
@@ -129,15 +132,27 @@ export function* saveWebhook(action: saveWebhookAction): SagaIterator {
         name: name,
         url: url,
         targetId: targetId,
-        intervalMinutes: intervalMinutes,
         description: description,
         eventTypes: eventTypes,
       },
     };
 
-    const data = yield call([api, api.saveWebhook], pushService);
+    const statusService: ApplicationWebhooks = {
+      applicationWebhookIntervals: {
+        ...hookIntervals,
+        [targetId]: {
+          appId: targetId,
+          waitTimeInterval: intervalMinutes,
+        },
+      },
+    };
 
-    yield put(SaveWebhookSuccess(data.latest.configuration));
+    const data = yield call([api, api.saveWebhookPush], pushService);
+    const statusDataResponse = yield call([api, api.saveWebhookStatus], statusService);
+
+    const hookIntervalResponse = statusDataResponse?.latest?.configuration.applicationWebhookIntervals;
+
+    yield put(SaveWebhookSuccess(data.latest.configuration, hookIntervalResponse));
     yield put(refreshServiceStatusApps());
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
@@ -153,11 +168,13 @@ export function* fetchWebhook(action: saveWebhookAction): SagaIterator {
   try {
     const api = new WebhookApi(configBaseUrl, token);
 
-    const data = yield call([api, api.fetchWebhook]);
+    const data = yield call([api, api.fetchWebhookPush]);
+    const statusData = yield call([api, api.fetchWebhookStatus]);
 
     const configuration = data?.latest?.configuration;
+    const hookIntervals = statusData?.latest?.configuration.applicationWebhookIntervals;
 
-    yield put(fetchWebhooksSuccess(configuration));
+    yield put(fetchWebhooksSuccess(configuration, hookIntervals));
     yield put(refreshServiceStatusApps());
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));

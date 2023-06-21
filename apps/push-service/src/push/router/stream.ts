@@ -262,6 +262,8 @@ export const createStreamRouter = (
       const tenantId = tenant[0]?.id;
 
       const user = {
+        name: 'Push Service Admin',
+        id: 'push-service-admin',
         tenantId,
         roles: [ServiceUserRoles.Admin],
       } as User;
@@ -310,7 +312,7 @@ export const createStreamRouter = (
                         callResponseTime = new Date().getTime() - beforeWebhook;
                       }
                     } catch (err) {
-                      response.statusText = `xx${err.message}`;
+                      response.statusText = err.message;
                       response.status = 400;
                       response.headers = { date: new Date() };
                       logger.info(`Failed sending request from status.`);

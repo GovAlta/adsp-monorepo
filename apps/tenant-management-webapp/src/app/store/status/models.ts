@@ -54,10 +54,19 @@ export interface Webhooks {
   url: string;
   name: string;
   targetId: string;
-  intervalMinutes: number;
   eventTypes: { id: string }[];
+  intervalMinutes?: number;
   description: string;
   generatedByTest?: boolean;
+}
+
+export interface ApplicationWebhooks {
+  applicationWebhookIntervals: Record<string, WebhookStatus>;
+}
+
+export interface WebhookStatus {
+  appId: string;
+  waitTimeInterval: number;
 }
 
 export interface UpdatePushConfig {

@@ -125,6 +125,17 @@ export const configurationSchema = {
         contactEmail: { type: 'string' },
       },
     },
+    applicationWebhookIntervals: {
+      appPropertyRegex: {
+        type: 'object',
+        properties: {
+          appId: { type: 'string', description: 'The unique application identifier' },
+          waitTimeInterval: { type: 'string', description: 'Webhook wait time for application (in minutes)' },
+        },
+        required: ['appId', 'waitTimeInterval'],
+        additionalProperties: false,
+      },
+    },
   },
   patternProperties: {
     appPropertyRegex: {
