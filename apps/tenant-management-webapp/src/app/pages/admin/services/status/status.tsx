@@ -191,14 +191,18 @@ function Status(): JSX.Element {
             </ApplicationList>
           </Tab>
           <Tab label="Webhook">
+            <p>The webhooks are listed here</p>
             <p>
               <GoAButton data-testid="add-application" onClick={() => addWebhook(true)} buttonType="primary">
                 Add webhook
               </GoAButton>
             </p>
-            <p>These are webhooks</p>
 
-            <WebhooksDisplay webhooks={webhooks} />
+            {Object.keys(webhooks).length > 0 ? (
+              <WebhooksDisplay webhooks={webhooks} />
+            ) : (
+              <b>There are not webhooks yet</b>
+            )}
           </Tab>
           <Tab label="Notices">
             {showAddNoticeModal && (

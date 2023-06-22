@@ -292,7 +292,6 @@ export const WebhookFormModal: FC<Props> = ({
                 })}
               </DataTable>
             </GoAFormItem>
-            <GoAFormItem>{entries && <EntryDetail>{JSON.stringify([entries[0]], null, 2)}</EntryDetail>}</GoAFormItem>
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
