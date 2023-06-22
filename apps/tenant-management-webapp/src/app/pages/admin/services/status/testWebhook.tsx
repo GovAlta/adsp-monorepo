@@ -131,7 +131,10 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
                     <GoAPageLoader visible={true} type="infinite" message={indicator.message} pagelock={true} />
                   </div>
                 ) : (
-                  showEntries && JSON.stringify(entries && entries[0], null, 2)
+                  showEntries &&
+                  (entries
+                    ? JSON.stringify(entries[0], null, 2)
+                    : 'No timely response from webhook test server - please try again')
                 )}
               </EntryDetail>
             </GoAFormItem>

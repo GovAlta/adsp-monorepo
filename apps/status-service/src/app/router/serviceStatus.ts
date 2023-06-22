@@ -321,7 +321,7 @@ export const testWebhook =
       } else {
         eventService.send(monitoredServiceUp(app, user, webhook));
       }
-      await delay(300);
+      await delay(2000);
       res.json(
         `event is sent - app: ${JSON.stringify(app)}, user: ${JSON.stringify(user)}, webhook: ${JSON.stringify(
           webhook
