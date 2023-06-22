@@ -198,7 +198,7 @@ function Status(): JSX.Element {
               </GoAButton>
             </p>
 
-            {Object.keys(webhooks).length > 0 ? (
+            {webhooks && Object.keys(webhooks).length > 0 ? (
               <WebhooksDisplay webhooks={webhooks} />
             ) : (
               <b>There are not webhooks yet</b>
