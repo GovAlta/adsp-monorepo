@@ -8,6 +8,7 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { WebhookFormModal } from '../webhookForm';
 import { WebhookHistoryModal } from '../webhookHistoryForm';
 import { TestWebhookModal } from '../testWebhook';
+import History from '../../../../../../assets/icons/history.svg';
 
 import { WebhookDeleteModal } from './webhookDeleteModal';
 
@@ -83,7 +84,7 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
 
     return (
       <>
-        <tr key={id}>
+        <Menu key={id}>
           <td>{name}</td>
           <td className="url"> {url}</td>
 
@@ -99,15 +100,15 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
                   setShowDetails(!showDetails);
                 }}
               />
-              <GoAIconButton
-                testId={`webhook-history-${id}`}
-                title="History"
-                size="medium"
-                type="time"
+              <div
                 onClick={() => {
                   onHistory();
                 }}
-              />
+                className="hover-blue"
+              >
+                <img src={History} alt="History" />
+              </div>
+
               <GoAIconButton
                 testId={`webhook-test-${id}`}
                 title="History"
@@ -136,7 +137,7 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
               />
             </GoAContextMenu>
           </td>
-        </tr>
+        </Menu>
         {showDetails && (
           <tr>
             <NoPaddingTd headers="correlation timestamp namespace name details" colSpan={5} className="event-details">
@@ -241,5 +242,17 @@ const TableLayout = styled.div`
     .updateRolesCol {
       width: 35%;
     }
+  }
+`;
+
+const Menu = styled.tr`
+  .hover-blue:hover {
+    background: #e3f2ff;
+    cursor: pointer;
+  }
+
+  .hover-blue {
+    padding: 4px 4px 0 4px;
+    border-radius: 6px;
   }
 `;
