@@ -123,16 +123,16 @@ Feature: Notifications
     Then the user views the subscribe checkbox is "checked"
     # Test subscriber deletion
     Given a tenant admin user is on notification subscribers page
-    When the user searches subscribers with address as containing "auto.test@gov.ab.ca", email containing "auto.test@gov.ab.ca" and phone number containing "EMPTY"
-    Then the user "views" the subscriber of "auto.test@gov.ab.ca", "auto.test@gov.ab.ca", "EMPTY"
-    When the user clicks "delete" button of "auto.test@gov.ab.ca", "auto.test@gov.ab.ca" on subscribers page
+    When the user searches subscribers with address as containing "Auto Test", email containing "auto.test@gov.ab.ca" and phone number containing "EMPTY"
+    Then the user "views" the subscriber of "Auto Test", "auto.test@gov.ab.ca", "EMPTY"
+    When the user clicks "delete" button of "Auto Test", "auto.test@gov.ab.ca" on subscribers page
     Then the user views Delete subscriber modal
     # The validation of delete confirmation modal content is skipped due to the bug of CS-1266
     # And the user views the Delete subscriber confirmation message of "auto.test@gov.ab.ca"
     When the user clicks Delete button on Delete subscriber modal
-    Then the user "should not view" the subscriber of "auto.test@gov.ab.ca", "auto.test@gov.ab.ca", "EMPTY"
+    Then the user "should not view" the subscriber of "Auto Test", "auto.test@gov.ab.ca", "EMPTY"
     When the user selects "Subscriptions" tab for "Notification"
-    Then the user "should not view" the subscription of "auto.test@gov.ab.ca", "auto.test@gov.ab.ca" under "Status-Application-Health-Change"
+    Then the user "should not view" the subscription of "Auto Test", "auto.test@gov.ab.ca" under "Status-Application-Health-Change"
     # Restore the subscription
     Given a tenant admin user is on status applications page
     Then the user views the subscribe checkbox is "unchecked"

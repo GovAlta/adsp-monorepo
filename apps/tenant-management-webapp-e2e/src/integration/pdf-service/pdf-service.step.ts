@@ -66,6 +66,7 @@ Then(
   function (viewOrNot, name, templateId, description) {
     switch (viewOrNot) {
       case 'views':
+        cy.viewport(1441, 901);
         pdfServiceObj.pdfTempate(name, templateId, description).should('exist');
         break;
       case 'should not view':
