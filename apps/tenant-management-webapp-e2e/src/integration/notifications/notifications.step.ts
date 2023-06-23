@@ -109,11 +109,7 @@ When(
               if (classAttVal.includes('selected')) {
                 cy.log('Bot check box is already selected. ');
               } else {
-                notificationsObj
-                  .notificationChannelCheckbox('bot')
-                  .shadow()
-                  .find('.goa-checkbox-container')
-                  .click({ force: true });
+                notificationsObj.notificationChannelCheckbox('bot').shadow().find('.goa-checkbox-container').click();
               }
               break;
             case 'no':
@@ -121,11 +117,7 @@ When(
                 if (!classAttVal.includes('selected')) {
                   cy.log('Bot check box is already not selected. ');
                 } else {
-                  notificationsObj
-                    .notificationChannelCheckbox('bot')
-                    .shadow()
-                    .find('.goa-checkbox-container')
-                    .click({ force: true });
+                  notificationsObj.notificationChannelCheckbox('bot').shadow().find('.goa-checkbox-container').click();
                 }
               }
               break;
@@ -185,7 +177,7 @@ When(
                   .notificationTypeModalSelfServiceCheckbox()
                   .shadow()
                   .find('.goa-checkbox-container')
-                  .click();
+                  .click({ force: true });
                 notificationsObj.notificationTypeModalSelfServiceCalloutContent().scrollIntoView().should('be.visible');
               }
               break;
@@ -522,8 +514,8 @@ When('the user searches subscribers with {string} containing {string}', function
 When(
   'the user searches subscribers with address as containing {string}, email containing {string} and phone number containing {string}',
   function (addressAs, email, phoneNumber) {
-    notificationsObj.searchSubscriberAddressAs().clear().type(addressAs);
-    notificationsObj.searchSubscriberEmail().clear().type(email);
+    notificationsObj.searchSubscriberAddressAs().clear({ force: true }).type(addressAs);
+    notificationsObj.searchSubscriberEmail().clear({ force: true }).type(email);
     expect(phoneNumber).match(/(EMPTY)|[0-9]{10}/);
     if (phoneNumber == 'EMPTY') {
       notificationsObj.searchSubscriberPhone().clear();
@@ -891,14 +883,14 @@ When(
       .click({ force: true })
       .focus()
       .clear({ force: true })
-      .type(subjectText, { force: true });
+      .type(subjectText, { force: true, parseSpecialCharSequences: false });
 
     notificationsObj
       .eventTemplateModalBody(channelNameInTitle)
       .click({ force: true })
       .focus()
       .clear({ force: true })
-      .type(bodyText, { force: true });
+      .type(bodyText, { force: true, parseSpecialCharSequences: false });
   }
 );
 
