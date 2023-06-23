@@ -71,9 +71,19 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
       }
       return { ...state };
     }
-    case SAVE_WEBHOOK_SUCCESS_ACTION:
-      state.webhooks = action.payload;
-      return { ...state, webhooks: { ...state.webhooks } };
+    case SAVE_WEBHOOK_SUCCESS_ACTION: {
+      const webhooks = action.payload;
+      const hookIntervalList = Object.keys(action.hookIntervals).map((h) => {
+        return action.hookIntervals[h];
+      });
+
+      Object.keys(webhooks).forEach((key) => {
+        webhooks[key].intervalMinutes = hookIntervalList.find(
+          (i) => i.appId === webhooks[key].targetId
+        )?.waitTimeInterval;
+      });
+      return { ...state, webhooks: webhooks };
+    }
     case TOGGLE_APPLICATION_SUCCESS_STATUS_ACTION:
       return {
         ...state,
@@ -85,11 +95,24 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
           )
           .sort(compareIds),
       };
-    case FETCH_WEBHOOK_SUCCESS_ACTION:
+    case FETCH_WEBHOOK_SUCCESS_ACTION: {
+      const webhooks = action.payload;
+
+      const hookIntervalList = Object.keys(action.hookIntervals).map((h) => {
+        return action.hookIntervals[h];
+      });
+
+      Object.keys(webhooks).forEach((key) => {
+        webhooks[key].intervalMinutes = hookIntervalList.find(
+          (i) => i.appId === webhooks[key].targetId
+        )?.waitTimeInterval;
+      });
+
       return {
         ...state,
-        webhooks: action.payload,
+        webhooks: webhooks,
       };
+    }
     case DELETE_WEBHOOK_SUCCESS_ACTION: {
       const deletedWebhook = Object.keys(state.webhooks).find((hook) => hook === action.payload);
 

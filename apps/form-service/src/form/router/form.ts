@@ -1,14 +1,8 @@
-import {
-  adspId,
-  AdspId,
-  DomainEvent,
-  EventService,
-  isAllowedUser,
-} from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, DomainEvent, EventService, isAllowedUser, startBenchmark } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { formSubmitted, formUnlocked } from '..';
-import { formCreated } from '../events';
+import { formArchived, formCreated, formDeleted } from '../events';
 import { FormDefinitionEntity, FormEntity } from '../model';
 import { NotificationService } from '../../notification';
 import { FormRepository } from '../repository';
@@ -41,10 +35,15 @@ export function mapFormDefinition(entity: FormDefinitionEntity): FormDefinition 
 export function mapForm(
   apiId: AdspId,
   entity: FormEntity
-): Omit<Form, 'definition' | 'applicant' | 'data' | 'files'> & { urn: string; applicant: { addressAs: string } } {
+): Omit<Form, 'definition' | 'applicant' | 'data' | 'files'> & {
+  urn: string;
+  definitionId: string;
+  applicant: { addressAs: string };
+} {
   return {
     urn: adspId`${apiId}:/forms/${entity.id}`.toString(),
     id: entity.id,
+    definitionId: entity.definition.id,
     formDraftUrl: entity.formDraftUrl,
     anonymousApplicant: entity.anonymousApplicant,
     status: entity.status,
@@ -98,6 +97,8 @@ export const getFormDefinition: RequestHandler = async (req, res, next) => {
 export function findForms(apiId: AdspId, repository: FormRepository): RequestHandler {
   return async (req, res, next) => {
     try {
+      const end = startBenchmark(req, 'operation-handler-time');
+
       const user = req.user;
       const { top: topValue, after, criteria: criteriaValue } = req.query;
       const top = topValue ? parseInt(topValue as string) : 10;
@@ -113,6 +114,8 @@ export function findForms(apiId: AdspId, repository: FormRepository): RequestHan
       }
 
       const { results, page } = await repository.find(top, after as string, criteria);
+
+      end();
       res.send({
         results: results.map((r) => mapForm(apiId, r)),
         page,
@@ -131,6 +134,8 @@ export function createForm(
 ): RequestHandler {
   return async (req, res, next) => {
     try {
+      const end = startBenchmark(req, 'operation-handler-time');
+
       const user = req.user;
       const { definitionId, applicant: applicantInfo } = req.body;
 
@@ -141,6 +146,8 @@ export function createForm(
       }
 
       const form = await definition.createForm(user, repository, notificationService, applicantInfo);
+
+      end();
       res.send(mapForm(apiId, form));
 
       eventService.send(formCreated(user, form));
@@ -154,12 +161,16 @@ const FORM = 'form';
 export function getForm(repository: FormRepository): RequestHandler {
   return async (req, _res, next) => {
     try {
+      const end = startBenchmark(req, 'get-entity-time');
+
       const { formId } = req.params;
       const form = await repository.get(req.tenant.id, formId);
       if (!form) {
         throw new NotFoundError('form', formId);
       }
       req[FORM] = form;
+
+      end();
       next();
     } catch (err) {
       next(err);
@@ -170,6 +181,8 @@ export function getForm(repository: FormRepository): RequestHandler {
 export function accessForm(notificationService: NotificationService): RequestHandler {
   return async (req, res, next) => {
     try {
+      const end = startBenchmark(req, 'operation-handler-time');
+
       const user = req.user;
       const { code } = req.query;
       const form: FormEntity = req[FORM];
@@ -178,6 +191,7 @@ export function accessForm(notificationService: NotificationService): RequestHan
         ? form.accessByCode(user, notificationService, code as string)
         : form.accessByUser(user));
 
+      end();
       res.send(mapFormData(result));
     } catch (err) {
       next(err);
@@ -187,6 +201,8 @@ export function accessForm(notificationService: NotificationService): RequestHan
 
 export const updateFormData: RequestHandler = async (req, res, next) => {
   try {
+    const end = startBenchmark(req, 'operation-handler-time');
+
     const user = req.user;
     const form: FormEntity = req[FORM];
     const { data, files: fileIds } = req.body;
@@ -196,6 +212,8 @@ export const updateFormData: RequestHandler = async (req, res, next) => {
     );
 
     const result = await form.update(user, data, files);
+
+    end();
     res.send(mapFormData(result));
   } catch (err) {
     next(err);
@@ -209,6 +227,8 @@ export function formOperation(
 ): RequestHandler {
   return async (req, res, next) => {
     try {
+      const end = startBenchmark(req, 'operation-handler-time');
+
       const user = req.user;
       const form: FormEntity = req[FORM];
       const request: FormOperations = req.body;
@@ -232,11 +252,14 @@ export function formOperation(
         }
         case ARCHIVE_FORM_OPERATION: {
           result = await form.archive(user);
+          event = formArchived(user, result);
           break;
         }
         default:
           throw new InvalidOperationError(`Form operation '${req.body.operation}' not recognized.`);
       }
+
+      end();
       res.send(mapForm(apiId, result));
 
       if (event) {
@@ -248,14 +271,23 @@ export function formOperation(
   };
 }
 
-export function deleteForm(fileService: FileService, notificationService: NotificationService): RequestHandler {
+export function deleteForm(
+  eventService: EventService,
+  fileService: FileService,
+  notificationService: NotificationService
+): RequestHandler {
   return async (req, res, next) => {
     try {
+      const end = startBenchmark(req, 'operation-handler-time');
+
       const user = req.user;
       const form: FormEntity = req[FORM];
 
       const deleted = await form.delete(user, fileService, notificationService);
+
+      end();
       res.send({ deleted });
+      eventService.send(formDeleted(user, form));
     } catch (err) {
       next(err);
     }
@@ -332,7 +364,7 @@ export function createFormRouter({
     '/forms/:formId',
     createValidationHandler(param('formId').isUUID()),
     getForm(repository),
-    deleteForm(fileService, notificationService)
+    deleteForm(eventService, fileService, notificationService)
   );
 
   router.get(

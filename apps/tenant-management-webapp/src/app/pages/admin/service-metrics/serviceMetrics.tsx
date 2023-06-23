@@ -17,7 +17,7 @@ export const ServiceMetrics: FunctionComponent = () => {
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(fetchServices());
-  });
+  }, [dispatch]);
 
   return (
     <Main>

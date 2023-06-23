@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import addAuthTokenInterceptor from './authTokenInterceptor';
-import { EndpointStatusEntry, ApplicationStatus, MetricResponse, Webhooks } from './models';
+import { EndpointStatusEntry, ApplicationStatus, MetricResponse, Webhooks, ApplicationWebhooks } from './models';
 
 export class StatusApi {
   private http: AxiosInstance;
@@ -63,7 +63,7 @@ export class WebhookApi {
     addAuthTokenInterceptor(this.http, token);
   }
 
-  async saveWebhook(props: Record<string, Webhooks>): Promise<object> {
+  async saveWebhookPush(props: Record<string, Webhooks>): Promise<object> {
     const body = {
       operation: 'UPDATE',
       update: props,
@@ -72,8 +72,22 @@ export class WebhookApi {
     const res = await this.http.patch(`/push-service`, body);
     return res.data;
   }
-  async fetchWebhook(): Promise<object> {
+  async saveWebhookStatus(props: ApplicationWebhooks): Promise<object> {
+    const body = {
+      operation: 'UPDATE',
+      update: props,
+    };
+
+    const res = await this.http.patch(`/status-service`, body);
+    return res.data;
+  }
+  async fetchWebhookPush(): Promise<object> {
     const res = await this.http.get(`/push-service`);
+
+    return res.data;
+  }
+  async fetchWebhookStatus(): Promise<object> {
+    const res = await this.http.get(`/status-service`);
 
     return res.data;
   }
