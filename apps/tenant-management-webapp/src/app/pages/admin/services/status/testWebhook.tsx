@@ -5,7 +5,7 @@ import { Webhooks } from '../../../../store/status/models';
 import DataTable from '@components/DataTable';
 import { EventSearchCriteria } from '@store/event/models';
 import { getEventLogEntries } from '@store/event/actions';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoARadio } from '@abgov/react-components';
 import { getEventDefinitions } from '@store/event/actions';
 
 import { GoAPageLoader } from '@abgov/react-components';
@@ -37,6 +37,7 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
   const dispatch = useDispatch();
 
   const [showEntries, setShowEntries] = useState<boolean>(false);
+  const [selectedStatusName, setSelectedStatusName] = useState<string>('monitored-service-down');
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -112,43 +113,49 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
               <DataTable data-testid="events-definitions-table">
                 {['monitored-service-down', 'monitored-service-up'].map((name) => {
                   return (
-                    <Events>
+                    <GoARadio
+                      key={`selectedStatusName-${name}`}
+                      value={name}
+                      testId="preferred-channel-email-opt"
+                      checked={name === selectedStatusName}
+                      onChange={() => setSelectedStatusName(name)}
+                    >
                       {name}
-                      <TestButtonWrapper>
-                        <GoAButton buttonType="secondary" buttonSize="small" onClick={() => test(name)}>
-                          Test
-                        </GoAButton>
-                      </TestButtonWrapper>
-                    </Events>
+                    </GoARadio>
                   );
                 })}
               </DataTable>
             </GoAFormItem>
-            <GoAFormItem>
-              <EntryDetail>
-                {indicator.show ? (
-                  <div className="loading-border">
-                    <GoAPageLoader visible={true} type="infinite" message={indicator.message} pagelock={true} />
-                  </div>
-                ) : (
-                  showEntries &&
-                  (entries
-                    ? JSON.stringify(entries[0], null, 2)
-                    : 'No timely response from webhook test server - please try again')
-                )}
-              </EntryDetail>
-            </GoAFormItem>
+
+            <EntryDetail>
+              {indicator.show ? (
+                <div className="loading-border">
+                  <GoAPageLoader visible={true} type="infinite" message={indicator.message} pagelock={true} />
+                </div>
+              ) : (
+                showEntries &&
+                (entries
+                  ? JSON.stringify(entries[0], null, 2)
+                  : 'No timely response from webhook test server - please try again')
+              )}
+            </EntryDetail>
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton
-            buttonType="secondary"
-            onClick={() => {
-              onClose();
-            }}
-          >
-            Close
-          </GoAButton>
+          <ButtonWrapper>
+            <GoAButton buttonType="secondary" onClick={() => test(selectedStatusName)}>
+              Test
+            </GoAButton>
+
+            <GoAButton
+              buttonType="primary"
+              onClick={() => {
+                onClose();
+              }}
+            >
+              Close
+            </GoAButton>
+          </ButtonWrapper>
         </GoAModalActions>
       </GoAModal>
     </GoAModalStyle>
@@ -162,7 +169,7 @@ const GoAModalStyle = styled.div`
   }
 
   .margin-bottom {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.25rem;
   }
 
   .minute-button {
@@ -212,13 +219,10 @@ export const Events = styled.div`
   }
 `;
 
-export const TestButtonWrapper = styled.div`
+export const ButtonWrapper = styled.div`
    {
-    margin: 2px 0 7px 15px;
-    padding: 0px;
-
     .goa-button {
-      line-height: 0.5em;
+      margin-left: 1.5rem;
     }
   }
 `;
@@ -234,6 +238,7 @@ export const EntryDetail = styled.div`
   font-size: 12px;
   line-height: 12px;
   padding: 16px;
+  margin-bottom: 4px;
   text-align: left;
   min-height: 320px;
 `;
