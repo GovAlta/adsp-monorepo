@@ -224,7 +224,8 @@ describe('TaskEntity', () => {
       expect(entity.assignment).toBeTruthy();
 
       const result = await entity.assign(user, null);
-      expect(result.assignment).toBeNull();
+      expect(result.assignment.assignedBy).toMatchObject({ id: user.id, name: user.name });
+      expect(result.assignment.assignedTo).toBeNull();
     });
 
     it('can self assign for worker', async () => {
@@ -241,9 +242,33 @@ describe('TaskEntity', () => {
       expect(entity.assignment.assignedOn).toBeTruthy();
       expect(entity.assignment.assignedTo.id).toBe('test');
       expect(entity.assignment.assignedTo.name).toBe('test');
+    });
 
-      const result = await entity.assign(user, null);
-      expect(result.assignment).toBeNull();
+    it('can throw for unassign for worker', async () => {
+      const user = { id: 'test', name: 'test', tenantId, roles: ['test-worker'] } as User;
+      let entity = await TaskEntity.create({ ...user, roles: [TaskServiceRoles.Admin] }, repositoryMock, queue, {
+        tenantId,
+        name: 'test',
+      });
+
+      entity = await entity.assign(user, { id: 'test', name: 'test', email: 'test@test.co' });
+      expect(() => entity.assign(user, null)).toThrow(/User test \(ID: test\) not permitted to assign task./);
+    });
+
+    it('can self assign for worker replacing other', async () => {
+      const user = { id: 'test', name: 'test-user', tenantId, roles: ['test-worker'] } as User;
+      let entity = await TaskEntity.create({ ...user, roles: [TaskServiceRoles.Admin] }, repositoryMock, queue, {
+        tenantId,
+        name: 'test',
+      });
+
+      await entity.assign(
+        { ...user, roles: [TaskServiceRoles.Admin] },
+        { id: 'test-2', name: 'test-2', email: 'test-2@test.co' }
+      );
+
+      entity = await entity.assign(user, { id: 'test', name: 'test', email: 'test@test.co' });
+      expect(entity.assignment.assignedBy.id).toBe('test');
     });
 
     it('can throw for worker assigning other', async () => {
@@ -256,6 +281,20 @@ describe('TaskEntity', () => {
       expect(() => entity.assign(user, { id: 'test-2', name: 'test-2', email: 'test-2@test.co' })).toThrow(
         /User test \(ID: test\) not permitted to assign task./
       );
+    });
+
+    it('can throw for worker un-assigning other', async () => {
+      const user = { id: 'test', name: 'test', tenantId, roles: ['test-worker'] } as User;
+      const entity = await TaskEntity.create({ ...user, roles: [TaskServiceRoles.Admin] }, repositoryMock, queue, {
+        tenantId,
+        name: 'test',
+      });
+      await entity.assign(
+        { ...user, roles: [TaskServiceRoles.Admin] },
+        { id: 'test-2', name: 'test-2', email: 'test-2@test.co' }
+      );
+
+      expect(() => entity.assign(user, null)).toThrow(/User test \(ID: test\) not permitted to assign task./);
     });
 
     it('can throw for unauthorized', async () => {
@@ -280,7 +319,8 @@ describe('TaskEntity', () => {
       entity = await entity.assign(user, { id: 'test-2', name: 'test-2', email: 'test-2@test.co' });
       entity = await entity.cancel(user);
       const result = await entity.assign(user, null);
-      expect(result.assignment).toBeNull();
+      expect(result.assignment).toBeTruthy();
+      expect(result.assignment.assignedTo).toBeNull();
     });
 
     it('can throw for ended task', async () => {
