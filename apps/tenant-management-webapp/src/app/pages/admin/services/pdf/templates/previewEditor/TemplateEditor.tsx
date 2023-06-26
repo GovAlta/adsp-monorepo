@@ -40,7 +40,6 @@ import { useDebounce } from '@lib/useDebounce';
 const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
 
 interface TemplateEditorProps {
-  modelOpen: boolean;
   //eslint-disable-next-line
   errors?: any;
 }
@@ -57,7 +56,7 @@ const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
   );
 };
 
-export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.Element => {
+export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => {
   const dispatch = useDispatch();
   const { id } = useParams<{ id: string }>();
   const monaco = useMonaco();
@@ -71,7 +70,6 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
 
   const suggestion = pdfTemplate ? (fileList ? getSuggestion(fileList) : getSuggestion()) : [];
 
-  const [activeIndex, setActiveIndex] = useState(0);
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const debouncedTmpTemplate = useDebounce(tmpTemplate, TEMPLATE_RENDER_DEBOUNCE_TIMER);
@@ -121,7 +119,6 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
   }, [reloadFile]);
 
   useEffect(() => {
-    setTmpTemplate(pdfTemplate);
     setSimulatedSaveTemplate(pdfTemplate);
   }, [pdfTemplate]);
 
@@ -153,14 +150,6 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
     }
   }, [monaco, suggestion]);
 
-  useEffect(() => {
-    if (modelOpen) {
-      setActiveIndex(0);
-    } else {
-      setActiveIndex(-1);
-    }
-  }, [modelOpen]);
-
   const monacoHeight = `calc(100vh - 585px${notifications.length > 0 ? ' - 80px' : ''})`;
 
   return (
@@ -172,7 +161,7 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
 
       <GoAForm>
         <GoAFormItem>
-          <Tabs style={{ minWidth: '4.5em' }} activeIndex={activeIndex}>
+          <Tabs style={{ minWidth: '4.5em' }} activeIndex={0}>
             <Tab testId={`pdf-edit-header`} label={<PdfEditorLabelWrapper>Header</PdfEditorLabelWrapper>}>
               <GoAFormItem error={errors?.header ?? ''}>
                 <MonacoDivBody style={{ height: monacoHeight }}>
@@ -292,7 +281,9 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
                 <>
                   <GoAButton
                     disabled={!isPDFUpdated(tmpTemplate, template) || EditorError?.testData !== null}
-                    onClick={() => savePdfTemplate(tmpTemplate)}
+                    onClick={() => {
+                      savePdfTemplate(tmpTemplate);
+                    }}
                     type="primary"
                     testId="template-form-save"
                   >
@@ -334,7 +325,6 @@ export const TemplateEditor = ({ modelOpen, errors }: TemplateEditorProps): JSX.
         open={saveModal}
         onDontSave={() => {
           setSaveModal(false);
-          // resetSavedAction();
           cancel();
         }}
         onSave={() => {

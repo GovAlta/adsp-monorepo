@@ -47,7 +47,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
             </TabletMessage>
             <HideTablet>
               <NotificationTemplateEditorContainer>
-                <TemplateEditor modelOpen={true} />
+                <TemplateEditor />
 
                 <PreviewTemplateContainer>
                   <PreviewTemplate channelTitle="PDF preview" />

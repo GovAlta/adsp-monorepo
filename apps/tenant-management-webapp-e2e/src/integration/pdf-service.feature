@@ -17,10 +17,8 @@ Feature: PDF service
     Then the user views Add template modal
     When the user enters "t" as name, "autotest PDF template desc" as description in pdf template modal
     And the user clicks Save button in Add or Edit template modal
-    Then the user "views" the PDF template of "t", "t" and "autotest PDF template desc"
 
     # Edit a PDF template meta data
-    When the user clicks "Edit" icon of "t", "t" and "autotest PDF template desc" on PDF templates page
     When the user clicks the "Header" tab in PDF template editor and view content
     When the user clicks the "Body" tab in PDF template editor and view content
     When the user clicks the "Footer" tab in PDF template editor and view content
