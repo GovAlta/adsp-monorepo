@@ -31,6 +31,7 @@ const userSchema = {
 
 const assignedUserSchema = {
   ...userSchema,
+  type: ['object', 'null'],
   properties: {
     ...userSchema.properties,
     email: {

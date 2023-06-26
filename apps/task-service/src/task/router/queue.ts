@@ -280,7 +280,7 @@ export function createQueueRouter({
             isString: true,
           },
           assignTo: {
-            optional: true,
+            optional: { options: { nullable: true, checkFalsy: false } },
             isObject: true,
           },
         },
