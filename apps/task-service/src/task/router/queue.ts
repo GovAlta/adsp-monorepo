@@ -113,7 +113,7 @@ export const createTask =
       });
       res.send(mapTask(apiId, entity));
 
-      eventService.send(taskCreated(user, entity));
+      eventService.send(taskCreated(apiId, user, entity));
     } catch (err) {
       next(err);
     }
