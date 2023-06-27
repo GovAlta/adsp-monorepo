@@ -116,7 +116,7 @@ export const updateTask =
       const updated = await task.update(user, update);
       res.send(mapTask(apiId, updated));
 
-      eventService.send(taskUpdated(user, updated, update));
+      eventService.send(taskUpdated(apiId, user, updated, update));
     } catch (err) {
       next(err);
     }
@@ -136,26 +136,26 @@ export const taskOperation =
       switch (request.operation) {
         case OPERATION_START:
           result = await task.start(user);
-          event = taskStarted(user, result);
+          event = taskStarted(apiId,user, result);
           break;
         case OPERATION_COMPLETE:
           result = await task.complete(user);
-          event = taskCompleted(user, result);
+          event = taskCompleted(apiId,user, result);
           break;
         case OPERATION_CANCEL:
           result = await task.cancel(user);
-          event = taskCancelled(user, result, request.reason);
+          event = taskCancelled(apiId,user, result, request.reason);
           break;
         case OPERATION_SET_PRIORITY: {
           const from = task.priority;
           result = await task.setPriority(user, TaskPriority[request.priority]);
-          event = taskPrioritySet(user, result, from);
+          event = taskPrioritySet(apiId,user, result, from);
           break;
         }
         case OPERATION_ASSIGN: {
           const from = task.assignment;
           result = await task.assign(user, request.assignTo);
-          event = taskAssigned(user, result, from);
+          event = taskAssigned(apiId,user, result, from);
           break;
         }
         default:
