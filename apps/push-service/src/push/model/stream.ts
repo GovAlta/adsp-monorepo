@@ -46,7 +46,7 @@ export class StreamEntity implements Stream {
     return this;
   }
 
-  private isMatch(event: StreamItem, criteria?: EventCriteria) {
+  public isMatch(event: StreamItem, criteria?: EventCriteria) {
     // Is a match if there is:
     // 1. No criteria; or
     // 2. Not (has correlationId criteria and does not match event correlationId) and
@@ -54,7 +54,7 @@ export class StreamEntity implements Stream {
     return (
       !criteria ||
       (!(criteria.correlationId && criteria.correlationId !== event.correlationId) &&
-        !(criteria.context && !Object.entries(criteria.context).find(([key, value]) => value !== event.context?.[key])))
+        !(criteria.context && Object.entries(criteria.context).find(([key, value]) => value !== event.context?.[key])))
     );
   }
 
