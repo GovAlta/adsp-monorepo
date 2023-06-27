@@ -56,23 +56,24 @@ export const WebhookFormModal: FC<Props> = ({
 
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
 
-  const entries = useSelector((state: RootState) => state.event.entries);
-
   useEffect(() => {
     dispatch(getEventDefinitions());
   }, [dispatch]);
 
   function save() {
     const saveHook = webhook;
-    saveHook.id = saveHook.id ? saveHook.id : saveHook.name;
+    if (!isEdit) {
+      saveHook.id = (Math.random() + 1).toString(36).substring(2);
+    }
+
     dispatch(saveWebhook(webhook));
     if (onSave) onSave();
   }
 
-  const isDuplicateWebhookKey = (): Validator => {
-    return (appKey: string) => {
-      const existingWebhooks = Object.keys(webhooks).filter((hook) => webhooks[hook].id === appKey);
-      return existingWebhooks.length === 1 ? 'webhook key is duplicate, please use a different name' : '';
+  const isDuplicateWebhookName = (): Validator => {
+    return (name: string) => {
+      const existingWebhooks = Object.keys(webhooks).filter((hook) => webhooks[hook].name === name);
+      return existingWebhooks.length === 1 ? 'webhook name is duplicate, please use a different name' : '';
     };
   };
 
@@ -82,14 +83,8 @@ export const WebhookFormModal: FC<Props> = ({
     };
   };
 
-  const { errors, validators } = useValidators(
-    'nameAppKey',
-    'name',
-    checkForBadChars,
-    wordMaxLengthCheck(32, 'Name'),
-    isDuplicateWebhookKey()
-  )
-    .add('nameOnly', 'name', checkForBadChars, isNotEmptyCheck('name'))
+  const { errors, validators } = useValidators('nameAppKey', 'name', checkForBadChars, wordMaxLengthCheck(32, 'Name'))
+    .add('nameOnly', 'name', checkForBadChars, isNotEmptyCheck('name'), isDuplicateWebhookName())
     .add('waitInterval', 'waitInterval', isMoreThanZero())
     .add(
       'url',
@@ -144,29 +139,15 @@ export const WebhookFormModal: FC<Props> = ({
                 name="name"
                 value={webhook?.name}
                 onChange={(name, value) => {
-                  if (!isEdit) {
-                    const id = toKebabName(value);
-                    validators['nameAppKey'].check(id);
-                    setWebhook({
-                      ...webhook,
-                      name: value,
-                      id,
-                    });
-                  } else {
-                    validators['nameOnly'].check(value);
-                    setWebhook({
-                      ...webhook,
-                      name: value,
-                    });
-                  }
+                  validators['nameOnly'].check(value);
+
+                  setWebhook({
+                    ...webhook,
+                    name: value,
+                  });
                 }}
                 aria-label="name"
               />
-            </GoAFormItem>
-
-            <GoAFormItem>
-              <label>ID</label>
-              <IdField>{webhook.id}</IdField>
             </GoAFormItem>
 
             <GoAFormItem error={errors?.['url']}>

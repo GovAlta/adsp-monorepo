@@ -9,6 +9,7 @@ import { WebhookFormModal } from '../webhookForm';
 import { WebhookHistoryModal } from '../webhookHistoryForm';
 import { TestWebhookModal } from '../testWebhook';
 import History from '../../../../../../assets/icons/history.svg';
+import { HoverWrapper, ToolTip } from '../styled-components';
 
 import { WebhookDeleteModal } from './webhookDeleteModal';
 
@@ -35,6 +36,7 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
   const [historyId, setHistoryId] = useState<string | null>(null);
   const [testId, setTestId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isShowURL, setIsShowURL] = useState<string>('');
 
   const onDeleteCancel = () => {
     setDeleteId(null);
@@ -82,11 +84,34 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
       description,
     };
 
+    const urlLength = 14;
+
+    console.log(url.length);
+
     return (
       <>
         <Menu key={id}>
           <td>{name}</td>
-          <td className="url"> {url}</td>
+          <td className="url">
+            <HoverWrapper
+              onMouseEnter={() => {
+                setIsShowURL(id);
+              }}
+              onMouseLeave={() => {
+                setIsShowURL('');
+              }}
+            >
+              <div>{url.length >= urlLength ? `${url.substring(0, urlLength)}...` : url}</div>
+
+              {isShowURL === id && (
+                <ToolTip>
+                  <p className="url-tooltip">
+                    <div className="message">{url}</div>
+                  </p>
+                </ToolTip>
+              )}
+            </HoverWrapper>
+          </td>
 
           <td className="waitInterval">{intervalMinutes} min</td>
           <td className="actionCol">
@@ -246,6 +271,7 @@ const TableLayout = styled.div`
 `;
 
 const Menu = styled.tr`
+  vertical-align: top;
   .hover-blue:hover {
     background: #e3f2ff;
     cursor: pointer;
@@ -254,5 +280,13 @@ const Menu = styled.tr`
   .hover-blue {
     padding: 4px 4px 0 4px;
     border-radius: 6px;
+  }
+
+  .hover {
+    display: none;
+  }
+
+  .hover {
+    display: block;
   }
 `;
