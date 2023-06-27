@@ -184,7 +184,7 @@ function mapContext(task: Task): Record<string, string | number | boolean> {
     definitionNamespace: task.definition?.namespace,
     definitionName: task.definition?.name,
     recordId: task.recordId,
-    assignedTo: task.assignment?.assignedTo.id,
+    assignedTo: task.assignment?.assignedTo?.id,
   };
 }
 
