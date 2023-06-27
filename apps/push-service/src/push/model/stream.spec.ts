@@ -194,7 +194,7 @@ describe('StreamEntity', () => {
               name: 'test-started',
               timestamp: new Date(),
               correlationId: '123',
-              context: { value: 123 },
+              context: { value: 123, other: '234' },
               payload: {},
             }
           )
