@@ -8,7 +8,6 @@ import { getEventDefinitions } from '@store/event/actions';
 import { useValidators } from '@lib/validation/useValidators';
 import { renderNoItem } from '@components/NoItem';
 import styled from 'styled-components';
-import { toKebabName } from '@lib/kebabName';
 
 import {
   characterCheck,
