@@ -195,26 +195,27 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
             </tr>
           </thead>
           <tbody>
-            {Object.keys(webhooks).map((key) => {
-              return (
-                <FileTypeTableRow
-                  key={`webhook-${webhooks[key].id}`}
-                  {...webhooks[key]}
-                  onDelete={() => {
-                    setDeleteId(webhooks[key].id);
-                  }}
-                  onEdit={() => {
-                    setEditId(webhooks[key].id);
-                  }}
-                  onHistory={() => {
-                    setHistoryId(webhooks[key].id);
-                  }}
-                  onTest={() => {
-                    setTestId(webhooks[key].id);
-                  }}
-                />
-              );
-            })}
+            {webhooks &&
+              Object.keys(webhooks).map((key) => {
+                return (
+                  <FileTypeTableRow
+                    key={`webhook-${webhooks[key].id}`}
+                    {...webhooks[key]}
+                    onDelete={() => {
+                      setDeleteId(webhooks[key].id);
+                    }}
+                    onEdit={() => {
+                      setEditId(webhooks[key].id);
+                    }}
+                    onHistory={() => {
+                      setHistoryId(webhooks[key].id);
+                    }}
+                    onTest={() => {
+                      setTestId(webhooks[key].id);
+                    }}
+                  />
+                );
+              })}
           </tbody>
         </DataTable>
       </TableLayout>
