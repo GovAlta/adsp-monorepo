@@ -86,8 +86,6 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
 
     const urlLength = 14;
 
-    console.log(url.length);
-
     return (
       <>
         <Menu key={id}>
@@ -101,7 +99,7 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
                 setIsShowURL('');
               }}
             >
-              <div>{url.length >= urlLength ? `${url.substring(0, urlLength)}...` : url}</div>
+              <div>{url?.length >= urlLength ? `${url?.substring(0, urlLength)}...` : url}</div>
 
               {isShowURL === id && (
                 <ToolTip>

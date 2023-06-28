@@ -102,11 +102,12 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
         return action.hookIntervals[h];
       });
 
-      Object.keys(webhooks).forEach((key) => {
-        webhooks[key].intervalMinutes = hookIntervalList.find(
-          (i) => i.appId === webhooks[key].targetId
-        )?.waitTimeInterval;
-      });
+      webhooks &&
+        Object.keys(webhooks).forEach((key) => {
+          webhooks[key].intervalMinutes = hookIntervalList.find(
+            (i) => i.appId === webhooks[key].targetId
+          )?.waitTimeInterval;
+        });
 
       return {
         ...state,
