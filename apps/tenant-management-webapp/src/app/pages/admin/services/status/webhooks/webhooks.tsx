@@ -86,8 +86,6 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
 
     const urlLength = 14;
 
-    console.log(url.length);
-
     return (
       <>
         <Menu key={id}>

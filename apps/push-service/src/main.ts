@@ -147,6 +147,7 @@ const initializeApp = async (): Promise<Server> => {
     directory,
     tokenProvider,
     eventService,
+    serviceId,
   });
 
   const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));

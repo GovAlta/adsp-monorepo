@@ -1,3 +1,14 @@
+export interface Webhook {
+  id: string;
+  url: string;
+  name: string;
+  targetId: string;
+  intervalMinutes: number;
+  events: { id: string }[];
+  description: string;
+  generatedByTest?: boolean;
+}
+
 export interface EventCriteria {
   correlationId?: string;
   context?: Record<string, boolean | number | string>;
@@ -14,7 +25,8 @@ export interface Stream {
   id: string;
   name: string;
   description: string;
-  events: StreamEvent[];
+  eventTypes: StreamEvent[];
   subscriberRoles: string[];
   publicSubscribe: boolean;
+  webhook: Webhook;
 }
