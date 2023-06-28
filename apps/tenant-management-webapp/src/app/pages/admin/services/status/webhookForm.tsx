@@ -71,8 +71,8 @@ export const WebhookFormModal: FC<Props> = ({
 
   const isDuplicateWebhookName = (): Validator => {
     return (name: string) => {
-      const existingWebhooks = Object.keys(webhooks).filter((hook) => webhooks[hook].name === name);
-      return existingWebhooks.length === 1 ? 'webhook name is duplicate, please use a different name' : '';
+      const existingWebhooks = webhooks && Object.keys(webhooks).filter((hook) => webhooks[hook].name === name);
+      return existingWebhooks?.length === 1 ? 'webhook name is duplicate, please use a different name' : '';
     };
   };
 
