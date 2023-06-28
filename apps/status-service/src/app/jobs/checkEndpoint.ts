@@ -131,58 +131,59 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
     data: Configuration;
   };
 
-  const webhooks = response.data.latest.configuration;
+  const webhooks = response.data?.latest?.configuration;
 
-  Object.keys(webhooks).map(async (key) => {
-    const webhook = webhooks[key];
-    if (webhook.targetId === app.appKey) {
-      const eventTypes = webhook.eventTypes;
+  webhooks &&
+    Object.keys(webhooks).map(async (key) => {
+      const webhook = webhooks[key];
+      if (webhook.targetId === app.appKey) {
+        const eventTypes = webhook.eventTypes;
 
-      const waitTimePings = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
-        app.url,
-        app.appKey,
-        webhook.intervalMinutes
-      );
+        const waitTimePings = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
+          app.url,
+          app.appKey,
+          webhook.intervalMinutes
+        );
 
-      let switchOffCount = 0;
-      let switchOnCount = 0;
-      waitTimePings.forEach((ping) => {
-        if (ping.ok) {
-          switchOnCount++;
-        } else {
-          switchOffCount++;
+        let switchOffCount = 0;
+        let switchOnCount = 0;
+        waitTimePings.forEach((ping) => {
+          if (ping.ok) {
+            switchOnCount++;
+          } else {
+            switchOffCount++;
+          }
+        });
+
+        if (switchOffCount === waitTimePings.length && switchOffCount === webhook.intervalMinutes) {
+          eventTypes.map((et) => {
+            if (et.id === 'status-service:monitored-service-down') {
+              if (webhook.appCurrentlyUp || webhook.appCurrentlyUp === undefined) {
+                const updatedWebhook: Webhooks = JSON.parse(JSON.stringify(webhook));
+                updatedWebhook.appCurrentlyUp = false;
+                updateAppStatus(directory, tenantId, tokenProvider, updatedWebhook, key);
+
+                eventService.send(monitoredServiceDown(app, user, updatedWebhook));
+              }
+            }
+          });
         }
-      });
 
-      if (switchOffCount === waitTimePings.length && switchOffCount === webhook.intervalMinutes) {
-        eventTypes.map((et) => {
-          if (et.id === 'status-service:monitored-service-down') {
-            if (webhook.appCurrentlyUp || webhook.appCurrentlyUp === undefined) {
-              const updatedWebhook: Webhooks = JSON.parse(JSON.stringify(webhook));
-              updatedWebhook.appCurrentlyUp = false;
-              updateAppStatus(directory, tenantId, tokenProvider, updatedWebhook, key);
+        if (switchOnCount === waitTimePings.length && switchOnCount === webhook.intervalMinutes) {
+          eventTypes.map((et) => {
+            if (et.id === 'status-service:monitored-service-up') {
+              if (webhook.appCurrentlyUp === false || webhook.appCurrentlyUp === undefined) {
+                const updatedWebhook: Webhooks = JSON.parse(JSON.stringify(webhook));
+                updatedWebhook.appCurrentlyUp = true;
+                updateAppStatus(directory, tenantId, tokenProvider, updatedWebhook, key);
 
-              eventService.send(monitoredServiceDown(app, user, updatedWebhook));
+                eventService.send(monitoredServiceUp(app, user, updatedWebhook));
+              }
             }
-          }
-        });
+          });
+        }
       }
-
-      if (switchOnCount === waitTimePings.length && switchOnCount === webhook.intervalMinutes) {
-        eventTypes.map((et) => {
-          if (et.id === 'status-service:monitored-service-up') {
-            if (webhook.appCurrentlyUp === false || webhook.appCurrentlyUp === undefined) {
-              const updatedWebhook: Webhooks = JSON.parse(JSON.stringify(webhook));
-              updatedWebhook.appCurrentlyUp = true;
-              updateAppStatus(directory, tenantId, tokenProvider, updatedWebhook, key);
-
-              eventService.send(monitoredServiceUp(app, user, updatedWebhook));
-            }
-          }
-        });
-      }
-    }
-  });
+    });
 
   const recentHistory = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
     app.url,

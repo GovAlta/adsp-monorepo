@@ -99,7 +99,7 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
                 setIsShowURL('');
               }}
             >
-              <div>{url.length >= urlLength ? `${url.substring(0, urlLength)}...` : url}</div>
+              <div>{url?.length >= urlLength ? `${url?.substring(0, urlLength)}...` : url}</div>
 
               {isShowURL === id && (
                 <ToolTip>
