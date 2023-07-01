@@ -32,7 +32,6 @@ interface StreamRouterProps {
   logger: Logger;
   eventServiceAmp: DomainEventSubscriberService;
   tenantService: TenantService;
-  directory: ServiceDirectory;
   tokenProvider: TokenProvider;
   eventService: EventService;
   configurationService: ConfigurationService;
@@ -76,7 +75,6 @@ function mapStream(entity: StreamEntity): Stream {
     publicSubscribe: entity.publicSubscribe,
     subscriberRoles: entity.subscriberRoles,
     events: entity.events,
-    webhook: entity.webhook,
   };
 }
 
@@ -254,7 +252,6 @@ export const createStreamRouter = (
     logger,
     eventServiceAmp,
     tenantService,
-    directory,
     tokenProvider,
     eventService,
     configurationService,
@@ -285,37 +282,18 @@ export const createStreamRouter = (
     try {
       const token = await tokenProvider.getAccessToken();
 
-      console.log(JSON.stringify(serviceId) + ',serviceId');
-      console.log(JSON.stringify(tenantId) + ',tenantId');
-
-      const webhooks = await configurationService.getConfiguration<Record<string, Webhooks>, Record<string, Webhooks>>(
+      const response = await configurationService.getConfiguration<Record<string, Webhook>, Record<string, Webhook>>(
         serviceId,
         token,
         tenantId
       );
 
-      const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
+      const webhooks = response?.webhooks;
 
-      const subscribersUrl = new URL(
-        `/configuration/v2/configuration/platform/push-service/latest?tenantId=${tenant[0].id}`,
-        configurationServiceUrl
-      );
-
-      console.log(JSON.stringify(subscribersUrl, getCircularReplacer()) + '<subscribersUrl OLDX');
-
-      console.log(JSON.stringify(webhooks, getCircularReplacer()) + '<webhooks');
-      const reponse = await axios.get(subscribersUrl.href, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      console.log(JSON.stringify(reponse.data, getCircularReplacer()) + '<reponse');
       Object.keys(webhooks).map(async (key) => {
         const eventMatches = [];
         const webhook = webhooks[key] as Webhook;
         const eventTypes = webhook.eventTypes;
-
-        console.log(JSON.stringify(key, getCircularReplacer()) + '<key');
-
-        console.log(JSON.stringify(eventTypes, getCircularReplacer()) + '<eventTypes');
 
         eventTypes.map((et) => {
           const nextPayload = next.payload as unknown as NextPayload;
@@ -330,8 +308,6 @@ export const createStreamRouter = (
           }
         });
         const endpointWebsocket = webhooks[key].url;
-
-        console.log(JSON.stringify(endpointWebsocket, getCircularReplacer()) + '<endpointWebsocket');
 
         if (eventMatches.length > 0) {
           let response: StatusResponse = {};
@@ -348,7 +324,6 @@ export const createStreamRouter = (
             response.headers = { date: new Date() };
             logger.info(`Failed sending request from status.`);
             logger.info(`Error: ${JSON.stringify(err.message, getCircularReplacer())}`);
-            logger.info(`Errorx: ${JSON.stringify(err, getCircularReplacer())}`);
             callResponseTime = new Date().getTime() - beforeWebhook;
           } finally {
             eventService.send(

@@ -5,11 +5,6 @@ import { AdspId, hasRequiredRole, isAllowedUser, UnauthorizedUserError, User } f
 import { DomainEvent, InvalidOperationError } from '@core-services/core-common';
 import { PushServiceRoles } from '../roles';
 import { EventCriteria, Stream, StreamEvent } from '../types';
-<<<<<<< Updated upstream
-=======
-import { PushServiceRoles } from '..';
-import { Webhook } from '../router';
->>>>>>> Stashed changes
 
 export type StreamItem = unknown & Pick<DomainEvent, 'namespace' | 'name' | 'correlationId' | 'context' | 'tenantId'>;
 export class StreamEntity implements Stream {
@@ -17,19 +12,16 @@ export class StreamEntity implements Stream {
   name: string;
   description: string;
   events: StreamEvent[];
-  webhook: Webhook;
   subscriberRoles: string[];
   publicSubscribe: boolean;
 
   stream: Observable<StreamItem>;
 
   constructor(public tenantId: AdspId, stream: Stream) {
-    console.log(JSON.stringify(stream) + '<stream');
     this.id = stream.id;
     this.name = stream.name;
     this.description = stream.description;
     this.events = stream.events || [];
-    this.webhook = stream.webhook;
 
     this.subscriberRoles = stream.subscriberRoles || [];
     this.publicSubscribe = stream.publicSubscribe;

@@ -84,7 +84,7 @@ export class WebhookApi {
   async fetchWebhookPush(): Promise<object> {
     const res = await this.http.get(`/push-service`);
 
-    return res.data.webhooks;
+    return res.data;
   }
   async fetchWebhookStatus(): Promise<object> {
     const res = await this.http.get(`/status-service`);

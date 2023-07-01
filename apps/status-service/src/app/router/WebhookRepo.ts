@@ -37,7 +37,9 @@ export class WebhookRepo {
 
   getWebhook = async (appKey: string, tenantId: AdspId): Promise<Webhooks> => {
     const webhook = await this.getWebhooks(tenantId);
-    const key = Object.keys(webhook).find((hook) => webhook[hook].id === appKey);
+    const key = Object.keys(webhook).find((hook) => {
+      return webhook[hook].id === appKey;
+    });
     return webhook[key];
   };
 
@@ -51,12 +53,13 @@ export class WebhookRepo {
     const { data } = await axios.get<StatusServiceConfiguration>(configUrl.href, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    const keys = Object.keys(data);
+    const keys = Object.keys(data?.webhooks);
     const webhooks = {};
     // Add the tenantId in, cause its not part of the configuration.
-    keys.forEach((k) => {
-      webhooks[k] = { ...data[k], tenantId: tenantId };
-    });
+    data?.webhooks &&
+      keys.forEach((k) => {
+        webhooks[k] = { ...data.webhooks[k], tenantId: tenantId };
+      });
     return webhooks;
   };
 }

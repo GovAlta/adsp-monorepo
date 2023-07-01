@@ -4,7 +4,7 @@ export interface Webhook {
   name: string;
   targetId: string;
   intervalMinutes: number;
-  events: { id: string }[];
+  eventTypes: { id: string }[];
   description: string;
   generatedByTest?: boolean;
 }
@@ -25,8 +25,7 @@ export interface Stream {
   id: string;
   name: string;
   description: string;
-  eventTypes: StreamEvent[];
+  events: StreamEvent[];
   subscriberRoles: string[];
   publicSubscribe: boolean;
-  webhook: Webhook;
 }

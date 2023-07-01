@@ -68,7 +68,7 @@ const initializeApp = async (): Promise<Server> => {
       },
       combineConfiguration: (tenant: Record<string, Stream>, core: Record<string, Stream>, tenantId) =>
         Object.entries({ ...tenant, ...core }).reduce(
-          (c, [k, s]) => ({ ...c, [k]: new StreamEntity(tenantId, s) }),
+          (c, [k, s]) => (k === 'webhooks' ? { webhooks: s } : { ...c, [k]: new StreamEntity(tenantId, s) }),
           {}
         ),
       events: [WebhookTriggeredDefinition],
