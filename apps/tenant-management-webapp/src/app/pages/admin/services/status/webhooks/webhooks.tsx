@@ -164,7 +164,7 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
         {showDetails && (
           <tr>
             <NoPaddingTd headers="correlation timestamp namespace name details" colSpan={5} className="event-details">
-              <EntryDetail>{JSON.stringify(details, null, 2)}</EntryDetail>
+              <EntryDetail>{description}</EntryDetail>
             </NoPaddingTd>
           </tr>
         )}

@@ -105,55 +105,56 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
           {title} - {webhook.name}
         </GoAModalTitle>
         <GoAModalContent>
-          <GoAForm>
-            <GoAFormItem>
-              <label className="margin-bottom">Events</label>
-              {!orderedGroupNames && renderNoItem('event definition')}
+          <GoAWrapper>
+            <GoAForm>
+              <GoAFormItem>
+                <label className="margin-bottom">Events</label>
+                {!orderedGroupNames && renderNoItem('event definition')}
 
-              <DataTable data-testid="events-definitions-table">
-                {['monitored-service-down', 'monitored-service-up'].map((name) => {
-                  return (
-                    <GoARadio
-                      key={`selectedStatusName-${name}`}
-                      value={name}
-                      testId="preferred-channel-email-opt"
-                      checked={name === selectedStatusName}
-                      onChange={() => setSelectedStatusName(name)}
-                    >
-                      {name}
-                    </GoARadio>
-                  );
-                })}
-              </DataTable>
-            </GoAFormItem>
+                <DataTable data-testid="events-definitions-table">
+                  {['monitored-service-down', 'monitored-service-up'].map((name) => {
+                    return (
+                      <GoARadio
+                        key={`selectedStatusName-${name}`}
+                        value={name}
+                        testId="preferred-channel-email-opt"
+                        checked={name === selectedStatusName}
+                        onChange={() => setSelectedStatusName(name)}
+                      >
+                        {name}
+                      </GoARadio>
+                    );
+                  })}
+                </DataTable>
+              </GoAFormItem>
 
-            <EntryDetail>
-              {indicator.show ? (
-                <div className="loading-border">
-                  <GoAPageLoader visible={true} type="infinite" message={indicator.message} pagelock={true} />
-                </div>
-              ) : (
-                showEntries &&
-                (entries
-                  ? JSON.stringify(entries[0], null, 2)
-                  : 'No timely response from webhook test server - please try again')
-              )}
-            </EntryDetail>
-          </GoAForm>
+              <EntryDetail>
+                {indicator.show ? (
+                  <div className="loading-border">
+                    <GoAPageLoader visible={true} type="infinite" message={indicator.message} pagelock={true} />
+                  </div>
+                ) : (
+                  showEntries &&
+                  (entries
+                    ? JSON.stringify(entries[0], null, 2)
+                    : 'No timely response from webhook test server - please try again')
+                )}
+              </EntryDetail>
+            </GoAForm>
+          </GoAWrapper>
         </GoAModalContent>
         <GoAModalActions>
           <ButtonWrapper>
-            <GoAButton buttonType="secondary" onClick={() => test(selectedStatusName)}>
-              Test
-            </GoAButton>
-
             <GoAButton
-              buttonType="primary"
+              buttonType="secondary"
               onClick={() => {
                 onClose();
               }}
             >
               Close
+            </GoAButton>
+            <GoAButton buttonType="primary" onClick={() => test(selectedStatusName)}>
+              Test
             </GoAButton>
           </ButtonWrapper>
         </GoAModalActions>
@@ -162,6 +163,9 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
   );
 };
 
+const GoAWrapper = styled.div`
+  width: 584px;
+`;
 const GoAModalStyle = styled.div`
   .group-name {
     font-size: var(--fs-lg);
@@ -234,7 +238,6 @@ export const NoPaddingTd = styled.td`
 export const EntryDetail = styled.div`
   background: #f3f3f3;
   white-space: pre-wrap;
-  font-family: monospace;
   font-size: 12px;
   line-height: 12px;
   padding: 16px;

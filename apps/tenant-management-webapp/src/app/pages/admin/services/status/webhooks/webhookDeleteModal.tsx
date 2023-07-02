@@ -18,7 +18,7 @@ export const WebhookDeleteModal = ({ onCancel, webhook }: WebhookDeleteModalProp
       <GoAModalTitle testId="webhook-delete-modal-title">Delete webhook</GoAModalTitle>
       <GoAModalContent testId="webhook-delete-modal-content">
         <p>
-          Delete <b>{`${webhook?.name} (ID: ${webhook?.id})?`}</b>
+          Are you sure you wish to delete #<b>{`${webhook?.name}?`}</b>
         </p>
 
         <GoAModalActions>

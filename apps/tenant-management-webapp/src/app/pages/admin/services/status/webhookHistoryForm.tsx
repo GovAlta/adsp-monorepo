@@ -163,7 +163,7 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
         <GoAModalTitle>Webhook History</GoAModalTitle>
         <GoAModalContent>
           <GoAForm>
-            <div>
+            <GoAWrapper>
               <GoAFormItem>
                 <label>Application</label>
                 <div className="grey-fill">{searchCriteria.applications}</div>
@@ -210,16 +210,6 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
                 </EndDate>
               </DateFilter>
 
-              <SearchButtonPadding>
-                <GoAButton
-                  type="secondary"
-                  onClick={() => {
-                    onSearch(searchCriteria);
-                  }}
-                >
-                  Show
-                </GoAButton>
-              </SearchButtonPadding>
               {viewWebhooks && (
                 <div className="mt-1 mb-2px">
                   <>
@@ -262,24 +252,42 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
                   </>
                 </div>
               )}
-            </div>
+            </GoAWrapper>
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton
-            type="primary"
-            onClick={() => {
-              setViewWebhooks(false);
-              onCancel();
-            }}
-          >
-            Close
-          </GoAButton>
+          <ButtonPadding>
+            <ButtonWrapper>
+              <GoAButton
+                type="primary"
+                onClick={() => {
+                  onSearch(searchCriteria);
+                }}
+              >
+                Show
+              </GoAButton>
+            </ButtonWrapper>
+            <ButtonWrapper>
+              <GoAButton
+                type="secondary"
+                onClick={() => {
+                  setViewWebhooks(false);
+                  onCancel();
+                }}
+              >
+                Close
+              </GoAButton>
+            </ButtonWrapper>
+          </ButtonPadding>
         </GoAModalActions>
       </GoAModal>
     </GoAModalStyle>
   );
 };
+
+const GoAWrapper = styled.div`
+  width: 584px;
+`;
 
 const GoAModalStyle = styled.div`
   max-width: 640px;
@@ -301,10 +309,6 @@ const GoAModalStyle = styled.div`
 
   .mb-2px {
     margin-bottom: 2px;
-  }
-
-  .goa-form-item {
-    margin-bottom: 1.5rem;
   }
 
   .goa-scrollable {
@@ -350,8 +354,13 @@ const EndDate = styled.div`
   display: flex;
 `;
 
-const SearchButtonPadding = styled.div`
-  margin: 1.5rem 0 3px 0;
+const ButtonPadding = styled.div`
+  display: flex;
+  flex-direction: row-reverse;
+`;
+
+const ButtonWrapper = styled.div`
+  margin-left: 24px;
 `;
 
 const PaddingLeftRight = styled.div`
