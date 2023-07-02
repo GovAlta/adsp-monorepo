@@ -66,7 +66,7 @@ export class WebhookApi {
   async saveWebhookPush(props: Record<string, Webhooks>): Promise<object> {
     const body = {
       operation: 'UPDATE',
-      update: props,
+      update: { webhooks: props },
     };
 
     const res = await this.http.patch(`/push-service`, body);
@@ -95,7 +95,7 @@ export class WebhookApi {
   async deleteWebhook(id: string): Promise<object> {
     const res = await this.http.patch(`/push-service`, {
       operation: 'DELETE',
-      property: id,
+      property: { webhook: id },
     });
 
     return res.data;

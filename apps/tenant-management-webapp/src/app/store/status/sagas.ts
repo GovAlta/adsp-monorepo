@@ -152,7 +152,7 @@ export function* saveWebhook(action: saveWebhookAction): SagaIterator {
 
     const hookIntervalResponse = statusDataResponse?.latest?.configuration.applicationWebhookIntervals;
 
-    yield put(SaveWebhookSuccess(data.latest.configuration, hookIntervalResponse));
+    yield put(SaveWebhookSuccess(data.latest.configuration?.webhooks, hookIntervalResponse));
     yield put(refreshServiceStatusApps());
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
@@ -169,9 +169,10 @@ export function* fetchWebhook(action: saveWebhookAction): SagaIterator {
     const api = new WebhookApi(configBaseUrl, token);
 
     const data = yield call([api, api.fetchWebhookPush]);
+
     const statusData = yield call([api, api.fetchWebhookStatus]);
 
-    const configuration = data?.latest?.configuration;
+    const configuration = data?.latest?.configuration?.webhooks;
     const hookIntervals = statusData?.latest?.configuration.applicationWebhookIntervals;
 
     yield put(fetchWebhooksSuccess(configuration, hookIntervals));

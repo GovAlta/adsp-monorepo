@@ -1,5 +1,24 @@
 export const configurationSchema = {
   type: 'object',
+  properties: {
+    webhooks: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        name: { type: 'string' },
+        url: { type: 'string' },
+        targetId: { type: 'string' },
+        intervalMinutes: { type: 'number' },
+        description: { type: 'string' },
+        eventTypes: {
+          type: 'array',
+          items: {
+            id: { type: 'string' },
+          },
+        },
+      },
+    },
+  },
   patternProperties: {
     '^[a-zA-Z0-9-_ ]{1,50}$': {
       type: 'object',
@@ -34,27 +53,10 @@ export const configurationSchema = {
             required: ['namespace', 'name'],
           },
         },
-        webhooks: {
-          type: 'array',
-          items: {
-            id: { type: 'string' },
-            name: { type: 'string' },
-            url: { type: 'string' },
-            targetId: { type: 'string' },
-            intervalMinutes: { type: 'number' },
-            description: { type: 'string' },
-            eventTypes: {
-              type: 'array',
-              items: {
-                id: { type: 'string' },
-              },
-            },
-          },
-        },
         subscriberRoles: { type: 'array', items: { type: 'string' } },
         publicSubscribe: { type: 'boolean' },
       },
-      required: ['id', 'name'],
+    
     },
   },
   additionalProperties: false,

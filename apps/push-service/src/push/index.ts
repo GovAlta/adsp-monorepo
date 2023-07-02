@@ -9,6 +9,7 @@ import {
   ServiceDirectory,
   TokenProvider,
   EventService,
+  AdspId,
 } from '@abgov/adsp-service-sdk';
 
 export * from './configuration';
@@ -24,6 +25,7 @@ interface PushMiddlewareProps {
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
   eventService: EventService;
+  serviceId: AdspId;
 }
 
 export const applyPushMiddleware = (app: Application, ios: IoNamespace[], props: PushMiddlewareProps): Application => {
