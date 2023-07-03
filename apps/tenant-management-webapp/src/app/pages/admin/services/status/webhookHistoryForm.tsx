@@ -34,14 +34,14 @@ interface EventLogEntryComponentProps {
 
 const statusBadge = (value: string) => {
   return (
-    <PaddingLeftRight>
+    <PaddingRight>
       <GoABadge
         key="webhook-status-badge"
         content={value === 'OK' ? 'Success' : 'Failure'}
         data-testid="webhook-status-badge"
         type={value === 'OK' ? 'success' : 'emergency'}
       />
-    </PaddingLeftRight>
+    </PaddingRight>
   );
 };
 
@@ -363,8 +363,8 @@ const ButtonWrapper = styled.div`
   margin-left: 24px;
 `;
 
-const PaddingLeftRight = styled.div`
-  margin: 0 10px 0 10px;
+const PaddingRight = styled.div`
+  margin: 0 10px 0 0;
 `;
 
 const AlignedTr = styled.tr`
