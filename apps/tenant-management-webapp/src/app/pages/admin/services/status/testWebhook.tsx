@@ -128,18 +128,22 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
                 </DataTable>
               </GoAFormItem>
 
-              <EntryDetail>
-                {indicator.show ? (
-                  <div className="loading-border">
-                    <GoAPageLoader visible={true} type="infinite" message={indicator.message} pagelock={true} />
-                  </div>
-                ) : (
-                  showEntries &&
-                  (entries
-                    ? JSON.stringify(entries[0], null, 2)
-                    : 'No timely response from webhook test server - please try again')
-                )}
-              </EntryDetail>
+              {(showEntries || indicator.show) && (
+                <EntryDetail>
+                  {indicator.show ? (
+                    <div className="loading-border">
+                      <GoAPageLoader visible={true} type="infinite" message={indicator.message} pagelock={true} />
+                    </div>
+                  ) : (
+                    showEntries &&
+                    (entries ? (
+                      <JSONFont>{JSON.stringify(entries[0], null, 2)}</JSONFont>
+                    ) : (
+                      'No timely response from webhook test server - please try again'
+                    ))
+                  )}
+                </EntryDetail>
+              )}
             </GoAForm>
           </GoAWrapper>
         </GoAModalContent>
@@ -244,4 +248,8 @@ export const EntryDetail = styled.div`
   margin-bottom: 4px;
   text-align: left;
   min-height: 320px;
+`;
+
+export const JSONFont = styled.div`
+  font-family: monospace;
 `;
