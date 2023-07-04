@@ -74,16 +74,6 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
   }: FileTypeRowProps): JSX.Element => {
     const [showDetails, setShowDetails] = useState<boolean>(false);
 
-    const details = {
-      id,
-      name,
-      url,
-      targetId,
-      intervalMinutes,
-      eventTypes,
-      description,
-    };
-
     const urlLength = 14;
 
     return (
@@ -164,7 +154,7 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
         {showDetails && (
           <tr>
             <NoPaddingTd headers="correlation timestamp namespace name details" colSpan={5} className="event-details">
-              <EntryDetail>{JSON.stringify(details, null, 2)}</EntryDetail>
+              <EntryDetail>{description}</EntryDetail>
             </NoPaddingTd>
           </tr>
         )}
@@ -277,8 +267,8 @@ const Menu = styled.tr`
   }
 
   .hover-blue {
-    padding: 4px 4px 0 4px;
-    border-radius: 6px;
+    padding: 2px 5px 0 1px;
+    border-radius: 4px;
   }
 
   .hover {
