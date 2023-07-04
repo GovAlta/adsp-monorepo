@@ -3,7 +3,6 @@ import {
   TenantService,
   UnauthorizedUserError,
   User,
-  ServiceDirectory,
   TokenProvider,
   EventService,
   ConfigurationService,
