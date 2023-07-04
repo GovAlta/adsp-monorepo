@@ -2,7 +2,7 @@ import React, { FormEvent, useState, useEffect } from 'react';
 import { GoAButton, GoARadio, GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { GoAInputEmail, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { useDispatch, useSelector } from 'react-redux';
-import { patchSubscriber } from '@store/subscription/actions';
+import { patchSubscriber, createSubscriber } from '@store/subscription/actions';
 import { actionTypes } from '@store/subscription/models';
 import { Channels } from '@store/subscription/models';
 import { Grid, GridItem } from '@components/Grid';
@@ -14,20 +14,24 @@ import { RootState } from '@store/index';
 import { phoneWrapper } from '@lib/wrappers';
 
 interface ContactInfoCardProps {
-  subscriber: Subscriber;
+  subscriber?: Subscriber;
 }
 
 export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Element => {
   const dispatch = useDispatch();
   const [formErrors, setFormErrors] = useState({});
-  const subscriberEmail = subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === Channels.email)[0]
-    ?.address;
+  const userInfo = useSelector((state: RootState) => state.session?.userInfo);
+
+  const subscriberEmail = subscriber
+    ? subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === Channels.email)[0]?.address
+    : userInfo?.email;
   const subscriberSMS =
     subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === Channels.sms)[0]?.address || '';
 
   useEffect(() => {
     setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
   }, [subscriber]);
+  // we need to wait for userInfo api call so that the followup api calls can make use of the jwt token
 
   const [emailContactInformation, setEmailContactInformation] = useState(subscriberEmail);
   const [SMSContactInformation, setSMSContactInformation] = useState(subscriberSMS);
@@ -47,10 +51,10 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
 
   const setValue = (name: string, value: string) => {
     switch (name) {
-      case Channels.email:
-        setEmailContactInformation(value);
+      case Channels?.email:
+        setEmailContactInformation(value ? value : userInfo?.email);
         break;
-      case Channels.sms: {
+      case Channels?.sms: {
         if (inValidSMSInput(value)) {
           if (!(value && value.length > 10)) {
             setSMSContactInformation(value);
@@ -112,19 +116,19 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
     }
     let channels = [];
 
-    if (subscriber.channels) {
+    if (subscriber?.channels) {
       channels = [...subscriber.channels];
     }
 
-    const emailChannelIndex = subscriber.channels.findIndex((channel) => {
+    const emailChannelIndex = subscriber?.channels?.findIndex((channel) => {
       return channel.channel === Channels.email;
     });
 
-    const smsChannelIndex = subscriber.channels.findIndex((channel) => {
+    const smsChannelIndex = subscriber?.channels?.findIndex((channel) => {
       return channel.channel === Channels.sms;
     });
 
-    if (emailChannelIndex !== -1) {
+    if (emailChannelIndex !== -1 && subscriber) {
       channels[emailChannelIndex].address = emailContactInformation;
     } else {
       channels = [
@@ -163,7 +167,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
       channels = [tmp, ...channels];
     }
 
-    dispatch(patchSubscriber(channels, subscriber.id, actionTypes.updateContactInfo));
+    dispatch(patchSubscriber(channels, subscriber?.id, actionTypes.updateContactInfo));
     setEditContactInformation(!editContactInformation);
   };
 
@@ -196,7 +200,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
 
   return (
     <InfoCard title="Contact information">
-      {!indicator && subscriber && (
+      {!indicator && (
         <div>
           {editContactInformation ? (
             <Grid>
@@ -299,13 +303,13 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
           )}
         </div>
       )}
-      {(!subscriber || indicator) && <GoASkeletonGridColumnContent rows={5}></GoASkeletonGridColumnContent>}
+      {indicator && <GoASkeletonGridColumnContent rows={5}></GoASkeletonGridColumnContent>}
       <GapVS />
-      {subscriber && !indicator && (
+      {!indicator && (
         <div>
           {editContactInformation ? (
             updateContactInfoButtons()
-          ) : (
+          ) : subscriber ? (
             <GoAButton
               buttonSize="small"
               data-testid="edit-contact-button"
@@ -317,6 +321,17 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
               }}
             >
               Edit contact information
+            </GoAButton>
+          ) : (
+            <GoAButton
+              buttonSize="small"
+              data-testid="create-subscriber-button"
+              onClick={() => {
+                dispatch(createSubscriber());
+                console.log('Create subscriber');
+              }}
+            >
+              Create subscriber
             </GoAButton>
           )}
         </div>
