@@ -1,4 +1,4 @@
-import { adspId, TenantService, EventService, User, TokenProvider, ServiceDirectory } from '@abgov/adsp-service-sdk';
+import { adspId, TenantService, EventService, User, TokenProvider } from '@abgov/adsp-service-sdk';
 import { DomainEventSubscriberService, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { of } from 'rxjs';
