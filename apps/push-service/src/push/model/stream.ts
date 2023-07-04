@@ -22,6 +22,7 @@ export class StreamEntity implements Stream {
     this.name = stream.name;
     this.description = stream.description;
     this.events = stream.events || [];
+
     this.subscriberRoles = stream.subscriberRoles || [];
     this.publicSubscribe = stream.publicSubscribe;
   }

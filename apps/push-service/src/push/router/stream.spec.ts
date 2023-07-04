@@ -1,4 +1,4 @@
-import { adspId, TenantService, EventService, User, TokenProvider, ServiceDirectory } from '@abgov/adsp-service-sdk';
+import { adspId, TenantService, EventService, User, TokenProvider } from '@abgov/adsp-service-sdk';
 import { DomainEventSubscriberService, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { of } from 'rxjs';
@@ -20,8 +20,8 @@ describe('stream router', () => {
     getAccessToken: jest.fn(),
   };
 
-  const directoryMock = {
-    getServiceUrl: jest.fn(() => Promise.resolve(new URL('http://totally-real-directory'))),
+  const configurationServiceMock = {
+    getConfiguration: jest.fn(),
   };
 
   const loggerMock = {
@@ -81,8 +81,9 @@ describe('stream router', () => {
       eventServiceAmp: eventServiceAmpMock as DomainEventSubscriberService,
       eventService: eventServiceMock as EventService,
       tenantService: tenantServiceMock as unknown as TenantService,
-      directory: directoryMock as unknown as ServiceDirectory,
       tokenProvider: tokenProviderMock as unknown as TokenProvider,
+      configurationService: configurationServiceMock,
+      serviceId: adspId`urn:ads:platform:push-service`,
     });
 
     expect(router).toBeTruthy();
