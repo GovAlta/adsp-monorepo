@@ -60,6 +60,9 @@ export const WebhookFormModal: FC<Props> = ({
   }, [dispatch]);
 
   function save() {
+    if (!isFormValid()) {
+      return;
+    }
     const saveHook = webhook;
     if (!isEdit) {
       saveHook.id = (Math.random() + 1).toString(36).substring(2);
@@ -75,6 +78,11 @@ export const WebhookFormModal: FC<Props> = ({
       return existingWebhooks?.length === 1 ? 'webhook name is duplicate, please use a different name' : '';
     };
   };
+  const atLeastOne = (): Validator => {
+    return (events: object[]) => {
+      return events.length === 0 ? 'please select at least one event' : '';
+    };
+  };
 
   const isMoreThanZero = (): Validator => {
     return (interval: number) => {
@@ -85,6 +93,7 @@ export const WebhookFormModal: FC<Props> = ({
   const { errors, validators } = useValidators('nameAppKey', 'name', checkForBadChars, wordMaxLengthCheck(32, 'Name'))
     .add('nameOnly', 'name', checkForBadChars, isNotEmptyCheck('name'), isDuplicateWebhookName())
     .add('waitInterval', 'waitInterval', isMoreThanZero())
+    .add('events', 'events', atLeastOne())
     .add(
       'url',
       'url',
@@ -115,7 +124,7 @@ export const WebhookFormModal: FC<Props> = ({
   });
 
   function isFormValid(): boolean {
-    if (!webhook?.name) return false;
+    if (webhook?.eventTypes.length === 0) return false;
     if (!webhook?.url) return false;
     return !validators.haveErrors();
   }
@@ -239,7 +248,7 @@ export const WebhookFormModal: FC<Props> = ({
                   <div>{`${webhook.description?.length}/180`}</div>
                 </HelpText>
               </GoAFormItem>
-              <GoAFormItem>
+              <GoAFormItem error={errors?.['events']}>
                 <label className="margin-bottom">Events</label>
                 {!orderedGroupNames && renderNoItem('event definition')}
 
@@ -259,6 +268,8 @@ export const WebhookFormModal: FC<Props> = ({
                             } else {
                               eventTypes.splice(elementLocation, 1);
                             }
+
+                            validators['events'].check(eventTypes);
 
                             setWebhook({
                               ...webhook,

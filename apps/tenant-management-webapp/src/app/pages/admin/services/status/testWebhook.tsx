@@ -98,6 +98,8 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
     ...Object.keys(groupedDefinitions).filter((g) => g !== 'status-service'),
   ];
 
+  const events = webhook.eventTypes.map((e) => e.id.split(':')[1]);
+
   return (
     <GoAModalStyle>
       <GoAModal isOpen={isOpen} testId={testId}>
@@ -112,7 +114,7 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
                 {!orderedGroupNames && renderNoItem('event definition')}
 
                 <DataTable data-testid="events-definitions-table">
-                  {['monitored-service-down', 'monitored-service-up'].map((name) => {
+                  {events.map((name) => {
                     return (
                       <GoARadio
                         key={`selectedStatusName-${name}`}
