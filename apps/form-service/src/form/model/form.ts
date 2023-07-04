@@ -164,6 +164,9 @@ export class FormEntity implements Form {
     if (files) {
       Object.entries(files).forEach(([_key, fileId]) => {
         assertAdspId(fileId, null, 'resource');
+        if (fileId.service !== 'file-service') {
+          throw new InvalidOperationError(`Provided ID is not for a file service resource: ${fileId}`);
+        }
       });
       this.files = files;
     }

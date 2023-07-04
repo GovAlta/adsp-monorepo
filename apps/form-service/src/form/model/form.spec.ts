@@ -391,6 +391,17 @@ describe('FormEntity', () => {
       ).rejects.toThrow(Error);
     });
 
+    it('can throw for file not a file service resource', async () => {
+      const data = {};
+      const files = {
+        support: adspId`urn:ads:platform:test-service:v1:/abc/123`,
+      };
+
+      await expect(
+        entity.update({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, data, files)
+      ).rejects.toThrow(InvalidOperationError);
+    });
+
     it('can throw for different user', async () => {
       const data = {};
       const files = {};
