@@ -73,6 +73,7 @@ components:
           type: object
           additionalProperties:
             type: string
+            format: uri
     SendCodeOperation:
       type: object
       properties:
@@ -340,6 +341,7 @@ components:
                 type: object
                 additionalProperties:
                   type: string
+                  format: uri
     responses:
       200:
         description: Successfully updated the form.

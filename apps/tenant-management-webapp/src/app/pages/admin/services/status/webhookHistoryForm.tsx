@@ -4,12 +4,11 @@ import { EventLogEntry, EventSearchCriteria } from '@store/event/models';
 import { Webhooks } from '../../../../store/status/models';
 import DataTable from '@components/DataTable';
 import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
-import { GoADropdown, GoADropdownOption } from '@abgov/react-components';
 import { getEventDefinitions } from '@store/event/actions';
 
 import { GoABadge } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
-import { GoAButton } from '@abgov/react-components/experimental';
+import { GoAButton } from '@abgov/react-components-new';
 
 import {
   GoAForm,
@@ -22,6 +21,7 @@ import {
 } from '@abgov/react-components/experimental';
 
 import { RootState } from '../../../../store/index';
+import { HoverWrapper, ToolTip } from './styled-components';
 
 interface Props {
   onCancel: () => void;
@@ -30,19 +30,18 @@ interface Props {
 
 interface EventLogEntryComponentProps {
   entry: EventLogEntry;
-  onSearchRelated: (correlationId: string) => void;
 }
 
 const statusBadge = (value: string) => {
   return (
-    <PaddingLeftRight>
+    <PaddingRight>
       <GoABadge
         key="webhook-status-badge"
         content={value === 'OK' ? 'Success' : 'Failure'}
         data-testid="webhook-status-badge"
         type={value === 'OK' ? 'success' : 'emergency'}
       />
-    </PaddingLeftRight>
+    </PaddingRight>
   );
 };
 
@@ -63,16 +62,48 @@ function ordinal_suffix_of(i) {
 
 const EventLogEntryComponent: FunctionComponent<EventLogEntryComponentProps> = ({
   entry,
-  onSearchRelated,
 }: EventLogEntryComponentProps) => {
   const dateArray = entry.timestamp.toDateString().split(' ');
   const date = dateArray[1] + ' ' + ordinal_suffix_of(dateArray[2]);
 
+  const objectLength = 14;
+  const url = entry.details.URL as string;
+  const name = entry.details?.name?.toString();
+
+  const HoverOnShort = ({ displayString }) => {
+    const [isShow, setIsShow] = useState<boolean>(false);
+    return (
+      <HoverWrapper
+        onMouseEnter={() => {
+          if (displayString.length >= objectLength) setIsShow(true);
+        }}
+        onMouseLeave={() => {
+          setIsShow(false);
+        }}
+      >
+        <div>
+          {displayString.length >= objectLength ? `${displayString.substring(0, objectLength)}...` : displayString}
+        </div>
+        {isShow && (
+          <ToolTip>
+            <p className="url-tooltip">
+              <div className="message">{displayString}</div>
+            </p>
+          </ToolTip>
+        )}
+      </HoverWrapper>
+    );
+  };
+
   return (
     <>
-      <tr>
-        <td headers="name">{entry.details?.name?.toString()}</td>
-        <td headers="url">{entry.details.URL as string}</td>
+      <AlignedTr>
+        <td headers="name" className="padding-left-8">
+          <HoverOnShort displayString={name} />
+        </td>
+        <td headers="url">
+          <HoverOnShort displayString={url} />
+        </td>
         <td headers="status">
           <StatusView>
             {statusBadge(entry.details?.callStatus as string)}
@@ -84,7 +115,7 @@ const EventLogEntryComponent: FunctionComponent<EventLogEntryComponentProps> = (
           <span> </span>
           <span>{entry.timestamp.toLocaleTimeString()}</span>
         </td>
-      </tr>
+      </AlignedTr>
     </>
   );
 };
@@ -107,8 +138,6 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
   const next = useSelector((state: RootState) => state.event.nextEntries);
   const isLoading = useSelector((state: RootState) => state.event.isLoading.log);
   const today = new Date().toLocaleDateString().split('/').reverse().join('-');
-
-  const { applications } = useSelector((state: RootState) => state.serviceStatus);
 
   useEffect(() => {
     dispatch(getEventDefinitions());
@@ -134,28 +163,10 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
         <GoAModalTitle>Webhook History</GoAModalTitle>
         <GoAModalContent>
           <GoAForm>
-            <div style={{ height: '1000px' }}>
+            <GoAWrapper>
               <GoAFormItem>
                 <label>Application</label>
-                <GoADropdown
-                  name="Application"
-                  selectedValues={[searchCriteria.applications]}
-                  onChange={(_n, [value]) =>
-                    setSearchCriteria({ ...searchCriteria, applications: value, value: value })
-                  }
-                  multiSelect={false}
-                >
-                  {applications.map((application): JSX.Element => {
-                    return (
-                      <GoADropdownOption
-                        label={application.appKey}
-                        value={application.appKey}
-                        key={application.appKey}
-                        visible={true}
-                      />
-                    );
-                  })}
-                </GoADropdown>
+                <div className="grey-fill">{searchCriteria.applications}</div>
               </GoAFormItem>
 
               <GoAFormItem>
@@ -199,78 +210,113 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
                 </EndDate>
               </DateFilter>
 
-              <SearchButtonPadding>
-                <GoAButton
-                  type={'secondary'}
-                  onClick={() => {
-                    onSearch(searchCriteria);
-                  }}
-                >
-                  Show
-                </GoAButton>
-              </SearchButtonPadding>
               {viewWebhooks && (
-                <GoAFormItem>
-                  {entries?.length > 0 ? (
-                    <DataTable>
-                      <colgroup>
-                        <col className="data-col" />
-                        <col className="data-col" />
-                        <col className="data-col" />
-                        <col className="data-col" />
-                      </colgroup>
-                      <thead>
-                        <tr>
-                          <th id="name">Name</th>
-                          <th id="url">URL</th>
-                          <th id="status">Status</th>
-                          <th id="timestamp">Occurred</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {entries !== null &&
-                          entries.map((entry) => (
-                            <EventLogEntryComponent
-                              key={`${entry.timestamp}${entry.namespace}${entry.name}`}
-                              entry={entry}
-                              onSearchRelated={(correlationId) => onSearch({ correlationId })}
-                            />
-                          ))}
-                      </tbody>
-                    </DataTable>
-                  ) : (
-                    'No webhook history found'
-                  )}
-                  {next && (
-                    <GoAButton disabled={isLoading} onClick={onNext}>
-                      Load more...
-                    </GoAButton>
-                  )}
-                </GoAFormItem>
+                <div className="mt-1 mb-2px">
+                  <>
+                    {entries?.length > 0 ? (
+                      <DataTable>
+                        <colgroup>
+                          <col className="data-col" />
+                          <col className="data-col" />
+                          <col className="data-col" />
+                          <col className="data-col" />
+                        </colgroup>
+                        <thead>
+                          <tr>
+                            <th id="name">Name</th>
+                            <th id="url">URL</th>
+                            <th id="status">Status</th>
+                            <th id="timestamp">Occurred</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {entries !== null &&
+                            entries.map((entry) => (
+                              <EventLogEntryComponent
+                                key={`${entry.timestamp}${entry.namespace}${entry.name}`}
+                                entry={entry}
+                              />
+                            ))}
+                        </tbody>
+                      </DataTable>
+                    ) : (
+                      'No webhook history found'
+                    )}
+                    {next && (
+                      <div className="mt-1">
+                        <GoAButton type="tertiary" disabled={isLoading} onClick={onNext}>
+                          Load more...
+                        </GoAButton>
+                      </div>
+                    )}
+                  </>
+                </div>
               )}
-            </div>
+            </GoAWrapper>
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton
-            buttonType="secondary"
-            onClick={() => {
-              setViewWebhooks(false);
-              onCancel();
-            }}
-          >
-            Cancel
-          </GoAButton>
+          <ButtonPadding>
+            <ButtonWrapper>
+              <GoAButton
+                type="primary"
+                onClick={() => {
+                  onSearch(searchCriteria);
+                }}
+              >
+                Show
+              </GoAButton>
+            </ButtonWrapper>
+            <ButtonWrapper>
+              <GoAButton
+                type="secondary"
+                onClick={() => {
+                  setViewWebhooks(false);
+                  onCancel();
+                }}
+              >
+                Close
+              </GoAButton>
+            </ButtonWrapper>
+          </ButtonPadding>
         </GoAModalActions>
       </GoAModal>
     </GoAModalStyle>
   );
 };
 
+const GoAWrapper = styled.div`
+  width: 584px;
+`;
+
 const GoAModalStyle = styled.div`
+  max-width: 640px;
   .group-name {
     font-size: var(--fs-lg);
     font-weight: var(--fw-bold);
+  }
+
+  .grey-fill {
+    background: #dcdcdc;
+    padding: 8px;
+    border: 1px solid F1F1F1;
+    border-radius: 4px;
+  }
+
+  .mt-1 {
+    margin-top: 1rem;
+  }
+
+  .mb-2px {
+    margin-bottom: 2px;
+  }
+
+  .goa-scrollable {
+    margin-bottom: 0;
+  }
+
+  .modal-container {
+    max-width: 640px;
   }
 `;
 
@@ -308,10 +354,23 @@ const EndDate = styled.div`
   display: flex;
 `;
 
-const SearchButtonPadding = styled.div`
-  margin: 10px 0 15px 0;
+const ButtonPadding = styled.div`
+  display: flex;
+  flex-direction: row-reverse;
 `;
 
-const PaddingLeftRight = styled.div`
-  margin: 0 10px 0 10px;
+const ButtonWrapper = styled.div`
+  margin-left: 24px;
+`;
+
+const PaddingRight = styled.div`
+  margin: 0 10px 0 0;
+`;
+
+const AlignedTr = styled.tr`
+  vertical-align: top;
+
+  .padding-left-8 {
+    padding-left: 8px;
+  }
 `;

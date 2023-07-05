@@ -113,10 +113,9 @@ export class TaskEntity implements Task {
     return this.repository.save(this);
   }
 
-  assign(user: User, assignTo: { id: string; name: string; email: string }): Promise<TaskEntity> {
-    if (
-      !(this.queue.canAssignTask(user) || (this.queue.canWorkOnTask(user) && (!assignTo || assignTo.id === user?.id)))
-    ) {
+  assign(user: User, assignTo?: { id: string; name: string; email: string }): Promise<TaskEntity> {
+    // Assigners can assign; Workers can assign themselves, but not unassign.
+    if (!(this.queue.canAssignTask(user) || (this.queue.canWorkOnTask(user) && assignTo?.id === user.id))) {
       throw new UnauthorizedUserError('assign task', user);
     }
 
@@ -124,23 +123,23 @@ export class TaskEntity implements Task {
       throw new InvalidOperationError('Cannot assign Completed or Cancelled task.');
     }
 
-    this.assignment = assignTo
-      ? {
-          assignedOn: new Date(),
-          assignedBy: {
-            id: user.id,
-            name: user.name,
-          },
-          assignedTo: assignTo,
-        }
-      : null;
+    this.assignment = {
+      assignedOn: new Date(),
+      assignedBy: {
+        id: user.id,
+        name: user.name,
+      },
+      assignedTo: assignTo,
+    };
 
     return this.repository.save(this);
   }
 
   canProgressTask(user: User): boolean {
     // Only the assigned worker can progress the task.
-    return this.queue.canWorkOnTask(user) && (!this.assignment || user.id === this.assignment.assignedTo.id);
+    return (
+      this.queue.canWorkOnTask(user) && (!this.assignment?.assignedTo || user.id === this.assignment.assignedTo.id)
+    );
   }
 
   start(user: User): Promise<TaskEntity> {

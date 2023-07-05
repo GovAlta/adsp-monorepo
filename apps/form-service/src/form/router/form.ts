@@ -206,10 +206,9 @@ export const updateFormData: RequestHandler = async (req, res, next) => {
     const user = req.user;
     const form: FormEntity = req[FORM];
     const { data, files: fileIds } = req.body;
-    const files: Record<string, AdspId> = Object.entries(fileIds || {}).reduce(
-      (ids, [k, v]) => ({ ...ids, [k]: AdspId.parse(v as string) }),
-      {}
-    );
+    const files: Record<string, AdspId> = fileIds
+      ? Object.entries(fileIds).reduce((ids, [k, v]) => ({ ...ids, [k]: AdspId.parse(v as string) }), {})
+      : null;
 
     const result = await form.update(user, data, files);
 
@@ -378,7 +377,11 @@ export function createFormRouter({
   );
   router.put(
     '/forms/:formId/data',
-    createValidationHandler(param('formId').isUUID(), body('data').isObject(), body('files').optional().isObject()),
+    createValidationHandler(
+      param('formId').isUUID(),
+      body('data').optional({ nullable: true }).isObject(),
+      body('files').optional({ nullable: true }).isObject()
+    ),
     getForm(repository),
     updateFormData
   );

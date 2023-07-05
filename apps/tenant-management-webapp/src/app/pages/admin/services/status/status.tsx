@@ -201,7 +201,7 @@ function Status(): JSX.Element {
             {webhooks && Object.keys(webhooks).length > 0 ? (
               <WebhooksDisplay webhooks={webhooks} />
             ) : (
-              <b>There are not webhooks yet</b>
+              <b>There are no webhooks yet</b>
             )}
           </Tab>
           <Tab label="Notices">

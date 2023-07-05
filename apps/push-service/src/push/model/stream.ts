@@ -3,8 +3,8 @@ import { Observable } from 'rxjs';
 import { map, filter } from 'rxjs/operators';
 import { AdspId, hasRequiredRole, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { DomainEvent, InvalidOperationError } from '@core-services/core-common';
+import { PushServiceRoles } from '../roles';
 import { EventCriteria, Stream, StreamEvent } from '../types';
-import { PushServiceRoles } from '..';
 
 export type StreamItem = unknown & Pick<DomainEvent, 'namespace' | 'name' | 'correlationId' | 'context' | 'tenantId'>;
 export class StreamEntity implements Stream {
@@ -22,6 +22,7 @@ export class StreamEntity implements Stream {
     this.name = stream.name;
     this.description = stream.description;
     this.events = stream.events || [];
+
     this.subscriberRoles = stream.subscriberRoles || [];
     this.publicSubscribe = stream.publicSubscribe;
   }
@@ -46,11 +47,15 @@ export class StreamEntity implements Stream {
     return this;
   }
 
-  private isMatch(event: StreamItem, criteria?: EventCriteria) {
+  public isMatch(event: StreamItem, criteria?: EventCriteria) {
+    // Is a match if there is:
+    // 1. No criteria; or
+    // 2. Not (has correlationId criteria and does not match event correlationId) and
+    // 3. Not (has context criteria with any context value that does not match event context).
     return (
       !criteria ||
       (!(criteria.correlationId && criteria.correlationId !== event.correlationId) &&
-        !(criteria.context && !_.isEqual(criteria.context, event.context)))
+        !(criteria.context && Object.entries(criteria.context).find(([key, value]) => value !== event.context?.[key])))
     );
   }
 
