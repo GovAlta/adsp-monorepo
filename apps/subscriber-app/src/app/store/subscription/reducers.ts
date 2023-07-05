@@ -4,6 +4,7 @@ import {
   NO_SUBSCRIBER,
   PATCH_SUBSCRIBER_SUCCESS,
   UNSUBSCRIBE_SUCCESS,
+  CREATE_SUBSCRIBER_SUCCESS,
 } from './actions';
 import { SUBSCRIBER_INIT, SubscriberService } from './models';
 
@@ -40,6 +41,14 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
           channels: action.payload.subscriber.channels,
         },
       };
+
+    case CREATE_SUBSCRIBER_SUCCESS: {
+      return {
+        ...state,
+
+        subscriber: action.payload.subscriber,
+      };
+    }
     default:
       return state;
   }

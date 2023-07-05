@@ -100,7 +100,6 @@ class KeycloakAuth {
             this.keycloak
               .loadUserInfo()
               .then(() => {
-                console.log('check-sso');
                 successHandler(this.keycloak);
               })
               .catch((e) => {
