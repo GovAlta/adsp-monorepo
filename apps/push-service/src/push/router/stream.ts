@@ -24,7 +24,6 @@ import { EventCriteria, Stream } from '../types';
 import { StreamEntity, StreamItem } from '../model';
 import { ExtendedError } from 'socket.io/dist/namespace';
 import axios from 'axios';
-
 import { webhookTriggered } from '../events';
 
 interface StreamRouterProps {
@@ -268,82 +267,86 @@ export const createStreamRouter = (
   events.subscribe(async (next) => {
     logger.debug(`Processing event ${next.namespace}:${next.name} ...`);
 
-    const tenant = await tenantService.getTenants();
-    const tenantId = tenant[0]?.id;
+    if (`${next.namespace}:${next.name}` !== 'push-service:webhook-triggered') {
+      const tenant = await tenantService.getTenants();
+      const tenantId = tenant[0]?.id;
 
-    const user = {
-      name: 'Push Service Admin',
-      id: 'push-service-admin',
-      tenantId,
-      roles: [ServiceUserRoles.Admin],
-    } as User;
-
-    try {
       const token = await tokenProvider.getAccessToken();
 
-      const response = await configurationService.getConfiguration<Record<string, Webhook>, Record<string, Webhook>>(
-        serviceId,
-        token,
-        tenantId
-      );
+      const user = {
+        name: 'Push Service Admin',
+        id: 'push-service-admin',
+        tenantId,
+        roles: [ServiceUserRoles.Admin],
+      } as User;
 
-      const webhooks = response?.webhooks;
+      try {
+        const response = await configurationService.getConfiguration<Record<string, Webhook>, Record<string, Webhook>>(
+          serviceId,
+          token,
+          tenantId
+        );
 
-      Object.keys(webhooks).map(async (key) => {
-        const eventMatches = [];
-        const webhook = webhooks[key] as Webhook;
-        const eventTypes = webhook.eventTypes;
+        const webhooks = response?.webhooks;
 
-        eventTypes.map((et) => {
-          const nextPayload = next.payload as unknown as NextPayload;
-          if (`${next.namespace}:${next.name}` === et.id && et.id !== 'push-service:webhook-triggered') {
-            if (
-              (nextPayload?.application?.appKey && nextPayload?.application?.appKey === webhook.targetId) ||
-              (nextPayload?.application?.id && nextPayload?.application?.id === webhook.targetId)
-            ) {
-              next.payload;
-              eventMatches.push(et.id);
+        Object.keys(webhooks).map(async (key) => {
+          if (webhooks[key]) {
+            const eventMatches = [];
+            const webhook = webhooks[key] as Webhook;
+            const eventTypes = webhook.eventTypes;
+
+            eventTypes.map((et) => {
+              const nextPayload = next.payload as unknown as NextPayload;
+              if (`${next.namespace}:${next.name}` === et.id) {
+                if (
+                  (nextPayload?.application?.appKey && nextPayload?.application?.appKey === webhook.targetId) ||
+                  (nextPayload?.application?.id && nextPayload?.application?.id === webhook.targetId)
+                ) {
+                  next.payload;
+                  eventMatches.push(et.id);
+                }
+              }
+            });
+            const endpointWebsocket = webhooks[key].url;
+
+            if (eventMatches.length > 0) {
+              let response: StatusResponse = {};
+              let callResponseTime = 0;
+              const beforeWebhook = new Date().getTime();
+              try {
+                if (isValidUrl(endpointWebsocket)) {
+                  response = await axios.post(endpointWebsocket, next);
+                  callResponseTime = new Date().getTime() - beforeWebhook;
+                }
+              } catch (err) {
+                response.statusText = err.message;
+                response.status = 400;
+                response.headers = { date: new Date() };
+                logger.info(`Failed sending request from status.`);
+                logger.info(`Error: ${JSON.stringify(err.message, getCircularReplacer())}`);
+                callResponseTime = new Date().getTime() - beforeWebhook;
+              } finally {
+                eventService.send(
+                  webhookTriggered(
+                    user,
+                    tenantId,
+                    webhook.url,
+                    webhook.targetId,
+                    webhook.eventTypes,
+                    webhook.name,
+                    response?.statusText,
+                    response?.status,
+                    response?.headers?.date,
+                    callResponseTime
+                  )
+                );
+              }
             }
           }
         });
-        const endpointWebsocket = webhooks[key].url;
-
-        if (eventMatches.length > 0) {
-          let response: StatusResponse = {};
-          let callResponseTime = 0;
-          const beforeWebhook = new Date().getTime();
-          try {
-            if (isValidUrl(endpointWebsocket)) {
-              response = await axios.post(endpointWebsocket, next);
-              callResponseTime = new Date().getTime() - beforeWebhook;
-            }
-          } catch (err) {
-            response.statusText = err.message;
-            response.status = 400;
-            response.headers = { date: new Date() };
-            logger.info(`Failed sending request from status.`);
-            logger.info(`Error: ${JSON.stringify(err.message, getCircularReplacer())}`);
-            callResponseTime = new Date().getTime() - beforeWebhook;
-          } finally {
-            eventService.send(
-              webhookTriggered(
-                user,
-                tenantId,
-                webhook.url,
-                webhook.targetId,
-                webhook.eventTypes,
-                webhook.name,
-                response?.statusText,
-                response?.status,
-                response?.headers?.date,
-                callResponseTime
-              )
-            );
-          }
-        }
-      });
-    } catch (e) {
-      console.error('Error: ' + JSON.stringify(e));
+      } catch (e) {
+        console.error('Error: ' + JSON.stringify(e));
+      }
     }
   });
 

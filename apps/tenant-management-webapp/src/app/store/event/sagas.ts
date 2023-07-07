@@ -223,7 +223,7 @@ export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaI
       yield put(
         UpdateIndicator({
           show: true,
-          message: 'Loading',
+          message: 'Loading...',
         })
       );
       const { data } = yield call(axios.get, eventUrl, {

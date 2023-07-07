@@ -8,6 +8,7 @@ import { getEventDefinitions } from '@store/event/actions';
 
 import { GoABadge } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
+import { GoAPageLoader } from '@abgov/react-components';
 import { GoAButton } from '@abgov/react-components-new';
 
 import {
@@ -122,6 +123,10 @@ const EventLogEntryComponent: FunctionComponent<EventLogEntryComponentProps> = (
 
 export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhook }: Props): JSX.Element => {
   const dispatch = useDispatch();
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
+
   const [viewWebhooks, setViewWebhooks] = useState(false);
   const [searched, setSearched] = useState(false);
   const initCriteria: EventSearchCriteria = {
@@ -141,6 +146,7 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
 
   useEffect(() => {
     dispatch(getEventDefinitions());
+    onSearch(searchCriteria);
   }, [dispatch]);
 
   const onSearch = (criteria: EventSearchCriteria) => {
@@ -213,34 +219,40 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
               {viewWebhooks && (
                 <div className="mt-1 mb-2px">
                   <>
-                    {entries?.length > 0 ? (
-                      <DataTable>
-                        <colgroup>
-                          <col className="data-col" />
-                          <col className="data-col" />
-                          <col className="data-col" />
-                          <col className="data-col" />
-                        </colgroup>
-                        <thead>
-                          <tr>
-                            <th id="name">Name</th>
-                            <th id="url">URL</th>
-                            <th id="status">Status</th>
-                            <th id="timestamp">Occurred</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {entries !== null &&
-                            entries.map((entry) => (
-                              <EventLogEntryComponent
-                                key={`${entry.timestamp}${entry.namespace}${entry.name}`}
-                                entry={entry}
-                              />
-                            ))}
-                        </tbody>
-                      </DataTable>
+                    {entries ? (
+                      entries?.length > 0 ? (
+                        <DataTable>
+                          <colgroup>
+                            <col className="data-col" />
+                            <col className="data-col" />
+                            <col className="data-col" />
+                            <col className="data-col" />
+                          </colgroup>
+                          <thead>
+                            <tr>
+                              <th id="name">Name</th>
+                              <th id="url">URL</th>
+                              <th id="status">Status</th>
+                              <th id="timestamp">Occurred</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {entries !== null &&
+                              entries.map((entry) => (
+                                <EventLogEntryComponent
+                                  key={`${entry.timestamp}${entry.namespace}${entry.name}`}
+                                  entry={entry}
+                                />
+                              ))}
+                          </tbody>
+                        </DataTable>
+                      ) : (
+                        'No webhook history found'
+                      )
                     ) : (
-                      'No webhook history found'
+                      <LoadingWrapper>
+                        <GoAPageLoader visible={true} type="infinite" message={indicator.message} pagelock={true} />
+                      </LoadingWrapper>
                     )}
                     {next && (
                       <div className="mt-1">
@@ -261,21 +273,21 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
               <GoAButton
                 type="primary"
                 onClick={() => {
-                  onSearch(searchCriteria);
+                  setViewWebhooks(false);
+                  onCancel();
                 }}
               >
-                Show
+                Close
               </GoAButton>
             </ButtonWrapper>
             <ButtonWrapper>
               <GoAButton
                 type="secondary"
                 onClick={() => {
-                  setViewWebhooks(false);
-                  onCancel();
+                  onSearch(searchCriteria);
                 }}
               >
-                Close
+                Search
               </GoAButton>
             </ButtonWrapper>
           </ButtonPadding>
@@ -373,4 +385,8 @@ const AlignedTr = styled.tr`
   .padding-left-8 {
     padding-left: 8px;
   }
+`;
+
+const LoadingWrapper = styled.div`
+  margin: 30px 0 30px 0;
 `;

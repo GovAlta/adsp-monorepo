@@ -185,6 +185,7 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
           <tbody>
             {webhooks &&
               Object.keys(webhooks).map((key) => {
+                if (!webhooks[key]) return null;
                 return (
                   <FileTypeTableRow
                     key={`webhook-${webhooks[key].id}`}
