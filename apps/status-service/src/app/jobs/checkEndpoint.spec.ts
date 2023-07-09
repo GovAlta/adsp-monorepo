@@ -121,7 +121,9 @@ describe('checkEndpoint', () => {
 
         mockTokenProvider.getAccessToken.mockResolvedValueOnce('test');
 
-        axiosMock.get.mockResolvedValueOnce({ data: { latest: { configuration: {} } } });
+        axiosMock.get.mockResolvedValueOnce({ data: { latest: { configuration: {} } } }).mockResolvedValueOnce({
+          data: { latest: { configuration: { applicationWebhookIntervals: {} } } },
+        });
 
         statusRepositoryMock.get.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
@@ -165,13 +167,16 @@ describe('checkEndpoint', () => {
         ]);
         mockTokenProvider.getAccessToken.mockResolvedValueOnce('test');
 
-        axiosMock.get.mockResolvedValueOnce({ data: { latest: { configuration: {} } } });
+        axiosMock.get.mockResolvedValueOnce({ data: { latest: { configuration: {} } } }).mockResolvedValueOnce({
+          data: { latest: { configuration: { applicationWebhookIntervals: {} } } },
+        });
         statusRepositoryMock.get.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
             endpoint: { status: 'online' },
           } as ServiceStatusApplication)
         );
+
         statusRepositoryMock.save.mockImplementationOnce((entity) => entity);
         await job();
         expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'application-unhealthy' }));
@@ -181,6 +186,12 @@ describe('checkEndpoint', () => {
       });
 
       it('sends a managed application down event', async () => {
+        const applicationWebhookIntervals = {
+          asdf: {
+            appId: 'the-other-key',
+            waitTimeInterval: 3,
+          },
+        };
         const webHooks = {
           asdf: {
             id: 'asdf',
@@ -222,7 +233,11 @@ describe('checkEndpoint', () => {
         ]);
         mockTokenProvider.getAccessToken.mockResolvedValueOnce('test');
 
-        axiosMock.get.mockResolvedValueOnce({ data: { latest: { configuration: webHooks } } });
+        axiosMock.get
+          .mockResolvedValueOnce({ data: { latest: { configuration: { webhooks: webHooks } } } })
+          .mockResolvedValueOnce({
+            data: { latest: { configuration: { applicationWebhookIntervals: applicationWebhookIntervals } } },
+          });
         statusRepositoryMock.get.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
@@ -235,6 +250,12 @@ describe('checkEndpoint', () => {
       });
 
       it('does not send a managed application down event because app is already down', async () => {
+        const applicationWebhookIntervals = {
+          asdf: {
+            appId: 'the-other-key',
+            waitTimeInterval: 3,
+          },
+        };
         const webHooks = {
           asdf: {
             id: 'asdf',
@@ -277,7 +298,9 @@ describe('checkEndpoint', () => {
         ]);
         mockTokenProvider.getAccessToken.mockResolvedValueOnce('test');
 
-        axiosMock.get.mockResolvedValueOnce({ data: { latest: { configuration: webHooks } } });
+        axiosMock.get.mockResolvedValueOnce({ data: { latest: { configuration: webHooks } } }).mockResolvedValueOnce({
+          data: { latest: { configuration: { applicationWebhookIntervals: applicationWebhookIntervals } } },
+        });
         statusRepositoryMock.get.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
@@ -292,13 +315,18 @@ describe('checkEndpoint', () => {
       });
 
       it('sends a managed application up event', async () => {
+        const applicationWebhookIntervals = {
+          asdf: {
+            appId: 'the-other-key',
+            waitTimeInterval: 3,
+          },
+        };
         const webHooks = {
           asdf: {
             id: 'asdf',
             name: 'Fubar',
             url: 'http://www.localhost:3000/uptime',
             targetId: 'the-other-key',
-            intervalMinutes: 3,
             description: 'asdfasdf',
             eventTypes: [
               { id: 'status-service:monitored-service-down' },
@@ -333,7 +361,11 @@ describe('checkEndpoint', () => {
         ]);
         mockTokenProvider.getAccessToken.mockResolvedValueOnce('test');
 
-        axiosMock.get.mockResolvedValueOnce({ data: { latest: { configuration: webHooks } } });
+        axiosMock.get
+          .mockResolvedValueOnce({ data: { latest: { configuration: { webhooks: webHooks } } } })
+          .mockResolvedValueOnce({
+            data: { latest: { configuration: { applicationWebhookIntervals: applicationWebhookIntervals } } },
+          });
         statusRepositoryMock.get.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
@@ -347,6 +379,13 @@ describe('checkEndpoint', () => {
       });
 
       it('can not update when status unchanged', async () => {
+        const applicationWebhookIntervals = {
+          asdf: {
+            appId: 'the-other-key',
+            waitTimeInterval: 3,
+          },
+        };
+
         getEndpointResponse.mockResolvedValueOnce({ status: 200 });
         endpointRepositoryMock.save.mockImplementationOnce((entity) => entity);
         endpointRepositoryMock.findRecentByUrlAndApplicationId.mockReturnValueOnce([
@@ -371,7 +410,9 @@ describe('checkEndpoint', () => {
         ]);
         mockTokenProvider.getAccessToken.mockResolvedValueOnce('test');
 
-        axiosMock.get.mockResolvedValueOnce({ data: { latest: { configuration: {} } } });
+        axiosMock.get.mockResolvedValueOnce({ data: { latest: { configuration: {} } } }).mockResolvedValueOnce({
+          data: { latest: { configuration: { applicationWebhookIntervals: applicationWebhookIntervals } } },
+        });
         statusRepositoryMock.get.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
