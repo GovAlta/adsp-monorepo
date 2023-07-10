@@ -78,9 +78,11 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
       });
 
       Object.keys(webhooks).forEach((key) => {
-        webhooks[key].intervalMinutes = hookIntervalList.find(
-          (i) => i.appId === webhooks[key].targetId
-        )?.waitTimeInterval;
+        if (webhooks[key]) {
+          webhooks[key].intervalMinutes = hookIntervalList.find(
+            (i) => i.appId === webhooks[key]?.targetId
+          )?.waitTimeInterval;
+        }
       });
       return { ...state, webhooks: webhooks };
     }
@@ -104,9 +106,11 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
 
       webhooks &&
         Object.keys(webhooks).forEach((key) => {
-          webhooks[key].intervalMinutes = hookIntervalList.find(
-            (i) => i.appId === webhooks[key].targetId
-          )?.waitTimeInterval;
+          if (webhooks[key]) {
+            webhooks[key].intervalMinutes = hookIntervalList.find(
+              (i) => i.appId === webhooks[key].targetId
+            )?.waitTimeInterval;
+          }
         });
 
       return {

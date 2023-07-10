@@ -6,7 +6,6 @@ import DataTable from '@components/DataTable';
 import { EventSearchCriteria } from '@store/event/models';
 import { getEventLogEntries } from '@store/event/actions';
 import { GoAButton, GoARadio } from '@abgov/react-components';
-import { getEventDefinitions } from '@store/event/actions';
 
 import { GoAPageLoader } from '@abgov/react-components';
 
@@ -37,7 +36,9 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
   const dispatch = useDispatch();
 
   const [showEntries, setShowEntries] = useState<boolean>(false);
-  const [selectedStatusName, setSelectedStatusName] = useState<string>('monitored-service-down');
+  const [selectedStatusName, setSelectedStatusName] = useState<string>(
+    defaultWebhooks && defaultWebhooks.eventTypes[0].id.split(':')[1]
+  );
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -60,12 +61,10 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
   const testSuccess = useSelector((state: RootState) => state.serviceStatus.testSuccess);
 
   useEffect(() => {
-    dispatch(getEventDefinitions());
-  }, [dispatch]);
-
-  useEffect(() => {
-    dispatch(getEventLogEntries('', initCriteria));
-    setShowEntries(true);
+    if (testSuccess) {
+      dispatch(getEventLogEntries('', initCriteria));
+      setShowEntries(true);
+    }
   }, [testSuccess]);
 
   useEffect(() => {
@@ -130,7 +129,7 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
                 </DataTable>
               </GoAFormItem>
 
-              {(showEntries || indicator.show) && (
+              {(showEntries || (indicator.show && indicator.message !== 'Loading...')) && (
                 <EntryDetail>
                   {indicator.show ? (
                     <div className="loading-border">
