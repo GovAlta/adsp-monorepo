@@ -222,7 +222,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
 
                 <GoAFormItem error={formErrors?.['sms']}>
                   <GoAInput
-                    type="text"
+                    type="phone"
                     aria-label="sms"
                     name="sms"
                     value={SMSContactInformation}
