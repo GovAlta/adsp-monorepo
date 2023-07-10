@@ -69,3 +69,35 @@ export const createSubscriberAppPublicClientConfig = (id: string): ClientReprese
 
   return config;
 };
+
+export const createApiAppPublicClientConfig = (id: string): ClientRepresentation => {
+  const config: ClientRepresentation = {
+    id,
+    clientId: 'api-app-client',
+    enabled: false,
+    publicClient: true,
+    directAccessGrantsEnabled: false,
+    redirectUris: [`${environment.API_APP_HOST}/*`],
+    webOrigins: [environment.API_APP_HOST],
+    description:
+      'Platform configured client for ADSP API site. Enable for easy authorization via openId (OAuth2, authorization_code) from the ADSP API site',
+  };
+
+  return config;
+};
+
+export const createNxAdspPublicClientConfig = (id: string): ClientRepresentation => {
+  const config: ClientRepresentation = {
+    id,
+    clientId: 'nx-adsp-cli',
+    enabled: false,
+    publicClient: true,
+    directAccessGrantsEnabled: false,
+    redirectUris: ['http://localhost:3000/callback'],
+    webOrigins: ['http://localhost:3000'],
+    description:
+      'Platform configured client for NX ADSP generators. Enable to use @abgov/nx-adsp generators that retrieve tenant configuration.',
+  };
+
+  return config;
+};
