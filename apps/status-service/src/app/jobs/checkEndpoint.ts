@@ -12,7 +12,7 @@ import {
   monitoredServiceDown,
   monitoredServiceUp,
 } from '../events';
-import { Configuration, StaticApplicationData, Webhooks } from '../model';
+import { Configuration, StatusConfiguration, StaticApplicationData, Webhooks } from '../model';
 
 const ENTRY_SAMPLE_SIZE = 5;
 const HEALTHY_MAX_FAIL_COUNT = 0;
@@ -121,6 +121,10 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
     `/configuration/v2/configuration/platform/push-service?tenantId=${app.tenantId}`,
     configurationServiceUrl
   );
+  const statusUrl = new URL(
+    `/configuration/v2/configuration/platform/status-service?tenantId=${app.tenantId}`,
+    configurationServiceUrl
+  );
 
   const user = {
     tenantId,
@@ -130,57 +134,69 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
   const response = (await axios.get(webhooksUrl.href, { headers: { Authorization: `Bearer ${token}` } })) as {
     data: Configuration;
   };
+  const statusResponse = (await axios.get(statusUrl.href, { headers: { Authorization: `Bearer ${token}` } })) as {
+    data: StatusConfiguration;
+  };
 
-  const webhooks = response.data?.latest?.configuration;
+  const webhooks = response.data?.latest?.configuration.webhooks;
+  const applicationWebhookIntervals = statusResponse?.data?.latest?.configuration.applicationWebhookIntervals;
+
+  const hookIntervalList = Object.keys(applicationWebhookIntervals).map((h) => {
+    return applicationWebhookIntervals[h];
+  });
 
   webhooks &&
     Object.keys(webhooks).map(async (key) => {
-      const webhook = webhooks[key];
-      if (webhook.targetId === app.appKey) {
-        const eventTypes = webhook.eventTypes;
+      if (webhooks[key]) {
+        const webhook = webhooks[key];
+        const waitTimeInterval = hookIntervalList.find((i) => i.appId === webhooks[key]?.targetId)?.waitTimeInterval;
 
-        const waitTimePings = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
-          app.url,
-          app.appKey,
-          webhook.intervalMinutes
-        );
+        if (webhook?.targetId === app.appKey) {
+          const eventTypes = webhook.eventTypes;
 
-        let switchOffCount = 0;
-        let switchOnCount = 0;
-        waitTimePings.forEach((ping) => {
-          if (ping.ok) {
-            switchOnCount++;
-          } else {
-            switchOffCount++;
+          const waitTimePings = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
+            app.url,
+            app.appKey,
+            waitTimeInterval
+          );
+
+          let switchOffCount = 0;
+          let switchOnCount = 0;
+          waitTimePings.forEach((ping) => {
+            if (ping.ok) {
+              switchOnCount++;
+            } else {
+              switchOffCount++;
+            }
+          });
+
+          if (switchOffCount === waitTimePings.length && switchOffCount === waitTimeInterval) {
+            eventTypes.map((et) => {
+              if (et.id === 'status-service:monitored-service-down') {
+                if (webhook.appCurrentlyUp || webhook.appCurrentlyUp === undefined) {
+                  const updatedWebhook: Webhooks = JSON.parse(JSON.stringify(webhook));
+                  updatedWebhook.appCurrentlyUp = false;
+                  updateAppStatus(directory, tenantId, tokenProvider, updatedWebhook, key);
+
+                  eventService.send(monitoredServiceDown(app, user, updatedWebhook));
+                }
+              }
+            });
           }
-        });
 
-        if (switchOffCount === waitTimePings.length && switchOffCount === webhook.intervalMinutes) {
-          eventTypes.map((et) => {
-            if (et.id === 'status-service:monitored-service-down') {
-              if (webhook.appCurrentlyUp || webhook.appCurrentlyUp === undefined) {
-                const updatedWebhook: Webhooks = JSON.parse(JSON.stringify(webhook));
-                updatedWebhook.appCurrentlyUp = false;
-                updateAppStatus(directory, tenantId, tokenProvider, updatedWebhook, key);
+          if (switchOnCount === waitTimePings.length && switchOnCount === waitTimeInterval) {
+            eventTypes.map((et) => {
+              if (et.id === 'status-service:monitored-service-up') {
+                if (webhook.appCurrentlyUp === false || webhook.appCurrentlyUp === undefined) {
+                  const updatedWebhook: Webhooks = JSON.parse(JSON.stringify(webhook));
+                  updatedWebhook.appCurrentlyUp = true;
+                  updateAppStatus(directory, tenantId, tokenProvider, updatedWebhook, key);
 
-                eventService.send(monitoredServiceDown(app, user, updatedWebhook));
+                  eventService.send(monitoredServiceUp(app, user, updatedWebhook));
+                }
               }
-            }
-          });
-        }
-
-        if (switchOnCount === waitTimePings.length && switchOnCount === webhook.intervalMinutes) {
-          eventTypes.map((et) => {
-            if (et.id === 'status-service:monitored-service-up') {
-              if (webhook.appCurrentlyUp === false || webhook.appCurrentlyUp === undefined) {
-                const updatedWebhook: Webhooks = JSON.parse(JSON.stringify(webhook));
-                updatedWebhook.appCurrentlyUp = true;
-                updateAppStatus(directory, tenantId, tokenProvider, updatedWebhook, key);
-
-                eventService.send(monitoredServiceUp(app, user, updatedWebhook));
-              }
-            }
-          });
+            });
+          }
         }
       }
     });
@@ -242,7 +258,7 @@ const updateAppStatus = async (
     {
       operation: 'UPDATE',
       update: {
-        [key]: webhook,
+        webhooks: { [key]: webhook },
       },
     },
     {

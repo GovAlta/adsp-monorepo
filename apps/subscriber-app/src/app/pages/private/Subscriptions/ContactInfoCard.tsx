@@ -309,11 +309,14 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
         <div>
           {editContactInformation ? (
             updateContactInfoButtons()
-          ) : subscriber ? (
+          ) : (
             <GoAButton
               buttonSize="small"
               data-testid="edit-contact-button"
               onClick={() => {
+                if (!subscriber) {
+                  dispatch(createSubscriber());
+                }
                 setEditContactInformation(!editContactInformation);
                 setEmailContactInformation(subscriberEmail);
                 setSMSContactInformation(subscriberSMS);
@@ -321,17 +324,6 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
               }}
             >
               Edit contact information
-            </GoAButton>
-          ) : (
-            <GoAButton
-              buttonSize="small"
-              data-testid="create-subscriber-button"
-              onClick={() => {
-                dispatch(createSubscriber());
-                console.log('Create subscriber');
-              }}
-            >
-              Create subscriber
             </GoAButton>
           )}
         </div>

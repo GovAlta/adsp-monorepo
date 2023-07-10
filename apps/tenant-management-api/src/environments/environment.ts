@@ -22,6 +22,7 @@ export const environment = envalid.cleanEnv(
     SUBSCRIBER_APP_CLIENT_ID: envalid.str({ default: 'urn:ads:platform:subscriber-app' }),
     TENANT_WEB_APP_HOST: envalid.str({ default: 'http://localhost:4200' }),
     SUBSCRIBER_APP_HOST: envalid.str({ default: 'http://localhost:4200' }),
+    API_APP_HOST: envalid.str({ default: 'http://localhost:4200' }),
     CLIENT_ID: envalid.str({ default: 'urn:ads:platform:tenant-service' }),
     CLIENT_SECRET: envalid.str({ default: '' }),
     APP_ENVIRONMENT: envalid.str({ default: 'dev' }),

@@ -73,12 +73,15 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const debouncedTmpTemplate = useDebounce(tmpTemplate, TEMPLATE_RENDER_DEBOUNCE_TIMER);
+  const tempPdfTemplate = useSelector((state: RootState) => state?.pdf?.tempTemplate);
   const [EditorError, setEditorError] = useState<Record<string, string>>({
     testData: null,
   });
 
   useEffect(() => {
-    if (!pdfTemplate) dispatch(getPdfTemplates());
+    if (!pdfTemplate) {
+      dispatch(getPdfTemplates());
+    }
   }, []);
 
   useEffect(() => {
@@ -109,7 +112,9 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
       dispatch(updateTempTemplate(null));
       return;
     }
-    dispatch(updateTempTemplate(tmpTemplate));
+    if (!tempPdfTemplate) {
+      dispatch(updateTempTemplate(tmpTemplate));
+    }
   }, [debouncedTmpTemplate, EditorError.testData]);
 
   useEffect(() => {

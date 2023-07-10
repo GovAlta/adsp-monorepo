@@ -33,7 +33,15 @@ export interface StaticApplicationData extends ApplicationConfiguration {
 }
 
 export interface Configuration {
-  latest: { configuration: Record<string, Webhooks> };
+  latest: { configuration: { webhooks: Record<string, Webhooks> }};
+}
+export interface StatusConfiguration {
+  latest: { configuration: { applicationWebhookIntervals: Record<string, HookInterval> }};
+}
+
+export interface HookInterval {
+  appId: string,
+  waitTimeInterval: number,
 }
 
 export interface Webhooks {

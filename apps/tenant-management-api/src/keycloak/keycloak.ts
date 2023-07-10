@@ -10,6 +10,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { Logger } from 'winston';
 import { RealmService, ServiceClient, Tenant, TenantServiceRoles } from '../tenant';
 import {
+  createApiAppPublicClientConfig,
+  createNxAdspPublicClientConfig,
   createPlatformServiceConfig,
   createSubscriberAppPublicClientConfig,
   createWebappClientConfig,
@@ -308,6 +310,8 @@ export class KeycloakRealmServiceImpl implements RealmService {
     const brokerClientSecret = uuidv4();
     const tenantPublicClientId = uuidv4();
     const subscriberAppPublicClientId = uuidv4();
+    const apiAppPublicClientId = uuidv4();
+    const nxAdspPublicClientId = uuidv4();
     const brokerClient = this.brokerClientName(realm);
 
     let client = await this.createAdminClient();
@@ -316,6 +320,8 @@ export class KeycloakRealmServiceImpl implements RealmService {
     this.logger.debug(`Creating realm '${realm}' with base configuration...`, LOG_CONTEXT);
     const publicClientConfig = createWebappClientConfig(tenantPublicClientId);
     const subscriberAppPublicClientConfig = createSubscriberAppPublicClientConfig(subscriberAppPublicClientId);
+    const apiAppPublicClientConfig = createApiAppPublicClientConfig(apiAppPublicClientId);
+    const nxAdspPublicClientConfig = createNxAdspPublicClientConfig(nxAdspPublicClientId);
 
     const clients = serviceClients.map((registeredClient) =>
       createPlatformServiceConfig(registeredClient.serviceId, ...registeredClient.roles)
@@ -328,7 +334,13 @@ export class KeycloakRealmServiceImpl implements RealmService {
       displayNameHtml: name,
       loginTheme: 'ads-theme',
       accountTheme: 'ads-theme',
-      clients: [subscriberAppPublicClientConfig, publicClientConfig, ...clients.map((c) => c.client)],
+      clients: [
+        subscriberAppPublicClientConfig,
+        publicClientConfig,
+        apiAppPublicClientConfig,
+        nxAdspPublicClientConfig,
+        ...clients.map((c) => c.client),
+      ],
       roles: {
         client: clients.reduce((cs, c) => ({ ...cs, [c.client.clientId]: c.clientRoles }), {}),
       },
