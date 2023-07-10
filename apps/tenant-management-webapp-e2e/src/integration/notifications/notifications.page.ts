@@ -154,13 +154,13 @@ class NotificationsPage {
 
   addAnEmailTemplateModalSubject() {
     return cy.xpath(
-      '(//*[@data-testid="template-form"]//*[@class="monaco-scrollable-element editor-scrollable vs mac"])[1]'
+      '(//*[@data-testid="template-form"]//*[@class="monaco-scrollable-element editor-scrollable vs"])[1]'
     );
   }
 
   addAnEmailTemplateModalBody() {
     return cy.xpath(
-      '(//*[@data-testid="template-form"]//*[@class="monaco-scrollable-element editor-scrollable vs mac"])[2]'
+      '(//*[@data-testid="template-form"]//*[@class="monaco-scrollable-element editor-scrollable vs"])[2]'
     );
   }
 
@@ -465,13 +465,13 @@ class NotificationsPage {
 
   eventTemplateModalSubject(channel) {
     return cy.xpath(
-      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-subject"]//div[@class="monaco-scrollable-element editor-scrollable vs mac"]/following-sibling::textarea`
+      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-subject"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea`
     );
   }
 
   eventTemplateModalBody(channel) {
     return cy.xpath(
-      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-body"]//div[@class="monaco-scrollable-element editor-scrollable vs mac"]/following-sibling::textarea`
+      `//*[@data-testid="modal-title" and contains(text(), "${channel}")]//parent::*//*[@data-testid="templated-editor-body"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea`
     );
   }
 
