@@ -27,6 +27,7 @@ export interface CreateCheckEndpointProps {
   eventService: EventService;
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
+  serviceId: AdspId;
   getEndpointResponse: GetEndpointResponse;
 }
 
@@ -109,6 +110,7 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
     logger,
     directory,
     tokenProvider,
+    serviceId,
   } = props;
   // create endpoint status entry before determining if the state is changed
 
@@ -117,12 +119,13 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
 
   const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
   const token = await tokenProvider.getAccessToken();
+
   const webhooksUrl = new URL(
-    `/configuration/v2/configuration/platform/push-service?tenantId=${app.tenantId}`,
+    `/configuration/v2/configuration/${serviceId.namespace}/push-service?tenantId=${app.tenantId}`,
     configurationServiceUrl
   );
   const statusUrl = new URL(
-    `/configuration/v2/configuration/platform/status-service?tenantId=${app.tenantId}`,
+    `/configuration/v2/configuration/${serviceId.namespace}/status-service?tenantId=${app.tenantId}`,
     configurationServiceUrl
   );
 
@@ -149,7 +152,7 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
     Object.keys(webhooks).map(async (key) => {
       if (webhooks[key]) {
         const webhook = webhooks[key];
-        const waitTimeInterval = hookIntervalList.find((i) => i.appId === webhooks[key]?.targetId)?.waitTimeInterval;
+        const waitTimeInterval = hookIntervalList.find((i) => i.appId === webhook?.targetId)?.waitTimeInterval;
 
         if (webhook?.targetId === app.appKey) {
           const eventTypes = webhook.eventTypes;
@@ -176,7 +179,7 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
                 if (webhook.appCurrentlyUp || webhook.appCurrentlyUp === undefined) {
                   const updatedWebhook: Webhooks = JSON.parse(JSON.stringify(webhook));
                   updatedWebhook.appCurrentlyUp = false;
-                  updateAppStatus(directory, tenantId, tokenProvider, updatedWebhook, key);
+                  updateAppStatus(directory, tenantId, tokenProvider, updatedWebhook, key, serviceId);
 
                   eventService.send(monitoredServiceDown(app, user, updatedWebhook));
                 }
@@ -190,7 +193,7 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
                 if (webhook.appCurrentlyUp === false || webhook.appCurrentlyUp === undefined) {
                   const updatedWebhook: Webhooks = JSON.parse(JSON.stringify(webhook));
                   updatedWebhook.appCurrentlyUp = true;
-                  updateAppStatus(directory, tenantId, tokenProvider, updatedWebhook, key);
+                  updateAppStatus(directory, tenantId, tokenProvider, updatedWebhook, key, serviceId);
 
                   eventService.send(monitoredServiceUp(app, user, updatedWebhook));
                 }
@@ -244,12 +247,13 @@ const updateAppStatus = async (
   tenantId: AdspId,
   tokenProvider: TokenProvider,
   webhook: Webhooks,
-  key: string
+  key: string,
+  serviceId: AdspId
 ) => {
   const token = await tokenProvider.getAccessToken();
   const baseUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
   const pushConfiguration = new URL(
-    `/configuration/v2/configuration/platform/push-service?tenantId=${tenantId}`,
+    `/configuration/v2/configuration/${serviceId.namespace}/push-service?tenantId=${tenantId}`,
     baseUrl
   );
 

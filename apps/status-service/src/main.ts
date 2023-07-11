@@ -134,6 +134,7 @@ app.use(express.json({ limit: '1mb' }));
     applicationManager,
     directory,
     tokenProvider,
+    serviceId,
   };
 
   const scheduler = new HealthCheckJobScheduler(healthCheckSchedulingProps);

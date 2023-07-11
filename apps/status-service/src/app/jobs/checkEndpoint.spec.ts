@@ -61,6 +61,7 @@ describe('checkEndpoint', () => {
         eventService: eventServiceMock,
         tokenProvider: mockTokenProvider,
         directory: serviceDirectoryMock,
+        serviceId: adspId`urn:ads:platform:test-service`,
       });
 
       expect(job).toBeTruthy();
@@ -82,6 +83,7 @@ describe('checkEndpoint', () => {
         eventService: eventServiceMock,
         tokenProvider: mockTokenProvider,
         directory: serviceDirectoryMock,
+        serviceId: adspId`urn:ads:platform:test-service`,
       });
 
       beforeEach(() => {

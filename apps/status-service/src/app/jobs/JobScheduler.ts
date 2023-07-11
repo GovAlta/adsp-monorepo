@@ -2,7 +2,7 @@ import { Job } from 'node-schedule';
 import { Logger } from 'winston';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
-import { EventService,   ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
+import { EventService, ServiceDirectory, TokenProvider, AdspId } from '@abgov/adsp-service-sdk';
 import { HealthCheckJobCache } from './HealthCheckJobCache';
 import { HealthCheckJob } from './HealthCheckJob';
 import { getScheduler } from './SchedulerFactory';
@@ -18,6 +18,7 @@ export interface HealthCheckSchedulingProps {
   applicationManager: ApplicationManager;
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
+  serviceId: AdspId;
 }
 export interface JobScheduler {
   schedule: (StaticApplicationData) => Job;
