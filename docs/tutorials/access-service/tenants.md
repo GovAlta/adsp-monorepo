@@ -39,7 +39,15 @@ The _realm owner_ will be a member of your group that has the responsibility for
 
 If you are unable to find or use an existing tenant, then you will need to create a new one. The process is fairly simple, requiring you to:
 
-- Sign in to the [Tenant Admin Webapp](https://adsp-dev.gov.ab.ca/get-started), to create an account if you do not already have one. Simply signing in with your GoA email address is sufficient to create a new account. Then sign back out again.
+- Sign in to the [Tenant Admin Webapp](https://adsp-uat.alberta.ca/get-started), to create an account if you do not already have one. Simply signing in with your GoA email address is sufficient to create a new account. Then sign back out again.
 - [Contact the ADSP team](mailto:adsp@gov.ab.ca) to give you the beta-tester role.
-- Once you have received the beta-tester role, sign back in to the Tenant Admin Webapp.
-- As a beta-tester, you will be able to create a new tenant by clicking on the appropriate button and following the instructions.
+
+As a beta-tester, you will be able to create a new tenant by clicking on the appropriate button as follows:
+
+Go to the [ADSP login page](https://adsp-uat.alberta.ca) and request a tenant.
+
+![](/adsp-monorepo/assets/access-service/homepage.png){: width="400" }
+
+You can then enter the name of your new tenant to create it.
+
+![](/adsp-monorepo/assets/access-service/create-tenant.png){: width="500" }
