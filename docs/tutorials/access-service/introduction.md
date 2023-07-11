@@ -21,8 +21,10 @@ The _Access Service_ is concerned with security, and is based on [Keycloak](http
 
 ## Learn More
 
-- Learn how to [configure a Keycloak client](/adsp-monorepo/tutorials/access-service/configuring-clients.html) to gain access to the ADSP services.
+- Learn about [tenants and realms](/adsp-monorepo/tutorials/access-service/tenants.html).
 
-- Learn how to [secure API calls](/adsp-monorepo/tutorials/access-service/api-security.html), and how ADSP API security works.
+- Learn how to [configure a Keycloak client](/adsp-monorepo/tutorials/access-service/application-clients.html) to gain access to the ADSP services.
+
+- Learn how to [secure API calls](/adsp-monorepo/tutorials/access-service/adsp-clients.html), and how ADSP API security works.
 
 - Learn how to [customize the Keycloak login page](/adsp-monorepo/tutorials/access-service/themes.html) to match your application's theme.
