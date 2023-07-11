@@ -17,6 +17,14 @@ interface DeleteJobProps {
   configurationService: ConfigurationService;
 }
 
+export function getBeforeLastAccessed(retention: number) {
+  const now = new Date();
+  // last night
+  now.setHours(0, 0, 0, 0);
+  const beforeDate = new Date(now.setDate(now.getDate() - retention));
+  return beforeDate.toISOString();
+}
+
 export function createDeleteOldFilesJob({
   serviceId,
   logger,
@@ -46,14 +54,12 @@ export function createDeleteOldFilesJob({
           return await Promise.all(
             Object.keys(configuration).map(async (key) => {
               if (configuration[key].rules?.retention?.active) {
-                const now = new Date();
                 const retention = configuration[key].rules?.retention?.deleteInDays;
-                const backdate = new Date(now.setDate(now.getDate() - retention));
-
                 let after = null;
+
                 do {
                   const { results, page } = await fileRepository.find(tenant.id, 20, after as string, {
-                    lastAccessedBefore: backdate.toDateString(),
+                    lastAccessedBefore: getBeforeLastAccessed(retention),
                   });
 
                   for (const file of results) {
