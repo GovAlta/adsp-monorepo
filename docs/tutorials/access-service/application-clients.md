@@ -1,7 +1,7 @@
 ---
 title: Application Clients
 layout: page
-nav_order: 2
+nav_order: 3
 parent: Access Service
 grand_parent: Tutorials
 ---
@@ -57,5 +57,3 @@ const { access_token, expires_in } = await response.json();
 ```
 
 Access tokens returned by the fetch are valid for about 5 minutes and can be used in API calls until they expire. You can, however, refresh them if needed, or just grab new ones.
-
-## CORS
