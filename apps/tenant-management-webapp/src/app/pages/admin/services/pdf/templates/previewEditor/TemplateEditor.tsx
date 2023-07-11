@@ -50,8 +50,6 @@ const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
     prev?.header !== next?.header ||
     prev?.footer !== next?.footer ||
     prev?.additionalStyles !== next?.additionalStyles ||
-    prev?.name !== next?.name ||
-    prev?.description !== next?.description ||
     prev?.variables !== next?.variables
   );
 };
