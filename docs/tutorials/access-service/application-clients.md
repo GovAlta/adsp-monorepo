@@ -1,5 +1,5 @@
 ---
-title: Configuring Clients
+title: Application Clients
 layout: page
 nav_order: 2
 parent: Access Service
@@ -10,7 +10,7 @@ grand_parent: Tutorials
 
 Although most of the keycloak configuration is done when a tenant is set up, you will still need to create new _clients_ for you applications. Clients are used to obtain access tokens for _authentication_ and _authorization_, and the ADSP API requires that your client is authorized to access its resources. To configure your clients, log in to ADSP's [Tenant Admin Webapp](https://adsp-uat.alberta.ca) and select the access service tab:
 
-![](/adsp-monorepo/assets/access-service/access-service.png)
+![](/adsp-monorepo/assets/access-service/access-service.png){: width="200" }
 
 Then click on the _Keycloak admin portal_ link, which will bring you to the Keycloak admin page:
 
