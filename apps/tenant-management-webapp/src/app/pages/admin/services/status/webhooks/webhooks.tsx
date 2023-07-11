@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { Webhooks } from '@store/status/models';
 import DataTable from '@components/DataTable';
 import styled from 'styled-components';
-import { GoAIconButton } from '@abgov/react-components/experimental';
-import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
+import { GoAIconButton } from '@abgov/react-components-new';
+import { GoAContextMenu } from '@components/ContextMenu';
 import { WebhookFormModal } from '../webhookForm';
 import { WebhookHistoryModal } from '../webhookHistoryForm';
 import { TestWebhookModal } from '../testWebhook';
@@ -107,8 +107,8 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
               <GoAIconButton
                 testId={`webhook-details-${id}`}
                 title="Details"
-                size="medium"
-                type="information-circle"
+                size="small"
+                icon="information-circle"
                 onClick={() => {
                   setShowDetails(!showDetails);
                 }}
@@ -117,24 +117,25 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
                 onClick={() => {
                   onHistory();
                 }}
-                className="hover-blue"
+                className="hover-blue tooltip"
               >
                 <img src={History} alt="History" />
+                <span className="tooltip-text">Webhook history</span>
               </div>
-
               <GoAIconButton
                 testId={`webhook-test-${id}`}
-                title="History"
-                size="medium"
-                type="ticket"
+                title="Test"
+                size="small"
+                icon="ticket"
                 onClick={() => {
                   onTest();
                 }}
               />
-              <GoAContextMenuIcon
-                type="create"
-                title="Edit"
+              <GoAIconButton
                 testId={`webhook-edit-${id}`}
+                title="Edit"
+                size="small"
+                icon="create"
                 onClick={() => {
                   onEdit();
                 }}
@@ -142,8 +143,8 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
               <GoAIconButton
                 testId={`webhook-delete-${id}`}
                 title="Delete"
-                size="medium"
-                type="trash"
+                size="small"
+                icon="trash"
                 onClick={() => {
                   onDelete();
                 }}
@@ -258,18 +259,22 @@ const TableLayout = styled.div`
       width: 35%;
     }
   }
+
+  .hosbPN {
+    overflow-y: clip;
+  }
 `;
 
 const Menu = styled.tr`
   vertical-align: top;
   .hover-blue:hover {
-    background: #e3f2ff;
+    background: #f1f1f1;
     cursor: pointer;
   }
 
   .hover-blue {
-    padding: 2px 5px 0 1px;
-    border-radius: 4px;
+    padding: 5px 5px 0 5px;
+    border-radius: 7px;
   }
 
   .hover {
@@ -278,5 +283,31 @@ const Menu = styled.tr`
 
   .hover {
     display: block;
+  }
+
+  .tooltip {
+    position: relative;
+    display: inline-block;
+  }
+
+  .tooltip .tooltip-text {
+    visibility: hidden;
+    width: 90px;
+    background-color: white;
+    color: #0f0f0f;
+    font-size: 11px;
+    text-align: center;
+    border: 1px solid black;
+
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+    top: 25px;
+    left: 70%;
+  }
+
+  .tooltip:hover .tooltip-text {
+    visibility: visible;
+    transition: all 0.4s 0.7s ease;
   }
 `;
