@@ -63,9 +63,6 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
     }
   }, [fileList]);
 
-  //eslint-disable-next-line
-  useEffect(() => {}, [tempPdfTemplate]);
-
   const generateTemplate = () => {
     const payload = {
       templateId: pdfTemplate.id,

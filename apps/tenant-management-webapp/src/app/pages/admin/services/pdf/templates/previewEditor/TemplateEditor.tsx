@@ -37,6 +37,8 @@ import { RootState } from '@store/index';
 import { FetchFileService } from '@store/file/actions';
 import { useHistory, useParams } from 'react-router-dom';
 import { useDebounce } from '@lib/useDebounce';
+import { selectPdfTemplateById } from '@store/pdf/selectors';
+
 const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
 
 interface TemplateEditorProps {
@@ -50,8 +52,6 @@ const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
     prev?.header !== next?.header ||
     prev?.footer !== next?.footer ||
     prev?.additionalStyles !== next?.additionalStyles ||
-    prev?.name !== next?.name ||
-    prev?.description !== next?.description ||
     prev?.variables !== next?.variables
   );
 };
@@ -62,10 +62,9 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   const monaco = useMonaco();
   const [saveModal, setSaveModal] = useState(false);
 
-  const pdfTemplate = useSelector((state: RootState) => state?.pdf?.pdfTemplates[id]);
+  const pdfTemplate = useSelector((state) => selectPdfTemplateById(state, id));
 
   const [tmpTemplate, setTmpTemplate] = useState(JSON.parse(JSON.stringify(pdfTemplate || '')));
-  const [simulatedSaveTemplate, setSimulatedSaveTemplate] = useState(null);
   const fileList = useSelector((state: RootState) => state.fileService.fileList);
 
   const suggestion = pdfTemplate ? (fileList ? getSuggestion(fileList) : getSuggestion()) : [];
@@ -82,18 +81,17 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     if (!pdfTemplate) {
       dispatch(getPdfTemplates());
     }
-  }, []);
-
-  useEffect(() => {
     dispatch(FetchFilesService());
   }, []);
+
+  //eslint-disable-next-line
+  useEffect(() => {}, [pdfTemplate]);
 
   const reloadFile = useSelector((state: RootState) => state.pdf?.reloadFile);
 
   const savePdfTemplate = (value) => {
     const saveObject = JSON.parse(JSON.stringify(value));
-    dispatch(updatePdfTemplate(saveObject, 'no-refresh'));
-    setSimulatedSaveTemplate(saveObject);
+    dispatch(updatePdfTemplate(saveObject));
   };
 
   const history = useHistory();
@@ -112,7 +110,9 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
       dispatch(updateTempTemplate(null));
       return;
     }
-    if (!tempPdfTemplate) {
+
+    // Sync tmpTemplate component status with the counterpart in the redux
+    if (isPDFUpdated(tempPdfTemplate, tmpTemplate)) {
       dispatch(updateTempTemplate(tmpTemplate));
     }
   }, [debouncedTmpTemplate, EditorError.testData]);
@@ -122,12 +122,6 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
       dispatch(FetchFileService(reloadFile[pdfTemplate.id]));
     }
   }, [reloadFile]);
-
-  useEffect(() => {
-    setSimulatedSaveTemplate(pdfTemplate);
-  }, [pdfTemplate]);
-
-  const template = simulatedSaveTemplate;
 
   useEffect(() => {
     if (monaco) {
@@ -162,7 +156,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
       <LogoutModal />
       <PDFTitle>PDF / Template Editor</PDFTitle>
       <hr className="hr-resize" />
-      {template && <PDFConfigForm template={template} />}
+      {pdfTemplate && <PDFConfigForm template={pdfTemplate} />}
 
       <GoAForm>
         <GoAFormItem>
@@ -170,7 +164,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
             <Tab testId={`pdf-edit-header`} label={<PdfEditorLabelWrapper>Header</PdfEditorLabelWrapper>}>
               <GoAFormItem error={errors?.header ?? ''}>
                 <MonacoDivBody style={{ height: monacoHeight }}>
-                  {template && (
+                  {pdfTemplate && (
                     <MonacoEditor
                       language={'handlebars'}
                       value={tmpTemplate?.header}
@@ -274,7 +268,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                       Delete all files
                     </GoAButton>
                   </ButtonRight>
-                  <section>{template?.id && <GeneratedPdfList templateId={template.id} />}</section>
+                  <section>{pdfTemplate?.id && <GeneratedPdfList templateId={pdfTemplate.id} />}</section>
                 </GeneratorStyling>
               </>
             </Tab>
@@ -285,7 +279,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
               <PdfEditActions>
                 <>
                   <GoAButton
-                    disabled={!isPDFUpdated(tmpTemplate, template) || EditorError?.testData !== null}
+                    disabled={!isPDFUpdated(tmpTemplate, pdfTemplate) || EditorError?.testData !== null}
                     onClick={() => {
                       savePdfTemplate(tmpTemplate);
                     }}
@@ -296,7 +290,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                   </GoAButton>
                   <GoAButton
                     onClick={() => {
-                      if (isPDFUpdated(tmpTemplate, template)) {
+                      if (isPDFUpdated(tmpTemplate, pdfTemplate)) {
                         setSaveModal(true);
                       } else {
                         cancel();
@@ -322,7 +316,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
           onCancel={() => setShowDeleteConfirmation(false)}
           onDelete={() => {
             setShowDeleteConfirmation(false);
-            dispatch(deletePdfFilesService(template.id));
+            dispatch(deletePdfFilesService(pdfTemplate.id));
           }}
         />
       )}
@@ -337,7 +331,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
           setSaveModal(false);
           cancel();
         }}
-        saveDisable={!isPDFUpdated(tmpTemplate, template) || EditorError?.testData !== null}
+        saveDisable={!isPDFUpdated(tmpTemplate, pdfTemplate) || EditorError?.testData !== null}
         onCancel={() => {
           setSaveModal(false);
         }}
