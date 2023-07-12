@@ -79,6 +79,7 @@ describe('stream router', () => {
     const router = createStreamRouter([ioMock as unknown as Namespace], {
       logger: loggerMock,
       eventServiceAmp: eventServiceAmpMock as DomainEventSubscriberService,
+      eventServiceAmpWebhooks: eventServiceAmpMock as DomainEventSubscriberService,
       eventService: eventServiceMock as EventService,
       tenantService: tenantServiceMock as unknown as TenantService,
       tokenProvider: tokenProviderMock as unknown as TokenProvider,
