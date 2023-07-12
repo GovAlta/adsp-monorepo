@@ -15,6 +15,7 @@ const SubscriberRoles = ({ roles, publicSubscribe }: SubscriberRolesProps): JSX.
       {publicSubscribe ? (
         <GoABadge key={`roles-public`} type="information" content={'Public'} />
       ) : (
+        roles &&
         roles.map((role): JSX.Element => {
           return <GoABadge key={`roles-${role}`} type="information" content={role} />;
         })
