@@ -280,8 +280,9 @@ export const createStreamRouter = (
 
   webhookEvents.subscribe(async (next) => {
     if (`${next.namespace}:${next.name}` !== 'push-service:webhook-triggered') {
-      const tenant = await tenantService.getTenants();
-      const tenantId = tenant[0]?.id;
+      const tenants = await tenantService.getTenants();
+
+      const tenantId = tenants.find((tenant) => tenant.id?.resource === next.tenantId?.resource)?.id;
 
       const token = await tokenProvider.getAccessToken();
 
