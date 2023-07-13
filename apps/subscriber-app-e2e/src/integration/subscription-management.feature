@@ -24,7 +24,8 @@ Feature: Subscription management
     And the user views the subscription of "Application health check change" and its description
     And the user views the support link for the subscription of "Application health check change"
 
-  @TEST_CS-1371 @REQ_CS-1238 @REQ_CS-1239 @regression
+  # Ignore the test until https://goa-dio.atlassian.net/browse/CS-2209 is fixed
+  @TEST_CS-1371 @REQ_CS-1238 @REQ_CS-1239 @regression @ignore
   Scenario: As a tenant admin, I can configure what channels are supported by a notification type, so that I can support multiple channels of notifications.
     When an authenticated user with "auto.contact" and "autotest" is in the subscriber app
     Then the user views subscription management page
@@ -49,7 +50,8 @@ Feature: Subscription management
     Then the user views a callout message of "Contact information updated."
     And the user views contact information of "auto.contact.test@gmail.com", "EMPTY" and "email"
 
-  @TEST_CS-1413 @REQ_CS-1240 @regression
+  # Ignore the test until https://goa-dio.atlassian.net/browse/CS-2209 is fixed
+  @TEST_CS-1413 @REQ_CS-1240 @regression @ignore
   # prior the test authenticated user should have subscription to Application health check change
   Scenario: As a subscriber, I can see the supported channels of a notification type in the subscriber app, so I know what's available.
     When an authenticated user with "auto.contact" and "autotest" is in the subscriber app

@@ -17,7 +17,6 @@ Feature: PDF service
     Then the user views Add template modal
     When the user enters "t" as name, "autotest PDF template desc" as description in pdf template modal
     And the user clicks Save button in Add or Edit template modal
-
     # Edit a PDF template meta data
     When the user clicks the "Header" tab in PDF template editor and view content
     When the user clicks the "Body" tab in PDF template editor and view content
@@ -33,7 +32,6 @@ Feature: PDF service
     And the user clicks Save button in Add or Edit template modal
     And the user clicks Back button in editor screen
     Then the user "views" the PDF template of "tt", "t" and "autotest PDF template desc new"
-
     # Delete a PDF template
     When the user clicks "Delete" icon of "tt", "t" and "autotest PDF template desc new" on PDF templates page
     Then the user views Delete PDF template modal for "tt"
@@ -55,7 +53,7 @@ Feature: PDF service
     And no critical or serious accessibility issues for "PDF template modal" on "PDF templates page"
 
   @TEST_CS-2063 @regression
-   Scenario: As a tenant admin, I can edit templates in header, footer,body and CSS section, and generate pdf files.
+  Scenario: As a tenant admin, I can edit templates in header, footer,body and CSS section, and generate pdf files.
     Given a tenant admin user is on PDF service templates page
     When the user clicks "Edit" icon of "autotest-generatepdf-test", "autotest-generatepdf-test" and "DO-NOT-DELETE" on PDF templates page
     When the user clicks Generate PDF button in PDF template editor screen
