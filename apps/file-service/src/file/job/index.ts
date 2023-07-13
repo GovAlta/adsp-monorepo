@@ -47,7 +47,7 @@ export const createFileJobs = (props: FileJobProps): void => {
           deleteJob(item.tenantId, item.file, done);
           break;
         default: {
-          props.logger.warn(
+          props.logger.debug(
             `Received unrecognized file job '${item.work}' for file ${item.file.filename} (ID: ${item.file.id}).`
           );
           done();

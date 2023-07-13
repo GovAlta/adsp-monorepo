@@ -15,7 +15,7 @@ export class AmqpFileQueueService extends AmqpWorkQueueService<FileServiceWorkIt
     const { timestamp, tenantId, name } = msg.properties.headers;
 
     return {
-      work: name === FILE_UPLOADED_EVENT ? 'scan' : name === FILE_DELETED_EVENT ? 'delete' : 'unknown',
+      work: name === FILE_UPLOADED_EVENT ? 'scan' : name === FILE_DELETED_EVENT ? 'delete' : name,
       file,
       timestamp: new Date(timestamp),
       tenantId: AdspId.parse(`${tenantId}`),
