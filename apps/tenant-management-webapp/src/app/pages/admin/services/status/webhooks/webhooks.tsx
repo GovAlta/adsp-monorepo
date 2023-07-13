@@ -259,10 +259,6 @@ const TableLayout = styled.div`
       width: 35%;
     }
   }
-
-  .hosbPN {
-    overflow-y: clip;
-  }
 `;
 
 const Menu = styled.tr`
