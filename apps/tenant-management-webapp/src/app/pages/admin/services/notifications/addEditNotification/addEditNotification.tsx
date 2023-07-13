@@ -1,6 +1,7 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import type { NotificationItem } from '@store/notification/models';
-import { GoAButton, GoASkeletonGridColumnContent } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components';
 import {
   GoAModal,
   GoAModalActions,
@@ -11,21 +12,22 @@ import {
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { GoACallout } from '@abgov/react-components';
 import styled from 'styled-components';
-import { GoACheckbox } from '@abgov/react-components-new';
+import { GoACheckbox, GoATextArea } from '@abgov/react-components-new';
 import { toKebabName } from '@lib/kebabName';
 import { Role } from '@store/tenant/models';
 import { ServiceRoleConfig } from '@store/access/models';
 import { AnonymousWrapper } from './styledComponents';
-import { RolesTable } from './rolesTable';
-import { mapTenantClientRoles } from '../../events/stream/utils';
-
+import { useValidators } from '@lib/validation/useValidators';
+import { isNotEmptyCheck, duplicateNameCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
+import { RootState } from '@store/index';
+import { ConfigServiceRole } from '@store/access/models';
+import { ClientRoleTable } from '@components/RoleTable';
 interface NotificationTypeFormProps {
   initialValue?: NotificationItem;
   onCancel?: () => void;
   onSave?: (type: NotificationItem) => void;
   title: string;
   open: boolean;
-  errors?: Record<string, string>;
   realmRoles: Role[];
   tenantClients: ServiceRoleConfig;
 }
@@ -44,7 +46,6 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   initialValue,
   onCancel,
   onSave,
-  errors,
   title,
   open,
   realmRoles,
@@ -52,24 +53,67 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
 }) => {
   const isEdit = !!initialValue?.id;
   const [type, setType] = useState(initialValue);
-
+  const notificationTypes = useSelector((state: RootState) => state.notification.notificationTypes);
+  const core = useSelector((state: RootState) => state.notification.core);
+  const typeObjects = Object.values({ ...notificationTypes, ...core });
+  const typeNames = typeObjects.map((type: NotificationItem) => type.name);
   useEffect(() => {
     setType(JSON.parse(JSON.stringify(initialValue)));
   }, [initialValue]);
 
-  let mappedRealmRoles = [];
+  const roleNames = realmRoles
+    ? realmRoles.map((role) => {
+        return role.name;
+      })
+    : [];
 
-  if (realmRoles) {
-    mappedRealmRoles = realmRoles.map((realmRole) => {
-      return {
-        value: realmRole.name,
-        label: realmRole.name,
-        key: realmRole.id,
-        dataTestId: `${realmRole}-update-roles-options`,
-      };
-    });
-  }
-  const tenantClientsMappedRoles = tenantClients ? mapTenantClientRoles(tenantClients) : undefined;
+  let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
+
+  const clientElements =
+    tenantClients &&
+    Object.entries(tenantClients).length > 0 &&
+    Object.entries(tenantClients)
+      .filter(([clientId, config]) => {
+        return (config as ConfigServiceRole).roles.length > 0;
+      })
+      .map(([clientId, config]) => {
+        const roles = (config as ConfigServiceRole).roles;
+        const roleNames = roles.map((role) => {
+          return role.role;
+        });
+        return { roleNames: roleNames, clientId: clientId, currentElements: null };
+      });
+  elements = elements.concat(clientElements);
+
+  const SubscribeRole = ({ roleNames, clientId }) => {
+    return (
+      <>
+        <ClientRoleTable
+          roles={roleNames}
+          clientId={clientId}
+          roleSelectFunc={(roles) => {
+            setType({
+              ...type,
+              subscriberRoles: roles,
+            });
+          }}
+          service="Notifications-type"
+          checkedRoles={[{ title: 'subscribe', selectedRoles: type.subscriberRoles }]}
+        />
+      </>
+    );
+  };
+
+  const { errors, validators } = useValidators(
+    'name',
+    'name',
+    badCharsCheck,
+    wordMaxLengthCheck(32, 'Name'),
+    isNotEmptyCheck('name')
+  )
+    .add('duplicated', 'name', duplicateNameCheck(typeNames, 'Notification type'))
+    .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
+    .build();
 
   return (
     <EditStyles>
@@ -85,7 +129,17 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 value={type.name}
                 data-testid="form-name"
                 aria-label="name"
-                onChange={(name, value) => setType({ ...type, name: value, id: isEdit ? type.id : toKebabName(value) })}
+                onChange={(name, value) => {
+                  const validations = {
+                    name: value,
+                  };
+                  if (!isEdit) {
+                    validators.remove('name');
+                    validations['duplicated'] = value;
+                    validators.checkAll(validations);
+                  }
+                  setType({ ...type, name: value, id: isEdit ? type.id : toKebabName(value) });
+                }}
               />
             </GoAFormItem>
             <GoAFormItem>
@@ -97,15 +151,20 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 </div>
               </div>
             </GoAFormItem>
-            <GoAFormItem>
+            <GoAFormItem error={errors?.['description']}>
               <label>Description</label>
-              <textarea
+              <GoATextArea
                 name="description"
-                data-testid="form-description"
+                testId="form-description"
                 value={type.description}
                 aria-label="description"
-                className="goa-textarea"
-                onChange={(e) => setType({ ...type, description: e.target.value })}
+                width="100%"
+                onChange={(name, value) => {
+                  const description = value;
+                  validators.remove('description');
+                  validators['description'].check(description);
+                  setType({ ...type, description: value });
+                }}
               />
             </GoAFormItem>
             <GoAFormItem error={errors?.['channels']}>
@@ -183,58 +242,11 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               />
               Make notification public
             </AnonymousWrapper>
-            {mappedRealmRoles ? '' : <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>}
-            {!type.publicSubscribe && mappedRealmRoles ? (
-              <RolesTable
-                tableHeading={'Roles'}
-                key={'roles'}
-                subscriberRolesOptions={mappedRealmRoles}
-                checkedRoles={type.subscriberRoles}
-                onItemChecked={(value) => {
-                  if (type.subscriberRoles.includes(value)) {
-                    const updatedRoles = type.subscriberRoles.filter((roleName) => roleName !== value);
-                    setType({ ...type, subscriberRoles: updatedRoles });
-                  } else {
-                    setType({ ...type, subscriberRoles: [...type.subscriberRoles, value] });
-                  }
-                }}
-              />
-            ) : (
-              // some extra white space so the modal height/width stays the same when roles are hidden
-              <div
-                style={{
-                  width: '35em',
-                  height: '8em',
-                }}
-              ></div>
-            )}
-            {tenantClientsMappedRoles ? (
-              ''
-            ) : (
-              <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>
-            )}
-            {!type.publicSubscribe && tenantClientsMappedRoles
-              ? tenantClientsMappedRoles.map((tenantRole) => {
-                  return (
-                    tenantRole.roles.length > 0 && (
-                      <RolesTable
-                        tableHeading={tenantRole.name}
-                        key={tenantRole.name}
-                        subscriberRolesOptions={tenantRole.roles}
-                        checkedRoles={type.subscriberRoles}
-                        onItemChecked={(value) => {
-                          if (type.subscriberRoles.includes(value)) {
-                            const updatedRoles = type.subscriberRoles.filter((roleName) => roleName !== value);
-                            setType({ ...type, subscriberRoles: updatedRoles });
-                          } else {
-                            setType({ ...type, subscriberRoles: [...type.subscriberRoles, value] });
-                          }
-                        }}
-                      />
-                    )
-                  );
-                })
-              : ''}
+            {tenantClients &&
+              !type.publicSubscribe &&
+              elements.map((e, key) => {
+                return <SubscribeRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+              })}
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
@@ -244,17 +256,33 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
             type="button"
             onClick={() => {
               setType(initialValue);
+              validators.clear();
               onCancel();
             }}
           >
             Cancel
           </GoAButton>
           <GoAButton
-            disabled={!type?.name}
+            disabled={validators.haveErrors()}
             buttonType="primary"
             data-testid="form-save"
             type="submit"
-            onClick={(e) => onSave(type)}
+            onClick={(e) => {
+              const validations = {
+                name: type.name,
+              };
+              if (!isEdit) {
+                validations['duplicated'] = type.name;
+              }
+              if (!type.channels.includes('email')) {
+                // Must include email as first channel
+                type.channels = ['email', ...type.channels];
+              }
+              if (!validators.checkAll(validations)) {
+                return;
+              }
+              onSave(type);
+            }}
           >
             Save
           </GoAButton>

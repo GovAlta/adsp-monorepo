@@ -4,7 +4,7 @@ import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
-
+import { GoATextArea } from '@abgov/react-components-new';
 import { GoAInputEmail } from '@abgov/react-components/experimental';
 import { isSmsValid, emailError, smsError } from '@lib/inputValidation';
 
@@ -95,14 +95,15 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
               </GoAFormItem>
               <GoAFormItem error={formErrors?.['supportInstructions']}>
                 <label>Support instructions</label>
-                <textarea
+                <GoATextArea
                   rows={7}
                   name="supportInstruction"
                   value={contactInformation?.supportInstructions || ''}
-                  data-testid="form-support-instructions"
+                  testId="form-support-instructions"
                   aria-label="name"
-                  onChange={(e) =>
-                    setContactInformation({ ...contactInformation, supportInstructions: e.target.value })
+                  width="100%"
+                  onChange={(name, value) =>
+                    setContactInformation({ ...contactInformation, supportInstructions: value })
                   }
                 />
               </GoAFormItem>

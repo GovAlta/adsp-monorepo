@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import { GoAHeader } from '@abgov/react-components';
 import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
-import { Link } from 'react-router-dom';
-import { RootState } from '@store/index';
 import Sidebar from '@pages/admin/sidebar';
 import MenuIcon from '@icons/menu-outline.svg';
 import CloseIcon from '@icons/close-outline.svg';
-import { ReactComponent as UserIcon } from '@icons/person-circle-outline.svg';
+import { GoAButton } from '@abgov/react-components-new';
 import { TenantAdminLogin, TenantLogout } from '@store/tenant/actions';
 import { getIdpHint } from '@lib/keycloak';
+import { selectUserName, selectUserEmail, selectIsAuthenticated } from '@store/session/selectors';
 
 interface HeaderMenuProps {
   hasLoginLink: boolean;
@@ -20,10 +19,18 @@ interface HeaderProps {
   hasLoginLink?: boolean;
   admin?: boolean;
 }
+const SignoutBadgeWrapper = styled.div`
+  display: inline-block;
+  position: relative;
+`;
+
 const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
-  const authenticated = useSelector((state: RootState) => state.session.authenticated);
+  const authenticated = useSelector(selectIsAuthenticated);
   const dispatch = useDispatch();
   const [menuState, setMenuState] = useState<MenuState>({ state: 'closed' });
+  const userName = useSelector(selectUserName);
+  const userEmail = useSelector(selectUserEmail);
+  const displayName = userName || userEmail || '';
 
   function toggleMenu() {
     setMenuState({ state: menuState.state === 'closed' ? 'open' : 'closed' });
@@ -46,24 +53,26 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
       {props.hasLoginLink ? (
         <div className="desktop">
           {/* For admin pages, only logout is required */}
-          {(authenticated === true || props.admin) && (
-            <UserIconBox>
-              <UserIcon />
-              <Link to={''} onClick={() => dispatch(TenantLogout())}>
+          {(authenticated || props.admin) && (
+            <div>
+              {displayName && <SignoutBadgeWrapper>{displayName}</SignoutBadgeWrapper>}
+              <GoAButton type="tertiary" testId="sign-out-btn" onClick={() => dispatch(TenantLogout())}>
                 Sign out
-              </Link>
-            </UserIconBox>
+              </GoAButton>
+            </div>
           )}
 
           {!authenticated && !props.admin && (
-            <a
+            <GoAButton
+              type="tertiary"
+              testId="sign-ing-btn"
               onClick={() => {
                 const idpHint = getIdpHint();
                 dispatch(TenantAdminLogin(idpHint));
               }}
             >
               Sign In
-            </a>
+            </GoAButton>
           )}
         </div>
       ) : null}
@@ -120,24 +129,9 @@ const SidebarWrapper = styled.div<MenuState>`
   }
 `;
 
-const UserIconBox = styled.div`
-  display: flex;
-  white-space: nowrap;
-  align-items: center;
-  svg {
-    position: relative;
-    width: 1.5rem;
-    height: auto;
-    margin-right: 0.25rem;
-  }
-  a {
-    text-decoration: none;
-  }
-`;
-
 const HeaderContainer = styled.div`
   position: relative;
-  border-bottom: 10px solid #c8eefa;
+  border-bottom: 1px solid #dcdcdc;
 `;
 
 const Actions = styled.div`

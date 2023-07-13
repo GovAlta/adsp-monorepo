@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 
 namespace Adsp.Sdk.Metadata;
-internal class ServiceMetadata
+internal sealed class ServiceMetadata
 {
   [JsonPropertyName("name")]
   public string? Name { get; set; }

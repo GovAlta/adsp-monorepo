@@ -23,11 +23,37 @@ export interface ApplicationConfiguration {
   name: string;
   url: string;
   description?: string;
+  monitorOnly?: boolean;
+  status?: PublicServiceStatusType;
 }
 
 // Add the tenant to the configuration.
 export interface StaticApplicationData extends ApplicationConfiguration {
   tenantId: AdspId;
+}
+
+export interface Configuration {
+  latest: { configuration: { webhooks: Record<string, Webhooks> }};
+}
+export interface StatusConfiguration {
+  latest: { configuration: { applicationWebhookIntervals: Record<string, HookInterval> }};
+}
+
+export interface HookInterval {
+  appId: string,
+  waitTimeInterval: number,
+}
+
+export interface Webhooks {
+  id: string;
+  url: string;
+  name: string;
+  targetId: string;
+  intervalMinutes: number;
+  eventTypes: { id: string }[];
+  description: string;
+  generatedByTest?: boolean;
+  appCurrentlyUp: boolean;
 }
 
 export type StatusServiceApplications = Record<string, StaticApplicationData>;
@@ -41,6 +67,7 @@ export interface ApplicationData {
   description?: string;
   status: PublicServiceStatusType;
   metadata: unknown;
+  monitorOnly?: boolean;
   statusTimestamp: number;
   enabled: boolean;
 }

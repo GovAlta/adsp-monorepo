@@ -6,7 +6,7 @@ using Microsoft.Extensions.Primitives;
 
 namespace Adsp.Sdk.Tenancy;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Middleware for application builder")]
-internal class TenantMiddleware
+internal sealed class TenantMiddleware
 {
   private const string TenantQueryParameter = "tenantId";
   public const string TenantContextKey = "ADSP:Tenant";

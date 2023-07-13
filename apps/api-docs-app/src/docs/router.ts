@@ -87,7 +87,7 @@ export const createDocsRouter = async ({
       const options = req['options'];
       // Dynamically create and use the initialization handler from 'serveFiles'. In practice it's only for dynamic
       // content in swagger-ui-init.js
-      const [initHandler] = swaggerUi.serveFiles(null, options);
+      const [initHandler] = swaggerUi.serveFiles(null, { ...options, swaggerOptions: { queryConfigEnabled: true } });
       if (req.url === '/swagger-ui-init.js') {
         // Prevent caching of the swagger-ui-init.js file since it is dynamically generated.
         res.setHeader('Cache-Control', 'no-store');

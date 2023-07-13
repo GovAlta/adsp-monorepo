@@ -5,6 +5,7 @@ import { FetchNotificationMetrics } from '@store/notification/actions';
 import { NotificationMetrics } from './metrics';
 import { ContactInformation } from './contactInformation';
 import { BotNotifications } from './botNotifications';
+import { OverviewLayout } from '@components/Overview';
 
 interface ParentCompProps {
   setActiveEdit?: (boolean) => void;
@@ -19,27 +20,32 @@ export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props)
     dispatch(FetchNotificationMetrics());
   }, []);
 
+  const description =
+    'Notification service provides the ability to generate and send notifications based on domain events sent via the event service. This service also includes concepts of subscriptions and subscribers to support management of subscriptions.';
+
   return (
-    <div>
-      <section>
-        <p>
-          Notification service provides the ability to generate and send notifications based on domain events sent via
-          the event service. This service also includes concepts of subscriptions and subscribers to support management
-          of subscriptions.
-        </p>
-        <GoAButton
-          data-testid="add-notification-overview"
-          disabled={disabled}
-          onClick={() => {
-            setActiveEdit(true);
-          }}
-        >
-          Add notification type
-        </GoAButton>
-      </section>
-      <ContactInformation />
-      <BotNotifications />
-      <NotificationMetrics />
-    </div>
+    <OverviewLayout
+      description={description}
+      addButton={
+        <>
+          <GoAButton
+            data-testid="add-notification-overview"
+            disabled={disabled}
+            onClick={() => {
+              setActiveEdit(true);
+            }}
+          >
+            Add notification type
+          </GoAButton>
+        </>
+      }
+      extra={
+        <>
+          <ContactInformation />
+          <BotNotifications />
+          <NotificationMetrics />
+        </>
+      }
+    />
   );
 };

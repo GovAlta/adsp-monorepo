@@ -28,6 +28,7 @@ export interface ServiceStatusApplication {
   lastUpdated: string;
   status: ServiceStatusType;
   notices?: Notice[];
+  monitorOnly?: boolean;
 }
 
 export interface ServiceStatusEndpoint {
@@ -157,7 +158,7 @@ export const sortNotices = (notices: Notice[]): Notice[] => {
 
 export const sortApplications = (applications: ServiceStatusApplication[]): ServiceStatusApplication[] => {
   return applications.sort((pre, next) => {
-    return pre.name < next.name ? -1 : 1;
+    return pre.name.toLowerCase() < next.name.toLowerCase() ? -1 : 1;
   });
 };
 

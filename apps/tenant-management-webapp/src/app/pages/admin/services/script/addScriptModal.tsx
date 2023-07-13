@@ -1,21 +1,21 @@
 import React, { FunctionComponent, useState } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAButton } from '@abgov/react-components';
-import { GoACheckbox } from '@abgov/react-components-new';
+import { GoACheckbox, GoATextArea } from '@abgov/react-components-new';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { ScriptItem } from '@store/script/models';
 import { useSelector } from 'react-redux';
 import { Role } from '@store/tenant/models';
 import { ConfigServiceRole } from '@store/access/models';
-import { useValidators } from '@lib/useValidators';
+import { useValidators } from '@lib/validation/useValidators';
 import { toKebabName } from '@lib/kebabName';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
-import { characterCheck, validationPattern, isNotEmptyCheck, Validator, wordMaxLengthCheck } from '@lib/checkInput';
+import { isNotEmptyCheck, wordMaxLengthCheck, duplicateNameCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { IdField } from './styled-components';
 import { ServiceRoleConfig } from '@store/access/models';
 import { RootState } from '@store/index';
-import { UseServiceAccountWrapper, DataTableWrapper } from './styled-components';
-import DataTable from '@components/DataTable';
+import { UseServiceAccountWrapper } from './styled-components';
+import { ClientRoleTable } from '@components/RoleTable';
 
 interface AddScriptModalProps {
   initialValue?: ScriptItem;
@@ -39,26 +39,16 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
   const scripts = useSelector((state: RootState) => {
     return state?.scriptService?.scripts;
   });
-
-  const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
-  const wordLengthCheck = wordMaxLengthCheck(32);
-
-  const duplicateScriptCheck = (): Validator => {
-    return (name: string) => {
-      return scripts[name]
-        ? `Duplicated script name ${name}, Please use a different name to get a unique script name`
-        : '';
-    };
-  };
-
+  const scriptNames = scripts ? Object.keys(scripts) : [];
   const { errors, validators } = useValidators(
     'name',
     'name',
-    checkForBadChars,
-    wordLengthCheck,
+    badCharsCheck,
+    wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
   )
-    .add('duplicated', 'name', duplicateScriptCheck())
+    .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
+    .add('duplicated', 'name', duplicateNameCheck(scriptNames, 'Script'))
     .build();
 
   const roleNames = realmRoles.map((role) => {
@@ -101,16 +91,17 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
   const RunnerRole = ({ roleNames, clientId }) => {
     return (
       <>
-        <RunnerRoleTable
+        <ClientRoleTable
           roles={roleNames}
           clientId={clientId}
-          roleSelectFunc={(roles, type) => {
+          roleSelectFunc={(roles) => {
             setScript({
               ...script,
               runnerRoles: roles,
             });
           }}
-          runnerRoles={script?.runnerRoles}
+          service="Script"
+          checkedRoles={[{ title: 'runner', selectedRoles: script?.runnerRoles }]}
         />
       </>
     );
@@ -146,17 +137,18 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
             <IdField>{script.id}</IdField>
           </GoAFormItem>
 
-          <GoAFormItem>
+          <GoAFormItem error={errors?.['description']}>
             <label>Description</label>
-            <textarea
+            <GoATextArea
               name="description"
               value={script.description}
-              data-testid={`script-modal-description-input`}
+              testId={`script-modal-description-input`}
               aria-label="description"
-              maxLength={250}
-              className="goa-textarea"
-              onChange={(e) => {
-                const description = e.target.value;
+              width="100%"
+              onChange={(name, value) => {
+                const description = value;
+                validators.remove('description');
+                validators['description'].check(description);
                 setScript({ ...script, description });
               }}
             />
@@ -191,6 +183,7 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
           buttonType="secondary"
           data-testid="script-modal-cancel"
           onClick={() => {
+            validators.clear();
             onCancel();
           }}
         >
@@ -208,67 +201,5 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
         </GoAButton>
       </GoAModalActions>
     </GoAModal>
-  );
-};
-
-interface RunnerRoleTableProps {
-  roles: string[];
-  roleSelectFunc: (roles: string[], type: string) => void;
-  runnerRoles: string[];
-
-  clientId: string;
-}
-
-const RunnerRoleTable = (props: RunnerRoleTableProps): JSX.Element => {
-  const [runnerRoles, setRunnerRoles] = useState(props.runnerRoles);
-
-  return (
-    <DataTableWrapper>
-      <DataTable noScroll={true}>
-        <thead>
-          <tr>
-            <th id="script-runner-roles" className="role-name">
-              {props.clientId ? props.clientId + ' roles' : 'Roles'}
-            </th>
-            <th id="script-runner-role-action" className="role">
-              Runner
-            </th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {props.roles?.map((role): JSX.Element => {
-            const compositeRole = props.clientId ? `${props.clientId}:${role}` : role;
-            return (
-              <tr key={`add-script-role-row-${role}`}>
-                <td className="role-name">{role}</td>
-                <td className="role-checkbox">
-                  <GoACheckbox
-                    name={`script-runner-role-checkbox-${role}`}
-                    key={`script-runner-role-checkbox-${compositeRole}`}
-                    checked={runnerRoles.includes(compositeRole)}
-                    data-testid={`script-runner-role-checkbox-${role}`}
-                    ariaLabel={`script-use-service-account-checkbox`}
-                    onChange={() => {
-                      if (runnerRoles.includes(compositeRole)) {
-                        const newRoles = runnerRoles.filter((runnerRole) => {
-                          return runnerRole !== compositeRole;
-                        });
-                        setRunnerRoles(newRoles);
-                        props.roleSelectFunc(newRoles, 'read');
-                      } else {
-                        const newRoles = [...runnerRoles, compositeRole];
-                        setRunnerRoles(newRoles);
-                        props.roleSelectFunc(newRoles, 'read');
-                      }
-                    }}
-                  />
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </DataTable>
-    </DataTableWrapper>
   );
 };

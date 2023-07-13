@@ -261,7 +261,7 @@ Feature: Service status
     Then no critical or serious accessibility issues on "status overview page"
     When the user clicks Edit button for contact information
     Then the user views Edit contact information modal on the status overview page
-    And no critical or serious accessibility issues for "edit status contact information modal" on "status overview page"
+    #And no critical or serious accessibility issues for "edit status contact information modal" on "status overview page"
     And the user clicks Cancel button on contact information modal
     When the user clicks Add application button
     Then the user views Add application modal

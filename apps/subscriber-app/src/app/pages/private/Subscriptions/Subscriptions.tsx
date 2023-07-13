@@ -23,6 +23,7 @@ import {
 } from './styled-components';
 import { phoneWrapper } from '@lib/wrappers';
 import { ContactInfoCard } from './ContactInfoCard';
+import { KeycloakCheckSSOWithLogout } from '@store/tenant/actions';
 
 interface SubscriptionsProps {
   realm: string;
@@ -38,13 +39,30 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
   const [showUnSubscribeModal, setShowUnSubscribeModal] = useState(false);
   const [selectedUnsubscribeSub, setSelectedUnsubscribeSub] = useState<Subscription>();
 
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
+
+  // we need to wait for userInfo api call so that the followup api calls can make use of the jwt token
+  const userInfo = useSelector((state: RootState) => state.session?.userInfo);
+
+  // call that gets user jwt token
   useEffect(() => {
-    dispatch(getMySubscriberDetails());
+    dispatch(KeycloakCheckSSOWithLogout(realm));
   }, []);
 
+  // only make the following 2 effects once we have user info and token ready
   useEffect(() => {
-    dispatch(FetchContactInfoService({ realm }));
-  }, []);
+    if (userInfo !== undefined) {
+      dispatch(getMySubscriberDetails());
+    }
+  }, [userInfo]);
+
+  useEffect(() => {
+    if (userInfo !== undefined) {
+      dispatch(FetchContactInfoService({ realm }));
+    }
+  }, [userInfo]);
 
   const unSubscribe = (typeId: string) => {
     setShowUnSubscribeModal(true);
@@ -106,68 +124,73 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
             </p>
           </DescriptionWrapper>
           {showUnSubscribeModal ? unSubscribeModal() : ''}
-
           <ContactInformationWrapper>
             <ContactInfoCard subscriber={subscriber} />
           </ContactInformationWrapper>
-
-          <SubscriptionListContainer>
-            <DataTable data-testid="subscriptions-table">
-              {!subscriber || subscriber?.subscriptions.length > 0 ? (
-                <tr>
-                  <th id="subscriptions">Subscription</th>
-                  <th id="descriptions">Description</th>
-                  <th id="available-channels">Available channels</th>
-                  <th id="action">Action</th>
-                </tr>
-              ) : (
-                ''
-              )}
-              <tbody>
-                {subscriber ? (
-                  <SubscriptionsList onUnsubscribe={unSubscribe} subscriber={subscriber} />
-                ) : (
-                  <tr>
-                    <td colSpan={4}>
-                      <GoASkeletonGridColumnContent rows={5}></GoASkeletonGridColumnContent>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </DataTable>
-
-            {subscriber?.subscriptions?.length <= 0 ? (
-              <GoACallout title="You have no subscriptions" type="important"></GoACallout>
-            ) : (
-              ''
-            )}
-          </SubscriptionListContainer>
-
-          <>
-            {contact?.contactEmail ? (
-              <CalloutWrapper id="contactSupport">
-                <GoACallout title="Need help? Contact your service admin" type="information">
-                  <div>{contact?.supportInstructions}</div>
-                  <div>
-                    Email:{' '}
-                    <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
-                      {contact?.contactEmail}
-                    </a>
-                  </div>
-                  {contact?.phoneNumber && <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>}
-                  <div data-testid="service-notice-date-range"></div>
-                </GoACallout>
-              </CalloutWrapper>
-            ) : (
-              <GoASkeletonGridColumnContent rows={5}></GoASkeletonGridColumnContent>
-            )}
-          </>
-          {hasSubscriberId === false ? (
+          {!hasSubscriberId ? (
             <NoSubscriberCallout>
               <GoACallout title="You have no subscriptions" type="important"></GoACallout>
             </NoSubscriberCallout>
           ) : (
-            ''
+            <>
+              <SubscriptionListContainer>
+                <DataTable data-testid="subscriptions-table">
+                  {!subscriber || subscriber?.subscriptions.length > 0 ? (
+                    <tr>
+                      <th id="subscriptions">Subscription</th>
+                      <th id="descriptions">Description</th>
+                      <th id="available-channels">Available channels</th>
+                      <th id="action">Action</th>
+                    </tr>
+                  ) : (
+                    ''
+                  )}
+                  <tbody>
+                    {subscriber ? (
+                      <SubscriptionsList onUnsubscribe={unSubscribe} subscriber={subscriber} />
+                    ) : indicator?.show || subscriber === undefined ? (
+                      <tr>
+                        <td colSpan={4}>
+                          <GoASkeletonGridColumnContent rows={5}></GoASkeletonGridColumnContent>
+                        </td>
+                      </tr>
+                    ) : (
+                      <tr>
+                        <td colSpan={4}>No Subscriptions</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </DataTable>
+
+                {subscriber?.subscriptions?.length <= 0 ? (
+                  <GoACallout title="You have no subscriptions" type="important"></GoACallout>
+                ) : (
+                  ''
+                )}
+              </SubscriptionListContainer>
+
+              {indicator?.show ? (
+                <GoASkeletonGridColumnContent rows={5}></GoASkeletonGridColumnContent>
+              ) : (
+                <CalloutWrapper id="contactSupport">
+                  <GoACallout title="Need help? Contact your service admin" type="information">
+                    <div>{contact?.supportInstructions || ''}</div>
+                    <div>
+                      {contact?.contactEmail && (
+                        <>
+                          Email:{' '}
+                          <a rel="noopener noreferrer" target="_blank" href={`mailto:${contact?.contactEmail}`}>
+                            {contact?.contactEmail}
+                          </a>
+                        </>
+                      )}
+                    </div>
+                    {contact?.phoneNumber && <div>Phone: {phoneWrapper(contact?.phoneNumber)}</div>}
+                    <div data-testid="service-notice-date-range"></div>
+                  </GoACallout>
+                </CalloutWrapper>
+              )}
+            </>
           )}
         </Container>
       </Main>

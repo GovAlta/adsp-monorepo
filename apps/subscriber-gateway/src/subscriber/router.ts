@@ -126,7 +126,7 @@ export function getSubscriber(tokenProvider: TokenProvider, directory: ServiceDi
         });
         res.send(data);
       } catch (err) {
-        if (err?.response?.status === 400) {
+        if (err?.response?.status === 404) {
           throw new NotFoundError('Subscriber Id', filteredSubscriberId);
         }
 

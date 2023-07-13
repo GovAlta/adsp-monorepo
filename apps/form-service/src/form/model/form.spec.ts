@@ -7,14 +7,20 @@ import { FormEntity } from './form';
 
 describe('FormEntity', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
-  const definition = new FormDefinitionEntity(tenantId, {
+  const validationService = {
+    validate: jest.fn(),
+    setSchema: jest.fn(),
+  };
+  const definition = new FormDefinitionEntity(validationService, tenantId, {
     id: 'test',
     name: 'test-form-definition',
     formDraftUrlTemplate: 'https://my-form/{{ id }}',
     description: null,
-    anonymousApply: false,
+    anonymousApply: true,
     applicantRoles: ['test-applicant'],
     assessorRoles: ['test-assessor'],
+    clerkRoles: ['test-clerk'],
+    dataSchema: null,
   });
 
   const subscriberId = adspId`urn:ads:platform:notification-service:v1:/subscribers/test`;
@@ -50,12 +56,14 @@ describe('FormEntity', () => {
     repositoryMock.delete.mockClear();
     notificationMock.sendCode.mockReset();
     notificationMock.verifyCode.mockReset();
+    validationService.validate.mockReset();
   });
 
   it('it can be created', () => {
     const formInfo = {
       id: 'test-form',
       formDraftUrl: 'https://my-form/test-form',
+      anonymousApplicant: false,
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Draft,
@@ -87,6 +95,7 @@ describe('FormEntity', () => {
         subscriber
       );
       expect(entity).toBeTruthy();
+      expect(entity.anonymousApplicant).toBeFalsy();
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
     });
 
@@ -101,12 +110,33 @@ describe('FormEntity', () => {
         FormEntity.create(user, repositoryMock, definition, 'test-form', 'https://my-form/test-form', subscriber)
       ).rejects.toThrow(UnauthorizedUserError);
     });
+
+    it('can set anonymousApplicant', async () => {
+      const user = {
+        tenantId,
+        id: 'tester',
+        roles: [FormServiceRoles.IntakeApp],
+      } as User;
+
+      const entity = await FormEntity.create(
+        user,
+        repositoryMock,
+        definition,
+        'test-form',
+        'https://my-form/test-form',
+        subscriber
+      );
+      expect(entity).toBeTruthy();
+      expect(entity.anonymousApplicant).toBeTruthy();
+      expect(repositoryMock.save).toHaveBeenCalledWith(entity);
+    });
   });
 
   describe('canAssess', () => {
     const formInfo = {
       id: 'test-form',
       formDraftUrl: 'https://my-form/test-form',
+      anonymousApplicant: false,
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Draft,
@@ -138,6 +168,7 @@ describe('FormEntity', () => {
     const formInfo = {
       id: 'test-form',
       formDraftUrl: 'https://my-form/test-form',
+      anonymousApplicant: false,
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Draft,
@@ -167,6 +198,7 @@ describe('FormEntity', () => {
     const formInfo = {
       id: 'test-form',
       formDraftUrl: 'https://my-form/test-form',
+      anonymousApplicant: false,
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Draft,
@@ -221,6 +253,7 @@ describe('FormEntity', () => {
     const formInfo = {
       id: 'test-form',
       formDraftUrl: 'https://my-form/test-form',
+      anonymousApplicant: false,
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Draft,
@@ -245,10 +278,32 @@ describe('FormEntity', () => {
       );
     });
 
+    it('can throw for user not matching creator on draft form', async () => {
+      await expect(
+        entity.accessByUser({ tenantId, id: 'tester-2', roles: ['test-applicant'] } as User)
+      ).rejects.toThrow(UnauthorizedUserError);
+    });
+
+    it('can return true for clerk on draft form', async () => {
+      const before = entity.lastAccessed;
+      const result = await entity.accessByUser({ tenantId, id: 'tester', roles: ['test-clerk'] } as User);
+      expect(result.lastAccessed.valueOf()).toBeGreaterThan(before.valueOf());
+      expect(repositoryMock.save).toHaveBeenCalledWith(entity);
+    });
+
     it('can throw for intake application role on draft form', async () => {
       await expect(
         entity.accessByUser({ tenantId, id: 'tester', roles: [FormServiceRoles.IntakeApp] } as User)
       ).rejects.toThrow(UnauthorizedUserError);
+    });
+
+    it('can return true for applicant on submitted form', async () => {
+      const submitted = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      submitted.status = FormStatus.Submitted;
+
+      const before = entity.lastAccessed;
+      const result = await submitted.accessByUser({ tenantId, id: 'tester', roles: ['test-applicant'] } as User);
+      expect(result.lastAccessed.valueOf()).toBeGreaterThan(before.valueOf());
     });
 
     it('can return true for assessor on submitted form', async () => {
@@ -292,6 +347,7 @@ describe('FormEntity', () => {
     const formInfo = {
       id: 'test-form',
       formDraftUrl: 'https://my-form/test-form',
+      anonymousApplicant: false,
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Draft,
@@ -309,6 +365,7 @@ describe('FormEntity', () => {
       const updated = await entity.update({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, data, files);
       expect(updated.data).toBe(data);
       expect(updated.files).toBe(files);
+      expect(validationService.validate).toHaveBeenCalledWith(expect.any(String), definition.id, data);
       expect(repositoryMock.save).toHaveBeenCalledWith(entity);
     });
 
@@ -334,12 +391,32 @@ describe('FormEntity', () => {
       ).rejects.toThrow(Error);
     });
 
+    it('can throw for file not a file service resource', async () => {
+      const data = {};
+      const files = {
+        support: adspId`urn:ads:platform:test-service:v1:/abc/123`,
+      };
+
+      await expect(
+        entity.update({ tenantId, id: 'tester', roles: ['test-applicant'] } as User, data, files)
+      ).rejects.toThrow(InvalidOperationError);
+    });
+
     it('can throw for different user', async () => {
       const data = {};
       const files = {};
       await expect(
         entity.update({ tenantId, id: 'tester-2', roles: ['test-applicant'] } as User, data, files)
       ).rejects.toThrow(UnauthorizedUserError);
+    });
+
+    it('can update form content by clerk', async () => {
+      const data = {};
+      const files = {};
+      const updated = await entity.update({ tenantId, id: 'tester-2', roles: ['test-clerk'] } as User, data, files);
+      expect(updated.data).toBe(data);
+      expect(updated.files).toBe(files);
+      expect(repositoryMock.save).toHaveBeenCalledWith(entity);
     });
 
     it('can throw for user without applicant role', async () => {
@@ -355,6 +432,7 @@ describe('FormEntity', () => {
     const formInfo = {
       id: 'test-form',
       formDraftUrl: 'https://my-form/test-form',
+      anonymousApplicant: false,
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Draft,
@@ -386,10 +464,11 @@ describe('FormEntity', () => {
     });
   });
 
-  describe('lock', () => {
+  describe('unlock', () => {
     const formInfo = {
       id: 'test-form',
       formDraftUrl: 'https://my-form/test-form',
+      anonymousApplicant: false,
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Locked,
@@ -425,18 +504,19 @@ describe('FormEntity', () => {
     const formInfo = {
       id: 'test-form',
       formDraftUrl: 'https://my-form/test-form',
+      anonymousApplicant: false,
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
-      status: FormStatus.Locked,
+      status: FormStatus.Draft,
       locked: null,
       submitted: null,
       lastAccessed: new Date(),
       data: {},
       files: {},
     };
-    const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
 
     it('can submit form', async () => {
+      const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
       const submitted = await entity.submit({ tenantId, id: 'tester', roles: ['test-applicant'] } as User);
       expect(submitted.status).toBe(FormStatus.Submitted);
       expect(submitted.submitted).toBeTruthy();
@@ -445,13 +525,34 @@ describe('FormEntity', () => {
     });
 
     it('can throw for different user', async () => {
+      const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
       await expect(entity.submit({ tenantId, id: 'tester-2', roles: ['test-applicant'] } as User)).rejects.toThrow(
         UnauthorizedUserError
       );
     });
 
+    it('can submit form by clerk', async () => {
+      const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
+      const submitted = await entity.submit({ tenantId, id: 'tester-2', roles: ['test-clerk'] } as User);
+      expect(submitted.status).toBe(FormStatus.Submitted);
+      expect(submitted.submitted).toBeTruthy();
+      expect(submitted.hash).toBeTruthy();
+      expect(repositoryMock.save).toHaveBeenCalledWith(entity);
+    });
+
     it('can throw for user without applicant role', async () => {
+      const entity = new FormEntity(repositoryMock, definition, subscriber, formInfo);
       await expect(entity.submit({ tenantId, id: 'tester', roles: [] } as User)).rejects.toThrow(UnauthorizedUserError);
+    });
+
+    it('can throw for form not in draft', async () => {
+      const entity = new FormEntity(repositoryMock, definition, subscriber, {
+        ...formInfo,
+        status: FormStatus.Submitted,
+      });
+      await expect(entity.submit({ tenantId, id: 'tester', roles: ['test-applicant'] } as User)).rejects.toThrow(
+        InvalidOperationError
+      );
     });
   });
 
@@ -459,6 +560,7 @@ describe('FormEntity', () => {
     const formInfo = {
       id: 'test-form',
       formDraftUrl: 'https://my-form/test-form',
+      anonymousApplicant: false,
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Locked,
@@ -487,6 +589,7 @@ describe('FormEntity', () => {
     const formInfo = {
       id: 'test-form',
       formDraftUrl: 'https://my-form/test-form',
+      anonymousApplicant: false,
       created: new Date(),
       createdBy: { id: 'tester', name: 'tester' },
       status: FormStatus.Locked,

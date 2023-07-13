@@ -1,7 +1,7 @@
 /// <reference types="cypress-xpath" />
 class WelcomePage {
-  signinDiv() {
-    return cy.xpath('//a[contains(text(), "Sign In")]');
+  signinButton() {
+    return cy.xpath('//*[@data-testid="sign-ing-btn"]');
   }
 
   getStartedButton() {

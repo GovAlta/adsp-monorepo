@@ -24,6 +24,7 @@ export function createLockJob({ logger, repository, eventService }: LockJobProps
       do {
         const { results, page } = await repository.find(20, after, {
           statusEquals: FormStatus.Draft,
+          anonymousApplicantEquals: true,
           lastAccessedBefore: DateTime.now().minus(MAX_STALE_AGE).toJSDate(),
         });
 

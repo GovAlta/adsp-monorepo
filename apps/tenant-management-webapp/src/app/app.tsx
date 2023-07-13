@@ -17,13 +17,12 @@ import { PrivateApp, PrivateRoute } from './privateApp';
 import { fetchConfig } from '@store/config/actions';
 import AuthContext from '@lib/authContext';
 import CreateTenant from '@pages/admin/tenants/CreateTenant';
-
 import { ThemeProvider } from 'styled-components';
 import { theme } from 'theme';
 import PublicApp from './publicApp';
 import styled from 'styled-components';
 import { GoAHeader } from '@abgov/react-components';
-
+import '@abgov/web-components/index.css';
 const AppRouters = () => {
   return (
     <>
@@ -46,7 +45,6 @@ const AppRouters = () => {
                 <PrivateRoute path="/admin/tenants" component={TenantsRouter} />
               </PrivateApp>
             </Route>
-
             <PublicApp>
               <Route path="/:realm/login">
                 <Login />

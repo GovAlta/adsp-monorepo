@@ -152,6 +152,71 @@ describe('StreamEntity', () => {
     });
   });
 
+  describe('isMatch', () => {
+    const stream = new StreamEntity(tenantId, {
+      id: 'test',
+      name: 'Test Stream',
+      description: null,
+      subscriberRoles: ['test-subscriber'],
+      publicSubscribe: false,
+      events: [
+        {
+          namespace: 'test-service',
+          name: 'test-started',
+          criteria: {
+            correlationId: '123',
+            context: { value: 123 },
+          },
+        },
+      ],
+    });
+
+    it('can return true for event matching criteria', () => {
+      const result = stream.isMatch(
+        {
+          tenantId,
+          namespace: 'test-service',
+          name: 'test-started',
+          correlationId: '123',
+          context: { value: 123, other: 321 },
+        },
+        { correlationId: '123', context: { value: 123 } }
+      );
+
+      expect(result).toBe(true);
+    });
+
+    it('can return false for event not matching correlationId criteria', () => {
+      const result = stream.isMatch(
+        {
+          tenantId,
+          namespace: 'test-service',
+          name: 'test-started',
+          correlationId: '321',
+          context: { value: 123, other: 321 },
+        },
+        { correlationId: '123', context: { value: 123 } }
+      );
+
+      expect(result).toBe(false);
+    });
+
+    it('can return false for event not matching context criteria', () => {
+      const result = stream.isMatch(
+        {
+          tenantId,
+          namespace: 'test-service',
+          name: 'test-started',
+          correlationId: '321',
+          context: { value: 123, other: 321 },
+        },
+        { correlationId: '123', context: { value: 321 } }
+      );
+
+      expect(result).toBe(false);
+    });
+  });
+
   describe('getEvents', () => {
     it('can get events', (done) => {
       const stream = new StreamEntity(tenantId, {
@@ -194,7 +259,7 @@ describe('StreamEntity', () => {
               name: 'test-started',
               timestamp: new Date(),
               correlationId: '123',
-              context: { value: 123 },
+              context: { value: 123, other: '234' },
               payload: {},
             }
           )

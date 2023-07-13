@@ -17,6 +17,7 @@ public interface ILuaScriptService
 
   IEnumerable<object> TestScript(
     IDictionary<string, object?> inputs,
+    Func<Task<string>> getToken,
     string script,
     AdspId tenantId
   );

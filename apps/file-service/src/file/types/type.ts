@@ -1,4 +1,5 @@
 import type { AdspId, FileType as BaseFileType } from '@abgov/adsp-service-sdk';
+export type { FileTypeRules } from '@abgov/adsp-service-sdk';
 
 export interface FileType extends BaseFileType {
   tenantId: AdspId;
@@ -10,4 +11,8 @@ export interface FileTypeCriteria {
   deleted?: boolean;
   spaceEquals?: string;
   typeEquals?: string;
+}
+
+export interface FileService {
+  delete(tenantId: AdspId, urn: AdspId): Promise<boolean>;
 }

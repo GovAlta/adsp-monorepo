@@ -1,72 +1,127 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   TemplateEditorContainerPdf,
   EditTemplateActions,
   MonacoDivBody,
-  MonacoDivHeader,
-  MonacoDivFooter,
   PdfEditorLabelWrapper,
   PdfEditActionLayout,
   PdfEditActions,
-} from './styled-components';
-import { GoAForm, GoAFormItem, GoABadge } from '@abgov/react-components/experimental';
-import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
+  GeneratorStyling,
+  PDFTitle,
+  ButtonRight,
+} from '../../styled-components';
+import { useDispatch, useSelector } from 'react-redux';
+import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { PdfTemplate } from '@store/pdf/model';
 import { languages } from 'monaco-editor';
 import { buildSuggestions, triggerInScope } from '@lib/autoComplete';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { Tab, Tabs } from '@components/Tabs';
 import { SaveFormModal } from '@components/saveModal';
 import { PDFConfigForm } from './PDFConfigForm';
+import { getSuggestion } from '../utils/suggestion';
+import { bodyEditorConfig } from './config';
+import GeneratedPdfList from '../generatedPdfList';
+import { DeleteModal } from '../DeleteModal';
+import { LogoutModal } from '@components/LogoutModal';
+import {
+  deletePdfFilesService,
+  getPdfTemplates,
+  updatePdfTemplate,
+  setPdfDisplayFileId,
+  updateTempTemplate,
+} from '@store/pdf/action';
+import { FetchFilesService } from '@store/file/actions';
+import { RootState } from '@store/index';
+import { FetchFileService } from '@store/file/actions';
+import { useHistory, useParams } from 'react-router-dom';
+import { useDebounce } from '@lib/useDebounce';
+import { selectPdfTemplateById } from '@store/pdf/selectors';
+
+const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
 
 interface TemplateEditorProps {
-  modelOpen: boolean;
-  mainTitle: string;
-  subjectTitle: string;
-  subjectEditorConfig?: EditorProps;
-  onBodyChange: (value: string) => void;
-  onHeaderChange: (value: string) => void;
-  onFooterChange: (value: string) => void;
-  setPreview: (channel: string) => void;
-  bodyEditorHintText?: string;
-  template: PdfTemplate;
-  savedTemplate: PdfTemplate;
-  bodyTitle: string;
-  bodyEditorConfig?: EditorProps;
-  saveCurrentTemplate?: () => void;
-  // eslint-disable-next-line
+  //eslint-disable-next-line
   errors?: any;
-  // eslint-disable-next-line
-  suggestion?: any;
-  cancel: () => void;
-  updateTemplate: (template: PdfTemplate) => void;
-  validateEventTemplateFields: () => boolean;
 }
 
-export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
-  modelOpen,
-  mainTitle,
-  subjectTitle,
-  subjectEditorConfig,
-  onBodyChange,
-  onHeaderChange,
-  onFooterChange,
-  setPreview,
-  bodyEditorHintText,
-  template,
-  savedTemplate,
-  bodyTitle,
-  bodyEditorConfig,
-  saveCurrentTemplate,
-  errors,
-  suggestion,
-  cancel,
-  updateTemplate,
-  validateEventTemplateFields,
-}) => {
+const isPDFUpdated = (prev: PdfTemplate, next: PdfTemplate): boolean => {
+  return (
+    prev?.template !== next?.template ||
+    prev?.header !== next?.header ||
+    prev?.footer !== next?.footer ||
+    prev?.additionalStyles !== next?.additionalStyles ||
+    prev?.variables !== next?.variables
+  );
+};
+
+export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => {
+  const dispatch = useDispatch();
+  const { id } = useParams<{ id: string }>();
   const monaco = useMonaco();
   const [saveModal, setSaveModal] = useState(false);
-  const [hasConfigError, setHasConfigError] = useState(false);
+
+  const pdfTemplate = useSelector((state) => selectPdfTemplateById(state, id));
+
+  const [tmpTemplate, setTmpTemplate] = useState(JSON.parse(JSON.stringify(pdfTemplate || '')));
+  const fileList = useSelector((state: RootState) => state.fileService.fileList);
+
+  const suggestion = pdfTemplate ? (fileList ? getSuggestion(fileList) : getSuggestion()) : [];
+
+  const notifications = useSelector((state: RootState) => state.notifications.notifications);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const debouncedTmpTemplate = useDebounce(tmpTemplate, TEMPLATE_RENDER_DEBOUNCE_TIMER);
+  const tempPdfTemplate = useSelector((state: RootState) => state?.pdf?.tempTemplate);
+  const [EditorError, setEditorError] = useState<Record<string, string>>({
+    testData: null,
+  });
+
+  useEffect(() => {
+    if (!pdfTemplate) {
+      dispatch(getPdfTemplates());
+    }
+    dispatch(FetchFilesService());
+  }, []);
+
+  //eslint-disable-next-line
+  useEffect(() => {}, [pdfTemplate]);
+
+  const reloadFile = useSelector((state: RootState) => state.pdf?.reloadFile);
+
+  const savePdfTemplate = (value) => {
+    const saveObject = JSON.parse(JSON.stringify(value));
+    dispatch(updatePdfTemplate(saveObject));
+  };
+
+  const history = useHistory();
+
+  const cancel = () => {
+    history.push({
+      pathname: '/admin/services/pdf',
+      search: '?templates=true',
+    });
+    dispatch(setPdfDisplayFileId(null));
+  };
+
+  useEffect(() => {
+    // If there are any errors in the temp template, we shall prevent preview and PDF generation.
+    if (EditorError?.testData) {
+      dispatch(updateTempTemplate(null));
+      return;
+    }
+
+    // Sync tmpTemplate component status with the counterpart in the redux
+    if (isPDFUpdated(tempPdfTemplate, tmpTemplate)) {
+      dispatch(updateTempTemplate(tmpTemplate));
+    }
+  }, [debouncedTmpTemplate, EditorError.testData]);
+
+  useEffect(() => {
+    if (reloadFile && reloadFile[pdfTemplate.id]) {
+      dispatch(FetchFileService(reloadFile[pdfTemplate.id]));
+    }
+  }, [reloadFile]);
 
   useEffect(() => {
     if (monaco) {
@@ -94,134 +149,45 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
     }
   }, [monaco, suggestion]);
 
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  useEffect(() => {
-    setPreview('footer/header');
-    onHeaderChange(template?.header);
-    onFooterChange(template?.footer);
-  }, [template, modelOpen]);
-
-  const switchTabPreview = (value) => {
-    onHeaderChange(template?.header);
-    onFooterChange(template?.footer);
-    setPreview(value);
-  };
-
-  useEffect(() => {
-    if (modelOpen) {
-      setActiveIndex(0);
-    } else {
-      setActiveIndex(-1);
-    }
-  }, [modelOpen]);
-
-  const channels = ['footer/header', 'main'];
-  const tmpTemplate = template;
-  const resetSavedAction = () => {
-    onBodyChange(savedTemplate.template);
-    onHeaderChange(savedTemplate.header);
-    onFooterChange(savedTemplate.footer);
-  };
+  const monacoHeight = `calc(100vh - 585px${notifications.length > 0 ? ' - 80px' : ''})`;
 
   return (
     <TemplateEditorContainerPdf>
-      {template && (
-        <PDFConfigForm
-          template={template}
-          setError={(hasError) => {
-            setHasConfigError(hasError);
-          }}
-          onChange={(_template) => {
-            updateTemplate({ ..._template });
-          }}
-        />
-      )}
+      <LogoutModal />
+      <PDFTitle>PDF / Template Editor</PDFTitle>
+      <hr className="hr-resize" />
+      {pdfTemplate && <PDFConfigForm template={pdfTemplate} />}
+
       <GoAForm>
         <GoAFormItem>
-          <Tabs
-            activeIndex={activeIndex}
-            changeTabCallback={(index: number) => {
-              switchTabPreview(channels[index]);
-              updateTemplate(tmpTemplate);
-            }}
-          >
-            <Tab
-              testId={`pdf-edit-header-footer`}
-              label={
-                <PdfEditorLabelWrapper>
-                  Header/Footer{' '}
-                  <div className="badge">
-                    {(errors?.footer || errors?.header) && (
-                      <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" icon="warning" />
-                    )}
-                  </div>
-                </PdfEditorLabelWrapper>
-              }
-            >
-              <>
-                <GoAFormItem error={errors?.header ?? ''}>
-                  <div className="title">Header</div>
-                  <MonacoDivHeader>
+          <Tabs style={{ minWidth: '4.5em' }} activeIndex={0}>
+            <Tab testId={`pdf-edit-header`} label={<PdfEditorLabelWrapper>Header</PdfEditorLabelWrapper>}>
+              <GoAFormItem error={errors?.header ?? ''}>
+                <MonacoDivBody style={{ height: monacoHeight }}>
+                  {pdfTemplate && (
                     <MonacoEditor
                       language={'handlebars'}
-                      defaultValue={template?.header}
+                      value={tmpTemplate?.header}
+                      data-testid="templateForm-header"
                       onChange={(value) => {
-                        onHeaderChange(value);
-                        if (tmpTemplate) {
-                          tmpTemplate.header = value;
-                        }
+                        setTmpTemplate({ ...tmpTemplate, header: value });
                       }}
                       {...bodyEditorConfig}
                     />
-                  </MonacoDivHeader>
-                </GoAFormItem>
-              </>
-              <>
-                <GoAFormItem error={errors?.footer ?? ''}>
-                  <div className="title">Footer</div>
-                  <MonacoDivFooter>
-                    <MonacoEditor
-                      language={'handlebars'}
-                      defaultValue={template?.footer}
-                      onChange={(value) => {
-                        onFooterChange(value);
-                        if (tmpTemplate) {
-                          tmpTemplate.footer = value;
-                        }
-                      }}
-                      {...bodyEditorConfig}
-                    />
-                  </MonacoDivFooter>
-                </GoAFormItem>
-              </>
+                  )}
+                </MonacoDivBody>
+              </GoAFormItem>
             </Tab>
-
-            <Tab
-              testId={`pdf-edit-body`}
-              label={
-                <PdfEditorLabelWrapper>
-                  Body
-                  <div className="badge">
-                    {errors?.body && (
-                      <GoABadge key="header-xss-error-badge" type="emergency" content="XSS Error" icon="warning" />
-                    )}
-                  </div>
-                </PdfEditorLabelWrapper>
-              }
-            >
+            <Tab testId={`pdf-edit-body`} label={<PdfEditorLabelWrapper>Body</PdfEditorLabelWrapper>}>
               <>
-                <GoAFormItem error={errors?.body ?? null} helpText={bodyEditorHintText}>
-                  <div className="title">Body</div>
-                  <MonacoDivBody>
+                <GoAFormItem error={errors?.body ?? null}>
+                  <MonacoDivBody style={{ height: monacoHeight }}>
                     <MonacoEditor
                       language={'handlebars'}
-                      defaultValue={template?.template}
+                      value={tmpTemplate?.template}
+                      data-testid="templateForm-body"
                       onChange={(value) => {
-                        onBodyChange(value);
-                        if (tmpTemplate) {
-                          tmpTemplate.template = value;
-                        }
+                        setTmpTemplate({ ...tmpTemplate, template: value });
                       }}
                       {...bodyEditorConfig}
                     />
@@ -229,55 +195,143 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 </GoAFormItem>
               </>
             </Tab>
+            <Tab testId={`pdf-edit-footer`} label={<PdfEditorLabelWrapper>Footer</PdfEditorLabelWrapper>}>
+              <GoAFormItem error={errors?.footer ?? ''}>
+                <MonacoDivBody style={{ height: monacoHeight }}>
+                  <MonacoEditor
+                    language={'handlebars'}
+                    value={tmpTemplate?.footer}
+                    data-testid="templateForm-footer"
+                    onChange={(value) => {
+                      setTmpTemplate({ ...tmpTemplate, footer: value });
+                    }}
+                    {...bodyEditorConfig}
+                  />
+                </MonacoDivBody>
+              </GoAFormItem>
+            </Tab>
+            <Tab testId={`pdf-edit-css`} label={<PdfEditorLabelWrapper>CSS</PdfEditorLabelWrapper>}>
+              <>
+                <GoAFormItem error={errors?.body ?? null}>
+                  <MonacoDivBody style={{ height: monacoHeight }}>
+                    <MonacoEditor
+                      language={'handlebars'}
+                      value={tmpTemplate?.additionalStyles}
+                      data-testid="templateForm-css"
+                      onChange={(value) => {
+                        setTmpTemplate({ ...tmpTemplate, additionalStyles: value });
+                      }}
+                      {...bodyEditorConfig}
+                    />
+                  </MonacoDivBody>
+                </GoAFormItem>
+              </>
+            </Tab>
+            <Tab testId={`pdf-test-generator`} label={<PdfEditorLabelWrapper>Test data</PdfEditorLabelWrapper>}>
+              <GoAFormItem error={errors?.body ?? EditorError?.testData ?? null}>
+                <MonacoDivBody style={{ height: monacoHeight }}>
+                  <MonacoEditor
+                    data-testid="form-schema"
+                    value={tmpTemplate?.variables}
+                    onChange={(value) => {
+                      setTmpTemplate({ ...tmpTemplate, variables: value });
+                    }}
+                    onValidate={(makers) => {
+                      if (makers.length !== 0) {
+                        setEditorError({
+                          testData: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
+                        });
+                      } else {
+                        setEditorError({
+                          testData: null,
+                        });
+                      }
+                    }}
+                    language="json"
+                    {...bodyEditorConfig}
+                  />
+                </MonacoDivBody>
+              </GoAFormItem>
+            </Tab>
+            <Tab testId={`pdf-test-history`} label={<PdfEditorLabelWrapper>File history</PdfEditorLabelWrapper>}>
+              <>
+                <GeneratorStyling style={{ height: `calc(${monacoHeight} - 1.5em` }}>
+                  <ButtonRight>
+                    <GoAButton
+                      type="secondary"
+                      testId="pdf-delete-all-files"
+                      size="compact"
+                      onClick={() => {
+                        setShowDeleteConfirmation(true);
+                      }}
+                    >
+                      Delete all files
+                    </GoAButton>
+                  </ButtonRight>
+                  <section>{pdfTemplate?.id && <GeneratedPdfList templateId={pdfTemplate.id} />}</section>
+                </GeneratorStyling>
+              </>
+            </Tab>
           </Tabs>
+          <hr className="hr-resize-bottom" />
+          <EditTemplateActions>
+            <PdfEditActionLayout>
+              <PdfEditActions>
+                <>
+                  <GoAButton
+                    disabled={!isPDFUpdated(tmpTemplate, pdfTemplate) || EditorError?.testData !== null}
+                    onClick={() => {
+                      savePdfTemplate(tmpTemplate);
+                    }}
+                    type="primary"
+                    testId="template-form-save"
+                  >
+                    Save
+                  </GoAButton>
+                  <GoAButton
+                    onClick={() => {
+                      if (isPDFUpdated(tmpTemplate, pdfTemplate)) {
+                        setSaveModal(true);
+                      } else {
+                        cancel();
+                      }
+                    }}
+                    testId="template-form-close"
+                    type="tertiary"
+                  >
+                    Back
+                  </GoAButton>
+                </>
+              </PdfEditActions>
+            </PdfEditActionLayout>
+          </EditTemplateActions>
         </GoAFormItem>
-
-        <EditTemplateActions>
-          {' '}
-          <PdfEditActionLayout>
-            <PdfEditActions>
-              <GoAButton
-                onClick={() => {
-                  if (
-                    savedTemplate.template !== template.template ||
-                    savedTemplate.header !== template.header ||
-                    savedTemplate.footer !== template.footer
-                  ) {
-                    setSaveModal(true);
-                  } else {
-                    cancel();
-                  }
-                }}
-                data-testid="template-form-close"
-                buttonType="secondary"
-                type="button"
-              >
-                Close
-              </GoAButton>
-              <GoAButton
-                disabled={!validateEventTemplateFields() || hasConfigError}
-                onClick={() => saveCurrentTemplate()}
-                buttonType="primary"
-                data-testid="template-form-save"
-                type="submit"
-              >
-                Save
-              </GoAButton>
-            </PdfEditActions>
-          </PdfEditActionLayout>
-        </EditTemplateActions>
       </GoAForm>
+      {/* Delete confirmation */}
+      {showDeleteConfirmation && (
+        <DeleteModal
+          isOpen={showDeleteConfirmation}
+          title="Delete PDF file"
+          content={<div>Are you sure you wish to delete all files?</div>}
+          onCancel={() => setShowDeleteConfirmation(false)}
+          onDelete={() => {
+            setShowDeleteConfirmation(false);
+            dispatch(deletePdfFilesService(pdfTemplate.id));
+          }}
+        />
+      )}
       <SaveFormModal
         open={saveModal}
         onDontSave={() => {
           setSaveModal(false);
-          resetSavedAction();
           cancel();
         }}
         onSave={() => {
-          saveCurrentTemplate();
+          savePdfTemplate(tmpTemplate);
           setSaveModal(false);
+          cancel();
         }}
+        saveDisable={!isPDFUpdated(tmpTemplate, pdfTemplate) || EditorError?.testData !== null}
         onCancel={() => {
           setSaveModal(false);
         }}

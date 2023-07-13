@@ -19,13 +19,28 @@ components:
           type: array
           items:
             type: string
+        clerkRoles:
+          type: array
+          items:
+            type: string
+        dataSchema:
+          type: object
     Form:
       type: object
       properties:
+        urn:
+          type: string
         id:
           type: string
         definitionId:
           type: string
+        anonymousApplicant:
+          type: boolean
+        applicant:
+          type: object
+          properties:
+            addressAs:
+              type: string
         status:
           type: string
           enum: [draft, locked, submitted, archived]
@@ -43,6 +58,9 @@ components:
         lastAccessed:
           type: string
           format: date-time
+        locked:
+          type: string
+          format: date-time
         submitted:
           type: string
           format: date-time
@@ -55,6 +73,7 @@ components:
           type: object
           additionalProperties:
             type: string
+            format: uri
     SendCodeOperation:
       type: object
       properties:
@@ -141,6 +160,8 @@ components:
             schema:
               type: object
               properties:
+                anonymousApplicant:
+                  type: boolean
                 definitionIdEquals:
                   type: string
                 statusEquals:
@@ -152,6 +173,8 @@ components:
                 lockedBefore:
                   type: string
                   format: date-time
+                createdByIdEquals:
+                  type: string
     responses:
       200:
         description: Successfully created a form.
@@ -318,6 +341,7 @@ components:
                 type: object
                 additionalProperties:
                   type: string
+                  format: uri
     responses:
       200:
         description: Successfully updated the form.

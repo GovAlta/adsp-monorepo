@@ -4,6 +4,11 @@ import * as util from 'util';
 
 dotenv.config();
 
+export const POD_TYPES = {
+  api: 'api',
+  job: 'job',
+};
+
 export const environment = envalid.cleanEnv(
   process.env,
   {
@@ -30,6 +35,7 @@ export const environment = envalid.cleanEnv(
     AMQP_PASSWORD: envalid.str({ default: 'guest' }),
     PORT: envalid.num({ default: 3337 }),
     TRUSTED_PROXY: envalid.str({ default: 'uniquelocal' }),
+    POD_TYPE: envalid.str({ default: POD_TYPES.api }),
   },
   {
     reporter: ({ errors }) => {

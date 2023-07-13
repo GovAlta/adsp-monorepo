@@ -1,16 +1,19 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { PdfTemplate } from '@store/pdf/model';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
-import styled from 'styled-components';
+import { Edit, OverflowWrap } from '../styled-components';
 import { GoAIconButton } from '@abgov/react-components/experimental';
-import { GoABadge } from '@abgov/react-components/experimental';
+import { useRouteMatch } from 'react-router';
+import { useHistory } from 'react-router-dom';
 
 interface PdfTemplateItemProps {
   pdfTemplate: PdfTemplate;
-  edit?: (PdfTemplate) => void;
   onDelete?: (PdfTemplate) => void;
 }
-export const PdfTemplateItem: FunctionComponent<PdfTemplateItemProps> = ({ pdfTemplate, edit, onDelete }) => {
+export const PdfTemplateItem = ({ pdfTemplate, onDelete }: PdfTemplateItemProps): JSX.Element => {
+  const { url } = useRouteMatch();
+  const history = useHistory();
+
   return (
     <>
       <tr>
@@ -25,7 +28,7 @@ export const PdfTemplateItem: FunctionComponent<PdfTemplateItemProps> = ({ pdfTe
               <GoAContextMenuIcon
                 type="create"
                 title="Edit"
-                onClick={() => edit(pdfTemplate)}
+                onClick={() => history.push(`${url}/edit/${pdfTemplate.id}`)}
                 testId={`edit-pdf-item`}
               />
               <GoAIconButton
@@ -35,9 +38,6 @@ export const PdfTemplateItem: FunctionComponent<PdfTemplateItemProps> = ({ pdfTe
                 type="trash"
                 onClick={() => onDelete(pdfTemplate)}
               />
-              <div className="badgePadding">
-                {pdfTemplate.template?.length === 0 && <GoABadge type="warning" content="Unfilled" icon="warning" />}
-              </div>
             </div>
           </Edit>
         </td>
@@ -45,20 +45,3 @@ export const PdfTemplateItem: FunctionComponent<PdfTemplateItemProps> = ({ pdfTe
     </>
   );
 };
-
-const Edit = styled.div`
-  .flexRow {
-    display: flex;
-    flex-direction: row;
-  }
-
-  .badgePadding {
-    margin: 6px 0 0 5px;
-  }
-
-  display: flex;
-`;
-
-const OverflowWrap = styled.div`
-  overflow-wrap: anywhere;
-`;

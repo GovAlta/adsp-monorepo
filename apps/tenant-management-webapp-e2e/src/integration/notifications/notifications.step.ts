@@ -33,7 +33,12 @@ When(
   function (name, description, role, bot, sms, selfService) {
     const roles = role.split(',');
     notificationsObj.notificationTypeModalNameField().clear().type(name);
-    notificationsObj.notificationTypeModalDescriptionField().clear().type(description);
+    notificationsObj
+      .notificationTypeModalDescriptionField()
+      .shadow()
+      .find('.goa-textarea')
+      .clear()
+      .type(description, { force: true });
     // Public or select roles
     notificationsObj
       .notificationTypeModalPublicCheckbox()
@@ -41,17 +46,27 @@ When(
       .find('.goa-checkbox-container')
       .invoke('attr', 'class')
       .then((publicCheckboxClassName) => {
-        if (role.toLowerCase() == 'public') {
+        if (role.toLowerCase() === 'public') {
           if (!publicCheckboxClassName?.includes('--selected')) {
-            notificationsObj.notificationTypeModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
+            notificationsObj
+              .notificationTypeModalPublicCheckbox()
+              .shadow()
+              .find('.goa-checkbox-container')
+              .click({ force: true });
           }
         } else {
           if (publicCheckboxClassName?.includes('--selected')) {
-            notificationsObj.notificationTypeModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
+            notificationsObj
+              .notificationTypeModalPublicCheckbox()
+              .shadow()
+              .find('.goa-checkbox-container')
+              .click({ force: true });
           }
           // Deselect all previously selected roles and then select new roles
           notificationsObj
             .notificationTypeModalRolesCheckboxes()
+            .shadow()
+            .find('.goa-checkbox-container')
             .then((elements) => {
               for (let i = 0; i < elements.length; i++) {
                 if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
@@ -62,9 +77,17 @@ When(
             .then(() => {
               for (let i = 0; i < roles.length; i++) {
                 if (roles[i].includes(':')) {
-                  notificationsObj.notificationTypeModalClientRoleCheckbox(roles[i].trim()).click();
+                  notificationsObj
+                    .notificationTypeModalClientRoleCheckbox(roles[i].trim())
+                    .shadow()
+                    .find('.goa-checkbox-container')
+                    .click();
                 } else {
-                  notificationsObj.notificationTypeModalRolesCheckbox(roles[i].trim()).click();
+                  notificationsObj
+                    .notificationTypeModalRolesCheckbox(roles[i].trim())
+                    .shadow()
+                    .find('.goa-checkbox-container')
+                    .click();
                 }
               }
             });
@@ -74,6 +97,8 @@ When(
     //bot checkbox
     notificationsObj
       .notificationChannelCheckbox('bot')
+      .shadow()
+      .find('.goa-checkbox-container')
       .invoke('attr', 'class')
       .then((classAttVal) => {
         if (classAttVal == undefined) {
@@ -84,7 +109,7 @@ When(
               if (classAttVal.includes('selected')) {
                 cy.log('Bot check box is already selected. ');
               } else {
-                notificationsObj.notificationChannelCheckbox('bot').click();
+                notificationsObj.notificationChannelCheckbox('bot').shadow().find('.goa-checkbox-container').click();
               }
               break;
             case 'no':
@@ -92,7 +117,7 @@ When(
                 if (!classAttVal.includes('selected')) {
                   cy.log('Bot check box is already not selected. ');
                 } else {
-                  notificationsObj.notificationChannelCheckbox('bot').click();
+                  notificationsObj.notificationChannelCheckbox('bot').shadow().find('.goa-checkbox-container').click();
                 }
               }
               break;
@@ -104,6 +129,8 @@ When(
     //sms checkbox
     notificationsObj
       .notificationChannelCheckbox('sms')
+      .shadow()
+      .find('.goa-checkbox-container')
       .invoke('attr', 'class')
       .then((classAttVal) => {
         if (classAttVal == undefined) {
@@ -114,7 +141,7 @@ When(
               if (classAttVal.includes('selected')) {
                 cy.log('SMS check box is already selected. ');
               } else {
-                notificationsObj.notificationChannelCheckbox('sms').click();
+                notificationsObj.notificationChannelCheckbox('sms').shadow().find('.goa-checkbox-container').click();
               }
               break;
             case 'no':
@@ -122,7 +149,7 @@ When(
                 if (!classAttVal.includes('selected')) {
                   cy.log('SMS check box is already not selected. ');
                 } else {
-                  notificationsObj.notificationChannelCheckbox('sms').click();
+                  notificationsObj.notificationChannelCheckbox('sms').shadow().find('.goa-checkbox-container').click();
                 }
               }
               break;
@@ -134,6 +161,8 @@ When(
     //Self-service checkbox
     notificationsObj
       .notificationTypeModalSelfServiceCheckbox()
+      .shadow()
+      .find('.goa-checkbox-container')
       .invoke('attr', 'class')
       .then((classAttVal) => {
         if (classAttVal == undefined) {
@@ -144,8 +173,12 @@ When(
               if (classAttVal.includes('selected')) {
                 cy.log('Self service check box is already selected. ');
               } else {
-                notificationsObj.notificationTypeModalSelfServiceCheckbox().click();
-                notificationsObj.notificationTypeModalSelfServiceCalloutContent().should('be.visible');
+                notificationsObj
+                  .notificationTypeModalSelfServiceCheckbox()
+                  .shadow()
+                  .find('.goa-checkbox-container')
+                  .click({ force: true });
+                notificationsObj.notificationTypeModalSelfServiceCalloutContent().scrollIntoView().should('be.visible');
               }
               break;
             case 'no':
@@ -153,7 +186,11 @@ When(
                 if (!classAttVal.includes('selected')) {
                   cy.log('Self service check box is already not selected. ');
                 } else {
-                  notificationsObj.notificationTypeModalSelfServiceCheckbox().click();
+                  notificationsObj
+                    .notificationTypeModalSelfServiceCheckbox()
+                    .shadow()
+                    .find('.goa-checkbox-container')
+                    .click();
                   notificationsObj.notificationTypeModalSelfServiceCalloutContent().should('not.exist');
                 }
               }
@@ -201,10 +238,10 @@ Then('the user views Add notification type button on Notification types page', f
 When('the user clicks {string} button for the notification type card of {string}', function (buttonType, cardTitle) {
   switch (buttonType) {
     case 'edit':
-      notificationsObj.notificationTypeEditBtn(cardTitle).click();
+      notificationsObj.notificationTypeEditBtn(cardTitle).click({ force: true });
       break;
     case 'delete':
-      notificationsObj.notificationTypeDeleteBtn(cardTitle).click();
+      notificationsObj.notificationTypeDeleteBtn(cardTitle).click({ force: true });
       break;
     default:
       expect(buttonType).to.be.oneOf(['edit', 'delete']);
@@ -392,8 +429,8 @@ Given('a tenant admin user is on notification subscriptions page', function () {
 When(
   'the user types {string} in Search subuscriber address as field and {string} in Search subscriber email field',
   function (addressAs, email) {
-    notificationsObj.searchSubscriberAddressAs().clear().type(addressAs);
-    notificationsObj.searchSubscriberEmail().clear().type(email);
+    notificationsObj.searchSubscriberAddressAs().clear({ force: true }).type(addressAs);
+    notificationsObj.searchSubscriberEmail().clear({ force: true }).type(email);
   }
 );
 
@@ -477,8 +514,8 @@ When('the user searches subscribers with {string} containing {string}', function
 When(
   'the user searches subscribers with address as containing {string}, email containing {string} and phone number containing {string}',
   function (addressAs, email, phoneNumber) {
-    notificationsObj.searchSubscriberAddressAs().clear().type(addressAs);
-    notificationsObj.searchSubscriberEmail().clear().type(email);
+    notificationsObj.searchSubscriberAddressAs().clear({ force: true }).type(addressAs);
+    notificationsObj.searchSubscriberEmail().clear({ force: true }).type(email);
     expect(phoneNumber).match(/(EMPTY)|[0-9]{10}/);
     if (phoneNumber == 'EMPTY') {
       notificationsObj.searchSubscriberPhone().clear();
@@ -649,7 +686,12 @@ When(
     }
     notificationsObj.editContactModalEmail().clear().type(emailInput);
     notificationsObj.editContactModalPhone().clear().type(phoneInput);
-    notificationsObj.editContactModalInstructions().clear().type(instructionsInput);
+    notificationsObj
+      .editContactModalInstructions()
+      .shadow()
+      .find('.goa-textarea')
+      .clear()
+      .type(instructionsInput, { force: true });
   }
 );
 
@@ -808,8 +850,8 @@ Then(
 );
 
 Then('the user views that email channel is greyed out', function () {
-  notificationsObj.notificationChannelEmailCheckbox().should('be.disabled');
-  notificationsObj.notificationChannelEmailCheckbox().should('be.checked');
+  notificationsObj.notificationChannelEmailCheckbox().shadow().find('input').should('be.disabled');
+  notificationsObj.notificationChannelEmailCheckbox().shadow().find('input').should('be.checked');
 });
 
 When('the user selects {string} tab on the event template', function (tab) {
@@ -838,18 +880,17 @@ When(
     }
     notificationsObj
       .eventTemplateModalSubject(channelNameInTitle)
-      .click()
+      .click({ force: true })
       .focus()
-      .type('{ctrl}a')
-      .clear()
-      .type(subjectText, { parseSpecialCharSequences: false });
+      .clear({ force: true })
+      .type(subjectText, { force: true, parseSpecialCharSequences: false });
+
     notificationsObj
       .eventTemplateModalBody(channelNameInTitle)
-      .click()
+      .click({ force: true })
       .focus()
-      .type('{ctrl}a')
-      .clear()
-      .type(bodyText, { parseSpecialCharSequences: false });
+      .clear({ force: true })
+      .type(bodyText, { force: true, parseSpecialCharSequences: false });
   }
 );
 

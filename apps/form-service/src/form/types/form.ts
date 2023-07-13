@@ -14,6 +14,7 @@ export interface Form {
   id: string;
   formDraftUrl: string;
   applicant: Subscriber;
+  anonymousApplicant: boolean;
   created: Date;
   createdBy: { id: string; name: string };
   locked: Date;
@@ -30,5 +31,7 @@ export interface FormCriteria {
   statusEquals?: FormStatus;
   lastAccessedBefore?: Date;
   lockedBefore?: Date;
+  createdByIdEquals?: string;
   hashEquals?: string;
+  anonymousApplicantEquals?: boolean;
 }

@@ -4,6 +4,7 @@ import { FetchRealmRoles } from '@store/tenant/actions';
 import { GoAButton } from '@abgov/react-components';
 import { FileMetrics } from './metrics';
 import { FetchFileMetrics } from '@store/file/actions';
+import { OverviewLayout } from '@components/Overview';
 
 interface FileOverviewProps {
   setActiveEdit: (boolean) => void;
@@ -23,19 +24,23 @@ const FileOverview = ({ setActiveEdit, setActiveIndex }: FileOverviewProps): JSX
   }, []);
 
   return (
-    <div>
-      <section>
-        <p>
-          The file service provides the capability to upload and download files. Consumers are registered with their own
-          space (tenant) containing file types that include role based access policy, and can associate files to domain
-          records.
-        </p>
-        <h2>File types</h2>
-        <div>
-          File types describe categories of files and include configuration of roles permitted to access and updated
-          files.
-        </div>
-        <br />
+    <OverviewLayout
+      description={
+        <section>
+          <p>
+            The file service provides the capability to upload and download files. Consumers are registered with their
+            own space (tenant) containing file types that include role based access policy, and can associate files to
+            domain records.
+          </p>
+          <h2>File types</h2>
+          <div>
+            File types describe categories of files and include configuration of roles permitted to access and updated
+            files.
+          </div>
+          <br />
+        </section>
+      }
+      addButton={
         <GoAButton
           data-testid="add-file-type-btn"
           onClick={() => {
@@ -44,9 +49,9 @@ const FileOverview = ({ setActiveEdit, setActiveIndex }: FileOverviewProps): JSX
         >
           Add file type
         </GoAButton>
-      </section>
-      <FileMetrics />
-    </div>
+      }
+      extra={<FileMetrics />}
+    />
   );
 };
 export default FileOverview;

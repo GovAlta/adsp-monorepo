@@ -24,7 +24,7 @@ class StatusServicePage {
   }
 
   noticeModalAllApplicationsCheckbox() {
-    return cy.xpath('//label[@class="goa-checkbox"]/div[contains(@class, "goa-checkbox-container")]');
+    return cy.xpath('//goa-checkbox[@name="isAllApplications"]');
   }
 
   noticeModalApplicationDropdown() {
@@ -158,7 +158,7 @@ class StatusServicePage {
   }
 
   addApplicationDescriptionModalField() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//textarea[@aria-label="description"]');
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//goa-textarea[@name="description"]');
   }
 
   addApplicationEndpointModalField() {

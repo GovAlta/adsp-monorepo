@@ -3,38 +3,158 @@ components:
     Application:
       type: object
       properties:
-        id:
+        appKey:
+          description: A unique ID generated when the application is added to the Status Service for monitoring.
+          example: my-application
           type: string
         name:
+          description: The name of the application being monitored.  The name must be unique for your Tenant.
+          example: My Application
           type: string
         description:
+          description: An optional, brief, description of the application being monitored.
           type: string
+          example: The application which is mine!
         status:
+          description: The operational status of the Application, set via the API or through the Tenant Admin Webapp
           type: string
           enum: [operational, reported-issues, maintenance, outage]
-        lastUpdated:
+        monitorOnly:
+          description: Indicates whether or not this application will be displayed on the public status page.
+          type: boolean
+        tenantId:
+          description: URN identifying the tenant to which the application belongs.
+          type: string
+          example: urn:ads:platform:tenant-service:v2:/tenants/61e9adcc9423490012a9ae46
+        enabled:
+          description: Indicates whether or not monitoring for the application has been turned on.
+          type: boolean
+    PingData:
+      type: object
+      properties:
+        url:
+          description: The URL pinged.
+          type: string
+          example: 'http://google.com'
+        ok:
+          description: The success of the ping; set to false if the ping resulted in a 400 or 500 error.
+          type: boolean
+        timestamp:
+          description: The time of the ping.
           type: string
           format: date-time
-
-/public_status/v1/applications/{tenant}:
-  get:
-    tags: ["Public status"]
-    description: Retrieves tenant applications and their statuses.
-    parameters:
-      - name: tenant
-        description: Name of the tenant to retrieve applications for.
-        in: path
-        required: true
-        schema:
+        responseTime:
+          description: The response time of the ping, in ms.
+          type: number
+          example: 178
+        status:
+          description: The http status-code of the response.
           type: string
+          example: 200
+        applicationId:
+          description: The application key, AKA application ID.
+          type: string
+          example: my-application
+
+/status/v1/applications:
+  get:
+    tags: ['Application Monitoring']
+    description: Retrieves tenant applications and their statuses.
     responses:
-      404:
-        description: Tenant not found.
       200:
-        description: Successfully retrieved statuses.
+        description: Applications retrieved successfully.
         content:
           application/json:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/Application"
+                $ref: '#/components/schemas/Application'
+
+/status/v1/applications/{appKey}/enable:
+  patch:
+    tags: ['Application Monitoring']
+    description: Request to start monitoring the application.
+    parameters:
+      - name: appKey
+        description: The application key, AKA application ID.
+        in: path
+        required: true
+        schema:
+          type: string
+          example: my-application
+    responses:
+      200:
+        description: Monitoring has been enabled.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Application'
+
+/status/v1/applications/{appKey}/disable:
+  patch:
+    tags: ['Application Monitoring']
+    description: Request to stop monitoring the application.
+    parameters:
+      - name: appKey
+        description: The application key, AKA application ID.
+        in: path
+        required: true
+        schema:
+          type: string
+          example: my-application
+    responses:
+      200:
+        description: Monitoring has been disabled.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Application'
+
+/status/v1/applications/{appKey}/toggle:
+  patch:
+    tags: ['Application Monitoring']
+    description: Request to toggle application monitoring, from enabled to disabled or vice versa.
+    parameters:
+      - name: appKey
+        description: The application key, AKA application ID.
+        in: path
+        required: true
+        schema:
+          type: string
+          example: my-application
+    responses:
+      200:
+        description: Monitoring has been toggled.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Application'
+
+/status/v1/applications/{appKey}/endpoint-status-entries:
+  get:
+    tags: ['Application Monitoring']
+    description: Retrieves the raw results of the _pings_, gathered for the specified application.
+    parameters:
+      - name: appKey
+        description: The application key, AKA application ID.
+        in: path
+        required: true
+        schema:
+          type: string
+          example: my-application
+      - name: top
+        description: Number of results to read, defaults to 200
+        in: query
+        required: false
+        schema:
+          type: number
+          example: 20
+    responses:
+      200:
+        description: Data retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/PingData'

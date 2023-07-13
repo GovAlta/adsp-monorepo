@@ -47,8 +47,13 @@ const ServiceHref = styled.div`
   margin-bottom: 0.5rem;
 `;
 
+const OrphanedBadge = styled.span`
+  margin-left: 0.2rem;
+`;
+
 interface CardHeaderProps {
   mode: string;
+  isOrphaned: boolean;
 }
 
 interface NoticeCardProps {
@@ -56,6 +61,7 @@ interface NoticeCardProps {
   isMenuOpen: boolean;
   clickMenuFn: (id: string, isMenuAction?: boolean) => void;
   openEditModalFn?: () => void;
+  isOrphaned?: boolean;
 }
 
 export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
@@ -112,6 +118,16 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
               }}
             />
           )}
+          {props.isOrphaned && (
+            <OrphanedBadge>
+              <GoABadge
+                key={`${notice.id}-orphaned`}
+                content={'Orphaned'}
+                data-testid="notice-card-orphaned"
+                type="information"
+              />
+            </OrphanedBadge>
+          )}
         </IconContext>
       </HeaderContainer>
     );
@@ -123,12 +139,18 @@ export const NoticeCard = (props: NoticeCardProps): JSX.Element => {
         {isMenuOpen && (
           <div
             className="dropdown-overlay"
+            data-testid="dropdown-overlay"
             onClick={() => {
               clickMenuFn(notice.id, true);
             }}
           />
         )}
-        <CardHeader mode={notice.mode} key={`notice-card-header-${notice.id}`} data-testid="notice-card-header" />
+        <CardHeader
+          mode={notice.mode}
+          isOrphaned={props.isOrphaned}
+          key={`notice-card-header-${notice.id}`}
+          data-testid="notice-card-header"
+        />
         <CardContent
           key={`notice-content-${notice.id}`}
           onClick={() => {

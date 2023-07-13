@@ -20,6 +20,8 @@ import {
   HealthCheckHealthyDefinition,
   ApplicationStatusChangedDefinition,
   ApplicationNoticePublishedDefinition,
+  MonitoredServiceUpDefinition,
+  MonitoredServiceDownDefinition,
 } from './app/events';
 
 import { StatusApplicationHealthChange, StatusApplicationStatusChange } from './app/notificationTypes';
@@ -53,6 +55,7 @@ app.use(express.json({ limit: '1mb' }));
     clearCached,
     tokenProvider,
     directory,
+    healthCheck,
   } = await initializePlatform(
     {
       serviceId,
@@ -82,6 +85,8 @@ app.use(express.json({ limit: '1mb' }));
         HealthCheckHealthyDefinition,
         ApplicationStatusChangedDefinition,
         ApplicationNoticePublishedDefinition,
+        MonitoredServiceUpDefinition,
+        MonitoredServiceDownDefinition,
       ],
       notifications: [StatusApplicationHealthChange, StatusApplicationStatusChange],
       clientSecret: environment.CLIENT_SECRET,
@@ -127,14 +132,16 @@ app.use(express.json({ limit: '1mb' }));
     serviceStatusRepository: repositories.serviceStatusRepository,
     endpointStatusEntryRepository: repositories.endpointStatusEntryRepository,
     applicationManager,
+    directory,
+    tokenProvider,
+    serviceId,
   };
 
   const scheduler = new HealthCheckJobScheduler(healthCheckSchedulingProps);
 
   // start the endpoint checking jobs
   if (!environment.HA_MODEL || (environment.HA_MODEL && environment.POD_TYPE === POD_TYPES.job)) {
-    // TODO remove this (see comments in ApplicationManager).
-    await applicationManager.synchronizeData();
+    logger.info(`Running Jobs`);
     // clear the health status database every midnight
     const scheduleDataReset = async () => {
       scheduleJob('0 0 * * *', async () => {
@@ -201,9 +208,29 @@ app.use(express.json({ limit: '1mb' }));
     res.json(swagger);
   });
 
-  app.get('/health', (_req, res) => {
+  app.get('/health', async (_req, res) => {
+    const platform = await healthCheck();
     res.json({
+      ...platform,
       db: repositories.isConnected(),
+    });
+  });
+
+  app.get('/', async (req, res) => {
+    const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
+    res.json({
+      name: 'Status service',
+      description: 'Service for publishing service status information.',
+      _links: {
+        self: { href: new URL(req.originalUrl, rootUrl).href },
+        health: { href: new URL('/health', rootUrl).href },
+        api: [
+          { href: new URL('/status/v1', rootUrl).href },
+          { href: new URL('/public_status/v1', rootUrl).href },
+          { href: new URL('/notice/v1', rootUrl).href },
+        ],
+        docs: { href: new URL('/swagger/docs/v1', rootUrl).href },
+      },
     });
   });
 

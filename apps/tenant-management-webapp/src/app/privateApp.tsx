@@ -10,6 +10,7 @@ import { GoAPageLoader } from '@abgov/react-components';
 import { NotificationBanner } from './notificationBanner';
 import styled from 'styled-components';
 import { LogoutModal } from '@components/LogoutModal';
+import { useTokenExpiryCount } from '@lib/useTokenExpiryCount';
 
 interface privateAppProps {
   children: ReactNode;
@@ -18,6 +19,8 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
   const [title, setTitle] = useState<string>('');
   const dispatch = useDispatch();
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
+
+  useTokenExpiryCount();
 
   const urlParams = new URLSearchParams(window.location.search);
   const realmFromParams = urlParams.get('realm');
@@ -84,6 +87,7 @@ const ScrollBarFixTop = styled.div`
 `;
 
 interface ItemProps {
+  //eslint-disable-next-line
   notifications: any[];
 }
 const ScrollBarFixMain = styled.div`

@@ -11,20 +11,28 @@ export enum ActionState {
   error,
 }
 
+export interface ModalState {
+  id: string;
+  type: string;
+  isOpen: boolean;
+}
+
 export interface ElementIndicator {
   show: boolean;
+}
+
+export interface UserInfo {
+  name?: string;
+  preferredUsername?: string;
+  email?: string;
+  emailVerified?: boolean;
+  sub?: string;
 }
 export interface Session {
   authenticated?: boolean;
   clientId?: string;
   realm?: string;
-  userInfo?: {
-    sub?: string;
-    name?: string;
-    preferredUsername?: string;
-    email?: string;
-    emailVerified?: boolean;
-  };
+  userInfo?: UserInfo;
   realmAccess?: {
     roles?: string[];
   };
@@ -34,6 +42,8 @@ export interface Session {
   elementIndicator?: ElementIndicator;
   loadingStates?: LoadingStates;
   isExpired?: boolean;
+  isWillExpired?: boolean;
+  modal?: Record<string, ModalState>;
 }
 
 export interface Credentials {
@@ -62,4 +72,5 @@ export const SESSION_INIT: Session = {
   },
   loadingStates: [],
   isExpired: null,
+  modal: {},
 };

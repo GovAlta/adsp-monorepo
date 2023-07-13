@@ -1,6 +1,6 @@
 import { RootState } from '@store/index';
 import { saveNotice } from '@store/notice/actions';
-import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import React, { useState, useEffect, FormEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton } from '@abgov/react-components';
 import { GoACheckbox } from '@abgov/react-components-new';
@@ -17,6 +17,7 @@ import DatePicker from 'react-date-picker';
 import styled from 'styled-components';
 import Multiselect from 'multiselect-react-dropdown';
 import CloseIcon from '@icons/close-outline.svg';
+import { GoATextArea } from '@abgov/react-components-new';
 
 const dateTime = (date, time) => {
   const newDate = new Date(date);
@@ -48,6 +49,8 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
     applications: state.serviceStatus.applications,
     notices: state.notice.notices,
   }));
+
+  const noMonitorOnlyApplications = applications.filter((application) => !application.monitorOnly);
 
   useEffect(() => {
     if (props.noticeId) {
@@ -92,6 +95,9 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
     if (message.length === 0) {
       return { message: 'Description is required' };
     }
+    if (message.length > 250) {
+      return { message: 'Description could not over 250 characters' };
+    }
   }
 
   function applicationSelectedErrors() {
@@ -106,11 +112,6 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
     const messageExistsConst = messageExistsErrors();
 
     return { ...applicationSelectedConst, ...validDateRangeConst, ...messageExistsConst };
-  }
-
-  function setValue(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, customValue?: unknown) {
-    const { value } = e.target;
-    setMessage(value);
   }
 
   function submit(e: FormEvent) {
@@ -153,13 +154,14 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
           <GoAForm data-testid="notice-form">
             <GoAFormItem error={errors?.['message']}>
               <label>Description</label>
-              <textarea
-                data-testid="notice-form-description"
+              <GoATextArea
+                testId="notice-form-description"
                 name="message"
                 value={message}
-                className="goa-textarea"
-                onChange={setValue}
-                maxLength={250}
+                width="100%"
+                onChange={(name, value) => {
+                  setMessage(value);
+                }}
               />
             </GoAFormItem>
 
@@ -182,7 +184,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
                 {isAllApplications === false && (
                   <MultiDropdownStyle>
                     <Multiselect
-                      options={applications}
+                      options={noMonitorOnlyApplications}
                       onSelect={onSelect}
                       onRemove={onSelect}
                       displayValue="name"

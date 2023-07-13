@@ -49,7 +49,8 @@ export const ConfigurationExport: FunctionComponent = () => {
       let totalExportKeys = 0;
       const temp = { ...exportServices };
       Object.keys(sortedConfiguration.namespaces).map((namespace) => {
-        sortedConfiguration.namespaces[namespace].map((name) => {
+        //eslint-disable-next-line
+        return sortedConfiguration.namespaces[namespace].map((name) => {
           temp[toServiceKey(namespace, name)] = true;
           totalExportKeys++;
         });
@@ -251,28 +252,31 @@ export const ConfigurationExport: FunctionComponent = () => {
                         return (
                           <div>
                             <h3 className="header-margin ellipsis-wrapper">{namespace}</h3>
-                            {Object.keys(exportServices).map((exp) => {
-                              const name = exp.split(':')[1];
-                              const namePixelWidth = getTextWidth(name);
-                              const acceptableBubbleTextPixelWidth = 93;
+                            {
+                              //eslint-disable-next-line
+                              Object.keys(exportServices).map((exp) => {
+                                const name = exp.split(':')[1];
+                                const namePixelWidth = getTextWidth(name);
+                                const acceptableBubbleTextPixelWidth = 93;
 
-                              const numberOfCharacters =
-                                acceptableBubbleTextPixelWidth / (namePixelWidth / name.length);
-                              const shortName =
-                                namePixelWidth > acceptableBubbleTextPixelWidth
-                                  ? name.substring(0, numberOfCharacters) + '...'
-                                  : name;
-                              if (exp.split(':')[0] === namespace) {
-                                return (
-                                  <GoAChip
-                                    key={exp}
-                                    deletable={true}
-                                    content={shortName}
-                                    onClick={() => toggleSelection(exp)}
-                                  />
-                                );
-                              }
-                            })}
+                                const numberOfCharacters =
+                                  acceptableBubbleTextPixelWidth / (namePixelWidth / name.length);
+                                const shortName =
+                                  namePixelWidth > acceptableBubbleTextPixelWidth
+                                    ? name.substring(0, numberOfCharacters) + '...'
+                                    : name;
+                                if (exp.split(':')[0] === namespace) {
+                                  return (
+                                    <GoAChip
+                                      key={exp}
+                                      deletable={true}
+                                      content={shortName}
+                                      onClick={() => toggleSelection(exp)}
+                                    />
+                                  );
+                                }
+                              })
+                            }
                           </div>
                         );
                       })}

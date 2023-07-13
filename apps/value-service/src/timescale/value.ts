@@ -82,6 +82,14 @@ export class TimescaleValuesRepository implements ValuesRepository {
       if (criteria.context) {
         query.whereRaw(`context @> ?::jsonb`, [JSON.stringify(criteria.context)]);
       }
+
+      if (criteria.value) {
+        query.whereRaw(`value @> ?::jsonb`, [`{"payload": {"targetId": "${criteria.value}"}}`]);
+      }
+
+      if (criteria.url) {
+        query.whereRaw(`value @> ?::jsonb`, [`{"payload": {"URL": "${criteria.url}"}}`]);
+      }
     }
 
     const rows = await query.orderBy('timestamp', 'desc');

@@ -19,6 +19,7 @@ export class FileEntity implements File {
   scanned = false;
   deleted = false;
   infected = false;
+  retentionDays?: number;
 
   static async create(
     storageProvider: FileStorageProvider,
@@ -62,6 +63,7 @@ export class FileEntity implements File {
     this.filename = values.filename;
     this.createdBy = values.createdBy;
     this.created = values.created;
+    this.lastAccessed = values.created;
     const record = values as FileRecord;
 
     if (record.id) {
@@ -79,19 +81,27 @@ export class FileEntity implements File {
   }
 
   canAccess(user: User): boolean {
-    return this.type
-      ? this.type.canAccessFile(user)
-      : isAllowedUser(user, this.tenantId, [ServiceUserRoles.Admin], true);
+    // User who created a file can always access it again, or
+    // Admin user, or
+    // User allowed to access based on role configuration on file type.
+    return (
+      user?.id === this.createdBy.id ||
+      isAllowedUser(user, this.tenantId, [ServiceUserRoles.Admin], true) ||
+      this.type?.canAccessFile(user)
+    );
   }
 
-  canUpdate(user: User): boolean {
-    return this.type
-      ? this.type.canUpdateFile(user)
-      : isAllowedUser(user, this.tenantId, [ServiceUserRoles.Admin], true);
+  canDelete(user: User): boolean {
+    // Admin user can delete, or
+    // User allowed to update based on role configuration on file type and is original creator.
+    return (
+      isAllowedUser(user, this.tenantId, [ServiceUserRoles.Admin], true) ||
+      (this.type?.canUpdateFile(user) && user.id === this.createdBy.id)
+    );
   }
 
   markForDeletion(user: User): Promise<FileEntity> {
-    if (!this.canUpdate(user)) {
+    if (!this.canDelete(user)) {
       throw new UnauthorizedError('User not authorized to delete file.');
     }
 

@@ -13,6 +13,7 @@ class PuppeteerPdfService implements PdfService {
       if (header !== null || footer !== null) {
         const _header = header === null ? '' : header;
         const _footer = footer === null ? '' : footer;
+
         return await page.pdf({
           footerTemplate: _footer,
           headerTemplate: _header,
@@ -31,6 +32,6 @@ class PuppeteerPdfService implements PdfService {
 }
 
 export async function createPdfService(): Promise<PdfService> {
-  const browser = await puppeteer.launch({ headless: true, args: ['--disable-dev-shm-usage'] });
+  const browser = await puppeteer.launch({ headless: true, args: ['--disable-dev-shm-usage', '--no-sandbox'] });
   return new PuppeteerPdfService(browser);
 }

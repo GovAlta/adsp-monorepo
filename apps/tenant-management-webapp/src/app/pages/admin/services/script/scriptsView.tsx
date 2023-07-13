@@ -17,8 +17,8 @@ import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
 import { ScriptEditor } from './editor/scriptEditor';
 import { Modal, BodyGlobalStyles, ModalContent, ScriptPanelContainer } from './styled-components';
-import { useValidators } from '@lib/useValidators';
-import { characterCheck, validationPattern, isNotEmptyCheck, Validator, isValidJSONCheck } from '@lib/checkInput';
+import { useValidators } from '@lib/validation/useValidators';
+import { isNotEmptyCheck, isValidJSONCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { scriptEditorConfig } from './editor/config';
 
 interface AddScriptProps {
@@ -51,12 +51,15 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   const tenant = useSelector(tenantRolesAndClients);
 
   const { scripts } = useSelector((state: RootState) => state.scriptService);
-  const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
-  const descriptionCheck = (): Validator => (description: string) =>
-    description.length > 250 ? 'Description should not exceed 250 characters' : '';
 
-  const { errors, validators } = useValidators('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
-    .add('description', 'description', descriptionCheck())
+  const { errors, validators } = useValidators(
+    'name',
+    'name',
+    badCharsCheck,
+    isNotEmptyCheck('name'),
+    wordMaxLengthCheck(32, 'Name')
+  )
+    .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .add('payloadSchema', 'payloadSchema', isValidJSONCheck('payloadSchema'))
     .build();
 
@@ -72,6 +75,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     setSelectedScript(defaultScript);
     setOpenAddScript(false);
     setShowScriptEditForm(false);
+    validators.clear();
   };
 
   const saveScript = (script) => {

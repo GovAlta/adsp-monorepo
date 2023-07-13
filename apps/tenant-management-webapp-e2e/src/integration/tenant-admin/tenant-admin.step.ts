@@ -367,7 +367,7 @@ Then('the user views the tenant name of {string}', function (tenantName) {
 });
 
 When('the user clicks Copy login link', function () {
-  tenantAdminObj.copyLoginLinkButton().shadow().find('button').scrollIntoView().click({ force: true });
+  tenantAdminObj.copyLoginLinkButton().shadow().find('button').scrollIntoView().trigger('mouseover');
 });
 
 Then('the user views the message of {string} from clicking Copy login link', function (message) {
@@ -997,7 +997,8 @@ Then(
 
     tenantAdminObj.eventToggleDetailsIcons().each(($element, $index, $full_array) => {
       //clicking each eye-icon in the list to verify event details
-      cy.wrap($element).scrollIntoView().click({ force: true });
+      cy.wrap($element).scrollIntoView();
+      cy.wrap($element).click({ force: true });
       tenantAdminObj
         .eventDetails()
         .invoke('text')
@@ -1018,7 +1019,8 @@ Then(
             cy.wrap($element).click({ force: true });
           } else {
             //clicking eye icon to close event details
-            cy.wrap($element).scrollIntoView().click({ force: true });
+            cy.wrap($element).scrollIntoView();
+            cy.wrap($element).click({ force: true });
           }
           if (isFound == false && $index + 1 == $full_array.length) {
             expect($index + 1).to.not.eq(

@@ -1,5 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { PdfService, PdfTemplate, TemplateService } from '../types';
+import { PdfService, PdfTemplate, TemplateService, File } from '../types';
 
 export class PdfTemplateEntity implements PdfTemplate {
   tenantId: AdspId;
@@ -7,8 +7,13 @@ export class PdfTemplateEntity implements PdfTemplate {
   name: string;
   description: string;
   template: string;
+  templateService: TemplateService;
   header?: string;
   footer?: string;
+  additionalStyles?: string;
+  startWithDefault?: boolean;
+  additionalStylesWrapped?: string;
+  fileList: File[];
 
   private evaluateTemplate: (context: unknown) => string;
   private evaluateFooterTemplate: (context: unknown) => string;
@@ -17,7 +22,7 @@ export class PdfTemplateEntity implements PdfTemplate {
   constructor(
     templateService: TemplateService,
     private readonly pdfService: PdfService,
-    { tenantId, id, name, description, template, header, footer }: PdfTemplate
+    { tenantId, id, name, description, template, header, footer, additionalStyles, startWithDefault }: PdfTemplate
   ) {
     this.tenantId = tenantId;
     this.id = id;
@@ -26,9 +31,29 @@ export class PdfTemplateEntity implements PdfTemplate {
     this.template = template;
     this.header = header;
     this.footer = footer;
-    this.evaluateTemplate = templateService.getTemplateFunction(template);
-    this.evaluateFooterTemplate = templateService.getTemplateFunction(footer, 'pdf-footer');
-    this.evaluateHeaderTemplate = templateService.getTemplateFunction(header, 'pdf-header');
+    this.templateService = templateService;
+    this.fileList = null;
+    this.startWithDefault = startWithDefault;
+
+    this.additionalStylesWrapped = '<style>' + additionalStyles + '</style>';
+  }
+
+  async populateFileList(token: string, tenantIdValue: string) {
+    this.fileList = await this.templateService.populateFileList(token, tenantIdValue);
+  }
+
+  evaluateTemplates() {
+    this.evaluateTemplate = this.templateService.getTemplateFunction(
+      this.additionalStylesWrapped.concat(this.template)
+    );
+    this.evaluateFooterTemplate = this.templateService.getTemplateFunction(
+      this.additionalStylesWrapped.concat(this.footer),
+      'pdf-footer'
+    );
+    this.evaluateHeaderTemplate = this.templateService.getTemplateFunction(
+      this.additionalStylesWrapped.concat(this.header),
+      'pdf-header'
+    );
   }
 
   generate(context: unknown): Promise<Buffer> {

@@ -265,7 +265,7 @@ When(
 );
 
 Then(
-  '{string} is returned for the file upload request as well as {string}, file size and created time with a succesful request',
+  '{string} is returned for the file upload request as well as {string}, file size and created time with a successful request',
   function (statusCode, fileName) {
     expect(responseObj.status).to.equal(Number(statusCode));
     if (responseObj.status == 200) {
@@ -404,7 +404,12 @@ When('the user enters {string}, {string}, {string} on file type modal', function
       .invoke('attr', 'class')
       .then((classAttr) => {
         if (classAttr?.includes('-selected')) {
-          fileServiceObj.fileTypeModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
+          fileServiceObj
+            .fileTypeModalPublicCheckbox()
+            .shadow()
+            .find('.goa-checkbox-container')
+            .click({ force: true, multiple: true });
+
           cy.log('Make public checkbox is already checked off. ');
         } else {
           cy.log('Make public checkbox is already unchecked. ');
@@ -425,7 +430,11 @@ When('the user enters {string}, {string}, {string} on file type modal', function
     //Select read roles
     const readRoles = readRole.split(',');
     for (let i = 0; i < readRoles.length; i++) {
-      fileServiceObj.fileTypeModalReadCheckbox(readRoles[i].trim()).click();
+      fileServiceObj
+        .fileTypeModalReadCheckbox(readRoles[i].trim())
+        .shadow()
+        .find('.goa-checkbox-container')
+        .click({ force: true, multiple: true });
     }
   }
 
@@ -445,12 +454,16 @@ When('the user enters {string}, {string}, {string} on file type modal', function
   //Select modify roles
   const updateRoles = updateRole.split(',');
   for (let i = 0; i < updateRoles.length; i++) {
-    fileServiceObj.fileTypeModalModifyCheckbox(updateRoles[i].trim()).shadow().find('.goa-checkbox-container').click();
+    fileServiceObj
+      .fileTypeModalModifyCheckbox(updateRoles[i].trim())
+      .shadow()
+      .find('.goa-checkbox-container')
+      .click({ force: true, multiple: true });
   }
 });
 
 When('the user clicks Save button on file type modal', function () {
-  fileServiceObj.fileTypeModalSaveButton().click();
+  fileServiceObj.fileTypeModalSaveButton().click({ force: true, multiple: true });
   cy.wait(2000); // Wait the file type list to refresh
 });
 
@@ -486,11 +499,11 @@ When(
     findFileType(name, readRole, updateRole).then((rowNumber) => {
       switch (button) {
         case 'Edit':
-          fileServiceObj.fileTypeEditButton(rowNumber).click();
+          fileServiceObj.fileTypeEditButton(rowNumber).click({ force: true });
           break;
         case 'Delete':
           cy.wait(1000); // Wait to avoid no modal showing up for delete button clicking
-          fileServiceObj.fileTypeDeleteButton(rowNumber).click();
+          fileServiceObj.fileTypeDeleteButton(rowNumber).click({ force: true });
           break;
         default:
           expect(button).to.be.oneOf(['Edit', 'Delete']);
@@ -590,4 +603,141 @@ Then('the user views the core file types with no actions', function () {
 
   // Verify at least one core file type
   fileServiceObj.coreFileTypesTable().find('tr').its('length').should('be.gte', 1);
+});
+function setOrDisableFileRetention(reqEndPoint, setRetention) {
+  const requestURL = Cypress.env('configurationServiceApiUrl') + reqEndPoint;
+
+  cy.request({
+    method: 'PATCH',
+    url: requestURL,
+    auth: {
+      bearer: Cypress.env('autotest-admin-token'),
+    },
+    body: {
+      operation: 'UPDATE',
+      update: {
+        autotype7: {
+          name: 'autotype7',
+          updateRoles: ['file-service-admin'],
+          readRoles: [],
+          anonymousRead: true,
+          id: 'autotype7',
+          rules: {
+            retention: {
+              active: Boolean(setRetention),
+              deleteInDays: 1,
+              createdAt: new Date(),
+            },
+          },
+        },
+      },
+    },
+    timeout: 1200000,
+  }).then(function (response) {
+    responseObj = response;
+  });
+}
+When('a developer of a GoA digital service set autotype7 request with {string} retention', function (reqEndPoint) {
+  setOrDisableFileRetention(reqEndPoint, true);
+});
+When(
+  'a developer of a GoA digital service set disable autotype7 request with {string} retention',
+  function (reqEndPoint) {
+    setOrDisableFileRetention(reqEndPoint, false);
+  }
+);
+
+Then('{string} is returned after file retention be set.', function (statusCode) {
+  // Verify the response has 200 status and an array of mappings
+  expect(responseObj.status).to.eq(Number(statusCode));
+});
+
+Then('check Generated PDF file type retention days is 30', function () {
+  const days = responseObj.body.latest.configuration['generated-pdf'].rules.retention.deleteInDays;
+  expect(Number(days)).to.eq(30);
+});
+
+When(
+  'a developer of a GoA digital service get default PDF file type configuration request with {string}',
+  function (reqEndPoint) {
+    const requestURL = Cypress.env('configurationServiceApiUrl') + reqEndPoint;
+    cy.request({
+      method: 'GET',
+      url: requestURL,
+      auth: {
+        bearer: Cypress.env('autotest-admin-token'),
+      },
+      failOnStatusCode: false,
+    }).then(function (response) {
+      responseObj = response;
+    });
+  }
+);
+
+When(
+  'a developer of a GoA digital service can query files by last accessed time criteria with {string} for before yesterday',
+  function (reqEndPoint) {
+    const date = new Date();
+
+    date.setDate(date.getDate() - 1);
+    const requestURL = Cypress.env('fileApi') + reqEndPoint;
+    +'?criteria={"lastAccessedBefore":' + '"' + date.toISOString() + '"' + '}';
+    cy.request({
+      method: 'GET',
+      url: requestURL,
+      auth: {
+        bearer: Cypress.env('autotest-admin-token'),
+      },
+      failOnStatusCode: false,
+    }).then(function (response) {
+      responseObj = response;
+    });
+  }
+);
+
+Then('check the file data before yesterday.', function () {
+  const checkedDate = new Date(responseObj.body.results[0].lastAccessed);
+  const yesterday = new Date().setDate(new Date().getDate() - 1);
+  cy.wrap(checkedDate).should('be.greaterThan', new Date(yesterday));
+});
+
+When(
+  'a developer of a GoA digital service can query files by last accessed time criteria with {string} for after month ago',
+  function (reqEndPoint) {
+    const date = new Date();
+
+    date.setDate(date.getDate() - 30);
+    const requestURL = Cypress.env('fileApi') + reqEndPoint;
+    +'?criteria={"lastAccessedAfter":' + '"' + date.toISOString() + '"' + '}';
+    cy.request({
+      method: 'GET',
+      url: requestURL,
+      auth: {
+        bearer: Cypress.env('autotest-admin-token'),
+      },
+      failOnStatusCode: false,
+    }).then(function (response) {
+      responseObj = response;
+    });
+  }
+);
+
+Then('check the file data with in recent 30 days.', function () {
+  const checkedDate = new Date(responseObj.body.results[0].lastAccessed);
+  const monthTime = new Date().setDate(new Date().getDate() - 30);
+  cy.wrap(checkedDate).should('be.greaterThan', new Date(monthTime));
+});
+
+Then('the user clicks Active retention policy checkbox', function () {
+  cy.wait(1000); // Wait for modal
+  fileServiceObj.fileRetentionCheckBox().shadow().find('.goa-checkbox-container').click({ force: true });
+});
+
+Then('the user view retention policy 1 days in file type modal', function () {
+  cy.wait(1000);
+  fileServiceObj.fileRetentionDelayInput().invoke('val').should('equal', '1');
+});
+Then('the user uncheck Active retention policy checkbox', function () {
+  cy.wait(1000); // Wait for modal
+  fileServiceObj.fileRetentionCheckBox().shadow().find('.goa-checkbox-container').click({ force: true });
 });

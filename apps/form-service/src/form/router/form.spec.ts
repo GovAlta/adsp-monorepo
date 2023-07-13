@@ -1,5 +1,5 @@
 import { adspId, Channel, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError, NotFoundError, ValidationService } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { accessForm, deleteForm, findForms, formOperation, getForm, getFormDefinition, updateFormData } from '.';
 import { FormServiceRoles, FormStatus, FORM_SUBMITTED } from '..';
@@ -10,7 +10,11 @@ describe('form router', () => {
   const serviceId = adspId`urn:ads:platform:form-service`;
   const apiId = adspId`${serviceId}:v1`;
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
-  const definition = new FormDefinitionEntity(tenantId, {
+  const validationService: ValidationService = {
+    validate: jest.fn(),
+    setSchema: jest.fn(),
+  };
+  const definition = new FormDefinitionEntity(validationService, tenantId, {
     id: 'test',
     name: 'test-form-definition',
     description: null,
@@ -18,6 +22,8 @@ describe('form router', () => {
     anonymousApply: false,
     applicantRoles: ['test-applicant'],
     assessorRoles: ['test-assessor'],
+    clerkRoles: [],
+    dataSchema: null,
   });
 
   const subscriberId = adspId`urn:ads:platform:notification-service:v1:/subscribers/test`;
@@ -55,6 +61,7 @@ describe('form router', () => {
   const formInfo = {
     id: 'test-form',
     formDraftUrl: 'https://my-form/test-form',
+    anonymousApplicant: false,
     created: new Date(),
     createdBy: { id: 'tester', name: 'tester' },
     status: FormStatus.Draft,
@@ -70,6 +77,7 @@ describe('form router', () => {
     repositoryMock.save.mockClear();
     repositoryMock.get.mockReset();
     repositoryMock.delete.mockReset();
+    repositoryMock.find.mockReset();
     notificationServiceMock.subscribe.mockReset();
     notificationServiceMock.sendCode.mockReset();
     notificationServiceMock.verifyCode.mockReset();
@@ -174,6 +182,7 @@ describe('form router', () => {
       const req = {
         user,
         query: {},
+        tenant: { id: tenantId },
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -186,7 +195,7 @@ describe('form router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
     });
 
-    it('can call next for unauthorized user', async () => {
+    it('can limit non-admin user to own forms', async () => {
       const user = {
         tenantId,
         id: 'tester',
@@ -195,6 +204,7 @@ describe('form router', () => {
       const req = {
         user,
         query: {},
+        tenant: { id: tenantId },
       };
       const res = { send: jest.fn() };
       const next = jest.fn();
@@ -204,8 +214,12 @@ describe('form router', () => {
 
       const handler = findForms(apiId, repositoryMock);
       await handler(req as Request, res as unknown as Response, next);
-      expect(res.send).not.toHaveBeenCalled();
-      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ page }));
+      expect(repositoryMock.find).toHaveBeenCalledWith(
+        expect.any(Number),
+        undefined,
+        expect.objectContaining({ createdByIdEquals: user.id })
+      );
     });
   });
 
@@ -467,7 +481,7 @@ describe('form router', () => {
 
   describe('deleteForm', () => {
     it('can create handler', () => {
-      const handler = deleteForm(fileServiceMock, notificationServiceMock);
+      const handler = deleteForm(eventServiceMock, fileServiceMock, notificationServiceMock);
       expect(handler).toBeTruthy();
     });
 
@@ -487,7 +501,7 @@ describe('form router', () => {
 
       repositoryMock.delete.mockResolvedValueOnce(true);
 
-      const handler = deleteForm(fileServiceMock, notificationServiceMock);
+      const handler = deleteForm(eventServiceMock, fileServiceMock, notificationServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(repositoryMock.delete).toHaveBeenCalledWith(entity);
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ deleted: true }));
@@ -507,7 +521,7 @@ describe('form router', () => {
       const res = { send: jest.fn() };
       const next = jest.fn();
 
-      const handler = deleteForm(fileServiceMock, notificationServiceMock);
+      const handler = deleteForm(eventServiceMock, fileServiceMock, notificationServiceMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
@@ -592,6 +606,7 @@ describe('form router', () => {
       const formInfo = {
         id: 'test-form',
         formDraftUrl: 'https://my-form/test-form',
+        anonymousApplicant: true,
         created: new Date(),
         createdBy: { id: 'tester', name: 'tester' },
         status: FormStatus.Locked,

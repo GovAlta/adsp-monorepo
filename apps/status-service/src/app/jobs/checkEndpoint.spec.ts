@@ -4,6 +4,10 @@ import { Logger } from 'winston';
 import { ServiceStatusApplicationEntity } from '../model';
 import { ServiceStatusApplication } from '../types';
 import { adspId } from '@abgov/adsp-service-sdk';
+import axios from 'axios';
+
+jest.mock('axios');
+const axiosMock = axios as jest.Mocked<typeof axios>;
 
 describe('checkEndpoint', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -37,6 +41,15 @@ describe('checkEndpoint', () => {
     send: jest.fn(),
   };
 
+  const mockTokenProvider = {
+    getAccessToken: jest.fn(),
+  };
+
+  const serviceDirectoryMock = {
+    getServiceUrl: jest.fn(() => Promise.resolve(new URL('http:/localhost:80'))),
+    getResourceUrl: jest.fn(() => Promise.resolve(new URL('http:/localhost:80'))),
+  };
+
   describe('createCheckEndpointJob', () => {
     it('can create job', () => {
       const job = createCheckEndpointJob({
@@ -46,6 +59,9 @@ describe('checkEndpoint', () => {
         serviceStatusRepository: statusRepositoryMock,
         endpointStatusEntryRepository: endpointRepositoryMock,
         eventService: eventServiceMock,
+        tokenProvider: mockTokenProvider,
+        directory: serviceDirectoryMock,
+        serviceId: adspId`urn:ads:platform:test-service`,
       });
 
       expect(job).toBeTruthy();
@@ -65,6 +81,9 @@ describe('checkEndpoint', () => {
         serviceStatusRepository: statusRepositoryMock,
         endpointStatusEntryRepository: endpointRepositoryMock,
         eventService: eventServiceMock,
+        tokenProvider: mockTokenProvider,
+        directory: serviceDirectoryMock,
+        serviceId: adspId`urn:ads:platform:test-service`,
       });
 
       beforeEach(() => {
@@ -101,6 +120,13 @@ describe('checkEndpoint', () => {
             responseTime: 250,
           },
         ]);
+
+        mockTokenProvider.getAccessToken.mockResolvedValueOnce('test');
+
+        axiosMock.get.mockResolvedValueOnce({ data: { latest: { configuration: {} } } }).mockResolvedValueOnce({
+          data: { latest: { configuration: { applicationWebhookIntervals: {} } } },
+        });
+
         statusRepositoryMock.get.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
@@ -141,12 +167,18 @@ describe('checkEndpoint', () => {
             responseTime: 250,
           },
         ]);
+        mockTokenProvider.getAccessToken.mockResolvedValueOnce('test');
+
+        axiosMock.get.mockResolvedValueOnce({ data: { latest: { configuration: {} } } }).mockResolvedValueOnce({
+          data: { latest: { configuration: { applicationWebhookIntervals: {} } } },
+        });
         statusRepositoryMock.get.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
             endpoint: { status: 'online' },
           } as ServiceStatusApplication)
         );
+
         statusRepositoryMock.save.mockImplementationOnce((entity) => entity);
         await job();
         expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'application-unhealthy' }));
@@ -155,7 +187,207 @@ describe('checkEndpoint', () => {
         );
       });
 
+      it('sends a managed application down event', async () => {
+        const applicationWebhookIntervals = {
+          asdf: {
+            appId: 'the-other-key',
+            waitTimeInterval: 3,
+          },
+        };
+        const webHooks = {
+          asdf: {
+            id: 'asdf',
+            name: 'Fubar',
+            url: 'http://www.localhost:3000/uptime',
+            targetId: 'the-other-key',
+            intervalMinutes: 3,
+            description: 'asdfasdf',
+            eventTypes: [
+              { id: 'status-service:monitored-service-down' },
+              { id: 'status-service:monitored-service-up' },
+            ],
+          },
+        };
+        getEndpointResponse.mockResolvedValueOnce({ status: 200 });
+        endpointRepositoryMock.save.mockImplementationOnce((entity) => entity);
+        endpointRepositoryMock.findRecentByUrlAndApplicationId.mockReturnValue([
+          {
+            ok: false,
+            url: 'https//test.co',
+            status: 500,
+            timestamp: new Date(),
+            responseTime: 250,
+          },
+          {
+            ok: false,
+            url: 'https//test.co',
+            status: 500,
+            timestamp: new Date(),
+            responseTime: 250,
+          },
+          {
+            ok: false,
+            url: 'https//test.co',
+            status: 500,
+            timestamp: new Date(),
+            responseTime: 250,
+          },
+        ]);
+        mockTokenProvider.getAccessToken.mockResolvedValueOnce('test');
+
+        axiosMock.get
+          .mockResolvedValueOnce({ data: { latest: { configuration: { webhooks: webHooks } } } })
+          .mockResolvedValueOnce({
+            data: { latest: { configuration: { applicationWebhookIntervals: applicationWebhookIntervals } } },
+          });
+        statusRepositoryMock.get.mockResolvedValueOnce(
+          new ServiceStatusApplicationEntity(statusRepositoryMock, {
+            _id: 'test-app',
+            endpoint: { status: 'online' },
+          } as ServiceStatusApplication)
+        );
+        statusRepositoryMock.save.mockImplementationOnce((entity) => entity);
+        await job();
+        expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'monitored-service-down' }));
+      });
+
+      it('does not send a managed application down event because app is already down', async () => {
+        const applicationWebhookIntervals = {
+          asdf: {
+            appId: 'the-other-key',
+            waitTimeInterval: 3,
+          },
+        };
+        const webHooks = {
+          asdf: {
+            id: 'asdf',
+            name: 'Fubar',
+            url: 'http://www.localhost:3000/uptime',
+            targetId: 'the-other-key',
+            intervalMinutes: 3,
+            description: 'asdfasdf',
+            eventTypes: [
+              { id: 'status-service:monitored-service-down' },
+              { id: 'status-service:monitored-service-up' },
+            ],
+            appCurrentlyUp: false,
+          },
+        };
+        getEndpointResponse.mockResolvedValueOnce({ status: 200 });
+        endpointRepositoryMock.save.mockImplementationOnce((entity) => entity);
+        endpointRepositoryMock.findRecentByUrlAndApplicationId.mockReturnValue([
+          {
+            ok: false,
+            url: 'https//test.co',
+            status: 500,
+            timestamp: new Date(),
+            responseTime: 250,
+          },
+          {
+            ok: false,
+            url: 'https//test.co',
+            status: 500,
+            timestamp: new Date(),
+            responseTime: 250,
+          },
+          {
+            ok: false,
+            url: 'https//test.co',
+            status: 500,
+            timestamp: new Date(),
+            responseTime: 250,
+          },
+        ]);
+        mockTokenProvider.getAccessToken.mockResolvedValueOnce('test');
+
+        axiosMock.get.mockResolvedValueOnce({ data: { latest: { configuration: webHooks } } }).mockResolvedValueOnce({
+          data: { latest: { configuration: { applicationWebhookIntervals: applicationWebhookIntervals } } },
+        });
+        statusRepositoryMock.get.mockResolvedValueOnce(
+          new ServiceStatusApplicationEntity(statusRepositoryMock, {
+            _id: 'test-app',
+            endpoint: { status: 'online' },
+          } as ServiceStatusApplication)
+        );
+        statusRepositoryMock.save.mockImplementationOnce((entity) => entity);
+        await job();
+        expect(eventServiceMock.send).not.toHaveBeenCalledWith(
+          expect.objectContaining({ name: 'monitored-service-down' })
+        );
+      });
+
+      it('sends a managed application up event', async () => {
+        const applicationWebhookIntervals = {
+          asdf: {
+            appId: 'the-other-key',
+            waitTimeInterval: 3,
+          },
+        };
+        const webHooks = {
+          asdf: {
+            id: 'asdf',
+            name: 'Fubar',
+            url: 'http://www.localhost:3000/uptime',
+            targetId: 'the-other-key',
+            description: 'asdfasdf',
+            eventTypes: [
+              { id: 'status-service:monitored-service-down' },
+              { id: 'status-service:monitored-service-up' },
+            ],
+          },
+        };
+        getEndpointResponse.mockResolvedValueOnce({ status: 200 });
+        endpointRepositoryMock.save.mockImplementationOnce((entity) => entity);
+        endpointRepositoryMock.findRecentByUrlAndApplicationId.mockReturnValue([
+          {
+            ok: true,
+            url: 'https//test.co',
+            status: 200,
+            timestamp: new Date(),
+            responseTime: 250,
+          },
+          {
+            ok: true,
+            url: 'https//test.co',
+            status: 200,
+            timestamp: new Date(),
+            responseTime: 250,
+          },
+          {
+            ok: true,
+            url: 'https//test.co',
+            status: 200,
+            timestamp: new Date(),
+            responseTime: 250,
+          },
+        ]);
+        mockTokenProvider.getAccessToken.mockResolvedValueOnce('test');
+
+        axiosMock.get
+          .mockResolvedValueOnce({ data: { latest: { configuration: { webhooks: webHooks } } } })
+          .mockResolvedValueOnce({
+            data: { latest: { configuration: { applicationWebhookIntervals: applicationWebhookIntervals } } },
+          });
+        statusRepositoryMock.get.mockResolvedValueOnce(
+          new ServiceStatusApplicationEntity(statusRepositoryMock, {
+            _id: 'test-app',
+            endpoint: { status: 'online' },
+          } as ServiceStatusApplication)
+        );
+        axiosMock.patch.mockResolvedValueOnce('success');
+        statusRepositoryMock.save.mockImplementationOnce((entity) => entity);
+        await job();
+        expect(eventServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ name: 'monitored-service-up' }));
+      });
+
       it('can not update when status unchanged', async () => {
+        const applicationWebhookIntervals = {
+          asdf: {
+            appId: 'the-other-key',
+            waitTimeInterval: 3,
+          },
+        };
+
         getEndpointResponse.mockResolvedValueOnce({ status: 200 });
         endpointRepositoryMock.save.mockImplementationOnce((entity) => entity);
         endpointRepositoryMock.findRecentByUrlAndApplicationId.mockReturnValueOnce([
@@ -178,6 +410,11 @@ describe('checkEndpoint', () => {
             responseTime: 250,
           },
         ]);
+        mockTokenProvider.getAccessToken.mockResolvedValueOnce('test');
+
+        axiosMock.get.mockResolvedValueOnce({ data: { latest: { configuration: {} } } }).mockResolvedValueOnce({
+          data: { latest: { configuration: { applicationWebhookIntervals: applicationWebhookIntervals } } },
+        });
         statusRepositoryMock.get.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',

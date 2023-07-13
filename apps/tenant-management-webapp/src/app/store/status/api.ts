@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import addAuthTokenInterceptor from './authTokenInterceptor';
-import { EndpointStatusEntry, ApplicationStatus, MetricResponse } from './models';
+import { EndpointStatusEntry, ApplicationStatus, MetricResponse, Webhooks, ApplicationWebhooks } from './models';
 
 export class StatusApi {
   private http: AxiosInstance;
@@ -22,13 +22,12 @@ export class StatusApi {
   }
 
   async saveApplication(props: ApplicationStatus): Promise<ApplicationStatus> {
-    if (props.appKey) {
-      const res = await this.http.put(`/applications/${encodeURIComponent(props.appKey)}`, props);
-      return res.data;
-    } else {
-      const res = await this.http.post(`/applications`, props);
-      return res.data;
-    }
+    const res = await this.http.post(`/applications`, props);
+    return res.data;
+  }
+  async updateApplication(props: ApplicationStatus): Promise<ApplicationStatus> {
+    const res = await this.http.put(`/applications/${encodeURIComponent(props.appKey)}`, props);
+    return res.data;
   }
 
   async deleteApplication(appKey: string): Promise<void> {
@@ -44,6 +43,11 @@ export class StatusApi {
     const res = await this.http.patch(`/applications/${applicationId}/toggle`, { enabled });
     return res.data;
   }
+
+  async testWebhook(webhook: Webhooks, eventName: string): Promise<object> {
+    const res = await this.http.get(`/webhook/${webhook.id}/test/${eventName}`);
+    return res.data;
+  }
 }
 
 // Paul: 2023-Jan-03, we start to use simple function for Apis.
@@ -51,3 +55,49 @@ export const fetchStatusMetricsApi = async (url: string, token: string): Promise
   const res = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
   return res.data;
 };
+
+export class WebhookApi {
+  private http: AxiosInstance;
+  constructor(baseUrl: string, token: string) {
+    this.http = axios.create({ baseURL: `${baseUrl}/configuration/v2/configuration/platform` });
+    addAuthTokenInterceptor(this.http, token);
+  }
+
+  async saveWebhookPush(props: Record<string, Webhooks>): Promise<object> {
+    const body = {
+      operation: 'UPDATE',
+      update: { webhooks: props },
+    };
+
+    const res = await this.http.patch(`/push-service`, body);
+    return res.data;
+  }
+  async saveWebhookStatus(props: ApplicationWebhooks): Promise<object> {
+    const body = {
+      operation: 'UPDATE',
+      update: props,
+    };
+
+    const res = await this.http.patch(`/status-service`, body);
+    return res.data;
+  }
+  async fetchWebhookPush(): Promise<object> {
+    const res = await this.http.get(`/push-service`);
+
+    return res.data;
+  }
+  async fetchWebhookStatus(): Promise<object> {
+    const res = await this.http.get(`/status-service`);
+
+    return res.data;
+  }
+
+  async deleteWebhook(id: string): Promise<object> {
+    const res = await this.http.patch(`/push-service`, {
+      operation: 'DELETE',
+      property: { webhook: id },
+    });
+
+    return res.data;
+  }
+}

@@ -88,7 +88,7 @@ public class ScriptController : ControllerBase
 
     Func<Task<string>> getToken = definition.UseServiceAccount == true ?
       () => _tokenProvider.GetAccessToken() :
-      () => Task.FromResult(HttpContext.Request.Headers[HeaderNames.Authorization].First()[TOKEN_INDEX..]);
+      () => Task.FromResult(HttpContext.Request.Headers[HeaderNames.Authorization].First()![TOKEN_INDEX..]);
 
     using (HttpContext.Benchmark("run-script-time"))
     {
@@ -122,11 +122,11 @@ public class ScriptController : ControllerBase
     }
     var user = HttpContext.GetAdspUser();
 
+    Task<string> getToken() => Task.FromResult(HttpContext.Request.Headers[HeaderNames.Authorization].First()![TOKEN_INDEX..]);
+
     using (HttpContext.Benchmark("run-script-time"))
     {
-      var outputs = _luaService.TestScript(
-        request.Inputs, request.Script, user!.Tenant!.Id!
-      );
+      var outputs = _luaService.TestScript(request.Inputs, getToken, request.Script, user!.Tenant!.Id!);
 
       return outputs;
     }

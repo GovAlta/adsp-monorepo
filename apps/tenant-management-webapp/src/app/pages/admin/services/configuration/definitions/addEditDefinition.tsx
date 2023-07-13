@@ -6,10 +6,17 @@ import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experime
 import { ConfigDefinition } from '@store/configuration/model';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
-import { useValidators } from '@lib/useValidators';
-import { characterCheck, validationPattern, isNotEmptyCheck, isValidJSONCheck, Validator } from '@lib/checkInput';
+import { useValidators } from '@lib/validation/useValidators';
+import {
+  isNotEmptyCheck,
+  isValidJSONCheck,
+  Validator,
+  duplicateNameCheck,
+  wordMaxLengthCheck,
+  badCharsCheck,
+} from '@lib/validation/checkInput';
 import styled from 'styled-components';
-
+import { GoATextArea } from '@abgov/react-components-new';
 interface AddEditConfigDefinitionProps {
   onSave: (definition: ConfigDefinition) => void;
   initialValue: ConfigDefinition;
@@ -27,25 +34,13 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
   onClose,
   configurations,
 }) => {
-  const getIdentifer = () => {
-    return Object.keys(configurations);
-  };
   const [definition, setDefinition] = useState<ConfigDefinition>(initialValue);
   const [payloadSchema, setPayloadSchema] = useState<string>(JSON.stringify(definition.configurationSchema, null, 2));
   const [spinner, setSpinner] = useState<boolean>(false);
-  const identifiers = getIdentifer();
-  const checkForBadChars = characterCheck(validationPattern.mixedKebabCase);
+  const identifiers = Object.keys(configurations);
   const loadingIndicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
-  const duplicateConfigCheck = (identifiers: string[]): Validator => {
-    return (identifier: string) => {
-      return identifiers.includes(identifier) ? `Duplicated event ${identifier}.` : '';
-    };
-  };
-
-  const MAX_NAME_LENGTH = 32;
-  const MAX_NAMESPACE_LENGTH = 32;
 
   const namespaceCheck = (): Validator => {
     return (namespace: string) => {
@@ -53,20 +48,18 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
     };
   };
 
-  const descriptionCheck = (): Validator => (description: string) =>
-    description.length > 250 ? 'Description could not over 250 characters ' : '';
-
   const { errors, validators } = useValidators(
     'namespace',
     'namespace',
-    checkForBadChars,
+    badCharsCheck,
     namespaceCheck(),
-    isNotEmptyCheck('namespace')
+    isNotEmptyCheck('namespace'),
+    wordMaxLengthCheck(32, 'Namespace')
   )
-    .add('name', 'name', checkForBadChars, isNotEmptyCheck('name'))
-    .add('duplicated', 'name', duplicateConfigCheck(identifiers))
+    .add('name', 'name', badCharsCheck, isNotEmptyCheck('name'), wordMaxLengthCheck(32, 'Name'))
+    .add('duplicated', 'name', duplicateNameCheck(identifiers, 'Configuration'))
     .add('payloadSchema', 'payloadSchema', isValidJSONCheck('payloadSchema'))
-    .add('description', 'description', descriptionCheck())
+    .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .build();
 
   useEffect(() => {
@@ -117,10 +110,9 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
                   data-testid="form-namespace"
                   aria-label="nameSpace"
                   onChange={(key, value) => {
-                    const namespace = value.substring(0, MAX_NAMESPACE_LENGTH);
                     validators.remove('namespace');
-                    validators['namespace'].check(namespace);
-                    setDefinition({ ...definition, namespace });
+                    validators['namespace'].check(value);
+                    setDefinition({ ...definition, namespace: value });
                   }}
                 />
               </GoAFormItem>
@@ -134,24 +126,22 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
                   data-testid="form-name"
                   aria-label="name"
                   onChange={(key, value) => {
-                    const name = value.substring(0, MAX_NAME_LENGTH);
                     validators.remove('name');
-                    validators['name'].check(name);
-                    setDefinition({ ...definition, name });
+                    validators['name'].check(value);
+                    setDefinition({ ...definition, name: value });
                   }}
                 />
               </GoAFormItem>
               <GoAFormItem error={errors?.['description']}>
                 <label>Description</label>
-                <textarea
+                <GoATextArea
                   name="description"
                   value={definition.description}
-                  data-testid="form-description"
+                  testId="form-description"
                   aria-label="description"
-                  className="goa-textarea"
-                  maxLength={250}
-                  onChange={(e) => {
-                    const description = e.target.value;
+                  width="100%"
+                  onChange={(name, value) => {
+                    const description = value;
                     validators.remove('description');
                     validators['description'].check(description);
                     setDefinition({ ...definition, description });

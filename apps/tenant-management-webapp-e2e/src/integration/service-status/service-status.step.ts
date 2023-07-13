@@ -47,18 +47,20 @@ Then('the user views Add notice dialog', function () {
 When(
   'the user enters {string}, {string}, {string}, {string}, {string}, {string} on notice dialog',
   function (desc, app, startDate, startTime, endDate, endTime) {
-    statusObj.noticeModalDescField().clear({ force: true }).type(desc);
+    statusObj.noticeModalDescField().shadow().find('.goa-textarea').clear({ force: true }).type(desc, { force: true });
     // Select Application
     if (app == 'All') {
-      statusObj.noticeModalAllApplicationsCheckbox().click();
+      statusObj.noticeModalAllApplicationsCheckbox().shadow().find('.goa-checkbox-container').click();
     } else {
       // Uncheck All applications checkbox if checked
       statusObj
         .noticeModalAllApplicationsCheckbox()
+        .shadow()
+        .find('.goa-checkbox-container')
         .invoke('attr', 'class')
         .then((classAttr) => {
           if (classAttr?.includes('-selected')) {
-            statusObj.noticeModalAllApplicationsCheckbox().click();
+            statusObj.noticeModalAllApplicationsCheckbox().shadow().find('.goa-checkbox-container').click();
           }
         });
       statusObj.noticeModalApplicationDropdown().click();
@@ -475,7 +477,12 @@ When(
   'the user enters {string} as name and {string} as description and {string} as endpoint',
   function (name, description, endpoint) {
     statusObj.addApplicationNameModalField().clear().type(name);
-    statusObj.addApplicationDescriptionModalField().clear().type(description);
+    statusObj
+      .addApplicationDescriptionModalField()
+      .shadow()
+      .find('.goa-textarea')
+      .clear()
+      .type(description, { force: true });
     statusObj.addApplicationEndpointModalField().clear().type(endpoint);
   }
 );
@@ -527,6 +534,8 @@ Then(
       });
     statusObj
       .addApplicationDescriptionModalField()
+      .shadow()
+      .find('.goa-textarea')
       .invoke('val')
       .then((val) => {
         expect(val).to.eq(description);
@@ -536,7 +545,12 @@ Then(
 
 When('the user enters {string} as name and {string} as description fields', function (appName, description) {
   statusObj.addApplicationNameModalField().clear().type(appName);
-  statusObj.addApplicationDescriptionModalField().clear().type(description);
+  statusObj
+    .addApplicationDescriptionModalField()
+    .shadow()
+    .find('.goa-textarea')
+    .clear()
+    .type(description, { force: true });
 });
 
 When('the user clicks Change status button for {string}', function (appName) {

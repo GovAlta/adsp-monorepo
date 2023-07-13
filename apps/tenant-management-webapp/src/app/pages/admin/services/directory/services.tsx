@@ -1,125 +1,67 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@store/index';
 import { fetchDirectory } from '@store/directory/actions';
-import { Service, defaultService } from '@store/directory/models';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
 import { GoAButton } from '@abgov/react-components';
-import { DeleteModal } from '@components/DeleteModal';
-import { DirectoryModal } from './directoryModal';
-import { deleteEntry } from '@store/directory/actions';
+import { DirectoryModal } from './modals/editModal';
 import { ServiceTableComponent } from './serviceList';
-import { toKebabName } from '@lib/kebabName';
 import styled from 'styled-components';
+import { DirectoryDeleteModal } from './modals/deleteModal';
+import { selectDirectory } from '@store/directory/selectors';
+import { selectTenantName, selectPageIndicator } from '@store/session/selectors';
+import { selectSortedDirectory } from '@store/directory/selectors';
+import { UpdateModalState } from '@store/session/actions';
+import { AddModalType } from '@store/directory/models';
 
-export const DirectoryService: FunctionComponent = () => {
+export const DirectoryService = (): JSX.Element => {
   const dispatch = useDispatch();
-  const [modalType, setModalType] = useState('');
-  const [editEntry, setEditEntry] = useState(false);
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<Service>(defaultService);
+  const { tenantDirectory, coreDirectory } = useSelector(selectSortedDirectory);
 
   useEffect(() => {
     dispatch(fetchDirectory());
   }, []);
 
   const coreTenant = 'Platform';
-  const tenantName = useSelector((state: RootState) => state.tenant?.name);
-  const { directory } = useSelector((state: RootState) => state.directory);
+  const tenantName = useSelector(selectTenantName);
+  const directory = useSelector(selectDirectory);
+  const indicator = useSelector(selectPageIndicator);
 
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
-
-  const reset = () => {
-    setEditEntry(false);
-    setSelectedEntry(defaultService);
-  };
-
-  const onEdit = (service) => {
-    setSelectedEntry(service);
-    setModalType('edit');
-    setEditEntry(true);
-  };
-  const onDelete = (service) => {
-    setShowDeleteConfirmation(true);
-    setSelectedEntry(service);
-  };
-
-  const onQuickAdd = (service) => {
-    setSelectedEntry(service);
-    setModalType('quickAdd');
-    setEditEntry(true);
-  };
   return (
     <>
-      {indicator.show && <PageIndicator />}
+      <PageIndicator />
+      <DirectoryDeleteModal />
+      <DirectoryModal />
+
       {!indicator.show && !directory && renderNoItem('directory')}
       {!indicator.show && directory && (
         <div>
           <p>Add your own entry so they can be found using the directory.</p>
 
-          {tenantName !== coreTenant && (
+          {tenantDirectory && (
             <>
               <NameDiv>{tenantName}</NameDiv>
               <GoAButton
                 data-testid="add-directory-btn"
                 onClick={() => {
-                  defaultService.namespace = toKebabName(tenantName);
-                  setSelectedEntry(defaultService);
-                  setModalType('new');
-                  setEditEntry(true);
+                  dispatch(
+                    UpdateModalState({
+                      type: AddModalType,
+                      id: null,
+                      isOpen: true,
+                    })
+                  );
                 }}
               >
                 Add entry
               </GoAButton>
 
-              <ServiceTableComponent
-                namespace={tenantName}
-                directory={directory}
-                isCore={false}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onQuickAdd={onQuickAdd}
-              />
+              <ServiceTableComponent key="directory-tenant-table" directory={tenantDirectory} />
             </>
           )}
           <NameDiv>{coreTenant}</NameDiv>
-          <ServiceTableComponent
-            namespace={coreTenant.toLowerCase()}
-            directory={directory}
-            isCore={true}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onQuickAdd={onQuickAdd}
-          />
+          <ServiceTableComponent key="directory-core-table" directory={coreDirectory} />
         </div>
-      )}
-      {/* Delete confirmation */}
-      {showDeleteConfirmation && (
-        <DeleteModal
-          isOpen={showDeleteConfirmation}
-          title="Delete entry"
-          content={`Delete ${
-            selectedEntry?.api ? `${selectedEntry?.service}:${selectedEntry?.api}` : selectedEntry.service
-          }?`}
-          onCancel={() => setShowDeleteConfirmation(false)}
-          onDelete={() => {
-            setShowDeleteConfirmation(false);
-            dispatch(deleteEntry(selectedEntry));
-          }}
-        />
-      )}
-      {editEntry && (
-        <DirectoryModal
-          open={true}
-          entry={selectedEntry}
-          type={modalType}
-          onCancel={() => {
-            reset();
-          }}
-        />
       )}
     </>
   );

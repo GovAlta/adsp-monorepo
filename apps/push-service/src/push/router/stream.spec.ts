@@ -1,4 +1,4 @@
-import { adspId, TenantService, User } from '@abgov/adsp-service-sdk';
+import { adspId, TenantService, EventService, User, TokenProvider } from '@abgov/adsp-service-sdk';
 import { DomainEventSubscriberService, InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request, Response } from 'express';
 import { of } from 'rxjs';
@@ -16,6 +16,14 @@ describe('stream router', () => {
     on: jest.fn(),
   };
 
+  const tokenProviderMock = {
+    getAccessToken: jest.fn(),
+  };
+
+  const configurationServiceMock = {
+    getConfiguration: jest.fn(),
+  };
+
   const loggerMock = {
     debug: jest.fn(),
     info: jest.fn(),
@@ -26,10 +34,14 @@ describe('stream router', () => {
     getTenantByName: jest.fn(),
   };
 
-  const eventServiceMock = {
+  const eventServiceAmpMock = {
     enqueue: jest.fn(),
     getItems: jest.fn(() => of()),
     isConnected: jest.fn(),
+  };
+
+  const eventServiceMock = {
+    send: jest.fn(),
   };
 
   let stream: StreamEntity = new StreamEntity(tenantId, {
@@ -66,8 +78,12 @@ describe('stream router', () => {
   it('createStreamRouter', () => {
     const router = createStreamRouter([ioMock as unknown as Namespace], {
       logger: loggerMock,
-      eventService: eventServiceMock as DomainEventSubscriberService,
+      eventServiceAmp: eventServiceAmpMock as DomainEventSubscriberService,
+      eventService: eventServiceMock as EventService,
       tenantService: tenantServiceMock as unknown as TenantService,
+      tokenProvider: tokenProviderMock as unknown as TokenProvider,
+      configurationService: configurationServiceMock,
+      serviceId: adspId`urn:ads:platform:push-service`,
     });
 
     expect(router).toBeTruthy();

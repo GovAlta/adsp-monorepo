@@ -1,10 +1,19 @@
+import { defaultTemplateBody } from '../../store/pdf/defaultTemplates/body';
+import { defaultTemplateHeader } from '../../store/pdf/defaultTemplates/header';
+import { defaultTemplateFooter } from '../../store/pdf/defaultTemplates/footer';
+import { defaultTemplateCss } from '../../store/pdf/defaultTemplates/css';
+import { defaultAssignments } from '../../store/pdf/defaultTemplates/assignments';
+
 export interface PdfTemplate {
   id: string;
   name: string;
   description: string;
   template: string;
   header: string;
+  additionalStyles: string;
   footer: string;
+  variables?: string;
+  startWithDefault?: boolean;
 }
 
 export interface PdfGenerationResponse {
@@ -20,7 +29,15 @@ export interface PdfGenerationResponse {
     jobId?: string;
     templateId?: string;
   };
+  payload?: {
+    file?: {
+      id?: string;
+    };
+    error?: string;
+  };
+  //eslint-disable-next-line
   data: any;
+  //eslint-disable-next-line
   stream: any;
   name?: string;
   fileWasGenerated: boolean;
@@ -77,6 +94,7 @@ interface Stream {
       id: string;
       filename: string;
     };
+    error?: string;
     requestedBy: {
       id: string;
       name: string;
@@ -89,15 +107,41 @@ export interface PdfState {
   metrics: PdfMetrics;
   stream: Stream[];
   jobs: PdfGenerationResponse[];
+  reloadFile: Record<string, string>;
   status: string[];
+  files: Record<string, Blob>;
+  currentFile: Blob;
+  currentId: string;
   socketChannel: SocketChannel;
+  tempTemplate: PdfTemplate;
+  openEditor: string;
 }
 
 export const defaultPdfTemplate: PdfTemplate = {
   id: '',
   name: '',
   description: '',
-  template: '',
-  header: '',
-  footer: '',
+  template: defaultTemplateBody,
+  startWithDefault: true,
+  additionalStyles: defaultTemplateCss,
+  header: defaultTemplateHeader,
+  footer: defaultTemplateFooter,
+  variables: defaultAssignments,
 };
+
+export interface UpdatePdfConfig {
+  operation: string;
+  update: Record<string, PdfTemplate>;
+}
+export interface DeletePdfConfig {
+  operation: string;
+  property: string;
+}
+
+export interface CreatePdfConfig {
+  operation: string;
+  templateId: string;
+  // eslint-disable-next-line
+  data: Record<string, any>;
+  filename: string;
+}

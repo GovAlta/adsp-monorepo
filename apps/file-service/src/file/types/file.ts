@@ -13,6 +13,7 @@ export interface File {
   createdBy: UserInfo;
   created: Date;
   lastAccessed?: Date;
+  retentionDays?: number
 }
 
 export interface FileRecord extends File {
@@ -29,6 +30,8 @@ export interface FileCriteria {
   infected?: boolean;
   typeEquals?: string;
   recordIdEquals?: string;
+  lastAccessedBefore?: string;
+  lastAccessedAfter?: string;
 }
 
 export type NewFile = {

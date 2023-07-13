@@ -17,7 +17,6 @@ export const GET_ALL_TYPE_SUBSCRIPTIONS = 'tenant/subscriber-service/get-all-typ
 export const GET_TYPE_SUBSCRIPTIONS = 'tenant/subscriber-service/get-type-subscription';
 export const GET_TYPE_SUBSCRIPTIONS_SUCCESS = 'tenant/subscriber-service/get-type-subscription-success';
 export const GET_SUBSCRIBER_SUBSCRIPTIONS = 'tenant/subscriber-service/get-subscription-subscriber';
-export const GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS = 'tenant/subscriber-service/get-subscription-subscriber-success';
 
 export const FIND_SUBSCRIBERS = 'tenant/subscriber-service/find-subscribers';
 export const FIND_SUBSCRIBERS_SUCCESS = 'tenant/subscriber-service/find-subscribers/success';
@@ -41,7 +40,6 @@ export type ActionTypes =
   | FindSubscribersSuccessAction
   | UpdateSubscriberSuccessAction
   | GetTypeSubscriptionsSuccessAction
-  | GetSubscriberSubscriptionsSuccessAction
   | ResolveSubscriberUserAction
   | ResolveSubscriberUserSuccessAction
   | DeleteSubscriberSuccessAction
@@ -122,17 +120,6 @@ export interface GetSubscriberSubscriptionsAction {
     after: string;
   };
 }
-
-export interface GetSubscriberSubscriptionsSuccessAction {
-  type: typeof GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS;
-  payload: {
-    subscriptions: SubscriptionWrapper[];
-    subscriber: Subscriber;
-    after: string;
-    next: string;
-  };
-}
-
 export interface ResolveSubscriberUserAction {
   type: typeof RESOLVE_SUBSCRIBER_USER;
   payload: {
@@ -285,21 +272,6 @@ export const GetSubscriberSubscriptions = (
 ): GetSubscriberSubscriptionsAction => ({
   type: GET_SUBSCRIBER_SUBSCRIPTIONS,
   payload: { subscriber, after },
-});
-
-export const GetSubscriberSubscriptionsSuccess = (
-  subscriptions: SubscriptionWrapper[],
-  subscriber: Subscriber,
-  after: string,
-  next: string
-): GetSubscriberSubscriptionsSuccessAction => ({
-  type: GET_SUBSCRIBER_SUBSCRIPTIONS_SUCCESS,
-  payload: {
-    subscriptions,
-    subscriber,
-    after,
-    next,
-  },
 });
 
 export const FindSubscribers = (criteria: SubscriberSearchCriteria): FindSubscribersAction => ({

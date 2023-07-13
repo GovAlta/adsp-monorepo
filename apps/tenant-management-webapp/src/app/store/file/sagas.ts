@@ -5,6 +5,7 @@ import FormData from 'form-data';
 import { UpdateIndicator } from '@store/session/actions';
 import {
   FetchFilesSuccessService,
+  FetchFileSuccessService,
   UploadFileSuccessService,
   FetchFileTypeSucceededService,
   UpdateFileTypeSucceededService,
@@ -22,6 +23,7 @@ import {
   DOWNLOAD_FILE,
   FETCH_FILE_LIST,
   FETCH_FILE_TYPE,
+  FETCH_FILE,
   FETCH_FILE_TYPE_HAS_FILE,
   UPDATE_FILE_TYPE,
   UPLOAD_FILE,
@@ -29,6 +31,7 @@ import {
   FetchFileMetricsSucceeded,
   FETCH_FILE_METRICS,
   FetchFilesAction,
+  FetchFileAction,
 } from './actions';
 
 import { FileApi } from './api';
@@ -70,7 +73,7 @@ export function* fetchFiles(action: FetchFilesAction): SagaIterator {
     const token = yield call(getAccessToken);
     const api = new FileApi(state.config, token, action.after);
 
-    const files = yield call([api, api.fetchFiles]);
+    const files = yield call([api, api.fetchFiles], action.criteria);
     yield put(FetchFilesSuccessService({ data: files.results, after: files.page.after, next: files.page.next }));
 
     yield put(
@@ -78,6 +81,32 @@ export function* fetchFiles(action: FetchFilesAction): SagaIterator {
         show: false,
       })
     );
+  } catch (e) {
+    yield put(ErrorNotification({ message: e.message }));
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
+  }
+}
+
+export function* fetchFile(action: FetchFileAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading File...',
+    })
+  );
+
+  const state = yield select();
+  try {
+    const token = yield call(getAccessToken);
+    const api = new FileApi(state.config, token, action.after);
+
+    const file = yield call([api, api.fetchFile], action.fileId);
+
+    yield put(FetchFileSuccessService({ data: file }));
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
     yield put(
@@ -207,6 +236,7 @@ export function* createFileType({ payload }: CreateFileTypeAction): SagaIterator
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
   const token: string = yield call(getAccessToken);
+  const { hasFile, ...config } = payload;
 
   if (configBaseUrl && token) {
     try {
@@ -216,13 +246,7 @@ export function* createFileType({ payload }: CreateFileTypeAction): SagaIterator
         {
           operation: 'UPDATE',
           update: {
-            [payload.id]: {
-              id: payload.id,
-              name: payload.name,
-              anonymousRead: payload.anonymousRead,
-              readRoles: payload.readRoles,
-              updateRoles: payload.updateRoles,
-            },
+            [payload.id]: config
           },
         },
         {
@@ -243,6 +267,8 @@ export function* updateFileType({ payload }: UpdateFileTypeAction): SagaIterator
   const token: string = yield call(getAccessToken);
 
   if (configBaseUrl && token) {
+    const { hasFile, ...config } = payload;
+
     try {
       yield call(
         axios.patch,
@@ -250,13 +276,7 @@ export function* updateFileType({ payload }: UpdateFileTypeAction): SagaIterator
         {
           operation: 'UPDATE',
           update: {
-            [payload.id]: {
-              id: payload.id,
-              name: payload.name,
-              anonymousRead: payload.anonymousRead,
-              readRoles: payload.readRoles,
-              updateRoles: payload.updateRoles,
-            },
+            [payload.id]: config,
           },
         },
         {
@@ -326,6 +346,7 @@ export function* watchFileSagas(): Generator {
   yield takeEvery(DOWNLOAD_FILE, downloadFile);
   yield takeEvery(DELETE_FILE, deleteFile);
   yield takeEvery(FETCH_FILE_LIST, fetchFiles);
+  yield takeEvery(FETCH_FILE, fetchFile);
   yield takeEvery(FETCH_FILE_TYPE_HAS_FILE, fetchFileTypeHasFile);
 
   yield takeEvery(FETCH_FILE_TYPE, fetchFileTypes);

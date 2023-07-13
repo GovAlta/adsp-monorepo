@@ -8,6 +8,7 @@ import { RootState } from '@store/index';
 import { GoARadio } from '@abgov/react-components';
 import { renderNoItem } from '@components/NoItem';
 import NoticeModal from './noticeModal';
+import { createSelector } from 'reselect';
 
 type filterOptionOnSelect = (option: string) => void;
 
@@ -42,6 +43,15 @@ const NoticeListFilterContainer = styled.div`
   justify-content: center;
   flex-wrap: wrap;
 `;
+
+export const selectStatusIdentifiers = createSelector(
+  (state: RootState) => state.serviceStatus?.applications || [],
+  (applications) => {
+    return applications.map((app) => {
+      return `${app.appKey}:${app.name}`;
+    });
+  }
+);
 
 export const NoticeListFilter = (props: NoticeListFilterProps): JSX.Element => {
   const { option, onSelect } = props;
@@ -112,6 +122,8 @@ export const NoticeList = (): JSX.Element => {
   const { notices } = useSelector((state: RootState) => ({
     notices: state.notice?.notices,
   }));
+
+  const applicationIdentifiers = useSelector(selectStatusIdentifiers);
   const [openMenuId, setOpenMenuId] = useState<string>(null);
 
   const filterOnSelectFn = (option: string) => {
@@ -192,6 +204,13 @@ export const NoticeList = (): JSX.Element => {
                     setShowEditModalId(notice.id);
                   }}
                   isMenuOpen={openMenuId === notice.id}
+                  isOrphaned={
+                    notice?.tennantServRef &&
+                    notice?.tennantServRef.length > 0 &&
+                    !applicationIdentifiers.includes(
+                      `${notice?.tennantServRef[0]['id']}:${notice?.tennantServRef[0]['name']}`
+                    )
+                  }
                 />
               </GridItem>
             ))}

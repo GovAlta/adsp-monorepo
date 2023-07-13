@@ -1,5 +1,5 @@
+import { FunctionComponent, useEffect } from 'react';
 import { recaptchaScriptLoaded } from '@store/config/actions';
-import React, { FunctionComponent, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 
 interface RecaptchaProps {

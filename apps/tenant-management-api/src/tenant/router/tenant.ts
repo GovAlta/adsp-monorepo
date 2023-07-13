@@ -126,6 +126,7 @@ export const createTenantRouter = ({ tenantRepository, eventService, realmServic
     const realm = req.user.token.iss.split('/').pop();
 
     try {
+      logger.info(`Start to fetch ${realm} realm roles`);
       const client = await createkcAdminClient();
       const roles = await client.roles.find({ realm });
       res.json({

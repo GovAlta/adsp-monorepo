@@ -12,7 +12,21 @@ export interface SubscriptionWrapper {
   subscriber?: Subscriber;
   subscriberId?: string;
   typeId?: string;
-  criterial?: string;
+  criteria?: string;
+}
+
+export interface SubscriberSubscriptions {
+  subscriberId?: string;
+  typeId?: string;
+  criteria?: string;
+  type: {
+    channels: Channels[];
+    description: string;
+    id: string;
+    manageSubscribe: boolean;
+    name: string;
+    publicSubscriber: boolean;
+  };
 }
 
 export interface Channels {
@@ -55,13 +69,6 @@ export interface SubscriberService {
       next: string;
     }
   >;
-  subscriberSubscriptionSearch: Record<
-    string,
-    {
-      results: string[];
-      next: string;
-    }
-  >;
   successMessage: string;
   updateError: string;
 }
@@ -74,7 +81,6 @@ export const SUBSCRIBER_INIT: SubscriberService = {
     next: null,
   },
   typeSubscriptionSearch: {},
-  subscriberSubscriptionSearch: {},
   successMessage: null,
   updateError: '',
 };

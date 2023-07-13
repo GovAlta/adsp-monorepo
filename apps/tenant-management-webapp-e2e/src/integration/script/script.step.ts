@@ -36,7 +36,7 @@ When(
   function (name, desc, useServiceAcct, role) {
     const roles = role.split(',');
     scriptObj.addScriptModalNameField().clear().type(name);
-    scriptObj.addScriptModalDescriptionField().clear().type(desc);
+    scriptObj.addScriptModalDescriptionField().shadow().find('.goa-textarea').clear().type(desc, { force: true });
     switch (useServiceAcct) {
       case 'yes':
         scriptObj.addScriptModalUseServiceAccountCheckbox().shadow().find('.goa-checkbox-container').click();
@@ -62,7 +62,7 @@ When(
 );
 
 When('the user clicks Save button in Add script modal', function () {
-  scriptObj.scriptModalSaveButton().click();
+  scriptObj.scriptModalSaveButton().click({ force: true });
   cy.wait(2000);
 });
 
@@ -149,7 +149,7 @@ When(
       cy.wait(1000); // Wait for buttons to show up
       switch (button.toLowerCase()) {
         case 'edit':
-          scriptObj.scriptEditButton(rowNumber).click();
+          scriptObj.scriptEditButton(rowNumber).click({ force: true });
           break;
           break;
         case 'delete':
@@ -168,17 +168,16 @@ Then('the user views Edit script modal', function () {
 
 When('the user enters {string} as name {string} as description in Edit script modal', function (name, description) {
   scriptObj.editScriptModalNameField().clear().type(name);
-  scriptObj.editScriptModalDescriptionField().clear().type(description);
+  scriptObj.editScriptModalDescriptionField().shadow().find('.goa-textarea').clear().type(description, { force: true });
 });
 
 When('the user enters {string} as lua script', function (script) {
   scriptObj
     .editScriptModalLuaScriptEditor()
-    .click()
+    .click({ force: true })
     .focus()
-    .type('{ctrl}a')
-    .clear()
-    .type(script, { parseSpecialCharSequences: false });
+    .clear({ force: true })
+    .type(script, { force: true });
 });
 
 When('the user clicks Save button in Edit script modal', function () {

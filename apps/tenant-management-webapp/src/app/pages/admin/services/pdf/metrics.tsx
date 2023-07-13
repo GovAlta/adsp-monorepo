@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import moment from 'moment';
 import { Metrics } from '@components/Metrics';
 import styled from 'styled-components';
@@ -11,8 +11,8 @@ const Title = styled.div`
   align-items: baseline;
 `;
 
-export const PdfMetrics: FunctionComponent = () => {
-  const metrics = useSelector((state: RootState) => state.pdf.metrics);
+export const PdfMetrics = (): JSX.Element => {
+  const metrics = useSelector((state: RootState) => state.pdf?.metrics);
 
   return (
     <section>
@@ -22,9 +22,9 @@ export const PdfMetrics: FunctionComponent = () => {
       </Title>
       <Metrics
         metrics={[
-          { id: 'pdf-generated', name: 'PDFs generated', value: metrics.pdfGenerated },
-          { id: 'pdf-failed', name: 'PDFs failed', value: metrics.pdfFailed },
-          { id: 'pdf-avg-duration', name: 'Average time to generate (secs)', value: metrics.generationDuration },
+          { id: 'pdf-generated', name: 'PDFs generated', value: metrics?.pdfGenerated },
+          { id: 'pdf-failed', name: 'PDFs failed', value: metrics?.pdfFailed },
+          { id: 'pdf-avg-duration', name: 'Average time to generate (secs)', value: metrics?.generationDuration },
         ]}
       />
     </section>

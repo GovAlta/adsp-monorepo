@@ -14,6 +14,8 @@ import { PublicServiceStatusType } from '../types';
 import { TenantService, EventService } from '@abgov/adsp-service-sdk';
 import { applicationStatusToStarted, applicationStatusToStopped, applicationStatusChange } from '../events';
 import { ApplicationRepo } from './ApplicationRepo';
+import { WebhookRepo } from './WebhookRepo';
+import { monitoredServiceDown, monitoredServiceUp } from '../events';
 
 export interface ServiceStatusRouterProps {
   logger: Logger;
@@ -96,7 +98,7 @@ export const createNewApplication =
   async (req, res, next) => {
     const user = req.user as User;
     const tenant = await tenantService.getTenant(user.tenantId);
-    const { name, description, endpoint, appKey } = req.body;
+    const { name, description, endpoint, appKey, monitorOnly, status } = req.body;
 
     try {
       const newAppKey = appKey ? appKey : ApplicationRepo.getApplicationKey(name);
@@ -107,7 +109,15 @@ export const createNewApplication =
         }
       });
 
-      const newApp = await applicationRepo.createApp(newAppKey, name, description, endpoint.url, tenant);
+      const newApp = await applicationRepo.createApp(
+        newAppKey,
+        name,
+        description,
+        endpoint.url,
+        monitorOnly,
+        status,
+        tenant
+      );
       res.status(201).json(newApp);
     } catch (err) {
       logger.error(`Failed to create new application: ${err.message}`);
@@ -122,7 +132,7 @@ export const updateApplication =
       logger.info(`${req.method} - ${req.url}`);
 
       const user = req.user as User;
-      const { name, description, endpoint } = req.body;
+      const { name, description, endpoint, monitorOnly } = req.body;
       const { appKey } = req.params;
       const tenantId = user.tenantId?.toString() ?? '';
 
@@ -139,6 +149,7 @@ export const updateApplication =
         name,
         url: endpoint.url,
         description,
+        monitorOnly,
       };
       await applicationRepo.updateApp(update, tenantId);
 
@@ -277,6 +288,51 @@ export const getApplicationEntries =
     }
   };
 
+function delay(time) {
+  return new Promise((resolve) => setTimeout(resolve, time));
+}
+
+export const testWebhook =
+  (
+    logger: Logger,
+    webhookRepo: WebhookRepo,
+    applicationRepo: ApplicationRepo,
+    eventService: EventService
+  ): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      const user = req.user as User;
+      const { id, eventName } = req.params;
+
+      const webhook = await webhookRepo.getWebhook(id, user.tenantId);
+      if (!webhook) {
+        throw new NotFoundError('Webhook', id);
+      }
+
+      const app = await applicationRepo.getApp(webhook.targetId, user.tenantId);
+      if (!app) {
+        throw new NotFoundError('Status application', webhook.targetId);
+      }
+
+      webhook.generatedByTest = true;
+
+      if (eventName === 'monitored-service-down') {
+        eventService.send(monitoredServiceDown(app, user, webhook));
+      } else {
+        eventService.send(monitoredServiceUp(app, user, webhook));
+      }
+      await delay(2000);
+      res.json(
+        `event is sent - app: ${JSON.stringify(app)}, user: ${JSON.stringify(user)}, webhook: ${JSON.stringify(
+          webhook
+        )}`
+      );
+    } catch (err) {
+      logger.error(`Failed to send event: ${err.message}`);
+      next(err);
+    }
+  };
+
 export function createServiceStatusRouter({
   logger,
   serviceStatusRepository,
@@ -289,6 +345,14 @@ export function createServiceStatusRouter({
 }: ServiceStatusRouterProps): Router {
   const router = Router();
   const applicationRepo = new ApplicationRepo(
+    serviceStatusRepository,
+    endpointStatusEntryRepository,
+    serviceId,
+    directory,
+    tokenProvider
+  );
+
+  const webhookRepo = new WebhookRepo(
     serviceStatusRepository,
     endpointStatusEntryRepository,
     serviceId,
@@ -335,6 +399,12 @@ export function createServiceStatusRouter({
   router.get(
     '/applications/:appKey/endpoint-status-entries',
     getApplicationEntries(logger, applicationRepo, endpointStatusEntryRepository)
+  );
+
+  router.get(
+    '/webhook/:id/test/:eventName',
+    assertAuthenticatedHandler,
+    testWebhook(logger, webhookRepo, applicationRepo, eventService)
   );
 
   return router;

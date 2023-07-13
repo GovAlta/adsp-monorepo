@@ -27,24 +27,23 @@ class NotificationsPage {
 
   notificationTypeModalRolesCheckboxes() {
     return cy.xpath(
-      '//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-label"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]'
+      '//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-name"]/following-sibling::td//goa-checkbox'
     );
   }
 
   notificationTypeModalRolesCheckbox(roleLabel) {
     return cy.xpath(
-      `//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-label" and text()="${roleLabel}"]/following-sibling::td//div[contains(@class, "goa-checkbox-container")]`
+      `//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-name" and text()="${roleLabel}"]/following-sibling::td//goa-checkbox`
     );
   }
 
   notificationTypeModalClientRoleCheckbox(clientRole) {
-    return cy.xpath(`//goa-checkbox[@type="checkbox" and @value="${clientRole}"]/parent::div`);
+    const role = `Notifications-type-subscribe-role-checkbox-${clientRole}`;
+    return cy.xpath(`//goa-checkbox[@name="${role}"]`);
   }
 
   notificationChannelCheckbox(channelName) {
-    return cy.xpath(
-      `//*[@class="modal"]//goa-checkbox[@name="${channelName}"]/parent::*[contains(@class, "goa-checkbox-container")]`
-    );
+    return cy.xpath(`//*[@class="modal"]//goa-checkbox[@name="${channelName}"]`);
   }
 
   notificationChannelEmailCheckbox() {
@@ -52,9 +51,7 @@ class NotificationsPage {
   }
 
   notificationTypeModalSelfServiceCheckbox() {
-    return cy.xpath(
-      '//*[@data-testid="manage-subscriptions-checkbox-wrapper"]//div[contains(@class, "goa-checkbox-container")]'
-    );
+    return cy.xpath('//*[@data-testid="manage-subscriptions-checkbox-wrapper"]//goa-checkbox');
   }
 
   notificationTypeModalSelfServiceCalloutContent() {
@@ -289,11 +286,11 @@ class NotificationsPage {
   }
 
   subscribersAddressAsSearchField() {
-    return cy.xpath('//goa-checkbox[@id="name"]');
+    return cy.xpath('//input[@id="name"]');
   }
 
   subscribersEmailSearchField() {
-    return cy.xpath('//goa-checkbox[@id="email"]');
+    return cy.xpath('//input[@id="email"]');
   }
 
   subscribersSearchBtn() {

@@ -1,4 +1,3 @@
-import axios from 'axios';
 import moment from 'moment';
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
@@ -13,9 +12,11 @@ import {
   getPdfTemplatesSuccess,
   UpdatePdfTemplatesAction,
   updatePdfTemplateSuccess,
+  updatePdfTemplateSuccessNoRefresh,
   UPDATE_PDF_TEMPLATE_ACTION,
   GeneratePdfAction,
   generatePdfSuccess,
+  generatePdfSuccessProcessing,
   GENERATE_PDF_ACTION,
   addToStream,
   STREAM_PDF_SOCKET_ACTION,
@@ -24,17 +25,36 @@ import {
   DeletePdfTemplatesAction,
   deletePdfTemplateSuccess,
   DELETE_PDF_TEMPLATE_ACTION,
+  SHOW_CURRENT_FILE_PDF,
+  ShowCurrentFilePdfAction,
+  showCurrentFilePdfSuccess,
+  GENERATE_PDF_SUCCESS_PROCESSING_ACTION,
+  GeneratePdfSuccessProcessingAction,
+  DeletePdfFileServiceAction,
+  DeletePdfFilesServiceAction,
+  DELETE_PDF_FILE_SERVICE,
+  DELETE_PDF_FILES_SERVICE,
+  updateJobs,
 } from './action';
+import { readFileAsync } from './readFile';
 import { io } from 'socket.io-client';
-import { FETCH_FILE_LIST } from '@store/file/actions';
 import { getAccessToken } from '@store/tenant/sagas';
-import { PdfGenerationResponse } from './model';
+import { PdfGenerationResponse, PdfTemplate, UpdatePdfConfig, DeletePdfConfig, CreatePdfConfig } from './model';
+import {
+  fetchPdfTemplatesApi,
+  updatePDFTemplateApi,
+  fetchPdfFileApi,
+  deletePdfFileApi,
+  generatePdfApi,
+  createPdfJobApi,
+  fetchPdfMetricsApi,
+} from './api';
 
 export function* fetchPdfTemplates(): SagaIterator {
   yield put(
     UpdateIndicator({
       show: true,
-      message: 'Loading...',
+      message: 'Loading template...',
     })
   );
 
@@ -44,14 +64,9 @@ export function* fetchPdfTemplates(): SagaIterator {
   const token: string = yield call(getAccessToken);
   if (configBaseUrl && token) {
     try {
-      const { data } = yield call(
-        axios.get,
-        `${configBaseUrl}/configuration/v2/configuration/platform/pdf-service/latest`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      yield put(getPdfTemplatesSuccess(data));
+      const url = `${configBaseUrl}/configuration/v2/configuration/platform/pdf-service/latest`;
+      const templates = yield call(fetchPdfTemplatesApi, token, url);
+      yield put(getPdfTemplatesSuccess(templates));
       yield put(
         UpdateIndicator({
           show: false,
@@ -66,6 +81,50 @@ export function* fetchPdfTemplates(): SagaIterator {
       );
     }
   }
+}
+export function* generatePdfSuccessProcessingSaga(action: GeneratePdfSuccessProcessingAction): SagaIterator {
+  let jobs = yield select((state: RootState) => state.pdf?.jobs);
+
+  const newJobs = JSON.parse(JSON.stringify(jobs));
+  const index = jobs.findIndex((job) => job.id === action.payload.context?.jobId);
+  if (index > -1) {
+    if (!jobs[index].stream) {
+      jobs[index].stream = [];
+    }
+    jobs[index].stream.push(action.payload);
+    jobs[index].status = action.payload.name;
+  } else {
+    if (action.payload?.filename) {
+      jobs = [action.payload].concat(jobs);
+    }
+  }
+
+  if (JSON.stringify(jobs) !== JSON.stringify(newJobs)) {
+    yield put(generatePdfSuccess(action.payload));
+  }
+}
+export function* deletePdfFileService(action: DeletePdfFileServiceAction): SagaIterator {
+  const jobs: PdfGenerationResponse[] = yield select((state: RootState) => state.pdf?.jobs);
+  const currentId: string = yield select((state: RootState) => state.pdf?.currentId);
+  const files: string = yield select((state: RootState) => state?.pdf.files);
+
+  const index = Object.keys(files).findIndex((f) => f === currentId);
+
+  const remainingJobs = jobs.filter((job) => job.id !== action.payload.data.recordId);
+
+  yield put(updateJobs(remainingJobs, index));
+}
+
+export function* deletePdfFilesService(action: DeletePdfFilesServiceAction): SagaIterator {
+  const jobs: PdfGenerationResponse[] = yield select((state: RootState) => state.pdf?.jobs);
+  const currentId: string = yield select((state: RootState) => state.pdf?.currentId);
+  const files: string = yield select((state: RootState) => state?.pdf.files);
+
+  const index = Object.keys(files).findIndex((f) => f === currentId);
+
+  const remainingJobs = jobs.filter((job) => job.templateId !== action.payload.templateId);
+
+  yield put(updateJobs(remainingJobs, index));
 }
 
 // wrapping function for socket.on
@@ -95,10 +154,9 @@ const connect = (pushServiceUrl, token, stream, tenantName) => {
   });
 };
 
-export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): SagaIterator {
+export function* updatePdfTemplate({ template, options }: UpdatePdfTemplatesAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const token: string = yield call(getAccessToken);
-
   if (baseUrl && token) {
     try {
       const pdfTemplate = {
@@ -106,15 +164,48 @@ export function* updatePdfTemplate({ template }: UpdatePdfTemplatesAction): Saga
           ...template,
         },
       };
-      const body = { operation: 'UPDATE', update: { ...pdfTemplate } };
-      const {
-        data: { latest },
-      } = yield call(axios.patch, `${baseUrl}/configuration/v2/configuration/platform/pdf-service`, body, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+
+      const body: UpdatePdfConfig = { operation: 'UPDATE', update: { ...pdfTemplate } };
+      const url = `${baseUrl}/configuration/v2/configuration/platform/pdf-service`;
+      const { latest } = yield call(updatePDFTemplateApi, token, url, body);
+
+      if (options === 'no-refresh') {
+        yield put(
+          updatePdfTemplateSuccessNoRefresh({
+            ...latest.configuration,
+          })
+        );
+      } else {
+        yield put(
+          updatePdfTemplateSuccess(
+            {
+              ...latest.configuration,
+            },
+            { templateId: template.id }
+          )
+        );
+      }
+    } catch (err) {
+      yield put(ErrorNotification({ message: err.message }));
+    }
+  }
+}
+
+export function* showCurrentFilePdf(action: ShowCurrentFilePdfAction): SagaIterator {
+  const fileUrl = yield select((state: RootState) => state.config.serviceUrls?.fileApi);
+
+  const token: string = yield call(getAccessToken);
+
+  if (fileUrl && token) {
+    try {
+      const url = `${fileUrl}/file/v1/files/${action.fileId}/download?unsafe=true`;
+      const data = yield call(fetchPdfFileApi, token, url);
+      const responseFile = yield call(readFileAsync, data);
+
+      yield put(showCurrentFilePdfSuccess(responseFile, action.fileId));
       yield put(
-        updatePdfTemplateSuccess({
-          ...latest.configuration,
+        UpdateIndicator({
+          show: false,
         })
       );
     } catch (err) {
@@ -129,16 +220,9 @@ export function* deletePdfTemplate({ template }: DeletePdfTemplatesAction): Saga
 
   if (baseUrl && token) {
     try {
-      const {
-        data: { latest },
-      } = yield call(
-        axios.patch,
-        `${baseUrl}/configuration/v2/configuration/platform/pdf-service`,
-        { operation: 'DELETE', property: template.id },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const payload: DeletePdfConfig = { operation: 'DELETE', property: template.id };
+      const url = `${baseUrl}/configuration/v2/configuration/platform/pdf-service`;
+      const { latest } = yield call(deletePdfFileApi, token, url, payload);
 
       yield put(
         deletePdfTemplateSuccess({
@@ -191,17 +275,11 @@ export function* streamPdfSocket({ disconnect }: StreamPdfSocketAction): SagaIte
 
     try {
       const currentEvents = [];
-
       while (true) {
         const payload = yield take(socketChannel);
         currentEvents.push(payload);
         yield put(addToStream(payload));
-        yield put(generatePdfSuccess(payload));
-
-        if (payload?.name === 'pdf-generated' || payload?.name === 'pdf-generation-failed') {
-          yield put({ type: FETCH_FILE_LIST });
-        }
-
+        yield put(generatePdfSuccessProcessing(payload));
         yield fork(emitResponse, socket);
       }
     } catch (err) {
@@ -216,29 +294,41 @@ function* emitResponse(socket) {
 
 export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
   const pdfServiceUrl: string = yield select((state: RootState) => state.config.serviceUrls?.pdfServiceApiUrl);
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const tempTemplate: PdfTemplate = yield select((state: RootState) => state.pdf.tempTemplate);
 
   const token: string = yield call(getAccessToken);
 
   yield put(
     UpdateIndicator({
       show: true,
-      message: 'Loading...',
+      message: 'Generating PDF...',
     })
   );
 
-  if (pdfServiceUrl && token) {
+  if (pdfServiceUrl && token && baseUrl) {
     try {
+      // save first
+      const pdfTemplate = {
+        [tempTemplate.id]: {
+          ...tempTemplate,
+        },
+      };
+      const saveBody: UpdatePdfConfig = { operation: 'UPDATE', update: { ...pdfTemplate } };
+      const url = `${baseUrl}/configuration/v2/configuration/platform/pdf-service`;
+      yield call(generatePdfApi, token, url, saveBody);
+      // generate after
       const pdfData = {
         templateId: payload.templateId,
         data: payload.data,
         filename: payload.fileName,
       };
-      const body = { operation: 'generate', ...pdfData };
-      const response: PdfGenerationResponse = yield call(axios.post, `${pdfServiceUrl}/pdf/v1/jobs`, body, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const pdfResponse = { ...body, ...response?.data };
-      yield put(generatePdfSuccess(pdfResponse));
+
+      const createJobUrl = `${pdfServiceUrl}/pdf/v1/jobs`;
+      const body: CreatePdfConfig = { operation: 'generate', ...pdfData };
+      const data = yield call(createPdfJobApi, token, createJobUrl, body);
+      const pdfResponse = { ...body, ...data };
+      yield put(generatePdfSuccess(pdfResponse, saveBody.update));
       yield put(
         UpdateIndicator({
           show: false,
@@ -255,10 +345,6 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
   }
 }
 
-interface MetricResponse {
-  values: { sum: string; avg: string }[];
-}
-
 export function* fetchPdfMetrics(): SagaIterator {
   const baseUrl = yield select((state: RootState) => state.config.serviceUrls?.valueServiceApiUrl);
   const token: string = yield call(getAccessToken);
@@ -271,11 +357,8 @@ export function* fetchPdfMetrics(): SagaIterator {
         metricLike: 'pdf-service',
       });
 
-      const { data: metrics }: { data: Record<string, MetricResponse> } = yield call(
-        axios.get,
-        `${baseUrl}/value/v1/event-service/values/event/metrics?interval=weekly&criteria=${criteria}`,
-        { headers: { Authorization: `Bearer ${token}`, 'Access-Control-Allow-Origin': '' } }
-      );
+      const url = `${baseUrl}/value/v1/event-service/values/event/metrics?interval=weekly&criteria=${criteria}`;
+      const metrics = yield call(fetchPdfMetricsApi, token, url);
 
       const generatedMetric = 'pdf-service:pdf-generated:count';
       const failedMetric = 'pdf-service:pdf-generation-failed:count';
@@ -302,4 +385,8 @@ export function* watchPdfSagas(): Generator {
   yield takeEvery(GENERATE_PDF_ACTION, generatePdf);
   yield takeEvery(STREAM_PDF_SOCKET_ACTION, streamPdfSocket);
   yield takeEvery(DELETE_PDF_TEMPLATE_ACTION, deletePdfTemplate);
+  yield takeEvery(DELETE_PDF_FILE_SERVICE, deletePdfFileService);
+  yield takeEvery(DELETE_PDF_FILES_SERVICE, deletePdfFilesService);
+  yield takeEvery(SHOW_CURRENT_FILE_PDF, showCurrentFilePdf);
+  yield takeEvery(GENERATE_PDF_SUCCESS_PROCESSING_ACTION, generatePdfSuccessProcessingSaga);
 }

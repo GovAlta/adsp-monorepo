@@ -6,8 +6,14 @@ import { Service } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { createEntry, updateEntry, fetchEntryDetail } from '@store/directory/actions';
 import { RootState } from '@store/index';
-import { characterCheck, validationPattern, Validator, isNotEmptyCheck, wordMaxLengthCheck } from '@lib/checkInput';
-import { useValidators } from '@lib/useValidators';
+import {
+  characterCheck,
+  validationPattern,
+  Validator,
+  isNotEmptyCheck,
+  wordMaxLengthCheck,
+} from '@lib/validation/checkInput';
+import { useValidators } from '@lib/validation/useValidators';
 
 interface DirectoryModalProps {
   entry?: Service;
@@ -47,7 +53,7 @@ const lowerCaseCheck = characterCheck(validationPattern.lowerKebabCase);
 const checkForBadUrl = characterCheck(validationPattern.validURL);
 const checkServiceExists = isNotEmptyCheck('service');
 const checkUrlExists = isNotEmptyCheck('URL');
-const wordLengthCheck = wordMaxLengthCheck(32);
+const wordLengthCheck = wordMaxLengthCheck(32, 'name');
 
 export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
   const isNew = props.type === 'new';

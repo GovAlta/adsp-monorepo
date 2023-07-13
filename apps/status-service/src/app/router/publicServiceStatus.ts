@@ -36,16 +36,21 @@ export const getApplicationsByName =
       const apps = new StatusApplications(theApps);
       const statuses = await serviceStatusRepository.find({ appKey: { $in: appKeys } });
 
-      const results = apps.map((app) => {
-        const status = statuses.find((s) => s.appKey === app.appKey);
-        return {
-          id: app.appKey,
-          name: app.name,
-          description: app.description,
-          status: status?.status || '',
-          lastUpdated: status?.statusTimestamp ? new Date(status.statusTimestamp) : null,
-        };
-      });
+      const results = apps
+        .map((app) => {
+          const status = statuses.find((s) => s.appKey === app.appKey);
+          return {
+            id: app.appKey,
+            name: app.name,
+            description: app.description,
+            status: status?.status || '',
+            monitorOnly: app.monitorOnly,
+            lastUpdated: status?.statusTimestamp ? new Date(status.statusTimestamp) : null,
+          };
+        })
+        .sort((a, b) => {
+          return a.name.toLowerCase().localeCompare(b.name.toLocaleLowerCase());
+        });
 
       res.json(results);
     } catch (err) {

@@ -1,7 +1,7 @@
 import React, { FunctionComponent } from 'react';
 import { GoAButton } from '@abgov/react-components';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-
+import { ActionButtonWrapper } from './styled-components';
 interface deleteModalProps {
   title: string;
   content?: string | JSX.Element;
@@ -16,12 +16,14 @@ export const DeleteModal: FunctionComponent<deleteModalProps> = ({ isOpen, title
       <GoAModalTitle>{title}</GoAModalTitle>
       <GoAModalContent>{content}</GoAModalContent>
       <GoAModalActions>
-        <GoAButton buttonType="secondary" data-testid="delete-cancel" onClick={onCancel}>
-          Cancel
-        </GoAButton>
-        <GoAButton buttonType="primary" data-testid="delete-confirm" onClick={onDelete}>
-          Delete
-        </GoAButton>
+        <ActionButtonWrapper>
+          <GoAButton buttonType="secondary" data-testid="delete-cancel" onClick={onCancel}>
+            Cancel
+          </GoAButton>
+          <GoAButton buttonType="primary" variant="destructive" data-testid="delete-confirm" onClick={onDelete}>
+            Delete
+          </GoAButton>
+        </ActionButtonWrapper>
       </GoAModalActions>
     </GoAModal>
   );

@@ -1,3 +1,8 @@
+interface RetentionPolicy {
+  active: boolean;
+  deleteInDays: number;
+  createdAt: string;
+}
 export interface FileTypeItem {
   id: string;
   name: string;
@@ -7,6 +12,9 @@ export interface FileTypeItem {
   hasFile?: boolean;
   tableData?: {
     id: string;
+  };
+  rules?: {
+    retention: RetentionPolicy;
   };
 }
 
@@ -24,6 +32,7 @@ export interface FileItem {
   filename: string;
   size: number;
   fileURN: string;
+  urn: string;
   typeName?: string;
   recordId?: string;
   created?: string;
@@ -39,6 +48,15 @@ export interface RequestBodySchema {
   schema: {
     properties: Record<string, RequestBodyProperties>;
   };
+}
+
+export interface FileCriteria {
+  filenameContains?: string;
+  scanned?: boolean;
+  deleted?: boolean;
+  infected?: boolean;
+  typeEquals?: string;
+  recordIdEquals?: string;
 }
 
 export interface FileMetrics {

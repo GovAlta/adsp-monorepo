@@ -1,6 +1,95 @@
 {
   "version": 1,
   "projects": {
+    "adsp-service-flask-sdk": {
+      "root": "libs/adsp-service-flask-sdk",
+      "projectType": "library",
+      "sourceRoot": "libs/adsp-service-flask-sdk/adsp_service_flask_sdk",
+      "architect": {
+        "docs": {
+          "builder": "nx:run-commands",
+          "options": {
+            "command": "pydoc-markdown -p adsp_service_flask_sdk --render-toc > docs/source/api.md",
+            "cwd": "libs/adsp-service-flask-sdk"
+          }
+        },
+        "lock": {
+          "builder": "nx:run-commands",
+          "options": {
+            "command": "poetry lock --no-update",
+            "cwd": "libs/adsp-service-flask-sdk"
+          }
+        },
+        "add": {
+          "builder": "@nxlv/python:add",
+          "options": {}
+        },
+        "update": {
+          "builder": "@nxlv/python:update",
+          "options": {}
+        },
+        "remove": {
+          "builder": "@nxlv/python:remove",
+          "options": {}
+        },
+        "build": {
+          "builder": "@nxlv/python:build",
+          "outputs": ["{projectRoot}/dist"],
+          "options": {
+            "outputPath": "libs/adsp-service-flask-sdk/dist",
+            "publish": true,
+            "lockedVersions": true,
+            "bundleLocalDependencies": true
+          }
+        },
+        "install": {
+          "builder": "@nxlv/python:install",
+          "options": {
+            "silent": false,
+            "args": "",
+            "cacheDir": ".cache/pypoetry",
+            "verbose": false,
+            "debug": false
+          }
+        },
+        "lint": {
+          "builder": "@nxlv/python:flake8",
+          "outputs": ["{workspaceRoot}/reports/libs/adsp-service-flask-sdk/pylint.txt"],
+          "options": {
+            "outputFile": "reports/libs/adsp-service-flask-sdk/pylint.txt"
+          }
+        },
+        "test": {
+          "builder": "nx:run-commands",
+          "outputs": [
+            "{workspaceRoot}/reports/libs/adsp-service-flask-sdk/unittests",
+            "{workspaceRoot}/coverage/libs/adsp-service-flask-sdk"
+          ],
+          "options": {
+            "command": "poetry run pytest tests/",
+            "cwd": "libs/adsp-service-flask-sdk"
+          }
+        },
+        "tox": {
+          "builder": "@nxlv/python:tox",
+          "outputs": [
+            "{workspaceRoot}/reports/libs/adsp-service-flask-sdk/unittests",
+            "{workspaceRoot}/coverage/libs/adsp-service-flask-sdk"
+          ],
+          "options": {
+            "silent": false,
+            "args": ""
+          }
+        },
+        "release": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "command": "npx semantic-release -e ./libs/adsp-service-flask-sdk/.releaserc.json"
+          }
+        }
+      },
+      "tags": []
+    },
     "adsp-service-net-sdk": {
       "root": "libs/adsp-service-net-sdk",
       "projectType": "library",
@@ -8,7 +97,7 @@
       "architect": {
         "build": {
           "builder": "@nx-dotnet/core:build",
-          "outputs": ["dist/libs/adsp-service-net-sdk"],
+          "outputs": ["{workspaceRoot}/dist/libs/adsp-service-net-sdk"],
           "options": {
             "configuration": "Debug",
             "noDependencies": true
@@ -29,7 +118,7 @@
           }
         },
         "release": {
-          "builder": "@nrwl/workspace:run-commands",
+          "builder": "nx:run-commands",
           "options": {
             "command": "npx semantic-release -e ./libs/adsp-service-net-sdk/.releaserc.json"
           }
@@ -50,7 +139,7 @@
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/adsp-service-sdk"],
+          "outputs": ["{workspaceRoot}/coverage/libs/adsp-service-sdk"],
           "options": {
             "jestConfig": "libs/adsp-service-sdk/jest.config.ts",
             "passWithNoTests": true
@@ -68,7 +157,7 @@
           }
         },
         "release": {
-          "builder": "@nrwl/workspace:run-commands",
+          "builder": "nx:run-commands",
           "options": {
             "command": "npx semantic-release -e ./libs/adsp-service-sdk/.releaserc.json"
           }
@@ -86,21 +175,15 @@
           "options": {
             "root": "libs/adsp-service-spring-sdk"
           },
-          "dependsOn": [
-            "^install"
-          ],
-          "outputs": [
-            "libs/adsp-service-spring-sdk/target"
-          ]
+          "dependsOn": ["^install"],
+          "outputs": ["{projectRoot}/target"]
         },
         "install": {
           "builder": "@nxrocks/nx-spring-boot:install",
           "options": {
             "root": "libs/adsp-service-spring-sdk"
           },
-          "outputs": [
-            "libs/adsp-service-spring-sdk/target"
-          ]
+          "outputs": ["{projectRoot}/target"]
         },
         "test": {
           "builder": "@nxrocks/nx-spring-boot:test",
@@ -115,7 +198,7 @@
           }
         },
         "release": {
-          "builder": "@nrwl/workspace:run-commands",
+          "builder": "nx:run-commands",
           "options": {
             "command": "npx semantic-release -e ./.releaserc.json",
             "cwd": "libs/adsp-service-spring-sdk"
@@ -164,7 +247,7 @@
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/api-docs-app"],
+          "outputs": ["{workspaceRoot}/coverage/apps/api-docs-app"],
           "options": {
             "jestConfig": "apps/api-docs-app/jest.config.ts",
             "passWithNoTests": true
@@ -221,7 +304,7 @@
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/calendar-service"],
+          "outputs": ["{workspaceRoot}/coverage/apps/calendar-service"],
           "options": {
             "jestConfig": "apps/calendar-service/jest.config.ts",
             "passWithNoTests": true
@@ -271,7 +354,7 @@
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/configuration-service"],
+          "outputs": ["{workspaceRoot}/coverage/apps/configuration-service"],
           "options": {
             "jestConfig": "apps/configuration-service/jest.config.ts",
             "passWithNoTests": true
@@ -298,7 +381,7 @@
             "jestConfig": "libs/core-common/jest.config.ts",
             "passWithNoTests": true
           },
-          "outputs": ["coverage/libs/core-common"]
+          "outputs": ["{workspaceRoot}/coverage/libs/core-common"]
         }
       },
       "tags": []
@@ -344,7 +427,7 @@
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/directory-service"],
+          "outputs": ["{workspaceRoot}/coverage/apps/directory-service"],
           "options": {
             "jestConfig": "apps/directory-service/jest.config.ts",
             "passWithNoTests": true
@@ -400,7 +483,7 @@
             "jestConfig": "apps/event-service/jest.config.ts",
             "passWithNoTests": true
           },
-          "outputs": ["coverage/apps/event-service"]
+          "outputs": ["{workspaceRoot}/coverage/apps/event-service"]
         }
       },
       "tags": []
@@ -453,7 +536,7 @@
             "passWithNoTests": true,
             "runInBand": true
           },
-          "outputs": ["coverage/apps/file-service"]
+          "outputs": ["{workspaceRoot}/coverage/apps/file-service"]
         }
       },
       "tags": []
@@ -500,7 +583,7 @@
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/form-service"],
+          "outputs": ["{workspaceRoot}/coverage/apps/form-service"],
           "options": {
             "jestConfig": "apps/form-service/jest.config.ts",
             "passWithNoTests": true
@@ -556,7 +639,7 @@
             "jestConfig": "apps/notification-service/jest.config.ts",
             "passWithNoTests": true
           },
-          "outputs": ["coverage/apps/notification-service"]
+          "outputs": ["{workspaceRoot}/coverage/apps/notification-service"]
         }
       },
       "tags": []
@@ -575,7 +658,7 @@
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/notification-shared"],
+          "outputs": ["{workspaceRoot}/coverage/libs/notification-shared"],
           "options": {
             "jestConfig": "libs/notification-shared/jest.config.ts",
             "passWithNoTests": true
@@ -625,7 +708,7 @@
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/pdf-service"],
+          "outputs": ["{workspaceRoot}/coverage/apps/pdf-service"],
           "options": {
             "jestConfig": "apps/pdf-service/jest.config.ts",
             "passWithNoTests": true
@@ -681,7 +764,7 @@
             "jestConfig": "apps/push-service/jest.config.ts",
             "passWithNoTests": true
           },
-          "outputs": ["coverage/apps/push-service"]
+          "outputs": ["{workspaceRoot}/coverage/apps/push-service"]
         }
       },
       "tags": []
@@ -693,7 +776,7 @@
       "architect": {
         "build": {
           "builder": "@nx-dotnet/core:build",
-          "outputs": ["dist/apps/script-service"],
+          "outputs": ["{workspaceRoot}/dist/apps/script-service"],
           "options": {
             "configuration": "Debug",
             "noDependencies": true
@@ -723,7 +806,7 @@
         },
         "swagger": {
           "builder": "@nx-dotnet/core:update-swagger",
-          "outputs": ["options.output"],
+          "outputs": ["{workspaceRoot}/options.output"],
           "options": {
             "output": "libs/generated/script-service-swagger/swagger.json"
           }
@@ -814,7 +897,7 @@
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/status-app"],
+          "outputs": ["{workspaceRoot}/coverage/apps/status-app"],
           "options": {
             "jestConfig": "apps/status-app/jest.config.ts",
             "passWithNoTests": true
@@ -915,7 +998,7 @@
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/stylesheets/scss"],
+          "outputs": ["{workspaceRoot}/coverage/libs/stylesheets/scss"],
           "options": {
             "jestConfig": "libs/stylesheets/scss/jest.config.ts",
             "passWithNoTests": true
@@ -1006,7 +1089,7 @@
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/subscriber-app"],
+          "outputs": ["{workspaceRoot}/coverage/apps/subscriber-app"],
           "options": {
             "jestConfig": "apps/subscriber-app/jest.config.ts",
             "passWithNoTests": true
@@ -1085,7 +1168,7 @@
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/subscriber-gateway"],
+          "outputs": ["{workspaceRoot}/coverage/apps/subscriber-gateway"],
           "options": {
             "jestConfig": "apps/subscriber-gateway/jest.config.ts",
             "passWithNoTests": true
@@ -1141,7 +1224,7 @@
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/task-service"],
+          "outputs": ["{workspaceRoot}/coverage/apps/task-service"],
           "options": {
             "jestConfig": "apps/task-service/jest.config.ts",
             "passWithNoTests": true
@@ -1198,7 +1281,7 @@
             "passWithNoTests": true,
             "runInBand": true
           },
-          "outputs": ["coverage/apps/tenant-management-api"]
+          "outputs": ["{workspaceRoot}/coverage/apps/tenant-management-api"]
         }
       },
       "tags": []
@@ -1300,7 +1383,7 @@
             "jestConfig": "apps/tenant-management-webapp/jest.config.ts",
             "passWithNoTests": true
           },
-          "outputs": ["coverage/apps/tenant-management-webapp"]
+          "outputs": ["{workspaceRoot}/coverage/apps/tenant-management-webapp"]
         }
       },
       "tags": []
@@ -1362,7 +1445,7 @@
           "outputs": ["{options.outputPath}"]
         },
         "execute": {
-          "builder": "@nrwl/workspace:run-commands",
+          "builder": "nx:run-commands",
           "options": {
             "commands": [
               {
@@ -1381,7 +1464,7 @@
             "jestConfig": "tools/scripts/jest.config.ts",
             "passWithNoTests": true
           },
-          "outputs": ["coverage/tools/scripts"]
+          "outputs": ["{workspaceRoot}/coverage/tools/scripts"]
         }
       },
       "tags": []
@@ -1440,7 +1523,7 @@
             "jestConfig": "apps/value-service/jest.config.ts",
             "passWithNoTests": true
           },
-          "outputs": ["coverage/apps/value-service"]
+          "outputs": ["{workspaceRoot}/coverage/apps/value-service"]
         }
       },
       "tags": []
@@ -1485,7 +1568,7 @@
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/apps/verify-service"],
+          "outputs": ["{workspaceRoot}/coverage/apps/verify-service"],
           "options": {
             "jestConfig": "apps/verify-service/jest.config.ts",
             "passWithNoTests": true

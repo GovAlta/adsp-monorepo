@@ -43,7 +43,7 @@ runs:
           -e "s/\"password3\":.+\"\"/\"password3\": \"${{ inputs.cy-password-3 }}\"/" \
           apps/${{ inputs.app }}-e2e/cypress.${{ inputs.environment }}.json
     - name: E2E Test
-      uses: cypress-io/github-action@v2
+      uses: cypress-io/github-action@v5
       with:
         install-command: npm ci
         command: npx nx e2e ${{ inputs.app }}-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config="apps/${{ inputs.app }}-e2e/cypress.${{ inputs.environment }}.json"

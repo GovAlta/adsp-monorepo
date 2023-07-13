@@ -11,6 +11,7 @@ import {
 import { StatusApplications } from '../model/statusApplications';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
+import { PublicServiceStatusType } from '../types';
 
 /**
  * Applications are stored in both the status-repository (for
@@ -109,11 +110,12 @@ export class ApplicationRepo {
       appKey: app.appKey,
       name: app.name,
       description: app.description,
+      monitorOnly: app.monitorOnly,
       tenantId: tenantId,
       metadata: status?.metadata ?? '',
       enabled: status?.enabled ?? false,
       statusTimestamp: status?.statusTimestamp ?? null,
-      status: status?.status ?? '',
+      status: status?.status ?? app.status,
       internalStatus: status?.internalStatus ?? 'stopped',
       endpoint: {
         status: status?.endpoint.status ?? 'offline',
@@ -122,12 +124,22 @@ export class ApplicationRepo {
     };
   };
 
-  createApp = async (appKey: string, appName: string, description: string, url: string, tenant: Tenant) => {
+  createApp = async (
+    appKey: string,
+    appName: string,
+    description: string,
+    url: string,
+    monitorOnly: boolean,
+    status: PublicServiceStatusType,
+    tenant: Tenant
+  ) => {
     const newApp = {
       appKey: appKey,
       name: appName,
       url: url,
       description: description,
+      monitorOnly: monitorOnly,
+      status: status,
     };
     await this.updateApp(newApp, tenant.id.toString());
     return this.mergeApplicationData(tenant.id.toString(), newApp);

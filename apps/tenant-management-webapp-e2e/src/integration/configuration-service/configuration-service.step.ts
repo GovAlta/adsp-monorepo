@@ -15,12 +15,12 @@ Then('the user views a {string} under core-service configurations', function (de
 });
 
 When('the user clicks eye icon of {string} under Platform to view the schema', function (definitionName) {
-  configurationObj.configurationDetailsIcon(definitionName).click();
+  configurationObj.configurationDetailsIcon(definitionName).click({ force: true });
   cy.wait(1000);
 });
 
 When('the user clicks eye-off icon of {string} under Platform to close the schema', function (definitionName) {
-  configurationObj.configurationHideDetailsIcon(definitionName).scrollIntoView().click();
+  configurationObj.configurationHideDetailsIcon(definitionName).scrollIntoView().click({ force: true });
 });
 
 Then(
@@ -82,7 +82,12 @@ When(
   function (namespace, name, desc) {
     configurationObj.addConfigurationDefinitionModalNamespaceField().clear().type(namespace);
     configurationObj.addConfigurationDefinitionModalNameField().clear().type(name);
-    configurationObj.addConfigurationDefinitionModalDescField().clear().type(desc);
+    configurationObj
+      .addConfigurationDefinitionModalDescField()
+      .shadow()
+      .find('.goa-textarea')
+      .clear()
+      .type(desc, { force: true });
   }
 );
 
@@ -117,13 +122,13 @@ When(
   function (buttonName, name, desc, namespace) {
     switch (buttonName.toLowerCase()) {
       case 'edit':
-        configurationObj.configurationDefinitionEditBtn(namespace, name, desc).click();
+        configurationObj.configurationDefinitionEditBtn(namespace, name, desc).click({ force: true });
         break;
       case 'delete':
-        configurationObj.configurationDefinitionDeleteBtn(namespace, name, desc).click();
+        configurationObj.configurationDefinitionDeleteBtn(namespace, name, desc).click({ force: true });
         break;
       case 'eye':
-        configurationObj.configurationDefinitionEyeBtn(namespace, name, desc).click();
+        configurationObj.configurationDefinitionEyeBtn(namespace, name, desc).click({ force: true });
         break;
       default:
         expect(buttonName.toLowerCase()).to.be.oneOf(['edit', 'delete', 'eye']);
@@ -141,15 +146,30 @@ Then('the user views disabled namespace and name fields in configuration definit
 });
 
 When('the user enters {string} in description in configuration definition modal', function (desc) {
-  configurationObj.addConfigurationDefinitionModalDescField().clear().type(desc);
+  configurationObj
+    .addConfigurationDefinitionModalDescField()
+    .shadow()
+    .find('.goa-textarea')
+    .clear({ force: true })
+    .type(desc, { force: true });
 });
 
 When('the user enters "{string}" in payload schema in configuration definition modal', function (desc) {
-  configurationObj.addConfigurationDefinitionModalDescField().clear().type(desc);
+  configurationObj
+    .addConfigurationDefinitionModalDescField()
+    .shadow()
+    .find('.goa-textarea')
+    .clear()
+    .type(desc, { force: true });
 });
 
 When('the user enters {string} in payload schema in configuration definition modal', function (payload) {
-  configurationObj.configurationDefinitionModalPayloadEditor().click().focus().type('{ctrl}a').clear().type(payload);
+  configurationObj
+    .configurationDefinitionModalPayloadEditor()
+    .click({ force: true })
+    .focus()
+    .clear({ force: true })
+    .type(payload, { force: true });
 });
 
 // payload parameter has payload content without "{}"

@@ -7,7 +7,7 @@ import * as compression from 'compression';
 import * as helmet from 'helmet';
 import { createLogger, createErrorHandler, createAmqpConfigUpdateService } from '@core-services/core-common';
 import { AdspId, initializePlatform, ServiceMetricsValueDefinition } from '@abgov/adsp-service-sdk';
-import { environment } from './environments/environment';
+import { environment, POD_TYPES } from './environments/environment';
 import {
   applyFileMiddleware,
   configurationSchema,
@@ -25,6 +25,7 @@ import { FileSystemStorageProvider } from './storage/file-system';
 import { createScanService } from './scan';
 import { AzureBlobStorageProvider } from './storage';
 import { createFileQueueService } from './amqp';
+import { ScanService } from './file';
 
 const logger = createLogger('file-service', environment.LOG_LEVEL || 'info');
 
@@ -53,6 +54,7 @@ async function initializeApp(): Promise<express.Application> {
     healthCheck,
     eventService,
     metricsHandler,
+    tenantService,
   } = await initializePlatform(
     {
       serviceId,
@@ -120,10 +122,14 @@ async function initializeApp(): Promise<express.Application> {
     storageProvider,
   });
 
-  const scanService = createScanService(environment.AV_PROVIDER, {
-    host: environment.AV_HOST,
-    port: environment.AV_PORT,
-  });
+  let scanService: ScanService = null;
+
+  if (environment.POD_TYPE !== 'file-service-job') {
+    scanService = createScanService(environment.AV_PROVIDER, {
+      host: environment.AV_HOST,
+      port: environment.AV_PORT,
+    });
+  }
 
   const queueService = await createFileQueueService({ ...environment, logger });
 
@@ -138,18 +144,16 @@ async function initializeApp(): Promise<express.Application> {
   });
 
   applyFileMiddleware(app, {
+    tokenProvider,
     serviceId,
     logger,
     storageProvider,
-    scanService,
     eventService,
+    scanService,
     queueService,
+    tenantService,
+    configurationService,
     ...repositories,
-  });
-
-  const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
-  app.use('/swagger/docs/v1', (_req, res) => {
-    res.json(swagger);
   });
 
   app.get('/health', async (_req, res) => {
@@ -160,19 +164,38 @@ async function initializeApp(): Promise<express.Application> {
     });
   });
 
-  app.get('/', async (req, res) => {
-    const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
-    res.json({
-      name: 'File service',
-      description: 'Service for upload and download of files.',
-      _links: {
-        self: { href: new URL(req.originalUrl, rootUrl).href },
-        health: { href: new URL('/health', rootUrl).href },
-        api: { href: new URL('/file/v1', rootUrl).href },
-        docs: { href: new URL('/swagger/docs/v1', rootUrl).href },
-      },
+  if (environment.POD_TYPE !== POD_TYPES.job) {
+    const swagger = JSON.parse(await promisify(readFile)(`${__dirname}/swagger.json`, 'utf8'));
+    app.use('/swagger/docs/v1', (_req, res) => {
+      res.json(swagger);
     });
-  });
+
+    app.get('/', async (req, res) => {
+      const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
+      res.json({
+        name: 'File service',
+        description: 'Service for upload and download of files.',
+        _links: {
+          self: { href: new URL(req.originalUrl, rootUrl).href },
+          health: { href: new URL('/health', rootUrl).href },
+          api: { href: new URL('/file/v1', rootUrl).href },
+          docs: { href: new URL('/swagger/docs/v1', rootUrl).href },
+        },
+      });
+    });
+  } else {
+    app.get('/', async (req, res) => {
+      const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
+      res.json({
+        name: 'File service job',
+        description: 'File service job side pod.',
+        _links: {
+          self: { href: new URL(req.originalUrl, rootUrl).href },
+          health: { href: new URL('/health', rootUrl).href },
+        },
+      });
+    });
+  }
 
   const errorHandler = createErrorHandler(logger);
   app.use(errorHandler);

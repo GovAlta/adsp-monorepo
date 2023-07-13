@@ -15,6 +15,9 @@ import {
   PATCH_SUBSCRIBER,
   NoSubscriberAction,
   GetSignedOutSubscriberAction,
+  CREATE_SUBSCRIBER,
+  CreateSubscribeAction,
+  createSubscriberSuccess,
 } from './actions';
 import { UpdateIndicator } from '@store/session/actions';
 import { ConfigState } from '@store/config/models';
@@ -40,25 +43,72 @@ export function* getMySubscriberDetails(): SagaIterator {
         yield put(GetSubscriberDetailsSuccess(data));
       }
     } catch (e) {
-      if (e.response.status === 404) {
-        yield put(NoSubscriberAction());
-      } else {
-        yield put(ErrorNotification({ message: `${e.message} - getMySubscriberDetails` }));
-      }
+      yield put(NoSubscriberAction());
     }
   }
 }
 
 export function* getSubscriberDetails(action: GetSubscriberAction): SagaIterator {
   try {
+    yield put(
+      UpdateIndicator({
+        show: true,
+        message: '',
+        action: action.payload.subscriberId,
+      })
+    );
+
     const subscriberId = action.payload.subscriberId;
     const { data } = yield call(axios.get, `/api/subscriber/v1/get-subscriber/${subscriberId}`);
 
     if (data) {
       yield put(GetSubscriberDetailsSuccess(data));
     }
+    yield put(
+      UpdateIndicator({
+        show: false,
+        message: '',
+        action: '',
+      })
+    );
   } catch (e) {
-    yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+    yield put(
+      UpdateIndicator({
+        show: false,
+        message: '',
+        action: '',
+      })
+    );
+    yield put(ErrorNotification({ message: `${e.response.data.errorMessage ?? e.message}` }));
+  }
+}
+
+function* createSubscriber(action: CreateSubscribeAction): SagaIterator {
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const email: string = yield select((state: RootState) => state.session.userInfo.email);
+
+  if (configBaseUrl && token) {
+    try {
+      const response = yield call(
+        axios.post,
+        `${configBaseUrl}/subscription/v1/subscribers?userSub=true`,
+        { data: 'data' },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      yield put(createSubscriberSuccess(response.data));
+
+      yield put(
+        SuccessNotification({
+          message: `You are subscribed! You will receive notifications on ${email} .`,
+        })
+      );
+    } catch (e) {
+      yield put(ErrorNotification({ message: `Subscriptions (addTypeSubscription): ${e.message}` }));
+    }
   }
 }
 
@@ -177,4 +227,5 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(UNSUBSCRIBE, unsubscribe);
   yield takeEvery(SIGNED_OUT_UNSUBSCRIBE, signedOutUnsubscribe);
   yield takeEvery(PATCH_SUBSCRIBER, patchSubscriber);
+  yield takeEvery(CREATE_SUBSCRIBER, createSubscriber);
 }

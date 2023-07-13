@@ -1,1 +1,1 @@
-export { Pdf } from './pdf';
+export { PDFRouter } from './routers';

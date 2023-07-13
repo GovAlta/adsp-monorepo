@@ -8,4 +8,11 @@ export const GeneratedPdfType: FileType = {
   anonymousRead: false,
   readRoles: [`urn:ads:platform:pdf-service:${ServiceRoles.PdfGenerator}`],
   updateRoles: [`urn:ads:platform:tenant-service:platform-service`],
+  rules: {
+    retention: {
+      active: true,
+      createdAt: '2023-04-20T17:19:22Z',
+      deleteInDays: 30,
+    },
+  },
 };

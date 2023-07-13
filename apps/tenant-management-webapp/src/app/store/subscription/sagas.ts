@@ -18,9 +18,6 @@ import {
   GET_TYPE_SUBSCRIPTIONS,
   GetTypeSubscriptionsActions,
   GetTypeSubscriptionSuccess,
-  GET_SUBSCRIBER_SUBSCRIPTIONS,
-  GetSubscriberSubscriptionsSuccess,
-  GetSubscriberSubscriptionsAction,
   ResolveSubscriberUserAction,
   ResolveSubscriberUserSuccess,
   FindSubscribersSuccessAction,
@@ -37,7 +34,7 @@ import {
   DELETE_SUBSCRIPTION,
   DeleteSubscriptionSuccess,
 } from './actions';
-import { Subscriber, SubscriptionWrapper, Events } from './models';
+import { Subscriber, Events } from './models';
 import { RootState } from '../index';
 import axios from 'axios';
 import { Api } from './api';
@@ -372,25 +369,6 @@ function* resolveSubscriberUser(action: ResolveSubscriberUserAction): SagaIterat
   }
 }
 
-function* getSubscriberSubscriptions(action: GetSubscriberSubscriptionsAction): SagaIterator {
-  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
-  const token: string = yield call(getAccessToken);
-  const { subscriber, after } = action.payload;
-  const findSubscriberPath = `subscription/v1/subscribers/${subscriber.id}/subscriptions?top=100`;
-
-  if (configBaseUrl && token) {
-    try {
-      const response = yield call(axios.get, `${configBaseUrl}/${findSubscriberPath}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const subscriptions: SubscriptionWrapper[] = response.data.results;
-      yield put(GetSubscriberSubscriptionsSuccess(subscriptions, subscriber, after, response.data.page.next));
-    } catch (e) {
-      yield put(ErrorNotification({ message: `Subscriptions (getSubscriberSubscriptions): ${e.message}` }));
-    }
-  }
-}
-
 function* deleteSubscriber(action: DeleteSubscriberAction): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield call(getAccessToken);
@@ -403,7 +381,7 @@ function* deleteSubscriber(action: DeleteSubscriberAction): SagaIterator {
     });
     yield put(DeleteSubscriberSuccess(action.payload.subscriberId));
   } catch (e) {
-    yield put(ErrorNotification({ message: `Subscriptions (getSubscriberSubscriptions): ${e.message}` }));
+    yield put(ErrorNotification({ message: `Subscriptions (deleteSubscriber): ${e.message}` }));
   }
 }
 
@@ -414,7 +392,6 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(DELETE_SUBSCRIPTION, deleteSubscription);
   yield takeEvery(GET_ALL_TYPE_SUBSCRIPTIONS, getAllTypeSubscriptions);
   yield takeEvery(GET_TYPE_SUBSCRIPTIONS, getTypeSubscriptions);
-  yield takeEvery(GET_SUBSCRIBER_SUBSCRIPTIONS, getSubscriberSubscriptions);
   yield takeEvery(FIND_SUBSCRIBERS, findSubscribers);
   yield takeEvery(FIND_SUBSCRIBERS_SUCCESS, resolveSubscriberUsers);
   yield takeEvery(RESOLVE_SUBSCRIBER_USER, resolveSubscriberUser);

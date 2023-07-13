@@ -7,7 +7,7 @@ import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgo
 import { GoAForm, GoAFormItem, GoAInputEmail, GoAInput } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
 import { isSmsValid, emailError, smsError } from '@lib/inputValidation';
-
+import { GoATextArea } from '@abgov/react-components-new';
 interface NotificationTypeFormProps {
   initialValue?: Subscriber;
   onCancel?: () => void;
@@ -200,14 +200,14 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
               {botIndex !== -1 && (
                 <GoAFormItem error={formErrors?.['slack'] || updateError}>
                   <label>Slack</label>
-                  <textarea
+                  <GoATextArea
                     name="slack"
-                    data-testid="form-slack"
+                    testId="form-slack"
                     value={bot}
                     aria-label="slack"
-                    className="goa-textarea"
-                    onChange={(e) => {
-                      setBot(e.target.value);
+                    width="100%"
+                    onChange={(name, value) => {
+                      setBot(value);
                     }}
                   />
                 </GoAFormItem>

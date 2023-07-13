@@ -450,7 +450,7 @@ describe('file router', () => {
       const req = {
         user: {
           tenantId,
-          id: 'test',
+          id: 'tester',
           roles: ['test-updater'],
         },
         getConfiguration: jest.fn(),

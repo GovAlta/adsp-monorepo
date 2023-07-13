@@ -3,18 +3,18 @@ import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgo
 import { GoAButton } from '@abgov/react-components';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { CalendarItem } from '@store/calendar/models';
+import { GoATextArea } from '@abgov/react-components-new';
 import { useSelector } from 'react-redux';
 import { Role } from '@store/tenant/models';
-import { ClientRoleTable } from '@components/ClientRoleTable';
+import { ClientRoleTable } from '@components/RoleTable';
 import { ConfigServiceRole } from '@store/access/models';
-import { useValidators } from '@lib/useValidators';
+import { useValidators } from '@lib/validation/useValidators';
 import { toKebabName } from '@lib/kebabName';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
-import { characterCheck, validationPattern, isNotEmptyCheck, Validator, wordMaxLengthCheck } from '@lib/checkInput';
+import { isNotEmptyCheck, wordMaxLengthCheck, duplicateNameCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { IdField } from './styled-components';
 import { ServiceRoleConfig } from '@store/access/models';
 import { RootState } from '@store/index';
-
 interface CalendarModalProps {
   initialValue?: CalendarItem;
   type: string;
@@ -41,30 +41,18 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
   const calendars = useSelector((state: RootState) => {
     return state?.calendarService?.calendars;
   });
-
+  const calendarNames = calendars ? Object.keys(calendars) : [];
   const title = isNew ? 'Add calendar' : 'Edit calendar';
-  const wordLengthCheck = wordMaxLengthCheck(32);
-
-  const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
-  const duplicateCalendarCheck = (): Validator => {
-    return (name: string) => {
-      return calendars[name]
-        ? `Duplicated calendar name ${name}, Please use a different name to get a unique Calendar name`
-        : '';
-    };
-  };
-  const descriptionCheck = (): Validator => (description: string) =>
-    description.length > 250 ? 'Description could not over 250 characters ' : '';
 
   const { errors, validators } = useValidators(
     'name',
     'name',
-    checkForBadChars,
-    wordLengthCheck,
+    badCharsCheck,
+    wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
   )
-    .add('duplicated', 'name', duplicateCalendarCheck())
-    .add('description', 'description', descriptionCheck())
+    .add('duplicated', 'name', duplicateNameCheck(calendarNames, 'Calendar'))
+    .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .build();
 
   const roleNames = realmRoles.map((role) => {
@@ -125,8 +113,11 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
               });
             }
           }}
-          readRoles={calendar?.readRoles}
-          updateRoles={calendar?.updateRoles}
+          service="Calendar"
+          checkedRoles={[
+            { title: 'read', selectedRoles: calendar?.readRoles },
+            { title: 'modify', selectedRoles: calendar?.updateRoles },
+          ]}
         />
       </>
     );
@@ -166,15 +157,14 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
           </GoAFormItem>
           <GoAFormItem error={errors?.['description']}>
             <label>Description</label>
-            <textarea
+            <GoATextArea
               name="description"
               value={calendar.description}
-              data-testid={`calendar-modal-description-input`}
+              testId={`calendar-modal-description-input`}
               aria-label="description"
-              className="goa-textarea"
-              maxLength={250}
-              onChange={(e) => {
-                const description = e.target.value;
+              width="100%"
+              onChange={(name, value) => {
+                const description = value;
                 validators.remove('description');
                 validators['description'].check(description);
                 setCalendar({ ...calendar, description });
@@ -195,6 +185,7 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
           buttonType="secondary"
           data-testid="calendar-modal-cancel"
           onClick={() => {
+            validators.clear();
             onCancel();
           }}
         >

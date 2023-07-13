@@ -7,7 +7,7 @@ using RestSharp;
 
 namespace Adsp.Sdk.Tenancy;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
-internal class TenantService : ITenantService, IDisposable
+internal sealed class TenantService : ITenantService, IDisposable
 {
   private static readonly AdspId TENANT_SERVICE_API_ID = AdspId.Parse("urn:ads:platform:tenant-service:v2");
 
@@ -84,7 +84,7 @@ internal class TenantService : ITenantService, IDisposable
 
     if (tenant != null)
     {
-      _cache.Set(tenant.Id, tenant, TimeSpan.FromHours(1));
+      _cache.Set(tenant.Id!, tenant, TimeSpan.FromHours(1));
     }
 
     return tenant;
@@ -111,7 +111,7 @@ internal class TenantService : ITenantService, IDisposable
     {
       foreach (var tenant in tenants)
       {
-        _cache.Set(tenant.Id, tenant, TimeSpan.FromHours(1));
+        _cache.Set(tenant.Id!, tenant, TimeSpan.FromHours(1));
       }
     }
 

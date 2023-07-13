@@ -12,6 +12,9 @@
   "editor.trimAutoWhitespace": true,
   "editor.tabSize": 2,
   "files.trimTrailingWhitespace": true,
+  "files.exclude": {
+    "**/node_modules": true
+  },
   "[html]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
@@ -69,5 +72,7 @@
     "uuidv"
   ],
   "omnisharp.enableRoslynAnalyzers": true,
-  "dotnet-test-explorer.testProjectPath": "libs/adsp-service-net-sdk/"
+  "dotnet-test-explorer.testProjectPath": "libs/adsp-service-net-sdk/",
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.compile.nullAnalysis.mode": "automatic"
 }

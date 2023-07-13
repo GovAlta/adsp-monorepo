@@ -1,12 +1,17 @@
 import { adspId, Channel, User } from '@abgov/adsp-service-sdk';
 import { FormServiceRoles } from '../roles';
 import { FormDefinitionEntity } from './definition';
+import { ValidationService } from '@core-services/core-common';
 
 describe('FormDefinitionEntity', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
+  const validationService: ValidationService = {
+    validate: jest.fn(),
+    setSchema: jest.fn(),
+  };
 
   it('can be created', () => {
-    const entity = new FormDefinitionEntity(tenantId, {
+    const entity = new FormDefinitionEntity(validationService, tenantId, {
       id: 'test',
       name: 'test-form-definition',
       description: null,
@@ -14,12 +19,15 @@ describe('FormDefinitionEntity', () => {
       anonymousApply: false,
       applicantRoles: ['test-applicant'],
       assessorRoles: ['test-assessor'],
+      clerkRoles: [],
+      dataSchema: null,
     });
     expect(entity).toBeTruthy();
+    expect(validationService.setSchema).toHaveBeenCalledWith(entity.id, expect.any(Object));
   });
 
   describe('canApply', () => {
-    const entity = new FormDefinitionEntity(tenantId, {
+    const entity = new FormDefinitionEntity(validationService, tenantId, {
       id: 'test',
       name: 'test-form-definition',
       description: null,
@@ -27,6 +35,8 @@ describe('FormDefinitionEntity', () => {
       anonymousApply: false,
       applicantRoles: ['test-applicant'],
       assessorRoles: ['test-assessor'],
+      clerkRoles: [],
+      dataSchema: null,
     });
 
     it('can return true for user with applicant role', () => {
@@ -40,7 +50,7 @@ describe('FormDefinitionEntity', () => {
     });
 
     it('can return true for intake app for anonymous apply definition', () => {
-      const anonymousApplyEntity = new FormDefinitionEntity(tenantId, {
+      const anonymousApplyEntity = new FormDefinitionEntity(validationService, tenantId, {
         id: 'test',
         name: 'test-form-definition',
         description: null,
@@ -48,6 +58,8 @@ describe('FormDefinitionEntity', () => {
         anonymousApply: true,
         applicantRoles: ['test-applicant'],
         assessorRoles: ['test-assessor'],
+        clerkRoles: [],
+        dataSchema: null,
       });
       const result = anonymousApplyEntity.canApply({
         tenantId,
@@ -74,6 +86,26 @@ describe('FormDefinitionEntity', () => {
         roles: ['test-applicant'],
       } as User);
       expect(result).toBe(false);
+    });
+  });
+
+  describe('validateDate', () => {
+    const entity = new FormDefinitionEntity(validationService, tenantId, {
+      id: 'test',
+      name: 'test-form-definition',
+      description: null,
+      formDraftUrlTemplate: 'https://my-form/{{ id }}',
+      anonymousApply: false,
+      applicantRoles: ['test-applicant'],
+      assessorRoles: ['test-assessor'],
+      clerkRoles: [],
+      dataSchema: { type: 'object' },
+    });
+
+    it('can validate data', () => {
+      const data = {};
+      entity.validateData(data);
+      expect(validationService.validate).toHaveBeenCalledWith(expect.any(String), entity.id, data);
     });
   });
 
@@ -108,19 +140,39 @@ describe('FormDefinitionEntity', () => {
       channels: [{ channel: Channel.email, address: 'test@test.co' }],
     };
 
-    const entity = new FormDefinitionEntity(tenantId, {
+    const entity = new FormDefinitionEntity(validationService, tenantId, {
       id: 'test',
       name: 'test-form-definition',
       description: null,
       formDraftUrlTemplate: 'https://my-form/{{ id }}',
-      anonymousApply: false,
+      anonymousApply: true,
       applicantRoles: ['test-applicant'],
       assessorRoles: ['test-assessor'],
+      clerkRoles: [],
+      dataSchema: null,
     });
 
     it('can create form', async () => {
+      notificationMock.subscribe.mockResolvedValueOnce(subscriber);
+      const form = await entity.createForm(
+        { ...user, roles: [FormServiceRoles.IntakeApp] },
+        repositoryMock,
+        notificationMock,
+        subscriber
+      );
+      expect(form).toBeTruthy();
+      expect(notificationMock.subscribe).toHaveBeenCalledWith(entity.tenantId, expect.any(String), subscriber);
+    });
+
+    it('can set applicant userId for user applicant', async () => {
+      notificationMock.subscribe.mockResolvedValueOnce(subscriber);
       const form = await entity.createForm(user, repositoryMock, notificationMock, subscriber);
       expect(form).toBeTruthy();
+      expect(notificationMock.subscribe).toHaveBeenCalledWith(
+        entity.tenantId,
+        expect.any(String),
+        expect.objectContaining({ userId: user.id })
+      );
     });
   });
 });

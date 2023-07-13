@@ -1,5 +1,5 @@
 import { AdspId, isAllowedUser, User } from '@abgov/adsp-service-sdk';
-import { FileType, ServiceUserRoles } from '../types';
+import { FileType, ServiceUserRoles, FileTypeRules } from '../types';
 import { Logger } from 'winston';
 
 /**
@@ -19,6 +19,7 @@ export class FileTypeEntity implements FileType {
   anonymousRead = false;
   readRoles: string[] = [];
   updateRoles: string[] = [];
+  rules?: FileTypeRules;
 
   static create(
     tenantId: AdspId,
@@ -26,7 +27,8 @@ export class FileTypeEntity implements FileType {
     name: string,
     anonymousRead: boolean,
     readRoles: string[],
-    updateRoles: string[]
+    updateRoles: string[],
+    rules?: FileTypeRules
   ): FileTypeEntity {
     const newType: FileType = {
       tenantId,
@@ -35,6 +37,7 @@ export class FileTypeEntity implements FileType {
       anonymousRead,
       readRoles,
       updateRoles,
+      rules,
     };
     return new FileTypeEntity(newType);
   }
@@ -46,13 +49,11 @@ export class FileTypeEntity implements FileType {
     this.anonymousRead = type.anonymousRead;
     this.readRoles = type.readRoles || [];
     this.updateRoles = type.updateRoles || [];
+    this.rules = type?.rules;
   }
 
   canAccessFile(user: User): boolean {
-    return (
-      this.anonymousRead ||
-      isAllowedUser(user, this.tenantId, [ServiceUserRoles.Admin, ...this.readRoles, ...this.updateRoles], true)
-    );
+    return this.anonymousRead || isAllowedUser(user, this.tenantId, [ServiceUserRoles.Admin, ...this.readRoles], true);
   }
 
   canUpdateFile(user: User): boolean {
@@ -60,6 +61,8 @@ export class FileTypeEntity implements FileType {
   }
 
   canAccess(user: User): boolean {
+    // This is for whether the user can access the File Type,
+    // but logic happens to be identical to accessing for file of type for now.
     return this.canAccessFile(user);
   }
 }

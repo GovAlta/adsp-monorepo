@@ -339,21 +339,21 @@ objects:
                   path: /
                   port: 3333
                   scheme: HTTP
-                initialDelaySeconds: 5
+                initialDelaySeconds: 2
                 timeoutSeconds: 1
-                periodSeconds: 30
+                periodSeconds: 5
                 successThreshold: 1
-                failureThreshold: 3
+                failureThreshold: 20
               livenessProbe:
                 httpGet:
                   path: /
                   port: 3333
                   scheme: HTTP
                 initialDelaySeconds: 60
-                timeoutSeconds: 1
+                timeoutSeconds: 2
                 periodSeconds: 60
                 successThreshold: 1
-                failureThreshold: 3
+                failureThreshold: 5
           dnsPolicy: ClusterFirst
           restartPolicy: Always
           schedulerName: default-scheduler

@@ -1,84 +1,95 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PdfTemplate } from '@store/pdf/model';
-import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
-import { Grid, GridItem } from '@components/Grid';
-import { useValidators } from '@lib/useValidators';
-import { characterCheck, validationPattern, isNotEmptyCheck, wordMaxLengthCheck } from '@lib/checkInput';
-import { PdfConfigFormWrapper } from './styled-components';
+
+import { GoAIconButton } from '@abgov/react-components-new';
+
+import { Edit, PdfConfigFormWrapper } from '../../styled-components';
+import { AddEditPdfTemplate } from '../addEditPdfTemplates';
+import { useDispatch } from 'react-redux';
+import { updatePdfTemplate } from '@store/pdf/action';
 
 interface PDFConfigFormProps {
   template: PdfTemplate;
-  onChange(template: PdfTemplate): void;
-  setError(hasError: boolean): void;
 }
-export const PDFConfigForm = ({ template, onChange, setError }: PDFConfigFormProps) => {
+export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
   const { id, name, description } = template;
-  const wordLengthCheck = wordMaxLengthCheck(32);
-  const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
-  const { errors, validators } = useValidators(
-    'name',
-    'name',
-    checkForBadChars,
-    wordLengthCheck,
-    isNotEmptyCheck('name')
-  ).build();
+  const [openEditPdfTemplate, setOpenEditPdfTemplate] = useState(false);
 
+  const dispatch = useDispatch();
   return (
-    <PdfConfigFormWrapper>
-      <GoAForm>
-        <Grid>
-          <GridItem md={6} hSpacing={1}>
-            <GoAFormItem error={errors?.['name']}>
-              <label>Name</label>
-              <GoAInput
-                type="text"
-                name="name"
-                value={name}
-                data-testid={`pdf-service-modal-name-input`}
-                aria-label="name"
-                onChange={(key, name) => {
-                  const error = validators['name'].check(name);
-                  setError(error && error.length > 0);
-                  onChange({ ...template, name });
-                }}
-              />
-            </GoAFormItem>
-          </GridItem>
-
-          <GridItem md={6}>
-            <GoAFormItem>
-              <label>Template ID</label>
-              <GoAInput
-                type="text"
-                name="template-id"
-                disabled={true}
-                value={id}
-                data-testid={`pdf-service-modal-template-id-input`}
-                aria-label="template id"
-                onChange={(key, id) => {
-                  onChange({ ...template, id });
-                }}
-              />
-            </GoAFormItem>
-          </GridItem>
-        </Grid>
-        <Grid>
-          <GoAFormItem>
-            <label>Description</label>
-            <textarea
-              name="description"
-              value={description}
-              maxLength={250}
-              className="goa-textarea"
-              data-testid="pdf-service-modal-description-textarea"
-              aria-label="description"
-              onChange={(e) => {
-                onChange({ ...template, description: e.target.value });
-              }}
-            />
-          </GoAFormItem>
-        </Grid>
-      </GoAForm>
+    <PdfConfigFormWrapper data-testid="pdf-config-form">
+      <div className="nameColumn">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+            </tr>
+            <tr>
+              <td data-testid="template-name" className="overflowContainer">
+                {name}
+              </td>
+            </tr>
+          </thead>
+        </table>
+      </div>
+      <div className="separator"></div>
+      <div className="idColumn">
+        <table>
+          <thead>
+            <tr>
+              <th>Template ID</th>
+            </tr>
+            <tr>
+              <td data-testid="template-id" className="overflowContainer">
+                {id}
+              </td>
+            </tr>
+          </thead>
+        </table>
+      </div>
+      <div className="separator"></div>
+      <div className="descColumn">
+        <table>
+          <thead>
+            <tr>
+              <th>Description</th>
+            </tr>
+            <tr>
+              <td>
+                <div data-testid="template-description" className="overflowContainer">
+                  {' '}
+                  {description}
+                </div>
+              </td>
+            </tr>
+          </thead>
+        </table>
+      </div>
+      <div className="editColumn">
+        <Edit>
+          <a rel="noopener noreferrer" onClick={() => setOpenEditPdfTemplate(true)}>
+            Edit
+          </a>
+          <GoAIconButton
+            icon="create"
+            testId="pdf-template-information-edit-icon"
+            title="Edit"
+            size="small"
+            onClick={() => setOpenEditPdfTemplate(true)}
+          />
+        </Edit>
+      </div>
+      {openEditPdfTemplate && (
+        <AddEditPdfTemplate
+          open={openEditPdfTemplate}
+          isEdit={true}
+          onClose={() => setOpenEditPdfTemplate(false)}
+          initialValue={template}
+          onSave={(template) => {
+            dispatch(updatePdfTemplate(template));
+          }}
+        />
+      )}
     </PdfConfigFormWrapper>
   );
 };

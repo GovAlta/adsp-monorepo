@@ -5,9 +5,9 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
+import { AdspId, ServiceMetricsValueDefinition, initializePlatform } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
-import { createLogger, createErrorHandler } from '@core-services/core-common';
+import { createLogger, createErrorHandler, AjvValidationService } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import {
   applyFormMiddleware,
@@ -15,7 +15,9 @@ import {
   FormCreatedDefinition,
   FormDefinition,
   FormDefinitionEntity,
+  FormDeletedDefinition,
   FormServiceRoles,
+  FormStatusArchivedDefinition,
   FormStatusLockedDefinition,
   FormStatusNotificationType,
   FormStatusSubmittedDefinition,
@@ -50,6 +52,7 @@ const initializeApp = async (): Promise<express.Application> => {
     configurationService,
     configurationHandler,
     coreStrategy,
+    metricsHandler,
     healthCheck,
   } = await initializePlatform(
     {
@@ -68,20 +71,25 @@ const initializeApp = async (): Promise<express.Application> => {
       ],
       events: [
         FormCreatedDefinition,
+        FormDeletedDefinition,
         FormStatusLockedDefinition,
         FormStatusUnlockedDefinition,
         FormStatusSubmittedDefinition,
+        FormStatusArchivedDefinition,
       ],
       notifications: [FormStatusNotificationType],
+      values: [ServiceMetricsValueDefinition],
       configuration: {
         description: 'Definitions of forms with configuration of roles allowed to submit and assess.',
         schema: configurationSchema,
       },
-      configurationConverter: (config: Record<string, FormDefinition>, tenantId) =>
-        Object.entries(config).reduce(
-          (defs, [id, def]) => ({ ...defs, [id]: new FormDefinitionEntity(tenantId, def) }),
+      configurationConverter: (config: Record<string, FormDefinition>, tenantId) => {
+        const validationService = new AjvValidationService(logger);
+        return Object.entries(config).reduce(
+          (defs, [id, def]) => ({ ...defs, [id]: new FormDefinitionEntity(validationService, tenantId, def) }),
           {}
-        ),
+        );
+      },
       enableConfigurationInvalidation: true,
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
@@ -102,7 +110,13 @@ const initializeApp = async (): Promise<express.Application> => {
   });
 
   app.use(passport.initialize());
-  app.use('/form', passport.authenticate(['core', 'tenant'], { session: false }), tenantHandler, configurationHandler);
+  app.use(
+    '/form',
+    metricsHandler,
+    passport.authenticate(['core', 'tenant'], { session: false }),
+    tenantHandler,
+    configurationHandler
+  );
 
   const notificationService = createNotificationService(logger, directory, tokenProvider);
   const fileService = createFileService(logger, directory, tokenProvider);

@@ -39,7 +39,7 @@ class FileServicePage {
 
   fileTypeModalReadCheckbox(roleName) {
     return cy.xpath(
-      `//*[@data-testid="file-type-modal"]//td[text()="${roleName}"]/following-sibling::td//input[contains(@name, "read-role")]/parent::*[contains(@class, "goa-checkbox-container")]`
+      `//*[@data-testid="file-type-modal"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "read-role")]`
     );
   }
 
@@ -49,12 +49,12 @@ class FileServicePage {
 
   fileTypeModalModifyCheckbox(roleName) {
     return cy.xpath(
-      `//*[@data-testid="file-type-modal"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "update-role")]`
+      `//*[@data-testid="file-type-modal"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "modify-role")]`
     );
   }
 
   fileTypeModalModifyCheckboxes() {
-    return cy.xpath('//*[@data-testid="file-type-modal"]//goa-checkbox[contains(@name, "update-role")]');
+    return cy.xpath('//*[@data-testid="file-type-modal"]//goa-checkbox[contains(@name, "modify-role")]');
   }
 
   fileTypeModalSaveButton() {
@@ -115,6 +115,14 @@ class FileServicePage {
 
   coreFileTypesTable() {
     return cy.xpath('//*[text()="Core file types"]/parent::*//*[@data-testid="file-types-table"]//tbody');
+  }
+
+  fileRetentionCheckBox() {
+    return cy.xpath('//*[@data-testid="file-type-modal"]//goa-checkbox[@name="retentionActive"]');
+  }
+
+  fileRetentionDelayInput() {
+    return cy.xpath('//*[@data-testid="file-type-modal"]//input[@data-testid="delete-in-days-input"]');
   }
 }
 export default FileServicePage;

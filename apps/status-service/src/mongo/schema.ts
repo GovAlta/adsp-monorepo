@@ -1,5 +1,4 @@
 import { Schema } from 'mongoose';
-import { ApplicationConfiguration, EndpointToInternalStatusMapping } from '../app';
 
 export const serviceStatusEndpointSchema = new Schema(
   {
@@ -126,6 +125,17 @@ export const configurationSchema = {
         contactEmail: { type: 'string' },
       },
     },
+    applicationWebhookIntervals: {
+      appPropertyRegex: {
+        type: 'object',
+        properties: {
+          appId: { type: 'string', description: 'The unique application identifier' },
+          waitTimeInterval: { type: 'string', description: 'Webhook wait time for application (in minutes)' },
+        },
+        required: ['appId', 'waitTimeInterval'],
+        additionalProperties: false,
+      },
+    },
   },
   patternProperties: {
     appPropertyRegex: {
@@ -135,6 +145,7 @@ export const configurationSchema = {
         name: { type: 'string', description: 'Name of the application' },
         url: { type: 'string', description: 'URL to be checked' },
         description: { type: 'string', description: 'Tell us about your application' },
+        monitorOnly: { type: 'boolean', description: 'If selected, do not show publicly' },
       },
       required: ['name', 'url'],
       additionalProperties: false,

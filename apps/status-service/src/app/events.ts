@@ -1,6 +1,7 @@
 import { AdspId, DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
 import { NoticeApplicationEntity } from './model/notice';
 import { StaticApplicationData } from './model';
+import { Webhooks } from './model';
 
 const ApplicationDefinition = {
   type: 'object',
@@ -9,6 +10,7 @@ const ApplicationDefinition = {
     name: { type: ['string', 'null'] },
     description: { type: ['string', 'null'] },
     url: { type: ['string', 'null'] },
+    monitorOnly: { type: ['boolean', 'null'] },
   },
 };
 
@@ -171,6 +173,69 @@ export const ApplicationStatusChangedDefinition: DomainEventDefinition = {
   },
 };
 
+export const MonitoredServiceDownDefinition: DomainEventDefinition = {
+  name: 'monitored-service-down',
+  description: 'Signalled when an application status is down for a specified period',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      application: {
+        type: 'object',
+        properties: {
+          id: {
+            type: 'string',
+          },
+          name: {
+            type: 'string',
+          },
+          description: {
+            type: 'string',
+          },
+
+          updatedBy: {
+            type: 'object',
+            properties: {
+              userId: { type: 'string' },
+              userName: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const MonitoredServiceUpDefinition: DomainEventDefinition = {
+  name: 'monitored-service-up',
+  description: 'Signalled when an application status is up for a specified period',
+  payloadSchema: {
+    type: 'object',
+    properties: {
+      application: {
+        type: 'object',
+        properties: {
+          id: {
+            type: 'string',
+          },
+          name: {
+            type: 'string',
+          },
+          description: {
+            type: 'string',
+          },
+          updatedBy: {
+            type: 'object',
+            properties: {
+              userId: { type: 'string' },
+              userName: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
 const mapNotice = (notice: NoticeApplicationEntity): ApplicationNotificationEvent => {
   return {
     description: notice.message,
@@ -249,6 +314,58 @@ export const applicationStatusToHealthy = (app: StaticApplicationData, tenantId:
   },
 });
 
+export const monitoredServiceDown = (app: StaticApplicationData, user: User, webhook: Webhooks): DomainEvent => ({
+  name: 'monitored-service-down',
+  timestamp: new Date(),
+  tenantId: user.tenantId,
+  correlationId: app.appKey,
+  context: {
+    applicationId: app.appKey,
+    applicationName: app.name,
+  },
+  payload: {
+    application: {
+      id: app.appKey,
+      name: app.name,
+      description: app.description,
+      targetId: webhook.targetId,
+      eventTypes: webhook.eventTypes,
+      waitTimeInterval: webhook.intervalMinutes,
+      generatedByTest: webhook.generatedByTest,
+      updatedBy: {
+        userId: user.id,
+        userName: user.name,
+      },
+    },
+  },
+});
+
+export const monitoredServiceUp = (app: StaticApplicationData, user: User, webhook: Webhooks): DomainEvent => ({
+  name: 'monitored-service-up',
+  timestamp: new Date(),
+  tenantId: user.tenantId,
+  correlationId: app.appKey,
+  context: {
+    applicationId: app.appKey,
+    applicationName: app.name,
+  },
+  payload: {
+    application: {
+      id: app.appKey,
+      name: app.name,
+      description: app.description,
+      targetId: webhook.targetId,
+      eventTypes: webhook.eventTypes,
+      waitTimeInterval: webhook.intervalMinutes,
+      generatedByTest: webhook.generatedByTest,
+      updatedBy: {
+        userId: user.id,
+        userName: user.name,
+      },
+    },
+  },
+});
+
 export const applicationStatusChange = (
   app: StaticApplicationData,
   newStatus: string,
@@ -268,6 +385,7 @@ export const applicationStatusChange = (
       id: app.appKey,
       name: app.name,
       description: app.description,
+      monitorOnly: app.monitorOnly,
       originalStatus: originalStatus,
       newStatus: newStatus,
       updatedBy: {

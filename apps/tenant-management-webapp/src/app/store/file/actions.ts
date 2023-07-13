@@ -1,12 +1,16 @@
-import { FileItem, FileMetrics, FileTypeItem } from './models';
+import { FileCriteria, FileItem, FileMetrics, FileTypeItem } from './models';
 
 export const UPLOAD_FILE = 'tenant/file-service/upload';
 export const UPLOAD_FILE_SUCCESSES = 'tenant/file-service/upload/success';
 export const UPLOAD_FILE_FAILED = 'tenant/file-service/upload/fail';
 
-export const FETCH_FILE_LIST = 'tenant/file-service/file/fetch';
-export const FETCH_FILE_LIST_SUCCESSES = 'tenant/file-service/file/fetch/success';
-export const FETCH_FILE_LIST_FAILED = 'tenant/file-service/file/fetch/fail';
+export const FETCH_FILE_LIST = 'tenant/file-service/files/fetch';
+export const FETCH_FILE_LIST_SUCCESSES = 'tenant/file-service/files/fetch/success';
+export const FETCH_FILE_LIST_FAILED = 'tenant/file-service/files/fetch/fail';
+
+export const FETCH_FILE = 'tenant/file-service/file/fetch';
+export const FETCH_FILE_SUCCESS = 'tenant/file-service/file/fetch/success';
+export const FETCH_FILE_FAILED = 'tenant/file-service/file/fetch/fail';
 
 export const DELETE_FILE = 'tenant/file-service/file/delete';
 export const DELETE_FILE_SUCCESSES = 'tenant/file-service/file/delete/success';
@@ -45,6 +49,8 @@ export type ActionTypes =
   | FetchFilesAction
   | FetchFilesSuccessAction
   | FetchFilesFailedAction
+  | FetchFileSuccessAction
+  | FetchFileFailedAction
   | DeleteFileAction
   | DeleteFileSuccessAction
   | DeleteFileFailedAction
@@ -81,6 +87,12 @@ interface UploadFileFailAction {
 export interface FetchFilesAction {
   type: typeof FETCH_FILE_LIST;
   after: string;
+  criteria: FileCriteria;
+}
+export interface FetchFileAction {
+  type: typeof FETCH_FILE;
+  after: string;
+  fileId: string;
 }
 
 interface FetchFilesSuccessAction {
@@ -92,6 +104,18 @@ interface FetchFilesSuccessAction {
 
 interface FetchFilesFailedAction {
   type: typeof FETCH_FILE_LIST_FAILED;
+  payload: { data: string };
+}
+
+interface FetchFileSuccessAction {
+  type: typeof FETCH_FILE_SUCCESS;
+  payload: {
+    results: { data: FileItem };
+  };
+}
+
+interface FetchFileFailedAction {
+  type: typeof FETCH_FILE_FAILED;
   payload: { data: string };
 }
 
@@ -204,9 +228,10 @@ export const UploadFileSuccessService = (result: { data: FileItem }): UploadFile
   },
 });
 
-export const FetchFilesService = (after?: string): FetchFilesAction => ({
+export const FetchFilesService = (after?: string, criteria?: FileCriteria): FetchFilesAction => ({
   type: FETCH_FILE_LIST,
   after,
+  criteria,
 });
 
 export const FetchFilesSuccessService = (results: {
@@ -219,9 +244,27 @@ export const FetchFilesSuccessService = (results: {
     results,
   },
 });
+export const FetchFileService = (fileId?: string, after?: string): FetchFileAction => ({
+  type: FETCH_FILE,
+  after,
+  fileId,
+});
+
+export const FetchFileSuccessService = (results: { data: FileItem }): FetchFileSuccessAction => ({
+  type: FETCH_FILE_SUCCESS,
+  payload: {
+    results,
+  },
+});
 
 export const FetchFilesFailedService = (data: string): FetchFilesFailedAction => ({
   type: FETCH_FILE_LIST_FAILED,
+  payload: {
+    data,
+  },
+});
+export const FetchFileFailedService = (data: string): FetchFileFailedAction => ({
+  type: FETCH_FILE_FAILED,
   payload: {
     data,
   },

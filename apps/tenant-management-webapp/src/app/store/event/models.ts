@@ -1,3 +1,5 @@
+import { GoADate } from '@abgov/react-components-new';
+
 export interface EventDefinition {
   isCore: boolean;
   namespace: string;
@@ -37,6 +39,22 @@ export interface EventSearchCriteria {
   namespace?: string;
   name?: string;
   correlationId?: string;
+  url?: string;
+  applications?: string;
+  value?: string;
+  top?: number;
+}
+
+export interface EventSearchCriteriaGoA {
+  timestampMax?: GoADate;
+  timestampMin?: GoADate;
+  namespace?: string;
+  name?: string;
+  correlationId?: string;
+  url?: string;
+  applications?: string;
+  value?: string;
+  top?: number;
 }
 
 export const defaultEventDefinition: EventDefinition = {

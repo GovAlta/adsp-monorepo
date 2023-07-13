@@ -1,4 +1,4 @@
-import { Credentials, Session, Indicator, ElementIndicator, LoadingState } from './models';
+import { Credentials, Session, Indicator, ElementIndicator, LoadingState, ModalState } from './models';
 
 export const SESSION_LOGIN_SUCCESS = 'session/login/success';
 export const SESSION_LOGOUT = 'session/logout';
@@ -8,6 +8,9 @@ export const UPDATE_ELEMENT_INDICATOR = 'session/elementIndicator';
 export const UPDATE_LOADING_STATE = 'session/loading/state';
 export const SET_SESSION_EXPIRED = 'session/expired';
 export const UPDATE_RESOURCE_ACCESS = 'session/resourceAccess/update';
+export const SET_SESSION_WILL_EXPIRED = 'session/will/expired';
+export const UPDATE_MODAL_STATE = 'session/modal/update';
+export const RESET_MODAL_STATE = 'session/modal/reset';
 
 export type ActionType =
   | SessionLoginSuccessAction
@@ -17,6 +20,9 @@ export type ActionType =
   | UpdateLoadingStateAction
   | UpdateElementIndicatorAction
   | SetSessionExpiredAction
+  | SetSessionWillExpiredAction
+  | UpdateModalStateAction
+  | ResetModalStateAction
   | UpdateResourceAccessAction;
 
 export interface CredentialRefreshAction {
@@ -53,12 +59,26 @@ export interface SetSessionExpiredAction {
   payload: boolean;
 }
 
+export interface SetSessionWillExpiredAction {
+  type: typeof SET_SESSION_WILL_EXPIRED;
+  payload: boolean;
+}
+
 export interface UpdateResourceAccessAction {
   type: typeof UPDATE_RESOURCE_ACCESS;
   payload: {
     clientId: string;
     role: string;
   };
+}
+
+export interface ResetModalStateAction {
+  type: typeof RESET_MODAL_STATE;
+}
+
+export interface UpdateModalStateAction {
+  type: typeof UPDATE_MODAL_STATE;
+  payload: ModalState;
 }
 
 export const SessionLoginSuccess = (session: Session): SessionLoginSuccessAction => ({
@@ -101,4 +121,18 @@ export const UpdateResourceAccess = (clientId: string, role: string): UpdateReso
     clientId,
     role,
   },
+});
+
+export const SetSessionWillExpired = (isExpired: boolean): SetSessionWillExpiredAction => ({
+  type: SET_SESSION_WILL_EXPIRED,
+  payload: isExpired,
+});
+
+export const UpdateModalState = (modalState: ModalState) => ({
+  type: UPDATE_MODAL_STATE,
+  payload: modalState,
+});
+
+export const ResetModalState = () => ({
+  type: RESET_MODAL_STATE,
 });

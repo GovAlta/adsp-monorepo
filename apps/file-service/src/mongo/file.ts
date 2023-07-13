@@ -20,6 +20,10 @@ interface QueryProps {
   deleted: boolean;
   infected: boolean;
   recordId: string;
+  lastAccessed?: {
+    $gt?: string;
+    $lt?: string;
+  };
 }
 
 export class MongoFileRepository implements FileRepository {
@@ -149,6 +153,16 @@ export class MongoFileRepository implements FileRepository {
         $regex: criteria.filenameContains,
         $options: 'i',
       };
+    }
+
+    if (criteria?.lastAccessedBefore || criteria?.lastAccessedAfter) {
+      query.lastAccessed = {};
+      if (criteria?.lastAccessedBefore) {
+        query.lastAccessed.$lt = criteria?.lastAccessedBefore;
+      }
+      if (criteria?.lastAccessedAfter) {
+        query.lastAccessed.$gt = criteria?.lastAccessedAfter;
+      }
     }
     return query;
   }

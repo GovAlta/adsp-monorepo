@@ -1,7 +1,7 @@
 import { put, select, call, fork, take } from 'redux-saga/effects';
 import { RootState } from '@store/index';
 import { ErrorNotification } from '@store/notifications/actions';
-import { StatusApi, fetchStatusMetricsApi } from './api';
+import { StatusApi, fetchStatusMetricsApi, WebhookApi } from './api';
 import {
   SaveApplicationAction,
   saveApplicationSuccess,
@@ -20,10 +20,18 @@ import {
   FetchStatusConfigurationSucceededService,
   toggleApplicationStatusSuccess,
   FETCH_SERVICE_STATUS_APPS_ACTION,
+  saveWebhookAction,
+  fetchWebhooksSuccess,
+  TestWebhooksSuccess,
+  deleteWebhookSuccess,
+  DeleteWebhookAction,
+  SaveWebhookSuccess,
+  TestWebhookAction,
 } from './actions';
 import { ConfigState } from '@store/config/models';
+import { UpdateIndicator } from '@store/session/actions';
 import { SetApplicationStatusAction, setApplicationStatusSuccess } from './actions/setApplicationStatus';
-import { EndpointStatusEntry, ApplicationStatus, MetricResponse } from './models';
+import { EndpointStatusEntry, ApplicationStatus, MetricResponse, Webhooks, ApplicationWebhooks } from './models';
 import { SagaIterator } from '@redux-saga/core';
 import moment from 'moment';
 import axios from 'axios';
@@ -85,12 +93,89 @@ export function* fetchServiceStatusApps(): SagaIterator {
 
 export function* saveApplication(action: SaveApplicationAction): SagaIterator {
   const currentState: RootState = yield select();
+  const statusApplications = currentState.serviceStatus.applications;
+  const existingApp = statusApplications.filter((app) => app.appKey === action.payload.appKey);
+
   const baseUrl = getServiceStatusUrl(currentState.config);
   const token = yield call(getAccessToken);
   try {
     const api = new StatusApi(baseUrl, token);
-    const data = yield call([api, api.saveApplication], action.payload);
+    let data;
+
+    if (existingApp.length === 1) {
+      data = yield call([api, api.updateApplication], action.payload);
+    } else {
+      data = yield call([api, api.saveApplication], action.payload);
+    }
     yield put(saveApplicationSuccess(data));
+    yield put(refreshServiceStatusApps());
+  } catch (e) {
+    yield put(ErrorNotification({ message: e.message }));
+  }
+}
+
+export function* saveWebhook(action: saveWebhookAction): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+
+  const token = yield call(getAccessToken);
+  try {
+    const api = new WebhookApi(baseUrl, token);
+    const statusData = yield call([api, api.fetchWebhookStatus]);
+
+    const hookIntervals = statusData?.latest?.configuration.applicationWebhookIntervals;
+
+    const { name, url, targetId, eventTypes, intervalMinutes, id, description } = action.payload;
+
+    const pushService: Record<string, Webhooks> = {
+      [id]: {
+        id: id,
+        name: name,
+        url: url,
+        targetId: targetId,
+        description: description,
+        eventTypes: eventTypes,
+      },
+    };
+
+    const statusService: ApplicationWebhooks = {
+      applicationWebhookIntervals: {
+        ...hookIntervals,
+        [targetId]: {
+          appId: targetId,
+          waitTimeInterval: intervalMinutes,
+        },
+      },
+    };
+
+    const data = yield call([api, api.saveWebhookPush], pushService);
+    const statusDataResponse = yield call([api, api.saveWebhookStatus], statusService);
+
+    const hookIntervalResponse = statusDataResponse?.latest?.configuration.applicationWebhookIntervals;
+
+    yield put(SaveWebhookSuccess(data.latest.configuration?.webhooks, hookIntervalResponse));
+    yield put(refreshServiceStatusApps());
+  } catch (e) {
+    yield put(ErrorNotification({ message: e.message }));
+  }
+}
+
+export function* fetchWebhook(action: saveWebhookAction): SagaIterator {
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
+
+  const token = yield call(getAccessToken);
+  try {
+    const api = new WebhookApi(configBaseUrl, token);
+
+    const data = yield call([api, api.fetchWebhookPush]);
+
+    const statusData = yield call([api, api.fetchWebhookStatus]);
+
+    const configuration = data?.latest?.configuration?.webhooks;
+    const hookIntervals = statusData?.latest?.configuration.applicationWebhookIntervals;
+
+    yield put(fetchWebhooksSuccess(configuration, hookIntervals));
     yield put(refreshServiceStatusApps());
   } catch (e) {
     yield put(ErrorNotification({ message: e.message }));
@@ -109,6 +194,62 @@ export function* deleteApplication(action: DeleteApplicationAction): SagaIterato
 
     yield put(deleteApplicationSuccess(action.payload.appKey));
   } catch (e) {
+    yield put(ErrorNotification({ message: e.message }));
+  }
+}
+
+export function* deleteWebhook(action: DeleteWebhookAction): SagaIterator {
+  const configBaseUrl: string = yield select(
+    (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
+  );
+  const token = yield call(getAccessToken);
+
+  const id = action.payload.id;
+
+  const pushService: Record<string, Webhooks> = {
+    [id]: null,
+  };
+
+  try {
+    const api = new WebhookApi(configBaseUrl, token);
+    yield call([api, api.saveWebhookPush], pushService);
+
+    yield put(deleteWebhookSuccess(action.payload.id));
+  } catch (e) {
+    yield put(ErrorNotification({ message: e.message }));
+  }
+}
+export function* testWebhook(action: TestWebhookAction): SagaIterator {
+  const currentState: RootState = yield select();
+
+  const token = yield call(getAccessToken);
+  const statusServiceUrl = getServiceStatusUrl(currentState.config);
+
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Running test...',
+    })
+  );
+
+  try {
+    const api = new StatusApi(statusServiceUrl, token);
+
+    const response = yield call([api, api.testWebhook], action.webhook, action.eventName); // webhook: Webhooks, eventName
+
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
+
+    yield put(TestWebhooksSuccess(response));
+  } catch (e) {
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
     yield put(ErrorNotification({ message: e.message }));
   }
 }

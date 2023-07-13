@@ -90,7 +90,12 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
         <GoAForm>
           <GoAFormItem>
             <div style={{ margin: '0 0 200px 0' }}>
-              <GoADropdown name="event" onChange={onChange} selectedValues={selectedValues}>
+              <GoADropdown
+                name="event"
+                onChange={onChange}
+                selectedValues={selectedValues}
+                data-testid="event-dropdown"
+              >
                 {dropDownOptions.map((item, key) => (
                   <GoADropdownOption label={item.label} value={item.value} key={key} data-testid={item.dataTestId} />
                 ))}

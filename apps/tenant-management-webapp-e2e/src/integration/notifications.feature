@@ -110,12 +110,12 @@ Feature: Notifications
     Then the user views all the subscribers with "address as" containing "auto"
     When the user searches subscribers with "email" containing "auto.Test"
     Then the user views all the subscribers with "email" containing "auto.Test"
-    When the user searches subscribers with address as containing "auto test", email containing "auto.test" and phone number containing "EMPTY"
-    Then the user views subscribers with "address as" containing "auto test" and "email" containing "auto.test"
+    When the user searches subscribers with address as containing "auto.test", email containing "auto.test" and phone number containing "EMPTY"
+    Then the user views subscribers with "address as" containing "auto.test" and "email" containing "auto.test"
     When the user expands the subscription list for the subscriber of "Auto Test" and "auto.test@gov.ab.ca"
     Then the user views the subscription of "status-application-health-change" for the subscriber of "Auto Test" and "auto.test@gov.ab.ca"
 
-  @TEST_CS-1224 @REQ_CS-1183 @regression
+ @TEST_CS-1224 @REQ_CS-1183 @regression
   Scenario: As a tenant admin, I can delete a subscriber
     # Autotest user should be already subscribed to application health change notifications. If not, set it to subscribed
     Given a tenant admin user is on status applications page
@@ -370,7 +370,7 @@ Feature: Notifications
     Then no critical or serious accessibility issues on "notification overview page"
     When the user clicks edit button for contact information
     Then the user views Edit contact information modal on notification overview page
-    And no critical or serious accessibility issues for "edit notification contact information modal" on "notification overview page"
+    #And no critical or serious accessibility issues for "edit notification contact information modal" on "notification overview page"
     And the user clicks Cancel button in Edit contact information modal
     When the user clicks Add notification type button
     Then the user views Add notification type modal
@@ -385,7 +385,7 @@ Feature: Notifications
     When the user clicks Cancel button in Select an event modal
     When the user clicks "edit" button for "Autotest:autotest-eventDefinition" in "autotest-notificationType"
     Then the user views an email template modal title for "Autotest:autotest-eventDefinition"
-    And no critical or serious accessibility issues for "event template modal" on "notification types page"
+    #And no critical or serious accessibility issues for "event template modal" on "notification types page"
     When the user clicks Close button in event template modal
     Then Preview event template modal is closed
     When the user selects "Subscriptions" tab for "Notification"

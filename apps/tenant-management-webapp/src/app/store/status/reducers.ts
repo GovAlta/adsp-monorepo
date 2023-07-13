@@ -10,11 +10,16 @@ import {
   UPDATE_FORM_DATA_ACTION,
   FETCH_STATUS_CONFIGURATION_SUCCEEDED,
   UPDATE_STATUS_CONTACT_INFORMATION,
+  FETCH_WEBHOOK_SUCCESS_ACTION,
+  DELETE_WEBHOOK_SUCCESS_ACTION,
+  SAVE_WEBHOOK_SUCCESS_ACTION,
+  TEST_WEBHOOK_SUCCESS_ACTION,
 } from './actions';
 import { ServiceStatus } from './models';
 
 const initialState: ServiceStatus = {
   applications: [],
+  webhooks: {},
   endpointHealth: {},
   currentFormData: {
     name: '',
@@ -28,6 +33,7 @@ const initialState: ServiceStatus = {
   contact: {
     contactEmail: null,
   },
+  testSuccess: 0,
 };
 
 const compareIds = (a: { appKey?: string }, b: { appKey?: string }): number => (a.appKey > b.appKey ? 1 : -1);
@@ -47,6 +53,9 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
           [action.payload.appKey]: { url: action.payload.url, entries: action.payload.entries || [] },
         },
       };
+    case TEST_WEBHOOK_SUCCESS_ACTION: {
+      return { ...state, testSuccess: state.testSuccess + 1 };
+    }
     case DELETE_APPLICATION_SUCCESS_ACTION:
       return {
         ...state,
@@ -62,6 +71,21 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
       }
       return { ...state };
     }
+    case SAVE_WEBHOOK_SUCCESS_ACTION: {
+      const webhooks = action.payload;
+      const hookIntervalList = Object.keys(action.hookIntervals).map((h) => {
+        return action.hookIntervals[h];
+      });
+
+      Object.keys(webhooks).forEach((key) => {
+        if (webhooks[key]) {
+          webhooks[key].intervalMinutes = hookIntervalList.find(
+            (i) => i.appId === webhooks[key]?.targetId
+          )?.waitTimeInterval;
+        }
+      });
+      return { ...state, webhooks: webhooks };
+    }
     case TOGGLE_APPLICATION_SUCCESS_STATUS_ACTION:
       return {
         ...state,
@@ -73,7 +97,33 @@ export default function statusReducer(state: ServiceStatus = initialState, actio
           )
           .sort(compareIds),
       };
+    case FETCH_WEBHOOK_SUCCESS_ACTION: {
+      const webhooks = action.payload;
 
+      const hookIntervalList = Object.keys(action.hookIntervals).map((h) => {
+        return action.hookIntervals[h];
+      });
+
+      webhooks &&
+        Object.keys(webhooks).forEach((key) => {
+          if (webhooks[key]) {
+            webhooks[key].intervalMinutes = hookIntervalList.find(
+              (i) => i.appId === webhooks[key].targetId
+            )?.waitTimeInterval;
+          }
+        });
+
+      return {
+        ...state,
+        webhooks: webhooks,
+      };
+    }
+    case DELETE_WEBHOOK_SUCCESS_ACTION: {
+      const deletedWebhook = Object.keys(state.webhooks).find((hook) => hook === action.payload);
+
+      delete state.webhooks[deletedWebhook];
+      return { ...state, webhooks: { ...state.webhooks } };
+    }
     case UPDATE_FORM_DATA_ACTION:
       return {
         ...state,
