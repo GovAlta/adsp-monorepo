@@ -87,12 +87,11 @@ Then('the user views Delete PDF template modal for {string}', function (template
   pdfServiceObj
     .pdfTemplateDeleteConfirmationModal()
     .shadow()
-    .find('.modal-title')
+    .get('[slot="heading"]')
     .invoke('text')
     .should('eq', 'Delete PDF template');
   pdfServiceObj
     .pdfTemplateDeleteConfirmationModalContent()
-
     .invoke('text')
     .should('contain', 'Delete ' + templateName);
 });

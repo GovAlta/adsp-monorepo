@@ -1,7 +1,7 @@
 ---
 title: Keycloak Themes
 layout: page
-nav_order: 2
+nav_order: 6
 parent: Access Service
 grand_parent: Tutorials
 ---

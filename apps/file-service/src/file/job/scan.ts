@@ -32,7 +32,7 @@ export const createScanJob =
               tenant: tenantId?.toString(),
             });
           } else {
-            logger.debug(`Scanned file ${filename} (ID: ${id}).`, {
+            logger.info(`Scanned file ${filename} (ID: ${id}).`, {
               context: 'FileScanJob',
               tenant: tenantId?.toString(),
             });

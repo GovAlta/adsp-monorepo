@@ -211,10 +211,18 @@ describe('File Entity', () => {
       expect(canAccess).toBeFalsy();
     });
 
-    it('can check user update for user with updated on type', () => {
+    it('can check user delete for other user with update role on type', () => {
       typeMock.setup((m) => m.canUpdateFile(user)).returns(true);
 
-      const canAccess = entity.canUpdate(user);
+      const canAccess = entity.canDelete(user);
+      expect(canAccess).toBeFalsy();
+    });
+
+    it('can check user delete for original creator user with update role on type', () => {
+      const creator = { ...user, id: 'user-1' };
+      typeMock.setup((m) => m.canUpdateFile(creator)).returns(true);
+
+      const canAccess = entity.canDelete(creator);
       expect(canAccess).toBeTruthy();
     });
 
@@ -250,7 +258,7 @@ describe('File Entity', () => {
       expect(canAdminAccess).toBeTruthy();
     });
 
-    it('can default user update to admin if type missing', () => {
+    it('can default user delete to admin if type missing', () => {
       entity = new FileEntity(storageProviderMock.object(), repositoryMock.object(), null, {
         tenantId,
         id: 'file-1',
@@ -267,7 +275,7 @@ describe('File Entity', () => {
         infected: false,
       });
 
-      const canUpdate = entity.canUpdate(user);
+      const canUpdate = entity.canDelete(user);
       expect(canUpdate).toBeFalsy();
 
       const canAdminUpdate = entity.canAccess({
@@ -296,10 +304,11 @@ describe('File Entity', () => {
     });
 
     it('can throw for file marked for deletion', async () => {
-      typeMock.setup((m) => m.canAccessFile(user)).returns(true);
+      const admin = { ...user, roles: [ServiceUserRoles.Admin] };
+      typeMock.setup((m) => m.canAccessFile(admin)).returns(true);
 
-      await entity.markForDeletion(user);
-      await expect(entity.readFile(user)).rejects.toThrowError(InvalidOperationError);
+      await entity.markForDeletion(admin);
+      await expect(entity.readFile(admin)).rejects.toThrowError(InvalidOperationError);
     });
 
     it('can throw for infected file', async () => {
@@ -315,7 +324,8 @@ describe('File Entity', () => {
     });
 
     it('can mark for delete', (done) => {
-      entity.markForDeletion(user).then((result) => {
+      const admin = { ...user, roles: [ServiceUserRoles.Admin] };
+      entity.markForDeletion(admin).then((result) => {
         expect(result.deleted).toEqual(true);
         done();
       });

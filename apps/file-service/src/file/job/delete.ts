@@ -20,7 +20,7 @@ export const createDeleteJob =
       if (result) {
         const deleted = await result.delete();
         if (deleted) {
-          logger.debug(`Deleted file ${filename} (ID: ${id}).`, {
+          logger.info(`Deleted file ${filename} (ID: ${id}).`, {
             context: 'FileDeleteJob',
             tenant: tenantId?.toString(),
           });

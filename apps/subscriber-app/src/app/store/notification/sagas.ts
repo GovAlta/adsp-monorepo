@@ -6,7 +6,6 @@ import axios from 'axios';
 
 export function* fetchContactInfo(action: FetchContactInfoAction): SagaIterator {
   const { realm, tenantId } = action.payload.tenant;
-
   try {
     let contactInfo = null;
     if (realm) {

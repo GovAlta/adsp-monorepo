@@ -15,6 +15,9 @@ export const PATCH_SUBSCRIBER_SUCCESS = 'tenant/notification-service/patch-subsc
 
 export const NO_SUBSCRIBER = 'tenant/notification-service/no-subscriber';
 
+export const CREATE_SUBSCRIBER = 'tenant/notification-service/create-subscriber';
+export const CREATE_SUBSCRIBER_SUCCESS = 'tenant/notification-service/create-subscriber-success';
+
 // =============
 // Actions Types
 // =============
@@ -24,7 +27,8 @@ export type ActionTypes =
   | PatchSubscriberActionSuccess
   | GetMySubscriberActionSuccess
   | UnsubscribeActionSuccess
-  | GetSubscriberActionSuccess;
+  | GetSubscriberActionSuccess
+  | CreateSubscriptionActionSuccess;
 export interface GetMySubscriberActionSuccess {
   type: typeof GET_MY_SUBSCRIBER_DETAILS_SUCCESS;
   payload: {
@@ -73,6 +77,17 @@ export interface PatchSubscriberActionSuccess {
 }
 export interface NoSubscriber {
   type: typeof NO_SUBSCRIBER;
+}
+
+export interface CreateSubscribeAction {
+  type: typeof CREATE_SUBSCRIBER;
+}
+
+export interface CreateSubscriptionActionSuccess {
+  type: typeof CREATE_SUBSCRIBER_SUCCESS;
+  payload: {
+    subscriber: Subscriber;
+  };
 }
 
 // ==============
@@ -145,5 +160,16 @@ export const getSubscriberDetails = (subscriberId: string): GetSubscriberAction 
   type: GET_SUBSCRIBER_DETAILS,
   payload: {
     subscriberId,
+  },
+});
+
+export const createSubscriber = (): CreateSubscribeAction => ({
+  type: CREATE_SUBSCRIBER,
+});
+
+export const createSubscriberSuccess = (subscriber): CreateSubscriptionActionSuccess => ({
+  type: CREATE_SUBSCRIBER_SUCCESS,
+  payload: {
+    subscriber,
   },
 });
