@@ -44,7 +44,7 @@ Feature: File service
       | /file/v1/files/<fileid> | GET          | autotest-type3 | autotest-file3.pdf | autotest-recordid-3 | 200         |
   #     | /file/v1/files/<fileid> | GET          | autotest-type4 | autotest-file4.pdf | autotest-recordid-4 | 200         |
 
- @TEST_CS-2110 @REQ_CS-2069 @regression @api
+  @TEST_CS-2110 @REQ_CS-2069 @regression @api
   Scenario Outline: As a developer of a GoA digital service, I can consume the file type API to set and disable file retention
     When a developer of a GoA digital service set autotype7 request with "<Request Endpoint>" retention
     Then "<Status Code>" is returned after file retention be set.
@@ -52,20 +52,20 @@ Feature: File service
     Then "<Status Code>" is returned after file retention be set.
 
     Examples:
-      | Request Endpoint                                       | Status Code |
-      | /configuration/v2/configuration/platform/file-service  | 200         |
+      | Request Endpoint                                      | Status Code |
+      | /configuration/v2/configuration/platform/file-service | 200         |
 
-@TEST_CS-2075 @REQ_CS-2069 @regression @api
+  @TEST_CS-2075 @REQ_CS-2069 @regression @api
   Scenario Outline: As a developer of a GoA digital service, I can test the default PDF file type configuration through API
-      When a developer of a GoA digital service get default PDF file type configuration request with "<Request Endpoint>"
-      Then "<Status Code>" is returned after file retention be set.
-      Then check Generated PDF file type retention days is 30
+    When a developer of a GoA digital service get default PDF file type configuration request with "<Request Endpoint>"
+    Then "<Status Code>" is returned after file retention be set.
+    Then check Generated PDF file type retention days is 30
 
-   Examples:
-      | Request Endpoint                                            | Status Code |
-      | /configuration/v2/configuration/platform/file-service?core  | 200         |
+    Examples:
+      | Request Endpoint                                           | Status Code |
+      | /configuration/v2/configuration/platform/file-service?core | 200         |
 
-@TEST_CS-2110 @REQ_CS-2037 @regression @api
+  @TEST_CS-2110 @REQ_CS-2037 @regression @api
 
   Scenario Outline: As a developer, I can query files by last accessed time criteria, so I can file stale files
     When a developer of a GoA digital service can query files by last accessed time criteria with "<Request Endpoint>" for before yesterday
@@ -77,8 +77,8 @@ Feature: File service
 
 
     Examples:
-      | Request Endpoint| Status Code |
-      | /file/v1/files/ | 200         |
+      | Request Endpoint | Status Code |
+      | /file/v1/files/  | 200         |
 
 
   # TODO: Test is no longer relevant with removal of file service enable/disable
