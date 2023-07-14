@@ -3,9 +3,8 @@ import styled from 'styled-components';
 
 // eslint-disable-next-line
 function DataTable({ children, ...props }): JSX.Element {
-
   if (props?.noScroll === true) {
-    return <Table {...props}>{children}</Table>
+    return <Table {...props}>{children}</Table>;
   }
 
   return (
@@ -20,6 +19,7 @@ export default DataTable;
 const ScrollWrapper = styled.div`
   width: 100%;
   overflow-x: auto;
+  overflow-y: clip;
 `;
 
 const Table = styled.table`
