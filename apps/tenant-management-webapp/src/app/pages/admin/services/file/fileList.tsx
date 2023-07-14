@@ -17,8 +17,9 @@ import { renderNoItem } from '@components/NoItem';
 import { DeleteModal } from '@components/DeleteModal';
 import { FileItem } from '@store/file/models';
 import { PageIndicator } from '@components/Indicator';
-
 import styled from 'styled-components';
+import { selectActionStateStart, selectActionStateCompleted } from '@store/session/selectors';
+import { UPLOAD_FILE } from '@store/file/actions';
 
 const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<FileItem>(null);
@@ -55,10 +56,12 @@ const FileList = (): JSX.Element => {
     return state?.session?.indicator;
   });
 
+  const isUploadingFile = useSelector(selectActionStateStart(UPLOAD_FILE));
+  const hasUploadingFileCompleted = useSelector(selectActionStateCompleted(UPLOAD_FILE));
+
   const onUploadSubmit = () => {
     const fileInfo = { file: selectedFile, type: uploadFileType };
     dispatch(UploadFileService(fileInfo));
-    setUploadFileType('');
     setSelectFile(null);
     fileName.current.value = '';
   };
@@ -100,7 +103,7 @@ const FileList = (): JSX.Element => {
   };
 
   // eslint-disable-next-line
-  useEffect(() => {}, [indicator]);
+  useEffect(() => {}, [indicator, isUploadingFile, hasUploadingFileCompleted]);
 
   const renderFileTable = () => {
     return (
@@ -190,7 +193,11 @@ const FileList = (): JSX.Element => {
             </button>
 
             <div className="margin-left">
-              {fileName?.current?.value ? fileName.current.value.split('\\').pop() : 'No file was chosen'}
+              {fileName?.current?.value
+                ? fileName.current.value.split('\\').pop()
+                : hasUploadingFileCompleted || isUploadingFile
+                ? 'Please choose another file'
+                : 'No file was chosen'}
             </div>
           </div>
         </>
@@ -211,7 +218,11 @@ const FileList = (): JSX.Element => {
           </GoAFormItem>
         </FileTypeDropdown>
 
-        <GoAButton type="submit" onClick={onUploadSubmit} disabled={!(selectedFile && uploadFileType.length > 0)}>
+        <GoAButton
+          type="submit"
+          onClick={onUploadSubmit}
+          disabled={isUploadingFile || !(selectedFile && uploadFileType.length > 0)}
+        >
           Upload
         </GoAButton>
       </GoAForm>
