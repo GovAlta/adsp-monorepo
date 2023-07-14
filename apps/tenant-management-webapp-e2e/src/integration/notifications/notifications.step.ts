@@ -76,6 +76,7 @@ When(
             })
             .then(() => {
               for (let i = 0; i < roles.length; i++) {
+                cy.wait(1000); //Wait the checkbox components to settle down before selecting a role
                 if (roles[i].includes(':')) {
                   notificationsObj
                     .notificationTypeModalClientRoleCheckbox(roles[i].trim())
@@ -862,7 +863,7 @@ When('the user selects {string} tab on the event template', function (tab) {
 When(
   'the user enters {string} as subject and {string} as body on {string} template page',
   function (subjectText, bodyText, channel) {
-    cy.wait(1000); // Wait for the template editor elements to show
+    cy.wait(2000); // Wait for the template editor elements to show
     // Use proper casing no matter what cases used by the passed in parameter
     let channelNameInTitle;
     switch (channel.toLowerCase()) {
@@ -883,6 +884,7 @@ When(
       .click({ force: true })
       .focus()
       .clear({ force: true })
+      .type('{selectAll}', { force: true, parseSpecialCharSequences: true }) //In case clear doesn't work, do select all and then type in text
       .type(subjectText, { force: true, parseSpecialCharSequences: false });
 
     notificationsObj
@@ -890,6 +892,7 @@ When(
       .click({ force: true })
       .focus()
       .clear({ force: true })
+      .type('{selectAll}', { force: true, parseSpecialCharSequences: true }) //In case clear doesn't work, do select all and then type in text
       .type(bodyText, { force: true, parseSpecialCharSequences: false });
   }
 );

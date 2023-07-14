@@ -115,7 +115,7 @@ Feature: Notifications
     When the user expands the subscription list for the subscriber of "Auto Test" and "auto.test@gov.ab.ca"
     Then the user views the subscription of "status-application-health-change" for the subscriber of "Auto Test" and "auto.test@gov.ab.ca"
 
- @TEST_CS-1224 @REQ_CS-1183 @regression
+  @TEST_CS-1224 @REQ_CS-1183 @regression
   Scenario: As a tenant admin, I can delete a subscriber
     # Autotest user should be already subscribed to application health change notifications. If not, set it to subscribed
     Given a tenant admin user is on status applications page
