@@ -18,6 +18,7 @@ import { createClient as createRedisClient } from 'redis';
 import { Server as IoServer, Socket } from 'socket.io';
 import { promisify } from 'util';
 import { createAmqpEventService } from './amqp';
+import { createAmqpEventService as createAmqpEventServiceWebhooks } from '@core-services/core-common';
 import { environment } from './environments/environment';
 import { applyPushMiddleware, configurationSchema, PushServiceRoles, Stream, StreamEntity } from './push';
 import { WebhookTriggeredDefinition } from './push/events';
@@ -139,9 +140,16 @@ const initializeApp = async (): Promise<Server> => {
 
   const eventServiceAmp = await createAmqpEventService({ ...environment, logger });
 
+  const eventServiceAmpWebhooks = await createAmqpEventServiceWebhooks({
+    ...environment,
+    queue: 'webhooks',
+    logger,
+  });
+
   applyPushMiddleware(app, [defaultIo, io], {
     logger,
     eventServiceAmp,
+    eventServiceAmpWebhooks,
     tenantService,
     configurationService,
     directory,
