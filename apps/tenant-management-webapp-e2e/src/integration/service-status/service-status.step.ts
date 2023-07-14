@@ -643,7 +643,7 @@ When('the user enters {string} in Edit contact information modal', function (ema
 
 Then('the user clicks Save button on contact information modal', function () {
   statusObj.editContactInformationEmailSaveBtn().click();
-  cy.wait(1000);
+  cy.wait(2000);
 });
 
 Then('the user clicks Cancel button on contact information modal', function () {
