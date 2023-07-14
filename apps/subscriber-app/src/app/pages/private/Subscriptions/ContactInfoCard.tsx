@@ -52,7 +52,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
   const setValue = (name: string, value: string) => {
     switch (name) {
       case Channels?.email:
-        setEmailContactInformation(value ? value : userInfo?.email);
+        setEmailContactInformation(value);
         break;
       case Channels?.sms: {
         if (inValidSMSInput(value)) {
