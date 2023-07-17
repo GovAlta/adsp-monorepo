@@ -20,6 +20,7 @@ export * from './roles';
 interface PushMiddlewareProps {
   logger: Logger;
   eventServiceAmp: DomainEventSubscriberService;
+  eventServiceAmpWebhooks: DomainEventSubscriberService;
   tenantService: TenantService;
   configurationService: ConfigurationService;
   directory: ServiceDirectory;

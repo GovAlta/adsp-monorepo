@@ -54,15 +54,30 @@ export function createDeleteOldFilesJob({
           return await Promise.all(
             Object.keys(configuration).map(async (key) => {
               if (configuration[key].rules?.retention?.active) {
-                const retention = configuration[key].rules?.retention?.deleteInDays;
+                const fileType = configuration[key];
+                const retention = fileType.rules?.retention?.deleteInDays;
+                if (!retention) {
+                  logger.info(
+                    `There is no file retention for file type ${fileType.id} - skip the file retention check.`
+                  );
+                  return;
+                }
                 let after = null;
+                const beforeLastAccessed = getBeforeLastAccessed(retention);
 
                 do {
                   const { results, page } = await fileRepository.find(tenant.id, 20, after as string, {
-                    lastAccessedBefore: getBeforeLastAccessed(retention),
+                    lastAccessedBefore: beforeLastAccessed,
+                    typeEquals: fileType.id,
                   });
-
+                  logger.info(
+                    `Found ${results?.length} files with last accessed before ${beforeLastAccessed} in file type ${fileType.id}.`
+                  );
                   for (const file of results) {
+                    logger.info(
+                      `File ${file.filename} of ${file.type} with lastAccessed ${file.lastAccessed} will be deleted.`
+                    );
+
                     if (!file.deleted) {
                       try {
                         jobUser.tenantId = file.tenantId;

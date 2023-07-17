@@ -29,6 +29,7 @@ import { webhookTriggered } from '../events';
 interface StreamRouterProps {
   logger: Logger;
   eventServiceAmp: DomainEventSubscriberService;
+  eventServiceAmpWebhooks: DomainEventSubscriberService;
   tenantService: TenantService;
   tokenProvider: TokenProvider;
   eventService: EventService;
@@ -249,6 +250,7 @@ export const createStreamRouter = (
   {
     logger,
     eventServiceAmp,
+    eventServiceAmpWebhooks,
     tenantService,
     tokenProvider,
     eventService,
@@ -264,12 +266,23 @@ export const createStreamRouter = (
     share()
   );
 
+  const webhookEvents = eventServiceAmpWebhooks.getItems().pipe(
+    map(({ item, done }) => {
+      done();
+      return item;
+    }),
+    share()
+  );
+
   events.subscribe(async (next) => {
     logger.debug(`Processing event ${next.namespace}:${next.name} ...`);
+  });
 
+  webhookEvents.subscribe(async (next) => {
     if (`${next.namespace}:${next.name}` !== 'push-service:webhook-triggered') {
-      const tenant = await tenantService.getTenants();
-      const tenantId = tenant[0]?.id;
+      const tenants = await tenantService.getTenants();
+
+      const tenantId = tenants.find((tenant) => tenant.id?.resource === next.tenantId?.resource)?.id;
 
       const token = await tokenProvider.getAccessToken();
 
@@ -310,6 +323,7 @@ export const createStreamRouter = (
             const endpointWebsocket = webhooks[key].url;
 
             if (eventMatches.length > 0) {
+              logger.debug(`Processing webhooks: ${next.namespace}:${next.name} ...`);
               let response: StatusResponse = {};
               let callResponseTime = 0;
               const beforeWebhook = new Date().getTime();

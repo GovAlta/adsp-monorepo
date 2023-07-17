@@ -158,7 +158,7 @@ export function uploadFile(apiId: AdspId, logger: Logger, eventService: EventSer
         `File '${fileEntity.filename}' (ID: ${fileEntity.id}) uploaded by user '${user.name}' (ID: ${user.id}).`,
         {
           context: 'file-router',
-          tenant: user?.tenantId?.toString(),
+          tenant: fileEntity.tenantId?.toString(),
           user: `${user.name} (ID: ${user.id})`,
         }
       );
@@ -234,7 +234,7 @@ export function downloadFile(logger: Logger): RequestHandler {
       stream.on('end', () => {
         logger.debug(`Ending streaming of file '${fileEntity.filename}' (ID: ${fileEntity.id}).`, {
           context: 'file-router',
-          tenant: user?.tenantId?.toString(),
+          tenant: fileEntity.tenantId?.toString(),
           user: user ? `${user.name} (ID: ${user.id})` : null,
         });
         res.end();
@@ -260,7 +260,7 @@ export function deleteFile(logger: Logger, eventService: EventService): RequestH
           `user '${user.name}' (ID: ${user.id}).`,
         {
           context: 'file-router',
-          tenant: user?.tenantId?.toString(),
+          tenant: fileEntity.tenantId?.toString(),
           user: `${user.name} (ID: ${user.id})`,
         }
       );
