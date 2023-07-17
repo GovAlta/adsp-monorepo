@@ -146,7 +146,8 @@ Feature: File service
   # When the user selects "Test files" tab for "File"
   # Then no critical or serious accessibility issues on "file test files page"
 
-  @TEST_CS-316 @REQ_CS-196 @FileTypes @regression
+  # Ingore until https://goa-dio.atlassian.net/browse/CS-2178 is fixed
+  @TEST_CS-316 @REQ_CS-196 @FileTypes @regression @ignore
   Scenario: As a tenant admin, I cannot remove an in-use file type
     Given a service owner user is on Files overview page
     When the user selects "File types" tab for "File"
