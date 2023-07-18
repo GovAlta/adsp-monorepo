@@ -41,10 +41,26 @@ export const createFileJobs = (props: FileJobProps): void => {
     props.queueService.getItems().subscribe(({ item, done }) => {
       switch (item.work) {
         case 'scan':
-          scanJob(item.tenantId, item.file, done);
+          try {
+            scanJob(item.tenantId, item.file, done);
+          } catch (error) {
+            props.logger.error(
+              `Error in scanning file: ${item.file.filename} ${
+                item.file.id
+              } for tenant: ${item.tenantId.toString()} - ${error.message}`
+            );
+          }
           break;
         case 'delete':
-          deleteJob(item.tenantId, item.file, done);
+          try {
+            deleteJob(item.tenantId, item.file, done);
+          } catch (error) {
+            props.logger.error(
+              `Error in deleting file: ${item.file.filename} ${
+                item.file.id
+              } for tenant: ${item.tenantId.toString()} - ${error.message}`
+            );
+          }
           break;
         default: {
           props.logger.debug(
