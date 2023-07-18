@@ -18,7 +18,7 @@ export class AdspId {
   static parse(urn: string): AdspId {
     // urn:ads:{namespace}:{service}:{apiVersion}:{resource}
     if (!urn?.startsWith(PREFIX)) {
-      throw new AdspIdFormatError(`ADSP ID must begin with: ${PREFIX}`);
+      throw new AdspIdFormatError(`ADSP ID (${urn}) must begin with: ${PREFIX}`);
     }
 
     const elements = urn.substring(PREFIX.length).split(':');
@@ -70,7 +70,7 @@ export class AdspId {
  */
 export function adspId(strings: TemplateStringsArray, ...parameters: unknown[]): AdspId {
   const combined = strings.reduce((result, string, i) => {
-    return result + string + (`${parameters[i] || ''}`);
+    return result + string + `${parameters[i] || ''}`;
   }, '');
 
   return AdspId.parse(combined);
