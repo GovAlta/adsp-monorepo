@@ -43,7 +43,6 @@ export const createRepositories = ({
           reject(err);
         } else {
           const typeRepository = new ConfigurationFileTypeRepository(serviceId, tokenProvider, configurationService);
-          logger.info(`File service configuration fetched: ${JSON.stringify(typeRepository, null, 4)}`);
           const fileRepository = new MongoFileRepository(storageProvider, typeRepository);
           resolve({
             fileRepository,
