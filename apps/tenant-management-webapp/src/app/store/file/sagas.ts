@@ -2,7 +2,7 @@ import { put, select, call, all, takeEvery } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import { SagaIterator } from '@redux-saga/core';
 import FormData from 'form-data';
-import { UpdateIndicator } from '@store/session/actions';
+import { UpdateIndicator, UpdateLoadingState } from '@store/session/actions';
 import {
   FetchFilesSuccessService,
   FetchFileSuccessService,
@@ -53,9 +53,29 @@ export function* uploadFile(file) {
   formData.append('file', file.payload.data.file);
 
   try {
+    yield put(
+      UpdateLoadingState({
+        name: UPLOAD_FILE,
+        state: 'start',
+      })
+    );
+
     const uploadFile = yield api.uploadFile(formData);
     yield put(UploadFileSuccessService(uploadFile));
+
+    yield put(
+      UpdateLoadingState({
+        name: UPLOAD_FILE,
+        state: 'completed',
+      })
+    );
   } catch (e) {
+    yield put(
+      UpdateLoadingState({
+        name: UPLOAD_FILE,
+        state: 'error',
+      })
+    );
     yield put(ErrorNotification({ message: e.message }));
   }
 }
@@ -246,7 +266,7 @@ export function* createFileType({ payload }: CreateFileTypeAction): SagaIterator
         {
           operation: 'UPDATE',
           update: {
-            [payload.id]: config
+            [payload.id]: config,
           },
         },
         {
