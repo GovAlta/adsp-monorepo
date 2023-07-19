@@ -165,6 +165,7 @@ When('the user clicks Eye icon to close metadata for the service entry of {strin
 });
 
 Then('the user clicks on Add from the action menu', function () {
+  cy.wait(1000); // Wait for the + icon to show
   directoryObj.addEntryActionBtn().click();
 });
 
