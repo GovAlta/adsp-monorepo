@@ -7,7 +7,7 @@ import type { Subscriber, Subscription, SubscriptionSearchCriteria, Criteria } f
 import { UpdateSubscriber, GetTypeSubscriptions } from '@store/subscription/actions';
 import styled from 'styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
-import { SubscriberModalForm } from './editSubscriber';
+import { SubscriberModalForm } from '../subscribers/editSubscriber';
 import { GoAIcon, GoAIconButton } from '@abgov/react-components/experimental';
 import { SubscriptionNextLoader } from './subscriptionNextLoader';
 import { GoAContextMenuIcon } from '@components/ContextMenu';

@@ -3,7 +3,7 @@ import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
 import { DataTableStyle } from './styled-components';
-import { SubscriberModalForm } from '../editSubscriber';
+import { SubscriberModalForm } from './editSubscriber';
 import { DeleteSubscriber, UpdateSubscriber } from '@store/subscription/actions';
 import { renderNoItem } from '@components/NoItem';
 import { DeleteModal } from '@components/DeleteModal';

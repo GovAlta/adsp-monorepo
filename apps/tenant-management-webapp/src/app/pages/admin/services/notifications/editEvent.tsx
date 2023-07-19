@@ -23,7 +23,6 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
   onCancel,
   onNext,
   onClickedOutside,
-  errors,
   open,
   selectedEvent,
 }) => {

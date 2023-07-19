@@ -6,7 +6,7 @@ import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { NotificationsOverview } from './overview';
 import { NotificationTypes } from './notificationTypes';
-import { Subscriptions } from './subscriptions';
+import { Subscriptions } from './subscription/subscriptions';
 import { Subscribers } from './subscribers';
 import { subscriberAppUrlSelector } from './selectors';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';

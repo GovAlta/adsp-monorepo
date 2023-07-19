@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { SubscriptionList } from './subscriptionList';
 import { GetAllTypeSubscriptions, DeleteSubscription } from '@store/subscription/actions';
 import type { Subscriber, SubscriberSearchCriteria, SubscriptionSearchCriteria } from '@store/subscription/models';
-import { SubscribersSearchForm } from './subscribers/subscriberSearchForm';
+import { SubscribersSearchForm } from '../subscribers/subscriberSearchForm';
 import { CheckSubscriberRoles } from './checkSubscriberRoles';
 import { DeleteModal } from '@components/DeleteModal';
 import { PageIndicator } from '@components/Indicator';
