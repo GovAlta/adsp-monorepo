@@ -57,7 +57,7 @@ export class MongoFileRepository implements FileRepository {
       this.model.findOne({ _id: id }, null, { lean: true }, async (err, doc) => {
         if (err) {
           reject(err);
-        } else if (!doc) {
+        } else if (!doc || !doc.spaceId) {
           resolve(null);
         } else {
           const type = await this.typeRepository.getType(AdspId.parse(doc.spaceId), doc.typeId);
