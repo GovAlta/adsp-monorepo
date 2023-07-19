@@ -36,10 +36,11 @@ export class MongoFileRepository implements FileRepository {
   async find(tenantId: AdspId, top: number, after: string, criteria: FileCriteria): Promise<Results<FileEntity>> {
     const skip = decodeAfter(after);
     const query: QueryProps = this.getQuery(tenantId, criteria);
+    let results = [];
+    console.log(`Start to fetch file types for tenant ${tenantId.toString()}`);
     const types = await this.typeRepository.getTypes(tenantId);
-
     const docs = await this.model.find(query, null, { lean: true }).skip(skip).limit(top).sort({ created: -1 }).exec();
-    const results = docs.map((doc) => this.fromDoc(types[doc.typeId], doc as FileDoc));
+    results = docs.map((doc) => this.fromDoc(types[doc.typeId], doc as FileDoc));
 
     return {
       results,
@@ -56,7 +57,7 @@ export class MongoFileRepository implements FileRepository {
       this.model.findOne({ _id: id }, null, { lean: true }, async (err, doc) => {
         if (err) {
           reject(err);
-        } else if (!doc) {
+        } else if (!doc || !doc.spaceId) {
           resolve(null);
         } else {
           const type = await this.typeRepository.getType(AdspId.parse(doc.spaceId), doc.typeId);

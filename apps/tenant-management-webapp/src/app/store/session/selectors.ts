@@ -34,3 +34,19 @@ export const selectUserEmail = createSelector(selectUserInfo, (userInfo: UserInf
 export const selectIsAuthenticated = (state: RootState) => {
   return state?.session?.authenticated === true;
 };
+
+const findActionState = (state: RootState, action) => {
+  const loadingStates = state.session?.loadingStates;
+  const loadingState = loadingStates.find((state) => state.name === action);
+  return loadingState;
+};
+
+export const selectActionStateStart = (action) => (state: RootState) => {
+  const loadingState = findActionState(state, action);
+  return loadingState && loadingState?.state === 'start';
+};
+
+export const selectActionStateCompleted = (action) => (state: RootState) => {
+  const loadingState = findActionState(state, action);
+  return loadingState && loadingState?.state === 'completed';
+};
