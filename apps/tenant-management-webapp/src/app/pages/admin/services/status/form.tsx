@@ -124,7 +124,7 @@ export const ApplicationFormModal: FC<Props> = ({
       return;
     }
 
-    application.status = 'operational';
+    application.status = '';
     dispatch(saveApplication(application));
     if (onSave) onSave();
   }

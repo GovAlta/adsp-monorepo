@@ -1,6 +1,6 @@
 export type InternalServiceStatusType = 'stopped' | 'healthy' | 'unhealthy' | 'pending';
 export type PublicServiceStatusType = 'operational' | 'maintenance' | 'outage' | 'reported-issues';
-export type ServiceStatusType = InternalServiceStatusType | PublicServiceStatusType;
+export type ServiceStatusType = InternalServiceStatusType | PublicServiceStatusType | '';
 export const PublicServiceStatusTypes = ['operational', 'maintenance', 'outage', 'reported-issues'];
 export type EndpointStatusType = 'offline' | 'online' | 'pending';
 
@@ -43,7 +43,7 @@ export interface ApplicationStatus {
   metadata?: unknown;
   enabled: boolean;
   statusTimestamp?: number;
-  status?: ServiceStatusType;
+  status?: ServiceStatusType | '';
   internalStatus?: InternalServiceStatusType;
   endpoint?: ServiceStatusEndpoint;
   monitorOnly?: boolean;
