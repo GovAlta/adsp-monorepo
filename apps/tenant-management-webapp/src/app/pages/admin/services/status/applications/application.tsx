@@ -39,7 +39,7 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false);
   const [showStatusForm, setShowStatusForm] = useState<boolean>(false);
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
-  const [status, setStatus] = useState<ServiceStatusType>(app.status);
+  const [status, setStatus] = useState<ServiceStatusType | ''>(app.status);
 
   function doDelete() {
     dispatch(deleteApplication({ tenantId: app.tenantId, appKey: app.appKey }));
