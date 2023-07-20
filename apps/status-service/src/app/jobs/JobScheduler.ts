@@ -41,18 +41,28 @@ export class HealthCheckJobScheduler {
     scheduleDataReset: () => Promise<void>,
     scheduleCacheReload: () => Promise<void>
   ): Promise<void> => {
-    const applications = await this.#appManager.findEnabledApps();
-    this.#jobCache.addBatch(applications, scheduleHealthChecks);
-    scheduleCacheReload();
-    scheduleDataReset();
+    try {
+      this.#logger.error('Start to load the enabled application configurations');
+      const applications = await this.#appManager.findEnabledApps();
+      this.#jobCache.addBatch(applications, scheduleHealthChecks);
+      scheduleCacheReload();
+      scheduleDataReset();
+      this.#logger.error('Successfully loaded the enabled application configurations');
+    } catch (error) {
+      this.#logger.error(`Error loading enabled application configurations: ${error.message}`);
+    }
   };
 
   startHealthChecks = (app: StaticApplicationData, scheduler: JobScheduler): void => {
-    if (!this.#jobCache.exists(app.appKey)) {
-      this.#jobCache.add(app, scheduler);
-      this.#logger.info(`Added job for url: ${app.url}`);
-    } else {
-      this.#logger.warn(`Asked to start a job already in the cache #${app.appKey}`);
+    try {
+      if (!this.#jobCache.exists(app.appKey)) {
+        this.#jobCache.add(app, scheduler);
+        this.#logger.info(`Added job for url: ${app.url}`);
+      } else {
+        this.#logger.warn(`Asked to start a job already in the cache #${app.appKey}`);
+      }
+    } catch (error) {
+      this.#logger.error(`Error starting the health check: ${error.message}`);
     }
   };
 
