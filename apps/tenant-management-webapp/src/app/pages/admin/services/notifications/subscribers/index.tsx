@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { FindSubscribers } from '@store/subscription/actions';
 import { SubscriberList } from './subscriberList';
 import { NextLoader } from './nextLoader';
-import { CheckSubscriberRoles } from '../checkSubscriberRoles';
+import { CheckSubscriberRoles } from '../subscription/checkSubscriberRoles';
 import { PageIndicator } from '@components/Indicator';
 import { RootState } from '@store/index';
 

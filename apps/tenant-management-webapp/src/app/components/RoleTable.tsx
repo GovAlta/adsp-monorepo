@@ -36,7 +36,7 @@ interface ClientRoleTableProps {
 export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
   const [checkedRoles, setCheckedRoles] = useState(props.checkedRoles);
   const service = props.service;
-  console.log('roles: ', checkedRoles);
+
   return (
     <DataTableWrapper>
       <DataTable noScroll={true}>
