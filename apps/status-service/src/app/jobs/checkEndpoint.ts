@@ -37,10 +37,16 @@ export enum ServiceUserRoles {
 
 export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
   return async (): Promise<void> => {
-    const { getEndpointResponse } = props;
-    // run all endpoint tests
-    const statusEntry = await checkEndpoint(getEndpointResponse, props.app.url, props.app.appKey, props.logger);
-    await saveStatus(props, statusEntry, props.app.tenantId);
+    try {
+      props.logger?.info(`Start to run the check endpoint job.`);
+      const { getEndpointResponse } = props;
+      // run all endpoint tests
+      const statusEntry = await checkEndpoint(getEndpointResponse, props.app.url, props.app.appKey, props.logger);
+      await saveStatus(props, statusEntry, props.app.tenantId);
+      props.logger?.info(`Successfully finished the check endpoint job.`);
+    } catch (error) {
+      props.logger?.info(`Error checking endpoints: ${error.message}.`);
+    }
   };
 }
 
