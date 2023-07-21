@@ -47,7 +47,7 @@ export class HealthCheckJobScheduler {
       this.#jobCache.addBatch(applications, scheduleHealthChecks);
       scheduleCacheReload();
       scheduleDataReset();
-      this.#logger.error('Successfully loaded the enabled application configurations');
+      this.#logger.info('Successfully loaded the enabled application configurations');
     } catch (error) {
       this.#logger.error(`Error loading enabled application configurations: ${error.message}`);
     }
