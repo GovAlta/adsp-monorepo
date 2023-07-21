@@ -29,13 +29,14 @@ When accessing ADSP services from the back end it is reasonable to login in with
 
 Most DDD applications however, require a user to login before gaining access to resources. The user authentication process yields a JWT containing the essential information that ADSP uses to authorize a request. However, this means that your users must be authorized to use ADSP and have all the roles and permissions that a client must have for the same purpose. There are a few ways to set up user roles.
 
-- If your application has relatively few users, you can set the roles by:
+If your application has relatively few users, you can set the roles by:
+
 - logging in to the Keycloak admin panel
 - selecting Users from the left hand side menu
 - selecting the _Role Mapping_ tab
 - adding the appropriate roles.
 
-- if you register users on the fly, you can add roles via one of the Keycloak APIs. e.g.
+If you register users on the fly, you can add roles via one of the Keycloak APIs. e.g.
 
 ```
 curl -X POST 'https://access-uat.alberta.ca/auth/admin/realms/{realm}/users/{user-id}/role-mappings/realm' \
