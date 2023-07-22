@@ -101,7 +101,8 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
       };
     }
     case UPDATE_JOBS: {
-      const currentId = action.payload.data[0]?.stream.find((x) => x.name === 'pdf-generated').payload?.file?.id;
+      const currentTemplateJobs = action.payload.data.find((job) => job.templateId === action.payload.templateId);
+      const currentId = currentTemplateJobs?.stream.find((x) => x.name === 'pdf-generated').payload?.file?.id;
 
       return {
         ...state,
