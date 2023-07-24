@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { TemplateEditorContainer, MonacoDiv, EditTemplateActions, MonacoDivBody } from './styled-components';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
-import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
+import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 import { buildSuggestions, triggerInScope } from '@lib/autoComplete';
 import { Template } from '@store/notification/models';
@@ -191,7 +191,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                     </MonacoDiv>
                   </GoAFormItem>
                   <h4>{'Body'}</h4>
-                  <GoAFormItem error={errors['body'] ?? ''} helpText={bodyEditorHintText}>
+                  <GoAFormItem error={errors['body'] ?? ''} helpText={errors['body'] ? '' : bodyEditorHintText}>
                     <MonacoDivBody data-testid="templated-editor-body">
                       <MonacoEditor
                         language={item.name === 'slack' ? 'markdown' : 'handlebars'}
