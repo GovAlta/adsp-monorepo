@@ -51,7 +51,6 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
   );
   const pdfGenerationError = jobList?.[0]?.payload?.error;
   const hasError = pdfGenerationError && pdfGenerationError.length > 0;
-  const tempPdfTemplate = useSelector((state: RootState) => state?.pdf?.tempTemplate);
 
   useEffect(() => {
     dispatch(updatePdfResponse({ fileList: fileList }));
@@ -148,7 +147,7 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
           <PDFTitle>{title}</PDFTitle>
 
           <GoAButton
-            disabled={indicator.show || tempPdfTemplate === null}
+            disabled={indicator.show || pdfTemplate === null}
             type="secondary"
             testId="generate-template"
             size="compact"
