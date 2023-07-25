@@ -37,10 +37,18 @@ export enum ServiceUserRoles {
 
 export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
   return async (): Promise<void> => {
-    const { getEndpointResponse } = props;
-    // run all endpoint tests
-    const statusEntry = await checkEndpoint(getEndpointResponse, props.app.url, props.app.appKey, props.logger);
-    await saveStatus(props, statusEntry, props.app.tenantId);
+    try {
+      props.logger?.info(`Start to run the check endpoint job.`);
+      const { getEndpointResponse } = props;
+      // run all endpoint tests
+      const statusEntry = await checkEndpoint(getEndpointResponse, props.app.url, props.app.appKey, props.logger);
+      await saveStatus(props, statusEntry, props.app.tenantId);
+      props.logger?.info(`Successfully finished the check endpoint job.`);
+    } catch (error) {
+      props.logger?.error(
+        `Error checking endpoint ${props?.app?.url} of tenant ${props?.app?.tenantId}: ${error.message}.`
+      );
+    }
   };
 }
 
@@ -67,7 +75,7 @@ async function checkEndpoint(
   } catch (err) {
     const duration = Date.now() - start;
     const details = axios.isAxiosError(err) && err.response ? `Status (${err.response.status}) - ${err.message}` : err;
-    logger.info(`Error on health check request to ${url} with duration ${duration} ms: ${details}`);
+    logger.error(`Error on health check request to ${url} with duration ${duration} ms: ${details}`);
     return {
       ok: false,
       url,
@@ -237,7 +245,7 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
     try {
       await serviceStatusRepository.save(status);
     } catch (err) {
-      logger.info(`Failed to updated application ${app.name} (ID: ${app.appKey}) status.`);
+      logger.error(`Failed to updated application ${app.name} (ID: ${app.appKey}) status.`);
     }
   }
 }

@@ -8,13 +8,16 @@ interface PreviewPortalProps {
 }
 
 export const PreviewPortal: FunctionComponent<PreviewPortalProps> = ({ className, title, html }) => {
+  const htmlDocument = sanitizeHtml(html, { WHOLE_DOCUMENT: true, ADD_TAGS: ['style'] });
+
   return (
     <iframe
       sandbox=""
       data-testid="email-preview-body"
       className={className}
       title={title}
-      srcDoc={sanitizeHtml(html, { WHOLE_DOCUMENT: true, ADD_TAGS: ['style'] })}
+      seamless
+      srcDoc={htmlDocument}
     />
   );
 };

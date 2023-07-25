@@ -1,7 +1,7 @@
 import styled, { createGlobalStyle } from 'styled-components';
-import { PreviewPortal } from '../previewPortal';
-import { SlackPreviewPortal } from '../slackPreviewPortal';
-import { SmsPreviewPortal } from '../smsPreviewPortal';
+import { PreviewPortal } from './previewPortal';
+import { SlackPreviewPortal } from './slackPreviewPortal';
+import { SmsPreviewPortal } from './smsPreviewPortal';
 export const NotificationTemplateEditorContainer = styled.div`
   display: flex;
   padding-left: 3rem;

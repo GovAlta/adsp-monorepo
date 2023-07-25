@@ -24,7 +24,7 @@ export interface ConfigurationService {
    * @returns {Promise<R>}
    * @memberof ConfigurationService
    */
-  getConfiguration<C, R = [C, C]>(serviceId: AdspId, token: string, tenantId?: AdspId): Promise<R>;
+  getConfiguration<C, R = [C, C]>(serviceId: AdspId, token: string, tenantId?: AdspId, unCached?: boolean): Promise<R>;
 }
 
 export class ConfigurationServiceImpl implements ConfigurationService {
@@ -120,19 +120,34 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     }
   };
 
-  getConfiguration = async <C, R = [C, C]>(serviceId: AdspId, token: string, tenantId?: AdspId): Promise<R> => {
+  getConfiguration = async <C, R = [C, C]>(
+    serviceId: AdspId,
+    token: string,
+    tenantId?: AdspId,
+    unCached?: boolean
+  ): Promise<R> => {
     let configuration = null;
     if (tenantId) {
       assertAdspId(tenantId, 'Provided ID is not for a tenant', 'resource');
 
-      configuration =
-        this.#configuration.get<C>(`${tenantId}-${serviceId}`) ||
-        (await this.#retrieveConfiguration<C>(serviceId, token, tenantId)) ||
-        null;
+      if (unCached) {
+        configuration = (await this.#retrieveConfiguration<C>(serviceId, token, tenantId)) || null;
+      } else {
+        configuration =
+          this.#configuration.get<C>(`${tenantId}-${serviceId}`) ||
+          (await this.#retrieveConfiguration<C>(serviceId, token, tenantId)) ||
+          null;
+      }
     }
 
-    const options =
-      this.#configuration.get<C>(`${serviceId}`) || (await this.#retrieveConfiguration<C>(serviceId, token)) || null;
+    let options = null;
+
+    if (unCached) {
+      options = (await this.#retrieveConfiguration<C>(serviceId, token)) || null;
+    } else {
+      options =
+        this.#configuration.get<C>(`${serviceId}`) || (await this.#retrieveConfiguration<C>(serviceId, token)) || null;
+    }
 
     return this.#combine(configuration, options, tenantId) as R;
   };

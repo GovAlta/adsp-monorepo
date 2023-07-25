@@ -18,7 +18,6 @@ import { ReactComponent as Mail } from '@assets/icons/mail.svg';
 import { ReactComponent as Slack } from '@assets/icons/slack.svg';
 import { ReactComponent as Chat } from '@assets/icons/chat.svg';
 import { XSSErrorMessage } from '@lib/sanitize';
-
 import {
   UpdateNotificationTypeService,
   DeleteNotificationTypeService,
@@ -27,9 +26,9 @@ import {
 } from '@store/notification/actions';
 import { NotificationItem, baseTemplate, Template, EventItem } from '@store/notification/models';
 import { RootState } from '@store/index';
-import styled from 'styled-components';
+
 import { EditIcon } from '@components/icons/EditIcon';
-import { subjectEditorConfig, bodyEditorConfig } from './previewEditor/config';
+
 import {
   PreviewTemplateContainer,
   NotificationTemplateEditorContainer,
@@ -45,6 +44,14 @@ import { useDebounce } from '@lib/useDebounce';
 import { subscriberAppUrlSelector } from './selectors';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
+import {
+  Buttons,
+  NotificationBorder,
+  EventBorder,
+  EventButtonWrapper,
+  MaxHeight,
+  NotificationStyles,
+} from './styled-components';
 
 const emptyNotificationType: NotificationItem = {
   name: '',
@@ -85,7 +92,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     body: '',
   };
   const [templateEditErrors, setTemplateEditErrors] = useState(templateDefaultError);
-  const TEMPALTE_RENDER_DEBOUNCE_TIMER = 500; // ms
+  const TEMPLATE_RENDER_DEBOUNCE_TIMER = 500; // ms
   const XSS_CHECK_RENDER_DEBOUNCE_TIMER = 2000; //ms
   const syntaxErrorMessage = 'Cannot render the code, please fix the syntax error in the input field';
   const notification = useSelector((state: RootState) => state.notification);
@@ -96,8 +103,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   const [body, setBody] = useState('');
   const [templates, setTemplates] = useState<Template>(baseTemplate);
   const [savedTemplates, setSavedTemplates] = useState<Template>(baseTemplate);
-  const debouncedRenderSubject = useDebounce(subject, TEMPALTE_RENDER_DEBOUNCE_TIMER);
-  const debouncedRenderBody = useDebounce(body, TEMPALTE_RENDER_DEBOUNCE_TIMER);
+  const debouncedRenderSubject = useDebounce(subject, TEMPLATE_RENDER_DEBOUNCE_TIMER);
+  const debouncedRenderBody = useDebounce(body, TEMPLATE_RENDER_DEBOUNCE_TIMER);
   const debouncedXssCheckRenderSubject = useDebounce(subject, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
   const debouncedXssCheckRenderBody = useDebounce(body, XSS_CHECK_RENDER_DEBOUNCE_TIMER);
 
@@ -218,7 +225,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   useEffect(() => {
     renderBodyPreview(debouncedRenderBody);
-  }, [debouncedRenderBody]);
+  }, [debouncedRenderBody, setBodyPreview]);
 
   useEffect(() => {
     if (hasXSS(debouncedXssCheckRenderBody)) {
@@ -240,7 +247,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   useEffect(() => {
     renderSubjectPreview(debouncedRenderSubject);
-  }, [debouncedRenderSubject]);
+  }, [debouncedRenderSubject, setSubjectPreview]);
 
   const renderSubjectPreview = (value) => {
     try {
@@ -329,8 +336,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   };
   const [eventTemplateFormState, setEventTemplateFormState] = useState(addNewEventTemplateContent);
 
-  const eventTemplateEditHintText =
-    "*GOA default header and footer wrapper is applied if the template doesn't include proper <html> opening and closing tags";
   const validateEventTemplateFields = () => {
     try {
       handlebars.parse(body);
@@ -753,7 +758,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             <TemplateEditor
               modelOpen={showTemplateForm}
               mainTitle={eventTemplateFormState.mainTitle}
-              subjectTitle="Subject"
               templates={templates}
               initialChannel={currentChannel}
               validChannels={selectedType.sortedChannels}
@@ -765,12 +769,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 } else {
                   newTemplates = { ...templates, [channel]: { subject: value } };
                 }
-
                 setTemplates(newTemplates);
                 setSubject(value);
               }}
-              subjectEditorConfig={subjectEditorConfig}
-              bodyTitle="Body"
               onBodyChange={(value, channel) => {
                 let newTemplates = templates;
                 if (templates[channel]) {
@@ -780,10 +781,11 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 }
 
                 setTemplates(newTemplates);
+
                 setBody(value);
               }}
               setPreview={(channel) => {
-                if (templates && templates[channel]) {
+                if (templates && templates[channel] && templates[channel]?.additionalStyles) {
                   const combinedPreview = ('<style>' + templates[channel]?.additionalStyles + '</style>').concat(
                     templates[channel]?.body
                   );
@@ -795,9 +797,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                 }
                 setCurrentChannel(channel);
               }}
-              bodyEditorConfig={bodyEditorConfig}
               errors={templateEditErrors}
-              bodyEditorHintText={eventTemplateEditHintText}
               saveCurrentTemplate={() => saveOrAddEventTemplate()}
               resetToSavedAction={() => {
                 setTemplates(JSON.parse(JSON.stringify(savedTemplates)));
@@ -812,7 +812,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
             <PreviewTemplateContainer>
               <PreviewTemplate
                 channel={channelNames[currentChannel]}
-                channelTitle={`${channelNames[currentChannel]} preview`}
                 subjectPreviewContent={subjectPreview}
                 bodyPreviewContent={bodyPreview}
                 contactPhoneNumber={contact?.phoneNumber}
@@ -826,192 +825,3 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 };
 
 export default NotificationTypes;
-
-interface HeightProps {
-  height: number;
-}
-
-const Buttons = styled.div`
-  margin: 2rem 0 2rem 0;
-  text-align: left;
-`;
-
-const NotificationBorder = styled.div`
-  border: 1px solid #666666;
-  margin: 3px;
-  border-radius: 3px;
-`;
-
-const EventBorder = styled.div`
-  border: 1px solid #e6e6e6;
-  margin: 3px;
-  border-radius: 3px;
-  padding: 20px;
-`;
-
-const EventButtonWrapper = styled.div`
-  text-align: center;
-  margin: 19px 0;
-`;
-
-const MaxHeight = styled.div`
-  max-height: ${(p: HeightProps) => p.height + 'px'};
-`;
-
-const NotificationStyles = styled.div`
-  .gridBoxHeight {
-    height: 10.5rem;
-  }
-
-  .nonCoreIconPadding {
-    height: 23px;
-    margin: 0 9px 0 9px;
-  }
-
-  .coreIconPadding {
-    height: 23px;
-    margin: 0 4px 0 4px;
-  }
-
-  .smallFont {
-    font-size: 12px;
-  }
-
-  svg {
-    color: #56a0d8;
-  }
-
-  .goa-title {
-    margin-bottom: 14px !important;
-  }
-
-  .topBottomMargin {
-    margin: 10px 0;
-  }
-
-  .rowFlex {
-    display: flex;
-    flex-direction: row;
-  }
-
-  .columnFlex {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .height-100 {
-    height: 100px;
-  }
-
-  .height-120 {
-    height: 120px;
-  }
-
-  .flex {
-    display: flex;
-  }
-
-  .flex1 {
-    flex: 1;
-  }
-
-  .flex3 {
-    flex: 3;
-  }
-
-  .flex4 {
-    flex: 4;
-  }
-
-  .flex5 {
-    flex: 5;
-  }
-
-  .padding {
-    padding: 20px;
-  }
-
-  .smallPadding {
-    padding: 3px;
-  }
-
-  .mail-outline {
-    padding: 0px 3px;
-  }
-
-  .flexEndAlign {
-    align-items: flex-end;
-  }
-
-  .endAlign {
-    align-self: end;
-  }
-
-  .rightAlignEdit {
-    text-align: end;
-    width: 100%;
-  }
-  .noCursor {
-    cursor: default;
-  }
-
-  .minimumLineHeight {
-    line-height: 0.75rem;
-  }
-
-  .icon-badge-group .icon-badge-container {
-    display: inline-block;
-    margin-left: 15px;
-  }
-
-  .icon-badge-group .icon-badge-container:first-child {
-    margin-left: 0;
-  }
-
-  .icon-badge-container {
-    margin-top: 5px;
-    position: relative;
-  }
-
-  .icon-badge-icon {
-    font-size: 30px;
-    position: relative;
-  }
-
-  .icon-badge {
-    background-color: #feba35;
-    font-size: 15px;
-    font-weight: bolder;
-    color: black;
-    text-align: center;
-    font-family: sans-serif;
-    width: 18px;
-    height: 18px;
-    border-radius: 100%;
-    position: relative;
-    top: -35px;
-    left: 17px;
-    border: solid 1px;
-  }
-
-  .badgePadding > div {
-    padding: 2px 0 2px 3px;
-  }
-
-  .marginTopAuto {
-    margin-top: auto;
-  }
-
-  .textAlignLastRight {
-    text-align-last: right;
-  }
-
-  .resetButton {
-    margin-right: 10px;
-    font-size: 15px;
-  }
-
-  .coreEditButton {
-    font-size: 15px;
-  }
-`;

@@ -1,12 +1,12 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { TemplateEditorContainer, MonacoDiv, EditTemplateActions, MonacoDivBody } from './styled-components';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
-import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
+import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 import { buildSuggestions, triggerInScope } from '@lib/autoComplete';
 import { Template } from '@store/notification/models';
 import { SaveFormModal } from '@components/saveModal';
-
+import { subjectEditorConfig, bodyEditorConfig } from './config';
 import { GoAInfoBadge, GoABadge } from '@abgov/react-components/experimental';
 import { Tab, Tabs } from '@components/Tabs';
 import { GoAButton } from '@abgov/react-components';
@@ -15,23 +15,18 @@ interface TemplateEditorProps {
   modelOpen: boolean;
   mainTitle: string;
   onSubjectChange: (value: string, channel: string) => void;
-  subjectEditorHintText?: string;
-  subjectTitle: string;
-  subjectEditorConfig?: EditorProps;
   onBodyChange: (value: string, channel: string) => void;
   setPreview: (channel: string) => void;
   templates: Template;
   validChannels: string[];
-  bodyTitle: string;
-  bodyEditorConfig?: EditorProps;
-  bodyEditorHintText?: string;
+
   saveCurrentTemplate?: () => void;
   resetToSavedAction: () => void;
   eventTemplateFormState?: { saveOrAddActionText: string; cancelOrBackActionText: string; mainTitle: string };
   savedTemplates: Template;
   initialChannel: string;
   saveAndReset: (closeEventModal?: boolean) => void;
-  validateEventTemplateFields: () => boolean;
+  validateEventTemplateFields?: () => boolean;
   actionButtons?: JSX.Element;
   // eslint-disable-next-line
   errors?: any;
@@ -44,16 +39,10 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   modelOpen,
   mainTitle,
   onSubjectChange,
-  subjectEditorHintText,
-  subjectTitle,
-  subjectEditorConfig,
   onBodyChange,
   setPreview,
   templates,
   validChannels,
-  bodyTitle,
-  bodyEditorConfig,
-  bodyEditorHintText,
   eventTemplateFormState,
   saveCurrentTemplate,
   resetToSavedAction,
@@ -66,6 +55,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
   eventSuggestion,
 }) => {
   const monaco = useMonaco();
+  const bodyEditorHintText =
+    "*GOA default header and footer wrapper is applied if the template doesn't include proper <html> opening and closing tags";
 
   useEffect(() => {
     if (monaco) {
@@ -185,8 +176,8 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                 } template--${serviceName}`}</h3>
 
                 <>
-                  <h4>{subjectTitle}</h4>
-                  <GoAFormItem error={errors['subject'] ?? ''} helpText={subjectEditorHintText}>
+                  <h4>{'Subject'}</h4>
+                  <GoAFormItem error={errors['subject'] ?? ''}>
                     <MonacoDiv data-testid="templated-editor-subject">
                       <MonacoEditor
                         language={item.name === 'slack' ? 'markdown' : 'handlebars'}
@@ -199,13 +190,13 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                       />
                     </MonacoDiv>
                   </GoAFormItem>
-                  <h4>{bodyTitle}</h4>
-                  <GoAFormItem error={errors['body'] ?? ''} helpText={bodyEditorHintText}>
+                  <h4>{'Body'}</h4>
+                  <GoAFormItem error={errors['body'] ?? ''} helpText={errors['body'] ? '' : bodyEditorHintText}>
                     <MonacoDivBody data-testid="templated-editor-body">
                       <MonacoEditor
                         language={item.name === 'slack' ? 'markdown' : 'handlebars'}
                         value={templates[item.name]?.body}
-                        onChange={(value) => {
+                        onChange={(value, event) => {
                           onBodyChange(value, item.name);
                         }}
                         {...bodyEditorConfig}

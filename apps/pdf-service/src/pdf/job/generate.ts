@@ -39,12 +39,15 @@ export function createGenerateJob({
 
     const tenantId = AdspId.parse(tenantIdValue);
 
+    const disableCaching = true;
+
     try {
       const token = await tokenProvider.getAccessToken();
       const [configuration] = await configurationService.getConfiguration<Record<string, PdfTemplateEntity>>(
         serviceId,
         token,
-        tenantId
+        tenantId,
+        disableCaching
       );
 
       const pdfTemplate = configuration[templateId];

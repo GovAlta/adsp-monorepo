@@ -85,7 +85,9 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   }, []);
 
   //eslint-disable-next-line
-  useEffect(() => {}, [pdfTemplate]);
+  useEffect(() => {
+    setTmpTemplate(JSON.parse(JSON.stringify(pdfTemplate || '')));
+  }, [pdfTemplate]);
 
   const reloadFile = useSelector((state: RootState) => state.pdf?.reloadFile);
 

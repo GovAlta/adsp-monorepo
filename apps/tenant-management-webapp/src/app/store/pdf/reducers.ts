@@ -39,8 +39,9 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
         pdfTemplates: action.payload,
       };
     case UPDATE_TEMP_TEMPLATE:
+      //Intentionally don't want to cause an immediate refresh on update, as it refreshed the preview pane on text input
       state.tempTemplate = action.payload;
-      return { ...state };
+      return state;
     case UPDATE_PDF_TEMPLATE_SUCCESS_ACTION:
       return {
         ...state,
@@ -101,7 +102,8 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
       };
     }
     case UPDATE_JOBS: {
-      const currentId = action.payload.data[0]?.stream.find((x) => x.name === 'pdf-generated').payload?.file?.id;
+      const currentTemplateJobs = action.payload.data.find((job) => job.templateId === action.payload.templateId);
+      const currentId = currentTemplateJobs?.stream.find((x) => x.name === 'pdf-generated').payload?.file?.id;
 
       return {
         ...state,
