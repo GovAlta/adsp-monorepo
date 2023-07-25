@@ -27,7 +27,7 @@ interface AddEditStreamProps {
   isEdit: boolean;
   open: boolean;
   initialValue: Stream;
-  realmRoles: Role[];
+  realmRoles?: Role[];
   tenantClients: ServiceRoleConfig;
   eventDefinitions: Record<string, EventDefinition>;
   streams: Record<string, Stream>;
@@ -188,12 +188,15 @@ export const AddEditStream = ({
                 tableHeading="Roles"
                 key={'roles'}
                 subscriberRolesOptions={subscriberRolesOptions}
-                checkedRoles={stream.subscriberRoles}
+                checkedRoles={stream?.subscriberRoles || []}
                 onItemChecked={(value) => {
-                  if (stream.subscriberRoles.includes(value)) {
+                  if (stream?.subscriberRoles && stream.subscriberRoles.includes(value)) {
                     const updatedRoles = stream.subscriberRoles.filter((roleName) => roleName !== value);
                     setStream({ ...stream, subscriberRoles: updatedRoles });
                   } else {
+                    if (!stream?.subscriberRoles) {
+                      stream.subscriberRoles = [];
+                    }
                     setStream({ ...stream, subscriberRoles: [...stream.subscriberRoles, value] });
                   }
                 }}
