@@ -39,8 +39,9 @@ export default function (state: PdfState = defaultState, action: PdfActionTypes)
         pdfTemplates: action.payload,
       };
     case UPDATE_TEMP_TEMPLATE:
+      //Intentionally don't want to cause an immediate refresh on update, as it refreshed the preview pane on text input
       state.tempTemplate = action.payload;
-      return { ...state };
+      return state;
     case UPDATE_PDF_TEMPLATE_SUCCESS_ACTION:
       return {
         ...state,
