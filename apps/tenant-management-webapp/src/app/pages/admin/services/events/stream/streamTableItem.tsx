@@ -5,7 +5,7 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { GoABadge } from '@abgov/react-components/experimental';
 
 interface SubscriberRolesProps {
-  roles: string[];
+  roles?: string[];
   publicSubscribe: boolean;
 }
 
