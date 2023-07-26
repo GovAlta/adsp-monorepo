@@ -59,18 +59,11 @@ export const Hyperlinkcolor = styled.div`
 export const Emailinkcolor = styled.a`
   display: flex !important;
   align-items: inherit !important;
-  svg {
-    margin-left: 6px;
-    position: absolute;
-    margin-top: 5px;
-    path {
-      stroke-width: 2px;
-      stroke: var(--color-primary);
-    }
-    &:hover {
-      path {
-        stroke: var(--color-primary-dark);
-      }
-    }
+  a {
+    padding-right: 4px;
+    margin-bottom: 1px;
   }
+`;
+export const Spaceadjust = styled.h3`
+  margin-bottom: 2px;
 `;
