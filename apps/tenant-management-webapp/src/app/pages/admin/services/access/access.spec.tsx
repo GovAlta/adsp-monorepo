@@ -86,7 +86,7 @@ describe('Access Page', () => {
       },
     });
 
-    const { queryByTitle } = render(
+    const { queryByText } = render(
       <Provider store={store}>
         <AccessPage />
       </Provider>
@@ -96,7 +96,7 @@ describe('Access Page', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const state: any = store.getState();
 
-      const link = queryByTitle('Keycloak Admin');
+      const link = queryByText('Keycloak admin portal');
       expect(link).not.toBeNull();
       expect(link.getAttribute('href')).toEqual(`${mockKeycloak.url}/admin/${state.session.realm}/console`);
     });
