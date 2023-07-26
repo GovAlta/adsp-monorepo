@@ -62,7 +62,7 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
               <label>Search subscriber email</label>
               <GoAInputEmail
                 name="email"
-                data-testid="form-email"
+                id="email"
                 value={criteria?.email || ''}
                 aria-label="email"
                 onChange={(_, value) => {
