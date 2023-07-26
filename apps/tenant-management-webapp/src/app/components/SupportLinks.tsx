@@ -1,7 +1,6 @@
 import { Emailinkcolor, Spaceadjust } from '@pages/admin/dashboard/styled-components';
 import React from 'react';
 
-import EmailIcon from '@components/icons/EmailIcon';
 import { GoAIcon } from '@abgov/react-components-new';
 
 function SupportLinks(): JSX.Element {
