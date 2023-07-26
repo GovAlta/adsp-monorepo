@@ -4,11 +4,16 @@ import SupportLinks from '@components/SupportLinks';
 import { Tab, Tabs } from '@components/Tabs';
 import { Overview } from './overview';
 import { ServiceRoles } from './serviceRoles';
+import { Hyperlinkcolor } from '@pages/admin/dashboard/styled-components';
+import { ExternalLink } from '@components/icons/ExternalLink';
 
 export default function (): JSX.Element {
   // eslint-disable-next-line
   const [activeIndex, setActiveIndex] = useState<number>(0);
 
+  function getAccessServiceLink() {
+    return 'https://github.com/GovAlta/access-service';
+  }
   return (
     <Page>
       <Main>
@@ -26,9 +31,10 @@ export default function (): JSX.Element {
 
       <Aside>
         <h3>Helpful links</h3>
-        <a rel="noopener noreferrer" target="_blank" href="https://github.com/GovAlta/access-service">
-          See the code
-        </a>
+        <Hyperlinkcolor>
+          <ExternalLink link={getAccessServiceLink()} text="See the code" />
+        </Hyperlinkcolor>
+        <div></div>
         <SupportLinks />
       </Aside>
     </Page>
