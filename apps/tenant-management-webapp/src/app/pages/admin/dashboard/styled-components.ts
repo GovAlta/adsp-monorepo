@@ -49,3 +49,28 @@ export const ListWrapper = styled.ul`
     margin-bottom: 0.5rem;
   }
 `;
+export const Hyperlinkcolor = styled.div`
+  a {
+    &:visited {
+      color: var(--color-primary);
+    }
+  }
+`;
+export const Emailinkcolor = styled.a`
+  display: flex !important;
+  align-items: inherit !important;
+  svg {
+    margin-left: 6px;
+    position: absolute;
+    margin-top: 5px;
+    path {
+      stroke-width: 2px;
+      stroke: var(--color-primary);
+    }
+    &:hover {
+      path {
+        stroke: var(--color-primary-dark);
+      }
+    }
+  }
+`;

@@ -113,7 +113,7 @@ const Aside = styled.aside`
   h3,
   h4,
   h5 {
-    margin-top: 1rem;
+    margin-top: 2rem;
     line-height: normal;
     font-weight: var(--fw-bold);
   }
