@@ -323,11 +323,6 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
       const data = yield call(createPdfJobApi, token, createJobUrl, body);
       const pdfResponse = { ...body, ...data };
       yield put(generatePdfSuccess(pdfResponse, saveBody.update));
-      yield put(
-        UpdateIndicator({
-          show: false,
-        })
-      );
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));
       yield put(
