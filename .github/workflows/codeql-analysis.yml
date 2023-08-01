@@ -86,9 +86,9 @@ jobs:
         uses: github/codeql-action/analyze@v2
 
       - name: Retry Perform CodeQL Analysis
-			  id: codeAnalysisRetry
+        id: codeAnalysisRetry
         # The autobuild of the csharp analysis will fail intermittently: https://github.com/actions/runner/issues/2615
         # Retry when the codeAnalysis failed
-			  if: steps.codeAnalysis.outcome == 'failure'
-			  continue-on-error: true
+        if: steps.codeAnalysis.outcome == 'failure'
+        continue-on-error: true
         uses: github/codeql-action/analyze@v2
