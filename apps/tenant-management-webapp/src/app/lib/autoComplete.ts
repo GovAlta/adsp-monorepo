@@ -54,7 +54,6 @@ export const buildSuggestions = (
 ) => {
   let results: EditorSuggestion[] = [];
   let hasParent = false;
-
   const prevChar = model.getValueInRange({
     startColumn: position.column - 1,
     startLineNumber: position.lineNumber,
@@ -211,3 +210,62 @@ const getPositionX = (text: string, search: string): number => {
 };
 export const triggerInScope = (text: string, lineNumber: number) =>
   text.indexOf('{{') !== -1 && getPositionX(text, '{{') <= lineNumber && getPositionX(text, '{{') >= lineNumber;
+
+const isStringOrNumber = (value: unknown): value is string | number => {
+  return typeof value === 'string' || typeof value === 'number';
+};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const convertEditorToSuggestion = (obj: any): EditorSuggestion => {
+  const isArray = Array.isArray(obj);
+
+  if (isArray) {
+    return {
+      label: 'Array',
+      insertText: 'Array',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      children: obj.map((item: any) => convertEditorToSuggestion(item)),
+    };
+  } else if (typeof obj === 'object' && obj !== null) {
+    const properties = Object.keys(obj).map((key) => {
+      const value = obj[key];
+
+      return isStringOrNumber(value)
+        ? {
+            label: String(value),
+            insertText: String(value),
+          }
+        : {
+            label: key,
+            insertText: key,
+
+            children: Array.isArray(value)
+              ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                value.map((item: any) => convertEditorToSuggestion(item))
+              : convertEditorToSuggestion(value)?.children,
+          };
+    });
+
+    return {
+      label: 'Object',
+      insertText: 'Object',
+      children: properties,
+    };
+  } else {
+    return {
+      label: String(obj),
+      insertText: String(obj),
+    };
+  }
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const convertToEditorSuggestion = (obj: any, fileList: EditorSuggestion[]): EditorSuggestion[] => {
+  const suggest = convertEditorToSuggestion(obj);
+  return [
+    {
+      label: 'data',
+      insertText: 'data',
+      children: fileList ? [...suggest.children, ...fileList] : suggest.children,
+    },
+  ];
+};
