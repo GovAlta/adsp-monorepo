@@ -10,28 +10,6 @@ export const getSuggestion = (fileList?: FileItem[]) => {
   const tempFileList = fileList || [];
   return [
     {
-      label: 'data',
-      insertText: 'data',
-      children: [
-        {
-          label: 'id',
-          insertText: 'id',
-        },
-        {
-          label: 'name',
-          insertText: 'name',
-        },
-        {
-          label: 'description',
-          insertText: 'description',
-        },
-        {
-          label: 'template',
-          insertText: 'template',
-        },
-      ],
-    },
-    {
       label: 'file',
       insertText: 'file',
       children: [
