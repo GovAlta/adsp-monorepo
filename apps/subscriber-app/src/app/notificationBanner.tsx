@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { RootState } from '@store/index';
 
-import { GoANotification } from '@abgov/react-components';
+import { GoANotification } from '@abgov/react-components-new';
 import { clearNotification } from '@store/notifications/actions';
 
 export function NotificationBanner(): JSX.Element {
@@ -19,7 +19,6 @@ export function NotificationBanner(): JSX.Element {
               dispatch(clearNotification());
             }}
             type={notification.type}
-            isDismissable={true}
           >
             {notification.message}
           </GoANotification>
