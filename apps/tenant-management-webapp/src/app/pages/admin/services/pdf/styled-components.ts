@@ -268,6 +268,7 @@ export const PdfConfigFormWrapper = styled.div`
     border-bottom: 16px solid #f1f1f1;
     height: 64px;
     overflow: hidden;
+    vertical-align: top;
   }
   .editColumn {
     width: 56px;
