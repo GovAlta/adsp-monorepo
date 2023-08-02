@@ -1,5 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { PdfService, PdfTemplate, TemplateService, File } from '../types';
+import { PdfService, PdfTemplate, TemplateService } from '../types';
 
 export class PdfTemplateEntity implements PdfTemplate {
   tenantId: AdspId;
