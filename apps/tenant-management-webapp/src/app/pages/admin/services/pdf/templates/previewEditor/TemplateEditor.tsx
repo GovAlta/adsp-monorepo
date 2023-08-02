@@ -15,7 +15,7 @@ import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { PdfTemplate } from '@store/pdf/model';
 import { languages } from 'monaco-editor';
-import { buildSuggestions, triggerInScope } from '@lib/autoComplete';
+import { buildSuggestions, triggerInScope, convertToEditorSuggestion } from '@lib/autoComplete';
 import { GoAButton } from '@abgov/react-components-new';
 import { Tab, Tabs } from '@components/Tabs';
 import { SaveFormModal } from '@components/saveModal';
@@ -65,7 +65,10 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   const pdfTemplate = useSelector((state) => selectPdfTemplateById(state, id));
 
   const [tmpTemplate, setTmpTemplate] = useState(JSON.parse(JSON.stringify(pdfTemplate || '')));
-  const suggestion = pdfTemplate ? getSuggestion() : [];
+
+  const suggestion =
+    pdfTemplate && pdfTemplate.variables
+      && convertToEditorSuggestion(JSON.parse(pdfTemplate.variables));
 
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -134,6 +137,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
             endLineNumber: position.lineNumber,
             endColumn: position.column,
           });
+
           const suggestions = triggerInScope(textUntilPosition, position.lineNumber)
             ? buildSuggestions(monaco, suggestion, model, position)
             : [];

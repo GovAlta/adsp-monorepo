@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { GoAButton, GoANotification, GoAElementLoader } from '@abgov/react-components';
+import { GoAButton, GoAElementLoader } from '@abgov/react-components';
+import { GoANotification } from '@abgov/react-components-new';
 import { CreateTenant, IsTenantAdmin } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import GoALinkButton from '@components/LinkButton';
@@ -57,7 +58,7 @@ const CreateRealm = (): JSX.Element => {
     const message = `${props.email} has already created a tenant. Currently only one tenant is allowed per person.`;
     return (
       <div>
-        <GoANotification type="information" title="Notification Title" message={message} />
+        <GoANotification type="information">{message}</GoANotification>
         <br />
         <GoAButton
           onClick={() => {

@@ -4,7 +4,7 @@ import SupportLinks from '@components/SupportLinks';
 import { Tab, Tabs } from '@components/Tabs';
 import { Overview } from './overview';
 import { ServiceRoles } from './serviceRoles';
-import { Hyperlinkcolor, Spaceadjust } from '@pages/admin/dashboard/styled-components';
+import { Gapadjustment, Hyperlinkcolor } from '@pages/admin/dashboard/styled-components';
 import { ExternalLink } from '@components/icons/ExternalLink';
 
 export default function (): JSX.Element {
@@ -30,12 +30,12 @@ export default function (): JSX.Element {
       </Main>
 
       <Aside>
-        <Spaceadjust>Helpful links</Spaceadjust>
+        <SupportLinks />
+
+        <Gapadjustment>Helpful links</Gapadjustment>
         <Hyperlinkcolor>
           <ExternalLink link={getAccessServiceLink()} text="See the code" />
         </Hyperlinkcolor>
-        <div>&nbsp;</div>
-        <SupportLinks />
       </Aside>
     </Page>
   );

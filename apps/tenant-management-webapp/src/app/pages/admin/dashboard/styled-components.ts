@@ -65,5 +65,10 @@ export const Emailinkcolor = styled.a`
   }
 `;
 export const Spaceadjust = styled.h3`
-  margin-bottom: 2px;
+  padding-top: 3rem;
+  padding-botton: 1rem;
+`;
+export const Gapadjustment = styled.h3`
+  padding-top: 2rem;
+  padding-botton: 1rem;
 `;
