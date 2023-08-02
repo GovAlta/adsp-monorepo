@@ -3,11 +3,8 @@ import { DateTime } from 'luxon';
 import { TemplateService } from './pdf';
 import { getTemplateBody } from '@core-services/notification-shared';
 import { ServiceDirectory, adspId } from '@abgov/adsp-service-sdk';
-import axios from 'axios';
 import { validate } from 'uuid';
 import * as NodeCache from 'node-cache';
-
-import { File } from './pdf/types';
 
 const TIME_ZONE = 'America/Edmonton';
 handlebars.registerHelper('formatDate', function (value: unknown, { hash = {} }: { hash: Record<string, string> }) {
@@ -28,10 +25,6 @@ handlebars.registerHelper('formatDate', function (value: unknown, { hash = {} }:
 });
 
 class HandlebarsTemplateService implements TemplateService {
-  private fileServiceUrl: string;
-  private fileList: NodeCache;
-  private token: string;
-
   fileServiceCache: NodeCache;
 
   constructor(private readonly directory: ServiceDirectory) {
@@ -40,43 +33,8 @@ class HandlebarsTemplateService implements TemplateService {
       useClones: false,
     });
 
-    this.fileList = new NodeCache({
-      stdTTL: 0,
-      useClones: false,
-    });
-
     this.directory.getServiceUrl(adspId`urn:ads:platform:file-service`).then((result) => {
       this.fileServiceCache.set('fileServiceUrl', result.toString());
-    });
-  }
-
-  setTenantToken(token: string) {
-    this.token = token;
-  }
-
-  getTenantToken(): string {
-    return this.token;
-  }
-
-  getFileServiceCache(): NodeCache {
-    return this.fileServiceCache;
-  }
-
-  async populateFileList(token: string, tenantIdValue: string): Promise<File[]> {
-    const headers = {
-      headers: { Authorization: `Bearer ${token}` },
-    };
-
-    return new Promise((resolve) => {
-      axios
-        .get(`${this.fileServiceCache.get('fileServiceUrl')}file/v1/files?tenantId=${tenantIdValue}`, headers)
-        .then((response) => {
-          this.fileList.set('fileList', response.data.results);
-          resolve(response.data.results);
-        })
-        .catch((error) => {
-          console.error(error);
-        });
     });
   }
 

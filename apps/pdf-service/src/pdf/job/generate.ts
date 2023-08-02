@@ -55,8 +55,6 @@ export function createGenerateJob({
         throw new NotFoundError('PDF Template', templateId);
       }
 
-      await pdfTemplate.populateFileList(token, tenantIdValue);
-
       await pdfTemplate.evaluateTemplates();
 
       const pdf = await pdfTemplate.generate({ data });

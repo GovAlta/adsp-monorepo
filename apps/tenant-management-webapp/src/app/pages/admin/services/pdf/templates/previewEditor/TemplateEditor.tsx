@@ -65,9 +65,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   const pdfTemplate = useSelector((state) => selectPdfTemplateById(state, id));
 
   const [tmpTemplate, setTmpTemplate] = useState(JSON.parse(JSON.stringify(pdfTemplate || '')));
-  const fileList = useSelector((state: RootState) => state.fileService.fileList);
-
-  const suggestion = pdfTemplate ? (fileList ? getSuggestion(fileList) : getSuggestion()) : [];
+  const suggestion = pdfTemplate ? getSuggestion() : [];
 
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);

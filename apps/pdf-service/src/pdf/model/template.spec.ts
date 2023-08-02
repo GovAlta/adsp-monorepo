@@ -5,10 +5,6 @@ describe('PdfTemplateEntity', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const templateServiceMock = {
     getTemplateFunction: jest.fn(),
-    setTenantToken: jest.fn(),
-    getTenantToken: jest.fn(),
-    getFileServiceCache: jest.fn(),
-    populateFileList: jest.fn(),
   };
 
   const pdfServiceMock = {
