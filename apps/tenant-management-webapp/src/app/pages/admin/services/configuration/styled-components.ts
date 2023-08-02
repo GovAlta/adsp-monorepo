@@ -29,6 +29,7 @@ export const TableDiv = styled.div`
   }
   & td:nth-child(2) {
     word-wrap: break-word;
+    word-break: break-word;
   }
 
   & td:last-child {
