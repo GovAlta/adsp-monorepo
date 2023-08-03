@@ -259,13 +259,13 @@ const convertEditorToSuggestion = (obj: any): EditorSuggestion => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const convertToEditorSuggestion = (obj: any, fileList: EditorSuggestion[]): EditorSuggestion[] => {
+export const convertToEditorSuggestion = (obj: any): EditorSuggestion[] => {
   const suggest = convertEditorToSuggestion(obj);
   return [
     {
       label: 'data',
       insertText: 'data',
-      children: fileList ? [...suggest.children, ...fileList] : suggest.children,
+      children: suggest.children,
     },
   ];
 };

@@ -1,5 +1,5 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import { PdfService, PdfTemplate, TemplateService, File } from '../types';
+import { PdfService, PdfTemplate, TemplateService } from '../types';
 
 export class PdfTemplateEntity implements PdfTemplate {
   tenantId: AdspId;
@@ -13,7 +13,6 @@ export class PdfTemplateEntity implements PdfTemplate {
   additionalStyles?: string;
   startWithDefault?: boolean;
   additionalStylesWrapped?: string;
-  fileList: File[];
 
   private evaluateTemplate: (context: unknown) => string;
   private evaluateFooterTemplate: (context: unknown) => string;
@@ -32,19 +31,15 @@ export class PdfTemplateEntity implements PdfTemplate {
     this.header = header;
     this.footer = footer;
     this.templateService = templateService;
-    this.fileList = null;
     this.startWithDefault = startWithDefault;
 
     this.additionalStylesWrapped = '<style>' + additionalStyles + '</style>';
   }
 
-  async populateFileList(token: string, tenantIdValue: string) {
-    this.fileList = await this.templateService.populateFileList(token, tenantIdValue);
-  }
-
   evaluateTemplates() {
     this.evaluateTemplate = this.templateService.getTemplateFunction(
-      this.additionalStylesWrapped.concat(this.template)
+      this.additionalStylesWrapped.concat(this.template),
+      null
     );
     this.evaluateFooterTemplate = this.templateService.getTemplateFunction(
       this.additionalStylesWrapped.concat(this.footer),
