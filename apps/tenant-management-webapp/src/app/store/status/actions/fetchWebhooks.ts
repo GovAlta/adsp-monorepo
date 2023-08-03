@@ -26,6 +26,6 @@ export const fetchWebhooksSuccess = (
   hookIntervals: Record<string, WebhookStatus>
 ): FetchWebhooksSuccessAction => ({
   type: FETCH_WEBHOOK_SUCCESS_ACTION,
-  payload,
-  hookIntervals,
+  payload: payload || {},
+  hookIntervals: hookIntervals || {},
 });
