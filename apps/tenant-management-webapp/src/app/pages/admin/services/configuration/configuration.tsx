@@ -9,6 +9,8 @@ import { ConfigurationRevisions } from './revisions/revisions';
 import SupportLinks from '@components/SupportLinks';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
+import { Gapadjustment, Hyperlinkcolor } from '@pages/admin/dashboard/styled-components';
+import { ExternalLink } from '@components/icons/ExternalLink';
 
 export const Configuration: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -26,7 +28,12 @@ export const Configuration: FunctionComponent = () => {
       setActiveIndex(null);
     }
   }, [activeIndex]);
-
+  function getDocsLink() {
+    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Configuration service`;
+  }
+  function getsupportcodeLink() {
+    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/configuration-service';
+  }
   return (
     <Page>
       <Main>
@@ -51,24 +58,14 @@ export const Configuration: FunctionComponent = () => {
       </Main>
       <Aside>
         <>
-          <h3>Helpful links</h3>
-          <a
-            rel="noopener noreferrer"
-            target="_blank"
-            href={`${docBaseUrl}/${tenantName
-              ?.toLowerCase()
-              .replace(/ /g, '-')}?urls.primaryName=Configuration service`}
-          >
-            Read the API docs
-          </a>
-          <br />
-          <a
-            rel="noopener noreferrer"
-            target="_blank"
-            href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/configuration-service"
-          >
-            See the code
-          </a>
+          <Gapadjustment>Helpful links</Gapadjustment>
+          <Hyperlinkcolor>
+            <ExternalLink link={getDocsLink()} text="Read the API docs" />
+          </Hyperlinkcolor>
+
+          <Hyperlinkcolor>
+            <ExternalLink link={getsupportcodeLink()} text="See the code" />
+          </Hyperlinkcolor>
 
           <SupportLinks />
         </>

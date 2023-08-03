@@ -29,6 +29,8 @@ import { ApplicationList } from './styled-components';
 import { WebhookFormModal } from './webhookForm';
 
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
+import { Gapadjustment, Hyperlinkcolor } from '@pages/admin/dashboard/styled-components';
+import { ExternalLink } from '@components/icons/ExternalLink';
 
 const userHealthSubscriptionSelector = createSelector(
   (state: RootState) => state.session.userInfo?.sub,
@@ -114,6 +116,9 @@ function Status(): JSX.Element {
     setShowAddWebhookModal(edit);
   };
 
+  function getStatussupportcodeLink() {
+    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/status-service';
+  }
   return (
     <Page>
       <Main>
@@ -236,15 +241,14 @@ function Status(): JSX.Element {
       </Main>
 
       <Aside>
-        <h3>Helpful links</h3>
-        <a
-          rel="noopener noreferrer"
-          target="_blank"
-          href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/status-service"
-        >
-          See the code
-        </a>
-        <SupportLinks />
+        <>
+          <Gapadjustment>Helpful links</Gapadjustment>
+          <Hyperlinkcolor>
+            <ExternalLink link={getStatussupportcodeLink()} text="See the code" />
+          </Hyperlinkcolor>
+
+          <SupportLinks />
+        </>
 
         <h3>Public status page</h3>
 

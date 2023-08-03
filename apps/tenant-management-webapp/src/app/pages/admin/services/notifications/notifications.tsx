@@ -10,6 +10,8 @@ import { Subscriptions } from './subscription/subscriptions';
 import { Subscribers } from './subscribers';
 import { subscriberAppUrlSelector } from './selectors';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
+import { Gapadjustment, Hyperlinkcolor } from '@pages/admin/dashboard/styled-components';
+import { ExternalLink } from '@components/icons/ExternalLink';
 
 export const Notifications: FunctionComponent = () => {
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
@@ -30,7 +32,12 @@ export const Notifications: FunctionComponent = () => {
       setActiveIndex(null);
     }
   }, [activeIndex]);
-
+  function getNotificationDocsLink() {
+    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Notification service`;
+  }
+  function getNotificationsupportcodeLink() {
+    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/notification-service';
+  }
   return (
     <Page>
       <Main>
@@ -51,22 +58,15 @@ export const Notifications: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <h3>Helpful links</h3>
-        <a
-          rel="noopener noreferrer"
-          target="_blank"
-          href={`${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Notification service`}
-        >
-          Read the API docs
-        </a>
-        <br />
-        <a
-          rel="noopener noreferrer"
-          target="_blank"
-          href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/notification-service"
-        >
-          See the code
-        </a>
+        <Gapadjustment>Helpful links</Gapadjustment>
+        <Hyperlinkcolor>
+          <ExternalLink link={getNotificationDocsLink()} text="Read the API docs" />
+        </Hyperlinkcolor>
+
+        <Hyperlinkcolor>
+          <ExternalLink link={getNotificationsupportcodeLink()} text="See the code" />
+        </Hyperlinkcolor>
+
         <SupportLinks />
 
         <h3>Manage subscriptions</h3>

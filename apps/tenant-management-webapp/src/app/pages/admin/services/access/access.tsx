@@ -30,12 +30,11 @@ export default function (): JSX.Element {
       </Main>
 
       <Aside>
-        <SupportLinks />
-
         <Gapadjustment>Helpful links</Gapadjustment>
         <Hyperlinkcolor>
           <ExternalLink link={getAccessServiceLink()} text="See the code" />
         </Hyperlinkcolor>
+        <SupportLinks />
       </Aside>
     </Page>
   );

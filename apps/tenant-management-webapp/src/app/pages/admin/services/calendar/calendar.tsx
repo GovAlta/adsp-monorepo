@@ -8,6 +8,8 @@ import BetaBadge from '@icons/beta-badge.svg';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { HeadingDiv } from './styled-components';
+import { Gapadjustment, Hyperlinkcolor } from '@pages/admin/dashboard/styled-components';
+import { ExternalLink } from '@components/icons/ExternalLink';
 
 export const Calendar = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -19,6 +21,12 @@ export const Calendar = (): JSX.Element => {
     setActiveIndex(1);
     setActivateEditState(edit);
   };
+  function getCalenderDocsLink() {
+    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Calendar service`;
+  }
+  function getCalendersupportcodeLink() {
+    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/calendar-service';
+  }
   return (
     <Page>
       <Main>
@@ -39,23 +47,18 @@ export const Calendar = (): JSX.Element => {
         </>
       </Main>
       <Aside>
-        <h3>Helpful links</h3>
-        <a
-          rel="noopener noreferrer"
-          target="_blank"
-          href={`${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Calendar service`}
-        >
-          Read the API docs
-        </a>
-        <br />
-        <a
-          rel="noopener noreferrer"
-          target="_blank"
-          href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/calendar-service"
-        >
-          See the code
-        </a>
-        <SupportLinks />
+        <>
+          <Gapadjustment>Helpful links</Gapadjustment>
+          <Hyperlinkcolor>
+            <ExternalLink link={getCalenderDocsLink()} text="Read the API docs" />
+          </Hyperlinkcolor>
+
+          <Hyperlinkcolor>
+            <ExternalLink link={getCalendersupportcodeLink()} text="See the code" />
+          </Hyperlinkcolor>
+
+          <SupportLinks />
+        </>
       </Aside>
     </Page>
   );

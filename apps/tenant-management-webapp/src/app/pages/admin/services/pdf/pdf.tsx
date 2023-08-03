@@ -6,6 +6,8 @@ import { PdfTemplates } from './templates/templates';
 import SupportLinks from '@components/SupportLinks';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
+import { Gapadjustment, Hyperlinkcolor } from '@pages/admin/dashboard/styled-components';
+import { ExternalLink } from '@components/icons/ExternalLink';
 
 export const Pdf: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -15,7 +17,12 @@ export const Pdf: FunctionComponent = () => {
   const searchParams = new URLSearchParams(document.location.search);
 
   const templates = tenantName && searchParams.get('templates');
-
+  function getPdfDocsLink() {
+    return `${docBaseUrl}/${tenantName?.replace(/ /g, '-')}?urls.primaryName=PDF service`;
+  }
+  function getPdfsupportcodeLink() {
+    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/pdf-service';
+  }
   return (
     <Page>
       <Main>
@@ -31,22 +38,14 @@ export const Pdf: FunctionComponent = () => {
       </Main>
       <Aside>
         <>
-          <h3>Helpful links</h3>
-          <a
-            rel="noopener noreferrer"
-            target="_blank"
-            href={`${docBaseUrl}/${tenantName?.replace(/ /g, '-')}?urls.primaryName=PDF service`}
-          >
-            Read the API docs
-          </a>
-          <br />
-          <a
-            rel="noopener noreferrer"
-            target="_blank"
-            href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/pdf-service"
-          >
-            See the code
-          </a>
+          <Gapadjustment>Helpful links</Gapadjustment>
+          <Hyperlinkcolor>
+            <ExternalLink link={getPdfDocsLink()} text="Read the API docs" />
+          </Hyperlinkcolor>
+
+          <Hyperlinkcolor>
+            <ExternalLink link={getPdfsupportcodeLink()} text="See the code" />
+          </Hyperlinkcolor>
 
           <SupportLinks />
         </>
