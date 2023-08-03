@@ -6,10 +6,18 @@ import SupportLinks from '@components/SupportLinks';
 import { DirectoryService } from './services';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
+import { Gapadjustment, Hyperlinkcolor } from '@pages/admin/dashboard/styled-components';
+import { ExternalLink } from '@components/icons/ExternalLink';
 
 export const Directory: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
+  function getDirectoryDocsLink() {
+    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Directory service`;
+  }
+  function getDirectorysupportcodeLink() {
+    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/directory-service';
+  }
   return (
     <Page>
       <Main>
@@ -27,23 +35,18 @@ export const Directory: FunctionComponent = () => {
         </>
       </Main>
       <Aside>
-        <h3>Helpful links</h3>
-        <a
-          rel="noopener noreferrer"
-          target="_blank"
-          href={`${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Directory service`}
-        >
-          Read the API docs
-        </a>
-        <br />
-        <a
-          rel="noopener noreferrer"
-          target="_blank"
-          href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/directory-service"
-        >
-          See the code
-        </a>
-        <SupportLinks />
+        <>
+          <Gapadjustment>Helpful links</Gapadjustment>
+          <Hyperlinkcolor>
+            <ExternalLink link={getDirectoryDocsLink()} text="Read the API docs" />
+          </Hyperlinkcolor>
+
+          <Hyperlinkcolor>
+            <ExternalLink link={getDirectorysupportcodeLink()} text="See the code" />
+          </Hyperlinkcolor>
+
+          <SupportLinks />
+        </>
       </Aside>
     </Page>
   );

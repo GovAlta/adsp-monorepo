@@ -10,6 +10,8 @@ import { EventStreams } from './stream';
 import { TestStream } from './stream/testStream/testStream';
 import { EventDefinitionModalForm } from './edit';
 import { defaultEventDefinition, EventDefinition } from '@store/event/models';
+import { Gapadjustment, Hyperlinkcolor } from '@pages/admin/dashboard/styled-components';
+import { ExternalLink } from '@components/icons/ExternalLink';
 
 export const Events: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -27,7 +29,12 @@ export const Events: FunctionComponent = () => {
     setActiveIndex(1);
     setActivateEditState(edit);
   };
-
+  function getEventDocsLink() {
+    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Event service`;
+  }
+  function getEventsupportcodeLink() {
+    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/event-service';
+  }
   return (
     <Page>
       <Main>
@@ -68,22 +75,14 @@ export const Events: FunctionComponent = () => {
       </Main>
       <Aside>
         <>
-          <h3>Helpful links</h3>
-          <a
-            rel="noopener noreferrer"
-            target="_blank"
-            href={`${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Event service`}
-          >
-            Read the API docs
-          </a>
-          <br />
-          <a
-            rel="noopener noreferrer"
-            target="_blank"
-            href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/event-service"
-          >
-            See the code
-          </a>
+          <Gapadjustment>Helpful links</Gapadjustment>
+          <Hyperlinkcolor>
+            <ExternalLink link={getEventDocsLink()} text="Read the API docs" />
+          </Hyperlinkcolor>
+
+          <Hyperlinkcolor>
+            <ExternalLink link={getEventsupportcodeLink()} text="See the code" />
+          </Hyperlinkcolor>
 
           <SupportLinks />
         </>
