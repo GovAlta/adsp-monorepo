@@ -1,5 +1,5 @@
 import { Aside, Main, Page } from '@components/Html';
-import SupportLinks from '@components/SupportLinks';
+
 import { Tab, Tabs } from '@components/Tabs';
 import { RootState } from '@store/index';
 import React, { FunctionComponent, useState } from 'react';
