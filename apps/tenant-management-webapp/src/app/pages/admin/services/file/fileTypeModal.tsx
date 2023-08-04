@@ -58,6 +58,7 @@ const DeleteInDaysItem = ({ value, updateFunc, disabled }: DeleteInDaysInputProp
           value={day}
           type="number"
           disabled={disabled}
+          aria-label="goa-input-delete-in-days"
         />
       </DeleteInDaysInputWrapper>
     </>
@@ -196,6 +197,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
                 disabled={true}
                 name="file-type-id"
                 type="text"
+                aria-label="goa-input-file-type-id"
                 //eslint-disable-next-line
                 onChange={() => {}}
               />
