@@ -3,11 +3,11 @@ import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { PdfOverview } from './overview';
 import { PdfTemplates } from './templates/templates';
-import SupportLinks from '@components/SupportLinks';
+
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { Gapadjustment, Hyperlinkcolor } from '@pages/admin/dashboard/styled-components';
-import { ExternalLink } from '@components/icons/ExternalLink';
+
+import AsideRight from '@components/AsideRight';
 
 export const Pdf: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -37,18 +37,7 @@ export const Pdf: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <>
-          <Gapadjustment>Helpful links</Gapadjustment>
-          <Hyperlinkcolor>
-            <ExternalLink link={getPdfDocsLink()} text="Read the API docs" />
-          </Hyperlinkcolor>
-
-          <Hyperlinkcolor>
-            <ExternalLink link={getPdfsupportcodeLink()} text="See the code" />
-          </Hyperlinkcolor>
-
-          <SupportLinks />
-        </>
+        <AsideRight serviceLink={getPdfsupportcodeLink()} docsLink={getPdfDocsLink()} />
       </Aside>
     </Page>
   );

@@ -19,7 +19,7 @@ import { GetMySubscriber, Subscribe, Unsubscribe } from '@store/subscription/act
 import { Tab, Tabs } from '@components/Tabs';
 import { getNotices } from '@store/notice/actions';
 import { NoticeList } from './noticeList';
-import SupportLinks from '@components/SupportLinks';
+
 import { renderNoItem } from '@components/NoItem';
 import { createSelector } from 'reselect';
 import { StatusOverview } from './overview';
@@ -29,8 +29,8 @@ import { ApplicationList } from './styled-components';
 import { WebhookFormModal } from './webhookForm';
 
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
-import { Gapadjustment, Hyperlinkcolor } from '@pages/admin/dashboard/styled-components';
-import { ExternalLink } from '@components/icons/ExternalLink';
+
+import AsideRight from '@components/AsideRight';
 
 const userHealthSubscriptionSelector = createSelector(
   (state: RootState) => state.session.userInfo?.sub,
@@ -242,14 +242,8 @@ function Status(): JSX.Element {
 
       <Aside>
         <>
-          <Gapadjustment>Helpful links</Gapadjustment>
-          <Hyperlinkcolor>
-            <ExternalLink link={getStatussupportcodeLink()} text="See the code" />
-          </Hyperlinkcolor>
-
-          <SupportLinks />
+          <AsideRight serviceLink={getStatussupportcodeLink()} />
         </>
-
         <h3>Public status page</h3>
 
         <p>Url of the current tenant's public status page:</p>

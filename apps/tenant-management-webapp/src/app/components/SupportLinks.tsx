@@ -1,4 +1,4 @@
-import { Emailinkcolor, Spaceadjust } from '@pages/admin/dashboard/styled-components';
+import { EmailLinkColor, SpaceAdjust } from '@pages/admin/dashboard/styled-components';
 import React from 'react';
 
 import { GoAIcon } from '@abgov/react-components-new';
@@ -6,15 +6,15 @@ import { GoAIcon } from '@abgov/react-components-new';
 function SupportLinks(): JSX.Element {
   return (
     <>
-      <Spaceadjust>Support</Spaceadjust>
+      <SpaceAdjust>Support</SpaceAdjust>
       {
-        <Emailinkcolor>
+        <EmailLinkColor>
           <a rel="noopener noreferrer" target="_blank" href="mailto:adsp@gov.ab.ca">
             Get support
           </a>
 
           <GoAIcon data-testid="mail-icon" size="small" type="mail" />
-        </Emailinkcolor>
+        </EmailLinkColor>
       }
     </>
   );

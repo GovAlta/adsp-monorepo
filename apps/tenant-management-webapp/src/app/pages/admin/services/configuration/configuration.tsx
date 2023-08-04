@@ -6,11 +6,9 @@ import { ConfigurationImport } from './import/import';
 import { ConfigurationExport } from './export/export';
 import { ConfigurationDefinitions } from './definitions/definitions';
 import { ConfigurationRevisions } from './revisions/revisions';
-import SupportLinks from '@components/SupportLinks';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { Gapadjustment, Hyperlinkcolor } from '@pages/admin/dashboard/styled-components';
-import { ExternalLink } from '@components/icons/ExternalLink';
+import AsideRight from '@components/AsideRight';
 
 export const Configuration: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -57,18 +55,7 @@ export const Configuration: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <>
-          <Gapadjustment>Helpful links</Gapadjustment>
-          <Hyperlinkcolor>
-            <ExternalLink link={getDocsLink()} text="Read the API docs" />
-          </Hyperlinkcolor>
-
-          <Hyperlinkcolor>
-            <ExternalLink link={getsupportcodeLink()} text="See the code" />
-          </Hyperlinkcolor>
-
-          <SupportLinks />
-        </>
+        <AsideRight serviceLink={getsupportcodeLink()} docsLink={getDocsLink()} />
       </Aside>
     </Page>
   );

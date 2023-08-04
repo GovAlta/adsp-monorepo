@@ -3,13 +3,13 @@ import { Tab, Tabs } from '@components/Tabs';
 import { CalendarOverview } from './overview';
 import { CalendarsView } from './calendarsView';
 import React, { useState } from 'react';
-import SupportLinks from '@components/SupportLinks';
+
 import BetaBadge from '@icons/beta-badge.svg';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { HeadingDiv } from './styled-components';
-import { Gapadjustment, Hyperlinkcolor } from '@pages/admin/dashboard/styled-components';
-import { ExternalLink } from '@components/icons/ExternalLink';
+
+import AsideRight from '@components/AsideRight';
 
 export const Calendar = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -47,18 +47,7 @@ export const Calendar = (): JSX.Element => {
         </>
       </Main>
       <Aside>
-        <>
-          <Gapadjustment>Helpful links</Gapadjustment>
-          <Hyperlinkcolor>
-            <ExternalLink link={getCalenderDocsLink()} text="Read the API docs" />
-          </Hyperlinkcolor>
-
-          <Hyperlinkcolor>
-            <ExternalLink link={getCalendersupportcodeLink()} text="See the code" />
-          </Hyperlinkcolor>
-
-          <SupportLinks />
-        </>
+        <AsideRight serviceLink={getCalendersupportcodeLink()} docsLink={getCalenderDocsLink()} />
       </Aside>
     </Page>
   );
