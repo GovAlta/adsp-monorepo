@@ -98,6 +98,10 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
               <NavLink to="/admin/services/file" activeClassName="current" title="File" data-testid="menu-file">
                 <span>File</span>
               </NavLink>
+              <NavLink to="/admin/services/form" activeClassName="current" title="Form" data-testid="menu-file">
+                <span>Form</span>
+                {betaBadge()}
+              </NavLink>
               <NavLink
                 to="/admin/services/notification"
                 activeClassName="current"

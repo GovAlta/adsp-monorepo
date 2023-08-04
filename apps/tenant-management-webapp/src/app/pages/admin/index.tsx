@@ -6,6 +6,7 @@ import { HeaderCtx } from '@lib/headerContext';
 import Sidebar from './sidebar';
 import Dashboard from './dashboard';
 import { File } from './services/file';
+import { Form } from './services/form';
 import AccessPage from './services/access/access';
 import { Directory } from './services/directory';
 import Container from '@components/Container';
@@ -57,6 +58,9 @@ const TenantManagement = (): JSX.Element => {
           <Route path="/admin/services/pdf" component={PDFRouter} />
           <Route exact path="/admin/services/file">
             <File />
+          </Route>
+          <Route exact path="/admin/services/form">
+            <Form />
           </Route>
           <Route path="/admin/services/status">
             <Status />
