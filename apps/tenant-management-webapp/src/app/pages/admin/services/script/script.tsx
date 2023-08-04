@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { ScriptOverview } from './overview';
-import SupportLinks from '@components/SupportLinks';
+
 import BetaBadge from '@icons/beta-badge.svg';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { ScriptsView } from './scriptsView';
 import { HeadingDiv } from './styled-components';
-import { Gapadjustment, Hyperlinkcolor } from '@pages/admin/dashboard/styled-components';
-import { ExternalLink } from '@components/icons/ExternalLink';
+
+import AsideRight from '@components/AsideRight';
 export const Script = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
@@ -43,19 +43,9 @@ export const Script = (): JSX.Element => {
           </Tabs>
         </>
       </Main>
+
       <Aside>
-        <>
-          <Gapadjustment>Helpful links</Gapadjustment>
-          <Hyperlinkcolor>
-            <ExternalLink link={getScriptDocsLink()} text="Read the API docs" />
-          </Hyperlinkcolor>
-
-          <Hyperlinkcolor>
-            <ExternalLink link={getScriptsupportcodeLink()} text="See the code" />
-          </Hyperlinkcolor>
-
-          <SupportLinks />
-        </>
+        <AsideRight serviceLink={getScriptsupportcodeLink()} docsLink={getScriptDocsLink()} />
       </Aside>
     </Page>
   );

@@ -8,7 +8,7 @@ import { TitleLinkHeader, TableStyle, Title } from './styled-component';
 import { fetchAccess, accessReset } from '@store/access/actions';
 import { OverviewLayout } from '@components/Overview';
 import { ExternalLink } from '@components/icons/ExternalLink';
-import { Hyperlinkcolor } from '@pages/admin/dashboard/styled-components';
+import { HyperLinkColor } from '@pages/admin/dashboard/styled-components';
 
 export const Overview = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -69,9 +69,9 @@ export const Overview = (): JSX.Element => {
             <TitleLinkHeader>
               <Title>Keycloak user information</Title>
 
-              <Hyperlinkcolor>
+              <HyperLinkColor>
                 <ExternalLink link={getKeycloakAdminPortal()} text="Keycloak admin portal" />
-              </Hyperlinkcolor>
+              </HyperLinkColor>
             </TitleLinkHeader>
 
             <Metrics

@@ -1,5 +1,5 @@
 import { Aside, Main, Page } from '@components/Html';
-import SupportLinks from '@components/SupportLinks';
+
 import { Tab, Tabs } from '@components/Tabs';
 import { RootState } from '@store/index';
 import React, { FunctionComponent, useState, useEffect } from 'react';
@@ -10,8 +10,8 @@ import { Subscriptions } from './subscription/subscriptions';
 import { Subscribers } from './subscribers';
 import { subscriberAppUrlSelector } from './selectors';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
-import { Gapadjustment, Hyperlinkcolor } from '@pages/admin/dashboard/styled-components';
-import { ExternalLink } from '@components/icons/ExternalLink';
+
+import AsideRight from '@components/AsideRight';
 
 export const Notifications: FunctionComponent = () => {
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
@@ -58,19 +58,10 @@ export const Notifications: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <Gapadjustment>Helpful links</Gapadjustment>
-        <Hyperlinkcolor>
-          <ExternalLink link={getNotificationDocsLink()} text="Read the API docs" />
-        </Hyperlinkcolor>
-
-        <Hyperlinkcolor>
-          <ExternalLink link={getNotificationsupportcodeLink()} text="See the code" />
-        </Hyperlinkcolor>
-
-        <SupportLinks />
+        <AsideRight serviceLink={getNotificationsupportcodeLink()} docsLink={getNotificationDocsLink()} />
 
         <h3>Manage subscriptions</h3>
-        <p>Subscribers can manage their subscriptions here:</p>
+        <span>Subscribers can manage their subscriptions here:</span>
         <h3>Subscriber app link</h3>
         <LinkCopyComponent text={'Copy link'} link={loginUrl} />
       </Aside>

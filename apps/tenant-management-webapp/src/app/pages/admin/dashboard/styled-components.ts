@@ -49,14 +49,14 @@ export const ListWrapper = styled.ul`
     margin-bottom: 0.5rem;
   }
 `;
-export const Hyperlinkcolor = styled.div`
+export const HyperLinkColor = styled.div`
   a {
     &:visited {
       color: var(--color-primary);
     }
   }
 `;
-export const Emailinkcolor = styled.div`
+export const EmailLinkColor = styled.div`
   display: flex !important;
   align-items: inherit !important;
   color: #0070c4;
@@ -65,11 +65,11 @@ export const Emailinkcolor = styled.div`
     margin-bottom: 1px;
   }
 `;
-export const Spaceadjust = styled.h3`
+export const SpaceAdjust = styled.h3`
   padding-top: 3rem;
   padding-botton: 1rem;
 `;
-export const Gapadjustment = styled.h3`
+export const GapAdjustment = styled.h3`
   padding-top: 2rem;
   padding-botton: 1rem;
 `;

@@ -2,12 +2,12 @@ import React, { FunctionComponent } from 'react';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { DirectoryOverview } from './overview';
-import SupportLinks from '@components/SupportLinks';
+
 import { DirectoryService } from './services';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { Gapadjustment, Hyperlinkcolor } from '@pages/admin/dashboard/styled-components';
-import { ExternalLink } from '@components/icons/ExternalLink';
+
+import AsideRight from '@components/AsideRight';
 
 export const Directory: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -35,18 +35,7 @@ export const Directory: FunctionComponent = () => {
         </>
       </Main>
       <Aside>
-        <>
-          <Gapadjustment>Helpful links</Gapadjustment>
-          <Hyperlinkcolor>
-            <ExternalLink link={getDirectoryDocsLink()} text="Read the API docs" />
-          </Hyperlinkcolor>
-
-          <Hyperlinkcolor>
-            <ExternalLink link={getDirectorysupportcodeLink()} text="See the code" />
-          </Hyperlinkcolor>
-
-          <SupportLinks />
-        </>
+        <AsideRight serviceLink={getDirectorysupportcodeLink()} docsLink={getDirectoryDocsLink()} />
       </Aside>
     </Page>
   );
