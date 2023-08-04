@@ -78,7 +78,7 @@ Then('the user gets a list of {string}', function (options) {
 });
 
 Then('the user views a link for the Keycloak admin', function () {
-  tenantAdminObj.keycloakLink().should('have.class', 'link-button');
+  tenantAdminObj.keycloakLink().should('have.attr', 'href');
 });
 
 // Cypress doesn't support multi-tabs. Therefore, the validation is done on the element itself

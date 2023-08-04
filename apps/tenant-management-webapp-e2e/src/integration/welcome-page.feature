@@ -25,7 +25,7 @@ Feature: Tenant management welcome page
         When the user selects get started button
         And the user clicks Sign in button
         And the user enters "env{email}" and "env{password}", and clicks login button
-        Then the user views a message of cannot create another tenant
+        Then the user views a notification message of "has already created a tenant"
 
     # TEST DATA: autotest tenant exists
     @TEST_CS-332 @REQ_CS-791 @regression

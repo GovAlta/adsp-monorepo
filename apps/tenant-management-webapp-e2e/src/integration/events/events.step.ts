@@ -201,6 +201,7 @@ Then('the user views Add stream modal', function () {
 When(
   'the user enters {string}, {string}, {string}, {string} in Add stream modal',
   function (name, description, event, role) {
+    cy.wait(1000); // Wait stream modal to show content
     const events = event.split(',');
     eventsObj.streamModalNameInput().scrollIntoView().clear().type(name);
     eventsObj

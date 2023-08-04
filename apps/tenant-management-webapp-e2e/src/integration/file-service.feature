@@ -165,7 +165,7 @@ Feature: File service
     And the user views the core file types with no actions
 
 
-  @TEST_CS-316 @REQ_CS-196 @FileTypes @regression
+  @FileTypes @regression
   Scenario: As a tenant admin, I can add /edit the file retention policy through the file type modal
     Given a service owner user is on Files overview page
     When the user selects "File types" tab for "File"
