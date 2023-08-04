@@ -45,7 +45,7 @@ export const Form: FunctionComponent = () => {
     <Page>
       <Main>
         <>
-          <h1 data-testid="file-title">File service</h1>
+          <h1 data-testid="form-title">Form service</h1>
           <Tabs activeIndex={activeIndex}>
             <Tab label="Overview">
               <FormOverview setActiveIndex={setActiveIndex} setActiveEdit={activateEdit} />

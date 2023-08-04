@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
 import { OverviewLayout } from '@components/Overview';
 
-interface FileOverviewProps {
+interface FormOverviewProps {
   setActiveEdit: (boolean) => void;
   setActiveIndex: (index: number) => void;
 }
 
-const FileOverview = ({ setActiveEdit, setActiveIndex }: FileOverviewProps): JSX.Element => {
+const FormOverview = ({ setActiveEdit, setActiveIndex }: FormOverviewProps): JSX.Element => {
   useEffect(() => {
     setActiveEdit(false);
     setActiveIndex(0);
@@ -30,4 +30,4 @@ const FileOverview = ({ setActiveEdit, setActiveIndex }: FileOverviewProps): JSX
     />
   );
 };
-export default FileOverview;
+export default FormOverview;
