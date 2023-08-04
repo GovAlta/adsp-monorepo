@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { GoANotification } from '@abgov/react-components';
+import { GoANotification } from '@abgov/react-components-new';
 import { DismissNotification } from '@store/notifications/actions';
 
 export function NotificationBanner(): JSX.Element {
@@ -17,7 +17,6 @@ export function NotificationBanner(): JSX.Element {
         <GoANotification
           key={latestNotification.id}
           type={latestNotification.type || 'emergency'}
-          isDismissable={true}
           onDismiss={() => dispatch(DismissNotification(latestNotification))}
         >
           {latestNotification.message}

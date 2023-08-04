@@ -7,6 +7,8 @@ import { PageIndicator } from '@components/Indicator';
 import { TitleLinkHeader, TableStyle, Title } from './styled-component';
 import { fetchAccess, accessReset } from '@store/access/actions';
 import { OverviewLayout } from '@components/Overview';
+import { ExternalLink } from '@components/icons/ExternalLink';
+import { Hyperlinkcolor } from '@pages/admin/dashboard/styled-components';
 
 export const Overview = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -66,15 +68,10 @@ export const Overview = (): JSX.Element => {
           <section id="keycloak-user-info">
             <TitleLinkHeader>
               <Title>Keycloak user information</Title>
-              <a
-                href={getKeycloakAdminPortal()}
-                rel="noopener noreferrer"
-                target="_blank"
-                className="link-button"
-                title="Keycloak Admin"
-              >
-                Keycloak admin portal
-              </a>
+
+              <Hyperlinkcolor>
+                <ExternalLink link={getKeycloakAdminPortal()} text="Keycloak admin portal" />
+              </Hyperlinkcolor>
             </TitleLinkHeader>
 
             <Metrics

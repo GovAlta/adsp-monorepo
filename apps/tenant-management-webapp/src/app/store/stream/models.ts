@@ -10,7 +10,7 @@ export interface Stream {
   name: string;
   events: Event[];
   publicSubscribe: boolean;
-  subscriberRoles: string[];
+  subscriberRoles?: string[];
   description: string;
 }
 
@@ -20,7 +20,6 @@ export const initialStream: Stream = {
   events: [],
   description: '',
   publicSubscribe: false,
-  subscriberRoles: [],
 };
 export interface StreamStatus {
   core: Streams;

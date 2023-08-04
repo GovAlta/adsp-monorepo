@@ -3,7 +3,8 @@ import { RootState } from '@store/index';
 import { fetchEventStreams, startSocket } from '@store/stream/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import { PageIndicator } from '@components/Indicator';
-import { GoAButton, GoADropdown, GoADropdownOption, GoAElementLoader } from '@abgov/react-components';
+import { GoAButton, GoAElementLoader } from '@abgov/react-components';
+import { GoADropdown, GoADropdownOption } from '@abgov/react-components-new';
 import { Divider, StreamHeading, StreamsDropdown } from './styledComponents';
 import { GoAForm } from '@abgov/react-components/experimental';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
@@ -171,11 +172,12 @@ export const TestStream = (): JSX.Element => {
               <GoADropdown
                 disabled={socketConnection}
                 name="streams"
-                selectedValues={selectedSteamId}
-                multiSelect={false}
-                onChange={(name, streamId) => {
-                  setSelectedStreamId(streamId);
+                value={selectedSteamId}
+                width="100%"
+                onChange={(name, streamId: string | string[]) => {
+                  setSelectedStreamId([streamId.toString()]);
                 }}
+                aria-label="select-test-stream-dropdown"
               >
                 {Object.keys(streams)
                   .sort((a, b) => (a < b ? -1 : 1))

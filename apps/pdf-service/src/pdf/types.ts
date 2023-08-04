@@ -1,12 +1,7 @@
 import { AdspId } from '@abgov/adsp-service-sdk';
-import * as NodeCache from 'node-cache';
 
 export interface TemplateService {
-  getTemplateFunction(template: string, channel?: string): (context: unknown) => string;
-  setTenantToken(token: string): void;
-  getTenantToken(): string;
-  getFileServiceCache(): NodeCache;
-  populateFileList(token: string, tenantIdValue: string): Promise<File[]>;
+  getTemplateFunction(template: string, channel?: string, tenantId?: AdspId): (context: unknown) => string;
 }
 
 export interface PdfServiceProps {

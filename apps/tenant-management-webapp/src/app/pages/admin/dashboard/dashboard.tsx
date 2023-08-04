@@ -126,12 +126,26 @@ const Dashboard = (): JSX.Element => {
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
                     <GoACard type="primary">
                       <h2>
+                        <Link to="/admin/services/form">Form</Link>
+                      </h2>
+                      <div>
+                        The form service provides capabilities to support user form submission. Form definitions are
+                        used to describe types of form with roles for applicants, clerks who assist them, and assessors
+                        who process the submissions.
+                      </div>
+                    </GoACard>
+                  </GridItem>
+                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
+                    <GoACard type="primary">
+                      <h2>
                         <Link to="/admin/services/notification">Notification</Link>
                       </h2>
                       <div>
                         The notifications service provides tenant applications with the ability to configure
                         notifications.
                       </div>
+                      <div>&nbsp;</div>
+                      <div>&nbsp;</div>
                       <div>&nbsp;</div>
                       <div>&nbsp;</div>
                     </GoACard>
@@ -145,6 +159,12 @@ const Dashboard = (): JSX.Element => {
                         The PDF service provides PDF operations like generating new PDFs from templates. It runs
                         operations as asynchronous jobs and uploads the output PDF files to the file service.
                       </div>
+                      <div>&nbsp;</div>
+                      <div>&nbsp;</div>
+                      <div>&nbsp;</div>
+                      <div>&nbsp;</div>
+                      <div>&nbsp;</div>
+                      <div>&nbsp;</div>
                     </GoACard>
                   </GridItem>
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
@@ -173,10 +193,6 @@ const Dashboard = (): JSX.Element => {
                         represent a service that is useful to the end user by itself, such as child care subsidy and
                         child care certification.
                       </div>
-                      <div>&nbsp;</div>
-                      <div>&nbsp;</div>
-                      <div>&nbsp;</div>
-                      <div>&nbsp;</div>
                     </GoACard>
                   </GridItem>
                 </Grid>

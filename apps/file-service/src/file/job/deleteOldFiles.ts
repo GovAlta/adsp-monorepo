@@ -75,7 +75,7 @@ export function createDeleteOldFilesJob({
                   );
                   for (const file of results) {
                     logger.info(
-                      `File ${file.filename} of ${file.type} with lastAccessed ${file.lastAccessed} will be deleted.`
+                      `File ${file.filename} of ${fileType.id} from tenant ${tenant.id} with lastAccessed ${file.lastAccessed} will be deleted.`
                     );
 
                     if (!file.deleted) {

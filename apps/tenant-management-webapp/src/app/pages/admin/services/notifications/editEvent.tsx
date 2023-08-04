@@ -1,7 +1,8 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { NotificationItem } from '@store/notification/models';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton, GoADropdown, GoADropdownOption } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components';
+import { GoADropdown, GoADropdownOption } from '@abgov/react-components-new';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
@@ -92,7 +93,9 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
               <GoADropdown
                 name="event"
                 onChange={onChange}
-                selectedValues={selectedValues}
+                value={selectedValues}
+                aria-label="event-form-dropdown"
+                width="100%"
                 data-testid="event-dropdown"
               >
                 {dropDownOptions.map((item, key) => (
@@ -113,7 +116,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
           data-testid="event-form-save"
           type="submit"
           onClick={() => {
-            const dropdownObject = dropDownOptions.find((dropdown) => dropdown.value === selectedValues[0]);
+            const dropdownObject = dropDownOptions.find((dropdown) => dropdown.value === selectedValues);
             const eventObject: EventItem = {
               namespace: dropdownObject.nameSpace,
               name: dropdownObject.name,

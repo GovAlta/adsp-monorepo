@@ -7,12 +7,12 @@ import {
   DeleteFileService,
   DownloadFileService,
 } from '@store/file/actions';
-//import { GoADropdownOption } from '@abgov/react-components';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoADropdownOption, GoADropdown, GoAButton } from '@abgov/react-components-new';
+
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
 import { GoAIconButton, GoAForm, GoAFormActions } from '@abgov/react-components/experimental';
-import { GoAInput, GoAFormItem, GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
+import { GoAInput, GoAFormItem } from '@abgov/react-components-new';
 import { renderNoItem } from '@components/NoItem';
 import { DeleteModal } from '@components/DeleteModal';
 import { FileItem } from '@store/file/models';
@@ -212,7 +212,7 @@ const FileList = (): JSX.Element => {
               }}
             >
               {getFileTypesValues().map((item, key) => (
-                <GoADropdownItem label={item.name} value={item.id} key={key} data-testid={item.id} />
+                <GoADropdownOption label={item.name} value={item.id} key={key} data-testid={item.id} />
               ))}
             </GoADropdown>
           </GoAFormItem>
@@ -251,7 +251,7 @@ const FileList = (): JSX.Element => {
                 }}
               >
                 {getFileTypesValues().map((item, key) => (
-                  <GoADropdownItem label={item.name} value={item.id} key={key} data-testid={item.id} />
+                  <GoADropdownOption label={item.name} value={item.id} key={key} data-testid={item.id} />
                 ))}
               </GoADropdown>
             )}

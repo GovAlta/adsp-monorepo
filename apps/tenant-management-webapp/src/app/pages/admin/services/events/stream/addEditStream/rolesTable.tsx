@@ -7,7 +7,7 @@ import { GoACheckbox } from '@abgov/react-components-new';
 interface RolesTableProps {
   subscriberRolesOptions: SubscriberRolesOptions[];
   onItemChecked: (value: string) => void;
-  checkedRoles: string[];
+  checkedRoles?: string[];
 
   tableHeading: string;
 }
@@ -37,7 +37,7 @@ export const RolesTable = ({
                     <GoACheckbox
                       name={role.label}
                       value={role.value}
-                      checked={checkedRoles.includes(role.value)}
+                      checked={checkedRoles && checkedRoles.includes(role.value)}
                       onChange={() => {
                         onItemChecked(role.value);
                       }}

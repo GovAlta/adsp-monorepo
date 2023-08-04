@@ -45,7 +45,7 @@ export const PaddingRight = styled.div`
 `;
 
 export const ButtonRight = styled.div`
-  margin-top: 32px;
+  margin-top: 8px;
   text-align: end;
 `;
 
@@ -268,6 +268,7 @@ export const PdfConfigFormWrapper = styled.div`
     border-bottom: 16px solid #f1f1f1;
     height: 64px;
     overflow: hidden;
+    vertical-align: top;
   }
   .editColumn {
     width: 56px;
@@ -394,6 +395,10 @@ export const PDFTitle = styled.div`
 `;
 
 export const HideTablet = styled.div`
+  @media (max-height: 919px) {
+    display: none;
+  }
+
   @media (max-width: 1439px) {
     display: none;
   }
@@ -408,8 +413,10 @@ export const TabletMessage = styled.div`
 
   text-align: center !important;
 
-  @media (min-width: 1440px) {
-    display: none;
+  @media (min-height: 920px) {
+    @media (min-width: 1440px) {
+      display: none;
+    }
   }
 `;
 export const PdfFormItem = styled.div`
