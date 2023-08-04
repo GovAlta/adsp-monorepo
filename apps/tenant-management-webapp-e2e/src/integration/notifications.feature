@@ -88,7 +88,7 @@ Feature: Notifications
     Given a tenant admin user is on status applications page
     Then the user views the subscribe checkbox is "unchecked"
     When the user "selects" the subscribe checkbox for health check notification type
-    Then the user views a callout message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"
+    Then the user views a notification message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"
 
   @TEST_CS-986 @TEST_CS-443 @REQ_CS-1068 @REQ_CS-963 @REQ_CS-978 @regression
   Scenario: As a tenant admin, I can see notification type for application status change updates
@@ -137,7 +137,7 @@ Feature: Notifications
     Given a tenant admin user is on status applications page
     Then the user views the subscribe checkbox is "unchecked"
     When the user "selects" the subscribe checkbox for health check notification type
-    Then the user views a callout message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"
+    Then the user views a notification message of "You are subscribed! You will receive notifications on auto.test@gov.ab.ca for status-application-health-change"
 
   @TEST_CS-1191 @REQ_CS-1148 @regression
   Scenario Outline: As a tenant admin, I can configure subscription management contact information on notifications overview page

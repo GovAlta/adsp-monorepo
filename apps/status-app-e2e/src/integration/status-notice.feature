@@ -9,7 +9,8 @@ Feature: public site for service status and notice
     Given a user is on the public service status page for "Platform"
     Then the user views the status and outages page
     And the user views the correct header and release version
-   # And the user views service statuses for "Access service, Event service, File service, Status service, Notification service"
+  # Applications are deleted in platform tenant. Need to recreate those applications
+  # And the user views service statuses for "Access service, Event service, File service, Status service, Notification service"
 
   @accessibility @regression
   Scenario: As an interested member of the public, I can see the public service status page without any critical and serious accessibility issues

@@ -41,12 +41,12 @@ Feature: Subscription management
     Then the user views an error messsage for missing email
     When the user enters "auto.contact.test@gmail.com" as email, "7801001234" as phone number and "sms" as preferred channel
     And the user clicks Save button in contact information
-    Then the user views a callout message of "Contact information updated."
+    Then the user views a notification message of "Contact information updated."
     And the user views contact information of "auto.contact.test@gmail.com", "780 100 1234" and "sms"
     When the user clicks edit contact information button
     And the user enters "auto.contact.test@gmail.com" as email, "EMPTY" as phone number and "email" as preferred channel
     And the user clicks Save button in contact information
-    Then the user views a callout message of "Contact information updated."
+    Then the user views a notification message of "Contact information updated."
     And the user views contact information of "auto.contact.test@gmail.com", "EMPTY" and "email"
 
   @TEST_CS-1413 @REQ_CS-1240 @regression
