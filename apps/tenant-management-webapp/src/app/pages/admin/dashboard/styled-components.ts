@@ -56,9 +56,10 @@ export const Hyperlinkcolor = styled.div`
     }
   }
 `;
-export const Emailinkcolor = styled.a`
+export const Emailinkcolor = styled.div`
   display: flex !important;
   align-items: inherit !important;
+  color: #0070c4;
   a {
     padding-right: 4px;
     margin-bottom: 1px;
