@@ -28,7 +28,7 @@ export default function (): JSX.Element {
       </Main>
 
       <Aside>
-        <AsideRight serviceLink={getAccessServiceLink()} />
+        <AsideRight serviceLink={getAccessServiceLink()} docsLink={''} />
       </Aside>
     </Page>
   );
