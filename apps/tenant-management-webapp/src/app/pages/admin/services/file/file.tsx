@@ -7,7 +7,7 @@ import { RootState } from '@store/index';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 
-import AsideRight from '@components/AsideRight';
+import AsideLinks from '@components/AsideLinks';
 
 const HelpLink = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -18,7 +18,7 @@ const HelpLink = (): JSX.Element => {
   function getFilesupportcodeLink() {
     return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/file-service';
   }
-  return <AsideRight serviceLink={getFilesupportcodeLink()} docsLink={getFileDocsLink()} />;
+  return <AsideLinks serviceLink={getFilesupportcodeLink()} docsLink={getFileDocsLink()} />;
 };
 
 export const File: FunctionComponent = () => {

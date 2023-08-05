@@ -9,7 +9,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { HeadingDiv } from './styled-components';
 
-import AsideRight from '@components/AsideRight';
+import AsideLinks from '@components/AsideLinks';
 
 export const Calendar = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -47,7 +47,7 @@ export const Calendar = (): JSX.Element => {
         </>
       </Main>
       <Aside>
-        <AsideRight serviceLink={getCalendersupportcodeLink()} docsLink={getCalenderDocsLink()} />
+        <AsideLinks serviceLink={getCalendersupportcodeLink()} docsLink={getCalenderDocsLink()} />
       </Aside>
     </Page>
   );

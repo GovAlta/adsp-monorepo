@@ -11,7 +11,7 @@ import { Subscribers } from './subscribers';
 import { subscriberAppUrlSelector } from './selectors';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
 
-import AsideRight from '@components/AsideRight';
+import AsideLinks from '@components/AsideLinks';
 
 export const Notifications: FunctionComponent = () => {
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
@@ -58,7 +58,7 @@ export const Notifications: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <AsideRight serviceLink={getNotificationsupportcodeLink()} docsLink={getNotificationDocsLink()} />
+        <AsideLinks serviceLink={getNotificationsupportcodeLink()} docsLink={getNotificationDocsLink()} />
 
         <h3>Manage subscriptions</h3>
         <span>Subscribers can manage their subscriptions here:</span>

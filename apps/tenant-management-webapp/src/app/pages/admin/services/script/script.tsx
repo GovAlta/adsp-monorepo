@@ -9,7 +9,7 @@ import { RootState } from '@store/index';
 import { ScriptsView } from './scriptsView';
 import { HeadingDiv } from './styled-components';
 
-import AsideRight from '@components/AsideRight';
+import AsideLinks from '@components/AsideLinks';
 export const Script = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
@@ -45,7 +45,7 @@ export const Script = (): JSX.Element => {
       </Main>
 
       <Aside>
-        <AsideRight serviceLink={getScriptsupportcodeLink()} docsLink={getScriptDocsLink()} />
+        <AsideLinks serviceLink={getScriptsupportcodeLink()} docsLink={getScriptDocsLink()} />
       </Aside>
     </Page>
   );

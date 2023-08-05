@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Aside, Main, Page } from '@components/Html';
-import AsideRight from '@components/AsideRight';
+import AsideLinks from '@components/AsideLinks';
 import { Tab, Tabs } from '@components/Tabs';
 import { Overview } from './overview';
 import { ServiceRoles } from './serviceRoles';
@@ -28,7 +28,7 @@ export default function (): JSX.Element {
       </Main>
 
       <Aside>
-        <AsideRight serviceLink={getAccessServiceLink()} docsLink={''} />
+        <AsideLinks serviceLink={getAccessServiceLink()} />
       </Aside>
     </Page>
   );
