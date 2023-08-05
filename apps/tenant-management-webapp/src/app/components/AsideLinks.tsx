@@ -3,12 +3,12 @@ import { GapAdjustment, HyperLinkColor } from '@pages/admin/dashboard/styled-com
 import { ExternalLink } from '@components/icons/ExternalLink';
 import SupportLinks from '@components/SupportLinks';
 
-interface AsideRightProps {
+interface AsideLinksProps {
   serviceLink: string;
   docsLink?: string;
 }
 
-function AsideRight({ serviceLink, docsLink }: AsideRightProps): JSX.Element {
+function AsideLinks({ serviceLink, docsLink }: AsideLinksProps): JSX.Element {
   return (
     <>
       <GapAdjustment>Helpful links</GapAdjustment>
@@ -27,4 +27,4 @@ function AsideRight({ serviceLink, docsLink }: AsideRightProps): JSX.Element {
   );
 }
 
-export default AsideRight;
+export default AsideLinks;

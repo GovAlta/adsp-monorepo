@@ -7,7 +7,7 @@ import { DirectoryService } from './services';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 
-import AsideRight from '@components/AsideRight';
+import AsideLinks from '@components/AsideLinks';
 
 export const Directory: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -35,7 +35,7 @@ export const Directory: FunctionComponent = () => {
         </>
       </Main>
       <Aside>
-        <AsideRight serviceLink={getDirectorysupportcodeLink()} docsLink={getDirectoryDocsLink()} />
+        <AsideLinks serviceLink={getDirectorysupportcodeLink()} docsLink={getDirectoryDocsLink()} />
       </Aside>
     </Page>
   );

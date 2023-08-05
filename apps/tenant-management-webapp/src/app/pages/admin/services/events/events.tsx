@@ -11,7 +11,7 @@ import { TestStream } from './stream/testStream/testStream';
 import { EventDefinitionModalForm } from './edit';
 import { defaultEventDefinition, EventDefinition } from '@store/event/models';
 
-import AsideRight from '@components/AsideRight';
+import AsideLinks from '@components/AsideLinks';
 
 export const Events: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -74,7 +74,7 @@ export const Events: FunctionComponent = () => {
         )}
       </Main>
       <Aside>
-        <AsideRight serviceLink={getEventsupportcodeLink()} docsLink={getEventDocsLink()} />
+        <AsideLinks serviceLink={getEventsupportcodeLink()} docsLink={getEventDocsLink()} />
       </Aside>
     </Page>
   );

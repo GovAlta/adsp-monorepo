@@ -30,7 +30,7 @@ import { WebhookFormModal } from './webhookForm';
 
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
 
-import AsideRight from '@components/AsideRight';
+import AsideLinks from '@components/AsideLinks';
 
 const userHealthSubscriptionSelector = createSelector(
   (state: RootState) => state.session.userInfo?.sub,
@@ -242,7 +242,7 @@ function Status(): JSX.Element {
 
       <Aside>
         <>
-          <AsideRight serviceLink={getStatussupportcodeLink()} />
+          <AsideLinks serviceLink={getStatussupportcodeLink()} />
         </>
         <h3>Public status page</h3>
 

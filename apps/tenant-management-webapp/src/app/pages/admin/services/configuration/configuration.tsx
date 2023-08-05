@@ -8,7 +8,7 @@ import { ConfigurationDefinitions } from './definitions/definitions';
 import { ConfigurationRevisions } from './revisions/revisions';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import AsideRight from '@components/AsideRight';
+import AsideLinks from '@components/AsideLinks';
 
 export const Configuration: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -55,7 +55,7 @@ export const Configuration: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <AsideRight serviceLink={getsupportcodeLink()} docsLink={getDocsLink()} />
+        <AsideLinks serviceLink={getsupportcodeLink()} docsLink={getDocsLink()} />
       </Aside>
     </Page>
   );

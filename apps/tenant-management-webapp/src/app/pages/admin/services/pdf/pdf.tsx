@@ -7,7 +7,7 @@ import { PdfTemplates } from './templates/templates';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 
-import AsideRight from '@components/AsideRight';
+import AsideLinks from '@components/AsideLinks';
 
 export const Pdf: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -37,7 +37,7 @@ export const Pdf: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <AsideRight serviceLink={getPdfsupportcodeLink()} docsLink={getPdfDocsLink()} />
+        <AsideLinks serviceLink={getPdfsupportcodeLink()} docsLink={getPdfDocsLink()} />
       </Aside>
     </Page>
   );
