@@ -21,6 +21,7 @@ import {
 } from './status/sagas';
 import { watchEventSagas } from './event/sagas';
 import { watchPdfSagas } from './pdf/sagas';
+import { watchFormSagas } from './form/sagas';
 import { watchFileSagas } from './file/sagas';
 import { watchConfigurationSagas } from './configuration/sagas';
 import {
@@ -121,6 +122,8 @@ export function* watchSagas() {
     watchStreamSagas(),
     //pdf
     watchPdfSagas(),
+    //pdf
+    watchFormSagas(),
     // service metrics
     watchServiceMetricsSagas(),
     //Calendar

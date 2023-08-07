@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import FormOverview from './formOverview';
 import { RootState } from '@store/index';
 import { Aside, Main, Page } from '@components/Html';
+import { FormDefinitions } from './definitions/definitions';
 import { Tab, Tabs } from '@components/Tabs';
 import SupportLinks from '@components/SupportLinks';
 
@@ -33,22 +34,26 @@ const HelpLink = (): JSX.Element => {
 };
 
 export const Form: FunctionComponent = () => {
+  const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const [activeIndex, setActiveIndex] = useState<number>(0);
-  const [activateEditState, setActivateEditState] = useState<boolean>(false);
 
-  const activateEdit = (edit: boolean) => {
-    setActiveIndex(1);
-    setActivateEditState(edit);
-  };
+  const [openAddDefinition, setOpenAddDefinition] = useState(false);
+
+  const searchParams = new URLSearchParams(document.location.search);
+
+  const definitions = tenantName && searchParams.get('definitions');
 
   return (
     <Page>
       <Main>
         <>
           <h1 data-testid="form-title">Form service</h1>
-          <Tabs activeIndex={activeIndex}>
+          <Tabs activeIndex={definitions === 'true' ? 1 : 0}>
             <Tab label="Overview">
-              <FormOverview setActiveIndex={setActiveIndex} setActiveEdit={activateEdit} />
+              <FormOverview setActiveIndex={setActiveIndex} setOpenAddDefinition={setOpenAddDefinition} />
+            </Tab>
+            <Tab label="Templates">
+              <FormDefinitions openAddDefinition={openAddDefinition} />
             </Tab>
           </Tabs>
         </>
