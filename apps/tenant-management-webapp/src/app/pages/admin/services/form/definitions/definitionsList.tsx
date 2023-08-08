@@ -30,7 +30,7 @@ export const FormDefinitionsTable: FunctionComponent<PdfTemplatesTableProps> = (
         <tbody>
           {Object.keys(newTemplates).map((templateName) => {
             return (
-              <FormDefinitionItem key={templateName} pdfTemplate={newTemplates[templateName]} onDelete={onDelete} />
+              <FormDefinitionItem key={templateName} formDefinition={newTemplates[templateName]} onDelete={onDelete} />
             );
           })}
         </tbody>

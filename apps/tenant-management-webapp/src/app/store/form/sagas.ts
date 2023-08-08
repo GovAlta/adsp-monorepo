@@ -9,11 +9,14 @@ import {
   updateFormDefinitionSuccess,
   FETCH_FORM_DEFINITIONS_ACTION,
   UPDATE_FORM_DEFINITION_ACTION,
+  DELETE_FORM_DEFINITION_ACTION,
+  deleteFormDefinitionSuccess,
+  DeleteFormDefinitionAction,
 } from './action';
 
 import { getAccessToken } from '@store/tenant/sagas';
-import { UpdateFormConfig } from './model';
-import { fetchFormDefinitionsApi, updateFormDefinitionApi } from './api';
+import { UpdateFormConfig, DeleteFormConfig } from './model';
+import { fetchFormDefinitionsApi, updateFormDefinitionApi, deleteFormDefinitionApi } from './api';
 
 export function* fetchFormDefinitions(): SagaIterator {
   yield put(
@@ -75,7 +78,29 @@ export function* updateFormDefinition({ definition, options }: UpdateFormDefinit
   }
 }
 
+export function* deleteFormDefinition({ definition }: DeleteFormDefinitionAction): SagaIterator {
+  const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+  const token: string = yield call(getAccessToken);
+
+  if (baseUrl && token) {
+    try {
+      const payload: DeleteFormConfig = { operation: 'DELETE', property: definition.id };
+      const url = `${baseUrl}/configuration/v2/configuration/platform/form-service`;
+      const { latest } = yield call(deleteFormDefinitionApi, token, url, payload);
+
+      yield put(
+        deleteFormDefinitionSuccess({
+          ...latest.configuration,
+        })
+      );
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.response.data} - deleteFormDefinition` }));
+    }
+  }
+}
+
 export function* watchFormSagas(): Generator {
   yield takeEvery(FETCH_FORM_DEFINITIONS_ACTION, fetchFormDefinitions);
   yield takeEvery(UPDATE_FORM_DEFINITION_ACTION, updateFormDefinition);
+  yield takeEvery(DELETE_FORM_DEFINITION_ACTION, deleteFormDefinition);
 }

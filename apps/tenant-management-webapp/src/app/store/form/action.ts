@@ -6,6 +6,9 @@ export const FETCH_FORM_DEFINITIONS_SUCCESS_ACTION = 'form/FETCH_FORM_DEFINITION
 export const UPDATE_FORM_DEFINITION_ACTION = 'form/UPDATE_FORM_DEFINITION_ACTION';
 export const UPDATE_FORM_DEFINITION_SUCCESS_ACTION = 'form/UPDATE_FORM_DEFINITION_SUCCESS_ACTION';
 
+export const DELETE_FORM_DEFINITION_ACTION = 'form/DELETE_FORM_DEFINITION_ACTION';
+export const DELETE_FORM_DEFINITION_SUCCESS_ACTION = 'form/DELETE_FORM_DEFINITION_SUCCESS_ACTION';
+
 export interface FetchFormDefinitionsAction {
   type: typeof FETCH_FORM_DEFINITIONS_ACTION;
 }
@@ -26,9 +29,21 @@ export interface UpdateFormDefinitionsSuccessAction {
   payload: Record<string, FormDefinition>;
 }
 
+export interface DeleteFormDefinitionAction {
+  type: typeof DELETE_FORM_DEFINITION_ACTION;
+  definition: FormDefinition;
+}
+
+export interface DeleteFormDefinitionSuccessAction {
+  type: typeof DELETE_FORM_DEFINITION_SUCCESS_ACTION;
+  payload: Record<string, FormDefinition>;
+}
+
 export type FormActionTypes =
   | FetchFormDefinitionsSuccessAction
   | FetchFormDefinitionsAction
+  | DeleteFormDefinitionAction
+  | DeleteFormDefinitionSuccessAction
   | UpdateFormDefinitionsAction
   | UpdateFormDefinitionsSuccessAction;
 
@@ -43,6 +58,18 @@ export const updateFormDefinitionSuccess = (
 ): UpdateFormDefinitionsSuccessAction => ({
   type: UPDATE_FORM_DEFINITION_SUCCESS_ACTION,
   payload: definition,
+});
+
+export const deleteFormDefinition = (definition: FormDefinition): DeleteFormDefinitionAction => ({
+  type: DELETE_FORM_DEFINITION_ACTION,
+  definition,
+});
+
+export const deleteFormDefinitionSuccess = (
+  definitions: Record<string, FormDefinition>
+): DeleteFormDefinitionSuccessAction => ({
+  type: DELETE_FORM_DEFINITION_SUCCESS_ACTION,
+  payload: definitions,
 });
 
 export const getFormDefinitions = (): FetchFormDefinitionsAction => ({
