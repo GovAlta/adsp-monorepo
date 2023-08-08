@@ -19,7 +19,7 @@ import { GetMySubscriber, Subscribe, Unsubscribe } from '@store/subscription/act
 import { Tab, Tabs } from '@components/Tabs';
 import { getNotices } from '@store/notice/actions';
 import { NoticeList } from './noticeList';
-import SupportLinks from '@components/SupportLinks';
+
 import { renderNoItem } from '@components/NoItem';
 import { createSelector } from 'reselect';
 import { StatusOverview } from './overview';
@@ -29,6 +29,8 @@ import { ApplicationList } from './styled-components';
 import { WebhookFormModal } from './webhookForm';
 
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
+
+import AsideLinks from '@components/AsideLinks';
 
 const userHealthSubscriptionSelector = createSelector(
   (state: RootState) => state.session.userInfo?.sub,
@@ -114,6 +116,9 @@ function Status(): JSX.Element {
     setShowAddWebhookModal(edit);
   };
 
+  function getStatussupportcodeLink() {
+    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/status-service';
+  }
   return (
     <Page>
       <Main>
@@ -236,16 +241,9 @@ function Status(): JSX.Element {
       </Main>
 
       <Aside>
-        <h3>Helpful links</h3>
-        <a
-          rel="noopener noreferrer"
-          target="_blank"
-          href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/status-service"
-        >
-          See the code
-        </a>
-        <SupportLinks />
-
+        <>
+          <AsideLinks serviceLink={getStatussupportcodeLink()} />
+        </>
         <h3>Public status page</h3>
 
         <p>Url of the current tenant's public status page:</p>

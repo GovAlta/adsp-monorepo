@@ -204,7 +204,7 @@ const Dashboard = (): JSX.Element => {
             <h3>Sharing tenant access</h3>
             <div>
               <p>To give another user limited access to your realm:</p>
-              <p>
+              <div>
                 <ListWrapper>
                   <li>
                     Share the login URL below and have your user <ExternalLink link={loginUrl} text="login" /> once to
@@ -218,7 +218,7 @@ const Dashboard = (): JSX.Element => {
                   </li>
                   <li>Once granted the role, the user can access tenant admin using the URL below.</li>
                 </ListWrapper>
-              </p>
+              </div>
             </div>
             <h3>Login link</h3>
             <LinkCopyComponent text={'Copy link'} link={loginUrl} />

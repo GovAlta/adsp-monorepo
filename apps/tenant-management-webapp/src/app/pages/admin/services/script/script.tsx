@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { ScriptOverview } from './overview';
-import SupportLinks from '@components/SupportLinks';
+
 import BetaBadge from '@icons/beta-badge.svg';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { ScriptsView } from './scriptsView';
 import { HeadingDiv } from './styled-components';
+
+import AsideLinks from '@components/AsideLinks';
 export const Script = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
@@ -18,6 +20,12 @@ export const Script = (): JSX.Element => {
     setActiveIndex(1);
     setActivateEditState(edit);
   };
+  function getScriptDocsLink() {
+    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Script service`;
+  }
+  function getScriptsupportcodeLink() {
+    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/script-service';
+  }
   return (
     <Page>
       <Main>
@@ -35,24 +43,9 @@ export const Script = (): JSX.Element => {
           </Tabs>
         </>
       </Main>
+
       <Aside>
-        <h3>Helpful links</h3>
-        <a
-          rel="noopener noreferrer"
-          target="_blank"
-          href={`${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Script service`}
-        >
-          Read the API docs
-        </a>
-        <br />
-        <a
-          rel="noopener noreferrer"
-          target="_blank"
-          href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/script-service"
-        >
-          See the code
-        </a>
-        <SupportLinks />
+        <AsideLinks serviceLink={getScriptsupportcodeLink()} docsLink={getScriptDocsLink()} />
       </Aside>
     </Page>
   );

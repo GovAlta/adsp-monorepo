@@ -1,30 +1,5 @@
 import styled, { createGlobalStyle } from 'styled-components';
 
-export const FileTableStyles = styled.div`
-  .flex-horizontal {
-    display: flex;
-    flex-direction: row;
-  }
-
-  .flex {
-    flex: 1;
-  }
-
-  .display-flex {
-    display: flex;
-  }
-
-  .flex-auto {
-    flex: auto;
-  }
-
-  margin: 1rem 0 1rem;
-
-  .some-margin {
-    margin: 8px;
-  }
-`;
-
 export const PopulateTemplateWrapper = styled.div`
   display: flex;
   margin-left: 3px;

@@ -3,11 +3,13 @@ import { Tab, Tabs } from '@components/Tabs';
 import { CalendarOverview } from './overview';
 import { CalendarsView } from './calendarsView';
 import React, { useState } from 'react';
-import SupportLinks from '@components/SupportLinks';
+
 import BetaBadge from '@icons/beta-badge.svg';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { HeadingDiv } from './styled-components';
+
+import AsideLinks from '@components/AsideLinks';
 
 export const Calendar = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -19,6 +21,12 @@ export const Calendar = (): JSX.Element => {
     setActiveIndex(1);
     setActivateEditState(edit);
   };
+  function getCalenderDocsLink() {
+    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Calendar service`;
+  }
+  function getCalendersupportcodeLink() {
+    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/calendar-service';
+  }
   return (
     <Page>
       <Main>
@@ -39,23 +47,7 @@ export const Calendar = (): JSX.Element => {
         </>
       </Main>
       <Aside>
-        <h3>Helpful links</h3>
-        <a
-          rel="noopener noreferrer"
-          target="_blank"
-          href={`${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Calendar service`}
-        >
-          Read the API docs
-        </a>
-        <br />
-        <a
-          rel="noopener noreferrer"
-          target="_blank"
-          href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/calendar-service"
-        >
-          See the code
-        </a>
-        <SupportLinks />
+        <AsideLinks serviceLink={getCalendersupportcodeLink()} docsLink={getCalenderDocsLink()} />
       </Aside>
     </Page>
   );

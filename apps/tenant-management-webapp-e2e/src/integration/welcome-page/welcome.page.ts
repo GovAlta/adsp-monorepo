@@ -12,10 +12,6 @@ class WelcomePage {
     return cy.xpath('//a[contains(text(), "Sign out")]');
   }
 
-  userHasOneTenantMessage() {
-    return cy.get('.message');
-  }
-
   createTenantTitle() {
     return cy.get('h2:contains("Create tenant")');
   }

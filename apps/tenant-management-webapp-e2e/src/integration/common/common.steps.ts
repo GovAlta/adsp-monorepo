@@ -178,7 +178,7 @@ When('the user selects {string} tab for {string}', function (tab, menuItem) {
   cy.wait(3000);
 });
 
-Then('the user views a callout message of {string}', function (message) {
+Then('the user views a notification message of {string}', function (message) {
   cy.wait(4000); // Wait for the message to show up
   commonObj.notificationMessage().invoke('text').should('contain', message);
 });

@@ -6,32 +6,19 @@ import FileList from './fileList';
 import { RootState } from '@store/index';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
-import SupportLinks from '@components/SupportLinks';
+
+import AsideLinks from '@components/AsideLinks';
 
 const HelpLink = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
-  return (
-    <>
-      <h3>Helpful links</h3>
-      <a
-        rel="noopener noreferrer"
-        target="_blank"
-        href={`${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=File service`}
-      >
-        Read the API docs
-      </a>
-      <br />
-      <a
-        rel="noopener noreferrer"
-        target="_blank"
-        href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/file-service"
-      >
-        See the code
-      </a>
-      <SupportLinks />
-    </>
-  );
+  function getFileDocsLink() {
+    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=File service`;
+  }
+  function getFilesupportcodeLink() {
+    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/file-service';
+  }
+  return <AsideLinks serviceLink={getFilesupportcodeLink()} docsLink={getFileDocsLink()} />;
 };
 
 export const File: FunctionComponent = () => {

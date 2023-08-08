@@ -278,7 +278,7 @@ describe('NotificationTypes Page', () => {
   });
 
   it('add an event', async () => {
-    const { getAllByTestId, queryByTestId } = render(
+    const { getAllByTestId, queryByTestId, baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
@@ -289,7 +289,7 @@ describe('NotificationTypes Page', () => {
     });
 
     // fields
-    const eventDropDown = queryByTestId('event-dropdown');
+    const eventDropDown = baseElement.querySelector('goa-dropdown');
     const cancelBtn = queryByTestId('event-form-cancel');
     const saveBtn = queryByTestId('event-form-save');
 
@@ -298,12 +298,19 @@ describe('NotificationTypes Page', () => {
     expect(saveBtn).toBeTruthy();
 
     // fill
-    fireEvent.click(queryByTestId('event-dropdown'));
-    fireEvent.click(queryByTestId('event-dropdown-option--foo:bar'));
+    fireEvent.click(baseElement.querySelector('goa-dropdown'));
+    const el = baseElement.querySelector('goa-dropdown');
+    fireEvent(
+      el,
+      new CustomEvent('_change', {
+        detail: { name: 'foo:bar', value: 'foo:bar' },
+      })
+    );
 
     fireEvent.click(saveBtn);
 
     const actions = store.getActions();
+
     const saveAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);
 
     expect(saveAction).toBeTruthy();

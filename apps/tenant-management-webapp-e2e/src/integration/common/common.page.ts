@@ -30,7 +30,7 @@ class Common {
   }
 
   notificationMessage() {
-    return cy.xpath('//*[@role="notification"]//*[@class="message"]');
+    return cy.get('goa-notification');
   }
 
   deleteConfirmationModalTitle() {
@@ -58,7 +58,7 @@ class Common {
   }
 
   supportLink(link) {
-    return cy.xpath(`//h3[text()="Support"]/following-sibling::*[contains(text(), "${link}")]`);
+    return cy.xpath(`//h3[text()="Support"]/following-sibling::*/*[contains(text(), "${link}")]`);
   }
 
   serviceOverviewContent(serviceOverviewTitle) {

@@ -89,9 +89,6 @@ class SubscriptionManagementPage {
     return cy.xpath('//input[@type="radio" and @checked]');
   }
 
-  calloutMessage() {
-    return cy.xpath('//*[@role="notification"]//*[@class="message"]');
-  }
   availableChannel(subscriptionName) {
     return cy.xpath(
       `//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]/following-sibling::td[2]`
