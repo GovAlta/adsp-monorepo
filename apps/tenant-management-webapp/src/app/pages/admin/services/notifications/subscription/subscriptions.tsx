@@ -14,7 +14,6 @@ export const Subscriptions: FunctionComponent = () => {
   const criteriaInit = {
     email: '',
     name: '',
-    sms: '',
   };
   const dispatch = useDispatch();
 
