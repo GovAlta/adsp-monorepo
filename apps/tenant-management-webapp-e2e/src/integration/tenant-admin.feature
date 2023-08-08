@@ -59,12 +59,10 @@ Feature: Tenant admin
     Then no critical or serious accessibility issues on "tenant admin access service roles page"
     When the user selects the "Event log" menu item
     Then no critical or serious accessibility issues on "tenant admin event log page"
-  #  CS-1839 is pending for fix
-  #  When the user selects the "Service metrics" menu item
-  #  Then no critical or serious accessibility issues on "tenant admin service metrics page"
-  #  CS-1838 is pending for fix
-  #   When the user selects the "Dashboard" menu item
-  #   Then no critical or serious accessibility issues on "tenant admin dashboard page"
+    When the user selects the "Service metrics" menu item
+    Then no critical or serious accessibility issues on "tenant admin service metrics page"
+    When the user selects the "Dashboard" menu item
+    Then no critical or serious accessibility issues on "tenant admin dashboard page"
 
   @TEST_CS-588 @TEST_CS-745 @dashboard @regression
   Scenario: As a tenant admin, I should be able to see useful information on the landing page
@@ -76,7 +74,7 @@ Feature: Tenant admin
     Then the user views the message of "Copy link" from clicking Copy login link
     # Getting content from clipboard doesn't work on build agent. Commented out this validation.
     # Then the login link is copied to the clipboard
-    And the user views introductions and links for "Access", "Calendar", "Configuration", "Directory", "Event", "File", "Notification", "PDF", "Script" and "Status"
+    And the user views introductions and links for "Access", "Calendar", "Configuration", "Directory", "Event", "File", "Form", "Notification", "PDF", "Script" and "Status"
     When the user clicks "Access" link
     Then the user is directed to "Access service" page
     When the user selects the "Dashboard" menu item
@@ -86,20 +84,23 @@ Feature: Tenant admin
     And the user clicks "File" link
     Then the user is directed to "File service" page
     When the user selects the "Dashboard" menu item
+    And the user clicks "Form" link
+    Then the user is directed to "Form service" page
+    When the user selects the "Dashboard" menu item
     And the user clicks "Status" link
     Then the user is directed to "Status service" page
     When the user selects the "Dashboard" menu item
     And the user clicks "Event" link
     Then the user is directed to "Event service" page
     When the user selects the "Dashboard" menu item
-    #And the user clicks "PDF" link
-    #Then the user is directed to "PDF service" page
-    #When the user selects the "Dashboard" menu item
-    #And the user clicks "Configuration" link
-    #Then the user is directed to "Configuration service" page
-    #When the user selects the "Dashboard" menu item
-    #And the user clicks "Script" link
-    #Then the user is directed to "Script service" page
+    And the user clicks "PDF" link
+    Then the user is directed to "PDF service" page
+    When the user selects the "Dashboard" menu item
+    And the user clicks "Configuration" link
+    Then the user is directed to "Configuration service" page
+    When the user selects the "Dashboard" menu item
+    And the user clicks "Script" link
+    Then the user is directed to "Script service" page
 
   # TEST DATA: need a user without tenant admin role
   @TEST_CS-743 @regression
