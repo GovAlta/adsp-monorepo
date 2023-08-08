@@ -8,6 +8,7 @@ import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 import ServiceStatusPage from './pages/status';
 import Recaptcha from './components/Recaptcha';
 import { RootState } from '@store/index';
+import '@abgov/web-components/index.css';
 
 export function App(): JSX.Element {
   const dispatch = useDispatch();

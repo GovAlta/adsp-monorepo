@@ -1,16 +1,27 @@
 import React, { useEffect } from 'react';
 import { OverviewLayout } from '@components/Overview';
+import { GoAButton } from '@abgov/react-components';
+import { useHistory } from 'react-router-dom';
 
 interface FormOverviewProps {
-  setActiveEdit: (boolean) => void;
   setActiveIndex: (index: number) => void;
+  setOpenAddDefinition: (val: boolean) => void;
 }
 
-const FormOverview = ({ setActiveEdit, setActiveIndex }: FormOverviewProps): JSX.Element => {
+const FormOverview = ({ setActiveIndex, setOpenAddDefinition }: FormOverviewProps): JSX.Element => {
   useEffect(() => {
-    setActiveEdit(false);
     setActiveIndex(0);
   }, []);
+
+  useEffect(() => {
+    setOpenAddDefinition(false);
+
+    history.push({
+      pathname: '/admin/services/form',
+    });
+  }, []);
+
+  const history = useHistory();
 
   return (
     <OverviewLayout
@@ -26,6 +37,22 @@ const FormOverview = ({ setActiveEdit, setActiveIndex }: FormOverviewProps): JSX
             ready.
           </p>
         </section>
+      }
+      addButton={
+        <>
+          <GoAButton
+            data-testid="add-definition"
+            onClick={() => {
+              history.push({
+                pathname: '/admin/services/form',
+                search: '?definitions=true',
+              });
+              setOpenAddDefinition(true);
+            }}
+          >
+            Add definition
+          </GoAButton>
+        </>
       }
     />
   );
