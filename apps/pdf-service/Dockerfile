@@ -29,7 +29,7 @@ RUN apt-get update \
   --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
-USER 1001:0
+RUN chmod -R 777 /.npm
 
 ARG SERVICE
 COPY . .
