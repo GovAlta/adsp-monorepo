@@ -32,6 +32,7 @@ RUN apt-get update \
 
 ARG SERVICE
 COPY . .
-RUN chmod -R 777 /dist /node_modules
+RUN mkdir /.npm
+RUN chmod -R 777 /dist /node_modules /.npm
 ENV SERVICE ${SERVICE}
 CMD npm run -d service dist/apps/${SERVICE}/main.js
