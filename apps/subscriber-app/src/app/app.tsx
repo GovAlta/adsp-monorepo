@@ -11,6 +11,7 @@ import AuthContext from '@lib/authContext';
 import { ThemeProvider } from 'styled-components';
 import { theme } from 'theme';
 import PublicApp from './publicApp';
+import '@abgov/web-components/index.css';
 
 const AppRouters = () => {
   return (

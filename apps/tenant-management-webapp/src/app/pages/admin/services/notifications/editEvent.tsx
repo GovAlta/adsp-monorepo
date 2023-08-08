@@ -2,7 +2,7 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { NotificationItem } from '@store/notification/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton } from '@abgov/react-components';
-import { GoADropdown, GoADropdownOption } from '@abgov/react-components-new';
+import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
@@ -99,7 +99,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
                 data-testid="event-dropdown"
               >
                 {dropDownOptions.map((item, key) => (
-                  <GoADropdownOption label={item.label} value={item.value} key={key} data-testid={item.dataTestId} />
+                  <GoADropdownItem label={item.label} value={item.value} key={key} data-testid={item.dataTestId} />
                 ))}
               </GoADropdown>
             </div>

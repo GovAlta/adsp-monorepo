@@ -3,8 +3,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { saveApplication } from '@store/status/actions';
 import { fetchDirectory, fetchDirectoryDetailByURNs } from '@store/directory/actions';
 import { ApplicationStatus } from '@store/status/models';
-import { GoADropdown, GoADropdownOption, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { useValidators } from '@lib/validation/useValidators';
+import { GoADropdownOption } from '@abgov/react-components';
 
 import {
   characterCheck,
@@ -26,7 +27,7 @@ import {
 import { GoATextArea } from '@abgov/react-components-new';
 import { RootState } from '@store/index';
 import { createSelector } from 'reselect';
-import { IdField } from './styled-components';
+import { DropdownListContainer, DropdownList, IdField } from './styled-components';
 import { toKebabName } from '@lib/kebabName';
 
 interface Props {
@@ -83,6 +84,7 @@ export const ApplicationFormModal: FC<Props> = ({
   const { directory } = useSelector((state: RootState) => state.directory);
   const { applications } = useSelector((state: RootState) => state.serviceStatus);
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
+  const [openDropdown, setOpenDropdown] = useState<boolean>(false);
 
   const isDuplicateAppName = (): Validator => {
     return (appName: string) => {
@@ -183,31 +185,6 @@ export const ApplicationFormModal: FC<Props> = ({
             <label>Application ID</label>
             <IdField>{application.appKey}</IdField>
           </GoAFormItem>
-
-          <GoAFormItem error={errors?.['url']}>
-            <label>URL</label>
-            <GoADropdown
-              name="url"
-              value={[application?.endpoint?.url]}
-              aria-label="select-url-dropdown"
-              width="100%"
-              onChange={(name, value: string | string[]) => {
-                validators.remove('url');
-                validators['url'].check(value);
-                setApplication({
-                  ...application,
-                  endpoint: {
-                    url: value.toString(),
-                    status: 'offline',
-                  },
-                });
-              }}
-            >
-              {healthEndpoints.map((endpoint) => {
-                return <GoADropdownOption name="url" label={endpoint} value={endpoint} key={endpoint} />;
-              })}
-            </GoADropdown>
-          </GoAFormItem>
           <GoAFormItem error={errors?.['description']}>
             <label>Description</label>
             <GoATextArea
@@ -224,6 +201,57 @@ export const ApplicationFormModal: FC<Props> = ({
               }}
               aria-label="description"
             />
+          </GoAFormItem>
+          <GoAFormItem error={errors?.['url']}>
+            <label>URL</label>
+            <GoAInput
+              type="test"
+              name="url"
+              value={application?.endpoint?.url}
+              aria-label="input-url"
+              onChange={(name, value) => {
+                validators.remove('url');
+                validators['url'].check(value);
+                setApplication({
+                  ...application,
+                  endpoint: {
+                    url: value,
+                    status: 'offline',
+                  },
+                });
+              }}
+              onTrailingIconClick={() => {
+                setOpenDropdown(!openDropdown);
+              }}
+              trailingIcon={openDropdown ? 'close-circle' : 'chevron-down'}
+            />
+
+            {openDropdown && (
+              <DropdownListContainer>
+                <DropdownList>
+                  {healthEndpoints.map((endpoint): JSX.Element => {
+                    return (
+                      <GoADropdownOption
+                        label={endpoint}
+                        value={endpoint}
+                        key={endpoint}
+                        visible={true}
+                        aria-label="select-dropdown-url"
+                        onClick={(value) => {
+                          setApplication({
+                            ...application,
+                            endpoint: {
+                              url: value,
+                              status: 'offline',
+                            },
+                          });
+                        }}
+                      />
+                    );
+                  })}
+                </DropdownList>
+              </DropdownListContainer>
+            )}
           </GoAFormItem>
         </GoAForm>
       </GoAModalContent>

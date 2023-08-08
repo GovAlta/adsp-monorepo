@@ -230,11 +230,11 @@ objects:
         activeDeadlineSeconds: 21600
         resources:
           limits:
-            cpu: 200m
-            memory: 200Mi
+            cpu: 400m
+            memory: 400Mi
           requests:
-            cpu: 20m
-            memory: 50Mi
+            cpu: 40m
+            memory: 100Mi
       template:
         metadata:
           labels:

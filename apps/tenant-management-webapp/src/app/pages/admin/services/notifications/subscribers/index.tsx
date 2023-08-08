@@ -18,7 +18,6 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
   const criteriaInit = {
     email: '',
     name: '',
-    sms: '',
     top: 10,
     next: null,
   };

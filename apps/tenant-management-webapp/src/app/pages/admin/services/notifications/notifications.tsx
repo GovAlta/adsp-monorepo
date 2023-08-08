@@ -1,5 +1,5 @@
 import { Aside, Main, Page } from '@components/Html';
-import SupportLinks from '@components/SupportLinks';
+
 import { Tab, Tabs } from '@components/Tabs';
 import { RootState } from '@store/index';
 import React, { FunctionComponent, useState, useEffect } from 'react';
@@ -10,6 +10,8 @@ import { Subscriptions } from './subscription/subscriptions';
 import { Subscribers } from './subscribers';
 import { subscriberAppUrlSelector } from './selectors';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
+
+import AsideLinks from '@components/AsideLinks';
 
 export const Notifications: FunctionComponent = () => {
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
@@ -30,7 +32,12 @@ export const Notifications: FunctionComponent = () => {
       setActiveIndex(null);
     }
   }, [activeIndex]);
-
+  function getNotificationDocsLink() {
+    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Notification service`;
+  }
+  function getNotificationsupportcodeLink() {
+    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/notification-service';
+  }
   return (
     <Page>
       <Main>
@@ -51,26 +58,10 @@ export const Notifications: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <h3>Helpful links</h3>
-        <a
-          rel="noopener noreferrer"
-          target="_blank"
-          href={`${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Notification service`}
-        >
-          Read the API docs
-        </a>
-        <br />
-        <a
-          rel="noopener noreferrer"
-          target="_blank"
-          href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/notification-service"
-        >
-          See the code
-        </a>
-        <SupportLinks />
+        <AsideLinks serviceLink={getNotificationsupportcodeLink()} docsLink={getNotificationDocsLink()} />
 
         <h3>Manage subscriptions</h3>
-        <p>Subscribers can manage their subscriptions here:</p>
+        <span>Subscribers can manage their subscriptions here:</span>
         <h3>Subscriber app link</h3>
         <LinkCopyComponent text={'Copy link'} link={loginUrl} />
       </Aside>

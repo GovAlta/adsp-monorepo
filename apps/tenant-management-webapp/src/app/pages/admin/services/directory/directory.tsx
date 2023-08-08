@@ -2,14 +2,22 @@ import React, { FunctionComponent } from 'react';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { DirectoryOverview } from './overview';
-import SupportLinks from '@components/SupportLinks';
+
 import { DirectoryService } from './services';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 
+import AsideLinks from '@components/AsideLinks';
+
 export const Directory: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
+  function getDirectoryDocsLink() {
+    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Directory service`;
+  }
+  function getDirectorysupportcodeLink() {
+    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/directory-service';
+  }
   return (
     <Page>
       <Main>
@@ -27,23 +35,7 @@ export const Directory: FunctionComponent = () => {
         </>
       </Main>
       <Aside>
-        <h3>Helpful links</h3>
-        <a
-          rel="noopener noreferrer"
-          target="_blank"
-          href={`${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Directory service`}
-        >
-          Read the API docs
-        </a>
-        <br />
-        <a
-          rel="noopener noreferrer"
-          target="_blank"
-          href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/directory-service"
-        >
-          See the code
-        </a>
-        <SupportLinks />
+        <AsideLinks serviceLink={getDirectorysupportcodeLink()} docsLink={getDirectoryDocsLink()} />
       </Aside>
     </Page>
   );
