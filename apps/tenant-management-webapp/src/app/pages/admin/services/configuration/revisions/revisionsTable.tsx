@@ -168,7 +168,7 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
   if (
     !configurationRevisions[service]?.revisions.next &&
     !configurationRevisions[service]?.revisions?.latest &&
-    configurationRevisions[service]?.revisions.result.length
+    configurationRevisions[service]?.revisions?.result?.length
   ) {
     configurationRevisions[service].revisions.latest = configurationRevisions[service]?.revisions.result.length - 1;
   }
