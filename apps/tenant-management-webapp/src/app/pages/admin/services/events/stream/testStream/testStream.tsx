@@ -4,7 +4,7 @@ import { fetchEventStreams, startSocket } from '@store/stream/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import { PageIndicator } from '@components/Indicator';
 import { GoAButton, GoAElementLoader } from '@abgov/react-components';
-import { GoADropdown, GoADropdownOption } from '@abgov/react-components-new';
+import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { Divider, StreamHeading, StreamsDropdown } from './styledComponents';
 import { GoAForm } from '@abgov/react-components/experimental';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
@@ -182,7 +182,7 @@ export const TestStream = (): JSX.Element => {
                 {Object.keys(streams)
                   .sort((a, b) => (a < b ? -1 : 1))
                   .map((streamId) => (
-                    <GoADropdownOption
+                    <GoADropdownItem
                       label={streams[streamId].name}
                       value={streamId}
                       key={streamId}

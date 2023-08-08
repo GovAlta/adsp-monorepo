@@ -5,7 +5,7 @@ import { Webhooks } from '../../../../store/status/models';
 import DataTable from '@components/DataTable';
 import {
   GoADropdown,
-  GoADropdownOption,
+  GoADropdownItem,
   GoAButton,
   GoACheckbox,
   GoAButtonGroup,
@@ -220,11 +220,7 @@ export const WebhookFormModal: FC<Props> = ({
                 >
                   {applications.map((application): JSX.Element => {
                     return (
-                      <GoADropdownOption
-                        label={application.appKey}
-                        value={application.appKey}
-                        key={application.appKey}
-                      />
+                      <GoADropdownItem label={application.appKey} value={application.appKey} key={application.appKey} />
                     );
                   })}
                 </GoADropdown>
