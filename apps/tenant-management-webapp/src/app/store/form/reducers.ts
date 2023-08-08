@@ -1,6 +1,7 @@
 import {
   FETCH_FORM_DEFINITIONS_SUCCESS_ACTION,
   UPDATE_FORM_DEFINITION_SUCCESS_ACTION,
+  DELETE_FORM_DEFINITION_SUCCESS_ACTION,
   FormActionTypes,
 } from './action';
 
@@ -19,6 +20,14 @@ export default function (state: FormState = defaultState, action: FormActionType
       };
 
     case UPDATE_FORM_DEFINITION_SUCCESS_ACTION:
+      return {
+        ...state,
+        definitions: {
+          ...action.payload,
+        },
+      };
+
+    case DELETE_FORM_DEFINITION_SUCCESS_ACTION:
       return {
         ...state,
         definitions: {
