@@ -171,7 +171,7 @@ function getFileId(fileName, fileTypeName, recordId, token) {
   let fileId: string;
   return new Cypress.Promise((resolve, reject) => {
     try {
-      const filesRequestURL = Cypress.env('fileApi') + '/file/v1/files';
+      const filesRequestURL = Cypress.env('fileApi') + '/file/v1/files?criteria={"typeEquals":"' + fileTypeName + '"}';
       cy.request({
         method: 'GET',
         url: filesRequestURL,

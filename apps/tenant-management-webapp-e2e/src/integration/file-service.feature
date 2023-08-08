@@ -75,11 +75,9 @@ Feature: File service
     Then "<Status Code>" is returned after file retention be set.
     Then check the file data with in recent 30 days.
 
-
     Examples:
       | Request Endpoint | Status Code |
       | /file/v1/files/  | 200         |
-
 
   # TODO: Test is no longer relevant with removal of file service enable/disable
   @TEST_CS-305 @REQ_CS-195 @regression @ignore
@@ -93,9 +91,8 @@ Feature: File service
     Then file service status is "Active"
     And "Overview , Test Files, File types, Documentation" file service tabs are "visible"
 
-  @TEST_CS-495 @REQ_CS-408 @regression @ignore
-  # Ignore this test until CS-1134 is fixed
-  Scenario: Test As a tenant admin, I can see the API documentation for file service in the tenant admin, so I can understand how to use the API
+  @TEST_CS-495 @REQ_CS-408 @regression
+  Scenario: As a tenant admin, I can see the API documentation for file service in the tenant admin, so I can understand how to use the API
     Given a service owner user is on Files overview page
     Then the user views the link of API docs for "File service"
     When the user goes to the web link of the API docs
@@ -138,16 +135,13 @@ Feature: File service
     Then no critical or serious accessibility issues on "file service overview page"
     When the user selects "File types" tab for "File"
     Then no critical or serious accessibility issues on "file types page"
-  ## CS-1833 pending for fix
-  # When the user clicks Add file type button on file types page
-  # Then no critical or serious accessibility issues for "file type modal" on "file types page"
-  # When the user clicks Cancel button on file type modal
-  # CS-1826 pending for fix
-  # When the user selects "Test files" tab for "File"
-  # Then no critical or serious accessibility issues on "file test files page"
+    When the user clicks Add file type button on file types page
+    Then no critical or serious accessibility issues for "file type modal" on "file types page"
+    When the user clicks Cancel button on file type modal
+    When the user selects "Uploaded files" tab for "File"
+    Then no critical or serious accessibility issues on "file uploaded files page"
 
-  # Ingore until https://goa-dio.atlassian.net/browse/CS-2178 is fixed
-  @TEST_CS-316 @REQ_CS-196 @FileTypes @regression @ignore
+  @TEST_CS-316 @REQ_CS-196 @FileTypes @regression
   Scenario: As a tenant admin, I cannot remove an in-use file type
     Given a service owner user is on Files overview page
     When the user selects "File types" tab for "File"
@@ -163,7 +157,6 @@ Feature: File service
     When the user selects "File types" tab for "File"
     Then the user views file types page
     And the user views the core file types with no actions
-
 
   @FileTypes @regression
   Scenario: As a tenant admin, I can add /edit the file retention policy through the file type modal
