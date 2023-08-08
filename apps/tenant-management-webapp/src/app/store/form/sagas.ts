@@ -1,7 +1,7 @@
 import { SagaIterator } from '@redux-saga/core';
 import { UpdateIndicator } from '@store/session/actions';
 import { RootState } from '../index';
-import { select, call, put, takeEvery, take, apply, fork } from 'redux-saga/effects';
+import { select, call, put, takeEvery } from 'redux-saga/effects';
 import { ErrorNotification } from '@store/notifications/actions';
 import {
   UpdateFormDefinitionsAction,
