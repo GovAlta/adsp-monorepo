@@ -3,7 +3,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { saveWebhook } from '../../../../store/status/actions';
 import { Webhooks } from '../../../../store/status/models';
 import DataTable from '@components/DataTable';
-import { GoAButton, GoACheckbox, GoADropdown, GoADropdownOption } from '@abgov/react-components';
+import {
+  GoADropdown,
+  GoADropdownOption,
+  GoAButton,
+  GoACheckbox,
+  GoAButtonGroup,
+  GoATextArea,
+  GoAIcon,
+} from '@abgov/react-components-new';
 import { getEventDefinitions } from '@store/event/actions';
 import { useValidators } from '@lib/validation/useValidators';
 import { renderNoItem } from '@components/NoItem';
@@ -26,7 +34,7 @@ import {
   GoAModalContent,
   GoAModalTitle,
 } from '@abgov/react-components/experimental';
-import { GoATextArea, GoAIcon } from '@abgov/react-components-new';
+
 import { RootState } from '../../../../store/index';
 
 interface Props {
@@ -200,14 +208,15 @@ export const WebhookFormModal: FC<Props> = ({
                 <label>Application</label>
                 <GoADropdown
                   name="Application"
-                  selectedValues={[webhook.targetId]}
+                  value={[webhook.targetId]}
                   onChange={(_n, [value]) =>
                     setWebhook({
                       ...webhook,
                       targetId: value,
                     })
                   }
-                  multiSelect={false}
+                  aria-label="select-webhook-dropdown"
+                  width="100%"
                 >
                   {applications.map((application): JSX.Element => {
                     return (
@@ -215,7 +224,6 @@ export const WebhookFormModal: FC<Props> = ({
                         label={application.appKey}
                         value={application.appKey}
                         key={application.appKey}
-                        visible={true}
                       />
                     );
                   })}
@@ -288,9 +296,9 @@ export const WebhookFormModal: FC<Props> = ({
           </GoAWrapper>
         </GoAModalContent>
         <GoAModalActions>
-          <ButtonWrapper>
+          <GoAButtonGroup alignment="end">
             <GoAButton
-              buttonType="secondary"
+              type="secondary"
               onClick={() => {
                 if (onCancel) onCancel();
                 setWebhook({ ...defaultWebhooks });
@@ -298,10 +306,10 @@ export const WebhookFormModal: FC<Props> = ({
             >
               Cancel
             </GoAButton>
-            <GoAButton disabled={!isFormValid() || validators.haveErrors()} buttonType="primary" onClick={save}>
+            <GoAButton disabled={!isFormValid() || validators.haveErrors()} type="primary" onClick={save}>
               Save
             </GoAButton>
-          </ButtonWrapper>
+          </GoAButtonGroup>
         </GoAModalActions>
       </GoAModal>
     </GoAModalStyle>
@@ -309,14 +317,6 @@ export const WebhookFormModal: FC<Props> = ({
 };
 
 export default WebhookFormModal;
-
-export const ButtonWrapper = styled.div`
-   {
-    .goa-button {
-      margin-left: 1.5rem;
-    }
-  }
-`;
 
 const GoAWrapper = styled.div`
   width: 578px;

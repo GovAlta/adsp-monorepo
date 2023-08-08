@@ -68,10 +68,6 @@ Then('the user views a login page for an existing tenant', function () {
   commonObj.loginButton().invoke('val').should('eq', 'Log In');
 });
 
-Then('the user views a message of cannot create another tenant', function () {
-  welcomPageObj.userHasOneTenantMessage().contains('has already created a tenant');
-});
-
 Then('the user views create tenant page', function () {
   welcomPageObj.createTenantTitle().contains('Create tenant');
 });

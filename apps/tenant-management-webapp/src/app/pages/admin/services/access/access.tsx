@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { Aside, Main, Page } from '@components/Html';
-import SupportLinks from '@components/SupportLinks';
+import AsideLinks from '@components/AsideLinks';
 import { Tab, Tabs } from '@components/Tabs';
 import { Overview } from './overview';
 import { ServiceRoles } from './serviceRoles';
-import { Gapadjustment, Hyperlinkcolor } from '@pages/admin/dashboard/styled-components';
-import { ExternalLink } from '@components/icons/ExternalLink';
 
 export default function (): JSX.Element {
   // eslint-disable-next-line
@@ -30,12 +28,7 @@ export default function (): JSX.Element {
       </Main>
 
       <Aside>
-        <SupportLinks />
-
-        <Gapadjustment>Helpful links</Gapadjustment>
-        <Hyperlinkcolor>
-          <ExternalLink link={getAccessServiceLink()} text="See the code" />
-        </Hyperlinkcolor>
+        <AsideLinks serviceLink={getAccessServiceLink()} />
       </Aside>
     </Page>
   );

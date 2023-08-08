@@ -75,10 +75,10 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
             />
           )}
         </h2>
-        <p>
+        <span>
           The following contact information and instructions are provided to your subscribers in the subscription
           management application so they know how to get support for notification related issues.
-        </p>
+        </span>
 
         <Grid>
           <GridItem data-testid="email" className="word-break contact-border" md={8} vSpacing={1} hSpacing={0.5}>

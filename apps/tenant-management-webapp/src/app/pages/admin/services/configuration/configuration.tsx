@@ -6,9 +6,9 @@ import { ConfigurationImport } from './import/import';
 import { ConfigurationExport } from './export/export';
 import { ConfigurationDefinitions } from './definitions/definitions';
 import { ConfigurationRevisions } from './revisions/revisions';
-import SupportLinks from '@components/SupportLinks';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
+import AsideLinks from '@components/AsideLinks';
 
 export const Configuration: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -26,7 +26,12 @@ export const Configuration: FunctionComponent = () => {
       setActiveIndex(null);
     }
   }, [activeIndex]);
-
+  function getDocsLink() {
+    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Configuration service`;
+  }
+  function getsupportcodeLink() {
+    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/configuration-service';
+  }
   return (
     <Page>
       <Main>
@@ -50,28 +55,7 @@ export const Configuration: FunctionComponent = () => {
         </Tabs>
       </Main>
       <Aside>
-        <>
-          <h3>Helpful links</h3>
-          <a
-            rel="noopener noreferrer"
-            target="_blank"
-            href={`${docBaseUrl}/${tenantName
-              ?.toLowerCase()
-              .replace(/ /g, '-')}?urls.primaryName=Configuration service`}
-          >
-            Read the API docs
-          </a>
-          <br />
-          <a
-            rel="noopener noreferrer"
-            target="_blank"
-            href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/configuration-service"
-          >
-            See the code
-          </a>
-
-          <SupportLinks />
-        </>
+        <AsideLinks serviceLink={getsupportcodeLink()} docsLink={getDocsLink()} />
       </Aside>
     </Page>
   );

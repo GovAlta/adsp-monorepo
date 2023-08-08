@@ -1,4 +1,4 @@
-import { GoADropdown, GoADropdownOption } from '@abgov/react-components';
+import { GoADropdown, GoADropdownOption } from '@abgov/react-components-new';
 import { GoAForm, GoAFormItem, GoAFormActions, GoAFlexRow, GoAButton } from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
 import { setIntervalCriteria, setServiceCriteria } from '@store/metrics/actions';
@@ -21,9 +21,9 @@ export const MetricsSearchForm: FunctionComponent<MetricsSearchFormProps> = ({ o
           <label>Service</label>
           <GoADropdown
             name="Service"
-            selectedValues={[service]}
+            value={[service]}
+            width="100%"
             onChange={(_n, [value]) => dispatch(setServiceCriteria(value))}
-            multiSelect={false}
           >
             {services
               .sort((a, b) => a.localeCompare(b))
@@ -36,9 +36,9 @@ export const MetricsSearchForm: FunctionComponent<MetricsSearchFormProps> = ({ o
           <label>Time period</label>
           <GoADropdown
             name="Time period"
-            selectedValues={[chartInterval]}
+            value={[chartInterval]}
             onChange={(_n, [value]) => dispatch(setIntervalCriteria(value as ChartInterval))}
-            multiSelect={false}
+            width="100%"
           >
             <GoADropdownOption value="15 mins" label="Last 15 minutes" />
             <GoADropdownOption value="1 hour" label="Last hour" />
