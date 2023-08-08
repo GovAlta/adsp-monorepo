@@ -18,12 +18,14 @@ import Stream from './stream/reducers';
 import Pdf from './pdf/reducers';
 import { serviceRolesReduce as ServiceRoles } from './access/reducers';
 import ServiceMetrics from './metrics/reducers';
+import Form from './form/reducers';
 
 export const rootReducer = combineReducers({
   fileService: File,
   session: Session,
   config: Config,
   pdf: Pdf,
+  form: Form,
   calendarService: Calendar,
   configuration: Configuration,
   configurationExport: ConfigurationExport,
