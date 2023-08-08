@@ -19,9 +19,10 @@ class PuppeteerPdfService implements PdfService {
           headerTemplate: _header,
           printBackground: true,
           displayHeaderFooter: true,
+          omitBackground: true,
         });
       } else {
-        return await page.pdf({ printBackground: true });
+        return await page.pdf({ printBackground: true, omitBackground: true });
       }
     } finally {
       if (page) {
