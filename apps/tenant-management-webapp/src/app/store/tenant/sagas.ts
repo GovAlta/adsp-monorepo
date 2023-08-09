@@ -188,7 +188,7 @@ export function* getAccessToken(isForce = false): SagaIterator {
 
 export function* tenantLogout(): SagaIterator {
   try {
-    const realm = yield select((state: RootState) => state.tenant.realm);
+    const realm = (yield select((state: RootState) => state.tenant.realm)) || 'core';
     if (realm) {
       const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, realm);
       yield call([keycloakAuth, keycloakAuth.logout]);
