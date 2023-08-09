@@ -166,11 +166,11 @@ class StatusServicePage {
   }
 
   addApplicationSaveBtn() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//button[text()="Save"]');
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//goa-button[text()="Save"]');
   }
 
   addApplicationCancelBtn() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//button[text()="Cancel"]');
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//goa-button[text()="Cancel"]');
   }
 
   applicationCardTitle(appName) {
