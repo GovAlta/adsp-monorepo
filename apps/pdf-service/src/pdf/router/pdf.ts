@@ -158,6 +158,7 @@ export function createPdfRouter({
   eventService,
   fileService,
   queueService,
+  logger,
 }: RouterProps): Router {
   const router = Router();
 
@@ -179,7 +180,7 @@ export function createPdfRouter({
       body('recordId').optional().isString()
     ),
     getTemplate('body'),
-    generatePdf(serviceId, repository, eventService, fileService, queueService)
+    generatePdf(serviceId, repository, eventService, fileService, queueService, logger)
   );
   router.get('/jobs/:jobId', createValidationHandler(param('jobId').isUUID()), getGeneratedFile(serviceId, repository));
 
