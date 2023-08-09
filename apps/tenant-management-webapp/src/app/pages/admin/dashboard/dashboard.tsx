@@ -1,6 +1,6 @@
 import React from 'react';
+import { GoAContainer } from '@abgov/react-components-new';
 import { GoACallout } from '@abgov/react-components';
-import { GoACard } from '@abgov/react-components/experimental';
 import { Link } from 'react-router-dom';
 
 import { Grid, GridItem } from '@components/Grid';
@@ -46,7 +46,7 @@ const Dashboard = (): JSX.Element => {
                 <h1 data-testid="dashboard-title">{tenantName} dashboard</h1>
                 <Grid>
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoACard type="primary">
+                    <GoAContainer accent="thin" type="interactive">
                       <h2>
                         <Link to="/admin/access">Access</Link>
                       </h2>
@@ -56,25 +56,26 @@ const Dashboard = (): JSX.Element => {
                         of the box.
                       </div>
                       <div>&nbsp;</div>
-                    </GoACard>
+                      <div>&nbsp;</div>
+                    </GoAContainer>
                   </GridItem>
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoACard type="primary">
+                    <GoAContainer accent="thin" type="interactive">
                       <HeadingDiv>
                         <h2>
                           <Link to="/admin/services/calendar">Calendar</Link>
                         </h2>
-                        <img src={BetaBadge} alt="Files Service" />
+                        <img src={BetaBadge} alt="Calendar Service" width={39} height={23} />
                       </HeadingDiv>
                       <div>
                         The calendar service provides information about dates, a model of calendars, calendar events and
                         scheduling. This service manages dates and times in a particular timezone (America/Edmonton)
                         rather than UTC or a particular UTC offset.
                       </div>
-                    </GoACard>
+                    </GoAContainer>
                   </GridItem>
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoACard type="primary">
+                    <GoAContainer accent="thin" type="interactive">
                       <h2>
                         <Link to="/admin/services/configuration">Configuration</Link>
                       </h2>
@@ -83,10 +84,10 @@ const Dashboard = (): JSX.Element => {
                         infrequently changing configuration. Store configuration against namespace and name keys, and
                         optionally define configuration schemas for write validation.
                       </div>
-                    </GoACard>
+                    </GoAContainer>
                   </GridItem>
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoACard type="primary">
+                    <GoAContainer accent="thin" type="interactive">
                       <h2>
                         <Link to="/admin/services/directory">Directory</Link>
                       </h2>
@@ -96,10 +97,10 @@ const Dashboard = (): JSX.Element => {
                         services so they can be found using the directory for service discovery.
                       </div>
                       <div>&nbsp;</div>
-                    </GoACard>
+                    </GoAContainer>
                   </GridItem>
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoACard type="primary">
+                    <GoAContainer accent="thin" type="interactive">
                       <h2>
                         <Link to="/admin/services/event">Event</Link>
                       </h2>
@@ -109,10 +110,10 @@ const Dashboard = (): JSX.Element => {
                       </div>
                       <div>&nbsp;</div>
                       <div>&nbsp;</div>
-                    </GoACard>
+                    </GoAContainer>
                   </GridItem>
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoACard type="primary">
+                    <GoAContainer accent="thin" type="interactive">
                       <h2>
                         <Link to="/admin/services/file">File</Link>
                       </h2>
@@ -121,22 +122,25 @@ const Dashboard = (): JSX.Element => {
                         with their own space (tenant) containing file types that include role based access policy, and
                         can associate files to domain records.
                       </div>
-                    </GoACard>
+                    </GoAContainer>
                   </GridItem>
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoACard type="primary">
-                      <h2>
-                        <Link to="/admin/services/form">Form</Link>
-                      </h2>
+                    <GoAContainer accent="thin" type="interactive">
+                      <HeadingDiv>
+                        <h2>
+                          <Link to="/admin/services/form">Form</Link>
+                        </h2>
+                        <img src={BetaBadge} alt="form Service" width={39} height={23} />
+                      </HeadingDiv>
                       <div>
                         The form service provides capabilities to support user form submission. Form definitions are
                         used to describe types of form with roles for applicants, clerks who assist them, and assessors
                         who process the submissions.
                       </div>
-                    </GoACard>
+                    </GoAContainer>
                   </GridItem>
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoACard type="primary">
+                    <GoAContainer accent="thin" type="interactive">
                       <h2>
                         <Link to="/admin/services/notification">Notification</Link>
                       </h2>
@@ -148,10 +152,10 @@ const Dashboard = (): JSX.Element => {
                       <div>&nbsp;</div>
                       <div>&nbsp;</div>
                       <div>&nbsp;</div>
-                    </GoACard>
+                    </GoAContainer>
                   </GridItem>
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoACard type="primary">
+                    <GoAContainer accent="thin" type="interactive">
                       <h2>
                         <Link to="/admin/services/pdf">PDF</Link>
                       </h2>
@@ -165,15 +169,15 @@ const Dashboard = (): JSX.Element => {
                       <div>&nbsp;</div>
                       <div>&nbsp;</div>
                       <div>&nbsp;</div>
-                    </GoACard>
+                    </GoAContainer>
                   </GridItem>
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoACard type="primary">
+                    <GoAContainer accent="thin" type="interactive">
                       <HeadingDiv>
                         <h2>
                           <Link to="/admin/services/script">Script</Link>
                         </h2>
-                        <img src={BetaBadge} alt="Files Service" />
+                        <img src={BetaBadge} alt="Script Service" width={39} height={23} />
                       </HeadingDiv>
                       <div>
                         The script services provides the ability to execute configured Lua scripts. Applications can use
@@ -181,10 +185,10 @@ const Dashboard = (): JSX.Element => {
                         configured in a script and executed via the script service API so that policy changes to the
                         formula can implemented through configuration change.
                       </div>
-                    </GoACard>
+                    </GoAContainer>
                   </GridItem>
                   <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoACard type="primary">
+                    <GoAContainer accent="thin" type="interactive">
                       <h2>
                         <Link to="/admin/services/status">Status</Link>
                       </h2>
@@ -193,7 +197,7 @@ const Dashboard = (): JSX.Element => {
                         represent a service that is useful to the end user by itself, such as child care subsidy and
                         child care certification.
                       </div>
-                    </GoACard>
+                    </GoAContainer>
                   </GridItem>
                 </Grid>
               </>

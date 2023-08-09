@@ -6,7 +6,7 @@ export const HeadingDiv = styled.div`
   column-gap: 0.6rem;
 
   img {
-    margin-bottom: 8px;
+    margin-top: 12px;
   }
 `;
 
