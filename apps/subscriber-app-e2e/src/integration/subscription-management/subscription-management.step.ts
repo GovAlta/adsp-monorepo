@@ -149,3 +149,8 @@ Then('the user views the checked {string} icon for {string}', function (channel,
       expect(channel).to.be.oneOf(['sms', 'email', 'bot']);
   }
 });
+
+Then('the user views a notification message of {string}', function (message) {
+  cy.wait(4000); // Wait for the message to show up
+  subscriptionManagementObj.notificationMessage().invoke('text').should('contain', message);
+});
