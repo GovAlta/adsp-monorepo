@@ -212,9 +212,14 @@ describe('NotificationTypes Page', () => {
     expect(description).not.toBeNull();
     expect(cancelBtn).not.toBeNull();
     expect(saveBtn).not.toBeNull();
-
     // fill
-    fireEvent.change(description, { target: { value: 'the updated description' } });
+    fireEvent(
+      description,
+      new CustomEvent('_change', {
+        detail: { value: 'the updated description' },
+      })
+    );
+    fireEvent.change(name, { target: { value: 'the updated name' } });
     fireEvent.click(saveBtn);
 
     const actions = store.getActions();

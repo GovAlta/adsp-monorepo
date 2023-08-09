@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Main } from '@components/Html';
 import Container from '@components/Container';
 import DataTable from '@components/DataTable';
-import { GoAButton, GoACard, GoASkeletonGridColumnContent } from '@abgov/react-components';
+import { GoAButton, GoASkeletonGridColumnContent } from '@abgov/react-components';
+import { GoAContainer } from '@abgov/react-components-new';
 import { GoACallout } from '@abgov/react-components';
 import { FetchContactInfoService } from '@store/notification/actions';
 import { FetchTenantService } from '@store/tenant/actions';
@@ -124,7 +125,12 @@ const Subscriptions = (): JSX.Element => {
             </DescriptionWrapper>
             {showUnSubscribeModal ? unSubscribeModal() : ''}
             <ContactInformationWrapper>
-              <GoACard title="Contact information" data-testid="contact-information-card">
+              <GoAContainer
+                accent="thick"
+                type="interactive"
+                title="Contact information"
+                data-testid="contact-information-card"
+              >
                 <Label>Email</Label>
                 <ContactInformationContainer>
                   <div>
@@ -137,7 +143,7 @@ const Subscriptions = (): JSX.Element => {
                   ) : (
                     <>No Email</>
                   ))}
-              </GoACard>
+              </GoAContainer>
             </ContactInformationWrapper>
 
             <>
