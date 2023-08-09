@@ -1,6 +1,6 @@
 import React, { useState, createRef, useEffect } from 'react';
 import { GoAHeroBanner } from '@abgov/react-components';
-import { GoACard } from '@abgov/react-components/experimental';
+import { GoAContainer } from '@abgov/react-components-new';
 import bannerBackground from '@assets/BannerBackground.jpg';
 import Header from '@components/AppHeader';
 import Footer from '@components/Footer';
@@ -148,7 +148,7 @@ const LandingPage = (): JSX.Element => {
               <GridItem md={10}>
                 <Grid>
                   <GridItem md={4} hSpacing={0.5}>
-                    <GoACard type="primary">
+                    <GoAContainer accent="thin" type="interactive">
                       <CardLayout>
                         <h2>UI components</h2>
                         <CardContent maxHeight={rowOneMaxHeight}>
@@ -161,11 +161,11 @@ const LandingPage = (): JSX.Element => {
                           label="Learn more"
                         />
                       </CardLayout>
-                    </GoACard>
+                    </GoAContainer>
                   </GridItem>
 
                   <GridItem md={4} hSpacing={0.5}>
-                    <GoACard type="primary">
+                    <GoAContainer accent="thin" type="interactive">
                       <CardLayout>
                         <h2>Access</h2>
                         <CardContent maxHeight={rowOneMaxHeight}>
@@ -180,11 +180,11 @@ const LandingPage = (): JSX.Element => {
                           label="Learn more"
                         />
                       </CardLayout>
-                    </GoACard>
+                    </GoAContainer>
                   </GridItem>
 
                   <GridItem md={4} hSpacing={0.5}>
-                    <GoACard type="primary">
+                    <GoAContainer accent="thin" type="interactive">
                       <CardLayout>
                         <h2>File</h2>
                         <CardContent maxHeight={rowOneMaxHeight}>
@@ -200,7 +200,7 @@ const LandingPage = (): JSX.Element => {
                           label="Learn more"
                         />
                       </CardLayout>
-                    </GoACard>
+                    </GoAContainer>
                   </GridItem>
                 </Grid>
               </GridItem>
@@ -213,7 +213,7 @@ const LandingPage = (): JSX.Element => {
               <GridItem md={10}>
                 <Grid>
                   <GridItem md={4} hSpacing={0.5}>
-                    <GoACard type="primary">
+                    <GoAContainer accent="thin" type="interactive">
                       <CardLayout>
                         <h2>Event</h2>
                         <CardContent id="event-service-description" maxHeight={rowTwoMaxHeight}>
@@ -227,11 +227,11 @@ const LandingPage = (): JSX.Element => {
                           label="Learn more"
                         />
                       </CardLayout>
-                    </GoACard>
+                    </GoAContainer>
                   </GridItem>
 
                   <GridItem md={4} hSpacing={0.5}>
-                    <GoACard type="primary">
+                    <GoAContainer accent="thin" type="interactive">
                       <CardLayout>
                         <h2>Notification</h2>
                         <CardContent maxHeight={rowTwoMaxHeight}>
@@ -245,7 +245,7 @@ const LandingPage = (): JSX.Element => {
                           label="Learn more"
                         />
                       </CardLayout>
-                    </GoACard>
+                    </GoAContainer>
                   </GridItem>
                   <GridItem md={4} hSpacing={0.5}></GridItem>
                 </Grid>

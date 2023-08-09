@@ -163,7 +163,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                   const description = value;
                   validators.remove('description');
                   validators['description'].check(description);
-                  setType({ ...type, description: value });
+                  setType({ ...type, description: description });
                 }}
               />
             </GoAFormItem>

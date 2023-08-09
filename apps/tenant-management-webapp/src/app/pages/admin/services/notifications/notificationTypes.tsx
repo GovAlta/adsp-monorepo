@@ -1,6 +1,7 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton, GoACard } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components';
+import { GoAContainer } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@components/Grid';
 import { NotificationTypeModalForm } from './addEditNotification/addEditNotification';
 import { EventModalForm } from './editEvent';
@@ -51,6 +52,7 @@ import {
   EventButtonWrapper,
   MaxHeight,
   NotificationStyles,
+  DescriptionText,
 } from './styled-components';
 
 const emptyNotificationType: NotificationItem = {
@@ -378,72 +380,69 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           .sort((a, b) => (a.name < b.name ? -1 : 1))
           .map((notificationType) => (
             <div className="topBottomMargin" key={`notification-list-${notificationType.id}`}>
-              <GoACard
-                title={
-                  <div>
-                    <div className="rowFlex">
-                      <h2 className="flex1">{notificationType.name}</h2>
-                      <MaxHeight height={30} className="rowFlex">
-                        <a
-                          className="flex1"
-                          data-testid="edit-notification-type"
-                          onClick={() => {
-                            setSelectedType(notificationType);
-                            setEditType(true);
-                            setFormTitle('Edit notification type');
-                          }}
-                        >
-                          <NotificationBorder className="smallPadding flex">
-                            <EditIcon size="small" />
-                          </NotificationBorder>
-                        </a>
-                        <a
-                          className="flex1"
-                          onClick={() => {
-                            setSelectedType(notificationType);
-                            setShowDeleteConfirmation(true);
-                          }}
-                          data-testid="delete-notification-type"
-                        >
-                          <NotificationBorder className="smallPadding">
-                            <GoAIcon type="trash" />
-                          </NotificationBorder>
-                        </a>
-                      </MaxHeight>
-                    </div>
-                    <div className="rowFlex smallFont">
-                      <div className="flex1">
-                        <div data-testid="type-id" className="minimumLineHeight">
-                          Type ID: {notificationType.id}
-                        </div>
-                        {notificationType?.subscriberRoles && (
-                          <div data-testid="tenant-subscriber-roles">
-                            Subscriber roles:{' '}
-                            <b>
-                              {!notificationType.publicSubscribe &&
-                                notificationType?.subscriberRoles
-                                  .filter((value) => value !== 'anonymousRead')
-                                  .map(
-                                    (roles, ix) =>
-                                      roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
-                                  )}{' '}
-                            </b>
-                          </div>
-                        )}
+              <GoAContainer accent="thin" type="interactive">
+                <div>
+                  <div className="rowFlex">
+                    <h2 className="flex1">{notificationType.name}</h2>
+                    <MaxHeight height={30} className="rowFlex">
+                      <a
+                        className="flex1"
+                        data-testid="edit-notification-type"
+                        onClick={() => {
+                          setSelectedType(notificationType);
+                          setEditType(true);
+                          setFormTitle('Edit notification type');
+                        }}
+                      >
+                        <NotificationBorder className="smallPadding flex">
+                          <EditIcon size="small" />
+                        </NotificationBorder>
+                      </a>
+                      <a
+                        className="flex1"
+                        onClick={() => {
+                          setSelectedType(notificationType);
+                          setShowDeleteConfirmation(true);
+                        }}
+                        data-testid="delete-notification-type"
+                      >
+                        <NotificationBorder className="smallPadding">
+                          <GoAIcon type="trash" />
+                        </NotificationBorder>
+                      </a>
+                    </MaxHeight>
+                  </div>
+                  <div className="rowFlex smallFont">
+                    <div className="flex1">
+                      <div data-testid="type-id" className="minimumLineHeight">
+                        Type ID: {notificationType.id}
                       </div>
-                      <div>
-                        <div data-testid="tenant-public-subscription" className="minimumLineHeight">
-                          Public subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
+                      {notificationType?.subscriberRoles && (
+                        <div data-testid="tenant-subscriber-roles">
+                          Subscriber roles:{' '}
+                          <b>
+                            {!notificationType.publicSubscribe &&
+                              notificationType?.subscriberRoles
+                                .filter((value) => value !== 'anonymousRead')
+                                .map(
+                                  (roles, ix) =>
+                                    roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
+                                )}{' '}
+                          </b>
                         </div>
-                        <div data-testid="tenant-self-service">
-                          Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
-                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div data-testid="tenant-public-subscription" className="minimumLineHeight">
+                        Public subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
+                      </div>
+                      <div data-testid="tenant-self-service">
+                        Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
                       </div>
                     </div>
                   </div>
-                }
-                description={`Description: ${notificationType.description}`}
-              >
+                </div>
+                <DescriptionText>{`Description: ${notificationType.description}`}</DescriptionText>
                 <h2>Events:</h2>
 
                 <Grid>
@@ -536,50 +535,47 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                     </NotificationBorder>
                   </GridItem>
                 </Grid>
-              </GoACard>
+              </GoAContainer>
             </div>
           ))}
       <h2>Core notifications:</h2>
       {coreNotification &&
         Object.values(coreNotification).map((notificationType) => (
           <div className="topBottomMargin" key={`notification-list-${notificationType.id}`}>
-            <GoACard
-              title={
-                <div>
-                  <div className="rowFlex">
-                    <h2 className="flex1">{notificationType.name}</h2>
-                  </div>
-                  <div className="rowFlex smallFont">
-                    <div className="flex1">
-                      <div data-testid="type-id" className="minimumLineHeight">
-                        Type ID: {notificationType.id}
-                      </div>
-                      {notificationType?.subscriberRoles && (
-                        <div data-testid="core-subscriber-roles">
-                          Subscriber roles:{' '}
-                          <b>
-                            {notificationType?.subscriberRoles
-                              .filter((value) => value !== 'anonymousRead')
-                              .map(
-                                (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
-                              )}{' '}
-                          </b>
-                        </div>
-                      )}
+            <GoAContainer accent="thin" type="interactive">
+              <div>
+                <div className="rowFlex">
+                  <h2 className="flex1">{notificationType.name}</h2>
+                </div>
+                <div className="rowFlex smallFont">
+                  <div className="flex1">
+                    <div data-testid="type-id" className="minimumLineHeight">
+                      Type ID: {notificationType.id}
                     </div>
-                    <div>
-                      <div data-testid="core-public-subscription" className="minimumLineHeight">
-                        Public subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
+                    {notificationType?.subscriberRoles && (
+                      <div data-testid="core-subscriber-roles">
+                        Subscriber roles:{' '}
+                        <b>
+                          {notificationType?.subscriberRoles
+                            .filter((value) => value !== 'anonymousRead')
+                            .map(
+                              (roles, ix) => roles + (notificationType.subscriberRoles.length - 1 === ix ? '' : ', ')
+                            )}{' '}
+                        </b>
                       </div>
-                      <div data-testid="core-self-service">
-                        Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
-                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <div data-testid="core-public-subscription" className="minimumLineHeight">
+                      Public subscription: {notificationType.publicSubscribe ? 'yes' : 'no'}
+                    </div>
+                    <div data-testid="core-self-service">
+                      Self-service allowed: {notificationType.manageSubscribe ? 'yes' : 'no'}
                     </div>
                   </div>
                 </div>
-              }
-              description={`Description: ${notificationType.description}`}
-            >
+              </div>
+              <DescriptionText>{`Description: ${notificationType.description}`}</DescriptionText>
               <h2>Events:</h2>
 
               <Grid>
@@ -652,7 +648,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                   </GridItem>
                 ))}
               </Grid>
-            </GoACard>
+            </GoAContainer>
           </div>
         ))}
       {indicator && indicator.show && <IndicatorWithDelay message="Loading..." pageLock={false} />}

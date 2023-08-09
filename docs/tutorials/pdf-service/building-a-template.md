@@ -234,29 +234,20 @@ The #each iterator operates on JSON arrays, allowing you to easily collect and p
 #### Adding Images
 
 Although you can source an image from anywhere, the PDF service makes it easy to use images uploaded to the [File Service](/adsp-monorepo/tutorials/file-service/introduction.html)
-in your documents. You can refer to an image, through handlebars, by its file ID, its name, or its URN as follows:
+in your documents. You can refer to an image through handlebars by its file ID (e.g. _27d6c5f2-924f-4dd3-9225-10d019ca23b6_), as follows:
 
-- {% raw %} {{ fileId ".file.name.[the file name]" }} {% endraw %}
-- {% raw %} {{ fileId ".file.fileId.[the file id]" }} {% endraw %}
-- {% raw %} {{ fileId ".file.urn.[the file URN]" }} {% endraw %}
+- {% raw %} {{ fileId "27d6c5f2-924f-4dd3-9225-10d019ca23b6" }} {% endraw %},
+- {% raw %} {{ fileId data.27d6c5f2-924f-4dd3-9225-10d019ca23b6 }} {% endraw %}, or
+- {% raw %} {{ fileId "urn:ads:platform:file-service:/files/27d6c5f2-924f-4dd3-9225-10d019ca23b6" }} {% endraw %}
 
 For example, if you upload the GOA _Alberta_ logo to the file service, you can display it in your PDF by ID like this:
 {% raw %}
 
 ```
-<img src="{{ fileId ".file.fileId.27d6c5f2-924f-4dd3-9225-10d019ca23b6" }}" alt="Alberta logo" />
+<img src="{{ fileId "27d6c5f2-924f-4dd3-9225-10d019ca23b6" }}" alt="Alberta logo" />
 ```
 
 {% endraw %}
-or by name, like this:
-{% raw %}
-
-```
-<img src="{{ fileId ".file.name.goa_logo.png" }}" alt="Alberta logo" />
-```
-
-{% endraw %}
-The former ensures that you are referring to a unique file, as the file service allows duplicate file names. We recommend that you always use the file ID.
 
 Note: the image must be uploaded in the same environment as the PDF service; i.e. PROD does not look for images uploaded in the UAT environment and vise versa.
 

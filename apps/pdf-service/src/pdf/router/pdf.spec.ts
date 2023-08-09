@@ -162,7 +162,14 @@ describe('pdf', () => {
 
   describe('generatePdf', () => {
     it('can create handler', () => {
-      const handler = generatePdf(serviceId, repositoryMock, eventServiceMock, fileServiceMock, queueServiceMock);
+      const handler = generatePdf(
+        serviceId,
+        repositoryMock,
+        eventServiceMock,
+        fileServiceMock,
+        queueServiceMock,
+        loggerMock
+      );
       expect(handler).toBeTruthy();
     });
 
@@ -192,7 +199,14 @@ describe('pdf', () => {
       repositoryMock.create.mockResolvedValueOnce({ id: 'job1' });
       fileServiceMock.typeExists.mockResolvedValueOnce(true);
       queueServiceMock.enqueue.mockResolvedValueOnce(null);
-      const handler = generatePdf(serviceId, repositoryMock, eventServiceMock, fileServiceMock, queueServiceMock);
+      const handler = generatePdf(
+        serviceId,
+        repositoryMock,
+        eventServiceMock,
+        fileServiceMock,
+        queueServiceMock,
+        loggerMock
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).not.toHaveBeenCalled();
       expect(queueServiceMock.enqueue).toHaveBeenCalledWith(
@@ -239,7 +253,14 @@ describe('pdf', () => {
       repositoryMock.create.mockResolvedValueOnce({ id: 'job1' });
       fileServiceMock.typeExists.mockResolvedValueOnce(false);
       queueServiceMock.enqueue.mockResolvedValueOnce(null);
-      const handler = generatePdf(serviceId, repositoryMock, eventServiceMock, fileServiceMock, queueServiceMock);
+      const handler = generatePdf(
+        serviceId,
+        repositoryMock,
+        eventServiceMock,
+        fileServiceMock,
+        queueServiceMock,
+        loggerMock
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
       expect(res.send).not.toHaveBeenCalled();
@@ -268,7 +289,14 @@ describe('pdf', () => {
       };
       const next = jest.fn();
 
-      const handler = generatePdf(serviceId, repositoryMock, eventServiceMock, fileServiceMock, queueServiceMock);
+      const handler = generatePdf(
+        serviceId,
+        repositoryMock,
+        eventServiceMock,
+        fileServiceMock,
+        queueServiceMock,
+        loggerMock
+      );
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
       expect(res.send).not.toHaveBeenCalled();

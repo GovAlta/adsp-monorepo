@@ -14,7 +14,7 @@ import { getConfigurationDefinitions, getConfigurations, ServiceId } from '@stor
 import { PageIndicator } from '@components/Indicator';
 import { ConfigurationExportType, Service } from '@store/configuration/model';
 import { Exports } from '../styled-components';
-import { GoACard } from '@abgov/react-components/experimental';
+import { GoAContainer } from '@abgov/react-components-new';
 import { ReactComponent as SmallClose } from '@assets/icons/x.svg';
 import { ReactComponent as Triangle } from '@assets/icons/triangle.svg';
 import { ReactComponent as Rectangle } from '@assets/icons/rectangle.svg';
@@ -234,7 +234,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                 }}
               >
                 <div className="configuration-selector">
-                  <GoACard type="primary">
+                  <GoAContainer accent="thin" type="interactive">
                     <div
                       className="auto-overflow"
                       style={{
@@ -306,7 +306,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                         </GoAButton>
                       </div>
                     </div>
-                  </GoACard>
+                  </GoAContainer>
                 </div>
               </div>
             </div>

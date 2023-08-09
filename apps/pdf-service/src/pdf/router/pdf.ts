@@ -78,7 +78,8 @@ export function generatePdf(
   repository: PdfJobRepository,
   eventService: EventService,
   fileService: FileService,
-  queueService: WorkQueueService<PdfServiceWorkItem>
+  queueService: WorkQueueService<PdfServiceWorkItem>,
+  logger: Logger
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -86,6 +87,7 @@ export function generatePdf(
       const tenantId = req.tenant.id;
       const { templateId, fileType, filename, recordId, data } = req.body;
       const template: PdfTemplateEntity = req[TEMPLATE];
+      logger.info(`Start to process the template: ${templateId}`);
 
       if (!isAllowedUser(user, template.tenantId, ServiceRoles.PdfGenerator)) {
         throw new UnauthorizedUserError('generate pdf', user);
@@ -99,6 +101,7 @@ export function generatePdf(
       }
 
       const job = await repository.create(tenantId);
+      logger.info(`Successfully created the job ${job.id}.`);
       await queueService.enqueue({
         timestamp: new Date(),
         work: 'generate',
@@ -114,8 +117,10 @@ export function generatePdf(
           name: user.name,
         },
       });
+      logger.info(`Successfully sent the job ${job.id} to work queue.`);
 
       eventService.send(pdfGenerationQueued(tenantId, job.id, templateId, { id: user.id, name: user.name }));
+      logger.info(`Successfully sent the job ${job.id} generation message to the event queue.`);
 
       res.send(mapJob(serviceId, job));
     } catch (err) {
@@ -153,6 +158,7 @@ export function createPdfRouter({
   eventService,
   fileService,
   queueService,
+  logger,
 }: RouterProps): Router {
   const router = Router();
 
@@ -174,7 +180,7 @@ export function createPdfRouter({
       body('recordId').optional().isString()
     ),
     getTemplate('body'),
-    generatePdf(serviceId, repository, eventService, fileService, queueService)
+    generatePdf(serviceId, repository, eventService, fileService, queueService, logger)
   );
   router.get('/jobs/:jobId', createValidationHandler(param('jobId').isUUID()), getGeneratedFile(serviceId, repository));
 
