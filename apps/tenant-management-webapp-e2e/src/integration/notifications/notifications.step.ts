@@ -276,14 +276,23 @@ Then('the user views Select an event modal', function () {
 });
 
 When('the user selects {string} in the event dropdown', function (event) {
-  notificationsObj.selectAnEventModalEventDropdown().click();
-  notificationsObj.selectAnEventModalEventDropdownItem(event).click();
+  notificationsObj.selectAnEventModalEventDropdown().shadow().find('[data-testid="event-dropdown"]').click();
+  notificationsObj
+    .selectAnEventModalEventDropdown()
+    .shadow()
+    .find('li[data-value="' + event + '"]')
+    .scrollIntoView()
+    .click({ force: true });
 });
 
 When('the user cannot select {string} in the event dropdown', function (event) {
-  notificationsObj.selectAnEventModalEventDropdown().click();
-  notificationsObj.selectAnEventModalEventDropdownItem(event).should('not.exist');
-  notificationsObj.selectAnEventModalEventDropdown().click({ force: true }); //Force clicking the dropdown to collapse the dropdown
+  notificationsObj.selectAnEventModalEventDropdown().shadow().find('[data-testid="event-dropdown"]').click();
+  notificationsObj
+    .selectAnEventModalEventDropdown()
+    .shadow()
+    .find('li[data-value="' + event + '"]')
+    .should('not.exist');
+  notificationsObj.selectAnEventModalEventDropdown().shadow().find('[data-testid="event-dropdown"]').click();
 });
 
 When('the user clicks Next button on Select an event page', function () {

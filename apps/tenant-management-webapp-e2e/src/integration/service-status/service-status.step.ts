@@ -488,12 +488,12 @@ When(
 );
 
 Then('the user clicks Save application button', function () {
-  statusObj.addApplicationSaveBtn().click();
+  statusObj.addApplicationSaveBtn().shadow().find('button').click({ force: true });
   cy.wait(4000);
 });
 
 Then('the user clicks Cancel application button', function () {
-  statusObj.addApplicationCancelBtn().click();
+  statusObj.addApplicationCancelBtn().shadow().find('button').click({ force: true });
   cy.wait(1000);
 });
 

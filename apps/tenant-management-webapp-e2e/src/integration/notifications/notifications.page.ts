@@ -130,13 +130,7 @@ class NotificationsPage {
 
   selectAnEventModalEventDropdown() {
     return cy.xpath(
-      '//*[@data-testid="event-form" and @data-state="visible"]/*[@class="modal"]//*[@data-testid="event-dropdown"]'
-    );
-  }
-
-  selectAnEventModalEventDropdownItem(text) {
-    return cy.xpath(
-      `//*[@data-testid="event-form" and @data-state="visible"]/*[@class="modal"]//*[@data-testid="event-dropdown"]/following-sibling::*//*[contains(text(), "${text}")]`
+      '//*[@data-testid="event-form" and @data-state="visible"]/*[@class="modal"]//goa-dropdown[@name="event"]'
     );
   }
 

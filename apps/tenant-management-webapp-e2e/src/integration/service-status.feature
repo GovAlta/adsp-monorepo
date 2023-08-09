@@ -261,18 +261,17 @@ Feature: Service status
     Then no critical or serious accessibility issues on "status overview page"
     When the user clicks Edit button for contact information
     Then the user views Edit contact information modal on the status overview page
-    #And no critical or serious accessibility issues for "edit status contact information modal" on "status overview page"
+    And no critical or serious accessibility issues for "edit status contact information modal" on "status overview page"
     And the user clicks Cancel button on contact information modal
     When the user clicks Add application button
     Then the user views Add application modal
-    ## CS-1826 is pending for fix
-    # And no critical or serious accessibility issues for "add application modal" on "status overview page"
+    And no critical or serious accessibility issues for "add application modal" on "status overview page"
     When the user clicks Cancel application button
     Then no critical or serious accessibility issues on "status applications page"
     When the user selects "Notices" tab for "Status"
     Then no critical or serious accessibility issues on "status notices page"
-    When the user clicks Add notice button
-    Then the user views Add notice dialog
-    ## CS-1863 is pending for fix
-    # And no critical or serious accessibility issues for "add notice modal" on "status notices page"
-    When the user clicks Cancel button in notice modal
+## CS-1863 is pending for fix
+# When the user clicks Add notice button
+# Then the user views Add notice dialog
+# And no critical or serious accessibility issues for "add notice modal" on "status notices page"
+# When the user clicks Cancel button in notice modal
