@@ -35,4 +35,4 @@ ARG SERVICE
 COPY . .
 
 ENV SERVICE ${SERVICE}
-CMD npm run -d service dist/apps/${SERVICE}/main.js
+CMD npm run -d service /dist/apps/${SERVICE}/main.js
