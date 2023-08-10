@@ -110,7 +110,7 @@ jobs:
         run: |
           for app in $AFFECTED_APPS
           do
-            oc import-image ghcr.io/govalta/$app:latest --reference-policy='local' --confirm
+            oc import-image ghcr.io/govalta/$app:latest --reference-policy='local' --confirm || true
             oc tag $app:latest $app:dev --reference-policy='local'
           done
       - run: oc project adsp-dev
