@@ -68,17 +68,17 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
         <br />
         <br />
         <PageIndicator />
-        {openAddFormDefinition && (
-          <AddEditFormDefinition
-            open={openAddFormDefinition}
-            isEdit={false}
-            onClose={reset}
-            initialValue={defaultFormDefinition}
-            onSave={(definition) => {
-              dispatch(updateFormDefinition(definition));
-            }}
-          />
-        )}
+
+        <AddEditFormDefinition
+          open={openAddFormDefinition}
+          isEdit={false}
+          onClose={reset}
+          initialValue={defaultFormDefinition}
+          onSave={(definition) => {
+            dispatch(updateFormDefinition(definition));
+          }}
+        />
+
         {!indicator.show && !formDefinitions && renderNoItem('form templates')}
         {!indicator.show && formDefinitions && (
           <FormDefinitionsTable
@@ -89,23 +89,21 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
             }}
           />
         )}
-        {/* Delete confirmation */}
-        {showDeleteConfirmation && (
-          <DeleteModal
-            isOpen={showDeleteConfirmation}
-            title="Delete form definition"
-            content={
-              <div>
-                Are you sure you wish to delete <b>{`${currentDefinition?.name}?`}</b>
-              </div>
-            }
-            onCancel={() => setShowDeleteConfirmation(false)}
-            onDelete={() => {
-              setShowDeleteConfirmation(false);
-              dispatch(deleteFormDefinition(currentDefinition));
-            }}
-          />
-        )}
+
+        <DeleteModal
+          isOpen={showDeleteConfirmation}
+          title="Delete form definition"
+          content={
+            <div>
+              Are you sure you wish to delete <b>{`${currentDefinition?.name}?`}</b>
+            </div>
+          }
+          onCancel={() => setShowDeleteConfirmation(false)}
+          onDelete={() => {
+            setShowDeleteConfirmation(false);
+            dispatch(deleteFormDefinition(currentDefinition));
+          }}
+        />
       </div>
     </>
   );

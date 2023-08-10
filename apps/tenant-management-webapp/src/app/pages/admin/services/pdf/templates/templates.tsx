@@ -80,17 +80,17 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
         <br />
         <br />
         <PageIndicator />
-        {openAddPdfTemplate && (
-          <AddEditPdfTemplate
-            open={openAddPdfTemplate}
-            isEdit={false}
-            onClose={reset}
-            initialValue={defaultPdfTemplate}
-            onSave={(template) => {
-              dispatch(updatePdfTemplate(template));
-            }}
-          />
-        )}
+
+        <AddEditPdfTemplate
+          open={openAddPdfTemplate}
+          isEdit={false}
+          onClose={reset}
+          initialValue={defaultPdfTemplate}
+          onSave={(template) => {
+            dispatch(updatePdfTemplate(template));
+          }}
+        />
+
         {!indicator.show && !pdfTemplates && renderNoItem('pdf templates')}
         {!indicator.show && pdfTemplates && (
           <PdfTemplatesTable
@@ -102,22 +102,20 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
           />
         )}
         {/* Delete confirmation */}
-        {showDeleteConfirmation && (
-          <DeleteModal
-            isOpen={showDeleteConfirmation}
-            title="Delete PDF template"
-            content={
-              <div>
-                Delete <b>{`${currentTemplate?.name} (ID: ${currentTemplate?.id})?`}</b>
-              </div>
-            }
-            onCancel={() => setShowDeleteConfirmation(false)}
-            onDelete={() => {
-              setShowDeleteConfirmation(false);
-              dispatch(deletePdfTemplate(currentTemplate));
-            }}
-          />
-        )}
+        <DeleteModal
+          isOpen={showDeleteConfirmation}
+          title="Delete PDF template"
+          content={
+            <div>
+              Delete <b>{`${currentTemplate?.name} (ID: ${currentTemplate?.id})?`}</b>
+            </div>
+          }
+          onCancel={() => setShowDeleteConfirmation(false)}
+          onDelete={() => {
+            setShowDeleteConfirmation(false);
+            dispatch(deletePdfTemplate(currentTemplate));
+          }}
+        />
       </div>
     </>
   );
