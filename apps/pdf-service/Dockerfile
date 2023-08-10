@@ -25,20 +25,20 @@ RUN apt-get update \
   --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
-# Install the puppeteer compatible chrome
-# A chrome binary will be installed at /puppeteer/.cache/puppeteer/chrome
-# We neeed to set the workdir for npm i
+# Install the chrome for the puppeteer
+# A chrome binary will be installed at /puppeteer/.cache/puppeteer/chrome.
+# We neeed to set the WORKDIR to run the `npm i` command.
 WORKDIR /usr/app
-# puppeteer will check the $HOME/.cache for the chome
+# Puppeteer will check the $HOME/.cache for the chome.
 ENV HOME=/puppeteer
-# Puppeteer version shall be compatible with that in the package.json
+# Puppeteer version shall be compatible with that in the package.json. Shall we add an arg here?
 RUN npm i puppeteer@20.9.0
-# To avoid OpenShift contianer permission issue
+# To avoid the potential OpenShift contianer permission issue.
 RUN chmod 777 -R /puppeteer
 
 USER 1001:0
 
-# COPY shall be after the npm i install. Otherwise, the chrome will not be install.
+# COPY command shall run after the `npm i` command. Otherwise, the presence of the node_modules folder will prevent the chrome installment.
 COPY . .
 
 ENV SERVICE ${SERVICE}
