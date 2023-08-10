@@ -93,10 +93,10 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
         {showDeleteConfirmation && (
           <DeleteModal
             isOpen={showDeleteConfirmation}
-            title="Delete Form Definition"
+            title="Delete form definition"
             content={
               <div>
-                Delete <b>{`${currentDefinition?.name} (ID: ${currentDefinition?.id})?`}</b>
+                Are you sure you wish to delete <b>{`${currentDefinition?.name}?`}</b>
               </div>
             }
             onCancel={() => setShowDeleteConfirmation(false)}
