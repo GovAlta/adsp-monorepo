@@ -33,6 +33,6 @@ class PuppeteerPdfService implements PdfService {
 }
 
 export async function createPdfService(): Promise<PdfService> {
-  const browser = await puppeteer.launch({ headless: 'new', args: ['--disable-dev-shm-usage', '--no-sandbox'] });
+  const browser = await puppeteer.launch({ headless: true, args: ['--disable-dev-shm-usage', '--no-sandbox'] });
   return new PuppeteerPdfService(browser);
 }
