@@ -120,6 +120,10 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
               <NavLink to="/admin/services/status" activeClassName="current" title="Status" data-testid="menu-status">
                 <span>Status</span>
               </NavLink>
+              <NavLink to="/admin/services/task" activeClassName="current" title="Task" data-testid="menu-task">
+                <span>Task</span>
+                {betaBadge()}
+              </NavLink>
             </>
           )}
         </>
