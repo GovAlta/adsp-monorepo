@@ -31,6 +31,8 @@
     "statusAppUrl": "https://status.adsp-uat.alberta.ca",
     "subscriptionUrl": "https://subscription.adsp-uat.alberta.ca"
   },
+  "viewportWidth": 1920,
+  "viewportHeight": 1080,
   "baseUrl": "https://adsp-uat.alberta.ca",
   "fileServerFolder": ".",
   "fixturesFolder": "./src/fixtures",
