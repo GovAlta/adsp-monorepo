@@ -31,8 +31,6 @@
     "statusAppUrl": "https://status.adsp-dev.gov.ab.ca",
     "subscriptionUrl": "https://subscription.adsp-dev.gov.ab.ca"
   },
-  "viewportWidth": 1920,
-  "viewportHeight": 1080,
   "baseUrl": "https://adsp-dev.gov.ab.ca",
   "fileServerFolder": ".",
   "fixturesFolder": "./src/fixtures",

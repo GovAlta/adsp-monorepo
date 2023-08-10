@@ -27,8 +27,6 @@
     "uiComponentUrl": "",
     "fileApi": ""
   },
-  "viewportWidth": 1920,
-  "viewportHeight": 1080,
   "baseUrl": "https://tenant-management-webapp-core-services-test.os99.gov.ab.ca",
   "fileServerFolder": ".",
   "fixturesFolder": "./src/fixtures",
