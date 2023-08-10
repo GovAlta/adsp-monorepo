@@ -42,4 +42,4 @@ USER 1001:0
 COPY . .
 
 ENV SERVICE ${SERVICE}
-CMD npm run -d service dist/apps/${SERVICE}/main.js
+CMD npm run -d service /dist/apps/${SERVICE}/main.js
