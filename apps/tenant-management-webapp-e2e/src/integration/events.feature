@@ -54,10 +54,11 @@ Feature: Events
     Then no critical or serious accessibility issues on "event overview page"
     When the user selects "Definitions" tab for "Event"
     Then no critical or serious accessibility issues on "event definitions page"
-    When the user clicks Add definition button
-    Then the user views Add definition dialog
-    And no critical or serious accessibility issues for "event definition modal" on "event definitions page"
-    When the user clicks Cancel button on Definition modal
+    # Accessibility test on Add definition dialog causes Cypress to crash. Need further research to avoid Cypress crash before running this test again.
+    # When the user clicks Add definition button
+    # Then the user views Add definition dialog
+    # And no critical or serious accessibility issues for "event definition modal" on "event definitions page"
+    # When the user clicks Cancel button on Definition modal
     And the user selects "Streams" tab for "Event"
     Then no critical or serious accessibility issues on "event streams page"
     When the user selects "Test stream" tab for "Event"

@@ -11,7 +11,7 @@ export function tenantAdminDirectURLLogin(url, id, user, password) {
       commonObj.usernameEmailField().type(user);
       commonObj.passwordField().type(password);
       commonObj.loginButton().click();
-      cy.wait(10000); // Wait all the redirects to settle down
+      cy.wait(7000); // Wait all the redirects to settle down
     }
   });
   cy.url().should('include', '/admin');
