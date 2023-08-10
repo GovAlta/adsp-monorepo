@@ -31,8 +31,6 @@
     "statusAppUrl": "https://status.adsp.alberta.ca",
     "subscriptionUrl": "https://subscription.adsp.alberta.ca"
   },
-  "viewportWidth": 1920,
-  "viewportHeight": 1080,
   "baseUrl": "https://adsp.alberta.ca",
   "fileServerFolder": ".",
   "fixturesFolder": "./src/fixtures",
