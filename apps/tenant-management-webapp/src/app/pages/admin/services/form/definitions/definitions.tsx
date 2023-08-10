@@ -17,6 +17,7 @@ interface FormDefinitionsProps {
 export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => {
   const [openAddFormDefinition, setOpenAddFormDefinition] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [showEdit, setShowEdit] = useState(null);
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
 
   const formDefinitions = useSelector((state: RootState) => {
@@ -38,6 +39,7 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
 
   const reset = () => {
     setOpenAddFormDefinition(false);
+    setShowEdit(false);
     setCurrentDefinition(defaultFormDefinition);
   };
 
@@ -79,6 +81,17 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
             }}
           />
         )}
+        {showEdit && (
+          <AddEditFormDefinition
+            open={!!showEdit}
+            isEdit={true}
+            onClose={reset}
+            initialValue={showEdit || currentDefinition}
+            onSave={(definition) => {
+              dispatch(updateFormDefinition(definition));
+            }}
+          />
+        )}
         {!indicator.show && !formDefinitions && renderNoItem('form templates')}
         {!indicator.show && formDefinitions && (
           <FormDefinitionsTable
@@ -86,6 +99,9 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
             onDelete={(currentTemplate) => {
               setShowDeleteConfirmation(true);
               setCurrentDefinition(currentTemplate);
+            }}
+            onEdit={(currentTemplate) => {
+              setShowEdit(currentTemplate);
             }}
           />
         )}

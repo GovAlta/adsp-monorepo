@@ -258,6 +258,22 @@ export const FormTitle = styled.div`
   font-weight: var(--fw-regular);
 `;
 
+export const TabletMessage = styled.div`
+  h1,
+  h3 {
+    text-align: center;
+    margin: 40px;
+  }
+
+  text-align: center !important;
+
+  @media (min-height: 920px) {
+    @media (min-width: 1440px) {
+      display: none;
+    }
+  }
+`;
+
 export const HideTablet = styled.div`
   @media (max-height: 919px) {
     display: none;
@@ -294,5 +310,17 @@ export const ErrorMsg = styled.div`
     color: var(--color-red);
     pointer-events: none;
     gap: 0.25rem;
+  }
+`;
+
+export const TextLoadingIndicator = styled.div`
+  animation: blinker 1s linear infinite;
+  font-size: 16px;
+  font-style: italic;
+  text-align: center;
+  @keyframes blinker {
+    50% {
+      opacity: 0;
+    }
   }
 `;

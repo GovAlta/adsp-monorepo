@@ -1,11 +1,12 @@
-import React, { FunctionComponent, useState } from 'react';
-import { useSelector } from 'react-redux';
+import React, { FunctionComponent, useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import FormOverview from './formOverview';
 import { RootState } from '@store/index';
 import { Aside, Main, Page } from '@components/Html';
 import { FormDefinitions } from './definitions/definitions';
 import { Tab, Tabs } from '@components/Tabs';
 import SupportLinks from '@components/SupportLinks';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
 
 const HelpLink = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -36,6 +37,12 @@ const HelpLink = (): JSX.Element => {
 export const Form: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const [activeIndex, setActiveIndex] = useState<number>(0);
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchKeycloakServiceRoles());
+  }, []);
 
   const [openAddDefinition, setOpenAddDefinition] = useState(false);
 

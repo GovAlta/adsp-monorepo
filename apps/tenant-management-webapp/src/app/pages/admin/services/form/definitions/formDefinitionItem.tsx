@@ -2,16 +2,14 @@ import React from 'react';
 import { FormDefinition } from '@store/form/model';
 import { Edit, OverflowWrap } from '../styled-components';
 import { GoAIconButton } from '@abgov/react-components-new';
-import { useRouteMatch } from 'react-router';
-import { useHistory } from 'react-router-dom';
 
 interface PdfTemplateItemProps {
   formDefinition: FormDefinition;
   onDelete?: (FormDefinition) => void;
+  onEdit?: (FormDefinition) => void;
 }
-export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItemProps): JSX.Element => {
-  const { url } = useRouteMatch();
-  const history = useHistory();
+
+export const FormDefinitionItem = ({ formDefinition, onDelete, onEdit }: PdfTemplateItemProps): JSX.Element => {
   return (
     <>
       <tr>
@@ -27,7 +25,7 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
               title="Edit"
               size="small"
               icon="create"
-              onClick={() => history.push(`${url}/edit/${formDefinition.id}`)}
+              onClick={() => onEdit(formDefinition)}
             />
             <GoAIconButton
               testId={`form-definition-delete`}

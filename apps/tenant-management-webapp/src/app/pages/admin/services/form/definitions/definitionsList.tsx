@@ -6,8 +6,9 @@ import { PdfTemplate } from '@store/pdf/model';
 export interface PdfTemplatesTableProps {
   definitions: Record<string, PdfTemplate>;
   onDelete?: (PdfTemplate) => void;
+  onEdit?: (PdfTemplate) => void;
 }
-export const FormDefinitionsTable: FunctionComponent<PdfTemplatesTableProps> = ({ definitions, onDelete }) => {
+export const FormDefinitionsTable: FunctionComponent<PdfTemplatesTableProps> = ({ definitions, onDelete, onEdit }) => {
   const newTemplates = JSON.parse(JSON.stringify(definitions));
 
   return (
@@ -30,7 +31,12 @@ export const FormDefinitionsTable: FunctionComponent<PdfTemplatesTableProps> = (
         <tbody>
           {Object.keys(newTemplates).map((templateName) => {
             return (
-              <FormDefinitionItem key={templateName} formDefinition={newTemplates[templateName]} onDelete={onDelete} />
+              <FormDefinitionItem
+                key={templateName}
+                formDefinition={newTemplates[templateName]}
+                onDelete={onDelete}
+                onEdit={onEdit}
+              />
             );
           })}
         </tbody>
