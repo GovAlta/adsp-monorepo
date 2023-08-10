@@ -100,6 +100,10 @@ class SubscriptionManagementPage {
       `//tbody/tr/td[@data-testid="subscription-name" and text()="${subscriptionName}"]/following-sibling::td[2]//div/div[@data-testid="icon-checked"]`
     );
   }
+
+  notificationMessage() {
+    return cy.get('goa-notification');
+  }
 }
 
 export default SubscriptionManagementPage;

@@ -17,7 +17,7 @@ class Common {
 
   readTheApiDocsLink() {
     return cy.xpath(
-      '//*[contains(text(), "Helpful links")]/following-sibling::a[contains(text(), "Read the API docs")]'
+      '//*[contains(text(), "Helpful links")]/following-sibling::*//a[contains(text(), "Read the API docs")]'
     );
   }
 
@@ -54,7 +54,7 @@ class Common {
   }
 
   seeTheCodeLink() {
-    return cy.xpath('//*[contains(text(), "Helpful links")]/following-sibling::a[contains(text(), "See the code")]');
+    return cy.xpath('//*[contains(text(), "Helpful links")]/following-sibling::*//a[contains(text(), "See the code")]');
   }
 
   supportLink(link) {

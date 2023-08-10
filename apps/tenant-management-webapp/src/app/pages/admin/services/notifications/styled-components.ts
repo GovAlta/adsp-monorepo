@@ -29,7 +29,12 @@ export const EventButtonWrapper = styled.div`
 export const MaxHeight = styled.div`
   max-height: ${(p: HeightProps) => p.height + 'px'};
 `;
-
+export const DescriptionText = styled.div`
+  font-size: var(--fs-base);
+  line-height: 28px;
+  margin-bottom: 28px;
+  margin-top: 14px;
+`;
 export const NotificationStyles = styled.div`
   .gridBoxHeight {
     height: 10.5rem;

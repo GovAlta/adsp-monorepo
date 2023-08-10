@@ -25,7 +25,7 @@
     "tenantManagementApi": "",
     "accessManagementApi": "",
     "uiComponentUrl": "",
-    "fileApi":"",
+    "fileApi": "",
     "directoryServiceApiUrl": "",
     "configurationServiceApiUrl": "",
     "statusAppUrl": "https://status.adsp-dev.gov.ab.ca",

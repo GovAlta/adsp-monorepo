@@ -121,7 +121,7 @@
     "@abgov/nx-oc": "^5.1.0",
     "@abgov/nx-release": "^5.0.0",
     "@abgov/react-components": "^3.4.0-beta.65",
-    "@abgov/react-components-new": "npm:@abgov/react-components@4.10.0",
+    "@abgov/react-components-new": "npm:@abgov/react-components@4.13.0",
     "@abgov/semantic-release-nuget": "^1.0.0",
     "@abgov/styles": "^1.0.0-alpha.14",
     "@babel/core": "7.9.6",

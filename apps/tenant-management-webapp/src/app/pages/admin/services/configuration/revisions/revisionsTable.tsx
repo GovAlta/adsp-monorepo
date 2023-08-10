@@ -165,6 +165,13 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
       dispatch(getConfigurationActive(service));
     }
   }, [indicator, revisions]);
+  if (
+    !configurationRevisions[service]?.revisions.next &&
+    !configurationRevisions[service]?.revisions?.latest &&
+    configurationRevisions[service]?.revisions?.result?.length
+  ) {
+    configurationRevisions[service].revisions.latest = configurationRevisions[service]?.revisions.result.length - 1;
+  }
   const latest = configurationRevisions[service]?.revisions?.latest;
   const active = configurationRevisions[service]?.revisions?.active;
   const isCore = configurationRevisions[service]?.revisions?.isCore;
