@@ -257,7 +257,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
             </Tab>
             <Tab testId={`pdf-test-history`} label={<PdfEditorLabelWrapper>File history</PdfEditorLabelWrapper>}>
               <>
-                <GeneratorStyling style={{ height: `calc(${monacoHeight} - 1.5em` }}>
+                <GeneratorStyling style={{ height: monacoHeight }}>
                   <ButtonRight>
                     <GoAButton
                       type="secondary"
@@ -270,7 +270,9 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                       Delete all files
                     </GoAButton>
                   </ButtonRight>
-                  <section>{pdfTemplate?.id && <GeneratedPdfList templateId={pdfTemplate.id} />}</section>
+                  <section className="scroll-bar">
+                    {pdfTemplate?.id && <GeneratedPdfList templateId={pdfTemplate.id} />}
+                  </section>
                 </GeneratorStyling>
               </>
             </Tab>

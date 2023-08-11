@@ -115,6 +115,11 @@ export const TemplateEditorContainerPdf = styled.div`
     margin-top: 5px;
   }
 
+  .scroll-bar {
+    max-height: -webkit-fill-available;
+    overflow-y: auto;
+  }
+
   @media (min-width: 1279px) {
     .mobile {
       display: none;
@@ -395,7 +400,7 @@ export const PDFTitle = styled.div`
 `;
 
 export const HideTablet = styled.div`
-  @media (max-height: 919px) {
+  @media (max-height: 629px) {
     display: none;
   }
 
@@ -413,7 +418,7 @@ export const TabletMessage = styled.div`
 
   text-align: center !important;
 
-  @media (min-height: 920px) {
+  @media (min-height: 630px) {
     @media (min-width: 1440px) {
       display: none;
     }
