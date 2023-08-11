@@ -2,7 +2,7 @@ export interface FormDefinition {
   id: string;
   name: string;
   description: string;
-  dataSchema: string;
+  dataSchema: Record<string, unknown>;
   applicantRoles: string[];
   clerkRoles: string[];
   assessorRoles: string[];
@@ -14,7 +14,7 @@ export const defaultFormDefinition: FormDefinition = {
   id: '',
   name: '',
   description: '',
-  dataSchema: '',
+  dataSchema: {},
   applicantRoles: [],
   clerkRoles: [],
   assessorRoles: [],
