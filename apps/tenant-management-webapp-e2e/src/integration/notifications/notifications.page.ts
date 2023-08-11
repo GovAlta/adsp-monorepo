@@ -68,13 +68,13 @@ class NotificationsPage {
 
   notificationTypeEditBtn(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/following-sibling::*//*[@data-testid="edit-notification-type"]`
+      `//goa-container//h2[contains(text(), "${notificationTypeTitle}")]/following-sibling::*//*[@data-testid="edit-notification-type"]`
     );
   }
 
   notificationTypeDeleteBtn(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/following-sibling::*//*[@data-testid="icon-trash"]`
+      `//goa-container//h2[contains(text(), "${notificationTypeTitle}")]/following-sibling::*//*[@data-testid="icon-trash"]`
     );
   }
 
@@ -83,42 +83,42 @@ class NotificationsPage {
   }
 
   notificationTypeCardTitle(notificationTypeTitle) {
-    return cy.xpath(`//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]`);
+    return cy.xpath(`//goa-container//h2[contains(text(), "${notificationTypeTitle}")]`);
   }
 
   notificationTypeCardDesc(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]//ancestor::*[@data-testid="card-title"]/following-sibling::*[@data-testid="card-content"]`
+      `//goa-container//h2[contains(text(), "${notificationTypeTitle}")]//ancestor::*/following-sibling::*[contains(text(), "Description:")]`
     );
   }
 
   notificationTypeSubscriberRoles(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//*[@data-testid="tenant-subscriber-roles"]`
+      `//goa-container//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//*[@data-testid="tenant-subscriber-roles"]`
     );
   }
 
   notificationTypePublicSubscription(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//*[@data-testid="tenant-public-subscription"]`
+      `//goa-container//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//*[@data-testid="tenant-public-subscription"]`
     );
   }
 
   notificationTypeSelfService(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//*[@data-testid="tenant-self-service"]`
+      `//goa-container//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//*[@data-testid="tenant-self-service"]`
     );
   }
 
   notificationTypeCoreSelfService(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//*[@data-testid="core-self-service"]`
+      `//goa-container//h2[contains(text(), "${notificationTypeTitle}")]/parent::*/following-sibling::*//*[@data-testid="core-self-service"]`
     );
   }
 
   notificationTypeSelectAnEventBtn(cardTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]//button[contains(text(), "Select an event")]`
+      `//goa-container//h2[contains(text(), "${cardTitle}")]/ancestor::goa-container//button[contains(text(), "Select an event")]`
     );
   }
 
@@ -164,32 +164,32 @@ class NotificationsPage {
 
   notificationTypeEvents(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]//ancestor::*[@class="card-content"]//*[@data-testid="card-footer"]//*[@class="flex1"]`
+      `//goa-container//h2[contains(text(), "${notificationTypeTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::div//div[@class="flex1"]`
     );
   }
 
   notificationTypeCardFooterItems(notificationTypeTitle) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${notificationTypeTitle}")]//ancestor::*[@class="card-content"]//*[@data-testid="card-footer"]/div/div`
+      `//goa-container//h2[contains(text(), "${notificationTypeTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::div/div`
     );
   }
 
   eventDeleteIcon(cardTitle, eventName) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/following-sibling::*[@class="rowFlex"]//*[@data-testid="icon-trash"]`
+      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::div//*[@class="flex1" and contains(., "${eventName}")]/following-sibling::*[@class="rowFlex"]//*[@data-testid="icon-trash"]`
     );
   }
 
   // Internal notification type card elements have different xpath than those from custom created notification type cards, so use "Internal" prefix for the following several UI page object names
   notificationTypeEventMailIcon(cardTitle, eventName) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="core-email-channel"]`
+      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::div//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="core-email-channel"]`
     );
   }
 
   notificationTypeEventEditButton(cardTitle, eventName) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="edit-event"]`
+      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::div//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="edit-event"]`
     );
   }
 
@@ -275,7 +275,7 @@ class NotificationsPage {
 
   notificationTypeEventDeleteBtn(cardTitle, eventName) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="delete-event"]`
+      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::div//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="delete-event"]`
     );
   }
 
@@ -413,37 +413,37 @@ class NotificationsPage {
 
   tenantNotificationTypeEventMailIcon(cardTitle, eventName) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-email-channel"]`
+      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::div//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-email-channel"]`
     );
   }
 
   tenantNotificationTypeEventMailBadge(cardTitle, eventName) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-email-badge"]`
+      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::div//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-email-badge"]`
     );
   }
 
   tenantNotificationTypeEventBotIcon(cardTitle, eventName) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-bot-channel"]`
+      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::div//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-bot-channel"]`
     );
   }
 
   tenantNotificationTypeEventBotIconBadge(cardTitle, eventName) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-bot-channel-badge"]`
+      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::div//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-bot-channel-badge"]`
     );
   }
 
   tenantNotificationTypeEventSmsIcon(cardTitle, eventName) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-sms-channel"]`
+      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::div//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-sms-channel"]`
     );
   }
 
   tenantNotificationTypeEventSmsIconBadge(cardTitle, eventName) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-sms-channel-badge"]`
+      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::div//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="tenant-sms-channel-badge"]`
     );
   }
 
@@ -499,7 +499,7 @@ class NotificationsPage {
 
   notificationTypeEventResetBtn(cardTitle, eventName) {
     return cy.xpath(
-      `//*[@data-testid="card-title"]//h2[contains(text(), "${cardTitle}")]//ancestor::*[@class="card-content"]/*[@data-testid="card-footer"]//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="reset-button"]`
+      `//goa-container//h2[contains(text(), "${cardTitle}")]//ancestor::goa-container//h2[text()="Events:"]/following-sibling::div//*[@class="flex1" and contains(., "${eventName}")]/parent::*/following-sibling::*//*[@data-testid="reset-button"]`
     );
   }
 
