@@ -15,7 +15,10 @@
 #   && yum install -y google-chrome-stable libXScrnSaver
 # # fipa-gothic-fonts wqy-zenhei-fonts thai-scalable-tlwgtypo-fonts kacst-one-fonts fonts-freefont-ttf
 
-FROM node:16.20.0
+FROM node:18.17
+
+USER 0
+
 RUN apt-get update \
   && apt-get install -y wget gnupg \
   && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
@@ -36,10 +39,13 @@ RUN npm i puppeteer@20.9.0
 # To avoid the potential OpenShift contianer permission issue.
 RUN chmod 777 -R /puppeteer
 
-USER 1001:0
 ARG SERVICE
 # COPY command shall run after the `npm i` command. Otherwise, the presence of the node_modules folder will prevent the chrome installment.
 COPY . .
+
+RUN mkdir /.npm
+
+RUN chmod -R 777 /dist /node_modules /.npm /puppeteer
 
 ENV SERVICE ${SERVICE}
 CMD npm run -d service dist/apps/${SERVICE}/main.js
