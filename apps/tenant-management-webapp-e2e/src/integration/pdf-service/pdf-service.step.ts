@@ -37,7 +37,7 @@ When('the user clicks Add template button', function () {
 });
 
 Then('the user views Add template modal', function () {
-  pdfServiceObj.pdfAddTemplateModal().shadow().get('div[slot="heading"]').invoke('text').should('eq', 'Add template');
+  pdfServiceObj.pdfAddTemplateModalHeading().invoke('text').should('eq', 'Add template');
 });
 
 When('the user enters {string} as name, {string} as description in pdf template modal', function (name, description) {
@@ -53,7 +53,7 @@ When('the user enters {string} as name, {string} as description in pdf template 
 
 Then('the user clicks Save button in Add or Edit template modal', function () {
   pdfServiceObj.pdfAddTemplateModalSaveBtn().shadow().find('button').click({ force: true });
-  cy.wait(5000);
+  cy.wait(4000);
   cy.viewport(1441, 901);
 });
 

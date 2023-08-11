@@ -487,7 +487,7 @@ When('the user searches with {string}', function (namespaceName) {
   tenantAdminObj.eventLogSearchBox().type(namespaceName);
   tenantAdminObj.eventLogSearchBox().should('have.value', namespaceName);
   tenantAdminObj.eventLogSearchBtn().click();
-  cy.wait(5000);
+  cy.wait(4000);
 });
 
 Then('the user views the events matching the search filter of {string}', function (namespaceName) {
@@ -911,7 +911,7 @@ Then(
     let matchCount = 0;
     let isFound = false;
     let tenantOrCore;
-    cy.wait(5000); // Wait for the service roles to show up
+    cy.wait(4000); // Wait for the service roles to show up
     // For each row of service roles, check if name, desc, isInAdminRole are matched. If all 3 cells are matched, it's a found
     if (serviceName.includes('urn:ads:platform')) {
       tenantOrCore = 'core';

@@ -11,7 +11,7 @@ When('the user enters credentials and clicks login button', function () {
   commonObj.usernameEmailField().type(Cypress.env('email'));
   commonObj.passwordField().type(Cypress.env('password'));
   commonObj.loginButton().click();
-  cy.wait(7000); // Wait all the redirects to settle down
+  cy.wait(8000); // Wait all the redirects to settle down
 });
 
 When('the user enters {string} and {string}, and clicks login button', function (username, password) {
@@ -37,7 +37,7 @@ When('the user enters {string} and {string}, and clicks login button', function 
   commonObj.usernameEmailField().type(user);
   commonObj.passwordField().type(pwd);
   commonObj.loginButton().click();
-  cy.wait(7000); // Wait all the redirects to settle down
+  cy.wait(8000); // Wait all the redirects to settle down
 });
 
 Given('a tenant admin user is on tenant admin page', function () {

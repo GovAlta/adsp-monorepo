@@ -433,7 +433,7 @@ Given('a tenant admin user is on notification subscriptions page', function () {
   );
   commonlib.tenantAdminMenuItem('Notification', 4000);
   commonObj.serviceTab('Notification', 'Subscriptions').click();
-  cy.wait(5000);
+  cy.wait(4000);
 });
 
 When(
@@ -498,7 +498,7 @@ Given('a tenant admin user is on notification subscribers page', function () {
   );
   commonlib.tenantAdminMenuItem('Notification', 4000);
   commonObj.serviceTab('Notification', 'Subscribers').click();
-  cy.wait(5000);
+  cy.wait(4000);
 });
 
 When('the user searches subscribers with {string} containing {string}', function (searchField, searchText) {
@@ -951,7 +951,7 @@ When('the user views the link for managing email subscription', function () {
 When('the user clicks Save all button in template modal', function () {
   cy.wait(2000);
   notificationsObj.editTemplateModalSaveallBtn().click();
-  cy.wait(5000);
+  cy.wait(4000);
 });
 
 Then('the user {string} Reset button for {string} in {string}', function (viewOrNot, eventName, typeName) {

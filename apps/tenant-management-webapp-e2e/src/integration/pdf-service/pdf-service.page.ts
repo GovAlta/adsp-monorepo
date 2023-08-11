@@ -9,8 +9,8 @@ class PDFServicePage {
     return cy.get('[data-testid="add-templates"]');
   }
 
-  pdfAddTemplateModal() {
-    return cy.xpath('//goa-modal');
+  pdfAddTemplateModalHeading() {
+    return cy.xpath('//goa-modal[@open="true"]/*[@slot="heading"]');
   }
 
   pdfAddTemplateModalName() {
