@@ -5,30 +5,20 @@ import { RootState } from '@store/index';
 import { Aside, Main, Page } from '@components/Html';
 import { FormDefinitions } from './definitions/definitions';
 import { Tab, Tabs } from '@components/Tabs';
-import SupportLinks from '@components/SupportLinks';
+import AsideLinks from '@components/AsideLinks';
 
 const HelpLink = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
+  function getCalenderDocsLink() {
+    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Form service`;
+  }
+  function getCalendersupportcodeLink() {
+    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/form-service';
+  }
   return (
     <>
-      <h3>Helpful links</h3>
-      <a
-        rel="noopener noreferrer"
-        target="_blank"
-        href={`${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=File service`}
-      >
-        Read the API docs
-      </a>
-      <br />
-      <a
-        rel="noopener noreferrer"
-        target="_blank"
-        href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/file-service"
-      >
-        See the code
-      </a>
-      <SupportLinks />
+      <AsideLinks serviceLink={getCalendersupportcodeLink()} docsLink={getCalenderDocsLink()} />
     </>
   );
 };
