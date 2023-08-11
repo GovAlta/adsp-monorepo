@@ -28,15 +28,30 @@ export const FlexRow = styled.div`
   flex-direction: row;
   padding-top: 1rem;
 `;
+export const FlexColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding-top: 1rem;
+`;
 export const NotificationTemplateEditorContainer = styled.div`
   display: flex;
   flex: auto;
   margin-top: 6px;
   padding-left: 3rem;
+  padding-right: 3rem;
   width: 100%;
   height: 100vh;
   overflow: hidden;
   box-sizing: border-box;
+`;
+
+export const FlexLeft = styled.div`
+  flex: 1;
+  padding-right: 3rem;
+`;
+
+export const FlexRight = styled.div`
+  flex: 1;
 `;
 
 export const OuterNotificationTemplateEditorContainer = styled.div`
