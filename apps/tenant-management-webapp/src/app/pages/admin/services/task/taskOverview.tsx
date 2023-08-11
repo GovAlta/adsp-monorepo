@@ -1,28 +1,30 @@
-import React, { FunctionComponent, useEffect } from 'react';
+import React, { Component } from 'react';
 import styled from 'styled-components';
 
 interface TaskOverviewProps {
-  setActiveIndex: (number) => void;
+  setActiveIndex?: number;
 }
 
-export const TaskserviceOverview: FunctionComponent<TaskOverviewProps> = (props) => {
-  const { setActiveIndex } = props;
+class TaskserviceOverview extends Component<TaskOverviewProps> {
+  static defaultProps: TaskOverviewProps = {
+    setActiveIndex: 0,
+  };
 
-  useEffect(() => {
-    setActiveIndex(0);
-  }, []);
+  render() {
+    return (
+      <OverviewCss>
+        <section>
+          <p>
+            The task service provides a model for tasks, task queues, and task assignment. Applications can use the task
+            service for work management as an aspect to augment domain specific concepts and processes.
+          </p>
+        </section>
+      </OverviewCss>
+    );
+  }
+}
 
-  return (
-    <OverviewCss>
-      <section>
-        <p>
-          The task service provides a model for tasks, task queues, and task assignment. Applications can use the task
-          service for work management as an aspect to augment domain specific concepts and processes.
-        </p>
-      </section>
-    </OverviewCss>
-  );
-};
+export default TaskserviceOverview;
 
 const OverviewCss = styled.div`
   .contact-border {
