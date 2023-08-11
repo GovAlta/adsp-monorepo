@@ -37,7 +37,7 @@ When('an authenticated user is in the subscriber app', function () {
   subscriptionManagementObj.usernameEmailField().type(Cypress.env('email'));
   subscriptionManagementObj.passwordField().type(Cypress.env('password'));
   subscriptionManagementObj.loginButton().click();
-  cy.wait(5000); // Wait all the redirects to settle down
+  cy.wait(4000); // Wait all the redirects to settle down
 });
 
 When('an authenticated user with {string} and {string} is in the subscriber app', function (username, password) {
@@ -46,7 +46,7 @@ When('an authenticated user with {string} and {string} is in the subscriber app'
   subscriptionManagementObj.usernameEmailField().type(username);
   subscriptionManagementObj.passwordField().type(password);
   subscriptionManagementObj.loginButton().click();
-  cy.wait(5000); // Wait all the redirects to settle down
+  cy.wait(4000); // Wait all the redirects to settle down
 });
 
 Then('the user views subscription management page', function () {
