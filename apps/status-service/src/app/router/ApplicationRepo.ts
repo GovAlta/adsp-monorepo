@@ -131,7 +131,8 @@ export class ApplicationRepo {
     url: string,
     monitorOnly: boolean,
     status: PublicServiceStatusType,
-    tenant: Tenant
+    tenant: Tenant,
+    user?: User
   ) => {
     const newApp = {
       appKey: appKey,
@@ -142,6 +143,15 @@ export class ApplicationRepo {
       status: status,
     };
     await this.updateApp(newApp, tenant.id.toString());
+    await ServiceStatusApplicationEntity.create(user, this.#repository, {
+      appKey: appKey,
+      endpoint: { status: 'offline' },
+      metadata: '',
+      statusTimestamp: Date.now(),
+      status: status,
+      enabled: false,
+      tenantId: user.tenantId.toString(),
+    });
     return this.mergeApplicationData(tenant.id.toString(), newApp);
   };
 
