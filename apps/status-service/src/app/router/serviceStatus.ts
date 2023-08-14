@@ -116,7 +116,8 @@ export const createNewApplication =
         endpoint.url,
         monitorOnly,
         status,
-        tenant
+        tenant,
+        user
       );
       res.status(201).json(newApp);
     } catch (err) {

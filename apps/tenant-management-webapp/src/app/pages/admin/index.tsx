@@ -11,6 +11,7 @@ import AccessPage from './services/access/access';
 import { Directory } from './services/directory';
 import Container from '@components/Container';
 import Status from './services/status';
+import Task from './services/task';
 import { EventLog } from './event-log';
 import { ServiceMetrics } from './service-metrics';
 import { Events } from './services/events';
@@ -64,6 +65,9 @@ const TenantManagement = (): JSX.Element => {
           <Route path="/admin/services/form" component={FormRouter} />
           <Route path="/admin/services/status">
             <Status />
+          </Route>
+          <Route path="/admin/services/task">
+            <Task />
           </Route>
           <Route path="/admin/services/script">
             <Script />

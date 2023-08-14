@@ -11,6 +11,12 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 const HelpLink = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
+  function getCalenderDocsLink() {
+    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Form service`;
+  }
+  function getCalendersupportcodeLink() {
+    return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/form-service';
+  }
   return (
     <>
       <h3>Helpful links</h3>

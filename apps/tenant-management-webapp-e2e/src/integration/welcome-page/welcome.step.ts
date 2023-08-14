@@ -25,7 +25,7 @@ Given('the user is on the tenant management welcome page', function () {
 
 When('the user clicks the sign in button', function () {
   welcomPageObj.signinButton().shadow().find('button').click({ force: true });
-  cy.wait(5000);
+  cy.wait(4000);
 });
 
 Then('the user is logged in tenant management web app', function () {
@@ -55,12 +55,12 @@ When('the user selects get started button', function () {
   cy.url().should('include', '/get-started');
   // Pass in kc_idp_hint= to avoid SSO login
   cy.visit('/get-started?kc_idp_hint=');
-  cy.wait(5000); // Wait for the web app to check if the user has created a tenant or not
+  cy.wait(4000); // Wait for the web app to check if the user has created a tenant or not
 });
 
 When('the user clicks Sign in button', function () {
   welcomPageObj.getStartedSigninButton().click();
-  cy.wait(5000); // Wait for the web app to check if the user has created a tenant or not
+  cy.wait(4000); // Wait for the web app to check if the user has created a tenant or not
 });
 
 Then('the user views a login page for an existing tenant', function () {

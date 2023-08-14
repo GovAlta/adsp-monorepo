@@ -73,23 +73,21 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
             }}
           />
         )}
-        {/* Delete confirmation */}
-        {showDeleteConfirmation && (
-          <DeleteModal
-            isOpen={showDeleteConfirmation}
-            title="Delete form definition"
-            content={
-              <div>
-                Are you sure you wish to delete <b>{`${currentDefinition?.name}?`}</b>
-              </div>
-            }
-            onCancel={() => setShowDeleteConfirmation(false)}
-            onDelete={() => {
-              setShowDeleteConfirmation(false);
-              dispatch(deleteFormDefinition(currentDefinition));
-            }}
-          />
-        )}
+
+        <DeleteModal
+          isOpen={showDeleteConfirmation}
+          title="Delete form definition"
+          content={
+            <div>
+              Are you sure you wish to delete <b>{`${currentDefinition?.name}?`}</b>
+            </div>
+          }
+          onCancel={() => setShowDeleteConfirmation(false)}
+          onDelete={() => {
+            setShowDeleteConfirmation(false);
+            dispatch(deleteFormDefinition(currentDefinition));
+          }}
+        />
       </div>
     </>
   );
