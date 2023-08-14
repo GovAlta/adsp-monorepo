@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState, useEffect } from 'react';
+import React, { FunctionComponent, useState, useEffect, useRef } from 'react';
 
 import Editor from '@monaco-editor/react';
 import { FormDefinition } from '@store/form/model';
@@ -8,6 +8,7 @@ import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { ActionState } from '@store/session/models';
+import { ClientRoleTable } from '@components/RoleTable';
 import {
   SpinnerModalPadding,
   FormFormItem,
@@ -18,15 +19,16 @@ import {
   FlexRow,
   FlexLeft,
   FlexRight,
+  EditorPadding,
+  FinalButtonPadding,
 } from '../styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
+import { updateFormDefinition } from '@store/form/action';
 
 import { createSelector } from 'reselect';
-import { GoACheckbox } from '@abgov/react-components-new';
-import { Tab, Tabs } from '@components/Tabs';
 
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
@@ -37,21 +39,37 @@ import { useHistory, useParams } from 'react-router-dom';
 
 import { GoATextArea, GoAInput, GoAButtonGroup, GoAFormItem, GoAButton, GoAIcon } from '@abgov/react-components-new';
 
-interface AddEditFormDefinitionProps {
-  isEdit: boolean;
-  onClose: (definition: FormDefinition) => void;
-  onSave: (definition: FormDefinition) => void;
+function getWindowDimensions() {
+  const { innerWidth: width, innerHeight: height } = window;
+  return {
+    width,
+    height,
+  };
 }
 
-export const AddEditFormDefinitionEditor: FunctionComponent<AddEditFormDefinitionProps> = ({
-  isEdit,
-  onClose,
-  onSave,
-}) => {
-  const [activeIndex, setActiveIndex] = useState<number>(0);
+export default function useWindowDimensions() {
+  const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
+
+  useEffect(() => {
+    function handleResize() {
+      setWindowDimensions(getWindowDimensions());
+    }
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return windowDimensions;
+}
+
+export const AddEditFormDefinitionEditor: FunctionComponent = () => {
   const [definition, setDefinition] = useState<FormDefinition>(defaultFormDefinition);
   const [spinner, setSpinner] = useState<boolean>(false);
   const { id } = useParams<{ id: string }>();
+
+  const { height } = useWindowDimensions();
+
+  const isEdit = !!id;
 
   const dispatch = useDispatch();
 
@@ -60,18 +78,13 @@ export const AddEditFormDefinitionEditor: FunctionComponent<AddEditFormDefinitio
     dispatch(getFormDefinitions());
   }, []);
 
-  console.log(JSON.stringify(definition) + '<definition');
+  const types = [
+    { type: 'applicantRoles', name: 'Applicant Roles' },
+    { type: 'clerkRoles', name: 'Clerk Roles' },
+    { type: 'assessorRoles', name: 'Assessor Roles' },
+  ];
 
-  const formDefinitions = useSelector((state: RootState) => {
-    return Object.entries(state?.form?.definitions)
-      .sort((template1, template2) => {
-        return template1[1].name.localeCompare(template2[1].name);
-      })
-      .reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
-        tempObj[formDefinitionId] = formDefinitionData;
-        return tempObj;
-      }, []);
-  });
+  const formDefinitions = useSelector((state: RootState) => state?.form?.definitions || []);
 
   const selectServiceKeycloakRoles = createSelector(
     (state: RootState) => state.serviceRoles,
@@ -84,14 +97,20 @@ export const AddEditFormDefinitionEditor: FunctionComponent<AddEditFormDefinitio
     dispatch(FetchRealmRoles());
   }, []);
 
-  console.log(JSON.stringify(formDefinitions) + '<formDefinitions0');
-
   useEffect(() => {
-    console.log(JSON.stringify(formDefinitions) + '<formDefinitions');
-    if (id && formDefinitions.length > 0) {
+    if (id && formDefinitions[id]) {
       setDefinition(formDefinitions[id]);
     }
   }, [formDefinitions]);
+
+  const history = useHistory();
+
+  const close = () => {
+    history.push({
+      pathname: '/admin/services/form',
+      search: '?definitions=true',
+    });
+  };
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
     fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
@@ -99,52 +118,54 @@ export const AddEditFormDefinitionEditor: FunctionComponent<AddEditFormDefinitio
   //eslint-disable-next-line
   useEffect(() => {}, [fetchKeycloakRolesState]);
 
-  const ClientRole = ({ roleNames, clientId, type }) => {
+  const ClientRole = ({ roleNames, clientId }) => {
+    const applicantRoles = types[0];
+    const clerkRoles = types[1];
+    const assessorRoles = types[2];
+
     return (
       <>
-        <thead>
-          <tr>
-            <p>
-              <b>{clientId}</b>
-            </p>
-          </tr>
-        </thead>
-
-        <tbody>
-          {roleNames?.map((role): JSX.Element => {
-            const compositeRole = clientId ? `${clientId}:${role}` : role;
-            return (
-              <tr key={` row-${role}`}>
-                <td className="role">
-                  <GoACheckbox
-                    name={`${type}-role-checkbox-${compositeRole}`}
-                    key={`${type}-role-checkbox-${compositeRole}`}
-                    checked={definition[type]?.includes(`${type}-role-checkbox-${compositeRole}`)}
-                    data-testid={`${type}-role-checkbox-${compositeRole}`}
-                    onChange={(name) => {
-                      if (definition[type]?.includes(name)) {
-                        definition[type] = definition[type]?.filter((r) => r !== name);
-                      } else {
-                        definition[type] = (definition[type] || []).concat(name);
-                      }
-                      setDefinition(definition);
-                    }}
-                  >
-                    <div className="role-name">{role}</div>
-                  </GoACheckbox>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
+        <ClientRoleTable
+          roles={roleNames}
+          clientId={clientId}
+          anonymousRead={definition.anonymousApply}
+          roleSelectFunc={(roles, type) => {
+            if (type === applicantRoles.name) {
+              setDefinition({
+                ...definition,
+                applicantRoles: roles,
+              });
+            } else if (type === clerkRoles.name) {
+              setDefinition({
+                ...definition,
+                clerkRoles: roles,
+              });
+            } else {
+              setDefinition({
+                ...definition,
+                assessorRoles: roles,
+              });
+            }
+          }}
+          service="FileType"
+          checkedRoles={[
+            { title: types[0].name, selectedRoles: definition[types[0].type] },
+            { title: types[1].name, selectedRoles: definition[types[1].type] },
+            { title: types[2].name, selectedRoles: definition[types[2].type] },
+          ]}
+        />
       </>
     );
   };
 
-  const roles = useSelector((state: RootState) => state.tenant.realmRoles);
+  const roles = useSelector((state: RootState) => state.tenant.realmRoles) || [];
+
+  const roleNames = roles.map((role) => {
+    return role.name;
+  });
 
   const keycloakClientRoles = useSelector(selectServiceKeycloakRoles);
-  let elements = [{ roleNames: null, clientId: '', currentElements: null }];
+  let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
 
   const clientElements =
     Object.entries(keycloakClientRoles).length > 0 &&
@@ -171,20 +192,13 @@ export const AddEditFormDefinitionEditor: FunctionComponent<AddEditFormDefinitio
   });
   const descErrMessage = 'Description can not be over 180 characters';
 
-  const types = [
-    { type: 'applicantRoles', name: 'Applicant Roles' },
-    { type: 'clerkRoles', name: 'Clerk Roles' },
-    { type: 'assessorRoles', name: 'Assessor Roles' },
-  ];
-
   useEffect(() => {
     if (spinner && Object.keys(definitions).length > 0) {
       if (validators['duplicate'].check(definition.id)) {
         setSpinner(false);
         return;
       }
-      onSave(definition);
-      onClose();
+
       setSpinner(false);
     }
   }, [definitions]);
@@ -280,94 +294,75 @@ export const AddEditFormDefinitionEditor: FunctionComponent<AddEditFormDefinitio
               </DescriptionItem>
             </GoAFormItem>
             <GoAFormItem label="Data schema" error={errors?.['payloadSchema']}>
-              <label></label>
-              <Editor
-                data-testid="form-schema"
-                height={120}
-                value={definition.dataSchema}
-                onChange={(value) => {
-                  validators.remove('payloadSchema');
-                  setDefinition({ ...definition, dataSchema: value });
-                }}
-                language="json"
-                options={{
-                  automaticLayout: true,
-                  scrollBeyondLastLine: false,
-                  tabSize: 2,
-                  minimap: { enabled: false },
-                }}
-              />
+              <EditorPadding>
+                <Editor
+                  data-testid="form-schema"
+                  height={height - 750}
+                  value={definition.dataSchema}
+                  onChange={(value) => {
+                    validators.remove('payloadSchema');
+                    setDefinition({ ...definition, dataSchema: value });
+                  }}
+                  language="json"
+                  options={{
+                    automaticLayout: true,
+                    scrollBeyondLastLine: false,
+                    tabSize: 2,
+                    minimap: { enabled: false },
+                  }}
+                />
+              </EditorPadding>
             </GoAFormItem>
           </FlexLeft>
           <FlexRight>
-            <Tabs activeIndex={activeIndex}>
-              {types.map((type) => (
-                <Tab label={type.name}>
-                  {roles &&
-                    roles.map((role, key) => (
-                      <GoACheckbox
-                        name={role.name}
-                        key={`${type.type}-checkbox-${key}`}
-                        checked={definition[type.type]?.includes(role.name)}
-                        data-testid={`${type.type}-checkbox-${key}`}
-                        onChange={(name, {}, value) => {
-                          if (definition[type.type]?.includes(name)) {
-                            definition[type.type] = definition[type.type]?.filter((r) => r !== name);
-                          } else {
-                            definition[type.type] = (definition[type.type] || []).concat(name);
-                          }
-                          setDefinition(definition);
-                        }}
-                      >
-                        {role.name}
-                      </GoACheckbox>
-                    ))}
-                  {fetchKeycloakRolesState === ActionState.inProcess && (
-                    <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
-                  )}
-                  {elements.map((e, key) => {
-                    return <ClientRole roleNames={e.roleNames} type={[type.type]} key={key} clientId={e.clientId} />;
-                  })}
-                </Tab>
-              ))}
-            </Tabs>
+            {elements.map((e, key) => {
+              return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+            })}
+            {fetchKeycloakRolesState === ActionState.inProcess && (
+              <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
+            )}
           </FlexRight>
         </FlexRow>
       )}
-      <GoAButtonGroup alignment="end">
-        <GoAButton
-          testId="form-cancel"
-          type="secondary"
-          onClick={() => {
-            validators.clear();
-          }}
-        >
-          Cancel
-        </GoAButton>
-        <GoAButton
-          type="primary"
-          testId="form-save"
-          disabled={!definition.name || validators.haveErrors()}
-          onClick={() => {
-            if (indicator.show === true) {
-              setSpinner(true);
-            } else {
-              if (!isEdit) {
-                const validations = {
-                  duplicate: definition.name,
-                };
-                if (!validators.checkAll(validations)) {
-                  return;
+      <FinalButtonPadding>
+        <GoAButtonGroup alignment="end">
+          <GoAButton
+            testId="form-cancel"
+            type="secondary"
+            onClick={() => {
+              validators.clear();
+              close();
+            }}
+          >
+            Cancel
+          </GoAButton>
+          <GoAButton
+            type="primary"
+            testId="form-save"
+            disabled={!definition.name || validators.haveErrors()}
+            onClick={() => {
+              if (indicator.show === true) {
+                setSpinner(true);
+              } else {
+                if (!isEdit) {
+                  const validations = {
+                    duplicate: definition.name,
+                  };
+                  if (!validators.checkAll(validations)) {
+                    return;
+                  }
                 }
+                setSpinner(true);
+                dispatch(updateFormDefinition(definition));
+
+                close();
               }
-              setSpinner(true);
-              onSave(definition);
-            }
-          }}
-        >
-          Save
-        </GoAButton>
-      </GoAButtonGroup>
+            }}
+          >
+            Save
+          </GoAButton>
+        </GoAButtonGroup>
+      </FinalButtonPadding>
     </div>
   );
 };

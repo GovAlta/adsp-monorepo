@@ -8,7 +8,7 @@ export interface PdfTemplatesTableProps {
   onDelete?: (PdfTemplate) => void;
   onEdit?: (PdfTemplate) => void;
 }
-export const FormDefinitionsTable: FunctionComponent<PdfTemplatesTableProps> = ({ definitions, onDelete, onEdit }) => {
+export const FormDefinitionsTable: FunctionComponent<PdfTemplatesTableProps> = ({ definitions, onDelete }) => {
   const newTemplates = JSON.parse(JSON.stringify(definitions));
 
   return (
@@ -31,12 +31,7 @@ export const FormDefinitionsTable: FunctionComponent<PdfTemplatesTableProps> = (
         <tbody>
           {Object.keys(newTemplates).map((templateName) => {
             return (
-              <FormDefinitionItem
-                key={templateName}
-                formDefinition={newTemplates[templateName]}
-                onDelete={onDelete}
-                onEdit={onEdit}
-              />
+              <FormDefinitionItem key={templateName} formDefinition={newTemplates[templateName]} onDelete={onDelete} />
             );
           })}
         </tbody>

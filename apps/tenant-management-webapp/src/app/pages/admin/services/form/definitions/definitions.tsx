@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { AddEditFormDefinition } from './addEditFormDefinition';
+
 import { GoAButton } from '@abgov/react-components';
 import { useDispatch, useSelector } from 'react-redux';
-import { getFormDefinitions, updateFormDefinition, deleteFormDefinition } from '@store/form/action';
+import { getFormDefinitions, deleteFormDefinition } from '@store/form/action';
 import { RootState } from '@store/index';
 import { renderNoItem } from '@components/NoItem';
 import { FormDefinitionsTable } from './definitionsList';
@@ -10,14 +10,14 @@ import { PageIndicator } from '@components/Indicator';
 import { defaultFormDefinition } from '@store/form/model';
 
 import { DeleteModal } from './DeleteModal';
+import { useHistory } from 'react-router-dom';
+import { useRouteMatch } from 'react-router';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
 }
 export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => {
-  const [openAddFormDefinition, setOpenAddFormDefinition] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [showEdit, setShowEdit] = useState(null);
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
 
   const formDefinitions = useSelector((state: RootState) => {
@@ -35,19 +35,11 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
     return state?.session?.indicator;
   });
 
+  const history = useHistory();
+  const { url } = useRouteMatch();
+
   const dispatch = useDispatch();
 
-  const reset = () => {
-    setOpenAddFormDefinition(false);
-    setShowEdit(false);
-    setCurrentDefinition(defaultFormDefinition);
-  };
-
-  useEffect(() => {
-    if (openAddDefinition) {
-      setOpenAddFormDefinition(true);
-    }
-  }, [openAddDefinition]);
   useEffect(() => {
     dispatch(getFormDefinitions());
   }, []);
@@ -62,7 +54,7 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
         <GoAButton
           data-testid="add-definition"
           onClick={() => {
-            setOpenAddFormDefinition(true);
+            history.push(`${url}/new?definitions=true`);
           }}
         >
           Add definition
@@ -70,28 +62,7 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
         <br />
         <br />
         <PageIndicator />
-        {openAddFormDefinition && (
-          <AddEditFormDefinition
-            open={openAddFormDefinition}
-            isEdit={false}
-            onClose={reset}
-            initialValue={defaultFormDefinition}
-            onSave={(definition) => {
-              dispatch(updateFormDefinition(definition));
-            }}
-          />
-        )}
-        {showEdit && (
-          <AddEditFormDefinition
-            open={!!showEdit}
-            isEdit={true}
-            onClose={reset}
-            initialValue={showEdit || currentDefinition}
-            onSave={(definition) => {
-              dispatch(updateFormDefinition(definition));
-            }}
-          />
-        )}
+
         {!indicator.show && !formDefinitions && renderNoItem('form templates')}
         {!indicator.show && formDefinitions && (
           <FormDefinitionsTable
@@ -99,9 +70,6 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
             onDelete={(currentTemplate) => {
               setShowDeleteConfirmation(true);
               setCurrentDefinition(currentTemplate);
-            }}
-            onEdit={(currentTemplate) => {
-              setShowEdit(currentTemplate);
             }}
           />
         )}

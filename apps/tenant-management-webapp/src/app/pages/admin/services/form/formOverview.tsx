@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { OverviewLayout } from '@components/Overview';
 import { GoAButton } from '@abgov/react-components';
+import { useRouteMatch } from 'react-router';
 import { useHistory } from 'react-router-dom';
 
 interface FormOverviewProps {
@@ -12,6 +13,7 @@ const FormOverview = ({ setActiveIndex, setOpenAddDefinition }: FormOverviewProp
   useEffect(() => {
     setActiveIndex(0);
   }, []);
+  const { url } = useRouteMatch();
 
   useEffect(() => {
     setOpenAddDefinition(false);
@@ -43,11 +45,7 @@ const FormOverview = ({ setActiveIndex, setOpenAddDefinition }: FormOverviewProp
           <GoAButton
             data-testid="add-definition"
             onClick={() => {
-              history.push({
-                pathname: '/admin/services/form',
-                search: '?definitions=true',
-              });
-              setOpenAddDefinition(true);
+              history.push(`${url}/new?definitions=true`);
             }}
           >
             Add definition

@@ -5,6 +5,13 @@ export const PopulateTemplateWrapper = styled.div`
   margin-left: 3px;
   margin-top: 1.5rem;
 `;
+export const EditorPadding = styled.div`
+  border: 1px solid grey;
+  border-radius: 5px;
+`;
+export const FinalButtonPadding = styled.div`
+  padding-top: 20px;
+`;
 
 export const BadgeWrapper = styled.div`
   margin-left: 1rem;
@@ -52,6 +59,12 @@ export const FlexLeft = styled.div`
 
 export const FlexRight = styled.div`
   flex: 1;
+  overflow-y: scroll;
+  max-height: calc(100vh - 300px);
+
+  .role {
+    width: 10em;
+  }
 `;
 
 export const OuterNotificationTemplateEditorContainer = styled.div`
@@ -282,7 +295,7 @@ export const TabletMessage = styled.div`
 
   text-align: center !important;
 
-  @media (min-height: 920px) {
+  @media (min-height: 630px) {
     @media (min-width: 1440px) {
       display: none;
     }
@@ -290,7 +303,7 @@ export const TabletMessage = styled.div`
 `;
 
 export const HideTablet = styled.div`
-  @media (max-height: 919px) {
+  @media (max-height: 629px) {
     display: none;
   }
 

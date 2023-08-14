@@ -12,6 +12,7 @@ export const FormRouter = () => {
         <Form />
       </Route>
       <Route path={`${url}/edit/:id`} component={FormDefinitionEditor} />
+      <Route path={`${url}/new`} component={FormDefinitionEditor} />
     </Switch>
   );
 };

@@ -8,10 +8,9 @@ import { useHistory } from 'react-router-dom';
 interface PdfTemplateItemProps {
   formDefinition: FormDefinition;
   onDelete?: (FormDefinition) => void;
-  onEdit?: (FormDefinition) => void;
 }
 
-export const FormDefinitionItem = ({ formDefinition, onDelete, onEdit }: PdfTemplateItemProps): JSX.Element => {
+export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItemProps): JSX.Element => {
   const { url } = useRouteMatch();
   const history = useHistory();
   return (
@@ -24,13 +23,6 @@ export const FormDefinitionItem = ({ formDefinition, onDelete, onEdit }: PdfTemp
         </td>
         <td data-testid="form-definitions-action">
           <Edit>
-            <GoAIconButton
-              testId="form-definition-edit"
-              title="Edit"
-              size="small"
-              icon="create"
-              onClick={() => onEdit(formDefinition)}
-            />
             <GoAIconButton
               testId="form-definition-edit"
               title="Edit"
