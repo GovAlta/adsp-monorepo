@@ -6,6 +6,7 @@ import { PdfTemplate } from '@store/pdf/model';
 export interface PdfTemplatesTableProps {
   definitions: Record<string, PdfTemplate>;
   onDelete?: (PdfTemplate) => void;
+  onEdit?: (PdfTemplate) => void;
 }
 export const FormDefinitionsTable: FunctionComponent<PdfTemplatesTableProps> = ({ definitions, onDelete }) => {
   const newTemplates = JSON.parse(JSON.stringify(definitions));
