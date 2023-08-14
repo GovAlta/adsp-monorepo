@@ -7,6 +7,8 @@ import { FormDefinitions } from './definitions/definitions';
 import { Tab, Tabs } from '@components/Tabs';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import AsideLinks from '@components/AsideLinks';
+import { HeadingDiv } from './styled-components';
+import BetaBadge from '@icons/beta-badge.svg';
 
 const HelpLink = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -41,7 +43,10 @@ export const Form: FunctionComponent = () => {
     <Page>
       <Main>
         <>
-          <h1 data-testid="form-title">Form service</h1>
+          <HeadingDiv>
+            <h1 data-testid="form-title">Form service</h1>
+            <img src={BetaBadge} alt="Form Service" />
+          </HeadingDiv>
           <Tabs activeIndex={definitions === 'true' ? 1 : 0}>
             <Tab label="Overview">
               <FormOverview />
