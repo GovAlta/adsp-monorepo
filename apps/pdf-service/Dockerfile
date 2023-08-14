@@ -40,12 +40,12 @@ RUN npm i puppeteer@20.9.0
 RUN chmod 777 -R /puppeteer
 
 ARG SERVICE
-# COPY command shall run after the `npm i` command. Otherwise, the presence of the node_modules folder will prevent the chrome installment.
-COPY . .
 
 RUN mkdir /.npm
 
-RUN chmod -R 777 /dist /node_modules /.npm /puppeteer
+# COPY command shall run after the `npm i` command. Otherwise, the presence of the node_modules folder will prevent the chrome installment.
+COPY . .
+RUN chmod 777 -R /dist /node_modules /.npm
 
 ENV SERVICE ${SERVICE}
 CMD npm run -d service dist/apps/${SERVICE}/main.js
