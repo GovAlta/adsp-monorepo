@@ -38,7 +38,7 @@ const LandingPage = (): JSX.Element => {
   useEffect(() => {
     // file-service-description has longest content in the first row. Need to update, if this is not validated.
     const rowOneMaxHeight = document.getElementById('file-service-description').clientHeight;
-    const rowTwoMaxHeight = document.getElementById('event-service-description').clientHeight;
+    const rowTwoMaxHeight = document.getElementById('form-service-description').clientHeight;
     if (rowOneMaxHeight) {
       setRowOneMaxHeight(rowOneMaxHeight);
       setRowTwoMaxHeight(rowTwoMaxHeight);
@@ -242,6 +242,27 @@ const LandingPage = (): JSX.Element => {
                         <RedirectButton
                           name="notification-service"
                           url="https://govalta.github.io/adsp-monorepo/services/notification-service.html"
+                          label="Learn more"
+                        />
+                      </CardLayout>
+                    </GoAContainer>
+                  </GridItem>
+
+                  <GridItem md={4} hSpacing={0.5}>
+                    <GoAContainer accent="thin" type="interactive">
+                      <CardLayout>
+                        <h2>Task</h2>
+                        <CardContent maxHeight={rowTwoMaxHeight}>
+                          <div id="form-service-description">
+                            The task service provides a model for tasks, task queues, and task assignment. Applications
+                            can use the task service for work management as an aspect to augment domain specific
+                            concepts and processes.
+                          </div>
+                        </CardContent>
+
+                        <RedirectButton
+                          name="task-service"
+                          url="https://govalta.github.io/adsp-monorepo/services/task-service.html"
                           label="Learn more"
                         />
                       </CardLayout>
