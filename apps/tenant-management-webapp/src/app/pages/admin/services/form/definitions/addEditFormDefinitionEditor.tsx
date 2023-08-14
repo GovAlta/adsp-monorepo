@@ -298,10 +298,10 @@ export const AddEditFormDefinitionEditor: FunctionComponent = () => {
                 <Editor
                   data-testid="form-schema"
                   height={height - 750}
-                  value={definition.dataSchema}
+                  value={JSON.stringify(definition.dataSchema)}
                   onChange={(value) => {
                     validators.remove('payloadSchema');
-                    setDefinition({ ...definition, dataSchema: value });
+                    setDefinition({ ...definition, dataSchema: JSON.parse(value) });
                   }}
                   language="json"
                   options={{
