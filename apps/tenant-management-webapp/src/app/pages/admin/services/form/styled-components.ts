@@ -341,6 +341,7 @@ export const ErrorMsg = styled.div`
   }
 `;
 
+ 
 export const TextLoadingIndicator = styled.div`
   animation: blinker 1s linear infinite;
   font-size: 16px;
@@ -352,7 +353,7 @@ export const TextLoadingIndicator = styled.div`
     }
   }
 `;
-
+ 
 export const HeadingDiv = styled.div`
   display: flex;
   column-gap: 0.6rem;
