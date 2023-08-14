@@ -4,20 +4,10 @@ import { GoAButton } from '@abgov/react-components';
 import { useRouteMatch } from 'react-router';
 import { useHistory } from 'react-router-dom';
 
-interface FormOverviewProps {
-  setActiveIndex: (index: number) => void;
-  setOpenAddDefinition: (val: boolean) => void;
-}
-
-const FormOverview = ({ setActiveIndex, setOpenAddDefinition }: FormOverviewProps): JSX.Element => {
-  useEffect(() => {
-    setActiveIndex(0);
-  }, []);
+const FormOverview = (): JSX.Element => {
   const { url } = useRouteMatch();
 
   useEffect(() => {
-    setOpenAddDefinition(false);
-
     history.push({
       pathname: '/admin/services/form',
     });

@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import Editor from '@monaco-editor/react';
 import { FormDefinition } from '@store/form/model';
@@ -62,7 +62,7 @@ export default function useWindowDimensions() {
   return windowDimensions;
 }
 
-export const AddEditFormDefinitionEditor: FunctionComponent = () => {
+export function AddEditFormDefinitionEditor(): JSX.Element {
   const [definition, setDefinition] = useState<FormDefinition>(defaultFormDefinition);
   const [spinner, setSpinner] = useState<boolean>(false);
   const { id } = useParams<{ id: string }>();
@@ -121,7 +121,6 @@ export const AddEditFormDefinitionEditor: FunctionComponent = () => {
   const ClientRole = ({ roleNames, clientId }) => {
     const applicantRoles = types[0];
     const clerkRoles = types[1];
-    const assessorRoles = types[2];
 
     return (
       <>
@@ -365,4 +364,4 @@ export const AddEditFormDefinitionEditor: FunctionComponent = () => {
       </FinalButtonPadding>
     </div>
   );
-};
+}

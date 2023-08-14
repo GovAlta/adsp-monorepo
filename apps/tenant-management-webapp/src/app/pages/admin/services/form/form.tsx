@@ -5,8 +5,8 @@ import { RootState } from '@store/index';
 import { Aside, Main, Page } from '@components/Html';
 import { FormDefinitions } from './definitions/definitions';
 import { Tab, Tabs } from '@components/Tabs';
-import SupportLinks from '@components/SupportLinks';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
+import AsideLinks from '@components/AsideLinks';
 
 const HelpLink = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -19,38 +19,19 @@ const HelpLink = (): JSX.Element => {
   }
   return (
     <>
-      <h3>Helpful links</h3>
-      <a
-        rel="noopener noreferrer"
-        target="_blank"
-        href={`${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=File service`}
-      >
-        Read the API docs
-      </a>
-      <br />
-      <a
-        rel="noopener noreferrer"
-        target="_blank"
-        href="https://github.com/GovAlta/adsp-monorepo/tree/main/apps/file-service"
-      >
-        See the code
-      </a>
-      <SupportLinks />
+      <AsideLinks serviceLink={getCalendersupportcodeLink()} docsLink={getCalenderDocsLink()} />
     </>
   );
 };
 
 export const Form: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
-  const [activeIndex, setActiveIndex] = useState<number>(0);
 
   const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(fetchKeycloakServiceRoles());
   }, []);
-
-  const [openAddDefinition, setOpenAddDefinition] = useState(false);
 
   const searchParams = new URLSearchParams(document.location.search);
 
@@ -63,10 +44,10 @@ export const Form: FunctionComponent = () => {
           <h1 data-testid="form-title">Form service</h1>
           <Tabs activeIndex={definitions === 'true' ? 1 : 0}>
             <Tab label="Overview">
-              <FormOverview setActiveIndex={setActiveIndex} setOpenAddDefinition={setOpenAddDefinition} />
+              <FormOverview />
             </Tab>
             <Tab label="Templates">
-              <FormDefinitions openAddDefinition={openAddDefinition} />
+              <FormDefinitions />
             </Tab>
           </Tabs>
         </>

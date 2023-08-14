@@ -13,10 +13,7 @@ import { DeleteModal } from './DeleteModal';
 import { useHistory } from 'react-router-dom';
 import { useRouteMatch } from 'react-router';
 
-interface FormDefinitionsProps {
-  openAddDefinition: boolean;
-}
-export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => {
+export const FormDefinitions = () => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
 
