@@ -15,7 +15,7 @@ The _File Service_ has two main components;
 
 ### Tenant Admin Webapp
 
-Configuring the _File Service_ is about creating _File Type collections_, and setting up permissions and retention policies for them. You do this through our [Tenant Admin Webapp](https://adsp.alberta.ca). See [File Type collections](/adsp-monorepo/tutorials/access-service/file-types.html) for more information.
+Configuring the _File Service_ is about creating _File Type collections_, and setting up permissions and retention policies for them. You do this through our [Tenant Admin Webapp](https://adsp-uat.alberta.ca). See [File Type collections](/adsp-monorepo/tutorials/access-service/file-types.html) for more information.
 
 ### API
 
