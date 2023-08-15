@@ -3,7 +3,7 @@ import moize from 'moize';
 import * as NodeCache from 'node-cache';
 import type { Logger } from 'winston';
 import { ServiceDirectory } from '../directory';
-import { adspId, AdspId, assertAdspId } from '../utils';
+import { adspId, AdspId, assertAdspId, LimitToOne } from '../utils';
 import type { CombineConfiguration, ConfigurationConverter } from './configuration';
 
 /**
@@ -69,7 +69,11 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     }
   }
 
-  #retrieveConfiguration = async <C>(serviceId: AdspId, token: string, tenantId?: AdspId): Promise<C> => {
+  @LimitToOne(
+    (propertyKey, serviceId: AdspId, _token, tenantId?: AdspId) =>
+      `${propertyKey}-${tenantId ? `${tenantId}-` : ''}${serviceId}`
+  )
+  private async retrieveConfiguration<C>(serviceId: AdspId, token: string, tenantId?: AdspId): Promise<C> {
     const service = serviceId.service;
 
     this.logger.debug(`Retrieving tenant '${tenantId?.toString() || 'core'}' configuration for ${service}...'`, {
@@ -118,7 +122,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
       });
       return null as C;
     }
-  };
+  }
 
   getConfiguration = async <C, R = [C, C]>(
     serviceId: AdspId,
@@ -131,11 +135,11 @@ export class ConfigurationServiceImpl implements ConfigurationService {
       assertAdspId(tenantId, 'Provided ID is not for a tenant', 'resource');
 
       if (unCached) {
-        configuration = (await this.#retrieveConfiguration<C>(serviceId, token, tenantId)) || null;
+        configuration = (await this.retrieveConfiguration<C>(serviceId, token, tenantId)) || null;
       } else {
         configuration =
           this.#configuration.get<C>(`${tenantId}-${serviceId}`) ||
-          (await this.#retrieveConfiguration<C>(serviceId, token, tenantId)) ||
+          (await this.retrieveConfiguration<C>(serviceId, token, tenantId)) ||
           null;
       }
     }
@@ -143,10 +147,10 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     let options = null;
 
     if (unCached) {
-      options = (await this.#retrieveConfiguration<C>(serviceId, token)) || null;
+      options = (await this.retrieveConfiguration<C>(serviceId, token)) || null;
     } else {
       options =
-        this.#configuration.get<C>(`${serviceId}`) || (await this.#retrieveConfiguration<C>(serviceId, token)) || null;
+        this.#configuration.get<C>(`${serviceId}`) || (await this.retrieveConfiguration<C>(serviceId, token)) || null;
     }
 
     return this.#combine(configuration, options, tenantId) as R;

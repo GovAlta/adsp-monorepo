@@ -1,4 +1,12 @@
-export { adspId, AdspId, AdspIdFormatError, assertAdspId, GoAError, toKebabName } from './utils';
+export {
+  adspId,
+  AdspId,
+  AdspIdFormatError,
+  assertAdspId,
+  GoAError,
+  LimitToOne,
+  toKebabName,
+} from './utils';
 export { AssertCoreRole, AssertRole, isAllowedUser, UnauthorizedUserError, hasRequiredRole } from './access';
 export type { TokenProvider, User } from './access';
 export type { GoAErrorExtra } from './utils';
