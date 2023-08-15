@@ -463,6 +463,7 @@ When('the user enters {string}, {string}, {string} on file type modal', function
 });
 
 When('the user clicks Save button on file type modal', function () {
+  cy.wait(1000); // Wait for the button to be enabled
   fileServiceObj.fileTypeModalSaveButton().click({ force: true, multiple: true });
   cy.wait(2000); // Wait the file type list to refresh
 });
