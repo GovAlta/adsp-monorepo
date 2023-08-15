@@ -229,7 +229,7 @@ export const AddEditStream = ({
                         subscriberRolesOptions={tenantRole.roles}
                         checkedRoles={stream.subscriberRoles}
                         onItemChecked={(value) => {
-                          if (stream.subscriberRoles.includes(value)) {
+                          if (stream?.subscriberRoles && stream.subscriberRoles.includes(value)) {
                             const updatedRoles = stream.subscriberRoles.filter((roleName) => roleName !== value);
                             setStream({ ...stream, subscriberRoles: updatedRoles });
                           } else {
