@@ -5,6 +5,13 @@ export const PopulateTemplateWrapper = styled.div`
   margin-left: 3px;
   margin-top: 1.5rem;
 `;
+export const EditorPadding = styled.div`
+  border: 1px solid grey;
+  border-radius: 5px;
+`;
+export const FinalButtonPadding = styled.div`
+  padding-top: 20px;
+`;
 
 export const BadgeWrapper = styled.div`
   margin-left: 1rem;
@@ -28,15 +35,36 @@ export const FlexRow = styled.div`
   flex-direction: row;
   padding-top: 1rem;
 `;
+export const FlexColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding-top: 1rem;
+`;
 export const NotificationTemplateEditorContainer = styled.div`
   display: flex;
   flex: auto;
   margin-top: 6px;
   padding-left: 3rem;
+  padding-right: 3rem;
   width: 100%;
   height: 100vh;
   overflow: hidden;
   box-sizing: border-box;
+`;
+
+export const FlexLeft = styled.div`
+  flex: 1;
+  padding-right: 3rem;
+`;
+
+export const FlexRight = styled.div`
+  flex: 1;
+  overflow-y: scroll;
+  max-height: calc(100vh - 300px);
+
+  .role {
+    width: 10em;
+  }
 `;
 
 export const OuterNotificationTemplateEditorContainer = styled.div`
@@ -258,8 +286,24 @@ export const FormTitle = styled.div`
   font-weight: var(--fw-regular);
 `;
 
+export const TabletMessage = styled.div`
+  h1,
+  h3 {
+    text-align: center;
+    margin: 40px;
+  }
+
+  text-align: center !important;
+
+  @media (min-height: 630px) {
+    @media (min-width: 1440px) {
+      display: none;
+    }
+  }
+`;
+
 export const HideTablet = styled.div`
-  @media (max-height: 919px) {
+  @media (max-height: 629px) {
     display: none;
   }
 
@@ -294,5 +338,27 @@ export const ErrorMsg = styled.div`
     color: var(--color-red);
     pointer-events: none;
     gap: 0.25rem;
+  }
+`;
+
+ 
+export const TextLoadingIndicator = styled.div`
+  animation: blinker 1s linear infinite;
+  font-size: 16px;
+  font-style: italic;
+  text-align: center;
+  @keyframes blinker {
+    50% {
+      opacity: 0;
+    }
+  }
+`;
+ 
+export const HeadingDiv = styled.div`
+  display: flex;
+  column-gap: 0.6rem;
+
+  img {
+    margin-bottom: 4px;
   }
 `;
