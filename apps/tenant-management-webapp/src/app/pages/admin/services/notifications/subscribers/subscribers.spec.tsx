@@ -106,8 +106,7 @@ describe('Notification - Subscribers Tab', () => {
     // fill
     fireEvent.change(name, { target: { value: 'Bob Smith' } });
     fireEvent.change(email, { target: { value: 'bob.smith@gmail.com' } });
-    fireEvent.click(saveBtn);
-
+    fireEvent(saveBtn, new CustomEvent('_click'));
     const actions = store.getActions();
 
     const saveAction = actions.find((action) => action.type === UPDATE_SUBSCRIBER);

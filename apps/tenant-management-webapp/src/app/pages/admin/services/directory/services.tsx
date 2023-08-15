@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchDirectory } from '@store/directory/actions';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { DirectoryModal } from './modals/editModal';
 import { ServiceTableComponent } from './serviceList';
 import styled from 'styled-components';
@@ -42,7 +42,7 @@ export const DirectoryService = (): JSX.Element => {
             <>
               <NameDiv>{tenantName}</NameDiv>
               <GoAButton
-                data-testid="add-directory-btn"
+                testId="add-directory-btn"
                 onClick={() => {
                   dispatch(
                     UpdateModalState({

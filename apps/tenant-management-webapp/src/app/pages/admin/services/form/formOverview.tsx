@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { OverviewLayout } from '@components/Overview';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { useHistory } from 'react-router-dom';
 
 interface FormOverviewProps {
@@ -41,7 +41,7 @@ const FormOverview = ({ setActiveIndex, setOpenAddDefinition }: FormOverviewProp
       addButton={
         <>
           <GoAButton
-            data-testid="add-definition"
+            testId="add-definition"
             onClick={() => {
               history.push({
                 pathname: '/admin/services/form',

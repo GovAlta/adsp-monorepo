@@ -8,8 +8,7 @@ import {
 } from '@store/status/actions';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton } from '@abgov/react-components';
-import { GoACheckbox } from '@abgov/react-components-new';
+import { GoACheckbox, GoAButton } from '@abgov/react-components-new';
 import ApplicationFormModal from './form';
 import { Application } from './applications/application';
 import { WebhooksDisplay } from './webhooks/webhooks';
@@ -170,7 +169,7 @@ function Status(): JSX.Element {
           </Tab>
           <Tab label="Applications">
             <p>
-              <GoAButton data-testid="add-application" onClick={() => addApplication(true)} buttonType="primary">
+              <GoAButton testId="add-application" onClick={() => addApplication(true)} type="primary">
                 Add application
               </GoAButton>
             </p>
@@ -198,7 +197,7 @@ function Status(): JSX.Element {
           <Tab label="Webhook">
             <p>The webhooks are listed here</p>
             <p>
-              <GoAButton data-testid="add-application" onClick={() => addWebhook(true)} buttonType="primary">
+              <GoAButton testId="add-application" onClick={() => addWebhook(true)} type="primary">
                 Add webhook
               </GoAButton>
             </p>
@@ -227,11 +226,11 @@ function Status(): JSX.Element {
               about upcoming maintenance windows or other events
             </p>
             <GoAButton
-              data-testid="add-notice"
+              testId="add-notice"
               onClick={() => {
                 setShowAddNoticeModal(true);
               }}
-              buttonType="primary"
+              type="primary"
             >
               Add notice
             </GoAButton>

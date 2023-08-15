@@ -2,8 +2,7 @@ import { RootState } from '@store/index';
 import { saveNotice } from '@store/notice/actions';
 import React, { useState, useEffect, FormEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton } from '@abgov/react-components';
-import { GoACheckbox } from '@abgov/react-components-new';
+
 import {
   GoAForm,
   GoAFormItem,
@@ -17,7 +16,7 @@ import DatePicker from 'react-date-picker';
 import styled from 'styled-components';
 import Multiselect from 'multiselect-react-dropdown';
 import CloseIcon from '@icons/close-outline.svg';
-import { GoATextArea } from '@abgov/react-components-new';
+import { GoATextArea, GoAButton, GoACheckbox, GoAButtonGroup } from '@abgov/react-components-new';
 
 const dateTime = (date, time) => {
   const newDate = new Date(date);
@@ -114,8 +113,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
     return { ...applicationSelectedConst, ...validDateRangeConst, ...messageExistsConst };
   }
 
-  function submit(e: FormEvent) {
-    e.preventDefault();
+  function submit() {
     const formErrorList = formErrors();
     if (Object.keys(formErrorList).length === 0) {
       dispatch(
@@ -258,12 +256,14 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
         </NoticeFormStyle>
       </GoAModalContent>
       <GoAModalActions>
-        <GoAButton buttonType="secondary" data-testid="notice-form-cancel" onClick={cancel}>
-          Cancel
-        </GoAButton>
-        <GoAButton buttonType="primary" type="submit" data-testid="notice-form-submit" onClick={submit}>
-          Save as draft
-        </GoAButton>
+        <GoAButtonGroup alignment="end">
+          <GoAButton type="secondary" testId="notice-form-cancel" onClick={cancel}>
+            Cancel
+          </GoAButton>
+          <GoAButton type="primary" data-testId="notice-form-submit" onClick={submit}>
+            Save as draft
+          </GoAButton>
+        </GoAButtonGroup>
       </GoAModalActions>
     </GoAModal>
   );

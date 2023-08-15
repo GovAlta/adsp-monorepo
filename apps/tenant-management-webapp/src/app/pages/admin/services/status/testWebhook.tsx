@@ -5,9 +5,8 @@ import { Webhooks } from '../../../../store/status/models';
 import DataTable from '@components/DataTable';
 import { EventSearchCriteria } from '@store/event/models';
 import { getEventLogEntries } from '@store/event/actions';
-import { GoAButton, GoARadio } from '@abgov/react-components';
-
-import { GoAPageLoader } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
+import { GoAPageLoader, GoARadio } from '@abgov/react-components';
 
 import { renderNoItem } from '@components/NoItem';
 import styled from 'styled-components';
@@ -151,14 +150,14 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
         <GoAModalActions>
           <ButtonWrapper>
             <GoAButton
-              buttonType="secondary"
+              type="secondary"
               onClick={() => {
                 onClose();
               }}
             >
               Close
             </GoAButton>
-            <GoAButton buttonType="primary" onClick={() => test(selectedStatusName)}>
+            <GoAButton type="primary" onClick={() => test(selectedStatusName)}>
               Test
             </GoAButton>
           </ButtonWrapper>

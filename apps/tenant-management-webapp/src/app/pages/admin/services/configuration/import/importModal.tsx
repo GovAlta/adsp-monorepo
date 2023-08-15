@@ -1,7 +1,7 @@
 import React, { FunctionComponent } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 
 interface ImportModalProps {
   importArray: string[];
@@ -25,25 +25,27 @@ export const ImportModal: FunctionComponent<ImportModalProps> = ({ importArray, 
         <GoAModalTitle>The following configuration will be impacted!</GoAModalTitle>
         <GoAModalContent>{getContent()}</GoAModalContent>
         <GoAModalActions>
-          <GoAButton
-            buttonType="secondary"
-            data-testid="import-configuration-modal-cancel"
-            onClick={() => {
-              onCancel();
-            }}
-          >
-            Cancel
-          </GoAButton>
-          <GoAButton
-            buttonType="primary"
-            data-testid="import-configuration-modal-confirm"
-            onClick={() => {
-              onConfirm();
-              onCancel();
-            }}
-          >
-            Confirm
-          </GoAButton>
+          <GoAButtonGroup alignment="end">
+            <GoAButton
+              type="secondary"
+              testId="import-configuration-modal-cancel"
+              onClick={() => {
+                onCancel();
+              }}
+            >
+              Cancel
+            </GoAButton>
+            <GoAButton
+              type="primary"
+              testId="import-configuration-modal-confirm"
+              onClick={() => {
+                onConfirm();
+                onCancel();
+              }}
+            >
+              Confirm
+            </GoAButton>
+          </GoAButtonGroup>
         </GoAModalActions>
       </GoAModal>
     </>

@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useState } from 'react';
 import { CalendarItem } from '@store/calendar/models';
-import { GoABadge } from '@abgov/react-components/experimental';
+import { GoABadge } from '@abgov/react-components-new';
 import { useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
 import { TableDiv } from './styled-components';

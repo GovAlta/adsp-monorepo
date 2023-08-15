@@ -5,7 +5,8 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { EventLogEntries } from './eventLogEntries';
 import { EventSearchForm } from './eventSearchForm';
-import { GoAButton, GoACallout } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
+import { GoACallout } from '@abgov/react-components';
 import { EventSearchCriteria } from '@store/event/models';
 
 export const EventLog: FunctionComponent = () => {

@@ -1,7 +1,6 @@
 import React, { FunctionComponent, useState } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAButton } from '@abgov/react-components';
-import { GoACheckbox, GoATextArea } from '@abgov/react-components-new';
+import { GoACheckbox, GoATextArea, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { ScriptItem } from '@store/script/models';
 import { useSelector } from 'react-redux';
@@ -179,26 +178,28 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
         </GoAForm>
       </GoAModalContent>
       <GoAModalActions>
-        <GoAButton
-          buttonType="secondary"
-          data-testid="script-modal-cancel"
-          onClick={() => {
-            validators.clear();
-            onCancel();
-          }}
-        >
-          Cancel
-        </GoAButton>
-        <GoAButton
-          buttonType="primary"
-          data-testid="script-modal-save"
-          disabled={validators && validators.haveErrors()}
-          onClick={(e) => {
-            validationCheck();
-          }}
-        >
-          Save
-        </GoAButton>
+        <GoAButtonGroup alignment="end">
+          <GoAButton
+            type="secondary"
+            testId="script-modal-cancel"
+            onClick={() => {
+              validators.clear();
+              onCancel();
+            }}
+          >
+            Cancel
+          </GoAButton>
+          <GoAButton
+            type="primary"
+            testId="script-modal-save"
+            disabled={validators && validators.haveErrors()}
+            onClick={() => {
+              validationCheck();
+            }}
+          >
+            Save
+          </GoAButton>
+        </GoAButtonGroup>
       </GoAModalActions>
     </GoAModal>
   );

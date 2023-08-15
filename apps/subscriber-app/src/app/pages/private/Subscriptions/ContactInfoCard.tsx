@@ -1,5 +1,5 @@
 import React, { FormEvent, useState, useEffect } from 'react';
-import { GoAButton, GoARadio, GoASkeletonGridColumnContent } from '@abgov/react-components';
+import { GoARadio, GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { GoAInputEmail, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { useDispatch, useSelector } from 'react-redux';
 import { patchSubscriber, createSubscriber } from '@store/subscription/actions';
@@ -12,7 +12,7 @@ import { Label } from './styled-components';
 import { GapVS } from './styled-components';
 import { RootState } from '@store/index';
 import { phoneWrapper } from '@lib/wrappers';
-
+import { GoAButton } from '@abgov/react-components-new';
 interface ContactInfoCardProps {
   subscriber?: Subscriber;
 }
@@ -96,8 +96,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
       .join('');
   };
 
-  const saveContactInformation = async (e: FormEvent) => {
-    e.preventDefault();
+  const saveContactInformation = async () => {
     setFormErrors({});
 
     if (!isValidEmail(emailContactInformation)) {
@@ -174,14 +173,14 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
   const updateContactInfoButtons = () => {
     return (
       <div>
-        <GoAButton buttonSize="small" data-testid="edit-contact-save-button" onClick={saveContactInformation}>
+        <GoAButton size="compact" testId="edit-contact-save-button" onClick={saveContactInformation}>
           Save
         </GoAButton>
 
         <GoAButton
-          buttonSize="small"
-          buttonType="secondary"
-          data-testid="edit-contact-cancel-button"
+          size="compact"
+          type="secondary"
+          testId="edit-contact-cancel-button"
           onClick={() => {
             setEditContactInformation(!editContactInformation);
             setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
@@ -311,8 +310,8 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
             updateContactInfoButtons()
           ) : (
             <GoAButton
-              buttonSize="small"
-              data-testid="edit-contact-button"
+              size="compact"
+              testId="edit-contact-button"
               onClick={() => {
                 if (!subscriber) {
                   dispatch(createSubscriber());

@@ -56,6 +56,7 @@ const LinkCopyComponent = ({ link, text }: LinkCopyComponentProps): JSX.Element 
       <GoAButtonV2
         type="secondary"
         leadingIcon="link"
+        testId="copy-link-button"
         onClick={() => {
           navigator.clipboard.writeText(link);
           setIsCopied(true);

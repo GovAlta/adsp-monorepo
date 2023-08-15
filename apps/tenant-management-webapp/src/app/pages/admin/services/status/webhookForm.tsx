@@ -295,6 +295,7 @@ export const WebhookFormModal: FC<Props> = ({
           <GoAButtonGroup alignment="end">
             <GoAButton
               type="secondary"
+              testId="webhook-from-cancel-button"
               onClick={() => {
                 if (onCancel) onCancel();
                 setWebhook({ ...defaultWebhooks });
@@ -302,7 +303,12 @@ export const WebhookFormModal: FC<Props> = ({
             >
               Cancel
             </GoAButton>
-            <GoAButton disabled={!isFormValid() || validators.haveErrors()} type="primary" onClick={save}>
+            <GoAButton
+              testId="webhook-from-save-button"
+              disabled={!isFormValid() || validators.haveErrors()}
+              type="primary"
+              onClick={save}
+            >
               Save
             </GoAButton>
           </GoAButtonGroup>

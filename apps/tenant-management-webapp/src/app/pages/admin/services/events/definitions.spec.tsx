@@ -27,8 +27,8 @@ describe('Definitions Page', () => {
     session: {
       realm: 'core',
       indicator: {
-        show: false
-      }
+        show: false,
+      },
     },
   });
 
@@ -49,7 +49,7 @@ describe('Definitions Page', () => {
       </Provider>
     );
     const addDefButton = queryByTestId('add-definition');
-    fireEvent.click(addDefButton);
+    fireEvent(addDefButton, new CustomEvent('_click'));
     const dialog = queryByTestId('definition-form');
     await waitFor(() => {
       expect(dialog).not.toBeNull();
@@ -133,8 +133,7 @@ describe('Definitions Page', () => {
 
     // fill
     fireEvent.change(description, { target: { value: 'the updated description' } });
-    fireEvent.click(saveBtn);
-
+    fireEvent(saveBtn, new CustomEvent('_click'));
     const actions = store.getActions();
     const saveAction = actions.find((action) => action.type === UPDATE_EVENT_DEFINITION_ACTION);
 
@@ -152,7 +151,7 @@ describe('Definitions Page', () => {
     fireEvent.click(editBtn);
 
     const cancelButton = queryByTestId('form-cancel');
-    fireEvent.click(cancelButton);
+    fireEvent(cancelButton, new CustomEvent('_click'));
 
     await waitFor(() => {
       const form = queryByTestId('definition-form');
@@ -167,8 +166,7 @@ describe('Definitions Page', () => {
       </Provider>
     );
     const addBtn = queryByTestId('add-definition');
-    fireEvent.click(addBtn);
-
+    fireEvent(addBtn, new CustomEvent('_click'));
     // fields
     const namespace = queryByTestId('form-namespace');
     const name = queryByTestId('form-name');
@@ -186,8 +184,8 @@ describe('Definitions Page', () => {
     fireEvent.change(namespace, { target: { value: 'namespace' } });
     fireEvent.change(name, { target: { value: 'name' } });
     fireEvent.change(description, { target: { value: 'description' } });
-    fireEvent.click(saveBtn);
 
+    fireEvent(saveBtn, new CustomEvent('_click'));
     const actions = store.getActions();
     const saveAction = actions.find((action) => action.type === UPDATE_EVENT_DEFINITION_ACTION);
     expect(saveAction).toBeTruthy();

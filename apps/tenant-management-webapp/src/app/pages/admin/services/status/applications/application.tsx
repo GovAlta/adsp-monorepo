@@ -4,9 +4,9 @@ import { RootState } from '@store/index';
 import { ServiceStatusType, PublicServiceStatusTypes, ApplicationStatus } from '@store/status/models';
 import { deleteApplication, toggleApplicationStatus } from '@store/status/actions';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
-import { GoAButton, GoARadio, GoARadioGroup } from '@abgov/react-components';
+import { GoARadio, GoARadioGroup } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import {
-  GoABadge,
   GoAModal,
   GoAModalActions,
   GoAModalContent,
@@ -15,12 +15,12 @@ import {
   GoAFormItem,
 } from '@abgov/react-components/experimental';
 import ApplicationFormModal from '../form';
-import type { GoABadgeType } from '@abgov/react-components/experimental';
+
 import { setApplicationStatus } from '@store/status/actions/setApplicationStatus';
 import { DeleteModal } from '@components/DeleteModal';
 import { HealthBar } from './healthBar';
 import { App, AppHeader, AppHealth, AppStatus, AppName } from './styled-components';
-import { GoACheckbox } from '@abgov/react-components-new';
+import { GoACheckbox, GoABadge, GoABadgeType } from '@abgov/react-components-new';
 import { saveApplication } from '@store/status/actions';
 
 export const Application = (app: ApplicationStatus): JSX.Element => {
@@ -70,7 +70,7 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
 
   const publicStatusMap: { [key: string]: GoABadgeType } = {
     operational: 'success',
-    maintenance: 'warning',
+    maintenance: 'important',
     'reported-issues': 'emergency',
     outage: 'emergency',
     pending: 'light',
@@ -83,7 +83,12 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
       <AppHeader>
         <div>
           <AppStatus>
-            <GoAButton buttonType="tertiary" buttonSize="small" onClick={() => setShowStatusForm(true)}>
+            <GoAButton
+              type="tertiary"
+              size="compact"
+              testId="status-application-change-status"
+              onClick={() => setShowStatusForm(true)}
+            >
               Change status
             </GoAButton>
             {app.status && <GoABadge type={publicStatusMap[app.status]} content={humanizeText(app.status)} />}
@@ -101,9 +106,9 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
       <AppHealth>
         <HealthBar data-testid="endpoint" displayCount={30} app={app}></HealthBar>
         <GoAButton
-          buttonType="tertiary"
-          buttonSize="small"
-          style={{ flex: '0 0 160px' }}
+          type="tertiary"
+          size="compact"
+          //style={{ flex: '0 0 160px' }}
           onClick={() => {
             dispatch(
               toggleApplicationStatus({
@@ -167,13 +172,15 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton buttonType="secondary" onClick={cancelManualStatusChange}>
-            Cancel
-          </GoAButton>
+          <GoAButtonGroup alignment="end">
+            <GoAButton testId="application-cancel-button" type="secondary" onClick={cancelManualStatusChange}>
+              Cancel
+            </GoAButton>
 
-          <GoAButton buttonType="primary" onClick={doManualStatusChange}>
-            Save
-          </GoAButton>
+            <GoAButton testId="application-save-button" type="primary" onClick={doManualStatusChange}>
+              Save
+            </GoAButton>
+          </GoAButtonGroup>
         </GoAModalActions>
       </GoAModal>
       <ApplicationFormModal

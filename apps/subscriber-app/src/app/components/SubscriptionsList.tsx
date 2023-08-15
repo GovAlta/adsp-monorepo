@@ -1,4 +1,4 @@
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { Subscription, Subscriber, Channel, Channels } from '@store/subscription/models';
 import React from 'react';
 import { RootState } from '@store/index';
@@ -113,13 +113,13 @@ const SubscriptionsList = (props: SubscriptionsListProps): JSX.Element => {
             <td>
               {subscription.type?.manageSubscribe ? (
                 <GoAButton
-                  buttonSize="small"
-                  buttonType="tertiary"
+                  size="compact"
+                  type="tertiary"
                   key={`${subscription.typeId}`}
                   onClick={() => {
                     props.onUnsubscribe(subscription.typeId);
                   }}
-                  data-testid="unsubscribe-button"
+                  testId="unsubscribe-button"
                 >
                   Unsubscribe
                 </GoAButton>

@@ -23,7 +23,7 @@ import { LocalTime } from '@components/Date';
 import { GoAPageLoader } from '@abgov/react-components';
 import moment from 'moment';
 import GoaLogo from '../../assets/goa-logo.svg';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { GoAForm, GoAFormItem, GoAInputEmail, GoAFormActions } from '@abgov/react-components/experimental';
 import { emailError } from '@lib/inputValidation';
 
@@ -157,8 +157,7 @@ const ServiceStatusPage = (): JSX.Element => {
     return { ...validEmailSelectedConst };
   }
 
-  const save = (e: FormEvent) => {
-    e.preventDefault();
+  const onSave = () => {
     const formErrorList = formErrorsFunc();
     if (Object.keys(formErrorList).length === 0) {
       dispatch(clearNotification());
@@ -257,7 +256,7 @@ const ServiceStatusPage = (): JSX.Element => {
                   </GoAForm>
                   <GoAFormActionOverwrite>
                     <GoAFormActions alignment="left">
-                      <GoAButton buttonType="primary" data-testid="subscribe" onClick={save}>
+                      <GoAButton type="primary" testId="subscribe" onClick={onSave}>
                         Submit
                       </GoAButton>
                     </GoAFormActions>

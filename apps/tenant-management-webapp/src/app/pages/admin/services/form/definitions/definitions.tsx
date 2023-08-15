@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AddEditFormDefinition } from './addEditFormDefinition';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
 import { getFormDefinitions, updateFormDefinition, deleteFormDefinition } from '@store/form/action';
 import { RootState } from '@store/index';
@@ -58,7 +58,7 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
       <div>
         <br />
         <GoAButton
-          data-testid="add-definition"
+          testId="add-definition"
           onClick={() => {
             setOpenAddFormDefinition(true);
           }}

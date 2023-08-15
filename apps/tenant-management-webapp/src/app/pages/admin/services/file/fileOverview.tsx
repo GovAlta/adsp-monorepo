@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { FetchRealmRoles } from '@store/tenant/actions';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { FileMetrics } from './metrics';
 import { FetchFileMetrics } from '@store/file/actions';
 import { OverviewLayout } from '@components/Overview';
@@ -42,7 +42,7 @@ const FileOverview = ({ setActiveEdit, setActiveIndex }: FileOverviewProps): JSX
       }
       addButton={
         <GoAButton
-          data-testid="add-file-type-btn"
+          testId="add-file-type-btn"
           onClick={() => {
             setActiveEdit(true);
           }}

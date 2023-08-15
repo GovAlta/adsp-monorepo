@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AddEditPdfTemplate } from './addEditPdfTemplates';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
 import { getPdfTemplates, updatePdfTemplate, deletePdfTemplate } from '@store/pdf/action';
 import { RootState } from '@store/index';
@@ -70,7 +70,7 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
       <div>
         <br />
         <GoAButton
-          data-testid="add-template"
+          testId="add-template"
           onClick={() => {
             setOpenAddPdfTemplate(true);
           }}

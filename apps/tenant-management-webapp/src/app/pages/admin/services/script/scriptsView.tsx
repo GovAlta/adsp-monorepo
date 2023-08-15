@@ -4,7 +4,7 @@ import { RootState } from '@store/index';
 import { UpdateScript, FETCH_SCRIPTS_ACTION, fetchScripts } from '@store/script/actions';
 import { ScriptItem, defaultScript } from '@store/script/models';
 
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { AddScriptModal } from './addScriptModal';
@@ -117,8 +117,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     <>
       <div>
         <GoAButton
-          activeEdit={activeEdit}
-          data-testid="add-script-btn"
+          testId="add-script-btn"
           onClick={() => {
             setSelectedScript(defaultScript);
             setOpenAddScript(true);

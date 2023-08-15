@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect } from 'react';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { ContactInformation } from './contactInformation/contactInformation';
 import { StatusMetrics } from './metrics';
 import styled from 'styled-components';
@@ -50,9 +50,9 @@ export const StatusOverview: FunctionComponent<StatusOverviewProps> = (props) =>
         }
         addButton={
           <GoAButton
-            data-testid="add-application"
+            testId="add-application"
             disabled={disabled}
-            buttonType="primary"
+            type="primary"
             onClick={() => {
               setActiveEdit(true);
             }}

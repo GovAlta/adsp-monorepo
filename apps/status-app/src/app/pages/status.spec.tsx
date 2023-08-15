@@ -187,7 +187,7 @@ describe('Service statuses (2 of them)', () => {
     fireEvent.change(email, { target: { value: 'bob@smith.com' } });
 
     const subscribeButton = await queryByTestId('subscribe');
-    fireEvent.click(subscribeButton);
+    fireEvent(subscribeButton, new CustomEvent('_click'));
     const actions = store.getActions();
 
     const saveAction = actions.find((action) => action.type === SUBSCRIBE_TO_TENANT);
