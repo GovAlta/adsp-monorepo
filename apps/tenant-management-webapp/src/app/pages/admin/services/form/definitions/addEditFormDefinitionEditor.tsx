@@ -76,6 +76,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   useEffect(() => {
     dispatch(fetchKeycloakServiceRoles());
     dispatch(getFormDefinitions());
+    dispatch(FetchRealmRoles());
   }, []);
 
   const types = [
@@ -92,10 +93,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       return serviceRoles?.keycloak || {};
     }
   );
-
-  useEffect(() => {
-    dispatch(FetchRealmRoles());
-  }, []);
 
   useEffect(() => {
     if (id && formDefinitions[id]) {
@@ -275,7 +272,9 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   onChange={(name, value) => {
                     validators.remove('description');
                     validators['description'].check(value);
-                    setDefinition({ ...definition, description: value });
+                    if (value !== definition?.description && definition !== defaultFormDefinition) {
+                      setDefinition({ ...definition, description: value });
+                    }
                   }}
                 />
 
