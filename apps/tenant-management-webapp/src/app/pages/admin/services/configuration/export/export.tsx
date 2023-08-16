@@ -284,7 +284,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                     <div className="flex-reverse-row">
                       <div className="button-style">
                         <GoAButton
-                          data-testid="export-configuration-1"
+                          testId="export-configuration"
                           disabled={Object.keys(exportServices).length < 1 || indicator.show}
                           onClick={() => {
                             dispatch(getConfigurations(Object.keys(exportServices).map((k) => toServiceId(k))));
@@ -296,6 +296,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                       <div className="button-style">
                         <GoAButton
                           type="secondary"
+                          testId="export-configuration-remove-all"
                           disabled={Object.keys(exportServices).length < 1 || indicator.show}
                           onClick={() => {
                             unselectAll();

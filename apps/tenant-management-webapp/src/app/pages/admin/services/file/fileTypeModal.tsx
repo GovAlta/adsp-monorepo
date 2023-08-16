@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { Role } from '@store/tenant/models';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { GoACheckbox, GoAPopover } from '@abgov/react-components-new';
 import {
@@ -279,62 +279,64 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
           )}
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton
-            buttonType="secondary"
-            data-testid="file-type-modal-cancel"
-            onClick={() => {
-              validators.clear();
-              props.onCancel();
-            }}
-          >
-            Cancel
-          </GoAButton>
-          <GoAButton
-            buttonType="primary"
-            disabled={!fileType.name || validators.haveErrors() || !validateRetentionPolicy(fileType)}
-            data-testid="file-type-modal-save"
-            onClick={() => {
-              const validations = {
-                name: fileType.name,
-              };
+          <GoAButtonGroup alignment="end">
+            <GoAButton
+              type="secondary"
+              testId="file-type-modal-cancel"
+              onClick={() => {
+                validators.clear();
+                props.onCancel();
+              }}
+            >
+              Cancel
+            </GoAButton>
+            <GoAButton
+              type="primary"
+              disabled={!fileType.name || validators.haveErrors() || !validateRetentionPolicy(fileType)}
+              testId="file-type-modal-save"
+              onClick={() => {
+                const validations = {
+                  name: fileType.name,
+                };
 
-              if (props.type === 'new') {
-                validations['duplicated'] = fileType.name;
-              }
-
-              if (!validators.checkAll(validations)) {
-                return;
-              }
-
-              let elementNames = [];
-              elements.forEach((e) => {
-                if (e) {
-                  elementNames = elementNames.concat(
-                    e.roleNames.map((roleName) => (e.clientId ? `${e.clientId}:${roleName}` : roleName))
-                  );
+                if (props.type === 'new') {
+                  validations['duplicated'] = fileType.name;
                 }
-              });
-              const cleanReadRoles = fileType.readRoles.filter((readRole) => {
-                return elementNames.includes(readRole);
-              });
-              const cleanUpdateRoles = fileType.updateRoles.filter((updateRole) => elementNames.includes(updateRole));
 
-              fileType.readRoles = cleanReadRoles;
-              fileType.updateRoles = cleanUpdateRoles;
+                if (!validators.checkAll(validations)) {
+                  return;
+                }
 
-              if (props.type === 'new') {
-                dispatch(CreateFileTypeService(fileType));
-              }
+                let elementNames = [];
+                elements.forEach((e) => {
+                  if (e) {
+                    elementNames = elementNames.concat(
+                      e.roleNames.map((roleName) => (e.clientId ? `${e.clientId}:${roleName}` : roleName))
+                    );
+                  }
+                });
+                const cleanReadRoles = fileType.readRoles.filter((readRole) => {
+                  return elementNames.includes(readRole);
+                });
+                const cleanUpdateRoles = fileType.updateRoles.filter((updateRole) => elementNames.includes(updateRole));
 
-              if (props.type === 'edit') {
-                dispatch(UpdateFileTypeService(fileType));
-              }
+                fileType.readRoles = cleanReadRoles;
+                fileType.updateRoles = cleanUpdateRoles;
 
-              props.onCancel();
-            }}
-          >
-            Save
-          </GoAButton>
+                if (props.type === 'new') {
+                  dispatch(CreateFileTypeService(fileType));
+                }
+
+                if (props.type === 'edit') {
+                  dispatch(UpdateFileTypeService(fileType));
+                }
+
+                props.onCancel();
+              }}
+            >
+              Save
+            </GoAButton>
+          </GoAButtonGroup>
         </GoAModalActions>
       </GoAModal>
     </ModalOverwrite>

@@ -9,7 +9,7 @@ import { SaveFormModal } from '@components/saveModal';
 import { subjectEditorConfig, bodyEditorConfig } from './config';
 import { GoAInfoBadge, GoABadge } from '@abgov/react-components/experimental';
 import { Tab, Tabs } from '@components/Tabs';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -209,32 +209,31 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
           </Tabs>
         </GoAFormItem>
         <EditTemplateActions>
-          {' '}
-          <GoAButton
-            onClick={() => {
-              if (JSON.stringify(savedTemplates) !== JSON.stringify(templates)) {
-                setSaveModal(true);
-              } else {
-                resetSavedAction();
-              }
-            }}
-            data-testid="template-form-close"
-            buttonType="secondary"
-            type="button"
-          >
-            {eventTemplateFormState.cancelOrBackActionText}
-          </GoAButton>
-          <GoAButton
-            onClick={() => {
-              saveAndReset(true);
-            }}
-            buttonType="primary"
-            data-testid="template-form-save"
-            type="submit"
-            disabled={!validateEventTemplateFields()}
-          >
-            {eventTemplateFormState.saveOrAddActionText}
-          </GoAButton>
+          <GoAButtonGroup alignment="end">
+            <GoAButton
+              onClick={() => {
+                if (JSON.stringify(savedTemplates) !== JSON.stringify(templates)) {
+                  setSaveModal(true);
+                } else {
+                  resetSavedAction();
+                }
+              }}
+              testId="template-form-close"
+              type="secondary"
+            >
+              {eventTemplateFormState.cancelOrBackActionText}
+            </GoAButton>
+            <GoAButton
+              onClick={() => {
+                saveAndReset(true);
+              }}
+              type="primary"
+              testId="template-form-save"
+              disabled={!validateEventTemplateFields()}
+            >
+              {eventTemplateFormState.saveOrAddActionText}
+            </GoAButton>
+          </GoAButtonGroup>
         </EditTemplateActions>
       </GoAForm>
       {/* Form */}

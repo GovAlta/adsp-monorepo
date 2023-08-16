@@ -68,7 +68,7 @@ describe('File types tab', () => {
     );
 
     const addFileTypeButton = queryByTestId('add-file-type-btn');
-    fireEvent.click(addFileTypeButton);
+    fireEvent(addFileTypeButton, new CustomEvent('_click'));
     const fileTypeModal = queryByTestId('file-type-modal');
     expect(fileTypeModal).not.toBeNull();
     const nameInput = queryByTestId('file-type-modal-name-input');

@@ -168,8 +168,8 @@ describe('NotificationTypes Page', () => {
     expect(confirmation).not.toBeNull();
 
     const deleteConfirm = queryByTestId('delete-confirm');
-    fireEvent.click(deleteConfirm);
-
+    //fireEvent.click(deleteConfirm);
+    fireEvent(deleteConfirm, new CustomEvent('_click'));
     const actions = store.getActions();
 
     const deleteAction = actions.find((action) => action.type === DELETE_NOTIFICATION_TYPE);
@@ -220,8 +220,7 @@ describe('NotificationTypes Page', () => {
       })
     );
     fireEvent.change(name, { target: { value: 'the updated name' } });
-    fireEvent.click(saveBtn);
-
+    fireEvent(saveBtn, new CustomEvent('_click'));
     const actions = store.getActions();
 
     const saveAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);

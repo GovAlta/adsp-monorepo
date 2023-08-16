@@ -59,7 +59,7 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
         actions={
           <GoAButtonGroup alignment="end">
             <GoAButton
-              data-testid="form-cancel"
+              testId="form-cancel"
               type="secondary"
               onClick={() => {
                 setConfiguration('');
@@ -70,7 +70,7 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
             </GoAButton>
             <GoAButton
               type="primary"
-              data-testid="form-save"
+              testId="form-save"
               disabled={error?.length > 0 || !configuration}
               onClick={() => {
                 const serviceSplit = service.split(':');

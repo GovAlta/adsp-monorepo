@@ -1,6 +1,7 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
-import { GoAButton, GoAElementLoader } from '@abgov/react-components';
+import { GoAElementLoader } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { ConfigDefinition } from '@store/configuration/model';
@@ -170,38 +171,38 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
             </GoAForm>
           </GoAModalContent>
           <GoAModalActions>
-            <GoAButton
-              data-testid="form-cancel"
-              buttonType="secondary"
-              type="button"
-              onClick={() => {
-                setDefinition(initialValue);
-                onClose();
-                validators.clear();
-              }}
-            >
-              Cancel
-            </GoAButton>
-            <GoAButton
-              buttonType="primary"
-              data-testid="form-save"
-              disabled={!definition.name || !definition.namespace || Object.entries(errors).length > 0}
-              type="submit"
-              onClick={(e) => {
-                if (loadingIndicator.show) {
-                  setSpinner(true);
-                } else {
-                  validationCheck();
-                }
-              }}
-            >
-              Save
-              {spinner && (
-                <SpinnerPadding>
-                  <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
-                </SpinnerPadding>
-              )}
-            </GoAButton>
+            <GoAButtonGroup alignment="end">
+              <GoAButton
+                testId="form-cancel"
+                type="secondary"
+                onClick={() => {
+                  setDefinition(initialValue);
+                  onClose();
+                  validators.clear();
+                }}
+              >
+                Cancel
+              </GoAButton>
+              <GoAButton
+                type="primary"
+                testId="form-save"
+                disabled={!definition.name || !definition.namespace || Object.entries(errors).length > 0}
+                onClick={() => {
+                  if (loadingIndicator.show) {
+                    setSpinner(true);
+                  } else {
+                    validationCheck();
+                  }
+                }}
+              >
+                Save
+                {spinner && (
+                  <SpinnerPadding>
+                    <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
+                  </SpinnerPadding>
+                )}
+              </GoAButton>
+            </GoAButtonGroup>
           </GoAModalActions>
         </GoAModal>
       </ModalOverwrite>

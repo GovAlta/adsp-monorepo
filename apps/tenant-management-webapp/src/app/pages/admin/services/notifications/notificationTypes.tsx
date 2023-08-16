@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { GoAContainer } from '@abgov/react-components-new';
 import { Grid, GridItem } from '@components/Grid';
 import { NotificationTypeModalForm } from './addEditNotification/addEditNotification';
@@ -364,7 +364,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       </div>
       <Buttons>
         <GoAButton
-          data-testid="add-notification"
+          testId="add-notification"
           onClick={() => {
             setSelectedType(emptyNotificationType);
             setEditType(true);
@@ -521,8 +521,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                     <NotificationBorder className="padding">
                       <EventButtonWrapper>
                         <GoAButton
-                          buttonType="secondary"
-                          data-testid="add-event"
+                          type="secondary"
+                          testId="add-event"
                           onClick={() => {
                             setSelectedEvent(emptyEvent);
                             manageEvents(notificationType);

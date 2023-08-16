@@ -176,7 +176,7 @@ export const ConfigurationImport: FunctionComponent = () => {
               type="primary"
               onClick={onUploadSubmit}
               disabled={selectedImportFile.length === 0}
-              data-testid="import-input-button"
+              testId="import-input-button"
             >
               Import
             </GoAButton>

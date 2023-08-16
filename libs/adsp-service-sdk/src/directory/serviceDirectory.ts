@@ -3,7 +3,7 @@ import * as NodeCache from 'node-cache';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const retry = require('promise-retry');
 import type { Logger } from 'winston';
-import { adspId, AdspId, assertAdspId } from '../utils';
+import { adspId, AdspId, assertAdspId, LimitToOne } from '../utils';
 
 interface DirectoryEntry {
   urn: string;
@@ -83,7 +83,8 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
       .filter(({ serviceUrl }) => serviceUrl);
   };
 
-  #retrieveDirectory = async (namespace: string): Promise<void> => {
+  @LimitToOne((propertyKey, namespace) => `${propertyKey}-${namespace}`)
+  private async retrieveDirectory(namespace: string): Promise<void> {
     const url = new URL(`/directory/v2/namespaces/${namespace}/entries`, this.directoryUrl);
 
     try {
@@ -102,7 +103,7 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
     } catch (err) {
       this.logger.error(`Error encountered retrieving directory. ${err}`, this.LOG_CONTEXT);
     }
-  };
+  }
 
   async getServiceUrl(id: AdspId): Promise<URL> {
     assertAdspId(id, 'Provided ID is not for a Service or API.', 'api', 'service');
@@ -110,7 +111,7 @@ export class ServiceDirectoryImpl implements ServiceDirectory {
     const key = `${id}`;
     let value = this.#directoryCache.get<URL>(key);
     if (!value) {
-      await this.#retrieveDirectory(id.namespace);
+      await this.retrieveDirectory(id.namespace);
       value = this.#directoryCache.get<URL>(key);
       if (!value) {
         throw new Error(`Failed to find directory entry for ${key}`);

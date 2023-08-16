@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { GoAButton, GoADropdownOption, GoADropdown } from '@abgov/react-components';
+import { GoADropdownOption, GoADropdown } from '@abgov/react-components';
 import {
   GoAModal,
   GoAModalActions,
@@ -20,7 +20,7 @@ import { RolesTable } from './rolesTable';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { ServiceRoleConfig } from '@store/access/models';
 import { GoAChip, GoACheckbox } from '@abgov/react-components-new';
-import { GoATextArea } from '@abgov/react-components-new';
+import { GoATextArea, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 interface AddEditStreamProps {
   onSave: (stream: Stream) => void;
   onClose: () => void;
@@ -229,7 +229,7 @@ export const AddEditStream = ({
                         subscriberRolesOptions={tenantRole.roles}
                         checkedRoles={stream.subscriberRoles}
                         onItemChecked={(value) => {
-                          if (stream.subscriberRoles.includes(value)) {
+                          if (stream?.subscriberRoles && stream.subscriberRoles.includes(value)) {
                             const updatedRoles = stream.subscriberRoles.filter((roleName) => roleName !== value);
                             setStream({ ...stream, subscriberRoles: updatedRoles });
                           } else {
@@ -246,33 +246,32 @@ export const AddEditStream = ({
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton
-            data-testid="form-cancel"
-            buttonType="secondary"
-            type="button"
-            onClick={() => {
-              validators.clear();
-              onClose();
-            }}
-          >
-            Cancel
-          </GoAButton>
-          <GoAButton
-            buttonType="primary"
-            data-testid="form-save"
-            type="submit"
-            disabled={!stream.name || validators.haveErrors()}
-            onClick={(e) => {
-              if (!isEdit && validators['duplicate'].check(stream.id)) {
-                e.stopPropagation();
-                return;
-              }
-              onSave(stream);
-              onClose();
-            }}
-          >
-            Save
-          </GoAButton>
+          <GoAButtonGroup alignment="end">
+            <GoAButton
+              testId="form-cancel"
+              type="secondary"
+              onClick={() => {
+                validators.clear();
+                onClose();
+              }}
+            >
+              Cancel
+            </GoAButton>
+            <GoAButton
+              type="primary"
+              testId="form-save"
+              disabled={!stream.name || validators.haveErrors()}
+              onClick={() => {
+                if (!isEdit && validators['duplicate'].check(stream.id)) {
+                  return;
+                }
+                onSave(stream);
+                onClose();
+              }}
+            >
+              Save
+            </GoAButton>
+          </GoAButtonGroup>
         </GoAModalActions>
       </GoAModal>
     </StreamModalStyles>

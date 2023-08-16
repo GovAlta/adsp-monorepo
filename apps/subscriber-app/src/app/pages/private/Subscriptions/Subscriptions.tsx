@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Main } from '@components/Html';
 import Container from '@components/Container';
 import DataTable from '@components/DataTable';
-import { GoAButton, GoASkeletonGridColumnContent } from '@abgov/react-components';
-import { GoACallout } from '@abgov/react-components';
+import { GoASkeletonGridColumnContent, GoACallout } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { FetchContactInfoService } from '@store/notification/actions';
 import { GoAModal, GoAModalActions, GoAModalTitle } from '@abgov/react-components/experimental';
 
@@ -84,8 +84,8 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
         </GoAModelTextWrapper>
         <GoAModalActions>
           <GoAButton
-            buttonType="secondary"
-            data-testid="unsubscribe-modal-cancel-button"
+            type="secondary"
+            testId="unsubscribe-modal-cancel-button"
             onClick={() => {
               resetSelectedUnsubscribe();
             }}
@@ -93,8 +93,8 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
             Cancel
           </GoAButton>
           <GoAButton
-            buttonType="primary"
-            data-testid="unsubscribe-modal-okay-button"
+            type="primary"
+            testId="unsubscribe-modal-okay-button"
             onClick={() => {
               dispatch(
                 unsubscribe({

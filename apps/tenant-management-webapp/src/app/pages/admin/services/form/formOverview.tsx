@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { OverviewLayout } from '@components/Overview';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { useRouteMatch } from 'react-router';
 import { useHistory } from 'react-router-dom';
 
@@ -33,7 +33,7 @@ const FormOverview = (): JSX.Element => {
       addButton={
         <>
           <GoAButton
-            data-testid="add-definition"
+            testId="add-definition"
             onClick={() => {
               history.push(`${url}/new?definitions=true`);
             }}

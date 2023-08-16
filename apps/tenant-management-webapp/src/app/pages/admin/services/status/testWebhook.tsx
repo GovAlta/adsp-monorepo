@@ -5,9 +5,8 @@ import { Webhooks } from '../../../../store/status/models';
 import DataTable from '@components/DataTable';
 import { EventSearchCriteria } from '@store/event/models';
 import { getEventLogEntries } from '@store/event/actions';
-import { GoAButton, GoARadio } from '@abgov/react-components';
-
-import { GoAPageLoader } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAPageLoader, GoARadio } from '@abgov/react-components';
 
 import { renderNoItem } from '@components/NoItem';
 import styled from 'styled-components';
@@ -149,19 +148,19 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
           </GoAWrapper>
         </GoAModalContent>
         <GoAModalActions>
-          <ButtonWrapper>
+          <GoAButtonGroup alignment="end">
             <GoAButton
-              buttonType="secondary"
+              type="secondary"
               onClick={() => {
                 onClose();
               }}
             >
               Close
             </GoAButton>
-            <GoAButton buttonType="primary" onClick={() => test(selectedStatusName)}>
+            <GoAButton type="primary" onClick={() => test(selectedStatusName)}>
               Test
             </GoAButton>
-          </ButtonWrapper>
+          </GoAButtonGroup>
         </GoAModalActions>
       </GoAModal>
     </GoAModalStyle>
@@ -225,14 +224,6 @@ export const ErrorMsg = styled.div`
 export const Events = styled.div`
    {
     display: flex;
-  }
-`;
-
-export const ButtonWrapper = styled.div`
-   {
-    .goa-button {
-      margin-left: 1.5rem;
-    }
   }
 `;
 

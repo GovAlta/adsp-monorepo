@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import GoALinkButton from '@components/LinkButton';
 import { GoAForm, GoAFormItem, GoAFormActions } from '@abgov/react-components/experimental';
 import { Aside, Main, Page } from '@components/Html';

@@ -227,7 +227,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                   dispatch(ClearScripts());
                 }
               }}
-              data-testid="template-form-close"
+              testId="template-form-close"
               type="secondary"
             >
               Back
@@ -240,7 +240,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                   setSaveModal(false);
                   onEditorCancel();
                 }}
-                data-testid="template-form-save"
+                testId="template-form-save"
                 type="primary"
                 disabled={Object.keys(errors).length > 0 || !hasChanged()}
               >
@@ -302,7 +302,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                   dispatch(ExecuteScript(testItem));
                 }}
                 disabled={errors?.['payloadSchema'] || loadingIndicator.show}
-                data-testid="template-form-save"
+                testId="template-form-save"
                 type="secondary"
               >
                 Execute

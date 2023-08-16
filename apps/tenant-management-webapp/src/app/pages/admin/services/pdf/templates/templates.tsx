@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AddEditPdfTemplate } from './addEditPdfTemplates';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
 import { getPdfTemplates, updatePdfTemplate, deletePdfTemplate } from '@store/pdf/action';
 import { RootState } from '@store/index';
@@ -11,7 +11,7 @@ import { defaultPdfTemplate } from '@store/pdf/model';
 import { useHistory } from 'react-router-dom';
 import { useRouteMatch } from 'react-router';
 
-import { DeleteModal } from './DeleteModal';
+import { DeleteModal } from '@components/DeleteModal';
 
 interface PdfTemplatesProps {
   openAddTemplate: boolean;
@@ -70,7 +70,7 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
       <div>
         <br />
         <GoAButton
-          data-testid="add-template"
+          testId="add-template"
           onClick={() => {
             setOpenAddPdfTemplate(true);
           }}

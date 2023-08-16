@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { GoAModal, GoAModalContent, GoAModalTitle, GoAModalActions } from '@abgov/react-components/experimental';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { RootState } from '@store/index';
 
 export const LogoutModal = (): JSX.Element => {
@@ -21,6 +21,7 @@ export const LogoutModal = (): JSX.Element => {
       </GoAModalContent>
       <GoAModalActions>
         <GoAButton
+          testId="logout-again-button"
           onClick={() => {
             const tenantRealm = localStorage.getItem('realm');
             const idpFromUrl = localStorage.getItem('idpFromUrl');

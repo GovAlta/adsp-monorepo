@@ -203,29 +203,27 @@ async function initializeApp(): Promise<express.Application> {
   return app;
 }
 
-initializeApp()
-  .then((app) => {
-    const port = environment.PORT || 3337;
+initializeApp().then((app) => {
+  const port = environment.PORT || 3337;
 
-    const server = app.listen(port, () => {
-      logger.info(`Listening at http://localhost:${port}`);
-    });
+  const server = app.listen(port, () => {
+    logger.info(`Listening at http://localhost:${port}`);
+  });
 
-    const handleExit = async (message, code, err) => {
-      server.close();
-      err === null ? logger.info(message) : logger.error(message, err);
-      process.exit(code);
-    };
+  const handleExit = async (message, code, err) => {
+    server.close();
+    err === null ? logger.info(message) : logger.error(message, err);
+    process.exit(code);
+  };
 
-    process.on('SIGINT', async () => {
-      handleExit('File service exit, Byte', 1, null);
-    });
-    process.on('SIGTERM', async () => {
-      handleExit('File service was termination, Byte', 1, null);
-    });
-    process.on('uncaughtException', async (err: Error) => {
-      handleExit('File service Uncaught exception', 1, err);
-    });
-    server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
-  })
-  .catch((err) => console.log(err));
+  process.on('SIGINT', async () => {
+    handleExit('File service exit, Byte', 1, null);
+  });
+  process.on('SIGTERM', async () => {
+    handleExit('File service was termination, Byte', 1, null);
+  });
+  process.on('uncaughtException', async (err: Error) => {
+    handleExit('File service Uncaught exception', 1, err);
+  });
+  server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
+});

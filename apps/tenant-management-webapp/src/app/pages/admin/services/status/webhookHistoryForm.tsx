@@ -6,10 +6,9 @@ import DataTable from '@components/DataTable';
 import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
 import { getEventDefinitions } from '@store/event/actions';
 
-import { GoABadge } from '@abgov/react-components/experimental';
+import { GoABadge, GoAButton } from '@abgov/react-components-new';
 import styled from 'styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
-import { GoAButton } from '@abgov/react-components-new';
 
 import {
   GoAForm,
@@ -256,7 +255,12 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
                     )}
                     {next && (
                       <div className="mt-1">
-                        <GoAButton type="tertiary" disabled={isLoading} onClick={onNext}>
+                        <GoAButton
+                          type="tertiary"
+                          testId="webhook-history-form-load-more"
+                          disabled={isLoading}
+                          onClick={onNext}
+                        >
                           Load more...
                         </GoAButton>
                       </div>

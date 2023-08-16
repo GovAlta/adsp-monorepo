@@ -168,7 +168,6 @@ export function readMetric(repository: ValuesRepository): RequestHandler {
 
 export const assertUserCanWrite: RequestHandler = async (req, _res, next) => {
   try {
-    console.log('user can write?');
     const user = req.user;
     const { tenantId: tenantIdValue } = req.body;
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { useDispatch } from 'react-redux';
 import { Page, Main } from '@components/Html';
 import GoALinkButton from '@components/LinkButton';
@@ -20,7 +20,7 @@ const GetStarted = (): JSX.Element => {
         </p>
         <GoAFormActions alignment="left">
           <GoAButton
-            buttonType="primary"
+            type="primary"
             onClick={() => {
               const idpHint = getIdpHint();
               dispatch(TenantCreationLoginInit(idpHint));

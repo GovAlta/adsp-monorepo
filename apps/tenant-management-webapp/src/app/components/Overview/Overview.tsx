@@ -39,7 +39,7 @@ export const createAddButtonComponent = (config: AddButtonConfig, service: strin
       type="primary"
       disabled={config?.disabled === true}
       onClick={config?.onClickCallback}
-      data-testid={config?.testId || `overall-${service}-add-btn`}
+      testId={config?.testId || `overall-${service}-add-btn`}
     >
       {config?.text || `Add ${service}`}
     </GoAButton>

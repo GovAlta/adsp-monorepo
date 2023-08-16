@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 
