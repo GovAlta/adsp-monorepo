@@ -192,7 +192,13 @@ Then('the user views delete {string} confirmation modal for {string}', function 
 });
 
 When('the user clicks Delete button in delete confirmation modal', function () {
-  commonObj.deleteConfirmationModalDeleteBtn().scrollIntoView().should('be.visible').click();
+  commonObj
+    .deleteConfirmationModalDeleteBtn()
+    .shadow()
+    .find('button')
+    .scrollIntoView()
+    .should('be.visible')
+    .click({ force: true });
   cy.wait(2000); // Wait for the record to be removed from the page
 });
 

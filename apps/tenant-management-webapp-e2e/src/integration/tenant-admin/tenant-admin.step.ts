@@ -513,7 +513,7 @@ When('the user clicks Load more button', function () {
     .then((elm) => {
       numOfRows = Number(elm.length);
     });
-  tenantAdminObj.eventLoadMoreBtn().click();
+  tenantAdminObj.eventLoadMoreBtn().shadow().find('button').click({ force: true });
   cy.wait(4000);
 });
 

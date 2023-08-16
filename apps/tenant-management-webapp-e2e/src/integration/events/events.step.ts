@@ -63,7 +63,7 @@ Then(
 );
 
 When('the user clicks Add definition button', function () {
-  eventsObj.addDefinitionButton().click();
+  eventsObj.addDefinitionButton().shadow().find('button').click({ force: true });
   cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
@@ -85,7 +85,7 @@ When(
 );
 
 When('the user clicks Save button on Definition modal', function () {
-  eventsObj.definitionModalSaveButton().click();
+  eventsObj.definitionModalSaveButton().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 
@@ -140,7 +140,7 @@ Then('the user views the {string} for {string}', function (errorMsg, errorField)
 });
 
 When('the user clicks Cancel button on Definition modal', function () {
-  eventsObj.definitionModalCancelButton().click();
+  eventsObj.definitionModalCancelButton().shadow().find('button').click({ force: true });
   cy.wait(1000);
 });
 
@@ -273,7 +273,7 @@ When(
 );
 
 Then('the user clicks Save button in Stream modal', function () {
-  eventsObj.streamModalSaveButton().click();
+  eventsObj.streamModalSaveButton().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 
