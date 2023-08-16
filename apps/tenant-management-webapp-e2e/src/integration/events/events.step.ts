@@ -190,7 +190,7 @@ Given('a tenant admin user is on event streams page', function () {
 });
 
 When('the user clicks Add stream button', function () {
-  eventsObj.addStreamBtn().click();
+  eventsObj.addStreamBtn().shadow().find('button').click({ force: true });
 });
 
 Then('the user views Add stream modal', function () {

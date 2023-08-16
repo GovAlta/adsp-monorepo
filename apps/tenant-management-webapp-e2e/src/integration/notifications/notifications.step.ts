@@ -205,12 +205,12 @@ When(
 );
 
 Then('the user clicks Save button in notification type modal', function () {
-  notificationsObj.notificationTypeModalSaveBtn().click();
+  notificationsObj.notificationTypeModalSaveBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 
 Then('the user clicks Cancel button in notification type modal', function () {
-  notificationsObj.notificationTypeModalCancelBtn().click();
+  notificationsObj.notificationTypeModalCancelBtn().shadow().find('button').click({ force: true });
   cy.wait(1000);
 });
 
@@ -296,11 +296,11 @@ When('the user cannot select {string} in the event dropdown', function (event) {
 });
 
 When('the user clicks Next button on Select an event page', function () {
-  notificationsObj.selectAnEventModalNextBtn().click();
+  notificationsObj.selectAnEventModalNextBtn().shadow().find('button').click({ force: true });
 });
 
 When('the user clicks Cancel button in Select an event modal', function () {
-  notificationsObj.selectAnEventModalCancelBtn().click();
+  notificationsObj.selectAnEventModalCancelBtn().shadow().find('button').click({ force: true });
 });
 
 Then('the user views Add an email template page', function () {
@@ -308,7 +308,7 @@ Then('the user views Add an email template page', function () {
 });
 
 When('the user clicks Add button in Add an email template page', function () {
-  notificationsObj.addAnEmailTemplateModalAddBtn().click();
+  notificationsObj.addAnEmailTemplateModalAddBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 
@@ -417,7 +417,7 @@ Then('the user views Preview an email template modal', function () {
 });
 
 When('the user clicks Close button in Preview an email template modal', function () {
-  notificationsObj.eventTemplatePreviewModalCloseBtn().click();
+  notificationsObj.eventTemplatePreviewModalCloseBtn().shadow().find('button').click({ force: true });
 });
 
 Then('Preview event template modal is closed', function () {
@@ -449,7 +449,7 @@ When('the user types {string} in Search subscriber email field', function (email
 });
 
 When('the user clicks Search button on notifications page', function () {
-  notificationsObj.notificationSearchBtn().click();
+  notificationsObj.notificationSearchBtn().shadow().find('button').click({ force: true });
 });
 
 //notification type in sentence case, only first letter is upper case
@@ -517,7 +517,7 @@ When('the user searches subscribers with {string} containing {string}', function
   }
 
   //Click Search button
-  notificationsObj.subscribersSearchBtn().click();
+  notificationsObj.subscribersSearchBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 
@@ -532,7 +532,7 @@ When(
     } else {
       notificationsObj.searchSubscriberPhone().clear().type(phoneNumber);
     }
-    notificationsObj.notificationSearchBtn().click();
+    notificationsObj.notificationSearchBtn().shadow().find('button').click({ force: true });
     cy.wait(2000);
   }
 );
@@ -656,7 +656,7 @@ Then('the user views Delete subscriber modal', function () {
 });
 
 When('the user clicks Delete button on Delete subscriber modal', function () {
-  notificationsObj.subscriberDeleteConfirmationModalDeleteBtn().click();
+  notificationsObj.subscriberDeleteConfirmationModalDeleteBtn().shadow().find('button').click({ force: true });
   cy.wait(4000); //Wait for the subscriber list to be updated
 });
 
@@ -706,12 +706,12 @@ When(
 );
 
 Then('the user clicks Save button in Edit contact information modal', function () {
-  notificationsObj.editContactModalSaveBtn().click();
+  notificationsObj.editContactModalSaveBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 
 Then('the user clicks Cancel button in Edit contact information modal', function () {
-  notificationsObj.editContactModalCancelBtn().click();
+  notificationsObj.editContactModalCancelBtn().shadow().find('button').click({ force: true });
   cy.wait(1000);
 });
 
@@ -771,7 +771,7 @@ Then('the user views Edit subscriber modal', function () {
 });
 
 Then('the user clicks Save button in Edit subscriber modal', function () {
-  notificationsObj.editSubscriberModalSaveBtn().click();
+  notificationsObj.editSubscriberModalSaveBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 
@@ -926,7 +926,7 @@ Then('the user views the email body {string}', function (emailBody) {
 
 When('the user clicks Close button in event template modal', function () {
   cy.scrollTo('bottom');
-  notificationsObj.editTemplateModalCloseBtn().click();
+  notificationsObj.editTemplateModalCloseBtn().shadow().find('button').click({ force: true });
 });
 
 When('the user views the link for managing email subscription', function () {
@@ -950,7 +950,7 @@ When('the user views the link for managing email subscription', function () {
 
 When('the user clicks Save all button in template modal', function () {
   cy.wait(2000);
-  notificationsObj.editTemplateModalSaveallBtn().click();
+  notificationsObj.editTemplateModalSaveallBtn().shadow().find('button').click({ force: true });
   cy.wait(4000);
 });
 
@@ -972,7 +972,7 @@ Then('the user views Reset email template modal', function () {
 });
 
 When('the user clicks Delete button in Reset email template modal', function () {
-  notificationsObj.resetEmailTemplateModalDeleteBtn().click();
+  notificationsObj.resetEmailTemplateModalDeleteBtn().shadow().find('button').click({ force: true });
   cy.wait(2000); // Wait for the modal and reset button to go away
 });
 

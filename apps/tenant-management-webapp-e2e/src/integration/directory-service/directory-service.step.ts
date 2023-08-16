@@ -35,7 +35,7 @@ Given('a tenant admin user is on directory entries page', function () {
 });
 
 When('the user clicks Add entry button', function () {
-  directoryObj.addEntryButton().click();
+  directoryObj.addEntryButton().shadow().find('button').click({ force: true });
   cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
@@ -79,12 +79,12 @@ When('the user modifies URL field {string}', function (url) {
 });
 
 Then('the user clicks Save button in Entry modal', function () {
-  directoryObj.entryModalSaveButton().click();
+  directoryObj.entryModalSaveButton().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 
 When('the user clicks Cancel button in Entry modal', function () {
-  directoryObj.entryModalCancelButton().click();
+  directoryObj.entryModalCancelButton().shadow().find('button').click({ force: true });
 });
 
 Then(
