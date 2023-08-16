@@ -10,7 +10,7 @@ import { FormDefinitionsTable } from './definitionsList';
 import { PageIndicator } from '@components/Indicator';
 import { defaultFormDefinition } from '@store/form/model';
 
-import { DeleteModal } from './DeleteModal';
+import { DeleteModal } from '@components/DeleteModal';
 import { useHistory } from 'react-router-dom';
 import { useRouteMatch } from 'react-router';
 

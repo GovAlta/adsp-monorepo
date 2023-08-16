@@ -168,8 +168,8 @@ describe('NotificationTypes Page', () => {
     expect(confirmation).not.toBeNull();
 
     const deleteConfirm = queryByTestId('delete-confirm');
-    fireEvent.click(deleteConfirm);
-
+    //fireEvent.click(deleteConfirm);
+    fireEvent(deleteConfirm, new CustomEvent('_click'));
     const actions = store.getActions();
 
     const deleteAction = actions.find((action) => action.type === DELETE_NOTIFICATION_TYPE);

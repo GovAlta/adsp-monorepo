@@ -183,12 +183,7 @@ export const TestStream = (): JSX.Element => {
                 {Object.keys(streams)
                   .sort((a, b) => (a < b ? -1 : 1))
                   .map((streamId) => (
-                    <GoADropdownItem
-                      label={streams[streamId].name}
-                      value={streamId}
-                      key={streamId}
-                      data-testid={streamId}
-                    />
+                    <GoADropdownItem label={streams[streamId].name} value={streamId} key={streamId} testId={streamId} />
                   ))}
               </GoADropdown>
             </StreamsDropdown>

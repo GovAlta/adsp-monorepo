@@ -12,7 +12,7 @@ import InformationCircle from '@components/icons/InformationCircle';
 import { FileTableStyles, ButtonBox, BadgeWrapper } from '../styled-components';
 import { GoABadge } from '@abgov/react-components-new';
 import { showCurrentFilePdf, setPdfDisplayFileId, deletePdfFileService } from '@store/pdf/action';
-import { DeleteModal } from './DeleteModal';
+import { DeleteModal } from '@components/DeleteModal';
 
 interface GeneratedPdfListProps {
   templateId: string;

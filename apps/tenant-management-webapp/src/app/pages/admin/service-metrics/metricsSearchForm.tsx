@@ -21,7 +21,7 @@ export const MetricsSearchForm: FunctionComponent<MetricsSearchFormProps> = ({ o
           <label>Service</label>
           <GoADropdown
             name="Service"
-            value={[service]}
+            value={service}
             width="100%"
             onChange={(_n, [value]) => dispatch(setServiceCriteria(value))}
           >
@@ -36,7 +36,7 @@ export const MetricsSearchForm: FunctionComponent<MetricsSearchFormProps> = ({ o
           <label>Time period</label>
           <GoADropdown
             name="Time period"
-            value={[chartInterval]}
+            value={chartInterval}
             onChange={(_n, [value]) => dispatch(setIntervalCriteria(value as ChartInterval))}
             width="100%"
           >

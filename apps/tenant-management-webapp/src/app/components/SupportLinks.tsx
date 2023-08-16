@@ -1,4 +1,4 @@
-import { EmailLinkColor, SpaceAdjust } from '@pages/admin/dashboard/styled-components';
+import { EmailLinkColor, SpaceAdjust } from './styled-components';
 import React from 'react';
 
 import { GoAIcon } from '@abgov/react-components-new';

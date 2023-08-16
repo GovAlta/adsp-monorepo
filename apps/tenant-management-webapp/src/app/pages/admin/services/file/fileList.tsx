@@ -212,7 +212,7 @@ const FileList = (): JSX.Element => {
               }}
             >
               {getFileTypesValues().map((item, key) => (
-                <GoADropdownItem label={item.name} value={item.id} key={key} data-testid={item.id} />
+                <GoADropdownItem label={item.name} value={item.id} key={key} testId={item.id} />
               ))}
             </GoADropdown>
           </GoAFormItem>
@@ -251,7 +251,7 @@ const FileList = (): JSX.Element => {
                 }}
               >
                 {getFileTypesValues().map((item, key) => (
-                  <GoADropdownItem label={item.name} value={item.id} key={key} data-testid={item.id} />
+                  <GoADropdownItem label={item.name} value={item.id} key={key} testId={item.id} />
                 ))}
               </GoADropdown>
             )}

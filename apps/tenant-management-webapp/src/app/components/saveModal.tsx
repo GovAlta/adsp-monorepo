@@ -1,6 +1,6 @@
 import React, { FunctionComponent } from 'react';
-import { GoAButton } from '@abgov/react-components';
-import { GoAModal, GoAModalActions, GoAModalTitle } from '@abgov/react-components/experimental';
+import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
+import {} from '@abgov/react-components/experimental';
 import styled from 'styled-components';
 
 interface SaveFormProps {
@@ -20,26 +20,26 @@ export const SaveFormModal: FunctionComponent<SaveFormProps> = ({
 }) => {
   return (
     <EditStyles>
-      <GoAModal testId="save-form-modal" isOpen={open}>
-        <GoAModalTitle>You have unsaved changes</GoAModalTitle>
-        <GoAModelTextWrapper>Leaving this page will discard any changes that haven't been saved</GoAModelTextWrapper>
-        <GoAModalActions>
-          <GoAButton data-testid="form-cancel-modal" buttonType="tertiary" type="button" onClick={onCancel}>
-            Cancel
-          </GoAButton>
-          <GoAButton buttonType="secondary" data-testid="form-dont-save" type="submit" onClick={(e) => onDontSave()}>
-            Don't save
-          </GoAButton>
-          <GoAButton
-            buttonType="primary"
-            data-testid="form-agree-save"
-            type="submit"
-            disabled={saveDisable}
-            onClick={(e) => onSave()}
-          >
-            Save
-          </GoAButton>
-        </GoAModalActions>
+      <GoAModal
+        testId="save-form-modal"
+        open={open}
+        heading="You have unsaved changes"
+        width="640px"
+        actions={
+          <GoAButtonGroup alignment="end">
+            <GoAButton testId="form-cancel-modal" type="tertiary" onClick={onCancel}>
+              Cancel
+            </GoAButton>
+            <GoAButton type="secondary" testId="form-dont-save" onClick={() => onDontSave()}>
+              Don't save
+            </GoAButton>
+            <GoAButton type="primary" testId="form-agree-save" disabled={saveDisable} onClick={() => onSave()}>
+              Save
+            </GoAButton>
+          </GoAButtonGroup>
+        }
+      >
+        Leaving this page will discard any changes that haven't been saved
       </GoAModal>
     </EditStyles>
   );
@@ -66,9 +66,4 @@ const EditStyles = styled.div`
   h3 {
     margin-bottom: 0;
   }
-`;
-
-const GoAModelTextWrapper = styled.div`
-  padding: 0 1.5rem 0 1.75rem;
-  max-width: 36rem;
 `;

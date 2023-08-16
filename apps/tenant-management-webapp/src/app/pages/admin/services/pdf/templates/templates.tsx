@@ -11,7 +11,7 @@ import { defaultPdfTemplate } from '@store/pdf/model';
 import { useHistory } from 'react-router-dom';
 import { useRouteMatch } from 'react-router';
 
-import { DeleteModal } from './DeleteModal';
+import { DeleteModal } from '@components/DeleteModal';
 
 interface PdfTemplatesProps {
   openAddTemplate: boolean;
