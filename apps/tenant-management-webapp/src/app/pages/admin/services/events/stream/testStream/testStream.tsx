@@ -3,7 +3,8 @@ import { RootState } from '@store/index';
 import { fetchEventStreams, startSocket } from '@store/stream/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import { PageIndicator } from '@components/Indicator';
-import { GoAButton, GoAElementLoader } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
+import { GoAElementLoader } from '@abgov/react-components';
 import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { Divider, StreamHeading, StreamsDropdown } from './styledComponents';
 import { GoAForm } from '@abgov/react-components/experimental';
@@ -193,8 +194,7 @@ export const TestStream = (): JSX.Element => {
             </StreamsDropdown>
             {socketStatus()}
             <GoAButton
-              type="submit"
-              buttonType="primary"
+              type="primary"
               disabled={disableConnectButton()}
               onClick={() => {
                 setSocketConnecting(true);
@@ -211,8 +211,7 @@ export const TestStream = (): JSX.Element => {
             </GoAButton>
             <Divider />
             <GoAButton
-              type="submit"
-              buttonType="secondary"
+              type="secondary"
               disabled={!socketConnection}
               onClick={() => {
                 socket.disconnect();

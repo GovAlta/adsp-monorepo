@@ -5,7 +5,7 @@ import { fetchCalendars, UpdateCalendar, FETCH_CALENDARS_ACTION } from '@store/c
 import { CalendarItem, defaultCalendar } from '@store/calendar/models';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { CalendarModal } from './calendarModal';
@@ -62,8 +62,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
     <>
       <div>
         <GoAButton
-          activeEdit={activeEdit}
-          data-testid="add-calendar-btn"
+          testId="add-calendar-btn"
           onClick={() => {
             setSelectedCalendar(defaultCalendar);
             setModalType('new');

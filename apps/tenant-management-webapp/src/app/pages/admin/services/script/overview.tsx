@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { OverviewLayout } from '@components/Overview';
 
@@ -26,7 +26,7 @@ export const ScriptOverview = ({ setActiveEdit, setActiveIndex }: ScriptOverview
       description={description}
       addButton={
         <GoAButton
-          data-testid="add-script-btn"
+          testId="add-script-btn"
           onClick={() => {
             setActiveEdit(true);
           }}

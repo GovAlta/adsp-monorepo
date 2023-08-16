@@ -6,7 +6,7 @@ import { GoAIconButton } from '@abgov/react-components/experimental';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { FileTypeDeleteModal } from './fileTypeDeleteModal';
 import styled from 'styled-components';
-import { GoABadge } from '@abgov/react-components/experimental';
+import { GoABadge } from '@abgov/react-components-new';
 import { FileTypeItem } from '@store/file/models';
 
 interface FileTypeRowProps extends FileTypeItem {

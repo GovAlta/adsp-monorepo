@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { FetchNotificationMetrics } from '@store/notification/actions';
 import { NotificationMetrics } from './metrics';
 import { ContactInformation } from './contactInformation';
@@ -29,7 +29,7 @@ export const NotificationsOverview: FunctionComponent<ParentCompProps> = (props)
       addButton={
         <>
           <GoAButton
-            data-testid="add-notification-overview"
+            testId="add-notification-overview"
             disabled={disabled}
             onClick={() => {
               setActiveEdit(true);

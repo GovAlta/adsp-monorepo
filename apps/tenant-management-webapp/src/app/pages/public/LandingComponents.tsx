@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { ReactComponent as OpenIcon } from '@assets/icons/open.svg';
 import React from 'react';
 // *****************
@@ -116,8 +116,8 @@ export const RedirectButton = ({ url, name, label }: RedirectButtonProps): JSX.E
   return (
     <ButtonContainer>
       <GoAButton
-        buttonType="tertiary"
-        data-testid={`redirect-button-${name}`}
+        type="tertiary"
+        testId={`redirect-button-${name}`}
         onClick={() => {
           window.open(url, '_blank');
         }}

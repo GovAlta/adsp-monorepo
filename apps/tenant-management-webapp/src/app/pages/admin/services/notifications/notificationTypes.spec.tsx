@@ -220,8 +220,7 @@ describe('NotificationTypes Page', () => {
       })
     );
     fireEvent.change(name, { target: { value: 'the updated name' } });
-    fireEvent.click(saveBtn);
-
+    fireEvent(saveBtn, new CustomEvent('_click'));
     const actions = store.getActions();
 
     const saveAction = actions.find((action) => action.type === UPDATE_NOTIFICATION_TYPE);

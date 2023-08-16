@@ -35,13 +35,13 @@ describe('Calendar list Page', () => {
   });
 
   it('Render calendar service', () => {
-    const { queryByTestId } = render(
+    const { baseElement } = render(
       <Provider store={store}>
         <CalendarsView activeEdit={false} />
       </Provider>
     );
 
-    const addButton = queryByTestId('add-calendar-btn');
+    const addButton = baseElement.querySelector('goa-button');
     expect(addButton).not.toBeNull();
   });
 });

@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect } from 'react';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { OverviewLayout } from '@components/Overview';
 
 interface ConfigurationOverviewProps {
@@ -21,7 +21,7 @@ export const ConfigurationOverview: FunctionComponent<ConfigurationOverviewProps
       description={description}
       addButton={
         <GoAButton
-          data-testid="add-definition"
+          testId="add-definition"
           disabled={disabled}
           onClick={() => {
             setActiveEdit(true);

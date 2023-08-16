@@ -8,7 +8,7 @@ import { NameDiv } from './styleComponents';
 import { PageIndicator } from '@components/Indicator';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { AddEditStream } from './addEditStream/addEditStream';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { initialStream } from '@store/stream/models';
 import { DeleteModal } from '@components/DeleteModal';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
@@ -49,7 +49,7 @@ export const EventStreams = (): JSX.Element => {
       {!indicator.show && (
         <>
           <GoAButton
-            data-testid="add-stream"
+            testId="add-stream"
             onClick={() => {
               setOpenAddStream(true);
             }}

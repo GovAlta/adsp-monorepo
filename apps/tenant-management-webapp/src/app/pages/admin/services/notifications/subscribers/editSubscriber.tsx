@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { Subscriber } from '@store/subscription/models';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
@@ -216,12 +216,14 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton data-testid="form-cancel" buttonType="secondary" type="button" onClick={tryCancel}>
-            Cancel
-          </GoAButton>
-          <GoAButton buttonType="primary" data-testid="form-save" type="submit" onClick={(e) => trySave(subscriber)}>
-            Save
-          </GoAButton>
+          <GoAButtonGroup alignment="end">
+            <GoAButton testId="form-cancel" type="secondary" onClick={tryCancel}>
+              Cancel
+            </GoAButton>
+            <GoAButton type="primary" testId="form-save" onClick={() => trySave(subscriber)}>
+              Save
+            </GoAButton>
+          </GoAButtonGroup>
         </GoAModalActions>
       </GoAModal>
     </EditStyles>

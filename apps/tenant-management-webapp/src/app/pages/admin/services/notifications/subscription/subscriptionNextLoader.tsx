@@ -1,4 +1,4 @@
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import React, { FunctionComponent } from 'react';
 import type { SubscriptionSearchCriteria } from '@store/subscription/models';
 import { RootState } from '@store/index';
@@ -15,12 +15,17 @@ interface SearchInfo {
   searchCriteria: SubscriptionSearchCriteria;
 }
 
-export const SubscriptionNextLoader: FunctionComponent<SubscriptionSearchNextProps> = ({ onSearch, searchCriteria, type }) => {
+export const SubscriptionNextLoader: FunctionComponent<SubscriptionSearchNextProps> = ({
+  onSearch,
+  searchCriteria,
+  type,
+}) => {
   const next = useSelector((state: RootState) => state.subscription.typeSubscriptionSearch[type]?.next);
 
   if (next) {
     return (
       <GoAButton
+        testId="subscription-next-loader"
         onClick={() => {
           searchCriteria.next = next;
           const searchInfo: SearchInfo = {

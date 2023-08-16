@@ -259,6 +259,7 @@ export const ApplicationFormModal: FC<Props> = ({
         <GoAButtonGroup alignment="end">
           <GoAButton
             type="secondary"
+            testId="form-cancel-button"
             onClick={() => {
               if (onCancel) onCancel();
               validators.clear();
@@ -267,7 +268,12 @@ export const ApplicationFormModal: FC<Props> = ({
           >
             Cancel
           </GoAButton>
-          <GoAButton disabled={!isFormValid() || validators.haveErrors()} type="primary" onClick={save}>
+          <GoAButton
+            testId="form-save-button"
+            disabled={!isFormValid() || validators.haveErrors()}
+            type="primary"
+            onClick={save}
+          >
             Save
           </GoAButton>
         </GoAButtonGroup>

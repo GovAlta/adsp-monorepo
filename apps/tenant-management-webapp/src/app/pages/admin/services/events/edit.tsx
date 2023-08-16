@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import type { EventDefinition } from '@store/event/models';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import {
   GoAModal,
   GoAModalActions,
@@ -147,47 +147,47 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton
-            data-testid="form-cancel"
-            buttonType="secondary"
-            type="button"
-            onClick={() => {
-              onClose();
-              validators.clear();
-            }}
-          >
-            Cancel
-          </GoAButton>
-          <GoAButton
-            disabled={!definition.namespace || !definition.name || validators.haveErrors()}
-            buttonType="primary"
-            data-testid="form-save"
-            type="submit"
-            onClick={(e) => {
-              const validations = {
-                payloadSchema: payloadSchema,
-              };
+          <GoAButtonGroup alignment="end">
+            <GoAButton
+              testId="form-cancel"
+              type="secondary"
+              onClick={() => {
+                onClose();
+                validators.clear();
+              }}
+            >
+              Cancel
+            </GoAButton>
+            <GoAButton
+              disabled={!definition.namespace || !definition.name || validators.haveErrors()}
+              type="primary"
+              testId="form-save"
+              onClick={() => {
+                const validations = {
+                  payloadSchema: payloadSchema,
+                };
 
-              if (!isEdit) {
-                validations['namespace'] = definition?.namespace;
-                validations['duplicated'] = `${definition?.namespace}:${definition?.name}`;
-                validations['description'] = definition.description;
-                validations['name'] = definition.name;
-              }
+                if (!isEdit) {
+                  validations['namespace'] = definition?.namespace;
+                  validations['duplicated'] = `${definition?.namespace}:${definition?.name}`;
+                  validations['description'] = definition.description;
+                  validations['name'] = definition.name;
+                }
 
-              if (!validators.checkAll(validations)) {
-                return;
-              }
-              dispatch(updateEventDefinition({ ...definition, payloadSchema: JSON.parse(payloadSchema) }));
-              if (onSave) {
-                onSave();
-              }
-              onClose();
-              validators.clear();
-            }}
-          >
-            Save
-          </GoAButton>
+                if (!validators.checkAll(validations)) {
+                  return;
+                }
+                dispatch(updateEventDefinition({ ...definition, payloadSchema: JSON.parse(payloadSchema) }));
+                if (onSave) {
+                  onSave();
+                }
+                onClose();
+                validators.clear();
+              }}
+            >
+              Save
+            </GoAButton>
+          </GoAButtonGroup>
         </GoAModalActions>
       </GoAModal>
     </ModalOverwrite>

@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import type { NotificationItem } from '@store/notification/models';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import {
   GoAModal,
   GoAModalActions,
@@ -250,42 +250,42 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton
-            data-testid="form-cancel"
-            buttonType="secondary"
-            type="button"
-            onClick={() => {
-              setType(initialValue);
-              validators.clear();
-              onCancel();
-            }}
-          >
-            Cancel
-          </GoAButton>
-          <GoAButton
-            disabled={validators.haveErrors()}
-            buttonType="primary"
-            data-testid="form-save"
-            type="submit"
-            onClick={(e) => {
-              const validations = {
-                name: type.name,
-              };
-              if (!isEdit) {
-                validations['duplicated'] = type.name;
-              }
-              if (!type.channels.includes('email')) {
-                // Must include email as first channel
-                type.channels = ['email', ...type.channels];
-              }
-              if (!validators.checkAll(validations)) {
-                return;
-              }
-              onSave(type);
-            }}
-          >
-            Save
-          </GoAButton>
+          <GoAButtonGroup alignment="end">
+            <GoAButton
+              testId="form-cancel"
+              type="secondary"
+              onClick={() => {
+                setType(initialValue);
+                validators.clear();
+                onCancel();
+              }}
+            >
+              Cancel
+            </GoAButton>
+            <GoAButton
+              disabled={validators.haveErrors()}
+              type="primary"
+              testId="form-save"
+              onClick={() => {
+                const validations = {
+                  name: type.name,
+                };
+                if (!isEdit) {
+                  validations['duplicated'] = type.name;
+                }
+                if (!type.channels.includes('email')) {
+                  // Must include email as first channel
+                  type.channels = ['email', ...type.channels];
+                }
+                if (!validators.checkAll(validations)) {
+                  return;
+                }
+                onSave(type);
+              }}
+            >
+              Save
+            </GoAButton>
+          </GoAButtonGroup>
         </GoAModalActions>
       </GoAModal>
     </EditStyles>
