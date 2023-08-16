@@ -5,7 +5,7 @@ import type { Logger } from 'winston';
 const retry = require('promise-retry');
 import type { TokenProvider } from '../access';
 import type { ServiceDirectory } from '../directory';
-import { AdspId, adspId, assertAdspId } from '../utils';
+import { AdspId, LimitToOne, adspId, assertAdspId } from '../utils';
 
 export interface Tenant {
   id: AdspId;
@@ -60,9 +60,7 @@ export class TenantServiceImpl implements TenantService {
   ) {
     if (preload) {
       // load into the cache.
-      this.#retrieveTenants().catch((err) =>
-        logger.error(`Encountered error during initialization of tenants. ${err}`)
-      );
+      this.retrieveTenants().catch((err) => logger.error(`Encountered error during initialization of tenants. ${err}`));
     }
   }
 
@@ -87,7 +85,8 @@ export class TenantServiceImpl implements TenantService {
     return tenants;
   };
 
-  #retrieveTenants = async (criteria?: TenantCriteria): Promise<Tenant[]> => {
+  @LimitToOne((propertyKey, criteria) => (criteria ? null : propertyKey))
+  private async retrieveTenants(criteria?: TenantCriteria): Promise<Tenant[]> {
     const tenantServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:tenant-service:v2`);
     const tenantsUrl = new URL('v2/tenants', tenantServiceUrl);
 
@@ -118,9 +117,10 @@ export class TenantServiceImpl implements TenantService {
       this.logger.error(`Error encountered during retrieval of tenants. ${err}`, this.LOG_CONTEXT);
       throw err;
     }
-  };
+  }
 
-  #retrieveTenant = async (tenantId: AdspId): Promise<Tenant> => {
+  @LimitToOne((propertyKey, tenantId) => `${propertyKey}-${tenantId}`)
+  private async retrieveTenant(tenantId: AdspId): Promise<Tenant> {
     this.logger.debug(`Retrieving tenant information...'`, this.LOG_CONTEXT);
 
     const tenantServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:tenant-service:v2`);
@@ -156,10 +156,10 @@ export class TenantServiceImpl implements TenantService {
       this.logger.error(`Error encountered during retrieval of tenant '${tenantId}'. ${err}`, this.LOG_CONTEXT);
       throw err;
     }
-  };
+  }
 
   getTenants = async (): Promise<Tenant[]> => {
-    const tenants = await this.#retrieveTenants();
+    const tenants = await this.retrieveTenants();
     return tenants;
   };
 
@@ -167,7 +167,7 @@ export class TenantServiceImpl implements TenantService {
     assertAdspId(tenantId, `Provided ID does not represent a resource: ${tenantId}.`, 'resource');
 
     const cacheKey = `${tenantId}`;
-    const tenant = this.#tenants.get<Tenant>(cacheKey) || (await this.#retrieveTenant(tenantId));
+    const tenant = this.#tenants.get<Tenant>(cacheKey) || (await this.retrieveTenant(tenantId));
 
     return tenant;
   };
@@ -179,7 +179,7 @@ export class TenantServiceImpl implements TenantService {
       let tenantId = this.#tenantNames[name.toLowerCase()];
       if (!tenantId) {
         // Query for the tenant if no existing record.
-        await this.#retrieveTenants({ name });
+        await this.retrieveTenants({ name });
         tenantId = this.#tenantNames[name.toLowerCase()];
       }
 
@@ -194,7 +194,7 @@ export class TenantServiceImpl implements TenantService {
       let tenantId = this.#tenantRealms[realm.toLowerCase()];
       if (!tenantId) {
         // Query for the tenant if no existing record.
-        await this.#retrieveTenants({ realm });
+        await this.retrieveTenants({ realm });
         tenantId = this.#tenantRealms[realm.toLowerCase()];
       }
 
