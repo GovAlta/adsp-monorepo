@@ -4,18 +4,18 @@ type LimitToOne = (
 ) => (
   target: unknown,
   propertyKey: string,
-  descriptor: TypedPropertyDescriptor<(...args: unknown[]) => Promise<unknown>>
+  descriptor: TypedPropertyDescriptor<(...args: any[]) => Promise<any>>
 ) => TypedPropertyDescriptor<(...args: any[]) => Promise<any>>;
 
 const results = new WeakMap<object, Record<string, Promise<unknown>>>();
 
 /**
  * Method decorator that limits a method to a single active execution per key.
- * The same promise is used to respond to callers until it is fulfilled.
+ * The same promise chain is used to respond to callers until it is fulfilled.
  *
  * @param {*} [getKey=(propertyKey) => propertyKey]
- * Function to get the key used to determine which executions share an execution.
- * By default only the method name is used.
+ * Function to get the key used to determine which executions share an execution;
+ * method name is used if no function is provided. Return a falsy value to force execution.
  */
 export const LimitToOne: LimitToOne =
   (getKey = (propertyKey) => propertyKey) =>
@@ -31,17 +31,21 @@ export const LimitToOne: LimitToOne =
       }
 
       const key = getKey(propertyKey, ...args);
-      let promise = promises[key];
+      if (!key) {
+        return await original.apply(this, args);
+      } else {
+        let promise = promises[key];
 
-      if (!promise) {
-        promise = original.apply(this, args);
-        promises[key] = promise;
-      }
+        if (!promise) {
+          promise = original.apply(this, args);
+          promises[key] = promise;
+        }
 
-      try {
-        return await promise;
-      } finally {
-        promises[key] = null;
+        try {
+          return await promise;
+        } finally {
+          promises[key] = null;
+        }
       }
     };
 

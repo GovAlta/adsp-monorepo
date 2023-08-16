@@ -21,10 +21,11 @@ export interface ConfigurationService {
    * @param {AdspId} serviceId
    * @param {string} token
    * @param {AdspId} tenantId
+   * @param {AdspId} skipCache
    * @returns {Promise<R>}
    * @memberof ConfigurationService
    */
-  getConfiguration<C, R = [C, C]>(serviceId: AdspId, token: string, tenantId?: AdspId, unCached?: boolean): Promise<R>;
+  getConfiguration<C, R = [C, C]>(serviceId: AdspId, token: string, tenantId?: AdspId, skipCache?: boolean): Promise<R>;
 }
 
 export class ConfigurationServiceImpl implements ConfigurationService {
@@ -128,13 +129,13 @@ export class ConfigurationServiceImpl implements ConfigurationService {
     serviceId: AdspId,
     token: string,
     tenantId?: AdspId,
-    unCached?: boolean
+    skipCache?: boolean
   ): Promise<R> => {
     let configuration = null;
     if (tenantId) {
       assertAdspId(tenantId, 'Provided ID is not for a tenant', 'resource');
 
-      if (unCached) {
+      if (skipCache) {
         configuration = (await this.retrieveConfiguration<C>(serviceId, token, tenantId)) || null;
       } else {
         configuration =
@@ -146,7 +147,7 @@ export class ConfigurationServiceImpl implements ConfigurationService {
 
     let options = null;
 
-    if (unCached) {
+    if (skipCache) {
       options = (await this.retrieveConfiguration<C>(serviceId, token)) || null;
     } else {
       options =

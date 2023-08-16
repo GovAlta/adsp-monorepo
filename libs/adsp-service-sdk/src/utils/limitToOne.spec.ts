@@ -14,7 +14,7 @@ class Test {
     });
   }
 
-  @LimitToOne((propertyKey, a) => `${propertyKey}:${a}`)
+  @LimitToOne((propertyKey, a) => (a === 'skip' ? '' : `${propertyKey}:${a}`))
   doStuffWithInputs(a: string): Promise<string> {
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -65,6 +65,15 @@ describe('LimitToOne', () => {
       test.doStuffWithInputs('a'),
     ]);
     expect(a).toBe(c);
+    expect(a).not.toBe(b);
+
+    expect(test.fn).toHaveBeenCalledTimes(2);
+  });
+
+  it('can cause new execution on falsy key', async () => {
+    const test = new Test();
+
+    const [a, b] = await Promise.all([test.doStuffWithInputs('skip'), test.doStuffWithInputs('skip')]);
     expect(a).not.toBe(b);
 
     expect(test.fn).toHaveBeenCalledTimes(2);
