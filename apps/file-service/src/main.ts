@@ -228,4 +228,3 @@ initializeApp()
     });
     server.on('error', (err) => logger.error(`Error encountered in server: ${err}`));
   })
-  .catch((err) => console.log(err));
