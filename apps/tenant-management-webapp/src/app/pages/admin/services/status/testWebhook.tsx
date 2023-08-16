@@ -5,7 +5,7 @@ import { Webhooks } from '../../../../store/status/models';
 import DataTable from '@components/DataTable';
 import { EventSearchCriteria } from '@store/event/models';
 import { getEventLogEntries } from '@store/event/actions';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { GoAPageLoader, GoARadio } from '@abgov/react-components';
 
 import { renderNoItem } from '@components/NoItem';
@@ -148,7 +148,7 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
           </GoAWrapper>
         </GoAModalContent>
         <GoAModalActions>
-          <ButtonWrapper>
+          <GoAButtonGroup alignment="end">
             <GoAButton
               type="secondary"
               onClick={() => {
@@ -160,7 +160,7 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
             <GoAButton type="primary" onClick={() => test(selectedStatusName)}>
               Test
             </GoAButton>
-          </ButtonWrapper>
+          </GoAButtonGroup>
         </GoAModalActions>
       </GoAModal>
     </GoAModalStyle>
@@ -224,14 +224,6 @@ export const ErrorMsg = styled.div`
 export const Events = styled.div`
    {
     display: flex;
-  }
-`;
-
-export const ButtonWrapper = styled.div`
-   {
-    .goa-button {
-      margin-left: 1.5rem;
-    }
   }
 `;
 

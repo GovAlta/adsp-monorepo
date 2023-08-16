@@ -24,7 +24,7 @@ export const ConfigurationRevisions = (): JSX.Element => {
         {serviceList?.length > 0 && (
           <GoADropdown
             name="Configurations"
-            value={[selectedConfiguration]}
+            value={selectedConfiguration}
             onChange={(name: string, selectedConfiguration: string | string[]) => {
               setSelectedConfiguration(selectedConfiguration.toString());
               dispatch(getConfigurationRevisions(selectedConfiguration.toString()));
@@ -39,7 +39,7 @@ export const ConfigurationRevisions = (): JSX.Element => {
                 key={item}
                 label={item}
                 value={item}
-                data-testid={`${item}-get-configuration-options`}
+                testId={`${item}-get-configuration-options`}
               />
             ))}
           </GoADropdown>

@@ -67,7 +67,7 @@ describe('Definitions Page', () => {
     const confirmation = queryByTestId('delete-confirmation');
     expect(confirmation).not.toBeNull();
     const deleteConfirm = queryByTestId('delete-confirm');
-    fireEvent.click(deleteConfirm);
+    fireEvent(deleteConfirm, new CustomEvent('_click'));
     const actions = store.getActions();
     const deleteAction = actions.find((action) => action.type === DELETE_EVENT_DEFINITION_ACTION);
     expect(deleteAction).toBeTruthy();
@@ -83,8 +83,7 @@ describe('Definitions Page', () => {
     fireEvent.click(deleteBtn);
 
     const deleteCancel = queryByTestId('delete-cancel');
-    fireEvent.click(deleteCancel);
-
+    fireEvent(deleteCancel, new CustomEvent('_click'));
     await waitFor(() => {
       expect(queryByTestId('delete-cancel')).toBeNull();
     });

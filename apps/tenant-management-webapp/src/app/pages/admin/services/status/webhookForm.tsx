@@ -208,7 +208,7 @@ export const WebhookFormModal: FC<Props> = ({
                 <label>Application</label>
                 <GoADropdown
                   name="Application"
-                  value={[webhook.targetId]}
+                  value={webhook.targetId}
                   onChange={(_n, [value]) =>
                     setWebhook({
                       ...webhook,
