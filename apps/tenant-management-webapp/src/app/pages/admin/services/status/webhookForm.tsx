@@ -11,6 +11,7 @@ import {
   GoAButtonGroup,
   GoATextArea,
   GoAIcon,
+  GoAInput,
 } from '@abgov/react-components-new';
 import { getEventDefinitions } from '@store/event/actions';
 import { useValidators } from '@lib/validation/useValidators';
@@ -28,7 +29,6 @@ import {
 import {
   GoAForm,
   GoAFormItem,
-  GoAInput,
   GoAModal,
   GoAModalActions,
   GoAModalContent,
@@ -154,6 +154,8 @@ export const WebhookFormModal: FC<Props> = ({
                 <GoAInput
                   type="text"
                   name="name"
+                  width="100%"
+                  testId="webhook-name-input"
                   value={webhook?.name}
                   onChange={(name, value) => {
                     validators['nameOnly'].check(value);
@@ -171,7 +173,9 @@ export const WebhookFormModal: FC<Props> = ({
                 <label>Url</label>
                 <GoAInput
                   name="url"
-                  type="text"
+                  type="url"
+                  width="100%"
+                  testId="webhook-url-input"
                   value={webhook?.url}
                   onChange={(name, value) => {
                     validators.remove('url');
@@ -190,6 +194,8 @@ export const WebhookFormModal: FC<Props> = ({
                   <GoAInput
                     name="interval"
                     type="number"
+                    width="100%"
+                    testId="webhook-wait-interval-input"
                     value={(webhook?.intervalMinutes || '').toString()}
                     onChange={(name, value) => {
                       validators['waitInterval'].check(parseInt(value));
@@ -199,8 +205,8 @@ export const WebhookFormModal: FC<Props> = ({
                       });
                     }}
                     aria-label="description"
+                    suffix="min"
                   />
-                  <div className="minute-button">min</div>
                 </div>
               </GoAFormItem>
 
@@ -217,6 +223,7 @@ export const WebhookFormModal: FC<Props> = ({
                   }
                   aria-label="select-webhook-dropdown"
                   width="100%"
+                  testId="webhook-application-dropdown"
                 >
                   {applications.map((application): JSX.Element => {
                     return (

@@ -1,34 +1,10 @@
 import styled from 'styled-components';
 
-export const DeleteInDaysLabel = styled.label`
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
-  padding-top: 0.5rem;
-  font-size: 18px;
-  padding-bottom: 0.5rem;
-  background: #f1f1f1;
-  border-width: 1px 0px 1px 1px;
-  border-style: solid;
-  border-color: #666666;
-  border-radius: 4px 0px 0px 4px;
-`;
-
 export const RetentionPolicyLabel = styled.label`
   font-size: 24px !important;
   line-height: 32px;
   margin-top: 24px;
   font-weight: normal !important;
-`;
-
-export const DeleteInDaysInputWrapper = styled.div`
-  display: inline-block;
-  width: 10rem;
-  .goa-input {
-    border-radius: 0px 4px 4px 0px !important;
-  }
-  z-index: 0;
-  position: revert;
-  margin-bottom: 2rem;
 `;
 
 export const FileIdItem = styled.div`

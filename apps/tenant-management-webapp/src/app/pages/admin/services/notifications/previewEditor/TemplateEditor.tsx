@@ -7,9 +7,8 @@ import { buildSuggestions, triggerInScope } from '@lib/autoComplete';
 import { Template } from '@store/notification/models';
 import { SaveFormModal } from '@components/saveModal';
 import { subjectEditorConfig, bodyEditorConfig } from './config';
-import { GoAInfoBadge, GoABadge } from '@abgov/react-components/experimental';
 import { Tab, Tabs } from '@components/Tabs';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoABadge } from '@abgov/react-components-new';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -149,20 +148,20 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
                       item.subject?.length !== 0 ? (
                         <div>
                           <div className="mobile">
-                            <GoAInfoBadge content="" type="information" />
+                            <GoABadge content="" type="information" />
                           </div>
                           <div className="desktop">
-                            <GoAInfoBadge content="Unsaved" type="information" />
+                            <GoABadge content="Unsaved" type="information" />
                           </div>
                         </div>
                       ) : (
                         (item.body?.length === 0 || item.subject?.length === 0) && (
                           <div>
                             <div className="mobile">
-                              <GoABadge type="warning" icon="warning" />
+                              <GoABadge type="important" icon />
                             </div>
                             <div className="desktop">
-                              <GoABadge type="warning" content="Unfilled" icon="warning" />
+                              <GoABadge type="important" content="Unfilled" icon />
                             </div>
                           </div>
                         )

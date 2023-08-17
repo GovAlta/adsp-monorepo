@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { Role } from '@store/tenant/models';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
-import { GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
+import { GoAButton, GoAButtonGroup, GoAInput } from '@abgov/react-components-new';
+import { GoAFormItem } from '@abgov/react-components/experimental';
 import { GoACheckbox, GoAPopover } from '@abgov/react-components-new';
 import {
-  DeleteInDaysLabel,
   RetentionPolicyLabel,
-  DeleteInDaysInputWrapper,
   FileIdItem,
   ModalOverwrite,
   AnonymousReadWrapper,
@@ -49,18 +47,17 @@ const DeleteInDaysItem = ({ value, updateFunc, disabled }: DeleteInDaysInputProp
   const day = value === undefined ? '' : value.toString();
   return (
     <>
-      <DeleteInDaysLabel>Days</DeleteInDaysLabel>
-      <DeleteInDaysInputWrapper>
-        <GoAInput
-          onChange={updateFunc}
-          data-testid={'delete-in-days-input'}
-          name="delete-in-days"
-          value={day}
-          type="number"
-          disabled={disabled}
-          aria-label="goa-input-delete-in-days"
-        />
-      </DeleteInDaysInputWrapper>
+      <GoAInput
+        onChange={updateFunc}
+        testId={'delete-in-days-input'}
+        name="delete-in-days"
+        value={day}
+        type="number"
+        disabled={disabled}
+        aria-label="goa-input-delete-in-days"
+        prefix="Days"
+        width="20%"
+      />
     </>
   );
 };
@@ -167,7 +164,8 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
               name="name"
               disabled={props.type === 'edit'}
               value={fileType.name}
-              data-testid={`file-type-modal-name-input`}
+              width="100%"
+              testId={`file-type-modal-name-input`}
               onChange={(name, value) => {
                 const newFileType = {
                   ...fileType,
@@ -192,9 +190,10 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
             <label>Type ID</label>
             <FileIdItem>
               <GoAInput
-                data-testid={`file-type-modal-id`}
+                testId={`file-type-modal-id`}
                 value={fileType.id || ''}
                 disabled={true}
+                width="100%"
                 name="file-type-id"
                 type="text"
                 aria-label="goa-input-file-type-id"
