@@ -36,7 +36,7 @@ Given('a tenant admin user is on status notices page', function () {
 });
 
 When('the user clicks Add notice button', function () {
-  statusObj.addNoticeButton().click();
+  statusObj.addNoticeButton().shadow().find('button').click({ force: true });
 });
 
 Then('the user views Add notice dialog', function () {
@@ -94,12 +94,12 @@ When(
 );
 
 When('the user clicks Save as draft button', function () {
-  statusObj.noticeModalSaveButton().click();
+  statusObj.noticeModalSaveButton().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 
 When('the user clicks Cancel button in notice modal', function () {
-  statusObj.noticeModalCancelButton().click();
+  statusObj.noticeModalCancelButton().shadow().find('button').click({ force: true });
   cy.wait(1000);
 });
 
@@ -465,7 +465,7 @@ Then('the user views the subscribe checkbox is {string}', function (checkboxStat
 });
 
 When('the user clicks Add application button', function () {
-  statusObj.addApplicationButton().click();
+  statusObj.addApplicationButton().shadow().find('button').click({ force: true });
   cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
@@ -563,7 +563,7 @@ Then('the user views Manual status change modal', function () {
 
 When('the user selects {string} and clicks Save button', function (statusName) {
   statusObj.manualStatusChangeModalStatusRadio(statusName.toLowerCase()).click();
-  statusObj.manualStatusChangeModalSaveBtn().click();
+  statusObj.manualStatusChangeModalSaveBtn().shadow().find('button').click({ force: true });
   cy.wait(2000); // Wait for the status to change after save
 });
 
@@ -608,7 +608,7 @@ Then('the user changes status to the first unused status', function () {
 });
 
 When('the user clicks Save button in Manual status change modal', function () {
-  statusObj.manualStatusChangeModalSaveBtn().click();
+  statusObj.manualStatusChangeModalSaveBtn().shadow().find('button').click({ force: true });
   cy.wait(4000);
 });
 
@@ -629,7 +629,7 @@ Then('the user views the status of {string} changed to the first unused status',
 });
 
 When('the user clicks Edit button for contact information', function () {
-  statusObj.contactInformationEditBtn().click();
+  statusObj.contactInformationEditBtn().shadow().find('button').click({ force: true });
   cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
@@ -642,12 +642,12 @@ When('the user enters {string} in Edit contact information modal', function (ema
 });
 
 Then('the user clicks Save button on contact information modal', function () {
-  statusObj.editContactInformationEmailSaveBtn().click();
+  statusObj.editContactInformationEmailSaveBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 
 Then('the user clicks Cancel button on contact information modal', function () {
-  statusObj.editContactInformationEmailCancelBtn().click();
+  statusObj.editContactInformationEmailCancelBtn().shadow().find('button').click({ force: true });
   cy.wait(1000);
 });
 

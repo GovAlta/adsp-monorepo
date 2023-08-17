@@ -356,13 +356,11 @@ When('user goes to {string} tab', function (tabText) {
 
 Then('the user views file types page', function () {
   // Check if the new file type button presents
-  fileServiceObj.addFileTypeButton().then((button) => {
-    expect(button.length).to.be.gt(0); //element exists
-  });
+  fileServiceObj.addFileTypeButton().should('exist');
 });
 
 When('the user clicks Add file type button on file types page', function () {
-  fileServiceObj.addFileTypeButton().click();
+  fileServiceObj.addFileTypeButton().shadow().find('button').click({ force: true });
   cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
@@ -409,8 +407,8 @@ When('the user enters {string}, {string}, {string} on file type modal', function
             .shadow()
             .find('.goa-checkbox-container')
             .click({ force: true, multiple: true });
-
-          cy.log('Make public checkbox is already checked off. ');
+          cy.log('Make public checkbox has been unchecked. ');
+          cy.wait(1000); // Wait for read roles to be enabled
         } else {
           cy.log('Make public checkbox is already unchecked. ');
         }
@@ -464,12 +462,12 @@ When('the user enters {string}, {string}, {string} on file type modal', function
 
 When('the user clicks Save button on file type modal', function () {
   cy.wait(1000); // Wait for the button to be enabled
-  fileServiceObj.fileTypeModalSaveButton().click({ force: true, multiple: true });
+  fileServiceObj.fileTypeModalSaveButton().shadow().find('button').click({ force: true, multiple: true });
   cy.wait(2000); // Wait the file type list to refresh
 });
 
 When('the user clicks Cancel button on file type modal', function () {
-  fileServiceObj.fileTypeModalCancelButton().click();
+  fileServiceObj.fileTypeModalCancelButton().shadow().find('button').click({ force: true });
   cy.wait(1000); // Wait the file type list to refresh
 });
 
@@ -522,7 +520,7 @@ Then('the user views Delete file type modal for {string}', function (fileTypeNam
 
 When('the user clicks Delete button on file type modal', function () {
   fileServiceObj.fileTypeDeleteModal().should('be.visible');
-  fileServiceObj.fileTypeDeleteModalDeleteButton().scrollIntoView().click();
+  fileServiceObj.fileTypeDeleteModalDeleteButton().shadow().find('button').scrollIntoView().click({ force: true });
   cy.wait(2000); //Wait the file type list to refresh
 });
 
@@ -594,7 +592,7 @@ Then('the user views file type current in user modal for {string}', function (fi
 });
 
 When('the user clicks Okay button', function () {
-  fileServiceObj.fileTypeDeleteModalOkayBtn().click();
+  fileServiceObj.fileTypeDeleteModalOkayBtn().shadow().find('button').click({ force: true });
   cy.wait(1000);
 });
 
