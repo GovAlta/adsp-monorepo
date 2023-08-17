@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { NotificationItem } from '@store/notification/models';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
@@ -107,32 +107,33 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
         </GoAForm>
       </GoAModalContent>
       <GoAModalActions>
-        <GoAButton data-testid="event-form-cancel" buttonType="secondary" type="button" onClick={onCancel}>
-          Cancel
-        </GoAButton>
-        <GoAButton
-          disabled={selectedValues[0] === ''}
-          buttonType="primary"
-          data-testid="event-form-save"
-          type="submit"
-          onClick={() => {
-            const dropdownObject = dropDownOptions.find((dropdown) => dropdown.value === selectedValues);
-            const eventObject: EventItem = {
-              namespace: dropdownObject.nameSpace,
-              name: dropdownObject.name,
-              templates: baseTemplate,
-            };
-            // deep cloning props to avoid unwanted side effects
-            // note: do not mutate props directly, it will cause unnecessary side effects
-            const deepClonedDefinition = JSON.parse(JSON.stringify(definition));
-            deepClonedDefinition.events.push(eventObject);
-            onNext(deepClonedDefinition, eventObject);
+        <GoAButtonGroup alignment="end">
+          <GoAButton testId="event-form-cancel" type="secondary" onClick={onCancel}>
+            Cancel
+          </GoAButton>
+          <GoAButton
+            disabled={selectedValues[0] === ''}
+            type="primary"
+            testId="event-form-save"
+            onClick={() => {
+              const dropdownObject = dropDownOptions.find((dropdown) => dropdown.value === selectedValues);
+              const eventObject: EventItem = {
+                namespace: dropdownObject.nameSpace,
+                name: dropdownObject.name,
+                templates: baseTemplate,
+              };
+              // deep cloning props to avoid unwanted side effects
+              // note: do not mutate props directly, it will cause unnecessary side effects
+              const deepClonedDefinition = JSON.parse(JSON.stringify(definition));
+              deepClonedDefinition.events.push(eventObject);
+              onNext(deepClonedDefinition, eventObject);
 
-            setValues(['']);
-          }}
-        >
-          Next
-        </GoAButton>
+              setValues(['']);
+            }}
+          >
+            Next
+          </GoAButton>
+        </GoAButtonGroup>
       </GoAModalActions>
     </GoAModal>
   );

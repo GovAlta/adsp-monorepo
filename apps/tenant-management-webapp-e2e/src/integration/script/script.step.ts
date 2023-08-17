@@ -15,7 +15,7 @@ Given('a tenant admin user is on script service overview page', function () {
 });
 
 When('the user clicks Add script button', function () {
-  scriptObj.addScriptBtn().click();
+  scriptObj.addScriptBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 
@@ -67,7 +67,7 @@ When('the user clicks Save button in Add script modal', function () {
 });
 
 When('the user clicks Cancel button in Add script modal', function () {
-  scriptObj.scriptModalCancelButton().click();
+  scriptObj.scriptModalCancelButton().shadow().find('button').click({ force: true });
   cy.wait(1000);
 });
 

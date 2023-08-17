@@ -1,7 +1,5 @@
-import React, { FunctionComponent } from 'react';
-import { GoAButton } from '@abgov/react-components';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { ActionButtonWrapper } from './styled-components';
+import React from 'react';
+import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
 interface deleteModalProps {
   title: string;
   content?: string | JSX.Element;
@@ -10,21 +8,25 @@ interface deleteModalProps {
   onCancel: () => void;
 }
 
-export const DeleteModal: FunctionComponent<deleteModalProps> = ({ isOpen, title, content, onDelete, onCancel }) => {
+export const DeleteModal = ({ isOpen, title, content, onDelete, onCancel }: deleteModalProps) => {
   return (
-    <GoAModal testId="delete-confirmation" isOpen={isOpen}>
-      <GoAModalTitle>{title}</GoAModalTitle>
-      <GoAModalContent>{content}</GoAModalContent>
-      <GoAModalActions>
-        <ActionButtonWrapper>
-          <GoAButton buttonType="secondary" data-testid="delete-cancel" onClick={onCancel}>
+    <GoAModal
+      testId="delete-confirmation"
+      open={isOpen}
+      heading={title}
+      width="640px"
+      actions={
+        <GoAButtonGroup alignment="end">
+          <GoAButton type="secondary" testId="delete-cancel" onClick={onCancel}>
             Cancel
           </GoAButton>
-          <GoAButton buttonType="primary" variant="destructive" data-testid="delete-confirm" onClick={onDelete}>
+          <GoAButton type="primary" variant="destructive" testId="delete-confirm" onClick={onDelete}>
             Delete
           </GoAButton>
-        </ActionButtonWrapper>
-      </GoAModalActions>
+        </GoAButtonGroup>
+      }
+    >
+      {content}
     </GoAModal>
   );
 };

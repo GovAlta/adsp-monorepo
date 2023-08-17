@@ -9,7 +9,7 @@ import {
   GoAInputEmail,
   GoAFormActions,
 } from '@abgov/react-components/experimental';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import '@abgov/core-css/src/lib/styles/v2/colors.scss';
 
 interface EventSearchFormProps {
@@ -52,24 +52,26 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
           </GoAFormItem>
         </GoAFlexRow>
         <GoAFormActions alignment="right">
-          <GoAButton
-            buttonType="secondary"
-            title="Reset"
-            onClick={() => {
-              reset();
-            }}
-          >
-            Reset
-          </GoAButton>
-          <GoAButton
-            title="Search"
-            onClick={() => {
-              onSearch(criteria);
-              onUpdate(criteria);
-            }}
-          >
-            Search
-          </GoAButton>
+          <GoAButtonGroup alignment="end">
+            <GoAButton
+              type="secondary"
+              testId="subscriber-search-reset-button"
+              onClick={() => {
+                reset();
+              }}
+            >
+              Reset
+            </GoAButton>
+            <GoAButton
+              testId="subscriber-search-search-button"
+              onClick={() => {
+                onSearch(criteria);
+                onUpdate(criteria);
+              }}
+            >
+              Search
+            </GoAButton>
+          </GoAButtonGroup>
         </GoAFormActions>
       </GoAForm>
     </div>

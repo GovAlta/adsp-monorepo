@@ -1,6 +1,6 @@
 import React from 'react';
 import { GoAModal, GoAModalActions, GoAModalTitle, GoAModalContent } from '@abgov/react-components/experimental';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { useDispatch } from 'react-redux';
 import { createKeycloakRole } from '@store/access/actions';
 import { ServiceRoleSyncStatus } from '@store/access/models';
@@ -51,8 +51,8 @@ export const ConfirmationModal = ({ clientId, onCancel, role, status }: Confirma
       </GoAModalContent>
       <GoAModalActions>
         <GoAButton
-          buttonType="secondary"
-          data-testid="add-service-role-modal-cancel-btn"
+          type="secondary"
+          testId="add-service-role-modal-cancel-btn"
           key="add-service-role-modal-cancel"
           onClick={() => {
             onCancel();
@@ -61,8 +61,8 @@ export const ConfirmationModal = ({ clientId, onCancel, role, status }: Confirma
           Cancel
         </GoAButton>
         <GoAButton
-          buttonType="primary"
-          data-testid="add-service-role-modal-ok-btn"
+          type="primary"
+          testId="add-service-role-modal-ok-btn"
           key="add-service-role-modal-ok"
           onClick={() => {
             dispatch(createKeycloakRole(clientId, role));

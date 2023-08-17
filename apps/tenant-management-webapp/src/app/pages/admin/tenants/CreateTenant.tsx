@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { GoAButton, GoAElementLoader } from '@abgov/react-components';
-import { GoANotification } from '@abgov/react-components-new';
+import { GoAElementLoader } from '@abgov/react-components';
+
+import { GoANotification, GoAButton } from '@abgov/react-components-new';
 import { CreateTenant, IsTenantAdmin } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import GoALinkButton from '@components/LinkButton';
@@ -72,7 +73,7 @@ const CreateRealm = (): JSX.Element => {
   };
   const ButtonLoader = () => {
     return (
-      <GoAButton buttonType="primary" buttonSize="normal" disabled>
+      <GoAButton type="primary" disabled>
         Creating Tenant...
         <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
       </GoAButton>

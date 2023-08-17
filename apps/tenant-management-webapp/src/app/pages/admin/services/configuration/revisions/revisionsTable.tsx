@@ -231,10 +231,15 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
         heading={`Create a revision for ${service} ?`}
         actions={
           <GoAButtonGroup alignment="end">
-            <GoAButton type="secondary" onClick={() => setShowCreateNewRevision(false)}>
+            <GoAButton
+              type="secondary"
+              testId="revision-create-cancel-button"
+              onClick={() => setShowCreateNewRevision(false)}
+            >
               Cancel
             </GoAButton>
             <GoAButton
+              testId="revision-create-button"
               onClick={() => {
                 setShowCreateNewRevision(false);
                 dispatch(setConfigurationRevision(service));
@@ -250,10 +255,15 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
         heading={`Set active revision for ${service} revision ${selectedRevision?.revision}?`}
         actions={
           <GoAButtonGroup alignment="end">
-            <GoAButton type="secondary" onClick={() => setShowActiveRevision(false)}>
+            <GoAButton
+              type="secondary"
+              testId="revision-active-cancel-button"
+              onClick={() => setShowActiveRevision(false)}
+            >
               Cancel
             </GoAButton>
             <GoAButton
+              testId="revision-active-button"
               onClick={() => {
                 setShowActiveRevision(false);
                 dispatch(setConfigurationRevisionActive(service, selectedRevision.revision));

@@ -1,7 +1,7 @@
 import React from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { FileTypeItem } from '@store/file/models';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { useDispatch } from 'react-redux';
 import { DeleteFileTypeService } from '@store/file/actions';
 
@@ -17,8 +17,8 @@ interface OkButtonProps {
 const OkButton = ({ onCancel }: OkButtonProps) => {
   return (
     <GoAButton
-      buttonType="secondary"
-      data-testid="file-type-delete-modal-cancel-btn"
+      type="secondary"
+      testId="file-type-delete-modal-cancel-btn"
       onClick={() => {
         onCancel();
       }}
@@ -59,24 +59,26 @@ export const FileTypeDeleteModal = ({ onCancel, fileType }: FileTypeDeleteModalP
             <b>Are you sure you want to continue?</b>
           </p>{' '}
           <GoAModalActions>
-            <GoAButton
-              buttonType="secondary"
-              data-testid="file-type-delete-modal-delete-cancel"
-              onClick={() => {
-                onCancel();
-              }}
-            >
-              Cancel
-            </GoAButton>
-            <GoAButton
-              data-testid="file-type-delete-modal-delete-btn"
-              onClick={() => {
-                dispatch(DeleteFileTypeService(fileType));
-                onCancel();
-              }}
-            >
-              Delete
-            </GoAButton>
+            <GoAButtonGroup alignment="end">
+              <GoAButton
+                type="secondary"
+                testId="file-type-delete-modal-delete-cancel"
+                onClick={() => {
+                  onCancel();
+                }}
+              >
+                Cancel
+              </GoAButton>
+              <GoAButton
+                testId="file-type-delete-modal-delete-btn"
+                onClick={() => {
+                  dispatch(DeleteFileTypeService(fileType));
+                  onCancel();
+                }}
+              >
+                Delete
+              </GoAButton>
+            </GoAButtonGroup>
           </GoAModalActions>
         </GoAModalContent>
       </GoAModal>

@@ -22,7 +22,7 @@ import { SaveFormModal } from '@components/saveModal';
 import { PDFConfigForm } from './PDFConfigForm';
 import { bodyEditorConfig } from './config';
 import GeneratedPdfList from '../generatedPdfList';
-import { DeleteModal } from '../DeleteModal';
+import { DeleteModal } from '@components/DeleteModal';
 import { LogoutModal } from '@components/LogoutModal';
 import {
   deletePdfFilesService,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CopyLinkToolTipClipboardWrapper, CopyLinkToolTipWrapper, LinkCopyComponentWrapper } from './styled-components';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
-import { GoAButton as GoAButtonV2 } from '@abgov/react-components-new';
+import { GoAButton } from '@abgov/react-components-new';
 
 interface LinkCopyComponentProps {
   link: string;
@@ -53,16 +53,17 @@ const LinkCopyComponent = ({ link, text }: LinkCopyComponentProps): JSX.Element 
           </p>
         </CopyLinkToolTipWrapper>
       )}
-      <GoAButtonV2
+      <GoAButton
         type="secondary"
         leadingIcon="link"
+        testId="copy-link-button"
         onClick={() => {
           navigator.clipboard.writeText(link);
           setIsCopied(true);
         }}
       >
         {text}
-      </GoAButtonV2>
+      </GoAButton>
     </LinkCopyComponentWrapper>
   );
 };

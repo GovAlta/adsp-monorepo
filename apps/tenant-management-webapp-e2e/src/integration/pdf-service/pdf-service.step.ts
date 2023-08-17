@@ -32,7 +32,7 @@ Then('the user views the Pdf service overview content {string}', function (parag
 });
 
 When('the user clicks Add template button', function () {
-  pdfServiceObj.pdfAddTemplateBtn().click();
+  pdfServiceObj.pdfAddTemplateBtn().shadow().find('button').click({ force: true });
   cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
@@ -84,12 +84,7 @@ Then('the user navigates to Templates page', function () {
 });
 
 Then('the user views Delete PDF template modal for {string}', function (templateName) {
-  pdfServiceObj
-    .pdfTemplateDeleteConfirmationModal()
-    .shadow()
-    .get('[slot="heading"]')
-    .invoke('text')
-    .should('eq', 'Delete PDF template');
+  pdfServiceObj.pdfTemplateDeleteConfirmationModalHeading().invoke('text').should('eq', 'Delete PDF template');
   pdfServiceObj
     .pdfTemplateDeleteConfirmationModalContent()
     .invoke('text')
@@ -189,6 +184,7 @@ When('the user clicks the {string} tab in PDF template editor and view content',
             pdfServiceObj.pdfTemplateHeaderTab().click();
           }
         });
+      cy.wait(1000); // Wait for editor content to show up
       pdfServiceObj.pdfTemplateHeaderEditor().contains('header-wrapper');
       break;
     case 'footer':
@@ -200,6 +196,7 @@ When('the user clicks the {string} tab in PDF template editor and view content',
             pdfServiceObj.pdfTemplateFooterTab().click();
           }
         });
+      cy.wait(1000); // Wait for editor content to show up
       pdfServiceObj.pdfTemplateFooterEditor().contains('footer-wrapper');
       break;
     case 'css':
@@ -211,6 +208,7 @@ When('the user clicks the {string} tab in PDF template editor and view content',
             pdfServiceObj.pdfTemplateCssTab().click();
           }
         });
+      cy.wait(1000); // Wait for editor content to show up
       pdfServiceObj.pdfTemplateCssEditor().contains('style');
       break;
     case 'test data':
@@ -222,6 +220,7 @@ When('the user clicks the {string} tab in PDF template editor and view content',
             pdfServiceObj.pdfTemplateTestDataTab().click();
           }
         });
+      cy.wait(1000); // Wait for editor content to show up
       pdfServiceObj.pdfTemplateTestDataEditor().contains('service');
       break;
     case 'file history':

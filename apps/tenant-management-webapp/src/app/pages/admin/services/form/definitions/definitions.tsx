@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
+
 import { useDispatch, useSelector } from 'react-redux';
 import { getFormDefinitions, deleteFormDefinition } from '@store/form/action';
 import { RootState } from '@store/index';
@@ -9,7 +10,7 @@ import { FormDefinitionsTable } from './definitionsList';
 import { PageIndicator } from '@components/Indicator';
 import { defaultFormDefinition } from '@store/form/model';
 
-import { DeleteModal } from './DeleteModal';
+import { DeleteModal } from '@components/DeleteModal';
 import { useHistory } from 'react-router-dom';
 import { useRouteMatch } from 'react-router';
 
@@ -49,7 +50,7 @@ export const FormDefinitions = () => {
       <div>
         <br />
         <GoAButton
-          data-testid="add-definition"
+          testId="add-definition"
           onClick={() => {
             history.push(`${url}/new?definitions=true`);
           }}

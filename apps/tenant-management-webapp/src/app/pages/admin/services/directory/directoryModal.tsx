@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import { Service } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
@@ -131,51 +131,53 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
         </GoAForm>
       </GoAModalContent>
       <GoAModalActions>
-        <GoAButton
-          buttonType="secondary"
-          data-testid="directory-modal-cancel"
-          onClick={() => {
-            props.onCancel();
-            validators.clear();
-          }}
-        >
-          Cancel
-        </GoAButton>
-        <GoAButton
-          buttonType="primary"
-          disabled={!entry.service || !entry.url || validators.haveErrors()}
-          data-testid="directory-modal-save"
-          onClick={(e) => {
-            const validations = {
-              serviceDuplicate: entry,
-              apiDuplicate: entry,
-            };
+        <GoAButtonGroup alignment="end">
+          <GoAButton
+            type="secondary"
+            testId="directory-modal-cancel"
+            onClick={() => {
+              props.onCancel();
+              validators.clear();
+            }}
+          >
+            Cancel
+          </GoAButton>
+          <GoAButton
+            type="primary"
+            disabled={!entry.service || !entry.url || validators.haveErrors()}
+            testId="directory-modal-save"
+            onClick={() => {
+              const validations = {
+                serviceDuplicate: entry,
+                apiDuplicate: entry,
+              };
 
-            if (!isEdit && !validators.checkAll(validations)) {
-              return;
-            }
-
-            if (isNew) {
-              dispatch(createEntry(entry));
-              if (!entry.api) {
-                const fetchTime = setInterval(() => dispatch(fetchEntryDetail(entry)), 1000);
-                setTimeout(() => {
-                  clearInterval(fetchTime);
-                }, 1000);
+              if (!isEdit && !validators.checkAll(validations)) {
+                return;
               }
-            }
-            if (isQuickAdd) {
-              dispatch(createEntry(entry));
-            }
-            if (props.type === 'edit') {
-              dispatch(updateEntry(entry));
-            }
 
-            props.onCancel();
-          }}
-        >
-          Save
-        </GoAButton>
+              if (isNew) {
+                dispatch(createEntry(entry));
+                if (!entry.api) {
+                  const fetchTime = setInterval(() => dispatch(fetchEntryDetail(entry)), 1000);
+                  setTimeout(() => {
+                    clearInterval(fetchTime);
+                  }, 1000);
+                }
+              }
+              if (isQuickAdd) {
+                dispatch(createEntry(entry));
+              }
+              if (props.type === 'edit') {
+                dispatch(updateEntry(entry));
+              }
+
+              props.onCancel();
+            }}
+          >
+            Save
+          </GoAButton>
+        </GoAButtonGroup>
       </GoAModalActions>
     </GoAModal>
   );

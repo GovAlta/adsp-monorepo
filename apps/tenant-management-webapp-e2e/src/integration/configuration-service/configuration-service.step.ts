@@ -50,7 +50,7 @@ Given('a tenant admin user is on configuration overview page', function () {
 });
 
 When('the user clicks Add definition button on configuration overview page', function () {
-  configurationObj.addConfigurationDefinitionBtn().click();
+  configurationObj.addConfigurationDefinitionBtn().shadow().find('button').click({ force: true });
   cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
@@ -92,12 +92,12 @@ When(
 );
 
 When('the user clicks Save button in configuration definition modal', function () {
-  configurationObj.configurationDefinitionModalSaveBtn().click();
+  configurationObj.configurationDefinitionModalSaveBtn().shadow().find('button').click({ force: true });
   cy.wait(2000); // Wait for the record to save and show in the grid
 });
 
 When('the user clicks Cancel button in configuration definition modal', function () {
-  configurationObj.configurationDefinitionModalCancelBtn().click();
+  configurationObj.configurationDefinitionModalCancelBtn().shadow().find('button').click({ force: true });
   cy.wait(1000); // Wait for the record to save and show in the grid
 });
 

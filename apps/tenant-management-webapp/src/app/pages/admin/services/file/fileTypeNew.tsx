@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FileTypeModal } from './fileTypeModal';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { Role } from '@store/tenant/models';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
@@ -51,7 +51,7 @@ export const AddFileType = ({ roles, activeEdit }: AddFileTypeProps): JSX.Elemen
   return (
     <div>
       <GoAButton
-        data-testid="add-file-type-btn"
+        testId="add-file-type-btn"
         onClick={() => {
           setWillAddNew(true);
         }}

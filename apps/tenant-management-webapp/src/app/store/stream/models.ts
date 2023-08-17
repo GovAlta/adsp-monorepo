@@ -20,6 +20,7 @@ export const initialStream: Stream = {
   events: [],
   description: '',
   publicSubscribe: false,
+  subscriberRoles: [],
 };
 export interface StreamStatus {
   core: Streams;

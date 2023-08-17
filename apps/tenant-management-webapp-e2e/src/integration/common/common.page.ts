@@ -34,16 +34,16 @@ class Common {
   }
 
   deleteConfirmationModalTitle() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//*[@class="modal-title"]');
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]//*[@slot="heading"]');
   }
 
   deleteConfirmationModalContent() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//*[@class="goa-scrollable"]');
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]');
   }
 
   deleteConfirmationModalDeleteBtn() {
     return cy.xpath(
-      '//*[@data-testid="delete-confirmation" and @data-state="visible"]//*[@data-testid="delete-confirm"]'
+      '//*[@data-testid="delete-confirmation" and @open="true"]//goa-button[@data-testid="delete-confirm"]'
     );
   }
 

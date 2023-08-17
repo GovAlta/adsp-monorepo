@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect } from 'react';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 
 import { getEventDefinitions } from '@store/event/actions';
 import { useDispatch } from 'react-redux';
@@ -50,7 +50,7 @@ export const EventsOverview: FunctionComponent<OverviewProps> = (props) => {
           variables as matching the payload from a triggering event.
         </p>
         <GoAButton
-          data-testid="add-definition"
+          testId="add-definition"
           onClick={() => {
             setActiveEdit(true);
           }}

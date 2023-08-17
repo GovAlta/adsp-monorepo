@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { ContactInformation } from '@store/notification/models';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
@@ -111,17 +111,14 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <GoAButton data-testid="form-cancel" buttonType="secondary" type="button" onClick={tryCancel}>
-            Cancel
-          </GoAButton>
-          <GoAButton
-            buttonType="primary"
-            data-testid="form-save"
-            type="submit"
-            onClick={(e) => trySave(contactInformation)}
-          >
-            Save
-          </GoAButton>
+          <GoAButtonGroup alignment="end">
+            <GoAButton testId="form-cancel" type="secondary" onClick={tryCancel}>
+              Cancel
+            </GoAButton>
+            <GoAButton type="primary" testId="form-save" onClick={() => trySave(contactInformation)}>
+              Save
+            </GoAButton>
+          </GoAButtonGroup>
         </GoAModalActions>
       </GoAModal>
     </EditStyles>

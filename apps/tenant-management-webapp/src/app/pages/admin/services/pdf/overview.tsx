@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect } from 'react';
-import { GoAButton } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { PdfMetrics } from './metrics';
 import { useDispatch } from 'react-redux';
 import { fetchPdfMetrics } from '@store/pdf/action';
@@ -30,7 +30,7 @@ export const PdfOverview: FunctionComponent<PdfOverviewProps> = ({ setOpenAddTem
       addButton={
         <>
           <GoAButton
-            data-testid="add-templates"
+            testId="add-templates"
             onClick={() => {
               history.push({
                 pathname: '/admin/services/pdf',
