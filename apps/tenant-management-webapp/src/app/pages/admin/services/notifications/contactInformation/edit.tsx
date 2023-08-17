@@ -1,11 +1,9 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { ContactInformation } from '@store/notification/models';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
-import { GoATextArea } from '@abgov/react-components-new';
-import { GoAInputEmail } from '@abgov/react-components/experimental';
+import { GoATextArea, GoAInput, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { isSmsValid, emailError, smsError } from '@lib/inputValidation';
 
 interface NotificationTypeFormProps {
@@ -62,9 +60,11 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
             <ErrorWrapper>
               <GoAFormItem error={formErrors?.['email']}>
                 <label>Email</label>
-                <GoAInputEmail
+                <GoAInput
+                  type="email"
                   name="email"
-                  data-testid="form-email"
+                  width="100%"
+                  testId="form-email"
                   value={contactInformation?.contactEmail || ''}
                   aria-label="email"
                   onChange={(_, value) => {
@@ -77,11 +77,12 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
                   Phone number <em>optional</em>
                 </label>
                 <GoAInput
-                  type="text"
+                  type="tel"
                   aria-label="sms"
                   name="sms"
+                  width="100%"
                   value={contactInformation?.phoneNumber || ''}
-                  data-testid="contact-sms-input"
+                  testId="contact-sms-input"
                   onChange={(_, value) => {
                     if (isSmsValid(value)) {
                       setContactInformation({ ...contactInformation, phoneNumber: value.substring(0, 10) });

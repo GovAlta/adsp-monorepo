@@ -1,5 +1,5 @@
-import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
-import { GoAForm, GoAFormItem, GoAFormActions, GoAFlexRow, GoAButton } from '@abgov/react-components/experimental';
+import { GoADropdown, GoADropdownItem, GoAButton, GoATooltip } from '@abgov/react-components-new';
+import { GoAForm, GoAFormItem, GoAFormActions, GoAFlexRow } from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
 import { setIntervalCriteria, setServiceCriteria } from '@store/metrics/actions';
 import { ChartInterval } from '@store/metrics/models';
@@ -47,12 +47,16 @@ export const MetricsSearchForm: FunctionComponent<MetricsSearchFormProps> = ({ o
         </GoAFormItem>
       </GoAFlexRow>
       <GoAFormActions alignment="right">
-        <GoAButton type="secondary" title="Reset" onClick={onReset}>
-          Reset
-        </GoAButton>
-        <GoAButton disabled={!chartInterval || !service} title="Search" onClick={onSearch}>
-          Search
-        </GoAButton>
+        <GoATooltip content="Reset" position="bottom">
+          <GoAButton type="secondary" onClick={onReset}>
+            Reset
+          </GoAButton>
+        </GoATooltip>
+        <GoATooltip content="Search" position="bottom">
+          <GoAButton disabled={!chartInterval || !service} onClick={onSearch}>
+            Search
+          </GoAButton>
+        </GoATooltip>
       </GoAFormActions>
     </GoAForm>
   );

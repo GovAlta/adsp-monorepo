@@ -1,12 +1,10 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { ContactInformation } from '@store/notification/models';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAInput } from '@abgov/react-components-new';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
 import { emailError } from '@lib/inputValidation';
-
-import { GoAInputEmail } from '@abgov/react-components/experimental';
 
 interface EditContactInformationFormProps {
   initialValue?: ContactInformation;
@@ -58,9 +56,11 @@ export const ContactInformationModalForm: FunctionComponent<EditContactInformati
             <ErrorWrapper>
               <GoAFormItem error={formErrors?.['email']}>
                 <label>Email</label>
-                <GoAInputEmail
+                <GoAInput
+                  type="email"
+                  width="100%"
                   name="email"
-                  data-testid="form-email"
+                  testId="form-email"
                   value={contactInformation?.contactEmail || ''}
                   aria-label="email"
                   onChange={(_, value) => {

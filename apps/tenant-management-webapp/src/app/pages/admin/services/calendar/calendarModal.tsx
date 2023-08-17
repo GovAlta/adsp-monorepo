@@ -1,9 +1,9 @@
 import React, { FunctionComponent, useState } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
-import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { CalendarItem } from '@store/calendar/models';
-import { GoATextArea } from '@abgov/react-components-new';
+import { GoATextArea, GoAInput } from '@abgov/react-components-new';
 import { useSelector } from 'react-redux';
 import { Role } from '@store/tenant/models';
 import { ClientRoleTable } from '@components/RoleTable';
@@ -134,9 +134,10 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
               type="text"
               name="name"
               value={calendar.displayName}
-              data-testid={`calendar-modal-name-input`}
+              testId={`calendar-modal-name-input`}
               aria-label="name"
               disabled={!isNew}
+              width="100%"
               onChange={(name, value) => {
                 const validations = {
                   name: value,

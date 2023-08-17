@@ -8,13 +8,12 @@ import {
   ResponseTableStyles,
   TestInputDivBody,
 } from '../styled-components';
-import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 import { SaveFormModal } from '@components/saveModal';
 import { ScriptItem } from '@store/script/models';
 import { ClearScripts, ExecuteScript } from '@store/script/actions';
-import { GoAButton } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
@@ -22,7 +21,7 @@ import { RootState } from '@store/index';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { functionSuggestion, functionSignature } from '@lib/luaCodeCompletion';
 import { buildSuggestions } from '@lib/autoComplete';
-import { GoATextArea } from '@abgov/react-components-new';
+import { GoATextArea, GoAInput, GoAButton } from '@abgov/react-components-new';
 interface ScriptEditorProps {
   editorConfig?: EditorProps;
   name: string;
@@ -182,8 +181,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             <GoAInput
               type="text"
               name="name"
+              width="100%"
               value={name}
-              data-testid={`script-modal-name-input`}
+              testId={`script-modal-name-input`}
               aria-label="script-name"
               onChange={(key, value) => {
                 onNameChange(value);

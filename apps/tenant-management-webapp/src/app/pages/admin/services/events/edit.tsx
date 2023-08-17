@@ -1,14 +1,8 @@
 import React, { FunctionComponent, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import type { EventDefinition } from '@store/event/models';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
-import {
-  GoAModal,
-  GoAModalActions,
-  GoAModalContent,
-  GoAModalTitle,
-  GoAInput,
-} from '@abgov/react-components/experimental';
+import { GoAButton, GoAButtonGroup, GoAInput } from '@abgov/react-components-new';
+import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import {
   wordCheck,
@@ -85,7 +79,8 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
                 name="namespace"
                 value={definition.namespace}
                 disabled={isEdit}
-                data-testid="form-namespace"
+                width="100%"
+                testId="form-namespace"
                 aria-label="nameSpace"
                 onChange={(name, value) => {
                   validators.remove('namespace');
@@ -99,9 +94,10 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               <GoAInput
                 type="text"
                 name="name"
+                width="100%"
                 value={definition.name}
                 disabled={isEdit}
-                data-testid="form-name"
+                testId="form-name"
                 aria-label="name"
                 onChange={(name, value) => {
                   validators.remove('name');
