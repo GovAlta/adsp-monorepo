@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useState } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoACheckbox, GoATextArea, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
-import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
+import { GoACheckbox, GoATextArea, GoAButton, GoAButtonGroup, GoAInput } from '@abgov/react-components-new';
+import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { ScriptItem } from '@store/script/models';
 import { useSelector } from 'react-redux';
 import { Role } from '@store/tenant/models';
@@ -117,7 +117,8 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
               type="text"
               name="name"
               value={script.name}
-              data-testid={`script-modal-name-input`}
+              width="100%"
+              testId={`script-modal-name-input`}
               aria-label="name"
               onChange={(name, value) => {
                 const scriptId = toKebabName(value);

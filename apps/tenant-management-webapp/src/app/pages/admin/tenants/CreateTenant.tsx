@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { GoAElementLoader } from '@abgov/react-components';
 
-import { GoANotification, GoAButton } from '@abgov/react-components-new';
+import { GoANotification, GoAButton, GoAInput } from '@abgov/react-components-new';
 import { CreateTenant, IsTenantAdmin } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import GoALinkButton from '@components/LinkButton';
-import { GoAForm, GoAFormActions, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormActions, GoAFormItem } from '@abgov/react-components/experimental';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import { KeycloakCheckSSO, TenantLogin } from '@store/tenant/actions';
@@ -136,7 +136,15 @@ const CreateRealm = (): JSX.Element => {
                     <GoAForm>
                       <GoAFormItem error={notifications[notifications.length - 1]?.message}>
                         <label htmlFor="name">Tenant name</label>
-                        <GoAInput name="name" id="name" type="text" value={name} onChange={onChangeName} />
+                        <GoAInput
+                          name="name"
+                          testId="name-input"
+                          id="name"
+                          type="text"
+                          value={name}
+                          width="100%"
+                          onChange={onChangeName}
+                        />
                       </GoAFormItem>
                       <GoAFormActions alignment="left">
                         {isLoaded ? <TenantCreateView /> : <ButtonLoader />}

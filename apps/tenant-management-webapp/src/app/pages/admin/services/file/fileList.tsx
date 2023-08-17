@@ -236,6 +236,7 @@ const FileList = (): JSX.Element => {
               name="name"
               id="name"
               value={searchName}
+              testId="file-type-name-input"
               width="100%"
               onChange={(_, value) => setSearchName(value)}
             />

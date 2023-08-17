@@ -1,12 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { GoADropdownOption, GoADropdown } from '@abgov/react-components';
-import {
-  GoAModal,
-  GoAModalActions,
-  GoAModalContent,
-  GoAModalTitle,
-  GoAInput,
-} from '@abgov/react-components/experimental';
+import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { AnonymousWrapper, ChipsWrapper, IdField, StreamModalStyles } from '../styleComponents';
 import { Stream } from '@store/stream/models';
@@ -19,8 +13,7 @@ import { EventDefinition } from '@store/event/models';
 import { RolesTable } from './rolesTable';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { ServiceRoleConfig } from '@store/access/models';
-import { GoAChip, GoACheckbox } from '@abgov/react-components-new';
-import { GoATextArea, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAChip, GoACheckbox, GoAInput, GoATextArea, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 interface AddEditStreamProps {
   onSave: (stream: Stream) => void;
   onClose: () => void;
@@ -89,9 +82,10 @@ export const AddEditStream = ({
               <GoAInput
                 type="text"
                 name="stream-name"
+                width="100%"
                 value={stream.name}
                 disabled={isEdit}
-                data-testid="stream-name"
+                testId="stream-name"
                 aria-label="stream-name"
                 onChange={(name, value) => {
                   validators.remove('name');

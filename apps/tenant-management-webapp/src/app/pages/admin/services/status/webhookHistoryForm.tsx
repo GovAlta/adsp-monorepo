@@ -6,14 +6,13 @@ import DataTable from '@components/DataTable';
 import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
 import { getEventDefinitions } from '@store/event/actions';
 
-import { GoABadge, GoAButton } from '@abgov/react-components-new';
+import { GoABadge, GoAButton, GoAInput } from '@abgov/react-components-new';
 import styled from 'styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
 
 import {
   GoAForm,
   GoAFormItem,
-  GoAInput,
   GoAModal,
   GoAModalActions,
   GoAModalContent,
@@ -178,7 +177,9 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
                 <label>URL</label>
                 <GoAInput
                   name="url"
-                  type="text"
+                  type="url"
+                  width="100%"
+                  testId="webhook-history-url-input"
                   value={searchCriteria.url}
                   onChange={(name, value) => {
                     setSearchCriteria({ ...searchCriteria, url: value });
