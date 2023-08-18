@@ -1,0 +1,54 @@
+{
+  "name": "tools-scripts",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "tools/scripts",
+  "projectType": "library",
+  "generators": {},
+  "targets": {
+    "build-encodeSecrets": {
+      "executor": "@nrwl/node:webpack",
+      "options": {
+        "outputPath": "dist/tools/scripts/encodeSecrets",
+        "main": "tools/scripts/encodeSecrets/index.ts",
+        "tsConfig": "tools/tsconfig.scripts.json",
+        "assets": [],
+        "buildLibsFromSource": true
+      },
+      "outputs": ["{options.outputPath}"]
+    },
+    "build-loadDirectoryData": {
+      "executor": "@nrwl/node:webpack",
+      "options": {
+        "outputPath": "dist/tools/scripts/loadDirectoryData",
+        "main": "tools/scripts/loadDirectoryData/index.ts",
+        "tsConfig": "tools/tsconfig.scripts.json",
+        "assets": [],
+        "buildLibsFromSource": true
+      },
+      "outputs": ["{options.outputPath}"]
+    },
+    "execute": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          {
+            "command": "nx run tools-scripts:build-{args.script}"
+          },
+          {
+            "command": "node dist/tools/scripts/{args.script}/main.js"
+          }
+        ],
+        "parallel": false
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "options": {
+        "jestConfig": "tools/scripts/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "outputs": ["{workspaceRoot}/coverage/tools/scripts"]
+    }
+  },
+  "tags": []
+}

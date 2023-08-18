@@ -1,0 +1,40 @@
+{
+  "name": "adsp-service-sdk",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/adsp-service-sdk/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["libs/adsp-service-sdk/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/adsp-service-sdk"],
+      "options": {
+        "jestConfig": "libs/adsp-service-sdk/jest.config.ts",
+        "passWithNoTests": true
+      }
+    },
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/adsp-service-sdk",
+        "tsConfig": "libs/adsp-service-sdk/tsconfig.lib.json",
+        "packageJson": "libs/adsp-service-sdk/package.json",
+        "main": "libs/adsp-service-sdk/src/index.ts",
+        "assets": ["libs/adsp-service-sdk/*.md"]
+      }
+    },
+    "release": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx semantic-release -e ./libs/adsp-service-sdk/.releaserc.json"
+      }
+    }
+  },
+  "tags": []
+}

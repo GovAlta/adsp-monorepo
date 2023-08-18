@@ -2,9 +2,7 @@
 export default {
   displayName: 'tools',
   preset: '../../jest.preset.js',
-  globals: {
-    'ts-jest': { tsconfig: '<rootDir>/tsconfig.spec.json' },
-  },
+  globals: {},
   coverageDirectory: '../../coverage/tools',
   testEnvironment: 'node',
 };
