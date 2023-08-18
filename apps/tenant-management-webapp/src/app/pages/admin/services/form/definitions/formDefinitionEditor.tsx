@@ -39,7 +39,7 @@ export const FormDefinitionEditor = (): JSX.Element => {
                 onClick={() => {
                   goBack();
                 }}
-                testId="template-form-close"
+                testId="back-to-previous"
                 type="tertiary"
               >
                 Go back

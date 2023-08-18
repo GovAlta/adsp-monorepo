@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
-import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
+import { GoAButton, GoAButtonGroup, GoAInput } from '@abgov/react-components-new';
+import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { Service } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { createEntry, updateEntry, fetchEntryDetail } from '@store/directory/actions';
@@ -89,8 +89,9 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               type="text"
               name="service"
               value={entry.service}
-              data-testid={`directory-modal-service-input`}
+              testId={`directory-modal-service-input`}
               aria-label="service"
+              width="100%"
               disabled={!isNew || isQuickAdd}
               onChange={(name, value) => {
                 validators['service'].check(value);
@@ -104,7 +105,8 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
               type="text"
               name="api"
               value={entry.api}
-              data-testid={`directory-modal-api-input`}
+              width="100%"
+              testId={`directory-modal-api-input`}
               aria-label="api"
               disabled={!isNew || isQuickAdd}
               onChange={(name, value) => {
@@ -118,8 +120,9 @@ export const DirectoryModal = (props: DirectoryModalProps): JSX.Element => {
             <GoAInput
               type="url"
               name="url"
+              width="100%"
               value={entry.url}
-              data-testid={`directory-modal-url-input`}
+              testId={`directory-modal-url-input`}
               aria-label="name"
               disabled={isQuickAdd}
               onChange={(name, value) => {

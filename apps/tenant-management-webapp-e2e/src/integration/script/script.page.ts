@@ -60,7 +60,9 @@ class ScriptPage {
   }
 
   editScriptModalSaveBtn() {
-    return cy.xpath('//*[@data-testid="script-edit-form" and @open]//goa-button[@type="primary"]');
+    return cy.xpath(
+      '//*[@data-testid="script-edit-form" and @open]//goa-button[@data-testid="template-form-save" and @type="primary"]'
+    );
   }
 
   editScriptModalNameField() {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { GoARadio, GoASkeletonGridColumnContent } from '@abgov/react-components';
-import { GoAInputEmail, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
+import { GoAFormItem } from '@abgov/react-components/experimental';
 import { useDispatch, useSelector } from 'react-redux';
 import { patchSubscriber, createSubscriber } from '@store/subscription/actions';
 import { actionTypes } from '@store/subscription/models';
@@ -12,7 +12,7 @@ import { Label } from './styled-components';
 import { GapVS } from './styled-components';
 import { RootState } from '@store/index';
 import { phoneWrapper } from '@lib/wrappers';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton, GoAInput } from '@abgov/react-components-new';
 interface ContactInfoCardProps {
   subscriber?: Subscriber;
 }
@@ -206,12 +206,14 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
               <GridItem md={3.5} hSpacing={1}>
                 <Label>Email</Label>
                 <GoAFormItem error={formErrors?.['email']}>
-                  <GoAInputEmail
+                  <GoAInput
+                    type="email"
                     aria-label="email"
                     name="email"
                     value={emailContactInformation}
                     onChange={setValue}
-                    data-testid="contact-email-input"
+                    testId="contact-email-input"
+                    width="100%"
                   />
                 </GoAFormItem>
               </GridItem>
@@ -221,9 +223,10 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
 
                 <GoAFormItem error={formErrors?.['sms']}>
                   <GoAInput
-                    type="phone"
+                    type="tel"
                     aria-label="sms"
                     name="sms"
+                    width="100%"
                     value={SMSContactInformation}
                     data-testid="contact-sms-input"
                     onChange={setValue}

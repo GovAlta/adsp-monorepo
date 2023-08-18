@@ -118,7 +118,7 @@ class NotificationsPage {
 
   notificationTypeSelectAnEventBtn(cardTitle) {
     return cy.xpath(
-      `//goa-container//h2[contains(text(), "${cardTitle}")]/ancestor::goa-container//button[contains(text(), "Select an event")]`
+      `//goa-container//h2[contains(text(), "${cardTitle}")]/ancestor::goa-container//goa-button[contains(text(), "Select an event")]`
     );
   }
 
@@ -230,7 +230,7 @@ class NotificationsPage {
   }
 
   notificationSearchBtn() {
-    return cy.xpath('//button[@title="Search"]');
+    return cy.xpath('//goa-button[text()="Search"]');
   }
 
   notificationRecord(notificationType, addressAs, email) {
@@ -258,15 +258,15 @@ class NotificationsPage {
   }
 
   deleteConfirmationModal() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]');
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]');
   }
 
   deleteConfirmationModalTitle() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//*[@class="modal-title"]');
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]//*[@slot="heading"]');
   }
 
   deleteConfirmationModalContent() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//*[@class="goa-scrollable"]');
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]');
   }
 
   deleteConfirmationModalConfirmBtn() {
@@ -288,11 +288,11 @@ class NotificationsPage {
   }
 
   subscribersSearchBtn() {
-    return cy.xpath('//button[@title="Search"]');
+    return cy.xpath('//goa-button[text()="Search"]');
   }
 
   subscribersResetBtn() {
-    return cy.xpath('//button[@title="Reset"]');
+    return cy.xpath('//goa-button[text()="Reset"]');
   }
 
   subscriberTableHeader() {
@@ -334,7 +334,7 @@ class NotificationsPage {
   }
 
   subscriberDeleteConfirmationModalTitle() {
-    return cy.xpath('//*[@data-testid="delete-confirmation"]//*[@class="modal-title"]');
+    return cy.xpath('//*[@data-testid="delete-confirmation"]/*[@slot="heading"]');
   }
 
   subscriberDeleteConfirmationModalDeleteBtn() {
@@ -504,7 +504,7 @@ class NotificationsPage {
   }
 
   resetEmailTemplateModalTitle() {
-    return cy.xpath('//*[@data-testid="delete-confirmation"]//*[@class="modal-title"]');
+    return cy.xpath('//*[@data-testid="delete-confirmation"]/*[@slot="heading"]');
   }
 
   resetEmailTemplateModalDeleteBtn() {

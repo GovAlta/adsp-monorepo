@@ -71,15 +71,15 @@ And('the user views the support link for the subscription of {string}', function
 });
 
 When('the user clicks edit contact information button', function () {
-  subscriptionManagementObj.editContactInformation().click();
+  subscriptionManagementObj.editContactInformation().shadow().find('button').click({ force: true });
 });
 
 And('the user enters an invalid phone number in contact information', function () {
-  subscriptionManagementObj.phoneNumberInput().clear().type('123');
+  subscriptionManagementObj.phoneNumberInput().shadow().find('input').clear().type('123', { force: true });
 });
 
 And('the user clicks Save button in contact information', function () {
-  subscriptionManagementObj.contactInformationSaveBtn().click();
+  subscriptionManagementObj.contactInformationSaveBtn().shadow().find('button').click({ force: true });
 });
 
 And('the user views an error message for the invalid phone number in contact information', function () {
@@ -87,7 +87,7 @@ And('the user views an error message for the invalid phone number in contact inf
 });
 
 And('the user removes phone number value in contact information', function () {
-  subscriptionManagementObj.phoneNumberInput().clear();
+  subscriptionManagementObj.phoneNumberInput().shadow().find('input').clear({ force: true });
 });
 
 When('the user selects {string} as the preferred channel in contact information', function (selection) {
@@ -101,7 +101,7 @@ Then('the user views an error messsage for missing phone number', function () {
 });
 
 When('the user removes email value in contact information', function () {
-  subscriptionManagementObj.emailInput().clear();
+  subscriptionManagementObj.emailInput().shadow().find('input').clear({ force: true });
 });
 
 Then('the user views an error messsage for missing email', function () {
@@ -111,11 +111,11 @@ Then('the user views an error messsage for missing email', function () {
 When(
   'the user enters {string} as email, {string} as phone number and {string} as preferred channel',
   function (email, phone, channel) {
-    subscriptionManagementObj.emailInput().clear().type(email);
+    subscriptionManagementObj.emailInput().shadow().find('input').clear().type(email, { force: true });
     if (phone == 'EMPTY') {
-      subscriptionManagementObj.phoneNumberInput().clear();
+      subscriptionManagementObj.phoneNumberInput().shadow().find('input').clear({ force: true });
     } else {
-      subscriptionManagementObj.phoneNumberInput().clear().type(phone);
+      subscriptionManagementObj.phoneNumberInput().shadow().find('input').clear().type(phone, { force: true });
     }
     subscriptionManagementObj.preferredNotificationChannelSelection(channel).click({ force: true });
   }

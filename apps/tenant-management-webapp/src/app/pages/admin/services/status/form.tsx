@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { saveApplication } from '@store/status/actions';
 import { fetchDirectory, fetchDirectoryDetailByURNs } from '@store/directory/actions';
 import { ApplicationStatus } from '@store/status/models';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAInput, GoATextArea } from '@abgov/react-components-new';
 import { useValidators } from '@lib/validation/useValidators';
 import { GoADropdownOption } from '@abgov/react-components';
 
@@ -18,13 +18,11 @@ import {
 import {
   GoAForm,
   GoAFormItem,
-  GoAInput,
   GoAModal,
   GoAModalContent,
   GoAModalTitle,
   GoAModalActions,
 } from '@abgov/react-components/experimental';
-import { GoATextArea } from '@abgov/react-components-new';
 import { RootState } from '@store/index';
 import { createSelector } from 'reselect';
 import { DropdownListContainer, DropdownList, IdField } from './styled-components';
@@ -158,6 +156,8 @@ export const ApplicationFormModal: FC<Props> = ({
             <GoAInput
               type="text"
               name="name"
+              width="100%"
+              testId="application-name-input"
               value={application?.name}
               onChange={(name, value) => {
                 if (!isEdit) {
@@ -191,6 +191,7 @@ export const ApplicationFormModal: FC<Props> = ({
               name="description"
               width="100%"
               value={application?.description}
+              testId="application-description"
               onChange={(name, value) => {
                 validators.remove('description');
                 validators['description'].check(value);
@@ -205,10 +206,12 @@ export const ApplicationFormModal: FC<Props> = ({
           <GoAFormItem error={errors?.['url']}>
             <label>URL</label>
             <GoAInput
-              type="test"
+              type="url"
               name="url"
+              width="100%"
               value={application?.endpoint?.url}
               aria-label="input-url"
+              testId="application-url-input"
               onChange={(name, value) => {
                 validators.remove('url');
                 validators['url'].check(value);

@@ -168,7 +168,7 @@ describe('NotificationTypes Page', () => {
     expect(confirmation).not.toBeNull();
 
     const deleteConfirm = queryByTestId('delete-confirm');
-    //fireEvent.click(deleteConfirm);
+
     fireEvent(deleteConfirm, new CustomEvent('_click'));
     const actions = store.getActions();
 
@@ -219,7 +219,13 @@ describe('NotificationTypes Page', () => {
         detail: { value: 'the updated description' },
       })
     );
-    fireEvent.change(name, { target: { value: 'the updated name' } });
+    fireEvent(
+      name,
+      new CustomEvent('_change', {
+        detail: { value: 'the updated name' },
+      })
+    );
+
     fireEvent(saveBtn, new CustomEvent('_click'));
     const actions = store.getActions();
 
@@ -270,7 +276,13 @@ describe('NotificationTypes Page', () => {
     expect(saveBtn).toBeTruthy();
 
     // fill
-    fireEvent.change(name, { target: { value: 'name' } });
+    fireEvent(
+      name,
+      new CustomEvent('_change', {
+        detail: { value: 'name' },
+      })
+    );
+
     fireEvent.change(description, { target: { value: 'description' } });
     fireEvent.click(saveBtn);
 

@@ -20,7 +20,7 @@ Given('a tenant admin user is on notification overview page', function () {
 });
 
 When('the user clicks Add notification type button', function () {
-  notificationsObj.addANotificationTypeButtonOnOverview().click();
+  notificationsObj.addANotificationTypeButtonOnOverview().shadow().find('button').click({ force: true });
   cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
@@ -267,7 +267,12 @@ Given('a tenant admin user is on notification types page', function () {
 });
 
 When('the user clicks Select event button for {string}', function (cardTitle) {
-  notificationsObj.notificationTypeSelectAnEventBtn(cardTitle).click({ force: true });
+  notificationsObj
+    .notificationTypeSelectAnEventBtn(cardTitle)
+    .shadow()
+    .find('button')
+    .scrollIntoView()
+    .click({ force: true });
   cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
@@ -276,7 +281,11 @@ Then('the user views Select an event modal', function () {
 });
 
 When('the user selects {string} in the event dropdown', function (event) {
-  notificationsObj.selectAnEventModalEventDropdown().shadow().find('[data-testid="event-dropdown"]').click();
+  notificationsObj
+    .selectAnEventModalEventDropdown()
+    .shadow()
+    .find('[data-testid="event-dropdown"]')
+    .click({ force: true });
   notificationsObj
     .selectAnEventModalEventDropdown()
     .shadow()
@@ -785,7 +794,7 @@ When('the user enters {string} in Phone number field', function (phoneNumber) {
 });
 
 When('the user clicks Add notification type button on Notification type page', function () {
-  notificationsObj.addNotificationTypeBtnOnNotificationType().click();
+  notificationsObj.addNotificationTypeBtnOnNotificationType().shadow().find('button').click({ force: true });
 });
 
 Then(
