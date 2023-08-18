@@ -3,14 +3,12 @@ import React, { useState } from 'react';
 import { Webhooks } from '@store/status/models';
 import DataTable from '@components/DataTable';
 import styled from 'styled-components';
-import { GoAIconButton } from '@abgov/react-components-new';
-import { GoAContextMenu } from '@components/ContextMenu';
 import { WebhookFormModal } from '../webhookForm';
 import { WebhookHistoryModal } from '../webhookHistoryForm';
 import { TestWebhookModal } from '../testWebhook';
 import History from '../../../../../../assets/icons/history.svg';
 import { HoverWrapper, ToolTip } from '../styled-components';
-
+import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { WebhookDeleteModal } from './webhookDeleteModal';
 
 interface WebhookDisplayProps {
@@ -104,11 +102,10 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
           <td className="waitInterval">{intervalMinutes} min</td>
           <td className="actionCol">
             <GoAContextMenu>
-              <GoAIconButton
+              <GoAContextMenuIcon
                 testId={`webhook-details-${id}`}
                 title="Details"
-                size="small"
-                icon="information-circle"
+                type="information-circle"
                 onClick={() => {
                   setShowDetails(!showDetails);
                 }}
@@ -122,29 +119,26 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
                 <img src={History} alt="History" />
                 <span className="tooltip-text">Webhook history</span>
               </div>
-              <GoAIconButton
+              <GoAContextMenuIcon
                 testId={`webhook-test-${id}`}
                 title="Test"
-                size="small"
-                icon="ticket"
+                type="ticket"
                 onClick={() => {
                   onTest();
                 }}
               />
-              <GoAIconButton
+              <GoAContextMenuIcon
                 testId={`webhook-edit-${id}`}
                 title="Edit"
-                size="small"
-                icon="create"
+                type="create"
                 onClick={() => {
                   onEdit();
                 }}
               />
-              <GoAIconButton
+              <GoAContextMenuIcon
                 testId={`webhook-delete-${id}`}
                 title="Delete"
-                size="small"
-                icon="trash"
+                type="trash"
                 onClick={() => {
                   onDelete();
                 }}

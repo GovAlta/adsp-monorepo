@@ -30,7 +30,7 @@ describe('Test Pdf list page', () => {
     );
 
     const deleteBtn = await queryByTestId('pdf-template-delete');
-    fireEvent.click(deleteBtn);
+    fireEvent(deleteBtn, new CustomEvent('_click'));
 
     expect(onDeleteMock).toHaveBeenCalledWith(templateMock);
     onDeleteMock.mockClear();

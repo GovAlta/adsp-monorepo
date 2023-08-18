@@ -96,8 +96,13 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
         </div>
 
         <GoAContextMenu>
-          <GoAContextMenuIcon type="create" onClick={() => setShowEditModal(true)} data-testid="status-edit-button" />
-          <GoAContextMenuIcon type="trash" onClick={() => setShowDeleteConfirmation(true)} />
+          <GoAContextMenuIcon
+            type="create"
+            title="Edit"
+            onClick={() => setShowEditModal(true)}
+            testId="status-edit-button"
+          />
+          <GoAContextMenuIcon type="trash" title="Delete" onClick={() => setShowDeleteConfirmation(true)} />
         </GoAContextMenu>
       </AppHeader>
       {/* Endpoint List for watched service */}

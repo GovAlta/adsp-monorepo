@@ -1,9 +1,10 @@
 import React from 'react';
 import { FormDefinition } from '@store/form/model';
-import { Edit, OverflowWrap } from '../styled-components';
-import { GoAIconButton } from '@abgov/react-components-new';
+import { OverflowWrap } from '../styled-components';
+
 import { useRouteMatch } from 'react-router';
 import { useHistory } from 'react-router-dom';
+import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 
 interface PdfTemplateItemProps {
   formDefinition: FormDefinition;
@@ -22,22 +23,20 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
           <OverflowWrap>{formDefinition.description}</OverflowWrap>
         </td>
         <td data-testid="form-definitions-action">
-          <Edit>
-            <GoAIconButton
+          <GoAContextMenu>
+            <GoAContextMenuIcon
               testId="form-definition-edit"
               title="Edit"
-              size="small"
-              icon="create"
+              type="create"
               onClick={() => history.push(`${url}/edit/${formDefinition.id}`)}
             />
-            <GoAIconButton
+            <GoAContextMenuIcon
               testId={`form-definition-delete`}
               title="Delete"
-              size="small"
-              icon="trash"
+              type="trash"
               onClick={() => onDelete(formDefinition)}
             />
-          </Edit>
+          </GoAContextMenu>
         </td>
       </tr>
     </>

@@ -8,10 +8,10 @@ import {
   DownloadFileService,
 } from '@store/file/actions';
 import { GoADropdownItem, GoADropdown, GoAButton } from '@abgov/react-components-new';
-
+import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
-import { GoAIconButton, GoAForm, GoAFormActions } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormActions } from '@abgov/react-components/experimental';
 import { GoAInput, GoAFormItem } from '@abgov/react-components-new';
 import { renderNoItem } from '@components/NoItem';
 import { DeleteModal } from '@components/DeleteModal';
@@ -128,24 +128,21 @@ const FileList = (): JSX.Element => {
                   <td>{file.typeName}</td>
                   <td>{file.id}</td>
                   <td>
-                    <div className="flex-horizontal">
-                      <div className="flex">
-                        <GoAIconButton
-                          data-testid="download-icon"
-                          size="medium"
-                          type="download"
-                          onClick={() => onDownloadFile(file)}
-                        />
-                      </div>
-                      <div className="flex">
-                        <GoAIconButton
-                          data-testid="delete-icon"
-                          size="medium"
-                          type="trash"
-                          onClick={() => onDeleteFile(file)}
-                        />
-                      </div>
-                    </div>
+                    <GoAContextMenu>
+                      <GoAContextMenuIcon
+                        testId="download-icon"
+                        title="Download"
+                        type="download"
+                        onClick={() => onDownloadFile(file)}
+                      />
+
+                      <GoAContextMenuIcon
+                        data-testid="delete-icon"
+                        title="Delete"
+                        type="trash"
+                        onClick={() => onDeleteFile(file)}
+                      />
+                    </GoAContextMenu>
                   </td>
                 </tr>
               );
@@ -207,6 +204,8 @@ const FileList = (): JSX.Element => {
               name="fileType"
               value={uploadFileType}
               width="100%"
+              relative={true}
+              testId="file-type-name-dropdown-1"
               onChange={(name, values: string | string[]) => {
                 setUploadFileType(values.toString());
               }}
@@ -247,6 +246,8 @@ const FileList = (): JSX.Element => {
                 name="fileType"
                 value={filterFileType}
                 width="100%"
+                relative={true}
+                testId="file-type-name-dropdown-2"
                 onChange={(name, value: string | string[]) => {
                   setFilterFileType(value.toString());
                 }}

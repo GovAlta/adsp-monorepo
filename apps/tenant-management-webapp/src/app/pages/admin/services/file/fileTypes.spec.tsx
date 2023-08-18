@@ -83,15 +83,15 @@ describe('File types tab', () => {
     );
 
     const editActionBtn = queryByTestId('file-type-row-edit-btn-mock-file-type-b-id');
-    fireEvent.click(editActionBtn);
+    fireEvent(editActionBtn, new CustomEvent('_click'));
     const fileTypeModal = queryByTestId('file-type-modal');
     expect(fileTypeModal).not.toBeNull();
     const nameInput = queryByTestId('file-type-modal-name-input');
     nameInput.textContent.includes('testRoleA');
     const cancelBtn = queryByTestId('file-type-modal-cancel');
-    fireEvent.click(cancelBtn);
+    fireEvent(cancelBtn, new CustomEvent('_click'));
     const deleteActionBtnA = queryByTestId('file-type-row-delete-btn-mock-file-type-a-id');
-    fireEvent.click(deleteActionBtnA);
+    fireEvent(deleteActionBtnA, new CustomEvent('_click'));
     const deleteModalTitle = queryByTestId('file-type-delete-modal-title');
     deleteModalTitle.textContent.includes('Delete file type');
   });

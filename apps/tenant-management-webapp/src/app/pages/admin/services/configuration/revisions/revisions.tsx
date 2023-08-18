@@ -32,6 +32,7 @@ export const ConfigurationRevisions = (): JSX.Element => {
             }}
             aria-label="select-configuration-dropdown"
             width="100%"
+            testId="configuration-select-definition-dropdown"
           >
             {serviceList.map((item) => (
               <GoADropdownItem
