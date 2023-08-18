@@ -54,7 +54,7 @@ class SubscriptionManagementPage {
   }
 
   phoneNumberInput() {
-    return cy.get('[data-testid="contact-sms-input"]');
+    return cy.xpath('//goa-input[@name="sms"]');
   }
 
   phoneNumberDisplay() {
@@ -74,11 +74,11 @@ class SubscriptionManagementPage {
   }
 
   phoneNumberErrorMsg() {
-    return cy.xpath('//input[@data-testid="contact-sms-input"]/parent::*/following-sibling::div[@class="error-msg"]');
+    return cy.xpath('//goa-input[@name="sms"]/following-sibling::div[@class="error-msg"]');
   }
 
   emailErrorMsg() {
-    return cy.xpath('//input[@data-testid="contact-email-input"]/parent::*/following-sibling::div[@class="error-msg"]');
+    return cy.xpath('//goa-input[@data-testid="contact-email-input"]/following-sibling::div[@class="error-msg"]');
   }
 
   preferredNotificationChannelSelection(selection) {
