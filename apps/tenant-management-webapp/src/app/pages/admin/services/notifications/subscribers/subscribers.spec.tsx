@@ -104,8 +104,19 @@ describe('Notification - Subscribers Tab', () => {
     const saveBtn = queryByTestId('form-save');
 
     // fill
-    fireEvent.change(name, { target: { value: 'Bob Smith' } });
-    fireEvent.change(email, { target: { value: 'bob.smith@gmail.com' } });
+    fireEvent(
+      name,
+      new CustomEvent('_change', {
+        detail: { value: 'Bob Smith' },
+      })
+    );
+    fireEvent(
+      email,
+      new CustomEvent('_change', {
+        detail: { value: 'bob.smith@gmail.com' },
+      })
+    );
+
     fireEvent(saveBtn, new CustomEvent('_click'));
     const actions = store.getActions();
 

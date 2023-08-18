@@ -7,8 +7,7 @@ import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import { ServiceRoleConfig, ServiceRoleSyncStatus } from '@store/access/models';
-import { GoAIconButton } from '@abgov/react-components/experimental';
-
+import { GoAContextMenuIcon } from '@components/ContextMenu';
 interface ServiceRoleListProps {
   roles: ServiceRoles;
   clientId: string;
@@ -96,8 +95,10 @@ export const ServiceRoleList = ({ roles, clientId, addRoleFunc, inProcess }: Ser
                       Object.entries(keycloakRoles).length > 0 &&
                       !isInProcess &&
                       status !== ServiceRoleSyncStatus.matched && (
-                        <GoAIconButton
+                        <GoAContextMenuIcon
                           type="add-circle"
+                          title="add-circle"
+                          testId="service-role-icon-btn"
                           onClick={() => {
                             addRoleFunc(clientId, role.role, status);
                           }}

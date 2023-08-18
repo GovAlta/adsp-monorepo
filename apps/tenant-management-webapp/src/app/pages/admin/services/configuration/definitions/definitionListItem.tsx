@@ -42,6 +42,7 @@ export const ConfigurationDefinitionItemComponent: FunctionComponent<serviceItem
                 <>
                   <GoAContextMenuIcon
                     type="create"
+                    title="Edit"
                     onClick={() =>
                       onEdit({
                         namespace: nameSpace,
@@ -54,6 +55,7 @@ export const ConfigurationDefinitionItemComponent: FunctionComponent<serviceItem
                   />
                   <GoAContextMenuIcon
                     type="trash"
+                    title="Delete"
                     onClick={() => onDelete(`${nameSpace}:${configName}`)}
                     testId="delete-config"
                   />

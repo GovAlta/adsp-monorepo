@@ -2,7 +2,6 @@ import React from 'react';
 import { PdfTemplate } from '@store/pdf/model';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { Edit, OverflowWrap } from '../styled-components';
-import { GoAIconButton } from '@abgov/react-components/experimental';
 import { useRouteMatch } from 'react-router';
 import { useHistory } from 'react-router-dom';
 
@@ -31,10 +30,9 @@ export const PdfTemplateItem = ({ pdfTemplate, onDelete }: PdfTemplateItemProps)
                 onClick={() => history.push(`${url}/edit/${pdfTemplate.id}`)}
                 testId={`edit-pdf-item`}
               />
-              <GoAIconButton
+              <GoAContextMenuIcon
                 testId={`pdf-template-delete`}
                 title="Delete"
-                size="medium"
                 type="trash"
                 onClick={() => onDelete(pdfTemplate)}
               />

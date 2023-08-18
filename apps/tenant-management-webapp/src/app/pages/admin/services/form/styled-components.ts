@@ -243,24 +243,6 @@ export const SpinnerPaddingSmall = styled.div`
   margin: 0 0 0 5px;
   float: right;
 `;
-export const Edit = styled.div`
-  .flexRow {
-    display: flex;
-    flex-direction: row;
-  }
-
-  .badgePadding {
-    margin: 6px 0 0 5px;
-  }
-
-  a {
-    margin-top: 3px;
-  }
-  display: flex;
-  flex-direction: row;
-  margin-right: 1rem;
-  margin-top: 0.5rem;
-`;
 export const OverflowWrap = styled.div`
   overflow-wrap: break-word;
   overflow-y: hidden;
@@ -341,7 +323,6 @@ export const ErrorMsg = styled.div`
   }
 `;
 
- 
 export const TextLoadingIndicator = styled.div`
   animation: blinker 1s linear infinite;
   font-size: 16px;
@@ -353,7 +334,7 @@ export const TextLoadingIndicator = styled.div`
     }
   }
 `;
- 
+
 export const HeadingDiv = styled.div`
   display: flex;
   column-gap: 0.6rem;
