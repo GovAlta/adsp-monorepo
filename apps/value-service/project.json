@@ -1,0 +1,62 @@
+{
+  "name": "value-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/value-service/src",
+  "projectType": "application",
+  "prefix": "value-service",
+  "generators": {},
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "options": {
+        "webpackConfig": "apps/value-service/webpack.config.js",
+        "outputPath": "dist/apps/value-service",
+        "main": "apps/value-service/src/main.ts",
+        "tsConfig": "apps/value-service/tsconfig.app.json",
+        "assets": [
+          "apps/value-service/src/assets",
+          {
+            "glob": "apps/value-service/migrations",
+            "input": ".",
+            "output": "migrations"
+          }
+        ],
+        "target": "node",
+        "compiler": "tsc",
+        "isolatedConfig": true,
+        "babelUpwardRootMode": true
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false,
+          "fileReplacements": []
+        }
+      },
+      "outputs": ["{options.outputPath}"]
+    },
+    "serve": {
+      "executor": "@nrwl/node:node",
+      "options": {
+        "buildTarget": "value-service:build",
+        "port": 7771
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["apps/value-service/**/*.{ts,tsx,js,jsx}"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "options": {
+        "jestConfig": "apps/value-service/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "outputs": ["{workspaceRoot}/coverage/apps/value-service"]
+    }
+  },
+  "tags": []
+}

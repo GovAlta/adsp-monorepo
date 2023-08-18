@@ -1,25 +1,11 @@
-const base = require('@nrwl/react/plugins/webpack');
+const { composePlugins, withNx } = require('@nrwl/webpack');
+const { withReact } = require('@nrwl/react');
 
-module.exports = (config) => {
-  base(config);
-  return {
-    ...config,
-    resolve: {
-      ...config.resolve,
-      alias: {
-        ...config.resolve.alias,
-        handlebars: 'handlebars/dist/handlebars.min.js',
-      },
-    },
-    module: {
-      ...config.module,
-      rules: [
-        ...config.module.rules,
-        {
-          test: /\.hbs/,
-          type: 'asset/source',
-        },
-      ],
-    },
-  };
-};
+// Nx plugins for webpack.
+module.exports = composePlugins(withNx(), withReact(), (config, { options, context }) => {
+  // Note: This was added by an Nx migration.
+  // You should consider inlining the logic into this file.
+  // For more information on webpack config and Nx see:
+  // https://nx.dev/packages/webpack/documents/webpack-config-setup
+  return require('./webpack.config.old.js')(config, context);
+});

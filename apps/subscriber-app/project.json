@@ -1,0 +1,94 @@
+{
+  "name": "subscriber-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/subscriber-app/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/subscriber-app",
+        "index": "apps/subscriber-app/src/index.html",
+        "baseHref": "/",
+        "main": "apps/subscriber-app/src/main.tsx",
+        "polyfills": "apps/subscriber-app/src/polyfills.ts",
+        "tsConfig": "apps/subscriber-app/tsconfig.app.json",
+        "assets": [
+          "apps/subscriber-app/src/favicon.ico",
+          "apps/subscriber-app/src/assets",
+          {
+            "glob": "nginx.conf",
+            "input": "apps/subscriber-app/",
+            "output": "./"
+          }
+        ],
+        "styles": ["apps/subscriber-app/src/styles.scss"],
+        "scripts": [],
+        "webpackConfig": "apps/subscriber-app/webpack.config.js",
+        "babelUpwardRootMode": true,
+        "isolatedConfig": true
+      },
+      "configurations": {
+        "production": {
+          "fileReplacements": [],
+          "optimization": true,
+          "outputHashing": "all",
+          "sourceMap": false,
+          "extractCss": true,
+          "namedChunks": false,
+          "extractLicenses": true,
+          "vendorChunk": false,
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "2mb",
+              "maximumError": "5mb"
+            }
+          ]
+        },
+        "development": {
+          "extractLicenses": false,
+          "optimization": false,
+          "sourceMap": true,
+          "vendorChunk": true
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/webpack:dev-server",
+      "options": {
+        "buildTarget": "subscriber-app:build",
+        "proxyConfig": "apps/subscriber-app/proxy.conf.json",
+        "hmr": true
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "subscriber-app:build:production",
+          "hmr": false
+        },
+        "development": {
+          "buildTarget": "subscriber-app:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/subscriber-app/**/*.{ts,tsx,js,jsx}"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/subscriber-app"],
+      "options": {
+        "jestConfig": "apps/subscriber-app/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}

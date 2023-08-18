@@ -2,9 +2,7 @@
 export default {
   displayName: 'notification-service',
   preset: '../../jest.preset.js',
-  globals: {
-    'ts-jest': { tsconfig: '<rootDir>/tsconfig.spec.json' },
-  },
+  globals: {},
   coverageDirectory: '../../coverage/apps/notification-service',
   testEnvironment: 'node',
   moduleNameMapper: {

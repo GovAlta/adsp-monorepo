@@ -43,7 +43,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
       return (
         indicator?.show &&
         indicator.action &&
-        [actionTypes.updatePreference, actionTypes.updateContactInfo].includes(indicator.action)
+        [actionTypes.updatePreference as string, actionTypes.updateContactInfo as string].includes(indicator.action)
       );
     }
     return false;

@@ -1,25 +1,10 @@
-const SwaggerJSDocWebpackPlugin = require('swagger-jsdoc-webpack-plugin');
-const swaggerDefinition = require('./swagger.config');
+const { composePlugins, withNx } = require('@nrwl/webpack');
 
-module.exports = (config) => {
-  return {
-    ...config,
-    plugins: [
-      ...config.plugins,
-      new SwaggerJSDocWebpackPlugin({
-        swaggerDefinition,
-        apis: ['apps/notification-service/src/**/*.ts', 'apps/notification-service/src/**/*.swagger.yml'],
-      }),
-    ],
-    module: {
-      ...config.module,
-      rules: [
-        ...config.module.rules,
-        {
-          test: /\.hbs/,
-          type: 'asset/source',
-        },
-      ],
-    },
-  };
-};
+// Nx plugins for webpack.
+module.exports = composePlugins(withNx(), (config, { options, context }) => {
+  // Note: This was added by an Nx migration.
+  // You should consider inlining the logic into this file.
+  // For more information on webpack config and Nx see:
+  // https://nx.dev/packages/webpack/documents/webpack-config-setup
+  return require('./webpack.config.old.js')(config, context);
+});
