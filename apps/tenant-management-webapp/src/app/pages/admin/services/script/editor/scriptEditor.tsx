@@ -302,7 +302,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                   dispatch(ExecuteScript(testItem));
                 }}
                 disabled={errors?.['payloadSchema'] || loadingIndicator.show}
-                testId="template-form-save"
+                testId="template-form-execute"
                 type="secondary"
               >
                 Execute
