@@ -3,8 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { DownloadFileService } from '@store/file/actions';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
-
-import { GoAIconButton } from '@abgov/react-components/experimental';
+import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
@@ -122,30 +121,30 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                         <td className="display-flex">
                           {file?.filename ? (
                             <>
-                              {currentFile?.filename !== job?.filename ? (
-                                <GoAIconButton
-                                  title="Toggle details"
-                                  type={'eye'}
-                                  onClick={() => showCurrentPdf(file)}
-                                  testId="toggle-details-visibility"
+                              <GoAContextMenu>
+                                {currentFile?.filename !== job?.filename ? (
+                                  <GoAContextMenuIcon
+                                    title="Toggle details"
+                                    type={'eye'}
+                                    onClick={() => showCurrentPdf(file)}
+                                    testId="toggle-details-visibility"
+                                  />
+                                ) : (
+                                  <ButtonBox />
+                                )}
+                                <GoAContextMenuIcon
+                                  disabled={!file?.size}
+                                  testId="download-icon"
+                                  type="download"
+                                  onClick={() => onDownloadFile(file)}
                                 />
-                              ) : (
-                                <ButtonBox />
-                              )}
-                              <GoAIconButton
-                                disabled={!file?.size}
-                                testId="download-icon"
-                                size="medium"
-                                type="download"
-                                onClick={() => onDownloadFile(file)}
-                              />
-                              <GoAIconButton
-                                data-testid="delete-icon"
-                                size="medium"
-                                type="trash"
-                                testId="delete-file-icon"
-                                onClick={() => onDeleteFile(file)}
-                              />
+                                <GoAContextMenuIcon
+                                  data-testid="delete-icon"
+                                  type="trash"
+                                  testId="delete-file-icon"
+                                  onClick={() => onDeleteFile(file)}
+                                />
+                              </GoAContextMenu>
                             </>
                           ) : (
                             <div>

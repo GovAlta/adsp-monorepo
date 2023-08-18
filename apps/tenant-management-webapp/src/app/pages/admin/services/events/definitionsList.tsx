@@ -34,10 +34,15 @@ const EventDefinitionComponent: FunctionComponent<EventDefinitionProps> = ({ def
               testId="toggle-details-visibility"
             />
             {!definition.isCore && (
-              <GoAContextMenuIcon type="create" onClick={() => onEdit(definition)} testId="edit-details" />
+              <GoAContextMenuIcon type="create" title="Edit" onClick={() => onEdit(definition)} testId="edit-details" />
             )}
             {!definition.isCore && (
-              <GoAContextMenuIcon type="trash" onClick={() => onDelete(definition)} testId="delete-details" />
+              <GoAContextMenuIcon
+                type="trash"
+                title="Delete"
+                onClick={() => onDelete(definition)}
+                testId="delete-details"
+              />
             )}
           </GoAContextMenu>
         </td>

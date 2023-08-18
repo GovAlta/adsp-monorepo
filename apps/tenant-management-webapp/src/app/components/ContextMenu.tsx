@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
-import { GoAButton } from '@abgov/react-components';
-import { GoAIconButton, GoAIconType } from '@abgov/react-components/experimental';
+import { GoAButton, GoAIconButton, GoAIconType } from '@abgov/react-components-new';
 import styled from 'styled-components';
 
 interface ContextMenuIconProps {
@@ -8,6 +7,7 @@ interface ContextMenuIconProps {
   testId?: string;
   title?: string;
   onClick?: () => void;
+  disabled?: boolean;
 }
 
 interface ContextMenuTextProps {
@@ -18,12 +18,19 @@ interface ContextMenuTextProps {
 
 export const GoAContextMenuIcon: FC<ContextMenuIconProps> = (props) => {
   return (
-    <GoAIconButton type={props.type} onClick={props.onClick} title={props.title} testId={props.testId} size="medium" />
+    <GoAIconButton
+      icon={props.type}
+      onClick={props.onClick}
+      title={props.title}
+      testId={props.testId}
+      size="small"
+      disabled={props.disable}
+    />
   );
 };
 
 export const GoAContextMenuText: FC<ContextMenuTextProps> = (props) => {
-  return <GoAButton buttonType="tertiary" onClick={props.onClick} testId={props.testId} buttonSize={'small'} />;
+  return <GoAButton type="tertiary" onClick={props.onClick} testId={props.testId} size="compact" />;
 };
 
 export const GoAContextMenu = styled.div`

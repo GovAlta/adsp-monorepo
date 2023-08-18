@@ -3,7 +3,6 @@ import { GoAElementLoader } from '@abgov/react-components';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
-import { GoAIconButton } from '@abgov/react-components/experimental';
 import { Service, DeleteModalType, EditModalType, AddModalType } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchEntryDetail } from '@store/directory/actions';
@@ -56,6 +55,7 @@ const ServiceItemComponent = ({ service }: serviceItemProps): JSX.Element => {
               {!service.isCore && service.metadata?._links?.api && !service.api && service.hasApi && (
                 <GoAContextMenuIcon
                   type="add"
+                  title="add"
                   onClick={() => {
                     dispatch(
                       UpdateModalState({
@@ -92,10 +92,9 @@ const ServiceItemComponent = ({ service }: serviceItemProps): JSX.Element => {
                 />
               )}
               {!service.isCore && (
-                <GoAIconButton
+                <GoAContextMenuIcon
                   testId={`directory-delete-${service.service}`}
                   title="Delete"
-                  size="medium"
                   type="trash"
                   key={service.urn}
                   onClick={() => {

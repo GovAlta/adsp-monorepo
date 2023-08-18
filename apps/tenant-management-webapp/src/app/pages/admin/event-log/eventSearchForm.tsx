@@ -3,10 +3,10 @@ import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import type { EventSearchCriteria } from '@store/event/models';
 
-import { GoAForm, GoAFormItem, GoAFormActions, GoAFlexRow, GoAIconButton } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem, GoAFormActions, GoAFlexRow } from '@abgov/react-components/experimental';
 import { getEventDefinitions } from '@store/event/actions';
 import styled from 'styled-components';
-import { GoAButton, GoATooltip } from '@abgov/react-components-new';
+import { GoAButton, GoATooltip, GoAIconButton } from '@abgov/react-components-new';
 const initCriteria: EventSearchCriteria = {
   namespace: '',
   name: '',
@@ -159,10 +159,10 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
               />
 
               <GoAIconButton
-                type={open ? 'close-circle' : 'chevron-down'}
+                icon={open ? 'close-circle' : 'chevron-down'}
                 size="medium"
                 testId="menu-open-close"
-                variant="tertiary"
+                variant="dark"
                 onClick={() => {
                   if (!open && searchBox.length === 0) {
                     setFilteredSuggestions(autoCompleteList);

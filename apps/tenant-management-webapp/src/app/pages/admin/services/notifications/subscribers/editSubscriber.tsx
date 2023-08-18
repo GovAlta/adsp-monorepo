@@ -80,10 +80,10 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
     }
     let phoneIndex = smsIndex;
     if (smsIndex === -1) {
-      phoneIndex = subscriber.channels ? subscriber.channels.length : 0;
+      phoneIndex = subscriber?.channels ? subscriber?.channels?.length : 0;
     }
 
-    const channels = subscriber.channels || [];
+    const channels = subscriber?.channels || [];
 
     formErrorList = Object.assign(formErrorList, smsError(phone));
     if (Object.keys(formErrorList).length === 0) {
@@ -130,7 +130,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
       }
 
       setFormErrors(null);
-      if (subscriber.addressAs != null) {
+      if (subscriber?.addressAs != null) {
         subscriber.addressAs = address;
       }
 
