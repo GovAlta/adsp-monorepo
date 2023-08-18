@@ -153,7 +153,7 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
         }}
         ariaLabel={`autoChangeStatus-checkbox`}
       >
-        Auto Change Status
+        Change status when site is unresponsive
       </GoACheckbox>
 
       {/* GoAModals */}

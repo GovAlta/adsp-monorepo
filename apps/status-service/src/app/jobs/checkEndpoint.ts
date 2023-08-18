@@ -1,6 +1,6 @@
 import axios from 'axios';
+import moment from 'moment';
 import { Logger } from 'winston';
-
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { EndpointStatusEntry, EndpointStatusType } from '../types';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
@@ -41,13 +41,17 @@ export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
       props.logger?.info(`Start to run the check endpoint job.`);
       const { getEndpointResponse } = props;
       // run all endpoint tests
+      await checkAndUpdateAutoChangeStatus(props);
+
       const statusEntry = await checkEndpoint(getEndpointResponse, props.app.url, props.app.appKey, props.logger);
       await saveStatus(props, statusEntry, props.app.tenantId);
+
       props.logger?.info(`Successfully finished the check endpoint job.`);
     } catch (error) {
       props.logger?.error(
         `Error checking endpoint ${props?.app?.url} of tenant ${props?.app?.tenantId}: ${error.message}.`
       );
+      props.logger?.error(`Error Job: `, error);
     }
   };
 }
@@ -145,6 +149,7 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
   const response = (await axios.get(webhooksUrl.href, { headers: { Authorization: `Bearer ${token}` } })) as {
     data: Configuration;
   };
+
   const statusResponse = (await axios.get(statusUrl.href, { headers: { Authorization: `Bearer ${token}` } })) as {
     data: StatusConfiguration;
   };
@@ -241,7 +246,6 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
       const errMessage = `The application ${app.name} (ID: ${app.appKey}) is unhealthy.`;
       eventService.send(applicationStatusToUnhealthy(app, tenantId.toString(), errMessage));
     }
-
     try {
       await serviceStatusRepository.save(status);
     } catch (err) {
@@ -280,3 +284,61 @@ const updateAppStatus = async (
 
   return response;
 };
+
+/**
+ * This is an attached job that checks auto change status boolean flag and determines
+ * what status to update based on the health check
+ */
+async function checkAndUpdateAutoChangeStatus(props: CreateCheckEndpointProps) {
+  const { app, serviceStatusRepository, endpointStatusEntryRepository, logger } = props;
+  const QUERY_SIZE = 5;
+  logger.info(`checkAndUpdateAutoChangeStatus Started...`);
+
+  try {
+    if (app.autoChangeStatus) {
+      //The history array contains 1 item for each minute.
+      const recentHistory = await endpointStatusEntryRepository.findRecentByUrlAndApplicationId(
+        app.url,
+        app.appKey,
+        QUERY_SIZE
+      );
+
+      //get first and last date time to make sure the time is 5 minutes apart.
+      const mostRecentDate = moment(new Date(recentHistory.at(0).timestamp));
+      const oldestDate = moment(new Date(recentHistory.at(-1).timestamp));
+
+      //Need to round date diff as MomentJS can give you an incorrect number because of the milliseconds
+      const dateDiff = Math.round(mostRecentDate.diff(oldestDate, 'minute'));
+
+      const failedForMoreThanFiveMins = recentHistory.filter((hist) => !hist.ok && dateDiff >= 5).length > 0;
+      const succeededMoreThanFiveMinutes = recentHistory.filter((hist) => hist.ok && dateDiff >= 5).length > 0;
+      const currentServiceStatus = await serviceStatusRepository.get(app.appKey);
+
+      //Set the status to opperational if it is in report issues status and
+      //the the health check has failed for the last five minutes
+      if (
+        currentServiceStatus &&
+        currentServiceStatus.status !== '' &&
+        currentServiceStatus.status === 'operational' &&
+        failedForMoreThanFiveMins
+      ) {
+        //update status to reported issues
+        currentServiceStatus.status = 'reported-issues';
+        serviceStatusRepository.save(currentServiceStatus);
+      } else if (
+        currentServiceStatus &&
+        currentServiceStatus.status !== '' &&
+        currentServiceStatus.status === 'reported-issues' &&
+        succeededMoreThanFiveMinutes
+      ) {
+        //update status to operational
+        currentServiceStatus.status = 'operational';
+        serviceStatusRepository.save(currentServiceStatus);
+      }
+    }
+
+    logger.info(`checkAndUpdateAutoChangeStatus Ended....`);
+  } catch (err) {
+    logger.error(`checkAndUpdateAutoChangeStatus() has encountered an error: ${err}`);
+  }
+}
