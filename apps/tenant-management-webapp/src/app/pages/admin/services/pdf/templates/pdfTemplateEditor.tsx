@@ -39,7 +39,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
                 onClick={() => {
                   goBack();
                 }}
-                testId="template-form-close"
+                testId="go-back-previous"
                 type="tertiary"
               >
                 Go back
