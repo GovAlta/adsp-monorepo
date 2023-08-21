@@ -1,13 +1,15 @@
 import React, { useEffect } from 'react';
 import { OverviewLayout } from '@components/Overview';
 import { GoAButton } from '@abgov/react-components-new';
-import { useRouteMatch } from 'react-router';
 import { useHistory } from 'react-router-dom';
 
-const FormOverview = (): JSX.Element => {
-  const { url } = useRouteMatch();
+interface FormOverviewProps {
+  setOpenAddDefinition: (val: boolean) => void;
+}
 
+const FormOverview = ({ setOpenAddDefinition }: FormOverviewProps): JSX.Element => {
   useEffect(() => {
+    setOpenAddDefinition(false);
     history.push({
       pathname: '/admin/services/form',
     });
@@ -35,7 +37,11 @@ const FormOverview = (): JSX.Element => {
           <GoAButton
             testId="add-definition"
             onClick={() => {
-              history.push(`${url}/new?definitions=true`);
+              setOpenAddDefinition(true);
+              history.push({
+                pathname: '/admin/services/form',
+                search: '?definitions=true',
+              });
             }}
           >
             Add definition

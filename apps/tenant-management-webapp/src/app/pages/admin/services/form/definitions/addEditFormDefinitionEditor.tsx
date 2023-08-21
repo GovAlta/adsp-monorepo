@@ -3,24 +3,23 @@ import React, { useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import { FormDefinition } from '@store/form/model';
 
-import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
+import { SaveFormModal } from '@components/saveModal';
 import {
   SpinnerModalPadding,
-  FormFormItem,
-  HelpText,
-  DescriptionItem,
-  ErrorMsg,
   TextLoadingIndicator,
   FlexRow,
-  FlexLeft,
-  FlexRight,
+  NameDescriptionDataSchema,
+  FormPermissions,
   EditorPadding,
   FinalButtonPadding,
+  FormEditorTitle,
+  FormEditor,
+  ScrollPane,
 } from '../styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
 import { FetchRealmRoles } from '@store/tenant/actions';
@@ -34,10 +33,11 @@ import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
+import { FormConfigDefinition } from './formConfigDefinition';
 
 import { useHistory, useParams } from 'react-router-dom';
 
-import { GoATextArea, GoAInput, GoAButtonGroup, GoAFormItem, GoAButton, GoAIcon } from '@abgov/react-components-new';
+import { GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components-new';
 
 function getWindowDimensions() {
   const { innerWidth: width, innerHeight: height } = window;
@@ -62,10 +62,21 @@ export default function useWindowDimensions() {
   return windowDimensions;
 }
 
+const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
+  return (
+    prev?.applicantRoles !== next?.applicantRoles ||
+    prev?.assessorRoles !== next?.assessorRoles ||
+    prev?.clerkRoles !== next?.clerkRoles ||
+    prev?.dataSchema !== next?.dataSchema
+  );
+};
+
 export function AddEditFormDefinitionEditor(): JSX.Element {
   const [definition, setDefinition] = useState<FormDefinition>(defaultFormDefinition);
+  const [initialDefinition, setInitialDefinition] = useState<FormDefinition>(defaultFormDefinition);
   const [spinner, setSpinner] = useState<boolean>(false);
   const { id } = useParams<{ id: string }>();
+  const [saveModal, setSaveModal] = useState(false);
 
   const { height } = useWindowDimensions();
 
@@ -97,6 +108,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   useEffect(() => {
     if (id && formDefinitions[id]) {
       setDefinition(formDefinitions[id]);
+      setInitialDefinition(formDefinitions[id]);
     }
   }, [formDefinitions]);
 
@@ -186,7 +198,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
-  const descErrMessage = 'Description can not be over 180 characters';
 
   useEffect(() => {
     if (spinner && Object.keys(definitions).length > 0) {
@@ -213,89 +224,23 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
   return (
-    <div style={{ width: '100%' }}>
-      <h1>{isEdit ? 'Edit' : 'Add'} definition</h1>
+    <FormEditor>
       {spinner ? (
         <SpinnerModalPadding>
           <GoAPageLoader visible={true} type="infinite" message={'Loading...'} pagelock={false} />
         </SpinnerModalPadding>
       ) : (
         <FlexRow>
-          <FlexLeft>
-            <FormFormItem>
-              <GoAFormItem error={errors?.['name']} label="Name">
-                <GoAInput
-                  type="text"
-                  name="form-definition-name"
-                  value={definition?.name}
-                  testId="form-definition-name"
-                  aria-label="form-definition-name"
-                  width="100%"
-                  onChange={(name, value) => {
-                    const validations = {
-                      name: value,
-                      duplicate: definition.name,
-                    };
-                    validators.remove('name');
+          <NameDescriptionDataSchema>
+            <FormEditorTitle>Form / Definition Editor</FormEditorTitle>
+            <hr className="hr-resize" />
+            {definition && <FormConfigDefinition definition={definition} />}
 
-                    validators.checkAll(validations);
-
-                    setDefinition(
-                      isEdit ? { ...definition, name: value } : { ...definition, name: value, id: toKebabName(value) }
-                    );
-                  }}
-                />
-              </GoAFormItem>
-            </FormFormItem>
-            <GoAFormItem label="Definition ID">
-              <FormFormItem>
-                <GoAInput
-                  name="form-definition-id"
-                  value={definition?.id}
-                  testId="form-definition-id"
-                  disabled={true}
-                  width="100%"
-                  // eslint-disable-next-line
-                  onChange={() => {}}
-                />
-              </FormFormItem>
-            </GoAFormItem>
-
-            <GoAFormItem label="Description">
-              <DescriptionItem>
-                <GoATextArea
-                  name="form-definition-description"
-                  value={definition?.description}
-                  width="100%"
-                  testId="form-definition-description"
-                  aria-label="form-definition-description"
-                  onChange={(name, value) => {
-                    validators.remove('description');
-                    validators['description'].check(value);
-                    if (value !== definition?.description && definition !== defaultFormDefinition) {
-                      setDefinition({ ...definition, description: value });
-                    }
-                  }}
-                />
-
-                <HelpText>
-                  {definition.description.length <= 180 ? (
-                    <div> {descErrMessage} </div>
-                  ) : (
-                    <ErrorMsg>
-                      <GoAIcon type="warning" size="small" theme="filled" />
-                      {`  ${errors?.['description']}`}
-                    </ErrorMsg>
-                  )}
-                  <div>{`${definition.description.length}/180`}</div>
-                </HelpText>
-              </DescriptionItem>
-            </GoAFormItem>
             <GoAFormItem label="Data schema" error={errors?.['payloadSchema']}>
               <EditorPadding>
                 <Editor
                   data-testid="form-schema"
-                  height={height - 750}
+                  height={height - 550}
                   value={JSON.stringify(definition.dataSchema)}
                   onChange={(value) => {
                     validators.remove('payloadSchema');
@@ -311,56 +256,92 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 />
               </EditorPadding>
             </GoAFormItem>
-          </FlexLeft>
-          <FlexRight>
-            {elements.map((e, key) => {
-              return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
-            })}
-            {fetchKeycloakRolesState === ActionState.inProcess && (
-              <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
-            )}
-          </FlexRight>
+            <hr className="hr-resize-bottom" />
+            <FinalButtonPadding>
+              <GoAButtonGroup alignment="start">
+                <GoAButton
+                  type="primary"
+                  testId="form-save"
+                  disabled={
+                    !isFormUpdated(initialDefinition, definition) || !definition.name || validators.haveErrors()
+                  }
+                  onClick={() => {
+                    if (indicator.show === true) {
+                      setSpinner(true);
+                    } else {
+                      if (!isEdit) {
+                        const validations = {
+                          duplicate: definition.name,
+                        };
+                        if (!validators.checkAll(validations)) {
+                          return;
+                        }
+                      }
+                      setSpinner(true);
+                      dispatch(updateFormDefinition(definition));
+
+                      close();
+                    }
+                  }}
+                >
+                  Save
+                </GoAButton>
+                <GoAButton
+                  testId="form-cancel"
+                  type="secondary"
+                  onClick={() => {
+                    if (isFormUpdated(initialDefinition, definition)) {
+                      setSaveModal(true);
+                    } else {
+                      validators.clear();
+                      close();
+                    }
+                  }}
+                >
+                  Back
+                </GoAButton>
+              </GoAButtonGroup>
+            </FinalButtonPadding>
+          </NameDescriptionDataSchema>
+          <FormPermissions>
+            <FormEditorTitle>Form permissions</FormEditorTitle>
+            <hr className="hr-resize" />
+            <ScrollPane>
+              {elements.map((e, key) => {
+                return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+              })}
+              {fetchKeycloakRolesState === ActionState.inProcess && (
+                <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
+              )}
+            </ScrollPane>
+          </FormPermissions>
         </FlexRow>
       )}
-      <FinalButtonPadding>
-        <GoAButtonGroup alignment="end">
-          <GoAButton
-            testId="form-cancel"
-            type="secondary"
-            onClick={() => {
-              validators.clear();
-              close();
-            }}
-          >
-            Cancel
-          </GoAButton>
-          <GoAButton
-            type="primary"
-            testId="form-save"
-            disabled={!definition.name || validators.haveErrors()}
-            onClick={() => {
-              if (indicator.show === true) {
-                setSpinner(true);
-              } else {
-                if (!isEdit) {
-                  const validations = {
-                    duplicate: definition.name,
-                  };
-                  if (!validators.checkAll(validations)) {
-                    return;
-                  }
-                }
-                setSpinner(true);
-                dispatch(updateFormDefinition(definition));
-
-                close();
-              }
-            }}
-          >
-            Save
-          </GoAButton>
-        </GoAButtonGroup>
-      </FinalButtonPadding>
-    </div>
+      <SaveFormModal
+        open={saveModal}
+        onDontSave={() => {
+          setSaveModal(false);
+          close();
+        }}
+        onSave={() => {
+          if (!isEdit) {
+            const validations = {
+              duplicate: definition.name,
+            };
+            if (!validators.checkAll(validations)) {
+              return;
+            }
+          }
+          setSpinner(true);
+          dispatch(updateFormDefinition(definition));
+          setSaveModal(false);
+          close();
+        }}
+        saveDisable={!isFormUpdated(initialDefinition, definition)}
+        onCancel={() => {
+          setSaveModal(false);
+        }}
+      />
+    </FormEditor>
   );
 }
