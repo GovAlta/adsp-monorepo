@@ -1,0 +1,37 @@
+{
+  "name": "adsp-service-net-sdk",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/adsp-service-net-sdk",
+  "targets": {
+    "build": {
+      "executor": "@nx-dotnet/core:build",
+      "outputs": ["{workspaceRoot}/dist/libs/adsp-service-net-sdk"],
+      "options": {
+        "configuration": "Debug",
+        "noDependencies": true
+      },
+      "configurations": {
+        "production": {
+          "configuration": "Release"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx-dotnet/core:format"
+    },
+    "test": {
+      "executor": "@nx-dotnet/core:test",
+      "options": {
+        "settings": "coverage.runsettings"
+      }
+    },
+    "release": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx semantic-release -e ./libs/adsp-service-net-sdk/.releaserc.json"
+      }
+    }
+  },
+  "tags": []
+}

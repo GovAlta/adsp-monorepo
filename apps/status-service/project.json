@@ -1,0 +1,53 @@
+{
+  "name": "status-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/status-service/src",
+  "projectType": "application",
+  "prefix": "status-service",
+  "generators": {},
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "options": {
+        "webpackConfig": "apps/status-service/webpack.config.js",
+        "outputPath": "dist/apps/status-service",
+        "main": "apps/status-service/src/main.ts",
+        "tsConfig": "apps/status-service/tsconfig.app.json",
+        "assets": ["apps/status-service/src/assets"],
+        "target": "node",
+        "compiler": "tsc",
+        "isolatedConfig": true,
+        "babelUpwardRootMode": true
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false,
+          "fileReplacements": []
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/node:node",
+      "options": {
+        "buildTarget": "status-service:build"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["apps/status-service/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "options": {
+        "jestConfig": "apps/status-service/jest.config.ts",
+        "passWithNoTests": true,
+        "runInBand": true
+      }
+    }
+  },
+  "tags": []
+}

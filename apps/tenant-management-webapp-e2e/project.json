@@ -1,0 +1,29 @@
+{
+  "name": "tenant-management-webapp-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/tenant-management-webapp-e2e/src",
+  "projectType": "application",
+  "targets": {
+    "e2e": {
+      "executor": "@nrwl/cypress:cypress",
+      "options": {
+        "cypressConfig": "apps/tenant-management-webapp-e2e/cypress.dev.json",
+        "tsConfig": "apps/tenant-management-webapp-e2e/tsconfig.e2e.json",
+        "devServerTarget": "tenant-management-webapp:serve"
+      },
+      "configurations": {
+        "production": {
+          "devServerTarget": "tenant-management-webapp:serve:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["apps/tenant-management-webapp-e2e/**/*.{ts,tsx,js,jsx}"]
+      }
+    }
+  },
+  "tags": [],
+  "implicitDependencies": ["tenant-management-webapp"]
+}

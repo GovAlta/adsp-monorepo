@@ -1,0 +1,91 @@
+{
+  "name": "status-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/status-app/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/status-app",
+        "index": "apps/status-app/src/index.html",
+        "baseHref": "/",
+        "main": "apps/status-app/src/main.tsx",
+        "polyfills": "apps/status-app/src/polyfills.ts",
+        "tsConfig": "apps/status-app/tsconfig.app.json",
+        "assets": [
+          "apps/status-app/src/favicon.ico",
+          "apps/status-app/src/assets",
+          {
+            "glob": "nginx.conf",
+            "input": "apps/status-app/",
+            "output": "./"
+          }
+        ],
+        "styles": ["apps/status-app/src/styles.scss"],
+        "scripts": [],
+        "webpackConfig": "apps/status-app/webpack.config.js",
+        "babelUpwardRootMode": true,
+        "isolatedConfig": true
+      },
+      "configurations": {
+        "production": {
+          "fileReplacements": [],
+          "optimization": true,
+          "outputHashing": "all",
+          "sourceMap": false,
+          "extractCss": true,
+          "namedChunks": false,
+          "extractLicenses": true,
+          "vendorChunk": false,
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "2mb",
+              "maximumError": "5mb"
+            }
+          ]
+        },
+        "development": {
+          "extractLicenses": false,
+          "optimization": false,
+          "sourceMap": true,
+          "vendorChunk": true
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/webpack:dev-server",
+      "options": {
+        "buildTarget": "status-app:build",
+        "proxyConfig": "apps/status-app/proxy.conf.json"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "status-app:build:production"
+        },
+        "development": {
+          "buildTarget": "status-app:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["apps/status-app/**/*.{ts,tsx,js,jsx}"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/status-app"],
+      "options": {
+        "jestConfig": "apps/status-app/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}

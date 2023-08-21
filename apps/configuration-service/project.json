@@ -1,0 +1,53 @@
+{
+  "name": "configuration-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/configuration-service/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "webpackConfig": "apps/configuration-service/webpack.config.js",
+        "outputPath": "dist/apps/configuration-service",
+        "main": "apps/configuration-service/src/main.ts",
+        "tsConfig": "apps/configuration-service/tsconfig.app.json",
+        "assets": [],
+        "target": "node",
+        "compiler": "tsc",
+        "isolatedConfig": true,
+        "babelUpwardRootMode": true
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false,
+          "fileReplacements": []
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/node:node",
+      "options": {
+        "buildTarget": "configuration-service:build",
+        "port": 7780
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["apps/configuration-service/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/configuration-service"],
+      "options": {
+        "jestConfig": "apps/configuration-service/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}

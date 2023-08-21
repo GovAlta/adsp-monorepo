@@ -1,0 +1,105 @@
+{
+  "name": "tenant-management-webapp",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/tenant-management-webapp/src",
+  "projectType": "application",
+  "generators": {},
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "options": {
+        "outputPath": "dist/apps/tenant-management-webapp",
+        "index": "apps/tenant-management-webapp/src/index.html",
+        "main": "apps/tenant-management-webapp/src/main.tsx",
+        "polyfills": "apps/tenant-management-webapp/src/polyfills.ts",
+        "tsConfig": "apps/tenant-management-webapp/tsconfig.app.json",
+        "assets": [
+          "apps/tenant-management-webapp/src/favicon.ico",
+          "apps/tenant-management-webapp/src/assets",
+          {
+            "glob": "nginx.conf",
+            "input": "./",
+            "output": "./"
+          },
+          {
+            "glob": "silent-check-sso.html",
+            "input": "apps/tenant-management-webapp/src/",
+            "output": "./"
+          }
+        ],
+        "scripts": [],
+        "stylePreprocessorOptions": {
+          "includePaths": ["libs/stylesheets/scss/src/lib"]
+        },
+        "extractCss": true,
+        "styles": [],
+        "webpackConfig": "apps/tenant-management-webapp/webpack.config.js",
+        "babelUpwardRootMode": true,
+        "isolatedConfig": true
+      },
+      "configurations": {
+        "production": {
+          "fileReplacements": [
+            {
+              "replace": "apps/tenant-management-webapp/src/environments/environment.ts",
+              "with": "apps/tenant-management-webapp/src/environments/environment.prod.ts"
+            }
+          ],
+          "optimization": true,
+          "outputHashing": "all",
+          "sourceMap": false,
+          "extractCss": true,
+          "namedChunks": false,
+          "extractLicenses": true,
+          "vendorChunk": false,
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "2mb",
+              "maximumError": "5mb"
+            }
+          ]
+        },
+        "development": {
+          "extractLicenses": false,
+          "optimization": false,
+          "sourceMap": true,
+          "vendorChunk": true
+        }
+      },
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@nrwl/webpack:dev-server",
+      "options": {
+        "buildTarget": "tenant-management-webapp:build",
+        "proxyConfig": "apps/tenant-management-webapp/proxy.conf.json"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "tenant-management-webapp:build:production"
+        },
+        "development": {
+          "buildTarget": "tenant-management-webapp:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["apps/tenant-management-webapp/**/*.{ts,tsx,js,jsx}"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "options": {
+        "jestConfig": "apps/tenant-management-webapp/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "outputs": ["{workspaceRoot}/coverage/apps/tenant-management-webapp"]
+    }
+  },
+  "tags": []
+}
