@@ -315,21 +315,11 @@ async function checkAndUpdateAutoChangeStatus(props: CreateCheckEndpointProps) {
 
       //Set the status to opperational if it is in report issues status and
       //the the health check has failed for the last five minutes
-      if (
-        currentServiceStatus &&
-        currentServiceStatus.status !== '' &&
-        currentServiceStatus.status === 'operational' &&
-        failedForMoreThanFiveMinutes
-      ) {
+      if (currentServiceStatus.status === 'operational' && failedForMoreThanFiveMinutes) {
         //update status to reported issues
         currentServiceStatus.status = 'reported-issues';
         serviceStatusRepository.save(currentServiceStatus);
-      } else if (
-        currentServiceStatus &&
-        currentServiceStatus.status !== '' &&
-        currentServiceStatus.status === 'reported-issues' &&
-        succeededMoreThanFiveMinutes
-      ) {
+      } else if (currentServiceStatus.status === 'reported-issues' && succeededMoreThanFiveMinutes) {
         //update status to operational
         currentServiceStatus.status = 'operational';
         serviceStatusRepository.save(currentServiceStatus);
