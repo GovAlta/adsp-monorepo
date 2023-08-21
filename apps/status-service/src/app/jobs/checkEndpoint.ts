@@ -1,5 +1,4 @@
 import axios from 'axios';
-import moment from 'moment';
 import { Logger } from 'winston';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { EndpointStatusEntry, EndpointStatusType } from '../types';
