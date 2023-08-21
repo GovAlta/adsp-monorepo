@@ -13,6 +13,104 @@ export const FinalButtonPadding = styled.div`
   padding-top: 20px;
 `;
 
+export const Edit = styled.div`
+  .flexRow {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .badgePadding {
+    margin: 6px 0 0 5px;
+  }
+
+  a {
+    margin-top: 3px;
+  }
+  display: flex;
+  flex-direction: row;
+  margin-right: 1rem;
+  margin-top: 0.5rem;
+`;
+
+export const ConfigFormWrapper = styled.div`
+  font-size: 16px;
+  padding-left: 3px;
+  border: solid 1px #dcdcdc;
+  border-radius: 3px;
+  height: 7.375rem;
+  background-color: #f1f1f1;
+  padding-right: 1rem;
+  border-bottom: solid 16px #f1f1f1;
+  border: solid 1px #dcdcdc;
+
+  display: flex;
+  margin-bottom: 1.5rem;
+  .nameColumn {
+    width: 180px;
+    float: left;
+    overflow: hidden;
+  }
+  .idColumn {
+    width: 180px;
+    float: left;
+    height: 100%;
+    overflow: hidden;
+  }
+  .descColumn {
+    width: calc(100% - 336px);
+    float: left;
+    height: 100%;
+    overflow: hidden;
+  }
+  .overflowContainer {
+    border-bottom: 16px solid #f1f1f1;
+    height: 64px;
+    overflow: hidden;
+    vertical-align: top;
+  }
+  .editColumn {
+    width: 56px;
+    float: right;
+    min-width: 50px;
+    margin-top: 0.5rem;
+  }
+  .separator {
+    margin-top: 1rem;
+    width: 1px;
+    height: 5.375rem;
+
+    border-left: 1px solid #ccc;
+  }
+  .hideOverflow {
+    overflow: hidden;
+  }
+  table {
+    margin: 1rem 1.5rem 1rem 1.5rem;
+  }
+  th {
+    text-align: left;
+    padding-bottom: 0.5rem;
+  }
+`;
+export const FormEditor = styled.div`
+  width: 100%;
+
+  .hr-resize {
+    margin-top: 0.75rem;
+  }
+
+  .hr-resize-bottom {
+    margin-bottom: 0.25rem;
+    margin-top: 2rem;
+  }
+`;
+
+export const FormEditorTitle = styled.div`
+  font-size: var(--fs-xl);
+  line-height: var(--lh-lg);
+  font-weight: var(--fw-regular);
+`;
+
 export const BadgeWrapper = styled.div`
   margin-left: 1rem;
 `;
@@ -33,7 +131,6 @@ export const ButtonRight = styled.div`
 export const FlexRow = styled.div`
   display: flex;
   flex-direction: row;
-  padding-top: 1rem;
 `;
 export const FlexColumn = styled.div`
   display: flex;
@@ -52,19 +149,22 @@ export const NotificationTemplateEditorContainer = styled.div`
   box-sizing: border-box;
 `;
 
-export const FlexLeft = styled.div`
+export const NameDescriptionDataSchema = styled.div`
   flex: 1;
   padding-right: 3rem;
 `;
 
-export const FlexRight = styled.div`
+export const FormPermissions = styled.div`
   flex: 1;
-  overflow-y: scroll;
-  max-height: calc(100vh - 300px);
 
   .role {
     width: 10em;
+    height: 3em;
   }
+`;
+export const ScrollPane = styled.div`
+  overflow-y: scroll;
+  max-height: calc(100vh - 230px);
 `;
 
 export const OuterNotificationTemplateEditorContainer = styled.div`

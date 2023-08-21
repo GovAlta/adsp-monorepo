@@ -1,4 +1,5 @@
 import axios from 'axios';
+import moment from 'moment';
 import { Logger } from 'winston';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { EndpointStatusEntry, EndpointStatusType } from '../types';
@@ -42,6 +43,8 @@ export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
       props.logger?.info(`Start to run the check endpoint job.`);
       const { getEndpointResponse } = props;
       // run all endpoint tests
+      await checkAndUpdateAutoChangeStatus(props);
+
       await checkAndUpdateAutoChangeStatus(props);
 
       const statusEntry = await checkEndpoint(getEndpointResponse, props.app.url, props.app.appKey, props.logger);

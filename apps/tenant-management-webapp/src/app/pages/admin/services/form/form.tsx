@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect } from 'react';
+import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import FormOverview from './formOverview';
 import { RootState } from '@store/index';
@@ -28,6 +28,9 @@ const HelpLink = (): JSX.Element => {
 
 export const Form: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
+  //const [activeIndex, setActiveIndex] = useState<number>(0);
+
+  const [openAddDefinition, setOpenAddDefinition] = useState(false);
 
   const dispatch = useDispatch();
 
@@ -49,10 +52,10 @@ export const Form: FunctionComponent = () => {
           </HeadingDiv>
           <Tabs activeIndex={definitions === 'true' ? 1 : 0}>
             <Tab label="Overview">
-              <FormOverview />
+              <FormOverview setOpenAddDefinition={setOpenAddDefinition} />
             </Tab>
             <Tab label="Templates">
-              <FormDefinitions />
+              <FormDefinitions openAddDefinition={openAddDefinition} />
             </Tab>
           </Tabs>
         </>
