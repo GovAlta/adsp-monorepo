@@ -13,6 +13,25 @@ export const FinalButtonPadding = styled.div`
   padding-top: 20px;
 `;
 
+export const Edit = styled.div`
+  .flexRow {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .badgePadding {
+    margin: 6px 0 0 5px;
+  }
+
+  a {
+    margin-top: 3px;
+  }
+  display: flex;
+  flex-direction: row;
+  margin-right: 1rem;
+  margin-top: 0.5rem;
+`;
+
 export const ConfigFormWrapper = styled.div`
   font-size: 16px;
   padding-left: 3px;
