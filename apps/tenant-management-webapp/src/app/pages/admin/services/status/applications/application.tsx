@@ -142,6 +142,20 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
         Monitor only (the application will not be publicly displayed)
       </GoACheckbox>
 
+      <GoACheckbox
+        checked={app.autoChangeStatus}
+        name="autoChangeStatus-checkbox"
+        data-testid="autoChangeStatus-checkbox"
+        onChange={() => {
+          const application: ApplicationStatus = JSON.parse(JSON.stringify(app));
+          application.autoChangeStatus = !app.autoChangeStatus;
+          dispatch(saveApplication(application));
+        }}
+        ariaLabel={`autoChangeStatus-checkbox`}
+      >
+        Change status when site is unresponsive
+      </GoACheckbox>
+
       {/* GoAModals */}
 
       {/* Delete confirmation dialog */}

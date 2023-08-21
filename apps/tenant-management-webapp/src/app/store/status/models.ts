@@ -47,6 +47,7 @@ export interface ApplicationStatus {
   internalStatus?: InternalServiceStatusType;
   endpoint?: ServiceStatusEndpoint;
   monitorOnly?: boolean;
+  autoChangeStatus?: boolean;
 }
 
 export interface Webhooks {

@@ -24,6 +24,7 @@ export interface ApplicationConfiguration {
   url: string;
   description?: string;
   monitorOnly?: boolean;
+  autoChangeStatus?: boolean;
   status?: PublicServiceStatusType;
 }
 
@@ -33,15 +34,15 @@ export interface StaticApplicationData extends ApplicationConfiguration {
 }
 
 export interface Configuration {
-  latest: { configuration: { webhooks: Record<string, Webhooks> }};
+  latest: { configuration: { webhooks: Record<string, Webhooks> } };
 }
 export interface StatusConfiguration {
-  latest: { configuration: { applicationWebhookIntervals: Record<string, HookInterval> }};
+  latest: { configuration: { applicationWebhookIntervals: Record<string, HookInterval> } };
 }
 
 export interface HookInterval {
-  appId: string,
-  waitTimeInterval: number,
+  appId: string;
+  waitTimeInterval: number;
 }
 
 export interface Webhooks {

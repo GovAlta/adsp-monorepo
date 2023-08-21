@@ -133,7 +133,7 @@ export const updateApplication =
       logger.info(`${req.method} - ${req.url}`);
 
       const user = req.user as User;
-      const { name, description, endpoint, monitorOnly } = req.body;
+      const { name, description, endpoint, monitorOnly, autoChangeStatus } = req.body;
       const { appKey } = req.params;
       const tenantId = user.tenantId?.toString() ?? '';
 
@@ -151,6 +151,7 @@ export const updateApplication =
         url: endpoint.url,
         description,
         monitorOnly,
+        autoChangeStatus,
       };
       await applicationRepo.updateApp(update, tenantId);
 
