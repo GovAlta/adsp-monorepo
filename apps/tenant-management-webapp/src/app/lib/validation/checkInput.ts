@@ -53,8 +53,8 @@ export const checkInput = (input: unknown, validators: Validator[], action?: Val
 /* Some common character cleansing patterns */
 export const validationPattern = {
   mixedKebabCase: {
-    pattern: new RegExp(/^[a-zA-Z0-9-]+$/),
-    onFailureMessage: 'Allowed characters are: a-z, A-Z, 0-9, -,_',
+    pattern: new RegExp(/^[a-zA-Z0-9-_]+$/),
+    onFailureMessage: 'Allowed characters are: a-z, A-Z, 0-9,-,_',
   },
   mixedArrowCaseWithSpace: {
     pattern: new RegExp(/^[a-zA-Z0-9- ]+$/),
