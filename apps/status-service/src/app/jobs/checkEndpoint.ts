@@ -17,7 +17,7 @@ import { diffMinutes } from '../utils';
 const ENTRY_SAMPLE_SIZE = 5;
 const HEALTHY_MAX_FAIL_COUNT = 0;
 const UNHEALTHY_MIN_FAIL_COUNT = 3;
-const QUERY_SIZE = 6;
+const QUERY_SIZE = 5;
 
 type GetEndpointResponse = (url: string) => Promise<{ status: number | string }>;
 export interface CreateCheckEndpointProps {
@@ -42,12 +42,12 @@ export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
       props.logger?.info(`Start to run the check endpoint job.`);
       const { getEndpointResponse } = props;
       // run all endpoint tests
-      await checkAndUpdateAutoChangeStatus(props);
-
-      await checkAndUpdateAutoChangeStatus(props);
-
       const statusEntry = await checkEndpoint(getEndpointResponse, props.app.url, props.app.appKey, props.logger);
       await saveStatus(props, statusEntry, props.app.tenantId);
+
+      // Keep this auto change status after the 'saveStatus' method as the autoChangeStatus' depends on
+      // the correct status app status and Endpoint service statuses information.
+      await checkAndUpdateAutoChangeStatus(props);
 
       props.logger?.info(`Successfully finished the check endpoint job.`);
     } catch (error) {
@@ -304,10 +304,10 @@ async function checkAndUpdateAutoChangeStatus(props: CreateCheckEndpointProps) {
         QUERY_SIZE
       );
 
-      //get first and last date time to make sure the time is 5 minutes apart.
+      //Get first and last date time to make sure the time is 5 minutes apart.
       const mostRecentDate = new Date(recentHistory.at(0).timestamp);
       const oldestDate = new Date(recentHistory.at(-1).timestamp);
-      const dateDiff = diffMinutes(oldestDate, mostRecentDate);
+      const dateDiff = diffMinutes(oldestDate, mostRecentDate) + 1; // +1 is for inclusive minutes
 
       const failedForMoreThanFiveMinutes =
         recentHistory.filter((hist) => {
@@ -317,6 +317,7 @@ async function checkAndUpdateAutoChangeStatus(props: CreateCheckEndpointProps) {
         recentHistory.filter((hist) => {
           return hist.ok;
         }).length >= 5 && dateDiff >= 5;
+
       const currentServiceStatus = await serviceStatusRepository.get(app.appKey);
 
       //Set the status to opperational if it is in report issues status and
