@@ -292,7 +292,6 @@ const updateAppStatus = async (
 async function checkAndUpdateAutoChangeStatus(props: CreateCheckEndpointProps) {
   const { app, serviceStatusRepository, endpointStatusEntryRepository, logger } = props;
   const QUERY_SIZE = 5;
-  logger.info(`checkAndUpdateAutoChangeStatus Started...`);
 
   try {
     if (app.autoChangeStatus) {
@@ -310,7 +309,7 @@ async function checkAndUpdateAutoChangeStatus(props: CreateCheckEndpointProps) {
       //Need to round date diff as MomentJS can give you an incorrect number because of the milliseconds
       const dateDiff = Math.round(mostRecentDate.diff(oldestDate, 'minute'));
 
-      const failedForMoreThanFiveMins = recentHistory.filter((hist) => !hist.ok && dateDiff >= 5).length > 0;
+      const failedForMoreThanFiveMinutes = recentHistory.filter((hist) => !hist.ok && dateDiff >= 5).length > 0;
       const succeededMoreThanFiveMinutes = recentHistory.filter((hist) => hist.ok && dateDiff >= 5).length > 0;
       const currentServiceStatus = await serviceStatusRepository.get(app.appKey);
 
@@ -320,7 +319,7 @@ async function checkAndUpdateAutoChangeStatus(props: CreateCheckEndpointProps) {
         currentServiceStatus &&
         currentServiceStatus.status !== '' &&
         currentServiceStatus.status === 'operational' &&
-        failedForMoreThanFiveMins
+        failedForMoreThanFiveMinutes
       ) {
         //update status to reported issues
         currentServiceStatus.status = 'reported-issues';
@@ -336,8 +335,6 @@ async function checkAndUpdateAutoChangeStatus(props: CreateCheckEndpointProps) {
         serviceStatusRepository.save(currentServiceStatus);
       }
     }
-
-    logger.info(`checkAndUpdateAutoChangeStatus Ended....`);
   } catch (err) {
     logger.error(`checkAndUpdateAutoChangeStatus() has encountered an error: ${err}`);
   }
