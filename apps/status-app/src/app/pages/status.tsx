@@ -24,8 +24,9 @@ import { GoAPageLoader } from '@abgov/react-components';
 import moment from 'moment';
 import GoaLogo from '../../assets/goa-logo.svg';
 import { GoAButton } from '@abgov/react-components-new';
-import { GoAForm, GoAFormItem, GoAInputEmail, GoAFormActions } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem, GoAFormActions } from '@abgov/react-components/experimental';
 import { emailError } from '@lib/inputValidation';
+import { GoAInput } from '@abgov/react-components-new';
 
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
@@ -242,13 +243,15 @@ const ServiceStatusPage = (): JSX.Element => {
                           <GoAFormLabelOverwrite>
                             <label>Enter your email to receive updates</label>
                           </GoAFormLabelOverwrite>
-                          <GoAInputEmail
+                          <GoAInput
+                            type="email"
                             id="email"
                             name="email"
                             value={email}
-                            data-testid="email"
+                            testId="email"
                             onChange={setValue}
                             aria-label="email"
+                            width="100%"
                           />
                         </GoAFormItem>
                       </GridItem>

@@ -2,9 +2,7 @@
 export default {
   displayName: 'tenant-management-api',
   preset: './jest.preset.js',
-  globals: {
-    'ts-jest': { tsconfig: '<rootDir>/tsconfig.spec.json' },
-  },
+  globals: {},
   coverageDirectory: '../../coverage/apps/tenant-management-api',
   moduleNameMapper: {
     '^uuid$': require.resolve('uuid'),

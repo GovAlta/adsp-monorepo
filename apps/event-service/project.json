@@ -1,0 +1,55 @@
+{
+  "name": "event-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/event-service/src",
+  "projectType": "application",
+  "prefix": "event-service",
+  "generators": {},
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "options": {
+        "webpackConfig": "apps/event-service/webpack.config.js",
+        "outputPath": "dist/apps/event-service",
+        "main": "apps/event-service/src/main.ts",
+        "tsConfig": "apps/event-service/tsconfig.app.json",
+        "assets": [],
+        "target": "node",
+        "compiler": "tsc",
+        "isolatedConfig": true,
+        "babelUpwardRootMode": true
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false,
+          "fileReplacements": []
+        }
+      },
+      "outputs": ["{options.outputPath}"]
+    },
+    "serve": {
+      "executor": "@nrwl/node:node",
+      "options": {
+        "buildTarget": "event-service:build",
+        "port": 7773
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["apps/event-service/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "options": {
+        "jestConfig": "apps/event-service/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "outputs": ["{workspaceRoot}/coverage/apps/event-service"]
+    }
+  },
+  "tags": []
+}

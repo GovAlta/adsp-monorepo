@@ -1,18 +1,11 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import type { NotificationItem } from '@store/notification/models';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
-import {
-  GoAModal,
-  GoAModalActions,
-  GoAModalContent,
-  GoAModalTitle,
-  GoAInput,
-} from '@abgov/react-components/experimental';
+import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { GoACallout } from '@abgov/react-components';
 import styled from 'styled-components';
-import { GoACheckbox, GoATextArea } from '@abgov/react-components-new';
+import { GoACheckbox, GoATextArea, GoAInput, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { toKebabName } from '@lib/kebabName';
 import { Role } from '@store/tenant/models';
 import { ServiceRoleConfig } from '@store/access/models';
@@ -127,8 +120,9 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 type="text"
                 name="name"
                 value={type.name}
-                data-testid="form-name"
+                testId="form-name"
                 aria-label="name"
+                width="100%"
                 onChange={(name, value) => {
                   const validations = {
                     name: value,

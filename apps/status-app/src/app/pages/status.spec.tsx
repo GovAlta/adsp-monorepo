@@ -184,8 +184,12 @@ describe('Service statuses (2 of them)', () => {
 
     const email = await queryByTestId('email');
 
-    fireEvent.change(email, { target: { value: 'bob@smith.com' } });
-
+    fireEvent(
+      email,
+      new CustomEvent('_change', {
+        detail: { value: 'bob@smith.com' },
+      })
+    );
     const subscribeButton = await queryByTestId('subscribe');
     fireEvent(subscribeButton, new CustomEvent('_click'));
     const actions = store.getActions();

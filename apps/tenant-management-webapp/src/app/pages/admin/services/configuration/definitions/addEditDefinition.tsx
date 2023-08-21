@@ -1,9 +1,9 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { GoAElementLoader } from '@abgov/react-components';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAInput } from '@abgov/react-components-new';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAForm, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { ConfigDefinition } from '@store/configuration/model';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
@@ -108,8 +108,9 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
                   name="namespace"
                   value={definition.namespace}
                   disabled={isEdit}
-                  data-testid="form-namespace"
+                  testId="form-namespace"
                   aria-label="nameSpace"
+                  width="100%"
                   onChange={(key, value) => {
                     validators.remove('namespace');
                     validators['namespace'].check(value);
@@ -124,8 +125,9 @@ export const AddEditConfigDefinition: FunctionComponent<AddEditConfigDefinitionP
                   name="name"
                   value={definition.name}
                   disabled={isEdit}
-                  data-testid="form-name"
+                  testId="form-name"
                   aria-label="name"
+                  width="100%"
                   onChange={(key, value) => {
                     validators.remove('name');
                     validators['name'].check(value);

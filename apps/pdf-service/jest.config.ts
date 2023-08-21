@@ -2,15 +2,16 @@
 export default {
   displayName: 'pdf-service',
   preset: '../../jest.preset.js',
-  globals: {
-    'ts-jest': {
-      tsconfig: '<rootDir>/tsconfig.spec.json',
-    },
-  },
+  globals: {},
   testEnvironment: 'node',
   transform: {
     '^.+\\.hbs$': '../../hbs-raw-loader.js',
-    '^.+\\.[tj]s$': 'ts-jest',
+    '^.+\\.[tj]s$': [
+      'ts-jest',
+      {
+        tsconfig: '<rootDir>/tsconfig.spec.json',
+      },
+    ],
   },
   moduleNameMapper: {
     '^uuid$': require.resolve('uuid'),

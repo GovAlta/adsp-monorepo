@@ -1,15 +1,8 @@
 import React, { FunctionComponent, useState } from 'react';
 import type { SubscriberSearchCriteria } from '@store/subscription/models';
 
-import {
-  GoAForm,
-  GoAFormItem,
-  GoAFlexRow,
-  GoAInputText,
-  GoAInputEmail,
-  GoAFormActions,
-} from '@abgov/react-components/experimental';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAForm, GoAFormItem, GoAFlexRow, GoAFormActions } from '@abgov/react-components/experimental';
+import { GoAButton, GoAButtonGroup, GoAInput } from '@abgov/react-components-new';
 import '@abgov/core-css/src/lib/styles/v2/colors.scss';
 
 interface EventSearchFormProps {
@@ -40,15 +33,38 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
         <GoAFlexRow gap="small">
           <GoAFormItem>
             <label htmlFor="name">Search subscriber address as</label>
-            <GoAInputText name="name" id="name" value={criteria?.name} onChange={onChangeFn} />
+            <GoAInput
+              name="name"
+              testId="subscriber-name-input"
+              id="name"
+              width="100%"
+              value={criteria?.name}
+              onChange={onChangeFn}
+            />
           </GoAFormItem>
           <GoAFormItem>
             <label htmlFor="email">Search subscriber email</label>
-            <GoAInputEmail name="email" id="email" value={criteria?.email} onChange={onChangeFn} />
+            <GoAInput
+              type="email"
+              testId="subscriber-email-input"
+              name="email"
+              width="100%"
+              id="email"
+              value={criteria?.email}
+              onChange={onChangeFn}
+            />
           </GoAFormItem>
           <GoAFormItem>
             <label htmlFor="sms">Search subscriber phone</label>
-            <GoAInputText name="sms" id="sms" value={criteria?.sms} onChange={onChangeFn} />
+            <GoAInput
+              type="tel"
+              name="sms"
+              testId="subscriber-phone-input"
+              id="sms"
+              width="100%"
+              value={criteria?.sms}
+              onChange={onChangeFn}
+            />
           </GoAFormItem>
         </GoAFlexRow>
         <GoAFormActions alignment="right">

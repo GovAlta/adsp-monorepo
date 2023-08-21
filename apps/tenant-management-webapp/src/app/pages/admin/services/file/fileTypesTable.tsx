@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import DataTable from '@components/DataTable';
 import { Role } from '@store/tenant/models';
 import { FileTypeModal } from './fileTypeModal';
-import { GoAIconButton } from '@abgov/react-components/experimental';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { FileTypeDeleteModal } from './fileTypeDeleteModal';
 import styled from 'styled-components';
@@ -63,10 +62,9 @@ const FileTypeTableRow = ({
               onEdit();
             }}
           />
-          <GoAIconButton
+          <GoAContextMenuIcon
             testId={`file-type-row-delete-btn-${id}`}
             title="Delete"
-            size="medium"
             type="trash"
             onClick={() => {
               onDelete();

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { GoARadio, GoASkeletonGridColumnContent } from '@abgov/react-components';
-import { GoAInputEmail, GoAFormItem, GoAInput } from '@abgov/react-components/experimental';
+import { GoAFormItem } from '@abgov/react-components/experimental';
 import { useDispatch, useSelector } from 'react-redux';
 import { patchSubscriber, createSubscriber } from '@store/subscription/actions';
 import { actionTypes } from '@store/subscription/models';
@@ -12,7 +12,7 @@ import { Label } from './styled-components';
 import { GapVS } from './styled-components';
 import { RootState } from '@store/index';
 import { phoneWrapper } from '@lib/wrappers';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton, GoAInput, GoAButtonGroup } from '@abgov/react-components-new';
 interface ContactInfoCardProps {
   subscriber?: Subscriber;
 }
@@ -43,7 +43,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
       return (
         indicator?.show &&
         indicator.action &&
-        [actionTypes.updatePreference, actionTypes.updateContactInfo].includes(indicator.action)
+        [actionTypes.updatePreference as string, actionTypes.updateContactInfo as string].includes(indicator.action)
       );
     }
     return false;
@@ -173,22 +173,24 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
   const updateContactInfoButtons = () => {
     return (
       <div>
-        <GoAButton size="compact" testId="edit-contact-save-button" onClick={saveContactInformation}>
-          Save
-        </GoAButton>
+        <GoAButtonGroup alignment="start">
+          <GoAButton size="compact" testId="edit-contact-save-button" onClick={saveContactInformation}>
+            Save
+          </GoAButton>
 
-        <GoAButton
-          size="compact"
-          type="secondary"
-          testId="edit-contact-cancel-button"
-          onClick={() => {
-            setEditContactInformation(!editContactInformation);
-            setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
-            setFormErrors({});
-          }}
-        >
-          Cancel
-        </GoAButton>
+          <GoAButton
+            size="compact"
+            type="secondary"
+            testId="edit-contact-cancel-button"
+            onClick={() => {
+              setEditContactInformation(!editContactInformation);
+              setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
+              setFormErrors({});
+            }}
+          >
+            Cancel
+          </GoAButton>
+        </GoAButtonGroup>
       </div>
     );
   };
@@ -206,12 +208,14 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
               <GridItem md={3.5} hSpacing={1}>
                 <Label>Email</Label>
                 <GoAFormItem error={formErrors?.['email']}>
-                  <GoAInputEmail
+                  <GoAInput
+                    type="email"
                     aria-label="email"
                     name="email"
                     value={emailContactInformation}
                     onChange={setValue}
-                    data-testid="contact-email-input"
+                    testId="contact-email-input"
+                    width="100%"
                   />
                 </GoAFormItem>
               </GridItem>
@@ -221,11 +225,12 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
 
                 <GoAFormItem error={formErrors?.['sms']}>
                   <GoAInput
-                    type="phone"
+                    type="tel"
                     aria-label="sms"
                     name="sms"
+                    width="100%"
                     value={SMSContactInformation}
-                    data-testid="contact-sms-input"
+                    testId="contact-sms-input"
                     onChange={setValue}
                     trailingIcon="close"
                     onTrailingIconClick={() => {

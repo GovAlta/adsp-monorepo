@@ -63,7 +63,7 @@ describe('Definitions Page', () => {
       </Provider>
     );
     const deleteBtn = queryByTestId('delete-details');
-    fireEvent.click(deleteBtn);
+    fireEvent(deleteBtn, new CustomEvent('_click'));
     const confirmation = queryByTestId('delete-confirmation');
     expect(confirmation).not.toBeNull();
     const deleteConfirm = queryByTestId('delete-confirm');
@@ -80,9 +80,10 @@ describe('Definitions Page', () => {
       </Provider>
     );
     const deleteBtn = queryByTestId('delete-details');
-    fireEvent.click(deleteBtn);
 
+    fireEvent(deleteBtn, new CustomEvent('_click'));
     const deleteCancel = queryByTestId('delete-cancel');
+
     fireEvent(deleteCancel, new CustomEvent('_click'));
     await waitFor(() => {
       expect(queryByTestId('delete-cancel')).toBeNull();
@@ -101,10 +102,10 @@ describe('Definitions Page', () => {
     // init
     expect(queryByTestId('details')).toBeFalsy();
     // show
-    fireEvent.click(toggleDetails);
+    fireEvent(toggleDetails, new CustomEvent('_click'));
     expect(queryByTestId('details')).toBeTruthy();
     // hide
-    fireEvent.click(toggleDetails);
+    fireEvent(toggleDetails, new CustomEvent('_click'));
     expect(queryByTestId('details')).toBeFalsy();
   });
 
@@ -115,8 +116,7 @@ describe('Definitions Page', () => {
       </Provider>
     );
     const editBtn = queryByTestId('edit-details');
-    fireEvent.click(editBtn);
-
+    fireEvent(editBtn, new CustomEvent('_click'));
     // fields
     const namespace = queryByTestId('form-namespace');
     const name = queryByTestId('form-name');
@@ -147,7 +147,7 @@ describe('Definitions Page', () => {
     );
 
     const editBtn = queryByTestId('edit-details');
-    fireEvent.click(editBtn);
+    fireEvent(editBtn, new CustomEvent('_click'));
 
     const cancelButton = queryByTestId('form-cancel');
     fireEvent(cancelButton, new CustomEvent('_click'));
@@ -180,9 +180,28 @@ describe('Definitions Page', () => {
     expect(saveBtn).toBeTruthy();
 
     // fill
-    fireEvent.change(namespace, { target: { value: 'namespace' } });
-    fireEvent.change(name, { target: { value: 'name' } });
-    fireEvent.change(description, { target: { value: 'description' } });
+    fireEvent(
+      namespace,
+      new CustomEvent('_change', {
+        detail: { value: 'namespace' },
+      })
+    );
+    fireEvent(
+      name,
+      new CustomEvent('_change', {
+        detail: { value: 'name' },
+      })
+    );
+    fireEvent(
+      description,
+      new CustomEvent('_change', {
+        detail: { value: 'description' },
+      })
+    );
+
+    // fireEvent.change(namespace, { target: { value: 'namespace' } });
+    // fireEvent.change(name, { target: { value: 'name' } });
+    // fireEvent.change(description, { target: { value: 'description' } });
 
     fireEvent(saveBtn, new CustomEvent('_click'));
     const actions = store.getActions();

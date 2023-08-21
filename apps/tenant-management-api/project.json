@@ -1,0 +1,56 @@
+{
+  "name": "tenant-management-api",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/tenant-management-api/src",
+  "projectType": "application",
+  "prefix": "tenant-management-api",
+  "generators": {},
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "options": {
+        "outputPath": "dist/apps/tenant-management-api",
+        "main": "apps/tenant-management-api/src/main.ts",
+        "tsConfig": "apps/tenant-management-api/tsconfig.app.json",
+        "assets": ["apps/tenant-management-api/src/assets"],
+        "webpackConfig": "apps/tenant-management-api/webpack.config.js",
+        "target": "node",
+        "compiler": "tsc",
+        "isolatedConfig": true,
+        "babelUpwardRootMode": true
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false,
+          "fileReplacements": []
+        }
+      },
+      "outputs": ["{options.outputPath}"]
+    },
+    "serve": {
+      "executor": "@nrwl/node:node",
+      "options": {
+        "buildTarget": "tenant-management-api:build",
+        "port": 7000
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["apps/tenant-management-api/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "options": {
+        "jestConfig": "apps/tenant-management-api/jest.config.ts",
+        "passWithNoTests": true,
+        "runInBand": true
+      },
+      "outputs": ["{workspaceRoot}/coverage/apps/tenant-management-api"]
+    }
+  },
+  "tags": []
+}

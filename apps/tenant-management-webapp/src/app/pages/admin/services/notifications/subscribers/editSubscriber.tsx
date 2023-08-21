@@ -1,10 +1,10 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { Subscriber } from '@store/subscription/models';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAInput } from '@abgov/react-components-new';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAForm, GoAFormItem, GoAInputEmail, GoAInput } from '@abgov/react-components/experimental';
+import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
 import { isSmsValid, emailError, smsError } from '@lib/inputValidation';
 import { GoATextArea } from '@abgov/react-components-new';
@@ -80,10 +80,10 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
     }
     let phoneIndex = smsIndex;
     if (smsIndex === -1) {
-      phoneIndex = subscriber.channels ? subscriber.channels.length : 0;
+      phoneIndex = subscriber?.channels ? subscriber?.channels?.length : 0;
     }
 
-    const channels = subscriber.channels || [];
+    const channels = subscriber?.channels || [];
 
     formErrorList = Object.assign(formErrorList, smsError(phone));
     if (Object.keys(formErrorList).length === 0) {
@@ -130,7 +130,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
       }
 
       setFormErrors(null);
-      if (subscriber.addressAs != null) {
+      if (subscriber?.addressAs != null) {
         subscriber.addressAs = address;
       }
 
@@ -157,17 +157,20 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
                 <GoAInput
                   type="text"
                   name="name"
+                  width="100%"
                   value={address}
-                  data-testid="form-name"
+                  testId="form-name"
                   aria-label="name"
                   onChange={(_name, value) => setAddress(value)}
                 />
               </GoAFormItem>
               <GoAFormItem error={formErrors?.['email'] || updateError}>
                 <label>Email</label>
-                <GoAInputEmail
+                <GoAInput
+                  type="email"
                   name="email"
-                  data-testid="form-email"
+                  width="100%"
+                  testId="form-email"
                   value={email}
                   aria-label="email"
                   onChange={(_name, value) => {
@@ -179,11 +182,12 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
                 <label>Phone number</label>
                 <div className="phoneInputStyle">
                   <GoAInput
-                    type="text"
+                    type="tel"
                     aria-label="sms"
                     name="sms"
+                    width="100%"
                     value={phone}
-                    data-testid="contact-sms-input"
+                    testId="contact-sms-input"
                     onChange={(_, value) => {
                       if (isSmsValid(value)) {
                         setPhone(value.substring(0, 10));
