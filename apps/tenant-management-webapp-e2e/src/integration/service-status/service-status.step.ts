@@ -233,6 +233,8 @@ Then('the user views {string} notices', function (filterType) {
           // Check mode
           statusObj
             .noticeCardMode(i + 1)
+            .shadow()
+            .find('.goa-badge-content')
             .invoke('text')
             .then((modeText) => {
               if (filterType != 'Active') {
@@ -321,6 +323,8 @@ function searchNoticeCards(mode, desc, app, startDateTime, endDateTime) {
               // Check mode
               statusObj
                 .noticeCardMode(i + 1)
+                .shadow()
+                .find('.goa-badge-content')
                 .invoke('text')
                 .then((modeText) => {
                   cy.log('Mode Text: ' + modeText);
@@ -476,14 +480,19 @@ Then('the user views Add application modal', function () {
 When(
   'the user enters {string} as name and {string} as description and {string} as endpoint',
   function (name, description, endpoint) {
-    statusObj.addApplicationNameModalField().clear().type(name);
+    statusObj.addApplicationNameModalField().shadow().find('input').clear().type(name, { delay: 50, force: true });
     statusObj
       .addApplicationDescriptionModalField()
       .shadow()
       .find('.goa-textarea')
       .clear()
       .type(description, { force: true });
-    statusObj.addApplicationEndpointModalField().clear().type(endpoint);
+    statusObj
+      .addApplicationEndpointModalField()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(endpoint, { delay: 50, force: true });
   }
 );
 
@@ -513,10 +522,10 @@ Then('the user {string} {string} in the application list', function (viewOrNot, 
 When('the user clicks {string} button for {string}', function (buttonType, appName) {
   switch (buttonType) {
     case 'Edit':
-      statusObj.applicationCardEditBtn(appName).click();
+      statusObj.applicationCardEditBtn(appName).shadow().find('button').click({ force: true });
       break;
     case 'Delete':
-      statusObj.applicationCardDeleteBtn(appName).click();
+      statusObj.applicationCardDeleteBtn(appName).shadow().find('button').click({ force: true });
       break;
     default:
       expect(buttonType).to.be.oneOf(['edit', 'delete']);
@@ -544,7 +553,7 @@ Then(
 );
 
 When('the user enters {string} as name and {string} as description fields', function (appName, description) {
-  statusObj.addApplicationNameModalField().clear().type(appName);
+  statusObj.addApplicationNameModalField().shadow().find('input').clear().type(appName, { delay: 100, force: true });
   statusObj
     .addApplicationDescriptionModalField()
     .shadow()
@@ -554,7 +563,7 @@ When('the user enters {string} as name and {string} as description fields', func
 });
 
 When('the user clicks Change status button for {string}', function (appName) {
-  statusObj.applicationCardChangeStatusBtn(appName).click();
+  statusObj.applicationCardChangeStatusBtn(appName).shadow().find('button').click({ force: true });
 });
 
 Then('the user views Manual status change modal', function () {
@@ -568,12 +577,19 @@ When('the user selects {string} and clicks Save button', function (statusName) {
 });
 
 Then('the user views the {string} status for {string}', function (statusValue, appName) {
-  statusObj.applicationCardStatusBadge(appName).invoke('text').should('eq', statusValue);
+  statusObj
+    .applicationCardStatusBadge(appName)
+    .shadow()
+    .find('.goa-badge-content')
+    .invoke('text')
+    .should('eq', statusValue);
 });
 
 Then('the user views current status for {string}', function (appName) {
   statusObj
     .applicationCardStatusBadge(appName)
+    .shadow()
+    .find('.goa-badge-content')
     .invoke('text')
     .then((statusValue) => {
       cy.task('setOriginalAppStatus', statusValue.toLowerCase());
@@ -615,6 +631,8 @@ When('the user clicks Save button in Manual status change modal', function () {
 Then('the user views the status of {string} changed to the first unused status', function (appName) {
   statusObj
     .applicationCardStatusBadge(appName)
+    .shadow()
+    .find('.goa-badge-content')
     .invoke('text')
     .then((statusValue) => {
       cy.log('Badge Status: ' + statusValue);
@@ -638,7 +656,7 @@ Then('the user views Edit contact information modal on the status overview page'
 });
 
 When('the user enters {string} in Edit contact information modal', function (email) {
-  statusObj.editContactInformationEmail().clear().type(email);
+  statusObj.editContactInformationEmail().shadow().find('input').clear().type(email, { delay: 50, force: true });
 });
 
 Then('the user clicks Save button on contact information modal', function () {

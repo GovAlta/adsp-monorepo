@@ -32,7 +32,12 @@ When(
   'the user enters {string}, {string}, {string}, {string}, {string}, {string} on notification type modal',
   function (name, description, role, bot, sms, selfService) {
     const roles = role.split(',');
-    notificationsObj.notificationTypeModalNameField().clear().type(name);
+    notificationsObj
+      .notificationTypeModalNameField()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(name, { delay: 200, force: true });
     notificationsObj
       .notificationTypeModalDescriptionField()
       .shadow()
@@ -448,13 +453,18 @@ Given('a tenant admin user is on notification subscriptions page', function () {
 When(
   'the user types {string} in Search subuscriber address as field and {string} in Search subscriber email field',
   function (addressAs, email) {
-    notificationsObj.searchSubscriberAddressAs().clear({ force: true }).type(addressAs);
-    notificationsObj.searchSubscriberEmail().clear({ force: true }).type(email);
+    notificationsObj
+      .searchSubscriberAddressAs()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(addressAs, { delay: 100, force: true });
+    notificationsObj.searchSubscriberEmail().shadow().find('input').clear().type(email, { delay: 100, force: true });
   }
 );
 
 When('the user types {string} in Search subscriber email field', function (email) {
-  notificationsObj.searchSubscriberEmail().clear().type(email);
+  notificationsObj.searchSubscriberEmail().shadow().find('input').clear().type(email, { delay: 100, force: true });
 });
 
 When('the user clicks Search button on notifications page', function () {
@@ -481,7 +491,11 @@ Then(
 When(
   'the user clicks delete button of {string}, {string} under {string}',
   function (addressAd, email, notificationType) {
-    notificationsObj.deleteIconForNotificationRecord(notificationType, addressAd, email).click({ force: true });
+    notificationsObj
+      .deleteIconForNotificationRecord(notificationType, addressAd, email)
+      .shadow()
+      .find('button')
+      .click({ force: true });
   }
 );
 
@@ -495,7 +509,7 @@ Then('the user views the Delete subscription confirmation message of {string}', 
 });
 
 When('the user clicks Confirm button on Delete subscription modal', function () {
-  notificationsObj.deleteConfirmationModalConfirmBtn().scrollIntoView().click();
+  notificationsObj.deleteConfirmationModalConfirmBtn().shadow().find('button').scrollIntoView().click({ force: true });
 });
 
 Given('a tenant admin user is on notification subscribers page', function () {
@@ -514,12 +528,22 @@ When('the user searches subscribers with {string} containing {string}', function
   //Enter search text
   switch (searchField) {
     case 'address as':
-      notificationsObj.subscribersAddressAsSearchField().clear().type(searchText);
-      notificationsObj.subscribersEmailSearchField().clear();
+      notificationsObj
+        .subscribersAddressAsSearchField()
+        .shadow()
+        .find('input')
+        .clear()
+        .type(searchText, { delay: 100, force: true });
+      notificationsObj.subscribersEmailSearchField().shadow().find('input').clear();
       break;
     case 'email':
-      notificationsObj.subscribersEmailSearchField().clear().type(searchText);
-      notificationsObj.subscribersAddressAsSearchField().clear();
+      notificationsObj
+        .subscribersEmailSearchField()
+        .shadow()
+        .find('input')
+        .clear()
+        .type(searchText, { delay: 100, force: true });
+      notificationsObj.subscribersAddressAsSearchField().shadow().find('input').clear();
       break;
     default:
       expect(searchField).to.be.oneOf(['address as', 'email']);
@@ -533,13 +557,23 @@ When('the user searches subscribers with {string} containing {string}', function
 When(
   'the user searches subscribers with address as containing {string}, email containing {string} and phone number containing {string}',
   function (addressAs, email, phoneNumber) {
-    notificationsObj.searchSubscriberAddressAs().clear({ force: true }).type(addressAs);
-    notificationsObj.searchSubscriberEmail().clear({ force: true }).type(email);
+    notificationsObj
+      .searchSubscriberAddressAs()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(addressAs, { delay: 100, force: true });
+    notificationsObj.searchSubscriberEmail().shadow().find('input').clear().type(email, { delay: 100, force: true });
     expect(phoneNumber).match(/(EMPTY)|[0-9]{10}/);
     if (phoneNumber == 'EMPTY') {
-      notificationsObj.searchSubscriberPhone().clear();
+      notificationsObj.searchSubscriberPhone().shadow().find('input').clear();
     } else {
-      notificationsObj.searchSubscriberPhone().clear().type(phoneNumber);
+      notificationsObj
+        .searchSubscriberPhone()
+        .shadow()
+        .find('input')
+        .clear()
+        .type(phoneNumber, { delay: 100, force: true });
     }
     notificationsObj.notificationSearchBtn().shadow().find('button').click({ force: true });
     cy.wait(2000);
@@ -607,7 +641,7 @@ Then(
 );
 
 When('the user expands the subscription list for the subscriber of {string} and {string}', function (addressAs, email) {
-  notificationsObj.subscriberIconEye(addressAs, email).click();
+  notificationsObj.subscriberIconEye(addressAs, email).shadow().find('button').click({ force: true });
 });
 
 Then(
@@ -650,10 +684,10 @@ Then(
 When('the user clicks {string} button of {string}, {string} on subscribers page', function (button, addressAs, email) {
   switch (button) {
     case 'delete':
-      notificationsObj.subscriberDeleteIcon(addressAs, email).click();
+      notificationsObj.subscriberDeleteIcon(addressAs, email).shadow().find('button').click({ force: true });
       break;
     case 'edit':
-      notificationsObj.subscriberEditIcon(addressAs, email).click();
+      notificationsObj.subscriberEditIcon(addressAs, email).shadow().find('button').click({ force: true });
       break;
     default:
       expect(button).to.be.oneOf(['delete', 'edit']);
@@ -670,7 +704,7 @@ When('the user clicks Delete button on Delete subscriber modal', function () {
 });
 
 When('the user clicks edit button for contact information', function () {
-  notificationsObj.contactInformationEdit().click();
+  notificationsObj.contactInformationEdit().shadow().find('button').click({ force: true });
   cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
@@ -703,8 +737,18 @@ When(
     } else {
       instructionsInput = (rand_str + instructions).replace(/rnd{/g, '').replace(/}/g, '');
     }
-    notificationsObj.editContactModalEmail().clear().type(emailInput);
-    notificationsObj.editContactModalPhone().clear().type(phoneInput);
+    notificationsObj
+      .editContactModalEmail()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(emailInput, { delay: 100, force: true });
+    notificationsObj
+      .editContactModalPhone()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(phoneInput, { delay: 100, force: true });
     notificationsObj
       .editContactModalInstructions()
       .shadow()
@@ -767,12 +811,22 @@ Then(
 );
 
 When('the user modifies the name to {string} and email to {string} in subscriber modal', function (name, editEmail) {
-  notificationsObj.editSubscriberModalNameField().clear().type(name);
-  notificationsObj.editSubscriberModalEmailField().clear().type(editEmail);
+  notificationsObj
+    .editSubscriberModalNameField()
+    .shadow()
+    .find('input')
+    .clear()
+    .type(name, { delay: 100, force: true });
+  notificationsObj
+    .editSubscriberModalEmailField()
+    .shadow()
+    .find('input')
+    .clear()
+    .type(editEmail, { delay: 100, force: true });
 });
 
 When('the user clicks Edit button of {string} and {string} on subscribers page', function (addressAs, email) {
-  notificationsObj.subscriberEditIcon(addressAs, email).click();
+  notificationsObj.subscriberEditIcon(addressAs, email).shadow().find('button').click({ force: true });
 });
 
 Then('the user views Edit subscriber modal', function () {
@@ -787,9 +841,14 @@ Then('the user clicks Save button in Edit subscriber modal', function () {
 When('the user enters {string} in Phone number field', function (phoneNumber) {
   expect(phoneNumber).match(/(EMPTY)|[0-9]{10}/);
   if (phoneNumber !== 'EMPTY') {
-    notificationsObj.editSubscriberModalPhoneNumberField().clear().type(phoneNumber);
+    notificationsObj
+      .editSubscriberModalPhoneNumberField()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(phoneNumber, { delay: 100, force: true });
   } else {
-    notificationsObj.editSubscriberModalPhoneNumberField().clear();
+    notificationsObj.editSubscriberModalPhoneNumberField().shadow().find('input').clear();
   }
 });
 
@@ -986,7 +1045,11 @@ When('the user clicks Delete button in Reset email template modal', function () 
 });
 
 When('the user clicks eye icon of {string}, {string} under {string}', function (addressAd, email, notificationType) {
-  notificationsObj.notificationRecordEyeIcon(notificationType, addressAd, email).click();
+  notificationsObj
+    .notificationRecordEyeIcon(notificationType, addressAd, email)
+    .shadow()
+    .find('button')
+    .click({ force: true });
 });
 
 Then('the user views the details of {string}, {string} under {string}', function (addressAd, email, notificationType) {

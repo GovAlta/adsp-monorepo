@@ -72,7 +72,7 @@ class StatusServicePage {
   }
 
   noticeModalSaveButton() {
-    return cy.get('[data-testid=notice-form-submit]');
+    return cy.xpath('//*[@data-testid="notice-modal"]//goa-button[@type="primary"]');
   }
 
   noticeModalCancelButton() {
@@ -84,7 +84,7 @@ class StatusServicePage {
   }
 
   noticeCardMode(index) {
-    return cy.xpath(`//*[@data-testid="notice-list"]/div/div[${index}]//*[@data-testid="notice-card-mode"]/div`);
+    return cy.xpath(`//*[@data-testid="notice-list"]/div/div[${index}]//*[@data-testid="notice-card-mode"]`);
   }
 
   noticeCardDesc(index) {
@@ -154,7 +154,7 @@ class StatusServicePage {
   }
 
   addApplicationNameModalField() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//input[@aria-label="name"]');
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//goa-input[@name="name"]');
   }
 
   addApplicationDescriptionModalField() {
@@ -162,7 +162,7 @@ class StatusServicePage {
   }
 
   addApplicationEndpointModalField() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//*[label="URL"]//input');
+    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//*[label="URL"]//goa-input');
   }
 
   addApplicationSaveBtn() {
@@ -179,19 +179,19 @@ class StatusServicePage {
 
   applicationCardEditBtn(appName) {
     return cy.xpath(
-      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//div[@data-testid="icon-create"]`
+      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//*[@data-testid="status-edit-button"]`
     );
   }
 
   applicationCardDeleteBtn(appName) {
     return cy.xpath(
-      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//div[@data-testid="icon-trash"]`
+      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//*[@title="Delete"]`
     );
   }
 
   applicationCardChangeStatusBtn(appName) {
     return cy.xpath(
-      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//button[text()='Change status']`
+      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//goa-button[text()='Change status']`
     );
   }
 
@@ -206,13 +206,11 @@ class StatusServicePage {
   }
 
   manualStatusChangeModalSaveBtn() {
-    return cy.xpath('//*[@class="modal-root" and @data-state="visible"]//button[text()="Save"]');
+    return cy.xpath('//*[@class="modal-root" and @data-state="visible"]//goa-button[text()="Save"]');
   }
 
   applicationCardStatusBadge(appName) {
-    return cy.xpath(
-      `//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//*[contains(@class, "badge-content")]`
-    );
+    return cy.xpath(`//*[@data-testid="application"]/div[contains(text(), "${appName}")]/parent::*//goa-badge`);
   }
 
   manualStatusChangeModalItemList() {
@@ -234,7 +232,7 @@ class StatusServicePage {
   }
 
   contactInformationEditBtn() {
-    return cy.xpath('//*[@data-testid="edit-contact-info"]//*[contains(@class, "goa-icon-button")]');
+    return cy.xpath('//*[@data-testid="edit-contact-info"]//goa-icon-button');
   }
 
   editContactInformationModal() {

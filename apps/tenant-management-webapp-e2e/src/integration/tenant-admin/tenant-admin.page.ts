@@ -98,11 +98,11 @@ class TenantAdminPage {
   }
 
   eventLogSearchBtn() {
-    return cy.get('button:contains("Search")');
+    return cy.get('goa-button:contains("Search")');
   }
 
   eventLogResetBtn() {
-    return cy.get('button:contains("Reset")');
+    return cy.get('goa-button:contains("Reset")');
   }
 
   eventTableBody() {
@@ -118,7 +118,7 @@ class TenantAdminPage {
   }
 
   eventToggleDetailsIcons() {
-    return cy.xpath('//*[@data-testid="toggle-details-visibility"]/div');
+    return cy.xpath('//*[@data-testid="toggle-details-visibility"]');
   }
 
   eventDetails() {
