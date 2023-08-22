@@ -150,18 +150,16 @@ const FileList = (): JSX.Element => {
           </tbody>
         </DataTable>
 
-        {showDeleteConfirmation && (
-          <DeleteModal
-            isOpen={showDeleteConfirmation}
-            title="Delete file"
-            content={`Delete file ${selectedFile?.filename} ?`}
-            onCancel={() => setShowDeleteConfirmation(false)}
-            onDelete={() => {
-              setShowDeleteConfirmation(false);
-              dispatch(DeleteFileService(selectedFile?.id));
-            }}
-          />
-        )}
+        <DeleteModal
+          isOpen={showDeleteConfirmation}
+          title="Delete file"
+          content={`Delete file ${selectedFile?.filename} ?`}
+          onCancel={() => setShowDeleteConfirmation(false)}
+          onDelete={() => {
+            setShowDeleteConfirmation(false);
+            dispatch(DeleteFileService(selectedFile?.id));
+          }}
+        />
       </FileTableStyles>
     );
   };

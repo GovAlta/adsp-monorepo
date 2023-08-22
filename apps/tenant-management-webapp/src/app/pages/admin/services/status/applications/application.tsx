@@ -171,15 +171,14 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
       {/* GoAModals */}
 
       {/* Delete confirmation dialog */}
-      {showDeleteConfirmation && (
-        <DeleteModal
-          isOpen={showDeleteConfirmation}
-          title="Delete application"
-          content={`Delete the ${app.name} service status checks?`}
-          onCancel={cancelDelete}
-          onDelete={doDelete}
-        />
-      )}
+
+      <DeleteModal
+        isOpen={showDeleteConfirmation}
+        title="Delete application"
+        content={`Delete the ${app.name} service status checks?`}
+        onCancel={cancelDelete}
+        onDelete={doDelete}
+      />
 
       {/* Manual status change dialog */}
       <GoAModal isOpen={showStatusForm}>

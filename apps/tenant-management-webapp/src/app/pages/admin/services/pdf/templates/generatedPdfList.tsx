@@ -160,23 +160,21 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
             </tbody>
           </DataTable>
           {/* Delete confirmation */}
-          {showDeleteConfirmation && (
-            <DeleteModal
-              isOpen={showDeleteConfirmation}
-              title="Delete PDF file"
-              content={
-                <div>
-                  Are you sure you wish to delete <b>{showDeleteConfirmation.filename}?</b>
-                </div>
-              }
-              onCancel={() => setShowDeleteConfirmation(null)}
-              onDelete={() => {
-                const file = showDeleteConfirmation;
-                dispatch(deletePdfFileService(file));
-                setShowDeleteConfirmation(null);
-              }}
-            />
-          )}
+          <DeleteModal
+            isOpen={showDeleteConfirmation}
+            title="Delete PDF file"
+            content={
+              <div>
+                Are you sure you wish to delete <b>{showDeleteConfirmation.filename}?</b>
+              </div>
+            }
+            onCancel={() => setShowDeleteConfirmation(null)}
+            onDelete={() => {
+              const file = showDeleteConfirmation;
+              dispatch(deletePdfFileService(file));
+              setShowDeleteConfirmation(null);
+            }}
+          />
         </FileTableStyles>
       </>
     );

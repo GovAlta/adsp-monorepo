@@ -312,18 +312,16 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
         </GoAFormItem>
       </GoAForm>
       {/* Delete confirmation */}
-      {showDeleteConfirmation && (
-        <DeleteModal
-          isOpen={showDeleteConfirmation}
-          title="Delete PDF file"
-          content={<div>Are you sure you wish to delete all files?</div>}
-          onCancel={() => setShowDeleteConfirmation(false)}
-          onDelete={() => {
-            setShowDeleteConfirmation(false);
-            dispatch(deletePdfFilesService(pdfTemplate.id));
-          }}
-        />
-      )}
+      <DeleteModal
+        isOpen={showDeleteConfirmation}
+        title="Delete PDF file"
+        content={<div>Are you sure you wish to delete all files?</div>}
+        onCancel={() => setShowDeleteConfirmation(false)}
+        onDelete={() => {
+          setShowDeleteConfirmation(false);
+          dispatch(deletePdfFilesService(pdfTemplate.id));
+        }}
+      />
       <SaveFormModal
         open={saveModal}
         onDontSave={() => {

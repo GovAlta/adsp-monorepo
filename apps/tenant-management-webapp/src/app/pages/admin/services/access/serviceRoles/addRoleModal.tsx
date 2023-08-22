@@ -1,6 +1,5 @@
 import React from 'react';
-import { GoAModal, GoAModalActions, GoAModalTitle, GoAModalContent } from '@abgov/react-components/experimental';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
 import { useDispatch } from 'react-redux';
 import { createKeycloakRole } from '@store/access/actions';
 import { ServiceRoleSyncStatus } from '@store/access/models';
@@ -44,34 +43,38 @@ export const ConfirmationModal = ({ clientId, onCancel, role, status }: Confirma
   const dispatch = useDispatch();
 
   return (
-    <GoAModal isOpen={true} key="add-service-role-confirmation-modal" data-testid="add-service-role-confirmation-modal">
-      <GoAModalTitle>Add role</GoAModalTitle>
-      <GoAModalContent>
-        <CreateConfirmationMessage status={status} role={role} clientId={clientId} />
-      </GoAModalContent>
-      <GoAModalActions>
-        <GoAButton
-          type="secondary"
-          testId="add-service-role-modal-cancel-btn"
-          key="add-service-role-modal-cancel"
-          onClick={() => {
-            onCancel();
-          }}
-        >
-          Cancel
-        </GoAButton>
-        <GoAButton
-          type="primary"
-          testId="add-service-role-modal-ok-btn"
-          key="add-service-role-modal-ok"
-          onClick={() => {
-            dispatch(createKeycloakRole(clientId, role));
-            onCancel();
-          }}
-        >
-          Add
-        </GoAButton>
-      </GoAModalActions>
+    <GoAModal
+      heading="Add role"
+      open={true}
+      key="add-service-role-confirmation-modal"
+      testId="add-service-role-confirmation-modal"
+      actions={
+        <GoAButtonGroup alignment="end">
+          <GoAButton
+            type="secondary"
+            testId="add-service-role-modal-cancel-btn"
+            key="add-service-role-modal-cancel"
+            onClick={() => {
+              onCancel();
+            }}
+          >
+            Cancel
+          </GoAButton>
+          <GoAButton
+            type="primary"
+            testId="add-service-role-modal-ok-btn"
+            key="add-service-role-modal-ok"
+            onClick={() => {
+              dispatch(createKeycloakRole(clientId, role));
+              onCancel();
+            }}
+          >
+            Add
+          </GoAButton>
+        </GoAButtonGroup>
+      }
+    >
+      <CreateConfirmationMessage status={status} role={role} clientId={clientId} />
     </GoAModal>
   );
 };

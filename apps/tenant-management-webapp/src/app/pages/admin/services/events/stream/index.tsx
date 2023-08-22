@@ -100,22 +100,21 @@ export const EventStreams = (): JSX.Element => {
             />
           </div>
           {/* Delete confirmation */}
-          {showDeleteStream && (
-            <DeleteModal
-              isOpen={showDeleteStream}
-              title="Delete stream"
-              content={`Delete ${selectedStream.name}?`}
-              onCancel={() => {
-                setShowDeleteStream(false);
-                reset();
-              }}
-              onDelete={() => {
-                setShowDeleteStream(false);
-                reset();
-                dispatch(dispatch(deleteEventStream(selectedStream.id)));
-              }}
-            />
-          )}
+
+          <DeleteModal
+            isOpen={showDeleteStream}
+            title="Delete stream"
+            content={`Delete ${selectedStream.name}?`}
+            onCancel={() => {
+              setShowDeleteStream(false);
+              reset();
+            }}
+            onDelete={() => {
+              setShowDeleteStream(false);
+              reset();
+              dispatch(dispatch(deleteEventStream(selectedStream.id)));
+            }}
+          />
         </>
       )}
     </>

@@ -654,58 +654,56 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       {indicator && indicator.show && <IndicatorWithDelay message="Loading..." pageLock={false} />}
       {/* Delete confirmation */}
 
-      {showDeleteConfirmation && (
-        <DeleteModal
-          isOpen={showDeleteConfirmation}
-          title="Delete notification type"
-          content={`Delete ${selectedType?.name}?`}
-          onCancel={() => {
-            setShowDeleteConfirmation(false);
-            setSelectedType(emptyNotificationType);
-          }}
-          onDelete={() => {
-            setShowDeleteConfirmation(false);
-            dispatch(DeleteNotificationTypeService(selectedType));
-            setSelectedType(emptyNotificationType);
-          }}
-        />
-      )}
+      <DeleteModal
+        isOpen={showDeleteConfirmation}
+        title="Delete notification type"
+        content={`Delete ${selectedType?.name}?`}
+        onCancel={() => {
+          setShowDeleteConfirmation(false);
+          setSelectedType(emptyNotificationType);
+        }}
+        onDelete={() => {
+          setShowDeleteConfirmation(false);
+          dispatch(DeleteNotificationTypeService(selectedType));
+          setSelectedType(emptyNotificationType);
+        }}
+      />
+
       {/* Event delete confirmation */}
-      {showEventDeleteConfirmation && (
-        <DeleteModal
-          isOpen={showEventDeleteConfirmation}
-          title={coreEvent ? 'Reset email template' : 'Delete event'}
-          content={
-            coreEvent
-              ? 'Delete custom email template modifications'
-              : `Delete ${selectedEvent?.namespace}:${selectedEvent?.name}`
-          }
-          onCancel={() => {
-            setShowEventDeleteConfirmation(false);
-            setSelectedType(emptyNotificationType);
-            setCoreEvent(false);
-          }}
-          onDelete={() => {
-            setShowEventDeleteConfirmation(false);
-            const updatedEvents = selectedType.events.filter(
-              (event) =>
-                `${event.namespace}:${event.name}` !== `${selectedEvent.namespace}:${selectedEvent.name}` &&
-                (!coreEvent || event.customized)
-            );
 
-            const newType = JSON.parse(JSON.stringify(selectedType));
-            newType.events = updatedEvents;
+      <DeleteModal
+        isOpen={showEventDeleteConfirmation}
+        title={coreEvent ? 'Reset email template' : 'Delete event'}
+        content={
+          coreEvent
+            ? 'Delete custom email template modifications'
+            : `Delete ${selectedEvent?.namespace}:${selectedEvent?.name}`
+        }
+        onCancel={() => {
+          setShowEventDeleteConfirmation(false);
+          setSelectedType(emptyNotificationType);
+          setCoreEvent(false);
+        }}
+        onDelete={() => {
+          setShowEventDeleteConfirmation(false);
+          const updatedEvents = selectedType.events.filter(
+            (event) =>
+              `${event.namespace}:${event.name}` !== `${selectedEvent.namespace}:${selectedEvent.name}` &&
+              (!coreEvent || event.customized)
+          );
 
-            newType.events = newType.events.map((event) => {
-              event.channels = [];
-              return event;
-            });
-            dispatch(UpdateNotificationTypeService(newType));
-            setSelectedType(emptyNotificationType);
-            setCoreEvent(false);
-          }}
-        />
-      )}
+          const newType = JSON.parse(JSON.stringify(selectedType));
+          newType.events = updatedEvents;
+
+          newType.events = newType.events.map((event) => {
+            event.channels = [];
+            return event;
+          });
+          dispatch(UpdateNotificationTypeService(newType));
+          setSelectedType(emptyNotificationType);
+          setCoreEvent(false);
+        }}
+      />
 
       {/* Form */}
       <NotificationTypeModalForm
