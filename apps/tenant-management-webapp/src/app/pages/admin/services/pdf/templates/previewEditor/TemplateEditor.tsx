@@ -90,16 +90,19 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
 
   const reloadFile = useSelector((state: RootState) => state.pdf?.reloadFile);
 
-  const savePdfTemplate = (value) => {
+  const savePdfTemplate = (value, options = null) => {
     const saveObject = JSON.parse(JSON.stringify(value));
-    dispatch(updatePdfTemplate(saveObject));
+    dispatch(updatePdfTemplate(saveObject, options));
   };
 
   const history = useHistory();
 
   const cancel = () => {
     dispatch(setPdfDisplayFileId(null));
-    history.push('/admin/services/pdf');
+    history.push({
+      pathname: '/admin/services/pdf',
+      search: '?templates=true',
+    });
   };
 
   useEffect(() => {
@@ -328,7 +331,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
           cancel();
         }}
         onSave={() => {
-          savePdfTemplate(tmpTemplate);
+          savePdfTemplate(tmpTemplate, 'no-refresh');
           setSaveModal(false);
           cancel();
         }}
