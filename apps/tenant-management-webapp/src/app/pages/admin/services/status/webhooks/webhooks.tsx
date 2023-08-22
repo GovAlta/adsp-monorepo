@@ -237,6 +237,9 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
 
 const TableLayout = styled.div`
   margin-top: 1em;
+  table {
+    margin-bottom: 15px;
+  }
   table,
   th,
   td {

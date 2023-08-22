@@ -132,10 +132,7 @@ export const WebhookFormModal: FC<Props> = ({
   });
 
   function isFormValid(): boolean {
-    if (webhook?.eventTypes.length === 0) return false;
-    if (!webhook?.url) return false;
-    if (webhook?.targetId === '') return false;
-    return !validators.haveErrors();
+    return webhook?.eventTypes.length !== 0 && webhook?.url && webhook?.targetId !== '' && !validators.haveErrors();
   }
 
   orderedGroupNames = [
