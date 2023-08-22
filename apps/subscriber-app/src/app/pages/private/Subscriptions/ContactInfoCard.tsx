@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GoARadio, GoASkeletonGridColumnContent } from '@abgov/react-components';
+import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { GoAFormItem } from '@abgov/react-components/experimental';
 import { useDispatch, useSelector } from 'react-redux';
 import { patchSubscriber, createSubscriber } from '@store/subscription/actions';
@@ -8,11 +8,10 @@ import { Channels } from '@store/subscription/models';
 import { Grid, GridItem } from '@components/Grid';
 import { SubscriberChannel, Subscriber } from '@store/subscription/models';
 import { InfoCard } from './InfoCard';
-import { Label } from './styled-components';
-import { GapVS } from './styled-components';
+import { Label, GapVS } from './styled-components';
 import { RootState } from '@store/index';
 import { phoneWrapper } from '@lib/wrappers';
-import { GoAButton, GoAInput, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAButton, GoAInput, GoAButtonGroup, GoARadioItem, GoARadioGroup } from '@abgov/react-components-new';
 interface ContactInfoCardProps {
   subscriber?: Subscriber;
 }
@@ -242,24 +241,16 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
 
               <GridItem md={5}>
                 <Label>My preferred notification channel</Label>
-                <GoARadio
-                  key="channel-preference-email"
-                  value={Channels.email}
-                  testId="preferred-channel-email-opt"
-                  checked={preferredChannel === Channels.email}
-                  onChange={updateChannelPreference}
+                <br />
+                <GoARadioGroup
+                  name="channel"
+                  value={preferredChannel}
+                  onChange={(_, value) => updateChannelPreference(value)}
                 >
-                  Email
-                </GoARadio>
-                <GoARadio
-                  key="channel-preference-sms"
-                  value={Channels.sms}
-                  testId="preferred-channel-sms-opt"
-                  checked={preferredChannel === Channels.sms}
-                  onChange={updateChannelPreference}
-                >
-                  SMS
-                </GoARadio>
+                  <GoARadioItem value={Channels.email} name="channel" label="Email" />
+
+                  <GoARadioItem value={Channels.sms} name="channel" label="SMS" />
+                </GoARadioGroup>
               </GridItem>
             </Grid>
           ) : (
@@ -279,28 +270,18 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                 </GridItem>
                 <GridItem md={5}>
                   <Label>My preferred notification channel</Label>
-                  <GoARadio
-                    key="channel-preference-email"
-                    value={Channels.email}
-                    disabled={true}
-                    testId="preferred-channel-email-opt"
-                    checked={preferredChannel === Channels.email}
+                  <br />
+                  <GoARadioGroup
+                    name="preferredChannel"
                     //eslint-disable-next-line
                     onChange={() => {}}
-                  >
-                    Email
-                  </GoARadio>
-                  <GoARadio
-                    key="channel-preference-sms"
-                    value={Channels.sms}
                     disabled={true}
-                    testId="preferred-channel-sms-opt"
-                    checked={preferredChannel === Channels.sms}
-                    //eslint-disable-next-line
-                    onChange={() => {}}
+                    value={preferredChannel}
                   >
-                    SMS
-                  </GoARadio>
+                    <GoARadioItem value={Channels.email} name="preferredChannel" label="Email" />
+
+                    <GoARadioItem value={Channels.sms} name="preferredChannel" label="SMS" />
+                  </GoARadioGroup>
                 </GridItem>
               </Grid>
             </div>
