@@ -1,4 +1,4 @@
-import { GoACallout } from '@abgov/react-components';
+import { GoACallout } from '@abgov/react-components-new';
 import { Main } from '@components/Html';
 import { RootState } from '@store/index';
 import { fetchServiceMetrics, fetchServices, setIntervalCriteria, setServiceCriteria } from '@store/metrics/actions';
@@ -39,11 +39,9 @@ export const ServiceMetrics: FunctionComponent = () => {
           <MetricsChart />
         </>
       ) : (
-        <GoACallout
-          title="Value reader role required"
-          type="information"
-          content="You need the urn:ads:platform:value-service 'value-reader' role to see service metrics."
-        />
+        <GoACallout heading="Value reader role required" type="information" testId="metric-role-need-callout">
+          <p>You need the urn:ads:platform:value-service 'value-reader' role to see the event log.</p>
+        </GoACallout>
       )}
     </Main>
   );
