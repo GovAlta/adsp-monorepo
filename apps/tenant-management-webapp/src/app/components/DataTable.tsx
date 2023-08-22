@@ -20,7 +20,6 @@ const ScrollWrapper = styled.div`
   width: 100%;
   overflow-x: auto;
   overflow-y: clip;
-  padding-bottom: 15px;
 `;
 
 const Table = styled.table`
