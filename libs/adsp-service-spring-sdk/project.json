@@ -1,0 +1,43 @@
+{
+  "name": "adsp-service-spring-sdk",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/adsp-service-spring-sdk/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nxrocks/nx-spring-boot:build",
+      "options": {
+        "root": "libs/adsp-service-spring-sdk"
+      },
+      "dependsOn": ["^install"],
+      "outputs": ["{projectRoot}/target"]
+    },
+    "install": {
+      "executor": "@nxrocks/nx-spring-boot:install",
+      "options": {
+        "root": "libs/adsp-service-spring-sdk"
+      },
+      "outputs": ["{projectRoot}/target"]
+    },
+    "test": {
+      "executor": "@nxrocks/nx-spring-boot:test",
+      "options": {
+        "root": "libs/adsp-service-spring-sdk"
+      }
+    },
+    "clean": {
+      "executor": "@nxrocks/nx-spring-boot:clean",
+      "options": {
+        "root": "libs/adsp-service-spring-sdk"
+      }
+    },
+    "release": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx semantic-release -e ./.releaserc.json",
+        "cwd": "libs/adsp-service-spring-sdk"
+      }
+    }
+  },
+  "tags": []
+}

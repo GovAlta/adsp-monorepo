@@ -111,6 +111,7 @@ export class ApplicationRepo {
       name: app.name,
       description: app.description,
       monitorOnly: app.monitorOnly,
+      autoChangeStatus: app.autoChangeStatus,
       tenantId: tenantId,
       metadata: status?.metadata ?? '',
       enabled: status?.enabled ?? false,

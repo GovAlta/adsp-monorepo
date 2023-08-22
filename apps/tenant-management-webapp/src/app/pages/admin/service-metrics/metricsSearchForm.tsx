@@ -21,15 +21,15 @@ export const MetricsSearchForm: FunctionComponent<MetricsSearchFormProps> = ({ o
           <label>Service</label>
           <GoADropdown
             name="Service"
-            value={service}
+            value={service ? service : ''}
             width="100%"
+            relative={true}
             onChange={(_n, [value]) => dispatch(setServiceCriteria(value))}
           >
-            {services
-              .sort((a, b) => a.localeCompare(b))
-              .map((service) => (
-                <GoADropdownItem key={service} value={service} label={service} />
-              ))}
+            {services &&
+              services
+                .sort((a, b) => a.localeCompare(b))
+                .map((service) => <GoADropdownItem name="Service" key={service} value={service} label={service} />)}
           </GoADropdown>
         </GoAFormItem>
         <GoAFormItem>
@@ -39,6 +39,7 @@ export const MetricsSearchForm: FunctionComponent<MetricsSearchFormProps> = ({ o
             value={chartInterval}
             onChange={(_n, [value]) => dispatch(setIntervalCriteria(value as ChartInterval))}
             width="100%"
+            relative={true}
           >
             <GoADropdownItem value="15 mins" label="Last 15 minutes" />
             <GoADropdownItem value="1 hour" label="Last hour" />

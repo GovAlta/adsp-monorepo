@@ -96,8 +96,13 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
         </div>
 
         <GoAContextMenu>
-          <GoAContextMenuIcon type="create" onClick={() => setShowEditModal(true)} data-testid="status-edit-button" />
-          <GoAContextMenuIcon type="trash" onClick={() => setShowDeleteConfirmation(true)} />
+          <GoAContextMenuIcon
+            type="create"
+            title="Edit"
+            onClick={() => setShowEditModal(true)}
+            testId="status-edit-button"
+          />
+          <GoAContextMenuIcon type="trash" title="Delete" onClick={() => setShowDeleteConfirmation(true)} />
         </GoAContextMenu>
       </AppHeader>
       {/* Endpoint List for watched service */}
@@ -135,6 +140,20 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
         ariaLabel={`monitor-only-checkbox`}
       >
         Monitor only (the application will not be publicly displayed)
+      </GoACheckbox>
+
+      <GoACheckbox
+        checked={app.autoChangeStatus}
+        name="autoChangeStatus-checkbox"
+        data-testid="autoChangeStatus-checkbox"
+        onChange={() => {
+          const application: ApplicationStatus = JSON.parse(JSON.stringify(app));
+          application.autoChangeStatus = !app.autoChangeStatus;
+          dispatch(saveApplication(application));
+        }}
+        ariaLabel={`autoChangeStatus-checkbox`}
+      >
+        Change status when site is unresponsive
       </GoACheckbox>
 
       {/* GoAModals */}

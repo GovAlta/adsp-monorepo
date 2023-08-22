@@ -4,7 +4,6 @@ import { GoABadge } from '@abgov/react-components-new';
 import { useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
 import { TableDiv } from './styled-components';
-import { GoAIconButton } from '@abgov/react-components/experimental';
 import { DeleteModal } from '@components/DeleteModal';
 import { DeleteScript } from '@store/script/actions';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
@@ -48,9 +47,9 @@ const ScriptItemComponent: FunctionComponent<ScriptItemProps> = ({ script, onDel
                   onEdit(script);
                 }}
               />
-              <GoAIconButton
-                data-testid="delete-icon"
-                size="medium"
+              <GoAContextMenuIcon
+                testId="delete-icon"
+                title="Delete"
                 type="trash"
                 onClick={() => {
                   onDelete(script);

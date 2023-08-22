@@ -62,6 +62,7 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
               <GoAContextMenuIcon
                 type="create"
                 title="Edit"
+                testId="contact-info-edit"
                 onClick={() => {
                   openModalFunction();
                 }}

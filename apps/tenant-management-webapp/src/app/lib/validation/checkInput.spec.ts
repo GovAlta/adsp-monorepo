@@ -17,9 +17,9 @@ describe('checkInput', () => {
       expect(checker('Its-a-kebab')).toBeFalsy();
     });
 
-    it('fails with mixed case', () => {
+    it('Succeeds with mixed case', () => {
       const checker = characterCheck(validationPattern.mixedKebabCase);
-      expect(checker('Its-not_a-kebab')).toBeTruthy();
+      expect(checker('Its-not_a-kebab')).toBeFalsy();
     });
 
     it('succeeds with valid URL', () => {

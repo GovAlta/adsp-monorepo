@@ -12,7 +12,7 @@ import { Label } from './styled-components';
 import { GapVS } from './styled-components';
 import { RootState } from '@store/index';
 import { phoneWrapper } from '@lib/wrappers';
-import { GoAButton, GoAInput } from '@abgov/react-components-new';
+import { GoAButton, GoAInput, GoAButtonGroup } from '@abgov/react-components-new';
 interface ContactInfoCardProps {
   subscriber?: Subscriber;
 }
@@ -43,7 +43,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
       return (
         indicator?.show &&
         indicator.action &&
-        [actionTypes.updatePreference, actionTypes.updateContactInfo].includes(indicator.action)
+        [actionTypes.updatePreference as string, actionTypes.updateContactInfo as string].includes(indicator.action)
       );
     }
     return false;
@@ -173,22 +173,24 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
   const updateContactInfoButtons = () => {
     return (
       <div>
-        <GoAButton size="compact" testId="edit-contact-save-button" onClick={saveContactInformation}>
-          Save
-        </GoAButton>
+        <GoAButtonGroup alignment="start">
+          <GoAButton size="compact" testId="edit-contact-save-button" onClick={saveContactInformation}>
+            Save
+          </GoAButton>
 
-        <GoAButton
-          size="compact"
-          type="secondary"
-          testId="edit-contact-cancel-button"
-          onClick={() => {
-            setEditContactInformation(!editContactInformation);
-            setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
-            setFormErrors({});
-          }}
-        >
-          Cancel
-        </GoAButton>
+          <GoAButton
+            size="compact"
+            type="secondary"
+            testId="edit-contact-cancel-button"
+            onClick={() => {
+              setEditContactInformation(!editContactInformation);
+              setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
+              setFormErrors({});
+            }}
+          >
+            Cancel
+          </GoAButton>
+        </GoAButtonGroup>
       </div>
     );
   };
@@ -228,7 +230,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                     name="sms"
                     width="100%"
                     value={SMSContactInformation}
-                    data-testid="contact-sms-input"
+                    testId="contact-sms-input"
                     onChange={setValue}
                     trailingIcon="close"
                     onTrailingIconClick={() => {

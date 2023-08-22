@@ -2,7 +2,6 @@ import React, { FunctionComponent, useState } from 'react';
 import { Subscriber } from '@store/subscription/models';
 import { phoneWrapper } from '@lib/wrappers';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
-import { GoAIconButton } from '@abgov/react-components/experimental';
 import { RowFlex } from './styled-components';
 import { getSubcriberSubscriptions } from './apis';
 interface ActionComponentProps {
@@ -71,9 +70,8 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
                 testId={`edit-subscription-item-${subscriber.id}`}
               />
 
-              <GoAIconButton
-                data-testid="delete-icon"
-                size="medium"
+              <GoAContextMenuIcon
+                testId="delete-icon"
                 type="trash"
                 onClick={() => {
                   openDeleteModalFunction(subscriber);
