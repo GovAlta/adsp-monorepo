@@ -330,8 +330,8 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
           setSaveModal(false);
           cancel();
         }}
-        onSave={async () => {
-          await savePdfTemplate(tmpTemplate, 'no-refresh');
+        onSave={() => {
+          savePdfTemplate(tmpTemplate, 'no-refresh');
           setSaveModal(false);
           cancel();
         }}
