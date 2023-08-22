@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { ServiceStatusType, PublicServiceStatusTypes, ApplicationStatus } from '@store/status/models';
@@ -40,6 +40,12 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
   const [showStatusForm, setShowStatusForm] = useState<boolean>(false);
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
   const [status, setStatus] = useState<ServiceStatusType | ''>(app.status);
+
+  useEffect(() => {
+    if (status !== app.status) {
+      setStatus(app.status);
+    }
+  }, [app.status]);
 
   function doDelete() {
     dispatch(deleteApplication({ tenantId: app.tenantId, appKey: app.appKey }));
