@@ -486,7 +486,7 @@ When('the user searches with {string}', function (namespaceName) {
   tenantAdminObj.eventLogSearchBox().click();
   tenantAdminObj.eventLogSearchBox().type(namespaceName);
   tenantAdminObj.eventLogSearchBox().should('have.value', namespaceName);
-  tenantAdminObj.eventLogSearchBtn().click();
+  tenantAdminObj.eventLogSearchBtn().shadow().find('button').click({ force: true });
   cy.wait(4000);
 });
 
@@ -585,7 +585,7 @@ When('the user searches with {string} as minimum timestamp, {string} as maximum 
 
   tenantAdminObj.eventLogMinTimeStamp().type(timestampMin);
   tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
-  tenantAdminObj.eventLogSearchBtn().click();
+  tenantAdminObj.eventLogSearchBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 
@@ -630,7 +630,7 @@ When('the user searches with {string} as minimum timestamp', function (submin) {
   cy.log(timestampMin);
 
   tenantAdminObj.eventLogMinTimeStamp().type(timestampMin);
-  tenantAdminObj.eventLogSearchBtn().click();
+  tenantAdminObj.eventLogSearchBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 
@@ -662,7 +662,7 @@ When('the user searches with {string} as maximum timestamp', function (addmin) {
   cy.log(timestampMax);
 
   tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
-  tenantAdminObj.eventLogSearchBtn().click();
+  tenantAdminObj.eventLogSearchBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 
@@ -703,7 +703,7 @@ When(
 
     tenantAdminObj.eventLogMinTimeStamp().type(timestampMin);
     tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
-    tenantAdminObj.eventLogSearchBtn().click();
+    tenantAdminObj.eventLogSearchBtn().shadow().find('button').click({ force: true });
     cy.wait(2000);
   }
 );
@@ -834,8 +834,8 @@ When('the user clicks Show details button for the latest event of {string} for {
     });
 
   // Verify the first toggle details icon is eye icon, not eye-off icon, and then click it
-  tenantAdminObj.eventToggleDetailsIcons().first().invoke('attr', 'data-testid').should('eq', 'icon-eye');
-  tenantAdminObj.eventToggleDetailsIcons().first().click();
+  tenantAdminObj.eventToggleDetailsIcons().first().invoke('attr', 'icon').should('eq', 'eye');
+  tenantAdminObj.eventToggleDetailsIcons().first().shadow().find('button').click({ force: true });
 });
 
 // Only one event details is open before calling this step
@@ -1000,7 +1000,7 @@ Then(
     tenantAdminObj.eventToggleDetailsIcons().each(($element, $index, $full_array) => {
       //clicking each eye-icon in the list to verify event details
       cy.wrap($element).scrollIntoView();
-      cy.wrap($element).click({ force: true });
+      cy.wrap($element).shadow().find('button').click({ force: true });
       tenantAdminObj
         .eventDetails()
         .invoke('text')

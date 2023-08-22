@@ -218,15 +218,15 @@ class NotificationsPage {
   }
 
   searchSubscriberAddressAs() {
-    return cy.xpath('//input[@id="name"]');
+    return cy.xpath('//goa-input[@id="name"]');
   }
 
   searchSubscriberEmail() {
-    return cy.xpath('//input[@id="email"]');
+    return cy.xpath('//goa-input[@id="email"]');
   }
 
   searchSubscriberPhone() {
-    return cy.xpath('//input[@id="sms"]');
+    return cy.xpath('//goa-input[@id="sms"]');
   }
 
   notificationSearchBtn() {
@@ -241,7 +241,7 @@ class NotificationsPage {
 
   notificationRecordEyeIcon(notificationType, addressAs, email) {
     return cy.xpath(
-      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[@data-testid="addressAs" and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr/td[@data-testid="actions"]//div[@data-testid="icon-eye"]`
+      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[@data-testid="addressAs" and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr/td[@data-testid="actions"]//*[@data-testid="toggle-details-visibility"]`
     );
   }
 
@@ -253,7 +253,7 @@ class NotificationsPage {
 
   deleteIconForNotificationRecord(notificationType, addressAs, email) {
     return cy.xpath(
-      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[@data-testid="addressAs" and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr//*[@data-testid="icon-trash"]`
+      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[@data-testid="addressAs" and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr//*[contains(@data-testid, "delete-subscription")]`
     );
   }
 
@@ -280,11 +280,11 @@ class NotificationsPage {
   }
 
   subscribersAddressAsSearchField() {
-    return cy.xpath('//input[@id="name"]');
+    return cy.xpath('//goa-input[@id="name"]');
   }
 
   subscribersEmailSearchField() {
-    return cy.xpath('//input[@id="email"]');
+    return cy.xpath('//goa-input[@id="email"]');
   }
 
   subscribersSearchBtn() {
@@ -305,13 +305,13 @@ class NotificationsPage {
 
   subscriberIconEye(addressAs, email) {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[@data-testid="icon-eye"]`
+      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[@data-testid="toggle-details-visibility"]`
     );
   }
 
   subscriberDeleteIcon(addressAs, email) {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[@data-testid="icon-trash"]`
+      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[@data-testid="delete-icon"]`
     );
   }
 
@@ -342,7 +342,7 @@ class NotificationsPage {
   }
 
   contactInformationEdit() {
-    return cy.get('[data-testid="icon-create"]');
+    return cy.get('[data-testid="contact-info-edit"]');
   }
 
   editContactModal() {
@@ -383,7 +383,7 @@ class NotificationsPage {
 
   subscriberEditIcon(addressAs, email) {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[@data-testid="icon-create"]`
+      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[contains(@data-testid, "edit-subscription-item")]`
     );
   }
 
