@@ -8,35 +8,29 @@ grand_parent: Tutorials
 
 ## Introduction
 
-The _Notification Service_ enables applications to easily implement functionality for notifying subscribers about significant events, or milestones, that occur when processing their applications or submissions. Users can subscribe to be notified when a _domain event_ associated with a _Notification Type_ is triggered. For example, you may want your users to be notified when an application has been accepted or rejected. To do this you would [configure the specifics](/adsp-monorepo/tutorials/notification-service/notification-types.html) of this requirement in the ADSP [Tenant admin webapp](https://adsp-uat.alberta.ca) and then add some logic and API calls to your application to subscribe users, and to trigger events when appropriate. The process looks something like this:
+The _Notification Service_ enables applications to quickly implement features for notifying users about significant events, or milestones, that occur when processing their applications or other submissions. It includes:
+
+- capabilities for defining _domain events_, which an application uses to trigger the notifications,
+- capabilities for designing message templates, which are used to send customized notifications to subscribers,
+- API's for subscribing users to receive notifications,
+- API's for triggering notifications via the _domain events_, and
+- application defined criteria for determining exactly which subscribers get notified.
+
+For example, you may want a user to be notified when their application for money has been accepted or rejected. To do this you might
+
+- define two domain events; application-approved, and application-rejected,
+- define a text message template: "Your application has been {{ application-status }}", where _application-status_ is a placeholder that is filled in when the notification is sent,
+- add some logic and API calls to your application to subscribe a user to the notifications when their application is submitted,
+- add some logic and API calls to trigger _application-accepted_ when the application has been approved.
+
+The process looks something like this:
 
 ![](/adsp-monorepo/assets/notification-service/notification-service.png)
 
-### Configuration
-
-You can configure notifications for your particular needs by first defining one or more [domain events](/adsp-monorepo/tutorials/notification-service/events.html) for your application using the [Tenant admin Webapp](https://adsp-uat.alberta.ca/admin/services/event). A _domain event_ consists of a name, id, description, and a Json Schema describing the data that gets posted (event payload) along with it. For notifications, the data you want to post contains values for the _email template placeholders_ defined in the [notification type](/adsp-monorepo/tutorials/notification-service/notification-types.html).
-
-Next, you will use the events to help configure your _Notification Types_. As with _domain events_ the latter can be defined in the [Tenant Admin Webapp](https://adsp-uat.alberta.ca/admin/services/notification). Notification types are the items to which end users are subscribed-to when you wish to notify them about one or more events of interest. The objects encapsulate information such as who can subscribe, the message to send, the channel by which it is sent, and the _domain events_ that will trigger a notification.
-
-### Subscribing Users
-
-End-users, as _subscribers_, are _subscribed_ to _Notification Types_, which represent the set of _domain events_ that can be triggered by your application. The relationships between the various entities looks like this:
-
-![](/adsp-monorepo/assets/notification-service/notification-erd.png){: width="200" }
-
-Subscribers and subscriptions are created by your application through the [Notification Service APIs](https://api.adsp-uat.alberta.ca/autotest/?urls.primaryName=Notification%20service), or you can allow your users to manage their own subscriptions through the ADSP _Subscriber App_. Either way, your subscribers will be notified whenever your application triggers a _domain event_ that is associated with the _notification type_.
-
-### Triggering Domain Events
-
-The events you define when configuring your notifications are triggered in your application logic via ADSP's [Event Service APIs](https://api.adsp-uat.alberta.ca/autotest/?urls.primaryName=Event%20service). When ADSP receives one, it will
-
-- match the _domain event_ with a _notification type_,
-- determine who needs to be notified, based on subscribers and notification criteria,
-- combine the information in the event payload with the message template's placeholders
-- send a notification through the appropriate channel
+Defining events and message templates is an easy, one step, process done through the [Tenant Admin Webapp](https://adsp-uat.alberta.ca/admin/services/notification). Adding API calls for subscribing users and sending events to your code requires a bit more work, but there are only a few of them, each with minimal complexity.
 
 ## Learn More
 
-- Learn how to [configure a notification type](/adsp-monorepo/tutorials/notification-service/notification-types.html)
+- Learn how to [configure notifications](/adsp-monorepo/tutorials/notification-service/notification-types.html)
 - Learn how to [manage subscribers](/adsp-monorepo/tutorials/notification-service/subscribers.html)
 - Learn how to [configure and trigger domain events](/adsp-monorepo/tutorials/notification-service/events.html)
