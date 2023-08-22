@@ -98,11 +98,8 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   const history = useHistory();
 
   const cancel = () => {
-    history.push({
-      pathname: '/admin/services/pdf',
-      search: '?templates=true',
-    });
     dispatch(setPdfDisplayFileId(null));
+    history.push('/admin/services/pdf');
   };
 
   useEffect(() => {
