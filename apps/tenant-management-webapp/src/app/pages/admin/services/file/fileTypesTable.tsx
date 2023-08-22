@@ -135,9 +135,9 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
       {fileTypes && fileTypes.length > 0 && (
         <TableLayout>
           <DataTable data-testid="file-types-table">
-            <thead data-testid="file-types-table-header">
+            <thead data-testid="file-types-table-header" id="file-types-table-header">
               <tr>
-                <th id="name" data-testid="events-definitions-table-header-name">
+                <th id="name" data-testid="file-types-table-header-name">
                   Name
                 </th>
                 <th id="read-roles">Read roles</th>
@@ -176,14 +176,14 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
           <h4>Core file types</h4>
           <TableLayout>
             <DataTable data-testid="file-types-table">
-              <thead data-testid="file-types-table-header">
+              <thead data-testid="file-types-table-header" id="file-types-table-core-header">
                 <tr>
-                  <th id="name" data-testid="events-definitions-table-header-name">
+                  <th id="name-core" data-testid="file-types-table-header-name">
                     Name
                   </th>
-                  <th id="read-roles">Read roles</th>
-                  <th id="write-roles">Modify roles</th>
-                  <th id="retention-policy">Retention period</th>
+                  <th id="read-roles-core">Read roles</th>
+                  <th id="write-roles-core">Modify roles</th>
+                  <th id="retention-policy-core">Retention period</th>
                 </tr>
               </thead>
               <tbody>
