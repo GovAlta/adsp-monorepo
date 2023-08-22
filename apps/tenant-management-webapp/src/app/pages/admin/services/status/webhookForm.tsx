@@ -134,6 +134,7 @@ export const WebhookFormModal: FC<Props> = ({
   function isFormValid(): boolean {
     if (webhook?.eventTypes.length === 0) return false;
     if (!webhook?.url) return false;
+    if (webhook?.targetId === '') return false;
     return !validators.haveErrors();
   }
 
@@ -213,9 +214,9 @@ export const WebhookFormModal: FC<Props> = ({
             <GoAFormItem>
               <label>Application</label>
               <GoADropdown
-                name="Application"
+                name="targetId"
                 value={webhook.targetId}
-                onChange={(_n, [value]) =>
+                onChange={(_n, value: string) =>
                   setWebhook({
                     ...webhook,
                     targetId: value,
@@ -228,7 +229,7 @@ export const WebhookFormModal: FC<Props> = ({
               >
                 {applications.map((application) => (
                   <GoADropdownItem
-                    name="Application"
+                    name="targetId"
                     label={application.appKey}
                     value={application.appKey}
                     key={application.appKey}
