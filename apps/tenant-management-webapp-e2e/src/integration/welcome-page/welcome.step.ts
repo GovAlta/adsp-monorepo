@@ -49,9 +49,9 @@ Then('the user views the page of {string} based on if the user created a tenant 
   }
 });
 
-When('the user selects get started button', function () {
-  // Click get started button and verify the button directs users to /get-started page
-  welcomPageObj.getStartedButton().click();
+When('the user selects Request a tenant button', function () {
+  // Click request a tenant button and verify the button directs users to /get-started page
+  welcomPageObj.requestATenantButton().click();
   cy.url().should('include', '/get-started');
   // Pass in kc_idp_hint= to avoid SSO login
   cy.visit('/get-started?kc_idp_hint=');
@@ -59,7 +59,7 @@ When('the user selects get started button', function () {
 });
 
 When('the user clicks Sign in button', function () {
-  welcomPageObj.getStartedSigninButton().click();
+  welcomPageObj.getStartedSigninButton().shadow().find('button').click({ force: true });
   cy.wait(4000); // Wait for the web app to check if the user has created a tenant or not
 });
 
@@ -77,8 +77,8 @@ When(
   function (tenantName, seconds) {
     expect(isNaN(seconds)).to.be.false; // Verify the pass in seconds is a number
     expect(Number(seconds)).to.be.lessThan(300); // provent user from passing in too big a number to hange the test execution
-    welcomPageObj.tenantNameField().clear().type(tenantName);
-    welcomPageObj.createTenantButton().click();
+    welcomPageObj.tenantNameField().shadow().find('input').clear().type(tenantName, { delay: 50, force: true });
+    welcomPageObj.createTenantButton().shadow().find('button').click({ force: true });
     cy.wait(Number(seconds) * 1000); // Wait N seconds for the tenant creation
   }
 );
@@ -111,7 +111,7 @@ Then('the new tenant is deleted', function () {
 });
 
 When('the user clicks the tenant login button', function () {
-  welcomPageObj.tenantLoginButton().click();
+  welcomPageObj.tenantLoginButton().shadow().find('button').click({ force: true });
 });
 
 Then('the user views the tenant login page', function () {
@@ -161,6 +161,6 @@ When('the Learn More button for Chat app redirects users to ADSP Chat Example', 
   cy.window().then((win) => {
     cy.stub(win, 'open').as('open');
   });
-  welcomPageObj.chatAppCardLearnMoreBtn().click();
+  welcomPageObj.chatAppCardLearnMoreBtn().shadow().find('button').click({ force: true });
   cy.get('@open').should('have.been.calledWith', chatUrl);
 });

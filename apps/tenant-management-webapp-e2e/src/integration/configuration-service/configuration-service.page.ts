@@ -17,19 +17,19 @@ class ConfigurationServicePage {
 
   configurationDefinitionEditBtn(namespace, name, desc) {
     return cy.xpath(
-      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="configuration-table"]/tbody/tr/td[@data-testid="configuration-name" and text()="${name}"]/following-sibling::td[@data-testid="configuration-description" and text()="${desc}"]/following-sibling::td//button[@data-testid="edit-details"]`
+      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="configuration-table"]/tbody/tr/td[@data-testid="configuration-name" and text()="${name}"]/following-sibling::td[@data-testid="configuration-description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@data-testid="edit-details"]`
     );
   }
 
   configurationDefinitionDeleteBtn(namespace, name, desc) {
     return cy.xpath(
-      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="configuration-table"]/tbody/tr/td[@data-testid="configuration-name" and text()="${name}"]/following-sibling::td[@data-testid="configuration-description" and text()="${desc}"]/following-sibling::td//button[@data-testid="delete-config"]`
+      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="configuration-table"]/tbody/tr/td[@data-testid="configuration-name" and text()="${name}"]/following-sibling::td[@data-testid="configuration-description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@data-testid="delete-config"]`
     );
   }
 
   configurationDefinitionEyeBtn(namespace, name, desc) {
     return cy.xpath(
-      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="configuration-table"]/tbody/tr/td[@data-testid="configuration-name" and text()="${name}"]/following-sibling::td[@data-testid="configuration-description" and text()="${desc}"]/following-sibling::td//button[@data-testid="configuration-toggle-details-visibility"]`
+      `//div[text()="${namespace}"]/following-sibling::div//*[@data-testid="configuration-table"]/tbody/tr/td[@data-testid="configuration-name" and text()="${name}"]/following-sibling::td[@data-testid="configuration-description" and text()="${desc}"]/following-sibling::td//goa-icon-button[@data-testid="configuration-toggle-details-visibility"]`
     );
   }
 
@@ -92,11 +92,11 @@ class ConfigurationServicePage {
   }
 
   configurationDefinitionModalSaveBtn() {
-    return cy.xpath('//*[@data-testid="definition-form"]//button[@data-testid="form-save"]');
+    return cy.xpath('//*[@data-testid="definition-form"]//goa-button[@data-testid="form-save"]');
   }
 
   configurationDefinitionModalCancelBtn() {
-    return cy.xpath('//*[@data-testid="definition-form"]//button[@data-testid="form-cancel"]');
+    return cy.xpath('//*[@data-testid="definition-form"]//goa-button[@data-testid="form-cancel"]');
   }
 
   configurationDefinitionModalPayloadEditor() {
