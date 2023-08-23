@@ -2,6 +2,8 @@ import DataTable from '@components/DataTable';
 import React, { useState } from 'react';
 import { GoACheckbox } from '@abgov/react-components-new';
 import { DataTableWrapper } from './styled-components';
+import { useSelector } from 'react-redux';
+import { RootState } from '@store/index';
 
 /**
  * A React component for creating roles table
@@ -34,16 +36,22 @@ interface ClientRoleTableProps {
 }
 
 export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
+  const { tenantName } = useSelector((state: RootState) => {
+    return {
+      tenantName: state.tenant.name,
+    };
+  });
   const [checkedRoles, setCheckedRoles] = useState(props.checkedRoles);
   const service = props.service;
 
   return (
     <DataTableWrapper>
       <DataTable noScroll={true}>
+        <h4 className="margin-adjustment">{props.clientId ? props.clientId : tenantName}</h4>
         <thead>
           <tr>
             <th id={`${service}-roles`} className="role-name">
-              {props.clientId ? props.clientId : 'Roles'}
+              Roles
             </th>
             {props.checkedRoles.map((role, index) => {
               return (
