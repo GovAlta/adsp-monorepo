@@ -35,13 +35,13 @@ class ConfigurationServicePage {
 
   configurationDetailsIcon(name) {
     return cy.xpath(
-      `//*[@data-testid="configuration-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="configuration-toggle-details-visibility"]`
+      `//*[@data-testid="configuration-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="configuration-toggle-details-visibility" and @icon="eye"]`
     );
   }
 
   configurationHideDetailsIcon(name) {
     return cy.xpath(
-      `//*[@data-testid="configuration-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="icon-eye-off"]`
+      `//*[@data-testid="configuration-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="configuration-toggle-details-visibility" and @icon="eye-off"]`
     );
   }
 

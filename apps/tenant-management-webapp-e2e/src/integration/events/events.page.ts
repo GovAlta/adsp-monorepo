@@ -29,13 +29,13 @@ class eventsPage {
 
   showDetailsIcon(namespace, eventName) {
     return cy.xpath(
-      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td//*[@data-testid="toggle-details-visibility"]/*[@data-testid="icon-eye"]`
+      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td//*[@data-testid="toggle-details-visibility" and @icon="eye"]`
     );
   }
 
   hideDetailsIcon(namespace, eventName) {
     return cy.xpath(
-      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td//*[@data-testid="toggle-details-visibility"]/*[@data-testid="icon-eye-off"]`
+      `//div[@class="group-name" and contains(text(), "${namespace}")]/following-sibling::div//td[@data-testid="name" and contains(text(), "${eventName}")]/following-sibling::td//*[@data-testid="toggle-details-visibility" and @icon="eye-off"]`
     );
   }
 
@@ -62,7 +62,7 @@ class eventsPage {
   }
 
   definitionModalNamespaceFieldErrorMsg() {
-    return cy.xpath('//input[@data-testid="form-namespace"]/parent::*/following-sibling::div[@class="error-msg"]');
+    return cy.xpath('//goa-input[@data-testid="form-namespace"]/following-sibling::div[@class="error-msg"]');
   }
 
   definitionModalNameField() {
@@ -70,7 +70,7 @@ class eventsPage {
   }
 
   definitionModalNameFieldErrorMsg() {
-    return cy.xpath('//input[@data-testid="form-name"]/parent::*/following-sibling::div[@class="error-msg"]');
+    return cy.xpath('//goa-input[@data-testid="form-name"]/following-sibling::div[@class="error-msg"]');
   }
 
   definitionModalDescriptionField() {
@@ -123,7 +123,7 @@ class eventsPage {
 
   streamToggleButton(streamName) {
     return cy.xpath(
-      `//*[@data-testid="Platform-stream-table"]//tbody/tr/td[text()="${streamName}"]/following-sibling::td//button[@data-testid="toggle-stream-visibility"]`
+      `//*[@data-testid="Platform-stream-table"]//tbody/tr/td[text()="${streamName}"]/following-sibling::td//*[@data-testid="toggle-stream-visibility"]`
     );
   }
 
@@ -209,13 +209,13 @@ class eventsPage {
 
   streamDetailsEyeIcon(name) {
     return cy.xpath(
-      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="toggle-stream-visibility"]`
+      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="toggle-stream-visibility" and @icon="eye"]`
     );
   }
 
   streamDetailsEyeOffIcon(name) {
     return cy.xpath(
-      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="icon-eye-off"]`
+      `//*[@data-testid="stream-name" and contains(text(), "${name}")]/following-sibling::td//*[@data-testid="toggle-stream-visibility" and @icon="eye-off"]`
     );
   }
 
