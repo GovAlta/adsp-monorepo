@@ -15,12 +15,17 @@ Then('the user views a {string} under core-service configurations', function (de
 });
 
 When('the user clicks eye icon of {string} under Platform to view the schema', function (definitionName) {
-  configurationObj.configurationDetailsIcon(definitionName).click({ force: true });
+  configurationObj.configurationDetailsIcon(definitionName).shadow().find('button').click({ force: true });
   cy.wait(1000);
 });
 
 When('the user clicks eye-off icon of {string} under Platform to close the schema', function (definitionName) {
-  configurationObj.configurationHideDetailsIcon(definitionName).scrollIntoView().click({ force: true });
+  configurationObj
+    .configurationHideDetailsIcon(definitionName)
+    .shadow()
+    .find('button')
+    .scrollIntoView()
+    .click({ force: true });
 });
 
 Then(
@@ -59,11 +64,21 @@ Then('the user views Add definition modal', function () {
 });
 
 When('the user enters {string} in namespace field in configuration definition modal', function (namespace) {
-  configurationObj.addConfigurationDefinitionModalNamespaceField().clear().type(namespace);
+  configurationObj
+    .addConfigurationDefinitionModalNamespaceField()
+    .shadow()
+    .find('input')
+    .clear()
+    .type(namespace, { delay: 50, force: true });
 });
 
 When('the user enters {string} in name field in configuration definition modal', function (name) {
-  configurationObj.addConfigurationDefinitionModalNameField().clear().type(name);
+  configurationObj
+    .addConfigurationDefinitionModalNameField()
+    .shadow()
+    .find('input')
+    .clear()
+    .type(name, { delay: 50, force: true });
 });
 
 Then(
@@ -80,8 +95,18 @@ Then('the user views the error message of {string} on name in configuration defi
 When(
   'the user enters {string} in namespace and {string} in name, {string} in description in configuration definition modal',
   function (namespace, name, desc) {
-    configurationObj.addConfigurationDefinitionModalNamespaceField().clear().type(namespace);
-    configurationObj.addConfigurationDefinitionModalNameField().clear().type(name);
+    configurationObj
+      .addConfigurationDefinitionModalNamespaceField()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(namespace, { delay: 50, force: true });
+    configurationObj
+      .addConfigurationDefinitionModalNameField()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(name, { delay: 50, force: true });
     configurationObj
       .addConfigurationDefinitionModalDescField()
       .shadow()
@@ -122,13 +147,25 @@ When(
   function (buttonName, name, desc, namespace) {
     switch (buttonName.toLowerCase()) {
       case 'edit':
-        configurationObj.configurationDefinitionEditBtn(namespace, name, desc).click({ force: true });
+        configurationObj
+          .configurationDefinitionEditBtn(namespace, name, desc)
+          .shadow()
+          .find('button')
+          .click({ force: true });
         break;
       case 'delete':
-        configurationObj.configurationDefinitionDeleteBtn(namespace, name, desc).click({ force: true });
+        configurationObj
+          .configurationDefinitionDeleteBtn(namespace, name, desc)
+          .shadow()
+          .find('button')
+          .click({ force: true });
         break;
       case 'eye':
-        configurationObj.configurationDefinitionEyeBtn(namespace, name, desc).click({ force: true });
+        configurationObj
+          .configurationDefinitionEyeBtn(namespace, name, desc)
+          .shadow()
+          .find('button')
+          .click({ force: true });
         break;
       default:
         expect(buttonName.toLowerCase()).to.be.oneOf(['edit', 'delete', 'eye']);
@@ -141,8 +178,8 @@ Then('the user views Edit definition modal', function () {
 });
 
 Then('the user views disabled namespace and name fields in configuration definition modal', function () {
-  configurationObj.addConfigurationDefinitionModalNamespaceField().should('be.disabled');
-  configurationObj.addConfigurationDefinitionModalNameField().should('be.disabled');
+  configurationObj.addConfigurationDefinitionModalNamespaceField().shadow().find('input').should('be.disabled');
+  configurationObj.addConfigurationDefinitionModalNameField().shadow().find('input').should('be.disabled');
 });
 
 When('the user enters {string} in description in configuration definition modal', function (desc) {
@@ -168,6 +205,7 @@ When('the user enters {string} in payload schema in configuration definition mod
     .configurationDefinitionModalPayloadEditor()
     .click({ force: true })
     .focus()
+    .type('{ctrl}a', { force: true })
     .clear({ force: true })
     .type(payload, { force: true });
 });

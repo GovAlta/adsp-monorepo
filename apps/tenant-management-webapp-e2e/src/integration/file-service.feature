@@ -66,7 +66,6 @@ Feature: File service
       | /configuration/v2/configuration/platform/file-service?core | 200         |
 
   @TEST_CS-2110 @REQ_CS-2037 @regression @api
-
   Scenario Outline: As a developer, I can query files by last accessed time criteria, so I can file stale files
     When a developer of a GoA digital service can query files by last accessed time criteria with "<Request Endpoint>" for before yesterday
     Then "<Status Code>" is returned after file retention be set.
