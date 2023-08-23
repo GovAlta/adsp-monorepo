@@ -35,10 +35,10 @@ When(
   function (showHide, eventName, eventNamespace) {
     switch (showHide) {
       case 'show':
-        eventsObj.showDetailsIcon(eventNamespace, eventName).click();
+        eventsObj.showDetailsIcon(eventNamespace, eventName).shadow().find('button').click({ force: true });
         break;
       case 'hide':
-        eventsObj.hideDetailsIcon(eventNamespace, eventName).click();
+        eventsObj.hideDetailsIcon(eventNamespace, eventName).shadow().find('button').click({ force: true });
         break;
       default:
         expect(showHide).to.be.oneOf(['show', 'hide']);
@@ -78,9 +78,14 @@ Then('the user views Edit definition dialog', function () {
 When(
   'the user enters {string} in Namespace, {string} in Name, {string} in Description',
   function (namespace, name, desc) {
-    eventsObj.definitionModalNamespaceField().type(namespace);
-    eventsObj.definitionModalNameField().type(name);
-    eventsObj.definitionModalDescriptionField().shadow().find('.goa-textarea').type(desc, { force: true });
+    eventsObj
+      .definitionModalNamespaceField()
+      .shadow()
+      .find('input')
+      .clear()
+      .type(namespace, { delay: 50, force: true });
+    eventsObj.definitionModalNameField().shadow().find('input').clear().type(name, { delay: 50, force: true });
+    eventsObj.definitionModalDescriptionField().shadow().find('.goa-textarea').type(desc);
   }
 );
 
@@ -90,7 +95,7 @@ When('the user clicks Save button on Definition modal', function () {
 });
 
 Then('the user views disabled Save button on Definition modal', function () {
-  eventsObj.definitionModalSaveButton().should('be.disabled');
+  eventsObj.definitionModalSaveButton().shadow().find('button').should('be.disabled');
 });
 
 When(
@@ -98,10 +103,18 @@ When(
   function (button, eventName, eventDesc, eventNamespace) {
     switch (button) {
       case 'Edit':
-        eventsObj.editDefinitionButton(eventNamespace, eventName, eventDesc).click({ force: true });
+        eventsObj
+          .editDefinitionButton(eventNamespace, eventName, eventDesc)
+          .shadow()
+          .find('button')
+          .click({ force: true });
         break;
       case 'Delete':
-        eventsObj.deleteDefinitionButton(eventNamespace, eventName, eventDesc).click({ force: true });
+        eventsObj
+          .deleteDefinitionButton(eventNamespace, eventName, eventDesc)
+          .shadow()
+          .find('button')
+          .click({ force: true });
         break;
       default:
         expect(button).to.be.oneOf(['Edit', 'Delete']);
@@ -167,7 +180,7 @@ Then('the user views Core streams section', function () {
 });
 
 When('the user clicks eye icon of {string} under Core streams', function (streamName) {
-  eventsObj.streamToggleButton(streamName).click();
+  eventsObj.streamToggleButton(streamName).shadow().find('button').click({ force: true });
 });
 
 Then('the user views the details of {string} under Core streams', function (streamName) {
@@ -203,7 +216,13 @@ When(
   function (name, description, event, role) {
     cy.wait(1000); // Wait stream modal to show content
     const events = event.split(',');
-    eventsObj.streamModalNameInput().scrollIntoView().clear().type(name);
+    eventsObj
+      .streamModalNameInput()
+      .shadow()
+      .find('input')
+      .scrollIntoView()
+      .clear()
+      .type(name, { delay: 50, force: true });
     eventsObj
       .streamModalDescriptionInput()
       .shadow()
@@ -383,16 +402,16 @@ Then(
 When('the user clicks {string} button for the stream of {string}', function (button, streamName) {
   switch (button) {
     case 'Eye':
-      eventsObj.streamDetailsEyeIcon(streamName).click({ force: true });
+      eventsObj.streamDetailsEyeIcon(streamName).shadow().find('button').click({ force: true });
       break;
     case 'Eye-Off':
-      eventsObj.streamDetailsEyeOffIcon(streamName).click({ force: true });
+      eventsObj.streamDetailsEyeOffIcon(streamName).shadow().find('button').click({ force: true });
       break;
     case 'Edit':
-      eventsObj.streamEditBtn(streamName).click({ force: true });
+      eventsObj.streamEditBtn(streamName).shadow().find('button').click({ force: true });
       break;
     case 'Delete':
-      eventsObj.streamDeleteBtn(streamName).click({ force: true });
+      eventsObj.streamDeleteBtn(streamName).shadow().find('button').click({ force: true });
       break;
     default:
       expect(button).to.be.oneOf(['Eye', 'Edit', 'Delete']);

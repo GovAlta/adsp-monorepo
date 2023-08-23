@@ -111,11 +111,16 @@ Then('the user views an error messsage for missing email', function () {
 When(
   'the user enters {string} as email, {string} as phone number and {string} as preferred channel',
   function (email, phone, channel) {
-    subscriptionManagementObj.emailInput().shadow().find('input').clear().type(email, { force: true });
+    subscriptionManagementObj.emailInput().shadow().find('input').clear().type(email, { delay: 50, force: true });
     if (phone == 'EMPTY') {
       subscriptionManagementObj.phoneNumberInput().shadow().find('input').clear({ force: true });
     } else {
-      subscriptionManagementObj.phoneNumberInput().shadow().find('input').clear().type(phone, { force: true });
+      subscriptionManagementObj
+        .phoneNumberInput()
+        .shadow()
+        .find('input')
+        .clear()
+        .type(phone, { delay: 50, force: true });
     }
     subscriptionManagementObj.preferredNotificationChannelSelection(channel).click({ force: true });
   }

@@ -57,30 +57,34 @@ class DirectoryServicePage {
 
   entryNameUrlEditIcon(serviceName, url) {
     return cy.xpath(
-      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/following-sibling::*[contains(text(), "${url}")]/parent::*//*[@data-testid="icon-create"]`
+      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/following-sibling::*[contains(text(), "${url}")]/parent::*//*[contains(@data-testid, "directory-edit")]`
     );
   }
 
   entryNameApiUrlEditIcon(serviceName, api, url) {
     return cy.xpath(
-      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/following-sibling::*[contains(text(), "${api}")]/following-sibling::*[contains(text(), "${url}")]/parent::*//*[@data-testid="icon-create"]`
+      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/following-sibling::*[contains(text(), "${api}")]/following-sibling::*[contains(text(), "${url}")]/parent::*//*[contains(@data-testid, "directory-edit")]`
     );
   }
 
   entryNameUrlDeleteIcon(serviceName, url) {
     return cy.xpath(
-      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/following-sibling::*[contains(text(), "${url}")]/parent::*//*[@data-testid="icon-trash"]`
+      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/following-sibling::*[contains(text(), "${url}")]/parent::*//*[contains(@data-testid, "directory-delete")]`
     );
   }
 
   entryNameApiUrlDeleteIcon(serviceName, api, url) {
     return cy.xpath(
-      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/following-sibling::*[contains(text(), "${api}")]/following-sibling::*[contains(text(), "${url}")]/parent::*//*[@data-testid="icon-trash"]`
+      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/following-sibling::*[contains(text(), "${api}")]/following-sibling::*[contains(text(), "${url}")]/parent::*//*[contains(@data-testid, "directory-delete")]`
     );
   }
 
+  deleteModalTitle() {
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]//*[@slot="heading"]');
+  }
+
   deleteModalContent() {
-    return cy.xpath('//*[@data-testid="delete-confirmation" and @data-state="visible"]//*[@class="goa-scrollable"]');
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]');
   }
 
   deleteModalDeleteBtn() {
@@ -101,13 +105,13 @@ class DirectoryServicePage {
 
   entryNameEyeIcon(serviceName) {
     return cy.xpath(
-      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/parent::*//*[@data-testid="icon-eye"]`
+      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/parent::*//*[@data-testid="directory-toggle-details-visibility" and @icon="eye"]`
     );
   }
 
   entryNameEyeOffIcon(serviceName) {
     return cy.xpath(
-      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/parent::*//*[@data-testid="icon-eye-off"]`
+      `//*[@data-testid="directory-table"]//tbody//td[contains(text(), "${serviceName}")]/parent::*//*[@data-testid="directory-toggle-details-visibility" and @icon="eye-off"]`
     );
   }
 
@@ -118,7 +122,11 @@ class DirectoryServicePage {
   }
 
   addEntryActionBtn() {
-    return cy.get('[data-testid=icon-add]');
+    return cy.get('[icon="add"]');
+  }
+
+  entryModalTitle() {
+    return cy.xpath('//*[@data-testid="directory-modal"]//*[@class="modal-title"]');
   }
 }
 export default DirectoryServicePage;
