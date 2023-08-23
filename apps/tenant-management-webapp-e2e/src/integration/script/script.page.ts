@@ -48,11 +48,11 @@ class ScriptPage {
   }
 
   scriptDeleteButton(rowNumber) {
-    return cy.xpath(`(//table[@data-testid="script-table"]//*[contains(@data-testid, "icon-trash")])[${rowNumber}]`);
+    return cy.xpath(`(//table[@data-testid="script-table"]//*[contains(@data-testid, "delete-icon")])[${rowNumber}]`);
   }
 
   scriptEditButton(rowNumber) {
-    return cy.xpath(`(//table[@data-testid="script-table"]//*[contains(@data-testid, "icon-create")])[${rowNumber}]`);
+    return cy.xpath(`(//table[@data-testid="script-table"]//*[contains(@data-testid, "script-edit")])[${rowNumber}]`);
   }
 
   editScriptModal() {

@@ -55,7 +55,7 @@ class NotificationsPage {
   }
 
   notificationTypeModalSelfServiceCalloutContent() {
-    return cy.xpath('//*[@data-testid="callout-content"]');
+    return cy.xpath('//goa-checkbox[@name="subscribe"]/following-sibling::*//goa-callout');
   }
 
   notificationTypeModalSaveBtn() {

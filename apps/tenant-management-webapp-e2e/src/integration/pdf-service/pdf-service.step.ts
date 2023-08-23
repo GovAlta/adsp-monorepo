@@ -41,14 +41,14 @@ Then('the user views Add template modal', function () {
 });
 
 When('the user enters {string} as name, {string} as description in pdf template modal', function (name, description) {
-  pdfServiceObj.pdfAddTemplateModalName().shadow().find('.input--goa').type(name, { force: true });
+  pdfServiceObj.pdfAddTemplateModalName().shadow().find('.input--goa').clear().type(name, { delay: 100, force: true });
   pdfServiceObj
     .pdfAddTemplateModalDescription()
     .shadow()
     .find('.goa-textarea')
     .invoke('removeAttr', 'disabled')
     .clear()
-    .type(description, { force: true });
+    .type(description, { delay: 100, force: true });
 });
 
 Then('the user clicks Save button in Add or Edit template modal', function () {
@@ -118,10 +118,14 @@ When(
     switch (iconType.toLowerCase()) {
       case 'edit':
         cy.viewport(1441, 901);
-        pdfServiceObj.pdfTemplateEditBtn(name, templateId, description).click({ force: true });
+        pdfServiceObj.pdfTemplateEditBtn(name, templateId, description).shadow().find('button').click({ force: true });
         break;
       case 'delete':
-        pdfServiceObj.pdfTemplateDeleteBtn(name, templateId, description).click({ force: true });
+        pdfServiceObj
+          .pdfTemplateDeleteBtn(name, templateId, description)
+          .shadow()
+          .find('button')
+          .click({ force: true });
         break;
       default:
         expect(iconType.toLowerCase()).to.be.oneOf(['edit', 'delete']);
@@ -246,8 +250,14 @@ When(
       .shadow()
       .find('.input--goa')
       .invoke('removeAttr', 'disabled')
-      .type(name, { force: true });
-    pdfServiceObj.pdfTemplateModalDescriptionField().shadow().find('.goa-textarea').type(description, { force: true });
+      .clear()
+      .type(name, { delay: 100, force: true });
+    pdfServiceObj
+      .pdfTemplateModalDescriptionField()
+      .shadow()
+      .find('.goa-textarea')
+      .clear()
+      .type(description, { delay: 100, force: true });
   }
 );
 
@@ -261,7 +271,7 @@ When('the user clicks Generate PDF button in PDF template editor screen', () => 
 });
 
 Then('the user can preview pdf file that generated in iframe', () => {
-  cy.wait(50000);
+  cy.wait(20000);
   pdfServiceObj.pdfTemplatePDFPreview().should('exist');
 });
 
