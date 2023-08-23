@@ -222,7 +222,6 @@ export const WebhookFormModal: FC<Props> = ({
                 aria-label="select-webhook-dropdown"
                 width="100%"
                 testId="webhook-application-dropdown"
-                relative={true}
               >
                 {applications.map((application) => (
                   <GoADropdownItem
