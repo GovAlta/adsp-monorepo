@@ -91,7 +91,11 @@ And('the user removes phone number value in contact information', function () {
 });
 
 When('the user selects {string} as the preferred channel in contact information', function (selection) {
-  subscriptionManagementObj.preferredNotificationChannelSelection(selection).click({ force: true });
+  subscriptionManagementObj
+    .preferredNotificationChannelGroup()
+    .shadow()
+    .find('input[value="' + selection + '"]')
+    .click({ force: true });
 });
 
 Then('the user views an error messsage for missing phone number', function () {
@@ -122,7 +126,11 @@ When(
         .clear()
         .type(phone, { delay: 50, force: true });
     }
-    subscriptionManagementObj.preferredNotificationChannelSelection(channel).click({ force: true });
+    subscriptionManagementObj
+      .preferredNotificationChannelGroup()
+      .shadow()
+      .find('input[value="' + channel + '"]')
+      .click({ force: true });
   }
 );
 
@@ -133,7 +141,7 @@ And('the user views contact information of {string}, {string} and {string}', fun
   } else {
     subscriptionManagementObj.phoneNumberDisplay().invoke('text').should('contain', phone);
   }
-  subscriptionManagementObj.preferredNotificationChannelDisplay().should('have.value', channel);
+  subscriptionManagementObj.preferredNotificationPreferredChannelGroup().invoke('attr', 'value').should('eq', channel);
 });
 
 Then('the user views the checked {string} icon for {string}', function (channel, subscriptionName) {
