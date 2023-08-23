@@ -57,16 +57,17 @@ describe('Definitions Page', () => {
   });
 
   it('deletes a definition', async () => {
-    const { queryByTestId } = render(
+    const { queryByTestId, baseElement } = render(
       <Provider store={store}>
         <Definitions />
       </Provider>
     );
     const deleteBtn = queryByTestId('delete-details');
     fireEvent(deleteBtn, new CustomEvent('_click'));
-    const confirmation = queryByTestId('delete-confirmation');
-    expect(confirmation).not.toBeNull();
-    const deleteConfirm = queryByTestId('delete-confirm');
+    const confirmation = baseElement.querySelector('goa-modal');
+    const actionContent = confirmation.querySelector("[slot='actions']");
+    const deleteConfirm = actionContent.querySelector("[data-testid='delete-confirm']");
+
     fireEvent(deleteConfirm, new CustomEvent('_click'));
     const actions = store.getActions();
     const deleteAction = actions.find((action) => action.type === DELETE_EVENT_DEFINITION_ACTION);
@@ -74,7 +75,7 @@ describe('Definitions Page', () => {
   });
 
   it('cancels deleting a definition', async () => {
-    const { queryByTestId } = render(
+    const { queryByTestId, baseElement } = render(
       <Provider store={store}>
         <Definitions />
       </Provider>
@@ -82,11 +83,10 @@ describe('Definitions Page', () => {
     const deleteBtn = queryByTestId('delete-details');
 
     fireEvent(deleteBtn, new CustomEvent('_click'));
-    const deleteCancel = queryByTestId('delete-cancel');
-
-    fireEvent(deleteCancel, new CustomEvent('_click'));
+    const confirmation = baseElement.querySelector('goa-modal');
+    const actionContent = confirmation.querySelector("[slot='actions']");
     await waitFor(() => {
-      expect(queryByTestId('delete-cancel')).toBeNull();
+      expect(actionContent.querySelector("[data-testid='delete-cancel']")).toBeVisible();
     });
   });
 
@@ -140,7 +140,7 @@ describe('Definitions Page', () => {
   });
 
   it('cancels editing the definition', async () => {
-    const { queryByTestId } = render(
+    const { queryByTestId, baseElement } = render(
       <Provider store={store}>
         <Definitions />
       </Provider>
@@ -148,13 +148,14 @@ describe('Definitions Page', () => {
 
     const editBtn = queryByTestId('edit-details');
     fireEvent(editBtn, new CustomEvent('_click'));
+    const confirmation = baseElement.querySelector('goa-modal');
+    const actionContent = confirmation.querySelector("[slot='actions']");
 
-    const cancelButton = queryByTestId('form-cancel');
+    const cancelButton = actionContent.querySelector('goa-button');
     fireEvent(cancelButton, new CustomEvent('_click'));
 
     await waitFor(() => {
-      const form = queryByTestId('definition-form');
-      expect(form).toBeNull();
+      expect(confirmation.getAttribute('open')).toBe('false');
     });
   });
 
@@ -198,10 +199,6 @@ describe('Definitions Page', () => {
         detail: { value: 'description' },
       })
     );
-
-    // fireEvent.change(namespace, { target: { value: 'namespace' } });
-    // fireEvent.change(name, { target: { value: 'name' } });
-    // fireEvent.change(description, { target: { value: 'description' } });
 
     fireEvent(saveBtn, new CustomEvent('_click'));
     const actions = store.getActions();

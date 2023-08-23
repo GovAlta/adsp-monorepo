@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAButton, GoAButtonGroup, GoAInput } from '@abgov/react-components-new';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import { GoAButton, GoAButtonGroup, GoAInput, GoAModal, GoAFormItem } from '@abgov/react-components-new';
 import { Service } from '@store/directory/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { createEntry, updateEntry, fetchEntryDetail } from '@store/directory/actions';
@@ -87,61 +85,11 @@ export const DirectoryModal = (): JSX.Element => {
   }, [initEntry]);
 
   return (
-    <GoAModal testId="directory-modal" isOpen={isNew || isEdit || isQuickAdd}>
-      <GoAModalTitle>{title}</GoAModalTitle>
-      <GoAModalContent>
-        <GoAForm>
-          <GoAFormItem error={errors?.['service']}>
-            <label>Service</label>
-            <GoAInput
-              type="text"
-              name="service"
-              width="100%"
-              value={entry.service}
-              testId={`directory-modal-service-input`}
-              aria-label="service"
-              disabled={!isNew || isQuickAdd}
-              onChange={(name, value) => {
-                validators['service'].check(value);
-                setEntry({ ...entry, service: value });
-              }}
-            />
-          </GoAFormItem>
-          <GoAFormItem error={errors?.['api']}>
-            <label>API</label>
-            <GoAInput
-              type="text"
-              name="api"
-              width="100%"
-              value={entry.api}
-              testId={`directory-modal-api-input`}
-              aria-label="api"
-              disabled={!isNew || isQuickAdd}
-              onChange={(name, value) => {
-                validators['api'].check(value);
-                setEntry({ ...entry, api: value });
-              }}
-            />
-          </GoAFormItem>
-          <GoAFormItem error={errors?.['url']}>
-            <label>URL</label>
-            <GoAInput
-              type="url"
-              name="url"
-              width="100%"
-              value={entry.url}
-              testId={`directory-modal-url-input`}
-              aria-label="name"
-              disabled={isQuickAdd}
-              onChange={(name, value) => {
-                validators['url'].check(value);
-                setEntry({ ...entry, url: value });
-              }}
-            />
-          </GoAFormItem>
-        </GoAForm>
-      </GoAModalContent>
-      <GoAModalActions>
+    <GoAModal
+      testId="directory-modal"
+      open={isNew || isEdit || isQuickAdd}
+      heading={title}
+      actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
             type="secondary"
@@ -189,7 +137,53 @@ export const DirectoryModal = (): JSX.Element => {
             Save
           </GoAButton>
         </GoAButtonGroup>
-      </GoAModalActions>
+      }
+    >
+      <GoAFormItem error={errors?.['service']} label="Service">
+        <GoAInput
+          type="text"
+          name="service"
+          width="100%"
+          value={entry.service}
+          testId={`directory-modal-service-input`}
+          aria-label="service"
+          disabled={!isNew || isQuickAdd}
+          onChange={(name, value) => {
+            validators['service'].check(value);
+            setEntry({ ...entry, service: value });
+          }}
+        />
+      </GoAFormItem>
+      <GoAFormItem error={errors?.['api']} label="API">
+        <GoAInput
+          type="text"
+          name="api"
+          width="100%"
+          value={entry.api}
+          testId={`directory-modal-api-input`}
+          aria-label="api"
+          disabled={!isNew || isQuickAdd}
+          onChange={(name, value) => {
+            validators['api'].check(value);
+            setEntry({ ...entry, api: value });
+          }}
+        />
+      </GoAFormItem>
+      <GoAFormItem error={errors?.['url']} label="URL">
+        <GoAInput
+          type="url"
+          name="url"
+          width="100%"
+          value={entry.url}
+          testId={`directory-modal-url-input`}
+          aria-label="name"
+          disabled={isQuickAdd}
+          onChange={(name, value) => {
+            validators['url'].check(value);
+            setEntry({ ...entry, url: value });
+          }}
+        />
+      </GoAFormItem>
     </GoAModal>
   );
 };

@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useState, useRef } from 'react';
 import { RootState } from '@store/index';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton, GoAFormItem } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   getConfigurationDefinitions,
@@ -10,12 +10,10 @@ import {
   resetImportsListAction,
 } from '@store/configuration/action';
 import { ConfigDefinition } from '@store/configuration/model';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import { ImportModal } from './importModal';
 import { isValidJSONCheck, jsonSchemaCheck } from '@lib/validation/checkInput';
-import { ErrorStatusText } from '../styled-components';
+import { ErrorStatusText, Import } from '../styled-components';
 import JobList from './jobList';
-import { Import } from '../styled-components';
 
 const exportSchema = {
   type: 'string',
@@ -141,60 +139,64 @@ export const ConfigurationImport: FunctionComponent = () => {
             As a tenant admin, you can import configuration from JSON file, so that you can apply previously exported
             configuration.
           </p>
-          <GoAForm>
-            <GoAFormItem>
-              <input
-                id="file-uploads"
-                name="inputJsonFile"
-                type="file"
-                onChange={onImportChange}
-                aria-label="file import"
-                ref={fileName}
-                accept="application/JSON"
-                data-testid="import-input"
-                style={{ display: 'none' }}
-                onClick={(event: React.MouseEvent<HTMLInputElement, MouseEvent>) => {
-                  const element = event.target as HTMLInputElement;
-                  element.value = '';
-                }}
-              />
-              <div className="row-flex">
-                <button
-                  className="choose-button"
-                  data-testid="import-input-button"
-                  onClick={() => fileName.current.click()}
-                >
-                  {' Choose a file'}
-                </button>
 
-                <div className="margin-left">
-                  {fileName?.current?.value ? fileName.current.value.split('\\').pop() : 'No file was chosen'}
-                </div>
+          <GoAFormItem label="">
+            <input
+              id="file-uploads"
+              name="inputJsonFile"
+              type="file"
+              onChange={onImportChange}
+              aria-label="file import"
+              ref={fileName}
+              accept="application/JSON"
+              data-testid="import-input"
+              style={{ display: 'none' }}
+              onClick={(event: React.MouseEvent<HTMLInputElement, MouseEvent>) => {
+                const element = event.target as HTMLInputElement;
+                element.value = '';
+              }}
+            />
+            <div className="row-flex">
+              <button
+                className="choose-button"
+                data-testid="import-input-button"
+                onClick={() => fileName.current.click()}
+              >
+                {' Choose a file'}
+              </button>
+
+              <div className="margin-left">
+                {fileName?.current?.value ? fileName.current.value.split('\\').pop() : 'No file was chosen'}
               </div>
-            </GoAFormItem>
-            <GoAButton
-              type="primary"
-              onClick={onUploadSubmit}
-              disabled={selectedImportFile.length === 0}
-              testId="import-input-button"
-            >
-              Import
-            </GoAButton>
-            <br />
-            {errorsStatus && (
-              <ErrorStatusText>
-                {errorsStatus}
-                <br />
-              </ErrorStatusText>
-            )}
-            <section>{jobsInUse && <JobList />}</section>
-          </GoAForm>
+            </div>
+          </GoAFormItem>
+          <GoAButton
+            type="primary"
+            onClick={onUploadSubmit}
+            disabled={selectedImportFile.length === 0}
+            testId="import-input-button"
+          >
+            Import
+          </GoAButton>
+          <br />
+          {errorsStatus && (
+            <ErrorStatusText>
+              {errorsStatus}
+              <br />
+            </ErrorStatusText>
+          )}
+          <section>{jobsInUse && <JobList />}</section>
+
           <br />
         </div>
       }
-      {openImportModal && (
-        <ImportModal importArray={importNameList} onCancel={onImportCancel} onConfirm={onImportConfirm} />
-      )}
+
+      <ImportModal
+        isOpen={openImportModal}
+        importArray={importNameList}
+        onCancel={onImportCancel}
+        onConfirm={onImportConfirm}
+      />
     </Import>
   );
 };

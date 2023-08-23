@@ -1,9 +1,7 @@
 import React, { FunctionComponent, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import type { EventDefinition } from '@store/event/models';
-import { GoAButton, GoAButtonGroup, GoAInput } from '@abgov/react-components-new';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import { GoAButton, GoAButtonGroup, GoAInput, GoAFormItem, GoAModal, GoATextArea } from '@abgov/react-components-new';
 import {
   wordCheck,
   isNotEmptyCheck,
@@ -17,7 +15,6 @@ import { useValidators } from '@lib/validation/useValidators';
 import { updateEventDefinition } from '@store/event/actions';
 import { useDispatch } from 'react-redux';
 import styled from 'styled-components';
-import { GoATextArea } from '@abgov/react-components-new';
 
 interface EventDefinitionFormProps {
   initialValue?: EventDefinition;
@@ -68,81 +65,11 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
 
   return (
     <ModalOverwrite>
-      <GoAModal testId="definition-form" isOpen={open}>
-        <GoAModalTitle testId="definition-form-title">{isEdit ? 'Edit definition' : 'Add definition'}</GoAModalTitle>
-        <GoAModalContent>
-          <GoAForm>
-            <GoAFormItem error={errors?.['namespace']}>
-              <label>Namespace</label>
-              <GoAInput
-                type="text"
-                name="namespace"
-                value={definition.namespace}
-                disabled={isEdit}
-                width="100%"
-                testId="form-namespace"
-                aria-label="nameSpace"
-                onChange={(name, value) => {
-                  validators.remove('namespace');
-                  validators['namespace'].check(value);
-                  setDefinition({ ...definition, namespace: value });
-                }}
-              />
-            </GoAFormItem>
-            <GoAFormItem error={errors?.['name']}>
-              <label>Name</label>
-              <GoAInput
-                type="text"
-                name="name"
-                width="100%"
-                value={definition.name}
-                disabled={isEdit}
-                testId="form-name"
-                aria-label="name"
-                onChange={(name, value) => {
-                  validators.remove('name');
-                  validators['name'].check(value);
-                  setDefinition({ ...definition, name: value });
-                }}
-              />
-            </GoAFormItem>
-            <GoAFormItem error={errors?.['description']}>
-              <label>Description</label>
-              <GoATextArea
-                name="description"
-                testId="form-description"
-                value={definition.description}
-                aria-label="description"
-                width="100%"
-                onChange={(name, value) => {
-                  validators.remove('description');
-                  validators['description'].check(value);
-                  setDefinition({ ...definition, description: value });
-                }}
-              />
-            </GoAFormItem>
-            <GoAFormItem error={errors?.['payloadSchema']}>
-              <label>Payload schema</label>
-              <Editor
-                data-testid="form-schema"
-                height={200}
-                value={payloadSchema}
-                onChange={(value) => {
-                  validators.remove('payloadSchema');
-                  setPayloadSchema(value);
-                }}
-                language="json"
-                options={{
-                  automaticLayout: true,
-                  scrollBeyondLastLine: false,
-                  tabSize: 2,
-                  minimap: { enabled: false },
-                }}
-              />
-            </GoAFormItem>
-          </GoAForm>
-        </GoAModalContent>
-        <GoAModalActions>
+      <GoAModal
+        testId="definition-form"
+        open={open}
+        heading={isEdit ? 'Edit definition' : 'Add definition'}
+        actions={
           <GoAButtonGroup alignment="end">
             <GoAButton
               testId="form-cancel"
@@ -184,7 +111,72 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
               Save
             </GoAButton>
           </GoAButtonGroup>
-        </GoAModalActions>
+        }
+      >
+        <GoAFormItem error={errors?.['namespace']} label="Namespace">
+          <GoAInput
+            type="text"
+            name="namespace"
+            value={definition.namespace}
+            disabled={isEdit}
+            width="100%"
+            testId="form-namespace"
+            aria-label="nameSpace"
+            onChange={(name, value) => {
+              validators.remove('namespace');
+              validators['namespace'].check(value);
+              setDefinition({ ...definition, namespace: value });
+            }}
+          />
+        </GoAFormItem>
+        <GoAFormItem error={errors?.['name']} label="Name">
+          <GoAInput
+            type="text"
+            name="name"
+            width="100%"
+            value={definition.name}
+            disabled={isEdit}
+            testId="form-name"
+            aria-label="name"
+            onChange={(name, value) => {
+              validators.remove('name');
+              validators['name'].check(value);
+              setDefinition({ ...definition, name: value });
+            }}
+          />
+        </GoAFormItem>
+        <GoAFormItem error={errors?.['description']} label="Description">
+          <GoATextArea
+            name="description"
+            testId="form-description"
+            value={definition.description}
+            aria-label="description"
+            width="100%"
+            onChange={(name, value) => {
+              validators.remove('description');
+              validators['description'].check(value);
+              setDefinition({ ...definition, description: value });
+            }}
+          />
+        </GoAFormItem>
+        <GoAFormItem error={errors?.['payloadSchema']} label="Payload schema">
+          <Editor
+            data-testid="form-schema"
+            height={200}
+            value={payloadSchema}
+            onChange={(value) => {
+              validators.remove('payloadSchema');
+              setPayloadSchema(value);
+            }}
+            language="json"
+            options={{
+              automaticLayout: true,
+              scrollBeyondLastLine: false,
+              tabSize: 2,
+              minimap: { enabled: false },
+            }}
+          />
+        </GoAFormItem>
       </GoAModal>
     </ModalOverwrite>
   );

@@ -155,19 +155,18 @@ describe('NotificationTypes Page', () => {
   });
 
   it('deletes a notification type', async () => {
-    const { getAllByTestId, queryByTestId } = render(
+    const { getAllByTestId, baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
     );
 
     const deleteBtn = getAllByTestId('delete-notification-type')[0];
-    fireEvent.click(deleteBtn);
-
-    const confirmation = queryByTestId('delete-confirmation');
+    fireEvent(deleteBtn, new CustomEvent('_click'));
+    const confirmation = baseElement.querySelector('goa-modal');
+    const actionContent = confirmation.querySelector("[slot='actions']");
+    const deleteConfirm = actionContent.querySelector("[data-testid='delete-confirm']");
     expect(confirmation).not.toBeNull();
-
-    const deleteConfirm = queryByTestId('delete-confirm');
 
     fireEvent(deleteConfirm, new CustomEvent('_click'));
     const actions = store.getActions();
@@ -177,17 +176,18 @@ describe('NotificationTypes Page', () => {
   });
 
   it('cancels deleting a notification type', async () => {
-    const { getAllByTestId, queryByTestId } = render(
+    const { getAllByTestId, baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
     );
 
     const deleteBtn = getAllByTestId('delete-notification-type')[0];
-    fireEvent.click(deleteBtn);
-
+    fireEvent(deleteBtn, new CustomEvent('_click'));
+    const confirmation = baseElement.querySelector('goa-modal');
+    const actionContent = confirmation.querySelector("[slot='actions']");
     await waitFor(() => {
-      expect(queryByTestId('delete-cancel')).toBeVisible();
+      expect(actionContent.querySelector("[data-testid='delete-cancel']")).toBeVisible();
     });
   });
 
@@ -361,20 +361,26 @@ describe('NotificationTypes Page', () => {
   });
 
   it('deletes an event', async () => {
-    const { getAllByTestId, queryByTestId } = render(
+    const { getAllByTestId, baseElement } = render(
       <Provider store={store}>
         <NotificationTypes />
       </Provider>
     );
     const deleteBtn = getAllByTestId('delete-event')[0];
 
-    fireEvent.click(deleteBtn);
-
-    const confirmation = queryByTestId('delete-confirmation');
+    fireEvent(deleteBtn, new CustomEvent('_click'));
+    const confirmation = baseElement.querySelector('goa-modal');
+    const actionContent = confirmation.querySelector("[slot='actions']");
+    const deleteConfirm = actionContent.querySelector("[data-testid='delete-confirm']");
     expect(confirmation).not.toBeNull();
 
-    const deleteConfirm = queryByTestId('delete-confirm');
-    fireEvent.click(deleteConfirm);
+    fireEvent(deleteConfirm, new CustomEvent('_click'));
+
+    // const confirmation = queryByTestId('delete-confirmation');
+    // expect(confirmation).not.toBeNull();
+
+    // const deleteConfirm = queryByTestId('delete-confirm');
+    // fireEvent.click(deleteConfirm);
 
     const actions = store.getActions();
 

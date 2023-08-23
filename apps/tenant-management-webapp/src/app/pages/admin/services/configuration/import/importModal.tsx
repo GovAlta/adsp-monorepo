@@ -1,15 +1,21 @@
 import React, { FunctionComponent } from 'react';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
+//import { , GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components-new';
 
 interface ImportModalProps {
+  isOpen: boolean;
   importArray: string[];
   onCancel: () => void;
   onConfirm: () => void;
 }
 
-export const ImportModal: FunctionComponent<ImportModalProps> = ({ importArray, onCancel, onConfirm }): JSX.Element => {
+export const ImportModal: FunctionComponent<ImportModalProps> = ({
+  isOpen,
+  importArray,
+  onCancel,
+  onConfirm,
+}): JSX.Element => {
   const getContent = () => {
     return (
       <ul>
@@ -21,10 +27,11 @@ export const ImportModal: FunctionComponent<ImportModalProps> = ({ importArray, 
   };
   return (
     <>
-      <GoAModal testId="import-configuration-modal" isOpen={true}>
-        <GoAModalTitle>The following configuration will be impacted!</GoAModalTitle>
-        <GoAModalContent>{getContent()}</GoAModalContent>
-        <GoAModalActions>
+      <GoAModal
+        testId="import-configuration-modal"
+        open={isOpen}
+        heading="The following configuration will be impacted!"
+        actions={
           <GoAButtonGroup alignment="end">
             <GoAButton
               type="secondary"
@@ -46,7 +53,9 @@ export const ImportModal: FunctionComponent<ImportModalProps> = ({ importArray, 
               Confirm
             </GoAButton>
           </GoAButtonGroup>
-        </GoAModalActions>
+        }
+      >
+        {getContent()}
       </GoAModal>
     </>
   );
