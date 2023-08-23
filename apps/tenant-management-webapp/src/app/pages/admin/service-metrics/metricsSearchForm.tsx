@@ -1,5 +1,5 @@
-import { GoADropdown, GoADropdownItem, GoAButton, GoATooltip } from '@abgov/react-components-new';
-import { GoAForm, GoAFormItem, GoAFormActions, GoAFlexRow } from '@abgov/react-components/experimental';
+import { GoADropdown, GoADropdownItem, GoAButton, GoAButtonGroup, GoAFormItem } from '@abgov/react-components-new';
+import { GoAFlexRow } from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
 import { setIntervalCriteria, setServiceCriteria } from '@store/metrics/actions';
 import { ChartInterval } from '@store/metrics/models';
@@ -15,15 +15,13 @@ export const MetricsSearchForm: FunctionComponent<MetricsSearchFormProps> = ({ o
   const { service, chartInterval } = useSelector((state: RootState) => state.serviceMetrics.criteria);
   const dispatch = useDispatch();
   return (
-    <GoAForm>
+    <div>
       <GoAFlexRow gap="small">
-        <GoAFormItem>
-          <label>Service</label>
+        <GoAFormItem label="Service">
           <GoADropdown
             name="Service"
             value={service ? service : ''}
             width="100%"
-            relative={true}
             onChange={(_n, [value]) => dispatch(setServiceCriteria(value))}
           >
             {services &&
@@ -32,14 +30,13 @@ export const MetricsSearchForm: FunctionComponent<MetricsSearchFormProps> = ({ o
                 .map((service) => <GoADropdownItem name="Service" key={service} value={service} label={service} />)}
           </GoADropdown>
         </GoAFormItem>
-        <GoAFormItem>
-          <label>Time period</label>
+        <GoAFormItem label="Time period">
+          <label></label>
           <GoADropdown
             name="Time period"
             value={chartInterval}
             onChange={(_n, [value]) => dispatch(setIntervalCriteria(value as ChartInterval))}
             width="100%"
-            relative={true}
           >
             <GoADropdownItem value="15 mins" label="Last 15 minutes" />
             <GoADropdownItem value="1 hour" label="Last hour" />
@@ -47,18 +44,15 @@ export const MetricsSearchForm: FunctionComponent<MetricsSearchFormProps> = ({ o
           </GoADropdown>
         </GoAFormItem>
       </GoAFlexRow>
-      <GoAFormActions alignment="right">
-        <GoATooltip content="Reset" position="bottom">
-          <GoAButton type="secondary" onClick={onReset}>
-            Reset
-          </GoAButton>
-        </GoATooltip>
-        <GoATooltip content="Search" position="bottom">
-          <GoAButton disabled={!chartInterval || !service} onClick={onSearch}>
-            Search
-          </GoAButton>
-        </GoATooltip>
-      </GoAFormActions>
-    </GoAForm>
+      <GoAButtonGroup alignment="end">
+        <GoAButton type="secondary" onClick={onReset}>
+          Reset
+        </GoAButton>
+
+        <GoAButton disabled={!chartInterval || !service} onClick={onSearch}>
+          Search
+        </GoAButton>
+      </GoAButtonGroup>
+    </div>
   );
 };

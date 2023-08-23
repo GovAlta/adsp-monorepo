@@ -97,7 +97,6 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
                 aria-label="event-form-dropdown"
                 width="100%"
                 testId="event-dropdown"
-                relative={true}
               >
                 {dropDownOptions.map((item, key) => (
                   <GoADropdownItem label={item.label} value={item.value} key={key} data-testid={item.dataTestId} />
