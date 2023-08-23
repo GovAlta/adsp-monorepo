@@ -5,7 +5,7 @@ import { NoticeCard } from './noticeCard';
 import FilterIcon from '@assets/icons/filter-filled.svg';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { GoARadio } from '@abgov/react-components';
+import { GoARadioItem, GoARadioGroup } from '@abgov/react-components-new';
 import { renderNoItem } from '@components/NoItem';
 import NoticeModal from './noticeModal';
 import { createSelector } from 'reselect';
@@ -22,25 +22,17 @@ const NoticeListContainer = styled.div`
 `;
 
 const NoticeListFilterContainer = styled.div`
-  float: right;
+  float: left;
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
   .filter-header {
-    padding-right: 1rem;
+    padding: 1rem 0 1rem 0;
     font-size: var(--fs-base);
-    text-align: center;
+    text-align: left;
     display: flex;
-    margin: auto;
-  }
-  .filter-radio {
-    display: inline-flex;
-    .goa-radio-label {
-      padding-bottom: 0rem !important;
-      padding-top: 0rem !important;
-    }
   }
   display: flex;
-  justify-content: center;
+  padding-bottom: 1rem;
   flex-wrap: wrap;
 `;
 
@@ -61,56 +53,17 @@ export const NoticeListFilter = (props: NoticeListFilterProps): JSX.Element => {
         <img src={FilterIcon} width="20" alt="notice-filter" />
         <span>Filter by status</span>
       </div>
-      <div className="filter-radio">
-        <GoARadio
-          value={'active'}
-          testId={'notice-filter-radio-draft'}
-          checked={option === 'active'}
-          onChange={(option) => {
-            onSelect(option);
-          }}
-        >
-          Active
-        </GoARadio>
-      </div>
-      <div className="filter-radio">
-        <GoARadio
-          testId="notice-filter-radio-draft"
-          value={'draft'}
-          checked={option === 'draft'}
-          onChange={(option) => {
-            onSelect(option);
-          }}
-        >
-          Draft
-        </GoARadio>
-      </div>
-      <div className="filter-radio">
-        <GoARadio
-          testId="notice-filter-radio-published"
-          value={'published'}
-          name={'Published'}
-          checked={option === 'published'}
-          onChange={(option) => {
-            onSelect(option);
-          }}
-        >
-          Published
-        </GoARadio>
-      </div>
-      <div className="filter-radio">
-        <GoARadio
-          testId="notice-filter-radio-archived"
-          value={'archived'}
-          name={'Archived'}
-          checked={option === 'archived'}
-          onChange={(option) => {
-            onSelect(option);
-          }}
-        >
-          Archived
-        </GoARadio>
-      </div>
+      <GoARadioGroup
+        name="option"
+        value={option}
+        onChange={(_, value: string) => onSelect(value)}
+        orientation="horizontal"
+      >
+        <GoARadioItem value="active" label="Active" name="active" />
+        <GoARadioItem value="draft" label="Draft" name="draft" />
+        <GoARadioItem value="published" label="Published" name="published" />
+        <GoARadioItem value="archived" label="Archived" name="archived" />
+      </GoARadioGroup>
     </NoticeListFilterContainer>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GoAHeader, GoACallout } from '@abgov/react-components';
+import { GoAHeader } from '@abgov/react-components';
 import { IndicatorWithDelay } from '@components/Indicator';
 
 import { Grid, GridItem } from '@components/Grid';
@@ -23,10 +23,9 @@ import { LocalTime } from '@components/Date';
 import { GoAPageLoader } from '@abgov/react-components';
 import moment from 'moment';
 import GoaLogo from '../../assets/goa-logo.svg';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton, GoAInput, GoACallout } from '@abgov/react-components-new';
 import { GoAForm, GoAFormItem, GoAFormActions } from '@abgov/react-components/experimental';
 import { emailError } from '@lib/inputValidation';
-import { GoAInput } from '@abgov/react-components-new';
 
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
@@ -190,7 +189,7 @@ const ServiceStatusPage = (): JSX.Element => {
         {allApplicationsNotices.map((notice) => {
           return (
             <div data-testid="all-application-notice" className="mb-1">
-              <GoACallout title="Notice" type="important" key={`{notice-${notice.id}}`}>
+              <GoACallout heading="Notice" type="important" key={`{notice-${notice.id}}`}>
                 <div data-testid="all-application-notice-message">{notice.message}</div>
                 <br />
                 <div data-testid="service-notice-date-range">
@@ -266,14 +265,14 @@ const ServiceStatusPage = (): JSX.Element => {
                   </GoAFormActionOverwrite>
                 </div>
                 {subscriber && indicator && !indicator.show && (
-                  <GoACallout title="You have signed up for notifications" key="success" type="success">
+                  <GoACallout key="success" type="success" heading="You have signed up for notifications">
                     Thank you for signing up. You will receive notifications regarding service statuses on{' '}
                     {subscriber.channels[emailIndex].address}.
                   </GoACallout>
                 )}
                 {error && error.length > 0 && indicator && !indicator.show && (
-                  <GoACallout key="error" type="emergency" title="Your signup attempt has failed">
-                    {error[error.length - 1].message}
+                  <GoACallout key="error" type="emergency" heading="Your sign up attempt has failed">
+                    <p> {error[error.length - 1].message}</p>
                   </GoACallout>
                 )}
                 {indicator && indicator.show && <IndicatorWithDelay message="Loading..." pageLock={false} />}

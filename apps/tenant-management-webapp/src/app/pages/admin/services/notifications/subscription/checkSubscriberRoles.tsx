@@ -1,5 +1,5 @@
 import { RootState } from '@store/index';
-import { GoACallout } from '@abgov/react-components';
+import { GoACallout } from '@abgov/react-components-new';
 import React, { ReactNode } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -20,7 +20,7 @@ export function CheckSubscriberRoles({ children }: privateAppProps): JSX.Element
   const ErrorView = () => {
     return (
       <>
-        <GoACallout type="important" data-testid="delete-modal">
+        <GoACallout type="important" testId="check-role-callout">
           <h3>Access to subscriptions requires admin roles</h3>
           <p>
             You require the subscription-admin role to access notifications and will need to contact the administrator

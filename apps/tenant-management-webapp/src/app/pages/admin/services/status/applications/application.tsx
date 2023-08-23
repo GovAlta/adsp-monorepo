@@ -1,11 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { ServiceStatusType, PublicServiceStatusTypes, ApplicationStatus } from '@store/status/models';
 import { deleteApplication, toggleApplicationStatus } from '@store/status/actions';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
-import { GoARadio, GoARadioGroup } from '@abgov/react-components';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
+import {
+  GoAButton,
+  GoAButtonGroup,
+  GoARadioItem,
+  GoARadioGroup,
+  GoACheckbox,
+  GoABadge,
+  GoABadgeType,
+} from '@abgov/react-components-new';
 import {
   GoAModal,
   GoAModalActions,
@@ -20,7 +27,6 @@ import { setApplicationStatus } from '@store/status/actions/setApplicationStatus
 import { DeleteModal } from '@components/DeleteModal';
 import { HealthBar } from './healthBar';
 import { App, AppHeader, AppHealth, AppStatus, AppName } from './styled-components';
-import { GoACheckbox, GoABadge, GoABadgeType } from '@abgov/react-components-new';
 import { saveApplication } from '@store/status/actions';
 
 export const Application = (app: ApplicationStatus): JSX.Element => {
@@ -40,6 +46,12 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
   const [showStatusForm, setShowStatusForm] = useState<boolean>(false);
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
   const [status, setStatus] = useState<ServiceStatusType | ''>(app.status);
+
+  useEffect(() => {
+    if (status !== app.status) {
+      setStatus(app.status);
+    }
+  }, [app.status]);
 
   function doDelete() {
     dispatch(deleteApplication({ tenantId: app.tenantId, appKey: app.appKey }));
@@ -180,11 +192,12 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
                 value={status}
                 onChange={(_name, value) => setStatus(value as ServiceStatusType)}
                 orientation="vertical"
+                testId="status-radio-group"
               >
                 {PublicServiceStatusTypes.map((statusType) => (
-                  <GoARadio key={statusType} value={statusType}>
+                  <GoARadioItem name="status" value={statusType}>
                     {formatStatus(statusType)}
-                  </GoARadio>
+                  </GoARadioItem>
                 ))}
               </GoARadioGroup>
             </GoAFormItem>
