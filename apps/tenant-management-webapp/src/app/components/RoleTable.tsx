@@ -1,7 +1,6 @@
-import DataTable from '@components/DataTable';
 import React, { useState } from 'react';
-import { GoACheckbox } from '@abgov/react-components-new';
-import { DataTableWrapper } from './styled-components';
+import { GoACheckbox, GoATable } from '@abgov/react-components-new';
+import { MarginAdjustment } from './styled-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 
@@ -45,18 +44,16 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
   const service = props.service;
 
   return (
-    <DataTableWrapper>
-      <DataTable noScroll={true}>
-        <h4 className="margin-adjustment">{props.clientId ? props.clientId : tenantName}</h4>
+    <>
+      <MarginAdjustment>{props.clientId ? props.clientId : tenantName}</MarginAdjustment>
+      <GoATable>
         <thead>
           <tr>
-            <th id={`${service}-roles`} className="role-name">
-              Roles
-            </th>
+            <th id={`${service}-roles`}>Roles</th>
             {props.checkedRoles.map((role, index) => {
               return (
                 <th id={`${role.title}-role-action`} className="role">
-                  <p style={{ textTransform: 'capitalize' }}>{role.title}</p>
+                  <div style={{ textTransform: 'capitalize' }}>{role.title}</div>
                 </th>
               );
             })}
@@ -102,7 +99,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
             );
           })}
         </tbody>
-      </DataTable>
-    </DataTableWrapper>
+      </GoATable>
+    </>
   );
 };

@@ -157,11 +157,6 @@ export const NameDescriptionDataSchema = styled.div`
 
 export const FormPermissions = styled.div`
   flex: 1;
-
-  .role {
-    width: 10em;
-    height: 3em;
-  }
 `;
 export const ScrollPane = styled.div`
   overflow-y: scroll;
