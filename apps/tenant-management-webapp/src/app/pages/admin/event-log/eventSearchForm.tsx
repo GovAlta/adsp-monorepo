@@ -3,10 +3,10 @@ import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import type { EventSearchCriteria } from '@store/event/models';
 
-import { GoAForm, GoAFormItem, GoAFormActions, GoAFlexRow } from '@abgov/react-components/experimental';
+import { GoAFormItem, GoAFlexRow } from '@abgov/react-components/experimental';
 import { getEventDefinitions } from '@store/event/actions';
 import styled from 'styled-components';
-import { GoAButton, GoATooltip, GoAIconButton } from '@abgov/react-components-new';
+import { GoAButton, GoAIconButton, GoAButtonGroup } from '@abgov/react-components-new';
 const initCriteria: EventSearchCriteria = {
   namespace: '',
   name: '',
@@ -127,7 +127,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
   };
 
   return (
-    <GoAForm>
+    <div>
       <GoAFlexRow gap="small">
         <SearchBox>
           <GoAFormItem helpText={!error && message} error={error && message}>
@@ -218,35 +218,32 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
           />
         </GoAFormItem>
       </GoAFlexRow>
-      <GoAFormActions alignment="right">
-        <GoATooltip content="Reset" position="bottom">
-          <GoAButton
-            type="secondary"
-            onClick={() => {
-              setOpen(false);
-              setError(false);
-              setSearchCriteria(initCriteria);
-              setSearchBox('');
-              onCancel();
-            }}
-          >
-            Reset
-          </GoAButton>
-        </GoATooltip>
-        <GoATooltip content="Search" position="bottom">
-          <GoAButton
-            onClick={() => {
-              setOpen(false);
-              if (validation()) {
-                onSearch(searchCriteria);
-              }
-            }}
-          >
-            Search
-          </GoAButton>
-        </GoATooltip>
-      </GoAFormActions>
-    </GoAForm>
+      <GoAButtonGroup alignment="end">
+        <GoAButton
+          type="secondary"
+          onClick={() => {
+            setOpen(false);
+            setError(false);
+            setSearchCriteria(initCriteria);
+            setSearchBox('');
+            onCancel();
+          }}
+        >
+          Reset
+        </GoAButton>
+
+        <GoAButton
+          onClick={() => {
+            setOpen(false);
+            if (validation()) {
+              onSearch(searchCriteria);
+            }
+          }}
+        >
+          Search
+        </GoAButton>
+      </GoAButtonGroup>
+    </div>
   );
 };
 

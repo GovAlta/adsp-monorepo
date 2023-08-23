@@ -1,7 +1,8 @@
-import DataTable from '@components/DataTable';
 import React, { useState } from 'react';
-import { GoACheckbox } from '@abgov/react-components-new';
-import { DataTableWrapper } from './styled-components';
+import { GoACheckbox, GoATable } from '@abgov/react-components-new';
+import { MarginAdjustment } from './styled-components';
+import { useSelector } from 'react-redux';
+import { RootState } from '@store/index';
 
 /**
  * A React component for creating roles table
@@ -34,21 +35,25 @@ interface ClientRoleTableProps {
 }
 
 export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
+  const { tenantName } = useSelector((state: RootState) => {
+    return {
+      tenantName: state.tenant.name,
+    };
+  });
   const [checkedRoles, setCheckedRoles] = useState(props.checkedRoles);
   const service = props.service;
 
   return (
-    <DataTableWrapper>
-      <DataTable noScroll={true}>
+    <>
+      <MarginAdjustment>{props.clientId ? props.clientId : tenantName}</MarginAdjustment>
+      <GoATable>
         <thead>
           <tr>
-            <th id={`${service}-roles`} className="role-name">
-              {props.clientId ? props.clientId : 'Roles'}
-            </th>
+            <th id={`${service}-roles`}>Roles</th>
             {props.checkedRoles.map((role, index) => {
               return (
                 <th id={`${role.title}-role-action`} className="role">
-                  <p style={{ textTransform: 'capitalize' }}>{role.title}</p>
+                  <div style={{ textTransform: 'capitalize' }}>{role.title}</div>
                 </th>
               );
             })}
@@ -94,7 +99,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
             );
           })}
         </tbody>
-      </DataTable>
-    </DataTableWrapper>
+      </GoATable>
+    </>
   );
 };

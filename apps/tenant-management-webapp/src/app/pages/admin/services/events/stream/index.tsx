@@ -58,21 +58,21 @@ export const EventStreams = (): JSX.Element => {
           </GoAButton>
           <br />
           <br />
-          {(isEdit || openAddStream) && (
-            <AddEditStream
-              streams={tenantStreams}
-              open={openAddStream}
-              isEdit={isEdit}
-              onClose={reset}
-              initialValue={selectedStream}
-              realmRoles={tenant.realmRoles}
-              tenantClients={tenant.tenantClients}
-              eventDefinitions={eventDefinitions}
-              onSave={(stream) => {
-                dispatch(updateEventStream(stream));
-              }}
-            />
-          )}
+
+          <AddEditStream
+            streams={tenantStreams}
+            open={openAddStream}
+            isEdit={isEdit}
+            onClose={reset}
+            initialValue={selectedStream}
+            realmRoles={tenant.realmRoles}
+            tenantClients={tenant.tenantClients}
+            eventDefinitions={eventDefinitions}
+            onSave={(stream) => {
+              dispatch(updateEventStream(stream));
+            }}
+          />
+
           <div>
             <StreamTable
               isTenantSpecificStream={true}
