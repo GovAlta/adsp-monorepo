@@ -33,6 +33,7 @@ export const Edit = styled.div`
 `;
 
 export const ConfigFormWrapper = styled.div`
+  margin-top: 2rem;
   font-size: 16px;
   padding-left: 3px;
   border: solid 1px #dcdcdc;
@@ -85,7 +86,7 @@ export const ConfigFormWrapper = styled.div`
     overflow: hidden;
   }
   table {
-    margin: 1rem 1.5rem 1rem 1.5rem;
+    margin: 1rem 1rem 1rem 1rem;
   }
   th {
     text-align: left;

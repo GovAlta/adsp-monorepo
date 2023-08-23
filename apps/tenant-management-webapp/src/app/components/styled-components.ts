@@ -49,7 +49,12 @@ export const DataTableWrapper = styled.div`
   }
 
   thead {
-    padding-top: 1.25rem;
+    padding-top: 0.75rem;
+  }
+
+  .margin-adjustment {
+    margin-bottom: 0.5rem !important;
+    margin-top: 2rem !important;
   }
 `;
 
