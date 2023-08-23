@@ -80,19 +80,17 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
         </div>
       )}
 
-      {(editCalendar || openAddCalendar) && (
-        <CalendarModal
-          open={true}
-          initialValue={selectedCalendar}
-          type={openAddCalendar ? 'new' : modalType}
-          realmRoles={tenant.realmRoles}
-          tenantClients={tenant.tenantClients ? tenant.tenantClients : {}}
-          onCancel={() => {
-            reset();
-          }}
-          onSave={(calendar) => dispatch(UpdateCalendar(calendar))}
-        />
-      )}
+      <CalendarModal
+        open={editCalendar || openAddCalendar}
+        initialValue={selectedCalendar}
+        type={openAddCalendar ? 'new' : modalType}
+        realmRoles={tenant.realmRoles}
+        tenantClients={tenant.tenantClients ? tenant.tenantClients : {}}
+        onCancel={() => {
+          reset();
+        }}
+        onSave={(calendar) => dispatch(UpdateCalendar(calendar))}
+      />
     </>
   );
 };

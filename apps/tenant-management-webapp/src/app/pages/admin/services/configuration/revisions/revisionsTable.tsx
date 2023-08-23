@@ -274,9 +274,8 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
           </GoAButtonGroup>
         }
       />
-      {showEditRevision && (
-        <RevisionEditModal open={showEditRevision} revision={selectedRevision} service={service} onClose={resetEdit} />
-      )}
+
+      <RevisionEditModal open={showEditRevision} revision={selectedRevision} service={service} onClose={resetEdit} />
     </>
   );
 };

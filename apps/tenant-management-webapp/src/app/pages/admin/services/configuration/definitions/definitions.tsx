@@ -62,18 +62,16 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
       </GoAButton>
 
       {/*Add/Edit definition */}
-      {(isEdit || openAddDefinition) && (
-        <AddEditConfigDefinition
-          open={openAddDefinition}
-          onClose={reset}
-          isEdit={isEdit}
-          initialValue={selectedDefinition}
-          configurations={{ ...tenantConfigDefinitions?.configuration, ...coreConfigDefinitions?.configuration }}
-          onSave={(definition) => {
-            dispatch(updateConfigurationDefinition(definition, false));
-          }}
-        />
-      )}
+      <AddEditConfigDefinition
+        open={isEdit || openAddDefinition}
+        onClose={reset}
+        isEdit={isEdit}
+        initialValue={selectedDefinition}
+        configurations={{ ...tenantConfigDefinitions?.configuration, ...coreConfigDefinitions?.configuration }}
+        onSave={(definition) => {
+          dispatch(updateConfigurationDefinition(definition, false));
+        }}
+      />
       {indicator.show && <PageIndicator />}
       {/* tenant config definition */}
       <div>
@@ -110,18 +108,17 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
         )}
       </div>
       {/* Delete confirmation */}
-      {showDeleteConfirmation && (
-        <DeleteModal
-          isOpen={showDeleteConfirmation}
-          title="Delete configuration definition"
-          content={`Delete ${selectedDefinitionName}?`}
-          onCancel={() => setShowDeleteConfirmation(false)}
-          onDelete={() => {
-            setShowDeleteConfirmation(false);
-            dispatch(deleteConfigurationDefinition(selectedDefinitionName));
-          }}
-        />
-      )}
+
+      <DeleteModal
+        isOpen={showDeleteConfirmation}
+        title="Delete configuration definition"
+        content={`Delete ${selectedDefinitionName}?`}
+        onCancel={() => setShowDeleteConfirmation(false)}
+        onDelete={() => {
+          setShowDeleteConfirmation(false);
+          dispatch(deleteConfigurationDefinition(selectedDefinitionName));
+        }}
+      />
     </>
   );
 };
