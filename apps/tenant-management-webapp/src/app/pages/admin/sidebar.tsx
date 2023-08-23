@@ -10,6 +10,8 @@ import { RootState } from '@store/index';
 import { TenantAdminLogin, TenantLogout, FetchTenant } from '@store/tenant/actions';
 import { getIdpHint } from '@lib/keycloak';
 
+import { featuresVisible } from '../../../featureFlag';
+
 interface SidebarProps {
   type: 'mobile' | 'desktop';
 }
@@ -98,10 +100,13 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
               <NavLink to="/admin/services/file" activeClassName="current" title="File" data-testid="menu-file">
                 <span>File</span>
               </NavLink>
-              <NavLink to="/admin/services/form" activeClassName="current" title="Form" data-testid="menu-form">
-                <span>Form</span>
-                {betaBadge()}
-              </NavLink>
+
+              {featuresVisible.Form && (
+                <NavLink to="/admin/services/form" activeClassName="current" title="Form" data-testid="menu-form">
+                  <span>Form</span>
+                  {betaBadge()}
+                </NavLink>
+              )}
               <NavLink
                 to="/admin/services/notification"
                 activeClassName="current"
@@ -113,6 +118,7 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
               <NavLink to="/admin/services/pdf" activeClassName="current" title="Pdf" data-testid="menu-pdf">
                 <span>PDF</span>
               </NavLink>
+
               <NavLink to="/admin/services/script" activeClassName="current" title="Script" data-testid="menu-script">
                 <span>Script</span>
                 {betaBadge()}

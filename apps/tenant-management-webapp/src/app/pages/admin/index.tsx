@@ -20,6 +20,7 @@ import { Configuration } from './services/configuration';
 import { Calendar } from './services/calendar';
 import { PDFRouter } from './services/pdf';
 import { FormRouter } from './services/form';
+import { featuresVisible } from '../../../featureFlag';
 
 import { Script } from './services/script';
 
@@ -62,7 +63,7 @@ const TenantManagement = (): JSX.Element => {
           <Route exact path="/admin/services/file">
             <File />
           </Route>
-          <Route path="/admin/services/form" component={FormRouter} />
+          {featuresVisible.Form && <Route path="/admin/services/form" component={FormRouter} />}
           <Route path="/admin/services/status">
             <Status />
           </Route>
