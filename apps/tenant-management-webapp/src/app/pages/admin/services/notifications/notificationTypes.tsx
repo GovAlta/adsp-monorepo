@@ -786,8 +786,10 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                   setBodyPreview(generateMessage(getTemplateBody(combinedPreview, channel, htmlPayload), htmlPayload));
                   setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
                 } else {
-                  setBodyPreview('');
-                  setSubjectPreview('');
+                  setBodyPreview(
+                    generateMessage(getTemplateBody(templates[channel]?.body, channel, htmlPayload), htmlPayload)
+                  );
+                  setSubjectPreview(generateMessage(templates[channel]?.subject, htmlPayload));
                 }
                 setCurrentChannel(channel);
               }}
