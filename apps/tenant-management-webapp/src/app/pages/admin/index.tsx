@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 import styled from 'styled-components';
 import { HeaderCtx } from '@lib/headerContext';
@@ -20,7 +20,7 @@ import { Configuration } from './services/configuration';
 import { Calendar } from './services/calendar';
 import { PDFRouter } from './services/pdf';
 import { FormRouter } from './services/form';
-import { featuresVisible } from '../../../featureFlag';
+import { serviceVariables } from '../../../featureFlag';
 
 import { Script } from './services/script';
 
@@ -30,6 +30,37 @@ const TenantManagement = (): JSX.Element => {
   useEffect(() => {
     setTitle('Alberta Digital Service Platform - Tenant management');
   }, [setTitle]);
+
+  const renderServices = (serviceName) => {
+    switch (serviceName) {
+      case 'Access':
+        return <AccessPage />;
+      case 'Calendar':
+        return <Calendar />;
+      case 'Configuration':
+        return <Configuration />;
+      case 'Directory':
+        return <Directory />;
+      case 'Event':
+        return <Events />;
+      case 'File':
+        return <File />;
+      case 'Form':
+        return <FormRouter />;
+      case 'Notification':
+        return <Notifications />;
+      case 'PDF':
+        return <PDFRouter />;
+      case 'Script':
+        return <Script />;
+      case 'Status':
+        return <Status />;
+      case 'Task':
+        return <Task />;
+      default:
+        return <Redirect to="/404" />;
+    }
+  };
 
   return (
     <AdminLayout>
@@ -47,38 +78,15 @@ const TenantManagement = (): JSX.Element => {
           <Route exact path="/admin/service-metrics">
             <ServiceMetrics />
           </Route>
-          <Route path="/admin/access">
-            <AccessPage />
-          </Route>
-          <Route exact path="/admin/services/directory">
-            <Directory />
-          </Route>
-          <Route exact path="/admin/services/calendar">
-            <Calendar />
-          </Route>
-          <Route exact path="/admin/services/configuration">
-            <Configuration />
-          </Route>
-          <Route path="/admin/services/pdf" component={PDFRouter} />
-          <Route exact path="/admin/services/file">
-            <File />
-          </Route>
-          {featuresVisible.Form && <Route path="/admin/services/form" component={FormRouter} />}
-          <Route path="/admin/services/status">
-            <Status />
-          </Route>
-          <Route path="/admin/services/task">
-            <Task />
-          </Route>
-          <Route path="/admin/services/script">
-            <Script />
-          </Route>
-          <Route path="/admin/services/event">
-            <Events />
-          </Route>
-          <Route path="/admin/services/notification">
-            <Notifications />
-          </Route>
+
+          {serviceVariables.map((service) => {
+            return (
+              <Route path={service.link} key={service.link}>
+                {renderServices(service.name)}
+              </Route>
+            );
+          })}
+
           <Route path="*" render={() => <Redirect to="/404" />} />
         </Switch>
       </Container>

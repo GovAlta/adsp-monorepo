@@ -10,7 +10,7 @@ import { RootState } from '@store/index';
 import { TenantAdminLogin, TenantLogout, FetchTenant } from '@store/tenant/actions';
 import { getIdpHint } from '@lib/keycloak';
 
-import { featuresVisible } from '../../../featureFlag';
+import { serviceVariables } from '../../../featureFlag';
 
 interface SidebarProps {
   type: 'mobile' | 'desktop';
@@ -66,70 +66,17 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
                 <span>Service metrics</span>
               </NavLink>
               <Title>Services</Title>
-              <NavLink to="/admin/access" activeClassName="current" title="Access" data-testid="menu-access">
-                <span>Access</span>
-              </NavLink>
-              <NavLink
-                to="/admin/services/calendar"
-                activeClassName="current"
-                title="Calendar"
-                data-testid="menu-calendar"
-              >
-                <span>Calendar</span>
-                {betaBadge()}
-              </NavLink>
-              <NavLink
-                to="/admin/services/configuration"
-                activeClassName="current"
-                title="Configuration"
-                data-testid="menu-configuration"
-              >
-                <span>Configuration</span>
-              </NavLink>
-              <NavLink
-                to="/admin/services/directory"
-                activeClassName="current"
-                title="Directory"
-                data-testid="menu-directory"
-              >
-                <span>Directory</span>
-              </NavLink>
-              <NavLink to="/admin/services/event" activeClassName="current" title="Event" data-testid="menu-event">
-                <span>Event</span>
-              </NavLink>
-              <NavLink to="/admin/services/file" activeClassName="current" title="File" data-testid="menu-file">
-                <span>File</span>
-              </NavLink>
-
-              {featuresVisible.Form && (
-                <NavLink to="/admin/services/form" activeClassName="current" title="Form" data-testid="menu-form">
-                  <span>Form</span>
-                  {betaBadge()}
+              {serviceVariables.map((service) => (
+                <NavLink
+                  to={service.link}
+                  activeClassName="current"
+                  title={service.name}
+                  data-testid={`menu-${service.name.toLowerCase()}`}
+                >
+                  <span>{service.name}</span>
+                  {service.beta && betaBadge()}
                 </NavLink>
-              )}
-              <NavLink
-                to="/admin/services/notification"
-                activeClassName="current"
-                title="Notification"
-                data-testid="menu-notification"
-              >
-                <span>Notification</span>
-              </NavLink>
-              <NavLink to="/admin/services/pdf" activeClassName="current" title="Pdf" data-testid="menu-pdf">
-                <span>PDF</span>
-              </NavLink>
-
-              <NavLink to="/admin/services/script" activeClassName="current" title="Script" data-testid="menu-script">
-                <span>Script</span>
-                {betaBadge()}
-              </NavLink>
-              <NavLink to="/admin/services/status" activeClassName="current" title="Status" data-testid="menu-status">
-                <span>Status</span>
-              </NavLink>
-              <NavLink to="/admin/services/task" activeClassName="current" title="Task" data-testid="menu-task">
-                <span>Task</span>
-                {betaBadge()}
-              </NavLink>
+              ))}
             </>
           )}
         </>
