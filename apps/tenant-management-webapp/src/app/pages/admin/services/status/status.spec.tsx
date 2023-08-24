@@ -77,6 +77,13 @@ describe('ServiceStatus Page', () => {
           },
         },
       },
+      directory: {
+        directory: ['https://facebook.com/api'],
+      },
+      event: {
+        results: [],
+        definitions: [],
+      },
     });
 
     renderPage(store);
@@ -130,6 +137,22 @@ describe('ServiceStatus Page', () => {
         serviceUrls: {
           serviceStatusAppUrl: 'http://www.somefakesite.com',
         },
+      },
+      directory: {
+        directory: [
+          {
+            namespace: 'autotest',
+            service: 'howard-t2',
+            url: 'https://event-service.adsp-dev.gov.ab.ca',
+            urn: 'urn:ads:autotest:howard-t2:v8',
+            isCore: false,
+            api: 'v8',
+          },
+        ],
+      },
+      event: {
+        results: [],
+        definitions: [],
       },
       serviceStatus: {
         metrics: {},

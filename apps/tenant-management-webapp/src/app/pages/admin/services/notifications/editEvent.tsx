@@ -1,10 +1,14 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { NotificationItem } from '@store/notification/models';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
-import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import {
+  GoAButton,
+  GoAButtonGroup,
+  GoADropdown,
+  GoADropdownItem,
+  GoAModal,
+  GoAFormItem,
+} from '@abgov/react-components-new';
 import { RootState } from '@store/index';
 import { getEventDefinitions } from '@store/event/actions';
 import { EventItem, baseTemplate } from '@store/notification/models';
@@ -84,29 +88,12 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
   }
 
   return (
-    <GoAModal testId="event-form" isOpen={open} onClose={onClickedOutside}>
-      <GoAModalTitle>{'Select an event'}</GoAModalTitle>
-      <GoAModalContent>
-        <GoAForm>
-          <GoAFormItem>
-            <div style={{ margin: '0 0 200px 0' }}>
-              <GoADropdown
-                name="event"
-                onChange={onChange}
-                value={selectedValues ? selectedValues : ''}
-                aria-label="event-form-dropdown"
-                width="100%"
-                testId="event-dropdown"
-              >
-                {dropDownOptions.map((item, key) => (
-                  <GoADropdownItem label={item.label} value={item.value} key={key} data-testid={item.dataTestId} />
-                ))}
-              </GoADropdown>
-            </div>
-          </GoAFormItem>
-        </GoAForm>
-      </GoAModalContent>
-      <GoAModalActions>
+    <GoAModal
+      testId="event-form"
+      open={open}
+      onClose={onClickedOutside}
+      heading={'Select an event'}
+      actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
             testId="event-form-cancel"
@@ -141,7 +128,24 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
             Next
           </GoAButton>
         </GoAButtonGroup>
-      </GoAModalActions>
+      }
+    >
+      <GoAFormItem label="">
+        <div style={{ margin: '0 0 200px 0' }}>
+          <GoADropdown
+            name="event"
+            onChange={onChange}
+            value={selectedValues ? selectedValues : ''}
+            aria-label="event-form-dropdown"
+            width="100%"
+            testId="event-dropdown"
+          >
+            {dropDownOptions.map((item, key) => (
+              <GoADropdownItem label={item.label} value={item.value} key={key} data-testid={item.dataTestId} />
+            ))}
+          </GoADropdown>
+        </div>
+      </GoAFormItem>
     </GoAModal>
   );
 };

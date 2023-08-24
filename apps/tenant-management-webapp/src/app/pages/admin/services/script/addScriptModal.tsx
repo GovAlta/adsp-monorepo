@@ -1,7 +1,13 @@
 import React, { FunctionComponent, useState } from 'react';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoACheckbox, GoATextArea, GoAButton, GoAButtonGroup, GoAInput } from '@abgov/react-components-new';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import {
+  GoACheckbox,
+  GoATextArea,
+  GoAButton,
+  GoAButtonGroup,
+  GoAInput,
+  GoAFormItem,
+  GoAModal,
+} from '@abgov/react-components-new';
 import { ScriptItem } from '@store/script/models';
 import { useSelector } from 'react-redux';
 import { Role } from '@store/tenant/models';
@@ -107,78 +113,11 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
   };
 
   return (
-    <GoAModal testId="add-script-modal" isOpen={open}>
-      <GoAModalTitle>Add script</GoAModalTitle>
-      <GoAModalContent>
-        <GoAForm>
-          <GoAFormItem error={errors?.['name']}>
-            <label>Name</label>
-            <GoAInput
-              type="text"
-              name="name"
-              value={script.name}
-              width="100%"
-              testId={`script-modal-name-input`}
-              aria-label="name"
-              onChange={(name, value) => {
-                const scriptId = toKebabName(value);
-                validators.remove('name');
-                const validations = {
-                  name: value,
-                };
-                validations['duplicated'] = scriptId;
-                validators.checkAll(validations);
-                setScript({ ...script, name: value, id: scriptId });
-              }}
-            />
-          </GoAFormItem>
-          <GoAFormItem>
-            <label>Script ID</label>
-            <IdField>{script.id}</IdField>
-          </GoAFormItem>
-
-          <GoAFormItem error={errors?.['description']}>
-            <label>Description</label>
-            <GoATextArea
-              name="description"
-              value={script.description}
-              testId={`script-modal-description-input`}
-              aria-label="description"
-              width="100%"
-              onChange={(name, value) => {
-                const description = value;
-                validators.remove('description');
-                validators['description'].check(description);
-                setScript({ ...script, description });
-              }}
-            />
-          </GoAFormItem>
-          <UseServiceAccountWrapper>
-            <GoACheckbox
-              checked={script.useServiceAccount}
-              name="script-use-service-account-checkbox"
-              data-testid="script-use-service-account-checkbox"
-              onChange={() => {
-                setScript({
-                  ...script,
-                  useServiceAccount: !script.useServiceAccount,
-                });
-              }}
-              ariaLabel={`script-use-service-account-checkbox`}
-            />
-            Use service account
-          </UseServiceAccountWrapper>
-
-          {tenantClients &&
-            elements.map((e, key) => {
-              return <RunnerRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
-            })}
-          {Object.entries(tenantClients).length === 0 && (
-            <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>
-          )}
-        </GoAForm>
-      </GoAModalContent>
-      <GoAModalActions>
+    <GoAModal
+      testId="add-script-modal"
+      open={open}
+      heading="Add script"
+      actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
             type="secondary"
@@ -201,7 +140,70 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
             Save
           </GoAButton>
         </GoAButtonGroup>
-      </GoAModalActions>
+      }
+    >
+      <GoAFormItem error={errors?.['name']} label="Name">
+        <GoAInput
+          type="text"
+          name="name"
+          value={script.name}
+          width="100%"
+          testId={`script-modal-name-input`}
+          aria-label="name"
+          onChange={(name, value) => {
+            const scriptId = toKebabName(value);
+            validators.remove('name');
+            const validations = {
+              name: value,
+            };
+            validations['duplicated'] = scriptId;
+            validators.checkAll(validations);
+            setScript({ ...script, name: value, id: scriptId });
+          }}
+        />
+      </GoAFormItem>
+      <GoAFormItem label="Script ID">
+        <IdField>{script.id}</IdField>
+      </GoAFormItem>
+
+      <GoAFormItem error={errors?.['description']} label="Description">
+        <GoATextArea
+          name="description"
+          value={script.description}
+          testId={`script-modal-description-input`}
+          aria-label="description"
+          width="100%"
+          onChange={(name, value) => {
+            const description = value;
+            validators.remove('description');
+            validators['description'].check(description);
+            setScript({ ...script, description });
+          }}
+        />
+      </GoAFormItem>
+      <UseServiceAccountWrapper>
+        <GoACheckbox
+          checked={script.useServiceAccount}
+          name="script-use-service-account-checkbox"
+          testId="script-use-service-account-checkbox"
+          onChange={() => {
+            setScript({
+              ...script,
+              useServiceAccount: !script.useServiceAccount,
+            });
+          }}
+          ariaLabel={`script-use-service-account-checkbox`}
+        />
+        Use service account
+      </UseServiceAccountWrapper>
+
+      {tenantClients &&
+        elements.map((e, key) => {
+          return <RunnerRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+        })}
+      {Object.entries(tenantClients).length === 0 && (
+        <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>
+      )}
     </GoAModal>
   );
 };

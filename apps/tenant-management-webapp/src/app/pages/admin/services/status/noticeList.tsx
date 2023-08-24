@@ -26,7 +26,7 @@ const NoticeListFilterContainer = styled.div`
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
   .filter-header {
-    padding: 1rem 0 1rem 0;
+    padding: 1rem 2rem 1rem 0;
     font-size: var(--fs-base);
     text-align: left;
     display: flex;
@@ -107,19 +107,19 @@ export const NoticeList = (): JSX.Element => {
           }}
         />
       )}
-      {showEditModalId !== null && (
-        <NoticeModal
-          isOpen={true}
-          title="Edit notice"
-          onCancel={() => {
-            setShowEditModalId(null);
-          }}
-          onSave={() => {
-            setShowEditModalId(null);
-          }}
-          noticeId={showEditModalId}
-        />
-      )}
+
+      <NoticeModal
+        isOpen={showEditModalId !== null}
+        title="Edit notice"
+        onCancel={() => {
+          setShowEditModalId(null);
+        }}
+        onSave={() => {
+          setShowEditModalId(null);
+        }}
+        noticeId={showEditModalId}
+      />
+
       <Grid>
         <GridItem md={12} hSpacing={0.5}>
           {notices && notices?.length === 0 && renderNoItem('notice')}

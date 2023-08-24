@@ -1,8 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { ContactInformation } from '@store/notification/models';
-import { GoAButton, GoAButtonGroup, GoAInput } from '@abgov/react-components-new';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import { GoAButton, GoAButtonGroup, GoAInput, GoAModal, GoAFormItem } from '@abgov/react-components-new';
 import styled from 'styled-components';
 import { emailError } from '@lib/inputValidation';
 
@@ -49,29 +47,11 @@ export const ContactInformationModalForm: FunctionComponent<EditContactInformati
 
   return (
     <EditStyles>
-      <GoAModal testId="edit-contact-information-status" isOpen={open}>
-        <GoAModalTitle>Edit contact information</GoAModalTitle>
-        <GoAModalContent>
-          <GoAForm>
-            <ErrorWrapper>
-              <GoAFormItem error={formErrors?.['email']}>
-                <label>Email</label>
-                <GoAInput
-                  type="email"
-                  width="100%"
-                  name="email"
-                  testId="form-email"
-                  value={contactInformation?.contactEmail || ''}
-                  aria-label="email"
-                  onChange={(_, value) => {
-                    setContactInformation({ ...contactInformation, contactEmail: value });
-                  }}
-                />
-              </GoAFormItem>
-            </ErrorWrapper>
-          </GoAForm>
-        </GoAModalContent>
-        <GoAModalActions>
+      <GoAModal
+        testId="edit-contact-information-status"
+        open={open}
+        heading="Edit contact information"
+        actions={
           <GoAButtonGroup alignment="end">
             <GoAButton testId="form-cancel" type="secondary" onClick={tryCancel}>
               Cancel
@@ -80,7 +60,23 @@ export const ContactInformationModalForm: FunctionComponent<EditContactInformati
               Save
             </GoAButton>
           </GoAButtonGroup>
-        </GoAModalActions>
+        }
+      >
+        <ErrorWrapper>
+          <GoAFormItem error={formErrors?.['email']} label="Email">
+            <GoAInput
+              type="email"
+              width="100%"
+              name="email"
+              testId="form-email"
+              value={contactInformation?.contactEmail || ''}
+              aria-label="email"
+              onChange={(_, value) => {
+                setContactInformation({ ...contactInformation, contactEmail: value });
+              }}
+            />
+          </GoAFormItem>
+        </ErrorWrapper>
       </GoAModal>
     </EditStyles>
   );
