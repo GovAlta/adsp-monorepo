@@ -181,7 +181,6 @@ export const BodyGlobalStyles = createGlobalStyle<{ hideOverflow: boolean }>`
   }
 `;
 export const ModalContent = styled.div`
-  // background: white;
   background: var(--goa-color-greyscale-white);
 `;
 export const PreviewTemplateContainer = styled.div`
@@ -198,7 +197,7 @@ export const MonacoDiv = styled.div`
   border: var(--goa-border-width-s) solid var(--color-gray-700);
   border-radius: var(--goa-border-radius-m);
   padding: var(--goa-spacing-3xs);
-`; // when using spacing design token did not find spacing token with  0.15rem so used 0.125rem token
+`;
 export const MonacoDivBody = styled.div`
   display: flex;
   border: var(--goa-border-width-s) solid var(--color-gray-700);
@@ -212,7 +211,6 @@ export const MonacoDivBody = styled.div`
 export const EditTemplateActions = styled.div`
   display: flex;
   justify-content: left;
-  // gap: var(--goa-spacing-m);
   gap: var(--goa-spacing-m);
   margin: var(--goa-spacing-m) 0 var(--goa-spacing-xl) 0;
 `;
