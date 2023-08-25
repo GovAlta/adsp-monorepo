@@ -19,10 +19,13 @@ export const FileTableStyles = styled.div`
     flex: auto;
   }
 
-  margin: 1rem 0 1rem;
+  margin: var(--goa-spacing-xs) 0 var(--goa-spacing-m);
 
   .some-margin {
-    margin: 8px;
+    margin: var(--goa-spacing-xs);
+  }
+  thead {
+    margin-bottom: var(--goa-spacing-xs);
   }
 `;
 
@@ -33,7 +36,7 @@ export const PopulateTemplateWrapper = styled.div`
 `;
 
 export const BadgeWrapper = styled.div`
-  margin-left: 1rem;
+  margin-left: var(--goa-spacing-m);
 `;
 
 export const ButtonBox = styled.div`
@@ -52,13 +55,13 @@ export const ButtonRight = styled.div`
 export const FlexRow = styled.div`
   display: flex;
   flex-direction: row;
-  padding-top: 1rem;
+  padding-top: var(--goa-spacing-m);
 `;
 export const NotificationTemplateEditorContainer = styled.div`
   display: flex;
   flex: auto;
   margin-top: 6px;
-  padding-left: 3rem;
+  padding-left: var(--goa-spacing-xl);
   width: 100%;
   height: 100vh;
   overflow: hidden;
@@ -72,7 +75,7 @@ export const OuterNotificationTemplateEditorContainer = styled.div`
 `;
 // Edit Template components
 export const TemplateEditorContainer = styled.div`
-  padding-right: 1rem;
+  padding-right: var(--goa-spacing-m);
   flex: auto;
   margin-top: 4rem;
   overflow: hidden;
@@ -102,17 +105,24 @@ export const TemplateEditorContainer = styled.div`
 `;
 
 export const TemplateEditorContainerPdf = styled.div`
-  padding-right: 1rem;
-  flex: auto;
+  padding-right: var(--goa-spacing-m);
   overflow: hidden;
   &:hover {
     overflow: auto;
   }
-
-  width: calc(100vw - 40vw - 3em);
+  width: calc(100vw - 40vw - 9.9rem);
 
   .reduce-margin {
     margin-top: 5px;
+  }
+
+  div[data-testid='pdf-edit-header'] {
+    padding: 0 !important;
+    margin-top: var(--goa-spacing-l);
+    margin-bottom: var(--goa-spacing-xl);
+  }
+  div[pdf-edit-header-tab-btn='pdf-edit-header-tab-btn'] {
+    margin-top: 0px !important;
   }
 
   .scroll-bar {
@@ -131,11 +141,13 @@ export const TemplateEditorContainerPdf = styled.div`
   }
 
   .hr-resize {
-    margin-top: 0.75rem;
+    margin-top: var(--goa-spacing-s);
   }
   .hr-resize-bottom {
-    margin-bottom: 1.5rem;
-    margin-top: 1rem;
+    margin-bottom: var(--goa-spacing-l);
+  }
+  .hr-resize-top {
+    margin-bottom: var(--goa-spacing-xl);
   }
 
   .title {
@@ -169,11 +181,13 @@ export const BodyGlobalStyles = createGlobalStyle<{ hideOverflow: boolean }>`
   }
 `;
 export const ModalContent = styled.div`
-  background: white;
+  // background: white;
+  background: var(--goa-color-greyscale-white);
 `;
 export const PreviewTemplateContainer = styled.div`
-  width: 40vw;
-  margin-left: 2rem;
+  width: calc(40vw + 3.9rem);
+  margin-right: var(--goa-spacing-xl);
+  margin-left: var(--goa-spacing-xl);
   overflow: hidden;
   &:hover {
     overflow: auto;
@@ -181,24 +195,26 @@ export const PreviewTemplateContainer = styled.div`
 `;
 export const MonacoDiv = styled.div`
   display: flex;
-  border: 1px solid var(--color-gray-700);
-  border-radius: 3px;
-  padding: 0.15rem 0.15rem;
-`;
+  border: var(--goa-border-width-s) solid var(--color-gray-700);
+  border-radius: var(--goa-border-radius-m);
+  padding: var(--goa-spacing-3xs);
+`; // when using spacing design token did not find spacing token with  0.15rem so used 0.125rem token
 export const MonacoDivBody = styled.div`
   display: flex;
-  border: 1px solid var(--color-gray-700);
-  border-radius: 3px;
-  padding: 0.15rem 0.15rem;
-  min-height: 2rem;
-  margin: 0.5rem 0 0 0;
+  border: var(--goa-border-width-s) solid var(--color-gray-700);
+  border-radius: var(--goa-border-radius-m);
+  padding-top: var(--goa-spacing-l);
+  padding: var(--goa-spacing-3xs);
+  min-height: var(--goa-spacing-xl);
+  margin: 0;
 `;
 
 export const EditTemplateActions = styled.div`
   display: flex;
   justify-content: left;
-  gap: 1rem;
-  margin: 1rem 0 2rem 0;
+  // gap: var(--goa-spacing-m);
+  gap: var(--goa-spacing-m);
+  margin: var(--goa-spacing-m) 0 var(--goa-spacing-xl) 0;
 `;
 
 // preview template components
@@ -206,23 +222,22 @@ export const PreviewContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: 85%;
-  margin-right: 3rem;
 `;
 
 export const SubjectPreview = styled.div`
   background-color: white;
-  padding-left: 1rem;
+  padding-left: var(--goa-spacing-m);
 `;
 
 export const BodyPreview = styled(PreviewPortal)`
-  background-color: white;
+  background-color: var(--goa-color-greyscale-white);
   overflow: hidden;
   &:hover {
     overflow: auto;
   }
   flex-grow: 1;
-  margin-bottom: 1rem;
-  border: 1.5rem solid #b2d4ed;
+  margin-bottom: var(--goa-spacing-m);
+  border: var(--goa-spacing-l) solid var(--goa-color-info-light);
 `;
 
 export const PdfEditorLabelWrapper = styled.div`
@@ -237,37 +252,35 @@ export const PdfEditorLabelWrapper = styled.div`
   .badge {
     margin: 0px 0px 0px 3px;
   }
-`;
+`; // no spacing design token for 4.5rem and 3px
 
 export const PdfConfigFormWrapper = styled.div`
-  font-size: 16px;
+  margin-top: var(--goa-spacing-xl);
+  font-size: var(--goa-fontSize-3);
   padding-left: 3px;
-  border: solid 1px #dcdcdc;
+  border: var(--goa-border-width-s) solid var(--goa-color-greyscale-200);
   border-radius: 3px;
   height: 7.375rem;
-  background-color: #f1f1f1;
-  padding-right: 1rem;
-  border-bottom: solid 16px #f1f1f1;
-  border: solid 1px #dcdcdc;
+  background-color: var(--goa-color-greyscale-100);
+  padding-right: var(--goa-color-greyscale-100);
+  border-bottom: solid var(--goa-fontSize-3) var(--goa-color-greyscale-100);
 
   display: flex;
-  margin-bottom: 2.5rem;
+  margin-bottom: var(--goa-spacing-l);
   .nameColumn {
-    width: 180px;
-    float: left;
-    overflow: hidden;
+    width: 91px;
+    height: 118px;
+    margin: var(--goa-spacing-m);
   }
   .idColumn {
-    width: 180px;
-    float: left;
-    height: 100%;
-    overflow: hidden;
+    width: 105px;
+    height: 118px;
+    margin: var(--goa-spacing-m);
   }
   .descColumn {
-    width: calc(100% - 336px);
-    float: left;
-    height: 100%;
-    overflow: hidden;
+    width: 664px;
+    height: 118px;
+    margin: var(--goa-spacing-m);
   }
   .overflowContainer {
     border-bottom: 16px solid #f1f1f1;
@@ -276,38 +289,39 @@ export const PdfConfigFormWrapper = styled.div`
     vertical-align: top;
   }
   .editColumn {
-    width: 56px;
-    float: right;
-    min-width: 50px;
-    margin-top: 0.5rem;
+    width: 77px;
+    height: 118px;
+    margin: var(--goa-spacing-m) var(--goa-spacing-m) var(--goa-spacing-m) 0px;
   }
   .separator {
-    margin-top: 1rem;
+    margin-top: var(--goa-spacing-m);
     width: 1px;
     height: 5.375rem;
 
-    border-left: 1px solid #ccc;
+    border-left: var(--goa-border-width-s) solid #ccc;
   }
   .hideOverflow {
     overflow: hidden;
   }
   table {
-    margin: 1rem 1.5rem 1rem 1.5rem;
   }
   th {
+    white-space: nowrap;
     text-align: left;
-    padding-bottom: 0.5rem;
+    font-size: var(--goa-font-size-4);
+    line-height: var(--goa-line-height-3);
+    font-weight: var(--goa-font-weight-bold);
+    font-family: var(--goa-font-family-sans);
   }
 `;
 
 export const PdfEditActionLayout = styled.div`
-  position fixed;
-  bottom: 4rem;
+  bottom: var(--goa-spacing-3xl);
 `;
 
 export const PdfEditActions = styled.div`
   display: flex;
-  gap: 0.5rem;
+  gap: var(--goa-spacing-xs);
 `;
 
 export const SpinnerSpace = styled.div`
@@ -368,11 +382,12 @@ export const Edit = styled.div`
 
   a {
     margin-top: 3px;
+    margin-right: var(--goa-spacing-xs);
   }
   display: flex;
   flex-direction: row;
-  margin-right: 1rem;
-  margin-top: 0.5rem;
+  margin-right: var(--goa-spacing-m);
+  margin-top: var(--goa-spacing-xs);
 `;
 export const OverflowWrap = styled.div`
   overflow-wrap: break-word;
@@ -380,16 +395,16 @@ export const OverflowWrap = styled.div`
 `;
 
 export const PreviewTopStyle = styled.div`
-  margin: 3px 3px 0 3px;
   display: flex;
   flex-direction: row;
-  justify-content: left;
-  gap: 1rem;
+  justify-content: start;
+  gap: var(--goa-spacing-l);
+  align-items: flex-start;
 `;
 
 export const PreviewTopStyleWrapper = styled.div`
   .hr-resize {
-    margin-top: calc(0.75rem - 3px);
+    margin-bottom: var(--goa-spacing-xl);
   }
 `;
 
@@ -397,6 +412,9 @@ export const PDFTitle = styled.div`
   font-size: var(--fs-xl);
   line-height: var(--lh-lg);
   font-weight: var(--fw-regular);
+  font-family: var(--goa-font-family-sans);
+  margin-bottom: var(--goa-spacing-s);
+}
 `;
 
 export const HideTablet = styled.div`
@@ -414,6 +432,7 @@ export const TabletMessage = styled.div`
   h3 {
     text-align: center;
     margin: 40px;
+    var(--goa-typography-heading-m)
   }
 
   text-align: center !important;
@@ -433,7 +452,7 @@ export const PdfFormItem = styled.div`
 export const HelpText = styled.div`
   font-size: var(--fs-sm);
   color: var(--color-gray-900);
-  line-height: calc(var(--fs-sm) + 0.5rem);
+  line-height: calc(var(--fs-sm) + var(--goa-spacing-xs));
   display: flex;
   display-direction: row;
   justify-content: space-between;

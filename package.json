@@ -43,6 +43,7 @@
   },
   "private": true,
   "dependencies": {
+    "@abgov/design-tokens": "^1.1.1",
     "@abgov/web-components": "^1.6.0",
     "@azure/storage-blob": "^12.9.0",
     "@faker-js/faker": "7.0.1",

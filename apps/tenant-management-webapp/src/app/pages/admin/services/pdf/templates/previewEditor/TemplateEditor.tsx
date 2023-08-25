@@ -157,12 +157,12 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     <TemplateEditorContainerPdf>
       <LogoutModal />
       <PDFTitle>PDF / Template Editor</PDFTitle>
-      <hr className="hr-resize" />
+      <hr />
       {pdfTemplate && <PDFConfigForm template={pdfTemplate} />}
 
       <GoAForm>
         <GoAFormItem>
-          <Tabs style={{ minWidth: '4.5em' }} activeIndex={0}>
+          <Tabs activeIndex={0}>
             <Tab testId={`pdf-edit-header`} label={<PdfEditorLabelWrapper>Header</PdfEditorLabelWrapper>}>
               <GoAFormItem error={errors?.header ?? ''}>
                 <MonacoDivBody style={{ height: monacoHeight }}>
@@ -262,7 +262,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                     <GoAButton
                       type="secondary"
                       testId="pdf-delete-all-files"
-                      size="compact"
+                      size="normal"
                       onClick={() => {
                         setShowDeleteConfirmation(true);
                       }}
@@ -301,7 +301,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                       }
                     }}
                     testId="template-form-close"
-                    type="tertiary"
+                    type="secondary"
                   >
                     Back
                   </GoAButton>

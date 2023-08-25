@@ -97,12 +97,12 @@ export const FormEditor = styled.div`
   width: 100%;
 
   .hr-resize {
-    margin-top: 0.75rem;
+    margin-top: var(--goa-spacing-s);
   }
 
   .hr-resize-bottom {
-    margin-bottom: 0.25rem;
-    margin-top: 2rem;
+    margin-bottom: var(--goa-spacing-2xs);
+    margin-top: var(--goa-spacing-xl);
   }
 `;
 
