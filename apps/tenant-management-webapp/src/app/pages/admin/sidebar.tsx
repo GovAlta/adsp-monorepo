@@ -20,9 +20,10 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
   const tenantAdminRole = 'tenant-admin';
   const dispatch = useDispatch();
 
-  const { tenantName, authenticated, realm, hasAdminRole } = useSelector((state: RootState) => {
+  const { tenantName, authenticated, realm, hasAdminRole, config } = useSelector((state: RootState) => {
     return {
       tenantName: state.tenant.name,
+      config: state.config,
       authenticated: state.session.authenticated,
       realm: state.session.realm,
       hasAdminRole:
@@ -66,8 +67,9 @@ const Sidebar = ({ type }: RouteComponentProps & SidebarProps) => {
                 <span>Service metrics</span>
               </NavLink>
               <Title>Services</Title>
-              {serviceVariables.map((service) => (
+              {serviceVariables(config.featureFlags).map((service, index) => (
                 <NavLink
+                  key={index}
                   to={service.link}
                   activeClassName="current"
                   title={service.name}

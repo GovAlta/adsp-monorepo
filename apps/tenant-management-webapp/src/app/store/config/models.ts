@@ -38,11 +38,26 @@ export interface ServiceUrls {
   scriptServiceApiUrl?: string;
 }
 
+export interface FeatureFlags {
+  Access: boolean;
+  Calendar: boolean;
+  Configuration: boolean;
+  Form: boolean;
+  Directory: boolean;
+  Event: boolean;
+  File: boolean;
+  Notification: boolean;
+  PDF: boolean;
+  Script: boolean;
+  Status: boolean;
+}
+
 export interface ConfigState {
   keycloakApi?: KeycloakApi;
   tenantApi?: TenantApi;
   serviceUrls?: ServiceUrls;
   fileApi?: FileApi;
+  featureFlags?: FeatureFlags;
 }
 
 export const CONFIG_INIT: ConfigState = {};

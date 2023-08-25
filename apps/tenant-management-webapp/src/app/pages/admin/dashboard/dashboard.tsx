@@ -25,9 +25,10 @@ const Dashboard = (): JSX.Element => {
 
   const [elRefs, setElRefs] = React.useState([]);
   const tenantAdminRole = 'tenant-admin';
-  const { session, tenantManagementWebApp, tenantName, adminEmail, hasAdminRole, keycloakConfig } = useSelector(
+  const { config, session, tenantManagementWebApp, tenantName, adminEmail, hasAdminRole, keycloakConfig } = useSelector(
     (state: RootState) => {
       return {
+        config: state.config,
         session: state.session,
         tenantManagementWebApp: state.config.serviceUrls.tenantManagementWebApp,
         tenantName: state.tenant.name,
@@ -46,7 +47,9 @@ const Dashboard = (): JSX.Element => {
       : keycloakConfig.url;
   }
 
-  const arrLength = serviceVariables.length;
+  const services = serviceVariables(config.featureFlags);
+
+  const arrLength = services.length;
 
   useEffect(() => {
     if (elRefs.length < arrLength) {
@@ -60,22 +63,20 @@ const Dashboard = (): JSX.Element => {
         .fill('1')
         .map((_, i) => elRefs[i] || createRef());
     }
-  }, [serviceVariables]);
+  }, [services]);
 
   useEffect(() => {
     const tempHeights = [];
 
     elementRefs.current.forEach((ref, index) => {
       if (ref.current) {
-        console.log(`Element ${index + 1} height:`, ref.current.clientHeight);
         tempHeights.push(ref.current.clientHeight);
       }
     });
-    console.log(JSON.stringify(tempHeights) + '<tempHeights');
+
     const tempFixedHeights = [];
     tempHeights.forEach((h, index) => {
       if (index % 2 === 0) {
-        console.log(JSON.stringify(index) + '<-index');
         if (h > tempHeights[index + 1]) {
           tempFixedHeights.push(h);
           tempFixedHeights.push(h);
@@ -87,25 +88,16 @@ const Dashboard = (): JSX.Element => {
         }
       }
     });
-    console.log(JSON.stringify(tempFixedHeights) + '<tempFixedHeights');
-    console.log(JSON.stringify(tempFixedHeights.length) + '<tempFixedHeights.length');
-    console.log(JSON.stringify(fixedHeights.length) + 'fixedHeights.lengthh');
-    console.log(JSON.stringify(oldWindowSize?.width !== size?.width) + 'oldWindowSize !== size');
-    console.log(JSON.stringify(oldWindowSize?.width) + 'oldWindowSize !== size');
-    console.log(JSON.stringify(size?.width) + 'oldWindowSize !== size');
-    console.log(JSON.stringify(oldWindowSize) + 'size');
-    console.log(JSON.stringify(size) + 'size');
+
     if (oldWindowSize?.width !== size?.width || fixedHeights.length === 0 || resetHeight) {
-      console.log('resizing----x');
       setFixedHeights(tempFixedHeights);
       setOldWindowSize(JSON.parse(JSON.stringify(size)));
       setResetHeight(false);
     }
-  }, [elementRefs, serviceVariables, resetHeight]);
+  }, [elementRefs, services, resetHeight]);
 
   useEffect(() => {
     if (oldWindowSize?.width !== size?.width) {
-      console.log('resetting height----x');
       setResetHeight(true);
     }
   }, [size]);
@@ -128,23 +120,18 @@ const Dashboard = (): JSX.Element => {
                             <div style={{ height: resetHeight ? 'inherit' : `${fixedHeights[index]}px` }} ref={ref}>
                               <HeadingDiv>
                                 <h2>
-                                  <Link to={serviceVariables[index].link}>{serviceVariables[index].name}</Link>
+                                  <Link to={services[index].link}>{services[index].name}</Link>
                                 </h2>
-                                {serviceVariables[index].beta && (
-                                  <img
-                                    src={BetaBadge}
-                                    alt={`${serviceVariables[index].name} Service`}
-                                    width={39}
-                                    height={23}
-                                  />
+                                {services[index].beta && (
+                                  <img src={BetaBadge} alt={`${services[index].name} Service`} width={39} height={23} />
                                 )}
                               </HeadingDiv>
-                              <div>{serviceVariables[index].description}</div>
+                              <div>{services[index].description}</div>
                             </div>
                           </GoAContainer>
                         </GridItem>
 
-                        {serviceVariables[index + 1] && (
+                        {services[index + 1] && (
                           <GridItem key={index + 1} md={6} vSpacing={1} hSpacing={0.5}>
                             <GoAContainer accent="thin" type="interactive">
                               <div
@@ -153,20 +140,18 @@ const Dashboard = (): JSX.Element => {
                               >
                                 <HeadingDiv>
                                   <h2>
-                                    <Link to={serviceVariables[index + 1].link}>
-                                      {serviceVariables[index + 1].name}
-                                    </Link>
+                                    <Link to={services[index + 1].link}>{services[index + 1].name}</Link>
                                   </h2>
-                                  {serviceVariables[index + 1].beta && (
+                                  {services[index + 1].beta && (
                                     <img
                                       src={BetaBadge}
-                                      alt={`${serviceVariables[index + 1].name} Service`}
+                                      alt={`${services[index + 1].name} Service`}
                                       width={39}
                                       height={23}
                                     />
                                   )}
                                 </HeadingDiv>
-                                <div>{serviceVariables[index + 1].description}</div>
+                                <div>{services[index + 1].description}</div>
                               </div>
                             </GoAContainer>
                           </GridItem>

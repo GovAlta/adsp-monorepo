@@ -77,11 +77,11 @@ const completeServiceVariables = [
   },
 ];
 
-export const featuresVisible = {
+export const defaultFeaturesVisible = {
   Access: true,
   Calendar: true,
   Configuration: true,
-  Form: true,
+  Form: false,
   Directory: true,
   Event: true,
   File: true,
@@ -91,6 +91,8 @@ export const featuresVisible = {
   Status: true,
 };
 
-export const serviceVariables = completeServiceVariables.filter((adminF) => {
-  return !(Object.keys(featuresVisible).includes(adminF.name) && featuresVisible[adminF.name] === false);
-});
+export const serviceVariables = (featuresVisible = defaultFeaturesVisible) => {
+  return completeServiceVariables.filter((adminF) => {
+    return !(Object.keys(featuresVisible).includes(adminF.name) && featuresVisible[adminF.name] === false);
+  });
+};

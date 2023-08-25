@@ -1,6 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Redirect, Route, Switch } from 'react-router-dom';
 import styled from 'styled-components';
+import { RootState } from '@store/index';
 import { HeaderCtx } from '@lib/headerContext';
 
 import Sidebar from './sidebar';
@@ -30,6 +32,8 @@ const TenantManagement = (): JSX.Element => {
   useEffect(() => {
     setTitle('Alberta Digital Service Platform - Tenant management');
   }, [setTitle]);
+
+  const config = useSelector((state: RootState) => state.config);
 
   const renderServices = (serviceName) => {
     switch (serviceName) {
@@ -79,7 +83,7 @@ const TenantManagement = (): JSX.Element => {
             <ServiceMetrics />
           </Route>
 
-          {serviceVariables.map((service) => {
+          {serviceVariables(config.featureFlags).map((service) => {
             return (
               <Route path={service.link} key={service.link}>
                 {renderServices(service.name)}
