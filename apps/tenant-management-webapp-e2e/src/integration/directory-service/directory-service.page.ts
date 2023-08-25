@@ -26,15 +26,11 @@ class DirectoryServicePage {
   }
 
   entryModalSaveButton() {
-    return cy.xpath(
-      '//*[@data-testid="directory-modal" and @data-state="visible"]//*[@data-testid="directory-modal-save"]'
-    );
+    return cy.xpath('//*[@data-testid="directory-modal" and @open="true"]//*[@data-testid="directory-modal-save"]');
   }
 
   entryModalCancelButton() {
-    return cy.xpath(
-      '//*[@data-testid="directory-modal" and @data-state="visible"]//*[@data-testid="directory-modal-cancel"]'
-    );
+    return cy.xpath('//*[@data-testid="directory-modal" and @open="true"]//*[@data-testid="directory-modal-cancel"]');
   }
 
   entryModalServiceFieldErrorMsg() {
@@ -126,7 +122,7 @@ class DirectoryServicePage {
   }
 
   entryModalTitle() {
-    return cy.xpath('//*[@data-testid="directory-modal"]//*[@class="modal-title"]');
+    return cy.xpath('//*[@data-testid="directory-modal"]//*[@slot="heading"]');
   }
 }
 export default DirectoryServicePage;
