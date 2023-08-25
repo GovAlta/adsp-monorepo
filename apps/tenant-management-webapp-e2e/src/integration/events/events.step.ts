@@ -83,7 +83,7 @@ When(
       .shadow()
       .find('input')
       .clear()
-      .type(namespace, { delay: 50, force: true });
+      .type(namespace, { delay: 100, force: true });
     eventsObj.definitionModalNameField().shadow().find('input').clear().type(name, { delay: 50, force: true });
     eventsObj.definitionModalDescriptionField().shadow().find('.goa-textarea').type(desc);
   }
@@ -142,10 +142,15 @@ Given('a service owner user is on event definitions page', function () {
 Then('the user views the {string} for {string}', function (errorMsg, errorField) {
   switch (errorField) {
     case 'Namespace':
-      eventsObj.definitionModalNamespaceFieldErrorMsg().invoke('text').should('eq', errorMsg);
+      eventsObj
+        .definitionModalNamespaceFormItem()
+        .shadow()
+        .find('.error-msg')
+        .invoke('text')
+        .should('contain', errorMsg);
       break;
     case 'Name':
-      eventsObj.definitionModalNameFieldErrorMsg().invoke('text').should('eq', errorMsg);
+      eventsObj.definitionModalNameFormItem().shadow().find('.error-msg').invoke('text').should('contain', errorMsg);
       break;
     default:
       expect(errorField).to.be.oneOf(['Namespace', 'Name']);
@@ -222,7 +227,7 @@ When(
       .find('input')
       .scrollIntoView()
       .clear()
-      .type(name, { delay: 50, force: true });
+      .type(name, { delay: 100, force: true });
     eventsObj
       .streamModalDescriptionInput()
       .shadow()

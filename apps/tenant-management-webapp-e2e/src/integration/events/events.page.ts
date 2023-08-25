@@ -50,47 +50,45 @@ class eventsPage {
   }
 
   definitionModal() {
-    return cy.xpath('//*[@data-testid="definition-form"]');
+    return cy.xpath('//*[@data-testid="definition-form" and @open="true"]');
   }
 
   definitionModalTitle() {
-    return cy.xpath('//*[@data-testid="definition-form" and @data-state="visible"]//div[@class="modal-title"]');
+    return cy.xpath('//*[@data-testid="definition-form" and @open="true"]//*[@slot="heading"]');
+  }
+
+  definitionModalNamespaceFormItem() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-input[@data-testid="form-namespace"]/parent::goa-form-item');
   }
 
   definitionModalNamespaceField() {
-    return cy.xpath('//*[@data-testid="definition-form" and @data-state="visible"]//*[@data-testid="form-namespace"]');
+    return cy.xpath('//*[@data-testid="definition-form" and @open="true"]//*[@data-testid="form-namespace"]');
   }
 
-  definitionModalNamespaceFieldErrorMsg() {
-    return cy.xpath('//goa-input[@data-testid="form-namespace"]/following-sibling::div[@class="error-msg"]');
+  definitionModalNameFormItem() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-input[@data-testid="form-name"]/parent::goa-form-item');
   }
 
   definitionModalNameField() {
-    return cy.xpath('//*[@data-testid="definition-form" and @data-state="visible"]//*[@data-testid="form-name"]');
-  }
-
-  definitionModalNameFieldErrorMsg() {
-    return cy.xpath('//goa-input[@data-testid="form-name"]/following-sibling::div[@class="error-msg"]');
+    return cy.xpath('//*[@data-testid="definition-form" and @open="true"]//*[@data-testid="form-name"]');
   }
 
   definitionModalDescriptionField() {
-    return cy.xpath(
-      '//*[@data-testid="definition-form" and @data-state="visible"]//*[@data-testid="form-description"]'
-    );
+    return cy.xpath('//*[@data-testid="definition-form" and @open="true"]//*[@data-testid="form-description"]');
   }
 
   definitionModalPayloadSchema() {
     return cy.xpath(
-      '//*[@data-testid="definition-form" and @data-state="visible"]//*[@class="monaco-scrollable-element editor-scrollable vs"]'
+      '//*[@data-testid="definition-form" and @open="true"]//*[@class="monaco-scrollable-element editor-scrollable vs"]'
     );
   }
 
   definitionModalSaveButton() {
-    return cy.xpath('//*[@data-testid="definition-form" and @data-state="visible"]//*[@data-testid="form-save"]');
+    return cy.xpath('//*[@data-testid="definition-form" and @open="true"]//*[@data-testid="form-save"]');
   }
 
   definitionModalCancelButton() {
-    return cy.xpath('//*[@data-testid="definition-form" and @data-state="visible"]//*[@data-testid="form-cancel"]');
+    return cy.xpath('//*[@data-testid="definition-form" and @open="true"]//*[@data-testid="form-cancel"]');
   }
 
   editDefinitionButton(namespace, eventName, eventDesc) {
