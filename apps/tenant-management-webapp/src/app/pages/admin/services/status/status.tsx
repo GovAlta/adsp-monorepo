@@ -75,6 +75,7 @@ function Status(): JSX.Element {
     description: '',
     eventTypes: [],
   };
+  let intervalId = null;
 
   useEffect(() => {
     dispatch(fetchServiceStatusApps());
@@ -82,9 +83,13 @@ function Status(): JSX.Element {
   }, []);
 
   useEffect(() => {
-    if (applications && applications.length > 0) {
-      const intervalId = setInterval(() => dispatch(fetchServiceStatusApps()), 30000);
-      return () => clearInterval(intervalId);
+    if (applications && applications.length > 0 && intervalId === null) {
+      intervalId = setInterval(() => dispatch(fetchServiceStatusApps()), 30000);
+      return () => {
+        if (intervalId !== null) {
+          clearInterval(intervalId);
+        }
+      };
     }
   }, [applications]);
 
