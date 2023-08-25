@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: comment-service
+        component: api
+      name: comment-service
+    data:
+      KEYCLOAK_ROOT_URL: https://access.adsp-dev.gov.ab.ca
+      DIRECTORY_URL: https://directory-service.adsp-dev.gov.ab.ca
+      LOG_LEVEL: debug
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        app: comment-service
+        component: api
+      name: comment-service
+    stringData:
+      CLIENT_ID: urn:ads:platform:comment-service
+      CLIENT_SECRET:
