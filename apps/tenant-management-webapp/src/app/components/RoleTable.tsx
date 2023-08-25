@@ -49,7 +49,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
   return (
     <>
       <MarginAdjustment>{getClientId()}</MarginAdjustment>
-      <GoATable>
+      <GoATable width="100%">
         <thead>
           <tr>
             <th id={`${service}-roles-${getClientId()}`}>Roles</th>

@@ -7,7 +7,17 @@ export const PopulateTemplateWrapper = styled.div`
 `;
 export const EditorPadding = styled.div`
   border: 1px solid grey;
-  border-radius: 5px;
+  border-radius: 3px;
+  padding: 0.15rem;
+
+  .monaco-scrollable-element {
+    margin-top: 5px !important;
+  }
+  .margin-view-overlays {
+    margin-top: 5px !important;
+  }
+
+  .
 `;
 export const FinalButtonPadding = styled.div`
   padding-top: 20px;
@@ -35,6 +45,7 @@ export const Edit = styled.div`
 export const ConfigFormWrapper = styled.div`
   margin-top: 2rem;
   font-size: 16px;
+  color: #333333;
   padding-left: 3px;
   border: solid 1px #dcdcdc;
   border-radius: 3px;
@@ -151,12 +162,12 @@ export const NotificationTemplateEditorContainer = styled.div`
 `;
 
 export const NameDescriptionDataSchema = styled.div`
-  flex: 1;
+  flex: 6;
   padding-right: 3rem;
 `;
 
 export const FormPermissions = styled.div`
-  flex: 1;
+  flex: 4;
 `;
 export const ScrollPane = styled.div`
   overflow-y: scroll;
