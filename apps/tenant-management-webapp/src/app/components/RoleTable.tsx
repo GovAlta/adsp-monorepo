@@ -43,16 +43,19 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
   const [checkedRoles, setCheckedRoles] = useState(props.checkedRoles);
   const service = props.service;
 
+  const getClientId = () => {
+    return props.clientId ? props.clientId : tenantName;
+  };
   return (
     <>
-      <MarginAdjustment>{props.clientId ? props.clientId : tenantName}</MarginAdjustment>
+      <MarginAdjustment>{getClientId()}</MarginAdjustment>
       <GoATable>
         <thead>
           <tr>
-            <th id={`${service}-roles`}>Roles</th>
-            {props.checkedRoles.map((role, index) => {
+            <th id={`${service}-roles-${getClientId()}`}>Roles</th>
+            {props.checkedRoles.map((role) => {
               return (
-                <th id={`${role.title}-role-action`} className="role">
+                <th id={`${role.title}-role-action-${getClientId()}`} className="role">
                   <div style={{ textTransform: 'capitalize' }}>{role.title}</div>
                 </th>
               );
