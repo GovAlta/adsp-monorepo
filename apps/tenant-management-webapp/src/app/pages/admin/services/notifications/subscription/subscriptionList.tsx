@@ -174,7 +174,9 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
   }
 
   const searchFn = ({ type, searchCriteria }) => {
-    dispatch(GetTypeSubscriptions(type, searchCriteria, searchCriteria.next));
+    if (typeSubscriptions) {
+      dispatch(GetTypeSubscriptions(type, searchCriteria, searchCriteria.next));
+    }
   };
 
   return (
@@ -185,10 +187,14 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
           <DataTable data-testid={`subscription-table-${index}`}>
             <thead>
               <tr>
-                <th className="address-as" id="userName" data-testid={`subscription-header-address-as-${index}`}>
+                <th
+                  className="address-as"
+                  id={`userName_${index}`}
+                  data-testid={`subscription-header-address-as-${index}`}
+                >
                   Address as
                 </th>
-                <th id="channels">Channels</th>
+                <th id={`channels_${index}`}>Channels</th>
                 <th id="actions">Actions</th>
               </tr>
             </thead>
