@@ -1,14 +1,21 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import type { NotificationItem } from '@store/notification/models';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
-import styled from 'styled-components';
-import { GoACheckbox, GoATextArea, GoAInput, GoAButton, GoAButtonGroup, GoACallout } from '@abgov/react-components-new';
+
+import {
+  GoACheckbox,
+  GoATextArea,
+  GoAInput,
+  GoAButton,
+  GoAButtonGroup,
+  GoACallout,
+  GoAModal,
+  GoAFormItem,
+} from '@abgov/react-components-new';
 import { toKebabName } from '@lib/kebabName';
 import { Role } from '@store/tenant/models';
 import { ServiceRoleConfig } from '@store/access/models';
-import { AnonymousWrapper } from './styledComponents';
+import { AnonymousWrapper, EditStyles, IdField } from './styledComponents';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, duplicateNameCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { RootState } from '@store/index';
@@ -29,10 +36,6 @@ const channels = [
   { value: 'bot', title: 'Bot' },
   { value: 'sms', title: 'SMS' },
 ];
-
-const IdField = styled.div`
-  min-height: 1.6rem;
-`;
 
 export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormProps> = ({
   initialValue,
@@ -109,140 +112,11 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
 
   return (
     <EditStyles>
-      <GoAModal testId="notification-types-form" isOpen={open}>
-        <GoAModalTitle>{title}</GoAModalTitle>
-        <GoAModalContent>
-          <GoAForm>
-            <GoAFormItem error={errors?.['name']}>
-              <label>Name</label>
-              <GoAInput
-                type="text"
-                name="name"
-                value={type.name}
-                testId="form-name"
-                aria-label="name"
-                width="100%"
-                onChange={(name, value) => {
-                  const validations = {
-                    name: value,
-                  };
-                  if (!isEdit) {
-                    validators.remove('name');
-                    validations['duplicated'] = value;
-                    validators.checkAll(validations);
-                  }
-                  setType({ ...type, name: value, id: isEdit ? type.id : toKebabName(value) });
-                }}
-              />
-            </GoAFormItem>
-            <GoAFormItem>
-              <div style={{ display: 'flex', flexDirection: 'row' }}>
-                <label>Type ID</label>
-
-                <div style={{ margin: '3px 10px' }}>
-                  <IdField data-testid={`form-id`}>{type.id || ''}</IdField>
-                </div>
-              </div>
-            </GoAFormItem>
-            <GoAFormItem error={errors?.['description']}>
-              <label>Description</label>
-              <GoATextArea
-                name="description"
-                testId="form-description"
-                value={type.description}
-                aria-label="description"
-                width="100%"
-                onChange={(name, value) => {
-                  const description = value;
-                  validators.remove('description');
-                  validators['description'].check(description);
-                  setType({ ...type, description: description });
-                }}
-              />
-            </GoAFormItem>
-            <GoAFormItem error={errors?.['channels']}>
-              <label>Select Notification Channels</label>
-              <div key="select channel" style={{ display: 'flex', flexDirection: 'row' }}>
-                {channels.map((channel, key) => {
-                  return (
-                    <div key={key}>
-                      <div style={{ paddingRight: '20px' }}>
-                        <GoACheckbox
-                          name={channel.value}
-                          checked={
-                            type.channels?.map((value) => value).includes(channel.value) || channel.value === 'email'
-                          }
-                          disabled={channel.value === 'email'}
-                          onChange={() => {
-                            const channels = type.channels || ['email'];
-                            const checked = channels.findIndex((ch) => ch === channel.value);
-                            if (checked === -1) {
-                              channels.push(channel.value);
-                            } else {
-                              channels.splice(checked, 1);
-                            }
-
-                            setType({ ...type, channels: channels });
-                          }}
-                          data-testid="manage-subscriptions-checkbox"
-                          value="manageSubscribe"
-                          ariaLabel={`manage-subscriptions-checkbox`}
-                        >
-                          {channel.title}
-                        </GoACheckbox>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </GoAFormItem>
-            <div data-testid="manage-subscriptions-checkbox-wrapper">
-              <GoAFormItem>
-                <GoACheckbox
-                  name="subscribe"
-                  checked={!!type.manageSubscribe}
-                  onChange={() => {
-                    setType({ ...type, manageSubscribe: !type.manageSubscribe });
-                  }}
-                  data-testid="manage-subscriptions-checkbox"
-                  value="manageSubscribe"
-                  ariaLabel={`manage-subscriptions-checkbox`}
-                >
-                  My subscribers are allowed to manage their own subscription for this notification type
-                </GoACheckbox>
-                {type.manageSubscribe && (
-                  <div className="fitContent">
-                    <GoACallout type="important">
-                      This checkbox enables your subscribers to manage subscriptions on a self serve basis. Subscribers
-                      can unsubscribe from the notification type without contacting the program area.
-                    </GoACallout>
-                  </div>
-                )}
-              </GoAFormItem>
-            </div>
-            <AnonymousWrapper>
-              <GoACheckbox
-                checked={type.publicSubscribe}
-                name="anonymousRead-checkbox"
-                data-testid="anonymousRead-checkbox"
-                onChange={() => {
-                  setType({
-                    ...type,
-                    publicSubscribe: !type.publicSubscribe,
-                  });
-                }}
-                ariaLabel={`anonymousRead-checkbox`}
-              />
-              Make notification public
-            </AnonymousWrapper>
-            {tenantClients &&
-              !type.publicSubscribe &&
-              elements.map((e, key) => {
-                return <SubscribeRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
-              })}
-          </GoAForm>
-        </GoAModalContent>
-        <GoAModalActions>
+      <GoAModal
+        testId="notification-types-form"
+        open={open}
+        heading={title}
+        actions={
           <GoAButtonGroup alignment="end">
             <GoAButton
               testId="form-cancel"
@@ -279,32 +153,132 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               Save
             </GoAButton>
           </GoAButtonGroup>
-        </GoAModalActions>
+        }
+      >
+        <GoAFormItem error={errors?.['name']} label="Name">
+          <GoAInput
+            type="text"
+            name="name"
+            value={type.name}
+            testId="form-name"
+            aria-label="name"
+            width="100%"
+            onChange={(name, value) => {
+              const validations = {
+                name: value,
+              };
+              if (!isEdit) {
+                validators.remove('name');
+                validations['duplicated'] = value;
+                validators.checkAll(validations);
+              }
+              setType({ ...type, name: value, id: isEdit ? type.id : toKebabName(value) });
+            }}
+          />
+        </GoAFormItem>
+        <GoAFormItem label="Type ID">
+          <div style={{ display: 'flex', flexDirection: 'row' }}>
+            <div style={{ margin: '3px 10px' }}>
+              <IdField data-testid={`form-id`}>{type.id || ''}</IdField>
+            </div>
+          </div>
+        </GoAFormItem>
+        <GoAFormItem error={errors?.['description']} label="Description">
+          <GoATextArea
+            name="description"
+            testId="form-description"
+            value={type.description}
+            aria-label="description"
+            width="100%"
+            onChange={(name, value) => {
+              const description = value;
+              validators.remove('description');
+              validators['description'].check(description);
+              setType({ ...type, description: description });
+            }}
+          />
+        </GoAFormItem>
+        <GoAFormItem error={errors?.['channels']} label="Select Notification Channels">
+          <label></label>
+          <div key="select channel" style={{ display: 'flex', flexDirection: 'row' }}>
+            {channels.map((channel, key) => {
+              return (
+                <div key={key}>
+                  <div style={{ paddingRight: '20px' }}>
+                    <GoACheckbox
+                      name={channel.value}
+                      checked={
+                        type.channels?.map((value) => value).includes(channel.value) || channel.value === 'email'
+                      }
+                      disabled={channel.value === 'email'}
+                      onChange={() => {
+                        const channels = type.channels || ['email'];
+                        const checked = channels.findIndex((ch) => ch === channel.value);
+                        if (checked === -1) {
+                          channels.push(channel.value);
+                        } else {
+                          channels.splice(checked, 1);
+                        }
+
+                        setType({ ...type, channels: channels });
+                      }}
+                      data-testid="manage-subscriptions-checkbox"
+                      value="manageSubscribe"
+                      ariaLabel={`manage-subscriptions-checkbox`}
+                    >
+                      {channel.title}
+                    </GoACheckbox>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </GoAFormItem>
+        <div data-testid="manage-subscriptions-checkbox-wrapper">
+          <GoAFormItem label="">
+            <GoACheckbox
+              name="subscribe"
+              checked={!!type.manageSubscribe}
+              onChange={() => {
+                setType({ ...type, manageSubscribe: !type.manageSubscribe });
+              }}
+              testId="manage-subscriptions-checkbox"
+              value="manageSubscribe"
+              ariaLabel={`manage-subscriptions-checkbox`}
+            >
+              My subscribers are allowed to manage their own subscription for this notification type
+            </GoACheckbox>
+            {type.manageSubscribe && (
+              <div className="fitContent">
+                <GoACallout type="important">
+                  This checkbox enables your subscribers to manage subscriptions on a self serve basis. Subscribers can
+                  unsubscribe from the notification type without contacting the program area.
+                </GoACallout>
+              </div>
+            )}
+          </GoAFormItem>
+        </div>
+        <AnonymousWrapper>
+          <GoACheckbox
+            checked={type.publicSubscribe}
+            name="anonymousRead-checkbox"
+            testId="anonymousRead-checkbox"
+            onChange={() => {
+              setType({
+                ...type,
+                publicSubscribe: !type.publicSubscribe,
+              });
+            }}
+            ariaLabel={`anonymousRead-checkbox`}
+          />
+          Make notification public
+        </AnonymousWrapper>
+        {tenantClients &&
+          !type.publicSubscribe &&
+          elements.map((e, key) => {
+            return <SubscribeRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+          })}
       </GoAModal>
     </EditStyles>
   );
 };
-
-const EditStyles = styled.div`
-  ul {
-    margin-left: 0;
-  }
-
-  li {
-    border: 1px solid #f1f1f1;
-  }
-
-  .fitContent {
-    max-width: fit-content;
-    min-height: 146px;
-  }
-
-  .messages {
-    margin-top: 0;
-  }
-
-  h3 {
-    margin-bottom: 0;
-  }
-  width: 36em;
-`;

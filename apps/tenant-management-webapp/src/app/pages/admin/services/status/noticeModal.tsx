@@ -2,21 +2,19 @@ import { RootState } from '@store/index';
 import { saveNotice } from '@store/notice/actions';
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-
-import {
-  GoAForm,
-  GoAFormItem,
-  GoAModalActions,
-  GoAModal,
-  GoAModalContent,
-  GoAModalTitle,
-} from '@abgov/react-components/experimental';
 import TimePicker from 'react-time-picker';
 import DatePicker from 'react-date-picker';
 import styled from 'styled-components';
 import Multiselect from 'multiselect-react-dropdown';
 import CloseIcon from '@icons/close-outline.svg';
-import { GoATextArea, GoAButton, GoACheckbox, GoAButtonGroup } from '@abgov/react-components-new';
+import {
+  GoATextArea,
+  GoAButton,
+  GoACheckbox,
+  GoAButtonGroup,
+  GoAFormItem,
+  GoAModal,
+} from '@abgov/react-components-new';
 
 const dateTime = (date, time) => {
   const newDate = new Date(date);
@@ -145,117 +143,11 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
   }
 
   return (
-    <GoAModal isOpen={props.isOpen} testId="notice-modal">
-      <GoAModalTitle>{props.title}</GoAModalTitle>
-      <GoAModalContent>
-        <NoticeFormStyle>
-          <GoAForm data-testid="notice-form">
-            <GoAFormItem error={errors?.['message']}>
-              <label>Description</label>
-              <GoATextArea
-                testId="notice-form-description"
-                name="message"
-                value={message}
-                width="100%"
-                onChange={(name, value) => {
-                  setMessage(value);
-                }}
-              />
-            </GoAFormItem>
-
-            <div>
-              <ErrorWrapper className={errors?.['applications'] && 'error'}>
-                <label className="notice-title">Application</label>
-                <div>
-                  <GoACheckbox
-                    name="isAllApplications"
-                    checked={isAllApplications}
-                    data-testid="notice-form-all-applications-checkbox"
-                    ariaLabel="notice-form-all-applications-checkbox"
-                    onChange={() => {
-                      setIsAllApplications(!isAllApplications);
-                    }}
-                  >
-                    <span>All applications</span>
-                  </GoACheckbox>
-                </div>
-                {isAllApplications === false && (
-                  <MultiDropdownStyle>
-                    <Multiselect
-                      options={noMonitorOnlyApplications}
-                      onSelect={onSelect}
-                      onRemove={onSelect}
-                      displayValue="name"
-                      selectedValues={selectedApplications}
-                      placeholder=""
-                      showCheckbox
-                      singleSelect
-                      avoidHighlightFirstOption
-                      customCloseIcon={<img src={CloseIcon} alt="Close" width="16" />}
-                    />
-                  </MultiDropdownStyle>
-                )}
-                <div className="error-msg">{errors?.['applications']}</div>
-              </ErrorWrapper>
-            </div>
-
-            <ErrorWrapper className={errors?.['date'] && 'error'}>
-              <div className="row-flex">
-                <div className="flex1 mr-1">
-                  <DatePickerStyle>
-                    <label>Start date</label>
-                    <DatePicker
-                      data-testid="notice-form-start-date-picker"
-                      name="startDate"
-                      onChange={setStartDate}
-                      value={startDate}
-                    />
-                  </DatePickerStyle>
-                </div>
-                <div className="flex1 ml-1">
-                  <DatePickerStyle>
-                    <label>End date</label>
-                    <DatePicker
-                      name="endDate"
-                      data-testid="notice-form-end-date-picker"
-                      onChange={setEndDate}
-                      value={endDate}
-                    />
-                  </DatePickerStyle>
-                </div>
-              </div>
-
-              <div className="row-flex">
-                <div className="flex1 mr-1">
-                  <DatePickerStyle>
-                    <label>Start time</label>
-                    <TimePicker
-                      name="startTime"
-                      onChange={setStartTime}
-                      data-testid="notice-form-start-time-picker"
-                      value={startTime}
-                    />
-                  </DatePickerStyle>
-                </div>
-                <div className="flex1 ml-1">
-                  <DatePickerStyle>
-                    <label>End time</label>
-                    <TimePicker
-                      name="endTime"
-                      onChange={setEndTime}
-                      data-testid="notice-form-end-time-picker"
-                      value={endTime}
-                    />
-                  </DatePickerStyle>
-                </div>
-              </div>
-
-              <div className="error-msg">{errors?.['date']}</div>
-            </ErrorWrapper>
-          </GoAForm>
-        </NoticeFormStyle>
-      </GoAModalContent>
-      <GoAModalActions>
+    <GoAModal
+      open={props.isOpen}
+      testId="notice-modal"
+      heading={props.title}
+      actions={
         <GoAButtonGroup alignment="end">
           <GoAButton type="secondary" testId="notice-form-cancel" onClick={cancel}>
             Cancel
@@ -264,7 +156,111 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
             Save as draft
           </GoAButton>
         </GoAButtonGroup>
-      </GoAModalActions>
+      }
+    >
+      <NoticeFormStyle>
+        <GoAFormItem error={errors?.['message']} label="Description">
+          <GoATextArea
+            testId="notice-form-description"
+            name="message"
+            value={message}
+            width="100%"
+            onChange={(name, value) => {
+              setMessage(value);
+            }}
+          />
+        </GoAFormItem>
+
+        <div>
+          <ErrorWrapper className={errors?.['applications'] && 'error'}>
+            <label className="notice-title">Application</label>
+            <div>
+              <GoACheckbox
+                name="isAllApplications"
+                checked={isAllApplications}
+                testId="notice-form-all-applications-checkbox"
+                ariaLabel="notice-form-all-applications-checkbox"
+                onChange={() => {
+                  setIsAllApplications(!isAllApplications);
+                }}
+              >
+                <span>All applications</span>
+              </GoACheckbox>
+            </div>
+            {isAllApplications === false && (
+              <MultiDropdownStyle>
+                <Multiselect
+                  options={noMonitorOnlyApplications}
+                  onSelect={onSelect}
+                  onRemove={onSelect}
+                  displayValue="name"
+                  selectedValues={selectedApplications}
+                  placeholder=""
+                  showCheckbox
+                  singleSelect
+                  avoidHighlightFirstOption
+                  customCloseIcon={<img src={CloseIcon} alt="Close" width="16" />}
+                />
+              </MultiDropdownStyle>
+            )}
+            <div className="error-msg">{errors?.['applications']}</div>
+          </ErrorWrapper>
+        </div>
+
+        <ErrorWrapper className={errors?.['date'] && 'error'}>
+          <div className="row-flex">
+            <div className="flex1 mr-1">
+              <DatePickerStyle>
+                <label>Start date</label>
+                <DatePicker
+                  data-testid="notice-form-start-date-picker"
+                  name="startDate"
+                  onChange={setStartDate}
+                  value={startDate}
+                />
+              </DatePickerStyle>
+            </div>
+            <div className="flex1 ml-1">
+              <DatePickerStyle>
+                <label>End date</label>
+                <DatePicker
+                  name="endDate"
+                  data-testid="notice-form-end-date-picker"
+                  onChange={setEndDate}
+                  value={endDate}
+                />
+              </DatePickerStyle>
+            </div>
+          </div>
+
+          <div className="row-flex">
+            <div className="flex1 mr-1">
+              <DatePickerStyle>
+                <label>Start time</label>
+                <TimePicker
+                  name="startTime"
+                  onChange={setStartTime}
+                  data-testid="notice-form-start-time-picker"
+                  value={startTime}
+                />
+              </DatePickerStyle>
+            </div>
+            <div className="flex1 ml-1">
+              <DatePickerStyle>
+                <label>End time</label>
+                <TimePicker
+                  name="endTime"
+                  onChange={setEndTime}
+                  data-testid="notice-form-end-time-picker"
+                  value={endTime}
+                />
+              </DatePickerStyle>
+            </div>
+          </div>
+
+          <div className="error-msg">{errors?.['date']}</div>
+        </ErrorWrapper>
+      </NoticeFormStyle>
     </GoAModal>
   );
 }

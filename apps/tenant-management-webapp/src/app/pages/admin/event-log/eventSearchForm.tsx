@@ -3,10 +3,10 @@ import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import type { EventSearchCriteria } from '@store/event/models';
 
-import { GoAFormItem, GoAFlexRow } from '@abgov/react-components/experimental';
+import { GoAFormItem } from '@abgov/react-components/experimental';
 import { getEventDefinitions } from '@store/event/actions';
 import styled from 'styled-components';
-import { GoAButton, GoAIconButton, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAButton, GoAIconButton, GoAButtonGroup, GoAGrid } from '@abgov/react-components-new';
 const initCriteria: EventSearchCriteria = {
   namespace: '',
   name: '',
@@ -128,7 +128,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
 
   return (
     <div>
-      <GoAFlexRow gap="small">
+      <GoAGrid minChildWidth="30ch" gap="s">
         <SearchBox>
           <GoAFormItem helpText={!error && message} error={error && message}>
             <label>Search event namespace and name</label>
@@ -217,7 +217,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
             onClick={() => setOpen(false)}
           />
         </GoAFormItem>
-      </GoAFlexRow>
+      </GoAGrid>
       <GoAButtonGroup alignment="end">
         <GoAButton
           type="secondary"

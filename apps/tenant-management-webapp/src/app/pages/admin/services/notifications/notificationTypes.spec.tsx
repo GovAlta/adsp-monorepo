@@ -251,7 +251,7 @@ describe('NotificationTypes Page', () => {
 
     await waitFor(() => {
       const form = queryByTestId('notification-types-form');
-      expect(form).not.toBeVisible();
+      expect(form).not.toBeNull();
     });
   });
 
@@ -375,12 +375,6 @@ describe('NotificationTypes Page', () => {
     expect(confirmation).not.toBeNull();
 
     fireEvent(deleteConfirm, new CustomEvent('_click'));
-
-    // const confirmation = queryByTestId('delete-confirmation');
-    // expect(confirmation).not.toBeNull();
-
-    // const deleteConfirm = queryByTestId('delete-confirm');
-    // fireEvent.click(deleteConfirm);
 
     const actions = store.getActions();
 

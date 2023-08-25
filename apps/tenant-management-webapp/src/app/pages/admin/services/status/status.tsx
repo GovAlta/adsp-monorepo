@@ -126,47 +126,43 @@ function Status(): JSX.Element {
   return (
     <Page>
       <Main>
-        {showAddApplicationModal && (
-          <ApplicationFormModal
-            isOpen={true}
-            testId={'add-application'}
-            isEdit={false}
-            title="Add application"
-            onCancel={() => {
-              setShowAddApplicationModal(false);
-            }}
-            onSave={() => {
-              if (activeIndex !== 1) {
-                setActiveIndex(1);
-              }
-              setShowAddApplicationModal(false);
-            }}
-            defaultApplication={{
-              name: '',
-              appKey: '',
-              tenantId: '',
-              enabled: false,
-              description: '',
-              endpoint: { url: '', status: 'offline' },
-            }}
-          />
-        )}
+        <ApplicationFormModal
+          isOpen={showAddApplicationModal}
+          testId={'add-application'}
+          isEdit={false}
+          title="Add application"
+          onCancel={() => {
+            setShowAddApplicationModal(false);
+          }}
+          onSave={() => {
+            if (activeIndex !== 1) {
+              setActiveIndex(1);
+            }
+            setShowAddApplicationModal(false);
+          }}
+          defaultApplication={{
+            name: '',
+            appKey: '',
+            tenantId: '',
+            enabled: false,
+            description: '',
+            endpoint: { url: '', status: 'offline' },
+          }}
+        />
 
-        {showAddWebhookModal && (
-          <WebhookFormModal
-            defaultWebhooks={defaultHooks}
-            isOpen={true}
-            testId={'add-webhook'}
-            isEdit={false}
-            title="Add webhook"
-            onCancel={() => {
-              setShowAddWebhookModal(false);
-            }}
-            onSave={() => {
-              setShowAddWebhookModal(false);
-            }}
-          />
-        )}
+        <WebhookFormModal
+          defaultWebhooks={defaultHooks}
+          isOpen={showAddWebhookModal}
+          testId={'add-webhook'}
+          isEdit={false}
+          title="Add webhook"
+          onCancel={() => {
+            setShowAddWebhookModal(false);
+          }}
+          onSave={() => {
+            setShowAddWebhookModal(false);
+          }}
+        />
         <h1 data-testid="status-title">Status service</h1>
         <Tabs activeIndex={activeIndex}>
           <Tab label="Overview">
@@ -214,18 +210,17 @@ function Status(): JSX.Element {
             )}
           </Tab>
           <Tab label="Notices">
-            {showAddNoticeModal && (
-              <NoticeModal
-                isOpen={true}
-                title="Add notice"
-                onCancel={() => {
-                  setShowAddNoticeModal(false);
-                }}
-                onSave={() => {
-                  setShowAddNoticeModal(false);
-                }}
-              />
-            )}
+            <NoticeModal
+              isOpen={showAddNoticeModal}
+              title="Add notice"
+              onCancel={() => {
+                setShowAddNoticeModal(false);
+              }}
+              onSave={() => {
+                setShowAddNoticeModal(false);
+              }}
+            />
+
             <p>
               This service allows for posting of application notices. This allows you to communicate with your customers
               about upcoming maintenance windows or other events
