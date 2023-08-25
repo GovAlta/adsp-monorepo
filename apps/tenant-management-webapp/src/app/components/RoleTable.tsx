@@ -1,7 +1,8 @@
-import DataTable from '@components/DataTable';
 import React, { useState } from 'react';
-import { GoACheckbox } from '@abgov/react-components-new';
-import { DataTableWrapper } from './styled-components';
+import { GoACheckbox, GoATable } from '@abgov/react-components-new';
+import { MarginAdjustment } from './styled-components';
+import { useSelector } from 'react-redux';
+import { RootState } from '@store/index';
 
 /**
  * A React component for creating roles table
@@ -34,21 +35,28 @@ interface ClientRoleTableProps {
 }
 
 export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
+  const { tenantName } = useSelector((state: RootState) => {
+    return {
+      tenantName: state.tenant.name,
+    };
+  });
   const [checkedRoles, setCheckedRoles] = useState(props.checkedRoles);
   const service = props.service;
 
+  const getClientId = () => {
+    return props.clientId ? props.clientId : tenantName;
+  };
   return (
-    <DataTableWrapper>
-      <DataTable noScroll={true}>
+    <>
+      <MarginAdjustment>{getClientId()}</MarginAdjustment>
+      <GoATable>
         <thead>
           <tr>
-            <th id={`${service}-roles`} className="role-name">
-              {props.clientId ? props.clientId : 'Roles'}
-            </th>
-            {props.checkedRoles.map((role, index) => {
+            <th id={`${service}-roles-${getClientId()}`}>Roles</th>
+            {props.checkedRoles.map((role) => {
               return (
-                <th id={`${role.title}-role-action`} className="role">
-                  <p style={{ textTransform: 'capitalize' }}>{role.title}</p>
+                <th id={`${role.title}-role-action-${getClientId()}`} className="role">
+                  <div style={{ textTransform: 'capitalize' }}>{role.title}</div>
                 </th>
               );
             })}
@@ -94,7 +102,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
             );
           })}
         </tbody>
-      </DataTable>
-    </DataTableWrapper>
+      </GoATable>
+    </>
   );
 };

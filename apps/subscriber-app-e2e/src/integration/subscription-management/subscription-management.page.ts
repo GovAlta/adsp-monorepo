@@ -46,7 +46,7 @@ class SubscriptionManagementPage {
   }
 
   contactSupportCalloutContent() {
-    return cy.xpath('//*[@id="contactSupport"]//*[@data-testid="callout-content"]');
+    return cy.xpath('//*[@id="contactSupport"]//goa-callout');
   }
 
   editContactInformation() {
@@ -81,8 +81,12 @@ class SubscriptionManagementPage {
     return cy.xpath('//goa-input[@data-testid="contact-email-input"]/following-sibling::div[@class="error-msg"]');
   }
 
-  preferredNotificationChannelSelection(selection) {
-    return cy.xpath(`//*[@class="goa-radio"]/input[@value="${selection}"]`);
+  preferredNotificationChannelGroup() {
+    return cy.xpath('//goa-radio-group[@name="channel"]');
+  }
+
+  preferredNotificationPreferredChannelGroup() {
+    return cy.xpath('//goa-radio-group[@name="preferredChannel"]');
   }
 
   preferredNotificationChannelDisplay() {

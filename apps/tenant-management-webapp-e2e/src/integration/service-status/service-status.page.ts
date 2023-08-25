@@ -135,8 +135,8 @@ class StatusServicePage {
     return cy.xpath(`//*[@data-testid="notice-list"]/div/div[${index}]//*[@data-testid="notice-card-menu-archive"]`);
   }
 
-  filterByStatusRadio(type) {
-    return cy.xpath(`//*[@class="goa-radio"]/input[@value="${type}"]/ancestor::div[@class="filter-radio"]`);
+  filterByStatusRadioGroup() {
+    return cy.xpath('//goa-radio-group[@name="option"]');
   }
 
   applicationHealthChangeNotificationSubscribeCheckbox() {

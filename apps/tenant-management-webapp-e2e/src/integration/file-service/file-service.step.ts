@@ -376,7 +376,7 @@ When('the user enters {string}, {string}, {string} on file type modal', function
   cy.wait(4000); //Wait for the client roles in the modal to show up
   //Enter Name
   if (name !== 'N/A') {
-    fileServiceObj.fileTypeModalNameField().clear().type(name);
+    fileServiceObj.fileTypeModalNameField().shadow().find('input').clear().type(name, { delay: 50, force: true });
   }
 
   //Select Who can read
@@ -449,6 +449,8 @@ When('the user enters {string}, {string}, {string} on file type modal', function
       }
     });
 
+  cy.wait(1000);
+
   //Select modify roles
   const updateRoles = updateRole.split(',');
   for (let i = 0; i < updateRoles.length; i++) {
@@ -456,13 +458,14 @@ When('the user enters {string}, {string}, {string} on file type modal', function
       .fileTypeModalModifyCheckbox(updateRoles[i].trim())
       .shadow()
       .find('.goa-checkbox-container')
-      .click({ force: true, multiple: true });
+      .scrollIntoView()
+      .click({ force: true });
   }
 });
 
 When('the user clicks Save button on file type modal', function () {
   cy.wait(1000); // Wait for the button to be enabled
-  fileServiceObj.fileTypeModalSaveButton().shadow().find('button').click({ force: true, multiple: true });
+  fileServiceObj.fileTypeModalSaveButton().shadow().find('button').click({ force: true });
   cy.wait(2000); // Wait the file type list to refresh
 });
 
@@ -498,11 +501,11 @@ When(
     findFileType(name, readRole, updateRole).then((rowNumber) => {
       switch (button) {
         case 'Edit':
-          fileServiceObj.fileTypeEditButton(rowNumber).click({ force: true });
+          fileServiceObj.fileTypeEditButton(rowNumber).shadow().find('button').click({ force: true });
           break;
         case 'Delete':
           cy.wait(1000); // Wait to avoid no modal showing up for delete button clicking
-          fileServiceObj.fileTypeDeleteButton(rowNumber).click({ force: true });
+          fileServiceObj.fileTypeDeleteButton(rowNumber).shadow().find('button').click({ force: true });
           break;
         default:
           expect(button).to.be.oneOf(['Edit', 'Delete']);
@@ -736,6 +739,7 @@ Then('the user view retention policy 1 days in file type modal', function () {
   cy.wait(1000);
   fileServiceObj.fileRetentionDelayInput().invoke('val').should('equal', '1');
 });
+
 Then('the user uncheck Active retention policy checkbox', function () {
   cy.wait(1000); // Wait for modal
   fileServiceObj.fileRetentionCheckBox().shadow().find('.goa-checkbox-container').click({ force: true });

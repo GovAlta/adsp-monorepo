@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Main } from '@components/Html';
 import Container from '@components/Container';
 import DataTable from '@components/DataTable';
-import { GoASkeletonGridColumnContent, GoACallout } from '@abgov/react-components';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoASkeletonGridColumnContent } from '@abgov/react-components';
+import { GoAButton, GoACallout } from '@abgov/react-components-new';
 import { FetchContactInfoService } from '@store/notification/actions';
 import { GoAModal, GoAModalActions, GoAModalTitle } from '@abgov/react-components/experimental';
 
@@ -129,7 +129,7 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
           </ContactInformationWrapper>
           {!hasSubscriberId ? (
             <NoSubscriberCallout>
-              <GoACallout title="You have no subscriptions" type="important"></GoACallout>
+              <GoACallout type="important" heading="You have no subscriptions" />
             </NoSubscriberCallout>
           ) : (
             <>
@@ -163,7 +163,7 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
                 </DataTable>
 
                 {subscriber?.subscriptions?.length <= 0 ? (
-                  <GoACallout title="You have no subscriptions" type="important"></GoACallout>
+                  <GoACallout type="important" heading="You have no subscriptions" />
                 ) : (
                   ''
                 )}
@@ -173,7 +173,7 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
                 <GoASkeletonGridColumnContent rows={5}></GoASkeletonGridColumnContent>
               ) : (
                 <CalloutWrapper id="contactSupport">
-                  <GoACallout title="Need help? Contact your service admin" type="information">
+                  <GoACallout heading="Need help? Contact your service admin" type="information">
                     <div>{contact?.supportInstructions || ''}</div>
                     <div>
                       {contact?.contactEmail && (

@@ -1,5 +1,4 @@
 import axios from 'axios';
-import moment from 'moment';
 import { Logger } from 'winston';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { EndpointStatusEntry, EndpointStatusType } from '../types';
@@ -13,10 +12,12 @@ import {
   monitoredServiceUp,
 } from '../events';
 import { Configuration, StatusConfiguration, StaticApplicationData, Webhooks } from '../model';
+import { diffMinutes } from '../utils';
 
 const ENTRY_SAMPLE_SIZE = 5;
 const HEALTHY_MAX_FAIL_COUNT = 0;
 const UNHEALTHY_MIN_FAIL_COUNT = 3;
+const QUERY_SIZE = 5;
 
 type GetEndpointResponse = (url: string) => Promise<{ status: number | string }>;
 export interface CreateCheckEndpointProps {
@@ -41,10 +42,12 @@ export function createCheckEndpointJob(props: CreateCheckEndpointProps) {
       props.logger?.info(`Start to run the check endpoint job.`);
       const { getEndpointResponse } = props;
       // run all endpoint tests
-      await checkAndUpdateAutoChangeStatus(props);
-
       const statusEntry = await checkEndpoint(getEndpointResponse, props.app.url, props.app.appKey, props.logger);
       await saveStatus(props, statusEntry, props.app.tenantId);
+
+      // Keep this auto change status after the 'saveStatus' method as the autoChangeStatus' depends on
+      // the correct status app status and Endpoint service statuses information.
+      await checkAndUpdateAutoChangeStatus(props);
 
       props.logger?.info(`Successfully finished the check endpoint job.`);
     } catch (error) {
@@ -291,7 +294,6 @@ const updateAppStatus = async (
  */
 async function checkAndUpdateAutoChangeStatus(props: CreateCheckEndpointProps) {
   const { app, serviceStatusRepository, endpointStatusEntryRepository, logger } = props;
-  const QUERY_SIZE = 5;
 
   try {
     if (app.autoChangeStatus) {
@@ -302,15 +304,20 @@ async function checkAndUpdateAutoChangeStatus(props: CreateCheckEndpointProps) {
         QUERY_SIZE
       );
 
-      //get first and last date time to make sure the time is 5 minutes apart.
-      const mostRecentDate = moment(new Date(recentHistory.at(0).timestamp));
-      const oldestDate = moment(new Date(recentHistory.at(-1).timestamp));
+      //Get first and last date time to make sure the time is 5 minutes apart.
+      const mostRecentDate = new Date(recentHistory.at(0).timestamp);
+      const oldestDate = new Date(recentHistory.at(-1).timestamp);
+      const dateDiff = diffMinutes(oldestDate, mostRecentDate) + 1; // +1 is for inclusive minutes
 
-      //Need to round date diff as MomentJS can give you an incorrect number because of the milliseconds
-      const dateDiff = Math.round(mostRecentDate.diff(oldestDate, 'minute'));
+      const failedForMoreThanFiveMinutes =
+        recentHistory.filter((hist) => {
+          return !hist.ok;
+        }).length >= 5 && dateDiff >= 5;
+      const succeededMoreThanFiveMinutes =
+        recentHistory.filter((hist) => {
+          return hist.ok;
+        }).length >= 5 && dateDiff >= 5;
 
-      const failedForMoreThanFiveMinutes = recentHistory.filter((hist) => !hist.ok && dateDiff >= 5).length > 0;
-      const succeededMoreThanFiveMinutes = recentHistory.filter((hist) => hist.ok && dateDiff >= 5).length > 0;
       const currentServiceStatus = await serviceStatusRepository.get(app.appKey);
 
       //Set the status to opperational if it is in report issues status and

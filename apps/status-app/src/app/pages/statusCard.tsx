@@ -1,7 +1,7 @@
 import React from 'react';
 
 import styled from 'styled-components';
-import { GoACallout } from '@abgov/react-components';
+import { GoACallout } from '@abgov/react-components-new';
 import { Notice, sortNotices } from '@store/status/models';
 import { LocalTime } from '@components/Date';
 
@@ -91,7 +91,7 @@ export function ServiceStatus(props: ServiceOptions): JSX.Element {
           {sortedNotice.map((notice) => {
             return (
               <div data-testid="service-notice">
-                <GoACallout title="Notice" type="important" key={`{notice-${notice.id}}`}>
+                <GoACallout heading="Notice" type="important" key={`{notice-${notice.id}}`}>
                   <div data-testid="service-notice-message">{notice.message}</div>
                   <br />
                   <div data-testid="service-notice-date-range">

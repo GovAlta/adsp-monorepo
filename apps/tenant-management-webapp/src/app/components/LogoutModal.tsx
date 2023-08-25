@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { GoAModal, GoAModalContent, GoAModalTitle, GoAModalActions } from '@abgov/react-components/experimental';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
 import { RootState } from '@store/index';
 
 export const LogoutModal = (): JSX.Element => {
@@ -13,31 +12,36 @@ export const LogoutModal = (): JSX.Element => {
   useEffect(() => {}, [isExpired]);
 
   return (
-    <GoAModal isOpen={isExpired === true} testId="tenant-logout-notice-modal">
-      <GoAModalTitle>Session expired</GoAModalTitle>
-      <GoAModalContent>
+    <GoAModal
+      open={isExpired === true}
+      testId="tenant-logout-notice-modal"
+      heading="Session expired"
+      actions={
+        <GoAButtonGroup alignment="end">
+          <GoAButton
+            testId="logout-again-button"
+            onClick={() => {
+              const tenantRealm = localStorage.getItem('realm');
+              const idpFromUrl = localStorage.getItem('idpFromUrl');
+              localStorage.removeItem('realm');
+              if (idpFromUrl === null || idpFromUrl === 'core') {
+                const url = `${tenantRealm}/login`;
+                window.location.replace(url);
+              } else {
+                const url = `${tenantRealm}/login?kc_idp_hint=${idpFromUrl}`;
+                window.location.replace(url);
+              }
+            }}
+          >
+            Login again
+          </GoAButton>
+        </GoAButtonGroup>
+      }
+    >
+      <p>
         You were logged out of the system. If you wish to continue, please login again. Otherwise, close the tab or
         window.
-      </GoAModalContent>
-      <GoAModalActions>
-        <GoAButton
-          testId="logout-again-button"
-          onClick={() => {
-            const tenantRealm = localStorage.getItem('realm');
-            const idpFromUrl = localStorage.getItem('idpFromUrl');
-            localStorage.removeItem('realm');
-            if (idpFromUrl === null || idpFromUrl === 'core') {
-              const url = `${tenantRealm}/login`;
-              window.location.replace(url);
-            } else {
-              const url = `${tenantRealm}/login?kc_idp_hint=${idpFromUrl}`;
-              window.location.replace(url);
-            }
-          }}
-        >
-          Login again
-        </GoAButton>
-      </GoAModalActions>
+      </p>
     </GoAModal>
   );
 };

@@ -91,7 +91,11 @@ And('the user removes phone number value in contact information', function () {
 });
 
 When('the user selects {string} as the preferred channel in contact information', function (selection) {
-  subscriptionManagementObj.preferredNotificationChannelSelection(selection).click({ force: true });
+  subscriptionManagementObj
+    .preferredNotificationChannelGroup()
+    .shadow()
+    .find('input[value="' + selection + '"]')
+    .click({ force: true });
 });
 
 Then('the user views an error messsage for missing phone number', function () {
@@ -111,13 +115,22 @@ Then('the user views an error messsage for missing email', function () {
 When(
   'the user enters {string} as email, {string} as phone number and {string} as preferred channel',
   function (email, phone, channel) {
-    subscriptionManagementObj.emailInput().shadow().find('input').clear().type(email, { force: true });
+    subscriptionManagementObj.emailInput().shadow().find('input').clear().type(email, { delay: 50, force: true });
     if (phone == 'EMPTY') {
       subscriptionManagementObj.phoneNumberInput().shadow().find('input').clear({ force: true });
     } else {
-      subscriptionManagementObj.phoneNumberInput().shadow().find('input').clear().type(phone, { force: true });
+      subscriptionManagementObj
+        .phoneNumberInput()
+        .shadow()
+        .find('input')
+        .clear()
+        .type(phone, { delay: 50, force: true });
     }
-    subscriptionManagementObj.preferredNotificationChannelSelection(channel).click({ force: true });
+    subscriptionManagementObj
+      .preferredNotificationChannelGroup()
+      .shadow()
+      .find('input[value="' + channel + '"]')
+      .click({ force: true });
   }
 );
 
@@ -128,7 +141,7 @@ And('the user views contact information of {string}, {string} and {string}', fun
   } else {
     subscriptionManagementObj.phoneNumberDisplay().invoke('text').should('contain', phone);
   }
-  subscriptionManagementObj.preferredNotificationChannelDisplay().should('have.value', channel);
+  subscriptionManagementObj.preferredNotificationPreferredChannelGroup().invoke('attr', 'value').should('eq', channel);
 });
 
 Then('the user views the checked {string} icon for {string}', function (channel, subscriptionName) {

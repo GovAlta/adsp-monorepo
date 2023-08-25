@@ -132,9 +132,7 @@ export const WebhookFormModal: FC<Props> = ({
   });
 
   function isFormValid(): boolean {
-    if (webhook?.eventTypes.length === 0) return false;
-    if (!webhook?.url) return false;
-    return !validators.haveErrors();
+    return webhook?.eventTypes.length !== 0 && webhook?.url && webhook?.targetId !== '' && !validators.haveErrors();
   }
 
   orderedGroupNames = [
@@ -213,9 +211,9 @@ export const WebhookFormModal: FC<Props> = ({
             <GoAFormItem>
               <label>Application</label>
               <GoADropdown
-                name="Application"
+                name="targetId"
                 value={webhook.targetId}
-                onChange={(_n, [value]) =>
+                onChange={(_n, value: string) =>
                   setWebhook({
                     ...webhook,
                     targetId: value,
@@ -224,11 +222,10 @@ export const WebhookFormModal: FC<Props> = ({
                 aria-label="select-webhook-dropdown"
                 width="100%"
                 testId="webhook-application-dropdown"
-                relative={true}
               >
                 {applications.map((application) => (
                   <GoADropdownItem
-                    name="Application"
+                    name="targetId"
                     label={application.appKey}
                     value={application.appKey}
                     key={application.appKey}

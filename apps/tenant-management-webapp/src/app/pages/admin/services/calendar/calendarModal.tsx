@@ -1,9 +1,6 @@
 import React, { FunctionComponent, useState } from 'react';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+import { GoAButton, GoAButtonGroup, GoAModal, GoATextArea, GoAInput, GoAFormItem } from '@abgov/react-components-new';
 import { CalendarItem } from '@store/calendar/models';
-import { GoATextArea, GoAInput } from '@abgov/react-components-new';
 import { useSelector } from 'react-redux';
 import { Role } from '@store/tenant/models';
 import { ClientRoleTable } from '@components/RoleTable';
@@ -124,64 +121,11 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
   };
 
   return (
-    <GoAModal testId="add-calendar-modal" isOpen={open}>
-      <GoAModalTitle>{title}</GoAModalTitle>
-      <GoAModalContent>
-        <GoAForm>
-          <GoAFormItem error={errors?.['name']}>
-            <label>Name</label>
-            <GoAInput
-              type="text"
-              name="name"
-              value={calendar.displayName}
-              testId={`calendar-modal-name-input`}
-              aria-label="name"
-              disabled={!isNew}
-              width="100%"
-              onChange={(name, value) => {
-                const validations = {
-                  name: value,
-                };
-                validators.remove('name');
-                if (isNew) {
-                  validations['duplicated'] = value;
-                }
-                validators.checkAll(validations);
-                const calendarId = toKebabName(value);
-                setCalendar({ ...calendar, name: calendarId, displayName: value });
-              }}
-            />
-          </GoAFormItem>
-          <GoAFormItem>
-            <label>Calendar ID</label>
-            <IdField>{calendar.name}</IdField>
-          </GoAFormItem>
-          <GoAFormItem error={errors?.['description']}>
-            <label>Description</label>
-            <GoATextArea
-              name="description"
-              value={calendar.description}
-              testId={`calendar-modal-description-input`}
-              aria-label="description"
-              width="100%"
-              onChange={(name, value) => {
-                const description = value;
-                validators.remove('description');
-                validators['description'].check(description);
-                setCalendar({ ...calendar, description });
-              }}
-            />
-          </GoAFormItem>
-          {tenantClients &&
-            elements.map((e, key) => {
-              return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
-            })}
-          {Object.entries(tenantClients).length === 0 && (
-            <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>
-          )}
-        </GoAForm>
-      </GoAModalContent>
-      <GoAModalActions>
+    <GoAModal
+      testId="add-calendar-modal"
+      open={open}
+      heading={title}
+      actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
             type="secondary"
@@ -204,7 +148,56 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
             Save
           </GoAButton>
         </GoAButtonGroup>
-      </GoAModalActions>
+      }
+    >
+      <GoAFormItem error={errors?.['name']} label="Name">
+        <GoAInput
+          type="text"
+          name="name"
+          value={calendar.displayName}
+          testId={`calendar-modal-name-input`}
+          aria-label="name"
+          disabled={!isNew}
+          width="100%"
+          onChange={(name, value) => {
+            const validations = {
+              name: value,
+            };
+            validators.remove('name');
+            if (isNew) {
+              validations['duplicated'] = value;
+            }
+            validators.checkAll(validations);
+            const calendarId = toKebabName(value);
+            setCalendar({ ...calendar, name: calendarId, displayName: value });
+          }}
+        />
+      </GoAFormItem>
+      <GoAFormItem label="Calendar ID">
+        <IdField>{calendar.name}</IdField>
+      </GoAFormItem>
+      <GoAFormItem error={errors?.['description']} label="Description">
+        <GoATextArea
+          name="description"
+          value={calendar.description}
+          testId={`calendar-modal-description-input`}
+          aria-label="description"
+          width="100%"
+          onChange={(name, value) => {
+            const description = value;
+            validators.remove('description');
+            validators['description'].check(description);
+            setCalendar({ ...calendar, description });
+          }}
+        />
+      </GoAFormItem>
+      {tenantClients &&
+        elements.map((e, key) => {
+          return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+        })}
+      {Object.entries(tenantClients).length === 0 && (
+        <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>
+      )}
     </GoAModal>
   );
 };

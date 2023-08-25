@@ -24,7 +24,7 @@ Then('the user views Add script modal', function () {
 });
 
 When('the user enters {string} in name field in script modal', function (name) {
-  scriptObj.addScriptModalNameField().clear().type(name);
+  scriptObj.addScriptModalNameField().shadow().find('input').clear().type(name, { delay: 100, force: true });
 });
 
 Then('the user views the error message of {string} on namespace in script modal', function (errorMsg) {
@@ -35,7 +35,7 @@ When(
   'the user enters {string}, {string}, {string}, {string} in Add script modal',
   function (name, desc, useServiceAcct, role) {
     const roles = role.split(',');
-    scriptObj.addScriptModalNameField().clear().type(name);
+    scriptObj.addScriptModalNameField().shadow().find('input').clear().type(name, { delay: 100, force: true });
     scriptObj.addScriptModalDescriptionField().shadow().find('.goa-textarea').clear().type(desc, { force: true });
     switch (useServiceAcct) {
       case 'yes':
@@ -149,11 +149,11 @@ When(
       cy.wait(1000); // Wait for buttons to show up
       switch (button.toLowerCase()) {
         case 'edit':
-          scriptObj.scriptEditButton(rowNumber).click({ force: true });
+          scriptObj.scriptEditButton(rowNumber).shadow().find('button').click({ force: true });
           break;
           break;
         case 'delete':
-          scriptObj.scriptDeleteButton(rowNumber).click();
+          scriptObj.scriptDeleteButton(rowNumber).shadow().find('button').click({ force: true });
           break;
         default:
           expect(button).to.be.oneOf(['edit', 'delete']);
@@ -167,7 +167,7 @@ Then('the user views Edit script modal', function () {
 });
 
 When('the user enters {string} as name {string} as description in Edit script modal', function (name, description) {
-  scriptObj.editScriptModalNameField().clear().type(name);
+  scriptObj.editScriptModalNameField().shadow().find('input').clear().type(name, { delay: 100, force: true });
   scriptObj.editScriptModalDescriptionField().shadow().find('.goa-textarea').clear().type(description, { force: true });
 });
 

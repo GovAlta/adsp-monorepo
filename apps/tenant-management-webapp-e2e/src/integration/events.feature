@@ -74,9 +74,9 @@ Feature: Events
     When the user clicks Cancel button on Definition modal
     Then the user exits the add definition dialog
     Examples:
-      | Namespace           | Name           | Description    | Error Message                            | Error Field |
-      | autotest-name:space | autotest-name  | auto-test-desc | Allowed characters are: a-z, A-Z, 0-9, - | Namespace   |
-      | autotest-namespace  | autotest-na:me | auto-test-desc | Allowed characters are: a-z, A-Z, 0-9, - | Name        |
+      | Namespace           | Name           | Description    | Error Message                               | Error Field |
+      | autotest-name:space | autotest-name  | auto-test-desc | Allowed characters are: a-z, A-Z, 0-9, -, _ | Namespace   |
+      | autotest-namespace  | autotest-na:me | auto-test-desc | Allowed characters are: a-z, A-Z, 0-9, -, _ | Name        |
 
   @TEST_CS-740 @REQ_CS-250 @regression
   Scenario: As a tenant admin, I cannot add/modify/delete event definitions within platform service namespaces

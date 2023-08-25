@@ -42,10 +42,10 @@ When('the user clicks Add entry button', function () {
 Then('the user {string} Add entry modal', function (viewOrNot) {
   switch (viewOrNot) {
     case 'views':
-      commonObj.modalTitle().invoke('text').should('eq', 'Add entry');
+      directoryObj.entryModalTitle().invoke('text').should('eq', 'Add entry');
       break;
     case 'should not view':
-      commonObj.modalTitle().should('not.exist');
+      directoryObj.entryModalTitle().should('not.exist');
       break;
     default:
       expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
@@ -53,29 +53,35 @@ Then('the user {string} Add entry modal', function (viewOrNot) {
 });
 
 Then('the user views Edit entry modal', function () {
-  commonObj.modalTitle().invoke('text').should('eq', 'Edit entry');
+  directoryObj.entryModalTitle().invoke('text').should('eq', 'Edit entry');
 });
 
 Then('the user views Delete entry modal for {string}', function (entryName) {
-  commonObj.modalTitle().invoke('text').should('eq', 'Delete entry');
+  directoryObj.deleteModalTitle().invoke('text').should('eq', 'Delete entry');
   directoryObj
     .deleteModalContent()
     .invoke('text')
-    .should('eq', 'Delete ' + entryName + '?');
+    .should('contain', 'Delete ' + entryName + '?');
 });
 
 When('the user enters {string} in Service, {string} in API, {string} in URL', function (service, api, url) {
-  directoryObj.entryModalServiceField().clear().type(service);
+  directoryObj.entryModalServiceField().shadow().find('input').clear().type(service, { delay: 50, force: true });
   if (api.toLowerCase() == 'empty') {
-    directoryObj.entryModalApiField().type(api).clear();
+    directoryObj.entryModalApiField().shadow().find('input').clear();
   } else {
-    directoryObj.entryModalApiField().clear().type(api);
+    directoryObj.entryModalApiField().shadow().find('input').clear().type(api, { delay: 50, force: true });
   }
-  directoryObj.entryModalUrlField().clear().type(url);
+  directoryObj.entryModalUrlField().shadow().find('input').clear().type(url, { delay: 50, force: true });
 });
 
 When('the user modifies URL field {string}', function (url) {
-  directoryObj.entryModalUrlField().scrollIntoView().clear().type(url);
+  directoryObj
+    .entryModalUrlField()
+    .shadow()
+    .find('input')
+    .scrollIntoView()
+    .clear()
+    .type(url, { delay: 50, force: true });
 });
 
 Then('the user clicks Save button in Entry modal', function () {
@@ -131,29 +137,30 @@ Then('the user views the error message {string} for {string} field', function (e
 
 When('the user clicks Edit icon of {string}, {string}, {string} on entries page', function (entryName, api, url) {
   if (api.toLowerCase() == 'empty') {
-    directoryObj.entryNameUrlEditIcon(entryName, url).click();
+    directoryObj.entryNameUrlEditIcon(entryName, url).shadow().find('button').click({ force: true });
   } else {
-    directoryObj.entryNameApiUrlEditIcon(entryName, api, url).click();
+    directoryObj.entryNameApiUrlEditIcon(entryName, api, url).shadow().find('button').click({ force: true });
   }
   cy.wait(2000);
 });
 
 When('the user clicks Delete icon of {string}, {string}, {string} on entries page', function (entryName, api, url) {
   if (api.toLowerCase() == 'empty') {
-    directoryObj.entryNameUrlDeleteIcon(entryName, url).click();
+    directoryObj.entryNameUrlDeleteIcon(entryName, url).shadow().find('button').click({ force: true });
   } else {
-    directoryObj.entryNameApiUrlDeleteIcon(entryName, api, url).click();
+    directoryObj.entryNameApiUrlDeleteIcon(entryName, api, url).shadow().find('button').click({ force: true });
   }
   cy.wait(2000);
 });
 
 When('the user clicks Delete button in Entry modal', function () {
-  directoryObj.deleteModalDeleteBtn().scrollIntoView().click();
+  directoryObj.deleteModalDeleteBtn().shadow().find('button').scrollIntoView().click({ force: true });
   cy.wait(2000);
 });
 
 When('the user clicks Eye icon for the service entry of {string}', function (serviceName) {
-  directoryObj.entryNameEyeIcon(serviceName).click();
+  directoryObj.entryNameEyeIcon(serviceName).shadow().find('button').click({ force: true });
+  cy.wait(1000);
 });
 
 Then('the user views the metadata of service for {string}', function (serviceName) {
@@ -161,18 +168,19 @@ Then('the user views the metadata of service for {string}', function (serviceNam
 });
 
 When('the user clicks Eye icon to close metadata for the service entry of {string}', function (serviceName) {
-  directoryObj.entryNameEyeOffIcon(serviceName).click();
+  directoryObj.entryNameEyeOffIcon(serviceName).shadow().find('button').click({ force: true });
+  cy.wait(1000);
 });
 
 Then('the user clicks on Add from the action menu', function () {
   cy.wait(1000); // Wait for the + icon to show
-  directoryObj.addEntryActionBtn().click();
+  directoryObj.addEntryActionBtn().shadow().find('button').click({ force: true });
 });
 
 Then('the user views disabled inputs for Service, API and URL fields', function () {
-  directoryObj.entryModalServiceField().should('be.disabled');
-  directoryObj.entryModalApiField().should('be.disabled');
-  directoryObj.entryModalUrlField().should('be.disabled');
+  directoryObj.entryModalServiceField().shadow().find('input').should('be.disabled');
+  directoryObj.entryModalApiField().shadow().find('input').should('be.disabled');
+  directoryObj.entryModalUrlField().shadow().find('input').should('be.disabled');
 });
 
 When(

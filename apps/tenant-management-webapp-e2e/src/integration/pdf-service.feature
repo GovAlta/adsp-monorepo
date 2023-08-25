@@ -15,7 +15,7 @@ Feature: PDF service
     # Add a PDF template
     When the user clicks Add template button
     Then the user views Add template modal
-    When the user enters "t" as name, "autotest PDF template desc" as description in pdf template modal
+    When the user enters "autotest-pdftemplate" as name, "autotest PDF template desc" as description in pdf template modal
     And the user clicks Save button in Add or Edit template modal
     # Edit a PDF template meta data
     When the user clicks the "Header" tab in PDF template editor and view content
@@ -26,17 +26,17 @@ Feature: PDF service
     When the user clicks the "File history" tab in PDF template editor and view content
     Then the user views "No PDF's have been generated yet"
     Then the user views the PDF template editor screen
-    Then the user views "t", "t" and "autotest PDF template desc" in PDF template editor
+    Then the user views "autotest-pdftemplate", "autotest-pdftemplate" and "autotest PDF template desc" in PDF template editor
     When the user clicks "Edit" icon in editor screen
-    When the user enters "t" as name and " new" as description in PDF template modal
+    When the user enters "autotest-pdftemplate-new" as name and "autotest PDF template desc new" as description in PDF template modal
     And the user clicks Save button in Add or Edit template modal
     And the user clicks Back button in editor screen
-    Then the user "views" the PDF template of "tt", "t" and "autotest PDF template desc new"
+    Then the user "views" the PDF template of "autotest-pdftemplate-new", "autotest-pdftemplate" and "autotest PDF template desc new"
     # Delete a PDF template
-    When the user clicks "Delete" icon of "tt", "t" and "autotest PDF template desc new" on PDF templates page
-    Then the user views Delete PDF template modal for "tt"
+    When the user clicks "Delete" icon of "autotest-pdftemplate-new", "autotest-pdftemplate" and "autotest PDF template desc new" on PDF templates page
+    Then the user views Delete PDF template modal for "autotest-pdftemplate-new"
     When the user clicks Confirm button in Delete PDF Template modal
-    Then the user "should not view" the PDF template of "tt", "t" and "autotest PDF template new desc"
+    Then the user "should not view" the PDF template of "autotest-pdftemplate-new", "autotest-pdftemplate" and "autotest PDF template new desc new"
 
   @accessibility @regression
   Scenario: As a tenant admin, I can use PDF pages without any critical or serious accessibility issues

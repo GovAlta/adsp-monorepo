@@ -54,11 +54,11 @@ export const checkInput = (input: unknown, validators: Validator[], action?: Val
 export const validationPattern = {
   mixedKebabCase: {
     pattern: new RegExp(/^[a-zA-Z0-9-_]+$/),
-    onFailureMessage: 'Allowed characters are: a-z, A-Z, 0-9,-,_',
+    onFailureMessage: 'Allowed characters are: a-z, A-Z, 0-9, -, _',
   },
   mixedArrowCaseWithSpace: {
     pattern: new RegExp(/^[a-zA-Z0-9- ]+$/),
-    onFailureMessage: 'Allowed characters are: a-z, A-Z, 0-9, -,[space]',
+    onFailureMessage: 'Allowed characters are: a-z, A-Z, 0-9, -, [space]',
   },
   lowerKebabCase: { pattern: new RegExp(/^[a-z0-9-]+$/), onFailureMessage: 'Allowed characters are: a-z, 0-9, -' },
   upperKebabCase: { pattern: new RegExp(/^[A-Z0-9-]+$/), onFailureMessage: 'Allowed characters are: A-Z, 0-9, -' },

@@ -1,8 +1,6 @@
 import React, { createRef, useEffect, useState, useRef } from 'react';
-import { GoAContainer } from '@abgov/react-components-new';
-import { GoACallout } from '@abgov/react-components';
+import { GoAContainer, GoACallout } from '@abgov/react-components-new';
 import { Link } from 'react-router-dom';
-
 import { Grid, GridItem } from '@components/Grid';
 import { Main, Page } from '@components/Html';
 import { useSelector } from 'react-redux';
@@ -195,8 +193,11 @@ const Dashboard = (): JSX.Element => {
     return (
       <Main>
         <h2>{tenantName} dashboard</h2>
-        <GoACallout type="important" data-testid="delete-modal">
-          <h3>Access to tenant admin app requires tenant-admin role</h3>
+        <GoACallout
+          heading="Access to tenant admin app requires tenant-admin role"
+          type="important"
+          testId="delete-modal"
+        >
           <p>
             You must have the administrator role to access the tenant administration application. If you need access,
             contact the tenant owner at <a href={`mailto: ${adminEmail}`}>{adminEmail}</a>

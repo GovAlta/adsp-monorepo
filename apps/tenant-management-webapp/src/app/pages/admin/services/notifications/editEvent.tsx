@@ -47,7 +47,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
   }, [selectedEvent]);
 
   function onChange(name, values) {
-    setValues(values);
+    setValues([values]);
   }
 
   useEffect(() => {
@@ -97,7 +97,6 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
                 aria-label="event-form-dropdown"
                 width="100%"
                 testId="event-dropdown"
-                relative={true}
               >
                 {dropDownOptions.map((item, key) => (
                   <GoADropdownItem label={item.label} value={item.value} key={key} data-testid={item.dataTestId} />
@@ -109,7 +108,14 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
       </GoAModalContent>
       <GoAModalActions>
         <GoAButtonGroup alignment="end">
-          <GoAButton testId="event-form-cancel" type="secondary" onClick={onCancel}>
+          <GoAButton
+            testId="event-form-cancel"
+            type="secondary"
+            onClick={() => {
+              setValues(['']);
+              onCancel();
+            }}
+          >
             Cancel
           </GoAButton>
           <GoAButton
@@ -117,7 +123,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
             type="primary"
             testId="event-form-save"
             onClick={() => {
-              const dropdownObject = dropDownOptions.find((dropdown) => dropdown.value === selectedValues);
+              const dropdownObject = dropDownOptions.find((dropdown) => dropdown.value === selectedValues[0]);
               const eventObject: EventItem = {
                 namespace: dropdownObject.nameSpace,
                 name: dropdownObject.name,

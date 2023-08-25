@@ -22,7 +22,7 @@ Feature: Tenant management welcome page
     @TEST_CS-331 @REQ_CS-370 @regression @tenant-signup
     Scenario: User created a tenant cannot create another tenant
         Given the user is on the tenant management welcome page
-        When the user selects get started button
+        When the user selects Request a tenant button
         And the user clicks Sign in button
         And the user enters "env{email}" and "env{password}", and clicks login button
         Then the user views a notification message of "has already created a tenant"
@@ -31,7 +31,7 @@ Feature: Tenant management welcome page
     @TEST_CS-332 @REQ_CS-791 @regression
     Scenario: As a tenant management user, I cannot create a tenant having a name with special chars or the same as an existing name
         Given the user is on the tenant management welcome page
-        When the user selects get started button
+        When the user selects Request a tenant button
         And the user clicks Sign in button
         And the user enters "env{email2}" and "env{password2}", and clicks login button
         Then the user views create tenant page
@@ -45,7 +45,7 @@ Feature: Tenant management welcome page
     @TEST_CS-297 @REQ_CS-370 @REQ-CS-193 @regression @tenant-signup
     Scenario: User didn't create a tenant before can create a new tenant
         Given the user is on the tenant management welcome page
-        When the user selects get started button
+        When the user selects Request a tenant button
         And the user clicks Sign in button
         And the user enters "env{email2}" and "env{password2}", and clicks login button
         Then the user views create tenant page
@@ -67,14 +67,15 @@ Feature: Tenant management welcome page
     @TEST_CS-733 @REQ_CS-640 @regression
     Scenario: As a non-beta-tester user, I cannot create a new tenant in ADSP
         Given the user is on the tenant management welcome page
-        When the user selects get started button
+        When the user selects Request a tenant button
         And the user clicks Sign in button
         And the user enters "env{email3}" and "env{password3}", and clicks login button
         Then the user views a message of cannot create a tenant without beta-tester role
         When the user clicks back to sign in page button
         Then the user views the tenant management welcome page title
 
-    @TEST_CS-1435 @REQ_CS-1384 @regression
+    # Window.open stubbing doesn't work with the new Loadmore button of shadow element
+    @TEST_CS-1435 @REQ_CS-1384 @regression @ignore
     Scenario: As an interested service owner, I can see examples on the tenant admin landing page, so I can find and go to examples
         When the user goes to the tenant management welcome page
         Then the user views Chat app card under Example apps section

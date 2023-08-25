@@ -4,7 +4,7 @@ class WelcomePage {
     return cy.xpath('//*[@data-testid="sign-ing-btn"]');
   }
 
-  getStartedButton() {
+  requestATenantButton() {
     return cy.get('a:contains("Request a tenant")');
   }
 
@@ -21,7 +21,7 @@ class WelcomePage {
   }
 
   createTenantButton() {
-    return cy.get('button:contains("Create tenant")');
+    return cy.get('goa-button:contains("Create tenant")');
   }
 
   createTenantLinkButton() {
@@ -33,7 +33,7 @@ class WelcomePage {
   }
 
   tenantLoginButton() {
-    return cy.get('button:contains("Tenant Login")');
+    return cy.get('goa-button:contains("Tenant Login")');
   }
 
   userIcon() {
@@ -45,7 +45,7 @@ class WelcomePage {
   }
 
   getStartedSigninButton() {
-    return cy.get('button:contains("Sign in")');
+    return cy.get('goa-button:contains("Sign in")');
   }
 
   tenantSignInTitle() {
@@ -79,7 +79,7 @@ class WelcomePage {
   }
 
   chatAppCardLearnMoreBtn() {
-    return cy.xpath('//button[@data-testid="redirect-button-chat-service"]');
+    return cy.xpath('//goa-button[@data-testid="redirect-button-chat-service"]');
   }
 }
 

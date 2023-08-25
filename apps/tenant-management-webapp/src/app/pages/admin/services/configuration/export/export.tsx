@@ -14,13 +14,12 @@ import { getConfigurationDefinitions, getConfigurations, ServiceId } from '@stor
 import { PageIndicator } from '@components/Indicator';
 import { ConfigurationExportType, Service } from '@store/configuration/model';
 import { Exports } from '../styled-components';
-import { GoAContainer } from '@abgov/react-components-new';
 import { ReactComponent as SmallClose } from '@assets/icons/x.svg';
 import { ReactComponent as Triangle } from '@assets/icons/triangle.svg';
 import { ReactComponent as Rectangle } from '@assets/icons/rectangle.svg';
 import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
 
-import { GoAButton, GoACheckbox, GoAChip } from '@abgov/react-components-new';
+import { GoAButton, GoACheckbox, GoAChip, GoAContainer } from '@abgov/react-components-new';
 
 function getTextWidth(text) {
   const canvas = document.createElement('canvas');

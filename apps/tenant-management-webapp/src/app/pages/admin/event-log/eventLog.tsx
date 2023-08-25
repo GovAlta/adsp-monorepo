@@ -5,8 +5,8 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { EventLogEntries } from './eventLogEntries';
 import { EventSearchForm } from './eventSearchForm';
-import { GoAButton } from '@abgov/react-components-new';
-import { GoACallout } from '@abgov/react-components';
+import { GoAButton, GoACallout } from '@abgov/react-components-new';
+
 import { EventSearchCriteria } from '@store/event/models';
 
 export const EventLog: FunctionComponent = () => {
@@ -67,11 +67,9 @@ export const EventLog: FunctionComponent = () => {
             )}
           </>
         ) : (
-          <GoACallout
-            title="Value reader role required"
-            type="information"
-            content="You need the urn:ads:platform:value-service 'value-reader' role to see the event log."
-          />
+          <GoACallout heading="Value reader role required" type="information" testId="role-need-callout">
+            <p>You need the urn:ads:platform:value-service 'value-reader' role to see the event log.</p>
+          </GoACallout>
         )}
       </section>
     </Main>

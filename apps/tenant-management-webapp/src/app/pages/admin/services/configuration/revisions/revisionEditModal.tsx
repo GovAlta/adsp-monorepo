@@ -53,7 +53,7 @@ export const RevisionEditModal: FunctionComponent<RevisionEditProps> = ({ open, 
   return (
     <ModalOverwrite>
       <GoAModal
-        data-testId="definition-form"
+        testId="definition-form"
         open={open}
         heading={`Edit Revision for ${service}`}
         actions={

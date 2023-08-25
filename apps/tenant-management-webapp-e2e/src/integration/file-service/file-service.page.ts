@@ -122,7 +122,7 @@ class FileServicePage {
   }
 
   fileRetentionDelayInput() {
-    return cy.xpath('//*[@data-testid="file-type-modal"]//input[@data-testid="delete-in-days-input"]');
+    return cy.xpath('//*[@data-testid="file-type-modal"]//goa-input[@data-testid="delete-in-days-input"]');
   }
 }
 export default FileServicePage;

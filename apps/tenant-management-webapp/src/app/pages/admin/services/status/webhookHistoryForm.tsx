@@ -6,9 +6,8 @@ import DataTable from '@components/DataTable';
 import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
 import { getEventDefinitions } from '@store/event/actions';
 
-import { GoABadge, GoAButton, GoAInput } from '@abgov/react-components-new';
+import { GoABadge, GoAButton, GoAInput, GoAButtonGroup, GoACircularProgress } from '@abgov/react-components-new';
 import styled from 'styled-components';
-import { GoAPageLoader } from '@abgov/react-components';
 
 import {
   GoAForm,
@@ -251,7 +250,7 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
                       )
                     ) : (
                       <LoadingWrapper>
-                        <GoAPageLoader visible={true} type="infinite" message={indicator.message} pagelock={true} />
+                        <GoACircularProgress visible={true} message={indicator.message} />
                       </LoadingWrapper>
                     )}
                     {next && (
@@ -273,29 +272,26 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
           </GoAForm>
         </GoAModalContent>
         <GoAModalActions>
-          <ButtonPadding>
-            <ButtonWrapper>
-              <GoAButton
-                type="primary"
-                onClick={() => {
-                  setViewWebhooks(false);
-                  onCancel();
-                }}
-              >
-                Close
-              </GoAButton>
-            </ButtonWrapper>
-            <ButtonWrapper>
-              <GoAButton
-                type="secondary"
-                onClick={() => {
-                  onSearch(searchCriteria);
-                }}
-              >
-                Search
-              </GoAButton>
-            </ButtonWrapper>
-          </ButtonPadding>
+          <GoAButtonGroup alignment="end">
+            <GoAButton
+              type="secondary"
+              onClick={() => {
+                onSearch(searchCriteria);
+              }}
+            >
+              Search
+            </GoAButton>
+
+            <GoAButton
+              type="primary"
+              onClick={() => {
+                setViewWebhooks(false);
+                onCancel();
+              }}
+            >
+              Close
+            </GoAButton>
+          </GoAButtonGroup>
         </GoAModalActions>
       </GoAModal>
     </GoAModalStyle>
@@ -369,15 +365,6 @@ const StartDate = styled.div`
 `;
 const EndDate = styled.div`
   display: flex;
-`;
-
-const ButtonPadding = styled.div`
-  display: flex;
-  flex-direction: row-reverse;
-`;
-
-const ButtonWrapper = styled.div`
-  margin-left: 24px;
 `;
 
 const PaddingRight = styled.div`
