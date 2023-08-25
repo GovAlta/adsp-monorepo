@@ -1,0 +1,458 @@
+components:
+  schemas:
+    TopicType:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    Topic:
+      type: object
+      properties:
+        type:
+          $ref: "#/components/schemas/TopicType"
+        id:
+          type: integer
+        urn:
+          type: string
+        resourceId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        commenters:
+          type: array
+          items:
+            type: string
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        content:
+          type: string
+        createdBy:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+        createdOn:
+          type: string
+          format: date-time
+        lastUpdatedBy:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+        lastUpdatedOn:
+          type: string
+          format: date-time
+
+/comment/v1/topics:
+  get:
+    tags:
+      - Topic
+    description: Retrieves topics.
+    parameters:
+      - name: top
+        description: Number of topics to return.
+        in: query
+        required: false
+        schema:
+          type: integer
+      - name: after
+        description: Cursor for the page to retrieve.  Use the _page.next_ value returned in the previous call to page sequentially through the data.
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: criteria
+        description: Criteria for topics to retrieve.
+        in: query
+        required: false
+        schema:
+          type: object
+          properties:
+            typeIdEquals:
+              type: string
+            resourceIdEquals:
+              type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Topic"
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                      description: cursor representing the set of data returned.
+                      example: Mw==
+                    next:
+                      type: string
+                      description: cursor representing the next set of data to be returned.
+                      example: Ng==
+                    size:
+                      description: The number of topics returned by the query.
+                      example: 10
+                      type: integer
+      401:
+        description: Not authorized.
+      403:
+        description: User not permitted for requested operation.
+  post:
+    tags:
+      - Topic
+    description: Creates a new topic.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              typeId:
+                type: string
+                description: ID of the topic type associated with the topic to create.
+              name:
+                type: string
+                description: The name of the topic.
+                example: Case ABC-12
+              description:
+                type: string
+                description: A description of the topic.
+                example: Comments on the case.
+              commenters:
+                type: array
+                items:
+                  type: string
+                description: Array containing IDs of additional users allowed to comment on the topic.
+              resourceId:
+                type: string
+                description: URN of the ADSP resource associated with the topic.
+                example: urn:ads:support:case:v1:/cases/abc-123
+            required: [name, typeId]
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Topic"
+      401:
+        description: Not authorized.
+      403:
+        description: User not permitted for requested operation.
+      404:
+        description: Topic type not found.
+
+/comment/v1/topics/{topicId}:
+  get:
+    tags:
+      - Topic
+    description: Retrieves a topic.
+    parameters:
+      - name: topicId
+        description: ID of the topic.
+        in: path
+        required: true
+        schema:
+          type: integer
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Topic"
+      401:
+        description: Not authorized.
+      403:
+        description: User not permitted for requested operation.
+      404:
+        description: Topic not found.
+  patch:
+    tags:
+      - Topic
+    description: Updates a topic.
+    parameters:
+      - name: topicId
+        description: ID of the topic.
+        in: path
+        required: true
+        schema:
+          type: integer
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Topic"
+      401:
+        description: Not authorized.
+      403:
+        description: User not permitted for requested operation.
+      404:
+        description: Topic not found.
+  delete:
+    tags:
+      - Topic
+    description: Deletes a topic and associated comments.
+    parameters:
+      - name: topicId
+        description: ID of the topic.
+        in: path
+        required: true
+        schema:
+          type: integer
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
+      401:
+        description: Not authorized.
+      403:
+        description: User not permitted for requested operation.
+      404:
+        description: Topic not found.
+
+/comment/v1/topics/{topicId}/comments:
+  get:
+    tags:
+      - Topic
+    description: Retrieves topic comments.
+    parameters:
+      - name: topicId
+        description: ID of the topic.
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: top
+        description: Number of topics to return.
+        in: query
+        required: false
+        schema:
+          type: integer
+      - name: after
+        description: Cursor for the page to retrieve.  Use the _page.next_ value returned in the previous call to page sequentially through the data.
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: criteria
+        description: Criteria for comments to retrieve.
+        in: query
+        required: false
+        schema:
+          type: object
+          properties:
+            titleLike:
+              type: string
+            contentLike:
+              type: string
+            titleOrContentLike:
+              type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Comment"
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                      description: cursor representing the set of data returned.
+                      example: Mw==
+                    next:
+                      type: string
+                      description: cursor representing the next set of data to be returned.
+                      example: Ng==
+                    size:
+                      description: The number of comments returned by the query.
+                      example: 10
+                      type: integer
+      401:
+        description: Not authorized.
+      403:
+        description: User not permitted for requested operation.
+      404:
+        description: Topic not found.
+  post:
+    tags:
+      - Topic
+    description: Creates a topic comment.
+    parameters:
+      - name: topicId
+        description: ID of the topic.
+        in: path
+        required: true
+        schema:
+          type: integer
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              title:
+                type: string
+                description: Title of the comment.
+              content:
+                type: string
+                description: Content of the comment.
+            required: [title]
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Comment"
+      401:
+        description: Not authorized.
+      403:
+        description: User not permitted for requested operation.
+      404:
+        description: Topic not found.
+
+/comment/v1/topics/{topicId}/comments/{commentId}:
+  get:
+    tags:
+      - Topic
+    description: Retrieves a topic comment.
+    parameters:
+      - name: topicId
+        description: ID of the topic.
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: commentId
+        description: ID of the comment.
+        in: path
+        required: true
+        schema:
+          type: integer
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Comment"
+      401:
+        description: Not authorized.
+      403:
+        description: User not permitted for requested operation.
+      404:
+        description: Topic or comment not found.
+  patch:
+    tags:
+      - Topic
+    description: Updates a topic comment.
+    parameters:
+      - name: topicId
+        description: ID of the topic.
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: commentId
+        description: ID of the comment.
+        in: path
+        required: true
+        schema:
+          type: integer
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              title:
+                type: string
+                description: Title of the comment.
+              content:
+                type: string
+                description: Content of the comment.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Comment"
+      401:
+        description: Not authorized.
+      403:
+        description: User not permitted for requested operation.
+      404:
+        description: Topic or comment not found.
+  delete:
+    tags:
+      - Topic
+    description: Deletes a topic and associated comments.
+    parameters:
+      - name: topicId
+        description: ID of the topic.
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: commentId
+        description: ID of the comment.
+        in: path
+        required: true
+        schema:
+          type: integer
+
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deleted:
+                  type: boolean
+      401:
+        description: Not authorized.
+      403:
+        description: User not permitted for requested operation.
+      404:
+        description: Topic or comment not found.

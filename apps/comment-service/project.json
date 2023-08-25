@@ -1,0 +1,81 @@
+{
+  "name": "comment-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/comment-service/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/comment-service",
+        "main": "apps/comment-service/src/main.ts",
+        "tsConfig": "apps/comment-service/tsconfig.app.json",
+        "assets": [
+          {
+            "glob": "apps/comment-service/migrations",
+            "input": ".",
+            "output": "migrations"
+          }
+        ],
+        "isolatedConfig": true,
+        "webpackConfig": "apps/comment-service/webpack.config.js"
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "fileReplacements": []
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "comment-service:build",
+        "port": 7785
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "comment-service:build:development"
+        },
+        "production": {
+          "buildTarget": "comment-service:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "apps/comment-service/**/*.ts"
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
+      "options": {
+        "jestConfig": "apps/comment-service/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "codeCoverage": true
+        }
+      }
+    }
+  },
+  "tags": []
+}
