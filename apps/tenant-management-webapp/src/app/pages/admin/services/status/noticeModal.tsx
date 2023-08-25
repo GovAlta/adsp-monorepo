@@ -78,7 +78,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
         setIsAllApplications(notice.isAllApplications);
       }
     }
-  }, []);
+  }, [props.noticeId]);
 
   const [selectedApplications, setSelectedApplications] = useState([]);
 

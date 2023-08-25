@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useState, useEffect } from 'react';
 import { GoAButton, GoAButtonGroup, GoAModal, GoATextArea, GoAInput, GoAFormItem } from '@abgov/react-components-new';
 import { CalendarItem } from '@store/calendar/models';
 import { useSelector } from 'react-redux';
@@ -55,6 +55,9 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
   const roleNames = realmRoles.map((role) => {
     return role.name;
   });
+  useEffect(() => {
+    setCalendar(initialValue);
+  }, [initialValue]);
 
   let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
 

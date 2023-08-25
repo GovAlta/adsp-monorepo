@@ -203,21 +203,19 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
           </tbody>
         </DataTable>
       </TableLayout>
-      {editId && (
-        <WebhookFormModal
-          isEdit={true}
-          isOpen={true}
-          testId={'edit-webhook'}
-          defaultWebhooks={webhooks[editId]}
-          title="Edit webhook"
-          onCancel={() => {
-            setEditId(null);
-          }}
-          onSave={() => {
-            setEditId(null);
-          }}
-        />
-      )}
+      <WebhookFormModal
+        isEdit={true}
+        isOpen={editId !== null}
+        testId={'edit-webhook'}
+        defaultWebhooks={webhooks[editId]}
+        title="Edit webhook"
+        onCancel={() => {
+          setEditId(null);
+        }}
+        onSave={() => {
+          setEditId(null);
+        }}
+      />
       {testId && (
         <TestWebhookModal
           isOpen={testId !== null}
