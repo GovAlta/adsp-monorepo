@@ -65,6 +65,7 @@ export function* fetchConfig(): SagaIterator {
           chatServiceApiUrl: data.serviceUrls.chatServiceApiUrl,
           scriptServiceApiUrl: entryMapping['script-service'],
         },
+        featureFlags: data.featureFlags,
       };
 
       const action: FetchConfigSuccessAction = {
