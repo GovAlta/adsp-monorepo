@@ -52,10 +52,10 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({
   return (
     <>
       <tr>
-        <td headers="userName" data-testid={`addressAs_${index}`}>
+        <td headers={`userName_${index}`} data-testid={`userName_${index}`}>
           {characterLimit(subscriber?.addressAs, 30)}
         </td>
-        <td headers="channels" data-testid="channels">
+        <td headers={`channels_${index}`} data-testid={`channels_${index}`}>
           {sortedChannels.map((channel, i) => (
             <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
               <div>
