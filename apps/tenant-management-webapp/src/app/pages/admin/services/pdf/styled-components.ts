@@ -284,6 +284,8 @@ export const PdfConfigFormWrapper = styled.div`
     font-weight: 400;
     font-family: 'acumin-pro-semi-condensed';
     line-height: 24px;
+    word-wrap: break-word;
+    word-break: break-word;
   }
   .editColumn {
     float: right;
