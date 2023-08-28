@@ -17,11 +17,18 @@ interface SubscriptionProps {
   criteria: Criteria;
   typeId: string;
   readonly?: boolean;
+  index: number;
   openModal?: (subscription: Subscription) => void;
   onDelete: (subscription: Subscriber, type: string) => void;
 }
 
-const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscriber, criteria, onDelete, typeId }) => {
+const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({
+  subscriber,
+  criteria,
+  onDelete,
+  typeId,
+  index,
+}) => {
   function characterLimit(string, limit) {
     if (string?.length > limit) {
       const slicedString = string.slice(0, limit);
@@ -45,7 +52,7 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscribe
   return (
     <>
       <tr>
-        <td headers="userName" data-testid="addressAs">
+        <td headers="userName" data-testid={`addressAs_${index}`}>
           {characterLimit(subscriber?.addressAs, 30)}
         </td>
         <td headers="channels" data-testid="channels">
@@ -70,7 +77,7 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscribe
             </div>
           ))}
         </td>
-        <td headers="actions" data-testid="actions">
+        <td headers="actions" data-testid={`actions_${index}`}>
           <div style={{ display: 'flex', flexDirection: 'row-reverse' }}>
             <GoAContextMenuIcon
               testId={`delete-subscription-${subscriber.id}`}
@@ -199,12 +206,13 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
               </tr>
             </thead>
             <tbody>
-              {typeSubscriptions[type.id].map((subscription) => (
+              {typeSubscriptions[type.id].map((subscription, index) => (
                 <SubscriptionComponent
                   key={`${subscription.subscriber.id}`}
                   subscriber={subscription.subscriber}
                   criteria={subscription.criteria}
                   openModal={openModalFunction}
+                  index={index}
                   typeId={subscription.typeId}
                   onDelete={onDelete}
                 />
