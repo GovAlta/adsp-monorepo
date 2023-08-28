@@ -1,6 +1,4 @@
 import React, { FunctionComponent } from 'react';
-//import { , GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-
 import { GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components-new';
 
 interface ImportModalProps {

@@ -216,19 +216,19 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
           setEditId(null);
         }}
       />
-      {testId && (
-        <TestWebhookModal
-          isOpen={testId !== null}
-          testId={'test-webhook'}
-          defaultWebhooks={webhooks[testId]}
-          title="Test webhook"
-          onClose={() => {
-            setTestId(null);
-          }}
-        />
-      )}
+
+      <TestWebhookModal
+        isOpen={testId !== null}
+        testId={'test-webhook'}
+        defaultWebhooks={webhooks[testId]}
+        title="Test webhook"
+        onClose={() => {
+          setTestId(null);
+        }}
+      />
+
       {deleteId && <WebhookDeleteModal webhook={webhooks[deleteId]} onCancel={() => onDeleteCancel()} />}
-      {historyId && <WebhookHistoryModal webhook={webhooks[historyId]} onCancel={() => onHistoryCancel()} />}
+      <WebhookHistoryModal isOpen={!!historyId} webhook={webhooks[historyId]} onCancel={() => onHistoryCancel()} />
     </div>
   );
 };

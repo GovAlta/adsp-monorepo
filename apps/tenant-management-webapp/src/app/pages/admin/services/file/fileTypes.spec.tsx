@@ -61,7 +61,7 @@ describe('File types tab', () => {
   });
 
   it('render add file type', () => {
-    const { queryByTestId } = render(
+    const { queryByTestId, baseElement } = render(
       <Provider store={store}>
         <FileTypes />
       </Provider>
@@ -69,14 +69,16 @@ describe('File types tab', () => {
 
     const addFileTypeButton = queryByTestId('add-file-type-btn');
     fireEvent(addFileTypeButton, new CustomEvent('_click'));
-    const fileTypeModal = queryByTestId('file-type-modal');
+    const fileTypeModal = baseElement.querySelector('goa-modal');
+
     expect(fileTypeModal).not.toBeNull();
-    const nameInput = queryByTestId('file-type-modal-name-input');
+
+    const nameInput = baseElement.querySelector("[data-testid='file-type-modal-name-input']");
     expect(nameInput).not.toBeNull();
   });
 
   it('check file type table actions', () => {
-    const { queryByTestId } = render(
+    const { queryByTestId, baseElement } = render(
       <Provider store={store}>
         <FileTypes />
       </Provider>
@@ -84,15 +86,17 @@ describe('File types tab', () => {
 
     const editActionBtn = queryByTestId('file-type-row-edit-btn-mock-file-type-b-id');
     fireEvent(editActionBtn, new CustomEvent('_click'));
-    const fileTypeModal = queryByTestId('file-type-modal');
+    const fileTypeModal = baseElement.querySelector('goa-modal');
     expect(fileTypeModal).not.toBeNull();
-    const nameInput = queryByTestId('file-type-modal-name-input');
+    const nameInput = baseElement.querySelector("[data-testid='file-type-modal-name-input']");
     nameInput.textContent.includes('testRoleA');
-    const cancelBtn = queryByTestId('file-type-modal-cancel');
+    const actionContent = fileTypeModal.querySelector("[slot='actions']");
+
+    const cancelBtn = actionContent.querySelector("[data-testid='file-type-modal-cancel']");
     fireEvent(cancelBtn, new CustomEvent('_click'));
     const deleteActionBtnA = queryByTestId('file-type-row-delete-btn-mock-file-type-a-id');
     fireEvent(deleteActionBtnA, new CustomEvent('_click'));
-    const deleteModalTitle = queryByTestId('file-type-delete-modal-title');
+    const deleteModalTitle = fileTypeModal.querySelector("[slot='heading']");
     deleteModalTitle.textContent.includes('Delete file type');
   });
 });

@@ -75,8 +75,8 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
                       <GoACheckbox
                         name={`${service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
                         key={`${service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
-                        checked={checkedRole.selectedRoles.includes(compositeRole)}
-                        data-testid={`${service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
+                        checked={checkedRole.selectedRoles?.includes(compositeRole)}
+                        data-testid={`${service}-${checkedRole?.title}-role-checkbox-${compositeRole}`}
                         disabled={props.anonymousRead && checkedRole.title === 'read'}
                         ariaLabel={`${service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
                         onChange={() => {
