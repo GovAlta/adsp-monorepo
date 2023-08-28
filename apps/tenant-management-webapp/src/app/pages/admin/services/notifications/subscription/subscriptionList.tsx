@@ -77,7 +77,7 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({
             </div>
           ))}
         </td>
-        <td headers="actions" data-testid="actions">
+        <td headers="actions" data-testid={`actions_${index}`}>
           <div style={{ display: 'flex', flexDirection: 'row-reverse' }}>
             <GoAContextMenuIcon
               testId={`delete-subscription-${subscriber.id}`}
