@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { PdfTemplate } from '@store/pdf/model';
 
-import { GoAIconButton } from '@abgov/react-components-new';
+import { GoAIconButton, GoATooltip } from '@abgov/react-components-new';
 
 import { Edit, PdfConfigFormWrapper } from '../../styled-components';
 import { AddEditPdfTemplate } from '../addEditPdfTemplates';
@@ -14,7 +14,6 @@ interface PDFConfigFormProps {
 export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
   const { id, name, description } = template;
   const [openEditPdfTemplate, setOpenEditPdfTemplate] = useState(false);
-
   const dispatch = useDispatch();
   return (
     <PdfConfigFormWrapper data-testid="pdf-config-form">
@@ -25,8 +24,10 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
               <th>Name</th>
             </tr>
             <tr>
-              <td data-testid="template-name" className="overflowContainer">
-                {name}
+              <td data-testid="template-name">
+                <GoATooltip content={name} position="bottom">
+                  <div className="overflowContainer">{name}</div>
+                </GoATooltip>
               </td>
             </tr>
           </thead>
@@ -40,8 +41,10 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
               <th>Template ID</th>
             </tr>
             <tr>
-              <td data-testid="template-id" className="overflowContainer">
-                {id}
+              <td data-testid="template-id">
+                <GoATooltip content={id} position="bottom">
+                  <div className="overflowContainer">{id}</div>
+                </GoATooltip>
               </td>
             </tr>
           </thead>
@@ -56,10 +59,11 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
             </tr>
             <tr>
               <td>
-                <div data-testid="template-description" className="overflowContainer">
-                  {' '}
-                  {description}
-                </div>
+                <GoATooltip content={description} position="bottom">
+                  <div data-testid="template-description" className="overflowContainer">
+                    {description}
+                  </div>
+                </GoATooltip>
               </td>
             </tr>
           </thead>
