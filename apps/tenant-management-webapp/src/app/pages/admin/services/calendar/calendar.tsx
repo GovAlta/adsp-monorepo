@@ -36,11 +36,11 @@ export const Calendar = (): JSX.Element => {
             <img src={BetaBadge} alt="Files Service" />
           </HeadingDiv>
 
-          <Tabs activeIndex={activeIndex}>
-            <Tab label="Overview">
+          <Tabs activeIndex={activeIndex} data-testid="calendar-tabs">
+            <Tab label="Overview" data-testid="calendar-overview-tab">
               <CalendarOverview setActiveIndex={setActiveIndex} setActiveEdit={activateEdit} />
             </Tab>
-            <Tab label="Calendars">
+            <Tab label="Calendars" data-testid="calendars-tab">
               <CalendarsView activeEdit={activateEditState} />
             </Tab>
           </Tabs>

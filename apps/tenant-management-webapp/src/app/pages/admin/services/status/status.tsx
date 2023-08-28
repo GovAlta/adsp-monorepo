@@ -164,11 +164,11 @@ function Status(): JSX.Element {
           }}
         />
         <h1 data-testid="status-title">Status service</h1>
-        <Tabs activeIndex={activeIndex}>
-          <Tab label="Overview">
+        <Tabs activeIndex={activeIndex} data-testid="status-tabs">
+          <Tab label="Overview" data-testid="status-overview-tab">
             <StatusOverview setActiveEdit={addApplication} setActiveIndex={setActiveIndex} />
           </Tab>
-          <Tab label="Applications">
+          <Tab label="Applications" data-testid="status-applications-tab">
             <p>
               <GoAButton testId="add-application" onClick={() => addApplication(true)} type="primary">
                 Add application
@@ -195,7 +195,7 @@ function Status(): JSX.Element {
               ))}
             </ApplicationList>
           </Tab>
-          <Tab label="Webhook">
+          <Tab label="Webhook" data-testid="status-webhook">
             <p>The webhooks are listed here</p>
             <p>
               <GoAButton testId="add-application" onClick={() => addWebhook(true)} type="primary">
@@ -209,7 +209,7 @@ function Status(): JSX.Element {
               <b>There are no webhooks yet</b>
             )}
           </Tab>
-          <Tab label="Notices">
+          <Tab label="Notices" data-testid="status-notices">
             <NoticeModal
               isOpen={showAddNoticeModal}
               title="Add notice"

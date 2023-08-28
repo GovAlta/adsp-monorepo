@@ -50,11 +50,11 @@ export const Form: FunctionComponent = () => {
             <h1 data-testid="form-title">Form service</h1>
             <img src={BetaBadge} alt="Form Service" />
           </HeadingDiv>
-          <Tabs activeIndex={definitions === 'true' ? 1 : 0}>
-            <Tab label="Overview">
+          <Tabs activeIndex={definitions === 'true' ? 1 : 0} data-testid="form-tabs">
+            <Tab label="Overview" data-testid="form-overview-tab">
               <FormOverview setOpenAddDefinition={setOpenAddDefinition} />
             </Tab>
-            <Tab label="Templates">
+            <Tab label="Templates" data-testid="form-templates">
               <FormDefinitions openAddDefinition={openAddDefinition} />
             </Tab>
           </Tabs>
