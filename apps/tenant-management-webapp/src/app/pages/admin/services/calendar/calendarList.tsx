@@ -3,10 +3,11 @@ import { CalendarItem } from '@store/calendar/models';
 import { GoABadge } from '@abgov/react-components-new';
 import { useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
-import { TableDiv } from './styled-components';
+import { TableDiv, OverFlowWrapTableCell } from './styled-components';
 import { DeleteModal } from '@components/DeleteModal';
 import { DeleteCalendar } from '@store/calendar/actions';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
+
 interface CalendarItemProps {
   calendar: CalendarItem;
   onEdit?: (calendar: CalendarItem) => void;
@@ -27,8 +28,9 @@ const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({
         <td headers="calendar-id" data-testid="calendar-id">
           {calendar.name}
         </td>
+
         <td headers="calendar-description" data-testid="calendar-description">
-          {calendar.description}
+          <OverFlowWrapTableCell>{calendar.description}</OverFlowWrapTableCell>
         </td>
         <td headers="calendar-read-roles" data-testid="calendar-read-roles">
           {calendar.readRoles.map((role): JSX.Element => {

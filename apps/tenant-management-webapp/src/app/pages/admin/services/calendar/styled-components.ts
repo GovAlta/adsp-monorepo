@@ -30,3 +30,7 @@ export const HeadingDiv = styled.div`
     margin-bottom: 4px;
   }
 `;
+
+export const OverFlowWrapTableCell = styled.td`
+  overflow-wrap: anywhere;
+`;
