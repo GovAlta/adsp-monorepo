@@ -190,8 +190,8 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
     <div className={className}>
       {groups.map((type, index) => (
         <div key={type.id}>
-          <div className="group-name">{type.name}</div>
-          <DataTable data-testid={`subscription-table-${index}`}>
+          <div className="group-name">{type.name}</div>q{' '}
+          <DataTable id={`subscription-table-${index}`} data-testid={`subscription-table-${index}`}>
             <thead>
               <tr>
                 <th
@@ -202,7 +202,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
                   Address as
                 </th>
                 <th id={`channels_${index}`}>Channels</th>
-                <th id="actions">Actions</th>
+                <th id={`actions_${index}`}>Actions</th>
               </tr>
             </thead>
             <tbody>
