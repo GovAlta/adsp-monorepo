@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import type { EventDefinition } from '@store/event/models';
 import { GoAButton, GoAButtonGroup, GoAInput, GoAFormItem, GoAModal, GoATextArea } from '@abgov/react-components-new';
@@ -47,7 +47,9 @@ export const EventDefinitionModalForm: FunctionComponent<EventDefinitionFormProp
       return namespace === 'platform' ? 'Cannot use the word platform as namespace' : '';
     };
   };
-
+  useEffect(() => {
+    setDefinition(initialValue);
+  }, [initialValue]);
   const { errors, validators } = useValidators(
     'namespace',
     'namespace',
