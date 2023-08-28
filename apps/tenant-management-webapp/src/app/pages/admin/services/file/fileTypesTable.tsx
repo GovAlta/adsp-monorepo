@@ -117,6 +117,7 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
   const deleteFileType = fileTypes.find((x) => x && x.id === deleteId);
 
   const editModalProps = {
+    isOpen: !!editId,
     fileType: editFileType,
     onCancel: () => {
       setEditId(null);
@@ -124,6 +125,7 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
   };
 
   const deleteModalProps = {
+    isOpen: !!deleteId,
     fileType: deleteFileType,
     onCancel: () => {
       setDeleteId(null);
@@ -210,8 +212,8 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
           </TableLayout>
         </div>
       )}
-      {editId && <FileTypeModal {...{ ...editModalProps, roles, type: 'edit' }} />}
-      {deleteId && <FileTypeDeleteModal {...deleteModalProps} />}
+      <FileTypeModal {...{ ...editModalProps, roles, type: 'edit' }} />
+      <FileTypeDeleteModal {...deleteModalProps} />
     </div>
   );
 };

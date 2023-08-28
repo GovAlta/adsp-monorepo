@@ -58,24 +58,24 @@ export const AddFileType = ({ roles, activeEdit }: AddFileTypeProps): JSX.Elemen
       >
         Add file type
       </GoAButton>
-      {willAddNew && (
-        <FileTypeModal
-          type="new"
-          roles={roles}
-          fileTypeNames={fileTypeNames}
-          fileType={{
-            name: '',
-            updateRoles: [],
-            readRoles: [],
-            anonymousRead: false,
-            hasFile: false,
-            id: null,
-          }}
-          onCancel={() => {
-            setWillAddNew(false);
-          }}
-        />
-      )}
+
+      <FileTypeModal
+        isOpen={willAddNew}
+        type="new"
+        roles={roles}
+        fileTypeNames={fileTypeNames}
+        fileType={{
+          name: '',
+          updateRoles: [],
+          readRoles: [],
+          anonymousRead: false,
+          hasFile: false,
+          id: null,
+        }}
+        onCancel={() => {
+          setWillAddNew(false);
+        }}
+      />
     </div>
   );
 };

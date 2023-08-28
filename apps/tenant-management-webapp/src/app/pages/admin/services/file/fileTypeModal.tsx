@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
 import { Role } from '@store/tenant/models';
-import { GoAButton, GoAButtonGroup, GoAInput } from '@abgov/react-components-new';
-import { GoAFormItem } from '@abgov/react-components/experimental';
-import { GoACheckbox, GoAPopover } from '@abgov/react-components-new';
+import {
+  GoAButton,
+  GoAButtonGroup,
+  GoAInput,
+  GoACheckbox,
+  GoAPopover,
+  GoAFormItem,
+  GoAModal,
+} from '@abgov/react-components-new';
 import {
   RetentionPolicyLabel,
   FileIdItem,
@@ -29,6 +34,7 @@ import { ActionState } from '@store/session/models';
 import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 interface FileTypeModalProps {
+  isOpen: boolean;
   fileType?: FileTypeItem;
   onCancel: () => void;
   fileTypeNames?: string[];
@@ -55,8 +61,8 @@ const DeleteInDaysItem = ({ value, updateFunc, disabled }: DeleteInDaysInputProp
         type="number"
         disabled={disabled}
         aria-label="goa-input-delete-in-days"
-        prefix="Days"
-        width="20%"
+        leadingContent="Days"
+        width="25%"
       />
     </>
   );
@@ -154,130 +160,11 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
 
   return (
     <ModalOverwrite>
-      <GoAModal testId="file-type-modal" isOpen={true}>
-        <GoAModalTitle>{title}</GoAModalTitle>
-        <GoAModalContent>
-          <GoAFormItem error={errors?.['name']}>
-            <label>Name</label>
-            <GoAInput
-              type="text"
-              name="name"
-              disabled={props.type === 'edit'}
-              value={fileType.name}
-              width="100%"
-              testId={`file-type-modal-name-input`}
-              onChange={(name, value) => {
-                const newFileType = {
-                  ...fileType,
-                  name: value,
-                  id: isNew ? toKebabName(value) : fileType.id,
-                };
-
-                const validations = {
-                  name: value,
-                };
-                validators.remove('name');
-                if (isNew) {
-                  validations['duplicated'] = value;
-                }
-                validators.checkAll(validations);
-                setFileType(newFileType);
-              }}
-              aria-label="name"
-            />
-          </GoAFormItem>
-          <GoAFormItem>
-            <label>Type ID</label>
-            <FileIdItem>
-              <GoAInput
-                testId={`file-type-modal-id`}
-                value={fileType.id || ''}
-                disabled={true}
-                width="100%"
-                name="file-type-id"
-                type="text"
-                aria-label="goa-input-file-type-id"
-                //eslint-disable-next-line
-                onChange={() => {}}
-              />
-            </FileIdItem>
-          </GoAFormItem>{' '}
-          <AnonymousReadWrapper>
-            <GoACheckbox
-              checked={fileType.anonymousRead}
-              name="file-type-anonymousRead-checkbox"
-              data-testid="file-type-anonymousRead-checkbox"
-              ariaLabel={`file-type-anonymousRead-checkbox`}
-              onChange={() => {
-                setFileType({
-                  ...fileType,
-                  anonymousRead: !fileType.anonymousRead,
-                });
-              }}
-              text={'Make public (read only)'}
-            />
-          </AnonymousReadWrapper>
-          <GoAFormItem>
-            <RetentionPolicyLabel>
-              Retention policy
-              <InfoCircleWrapper>
-                <GoAPopover testId={'file-type-retention-tooltip'} target={<InfoCircle />}>
-                  <RetentionToolTip>
-                    The untouched files within the file type will be deleted after the retention period provided.
-                  </RetentionToolTip>
-                </GoAPopover>
-              </InfoCircleWrapper>
-            </RetentionPolicyLabel>
-            <RetentionPolicyWrapper>
-              <GoACheckbox
-                name="retentionActive"
-                key="retention-period-active-checkbox"
-                checked={fileType?.rules?.retention?.active === true}
-                onChange={(name, checked) => {
-                  setFileType({
-                    ...fileType,
-                    rules: {
-                      ...fileType?.rules,
-                      retention: {
-                        ...fileType?.rules?.retention,
-                        active: checked,
-                      },
-                    },
-                  });
-                }}
-                text={'Active retention policy'}
-              />
-              <b>Enter retention period</b>
-            </RetentionPolicyWrapper>
-          </GoAFormItem>
-          <DeleteInDaysItem
-            value={fileType?.rules?.retention?.deleteInDays}
-            disabled={fileType?.rules?.retention?.active !== true}
-            updateFunc={(name, day: string) => {
-              if (parseInt(day) > 0) {
-                setFileType({
-                  ...fileType,
-                  rules: {
-                    ...fileType?.rules,
-                    retention: {
-                      ...fileType?.rules?.retention,
-                      deleteInDays: parseInt(day),
-                      active: fileType?.rules?.retention?.active || false,
-                      createdAt: fileType?.rules?.retention?.createdAt || new Date().toISOString(),
-                    },
-                  },
-                });
-              }
-            }}
-          />
-          {elements.map((e, key) => {
-            return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
-          })}
-          {fetchKeycloakRolesState === ActionState.inProcess && (
-            <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
-          )}
-        </GoAModalContent>
-        <GoAModalActions>
+      <GoAModal
+        testId="file-type-modal"
+        open={props.isOpen}
+        heading={title}
+        actions={
           <GoAButtonGroup alignment="end">
             <GoAButton
               type="secondary"
@@ -291,7 +178,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
             </GoAButton>
             <GoAButton
               type="primary"
-              disabled={!fileType.name || validators.haveErrors() || !validateRetentionPolicy(fileType)}
+              disabled={!fileType?.name || validators.haveErrors() || !validateRetentionPolicy(fileType)}
               testId="file-type-modal-save"
               onClick={() => {
                 const validations = {
@@ -336,7 +223,125 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
               Save
             </GoAButton>
           </GoAButtonGroup>
-        </GoAModalActions>
+        }
+      >
+        <GoAFormItem error={errors?.['name']} label="Name">
+          <GoAInput
+            type="text"
+            name="name"
+            disabled={props.type === 'edit'}
+            value={fileType?.name}
+            width="100%"
+            testId={`file-type-modal-name-input`}
+            onChange={(name, value) => {
+              const newFileType = {
+                ...fileType,
+                name: value,
+                id: isNew ? toKebabName(value) : fileType.id,
+              };
+
+              const validations = {
+                name: value,
+              };
+              validators.remove('name');
+              if (isNew) {
+                validations['duplicated'] = value;
+              }
+              validators.checkAll(validations);
+              setFileType(newFileType);
+            }}
+            aria-label="name"
+          />
+        </GoAFormItem>
+        <GoAFormItem label="Type ID">
+          <FileIdItem>
+            <GoAInput
+              testId={`file-type-modal-id`}
+              value={fileType?.id || ''}
+              disabled={true}
+              width="100%"
+              name="file-type-id"
+              type="text"
+              aria-label="goa-input-file-type-id"
+              //eslint-disable-next-line
+              onChange={() => {}}
+            />
+          </FileIdItem>
+        </GoAFormItem>{' '}
+        <AnonymousReadWrapper>
+          <GoACheckbox
+            checked={fileType?.anonymousRead}
+            name="file-type-anonymousRead-checkbox"
+            testId="file-type-anonymousRead-checkbox"
+            ariaLabel={`file-type-anonymousRead-checkbox`}
+            onChange={() => {
+              setFileType({
+                ...fileType,
+                anonymousRead: !fileType.anonymousRead,
+              });
+            }}
+            text={'Make public (read only)'}
+          />
+        </AnonymousReadWrapper>
+        <GoAFormItem label="">
+          <RetentionPolicyLabel>
+            Retention policy
+            <InfoCircleWrapper>
+              <GoAPopover testId={'file-type-retention-tooltip'} target={<InfoCircle />} maxWidth="260px">
+                <RetentionToolTip>
+                  The untouched files within the file type will be deleted after the retention period provided.
+                </RetentionToolTip>
+              </GoAPopover>
+            </InfoCircleWrapper>
+          </RetentionPolicyLabel>
+          <RetentionPolicyWrapper>
+            <GoACheckbox
+              name="retentionActive"
+              key="retention-period-active-checkbox"
+              checked={fileType?.rules?.retention?.active === true}
+              onChange={(name, checked) => {
+                setFileType({
+                  ...fileType,
+                  rules: {
+                    ...fileType?.rules,
+                    retention: {
+                      ...fileType?.rules?.retention,
+                      active: checked,
+                    },
+                  },
+                });
+              }}
+              text={'Active retention policy'}
+            />
+            <b>Enter retention period</b>
+          </RetentionPolicyWrapper>
+        </GoAFormItem>
+        <DeleteInDaysItem
+          value={fileType?.rules?.retention?.deleteInDays}
+          disabled={fileType?.rules?.retention?.active !== true}
+          updateFunc={(name, day: string) => {
+            if (parseInt(day) > 0) {
+              setFileType({
+                ...fileType,
+                rules: {
+                  ...fileType?.rules,
+                  retention: {
+                    ...fileType?.rules?.retention,
+                    deleteInDays: parseInt(day),
+                    active: fileType?.rules?.retention?.active || false,
+                    createdAt: fileType?.rules?.retention?.createdAt || new Date().toISOString(),
+                  },
+                },
+              });
+            }
+          }}
+        />
+        {elements.map((e, key) => {
+          return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+        })}
+        {fetchKeycloakRolesState === ActionState.inProcess && (
+          <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
+        )}
       </GoAModal>
     </ModalOverwrite>
   );
