@@ -68,14 +68,16 @@ export const ServiceRoles = (): JSX.Element => {
 
   return (
     <div>
-      <ConfirmationModal
-        clientId={newClientId}
-        role={newRole}
-        onCancel={() => {
-          setNewClientId(null);
-        }}
-        status={serviceRoleSyncStatus}
-      />
+      {newClientId && (
+        <ConfirmationModal
+          clientId={newClientId}
+          role={newRole}
+          onCancel={() => {
+            setNewClientId(null);
+          }}
+          status={serviceRoleSyncStatus}
+        />
+      )}
 
       {!indicator.show && tenantRoles !== null && (
         <div>
