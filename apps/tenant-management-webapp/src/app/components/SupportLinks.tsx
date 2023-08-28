@@ -8,7 +8,7 @@ function SupportLinks(): JSX.Element {
     <>
       <SpaceAdjust>Support</SpaceAdjust>
       {
-        <EmailLinkColor>
+        <EmailLinkColor data-testid="support-link">
           <a rel="noopener noreferrer" target="_blank" href="mailto:adsp@gov.ab.ca">
             Get support
           </a>

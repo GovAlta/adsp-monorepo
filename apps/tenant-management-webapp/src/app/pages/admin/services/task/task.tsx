@@ -28,11 +28,11 @@ class Task extends Component<TaskProps> {
             <h1 data-testid="Task-title">Task service</h1>
             <img src={BetaBadge} alt="Task Service" />
           </HeadingDiv>
-          <Tabs activeIndex={this.props.activeIndex}>
-            <Tab label="Overview">
+          <Tabs activeIndex={this.props.activeIndex} data-testid="Task-tabs">
+            <Tab label="Overview" data-testid="Task-overview-tab">
               <TaskserviceOverview setActiveIndex={this.props.setActiveIndex} />
             </Tab>
-            <Tab label="Queues">
+            <Tab label="Queues" data-testid="Task-queues-tab">
               <QueueList />
             </Tab>
           </Tabs>

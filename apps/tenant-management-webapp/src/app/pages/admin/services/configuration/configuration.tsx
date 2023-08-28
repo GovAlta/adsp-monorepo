@@ -36,20 +36,20 @@ export const Configuration: FunctionComponent = () => {
     <Page>
       <Main>
         <h1 data-testid="configuration-title">Configuration service</h1>
-        <Tabs activeIndex={activeIndex}>
-          <Tab label="Overview">
+        <Tabs activeIndex={activeIndex} data-testid="configuration-tabs">
+          <Tab label="Overview" data-testid="configuration-overview-tab">
             <ConfigurationOverview setActiveEdit={activateEdit} setActiveIndex={setActiveIndex} />
           </Tab>
-          <Tab label="Definitions">
+          <Tab label="Definitions" data-testid="configuration-definitions-tab">
             <ConfigurationDefinitions activeEdit={activateEditState} />
           </Tab>
-          <Tab label="Revisions">
+          <Tab label="Revisions" data-testid="configuration-revisions-tab">
             <ConfigurationRevisions />
           </Tab>
-          <Tab label="Import">
+          <Tab label="Import" data-testid="configuration-import-tab">
             <ConfigurationImport />
           </Tab>
-          <Tab label="Export">
+          <Tab label="Export" data-testid="configuration-export-tab">
             <ConfigurationExport />
           </Tab>
         </Tabs>

@@ -27,11 +27,11 @@ export const Pdf: FunctionComponent = () => {
     <Page>
       <Main>
         <h1 data-testid="pdf-service-title">PDF service</h1>
-        <Tabs activeIndex={templates === 'true' ? 1 : 0}>
-          <Tab label="Overview">
+        <Tabs activeIndex={templates === 'true' ? 1 : 0} data-testid="pdf-service-tabs">
+          <Tab label="Overview" data-testid="pdf-service-overview-tab">
             <PdfOverview setOpenAddTemplate={setOpenAddTemplate} />
           </Tab>
-          <Tab label="Templates">
+          <Tab label="Templates" data-testid="pdf-service-tenplates-tab">
             <PdfTemplates openAddTemplate={openAddTemplate} />
           </Tab>
         </Tabs>

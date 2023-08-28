@@ -16,12 +16,12 @@ export default function (): JSX.Element {
     <Page>
       <Main>
         <h1 data-testid="access-title">Access service</h1>
-        <Tabs activeIndex={activeIndex}>
-          <Tab label="Overview">
+        <Tabs activeIndex={activeIndex} data-testid="access-tabs">
+          <Tab label="Overview" data-testid="access-overview-tab">
             <Overview />
           </Tab>
 
-          <Tab label="Service roles">
+          <Tab label="Service roles" data-testid="service-roles-tab">
             <ServiceRoles />
           </Tab>
         </Tabs>
