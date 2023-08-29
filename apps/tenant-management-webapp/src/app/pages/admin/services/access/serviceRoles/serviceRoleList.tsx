@@ -97,7 +97,7 @@ export const ServiceRoleList = ({ roles, clientId, addRoleFunc, inProcess }: Ser
                       status !== ServiceRoleSyncStatus.matched && (
                         <GoAContextMenuIcon
                           type="add-circle"
-                          title="add-circle"
+                          title="Add Role"
                           testId="service-role-icon-btn"
                           onClick={() => {
                             addRoleFunc(clientId, role.role, status);
