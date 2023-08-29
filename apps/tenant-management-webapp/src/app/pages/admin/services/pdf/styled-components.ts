@@ -271,6 +271,10 @@ export const PdfConfigFormWrapper = styled.div`
     width: 664px;
     height: 118px;
     margin: var(--goa-spacing-m);
+    p {
+      bottom: -105px !important;
+      max-width: 300px !important;
+    }
   }
   .overflowContainer {
     height: 48px;
@@ -312,6 +316,25 @@ export const PdfConfigFormWrapper = styled.div`
     line-height: var(--goa-line-height-3);
     font-weight: var(--goa-font-weight-bold);
     font-family: var(--goa-font-family-sans);
+  }
+`;
+
+export const Tooltip = styled.div`
+  position: relative;
+  p {
+    display: none;
+    position: absolute;
+  }
+  &:hover p {
+    display: block;
+    margin: 0;
+    padding: 3px 7px;
+    background: #ffffff;
+    border: 1px solid grey;
+    bottom: -37px;
+    width: max-content;
+    min-width: 200px;
+    font-size: 16px;
   }
 `;
 
