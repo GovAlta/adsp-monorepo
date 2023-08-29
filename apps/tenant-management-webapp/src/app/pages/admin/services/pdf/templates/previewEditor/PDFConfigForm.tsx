@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { PdfTemplate } from '@store/pdf/model';
 
 import { GoAIconButton } from '@abgov/react-components-new';
 
-import { Edit, PdfConfigFormWrapper } from '../../styled-components';
+import { Edit, PdfConfigFormWrapper, Tooltip } from '../../styled-components';
 import { AddEditPdfTemplate } from '../addEditPdfTemplates';
 import { useDispatch } from 'react-redux';
 import { updatePdfTemplate } from '@store/pdf/action';
@@ -14,8 +14,28 @@ interface PDFConfigFormProps {
 export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
   const { id, name, description } = template;
   const [openEditPdfTemplate, setOpenEditPdfTemplate] = useState(false);
-
   const dispatch = useDispatch();
+  const [isElipsisActive, setIsElipsisActive] = useState(false);
+  const tooltipElem = useRef<HTMLParagraphElement>();
+  const [isNameElipsisActive, setIsNameElipsisActive] = useState(false);
+  const tooltipNameElem = useRef<HTMLParagraphElement>();
+  const [isDescElipsisActive, setIsDescElipsisActive] = useState(false);
+  const tooltipDescElem = useRef<HTMLParagraphElement>();
+  useEffect(() => {
+    const elem = tooltipNameElem.current;
+
+    setIsNameElipsisActive(elem ? elem.offsetWidth < elem.scrollWidth || elem.offsetHeight < elem.scrollHeight : false);
+  }, []);
+  useEffect(() => {
+    const elem = tooltipElem.current;
+
+    setIsElipsisActive(elem ? elem.offsetWidth < elem.scrollWidth || elem.offsetHeight < elem.scrollHeight : false);
+  }, []);
+  useEffect(() => {
+    const elem = tooltipDescElem.current;
+
+    setIsDescElipsisActive(elem ? elem.offsetWidth < elem.scrollWidth || elem.offsetHeight < elem.scrollHeight : false);
+  }, []);
   return (
     <PdfConfigFormWrapper data-testid="pdf-config-form">
       <div className="nameColumn">
@@ -25,8 +45,13 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
               <th>Name</th>
             </tr>
             <tr>
-              <td data-testid="template-name" className="overflowContainer">
-                {name}
+              <td data-testid="template-name">
+                <Tooltip>
+                  <div className="overflowContainer" ref={tooltipNameElem}>
+                    {name}
+                  </div>
+                  {isNameElipsisActive && <p>{name}</p>}
+                </Tooltip>
               </td>
             </tr>
           </thead>
@@ -40,8 +65,13 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
               <th>Template ID</th>
             </tr>
             <tr>
-              <td data-testid="template-id" className="overflowContainer">
-                {id}
+              <td data-testid="template-id">
+                <Tooltip>
+                  <div className="overflowContainer" ref={tooltipElem}>
+                    {id}
+                  </div>
+                  {isElipsisActive && <p>{id}</p>}
+                </Tooltip>
               </td>
             </tr>
           </thead>
@@ -56,10 +86,12 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
             </tr>
             <tr>
               <td>
-                <div data-testid="template-description" className="overflowContainer">
-                  {' '}
-                  {description}
-                </div>
+                <Tooltip>
+                  <div className="overflowContainer" ref={tooltipDescElem}>
+                    {description}
+                  </div>
+                  {isDescElipsisActive && <p>{description}</p>}
+                </Tooltip>
               </td>
             </tr>
           </thead>
