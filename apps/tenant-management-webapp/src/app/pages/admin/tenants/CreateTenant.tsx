@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { GoAElementLoader } from '@abgov/react-components';
 
-import { GoANotification, GoAButton, GoAInput } from '@abgov/react-components-new';
+import { GoANotification, GoAButton, GoAInput, GoAFormItem, GoAButtonGroup } from '@abgov/react-components-new';
 import { CreateTenant, IsTenantAdmin } from '@store/tenant/actions';
 import { RootState } from '@store/index';
 import GoALinkButton from '@components/LinkButton';
-import { GoAForm, GoAFormActions, GoAFormItem } from '@abgov/react-components/experimental';
 import { Aside, Main, Page } from '@components/Html';
 import SupportLinks from '@components/SupportLinks';
 import { KeycloakCheckSSO, TenantLogin } from '@store/tenant/actions';
@@ -133,23 +132,21 @@ const CreateRealm = (): JSX.Element => {
                     <p>
                       As a reminder, you are only able to create <b>one tenant</b> per user account.
                     </p>
-                    <GoAForm>
-                      <GoAFormItem error={notifications[notifications.length - 1]?.message}>
-                        <label htmlFor="name">Tenant name</label>
-                        <GoAInput
-                          name="name"
-                          testId="name-input"
-                          id="name"
-                          type="text"
-                          value={name}
-                          width="100%"
-                          onChange={onChangeName}
-                        />
-                      </GoAFormItem>
-                      <GoAFormActions alignment="left">
-                        {isLoaded ? <TenantCreateView /> : <ButtonLoader />}
-                      </GoAFormActions>
-                    </GoAForm>
+
+                    <GoAFormItem error={notifications[notifications.length - 1]?.message} label="Tenant name">
+                      <GoAInput
+                        name="name"
+                        testId="name-input"
+                        id="name"
+                        type="text"
+                        value={name}
+                        width="100%"
+                        onChange={onChangeName}
+                      />
+                    </GoAFormItem>
+                    <GoAButtonGroup alignment="start">
+                      {isLoaded ? <TenantCreateView /> : <ButtonLoader />}
+                    </GoAButtonGroup>
                   </>
                 ) : null}
               </>

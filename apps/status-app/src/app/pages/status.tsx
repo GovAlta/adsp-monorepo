@@ -23,8 +23,7 @@ import { LocalTime } from '@components/Date';
 import { GoAPageLoader } from '@abgov/react-components';
 import moment from 'moment';
 import GoaLogo from '../../assets/goa-logo.svg';
-import { GoAButton, GoAInput, GoACallout } from '@abgov/react-components-new';
-import { GoAForm, GoAFormItem, GoAFormActions } from '@abgov/react-components/experimental';
+import { GoAButton, GoAInput, GoACallout, GoAFormItem } from '@abgov/react-components-new';
 import { emailError } from '@lib/inputValidation';
 
 function capitalizeFirstLetter(string) {
@@ -235,34 +234,32 @@ const ServiceStatusPage = (): JSX.Element => {
                   to report issues, or for any other inquiries regarding service statuses.
                 </div>
                 <div>
-                  <GoAForm>
-                    <Grid>
-                      <GridItem md={4.6}>
-                        <GoAFormItem error={formErrors?.['email'] || error?.length > 0}>
-                          <GoAFormLabelOverwrite>
-                            <label>Enter your email to receive updates</label>
-                          </GoAFormLabelOverwrite>
-                          <GoAInput
-                            type="email"
-                            id="email"
-                            name="email"
-                            value={email}
-                            testId="email"
-                            onChange={setValue}
-                            aria-label="email"
-                            width="100%"
-                          />
-                        </GoAFormItem>
-                      </GridItem>
-                    </Grid>
-                  </GoAForm>
+                  <Grid>
+                    <GridItem md={4.6}>
+                      <GoAFormItem
+                        error={formErrors?.['email'] || error?.length > 0 ? formErrors?.['email'] : ''}
+                        label="Enter your email to receive updates"
+                      >
+                        <GoAInput
+                          type="email"
+                          id="email"
+                          name="email"
+                          value={email}
+                          testId="email"
+                          onChange={setValue}
+                          aria-label="email"
+                          width="100%"
+                        />
+                      </GoAFormItem>
+                    </GridItem>
+                  </Grid>
+
                   <GoAFormActionOverwrite>
-                    <GoAFormActions alignment="left">
-                      <GoAButton type="primary" testId="subscribe" onClick={onSave}>
-                        Submit
-                      </GoAButton>
-                    </GoAFormActions>
+                    <GoAButton type="primary" testId="subscribe" onClick={onSave}>
+                      Submit
+                    </GoAButton>
                   </GoAFormActionOverwrite>
+                  <br />
                 </div>
                 {subscriber && indicator && !indicator.show && (
                   <GoACallout key="success" type="success" heading="You have signed up for notifications">

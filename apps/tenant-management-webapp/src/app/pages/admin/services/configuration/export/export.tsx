@@ -150,7 +150,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                   onChange={() => {
                     toggleSelection('select-all');
                   }}
-                  data-testid={'select-all-id'}
+                  testId={'select-all-id'}
                   ariaLabel="select-all-checkbox"
                 ></GoACheckbox>
                 <div className="middle-align">Select all</div>
@@ -172,7 +172,7 @@ export const ConfigurationExport: FunctionComponent = () => {
                                 onChange={() => {
                                   toggleSelection(toServiceKey(namespace, name));
                                 }}
-                                data-testid={`${toServiceKey(namespace, name)}_id`}
+                                testId={`${toServiceKey(namespace, name)}_id`}
                                 ariaLabel={`${toServiceKey(namespace, name)}_id_checkbox`}
                               ></GoACheckbox>
                               <div className="middle-align">{name}</div>
