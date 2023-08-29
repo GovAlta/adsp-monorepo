@@ -65,7 +65,7 @@ const ServiceItemComponent = ({ service }: serviceItemProps): JSX.Element => {
                       })
                     );
                   }}
-                  testId="directory-toggle-details-visibility"
+                  testId={`directory-add-${service.service}`}
                 />
               )}
               {!service.api && (

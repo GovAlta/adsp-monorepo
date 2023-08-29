@@ -132,6 +132,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
             }
           }}
           service="FileType"
+          nameColumnWidth={80}
           checkedRoles={[
             { title: 'read', selectedRoles: fileType?.readRoles },
             { title: 'modify', selectedRoles: fileType?.updateRoles },

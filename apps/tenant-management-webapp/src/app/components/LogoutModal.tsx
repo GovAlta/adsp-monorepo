@@ -21,8 +21,8 @@ export const LogoutModal = (): JSX.Element => {
           <GoAButton
             testId="logout-again-button"
             onClick={() => {
-              const tenantRealm = localStorage.getItem('realm');
-              const idpFromUrl = localStorage.getItem('idpFromUrl');
+              const tenantRealm = encodeURIComponent(localStorage.getItem('realm'));
+              const idpFromUrl = encodeURIComponent(localStorage.getItem('idpFromUrl'));
               localStorage.removeItem('realm');
               if (idpFromUrl === null || idpFromUrl === 'core') {
                 const url = `${tenantRealm}/login`;

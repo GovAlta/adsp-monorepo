@@ -35,14 +35,14 @@ export const File: FunctionComponent = () => {
       <Main>
         <>
           <h1 data-testid="file-title">File service</h1>
-          <Tabs activeIndex={activeIndex}>
-            <Tab label="Overview">
+          <Tabs activeIndex={activeIndex} data-testid="file-tabs">
+            <Tab label="Overview" data-testid="file-overview-tab">
               <FileOverview setActiveIndex={setActiveIndex} setActiveEdit={activateEdit} />
             </Tab>
-            <Tab label="File types">
+            <Tab label="File types" data-testid="file-types-tab">
               <FileTypes activeEdit={activateEditState} />
             </Tab>
-            <Tab label="Uploaded files">
+            <Tab label="Uploaded files" data-testid="file-upload-tab">
               <FileList />
             </Tab>
           </Tabs>

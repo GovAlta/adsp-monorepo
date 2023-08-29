@@ -19,7 +19,7 @@ Then('the user views the service entry of {string} and {string}', function (dire
   } else {
     url = Cypress.env(String(envFileApi));
   }
-  directoryObj.directoryTable().contains('td[data-testid="service"]', directoryName).siblings().contains(url);
+  directoryObj.directoryTable().get('td[data-testid="service"]').contains(directoryName).siblings().contains(url);
 });
 
 Given('a tenant admin user is on directory entries page', function () {
@@ -85,7 +85,7 @@ When('the user modifies URL field {string}', function (url) {
 });
 
 Then('the user clicks Save button in Entry modal', function () {
-  directoryObj.entryModalSaveButton().shadow().find('button').click({ force: true });
+  directoryObj.entryModalSaveButton().shadow().find('button').click();
   cy.wait(2000);
 });
 

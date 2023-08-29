@@ -17,11 +17,18 @@ interface SubscriptionProps {
   criteria: Criteria;
   typeId: string;
   readonly?: boolean;
+  index: number;
   openModal?: (subscription: Subscription) => void;
   onDelete: (subscription: Subscriber, type: string) => void;
 }
 
-const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscriber, criteria, onDelete, typeId }) => {
+const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({
+  subscriber,
+  criteria,
+  onDelete,
+  typeId,
+  index,
+}) => {
   function characterLimit(string, limit) {
     if (string?.length > limit) {
       const slicedString = string.slice(0, limit);
@@ -45,10 +52,10 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscribe
   return (
     <>
       <tr>
-        <td headers="userName" data-testid="addressAs">
+        <td headers={`userName_${index}`} data-testid={`userName_${index}`}>
           {characterLimit(subscriber?.addressAs, 30)}
         </td>
-        <td headers="channels" data-testid="channels">
+        <td headers={`channels_${index}`} data-testid={`channels_${index}`}>
           {sortedChannels.map((channel, i) => (
             <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
               <div>
@@ -70,7 +77,7 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({ subscribe
             </div>
           ))}
         </td>
-        <td headers="actions" data-testid="actions">
+        <td headers="actions" data-testid={`actions_${index}`}>
           <div style={{ display: 'flex', flexDirection: 'row-reverse' }}>
             <GoAContextMenuIcon
               testId={`delete-subscription-${subscriber.id}`}
@@ -184,7 +191,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
       {groups.map((type, index) => (
         <div key={type.id}>
           <div className="group-name">{type.name}</div>
-          <DataTable data-testid={`subscription-table-${index}`}>
+          <DataTable id={`subscription-table-${index}`} data-testid={`subscription-table-${index}`}>
             <thead>
               <tr>
                 <th
@@ -195,16 +202,17 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
                   Address as
                 </th>
                 <th id={`channels_${index}`}>Channels</th>
-                <th id="actions">Actions</th>
+                <th id={`actions_${index}`}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {typeSubscriptions[type.id].map((subscription) => (
+              {typeSubscriptions[type.id].map((subscription, index) => (
                 <SubscriptionComponent
                   key={`${subscription.subscriber.id}`}
                   subscriber={subscription.subscriber}
                   criteria={subscription.criteria}
                   openModal={openModalFunction}
+                  index={index}
                   typeId={subscription.typeId}
                   onDelete={onDelete}
                 />

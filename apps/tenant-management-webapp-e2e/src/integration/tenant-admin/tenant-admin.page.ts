@@ -56,7 +56,7 @@ class TenantAdminPage {
   }
 
   goaCardTexts() {
-    return cy.xpath('//goa-container/div[contains(text(), ".")]');
+    return cy.xpath('//goa-container/div/div[contains(text(), ".")]');
   }
 
   goaCardLink(text) {
@@ -77,12 +77,12 @@ class TenantAdminPage {
     );
   }
 
-  dashboardCalloutContenth3Title() {
-    return cy.xpath('//*[@data-testid="callout-content"]/h3');
+  dashboardCallout() {
+    return cy.xpath('//goa-callout');
   }
 
   dashboardCalloutContentEmail() {
-    return cy.xpath('//*[@data-testid="callout-content"]/p/a');
+    return cy.xpath('//goa-callout/p/a');
   }
 
   eventLogSearchBox() {

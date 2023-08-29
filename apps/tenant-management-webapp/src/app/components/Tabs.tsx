@@ -69,7 +69,9 @@ interface TabProps {
 }
 
 function Tab(props: TabProps & { children: ReactNode }): JSX.Element {
-  return <TabContent data-testid={`${props.testId}`}>{props.children}</TabContent>;
+  return (
+    <TabContent data-testid={`${props.testId ? props.testId : props['data-testid']}`}>{props.children}</TabContent>
+  );
 }
 
 export { Tabs, Tab };

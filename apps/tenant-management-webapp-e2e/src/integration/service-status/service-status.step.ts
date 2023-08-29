@@ -64,7 +64,7 @@ When(
           }
         });
       statusObj.noticeModalApplicationDropdown().click();
-      statusObj.noticeModalApplicationDropdownItem(app).click();
+      statusObj.noticeModalApplicationDropdownItem(app).click({ force: true });
     }
     // Get hour, minute and am/pm for start time and end time
     const startHr = startTime.substring(0, 2);

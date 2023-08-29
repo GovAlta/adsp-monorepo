@@ -16,67 +16,69 @@ class StatusServicePage {
   }
 
   noticeModalTitle() {
-    return cy.xpath('//div[@data-testid="notice-modal" and @data-state="visible"]//div[@class="modal-title"]');
+    return cy.xpath('//*[@data-testid="notice-modal" and @open="true"]//*[@slot="heading"]');
   }
 
   noticeModalDescField() {
-    return cy.get('[data-testid="notice-form-description"]');
+    return cy.xpath('//*[@data-testid="notice-modal" and @open="true"]//*[@data-testid="notice-form-description"]');
   }
 
   noticeModalAllApplicationsCheckbox() {
-    return cy.xpath('//goa-checkbox[@name="isAllApplications"]');
+    return cy.xpath('//*[@data-testid="notice-modal" and @open="true"]//goa-checkbox[@name="isAllApplications"]');
   }
 
   noticeModalApplicationDropdown() {
-    return cy.get('[id="multiselectContainerReact"]');
+    return cy.xpath('//*[@data-testid="notice-modal" and @open="true"]//*[@id="multiselectContainerReact"]');
   }
 
   noticeModalApplicationDropdownItem(itemText) {
-    return cy.xpath(`//div[@class="optionListContainer displayBlock"]//li[text() = "${itemText}"]`);
+    return cy.xpath(
+      `//*[@data-testid="notice-modal" and @open="true"]//div[@class="optionListContainer displayBlock"]//li[text() = "${itemText}"]`
+    );
   }
 
   noticeModalStartTimeHourField() {
     return cy.xpath(
-      '//div[@class="react-time-picker__inputGroup"]/input[@name="startTime"]/following-sibling::input[@max="12"]'
+      '//*[@data-testid="notice-modal" and @open="true"]//div[@class="react-time-picker__inputGroup"]/input[@name="startTime"]/following-sibling::input[@max="12"]'
     );
   }
 
   noticeModalStartTimeMinuteField() {
     return cy.xpath(
-      '//div[@class="react-time-picker__inputGroup"]/input[@name="startTime"]/following-sibling::input[@max="59"]'
+      '//*[@data-testid="notice-modal" and @open="true"]//div[@class="react-time-picker__inputGroup"]/input[@name="startTime"]/following-sibling::input[@max="59"]'
     );
   }
 
   noticeModalStartTimeAmPmDropdown() {
     return cy.xpath(
-      '//div[@class="react-time-picker__inputGroup"]/input[@name="startTime"]/following-sibling::select[@name="amPm"]'
+      '//*[@data-testid="notice-modal" and @open="true"]//div[@class="react-time-picker__inputGroup"]/input[@name="startTime"]/following-sibling::select[@name="amPm"]'
     );
   }
 
   noticeModalEndTimeHourField() {
     return cy.xpath(
-      '//div[@class="react-time-picker__inputGroup"]/input[@name="endTime"]/following-sibling::input[@max="12"]'
+      '//*[@data-testid="notice-modal" and @open="true"]//div[@class="react-time-picker__inputGroup"]/input[@name="endTime"]/following-sibling::input[@max="12"]'
     );
   }
 
   noticeModalEndTimeMinuteField() {
     return cy.xpath(
-      '//div[@class="react-time-picker__inputGroup"]/input[@name="endTime"]/following-sibling::input[@max="59"]'
+      '//*[@data-testid="notice-modal" and @open="true"]//div[@class="react-time-picker__inputGroup"]/input[@name="endTime"]/following-sibling::input[@max="59"]'
     );
   }
 
   noticeModalEndTimeAmPmDropdown() {
     return cy.xpath(
-      '//div[@class="react-time-picker__inputGroup"]/input[@name="endTime"]/following-sibling::select[@name="amPm"]'
+      '//*[@data-testid="notice-modal" and @open="true"]//div[@class="react-time-picker__inputGroup"]/input[@name="endTime"]/following-sibling::select[@name="amPm"]'
     );
   }
 
   noticeModalSaveButton() {
-    return cy.xpath('//*[@data-testid="notice-modal"]//goa-button[@type="primary"]');
+    return cy.xpath('//*[@data-testid="notice-modal" and @open="true"]//goa-button[@type="primary"]');
   }
 
   noticeModalCancelButton() {
-    return cy.get('[data-testid=notice-form-cancel]');
+    return cy.xpath('//*[@data-testid="notice-modal" and @open="true"]//*[@data-testid=notice-form-cancel]');
   }
 
   noticeList() {

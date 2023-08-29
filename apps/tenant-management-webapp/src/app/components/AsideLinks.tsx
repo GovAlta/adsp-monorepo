@@ -14,12 +14,12 @@ function AsideLinks({ serviceLink, docsLink }: AsideLinksProps): JSX.Element {
       <GapAdjustment>Helpful links</GapAdjustment>
       {serviceLink && (
         <HyperLinkColor>
-          <ExternalLink link={serviceLink} text="See the code" />
+          <ExternalLink testId="code-link" link={serviceLink} text="See the code" />
         </HyperLinkColor>
       )}
       {docsLink && (
         <HyperLinkColor>
-          <ExternalLink link={docsLink} text="Read the API docs" />
+          <ExternalLink link={docsLink} testId="docs-link" text="Read the API docs" />
         </HyperLinkColor>
       )}
       <SupportLinks />
