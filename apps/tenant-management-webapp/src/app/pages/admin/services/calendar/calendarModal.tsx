@@ -113,6 +113,7 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
               });
             }
           }}
+          nameColumnWidth={80}
           service="Calendar"
           checkedRoles={[
             { title: 'read', selectedRoles: calendar?.readRoles },

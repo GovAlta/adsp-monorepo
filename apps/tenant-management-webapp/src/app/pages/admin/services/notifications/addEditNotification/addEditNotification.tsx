@@ -92,6 +92,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               subscriberRoles: roles,
             });
           }}
+          nameColumnWidth={80}
           service="Notifications-type"
           checkedRoles={[{ title: 'subscribe', selectedRoles: type.subscriberRoles }]}
         />
@@ -276,7 +277,11 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
         {tenantClients &&
           !type.publicSubscribe &&
           elements.map((e, key) => {
-            return <SubscribeRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+            return (
+              <div>
+                <SubscribeRole roleNames={e.roleNames} key={key} clientId={e.clientId} />
+              </div>
+            );
           })}
       </GoAModal>
     </EditStyles>

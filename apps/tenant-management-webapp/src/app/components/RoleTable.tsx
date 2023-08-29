@@ -32,6 +32,7 @@ interface ClientRoleTableProps {
   service: string;
   anonymousRead?: boolean;
   clientId?: string;
+  nameColumnWidth?: number;
 }
 
 export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
@@ -42,6 +43,9 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
   });
   const [checkedRoles, setCheckedRoles] = useState(props.checkedRoles);
   const service = props.service;
+  const nameColumnStyle = {
+    width: props?.nameColumnWidth ? `${props.nameColumnWidth}%` : '',
+  };
 
   const getClientId = () => {
     return props.clientId ? props.clientId : tenantName;
@@ -49,10 +53,13 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
   return (
     <>
       <MarginAdjustment>{getClientId()}</MarginAdjustment>
-      <GoATable>
+      <GoATable width="100%">
         <thead>
           <tr>
-            <th id={`${service}-roles-${getClientId()}`}>Roles</th>
+            {/* Cannot use class to change the width */}
+            <th id={`${service}-roles-${getClientId()}`} style={nameColumnStyle}>
+              Roles
+            </th>
             {props.checkedRoles.map((role) => {
               return (
                 <th id={`${role.title}-role-action-${getClientId()}`} className="role">
