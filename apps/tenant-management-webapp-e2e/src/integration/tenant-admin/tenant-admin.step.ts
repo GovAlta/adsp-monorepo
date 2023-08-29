@@ -459,7 +459,7 @@ Then('the user views an instruction of role requirement indicating user needs te
 Then(
   'the user views a message stating the user needs administrator role for the tenant to access the app and that they can contact the tenant creator of {string}',
   function (ownerEmail) {
-    tenantAdminObj.dashboardCalloutContenth3Title().should('contain.text', 'requires tenant-admin role');
+    tenantAdminObj.dashboardCallout().shadow().find('h3').should('contain.text', 'requires tenant-admin role');
     // Get owner email
     let email = '';
     const envOwnerEmail = ownerEmail.match(/(?<={).+(?=})/g);
@@ -756,7 +756,7 @@ Then(
 );
 
 Then('the user resets event log views', function () {
-  tenantAdminObj.eventLogResetBtn().click();
+  tenantAdminObj.eventLogResetBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 
