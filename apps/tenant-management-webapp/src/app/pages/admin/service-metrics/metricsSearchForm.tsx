@@ -1,5 +1,12 @@
-import { GoADropdown, GoADropdownItem, GoAButton, GoAButtonGroup, GoAFormItem } from '@abgov/react-components-new';
-import { GoAFlexRow } from '@abgov/react-components/experimental';
+import {
+  GoADropdown,
+  GoADropdownItem,
+  GoAButton,
+  GoAButtonGroup,
+  GoAFormItem,
+  GoAGrid,
+} from '@abgov/react-components-new';
+
 import { RootState } from '@store/index';
 import { setIntervalCriteria, setServiceCriteria } from '@store/metrics/actions';
 import { ChartInterval } from '@store/metrics/models';
@@ -16,7 +23,7 @@ export const MetricsSearchForm: FunctionComponent<MetricsSearchFormProps> = ({ o
   const dispatch = useDispatch();
   return (
     <div>
-      <GoAFlexRow gap="small">
+      <GoAGrid gap="s" minChildWidth="30ch">
         <GoAFormItem label="Service">
           <GoADropdown
             name="Service"
@@ -31,7 +38,6 @@ export const MetricsSearchForm: FunctionComponent<MetricsSearchFormProps> = ({ o
           </GoADropdown>
         </GoAFormItem>
         <GoAFormItem label="Time period">
-          <label></label>
           <GoADropdown
             name="Time period"
             value={chartInterval}
@@ -43,7 +49,7 @@ export const MetricsSearchForm: FunctionComponent<MetricsSearchFormProps> = ({ o
             <GoADropdownItem value="5 hours" label="Last 5 hours" />
           </GoADropdown>
         </GoAFormItem>
-      </GoAFlexRow>
+      </GoAGrid>
       <GoAButtonGroup alignment="end">
         <GoAButton type="secondary" onClick={onReset}>
           Reset

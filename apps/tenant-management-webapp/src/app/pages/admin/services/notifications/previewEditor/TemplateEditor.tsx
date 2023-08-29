@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { TemplateEditorContainer, MonacoDiv, EditTemplateActions, MonacoDivBody } from './styled-components';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
+
 import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 import { buildSuggestions, triggerInScope } from '@lib/autoComplete';
@@ -8,7 +8,7 @@ import { Template } from '@store/notification/models';
 import { SaveFormModal } from '@components/saveModal';
 import { subjectEditorConfig, bodyEditorConfig } from './config';
 import { Tab, Tabs } from '@components/Tabs';
-import { GoAButton, GoAButtonGroup, GoABadge } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoABadge, GoAFormItem } from '@abgov/react-components-new';
 
 interface TemplateEditorProps {
   modelOpen: boolean;
@@ -131,111 +131,107 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
 
   return (
     <TemplateEditorContainer>
-      <GoAForm>
-        <GoAFormItem>
-          <Tabs activeIndex={activeIndex} changeTabCallback={(index: number) => switchTabPreview(validChannels[index])}>
-            {radioOptions.map((item, key) => (
-              <Tab
-                data-testid={`${item.display}-tab`}
-                key={item.name}
-                label={
-                  <div style={{ display: 'flex', flexDirection: 'row' }}>
-                    <div>{item.display}</div>
-                    <div style={{ margin: '3px 0 0 5px' }}>
-                      {(savedTemplates[item.name]?.body !== templates[item.name]?.body ||
-                        savedTemplates[item.name]?.subject !== templates[item.name]?.subject) &&
-                      item.body?.length !== 0 &&
-                      item.subject?.length !== 0 ? (
+      <GoAFormItem label="">
+        <Tabs activeIndex={activeIndex} changeTabCallback={(index: number) => switchTabPreview(validChannels[index])}>
+          {radioOptions.map((item, key) => (
+            <Tab
+              data-testid={`${item.display}-tab`}
+              key={item.name}
+              label={
+                <div style={{ display: 'flex', flexDirection: 'row' }}>
+                  <div>{item.display}</div>
+                  <div style={{ margin: '3px 0 0 5px' }}>
+                    {(savedTemplates[item.name]?.body !== templates[item.name]?.body ||
+                      savedTemplates[item.name]?.subject !== templates[item.name]?.subject) &&
+                    item.body?.length !== 0 &&
+                    item.subject?.length !== 0 ? (
+                      <div>
+                        <div className="mobile">
+                          <GoABadge content="" type="information" />
+                        </div>
+                        <div className="desktop">
+                          <GoABadge content="Unsaved" type="information" />
+                        </div>
+                      </div>
+                    ) : (
+                      (item.body?.length === 0 || item.subject?.length === 0) && (
                         <div>
                           <div className="mobile">
-                            <GoABadge content="" type="information" />
+                            <GoABadge type="important" icon />
                           </div>
                           <div className="desktop">
-                            <GoABadge content="Unsaved" type="information" />
+                            <GoABadge type="important" content="Unfilled" icon />
                           </div>
                         </div>
-                      ) : (
-                        (item.body?.length === 0 || item.subject?.length === 0) && (
-                          <div>
-                            <div className="mobile">
-                              <GoABadge type="important" icon />
-                            </div>
-                            <div className="desktop">
-                              <GoABadge type="important" content="Unfilled" icon />
-                            </div>
-                          </div>
-                        )
-                      )}
-                    </div>
+                      )
+                    )}
                   </div>
-                }
-              >
-                <h3 data-testid="modal-title">{`${mainTitle}${
-                  titleNames[item.name] || ''
-                } template--${serviceName}`}</h3>
+                </div>
+              }
+            >
+              <h3 data-testid="modal-title">{`${mainTitle}${titleNames[item.name] || ''} template--${serviceName}`}</h3>
 
-                <>
-                  <h4>{'Subject'}</h4>
-                  <GoAFormItem error={errors['subject'] ?? ''}>
-                    <MonacoDiv data-testid="templated-editor-subject">
-                      <MonacoEditor
-                        language={item.name === 'slack' ? 'markdown' : 'handlebars'}
-                        data-testid="templated-editor-subject"
-                        onChange={(value) => {
-                          onSubjectChange(value, item.name);
-                        }}
-                        value={templates[item.name]?.subject}
-                        {...subjectEditorConfig}
-                      />
-                    </MonacoDiv>
-                  </GoAFormItem>
-                  <h4>{'Body'}</h4>
-                  <GoAFormItem error={errors['body'] ?? ''} helpText={errors['body'] ? '' : bodyEditorHintText}>
-                    <MonacoDivBody data-testid="templated-editor-body">
-                      <MonacoEditor
-                        language={item.name === 'slack' ? 'markdown' : 'handlebars'}
-                        value={templates[item.name]?.body}
-                        onChange={(value, event) => {
-                          onBodyChange(value, item.name);
-                        }}
-                        {...bodyEditorConfig}
-                      />
-                    </MonacoDivBody>
-                  </GoAFormItem>
-                </>
-              </Tab>
-            ))}
-          </Tabs>
-        </GoAFormItem>
-        <EditTemplateActions>
-          <GoAButtonGroup alignment="end">
-            <GoAButton
-              onClick={() => {
-                if (JSON.stringify(savedTemplates) !== JSON.stringify(templates)) {
-                  setSaveModal(true);
-                } else {
-                  resetSavedAction();
-                }
-              }}
-              testId="template-form-close"
-              type="secondary"
-            >
-              {eventTemplateFormState.cancelOrBackActionText}
-            </GoAButton>
-            <GoAButton
-              onClick={() => {
-                saveAndReset(true);
-              }}
-              type="primary"
-              testId="template-form-save"
-              disabled={!validateEventTemplateFields()}
-            >
-              {eventTemplateFormState.saveOrAddActionText}
-            </GoAButton>
-          </GoAButtonGroup>
-        </EditTemplateActions>
-      </GoAForm>
-      {/* Form */}
+              <>
+                <h4>{'Subject'}</h4>
+                <GoAFormItem error={errors['subject'] ?? ''} label="">
+                  <MonacoDiv data-testid="templated-editor-subject">
+                    <MonacoEditor
+                      language={item.name === 'slack' ? 'markdown' : 'handlebars'}
+                      data-testid="templated-editor-subject"
+                      onChange={(value) => {
+                        onSubjectChange(value, item.name);
+                      }}
+                      value={templates[item.name]?.subject}
+                      {...subjectEditorConfig}
+                    />
+                  </MonacoDiv>
+                </GoAFormItem>
+                <h4>{'Body'}</h4>
+                <GoAFormItem error={errors['body'] ?? ''} helpText={errors['body'] ? '' : bodyEditorHintText} label="">
+                  <MonacoDivBody data-testid="templated-editor-body">
+                    <MonacoEditor
+                      language={item.name === 'slack' ? 'markdown' : 'handlebars'}
+                      value={templates[item.name]?.body}
+                      onChange={(value, event) => {
+                        onBodyChange(value, item.name);
+                      }}
+                      {...bodyEditorConfig}
+                    />
+                  </MonacoDivBody>
+                </GoAFormItem>
+              </>
+            </Tab>
+          ))}
+        </Tabs>
+      </GoAFormItem>
+      <EditTemplateActions>
+        <GoAButtonGroup alignment="end">
+          <GoAButton
+            onClick={() => {
+              if (JSON.stringify(savedTemplates) !== JSON.stringify(templates)) {
+                setSaveModal(true);
+              } else {
+                resetSavedAction();
+              }
+            }}
+            testId="template-form-close"
+            type="secondary"
+          >
+            {eventTemplateFormState.cancelOrBackActionText}
+          </GoAButton>
+          <GoAButton
+            onClick={() => {
+              saveAndReset(true);
+            }}
+            type="primary"
+            testId="template-form-save"
+            disabled={!validateEventTemplateFields()}
+          >
+            {eventTemplateFormState.saveOrAddActionText}
+          </GoAButton>
+        </GoAButtonGroup>
+      </EditTemplateActions>
+
       <SaveFormModal
         open={saveModal}
         onDontSave={() => {

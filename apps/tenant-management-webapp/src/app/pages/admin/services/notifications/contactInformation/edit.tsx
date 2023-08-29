@@ -1,9 +1,7 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { ContactInformation } from '@store/notification/models';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
-import { GoATextArea, GoAInput, GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoATextArea, GoAInput, GoAButton, GoAButtonGroup, GoAFormItem, GoAModal } from '@abgov/react-components-new';
 import { isSmsValid, emailError, smsError } from '@lib/inputValidation';
 
 interface NotificationTypeFormProps {
@@ -53,65 +51,11 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
 
   return (
     <EditStyles>
-      <GoAModal testId="edit-contact-information-notification" isOpen={open}>
-        <GoAModalTitle>Edit contact information</GoAModalTitle>
-        <GoAModalContent>
-          <GoAForm>
-            <ErrorWrapper>
-              <GoAFormItem error={formErrors?.['email']}>
-                <label>Email</label>
-                <GoAInput
-                  type="email"
-                  name="email"
-                  width="100%"
-                  testId="form-email"
-                  value={contactInformation?.contactEmail || ''}
-                  aria-label="email"
-                  onChange={(_, value) => {
-                    setContactInformation({ ...contactInformation, contactEmail: value });
-                  }}
-                />
-              </GoAFormItem>
-              <GoAFormItem error={formErrors?.['sms']}>
-                <label>
-                  Phone number <em>optional</em>
-                </label>
-                <GoAInput
-                  type="tel"
-                  aria-label="sms"
-                  name="sms"
-                  width="100%"
-                  value={contactInformation?.phoneNumber || ''}
-                  testId="contact-sms-input"
-                  onChange={(_, value) => {
-                    if (isSmsValid(value)) {
-                      setContactInformation({ ...contactInformation, phoneNumber: value.substring(0, 10) });
-                    }
-                  }}
-                  trailingIcon="close"
-                  onTrailingIconClick={() => {
-                    setContactInformation({ ...contactInformation, phoneNumber: '' });
-                  }}
-                />
-              </GoAFormItem>
-              <GoAFormItem error={formErrors?.['supportInstructions']}>
-                <label>Support instructions</label>
-                <GoATextArea
-                  rows={7}
-                  name="supportInstruction"
-                  value={contactInformation?.supportInstructions || ''}
-                  testId="form-support-instructions"
-                  aria-label="name"
-                  width="100%"
-                  onChange={(name, value) =>
-                    setContactInformation({ ...contactInformation, supportInstructions: value })
-                  }
-                />
-              </GoAFormItem>
-            </ErrorWrapper>
-          </GoAForm>
-        </GoAModalContent>
-        <GoAModalActions>
+      <GoAModal
+        testId="edit-contact-information-notification"
+        open={open}
+        heading="Edit contact information"
+        actions={
           <GoAButtonGroup alignment="end">
             <GoAButton testId="form-cancel" type="secondary" onClick={tryCancel}>
               Cancel
@@ -120,7 +64,53 @@ export const ContactInformationModalForm: FunctionComponent<NotificationTypeForm
               Save
             </GoAButton>
           </GoAButtonGroup>
-        </GoAModalActions>
+        }
+      >
+        <ErrorWrapper>
+          <GoAFormItem error={formErrors?.['email']} label="Email">
+            <GoAInput
+              type="email"
+              name="email"
+              width="100%"
+              testId="form-email"
+              value={contactInformation?.contactEmail || ''}
+              aria-label="email"
+              onChange={(_, value) => {
+                setContactInformation({ ...contactInformation, contactEmail: value });
+              }}
+            />
+          </GoAFormItem>
+          <GoAFormItem error={formErrors?.['sms']} label="Phone number" requirement="optional">
+            <GoAInput
+              type="tel"
+              aria-label="sms"
+              name="sms"
+              width="100%"
+              value={contactInformation?.phoneNumber || ''}
+              testId="contact-sms-input"
+              onChange={(_, value) => {
+                if (isSmsValid(value)) {
+                  setContactInformation({ ...contactInformation, phoneNumber: value.substring(0, 10) });
+                }
+              }}
+              trailingIcon="close"
+              onTrailingIconClick={() => {
+                setContactInformation({ ...contactInformation, phoneNumber: '' });
+              }}
+            />
+          </GoAFormItem>
+          <GoAFormItem error={formErrors?.['supportInstructions']} label="Support instructions">
+            <GoATextArea
+              rows={7}
+              name="supportInstruction"
+              value={contactInformation?.supportInstructions || ''}
+              testId="form-support-instructions"
+              aria-label="name"
+              width="100%"
+              onChange={(name, value) => setContactInformation({ ...contactInformation, supportInstructions: value })}
+            />
+          </GoAFormItem>
+        </ErrorWrapper>
       </GoAModal>
     </EditStyles>
   );

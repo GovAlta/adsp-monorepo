@@ -3,15 +3,13 @@ import { RootState } from '@store/index';
 import { fetchEventStreams, startSocket } from '@store/stream/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import { PageIndicator } from '@components/Indicator';
-import { GoAButton } from '@abgov/react-components-new';
+
 import { GoAElementLoader } from '@abgov/react-components';
-import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
-import { Divider, StreamHeading, StreamsDropdown } from './styledComponents';
-import { GoAForm } from '@abgov/react-components/experimental';
+import { GoADropdown, GoADropdownItem, GoAButton } from '@abgov/react-components-new';
+import { Divider, StreamHeading, StreamsDropdown, SpinnerPadding } from './styledComponents';
 import { ReactComponent as GreenCircleCheckMark } from '@icons/green-circle-checkmark.svg';
 import { ReactComponent as Error } from '@icons/close-circle-outline.svg';
 import { StreamPayloadTable } from './streamPayloadTable';
-import styled from 'styled-components';
 
 const Icons = {
   greenCircleCheckMark: (
@@ -168,53 +166,53 @@ export const TestStream = (): JSX.Element => {
             &nbsp; to connect to streams.
           </p>
           <StreamHeading>Please select a stream to test</StreamHeading>
-          <GoAForm>
-            <StreamsDropdown>
-              <GoADropdown
-                disabled={socketConnection}
-                name="streams"
-                value={selectedSteamId}
-                width="100%"
-                onChange={(name, streamId: string | string[]) => {
-                  setSelectedStreamId([streamId.toString()]);
-                }}
-                aria-label="select-test-stream-dropdown"
-              >
-                {Object.keys(streams)
-                  .sort((a, b) => (a < b ? -1 : 1))
-                  .map((streamId) => (
-                    <GoADropdownItem label={streams[streamId].name} value={streamId} key={streamId} testId={streamId} />
-                  ))}
-              </GoADropdown>
-            </StreamsDropdown>
-            {socketStatus()}
-            <GoAButton
-              type="primary"
-              disabled={disableConnectButton()}
-              onClick={() => {
-                setSocketConnecting(true);
-                spinnerTimeout.current = setTimeout(() => setSpinner(true), 2000);
-                dispatch(startSocket(`${pushServiceUrl}/${tenant?.name}`, selectedSteamId[0]));
+
+          <StreamsDropdown>
+            <GoADropdown
+              disabled={socketConnection}
+              name="streams"
+              value={selectedSteamId}
+              width="100%"
+              onChange={(name, streamId: string | string[]) => {
+                setSelectedStreamId([streamId.toString()]);
               }}
+              aria-label="select-test-stream-dropdown"
             >
-              Connect
-              {spinner && (
-                <SpinnerPadding>
-                  <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
-                </SpinnerPadding>
-              )}
-            </GoAButton>
-            <Divider />
-            <GoAButton
-              type="secondary"
-              disabled={!socketConnection}
-              onClick={() => {
-                socket.disconnect();
-              }}
-            >
-              Disconnect
-            </GoAButton>
-          </GoAForm>
+              {Object.keys(streams)
+                .sort((a, b) => (a < b ? -1 : 1))
+                .map((streamId) => (
+                  <GoADropdownItem label={streams[streamId].name} value={streamId} key={streamId} testId={streamId} />
+                ))}
+            </GoADropdown>
+          </StreamsDropdown>
+          {socketStatus()}
+          <GoAButton
+            type="primary"
+            disabled={disableConnectButton()}
+            onClick={() => {
+              setSocketConnecting(true);
+              spinnerTimeout.current = setTimeout(() => setSpinner(true), 2000);
+              dispatch(startSocket(`${pushServiceUrl}/${tenant?.name}`, selectedSteamId[0]));
+            }}
+          >
+            Connect
+            {spinner && (
+              <SpinnerPadding>
+                <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
+              </SpinnerPadding>
+            )}
+          </GoAButton>
+          <Divider />
+          <GoAButton
+            type="secondary"
+            disabled={!socketConnection}
+            onClick={() => {
+              socket.disconnect();
+            }}
+          >
+            Disconnect
+          </GoAButton>
+
           <br />
           <StreamPayloadTable streams={streamData} />
         </>
@@ -222,8 +220,3 @@ export const TestStream = (): JSX.Element => {
     </>
   );
 };
-
-const SpinnerPadding = styled.div`
-  margin: 0 0 0 5px;
-  float: right;
-`;

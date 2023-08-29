@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { createRef, useEffect, useState, useRef } from 'react';
 import { GoAContainer, GoACallout } from '@abgov/react-components-new';
 import { Link } from 'react-router-dom';
 import { Grid, GridItem } from '@components/Grid';
@@ -10,12 +10,23 @@ import BetaBadge from '@icons/beta-badge.svg';
 import { DashboardAside, DashboardDiv, HeadingDiv, ListWrapper } from './styled-components';
 import SupportLinks from '@components/SupportLinks';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
+import { serviceVariables } from '../../../../featureFlag';
 
 const Dashboard = (): JSX.Element => {
+  const [oldWindowSize, setOldWindowSize] = useState(null);
+  const [fixedHeights, setFixedHeights] = useState([]);
+  const [resetHeight, setResetHeight] = useState(true);
+
+  const size = useWindowSize();
+
+  const elementRefs = useRef([]);
+
+  const [elRefs, setElRefs] = React.useState([]);
   const tenantAdminRole = 'tenant-admin';
-  const { session, tenantManagementWebApp, tenantName, adminEmail, hasAdminRole, keycloakConfig } = useSelector(
+  const { config, session, tenantManagementWebApp, tenantName, adminEmail, hasAdminRole, keycloakConfig } = useSelector(
     (state: RootState) => {
       return {
+        config: state.config,
         session: state.session,
         tenantManagementWebApp: state.config.serviceUrls.tenantManagementWebApp,
         tenantName: state.tenant.name,
@@ -34,6 +45,61 @@ const Dashboard = (): JSX.Element => {
       : keycloakConfig.url;
   }
 
+  const services = serviceVariables(config.featureFlags);
+
+  const arrLength = services.length;
+
+  useEffect(() => {
+    if (elRefs.length < arrLength) {
+      setElRefs((elRefs) =>
+        Array(arrLength)
+          .fill('1')
+          .map((_, i) => elRefs[i] || createRef())
+      );
+
+      elementRefs.current = Array(arrLength)
+        .fill('1')
+        .map((_, i) => elRefs[i] || createRef());
+    }
+  }, [services]);
+
+  useEffect(() => {
+    const tempHeights = [];
+
+    elementRefs.current.forEach((ref, index) => {
+      if (ref.current) {
+        tempHeights.push(ref.current.clientHeight);
+      }
+    });
+
+    const tempFixedHeights = [];
+    tempHeights.forEach((h, index) => {
+      if (index % 2 === 0) {
+        if (h > tempHeights[index + 1]) {
+          tempFixedHeights.push(h);
+          tempFixedHeights.push(h);
+        } else if (tempHeights[index + 1] === undefined) {
+          tempFixedHeights.push(h);
+        } else {
+          tempFixedHeights.push(tempHeights[index + 1]);
+          tempFixedHeights.push(tempHeights[index + 1]);
+        }
+      }
+    });
+
+    if (oldWindowSize?.width !== size?.width || fixedHeights.length === 0 || resetHeight) {
+      setFixedHeights(tempFixedHeights);
+      setOldWindowSize(JSON.parse(JSON.stringify(size)));
+      setResetHeight(false);
+    }
+  }, [elementRefs, services, resetHeight]);
+
+  useEffect(() => {
+    if (oldWindowSize?.width !== size?.width) {
+      setResetHeight(true);
+    }
+  }, [size]);
+
   const adminDashboard = () => {
     return (
       <DashboardDiv>
@@ -42,162 +108,55 @@ const Dashboard = (): JSX.Element => {
             {tenantName && (
               <>
                 <h1 data-testid="dashboard-title">{tenantName} dashboard</h1>
-                <Grid>
-                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoAContainer accent="thin" type="interactive">
-                      <h2>
-                        <Link to="/admin/access">Access</Link>
-                      </h2>
-                      <div>
-                        Access allows you to add a secure sign in to your application and services with minimum effort
-                        and configuration. No need to deal with storing or authenticating users. It's all available out
-                        of the box.
-                      </div>
-                      <div>&nbsp;</div>
-                      <div>&nbsp;</div>
-                    </GoAContainer>
-                  </GridItem>
-                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoAContainer accent="thin" type="interactive">
-                      <HeadingDiv>
-                        <h2>
-                          <Link to="/admin/services/calendar">Calendar</Link>
-                        </h2>
-                        <img src={BetaBadge} alt="Calendar Service" width={39} height={23} />
-                      </HeadingDiv>
-                      <div>
-                        The calendar service provides information about dates, a model of calendars, calendar events and
-                        scheduling. This service manages dates and times in a particular timezone (America/Edmonton)
-                        rather than UTC or a particular UTC offset.
-                      </div>
-                    </GoAContainer>
-                  </GridItem>
-                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoAContainer accent="thin" type="interactive">
-                      <h2>
-                        <Link to="/admin/services/configuration">Configuration</Link>
-                      </h2>
-                      <div>
-                        The configuration service provides a generic json document store for storage and revisioning of
-                        infrequently changing configuration. Store configuration against namespace and name keys, and
-                        optionally define configuration schemas for write validation.
-                      </div>
-                    </GoAContainer>
-                  </GridItem>
-                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoAContainer accent="thin" type="interactive">
-                      <h2>
-                        <Link to="/admin/services/directory">Directory</Link>
-                      </h2>
-                      <div>
-                        The directory service is a registry of services and their APIs. Applications can use the
-                        directory to lookup URLs for service from a common directory API. Add entries for your own
-                        services so they can be found using the directory for service discovery.
-                      </div>
-                      <div>&nbsp;</div>
-                    </GoAContainer>
-                  </GridItem>
-                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoAContainer accent="thin" type="interactive">
-                      <h2>
-                        <Link to="/admin/services/event">Event</Link>
-                      </h2>
-                      <div>
-                        The event service provides tenant applications with the ability to send domain events.
-                        Applications are able to leverage additional capabilities as side effects through these events.
-                      </div>
-                      <div>&nbsp;</div>
-                      <div>&nbsp;</div>
-                    </GoAContainer>
-                  </GridItem>
-                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoAContainer accent="thin" type="interactive">
-                      <h2>
-                        <Link to="/admin/services/file">File</Link>
-                      </h2>
-                      <div>
-                        The file service provides the capability to upload and download files. Consumers are registered
-                        with their own space (tenant) containing file types that include role based access policy, and
-                        can associate files to domain records.
-                      </div>
-                    </GoAContainer>
-                  </GridItem>
-                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoAContainer accent="thin" type="interactive">
-                      <HeadingDiv>
-                        <h2>
-                          <Link to="/admin/services/form">Form</Link>
-                        </h2>
-                        <img src={BetaBadge} alt="form Service" width={39} height={23} />
-                      </HeadingDiv>
-                      <div>
-                        The form service provides capabilities to support user form submission. Form definitions are
-                        used to describe types of form with roles for applicants, clerks who assist them, and assessors
-                        who process the submissions.
-                      </div>
-                    </GoAContainer>
-                  </GridItem>
-                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoAContainer accent="thin" type="interactive">
-                      <h2>
-                        <Link to="/admin/services/notification">Notification</Link>
-                      </h2>
-                      <div>
-                        The notifications service provides tenant applications with the ability to configure
-                        notifications.
-                      </div>
-                      <div>&nbsp;</div>
-                      <div>&nbsp;</div>
-                      <div>&nbsp;</div>
-                      <div>&nbsp;</div>
-                    </GoAContainer>
-                  </GridItem>
-                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoAContainer accent="thin" type="interactive">
-                      <h2>
-                        <Link to="/admin/services/pdf">PDF</Link>
-                      </h2>
-                      <div>
-                        The PDF service provides PDF operations like generating new PDFs from templates. It runs
-                        operations as asynchronous jobs and uploads the output PDF files to the file service.
-                      </div>
-                      <div>&nbsp;</div>
-                      <div>&nbsp;</div>
-                      <div>&nbsp;</div>
-                      <div>&nbsp;</div>
-                      <div>&nbsp;</div>
-                      <div>&nbsp;</div>
-                    </GoAContainer>
-                  </GridItem>
-                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoAContainer accent="thin" type="interactive">
-                      <HeadingDiv>
-                        <h2>
-                          <Link to="/admin/services/script">Script</Link>
-                        </h2>
-                        <img src={BetaBadge} alt="Script Service" width={39} height={23} />
-                      </HeadingDiv>
-                      <div>
-                        The script services provides the ability to execute configured Lua scripts. Applications can use
-                        this to capture simple logic in configuration. For example, benefits calculations can be
-                        configured in a script and executed via the script service API so that policy changes to the
-                        formula can implemented through configuration change.
-                      </div>
-                    </GoAContainer>
-                  </GridItem>
-                  <GridItem md={6} vSpacing={1} hSpacing={0.5}>
-                    <GoAContainer accent="thin" type="interactive">
-                      <h2>
-                        <Link to="/admin/services/status">Status</Link>
-                      </h2>
-                      <div>
-                        The status service allows for easy monitoring of application downtime. Each application should
-                        represent a service that is useful to the end user by itself, such as child care subsidy and
-                        child care certification.
-                      </div>
-                    </GoAContainer>
-                  </GridItem>
-                </Grid>
+
+                {elementRefs.current.map(
+                  (ref, index) =>
+                    0 === index % 2 && (
+                      <Grid>
+                        <GridItem key={index} md={6} vSpacing={1} hSpacing={0.5}>
+                          <GoAContainer accent="thin" type="interactive">
+                            <div style={{ height: resetHeight ? 'inherit' : `${fixedHeights[index]}px` }} ref={ref}>
+                              <HeadingDiv>
+                                <h2>
+                                  <Link to={services[index].link}>{services[index].name}</Link>
+                                </h2>
+                                {services[index].beta && (
+                                  <img src={BetaBadge} alt={`${services[index].name} Service`} width={39} height={23} />
+                                )}
+                              </HeadingDiv>
+                              <div>{services[index].description}</div>
+                            </div>
+                          </GoAContainer>
+                        </GridItem>
+
+                        {services[index + 1] && (
+                          <GridItem key={index + 1} md={6} vSpacing={1} hSpacing={0.5}>
+                            <GoAContainer accent="thin" type="interactive">
+                              <div
+                                ref={elementRefs.current[index + 1]}
+                                style={{ height: resetHeight ? 'inherit' : `${fixedHeights[index + 1]}px` }}
+                              >
+                                <HeadingDiv>
+                                  <h2>
+                                    <Link to={services[index + 1].link}>{services[index + 1].name}</Link>
+                                  </h2>
+                                  {services[index + 1].beta && (
+                                    <img
+                                      src={BetaBadge}
+                                      alt={`${services[index + 1].name} Service`}
+                                      width={39}
+                                      height={23}
+                                    />
+                                  )}
+                                </HeadingDiv>
+                                <div>{services[index + 1].description}</div>
+                              </div>
+                            </GoAContainer>
+                          </GridItem>
+                        )}
+                      </Grid>
+                    )
+                )}
               </>
             )}
           </Main>
@@ -249,4 +208,26 @@ const Dashboard = (): JSX.Element => {
   };
   return hasAdminRole ? adminDashboard() : calloutMessage();
 };
+
+function useWindowSize() {
+  const [windowSize, setWindowSize] = useState({
+    width: undefined,
+    height: undefined,
+  });
+  useEffect(() => {
+    function handleResize() {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    }
+
+    window.addEventListener('resize', handleResize);
+
+    handleResize();
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  return windowSize;
+}
 export default Dashboard;

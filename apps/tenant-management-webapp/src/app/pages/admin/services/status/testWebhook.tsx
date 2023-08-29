@@ -5,20 +5,18 @@ import { Webhooks } from '../../../../store/status/models';
 import DataTable from '@components/DataTable';
 import { EventSearchCriteria } from '@store/event/models';
 import { getEventLogEntries } from '@store/event/actions';
-import { GoAButton, GoAButtonGroup, GoARadioItem, GoARadioGroup } from '@abgov/react-components-new';
+import {
+  GoAButton,
+  GoAButtonGroup,
+  GoARadioItem,
+  GoARadioGroup,
+  GoAModal,
+  GoAFormItem,
+} from '@abgov/react-components-new';
 import { GoAPageLoader } from '@abgov/react-components';
 
 import { renderNoItem } from '@components/NoItem';
 import styled from 'styled-components';
-
-import {
-  GoAForm,
-  GoAFormItem,
-  GoAModal,
-  GoAModalActions,
-  GoAModalContent,
-  GoAModalTitle,
-} from '@abgov/react-components/experimental';
 
 import { RootState } from '../../../../store/index';
 
@@ -50,9 +48,9 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
     namespace: 'push-service',
     timestampMax: '',
     timestampMin: '',
-    url: webhook.url,
-    applications: webhook.targetId,
-    value: webhook.targetId,
+    url: webhook?.url,
+    applications: webhook?.targetId,
+    value: webhook?.targetId,
     top: 1,
   };
 
@@ -96,54 +94,15 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
     ...Object.keys(groupedDefinitions).filter((g) => g !== 'status-service'),
   ];
 
-  const events = webhook.eventTypes.map((e) => e.id.split(':')[1]);
+  const events = webhook?.eventTypes.map((e) => e.id.split(':')[1]);
 
   return (
     <GoAModalStyle>
-      <GoAModal isOpen={isOpen} testId={testId}>
-        <GoAModalTitle>
-          {title} - {webhook.name}
-        </GoAModalTitle>
-        <GoAModalContent>
-          <GoAWrapper>
-            <GoAForm>
-              <GoAFormItem>
-                <label className="margin-bottom">Events</label>
-                {!orderedGroupNames && renderNoItem('event definition')}
-
-                <DataTable data-testid="events-definitions-table">
-                  <GoARadioGroup name="option" onChange={(_, value) => setSelectedStatusName(value)}>
-                    {events.map((name) => {
-                      return (
-                        <GoARadioItem name="option" value={name}>
-                          {name}
-                        </GoARadioItem>
-                      );
-                    })}
-                  </GoARadioGroup>
-                </DataTable>
-              </GoAFormItem>
-
-              {(showEntries || (indicator.show && indicator.message !== 'Loading...')) && (
-                <EntryDetail>
-                  {indicator.show ? (
-                    <div className="loading-border">
-                      <GoAPageLoader visible={true} type="infinite" message={indicator.message} pagelock={true} />
-                    </div>
-                  ) : (
-                    showEntries &&
-                    (entries ? (
-                      <JSONFont>{JSON.stringify(entries[0], null, 2)}</JSONFont>
-                    ) : (
-                      'No timely response from webhook test server - please try again'
-                    ))
-                  )}
-                </EntryDetail>
-              )}
-            </GoAForm>
-          </GoAWrapper>
-        </GoAModalContent>
-        <GoAModalActions>
+      <GoAModal
+        open={isOpen}
+        testId={testId}
+        heading={`${title} - ${webhook?.name}`}
+        actions={
           <GoAButtonGroup alignment="end">
             <GoAButton
               type="secondary"
@@ -157,15 +116,45 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
               Test
             </GoAButton>
           </GoAButtonGroup>
-        </GoAModalActions>
+        }
+      >
+        <GoAFormItem label="Events">
+          {!orderedGroupNames && renderNoItem('event definition')}
+
+          <DataTable data-testid="events-definitions-table">
+            <GoARadioGroup name="option" onChange={(_, value) => setSelectedStatusName(value)}>
+              {events?.map((name) => {
+                return (
+                  <GoARadioItem name="option" value={name}>
+                    {name}
+                  </GoARadioItem>
+                );
+              })}
+            </GoARadioGroup>
+          </DataTable>
+        </GoAFormItem>
+
+        {(showEntries || (indicator.show && indicator.message !== 'Loading...')) && (
+          <EntryDetail>
+            {indicator.show ? (
+              <div className="loading-border">
+                <GoAPageLoader visible={true} type="infinite" message={indicator.message} pagelock={true} />
+              </div>
+            ) : (
+              showEntries &&
+              (entries ? (
+                <JSONFont>{JSON.stringify(entries[0], null, 2)}</JSONFont>
+              ) : (
+                'No timely response from webhook test server - please try again'
+              ))
+            )}
+          </EntryDetail>
+        )}
       </GoAModal>
     </GoAModalStyle>
   );
 };
 
-const GoAWrapper = styled.div`
-  width: 584px;
-`;
 const GoAModalStyle = styled.div`
   .group-name {
     font-size: var(--fs-lg);

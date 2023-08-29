@@ -1,13 +1,11 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { Subscriber } from '@store/subscription/models';
-import { GoAButton, GoAButtonGroup, GoAInput } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAInput, GoATextArea, GoAModal, GoAFormItem } from '@abgov/react-components-new';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { GoAModal, GoAModalActions, GoAModalContent, GoAModalTitle } from '@abgov/react-components/experimental';
-import { GoAForm, GoAFormItem } from '@abgov/react-components/experimental';
 import styled from 'styled-components';
 import { isSmsValid, emailError, smsError } from '@lib/inputValidation';
-import { GoATextArea } from '@abgov/react-components-new';
+
 interface NotificationTypeFormProps {
   initialValue?: Subscriber;
   onCancel?: () => void;
@@ -147,79 +145,11 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
 
   return (
     <EditStyles>
-      <GoAModal testId="notification-types-form" isOpen={open}>
-        <GoAModalTitle>Edit subscriber</GoAModalTitle>
-        <GoAModalContent>
-          <GoAForm>
-            <ErrorWrapper>
-              <GoAFormItem error={formErrors?.['name']}>
-                <label>Address as</label>
-                <GoAInput
-                  type="text"
-                  name="name"
-                  width="100%"
-                  value={address}
-                  testId="form-name"
-                  aria-label="name"
-                  onChange={(_name, value) => setAddress(value)}
-                />
-              </GoAFormItem>
-              <GoAFormItem error={formErrors?.['email'] || updateError}>
-                <label>Email</label>
-                <GoAInput
-                  type="email"
-                  name="email"
-                  width="100%"
-                  testId="form-email"
-                  value={email}
-                  aria-label="email"
-                  onChange={(_name, value) => {
-                    setEmail(value);
-                  }}
-                />
-              </GoAFormItem>
-              <GoAFormItem error={formErrors?.['sms'] || updateError}>
-                <label>Phone number</label>
-                <div className="phoneInputStyle">
-                  <GoAInput
-                    type="tel"
-                    aria-label="sms"
-                    name="sms"
-                    width="100%"
-                    value={phone}
-                    testId="contact-sms-input"
-                    onChange={(_, value) => {
-                      if (isSmsValid(value)) {
-                        setPhone(value.substring(0, 10));
-                      }
-                    }}
-                    trailingIcon="close"
-                    onTrailingIconClick={() => {
-                      setPhone('');
-                    }}
-                  />
-                </div>
-              </GoAFormItem>
-
-              {botIndex !== -1 && (
-                <GoAFormItem error={formErrors?.['slack'] || updateError}>
-                  <label>Slack</label>
-                  <GoATextArea
-                    name="slack"
-                    testId="form-slack"
-                    value={bot}
-                    aria-label="slack"
-                    width="100%"
-                    onChange={(name, value) => {
-                      setBot(value);
-                    }}
-                  />
-                </GoAFormItem>
-              )}
-            </ErrorWrapper>
-          </GoAForm>
-        </GoAModalContent>
-        <GoAModalActions>
+      <GoAModal
+        testId="notification-types-form"
+        open={open}
+        heading="Edit subscriber"
+        actions={
           <GoAButtonGroup alignment="end">
             <GoAButton testId="form-cancel" type="secondary" onClick={tryCancel}>
               Cancel
@@ -228,7 +158,70 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
               Save
             </GoAButton>
           </GoAButtonGroup>
-        </GoAModalActions>
+        }
+      >
+        <ErrorWrapper>
+          <GoAFormItem error={formErrors?.['name']} label="Address as">
+            <GoAInput
+              type="text"
+              name="name"
+              width="100%"
+              value={address}
+              testId="form-name"
+              aria-label="name"
+              onChange={(_name, value) => setAddress(value)}
+            />
+          </GoAFormItem>
+          <GoAFormItem error={formErrors?.['email'] || updateError} label="Email">
+            <GoAInput
+              type="email"
+              name="email"
+              width="100%"
+              testId="form-email"
+              value={email}
+              aria-label="email"
+              onChange={(_name, value) => {
+                setEmail(value);
+              }}
+            />
+          </GoAFormItem>
+          <GoAFormItem error={formErrors?.['sms'] || updateError} label="Phone number">
+            <div className="phoneInputStyle">
+              <GoAInput
+                type="tel"
+                aria-label="sms"
+                name="sms"
+                width="100%"
+                value={phone}
+                testId="contact-sms-input"
+                onChange={(_, value) => {
+                  if (isSmsValid(value)) {
+                    setPhone(value.substring(0, 10));
+                  }
+                }}
+                trailingIcon="close"
+                onTrailingIconClick={() => {
+                  setPhone('');
+                }}
+              />
+            </div>
+          </GoAFormItem>
+
+          {botIndex !== -1 && (
+            <GoAFormItem error={formErrors?.['slack'] || updateError} label="Slack">
+              <GoATextArea
+                name="slack"
+                testId="form-slack"
+                value={bot}
+                aria-label="slack"
+                width="100%"
+                onChange={(name, value) => {
+                  setBot(value);
+                }}
+              />
+            </GoAFormItem>
+          )}
+        </ErrorWrapper>
       </GoAModal>
     </EditStyles>
   );

@@ -6,22 +6,22 @@ import DataTable from '@components/DataTable';
 import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
 import { getEventDefinitions } from '@store/event/actions';
 
-import { GoABadge, GoAButton, GoAInput, GoAButtonGroup, GoACircularProgress } from '@abgov/react-components-new';
-import styled from 'styled-components';
-
 import {
-  GoAForm,
+  GoABadge,
+  GoAButton,
+  GoAInput,
+  GoAButtonGroup,
+  GoACircularProgress,
   GoAFormItem,
   GoAModal,
-  GoAModalActions,
-  GoAModalContent,
-  GoAModalTitle,
-} from '@abgov/react-components/experimental';
+} from '@abgov/react-components-new';
+import styled from 'styled-components';
 
 import { RootState } from '../../../../store/index';
 import { HoverWrapper, ToolTip } from './styled-components';
 
 interface Props {
+  isOpen: boolean;
   onCancel: () => void;
   webhook: Webhooks;
 }
@@ -118,7 +118,7 @@ const EventLogEntryComponent: FunctionComponent<EventLogEntryComponentProps> = (
   );
 };
 
-export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhook }: Props): JSX.Element => {
+export const WebhookHistoryModal: FunctionComponent<Props> = ({ isOpen, onCancel, webhook }: Props): JSX.Element => {
   const dispatch = useDispatch();
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -131,9 +131,9 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
     namespace: 'push-service',
     timestampMax: '',
     timestampMin: '',
-    url: webhook.url,
-    applications: webhook.targetId,
-    value: webhook.targetId,
+    url: webhook?.url,
+    applications: webhook?.targetId,
+    value: webhook?.targetId,
   };
 
   const [searchCriteria, setSearchCriteria] = useState(initCriteria);
@@ -159,119 +159,16 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
   };
 
   const entries = useSelector((state: RootState) => state.event.entries);
-
+  useEffect(() => {
+    setSearchCriteria(initCriteria);
+  }, [initCriteria]);
   return (
     <GoAModalStyle>
-      <GoAModal isOpen={true} testId="webhook-history-modal">
-        <GoAModalTitle>Webhook History</GoAModalTitle>
-        <GoAModalContent>
-          <GoAForm>
-            <GoAWrapper>
-              <GoAFormItem>
-                <label>Application</label>
-                <div className="grey-fill">{searchCriteria.applications}</div>
-              </GoAFormItem>
-
-              <GoAFormItem>
-                <label>URL</label>
-                <GoAInput
-                  name="url"
-                  type="url"
-                  width="100%"
-                  testId="webhook-history-url-input"
-                  value={searchCriteria.url}
-                  onChange={(name, value) => {
-                    setSearchCriteria({ ...searchCriteria, url: value });
-                  }}
-                  aria-label="description"
-                />
-              </GoAFormItem>
-              <DateFilter>
-                <StartDate>
-                  <GoAFormItem>
-                    <label>Start date</label>
-                    <DateTimeInput
-                      type="datetime-local"
-                      name="timestampMin"
-                      max={today}
-                      aria-label="timestampMin"
-                      value={searchCriteria.timestampMin}
-                      onChange={(e) => setSearchCriteria({ ...searchCriteria, timestampMin: e.target.value })}
-                    />
-                  </GoAFormItem>
-                </StartDate>
-                <EndDate>
-                  <GoAFormItem>
-                    <label>End date</label>
-                    <DateTimeInput
-                      type="datetime-local"
-                      name="timestampMax"
-                      max={today}
-                      aria-label="timestampMax"
-                      value={searchCriteria.timestampMax}
-                      onChange={(e) => setSearchCriteria({ ...searchCriteria, timestampMax: e.target.value })}
-                    />
-                  </GoAFormItem>
-                </EndDate>
-              </DateFilter>
-
-              {viewWebhooks && (
-                <div className="mt-1 mb-2px">
-                  <>
-                    {entries ? (
-                      entries?.length > 0 ? (
-                        <DataTable>
-                          <colgroup>
-                            <col className="data-col" />
-                            <col className="data-col" />
-                            <col className="data-col" />
-                            <col className="data-col" />
-                          </colgroup>
-                          <thead>
-                            <tr>
-                              <th id="name">Name</th>
-                              <th id="url">URL</th>
-                              <th id="status">Status</th>
-                              <th id="timestamp">Occurred</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {entries !== null &&
-                              entries.map((entry) => (
-                                <EventLogEntryComponent
-                                  key={`${entry.timestamp}${entry.namespace}${entry.name}`}
-                                  entry={entry}
-                                />
-                              ))}
-                          </tbody>
-                        </DataTable>
-                      ) : (
-                        'No webhook history found'
-                      )
-                    ) : (
-                      <LoadingWrapper>
-                        <GoACircularProgress visible={true} message={indicator.message} />
-                      </LoadingWrapper>
-                    )}
-                    {next && (
-                      <div className="mt-1">
-                        <GoAButton
-                          type="tertiary"
-                          testId="webhook-history-form-load-more"
-                          disabled={isLoading}
-                          onClick={onNext}
-                        >
-                          Load more...
-                        </GoAButton>
-                      </div>
-                    )}
-                  </>
-                </div>
-              )}
-            </GoAWrapper>
-          </GoAForm>
-        </GoAModalContent>
-        <GoAModalActions>
+      <GoAModal
+        open={isOpen}
+        testId="webhook-history-modal"
+        heading="Webhook History"
+        actions={
           <GoAButtonGroup alignment="end">
             <GoAButton
               type="secondary"
@@ -292,15 +189,109 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ onCancel, webhoo
               Close
             </GoAButton>
           </GoAButtonGroup>
-        </GoAModalActions>
+        }
+      >
+        <GoAFormItem label="Application">
+          <div className="grey-fill">{searchCriteria.applications}</div>
+        </GoAFormItem>
+
+        <GoAFormItem label="URL">
+          <GoAInput
+            name="url"
+            type="url"
+            width="100%"
+            testId="webhook-history-url-input"
+            value={searchCriteria.url}
+            onChange={(name, value) => {
+              setSearchCriteria({ ...searchCriteria, url: value });
+            }}
+            aria-label="description"
+          />
+        </GoAFormItem>
+        <DateFilter>
+          <StartDate>
+            <GoAFormItem label="Start date">
+              <DateTimeInput
+                type="datetime-local"
+                name="timestampMin"
+                max={today}
+                aria-label="timestampMin"
+                value={searchCriteria.timestampMin}
+                onChange={(e) => setSearchCriteria({ ...searchCriteria, timestampMin: e.target.value })}
+              />
+            </GoAFormItem>
+          </StartDate>
+          <EndDate>
+            <GoAFormItem label="End date">
+              <DateTimeInput
+                type="datetime-local"
+                name="timestampMax"
+                max={today}
+                aria-label="timestampMax"
+                value={searchCriteria.timestampMax}
+                onChange={(e) => setSearchCriteria({ ...searchCriteria, timestampMax: e.target.value })}
+              />
+            </GoAFormItem>
+          </EndDate>
+        </DateFilter>
+
+        {viewWebhooks && (
+          <div className="mt-1 mb-2px">
+            <>
+              {entries ? (
+                entries?.length > 0 ? (
+                  <DataTable>
+                    <colgroup>
+                      <col className="data-col" />
+                      <col className="data-col" />
+                      <col className="data-col" />
+                      <col className="data-col" />
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th id="name">Name</th>
+                        <th id="url">URL</th>
+                        <th id="status">Status</th>
+                        <th id="timestamp">Occurred</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {entries !== null &&
+                        entries.map((entry) => (
+                          <EventLogEntryComponent
+                            key={`${entry.timestamp}${entry.namespace}${entry.name}`}
+                            entry={entry}
+                          />
+                        ))}
+                    </tbody>
+                  </DataTable>
+                ) : (
+                  'No webhook history found'
+                )
+              ) : (
+                <LoadingWrapper>
+                  <GoACircularProgress visible={true} message={indicator.message} />
+                </LoadingWrapper>
+              )}
+              {next && (
+                <div className="mt-1">
+                  <GoAButton
+                    type="tertiary"
+                    testId="webhook-history-form-load-more"
+                    disabled={isLoading}
+                    onClick={onNext}
+                  >
+                    Load more...
+                  </GoAButton>
+                </div>
+              )}
+            </>
+          </div>
+        )}
       </GoAModal>
     </GoAModalStyle>
   );
 };
-
-const GoAWrapper = styled.div`
-  width: 584px;
-`;
 
 const GoAModalStyle = styled.div`
   max-width: 640px;

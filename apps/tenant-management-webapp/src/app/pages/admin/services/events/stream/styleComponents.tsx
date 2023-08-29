@@ -9,7 +9,7 @@ export const NameDiv = styled.div`
 `;
 
 export const ChipsWrapper = styled.div`
-  width: 33em;
+  width: 100%;
   display: flex;
   flex-wrap: wrap;
   padding-bottom: 1em;

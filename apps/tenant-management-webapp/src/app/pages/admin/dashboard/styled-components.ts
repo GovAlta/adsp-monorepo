@@ -40,6 +40,18 @@ export const DashboardDiv = styled.div`
     }
   }
   margin-bottom: 2.5rem;
+
+  .row {
+    display: flex; /* equal height of the children */
+  }
+
+  .col {
+    flex: 1; /* additionally, equal width */
+  }
+
+  .goa-container {
+    height: 400px;
+  }
 `;
 
 export const ListWrapper = styled.ul`

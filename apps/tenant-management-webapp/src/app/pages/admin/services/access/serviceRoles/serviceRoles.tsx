@@ -78,6 +78,7 @@ export const ServiceRoles = (): JSX.Element => {
           status={serviceRoleSyncStatus}
         />
       )}
+
       {!indicator.show && tenantRoles !== null && (
         <div>
           {Object.entries(tenantRoles).length > 0 &&

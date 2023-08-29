@@ -33,11 +33,11 @@ export const Script = (): JSX.Element => {
           <HeadingDiv>
             <h1 data-testid="script-service-title">Script service</h1> <img src={BetaBadge} alt="Files Service" />
           </HeadingDiv>
-          <Tabs activeIndex={activeIndex}>
-            <Tab label="Overview">
+          <Tabs activeIndex={activeIndex} data-testid="script-tabs">
+            <Tab label="Overview" data-testid="script-overview-tabs">
               <ScriptOverview setActiveIndex={setActiveIndex} setActiveEdit={activateEdit} />
             </Tab>
-            <Tab label="Scripts">
+            <Tab label="Scripts" data-testid="scripts-tab">
               <ScriptsView activeEdit={activateEditState} />
             </Tab>
           </Tabs>

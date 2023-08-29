@@ -78,11 +78,9 @@ export const DirectoryModal = (): JSX.Element => {
     .build();
 
   // eslint-disable-next-line
-  useEffect(() => {}, [editModal?.isOpen, addModal?.isOpen]);
-
   useEffect(() => {
     setEntry(initEntry);
-  }, [initEntry]);
+  }, [isNew, isQuickAdd, isEdit, initEntry]);
 
   return (
     <GoAModal

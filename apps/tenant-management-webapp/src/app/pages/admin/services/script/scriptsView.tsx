@@ -136,18 +136,17 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
         </div>
       )}
 
-      {openAddScript && (
-        <AddScriptModal
-          open={true}
-          initialValue={selectedScript}
-          realmRoles={tenant.realmRoles}
-          tenantClients={tenant.tenantClients ? tenant.tenantClients : {}}
-          onCancel={() => {
-            reset();
-          }}
-          onSave={saveScript}
-        />
-      )}
+      <AddScriptModal
+        open={openAddScript}
+        initialValue={selectedScript}
+        realmRoles={tenant.realmRoles}
+        tenantClients={tenant.tenantClients ? tenant.tenantClients : {}}
+        onCancel={() => {
+          reset();
+        }}
+        onSave={saveScript}
+      />
+
       <Modal open={showScriptEditForm} data-testid="script-edit-form">
         {/* Hides body overflow when the modal is up */}
         <BodyGlobalStyles hideOverflow={showScriptEditForm} />

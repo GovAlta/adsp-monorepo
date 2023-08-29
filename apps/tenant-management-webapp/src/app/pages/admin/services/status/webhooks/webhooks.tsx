@@ -203,34 +203,32 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
           </tbody>
         </DataTable>
       </TableLayout>
-      {editId && (
-        <WebhookFormModal
-          isEdit={true}
-          isOpen={true}
-          testId={'edit-webhook'}
-          defaultWebhooks={webhooks[editId]}
-          title="Edit webhook"
-          onCancel={() => {
-            setEditId(null);
-          }}
-          onSave={() => {
-            setEditId(null);
-          }}
-        />
-      )}
-      {testId && (
-        <TestWebhookModal
-          isOpen={testId !== null}
-          testId={'test-webhook'}
-          defaultWebhooks={webhooks[testId]}
-          title="Test webhook"
-          onClose={() => {
-            setTestId(null);
-          }}
-        />
-      )}
+      <WebhookFormModal
+        isEdit={true}
+        isOpen={editId !== null}
+        testId={'edit-webhook'}
+        defaultWebhooks={webhooks[editId]}
+        title="Edit webhook"
+        onCancel={() => {
+          setEditId(null);
+        }}
+        onSave={() => {
+          setEditId(null);
+        }}
+      />
+
+      <TestWebhookModal
+        isOpen={testId !== null}
+        testId={'test-webhook'}
+        defaultWebhooks={webhooks[testId]}
+        title="Test webhook"
+        onClose={() => {
+          setTestId(null);
+        }}
+      />
+
       {deleteId && <WebhookDeleteModal webhook={webhooks[deleteId]} onCancel={() => onDeleteCancel()} />}
-      {historyId && <WebhookHistoryModal webhook={webhooks[historyId]} onCancel={() => onHistoryCancel()} />}
+      <WebhookHistoryModal isOpen={!!historyId} webhook={webhooks[historyId]} onCancel={() => onHistoryCancel()} />
     </div>
   );
 };

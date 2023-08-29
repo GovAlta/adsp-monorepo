@@ -126,53 +126,49 @@ function Status(): JSX.Element {
   return (
     <Page>
       <Main>
-        {showAddApplicationModal && (
-          <ApplicationFormModal
-            isOpen={true}
-            testId={'add-application'}
-            isEdit={false}
-            title="Add application"
-            onCancel={() => {
-              setShowAddApplicationModal(false);
-            }}
-            onSave={() => {
-              if (activeIndex !== 1) {
-                setActiveIndex(1);
-              }
-              setShowAddApplicationModal(false);
-            }}
-            defaultApplication={{
-              name: '',
-              appKey: '',
-              tenantId: '',
-              enabled: false,
-              description: '',
-              endpoint: { url: '', status: 'offline' },
-            }}
-          />
-        )}
+        <ApplicationFormModal
+          isOpen={showAddApplicationModal}
+          testId={'add-application'}
+          isEdit={false}
+          title="Add application"
+          onCancel={() => {
+            setShowAddApplicationModal(false);
+          }}
+          onSave={() => {
+            if (activeIndex !== 1) {
+              setActiveIndex(1);
+            }
+            setShowAddApplicationModal(false);
+          }}
+          defaultApplication={{
+            name: '',
+            appKey: '',
+            tenantId: '',
+            enabled: false,
+            description: '',
+            endpoint: { url: '', status: 'offline' },
+          }}
+        />
 
-        {showAddWebhookModal && (
-          <WebhookFormModal
-            defaultWebhooks={defaultHooks}
-            isOpen={true}
-            testId={'add-webhook'}
-            isEdit={false}
-            title="Add webhook"
-            onCancel={() => {
-              setShowAddWebhookModal(false);
-            }}
-            onSave={() => {
-              setShowAddWebhookModal(false);
-            }}
-          />
-        )}
+        <WebhookFormModal
+          defaultWebhooks={defaultHooks}
+          isOpen={showAddWebhookModal}
+          testId={'add-webhook'}
+          isEdit={false}
+          title="Add webhook"
+          onCancel={() => {
+            setShowAddWebhookModal(false);
+          }}
+          onSave={() => {
+            setShowAddWebhookModal(false);
+          }}
+        />
         <h1 data-testid="status-title">Status service</h1>
-        <Tabs activeIndex={activeIndex}>
-          <Tab label="Overview">
+        <Tabs activeIndex={activeIndex} data-testid="status-tabs">
+          <Tab label="Overview" data-testid="status-overview-tab">
             <StatusOverview setActiveEdit={addApplication} setActiveIndex={setActiveIndex} />
           </Tab>
-          <Tab label="Applications">
+          <Tab label="Applications" data-testid="status-applications-tab">
             <p>
               <GoAButton testId="add-application" onClick={() => addApplication(true)} type="primary">
                 Add application
@@ -199,7 +195,7 @@ function Status(): JSX.Element {
               ))}
             </ApplicationList>
           </Tab>
-          <Tab label="Webhook">
+          <Tab label="Webhook" data-testid="status-webhook">
             <p>The webhooks are listed here</p>
             <p>
               <GoAButton testId="add-application" onClick={() => addWebhook(true)} type="primary">
@@ -213,19 +209,18 @@ function Status(): JSX.Element {
               <b>There are no webhooks yet</b>
             )}
           </Tab>
-          <Tab label="Notices">
-            {showAddNoticeModal && (
-              <NoticeModal
-                isOpen={true}
-                title="Add notice"
-                onCancel={() => {
-                  setShowAddNoticeModal(false);
-                }}
-                onSave={() => {
-                  setShowAddNoticeModal(false);
-                }}
-              />
-            )}
+          <Tab label="Notices" data-testid="status-notices">
+            <NoticeModal
+              isOpen={showAddNoticeModal}
+              title="Add notice"
+              onCancel={() => {
+                setShowAddNoticeModal(false);
+              }}
+              onSave={() => {
+                setShowAddNoticeModal(false);
+              }}
+            />
+
             <p>
               This service allows for posting of application notices. This allows you to communicate with your customers
               about upcoming maintenance windows or other events

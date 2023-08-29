@@ -12,15 +12,10 @@ import {
   GoACheckbox,
   GoABadge,
   GoABadgeType,
-} from '@abgov/react-components-new';
-import {
   GoAModal,
-  GoAModalActions,
-  GoAModalContent,
-  GoAModalTitle,
-  GoAForm,
   GoAFormItem,
-} from '@abgov/react-components/experimental';
+} from '@abgov/react-components-new';
+
 import ApplicationFormModal from '../form';
 
 import { setApplicationStatus } from '@store/status/actions/setApplicationStatus';
@@ -76,10 +71,6 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
     return value.substr(0, 1).toUpperCase() + value.substr(1);
   }
 
-  function formatStatus(statusType: string): string {
-    return statusType.slice(0, 1).toUpperCase() + statusType.slice(1).replace(/\W/, ' ');
-  }
-
   const publicStatusMap: { [key: string]: GoABadgeType } = {
     operational: 'success',
     maintenance: 'important',
@@ -125,7 +116,6 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
         <GoAButton
           type="tertiary"
           size="compact"
-          //style={{ flex: '0 0 160px' }}
           onClick={() => {
             dispatch(
               toggleApplicationStatus({
@@ -143,7 +133,7 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
       <GoACheckbox
         checked={app.monitorOnly}
         name="monitor-only-checkbox"
-        data-testid="monitor-only-checkbox"
+        testId="monitor-only-checkbox"
         onChange={() => {
           const application: ApplicationStatus = JSON.parse(JSON.stringify(app));
           application.monitorOnly = !app.monitorOnly;
@@ -181,38 +171,30 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
       />
 
       {/* Manual status change dialog */}
-      <GoAModal isOpen={showStatusForm}>
-        <GoAModalTitle>Manual status change</GoAModalTitle>
-        <GoAModalContent>
-          <GoAForm>
-            <GoAFormItem>
-              <GoARadioGroup
-                name="status"
-                value={status}
-                onChange={(_name, value) => setStatus(value as ServiceStatusType)}
-                orientation="vertical"
-                testId="status-radio-group"
-              >
-                {PublicServiceStatusTypes.map((statusType) => (
-                  <GoARadioItem name="status" value={statusType}>
-                    {formatStatus(statusType)}
-                  </GoARadioItem>
-                ))}
-              </GoARadioGroup>
-            </GoAFormItem>
-          </GoAForm>
-        </GoAModalContent>
-        <GoAModalActions>
-          <GoAButtonGroup alignment="end">
-            <GoAButton testId="application-cancel-button" type="secondary" onClick={cancelManualStatusChange}>
-              Cancel
-            </GoAButton>
+      <GoAModal open={showStatusForm} heading="Manual status change">
+        <GoAFormItem label="">
+          <GoARadioGroup
+            name="status"
+            value={status}
+            onChange={(_name, value) => setStatus(value as ServiceStatusType)}
+            orientation="vertical"
+            testId="status-radio-group"
+          >
+            {PublicServiceStatusTypes.map((statusType) => (
+              <GoARadioItem name="status" value={statusType}></GoARadioItem>
+            ))}
+          </GoARadioGroup>
+        </GoAFormItem>
 
-            <GoAButton testId="application-save-button" type="primary" onClick={doManualStatusChange}>
-              Save
-            </GoAButton>
-          </GoAButtonGroup>
-        </GoAModalActions>
+        <GoAButtonGroup alignment="end">
+          <GoAButton testId="application-cancel-button" type="secondary" onClick={cancelManualStatusChange}>
+            Cancel
+          </GoAButton>
+
+          <GoAButton testId="application-save-button" type="primary" onClick={doManualStatusChange}>
+            Save
+          </GoAButton>
+        </GoAButtonGroup>
       </GoAModal>
       <ApplicationFormModal
         isOpen={showEditModal}

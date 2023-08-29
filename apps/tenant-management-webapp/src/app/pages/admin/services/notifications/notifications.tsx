@@ -42,17 +42,17 @@ export const Notifications: FunctionComponent = () => {
     <Page>
       <Main>
         <h1 data-testid="notification-title">Notification service</h1>
-        <Tabs activeIndex={activeIndex}>
-          <Tab label="Overview">
+        <Tabs activeIndex={activeIndex} data-testid="notification-tabs">
+          <Tab label="Overview" data-testid="notification-overview-tab">
             <NotificationsOverview setActiveEdit={activateEdit} />
           </Tab>
-          <Tab label="Notification types">
+          <Tab label="Notification types" data-testid="notification-types-tab">
             <NotificationTypes activeEdit={activateEditState} activateEdit={activateEdit} />
           </Tab>
-          <Tab label="Subscriptions">
+          <Tab label="Subscriptions" data-testid="notification-subscriptions-tab">
             <Subscriptions />
           </Tab>
-          <Tab label="Subscribers">
+          <Tab label="Subscribers" data-testid="notification-subscribers">
             <Subscribers />
           </Tab>
         </Tabs>

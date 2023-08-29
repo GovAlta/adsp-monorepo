@@ -9,7 +9,7 @@ const coreRealm = 'platform';
 
 const hasApi = (service, directory) => {
   const filteredDirectory = directory.filter((dir) => dir.service === service.service);
-  const api = service.metadata?._links.api.href.split('/').slice(-1)[0];
+  const api = service.metadata?._links?.api?.href?.split('/').slice(-1)[0];
 
   return filteredDirectory.length < 2 || !filteredDirectory.find((dir) => dir.api === api);
 };

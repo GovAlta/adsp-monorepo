@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { saveApplication } from '@store/status/actions';
 import { fetchDirectory, fetchDirectoryDetailByURNs } from '@store/directory/actions';
 import { ApplicationStatus } from '@store/status/models';
-import { GoAButton, GoAButtonGroup, GoAInput, GoATextArea } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAInput, GoATextArea, GoAFormItem, GoAModal } from '@abgov/react-components-new';
 import { useValidators } from '@lib/validation/useValidators';
 import { GoADropdownOption } from '@abgov/react-components';
 
@@ -15,14 +15,6 @@ import {
   wordMaxLengthCheck,
 } from '@lib/validation/checkInput';
 
-import {
-  GoAForm,
-  GoAFormItem,
-  GoAModal,
-  GoAModalContent,
-  GoAModalTitle,
-  GoAModalActions,
-} from '@abgov/react-components/experimental';
 import { RootState } from '@store/index';
 import { createSelector } from 'reselect';
 import { DropdownListContainer, DropdownList, IdField } from './styled-components';
@@ -38,7 +30,7 @@ interface Props {
   onSave?: () => void;
 }
 const tenantServiceURNSelector = createSelector(
-  (state: RootState) => state.directory.directory,
+  (state: RootState) => state.directory?.directory,
   (directory) => {
     if (!directory) {
       return [];
@@ -54,14 +46,14 @@ const tenantServiceURNSelector = createSelector(
 );
 
 const healthEndpointsSelector = createSelector(
-  (state: RootState) => state.directory.directory,
+  (state: RootState) => state.directory?.directory,
   (directory) => {
     return directory
       .filter((_directory) => {
         return _directory?.metadata?._links?.health?.href !== undefined;
       })
       .map((_directory) => {
-        return _directory?.metadata._links.health.href;
+        return _directory?.metadata._links?.health?.href;
       });
   }
 );
@@ -144,121 +136,14 @@ export const ApplicationFormModal: FC<Props> = ({
   }, [tenantServiceUrns.length]);
 
   // eslint-disable-next-line
-  useEffect(() => {}, [healthEndpoints]);
+  // useEffect(() => {}, [healthEndpoints]);
 
   return (
-    <GoAModal isOpen={isOpen} testId={testId}>
-      <GoAModalTitle>{title}</GoAModalTitle>
-      <GoAModalContent>
-        <GoAForm>
-          <GoAFormItem error={errors?.['name']}>
-            <label>Application name</label>
-            <GoAInput
-              type="text"
-              name="name"
-              width="100%"
-              testId="application-name-input"
-              value={application?.name}
-              onChange={(name, value) => {
-                if (!isEdit) {
-                  const appKey = toKebabName(value);
-                  // check for duplicate appKey
-                  validators['nameAppKey'].check(appKey);
-                  setApplication({
-                    ...application,
-                    name: value,
-                    appKey,
-                  });
-                } else {
-                  // should not update appKey during update
-                  validators['nameOnly'].check(value);
-                  setApplication({
-                    ...application,
-                    name: value,
-                  });
-                }
-              }}
-              aria-label="name"
-            />
-          </GoAFormItem>
-          <GoAFormItem>
-            <label>Application ID</label>
-            <IdField>{application.appKey}</IdField>
-          </GoAFormItem>
-          <GoAFormItem error={errors?.['description']}>
-            <label>Description</label>
-            <GoATextArea
-              name="description"
-              width="100%"
-              value={application?.description}
-              testId="application-description"
-              onChange={(name, value) => {
-                validators.remove('description');
-                validators['description'].check(value);
-                setApplication({
-                  ...application,
-                  description: value,
-                });
-              }}
-              aria-label="description"
-            />
-          </GoAFormItem>
-          <GoAFormItem error={errors?.['url']}>
-            <label>URL</label>
-            <GoAInput
-              type="url"
-              name="url"
-              width="100%"
-              value={application?.endpoint?.url}
-              aria-label="input-url"
-              testId="application-url-input"
-              onChange={(name, value) => {
-                validators.remove('url');
-                validators['url'].check(value);
-                setApplication({
-                  ...application,
-                  endpoint: {
-                    url: value,
-                    status: 'offline',
-                  },
-                });
-              }}
-              onTrailingIconClick={() => {
-                setOpenDropdown(!openDropdown);
-              }}
-              trailingIcon={openDropdown ? 'close-circle' : 'chevron-down'}
-            />
-
-            {openDropdown && (
-              <DropdownListContainer>
-                <DropdownList>
-                  {healthEndpoints.map((endpoint): JSX.Element => {
-                    return (
-                      <GoADropdownOption
-                        label={endpoint}
-                        value={endpoint}
-                        key={endpoint}
-                        visible={true}
-                        aria-label="select-dropdown-url"
-                        onClick={(value) => {
-                          setApplication({
-                            ...application,
-                            endpoint: {
-                              url: value,
-                              status: 'offline',
-                            },
-                          });
-                        }}
-                      />
-                    );
-                  })}
-                </DropdownList>
-              </DropdownListContainer>
-            )}
-          </GoAFormItem>
-        </GoAForm>
-      </GoAModalContent>
-      <GoAModalActions>
+    <GoAModal
+      open={isOpen}
+      testId={testId}
+      heading={title}
+      actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
             type="secondary"
@@ -280,7 +165,109 @@ export const ApplicationFormModal: FC<Props> = ({
             Save
           </GoAButton>
         </GoAButtonGroup>
-      </GoAModalActions>
+      }
+    >
+      <GoAFormItem error={errors?.['name']} label="Application name">
+        <GoAInput
+          type="text"
+          name="name"
+          width="100%"
+          testId="application-name-input"
+          value={application?.name}
+          onChange={(name, value) => {
+            if (!isEdit) {
+              const appKey = toKebabName(value);
+              // check for duplicate appKey
+              validators['nameAppKey'].check(appKey);
+              setApplication({
+                ...application,
+                name: value,
+                appKey,
+              });
+            } else {
+              // should not update appKey during update
+              validators['nameOnly'].check(value);
+              setApplication({
+                ...application,
+                name: value,
+              });
+            }
+          }}
+          aria-label="name"
+        />
+      </GoAFormItem>
+      <GoAFormItem label="Application ID">
+        <IdField>{application.appKey}</IdField>
+      </GoAFormItem>
+      <GoAFormItem error={errors?.['description']} label="Description">
+        <GoATextArea
+          name="description"
+          width="100%"
+          value={application?.description}
+          testId="application-description"
+          onChange={(name, value) => {
+            validators.remove('description');
+            validators['description'].check(value);
+            setApplication({
+              ...application,
+              description: value,
+            });
+          }}
+          aria-label="description"
+        />
+      </GoAFormItem>
+      <GoAFormItem error={errors?.['url']} label="URL">
+        <GoAInput
+          type="url"
+          name="url"
+          width="100%"
+          value={application?.endpoint?.url}
+          aria-label="input-url"
+          testId="application-url-input"
+          onChange={(name, value) => {
+            validators.remove('url');
+            validators['url'].check(value);
+            setApplication({
+              ...application,
+              endpoint: {
+                url: value,
+                status: 'offline',
+              },
+            });
+          }}
+          onTrailingIconClick={() => {
+            setOpenDropdown(!openDropdown);
+          }}
+          trailingIcon={openDropdown ? 'close-circle' : 'chevron-down'}
+        />
+
+        {openDropdown && (
+          <DropdownListContainer>
+            <DropdownList>
+              {healthEndpoints.map((endpoint): JSX.Element => {
+                return (
+                  <GoADropdownOption
+                    label={endpoint}
+                    value={endpoint}
+                    key={endpoint}
+                    visible={true}
+                    aria-label="select-dropdown-url"
+                    onClick={(value) => {
+                      setApplication({
+                        ...application,
+                        endpoint: {
+                          url: value,
+                          status: 'offline',
+                        },
+                      });
+                    }}
+                  />
+                );
+              })}
+            </DropdownList>
+          </DropdownListContainer>
+        )}
+      </GoAFormItem>
     </GoAModal>
   );
 };
