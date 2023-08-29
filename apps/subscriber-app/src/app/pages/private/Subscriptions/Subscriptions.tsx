@@ -3,9 +3,8 @@ import { Main } from '@components/Html';
 import Container from '@components/Container';
 import DataTable from '@components/DataTable';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
-import { GoAButton, GoACallout } from '@abgov/react-components-new';
+import { GoAButton, GoACallout, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
 import { FetchContactInfoService } from '@store/notification/actions';
-import { GoAModal, GoAModalActions, GoAModalTitle } from '@abgov/react-components/experimental';
 
 import SubscriptionsList from '@components/SubscriptionsList';
 
@@ -76,13 +75,12 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
 
   const unSubscribeModal = () => {
     return (
-      <GoAModal isOpen={true} key={1} data-testId="unsubscribe-modal">
-        <GoAModalTitle>Are you sure you want unsubscribe?</GoAModalTitle>
+      <GoAModal open={true} key={1} testId="unsubscribe-modal" heading="Are you sure you want unsubscribe?">
         <GoAModelTextWrapper data-testId="unsubscribe-modal-content">
           If you decide to unsubscribe from “{selectedUnsubscribeSub.type.name}” you won’t receive any updates from the
           service in the future.{' '}
         </GoAModelTextWrapper>
-        <GoAModalActions>
+        <GoAButtonGroup alignment="end">
           <GoAButton
             type="secondary"
             testId="unsubscribe-modal-cancel-button"
@@ -107,7 +105,7 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
           >
             Unsubscribe
           </GoAButton>
-        </GoAModalActions>
+        </GoAButtonGroup>
       </GoAModal>
     );
   };

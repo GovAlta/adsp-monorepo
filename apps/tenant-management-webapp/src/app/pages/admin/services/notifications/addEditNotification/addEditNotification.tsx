@@ -222,7 +222,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
 
                         setType({ ...type, channels: channels });
                       }}
-                      data-testid="manage-subscriptions-checkbox"
+                      testId="manage-subscriptions-checkbox"
                       value="manageSubscribe"
                       ariaLabel={`manage-subscriptions-checkbox`}
                     >

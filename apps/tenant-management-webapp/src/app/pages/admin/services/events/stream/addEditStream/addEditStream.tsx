@@ -190,7 +190,7 @@ export const AddEditStream = ({
           <GoACheckbox
             checked={stream.publicSubscribe}
             name="stream-anonymousRead-checkbox"
-            data-testid="stream-anonymousRead-checkbox"
+            testId="stream-anonymousRead-checkbox"
             onChange={() => {
               setStream({
                 ...stream,

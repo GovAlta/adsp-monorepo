@@ -227,7 +227,7 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
         }}
       />
 
-      {deleteId && <WebhookDeleteModal webhook={webhooks[deleteId]} onCancel={() => onDeleteCancel()} />}
+      <WebhookDeleteModal isOpen={!!deleteId} webhook={webhooks[deleteId]} onCancel={() => onDeleteCancel()} />
       <WebhookHistoryModal isOpen={!!historyId} webhook={webhooks[historyId]} onCancel={() => onHistoryCancel()} />
     </div>
   );
