@@ -127,8 +127,8 @@ class KeycloakAuth {
     const location: string = window.location.href;
     const skipSSO = location.indexOf('kc_idp_hint') > -1;
 
-    const urlParams = new URLSearchParams(encodeURIComponent(window.location.search));
-    const idpFromUrl = urlParams.get('kc_idp_hint');
+    const urlParams = new URLSearchParams(window.location.search);
+    const idpFromUrl = encodeURIComponent(urlParams.get('kc_idp_hint'));
 
     let redirectUri = `${this.loginRedirect}/${realm}`;
     console.debug(`Keycloak redirect URL: ${redirectUri}`);
