@@ -85,7 +85,7 @@ When('the user modifies URL field {string}', function (url) {
 });
 
 Then('the user clicks Save button in Entry modal', function () {
-  directoryObj.entryModalSaveButton().shadow().find('button').click();
+  directoryObj.entryModalSaveButton().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
 

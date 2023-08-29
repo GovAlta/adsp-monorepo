@@ -122,7 +122,7 @@ class DirectoryServicePage {
   }
 
   entryModalTitle() {
-    return cy.xpath('//*[@data-testid="directory-modal"]//*[@slot="heading"]');
+    return cy.xpath('//*[@data-testid="directory-modal" and @open="true"]//*[@slot="heading"]');
   }
 }
 export default DirectoryServicePage;
