@@ -29,7 +29,7 @@ export const getIdpHint = () => {
   const location: string = window.location.href;
   const skipSSO = location.indexOf('kc_idp_hint') > -1;
   const urlParams = new URLSearchParams(window.location.search);
-  const idpFromUrl = urlParams.get('kc_idp_hint');
+  const idpFromUrl = encodeURIComponent(urlParams.get('kc_idp_hint'));
   if (skipSSO) {
     return idpFromUrl;
   }

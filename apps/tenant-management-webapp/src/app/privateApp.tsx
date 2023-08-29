@@ -23,7 +23,7 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
   useTokenExpiryCount();
 
   const urlParams = new URLSearchParams(window.location.search);
-  const realmFromParams = urlParams.get('realm');
+  const realmFromParams = encodeURIComponent(urlParams.get('realm'));
   const realm = realmFromParams || localStorage.getItem('realm');
 
   if (realmFromParams) {

@@ -27,7 +27,7 @@ const LoginRedirect = (props: LoginProps): JSX.Element => {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const type = urlParams.get('type');
+    const type = encodeURIComponent(urlParams.get('type'));
     const idpFromUrl = urlParams.get('kc_idp_hint');
     const location: string = window.location.href;
     const skipSSO = location.indexOf('kc_idp_hint=') > -1;
