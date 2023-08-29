@@ -60,7 +60,7 @@ export const FlexRow = styled.div`
 export const NotificationTemplateEditorContainer = styled.div`
   display: flex;
   flex: auto;
-  margin-top: 6px;
+  margin-top: 0px;
   padding-left: var(--goa-spacing-xl);
   width: 100%;
   height: 100vh;
@@ -111,18 +111,10 @@ export const TemplateEditorContainerPdf = styled.div`
     overflow: auto;
   }
   width: calc(100vw - 40vw - 9.9rem);
+  padding-top: var(--goa-spacing-xs);
 
   .reduce-margin {
     margin-top: 5px;
-  }
-
-  div[data-testid='pdf-edit-header'] {
-    padding: 0 !important;
-    margin-top: var(--goa-spacing-l);
-    margin-bottom: var(--goa-spacing-xl);
-  }
-  div[pdf-edit-header-tab-btn='pdf-edit-header-tab-btn'] {
-    margin-top: 0px !important;
   }
 
   .scroll-bar {
@@ -188,6 +180,7 @@ export const PreviewTemplateContainer = styled.div`
   margin-right: var(--goa-spacing-xl);
   margin-left: var(--goa-spacing-xl);
   overflow: hidden;
+  padding-top: var(--goa-spacing-xs);
   &:hover {
     overflow: auto;
   }
@@ -261,13 +254,12 @@ export const PdfConfigFormWrapper = styled.div`
   height: 7.375rem;
   background-color: var(--goa-color-greyscale-100);
   padding-right: var(--goa-color-greyscale-100);
-  border-bottom: solid var(--goa-fontSize-3) var(--goa-color-greyscale-100);
 
   display: flex;
   margin-bottom: var(--goa-spacing-l);
   .nameColumn {
     width: 91px;
-    height: 118px;
+    height: 85px;
     margin: var(--goa-spacing-m);
   }
   .idColumn {
@@ -279,17 +271,31 @@ export const PdfConfigFormWrapper = styled.div`
     width: 664px;
     height: 118px;
     margin: var(--goa-spacing-m);
+    p {
+      bottom: -105px !important;
+      max-width: 300px !important;
+    }
   }
   .overflowContainer {
-    border-bottom: 16px solid #f1f1f1;
-    height: 64px;
+    height: 48px;
     overflow: hidden;
     vertical-align: top;
+    width: 100%;
+    -webkit-box-orient: vertical;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    font-size: 16px;
+    font-weight: 400;
+    font-family: 'acumin-pro-semi-condensed';
+    line-height: 24px;
+    word-wrap: break-word;
+    word-break: break-word;
   }
   .editColumn {
+    float: right;
     width: 77px;
     height: 118px;
-    margin: var(--goa-spacing-m) var(--goa-spacing-m) var(--goa-spacing-m) 0px;
+    margin: var(--goa-spacing-m) var(--goa-spacing-m) var(--goa-spacing-m) auto;
   }
   .separator {
     margin-top: var(--goa-spacing-m);
@@ -310,6 +316,25 @@ export const PdfConfigFormWrapper = styled.div`
     line-height: var(--goa-line-height-3);
     font-weight: var(--goa-font-weight-bold);
     font-family: var(--goa-font-family-sans);
+  }
+`;
+
+export const Tooltip = styled.div`
+  position: relative;
+  p {
+    display: none;
+    position: absolute;
+  }
+  &:hover p {
+    display: block;
+    margin: 0;
+    padding: 3px 7px;
+    background: #ffffff;
+    border: 1px solid grey;
+    bottom: -37px;
+    width: max-content;
+    min-width: 200px;
+    font-size: 16px;
   }
 `;
 

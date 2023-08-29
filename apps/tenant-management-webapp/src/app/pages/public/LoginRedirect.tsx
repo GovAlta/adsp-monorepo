@@ -20,15 +20,15 @@ const LoginRedirect = (props: LoginProps): JSX.Element => {
   // TODO: isAuthenticated shall be same as the validation in the PrivateApp. Need to create a global function for both.
   const isAuthenticated = useSelector((state: RootState) => state.session?.authenticated ?? false);
   const urlParams = new URLSearchParams(window.location.search);
-  const realm = urlParams.get('realm');
+  const realm = encodeURIComponent(urlParams.get('realm'));
   useEffect(() => {
     dispatch(KeycloakCheckSSO(realm));
   }, []);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const type = urlParams.get('type');
-    const idpFromUrl = urlParams.get('kc_idp_hint');
+    const type = encodeURIComponent(urlParams.get('type'));
+    const idpFromUrl = encodeURIComponent(urlParams.get('kc_idp_hint'));
     const location: string = window.location.href;
     const skipSSO = location.indexOf('kc_idp_hint=') > -1;
 
