@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { PdfTemplate } from '@store/pdf/model';
 
-import { GoAIconButton, GoATooltip } from '@abgov/react-components-new';
+import { GoAIconButton } from '@abgov/react-components-new';
 
 import { Edit, PdfConfigFormWrapper, Tooltip } from '../../styled-components';
 import { AddEditPdfTemplate } from '../addEditPdfTemplates';
