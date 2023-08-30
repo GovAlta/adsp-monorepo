@@ -40,7 +40,7 @@ export const BadgeWrapper = styled.div`
 `;
 
 export const ButtonBox = styled.div`
-  width: 2.15rem;
+  width: 1.75rem;
 `;
 
 export const PaddingRight = styled.div`
@@ -268,7 +268,7 @@ export const PdfConfigFormWrapper = styled.div`
     margin: var(--goa-spacing-m);
   }
   .descColumn {
-    width: 664px;
+    width: 606px;
     height: 118px;
     margin: var(--goa-spacing-m);
     p {
@@ -293,8 +293,8 @@ export const PdfConfigFormWrapper = styled.div`
   }
   .editColumn {
     float: right;
-    width: 77px;
-    height: 118px;
+    width: 53px;
+
     margin: var(--goa-spacing-m) var(--goa-spacing-m) var(--goa-spacing-m) auto;
   }
   .separator {
@@ -403,14 +403,22 @@ export const Edit = styled.div`
     margin: 6px 0 0 5px;
   }
 
+  goa-icon-button {
+    position: relative;
+    left: -0.25rem;
+  }
+
   a {
     margin-top: 3px;
     margin-right: var(--goa-spacing-xs);
+    text-decoration: underline;
+    line-height: 28px;
   }
   display: flex;
   flex-direction: row;
   margin-right: var(--goa-spacing-m);
-  margin-top: var(--goa-spacing-xs);
+  margin-top: 0;
+  padding-top: var(--goa-spacing-3xs);
 `;
 export const OverflowWrap = styled.div`
   overflow-wrap: break-word;
