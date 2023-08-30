@@ -28,6 +28,7 @@ Then('the user views Add notification type modal', function () {
   notificationsObj.notificationTypeModal().should('exist');
 });
 
+// Known issue: scrollbar to scroll to a specific role element doesn't work with .scrollIntoView() in Cypress. Only the viewable roles are useable for now.
 When(
   'the user enters {string}, {string}, {string}, {string}, {string}, {string} on notification type modal',
   function (name, description, role, bot, sms, selfService) {
