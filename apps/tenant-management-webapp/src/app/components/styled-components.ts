@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 export const MarginAdjustment = styled.h4`
   margin-bottom: 0.5rem !important;
-  margin-top: 2rem !important;
+  margin-top: 3rem !important;
 `;
 
 export const ActionButtonWrapper = styled.div`
