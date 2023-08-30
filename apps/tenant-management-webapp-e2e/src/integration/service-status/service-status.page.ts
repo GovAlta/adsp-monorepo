@@ -149,30 +149,28 @@ class StatusServicePage {
     return cy.get('[data-testid="add-application"]');
   }
 
-  addApplicationModalTitle() {
-    return cy.xpath(
-      '//div[@class="modal-root" and @data-state="visible"]/div[@class="modal"]/div[@class="modal-container"]/div[@class="modal-title"]'
-    );
+  addEditApplicationModalTitle() {
+    return cy.xpath('//goa-modal[@open="true"]//*[@slot="heading"]');
   }
 
-  addApplicationNameModalField() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//goa-input[@name="name"]');
+  addEditApplicationNameModalField() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-input[@name="name"]');
   }
 
-  addApplicationDescriptionModalField() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//goa-textarea[@name="description"]');
+  addEditApplicationDescriptionModalField() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-textarea[@name="description"]');
   }
 
-  addApplicationEndpointModalField() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//*[label="URL"]//goa-input');
+  addEditApplicationEndpointModalField() {
+    return cy.xpath('//goa-modal[@open="true"]//*[@label="URL"]//goa-input');
   }
 
-  addApplicationSaveBtn() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//goa-button[text()="Save"]');
+  addEditApplicationSaveBtn() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-button[text()="Save"]');
   }
 
-  addApplicationCancelBtn() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]//goa-button[text()="Cancel"]');
+  addEditApplicationCancelBtn() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-button[text()="Cancel"]');
   }
 
   applicationCardTitle(appName) {
@@ -198,17 +196,15 @@ class StatusServicePage {
   }
 
   manualStatusChangeModalTitle() {
-    return cy.xpath('//*[@class="modal-root" and @data-state="visible"]//*[@class="modal-title"]');
+    return cy.xpath('//goa-modal[@open="true"]//*[@slot="heading"]');
   }
 
   manualStatusChangeModalStatusRadio(statusName) {
-    return cy.xpath(
-      `//*[@class="modal-root" and @data-state="visible"]//input[@value="${statusName}"]/following-sibling::div`
-    );
+    return cy.xpath(`//goa-modal[@open="true"]//input[@value="${statusName}"]/following-sibling::div`);
   }
 
   manualStatusChangeModalSaveBtn() {
-    return cy.xpath('//*[@class="modal-root" and @data-state="visible"]//goa-button[text()="Save"]');
+    return cy.xpath('//goa-modal[@open="true"]//goa-button[text()="Save"]');
   }
 
   applicationCardStatusBadge(appName) {
@@ -238,7 +234,7 @@ class StatusServicePage {
   }
 
   editContactInformationModal() {
-    return cy.xpath('//*[@data-testid="edit-contact-information-status"]//*[@class="modal-title"]');
+    return cy.xpath('//*[@data-testid="edit-contact-information-status"]//*[@slot="heading"]');
   }
 
   editContactInformationEmail() {

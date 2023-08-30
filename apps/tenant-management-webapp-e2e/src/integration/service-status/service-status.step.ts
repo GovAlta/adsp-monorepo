@@ -478,21 +478,21 @@ When('the user clicks Add application button', function () {
 });
 
 Then('the user views Add application modal', function () {
-  statusObj.addApplicationModalTitle().invoke('text').should('eq', 'Add application');
+  statusObj.addEditApplicationModalTitle().invoke('text').should('eq', 'Add application');
 });
 
 When(
   'the user enters {string} as name and {string} as description and {string} as endpoint',
   function (name, description, endpoint) {
-    statusObj.addApplicationNameModalField().shadow().find('input').clear().type(name, { delay: 50, force: true });
+    statusObj.addEditApplicationNameModalField().shadow().find('input').clear().type(name, { delay: 100, force: true });
     statusObj
-      .addApplicationDescriptionModalField()
+      .addEditApplicationDescriptionModalField()
       .shadow()
       .find('.goa-textarea')
       .clear()
       .type(description, { force: true });
     statusObj
-      .addApplicationEndpointModalField()
+      .addEditApplicationEndpointModalField()
       .shadow()
       .find('input')
       .clear()
@@ -501,12 +501,12 @@ When(
 );
 
 Then('the user clicks Save application button', function () {
-  statusObj.addApplicationSaveBtn().shadow().find('button').click({ force: true });
+  statusObj.addEditApplicationSaveBtn().shadow().find('button').click({ force: true });
   cy.wait(4000);
 });
 
 Then('the user clicks Cancel application button', function () {
-  statusObj.addApplicationCancelBtn().shadow().find('button').click({ force: true });
+  statusObj.addEditApplicationCancelBtn().shadow().find('button').click({ force: true });
   cy.wait(1000);
 });
 
@@ -540,13 +540,13 @@ Then(
   'the user views {string} as name and {string} as description in the modal fields',
   function (appName, description) {
     statusObj
-      .addApplicationNameModalField()
+      .addEditApplicationNameModalField()
       .invoke('val')
       .then((val) => {
         expect(val).to.eq(appName);
       });
     statusObj
-      .addApplicationDescriptionModalField()
+      .addEditApplicationDescriptionModalField()
       .shadow()
       .find('.goa-textarea')
       .invoke('val')
@@ -557,9 +557,14 @@ Then(
 );
 
 When('the user enters {string} as name and {string} as description fields', function (appName, description) {
-  statusObj.addApplicationNameModalField().shadow().find('input').clear().type(appName, { delay: 100, force: true });
   statusObj
-    .addApplicationDescriptionModalField()
+    .addEditApplicationNameModalField()
+    .shadow()
+    .find('input')
+    .clear()
+    .type(appName, { delay: 100, force: true });
+  statusObj
+    .addEditApplicationDescriptionModalField()
     .shadow()
     .find('.goa-textarea')
     .clear()
