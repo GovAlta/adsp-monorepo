@@ -4,13 +4,11 @@ class NotificationsPage {
   }
 
   notificationTypeModal() {
-    return cy.xpath('//*[@data-testid="notification-types-form" and @data-state="visible"]/*[@class="modal"]');
+    return cy.xpath('//*[@data-testid="notification-types-form" and @open="true"]');
   }
 
   notificationTypeModalTitle() {
-    return cy.xpath(
-      '//*[@data-testid="notification-types-form" and @data-state="visible"]/*[@class="modal"]//*[@class="modal-title"]'
-    );
+    return cy.xpath('//*[@data-testid="notification-types-form" and @open="true"]//*[@slot="heading"]');
   }
 
   notificationTypeModalNameField() {
@@ -25,6 +23,10 @@ class NotificationsPage {
     return cy.xpath('//goa-checkbox[@name="anonymousRead-checkbox"]');
   }
 
+  notificationTypeModalRolesTable() {
+    return cy.xpath('//*[@data-testid="notification-types-form"]//goa-table');
+  }
+
   notificationTypeModalRolesCheckboxes() {
     return cy.xpath(
       '//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-name"]/following-sibling::td//goa-checkbox'
@@ -32,9 +34,8 @@ class NotificationsPage {
   }
 
   notificationTypeModalRolesCheckbox(roleLabel) {
-    return cy.xpath(
-      `//*[@data-testid="notification-types-form"]//tbody/tr/td[@class="role-name" and text()="${roleLabel}"]/following-sibling::td//goa-checkbox`
-    );
+    const role = `Notifications-type-subscribe-role-checkbox-${roleLabel}`;
+    return cy.xpath(`//goa-checkbox[@name="${role}"]`);
   }
 
   notificationTypeModalClientRoleCheckbox(clientRole) {
@@ -43,7 +44,7 @@ class NotificationsPage {
   }
 
   notificationChannelCheckbox(channelName) {
-    return cy.xpath(`//*[@class="modal"]//goa-checkbox[@name="${channelName}"]`);
+    return cy.xpath(`//goa-modal[@open="true"]//goa-checkbox[@name="${channelName}"]`);
   }
 
   notificationChannelEmailCheckbox() {
@@ -123,15 +124,11 @@ class NotificationsPage {
   }
 
   selectAnEventModalTitle() {
-    return cy.xpath(
-      '//*[@data-testid="event-form" and @data-state="visible"]/*[@class="modal"]//*[@class="modal-title"]'
-    );
+    return cy.xpath('//*[@data-testid="event-form"]//*[@slot="heading"]');
   }
 
   selectAnEventModalEventDropdown() {
-    return cy.xpath(
-      '//*[@data-testid="event-form" and @data-state="visible"]/*[@class="modal"]//goa-dropdown[@name="event"]'
-    );
+    return cy.xpath('//*[@data-testid="event-form"]//goa-dropdown[@name="event"]');
   }
 
   selectAnEventModalNextBtn() {
@@ -235,25 +232,25 @@ class NotificationsPage {
 
   notificationRecord(notificationType, addressAs, email) {
     return cy.xpath(
-      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[@data-testid="addressAs" and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr`
+      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[contains(@data-testid, "userName") and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr`
     );
   }
 
   notificationRecordEyeIcon(notificationType, addressAs, email) {
     return cy.xpath(
-      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[@data-testid="addressAs" and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr/td[@data-testid="actions"]//*[@data-testid="toggle-details-visibility"]`
+      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[contains(@data-testid, "userName") and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr/td[@data-testid="actions"]//*[@data-testid="toggle-details-visibility"]`
     );
   }
 
   notificationRecordDetailsCriteria(notificationType, addressAs, email) {
     return cy.xpath(
-      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[@data-testid="addressAs" and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr/following-sibling::tr//div[@data-testid="subscriber-criteria"]`
+      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[contains(@data-testid, "userName") and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr/following-sibling::tr//div[@data-testid="subscriber-criteria"]`
     );
   }
 
   deleteIconForNotificationRecord(notificationType, addressAs, email) {
     return cy.xpath(
-      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[@data-testid="addressAs" and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr//*[contains(@data-testid, "delete-subscription")]`
+      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[contains(@data-testid, "userName") and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr//*[contains(@data-testid, "delete-subscription")]`
     );
   }
 
@@ -346,7 +343,7 @@ class NotificationsPage {
   }
 
   editContactModal() {
-    return cy.xpath('//div[@class="modal-root" and @data-state="visible"]');
+    return cy.xpath('//goa-modal[@data-testid="edit-contact-information-notification" and @open="true"]');
   }
 
   editContactModalEmail() {
@@ -388,7 +385,7 @@ class NotificationsPage {
   }
 
   editSubscriberModal() {
-    return cy.xpath('//div[@class="modal-title" and text()="Edit subscriber"]/ancestor::div[@class="modal"]');
+    return cy.xpath('//goa-modal[@open="true"]/*[@slot="heading" and text()="Edit subscriber"]/parent::goa-modal');
   }
 
   editSubscriberModalSaveBtn() {
@@ -448,9 +445,7 @@ class NotificationsPage {
   }
 
   notificationEventTemplateTab(text) {
-    return cy.xpath(
-      `//*[@data-testid="template-form"]//*[@class="goa-form-item"]//descendant::div//descendant::div/div/div[contains(text(), "${text}")]`
-    );
+    return cy.xpath(`//*[@data-testid="template-form"]//div[contains(text(), "${text}")]`);
   }
 
   eventTemplateModal() {
@@ -504,11 +499,11 @@ class NotificationsPage {
   }
 
   resetEmailTemplateModalTitle() {
-    return cy.xpath('//*[@data-testid="delete-confirmation"]/*[@slot="heading"]');
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]/*[@slot="heading"]');
   }
 
   resetEmailTemplateModalDeleteBtn() {
-    return cy.xpath('//*[@data-testid="delete-confirmation"]//*[@data-testid="delete-confirm"]');
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]//*[@data-testid="delete-confirm"]');
   }
 
   templateModalPreviewPaneSMSSubject() {

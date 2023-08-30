@@ -28,6 +28,7 @@ Then('the user views Add notification type modal', function () {
   notificationsObj.notificationTypeModal().should('exist');
 });
 
+// Known issue: scrollbar to scroll to a specific role element doesn't work with .scrollIntoView() in Cypress. Only the viewable roles are useable for now.
 When(
   'the user enters {string}, {string}, {string}, {string}, {string}, {string} on notification type modal',
   function (name, description, role, bot, sms, selfService) {
@@ -69,7 +70,9 @@ When(
           }
           // Deselect all previously selected roles and then select new roles
           notificationsObj
-            .notificationTypeModalRolesCheckboxes()
+            .notificationTypeModalRolesTable()
+            .shadow()
+            .find('goa-checkbox')
             .shadow()
             .find('.goa-checkbox-container')
             .then((elements) => {
@@ -90,10 +93,12 @@ When(
                     .click();
                 } else {
                   notificationsObj
-                    .notificationTypeModalRolesCheckbox(roles[i].trim())
+                    .notificationTypeModalRolesTable()
+                    .shadow()
+                    .find('goa-checkbox[name="Notifications-type-subscribe-role-checkbox-' + roles[i].trim() + '"]')
                     .shadow()
                     .find('.goa-checkbox-container')
-                    .click();
+                    .click({ force: true });
                 }
               }
             });
@@ -245,6 +250,7 @@ When('the user clicks {string} button for the notification type card of {string}
   switch (buttonType) {
     case 'edit':
       notificationsObj.notificationTypeEditBtn(cardTitle).click({ force: true });
+      cy.wait(2000); // wait for roles to show up for editing
       break;
     case 'delete':
       notificationsObj.notificationTypeDeleteBtn(cardTitle).click({ force: true });

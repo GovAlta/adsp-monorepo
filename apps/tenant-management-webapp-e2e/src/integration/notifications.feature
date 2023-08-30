@@ -13,13 +13,13 @@ Feature: Notifications
     And the user views Add notification type button on Notification types page
     When the user clicks "edit" button for the notification type card of "autotest-addNotificationType"
     Then the user views Edit notification type modal for "autotest-addNotificationType"
-    When the user enters "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, urn:ads:platform:file-service:file-service-admin", "no", "no", "no" on notification type modal
+    When the user enters "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1", "no", "no", "no" on notification type modal
     And the user clicks Save button in notification type modal
-    Then the user "views" the notification type card of "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, urn:ads:platform:file-service:file-service-admin", "no", "no"
+    Then the user "views" the notification type card of "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1", "no", "no"
     When the user clicks "delete" button for the notification type card of "autotest-editNotificationType"
     Then the user views delete "notification type" confirmation modal for "autotest-editNotificationType"
     When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the notification type card of "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1, urn:ads:platform:file-service:file-service-admin", "no", "no"
+    Then the user "should not view" the notification type card of "autotest-editNotificationType", "Edited notification type desc", "auto-test-role1", "no", "no"
 
   # TEST DATA: a precreated notification type named "autotest-notificationType"
   @TEST_CS-949 @REQ_CS-277 @regression
