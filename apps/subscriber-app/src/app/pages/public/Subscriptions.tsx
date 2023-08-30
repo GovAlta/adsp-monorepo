@@ -3,10 +3,10 @@ import { Main } from '@components/Html';
 import Container from '@components/Container';
 import DataTable from '@components/DataTable';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
-import { GoAContainer, GoAButton, GoACallout } from '@abgov/react-components-new';
+import { GoAContainer, GoAButton, GoACallout, GoAButtonGroup, GoAModal } from '@abgov/react-components-new';
 import { FetchContactInfoService } from '@store/notification/actions';
 import { FetchTenantService } from '@store/tenant/actions';
-import { GoAModal, GoAModalActions, GoAModalTitle } from '@abgov/react-components/experimental';
+
 import styled from 'styled-components';
 import {
   Label,
@@ -73,13 +73,12 @@ const Subscriptions = (): JSX.Element => {
 
   const unSubscribeModal = () => {
     return (
-      <GoAModal isOpen={true} key={1} data-testId="unsubscribe-modal">
-        <GoAModalTitle>Are you sure you want unsubscribe?</GoAModalTitle>
+      <GoAModal open={true} key={1} testId="unsubscribe-modal" heading="Are you sure you want unsubscribe?">
         <GoAModelTextWrapper data-testId="unsubscribe-modal-content">
           If you decide to unsubscribe from “{selectedUnsubscribeSub.type.name}” you won’t receive any updates from the
           service in the future.{' '}
         </GoAModelTextWrapper>
-        <GoAModalActions>
+        <GoAButtonGroup alignment="end">
           <GoAButton
             type="secondary"
             testId="unsubscribe-modal-cancel-button"
@@ -105,7 +104,7 @@ const Subscriptions = (): JSX.Element => {
           >
             Unsubscribe
           </GoAButton>
-        </GoAModalActions>
+        </GoAButtonGroup>
       </GoAModal>
     );
   };

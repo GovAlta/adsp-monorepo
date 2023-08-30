@@ -15,7 +15,6 @@ import { GoAPageLoader } from '@abgov/react-components';
 
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
-import { GoACheckbox } from '@abgov/react-components-new';
 import {
   GoATextArea,
   GoAInput,
@@ -24,6 +23,7 @@ import {
   GoAFormItem,
   GoAButton,
   GoAIcon,
+  GoACheckbox,
 } from '@abgov/react-components-new';
 interface AddEditPdfTemplateProps {
   open: boolean;
@@ -208,7 +208,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
                 key={'populate-template'}
                 ariaLabel={'populate-template-checkbox'}
                 checked={template.startWithDefault}
-                data-testid={'populate-template'}
+                testId={'populate-template'}
                 onChange={() => {
                   template.startWithDefault = !template.startWithDefault;
                   if (template.startWithDefault) {

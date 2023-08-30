@@ -185,6 +185,7 @@ function Status(): JSX.Element {
               }}
               value="subscribed"
               ariaLabel="subscribe-checkbox"
+              testId="subscribe-checkbox"
             >
               I want to subscribe and receive notifications
             </GoACheckbox>

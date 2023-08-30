@@ -56,11 +56,11 @@ export const DirectoryService = (): JSX.Element => {
                 Add entry
               </GoAButton>
 
-              <ServiceTableComponent key="directory-tenant-table" directory={tenantDirectory} />
+              <ServiceTableComponent headerId={`directory-tenant-table`} directory={tenantDirectory} />
             </>
           )}
           <NameDiv>{coreTenant}</NameDiv>
-          <ServiceTableComponent key="directory-core-table" directory={coreDirectory} />
+          <ServiceTableComponent headerId={`directory-core-table`} directory={coreDirectory} />
         </div>
       )}
     </>

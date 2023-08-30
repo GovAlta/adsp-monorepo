@@ -282,6 +282,7 @@ export const WebhookFormModal: FC<Props> = ({
                 <GoACheckbox
                   name={name}
                   key={`${name}:${Math.random()}`}
+                  testId="webhook-name"
                   checked={webhook?.eventTypes?.map((e) => e.id).includes(`status-service:${name}`)}
                   onChange={(value: string) => {
                     const eventTypes = webhook?.eventTypes?.map((e) => e.id);

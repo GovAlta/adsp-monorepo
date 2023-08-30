@@ -105,6 +105,7 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
               runnerRoles: roles,
             });
           }}
+          nameColumnWidth={80}
           service="Script"
           checkedRoles={[{ title: 'runner', selectedRoles: script?.runnerRoles }]}
         />

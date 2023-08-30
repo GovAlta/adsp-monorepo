@@ -147,7 +147,7 @@ export const Application = (app: ApplicationStatus): JSX.Element => {
       <GoACheckbox
         checked={app.autoChangeStatus}
         name="autoChangeStatus-checkbox"
-        data-testid="autoChangeStatus-checkbox"
+        testId="autoChangeStatus-checkbox"
         onChange={() => {
           const application: ApplicationStatus = JSON.parse(JSON.stringify(app));
           application.autoChangeStatus = !app.autoChangeStatus;
