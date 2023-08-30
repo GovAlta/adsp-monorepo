@@ -11,9 +11,11 @@ import { UpdateModalState } from '@store/session/actions';
 
 interface serviceItemProps {
   service: Service;
+  id: string;
+  headerId: string;
 }
 
-const ServiceItemComponent = ({ service }: serviceItemProps): JSX.Element => {
+const ServiceItemComponent = ({ service, id, headerId }: serviceItemProps): JSX.Element => {
   const [showDetails, setShowDetails] = useState(false);
   const dispatch = useDispatch();
 
@@ -40,16 +42,16 @@ const ServiceItemComponent = ({ service }: serviceItemProps): JSX.Element => {
   return (
     <>
       <tr key={service.urn}>
-        <td headers="directory-service" data-testid="service">
+        <td headers={`${headerId}-directory-service`} data-testid="service">
           {service.service}
         </td>
-        <td headers="directory-api" data-testid="api">
+        <td headers={`${headerId}-directory-api`} data-testid="api">
           {service.api}
         </td>
-        <td headers="directory-url" data-testid="directory">
+        <td headers={`${headerId}-directory-url`} data-testid="directory">
           {service.url}
         </td>
-        <td headers="directory-actions">
+        <td headers={`${headerId}-directory-actions`}>
           <IconDiv>
             <GoAContextMenu>
               {!service.isCore && service.metadata?._links?.api && !service.api && service.hasApi && (
@@ -137,28 +139,29 @@ const ServiceItemComponent = ({ service }: serviceItemProps): JSX.Element => {
 
 interface serviceTableProps {
   directory: Service[];
+  headerId: string;
 }
 
-export const ServiceTableComponent = ({ directory }: serviceTableProps): JSX.Element => {
+export const ServiceTableComponent = ({ directory, headerId }: serviceTableProps): JSX.Element => {
   return (
     <TableDiv>
-      <DataTable data-testid="directory-table">
+      <DataTable id={`${headerId}-directory-table`} data-testid="directory-table">
         <thead data-testid="directory-table-header">
           <tr>
-            <th id="directory-service" data-testid="directory-table-header-name">
+            <th id={`${headerId}-directory-service`} data-testid="directory-table-header-name">
               Service
             </th>
-            <th id="directory-api" data-testid="directory-table-header-name">
+            <th id={`${headerId}-directory-api`} data-testid="directory-table-header-name">
               API
             </th>
-            <th id="directory-url">URL</th>
-            <th id="directory-actions">Action</th>
+            <th id={`${headerId}-directory-url`}>URL</th>
+            <th id={`${headerId}-directory-actions`}>Action</th>
           </tr>
         </thead>
 
         <tbody>
           {directory.map((dir: Service) => {
-            return <ServiceItemComponent key={`directory-list-item-${dir.urn}`} service={dir} />;
+            return <ServiceItemComponent id={`directory-list-item-${dir.urn}`} service={dir} headerId={headerId} />;
           })}
         </tbody>
       </DataTable>
