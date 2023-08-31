@@ -84,12 +84,22 @@ When('the user enters {string} in name field in configuration definition modal',
 Then(
   'the user views the error message of {string} on namespace in configuration definition modal',
   function (errorMsg) {
-    configurationObj.addConfigurationDefinitionModalNamespaceErrorMsg().invoke('text').should('contain', errorMsg);
+    configurationObj
+      .addConfigurationDefinitionModalNamespaceFormItem()
+      .shadow()
+      .find('.error-msg')
+      .invoke('text')
+      .should('contain', errorMsg);
   }
 );
 
 Then('the user views the error message of {string} on name in configuration definition modal', function (errorMsg) {
-  configurationObj.addConfigurationDefinitionModalNameErrorMsg().invoke('text').should('contain', errorMsg);
+  configurationObj
+    .addConfigurationDefinitionModalNameFormItem()
+    .shadow()
+    .find('.error-msg')
+    .invoke('text')
+    .should('contain', errorMsg);
 });
 
 When(
@@ -99,19 +109,19 @@ When(
       .addConfigurationDefinitionModalNamespaceField()
       .shadow()
       .find('input')
-      .clear()
-      .type(namespace, { delay: 50, force: true });
+      .clear({ force: true })
+      .type(namespace, { delay: 100, force: true });
     configurationObj
       .addConfigurationDefinitionModalNameField()
       .shadow()
       .find('input')
-      .clear()
+      .clear({ force: true })
       .type(name, { delay: 50, force: true });
     configurationObj
       .addConfigurationDefinitionModalDescField()
       .shadow()
       .find('.goa-textarea')
-      .clear()
+      .clear({ force: true })
       .type(desc, { force: true });
   }
 );

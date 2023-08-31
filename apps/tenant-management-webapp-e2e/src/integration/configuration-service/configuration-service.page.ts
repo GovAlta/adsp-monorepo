@@ -62,9 +62,7 @@ class ConfigurationServicePage {
   }
 
   configurationDefinitionModalTitle() {
-    return cy.xpath(
-      '//*[@data-testid="definition-form" and @data-state="visible"]//*[@data-testid="definition-form-title"]'
-    );
+    return cy.xpath('//*[@data-testid="definition-form" and @open="true"]//*[@slot="heading"]');
   }
 
   addConfigurationDefinitionModalNamespaceField() {
@@ -79,16 +77,12 @@ class ConfigurationServicePage {
     return cy.get('[data-testid="form-description"]');
   }
 
-  addConfigurationDefinitionModalNamespaceErrorMsg() {
-    return cy.xpath(
-      '//*[@data-testid="definition-form"]//label[text()="Namespace"]/following-sibling::div[@class="error-msg"]'
-    );
+  addConfigurationDefinitionModalNamespaceFormItem() {
+    return cy.xpath('//*[@data-testid="definition-form"]//*[@label="Namespace"]');
   }
 
-  addConfigurationDefinitionModalNameErrorMsg() {
-    return cy.xpath(
-      '//*[@data-testid="definition-form"]//label[text()="Name"]/following-sibling::div[@class="error-msg"]'
-    );
+  addConfigurationDefinitionModalNameFormItem() {
+    return cy.xpath('//*[@data-testid="definition-form"]//*[@label="Name"]');
   }
 
   configurationDefinitionModalSaveBtn() {
