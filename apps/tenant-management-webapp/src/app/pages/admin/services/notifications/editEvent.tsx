@@ -120,6 +120,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
               // note: do not mutate props directly, it will cause unnecessary side effects
               const deepClonedDefinition = JSON.parse(JSON.stringify(definition));
               deepClonedDefinition.events.push(eventObject);
+              onCancel();
               onNext(deepClonedDefinition, eventObject);
 
               setValues(['']);
