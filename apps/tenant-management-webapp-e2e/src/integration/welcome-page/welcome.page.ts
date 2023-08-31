@@ -68,10 +68,6 @@ class WelcomePage {
     return cy.xpath('//*[@class="goa-hero"]//div/h1');
   }
 
-  createTenantNameErrorMsg() {
-    return cy.xpath('//*[@class="goa-form"]//*[@class="error-msg"]');
-  }
-
   createTenantNameFormItem() {
     return cy.xpath('//goa-form-item[@label="Tenant name"]');
   }
