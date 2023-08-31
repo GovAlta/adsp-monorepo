@@ -613,7 +613,7 @@ Then('the user views current status for {string}', function (appName) {
 });
 
 Then('the user changes status to the first unused status', function () {
-  var radioListIndexToCheck;
+  let radioListIndexToCheck;
   const radioList = ['operational', 'maintenance', 'outage', 'reported-issues'];
   // statusObj.manualStatusChangeModalItemList().should('have.length', 4);
   statusObj.manualStatusChangeModalStatusRadioGroup().shadow().find('.goa-radio-label').should('have.length', 4);
