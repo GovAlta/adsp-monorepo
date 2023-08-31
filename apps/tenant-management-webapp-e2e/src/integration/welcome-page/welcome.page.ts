@@ -72,6 +72,10 @@ class WelcomePage {
     return cy.xpath('//*[@class="goa-form"]//*[@class="error-msg"]');
   }
 
+  createTenantNameFormItem() {
+    return cy.xpath('//goa-form-item[@label="Tenant name"]');
+  }
+
   chatAppCard() {
     return cy.xpath(
       '//main//h2[text()="Example apps"]/parent::div/following-sibling::div//h2[text()="Chat app"]/parent::div'
