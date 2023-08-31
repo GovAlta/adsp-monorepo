@@ -199,8 +199,8 @@ class StatusServicePage {
     return cy.xpath('//goa-modal[@open="true"]//*[@slot="heading"]');
   }
 
-  manualStatusChangeModalStatusRadio(statusName) {
-    return cy.xpath(`//goa-modal[@open="true"]//input[@value="${statusName}"]/following-sibling::div`);
+  manualStatusChangeModalStatusRadioGroup() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-radio-group[@data-testid="status-radio-group"]');
   }
 
   manualStatusChangeModalSaveBtn() {
@@ -217,18 +217,6 @@ class StatusServicePage {
     );
   }
 
-  manualStatusChangeModalCheckedRadioBtn() {
-    return cy.xpath(
-      '//*[@class="modal-root" and @data-state="visible"]//*[@class="goa-form-item"]//div/*[@class="goa-radio"]//input[@type="radio" and @checked]'
-    );
-  }
-
-  manualStatusChangeModalRadioBtns() {
-    return cy.xpath(
-      '//*[@class="modal-root" and @data-state="visible"]//*[@class="goa-form-item"]//div/*[@class="goa-radio"]//input[@type="radio"]'
-    );
-  }
-
   contactInformationEditBtn() {
     return cy.xpath('//*[@data-testid="edit-contact-info"]//goa-icon-button');
   }
@@ -238,7 +226,8 @@ class StatusServicePage {
   }
 
   editContactInformationEmail() {
-    return cy.get('[data-testid="form-email"]');
+    // return cy.get('[data-testid="form-email"]');
+    return cy.xpath('//goa-input[@data-testid="form-email"]');
   }
 
   editContactInformationEmailSaveBtn() {
