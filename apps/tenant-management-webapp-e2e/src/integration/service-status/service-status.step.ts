@@ -580,7 +580,11 @@ Then('the user views Manual status change modal', function () {
 });
 
 When('the user selects {string} and clicks Save button', function (statusName) {
-  statusObj.manualStatusChangeModalStatusRadio(statusName.toLowerCase()).click();
+  statusObj
+    .manualStatusChangeModalStatusRadioGroup()
+    .shadow()
+    .find('input[value="' + statusName.toLowerCase() + '"]')
+    .click({ force: true });
   statusObj.manualStatusChangeModalSaveBtn().shadow().find('button').click({ force: true });
   cy.wait(2000); // Wait for the status to change after save
 });
@@ -609,25 +613,37 @@ Then('the user views current status for {string}', function (appName) {
 });
 
 Then('the user changes status to the first unused status', function () {
-  const radioList = ['Operational', 'Maintenance', 'Outage', 'Reported issues'];
-  statusObj.manualStatusChangeModalItemList().should('have.length', 4);
-  statusObj.manualStatusChangeModalItemList().each((item, index) => {
-    expect(Cypress.$(item).text()).to.eq(radioList[index]);
-  });
+  var radioListIndexToCheck;
+  const radioList = ['operational', 'maintenance', 'outage', 'reported-issues'];
+  // statusObj.manualStatusChangeModalItemList().should('have.length', 4);
+  statusObj.manualStatusChangeModalStatusRadioGroup().shadow().find('.goa-radio-label').should('have.length', 4);
+  // statusObj.manualStatusChangeModalItemList().each((item, index) => {
   statusObj
-    .manualStatusChangeModalCheckedRadioBtn()
-    .invoke('val')
+    .manualStatusChangeModalStatusRadioGroup()
+    .shadow()
+    .find('.goa-radio-label')
+    .each((item, index) => {
+      expect(Cypress.$(item).text()).to.eq(radioList[index]);
+    });
+  statusObj
+    .manualStatusChangeModalStatusRadioGroup()
+    .invoke('attr', 'value')
     .then(($value) => {
       const checkedStatus = String($value);
-      statusObj.manualStatusChangeModalRadioBtns().each(($item) => {
-        if ($item.val() != checkedStatus) {
-          $item.trigger('click');
-          cy.task('setNewAppStatus', $item.val());
-          cy.task('getNewAppStatus').then((appStatus) => {
-            cy.log('New Status: ' + appStatus);
-          });
-          return false;
-        }
+      const radioListIndex = radioList.indexOf(checkedStatus);
+      if (radioListIndex == 3) {
+        radioListIndexToCheck = 0;
+      } else {
+        radioListIndexToCheck = radioListIndex + 1;
+      }
+      statusObj
+        .manualStatusChangeModalStatusRadioGroup()
+        .shadow()
+        .find('input[value="' + radioList[radioListIndexToCheck] + '"]')
+        .click({ force: true });
+      cy.task('setNewAppStatus', radioList[radioListIndexToCheck]);
+      cy.task('getNewAppStatus').then((appStatus) => {
+        cy.log('New Status: ' + appStatus);
       });
     });
 });
@@ -665,7 +681,12 @@ Then('the user views Edit contact information modal on the status overview page'
 });
 
 When('the user enters {string} in Edit contact information modal', function (email) {
-  statusObj.editContactInformationEmail().shadow().find('input').clear().type(email, { delay: 50, force: true });
+  statusObj
+    .editContactInformationEmail()
+    .shadow()
+    .find('input')
+    .clear({ force: true })
+    .type(email, { delay: 100, force: true });
 });
 
 Then('the user clicks Save button on contact information modal', function () {

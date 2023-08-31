@@ -1042,7 +1042,7 @@ Then('the user {string} Reset button for {string} in {string}', function (viewOr
 });
 
 Then('the user views Reset email template modal', function () {
-  notificationsObj.resetEmailTemplateModalTitle().should('have.text', 'Reset email template');
+  notificationsObj.resetEmailTemplateModalTitle().invoke('text').should('contains', 'Reset email template');
 });
 
 When('the user clicks Delete button in Reset email template modal', function () {
