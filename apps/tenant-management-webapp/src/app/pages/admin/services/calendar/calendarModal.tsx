@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { GoAButton, GoAButtonGroup, GoAModal, GoATextArea, GoAInput, GoAFormItem } from '@abgov/react-components-new';
-import { CalendarItem } from '@store/calendar/models';
+import { CalendarItem, defaultCalendar } from '@store/calendar/models';
 import { useSelector } from 'react-redux';
 import { Role } from '@store/tenant/models';
 import { ClientRoleTable } from '@components/RoleTable';
@@ -124,6 +124,14 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
     );
   };
 
+  const handleCancelClick = () => {
+    if (isNew) {
+      setCalendar(defaultCalendar);
+    }
+    validators.clear();
+    onCancel();
+  };
+
   return (
     <GoAModal
       testId="add-calendar-modal"
@@ -135,8 +143,7 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
             type="secondary"
             testId="calendar-modal-cancel"
             onClick={() => {
-              validators.clear();
-              onCancel();
+              handleCancelClick();
             }}
           >
             Cancel
