@@ -85,7 +85,7 @@ export const PDFConfigForm = ({ template }: PDFConfigFormProps) => {
               <th>Description</th>
             </tr>
             <tr>
-              <td>
+              <td data-testid="template-description">
                 <Tooltip>
                   <div className="overflowContainer" ref={tooltipDescElem}>
                     {description}
