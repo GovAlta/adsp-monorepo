@@ -1,6 +1,6 @@
-interface RetentionPolicy {
+export interface RetentionPolicy {
   active: boolean;
-  deleteInDays: number;
+  deleteInDays: number | string;
   createdAt: string;
 }
 export interface FileTypeItem {
