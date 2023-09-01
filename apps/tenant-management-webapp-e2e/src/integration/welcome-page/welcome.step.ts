@@ -148,7 +148,7 @@ When('the user clicks back to sign in page button', function () {
 });
 
 Then('the user views the error message of {string} for tenant creation', function (errorMsg) {
-  welcomPageObj.createTenantNameErrorMsg().invoke('text').should('contain', errorMsg);
+  welcomPageObj.createTenantNameFormItem().shadow().find('.error-msg').invoke('text').should('contain', errorMsg);
 });
 
 Then('the user views Chat app card under Example apps section', function () {
