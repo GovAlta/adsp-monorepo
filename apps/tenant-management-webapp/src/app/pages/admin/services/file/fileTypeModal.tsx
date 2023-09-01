@@ -33,6 +33,8 @@ import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { ActionState } from '@store/session/models';
 import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
+import { cloneDeep } from 'lodash';
+
 interface FileTypeModalProps {
   isOpen: boolean;
   fileType?: FileTypeItem;
@@ -86,7 +88,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   const isNew = props.type === 'new';
   const [fileType, setFileType] = useState({} as FileTypeItem);
   const title = isNew ? 'Add file type' : 'Edit file type';
-  const cloneFileType = structuredClone(props.fileType);
+  const cloneFileType = cloneDeep(props.fileType);
 
   const { errors, validators } = useValidators(
     'name',
