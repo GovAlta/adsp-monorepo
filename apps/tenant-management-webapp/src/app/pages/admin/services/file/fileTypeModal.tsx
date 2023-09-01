@@ -20,7 +20,7 @@ import {
   RetentionToolTip,
 } from './styled-components';
 import { UpdateFileTypeService, CreateFileTypeService } from '@store/file/actions';
-import { FileTypeItem } from '@store/file/models';
+import { FileTypeItem, RetentionPolicy } from '@store/file/models';
 import { useDispatch } from 'react-redux';
 import { toKebabName } from '@lib/kebabName';
 import { createSelector } from 'reselect';
@@ -45,7 +45,7 @@ interface FileTypeModalProps {
 
 interface DeleteInDaysInputProps {
   updateFunc: (name: string, day: string) => void;
-  value: number;
+  value: number | string;
   disabled: boolean;
 }
 
@@ -84,8 +84,9 @@ const validateRetentionPolicy = (type: FileTypeItem): boolean => {
 
 export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   const isNew = props.type === 'new';
-  const [fileType, setFileType] = useState(props.fileType);
+  const [fileType, setFileType] = useState({} as FileTypeItem);
   const title = isNew ? 'Add file type' : 'Edit file type';
+  const cloneFileType = structuredClone(props.fileType);
 
   const { errors, validators } = useValidators(
     'name',
@@ -108,8 +109,13 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
     fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
   }));
+
   //eslint-disable-next-line
   useEffect(() => {}, [fetchKeycloakRolesState]);
+
+  useEffect(() => {
+    setFileType(props.fileType);
+  }, [props.fileType]);
 
   const ClientRole = ({ roleNames, clientId }) => {
     return (
@@ -159,6 +165,32 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
       });
   elements = elements.concat(clientElements);
 
+  const handleCancelClick = () => {
+    if (isNew) {
+      const defaultRetention: RetentionPolicy = {
+        ...fileType.rules?.retention,
+        active: false,
+        deleteInDays: '',
+      };
+      setFileType({
+        ...fileType,
+        name: '',
+        id: '',
+        readRoles: [],
+        updateRoles: [],
+        anonymousRead: false,
+        rules: {
+          ...fileType?.rules,
+          retention: defaultRetention,
+        },
+      });
+    } else {
+      setFileType(cloneFileType);
+    }
+    validators.clear();
+    props.onCancel();
+  };
+
   return (
     <ModalOverwrite>
       <GoAModal
@@ -171,8 +203,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
               type="secondary"
               testId="file-type-modal-cancel"
               onClick={() => {
-                validators.clear();
-                props.onCancel();
+                handleCancelClick();
               }}
             >
               Cancel
