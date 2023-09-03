@@ -75,6 +75,13 @@ const completeServiceVariables = [
       'The status service allows for easy monitoring of application downtime. Each application should represent a service that is useful to the end user by itself, such as child care subsidy and child care certification.',
     beta: false,
   },
+  {
+    name: 'Task',
+    link: '/admin/services/task',
+    description:
+      'The task service provides a model for tasks, task queues, and task assignment. Applications can use the task service for work management as an aspect to augment domain specific concepts and processes..',
+    beta: true,
+  },
 ];
 
 export const defaultFeaturesVisible = {
@@ -89,6 +96,7 @@ export const defaultFeaturesVisible = {
   PDF: true,
   Script: true,
   Status: true,
+  Task: true,
 };
 
 export const serviceVariables = (featuresVisible = defaultFeaturesVisible) => {

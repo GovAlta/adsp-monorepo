@@ -50,6 +50,7 @@ export interface FeatureFlags {
   PDF: boolean;
   Script: boolean;
   Status: boolean;
+  Task: boolean;
 }
 
 export interface ConfigState {
