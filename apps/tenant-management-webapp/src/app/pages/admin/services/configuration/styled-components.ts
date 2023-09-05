@@ -171,7 +171,7 @@ export const Exports = styled.div`
   }
 
   .configuration-selector {
-    width: 256px;
+    width: 272px;
   }
 
   .absolute-position {
@@ -191,7 +191,6 @@ export const Exports = styled.div`
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
-    color: red;
   }
 
   .chip {
@@ -238,7 +237,6 @@ export const Exports = styled.div`
 
 export const ChipWrapper = styled.div`
   margin: 4px 0 4px 0;
-  text-overflow: ellipsis;
 `;
 
 export const ConfigurationTableStyles = styled.div`
