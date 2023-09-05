@@ -2,7 +2,11 @@ import styled from 'styled-components';
 
 export const MarginAdjustment = styled.h4`
   margin-bottom: 0.5rem !important;
-  margin-top: 3rem !important;
+  margin-top: 2rem !important;
+`;
+
+export const PaddingRem = styled.div`
+  padding-top: 1rem;
 `;
 
 export const ActionButtonWrapper = styled.div`
