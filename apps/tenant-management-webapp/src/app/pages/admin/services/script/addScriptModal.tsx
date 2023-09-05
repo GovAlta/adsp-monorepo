@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useEffect, useState } from 'react';
 import {
   GoACheckbox,
   GoATextArea,
@@ -8,7 +8,7 @@ import {
   GoAFormItem,
   GoAModal,
 } from '@abgov/react-components-new';
-import { ScriptItem } from '@store/script/models';
+import { ScriptItem, defaultScript } from '@store/script/models';
 import { useSelector } from 'react-redux';
 import { Role } from '@store/tenant/models';
 import { ConfigServiceRole } from '@store/access/models';
@@ -56,6 +56,10 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
     .add('duplicated', 'name', duplicateNameCheck(scriptNames, 'Script'))
     .build();
 
+  useEffect(() => {
+    setScript(initialValue);
+  }, [initialValue]);
+
   const roleNames = realmRoles.map((role) => {
     return role.name;
   });
@@ -93,6 +97,7 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
     onCancel();
     validators.clear();
   };
+
   const RunnerRole = ({ roleNames, clientId }) => {
     return (
       <>
@@ -124,6 +129,7 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
             type="secondary"
             testId="script-modal-cancel"
             onClick={() => {
+              setScript(defaultScript);
               validators.clear();
               onCancel();
             }}
