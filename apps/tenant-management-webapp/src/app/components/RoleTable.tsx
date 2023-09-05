@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { GoACheckbox, GoATable } from '@abgov/react-components-new';
-import { MarginAdjustment } from './styled-components';
+import { MarginAdjustment, PaddingRem } from './styled-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 
@@ -48,7 +48,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
   };
 
   const getClientId = () => {
-    return props.clientId ? props.clientId : tenantName;
+    return props.clientId ? <PaddingRem>{props.clientId}</PaddingRem> : tenantName;
   };
   return (
     <>

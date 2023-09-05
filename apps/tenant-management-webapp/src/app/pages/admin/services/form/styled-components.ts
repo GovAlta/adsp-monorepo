@@ -35,6 +35,10 @@ export const Edit = styled.div`
 
   a {
     margin-top: 3px;
+    margin-right: 0.5rem;
+    text-decoration: underline;
+    line-height: 28px;
+    font-size: 18px;
   }
   display: flex;
   flex-direction: row;
@@ -102,6 +106,7 @@ export const ConfigFormWrapper = styled.div`
   th {
     text-align: left;
     padding-bottom: 0.5rem;
+    font-size: 18px;
   }
 `;
 export const FormEditor = styled.div`
