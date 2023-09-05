@@ -4,7 +4,7 @@ import { GoAButton, GoAButtonGroup, GoAInput, GoATextArea, GoAModal, GoAFormItem
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import styled from 'styled-components';
-import { isSmsValid, emailError, smsError } from '@lib/inputValidation';
+import { emailError, smsError } from '@lib/inputValidation';
 
 interface NotificationTypeFormProps {
   initialValue?: Subscriber;
@@ -195,9 +195,7 @@ export const SubscriberModalForm: FunctionComponent<NotificationTypeFormProps> =
                 value={phone}
                 testId="contact-sms-input"
                 onChange={(_, value) => {
-                  if (isSmsValid(value)) {
-                    setPhone(value.substring(0, 10));
-                  }
+                  if (value) setPhone(value);
                 }}
                 trailingIcon="close"
                 onTrailingIconClick={() => {
