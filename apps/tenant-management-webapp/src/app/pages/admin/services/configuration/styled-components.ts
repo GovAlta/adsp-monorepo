@@ -191,6 +191,7 @@ export const Exports = styled.div`
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
+    color: red;
   }
 
   .chip {
@@ -233,6 +234,11 @@ export const Exports = styled.div`
     background: #004f84;
     border: 1px solid !important;
   }
+`;
+
+export const ChipWrapper = styled.div`
+  margin: 4px 0 4px 0;
+  text-overflow: ellipsis;
 `;
 
 export const ConfigurationTableStyles = styled.div`
