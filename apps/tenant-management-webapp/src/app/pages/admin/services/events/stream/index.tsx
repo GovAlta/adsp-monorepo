@@ -12,37 +12,33 @@ import { GoAButton } from '@abgov/react-components-new';
 import { initialStream } from '@store/stream/models';
 import { DeleteModal } from '@components/DeleteModal';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
-import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
+import { UpdateModalState } from '@store/session/actions';
+import { AddModalType, EditModalType } from '@store/stream/models';
+import { selectTenantStreams } from '@store/stream/selectors';
 
 export const EventStreams = (): JSX.Element => {
   const dispatch = useDispatch();
 
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
-  const tenantStreams = useSelector((state: RootState) => state.stream?.tenant);
+  const tenantStreams = useSelector(selectTenantStreams);
   const coreStreams = useSelector((state: RootState) => state.stream?.core);
   const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
-  const tenant = useSelector(tenantRolesAndClients);
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
   const [showDeleteStream, setShowDeleteStream] = useState(false);
 
-  const [openAddStream, setOpenAddStream] = useState(false);
   const [selectedStream, setSelectedStream] = useState(initialStream);
-  const [isEdit, setIsEdit] = useState(false);
-
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
     dispatch(fetchEventStreams());
   }, []);
 
-  const reset = () => {
-    setIsEdit(false);
-    setOpenAddStream(false);
-    setSelectedStream(initialStream);
-  };
+  // eslint-disable-next-line
+  useEffect(() => {}, [tenantStreams]);
+
   return (
     <>
       <PageIndicator />
@@ -51,7 +47,13 @@ export const EventStreams = (): JSX.Element => {
           <GoAButton
             testId="add-stream"
             onClick={() => {
-              setOpenAddStream(true);
+              dispatch(
+                UpdateModalState({
+                  type: AddModalType,
+                  id: null,
+                  isOpen: true,
+                })
+              );
             }}
           >
             Add stream
@@ -61,12 +63,6 @@ export const EventStreams = (): JSX.Element => {
 
           <AddEditStream
             streams={tenantStreams}
-            open={openAddStream}
-            isEdit={isEdit}
-            onClose={reset}
-            initialValue={selectedStream}
-            realmRoles={tenant.realmRoles}
-            tenantClients={tenant.tenantClients}
             eventDefinitions={eventDefinitions}
             onSave={(stream) => {
               dispatch(updateEventStream(stream));
@@ -82,11 +78,15 @@ export const EventStreams = (): JSX.Element => {
                 setShowDeleteStream(true);
               }}
               onEdit={(streamId) => {
-                setSelectedStream(tenantStreams[streamId]);
-                setIsEdit(true);
-                setOpenAddStream(true);
+                dispatch(
+                  UpdateModalState({
+                    type: EditModalType,
+                    id: streamId,
+                    isOpen: true,
+                  })
+                );
               }}
-              streams={tenantStreams}
+              streams={{ ...tenantStreams }}
               namespace={tenantName}
             />
           </div>
@@ -107,11 +107,9 @@ export const EventStreams = (): JSX.Element => {
             content={`Delete ${selectedStream.name}?`}
             onCancel={() => {
               setShowDeleteStream(false);
-              reset();
             }}
             onDelete={() => {
               setShowDeleteStream(false);
-              reset();
               dispatch(dispatch(deleteEventStream(selectedStream.id)));
             }}
           />

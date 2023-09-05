@@ -1,6 +1,12 @@
-import { createSelectorCreator, defaultMemoize } from 'reselect';
+import { createSelectorCreator, defaultMemoize, createSelector } from 'reselect';
 import { RootState } from '@store/index';
 import { isEqual } from 'lodash';
+import { v4 as uuidV4 } from 'uuid';
+
+// Might need to move the type definition to another file later
+export type RoleObject = Record<string, string[]>;
+
+export const REALM_ROLE_KEY = uuidV4();
 
 const createDeepEqualSelector = createSelectorCreator(defaultMemoize, isEqual);
 
@@ -26,3 +32,65 @@ export const tenantRolesAndClients = createDeepEqualSelector(
     };
   }
 );
+
+export const getRolesFromRoleUrns = (urns: string[]) => {
+  return urns.map((u) => u.split(':').splice(-1));
+};
+
+export const constructRoleFromUrn = (urn: string) => {
+  const elements = urn.split(':');
+  const role = elements.pop();
+  const clientId = elements.join(':');
+  return [clientId, role];
+};
+
+export const constructRoleObjFromUrns = (urns?: string[]) => {
+  const roleObject: RoleObject = {};
+  if (!urns) return roleObject;
+  urns.forEach((u) => {
+    if (u.includes(':')) {
+      const [clientId, role] = constructRoleFromUrn(u);
+      if (!(clientId in roleObject)) roleObject[clientId] = [];
+      roleObject[clientId].push(role);
+    } else {
+      if (!(REALM_ROLE_KEY in roleObject)) roleObject[REALM_ROLE_KEY] = [];
+      roleObject[REALM_ROLE_KEY].push(u);
+    }
+  });
+
+  return roleObject;
+};
+
+export const roleObjectToUrns = (roleObject: RoleObject) => {
+  const roles = [];
+  Object.entries(roleObject).map(([clientId, clientRoles]) => {
+    if (clientId === REALM_ROLE_KEY) {
+      clientRoles.map((r) => roles.push(r));
+    } else {
+      clientRoles.map((r) => roles.push(`${clientId}:${r}`));
+    }
+  });
+  return roles;
+};
+
+export const selectRolesObject = createSelector(tenantRolesAndClients, (mergedRoles) => {
+  const { realmRoles, tenantClients } = mergedRoles;
+  const roleObject: RoleObject = {};
+
+  if (realmRoles) {
+    realmRoles.forEach((role) => {
+      if (!(REALM_ROLE_KEY in roleObject)) roleObject[REALM_ROLE_KEY] = [];
+      roleObject[REALM_ROLE_KEY].push(role.name);
+    });
+  }
+
+  if (tenantClients) {
+    Object.entries(tenantClients).forEach(([clientId, roleConfig]) => {
+      if (roleConfig?.roles && roleConfig?.roles?.length > 0) {
+        roleObject[clientId] = roleConfig.roles.map((role) => role.role);
+      }
+    });
+  }
+
+  return roleObject;
+});

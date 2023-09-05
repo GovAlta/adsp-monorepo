@@ -1,5 +1,8 @@
 import { Socket } from 'socket.io-client';
 
+export const EditModalType = 'stream-edit-modal';
+export const AddModalType = 'stream-add-modal';
+
 export interface Event {
   namespace: string;
   name: string;
@@ -44,3 +47,12 @@ export interface SubscriberRolesOptions {
   label: string;
   dataTestId: string;
 }
+
+export const InitStream = {
+  id: '',
+  name: '',
+  events: [],
+  publicSubscribe: false,
+  subscriberRoles: [],
+  description: '',
+};

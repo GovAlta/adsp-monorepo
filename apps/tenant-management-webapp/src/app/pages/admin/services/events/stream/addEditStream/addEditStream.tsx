@@ -1,16 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { GoADropdownOption, GoADropdown } from '@abgov/react-components';
 import { AnonymousWrapper, ChipsWrapper, IdField, StreamModalStyles } from '../styleComponents';
-import { Stream } from '@store/stream/models';
+import { Stream, EditModalType, AddModalType } from '@store/stream/models';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, duplicateNameCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { toKebabName } from '@lib/kebabName';
-import { generateEventOptions, generateSubscriberRolesOptions, mapTenantClientRoles } from '../utils';
-import { Role } from '@store/tenant/models';
+import { generateEventOptions } from '../utils';
 import { EventDefinition } from '@store/event/models';
-import { RolesTable } from './rolesTable';
-
-import { ServiceRoleConfig } from '@store/access/models';
+import { ClientRoleTable } from '@components/RoleTable';
 import {
   GoAChip,
   GoACheckbox,
@@ -22,29 +19,29 @@ import {
   GoAFormItem,
   GoAModal,
 } from '@abgov/react-components-new';
+import { initialStream } from '@store/stream/models';
+import { selectAddEditInitStream } from '@store/stream/selectors';
+import { useSelector, useDispatch } from 'react-redux';
+import { ResetModalState } from '@store/session/actions';
+import { selectModalStateByType } from '@store/session/selectors';
+import { selectRolesObject, constructRoleObjFromUrns, roleObjectToUrns } from '@store/sharedSelectors/roles';
+
 interface AddEditStreamProps {
   onSave: (stream: Stream) => void;
-  onClose: () => void;
-  isEdit: boolean;
-  open: boolean;
-  initialValue: Stream;
-  realmRoles?: Role[];
-  tenantClients: ServiceRoleConfig;
   eventDefinitions: Record<string, EventDefinition>;
   streams: Record<string, Stream>;
 }
-export const AddEditStream = ({
-  onSave,
-  open,
-  isEdit,
-  initialValue,
-  onClose,
-  realmRoles,
-  eventDefinitions,
-  tenantClients,
-  streams,
-}: AddEditStreamProps): JSX.Element => {
-  const [stream, setStream] = useState<Stream>({ ...initialValue });
+
+export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStreamProps): JSX.Element => {
+  const initStream = useSelector(selectAddEditInitStream) as Stream;
+  const [stream, setStream] = useState<Stream>(initStream);
+  const dispatch = useDispatch();
+  const editModal = useSelector(selectModalStateByType(EditModalType));
+  const addModal = useSelector(selectModalStateByType(AddModalType));
+  const isOpen = editModal?.isOpen || addModal?.isOpen;
+  const isEdit = editModal.isOpen;
+  const rolesObj = useSelector(selectRolesObject);
+  const selectedRoles = constructRoleObjFromUrns(initStream?.subscriberRoles);
 
   const { errors, validators } = useValidators(
     'name',
@@ -61,11 +58,9 @@ export const AddEditStream = ({
     return stream?.events.map((event) => {
       return `${event.namespace}:${event.name}`;
     });
-  }, [stream.events]);
+  }, [stream?.events]);
 
-  const subscriberRolesOptions = realmRoles ? generateSubscriberRolesOptions(realmRoles) : undefined;
   const eventOptions = eventDefinitions ? generateEventOptions(eventDefinitions) : undefined;
-  const tenantClientsMappedRoles = tenantClients ? mapTenantClientRoles(tenantClients) : undefined;
 
   const deleteEventChip = (eventChip) => {
     const updatedStreamEvents = streamEvents.filter((event) => event !== eventChip);
@@ -79,190 +74,184 @@ export const AddEditStream = ({
       }),
     });
   };
+
+  useEffect(() => {
+    if (stream.id !== initStream.id) {
+      setStream(initStream);
+    }
+  }, [initStream, rolesObj]);
+
   return (
     <StreamModalStyles>
-      <GoAModal
-        testId="stream-form"
-        open={open}
-        heading={isEdit ? 'Edit stream' : 'Add stream'}
-        actions={
-          <GoAButtonGroup alignment="end">
-            <GoAButton
-              testId="form-cancel"
-              type="secondary"
-              onClick={() => {
-                validators.clear();
-                onClose();
+      {isOpen && (
+        <GoAModal
+          testId="stream-form"
+          open={true}
+          heading={isEdit ? 'Edit stream' : 'Add stream'}
+          actions={
+            <GoAButtonGroup alignment="end">
+              <GoAButton
+                testId="form-cancel"
+                type="secondary"
+                onClick={() => {
+                  validators.clear();
+                  dispatch(ResetModalState());
+                  setStream(initialStream);
+                }}
+              >
+                Cancel
+              </GoAButton>
+              <GoAButton
+                type="primary"
+                testId="form-save"
+                disabled={!stream?.name || validators.haveErrors()}
+                onClick={() => {
+                  if (!isEdit && validators['duplicate'].check(stream.id)) {
+                    return;
+                  }
+                  onSave(stream);
+                  dispatch(ResetModalState());
+                }}
+              >
+                Save
+              </GoAButton>
+            </GoAButtonGroup>
+          }
+        >
+          <GoAFormItem error={errors?.['name']} label="Name">
+            <GoAInput
+              type="text"
+              name="stream-name"
+              width="100%"
+              value={stream.name}
+              disabled={isEdit}
+              testId="stream-name"
+              aria-label="stream-name"
+              onChange={(name, value) => {
+                validators.remove('name');
+                validators['name'].check(value);
+                const streamId = toKebabName(value);
+                setStream({ ...stream, name: value, id: streamId });
+              }}
+            />
+          </GoAFormItem>
+          <GoAFormItem label="Stream ID">
+            <IdField>{stream.id}</IdField>
+          </GoAFormItem>
+          <GoAFormItem label="Description">
+            <label></label>
+            <GoATextArea
+              name="stream-description"
+              value={stream.description}
+              testId="stream-description"
+              aria-label="stream-description"
+              width="100%"
+              onChange={(name, value) => {
+                validators.remove('description');
+                validators['description'].check(value);
+                setStream({ ...stream, description: value });
+              }}
+            />
+          </GoAFormItem>
+          <GoAFormItem label="Select events">
+            <GoADropdown
+              name="streamEvents"
+              selectedValues={streamEvents}
+              multiSelect={true}
+              onChange={(name, values) => {
+                setStream({
+                  ...stream,
+                  events: values.map((event) => {
+                    return {
+                      namespace: event.split(':')[0],
+                      name: event.split(':')[1],
+                    };
+                  }),
+                });
               }}
             >
-              Cancel
-            </GoAButton>
-            <GoAButton
-              type="primary"
-              testId="form-save"
-              disabled={!stream.name || validators.haveErrors()}
-              onClick={() => {
-                if (!isEdit && validators['duplicate'].check(stream.id)) {
-                  return;
-                }
-                onSave(stream);
-                onClose();
-              }}
-            >
-              Save
-            </GoAButton>
-          </GoAButtonGroup>
-        }
-      >
-        <GoAFormItem error={errors?.['name']} label="Name">
-          <GoAInput
-            type="text"
-            name="stream-name"
-            width="100%"
-            value={stream.name}
-            disabled={isEdit}
-            testId="stream-name"
-            aria-label="stream-name"
-            onChange={(name, value) => {
-              validators.remove('name');
-              validators['name'].check(value);
-              const streamId = toKebabName(value);
-              setStream({ ...stream, name: value, id: streamId });
-            }}
-          />
-        </GoAFormItem>
-        <GoAFormItem label="Stream ID">
-          <IdField>{stream.id}</IdField>
-        </GoAFormItem>
-        <GoAFormItem label="Description">
-          <label></label>
-          <GoATextArea
-            name="stream-description"
-            value={stream.description}
-            testId="stream-description"
-            aria-label="stream-description"
-            width="100%"
-            onChange={(name, value) => {
-              validators.remove('description');
-              validators['description'].check(value);
-              setStream({ ...stream, description: value });
-            }}
-          />
-        </GoAFormItem>
-        <GoAFormItem label="Select events">
-          <GoADropdown
-            name="streamEvents"
-            selectedValues={streamEvents}
-            multiSelect={true}
-            onChange={(name, values) => {
-              setStream({
-                ...stream,
-                events: values.map((event) => {
-                  return {
-                    namespace: event.split(':')[0],
-                    name: event.split(':')[1],
-                  };
-                }),
-              });
-            }}
-          >
-            {eventOptions
-              .sort((a, b) => (a.name < b.name ? -1 : 1))
-              .map((item) => (
-                <GoADropdownOption label={item.label} value={item.value} key={item.key} data-testid={item.dataTestId} />
-              ))}
-          </GoADropdown>
-        </GoAFormItem>
-        <ChipsWrapper>
-          {streamEvents.map((eventChip) => {
-            return (
-              <GoAChip
-                key={eventChip}
-                deletable={true}
-                content={eventChip}
-                onClick={() => deleteEventChip(eventChip)}
-              />
-            );
-          })}
-        </ChipsWrapper>
-
-        <AnonymousWrapper>
-          <GoACheckbox
-            checked={stream.publicSubscribe}
-            name="stream-anonymousRead-checkbox"
-            testId="stream-anonymousRead-checkbox"
-            onChange={() => {
-              setStream({
-                ...stream,
-                publicSubscribe: !stream.publicSubscribe,
-              });
-            }}
-            ariaLabel={`stream-anonymousRead-checkbox`}
-          />
-          Make stream public
-        </AnonymousWrapper>
-        {subscriberRolesOptions ? '' : <GoASkeleton type="text" />}
-        {!stream.publicSubscribe && subscriberRolesOptions ? (
-          <RolesTable
-            tableHeading="Roles"
-            key={'roles'}
-            subscriberRolesOptions={subscriberRolesOptions}
-            checkedRoles={stream?.subscriberRoles || []}
-            onItemChecked={(value) => {
-              if (stream?.subscriberRoles && stream.subscriberRoles.includes(value)) {
-                const updatedRoles = stream.subscriberRoles.filter((roleName) => roleName !== value);
-                setStream({ ...stream, subscriberRoles: updatedRoles });
-              } else {
-                if (!stream?.subscriberRoles) {
-                  stream.subscriberRoles = [];
-                }
-                setStream({ ...stream, subscriberRoles: [...stream.subscriberRoles, value] });
-              }
-            }}
-          />
-        ) : (
-          // some extra white space so the modal height/width stays the same when roles are hidden
-          <div
-            style={{
-              width: '33em',
-              height: '6em',
-            }}
-          ></div>
-        )}
-
-        {tenantClientsMappedRoles ? (
-          ''
-        ) : (
-          <>
-            <br />
-            <GoASkeleton type="text" />
-          </>
-        )}
-        {!stream.publicSubscribe && tenantClientsMappedRoles
-          ? tenantClientsMappedRoles.map((tenantRole) => {
-              return (
-                tenantRole.roles.length > 0 && (
-                  <RolesTable
-                    tableHeading={tenantRole.name}
-                    key={tenantRole.name}
-                    subscriberRolesOptions={tenantRole.roles}
-                    checkedRoles={stream.subscriberRoles}
-                    onItemChecked={(value) => {
-                      if (stream?.subscriberRoles && stream.subscriberRoles.includes(value)) {
-                        const updatedRoles = stream.subscriberRoles.filter((roleName) => roleName !== value);
-                        setStream({ ...stream, subscriberRoles: updatedRoles });
-                      } else {
-                        setStream({ ...stream, subscriberRoles: [...stream.subscriberRoles, value] });
-                      }
-                    }}
+              {eventOptions
+                .sort((a, b) => (a.name < b.name ? -1 : 1))
+                .map((item) => (
+                  <GoADropdownOption
+                    label={item.label}
+                    value={item.value}
+                    key={item.key}
+                    data-testid={item.dataTestId}
                   />
-                )
+                ))}
+            </GoADropdown>
+          </GoAFormItem>
+          <ChipsWrapper>
+            {streamEvents.map((eventChip) => {
+              return (
+                <GoAChip
+                  key={eventChip}
+                  deletable={true}
+                  content={eventChip}
+                  onClick={() => deleteEventChip(eventChip)}
+                />
+              );
+            })}
+          </ChipsWrapper>
+
+          <AnonymousWrapper>
+            <GoACheckbox
+              checked={stream.publicSubscribe}
+              name="stream-anonymousRead-checkbox"
+              testId="stream-anonymousRead-checkbox"
+              onChange={() => {
+                setStream({
+                  ...stream,
+                  publicSubscribe: !stream.publicSubscribe,
+                });
+              }}
+              ariaLabel={`stream-anonymousRead-checkbox`}
+            />
+            Make stream public
+          </AnonymousWrapper>
+          {rolesObj ? '' : <GoASkeleton type="text" />}
+          {!stream.publicSubscribe && rolesObj ? (
+            Object.entries(rolesObj).map(([clientId, roles]) => {
+              return (
+                <ClientRoleTable
+                  roles={roles || []}
+                  roleSelectFunc={(roleNames, type) => {
+                    if (roleNames && roleNames.length > 0) {
+                      selectedRoles[clientId] = roleNames.map((r) => r.split(':').pop());
+                    } else {
+                      selectedRoles[clientId] = [];
+                    }
+                    // no need to use setStream here.
+                    stream.subscriberRoles = roleObjectToUrns(selectedRoles);
+                  }}
+                  clientId={clientId}
+                  key={`client-role-group-${clientId}`}
+                  service={`client-role-group-${clientId}`}
+                  nameColumnWidth={80}
+                  checkedRoles={[
+                    {
+                      title: 'Subscribe',
+                      selectedRoles: selectedRoles?.[clientId]?.map((r) => `${clientId}:${r}`) || [],
+                    },
+                  ]}
+                />
               );
             })
-          : ''}
-        <br />
-        <br />
-      </GoAModal>
+          ) : (
+            // some extra white space so the modal height/width stays the same when roles are hidden
+            <div
+              style={{
+                width: '100%',
+                height: '6em',
+              }}
+            ></div>
+          )}
+
+          <br />
+          <br />
+        </GoAModal>
+      )}
     </StreamModalStyles>
   );
 };
