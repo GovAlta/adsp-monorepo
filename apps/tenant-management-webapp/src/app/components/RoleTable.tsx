@@ -3,6 +3,7 @@ import { GoACheckbox, GoATable } from '@abgov/react-components-new';
 import { MarginAdjustment, PaddingRem } from './styled-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
+import { REALM_ROLE_KEY } from '@store/sharedSelectors/roles';
 
 /**
  * A React component for creating roles table
@@ -48,8 +49,9 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
   };
 
   const getClientId = () => {
-    return props.clientId ? <PaddingRem>{props.clientId}</PaddingRem> : tenantName;
+    return props.clientId && props.clientId !== REALM_ROLE_KEY ? <PaddingRem>{props.clientId}</PaddingRem> : tenantName;
   };
+
   return (
     <>
       <MarginAdjustment>{getClientId()}</MarginAdjustment>
@@ -73,12 +75,13 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
         <tbody>
           {props.roles?.map((role): JSX.Element => {
             const compositeRole = props.clientId ? `${props.clientId}:${role}` : role;
+
             return (
               <tr key={`${service}-row-${role}`}>
                 <td className="role-name">{role}</td>
                 {checkedRoles.map((checkedRole, index) => {
                   return (
-                    <td className="role">
+                    <td className="role" key={`${service}-${role}-checkbox-${index}`}>
                       <GoACheckbox
                         name={`${service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
                         key={`${service}-${checkedRole.title}-role-checkbox-${compositeRole}`}
