@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { GoACheckbox, GoATable } from '@abgov/react-components-new';
-import { MarginAdjustment } from './styled-components';
+import { MarginAdjustment, PaddingRem } from './styled-components';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { REALM_ROLE_KEY } from '@store/sharedSelectors/roles';
@@ -49,7 +49,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
   };
 
   const getClientId = () => {
-    return props.clientId && props.clientId !== REALM_ROLE_KEY ? props.clientId : tenantName;
+    return props.clientId && props.clientId !== REALM_ROLE_KEY ? <PaddingRem>{props.clientId}</PaddingRem> : tenantName;
   };
 
   return (
