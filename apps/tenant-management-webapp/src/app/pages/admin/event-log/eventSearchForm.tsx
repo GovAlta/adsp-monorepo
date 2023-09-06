@@ -3,10 +3,9 @@ import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import type { EventSearchCriteria } from '@store/event/models';
 
-import { GoAFormItem } from '@abgov/react-components/experimental';
 import { getEventDefinitions } from '@store/event/actions';
 import styled from 'styled-components';
-import { GoAButton, GoAIconButton, GoAButtonGroup, GoAGrid } from '@abgov/react-components-new';
+import { GoAButton, GoAIconButton, GoAButtonGroup, GoAGrid, GoAFormItem } from '@abgov/react-components-new';
 const initCriteria: EventSearchCriteria = {
   namespace: '',
   name: '',
@@ -128,11 +127,13 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
 
   return (
     <div>
-      <GoAGrid minChildWidth="30ch" gap="s">
+      <GoAGrid minChildWidth="30ch" gap="xs">
         <SearchBox>
-          <GoAFormItem helpText={!error && message} error={error && message}>
-            <label>Search event namespace and name</label>
-
+          <GoAFormItem
+            helpText={error ? '' : message}
+            error={error ? message : ''}
+            label="Search event namespace and name"
+          >
             <div
               className={open ? 'search search-open' : 'search'}
               onKeyDown={(e) => {
@@ -193,8 +194,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
             )}
           </GoAFormItem>
         </SearchBox>
-        <GoAFormItem>
-          <label>Minimum timestamp</label>
+        <GoAFormItem label="Minimum timestamp">
           <DateTimeInput
             type="datetime-local"
             name="timestampMin"
@@ -205,8 +205,7 @@ export const EventSearchForm: FunctionComponent<EventSearchFormProps> = ({ onCan
             onClick={() => setOpen(false)}
           />
         </GoAFormItem>
-        <GoAFormItem>
-          <label>Maximum timestamp</label>
+        <GoAFormItem label="Maximum timestamp">
           <DateTimeInput
             type="datetime-local"
             name="timestampMax"
@@ -253,7 +252,7 @@ const SearchBox = styled.div`
     display: flex;
     border: 1px solid var(--color-gray-700);
     border-radius: 3px;
-    padding: 0.15rem;
+    padding: 0.16rem;
   }
   .search-open {
     border: 1px solid var(--color-orange);
@@ -263,6 +262,7 @@ const SearchBox = styled.div`
   }
   input {
     border-width: 0;
+    width: 100%;
   }
   input:focus {
     outline: none;
@@ -299,6 +299,7 @@ const SearchBox = styled.div`
 const DateTimeInput = styled.input`
   display: flex;
   align-content: center;
+  width: 100%;
   line-height: var(--input-height);
   height: var(--input-height);
   border: 1px solid var(--color-gray-700);
