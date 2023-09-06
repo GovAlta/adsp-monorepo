@@ -661,7 +661,7 @@ Then('the user views the status of {string} changed to the first unused status',
     .invoke('text')
     .then((statusValue) => {
       cy.log('Badge Status: ' + statusValue);
-      const badgeValue = String(statusValue.toLowerCase());
+      const badgeValue = String(statusValue.replace(' ', '-').toLowerCase()); // To handle the difference of reported-issues and reported issues
       cy.task('getNewAppStatus').then((appStatus) => {
         expect(badgeValue).to.equal(appStatus);
       });

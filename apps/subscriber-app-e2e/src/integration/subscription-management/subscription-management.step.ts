@@ -83,7 +83,7 @@ And('the user clicks Save button in contact information', function () {
 });
 
 And('the user views an error message for the invalid phone number in contact information', function () {
-  subscriptionManagementObj.phoneNumberErrorMsg().should('contain', 'You must enter a valid phone number.');
+  subscriptionManagementObj.phoneNumberErrorMsg().should('contain', 'Please enter a valid 10 digit phone number');
 });
 
 And('the user removes phone number value in contact information', function () {
