@@ -155,6 +155,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               });
             }
           }}
+          nameColumnWidth={40}
           service="FileType"
           checkedRoles={[
             { title: types[0].name, selectedRoles: definition[types[0].type] },
