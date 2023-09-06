@@ -1,38 +1,37 @@
 import React, { FunctionComponent } from 'react';
 import DataTable from '@components/DataTable';
-import { FormDefinitionItem } from './formDefinitionItem';
-import { PdfTemplate } from '@store/pdf/model';
+import { QueueTableItem } from './queueTableItem';
+import { TaskDefinition } from '@store/task/model';
 
-export interface PdfTemplatesTableProps {
-  taskQueues: Record<string, TaskQueues>;
-  onDelete?: (PdfTemplate) => void;
-  onEdit?: (PdfTemplate) => void;
+export interface QueueTableProps {
+  taskQueues: Record<string, TaskDefinition>;
+  onDelete?: (taskQueue) => void;
+  onEdit?: (taskQueue) => void;
 }
-export const QueueListTable: FunctionComponent<PdfTemplatesTableProps> = ({ taskQueues, onDelete }) => {
-  const newTemplates = JSON.parse(JSON.stringify(definitions));
+export const QueueListTable: FunctionComponent<QueueTableProps> = ({ taskQueues, onDelete }) => {
+  const newQueues = JSON.parse(JSON.stringify(taskQueues)) as Record<string, TaskDefinition>;
 
   return (
     <>
-      <DataTable data-testid="pdf-definitions-table">
-        <thead data-testid="pdf-definitions-table-header">
+      <DataTable data-testid="task-queue-table">
+        <thead data-testid="task-queue-table-header">
           <tr>
-            <th data-testid="pdf-definitions-table-header-name">Name</th>
-            <th id="pdf-definitions-template-id" data-testid="pdf-definitions-table-header-template-id">
-              Template ID
+            <th data-testid="task-queue-table-header-namespace">Namespace</th>
+            <th data-testid="task-queue-table-header-name">Name</th>
+            <th id="task-queue-assigner" data-testid="task-queue-table-header-assigners">
+              Assigner roles
             </th>
-            <th id="pdf-definitions-Description" data-testid="pdf-definitions-table-header-description">
-              Description
+            <th id="task-queue-worker" data-testid="task-queue-table-header-workers">
+              Worker roles
             </th>
-            <th id="pdf-definitions-action" data-testid="pdf-definitions-table-header-action">
+            <th id="task-queue-action" data-testid="task-queue-table-header-action">
               Actions
             </th>
           </tr>
         </thead>
         <tbody>
-          {Object.keys(newTemplates).map((templateName) => {
-            return (
-              <FormDefinitionItem key={templateName} formDefinition={newTemplates[templateName]} onDelete={onDelete} />
-            );
+          {Object.keys(newQueues).map((queue) => {
+            return <QueueTableItem key={queue} queue={newQueues[queue]} onDelete={onDelete} />;
           })}
         </tbody>
       </DataTable>

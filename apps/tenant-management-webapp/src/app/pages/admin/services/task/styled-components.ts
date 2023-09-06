@@ -8,3 +8,8 @@ export const HeadingDiv = styled.div`
     margin-bottom: 4px;
   }
 `;
+
+export const OverflowWrap = styled.div`
+  overflow-wrap: break-word;
+  overflow-y: hidden;
+`;

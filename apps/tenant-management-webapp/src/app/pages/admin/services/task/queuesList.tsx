@@ -19,8 +19,8 @@ export const QueueList = () => {
       .sort((template1, template2) => {
         return template1[1].name.localeCompare(template2[1].name);
       })
-      .reduce((tempObj, [formDefinitionId, formDefinitionData]) => {
-        tempObj[formDefinitionId] = formDefinitionData;
+      .reduce((tempObj, [taskDefinitionId, taskDefinitionData]) => {
+        tempObj[taskDefinitionId] = taskDefinitionData;
         return tempObj;
       }, {});
   });
@@ -33,14 +33,11 @@ export const QueueList = () => {
 
   return (
     <section>
-      <p>QueuesList</p>
-      <br />
-      <br />
       <PageIndicator />
-      {JSON.stringify(taskQueues)}
+
       {!indicator.show && !taskQueues && renderNoItem('task queues')}
       {!indicator.show && taskQueues && (
-        <TaskQueuesTable
+        <QueueListTable
           taskQueues={taskQueues}
           onDelete={(currentTemplate) => {
             setShowDeleteConfirmation(true);

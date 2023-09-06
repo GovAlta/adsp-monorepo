@@ -1,7 +1,7 @@
 import { TaskDefinition } from './model';
 
-export const FETCH_TASK_QUEUES_ACTION = 'form/FETCH_TASK_QUEUES_ACTION';
-export const FETCH_TASK_QUEUES_SUCCESS_ACTION = 'form/FETCH_TASK_QUEUES_SUCCESS_ACTION';
+export const FETCH_TASK_QUEUES_ACTION = 'task/FETCH_TASK_QUEUES_ACTION';
+export const FETCH_TASK_QUEUES_SUCCESS_ACTION = 'task/FETCH_TASK_QUEUES_SUCCESS_ACTION';
 
 export interface FetchTaskQueuesAction {
   type: typeof FETCH_TASK_QUEUES_ACTION;
