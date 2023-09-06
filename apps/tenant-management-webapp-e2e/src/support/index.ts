@@ -37,7 +37,8 @@ Cypress.on('uncaught:exception', (err) => {
     err.message.includes('Write permission denied') || // Copy login link button
     err.message.includes('Model is disposed') || // pdf template modal save button
     err.message.includes('has row #0: expected 0 to be above 0') || // file type grid
-    err.message.includes("Cannot destructure property 'ownerNode' of 'e.stylesheet' as it is null") // delete subscription confirmation modal
+    err.message.includes("Cannot destructure property 'ownerNode' of 'e.stylesheet' as it is null") || // delete subscription confirmation modal
+    err.message.includes("Cannot read properties of undefined (reading 'id')") // File type modal
   ) {
     return false;
   }

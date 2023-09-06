@@ -26,43 +26,59 @@ class FileServicePage {
   }
 
   fileTypeModalTitle() {
-    return cy.xpath('//*[@data-testid="file-type-modal"]//*[@class="modal-title"]');
+    return cy.xpath('//*[@data-testid="file-type-modal" and @open="true"]//*[@slot="heading"]');
   }
 
   fileTypeModalNameField() {
-    return cy.get('[data-testid="file-type-modal-name-input"]');
+    return cy.xpath(
+      '//*[@data-testid="file-type-modal" and @open="true"]//*[@data-testid="file-type-modal-name-input"]'
+    );
   }
 
   fileTypeModalPublicCheckbox() {
-    return cy.xpath('//*[@data-testid="file-type-modal"]//goa-checkbox[@name="file-type-anonymousRead-checkbox"]');
+    return cy.xpath(
+      '//*[@data-testid="file-type-modal" and @open="true"]//goa-checkbox[@name="file-type-anonymousRead-checkbox"]'
+    );
   }
 
   fileTypeModalReadCheckbox(roleName) {
     return cy.xpath(
-      `//*[@data-testid="file-type-modal"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "read-role")]`
+      `//*[@data-testid="file-type-modal" and @open="true"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "read-role")]`
     );
   }
 
   fileTypeModalReadCheckboxes() {
-    return cy.xpath(`//*[@data-testid="file-type-modal"]//goa-checkbox[contains(@name, "read-role")]`);
+    return cy.xpath(`//*[@data-testid="file-type-modal" and @open="true"]//goa-checkbox[contains(@name, "read-role")]`);
+  }
+
+  fileTypeModalCheckboxesTable(tableName) {
+    return cy.xpath(
+      `//*[@data-testid="file-type-modal" and @open="true"]//h4[text()="${tableName}"]/following-sibling::goa-table`
+    );
+  }
+
+  fileTypeModalCheckboxesTables() {
+    return cy.xpath(`//*[@data-testid="file-type-modal" and @open="true"]//goa-table`);
   }
 
   fileTypeModalModifyCheckbox(roleName) {
     return cy.xpath(
-      `//*[@data-testid="file-type-modal"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "modify-role")]`
+      `//*[@data-testid="file-type-modal" and @open="true"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "modify-role")]`
     );
   }
 
   fileTypeModalModifyCheckboxes() {
-    return cy.xpath('//*[@data-testid="file-type-modal"]//goa-checkbox[contains(@name, "modify-role")]');
+    return cy.xpath(
+      '//*[@data-testid="file-type-modal" and @open="true"]//goa-checkbox[contains(@name, "modify-role")]'
+    );
   }
 
   fileTypeModalSaveButton() {
-    return cy.get('[data-testid="file-type-modal-save"]');
+    return cy.xpath('//*[@data-testid="file-type-modal" and @open="true"]//*[@data-testid="file-type-modal-save"]');
   }
 
   fileTypeModalCancelButton() {
-    return cy.get('[data-testid="file-type-modal-cancel"]');
+    return cy.xpath('//*[@data-testid="file-type-modal" and @open="true"]//*[@data-testid="file-type-modal-cancel"]');
   }
 
   fileTypeTableBody() {
@@ -98,15 +114,15 @@ class FileServicePage {
   }
 
   fileTypeDeleteModalTitle() {
-    return cy.xpath('//*[@data-testid="file-type-delete-modal"]//*[@class="modal-title"]');
+    return cy.xpath('//*[@data-testid="file-type-delete-modal"]//*[@slot="heading"]');
   }
 
   fileTypeDeleteModalContent() {
-    return cy.get('[data-testid="file-type-delete-modal-content"]');
+    return cy.xpath('//*[@data-testid="file-type-delete-modal"]//p');
   }
 
   fileTypeDeleteModalOkayBtn() {
-    return cy.get('[data-testid="file-type-delete-modal-cancel-btn"]');
+    return cy.xpath('//*[@data-testid="file-type-delete-modal"]//goa-button');
   }
 
   coreFileTypesTitle() {
@@ -118,11 +134,13 @@ class FileServicePage {
   }
 
   fileRetentionCheckBox() {
-    return cy.xpath('//*[@data-testid="file-type-modal"]//goa-checkbox[@name="retentionActive"]');
+    return cy.xpath('//*[@data-testid="file-type-modal" and @open="true"]//goa-checkbox[@name="retentionActive"]');
   }
 
   fileRetentionDelayInput() {
-    return cy.xpath('//*[@data-testid="file-type-modal"]//goa-input[@data-testid="delete-in-days-input"]');
+    return cy.xpath(
+      '//*[@data-testid="file-type-modal" and @open="true"]//goa-input[@data-testid="delete-in-days-input"]'
+    );
   }
 }
 export default FileServicePage;
