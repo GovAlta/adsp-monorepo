@@ -19,6 +19,16 @@ export const EditorPadding = styled.div`
 
   .
 `;
+
+export const EntryDetail = styled.div`
+  background: #f3f3f3;
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 12px;
+  padding: 16px;
+  text-align: left;
+`;
 export const FinalButtonPadding = styled.div`
   padding-top: 20px;
 `;
