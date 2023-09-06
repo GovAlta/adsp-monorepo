@@ -171,7 +171,7 @@ export const Exports = styled.div`
   }
 
   .configuration-selector {
-    width: 256px;
+    width: 272px;
   }
 
   .absolute-position {
@@ -233,6 +233,10 @@ export const Exports = styled.div`
     background: #004f84;
     border: 1px solid !important;
   }
+`;
+
+export const ChipWrapper = styled.div`
+  margin: 4px 0 4px 0;
 `;
 
 export const ConfigurationTableStyles = styled.div`

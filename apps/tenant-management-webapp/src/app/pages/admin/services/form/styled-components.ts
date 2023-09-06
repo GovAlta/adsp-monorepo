@@ -19,6 +19,16 @@ export const EditorPadding = styled.div`
 
   .
 `;
+
+export const EntryDetail = styled.div`
+  background: #f3f3f3;
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 12px;
+  padding: 16px;
+  text-align: left;
+`;
 export const FinalButtonPadding = styled.div`
   padding-top: 20px;
 `;
@@ -35,6 +45,10 @@ export const Edit = styled.div`
 
   a {
     margin-top: 3px;
+    margin-right: 0.5rem;
+    text-decoration: underline;
+    line-height: 28px;
+    font-size: 18px;
   }
   display: flex;
   flex-direction: row;
@@ -102,6 +116,7 @@ export const ConfigFormWrapper = styled.div`
   th {
     text-align: left;
     padding-bottom: 0.5rem;
+    font-size: 18px;
   }
 `;
 export const FormEditor = styled.div`

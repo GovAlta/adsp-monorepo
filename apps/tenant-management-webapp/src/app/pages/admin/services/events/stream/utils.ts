@@ -17,22 +17,6 @@ export const generateSubscriberRolesOptions = (realmRoles: Role[]): SubscriberRo
   }
 };
 
-export const mapTenantClientRoles = (roles) => {
-  const mappedRoles = Object.keys(roles).map((roleName) => {
-    return {
-      name: roleName,
-      roles: roles[roleName].roles.map((role) => {
-        return {
-          value: `${roleName}:${role.role}`,
-          label: role.role,
-          description: role.description,
-        };
-      }),
-    };
-  });
-  return mappedRoles;
-};
-
 export const generateEventOptions = (eventDefinitions: Record<string, EventDefinition>) => {
   return Object.keys(eventDefinitions).map((eventKey, index) => {
     return {

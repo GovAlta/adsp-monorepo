@@ -41,6 +41,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState({});
   const [isAllApplications, setIsAllApplications] = useState(false);
+  const [selectedApplications, setSelectedApplications] = useState([]);
 
   const { applications, notices } = useSelector((state: RootState) => ({
     applications: state.serviceStatus.applications,
@@ -79,8 +80,6 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
       }
     }
   }, [props.noticeId]);
-
-  const [selectedApplications, setSelectedApplications] = useState([]);
 
   function validDateRangeErrors() {
     if (dateTime(endDate, endTime) < dateTime(startDate, startTime)) {
@@ -132,6 +131,7 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
   }
 
   function cancel() {
+    setNoticeDefaults();
     if (props.onCancel) props.onCancel();
   }
 
@@ -140,6 +140,17 @@ function NoticeModal(props: NoticeModalProps): JSX.Element {
       return { id: s.appKey, name: s.name };
     });
     setSelectedApplications(parsedApplications);
+  }
+
+  function setNoticeDefaults() {
+    setMessage('');
+    setIsAllApplications(false);
+    setErrors({});
+    setStartDate(new Date());
+    setStartTime('10:00');
+    setEndDate(new Date());
+    setEndTime('14:00');
+    setSelectedApplications([]);
   }
 
   return (

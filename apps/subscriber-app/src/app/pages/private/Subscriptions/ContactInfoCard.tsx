@@ -54,11 +54,8 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
         setEmailContactInformation(value);
         break;
       case Channels?.sms: {
-        if (inValidSMSInput(value)) {
-          if (!(value && value.length > 10)) {
-            setSMSContactInformation(value);
-          }
-        }
+        setSMSContactInformation(value);
+
         break;
       }
     }
@@ -72,8 +69,9 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
 
   const isValidSMS = (sms: string): boolean => {
     if (sms) {
-      return /^[0-9]{10}$/.test(sms);
+      return /^\d{10}$/.test(sms) && sms.length === 10;
     }
+
     // allow empty phone number
     return true;
   };
@@ -109,7 +107,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
     }
 
     if (!isValidSMS(SMSContactInformation)) {
-      setFormErrors({ sms: 'You must enter a valid phone number.' });
+      setFormErrors({ sms: 'Please enter a valid 10 digit phone number ie. 7801234567.' });
       return;
     }
     let channels = [];
@@ -140,7 +138,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
 
     if (smsChannelIndex !== -1) {
       if (SMSContactInformation) {
-        channels[smsChannelIndex].address = sanitizeSMS(SMSContactInformation);
+        channels[smsChannelIndex].address = SMSContactInformation;
       } else {
         channels.splice(smsChannelIndex, 1);
       }
@@ -150,7 +148,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
           ...channels,
           {
             channel: Channels.sms,
-            address: sanitizeSMS(SMSContactInformation),
+            address: SMSContactInformation,
           },
         ];
       }

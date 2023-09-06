@@ -11,6 +11,7 @@ import { SubscriberModalForm } from '../subscribers/editSubscriber';
 import { GoAIcon } from '@abgov/react-components/experimental';
 import { SubscriptionNextLoader } from './subscriptionNextLoader';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
+import { phoneWrapper } from '@lib/wrappers';
 
 interface SubscriptionProps {
   subscriber: Subscriber;
@@ -73,7 +74,9 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({
                   )}{' '}
                 </div>
               </div>
-              <div>{characterLimit(channel?.address, 30)}</div>
+              <div>
+                {characterLimit(channel.channel === 'email' ? channel?.address : phoneWrapper(channel?.address), 30)}
+              </div>
             </div>
           ))}
         </td>

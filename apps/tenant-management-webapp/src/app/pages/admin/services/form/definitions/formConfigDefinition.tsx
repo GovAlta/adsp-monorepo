@@ -14,7 +14,7 @@ interface PDFConfigFormProps {
 }
 export const FormConfigDefinition = ({ definition }: PDFConfigFormProps) => {
   const { id, name, description } = definition;
-  const [openEditPdfTemplate, setOpenEditPdfTemplate] = useState(false);
+  const [openEditFormTemplate, setOpenEditFormTemplate] = useState(false);
 
   const dispatch = useDispatch();
   return (
@@ -68,23 +68,23 @@ export const FormConfigDefinition = ({ definition }: PDFConfigFormProps) => {
       </div>
       <div className="editColumn">
         <Edit>
-          <a rel="noopener noreferrer" onClick={() => setOpenEditPdfTemplate(true)}>
+          <a rel="noopener noreferrer" onClick={() => setOpenEditFormTemplate(true)}>
             Edit
           </a>
           <GoAIconButton
             icon="create"
-            testId="pdf-template-information-edit-icon"
+            testId="form-template-information-edit-icon"
             title="Edit"
             size="small"
-            onClick={() => setOpenEditPdfTemplate(true)}
+            onClick={() => setOpenEditFormTemplate(true)}
           />
         </Edit>
       </div>
-      {openEditPdfTemplate && (
+      {openEditFormTemplate && (
         <AddEditFormDefinition
-          open={openEditPdfTemplate}
+          open={openEditFormTemplate}
           isEdit={true}
-          onClose={() => setOpenEditPdfTemplate(false)}
+          onClose={() => setOpenEditFormTemplate(false)}
           initialValue={definition}
           onSave={(definition) => {
             dispatch(updateFormDefinition(definition));

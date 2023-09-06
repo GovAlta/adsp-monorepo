@@ -23,6 +23,15 @@ export const FormDefinitionsTable: FunctionComponent<PdfTemplatesTableProps> = (
             <th id="pdf-definitions-Description" data-testid="pdf-definitions-table-header-description">
               Description
             </th>
+            <th id="pdf-definitions-applicant" data-testid="pdf-definitions-table-header-applicant">
+              Applicant Roles
+            </th>
+            <th id="pdf-definitions-clerk" data-testid="pdf-definitions-table-header-clerk">
+              Clerk Roles
+            </th>
+            <th id="pdf-definitions-assessor" data-testid="pdf-definitions-table-header-assessor">
+              Assessor Roles
+            </th>
             <th id="pdf-definitions-action" data-testid="pdf-definitions-table-header-action">
               Actions
             </th>

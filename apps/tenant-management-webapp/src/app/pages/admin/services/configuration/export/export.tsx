@@ -13,7 +13,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getConfigurationDefinitions, getConfigurations, ServiceId } from '@store/configuration/action';
 import { PageIndicator } from '@components/Indicator';
 import { ConfigurationExportType, Service } from '@store/configuration/model';
-import { Exports } from '../styled-components';
+import { Exports, ChipWrapper } from '../styled-components';
 import { ReactComponent as SmallClose } from '@assets/icons/x.svg';
 import { ReactComponent as Triangle } from '@assets/icons/triangle.svg';
 import { ReactComponent as Rectangle } from '@assets/icons/rectangle.svg';
@@ -266,12 +266,14 @@ export const ConfigurationExport: FunctionComponent = () => {
                                     : name;
                                 if (exp.split(':')[0] === namespace) {
                                   return (
-                                    <GoAChip
-                                      key={exp}
-                                      deletable={true}
-                                      content={shortName}
-                                      onClick={() => toggleSelection(exp)}
-                                    />
+                                    <ChipWrapper>
+                                      <GoAChip
+                                        key={exp}
+                                        deletable={true}
+                                        content={shortName}
+                                        onClick={() => toggleSelection(exp)}
+                                      />
+                                    </ChipWrapper>
                                   );
                                 }
                               })

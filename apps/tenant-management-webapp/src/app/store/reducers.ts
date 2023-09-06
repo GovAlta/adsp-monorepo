@@ -19,6 +19,7 @@ import Pdf from './pdf/reducers';
 import { serviceRolesReduce as ServiceRoles } from './access/reducers';
 import ServiceMetrics from './metrics/reducers';
 import Form from './form/reducers';
+import Task from './task/reducers';
 
 export const rootReducer = combineReducers({
   fileService: File,
@@ -26,6 +27,7 @@ export const rootReducer = combineReducers({
   config: Config,
   pdf: Pdf,
   form: Form,
+  task: Task,
   calendarService: Calendar,
   configuration: Configuration,
   configurationExport: ConfigurationExport,
