@@ -4,24 +4,28 @@ class ScriptPage {
   }
 
   addScriptModalTitle() {
-    return cy.xpath('//div[@data-testid="add-script-modal" and @data-state="visible"]//div[@class="modal-title"]');
+    return cy.xpath('//goa-modal[@data-testid="add-script-modal" and @open="true"]//*[@slot="heading"]');
+  }
+
+  addScriptModalNameFormItem() {
+    return cy.xpath('//goa-modal[@data-testid="add-script-modal" and @open="true"]//*[@label="Name"]');
   }
 
   addScriptModalNameField() {
     return cy.xpath(
-      '//*[@data-testid="add-script-modal" and @data-state="visible"]//*[@data-testid="script-modal-name-input"]'
+      '//goa-modal[@data-testid="add-script-modal" and @open="true"]//*[@data-testid="script-modal-name-input"]'
     );
   }
 
   addScriptModalNameErrorMsg() {
     return cy.xpath(
-      '//*[@data-testid="add-script-modal"]//label[text()="Name"]/following-sibling::div[@class="error-msg"]'
+      '//goa-modal[@data-testid="add-script-modal" and @open="true"]//label[text()="Name"]/following-sibling::div[@class="error-msg"]'
     );
   }
 
   addScriptModalDescriptionField() {
     return cy.xpath(
-      '//*[@data-testid="add-script-modal" and @data-state="visible"]//*[@data-testid="script-modal-description-input"]'
+      '//goa-modal[@data-testid="add-script-modal" and @open="true"]//*[@data-testid="script-modal-description-input"]'
     );
   }
 
@@ -32,6 +36,22 @@ class ScriptPage {
   addScriptModalRolesCheckbox(roleName) {
     return cy.xpath(
       `//*[@data-testid="add-script-modal"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "runner")]`
+    );
+  }
+
+  addScriptModalRolesTitle(roleTitle) {
+    return cy.xpath(`//*[@data-testid="add-script-modal"]//h4[text()="${roleTitle}"]`);
+  }
+
+  addScriptModalClientRolesTable(clientName) {
+    return cy.xpath(
+      `//*[@data-testid="add-script-modal" and @open="true"]//h4/div[text()="${clientName}"]/parent::h4/following-sibling::goa-table`
+    );
+  }
+
+  addScriptModalRolesTable() {
+    return cy.xpath(
+      `//*[@data-testid="add-script-modal" and @open="true"]//h4[text()="autotest"]/following-sibling::goa-table`
     );
   }
 

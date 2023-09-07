@@ -28,13 +28,18 @@ When('the user enters {string} in name field in script modal', function (name) {
 });
 
 Then('the user views the error message of {string} on namespace in script modal', function (errorMsg) {
-  scriptObj.addScriptModalNameErrorMsg().invoke('text').should('contain', errorMsg);
+  scriptObj
+    .addScriptModalNameFormItem()
+    .shadow()
+    .find('[class="error-msg"]')
+    .invoke('text')
+    .should('contain', errorMsg);
 });
 
 When(
   'the user enters {string}, {string}, {string}, {string} in Add script modal',
   function (name, desc, useServiceAcct, role) {
-    const roles = role.split(',');
+    cy.viewport(1920, 1080);
     scriptObj.addScriptModalNameField().shadow().find('input').clear().type(name, { delay: 100, force: true });
     scriptObj.addScriptModalDescriptionField().shadow().find('.goa-textarea').clear().type(desc, { force: true });
     switch (useServiceAcct) {
@@ -46,16 +51,43 @@ When(
       default:
         expect(useServiceAcct).to.be.oneOf(['yes', 'no']);
     }
+    // Select roles or client roles
+    const roles = role.split(',');
     for (let i = 0; i < roles.length; i++) {
       if (roles[i].includes(':')) {
         const clientRoleStringArray = roles[i].split(':');
+        let clientName = '';
+        for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
+          if (j !== clientRoleStringArray.length - 2) {
+            clientName = clientName + clientRoleStringArray[j].trim() + ':';
+          } else {
+            clientName = clientName + clientRoleStringArray[j];
+          }
+        }
+        const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
         scriptObj
-          .addScriptModalRolesCheckbox(clientRoleStringArray[clientRoleStringArray.length - 1])
+          .addScriptModalClientRolesTable(clientName)
+          .shadow()
+          .find('.role-name')
+          .contains(roleName)
+          .next()
+          .find('goa-checkbox')
           .shadow()
           .find('.goa-checkbox-container')
-          .click();
+          .scrollIntoView()
+          .click({ force: true });
       } else {
-        scriptObj.addScriptModalRolesCheckbox(roles[i].trim()).shadow().find('.goa-checkbox-container').click();
+        scriptObj
+          .addScriptModalRolesTable()
+          .shadow()
+          .find('.role-name')
+          .contains(roles[i].trim())
+          .next()
+          .find('goa-checkbox')
+          .shadow()
+          .find('.goa-checkbox-container')
+          .scrollIntoView()
+          .click({ force: true });
       }
     }
   }
