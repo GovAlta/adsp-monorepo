@@ -31,7 +31,7 @@ export const QueueListTable: FunctionComponent<QueueTableProps> = ({ taskQueues,
         </thead>
         <tbody>
           {Object.keys(newQueues).map((queue) => {
-            return <QueueTableItem key={queue} queue={newQueues[queue]} onDelete={onDelete} />;
+            return <QueueTableItem key={queue} id={queue} queue={newQueues[queue]} onDelete={onDelete} />;
           })}
         </tbody>
       </DataTable>

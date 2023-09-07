@@ -19,3 +19,8 @@ export const defaultTaskQueue: TaskDefinition = {
 export interface TaskState {
   queues: Record<string, TaskDefinition>;
 }
+
+export interface DeleteTaskConfig {
+  operation: string;
+  property: string;
+}
