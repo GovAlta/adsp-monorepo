@@ -219,15 +219,9 @@ Then('the user views Add stream modal', function () {
 When(
   'the user enters {string}, {string}, {string}, {string} in Add stream modal',
   function (name, description, event, role) {
-    cy.wait(1000); // Wait stream modal to show content
+    cy.wait(4000); // Wait stream modal to show content
     const events = event.split(',');
-    eventsObj
-      .streamModalNameInput()
-      .shadow()
-      .find('input')
-      .scrollIntoView()
-      .clear()
-      .type(name, { delay: 100, force: true });
+    eventsObj.streamModalNameInput().shadow().find('input').clear().type(name, { delay: 100, force: true });
     eventsObj
       .streamModalDescriptionInput()
       .shadow()
@@ -239,7 +233,7 @@ When(
       eventsObj.streamModalEventDropdown().click();
       eventsObj.streamModalEventDropdownItems().then(() => {
         for (let i = 0; i < events.length; i++) {
-          eventsObj.streamModalEventDropdownItem(events[i].trim()).click();
+          eventsObj.streamModalEventDropdownItem(events[i].trim()).click({ force: true });
         }
       });
       eventsObj.streamModalEventDropdownBackground().click({ force: true }); // To collapse the event dropdown
@@ -261,14 +255,6 @@ When(
     } else if (role == 'n/a') {
       // Do nothing
     } else {
-      // Unselect all roles
-      eventsObj.streamModalRoleCheckboxes().then((elements) => {
-        for (let i = 0; i < elements.length; i++) {
-          if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
-            elements[i].click();
-          }
-        }
-      });
       // Select roles or client roles
       const roles = role.split(',');
       for (let i = 0; i < roles.length; i++) {
@@ -284,12 +270,28 @@ When(
           }
           const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
           eventsObj
-            .streamModalClientRoleCheckbox(clientName, roleName)
+            .streamModalClientRolesTable(clientName)
+            .shadow()
+            .find('.role-name')
+            .contains(roleName)
+            .next()
+            .find('goa-checkbox')
             .shadow()
             .find('.goa-checkbox-container')
-            .click();
+            .scrollIntoView()
+            .click({ force: true });
         } else {
-          eventsObj.streamModalRoleCheckbox(roles[i].trim()).shadow().find('.goa-checkbox-container').click();
+          eventsObj
+            .streamModalRolesTable()
+            .shadow()
+            .find('.role-name')
+            .contains(roles[i].trim())
+            .next()
+            .find('goa-checkbox')
+            .shadow()
+            .find('.goa-checkbox-container')
+            .scrollIntoView()
+            .click({ force: true });
         }
       }
     }
@@ -455,42 +457,81 @@ Then('the user enters {string}, {string}, {string} in Edit stream modal', functi
       .streamModalPublicCheckbox()
       .shadow()
       .find('.goa-checkbox-container')
-      .invoke('attr', 'class')
-      .then((classAttr) => {
-        if (classAttr?.includes('-selected')) {
+      .invoke('attr', 'checked')
+      .then((checkedAttr) => {
+        if (checkedAttr == 'true') {
           cy.log('Make stream public is already checked off.');
         } else {
-          eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
+          eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click({ force: true });
         }
       });
   } else if (role == 'n/a') {
     eventsObj.streamModalRolesCheckboxes().should('exist');
   } else {
-    const roles = role.split(',');
     eventsObj
       .streamModalPublicCheckbox()
       .shadow()
       .find('.goa-checkbox-container')
-      .invoke('attr', 'class')
-      .then((classAttr) => {
-        if (classAttr?.includes('-selected')) {
-          eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
+      .invoke('attr', 'checked')
+      .then((checkedAttr) => {
+        if (checkedAttr == 'true') {
+          eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click({ force: true });
         }
       });
+    cy.wait(1000);
+    // Unselect all roles
     eventsObj
-      .streamModalRolesCheckboxes()
+      .streamModalRolesTables()
+      .shadow()
+      .find('goa-checkbox')
+      .shadow()
+      .find('.goa-checkbox-container')
       .then((elements) => {
         for (let i = 0; i < elements.length; i++) {
           if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
             elements[i].click();
           }
         }
-      })
-      .then(() => {
-        for (let i = 0; i < roles.length; i++) {
-          eventsObj.streamModalRoleCheckbox(roles[i].trim()).shadow().find('.goa-checkbox-container').click();
-        }
       });
+    // Select roles or client roles
+    const roles = role.split(',');
+    for (let i = 0; i < roles.length; i++) {
+      if (roles[i].includes(':')) {
+        const clientRoleStringArray = roles[i].split(':');
+        let clientName = '';
+        for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
+          if (j !== clientRoleStringArray.length - 2) {
+            clientName = clientName + clientRoleStringArray[j].trim() + ':';
+          } else {
+            clientName = clientName + clientRoleStringArray[j];
+          }
+        }
+        const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
+        eventsObj
+          .streamModalClientRolesTable(clientName)
+          .shadow()
+          .find('.role-name')
+          .contains(roleName)
+          .next()
+          .find('goa-checkbox')
+          .shadow()
+          .find('.goa-checkbox-container')
+          .scrollIntoView()
+          .click({ force: true });
+      } else {
+        eventsObj
+          .streamModalRolesTable()
+          .shadow()
+          .find('.role-name')
+          .contains(roles[i].trim())
+          .next()
+          .find('goa-checkbox')
+          .shadow()
+          .find('.goa-checkbox-container')
+          .scrollIntoView()
+          .click({ force: true });
+      }
+    }
   }
 });
 

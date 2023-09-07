@@ -136,40 +136,38 @@ class eventsPage {
   }
 
   streamModal() {
-    return cy.get('[data-testid="stream-form"]');
+    return cy.xpath('//*[@data-testid="stream-form" and @open="true"]');
   }
 
   streamModalTitle() {
-    return cy.xpath('//*[@data-testid="stream-form" and @data-state="visible"]//div[@class="modal-title"]');
+    return cy.xpath('//*[@data-testid="stream-form" and @open="true"]//*[@slot="heading"]');
   }
 
   streamModalNameInput() {
-    return cy.xpath('//*[@data-testid="stream-form" and @data-state="visible"]//*[@data-testid="stream-name"]');
+    return cy.xpath('//*[@data-testid="stream-form" and @open="true"]//*[@data-testid="stream-name"]');
   }
 
   streamModalDescriptionInput() {
-    return cy.xpath('//*[@data-testid="stream-form" and @data-state="visible"]//*[@data-testid="stream-description"]');
+    return cy.xpath('//*[@data-testid="stream-form" and @open="true"]//*[@data-testid="stream-description"]');
   }
 
   streamModalSaveButton() {
-    return cy.xpath('//*[@data-testid="stream-form" and @data-state="visible"]//*[@data-testid="form-save"]');
+    return cy.xpath('//*[@data-testid="stream-form" and @open="true"]//*[@data-testid="form-save"]');
   }
 
   streamModalEventDropdown() {
-    return cy.xpath(
-      '//*[@data-testid="stream-form" and @data-state="visible"]/*[@class="modal"]//*[@data-testid="streamEvents-dropdown"]'
-    );
+    return cy.xpath('//*[@data-testid="stream-form" and @open="true"]//*[@data-testid="streamEvents-dropdown"]');
   }
 
   streamModalEventDropdownItem(text) {
     return cy.xpath(
-      `//*[@data-testid="stream-form" and @data-state="visible"]/*[@class="modal"]//*[@data-testid="streamEvents-dropdown"]/following-sibling::*//*[contains(text(), "${text}")]`
+      `//*[@data-testid="stream-form" and @open="true"]//*[@data-testid="streamEvents-dropdown"]/following-sibling::*//*[contains(text(), "${text}")]`
     );
   }
 
   streamModalEventDropdownItems() {
     return cy.xpath(
-      '//*[@data-testid="stream-form" and @data-state="visible"]/*[@class="modal"]//*[@data-testid="streamEvents-dropdown"]/following-sibling::*//li'
+      '//*[@data-testid="stream-form" and @open="true"]//*[@data-testid="streamEvents-dropdown"]/following-sibling::*//li'
     );
   }
 
@@ -179,22 +177,30 @@ class eventsPage {
 
   streamModalRoleCheckbox(roleLabel) {
     return cy.xpath(
-      `//*[@data-testid="stream-form"]//tbody/tr/td[@class="role-label" and text()="${roleLabel}"]/following-sibling::td//goa-checkbox`
+      `//*[@data-testid="stream-form" and @open="true"]//tbody/tr/td[@class="role-label" and text()="${roleLabel}"]/following-sibling::td//goa-checkbox`
     );
   }
 
-  streamModalClientRoleCheckbox(clientName, roleName) {
+  streamModalRolesTables() {
+    return cy.xpath('//*[@data-testid="stream-form" and @open="true"]//goa-table');
+  }
+
+  streamModalClientRolesTable(clientName) {
     return cy.xpath(
-      `//*[@data-testid="stream-form"]//thead/tr/th[@class="role-name" and text()="${clientName}"]/ancestor::thead/following-sibling::tbody/tr/td[@class="role-label" and text()="${roleName}"]/following-sibling::td//goa-checkbox`
+      `//*[@data-testid="stream-form" and @open="true"]//h4/div[text()="${clientName}"]/parent::h4/following-sibling::goa-table`
     );
   }
 
-  streamModalRoleCheckboxes() {
-    return cy.xpath(`//*[@data-testid="stream-form"]//goa-checkbox[contains(@name, "auto-test-role1")]`);
+  streamModalRolesTable() {
+    return cy.xpath(
+      `//*[@data-testid="stream-form" and @open="true"]//h4[text()="autotest"]/following-sibling::goa-table`
+    );
   }
 
   streamModalRolesCheckboxes() {
-    return cy.xpath(`//*[@data-testid="stream-form"]//goa-checkbox[contains(@name, "auto-test-role1")]`);
+    return cy.xpath(
+      `//*[@data-testid="stream-form" and @open="true"]//goa-checkbox[contains(@name, "auto-test-role1")]`
+    );
   }
 
   streamNameList() {
@@ -234,7 +240,9 @@ class eventsPage {
   }
 
   streamModalPublicCheckbox() {
-    return cy.xpath('//*[@data-testid="stream-form"]//goa-checkbox[@name="stream-anonymousRead-checkbox"]');
+    return cy.xpath(
+      '//*[@data-testid="stream-form" and @open="true"]//goa-checkbox[@name="stream-anonymousRead-checkbox"]'
+    );
   }
 }
 
