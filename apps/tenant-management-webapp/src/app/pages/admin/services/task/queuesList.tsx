@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
-import { getTaskQueues } from '@store/task/action';
+import { getTaskQueues, deleteTaskQueue } from '@store/task/action';
 import { PageIndicator } from '@components/Indicator';
 import { defaultTaskQueue } from '@store/task/model';
+import { DeleteModal } from '@components/DeleteModal';
 import { renderNoItem } from '@components/NoItem';
 import { QueueListTable } from './queueTable';
 
 export const QueueList = () => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [currentDefinition, setCurrentDefinition] = useState(defaultTaskQueue);
+  const [taskQueue, setTaskQueue] = useState(defaultTaskQueue);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -34,17 +35,30 @@ export const QueueList = () => {
   return (
     <section>
       <PageIndicator />
-
-      {!indicator.show && !taskQueues && renderNoItem('task queues')}
-      {!indicator.show && taskQueues && (
+      {!indicator.show && Object.keys(taskQueues).length === 0 && renderNoItem('task queues')}
+      {!indicator.show && Object.keys(taskQueues).length > 0 && (
         <QueueListTable
           taskQueues={taskQueues}
           onDelete={(currentTemplate) => {
             setShowDeleteConfirmation(true);
-            setCurrentDefinition(currentTemplate);
+            setTaskQueue(currentTemplate);
           }}
         />
       )}
+      <DeleteModal
+        isOpen={showDeleteConfirmation}
+        title="Delete task queue"
+        content={
+          <div>
+            Are you sure you wish to delete <b>{`${taskQueue?.name}?`}</b>
+          </div>
+        }
+        onCancel={() => setShowDeleteConfirmation(false)}
+        onDelete={() => {
+          setShowDeleteConfirmation(false);
+          dispatch(deleteTaskQueue(taskQueue));
+        }}
+      />
     </section>
   );
 };
