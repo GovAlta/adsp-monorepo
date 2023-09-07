@@ -1,5 +1,5 @@
 import React, { useState, createRef, useEffect } from 'react';
-import { GoAHeroBanner } from '@abgov/react-components';
+import { GoAHeroBanner } from '@abgov/react-components-new';
 import { GoAContainer } from '@abgov/react-components-new';
 import bannerBackground from '@assets/BannerBackground.jpg';
 import Header from '@components/AppHeader';
@@ -50,8 +50,8 @@ const LandingPage = (): JSX.Element => {
       <Header serviceName="" />
       <Main>
         <HeroBannerLayout>
-          <GoAHeroBanner title="" backgroundUrl={bannerBackground}>
-            <Container hs={1} vs={3}>
+          <GoAHeroBanner heading="" backgroundUrl={bannerBackground} minHeight="300px">
+            <Container hs={1}>
               <Grid>
                 <GridItem md={1} />
                 <GridItem md={10}>
