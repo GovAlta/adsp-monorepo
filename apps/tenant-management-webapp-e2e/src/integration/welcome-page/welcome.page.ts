@@ -65,7 +65,7 @@ class WelcomePage {
   }
 
   welcomePageTitle() {
-    return cy.xpath('//*[@class="goa-hero"]//div/h1');
+    return cy.xpath('//goa-hero-banner//h1');
   }
 
   createTenantNameFormItem() {
