@@ -1104,8 +1104,8 @@ Then('Event template modal is closed', function () {
 
 Then('the user views the hint text for GoA wrapper in event template modal', function () {
   notificationsObj
-    .templateModalHelpText()
-    .invoke('text')
+    .templateModalBodyWithHelpText()
+    .invoke('attr', 'helptext')
     .should(
       'contain',
       "*GOA default header and footer wrapper is applied if the template doesn't include proper <html> opening and closing tags"

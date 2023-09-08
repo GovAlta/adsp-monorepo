@@ -522,8 +522,8 @@ class NotificationsPage {
     return cy.xpath('//*[@data-testid="bot-preview"]/div/p');
   }
 
-  templateModalHelpText() {
-    return cy.get('#helpText');
+  templateModalBodyWithHelpText() {
+    return cy.xpath('//*[@data-testid="template-form"]//goa-form-item[contains(@helptext, "*")]');
   }
 }
 export default NotificationsPage;
