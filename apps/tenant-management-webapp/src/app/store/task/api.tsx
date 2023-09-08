@@ -12,3 +12,7 @@ export const deleteTaskQueuesApi = async (token: string, url: string, body: Dele
   const res = await axios.patch(url, body, { headers: { Authorization: `Bearer ${token}` } });
   return res.data;
 };
+export const getTasksApi = async (token: string, url: string) => {
+  const res = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+  return res.data;
+};

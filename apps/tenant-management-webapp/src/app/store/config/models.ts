@@ -36,6 +36,7 @@ export interface ServiceUrls {
   pdfServiceApiUrl?: string;
   calendarServiceApiUrl?: string;
   scriptServiceApiUrl?: string;
+  taskServiceApiUrl?: string;
 }
 
 export interface FeatureFlags {

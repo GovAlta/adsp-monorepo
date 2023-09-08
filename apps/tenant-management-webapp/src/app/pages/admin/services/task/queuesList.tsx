@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
-import { getTaskQueues, deleteTaskQueue } from '@store/task/action';
+import { getTaskQueues, deleteTaskQueue, getTasks } from '@store/task/action';
 import { PageIndicator } from '@components/Indicator';
 import { defaultTaskQueue } from '@store/task/model';
 import { DeleteModal } from '@components/DeleteModal';
+import { GoABadge } from '@abgov/react-components-new';
 import { renderNoItem } from '@components/NoItem';
 import { QueueListTable } from './queueTable';
 
@@ -13,6 +14,10 @@ export const QueueList = () => {
   const [taskQueue, setTaskQueue] = useState(defaultTaskQueue);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
+  });
+
+  const tasks = useSelector((state: RootState) => {
+    return state?.task?.tasks;
   });
 
   const taskQueues = useSelector((state: RootState) => {
@@ -32,6 +37,12 @@ export const QueueList = () => {
     dispatch(getTaskQueues());
   }, []);
 
+  useEffect(() => {
+    if (taskQueue.name.length > 0) {
+      dispatch(getTasks(taskQueue));
+    }
+  }, [taskQueue]);
+
   return (
     <section>
       <PageIndicator />
@@ -50,7 +61,19 @@ export const QueueList = () => {
         title="Delete task queue"
         content={
           <div>
-            Are you sure you wish to delete <b>{`${taskQueue?.name}?`}</b>
+            <div>
+              Are you sure you wish to delete <b>{`${taskQueue?.name}?`}</b>
+            </div>
+            <div style={{ margin: '10px 0' }}>
+              {tasks && Object.keys(tasks).length > 0 && (
+                <GoABadge
+                  key="unended-tasks"
+                  type="emergency"
+                  icon
+                  content={`${taskQueue?.name} contains unended tasks`}
+                />
+              )}
+            </div>
           </div>
         }
         onCancel={() => setShowDeleteConfirmation(false)}
