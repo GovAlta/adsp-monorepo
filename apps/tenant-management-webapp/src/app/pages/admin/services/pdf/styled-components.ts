@@ -342,11 +342,6 @@ export const PdfEditActionLayout = styled.div`
   bottom: var(--goa-spacing-3xl);
 `;
 
-export const PdfEditActions = styled.div`
-  display: flex;
-  gap: var(--goa-spacing-xs);
-`;
-
 export const SpinnerSpace = styled.div`
   margin: 10px 9px 10px 14px;
   float: right;

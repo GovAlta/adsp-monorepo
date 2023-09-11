@@ -274,7 +274,7 @@ const FileList = (): JSX.Element => {
         </GoAButtonGroup>
       </div>
       <br />
-      {!indicator.show && fileList?.length === 0 && renderNoItem('file')}
+      {!indicator.show && !fileList && renderNoItem('file')}
       {!indicator.show && fileList?.length > 0 && renderFileTable()}
       {indicator.show && <PageIndicator />}
       {next && (
