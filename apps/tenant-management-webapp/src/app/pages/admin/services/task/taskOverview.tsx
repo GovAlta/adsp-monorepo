@@ -1,6 +1,7 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { GoAButton } from '@abgov/react-components';
 import { OverviewLayout } from '@components/Overview';
+import { useHistory } from 'react-router-dom';
 interface TaskOverviewProps {
   setActiveEdit: (boolean) => void;
   setActiveIndex: (number) => void;
@@ -12,7 +13,11 @@ export const TaskserviceOverview: FunctionComponent<TaskOverviewProps> = (props)
   useEffect(() => {
     setActiveEdit(false);
     setActiveIndex(0);
+    history.push({
+      pathname: '/admin/services/task',
+    });
   }, []);
+  const history = useHistory();
   const description = `The task service provides a model for tasks, task queues, and task assignment. Applications can use the task
   service for work management as an aspect to augment domain specific concepts and processes.`;
 

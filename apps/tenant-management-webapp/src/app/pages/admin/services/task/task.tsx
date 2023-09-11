@@ -22,11 +22,15 @@ export const Task: FunctionComponent = () => {
     return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/task-service';
   }
 
+  const searchParams = new URLSearchParams(document.location.search);
+
+  const queues = searchParams.get('definitions');
+
   return (
     <Page>
       <Main>
         <h1 data-testid="status-title">Task service</h1>
-        <Tabs activeIndex={activeIndex}>
+        <Tabs activeIndex={queues === 'true' ? 1 : 0}>
           <Tab label="Overview">
             <TaskserviceOverview setActiveEdit={activateEdit} setActiveIndex={setActiveIndex} />
           </Tab>
