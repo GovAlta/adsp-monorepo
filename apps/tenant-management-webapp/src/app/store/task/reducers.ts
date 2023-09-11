@@ -3,6 +3,7 @@ import {
   TaskActionTypes,
   DELETE_TASK_QUEUE_SUCCESS_ACTION,
   GET_TASKS_SUCCESS_ACTION,
+  UPDATE_TASK_QUEUE_SUCCESS_ACTION,
 } from './action';
 
 import { TaskState } from './model';
@@ -21,6 +22,12 @@ export default function (state: TaskState = defaultState, action: TaskActionType
       };
 
     case GET_TASKS_SUCCESS_ACTION:
+      return {
+        ...state,
+        tasks: action.payload,
+      };
+
+    case UPDATE_TASK_QUEUE_SUCCESS_ACTION:
       return {
         ...state,
         tasks: action.payload,
