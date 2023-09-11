@@ -55,7 +55,9 @@ export default function useWindowDimensions() {
 }
 
 const isTaskUpdated = (prev: TaskDefinition, next: TaskDefinition): boolean => {
-  return prev?.assignerRoles !== next?.assignerRoles || prev?.workerRoles !== next?.workerRoles;
+  return (
+    prev?.assignerRoles.length === next?.assignerRoles.length && prev?.workerRoles.length === next?.workerRoles.length
+  );
 };
 
 export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
@@ -247,12 +249,11 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
                   type="secondary"
                   onClick={() => {
                     if (isTaskUpdated(initialDefinition, queue)) {
-                      setSaveModal(true);
-                    } else {
                       validators.clear();
                       close();
+                    } else {
+                      setSaveModal(true);
                     }
-                    close();
                   }}
                 >
                   Back
@@ -260,7 +261,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
               </GoAButtonGroup>
             </FinalButtonPadding>
           </NameDescriptionDataSchema>
-          <TaskPermissions>
+          <TaskPermissions className="task-permissions-wrapper">
             <TaskEditorTitle>Queue permissions</TaskEditorTitle>
             <hr className="hr-resize" />
             <ScrollPane>

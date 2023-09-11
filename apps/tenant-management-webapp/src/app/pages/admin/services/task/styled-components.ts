@@ -73,7 +73,7 @@ export const ScrollPane = styled.div`
 `;
 
 export const EditorPadding = styled.div`
-  border: 1px solid grey;
+  border: 0px solid grey;
   border-radius: 3px;
   padding: 0.15rem;
 
@@ -105,6 +105,50 @@ export const TaskEditor = styled.div`
   .hr-resize-bottom {
     margin-bottom: var(--goa-spacing-2xs);
     margin-top: var(--goa-spacing-xl);
+  }
+  .task-permissions-wrapper {
+    table {
+      border-collapse: collapse;
+    }
+    table.sticky {
+      position: relative;
+    }
+    table.sticky thead {
+      position: sticky;
+      top: 0;
+    }
+    td {
+      font: var(--goa-typography-body-m);
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--goa-color-greyscale-200);
+    }
+    table .goa-table-number-column {
+      font: var(--goa-typography-number-m);
+      text-align: right;
+    }
+    table.relaxed td {
+      padding: 1rem;
+    }
+    th {
+      background-color: var(--goa-color-greyscale-white);
+      color: var(--goa-color-text-secondary);
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 2px solid var(--goa-color-greyscale-600);
+      vertical-align: bottom;
+    }
+    th:has(goa-table-sort-header) {
+      padding: 0;
+    }
+    tfoot td {
+      background-color: var(--goa-color-greyscale-100);
+    }
+    tfoot tr:first-child td {
+      border-top: 2px solid var(--goa-color-greyscale-200);
+    }
+    tfoot tr:last-child td {
+      border-bottom: none;
+    }
   }
 `;
 
