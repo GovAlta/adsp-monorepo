@@ -152,6 +152,7 @@ Then(
 When(
   'the user clicks {string} menu for the {string} notice of {string}, {string}, {string}, {string}, {string}, {string}',
   function (menu, mode, desc, app, startDate, startTime, endDate, endTime) {
+    cy.viewport(1920, 1080);
     let startDateTime;
     let endDateTime;
     if (startDate == 'Today' && endDate == 'Today') {
@@ -184,6 +185,7 @@ When(
     }
     searchNoticeCards(mode, desc, app, startDateTime, endDateTime).then((index) => {
       expect(index).to.not.equal(0);
+      cy.wait(2000);
       statusObj
         .noticeCardGearButton(index)
         .scrollIntoView()
@@ -220,6 +222,7 @@ Then('the user views Edit notice dialog', function () {
 
 When('the user selects {string} filter by status radio button', function (filterType) {
   expect(filterType).to.be.oneOf(['Draft', 'Published', 'Archived', 'Active']);
+  cy.wait(1000); // To avoid clicking the filter too early
   statusObj
     .filterByStatusRadioGroup()
     .shadow()
@@ -686,6 +689,9 @@ When('the user enters {string} in Edit contact information modal', function (ema
     .shadow()
     .find('input')
     .clear({ force: true })
+    .wait(2000) // Add wait for clear to be effective before proceeding
+    .type('{selectAll}', { force: true, parseSpecialCharSequences: true }) //In case clear doesn't work, do select all and then type in text
+    .wait(2000)
     .type(email, { delay: 100, force: true });
 });
 
