@@ -61,6 +61,18 @@ class FileServicePage {
     return cy.xpath(`//*[@data-testid="file-type-modal" and @open="true"]//goa-table`);
   }
 
+  fileTypeModalClientRolesTable(clientName) {
+    return cy.xpath(
+      `//*[@data-testid="file-type-modal" and @open="true"]//h4/div[text()="${clientName}"]/parent::h4/following-sibling::goa-table`
+    );
+  }
+
+  fileTypeModalRolesTable() {
+    return cy.xpath(
+      '//*[@data-testid="file-type-modal" and @open="true"]//h4[text()="autotest"]/following-sibling::goa-table[1]'
+    );
+  }
+
   fileTypeModalModifyCheckbox(roleName) {
     return cy.xpath(
       `//*[@data-testid="file-type-modal" and @open="true"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "modify-role")]`
