@@ -114,7 +114,7 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
 
     return (
       <>
-        <PreviewTop title={channelTitle} />
+        <PreviewTop title={channelTitle} iconDisable={!blobUrl} />
         {indicator?.show && (
           <SpinnerPadding>
             <GoAPageLoader visible={true} type="infinite" message={indicator.message} />
@@ -140,7 +140,7 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
     );
   };
 
-  const PreviewTop = ({ title }) => {
+  const PreviewTop = ({ title, iconDisable }) => {
     return (
       <PreviewTopStyleWrapper>
         <PreviewTopStyle>
@@ -163,6 +163,7 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
             title="Download"
             testId="download-template-icon"
             size="medium"
+            disabled={iconDisable}
             onClick={() => {
               const file = fileList[0];
               if (file.recordId === pdfList[0].id && file.filename.indexOf(pdfList[0].templateId) > -1) {

@@ -1,8 +1,11 @@
 import React from 'react';
-import { TaskDefinition } from '@store/task/model';
 import { GoABadge } from '@abgov/react-components-new';
 import { OverflowWrap } from './styled-components';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
+
+import { useRouteMatch } from 'react-router';
+import { useHistory } from 'react-router-dom';
+import { TaskDefinition } from '@store/task/model';
 
 interface QueueTableItemProps {
   id: string;
@@ -11,6 +14,8 @@ interface QueueTableItemProps {
 }
 
 export const QueueTableItem = ({ id, queue, onDelete }: QueueTableItemProps): JSX.Element => {
+  const { url } = useRouteMatch();
+  const history = useHistory();
   return (
     <>
       <tr>
@@ -40,6 +45,12 @@ export const QueueTableItem = ({ id, queue, onDelete }: QueueTableItemProps): JS
           </OverflowWrap>
         </td>
         <td data-testid="queue-list-action">
+          <GoAContextMenuIcon
+            testId="task-definition-edit"
+            title="Edit"
+            type="create"
+            onClick={() => history.push(`${url}/edit/${queue.namespace}:${queue.name}`)}
+          />
           <GoAContextMenuIcon
             testId={`form-definition-delete`}
             title="Delete"

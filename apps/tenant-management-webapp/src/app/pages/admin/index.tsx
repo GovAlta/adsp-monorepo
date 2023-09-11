@@ -13,7 +13,7 @@ import AccessPage from './services/access/access';
 import { Directory } from './services/directory';
 import Container from '@components/Container';
 import Status from './services/status';
-import Task from './services/task';
+import { TaskRouter } from './services/task';
 import { EventLog } from './event-log';
 import { ServiceMetrics } from './service-metrics';
 import { Events } from './services/events';
@@ -60,7 +60,7 @@ const TenantManagement = (): JSX.Element => {
       case 'Status':
         return <Status />;
       case 'Task':
-        return <Task />;
+        return <TaskRouter />;
       default:
         return <Redirect to="/404" />;
     }

@@ -5,7 +5,6 @@ import {
   MonacoDivBody,
   PdfEditorLabelWrapper,
   PdfEditActionLayout,
-  PdfEditActions,
   GeneratorStyling,
   PDFTitle,
   ButtonRight,
@@ -15,7 +14,7 @@ import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { PdfTemplate } from '@store/pdf/model';
 import { languages } from 'monaco-editor';
 import { buildSuggestions, triggerInScope, convertToEditorSuggestion } from '@lib/autoComplete';
-import { GoAButton, GoAFormItem } from '@abgov/react-components-new';
+import { GoAButton, GoAFormItem, GoAButtonGroup } from '@abgov/react-components-new';
 import { Tab, Tabs } from '@components/Tabs';
 import { SaveFormModal } from '@components/saveModal';
 import { PDFConfigForm } from './PDFConfigForm';
@@ -151,7 +150,9 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   }, [monaco, suggestion]);
 
   const monacoHeight = `calc(100vh - 585px${notifications.length > 0 ? ' - 80px' : ''})`;
-
+  const pdfList = useSelector((state: RootState) =>
+    state.pdf?.jobs?.filter((job) => job.templateId === pdfTemplate.id)
+  );
   return (
     <TemplateEditorContainerPdf>
       <LogoutModal />
@@ -264,6 +265,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                     onClick={() => {
                       setShowDeleteConfirmation(true);
                     }}
+                    disabled={pdfList === null || pdfList?.length === 0}
                   >
                     Delete all files
                   </GoAButton>
@@ -278,33 +280,31 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
         <hr className="hr-resize-bottom" />
         <EditTemplateActions>
           <PdfEditActionLayout>
-            <PdfEditActions>
-              <>
-                <GoAButton
-                  disabled={!isPDFUpdated(tmpTemplate, pdfTemplate) || EditorError?.testData !== null}
-                  onClick={() => {
-                    savePdfTemplate(tmpTemplate);
-                  }}
-                  type="primary"
-                  testId="template-form-save"
-                >
-                  Save
-                </GoAButton>
-                <GoAButton
-                  onClick={() => {
-                    if (isPDFUpdated(tmpTemplate, pdfTemplate)) {
-                      setSaveModal(true);
-                    } else {
-                      cancel();
-                    }
-                  }}
-                  testId="template-form-close"
-                  type="secondary"
-                >
-                  Back
-                </GoAButton>
-              </>
-            </PdfEditActions>
+            <GoAButtonGroup alignment="start">
+              <GoAButton
+                disabled={!isPDFUpdated(tmpTemplate, pdfTemplate) || EditorError?.testData !== null}
+                onClick={() => {
+                  savePdfTemplate(tmpTemplate);
+                }}
+                type="primary"
+                testId="template-form-save"
+              >
+                Save
+              </GoAButton>
+              <GoAButton
+                onClick={() => {
+                  if (isPDFUpdated(tmpTemplate, pdfTemplate)) {
+                    setSaveModal(true);
+                  } else {
+                    cancel();
+                  }
+                }}
+                testId="template-form-close"
+                type="secondary"
+              >
+                Back
+              </GoAButton>
+            </GoAButtonGroup>
           </PdfEditActionLayout>
         </EditTemplateActions>
       </GoAFormItem>
