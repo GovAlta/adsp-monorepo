@@ -21,6 +21,7 @@ import { Notifications } from './services/notifications';
 import { Configuration } from './services/configuration';
 import { Calendar } from './services/calendar';
 import { PDFRouter } from './services/pdf';
+import { CommentRouter } from './services/comment';
 import { FormRouter } from './services/form';
 import { serviceVariables } from '../../../featureFlag';
 
@@ -41,6 +42,8 @@ const TenantManagement = (): JSX.Element => {
         return <AccessPage />;
       case 'Calendar':
         return <Calendar />;
+      case 'Comment':
+        return <CommentRouter />;
       case 'Configuration':
         return <Configuration />;
       case 'Directory':
