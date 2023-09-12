@@ -11,6 +11,7 @@ import { GoABadge } from '@abgov/react-components-new';
 import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 import { QueueListTable } from './queueTable';
 import { QueueModal } from './queueModal';
+import { Buttonpadding } from './styled-components';
 
 interface AddEditQueueProps {
   openAddDefinition: boolean;
@@ -79,16 +80,18 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
   return (
     <section>
       <div>
-        <GoAButton
-          testId="add-queue-btn"
-          onClick={() => {
-            setSelectedQueue(defaultTaskQueue);
-            setModalType('new');
-            setEditQueue(true);
-          }}
-        >
-          Add queue
-        </GoAButton>
+        <Buttonpadding>
+          <GoAButton
+            testId="add-queue-btn"
+            onClick={() => {
+              setSelectedQueue(defaultTaskQueue);
+              setModalType('new');
+              setEditQueue(true);
+            }}
+          >
+            Add queue
+          </GoAButton>
+        </Buttonpadding>
       </div>
       <PageIndicator />
       {!indicator.show && Object.keys(taskQueues).length === 0 && renderNoItem('task queues')}
