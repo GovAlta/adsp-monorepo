@@ -130,7 +130,7 @@ const initializeApp = async (): Promise<express.Application> => {
     const rootUrl = new URL(`${req.protocol}://${req.get('host')}`);
     res.json({
       name: 'Comment service',
-      description: 'Put a description of the service here.',
+      description: 'Service that allows users to comment on topics.',
       _links: {
         self: { href: new URL(req.originalUrl, rootUrl).href },
         health: { href: new URL('/health', rootUrl).href },

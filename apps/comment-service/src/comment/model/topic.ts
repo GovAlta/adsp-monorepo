@@ -11,7 +11,7 @@ export class TopicEntity implements Topic {
   type?: TopicTypeEntity;
   name: string;
   description: string;
-  resourceId?: AdspId;
+  resourceId?: AdspId | string;
   commenters?: string[] = [];
 
   @AssertRole('create topic', [ServiceRoles.Admin, ServiceRoles.TopicSetter])
@@ -86,7 +86,11 @@ export class TopicEntity implements Topic {
       throw new UnauthorizedUserError('read comments', user);
     }
 
-    return await this.repository.getComments(this, top, after, criteria);
+    return await this.repository.getComments(top, after, {
+      ...criteria,
+      tenantIdEquals: this.tenantId,
+      topicIdEquals: this.id,
+    });
   }
 
   public async getComment(user: User, commentId: number): Promise<Comment> {
@@ -105,6 +109,7 @@ export class TopicEntity implements Topic {
     const createdOn = new Date();
     return await this.repository.saveComment(this, {
       ...comment,
+      topicId: this.id,
       id: undefined,
       createdBy: user,
       createdOn,

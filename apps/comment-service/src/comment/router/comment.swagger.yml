@@ -1,0 +1,68 @@
+/comment/v1/comments:
+  get:
+    tags:
+      - Comment
+    description: Retrieves comments.
+    parameters:
+      - name: top
+        description: Number of topics to return.
+        in: query
+        required: false
+        schema:
+          type: integer
+      - name: after
+        description: Cursor for the page to retrieve.  Use the _page.next_ value returned in the previous call to page sequentially through the data.
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: criteria
+        description: Criteria for comments to retrieve.
+        in: query
+        required: false
+        schema:
+          type: object
+          properties:
+            typeIdEquals:
+              type: string
+            topicIdEquals:
+              type: integer
+            titleLike:
+              type: string
+            contentLike:
+              type: string
+            titleOrContentLike:
+              type: string
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Comment"
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                      description: cursor representing the set of data returned.
+                      example: Mw==
+                    next:
+                      type: string
+                      description: cursor representing the next set of data to be returned.
+                      example: Ng==
+                    size:
+                      description: The number of comments returned by the query.
+                      example: 10
+                      type: integer
+      401:
+        description: Not authorized.
+      403:
+        description: User not permitted for requested operation.
+      404:
+        description: Topic type not found.

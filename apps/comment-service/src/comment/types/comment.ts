@@ -1,4 +1,7 @@
+import { AdspId } from '@abgov/adsp-service-sdk';
+
 export interface Comment {
+  topicId: number;
   id: number;
   title: string;
   content: string;
@@ -15,6 +18,9 @@ export interface Comment {
 }
 
 export interface CommentCriteria {
+  tenantIdEquals?: AdspId;
+  typeIdEquals?: string;
+  topicIdEquals?: number;
   titleLike?: string;
   contentLike?: string;
   titleOrContentLike?: string;

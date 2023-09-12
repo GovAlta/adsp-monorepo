@@ -12,7 +12,7 @@ export interface TopicRepository {
     criteria?: TopicCriteria
   ): Promise<Results<TopicEntity>>;
   getComment(entity: TopicEntity, commentId: number): Promise<Comment>;
-  getComments(entity: TopicEntity, top: number, after?: string, criteria?: CommentCriteria): Promise<Results<Comment>>;
+  getComments(top: number, after?: string, criteria?: CommentCriteria): Promise<Results<Comment>>;
 
   save(entity: TopicEntity): Promise<TopicEntity>;
   delete(entity: TopicEntity): Promise<boolean>;
