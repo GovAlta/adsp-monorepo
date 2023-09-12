@@ -57,7 +57,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   const dispatch = useDispatch();
   const { id } = useParams<{ id: string }>();
   const monaco = useMonaco();
-  const [saveModal, setSaveModal] = useState(false);
+  const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
 
   const pdfTemplate = useSelector((state) => selectPdfTemplateById(state, id));
 
@@ -78,13 +78,18 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
     if (!pdfTemplate) {
       dispatch(getPdfTemplates());
     }
-    dispatch(FetchFilesService());
   }, []);
 
   //eslint-disable-next-line
   useEffect(() => {
     setTmpTemplate(JSON.parse(JSON.stringify(pdfTemplate || '')));
   }, [pdfTemplate]);
+
+  useEffect(() => {
+    if (saveModal.closeEditor) {
+      cancel();
+    }
+  }, [saveModal]);
 
   const reloadFile = useSelector((state: RootState) => state.pdf?.reloadFile);
 
@@ -294,7 +299,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
               <GoAButton
                 onClick={() => {
                   if (isPDFUpdated(tmpTemplate, pdfTemplate)) {
-                    setSaveModal(true);
+                    setSaveModal({ visible: true, closeEditor: false });
                   } else {
                     cancel();
                   }
@@ -321,19 +326,17 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
         }}
       />
       <SaveFormModal
-        open={saveModal}
+        open={saveModal.visible}
         onDontSave={() => {
-          setSaveModal(false);
-          cancel();
+          setSaveModal({ visible: false, closeEditor: true });
         }}
         onSave={() => {
           savePdfTemplate(tmpTemplate, 'no-refresh');
-          setSaveModal(false);
-          cancel();
+          setSaveModal({ visible: false, closeEditor: true });
         }}
         saveDisable={!isPDFUpdated(tmpTemplate, pdfTemplate) || EditorError?.testData !== null}
         onCancel={() => {
-          setSaveModal(false);
+          setSaveModal({ visible: false, closeEditor: false });
         }}
       />
     </TemplateEditorContainerPdf>
