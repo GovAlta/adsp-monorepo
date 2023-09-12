@@ -70,11 +70,11 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
   const tenantClients: ServiceRoleConfig = tenant.tenantClients ? tenant.tenantClients : {};
   const { id } = useParams<{ id: string }>();
   const { height } = useWindowDimensions();
-  const [saveModal, setSaveModal] = useState(false);
+  const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
 
   const isEdit = !!id;
   const heightCover = {
-    height: height - 550,
+    height: height - 480,
   };
 
   useEffect(() => {
@@ -82,6 +82,13 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
   }, []);
+
+  useEffect(() => {
+    if (saveModal.closeEditor) {
+      close();
+    }
+  }, [saveModal]);
+
   const queues = useSelector((state: RootState) => state?.task?.queues || []);
 
   useEffect(() => {
@@ -253,7 +260,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
                       validators.clear();
                       close();
                     } else {
-                      setSaveModal(true);
+                      setSaveModal({ visible: true, closeEditor: false });
                     }
                   }}
                 >
@@ -278,10 +285,10 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
         </FlexRow>
       )}
       <SaveFormModal
-        open={saveModal}
+        open={saveModal.visible}
         onDontSave={() => {
-          setSaveModal(false);
           close();
+          setSaveModal({ visible: false, closeEditor: true });
         }}
         onSave={() => {
           if (!isEdit) {
@@ -294,12 +301,11 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
           }
           setSpinner(true);
           dispatch(UpdateTaskQueue(queue));
-          setSaveModal(false);
-          close();
+          setSaveModal({ visible: false, closeEditor: true });
         }}
         saveDisable={isTaskUpdated(initialDefinition, queue)}
         onCancel={() => {
-          setSaveModal(false);
+          setSaveModal({ visible: false, closeEditor: false });
         }}
       />
     </TaskEditor>
