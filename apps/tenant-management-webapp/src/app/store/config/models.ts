@@ -42,6 +42,7 @@ export interface ServiceUrls {
 export interface FeatureFlags {
   Access: boolean;
   Calendar: boolean;
+  Comment: boolean;
   Configuration: boolean;
   Form: boolean;
   Directory: boolean;

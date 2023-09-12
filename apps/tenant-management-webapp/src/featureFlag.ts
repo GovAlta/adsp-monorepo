@@ -14,6 +14,13 @@ const completeServiceVariables = [
     beta: true,
   },
   {
+    name: 'Comment',
+    link: '/admin/services/comment',
+    description:
+      'Comment services allows users to create topics and post comments against the topics. Topics are of a particular topic type, and the type determines the roles permitted to administer, read, or comment on a topic.',
+    beta: true,
+  },
+  {
     name: 'Configuration',
     link: '/admin/services/configuration',
     description:
@@ -87,6 +94,7 @@ const completeServiceVariables = [
 export const defaultFeaturesVisible = {
   Access: true,
   Calendar: true,
+  Comment: true,
   Configuration: true,
   Form: false,
   Directory: true,
