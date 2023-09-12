@@ -13,9 +13,9 @@ import { QueueListTable } from './queueTable';
 import { QueueModal } from './queueModal';
 
 interface AddEditQueueProps {
-  activeEdit: boolean;
+  openAddDefinition: boolean;
 }
-export const QueuesList = ({ activeEdit }: AddEditQueueProps): JSX.Element => {
+export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Element => {
   const dispatch = useDispatch();
   const [modalType, setModalType] = useState('');
   const [editQueue, setEditQueue] = useState(false);
@@ -53,11 +53,11 @@ export const QueuesList = ({ activeEdit }: AddEditQueueProps): JSX.Element => {
   }, [taskQueue]);
 
   useEffect(() => {
-    if (activeEdit) {
+    if (openAddDefinition) {
       reset();
       setOpenAddQueue(true);
     }
-  }, [activeEdit]);
+  }, [openAddDefinition]);
 
   // eslint-disable-next-line
 
@@ -104,7 +104,7 @@ export const QueuesList = ({ activeEdit }: AddEditQueueProps): JSX.Element => {
         content={
           <div>
             <div>
-              Are you sure you wish to delete <b>{`${taskQueue?.name}?`}</b>
+              Are you sure you wish to delete <b>{`${selectedQueue?.name}?`}</b>
             </div>
             <div style={{ margin: '10px 0' }}>
               {tasks && Object.keys(tasks).length > 0 && (
@@ -112,7 +112,7 @@ export const QueuesList = ({ activeEdit }: AddEditQueueProps): JSX.Element => {
                   key="unended-tasks"
                   type="emergency"
                   icon
-                  content={`${taskQueue?.name} contains unended tasks`}
+                  content={`${selectedQueue?.name} contains unended tasks`}
                 />
               )}
             </div>

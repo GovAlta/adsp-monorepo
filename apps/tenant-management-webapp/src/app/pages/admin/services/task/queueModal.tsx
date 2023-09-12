@@ -90,7 +90,7 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
       <GoAModalContent>
         <GoAForm>
           <GoAFormItem error={errors?.['namespace']}>
-            <label>Name Space</label>
+            <label>Namespace</label>
             <GoAInput
               type="text"
               name="namespace"

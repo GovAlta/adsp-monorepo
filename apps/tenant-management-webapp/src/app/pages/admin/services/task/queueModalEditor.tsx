@@ -224,6 +224,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
                 <GoAButton
                   type="primary"
                   testId="form-save"
+                  disabled={isTaskUpdated(initialDefinition, queue) || validators.haveErrors()}
                   onClick={() => {
                     if (indicator.show === true) {
                       setSpinner(true);
@@ -296,7 +297,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
           setSaveModal(false);
           close();
         }}
-        saveDisable={!isTaskUpdated(initialDefinition, queue)}
+        saveDisable={isTaskUpdated(initialDefinition, queue)}
         onCancel={() => {
           setSaveModal(false);
         }}
