@@ -20,7 +20,6 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
   const [modalType, setModalType] = useState('');
   const [editQueue, setEditQueue] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [taskQueue, setTaskQueue] = useState(defaultTaskQueue);
   const [openAddQueue, setOpenAddQueue] = useState(false);
   const [selectedQueue, setSelectedQueue] = useState<TaskDefinition>(defaultTaskQueue);
   const indicator = useSelector((state: RootState) => {
@@ -47,10 +46,10 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
   }, []);
 
   useEffect(() => {
-    if (taskQueue.name.length > 0) {
-      dispatch(getTasks(taskQueue));
+    if (selectedQueue.name.length > 0) {
+      dispatch(getTasks(selectedQueue));
     }
-  }, [taskQueue]);
+  }, [selectedQueue]);
 
   useEffect(() => {
     if (openAddDefinition) {
@@ -121,7 +120,7 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
         onCancel={() => setShowDeleteConfirmation(false)}
         onDelete={() => {
           setShowDeleteConfirmation(false);
-          dispatch(deleteTaskQueue(taskQueue));
+          dispatch(deleteTaskQueue(selectedQueue));
         }}
       />
 
