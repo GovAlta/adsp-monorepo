@@ -475,6 +475,7 @@ When('the user types {string} in Search subscriber email field', function (email
 
 When('the user clicks Search button on notifications page', function () {
   notificationsObj.notificationSearchBtn().shadow().find('button').click({ force: true });
+  cy.wait(1000);
 });
 
 //notification type in sentence case, only first letter is upper case
