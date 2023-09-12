@@ -293,3 +293,6 @@ export const HideTablet = styled.div`
     display: none;
   }
 `;
+export const Buttonpadding = styled.div`
+  padding-bottom: var(--goa-spacing-l);
+`;
