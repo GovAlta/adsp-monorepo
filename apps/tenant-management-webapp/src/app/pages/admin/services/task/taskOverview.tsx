@@ -1,39 +1,47 @@
-import React, { FunctionComponent, useEffect } from 'react';
-import { GoAButton } from '@abgov/react-components';
+import React, { useEffect } from 'react';
 import { OverviewLayout } from '@components/Overview';
+import { GoAButton } from '@abgov/react-components-new';
 import { useHistory } from 'react-router-dom';
-interface TaskOverviewProps {
-  setActiveEdit: (boolean) => void;
-  setActiveIndex: (number) => void;
-  disabled?: boolean;
-}
-export const TaskserviceOverview: FunctionComponent<TaskOverviewProps> = (props) => {
-  const { setActiveEdit, setActiveIndex, disabled } = props;
 
+interface TaskOverviewProps {
+  setOpenAddDefinition: (val: boolean) => void;
+}
+
+export const TaskOverview = ({ setOpenAddDefinition }: TaskOverviewProps): JSX.Element => {
   useEffect(() => {
-    setActiveEdit(false);
-    setActiveIndex(0);
+    setOpenAddDefinition(false);
     history.push({
       pathname: '/admin/services/task',
     });
   }, []);
+
   const history = useHistory();
-  const description = `The task service provides a model for tasks, task queues, and task assignment. Applications can use the task
-  service for work management as an aspect to augment domain specific concepts and processes.`;
 
   return (
     <OverviewLayout
-      description={description}
+      description={
+        <section>
+          <p>
+            The task service provides a model for tasks, task queues, and task assignment. Applications can use the task
+            service for work management as an aspect to augment domain specific concepts and processes.
+          </p>
+        </section>
+      }
       addButton={
-        <GoAButton
-          data-testid="add-queue"
-          disabled={disabled}
-          onClick={() => {
-            setActiveEdit(true);
-          }}
-        >
-          Add queue
-        </GoAButton>
+        <>
+          <GoAButton
+            testId="add-definition"
+            onClick={() => {
+              setOpenAddDefinition(true);
+              history.push({
+                pathname: '/admin/services/task',
+                search: '?definitions=true',
+              });
+            }}
+          >
+            Add Queue
+          </GoAButton>
+        </>
       }
     />
   );

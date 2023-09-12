@@ -13,14 +13,13 @@ import { QueueListTable } from './queueTable';
 import { QueueModal } from './queueModal';
 
 interface AddEditQueueProps {
-  activeEdit: boolean;
+  openAddDefinition: boolean;
 }
-export const QueuesList = ({ activeEdit }: AddEditQueueProps): JSX.Element => {
+export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Element => {
   const dispatch = useDispatch();
   const [modalType, setModalType] = useState('');
   const [editQueue, setEditQueue] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [taskQueue, setTaskQueue] = useState(defaultTaskQueue);
   const [openAddQueue, setOpenAddQueue] = useState(false);
   const [selectedQueue, setSelectedQueue] = useState<TaskDefinition>(defaultTaskQueue);
   const indicator = useSelector((state: RootState) => {
@@ -47,17 +46,17 @@ export const QueuesList = ({ activeEdit }: AddEditQueueProps): JSX.Element => {
   }, []);
 
   useEffect(() => {
-    if (taskQueue.name.length > 0) {
-      dispatch(getTasks(taskQueue));
+    if (selectedQueue.name.length > 0) {
+      dispatch(getTasks(selectedQueue));
     }
-  }, [taskQueue]);
+  }, [selectedQueue]);
 
   useEffect(() => {
-    if (activeEdit) {
+    if (openAddDefinition) {
       reset();
       setOpenAddQueue(true);
     }
-  }, [activeEdit]);
+  }, [openAddDefinition]);
 
   // eslint-disable-next-line
 
@@ -104,7 +103,7 @@ export const QueuesList = ({ activeEdit }: AddEditQueueProps): JSX.Element => {
         content={
           <div>
             <div>
-              Are you sure you wish to delete <b>{`${taskQueue?.name}?`}</b>
+              Are you sure you wish to delete <b>{`${selectedQueue?.name}?`}</b>
             </div>
             <div style={{ margin: '10px 0' }}>
               {tasks && Object.keys(tasks).length > 0 && (
@@ -112,7 +111,7 @@ export const QueuesList = ({ activeEdit }: AddEditQueueProps): JSX.Element => {
                   key="unended-tasks"
                   type="emergency"
                   icon
-                  content={`${taskQueue?.name} contains unended tasks`}
+                  content={`${selectedQueue?.name} contains unended tasks`}
                 />
               )}
             </div>
@@ -121,7 +120,7 @@ export const QueuesList = ({ activeEdit }: AddEditQueueProps): JSX.Element => {
         onCancel={() => setShowDeleteConfirmation(false)}
         onDelete={() => {
           setShowDeleteConfirmation(false);
-          dispatch(deleteTaskQueue(taskQueue));
+          dispatch(deleteTaskQueue(selectedQueue));
         }}
       />
 

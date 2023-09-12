@@ -53,10 +53,10 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({
   return (
     <>
       <tr>
-        <td headers={`userName_${index}`} data-testid={`userName_${index}`}>
+        <td headers="userName" data-testid={`userName_${index}`}>
           {characterLimit(subscriber?.addressAs, 30)}
         </td>
-        <td headers={`channels_${index}`} data-testid={`channels_${index}`}>
+        <td headers="channels" data-testid={`channels_${index}`}>
           {sortedChannels.map((channel, i) => (
             <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
               <div>
@@ -80,7 +80,7 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({
             </div>
           ))}
         </td>
-        <td headers={`actions_${index}`} data-testid={`actions_${index}`}>
+        <td headers="actions" data-testid={`actions_${index}`}>
           <div style={{ display: 'flex', flexDirection: 'row-reverse' }}>
             <GoAContextMenuIcon
               testId={`delete-subscription-${subscriber.id}`}
@@ -197,15 +197,11 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
           <DataTable id={`subscription-table-${index}`} data-testid={`subscription-table-${index}`}>
             <thead>
               <tr>
-                <th
-                  className="address-as"
-                  id={`userName_${index}`}
-                  data-testid={`subscription-header-address-as-${index}`}
-                >
+                <th className="address-as" id="userName" data-testid={`subscription-header-address-as-${index}`}>
                   Address as
                 </th>
-                <th id={`channels_${index}`}>Channels</th>
-                <th id={`actions_${index}`}>Actions</th>
+                <th id="channels">Channels</th>
+                <th id="actions">Actions</th>
               </tr>
             </thead>
             <tbody>
