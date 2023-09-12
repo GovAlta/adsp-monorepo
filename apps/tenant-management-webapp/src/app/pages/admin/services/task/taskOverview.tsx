@@ -1,38 +1,40 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-
+import React, { FunctionComponent, useEffect } from 'react';
+import { GoAButton } from '@abgov/react-components';
+import { OverviewLayout } from '@components/Overview';
+import { useHistory } from 'react-router-dom';
 interface TaskOverviewProps {
-  setActiveIndex?: number;
+  setActiveEdit: (boolean) => void;
+  setActiveIndex: (number) => void;
+  disabled?: boolean;
 }
+export const TaskserviceOverview: FunctionComponent<TaskOverviewProps> = (props) => {
+  const { setActiveEdit, setActiveIndex, disabled } = props;
 
-class TaskserviceOverview extends Component<TaskOverviewProps> {
-  static defaultProps: TaskOverviewProps = {
-    setActiveIndex: 0,
-  };
+  useEffect(() => {
+    setActiveEdit(false);
+    setActiveIndex(0);
+    history.push({
+      pathname: '/admin/services/task',
+    });
+  }, []);
+  const history = useHistory();
+  const description = `The task service provides a model for tasks, task queues, and task assignment. Applications can use the task
+  service for work management as an aspect to augment domain specific concepts and processes.`;
 
-  render() {
-    return (
-      <OverviewCss>
-        <section>
-          <p>
-            The task service provides a model for tasks, task queues, and task assignment. Applications can use the task
-            service for work management as an aspect to augment domain specific concepts and processes.
-          </p>
-        </section>
-      </OverviewCss>
-    );
-  }
-}
-
-export default TaskserviceOverview;
-
-const OverviewCss = styled.div`
-  .contact-border {
-    padding: 1rem;
-    border: 1px solid #ccc;
-  }
-
-  .left-float {
-    float: left;
-  }
-`;
+  return (
+    <OverviewLayout
+      description={description}
+      addButton={
+        <GoAButton
+          data-testid="add-queue"
+          disabled={disabled}
+          onClick={() => {
+            setActiveEdit(true);
+          }}
+        >
+          Add queue
+        </GoAButton>
+      }
+    />
+  );
+};

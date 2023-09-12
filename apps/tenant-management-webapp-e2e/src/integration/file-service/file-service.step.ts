@@ -385,7 +385,7 @@ When('the user enters {string}, {string}, {string} on file type modal', function
       .type(name, { delay: 100, force: true });
   }
 
-  //Select Who can read
+  //Select roles
   if (readRole == 'public') {
     fileServiceObj
       .fileTypeModalPublicCheckbox()
@@ -399,6 +399,63 @@ When('the user enters {string}, {string}, {string} on file type modal', function
           fileServiceObj.fileTypeModalPublicCheckbox().shadow().find('.goa-checkbox-container').click({ force: true });
         }
       });
+
+    //Unselect all checkboxes
+    fileServiceObj
+      .fileTypeModalCheckboxesTables()
+      .shadow()
+      .find('goa-checkbox')
+      .shadow()
+      .find('.goa-checkbox-container')
+      .then((elements) => {
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].getAttribute('checked') == 'true') {
+            elements[i].click();
+          }
+        }
+      });
+
+    //Select modify roles
+    const updateRoles = updateRole.split(',');
+    for (let i = 0; i < updateRoles.length; i++) {
+      if (updateRoles[i].includes(':')) {
+        const clientRoleStringArray = updateRoles[i].split(':');
+        let clientName = '';
+        for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
+          if (j !== clientRoleStringArray.length - 2) {
+            clientName = clientName + clientRoleStringArray[j].trim() + ':';
+          } else {
+            clientName = clientName + clientRoleStringArray[j];
+          }
+        }
+        const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
+        fileServiceObj
+          .fileTypeModalClientRolesTable(clientName)
+          .shadow()
+          .find('.role-name')
+          .contains(roleName)
+          .next()
+          .next()
+          .find('goa-checkbox')
+          .shadow()
+          .find('.goa-checkbox-container')
+          .scrollIntoView()
+          .click({ force: true });
+      } else {
+        fileServiceObj
+          .fileTypeModalRolesTable()
+          .shadow()
+          .find('.role-name')
+          .contains(updateRoles[i].trim())
+          .next()
+          .next()
+          .find('goa-checkbox')
+          .shadow()
+          .find('.goa-checkbox-container')
+          .scrollIntoView()
+          .click({ force: true }); // The checkbox clicking doesn't work properly (selects and unselects the checkbox).Need further investigation
+      }
+    }
   } else {
     //Unselect Make public checkbox if not already unchecked
     fileServiceObj
@@ -419,6 +476,7 @@ When('the user enters {string}, {string}, {string} on file type modal', function
           cy.log('Make public checkbox is already unchecked. ');
         }
       });
+
     //Unselect all checkboxes
     fileServiceObj
       .fileTypeModalCheckboxesTables()
@@ -428,11 +486,12 @@ When('the user enters {string}, {string}, {string} on file type modal', function
       .find('.goa-checkbox-container')
       .then((elements) => {
         for (let i = 0; i < elements.length; i++) {
-          if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
+          if (elements[i].getAttribute('checked') == 'true') {
             elements[i].click();
           }
         }
       });
+
     //Select read roles
     const readRoles = readRole.split(',');
     for (let i = 0; i < readRoles.length; i++) {
@@ -444,36 +503,48 @@ When('the user enters {string}, {string}, {string} on file type modal', function
         .find('.goa-checkbox-container')
         .click({ force: true, multiple: true });
     }
-  }
 
-  //Unselect all checkboxes
-  fileServiceObj
-    .fileTypeModalCheckboxesTables()
-    .shadow()
-    .find('goa-checkbox')
-    .shadow()
-    .find('.goa-checkbox-container')
-    .then((elements) => {
-      for (let i = 0; i < elements.length; i++) {
-        if (elements[i].className == 'goa-checkbox-container goa-checkbox--selected') {
-          elements[i].click();
+    //Select modify roles
+    const updateRoles = updateRole.split(',');
+    for (let i = 0; i < updateRoles.length; i++) {
+      if (updateRoles[i].includes(':')) {
+        const clientRoleStringArray = updateRoles[i].split(':');
+        let clientName = '';
+        for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
+          if (j !== clientRoleStringArray.length - 2) {
+            clientName = clientName + clientRoleStringArray[j].trim() + ':';
+          } else {
+            clientName = clientName + clientRoleStringArray[j];
+          }
         }
+        const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
+        fileServiceObj
+          .fileTypeModalClientRolesTable(clientName)
+          .shadow()
+          .find('.role-name')
+          .contains(roleName)
+          .next()
+          .next()
+          .find('goa-checkbox')
+          .shadow()
+          .find('.goa-checkbox-container')
+          .scrollIntoView()
+          .click({ force: true });
+      } else {
+        fileServiceObj
+          .fileTypeModalRolesTable()
+          .shadow()
+          .find('.role-name')
+          .contains(updateRoles[i].trim())
+          .next()
+          .next()
+          .find('goa-checkbox')
+          .shadow()
+          .find('.goa-checkbox-container')
+          .scrollIntoView()
+          .click({ force: true });
       }
-    });
-
-  cy.wait(1000);
-
-  //Select modify roles
-  const updateRoles = updateRole.split(',');
-  for (let i = 0; i < updateRoles.length; i++) {
-    fileServiceObj
-      .fileTypeModalCheckboxesTables()
-      .shadow()
-      .find('goa-checkbox[data-testid="FileType-modify-role-checkbox-' + updateRoles[i].trim() + '"]')
-      .shadow()
-      .find('.goa-checkbox-container')
-      .click({ force: true, multiple: true });
-    cy.wait(4000);
+    }
   }
 });
 

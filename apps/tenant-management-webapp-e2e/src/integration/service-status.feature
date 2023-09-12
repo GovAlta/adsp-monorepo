@@ -46,6 +46,7 @@ Feature: Service status
     Then the user views event details of "Drafted notice - AUTOMATED TEST ONLY", "Autotest" of application-notice-published for status-service
     When the user selects the "Status" menu item
     And the user selects "Notices" tab for "Status"
+    And the user selects "Published" filter by status radio button
     And the user clicks "Unpublish" menu for the "Published" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
     And the user selects "Draft" filter by status radio button
     Then the user "views" the "Draft" notice of "Drafted notice - AUTOMATED TEST ONLY", "Autotest", "1/1/2020", "12:00 am", "1/1/2020", "12:00 pm"
