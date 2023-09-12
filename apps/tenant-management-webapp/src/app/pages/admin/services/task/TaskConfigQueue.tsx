@@ -13,7 +13,7 @@ export const TaskConfigQueue = ({ queue }: props) => {
         <table>
           <thead>
             <tr>
-              <th>Name space</th>
+              <th>Namespace</th>
             </tr>
             <tr>
               <td data-testid="queue-namespace" className="overflowContainer">
