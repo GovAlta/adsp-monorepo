@@ -55,15 +55,6 @@ export interface UpdateIndicatorAction {
   payload: Indicator;
 }
 
-export interface GetsTasksSuccessAction {
-  type: typeof GET_TASKS_SUCCESS_ACTION;
-  payload: Record<string, object>;
-}
-export interface GetsTasksAction {
-  type: typeof GET_TASKS_ACTION;
-  queue: TaskDefinition;
-}
-
 export type TaskActionTypes =
   | FetchTaskQueuesAction
   | FetchTaskQueuesSuccessAction
