@@ -195,7 +195,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
 
-  const { errors, validators } = useValidators(
+  const { validators } = useValidators(
     'name',
     'name',
     badCharsCheck,

@@ -8,7 +8,6 @@ import { renderNoItem } from '@components/NoItem';
 import { GoAButton } from '@abgov/react-components-new';
 import { DeleteModal } from '@components/DeleteModal';
 import { GoABadge } from '@abgov/react-components-new';
-import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 import { QueueListTable } from './queueTable';
 import { QueueModal } from './queueModal';
 import { Buttonpadding } from './styled-components';
@@ -69,12 +68,6 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
     setEditQueue(false);
     setSelectedQueue(defaultTaskQueue);
     setOpenAddQueue(false);
-  };
-
-  const onEdit = (queue) => {
-    setSelectedQueue(queue);
-    setModalType('edit');
-    setEditQueue(true);
   };
 
   return (
