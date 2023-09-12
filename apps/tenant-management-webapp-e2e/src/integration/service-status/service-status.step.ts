@@ -222,7 +222,7 @@ Then('the user views Edit notice dialog', function () {
 
 When('the user selects {string} filter by status radio button', function (filterType) {
   expect(filterType).to.be.oneOf(['Draft', 'Published', 'Archived', 'Active']);
-  cy.wait(1000); // To avoid clicking the filter too early
+  cy.wait(2000); // To avoid clicking the filter too early
   statusObj
     .filterByStatusRadioGroup()
     .shadow()
