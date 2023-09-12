@@ -76,7 +76,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [initialDefinition, setInitialDefinition] = useState<FormDefinition>(defaultFormDefinition);
   const [spinner, setSpinner] = useState<boolean>(false);
   const { id } = useParams<{ id: string }>();
-  const [saveModal, setSaveModal] = useState(false);
+  const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
 
   const { height } = useWindowDimensions();
 
@@ -104,6 +104,12 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
       return serviceRoles?.keycloak || {};
     }
   );
+
+  useEffect(() => {
+    if (saveModal.closeEditor) {
+      close();
+    }
+  }, [saveModal]);
 
   useEffect(() => {
     if (id && formDefinitions[id]) {
@@ -292,7 +298,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   type="secondary"
                   onClick={() => {
                     if (isFormUpdated(initialDefinition, definition)) {
-                      setSaveModal(true);
+                      setSaveModal({ visible: true, closeEditor: false });
                     } else {
                       validators.clear();
                       close();
@@ -319,10 +325,9 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         </FlexRow>
       )}
       <SaveFormModal
-        open={saveModal}
+        open={saveModal.visible}
         onDontSave={() => {
-          setSaveModal(false);
-          close();
+          setSaveModal({ visible: false, closeEditor: true });
         }}
         onSave={() => {
           if (!isEdit) {
@@ -335,12 +340,11 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           }
           setSpinner(true);
           dispatch(updateFormDefinition(definition));
-          setSaveModal(false);
-          close();
+          setSaveModal({ visible: false, closeEditor: true });
         }}
         saveDisable={!isFormUpdated(initialDefinition, definition)}
         onCancel={() => {
-          setSaveModal(false);
+          setSaveModal({ visible: false, closeEditor: false });
         }}
       />
     </FormEditor>

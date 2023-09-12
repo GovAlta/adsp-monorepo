@@ -55,6 +55,9 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
 
   // eslint-disable-next-line
   useEffect(() => {}, [formDefinitions]);
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, []);
 
   return (
     <>

@@ -64,6 +64,9 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
 
   // eslint-disable-next-line
   useEffect(() => {}, [pdfTemplates]);
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, []);
 
   return (
     <>
