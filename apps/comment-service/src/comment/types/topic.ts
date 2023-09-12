@@ -13,7 +13,7 @@ export interface Topic {
   type?: TopicType;
   tenantId: AdspId;
   id: number;
-  resourceId?: AdspId;
+  resourceId?: AdspId | string;
   name: string;
   description: string;
   commenters?: string[];
