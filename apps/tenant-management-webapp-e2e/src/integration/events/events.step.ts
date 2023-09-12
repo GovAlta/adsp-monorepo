@@ -457,9 +457,9 @@ Then('the user enters {string}, {string}, {string} in Edit stream modal', functi
       .streamModalPublicCheckbox()
       .shadow()
       .find('.goa-checkbox-container')
-      .invoke('attr', 'checked')
-      .then((checkedAttr) => {
-        if (checkedAttr == 'true') {
+      .invoke('attr', 'class')
+      .then((classAttr) => {
+        if (classAttr?.includes('--selected')) {
           cy.log('Make stream public is already checked off.');
         } else {
           eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click({ force: true });
@@ -472,9 +472,9 @@ Then('the user enters {string}, {string}, {string} in Edit stream modal', functi
       .streamModalPublicCheckbox()
       .shadow()
       .find('.goa-checkbox-container')
-      .invoke('attr', 'checked')
-      .then((checkedAttr) => {
-        if (checkedAttr == 'true') {
+      .invoke('attr', 'class')
+      .then((classAttr) => {
+        if (classAttr?.includes('--selected')) {
           eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click({ force: true });
         }
       });

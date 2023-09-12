@@ -391,9 +391,9 @@ When('the user enters {string}, {string}, {string} on file type modal', function
       .fileTypeModalPublicCheckbox()
       .shadow()
       .find('.goa-checkbox-container')
-      .invoke('attr', 'checked')
-      .then((checkedAttr) => {
-        if (checkedAttr == 'true') {
+      .invoke('attr', 'class')
+      .then((classAttr) => {
+        if (classAttr?.includes('--selected')) {
           cy.log('Make public checkbox is already checked off. ');
         } else {
           fileServiceObj.fileTypeModalPublicCheckbox().shadow().find('.goa-checkbox-container').click({ force: true });
