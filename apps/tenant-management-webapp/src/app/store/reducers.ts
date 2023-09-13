@@ -1,6 +1,7 @@
 import { combineReducers } from 'redux';
 import Access from './access/reducers';
 import Config from './config/reducers';
+import Comment from './comment/reducers';
 import Directory from './directory/reducers';
 import File from './file/reducers';
 import Notification from './notification/reducers';
@@ -24,6 +25,7 @@ import Task from './task/reducers';
 export const rootReducer = combineReducers({
   fileService: File,
   session: Session,
+  comment: Comment,
   config: Config,
   pdf: Pdf,
   form: Form,

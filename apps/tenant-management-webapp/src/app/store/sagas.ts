@@ -22,6 +22,7 @@ import {
 import { watchEventSagas } from './event/sagas';
 import { watchPdfSagas } from './pdf/sagas';
 import { watchFormSagas } from './form/sagas';
+import { watchCommentSagas } from './comment/sagas';
 import { watchTaskSagas } from './task/sagas';
 import { watchFileSagas } from './file/sagas';
 import { watchConfigurationSagas } from './configuration/sagas';
@@ -125,6 +126,8 @@ export function* watchSagas() {
     watchPdfSagas(),
     //form
     watchFormSagas(),
+    //form
+    watchCommentSagas(),
     //task
     watchTaskSagas(),
     // service metrics
