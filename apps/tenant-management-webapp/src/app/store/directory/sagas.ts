@@ -179,6 +179,7 @@ export function* fetchEntryDetail(action: FetchEntryDetailAction): SagaIterator 
   yield put(
     UpdateElementIndicator({
       show: true,
+      id: action.data.urn,
     })
   );
 
