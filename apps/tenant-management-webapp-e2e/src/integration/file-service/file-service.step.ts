@@ -374,7 +374,7 @@ Then('the user views {string} file type modal', function (addOrEdit) {
 
 When('the user enters {string}, {string}, {string} on file type modal', function (name, readRole, updateRole) {
   cy.viewport(1920, 1080);
-  cy.wait(4000); //Wait for the client roles in the modal to show up
+  cy.wait(2000); //Wait for the client roles in the modal to show up
   //Enter Name
   if (name !== 'N/A') {
     fileServiceObj
@@ -382,7 +382,8 @@ When('the user enters {string}, {string}, {string} on file type modal', function
       .shadow()
       .find('input')
       .clear({ force: true })
-      .type(name, { delay: 100, force: true });
+      .wait(1000)
+      .type(name, { delay: 200, force: true });
   }
 
   //Select roles
@@ -416,44 +417,46 @@ When('the user enters {string}, {string}, {string} on file type modal', function
       });
 
     //Select modify roles
-    const updateRoles = updateRole.split(',');
-    for (let i = 0; i < updateRoles.length; i++) {
-      if (updateRoles[i].includes(':')) {
-        const clientRoleStringArray = updateRoles[i].split(':');
-        let clientName = '';
-        for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
-          if (j !== clientRoleStringArray.length - 2) {
-            clientName = clientName + clientRoleStringArray[j].trim() + ':';
-          } else {
-            clientName = clientName + clientRoleStringArray[j];
+    if (updateRole.toLowerCase() != 'empty') {
+      const updateRoles = updateRole.split(',');
+      for (let i = 0; i < updateRoles.length; i++) {
+        if (updateRoles[i].includes(':')) {
+          const clientRoleStringArray = updateRoles[i].split(':');
+          let clientName = '';
+          for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
+            if (j !== clientRoleStringArray.length - 2) {
+              clientName = clientName + clientRoleStringArray[j].trim() + ':';
+            } else {
+              clientName = clientName + clientRoleStringArray[j];
+            }
           }
+          const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
+          fileServiceObj
+            .fileTypeModalClientRolesTable(clientName)
+            .shadow()
+            .find('.role-name')
+            .contains(roleName)
+            .next()
+            .next()
+            .find('goa-checkbox')
+            .shadow()
+            .find('.goa-checkbox-container')
+            .scrollIntoView()
+            .click({ force: true });
+        } else {
+          fileServiceObj
+            .fileTypeModalRolesTable()
+            .shadow()
+            .find('.role-name')
+            .contains(updateRoles[i].trim())
+            .next()
+            .next()
+            .find('goa-checkbox')
+            .shadow()
+            .find('.goa-checkbox-container')
+            .scrollIntoView()
+            .click({ force: true }); // The checkbox clicking doesn't work properly (selects and unselects the checkbox).Need further investigation
         }
-        const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
-        fileServiceObj
-          .fileTypeModalClientRolesTable(clientName)
-          .shadow()
-          .find('.role-name')
-          .contains(roleName)
-          .next()
-          .next()
-          .find('goa-checkbox')
-          .shadow()
-          .find('.goa-checkbox-container')
-          .scrollIntoView()
-          .click({ force: true });
-      } else {
-        fileServiceObj
-          .fileTypeModalRolesTable()
-          .shadow()
-          .find('.role-name')
-          .contains(updateRoles[i].trim())
-          .next()
-          .next()
-          .find('goa-checkbox')
-          .shadow()
-          .find('.goa-checkbox-container')
-          .scrollIntoView()
-          .click({ force: true }); // The checkbox clicking doesn't work properly (selects and unselects the checkbox).Need further investigation
       }
     }
   } else {
@@ -493,56 +496,60 @@ When('the user enters {string}, {string}, {string} on file type modal', function
       });
 
     //Select read roles
-    const readRoles = readRole.split(',');
-    for (let i = 0; i < readRoles.length; i++) {
-      fileServiceObj
-        .fileTypeModalCheckboxesTables()
-        .shadow()
-        .find('goa-checkbox[data-testid="FileType-read-role-checkbox-' + readRoles[i].trim() + '"]')
-        .shadow()
-        .find('.goa-checkbox-container')
-        .click({ force: true, multiple: true });
+    if (readRole.toLowerCase() != 'empty') {
+      const readRoles = readRole.split(',');
+      for (let i = 0; i < readRoles.length; i++) {
+        fileServiceObj
+          .fileTypeModalCheckboxesTables()
+          .shadow()
+          .find('goa-checkbox[data-testid="FileType-read-role-checkbox-' + readRoles[i].trim() + '"]')
+          .shadow()
+          .find('.goa-checkbox-container')
+          .click({ force: true, multiple: true });
+      }
     }
 
     //Select modify roles
-    const updateRoles = updateRole.split(',');
-    for (let i = 0; i < updateRoles.length; i++) {
-      if (updateRoles[i].includes(':')) {
-        const clientRoleStringArray = updateRoles[i].split(':');
-        let clientName = '';
-        for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
-          if (j !== clientRoleStringArray.length - 2) {
-            clientName = clientName + clientRoleStringArray[j].trim() + ':';
-          } else {
-            clientName = clientName + clientRoleStringArray[j];
+    if (updateRole.toLowerCase() != 'empty') {
+      const updateRoles = updateRole.split(',');
+      for (let i = 0; i < updateRoles.length; i++) {
+        if (updateRoles[i].includes(':')) {
+          const clientRoleStringArray = updateRoles[i].split(':');
+          let clientName = '';
+          for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
+            if (j !== clientRoleStringArray.length - 2) {
+              clientName = clientName + clientRoleStringArray[j].trim() + ':';
+            } else {
+              clientName = clientName + clientRoleStringArray[j];
+            }
           }
+          const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
+          fileServiceObj
+            .fileTypeModalClientRolesTable(clientName)
+            .shadow()
+            .find('.role-name')
+            .contains(roleName)
+            .next()
+            .next()
+            .find('goa-checkbox')
+            .shadow()
+            .find('.goa-checkbox-container')
+            .scrollIntoView()
+            .click({ force: true });
+        } else {
+          fileServiceObj
+            .fileTypeModalRolesTable()
+            .shadow()
+            .find('.role-name')
+            .contains(updateRoles[i].trim())
+            .next()
+            .next()
+            .find('goa-checkbox')
+            .shadow()
+            .find('.goa-checkbox-container')
+            .scrollIntoView()
+            .click({ force: true });
         }
-        const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
-        fileServiceObj
-          .fileTypeModalClientRolesTable(clientName)
-          .shadow()
-          .find('.role-name')
-          .contains(roleName)
-          .next()
-          .next()
-          .find('goa-checkbox')
-          .shadow()
-          .find('.goa-checkbox-container')
-          .scrollIntoView()
-          .click({ force: true });
-      } else {
-        fileServiceObj
-          .fileTypeModalRolesTable()
-          .shadow()
-          .find('.role-name')
-          .contains(updateRoles[i].trim())
-          .next()
-          .next()
-          .find('goa-checkbox')
-          .shadow()
-          .find('.goa-checkbox-container')
-          .scrollIntoView()
-          .click({ force: true });
       }
     }
   }
@@ -619,9 +626,16 @@ function findFileType(name, readRole, updateRole) {
   return new Cypress.Promise((resolve, reject) => {
     try {
       let rowNumber = 0;
+      let targetedNumber = 1;
       const readRoles = readRole.split(',');
       const updateRoles = updateRole.split(',');
-      const targetedNumber = readRoles.length + updateRoles.length + 1; // Name, read roles and update roles all need to match to find the file type
+      if (readRole.toLowerCase() != 'empty') {
+        targetedNumber = targetedNumber + readRoles.length;
+      }
+      if (updateRole.toLowerCase() != 'empty') {
+        targetedNumber = targetedNumber + updateRoles.length;
+      }
+      // targetedNumber = readRoles.length + updateRoles.length + 1; // Name, read roles and update roles all need to match to find the file type
       fileServiceObj
         .fileTypeTableBody()
         .find('tr')
@@ -677,11 +691,6 @@ Then('the user views file type current in user modal for {string}', function (fi
       'contain',
       'You are unable to delete the file type ' + fileTypeName + ' because there are files within the file type'
     );
-});
-
-When('the user clicks Okay button', function () {
-  fileServiceObj.fileTypeDeleteModalOkayBtn().shadow().find('button').click({ force: true });
-  cy.wait(1000);
 });
 
 Then('the user views the core file types with no actions', function () {

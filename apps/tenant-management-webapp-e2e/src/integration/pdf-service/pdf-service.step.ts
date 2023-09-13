@@ -145,6 +145,7 @@ Then('the user views {string}, {string} and {string} in PDF template editor', fu
 
 When('the user clicks "Edit" icon in editor screen', function () {
   pdfServiceObj.pdfTemplateEditorScreenEditIcon().shadow().find('.color').click();
+  cy.wait(2000);
 });
 
 Then('the user views {string}, {string} and {string} in PDF template modal', function (name, templateId, description) {

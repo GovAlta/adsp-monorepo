@@ -110,7 +110,9 @@ class FileServicePage {
   }
 
   fileTypeDeleteModalDeleteButton() {
-    return cy.get('[data-testid="file-type-delete-modal-delete-btn"]');
+    return cy.xpath(
+      '//*[@data-testid="delete-confirmation" and @open="true"]//goa-button[@data-testid="delete-confirm"]'
+    );
   }
 
   fileTypeDeleteModalFileTypeName() {
@@ -122,19 +124,15 @@ class FileServicePage {
   }
 
   fileTypeDeleteModal() {
-    return cy.xpath('//*[@data-testid="file-type-delete-modal"]');
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]');
   }
 
   fileTypeDeleteModalTitle() {
-    return cy.xpath('//*[@data-testid="file-type-delete-modal"]//*[@slot="heading"]');
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]//*[@slot="heading"]');
   }
 
   fileTypeDeleteModalContent() {
-    return cy.xpath('//*[@data-testid="file-type-delete-modal"]//p');
-  }
-
-  fileTypeDeleteModalOkayBtn() {
-    return cy.xpath('//*[@data-testid="file-type-delete-modal"]//goa-button');
+    return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]//p');
   }
 
   coreFileTypesTitle() {
