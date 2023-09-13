@@ -9,7 +9,6 @@ import {
   UPDATE_TASK_QUEUE_ACTION,
   DELETE_TASK_QUEUE_ACTION,
   DeleteTaskDefinitionAction,
-  UpdateTaskQueueSuccessAction,
   deleteTaskQueueSuccess,
   GET_TASKS_ACTION,
   GetsTasksAction,
