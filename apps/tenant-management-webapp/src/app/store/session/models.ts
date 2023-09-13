@@ -19,6 +19,7 @@ export interface ModalState {
 
 export interface ElementIndicator {
   show: boolean;
+  id?: string;
 }
 
 export interface UserInfo {
