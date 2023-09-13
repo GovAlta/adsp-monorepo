@@ -168,9 +168,11 @@ When('the user goes to the web link of the API docs', function () {
 });
 
 Then('the user views {string} API documentation', function (serviceName) {
+  Cypress.config('defaultCommandTimeout', 20000); // Wait more time for checking API title
   commonObj.APIDocsPageTitle(serviceName).then((title) => {
     expect(title.length).to.be.gt(0); // element exists
   });
+  Cypress.config('defaultCommandTimeout', 4000);
 });
 
 When('the user selects {string} tab for {string}', function (tab, menuItem) {

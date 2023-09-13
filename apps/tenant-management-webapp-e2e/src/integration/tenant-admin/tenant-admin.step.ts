@@ -384,11 +384,26 @@ Then('the login link is copied to the clipboard', function () {
 });
 
 Then(
-  'the user views introductions and links for {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}',
-  function (access, calendar, configuration, directory, events, file, form, notification, pdf, script, status, task) {
+  'the user views introductions and links for {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}',
+  function (
+    access,
+    calendar,
+    comment,
+    configuration,
+    directory,
+    events,
+    file,
+    form,
+    notification,
+    pdf,
+    script,
+    status,
+    task
+  ) {
     const cardTextArray = [
       'Access allows',
       'The calendar service provides',
+      'Comment service',
       'The configuration service provides',
       'The directory service is',
       'The event service provides',
@@ -403,6 +418,7 @@ Then(
     const cardTitleArray = [
       access,
       calendar,
+      comment,
       configuration,
       directory,
       events,
