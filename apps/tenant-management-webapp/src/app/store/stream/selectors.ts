@@ -15,7 +15,7 @@ export const selectTenantStreamById = createSelector(
   (state: RootState) => state?.stream?.tenant,
   (_, id: string) => id,
   (tenantStreams: Streams, id) => {
-    const [key, stream] = Object.entries(tenantStreams).find(([_id, stream]) => _id === id) as [string, Stream];
+    const [stream] = Object.entries(tenantStreams).find(([_id, stream]) => _id === id) as [string, Stream];
     return stream;
   }
 );

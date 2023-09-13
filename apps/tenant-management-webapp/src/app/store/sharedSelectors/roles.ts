@@ -63,7 +63,7 @@ export const constructRoleObjFromUrns = (urns?: string[]) => {
 
 export const roleObjectToUrns = (roleObject: RoleObject) => {
   const roles = [];
-  Object.entries(roleObject).map(([clientId, clientRoles]) => {
+  Object.entries(roleObject).forEach(([clientId, clientRoles]) => {
     if (clientId === REALM_ROLE_KEY) {
       clientRoles.map((r) => roles.push(r));
     } else {

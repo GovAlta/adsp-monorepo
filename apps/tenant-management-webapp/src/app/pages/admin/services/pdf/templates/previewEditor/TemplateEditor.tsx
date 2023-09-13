@@ -29,7 +29,7 @@ import {
   setPdfDisplayFileId,
   updateTempTemplate,
 } from '@store/pdf/action';
-import { FetchFilesService } from '@store/file/actions';
+
 import { RootState } from '@store/index';
 import { FetchFileService } from '@store/file/actions';
 import { useHistory, useParams } from 'react-router-dom';
