@@ -78,13 +78,15 @@ components:
         description: Criteria for topics to retrieve.
         in: query
         required: false
-        schema:
-          type: object
-          properties:
-            typeIdEquals:
-              type: string
-            resourceIdEquals:
-              type: string
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                typeIdEquals:
+                  type: string
+                resourceIdEquals:
+                  type: string
     responses:
       200:
         description: Request completed successfully.
@@ -198,6 +200,26 @@ components:
         required: true
         schema:
           type: integer
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                description: The name of the topic.
+                example: Case ABC-12
+              description:
+                type: string
+                description: A description of the topic.
+                example: Comments on the case.
+              commenters:
+                type: array
+                items:
+                  type: string
+                description: Array containing IDs of additional users allowed to comment on the topic.
     responses:
       200:
         description: Request completed successfully.
