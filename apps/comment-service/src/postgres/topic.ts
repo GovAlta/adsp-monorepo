@@ -2,6 +2,7 @@ import { AdspId } from '@abgov/adsp-service-sdk';
 import { Results, decodeAfter, encodeNext } from '@core-services/core-common';
 import { Knex } from 'knex';
 import { TopicCriteria, Comment, CommentCriteria, TopicEntity, TopicRepository, TopicTypeEntity } from '../comment';
+import { isAdspId } from '../utils';
 import { CommentRecord, TopicRecord } from './types';
 
 export class PostgresTopicRepository implements TopicRepository {
@@ -15,7 +16,7 @@ export class PostgresTopicRepository implements TopicRepository {
           name: record.name,
           description: record.description,
           type: types[record.type],
-          resourceId: record.resource ? AdspId.parse(record.resource) : null,
+          resourceId: isAdspId(record.resource) ? AdspId.parse(record.resource) : record.resource,
           commenters: record.commenters,
         })
       : null;
@@ -24,6 +25,7 @@ export class PostgresTopicRepository implements TopicRepository {
   private mapCommentRecord(record: CommentRecord): Comment {
     return record
       ? {
+          topicId: record.topic_id,
           id: record.id,
           createdOn: record.createdOn,
           createdBy: {
@@ -95,23 +97,23 @@ export class PostgresTopicRepository implements TopicRepository {
     return this.mapCommentRecord(record);
   }
 
-  async getComments(
-    entity: TopicEntity,
-    top: number,
-    after?: string,
-    criteria?: CommentCriteria
-  ): Promise<Results<Comment>> {
+  async getComments(top: number, after?: string, criteria?: CommentCriteria): Promise<Results<Comment>> {
     const skip = decodeAfter(after);
 
     let query = this.knex<CommentRecord>('comments');
     query = query.offset(skip).limit(top);
 
-    query.where({
-      tenant: entity.tenantId.toString(),
-      topic_id: entity.id,
-    });
-
     if (criteria) {
+      const queryCriteria: Record<string, unknown> = {};
+      if (criteria.tenantIdEquals) {
+        queryCriteria['comments.tenant'] = criteria.tenantIdEquals.toString();
+      }
+
+      if (criteria.topicIdEquals) {
+        queryCriteria.topic_id = criteria.topicIdEquals;
+      }
+      query.where(queryCriteria);
+
       if (criteria.titleLike) {
         query.andWhereRaw("to_tsvector('english', title) @@ to_tsquery(?)", `'${criteria.titleLike}'`);
       }
@@ -127,6 +129,12 @@ export class PostgresTopicRepository implements TopicRepository {
             `'${criteria.titleOrContentLike}'`
           );
         });
+      }
+
+      if (criteria.typeIdEquals) {
+        query
+          .innerJoin('topics', 'topics.id', '=', 'comments.topic_id')
+          .andWhere('topics.type', '=', criteria.typeIdEquals);
       }
     }
 

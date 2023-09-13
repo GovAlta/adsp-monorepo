@@ -178,7 +178,11 @@ describe('TopicEntity', () => {
       const criteria = {};
       const result = await entity.getComments({ ...user, roles: ['test-reader'] } as User, 10, null, criteria);
       expect(result).toBe(comments);
-      expect(repositoryMock.getComments).toHaveBeenCalledWith(entity, 10, null, criteria);
+      expect(repositoryMock.getComments).toHaveBeenCalledWith(
+        10,
+        null,
+        expect.objectContaining({ topicIdEquals: entity.id, tenantIdEquals: entity.tenantId })
+      );
     });
 
     it('can fail for user without role', async () => {

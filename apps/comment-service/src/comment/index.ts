@@ -1,7 +1,7 @@
 import { AdspId, EventService, adspId } from '@abgov/adsp-service-sdk';
 import { Application } from 'express';
 import { Logger } from 'winston';
-import { createTopicRouter } from './router';
+import { createCommentRouter, createTopicRouter } from './router';
 import { assertAuthenticatedHandler } from '@core-services/core-common';
 import { TopicRepository } from './repository';
 
@@ -19,8 +19,11 @@ interface CommentMiddlewareProps {
 }
 
 export function applyCommentMiddleware(app: Application, { serviceId, ...props }: CommentMiddlewareProps): Application {
-  const router = createTopicRouter({ ...props, apiId: adspId`${serviceId}:v1` });
-  app.use('/comment/v1', assertAuthenticatedHandler, router);
+  const apiId = adspId`${serviceId}:v1`;
+  const commentRouter = createCommentRouter(props);
+  const topicRouter = createTopicRouter({ ...props, apiId });
+
+  app.use('/comment/v1', assertAuthenticatedHandler, [commentRouter, topicRouter]);
 
   return app;
 }

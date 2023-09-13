@@ -6,7 +6,7 @@ export interface TopicRecord extends Omit<Topic, 'tenantId' | 'type' | 'resource
   resource: string;
 }
 
-export interface CommentRecord extends Omit<Comment, 'topic' | 'createdBy' | 'lastUpdatedBy'> {
+export interface CommentRecord extends Omit<Comment, 'topicId' | 'createdBy' | 'lastUpdatedBy'> {
   tenant: string;
   topic_id: number;
   createdById: string;

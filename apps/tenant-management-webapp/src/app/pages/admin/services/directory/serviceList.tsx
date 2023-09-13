@@ -17,12 +17,14 @@ interface serviceItemProps {
 
 const ServiceItemComponent = ({ service, id, headerId }: serviceItemProps): JSX.Element => {
   const [showDetails, setShowDetails] = useState(false);
+
   const dispatch = useDispatch();
 
   const setDetails = (service: Service) => {
     if (!showDetails) {
       dispatch(fetchEntryDetail(service));
     }
+
     setShowDetails(!showDetails);
   };
   const elementIndicator = useSelector((state: RootState) => {
@@ -118,14 +120,9 @@ const ServiceItemComponent = ({ service, id, headerId }: serviceItemProps): JSX.
         <tr>
           <td headers="Entry metadata information" colSpan={5} className="meta">
             <EntryDetail data-testid="details">
-              {!service.loaded && (
+              {!service.loaded && elementIndicator.show && elementIndicator?.id === service.urn && (
                 <ElementLoader>
-                  <GoAElementLoader
-                    visible={elementIndicator.show}
-                    size="default"
-                    baseColour="#c8eef9"
-                    spinnerColour="#0070c4"
-                  />
+                  <GoAElementLoader visible={true} size="default" baseColour="#c8eef9" spinnerColour="#0070c4" />
                 </ElementLoader>
               )}
               {service.metadata === null ? renderNoItem() : JSON.stringify(service.metadata, null, 2)}
@@ -214,6 +211,6 @@ const NoItem = styled.div`
 
 const ElementLoader = styled.div`
   text-align: center;
-  padding-top: 1.3rem;
-  padding-bottom: 1rem;
+  margin-top: 1.3rem;
+  margin-bottom: 1rem;
 `;

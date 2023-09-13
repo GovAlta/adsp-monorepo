@@ -1,13 +1,14 @@
 import { AdspId, EventService, UnauthorizedUserError, adspId, isAllowedUser } from '@abgov/adsp-service-sdk';
-import { Request, RequestHandler, Response, Router } from 'express';
-import { Logger } from 'winston';
-import { TopicRepository } from '../repository';
-import { Topic } from '../types';
 import { NotFoundError, createValidationHandler, decodeAfter } from '@core-services/core-common';
+import { Request, RequestHandler, Response, Router } from 'express';
 import { body, param, query } from 'express-validator';
-import { TopicEntity, TopicTypeEntity } from '../model';
+import { Logger } from 'winston';
+import { isAdspId } from '../../utils';
 import { commentCreated, commentDeleted, commentUpdated, topicCreated, topicDeleted, topicUpdated } from '../events';
+import { TopicEntity, TopicTypeEntity } from '../model';
+import { TopicRepository } from '../repository';
 import { ServiceRoles } from '../roles';
+import { Topic } from '../types';
 
 interface TopicRouterProps {
   apiId: AdspId;
@@ -73,7 +74,7 @@ export function createTopic(
     try {
       const user = req.user;
       const tenantId = req.tenant.id;
-      const { typeId, ...topic } = req.body;
+      const { typeId, resourceId: resourceIdValue, ...topic } = req.body;
 
       const types = await req.getConfiguration<Record<string, TopicTypeEntity>, Record<string, TopicTypeEntity>>(
         tenantId
@@ -83,7 +84,11 @@ export function createTopic(
         throw new NotFoundError('topic type', typeId);
       }
 
-      const result = await TopicEntity.create(user, repository, type, { typeId, ...topic });
+      const result = await TopicEntity.create(user, repository, type, {
+        typeId,
+        resourceId: isAdspId(resourceIdValue) ? AdspId.parse(resourceIdValue) : resourceIdValue,
+        ...topic,
+      });
       res.send(mapTopic(apiId, result));
 
       eventService.send(topicCreated(result, user));
@@ -328,15 +333,7 @@ export function createTopicRouter({ apiId, logger, eventService, repository }: T
       body('typeId').isString().isLength({ min: 1, max: 50 }),
       body('name').isString().isLength({ min: 1, max: 50 }),
       body('description').optional().isString(),
-      body('resourceId')
-        .optional()
-        .custom((value) => {
-          try {
-            return AdspId.parse(value).type === 'resource';
-          } catch (err) {
-            return false;
-          }
-        })
+      body('resourceId').optional().isString().isLength({ min: 1, max: 1200 })
     ),
     createTopic(apiId, logger, repository, eventService)
   );

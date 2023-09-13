@@ -1,35 +1,41 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useParams } from 'react-router-dom';
-// import { SaveFormModal } from '@components/saveModal';
+import React, { useState, useEffect } from 'react';
+
+import { CommentTopicTypes } from '@store/comment/model';
+import { useValidators } from '@lib/validation/useValidators';
+import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
+import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
+import { ActionState } from '@store/session/models';
+import { ClientRoleTable } from '@components/RoleTable';
+import { SaveFormModal } from '@components/saveModal';
 import {
   SpinnerModalPadding,
   TextLoadingIndicator,
   FlexRow,
   NameDescriptionDataSchema,
-  TaskPermissions,
-  EditorPadding,
+  CommentPermissions,
   FinalButtonPadding,
-  TaskEditorTitle,
-  TaskEditor,
+  CommentEditorTitle,
+  CommentEditor,
   ScrollPane,
-} from './styled-components';
-import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
-import { UpdateTaskQueue, getTaskQueues } from '@store/task/action';
-import { ClientRoleTable } from '@components/RoleTable';
-import { GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components-new';
+  EditorPadding,
+} from '../styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
-import { TaskDefinition, defaultTaskQueue } from '@store/task/model';
-import { ServiceRoleConfig } from '@store/access/models';
-import { ConfigServiceRole } from '@store/access/models';
-import { RootState } from '@store/index';
-import { FETCH_KEYCLOAK_SERVICE_ROLES, fetchKeycloakServiceRoles } from '@store/access/actions';
-import { ActionState } from '@store/session/models';
 import { FetchRealmRoles } from '@store/tenant/actions';
-import { useValidators } from '@lib/validation/useValidators';
-import { badCharsCheck, wordMaxLengthCheck, isNotEmptyCheck, duplicateNameCheck } from '@lib/validation/checkInput';
-import { TaskConfigQueue } from './TaskConfigQueue';
-import { SaveFormModal } from '@components/saveModal';
+import { ConfigServiceRole } from '@store/access/models';
+import { getCommentTopicTypes } from '@store/comment/action';
+import { updateCommentTopicType } from '@store/comment/action';
+
+import { createSelector } from 'reselect';
+
+import { RootState } from '@store/index';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
+import { defaultCommentTopicType } from '@store/comment/model';
+import { TopicConfigTopicType } from './topicConfigTopicType';
+
+import { useHistory, useParams } from 'react-router-dom';
+
+import { GoAButtonGroup, GoAButton, GoAFormItem } from '@abgov/react-components-new';
 
 function getWindowDimensions() {
   const { innerWidth: width, innerHeight: height } = window;
@@ -54,34 +60,51 @@ export default function useWindowDimensions() {
   return windowDimensions;
 }
 
-const isTaskUpdated = (prev: TaskDefinition, next: TaskDefinition): boolean => {
+const isCommentUpdated = (prev: CommentTopicTypes, next: CommentTopicTypes): boolean => {
   return (
-    prev?.assignerRoles.length === next?.assignerRoles.length && prev?.workerRoles.length === next?.workerRoles.length
+    prev?.adminRoles !== next?.adminRoles ||
+    prev?.commenterRoles !== next?.commenterRoles ||
+    prev?.readerRoles !== next?.readerRoles
   );
 };
 
-export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
-  const dispatch = useDispatch();
-  // const location = useLocation();
-  const [queue, setQueue] = useState<TaskDefinition>(defaultTaskQueue);
-  const [initialDefinition, setInitialQueue] = useState<TaskDefinition>(defaultTaskQueue);
+export function AddEditCommentTopicTypeEditor(): JSX.Element {
+  const [topicType, setTopicType] = useState<CommentTopicTypes>(defaultCommentTopicType);
+  const [initialTopicType, setInitialTopicType] = useState<CommentTopicTypes>(defaultCommentTopicType);
   const [spinner, setSpinner] = useState<boolean>(false);
-  const tenant = useSelector(tenantRolesAndClients);
-  const tenantClients: ServiceRoleConfig = tenant.tenantClients ? tenant.tenantClients : {};
   const { id } = useParams<{ id: string }>();
-  const { height } = useWindowDimensions();
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
 
-  const isEdit = !!id;
+  const { height } = useWindowDimensions();
+
   const heightCover = {
     height: height - 480,
   };
 
+  const isEdit = !!id;
+
+  const dispatch = useDispatch();
+
   useEffect(() => {
-    dispatch(getTaskQueues());
-    dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
+    dispatch(getCommentTopicTypes());
+    dispatch(FetchRealmRoles());
   }, []);
+
+  const types = [
+    { type: 'adminRoles', name: 'Admin Roles' },
+    { type: 'commenterRoles', name: 'Commenter Roles' },
+    { type: 'readerRoles', name: 'Reader Roles' },
+  ];
+
+  const commentTopicTypes = useSelector((state: RootState) => state?.comment?.topicTypes || []);
+
+  const selectServiceKeycloakRoles = createSelector(
+    (state: RootState) => state.serviceRoles,
+    (serviceRoles) => {
+      return serviceRoles?.keycloak || {};
+    }
+  );
 
   useEffect(() => {
     if (saveModal.closeEditor) {
@@ -89,62 +112,61 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
     }
   }, [saveModal]);
 
-  const queues = useSelector((state: RootState) => state?.task?.queues || []);
-
   useEffect(() => {
-    if (id && queues[id]) {
-      const selectedQueue = queues[id];
-      setQueue(selectedQueue);
-      setInitialQueue(selectedQueue);
+    if (id && commentTopicTypes[id]) {
+      setTopicType(commentTopicTypes[id]);
+      setInitialTopicType(commentTopicTypes[id]);
     }
-
-    // const selectedQueue = location.state as TaskDefinition;
-    // setQueue(selectedQueue);
-  }, [queues]);
+  }, [commentTopicTypes]);
 
   const history = useHistory();
 
   const close = () => {
     history.push({
-      pathname: '/admin/services/task',
-      search: '?definitions=true',
+      pathname: '/admin/services/comment',
+      search: '?topicTypes=true',
     });
   };
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
     fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
   }));
-
-  const types = [
-    { type: 'assignerRoles', name: 'Assigner Roles' },
-    { type: 'workerRoles', name: 'Worker Roles' },
-  ];
   //eslint-disable-next-line
   useEffect(() => {}, [fetchKeycloakRolesState]);
+
   const ClientRole = ({ roleNames, clientId }) => {
+    const applicantRoles = types[0];
+    const clerkRoles = types[1];
+
     return (
       <>
         <ClientRoleTable
           roles={roleNames}
           clientId={clientId}
           roleSelectFunc={(roles, type) => {
-            if (type === 'Assigner Roles') {
-              setQueue({
-                ...queue,
-                assignerRoles: roles,
+            if (type === applicantRoles.name) {
+              setTopicType({
+                ...topicType,
+                adminRoles: roles,
+              });
+            } else if (type === clerkRoles.name) {
+              setTopicType({
+                ...topicType,
+                commenterRoles: roles,
               });
             } else {
-              setQueue({
-                ...queue,
-                workerRoles: roles,
+              setTopicType({
+                ...topicType,
+                readerRoles: roles,
               });
             }
           }}
           nameColumnWidth={40}
-          service="Queue"
+          service="FileType"
           checkedRoles={[
-            { title: types[0].name, selectedRoles: queue[types[0].type] },
-            { title: types[1].name, selectedRoles: queue[types[1].type] },
+            { title: types[0].name, selectedRoles: topicType[types[0].type] },
+            { title: types[1].name, selectedRoles: topicType[types[1].type] },
+            { title: types[2].name, selectedRoles: topicType[types[2].type] },
           ]}
         />
       </>
@@ -157,12 +179,12 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
     return role.name;
   });
 
+  const keycloakClientRoles = useSelector(selectServiceKeycloakRoles);
   let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
 
   const clientElements =
-    tenantClients &&
-    Object.entries(tenantClients).length > 0 &&
-    Object.entries(tenantClients)
+    Object.entries(keycloakClientRoles).length > 0 &&
+    Object.entries(keycloakClientRoles)
       .filter(([clientId, config]) => {
         return (config as ConfigServiceRole).roles.length > 0;
       })
@@ -175,22 +197,25 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
       });
   elements = elements.concat(clientElements);
 
-  const definitionIds = Object.keys(queues);
+  const topicTypes = useSelector((state: RootState) => {
+    return state?.comment?.topicTypes;
+  });
+  const topicTypeIds = Object.keys(topicTypes);
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
 
   useEffect(() => {
-    if (spinner && Object.keys(queues).length > 0) {
-      if (validators['duplicate'].check(queue.id)) {
+    if (spinner && Object.keys(topicTypes).length > 0) {
+      if (validators['duplicate'].check(topicType.id)) {
         setSpinner(false);
         return;
       }
 
       setSpinner(false);
     }
-  }, [queues]);
+  }, [topicTypes]);
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
@@ -202,12 +227,11 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
     wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
   )
-    .add('duplicate', 'name', duplicateNameCheck(definitionIds, 'definition'))
+    .add('duplicate', 'name', duplicateNameCheck(topicTypeIds, 'topicType'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
-
   return (
-    <TaskEditor>
+    <CommentEditor>
       {spinner ? (
         <SpinnerModalPadding>
           <GoAPageLoader visible={true} type="infinite" message={'Loading...'} pagelock={false} />
@@ -215,10 +239,9 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
       ) : (
         <FlexRow>
           <NameDescriptionDataSchema>
-            <TaskEditorTitle>Queue</TaskEditorTitle>
+            <CommentEditorTitle>Comment / Topic type editor</CommentEditorTitle>
             <hr className="hr-resize" />
-            {queue && <TaskConfigQueue queue={queue} />}
-
+            {topicType && <TopicConfigTopicType topicType={topicType} />}
             <GoAFormItem label="">
               <EditorPadding>
                 {/* <Editor height={height - 550} /> */}
@@ -230,22 +253,25 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
               <GoAButtonGroup alignment="start">
                 <GoAButton
                   type="primary"
-                  testId="form-save"
-                  disabled={isTaskUpdated(initialDefinition, queue) || validators.haveErrors()}
+                  testId="comment-save"
+                  disabled={
+                    !isCommentUpdated(initialTopicType, topicType) || !topicType.name || validators.haveErrors()
+                  }
                   onClick={() => {
                     if (indicator.show === true) {
                       setSpinner(true);
                     } else {
                       if (!isEdit) {
                         const validations = {
-                          duplicate: queue.name,
+                          duplicate: topicType.name,
                         };
                         if (!validators.checkAll(validations)) {
                           return;
                         }
                       }
                       setSpinner(true);
-                      dispatch(UpdateTaskQueue(queue));
+                      dispatch(updateCommentTopicType(topicType));
+
                       close();
                     }
                   }}
@@ -253,14 +279,14 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
                   Save
                 </GoAButton>
                 <GoAButton
-                  testId="form-cancel"
+                  testId="comment-cancel"
                   type="secondary"
                   onClick={() => {
-                    if (isTaskUpdated(initialDefinition, queue)) {
+                    if (isCommentUpdated(initialTopicType, topicType)) {
+                      setSaveModal({ visible: true, closeEditor: false });
+                    } else {
                       validators.clear();
                       close();
-                    } else {
-                      setSaveModal({ visible: true, closeEditor: false });
                     }
                   }}
                 >
@@ -269,45 +295,43 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
               </GoAButtonGroup>
             </FinalButtonPadding>
           </NameDescriptionDataSchema>
-          <TaskPermissions className="task-permissions-wrapper">
-            <TaskEditorTitle>Queue permissions</TaskEditorTitle>
+          <CommentPermissions>
+            <CommentEditorTitle>Roles</CommentEditorTitle>
             <hr className="hr-resize" />
             <ScrollPane>
-              {tenantClients &&
-                elements.map((e, key) => {
-                  return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
-                })}
+              {elements.map((e, key) => {
+                return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+              })}
               {fetchKeycloakRolesState === ActionState.inProcess && (
                 <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
               )}
             </ScrollPane>
-          </TaskPermissions>
+          </CommentPermissions>
         </FlexRow>
       )}
       <SaveFormModal
         open={saveModal.visible}
         onDontSave={() => {
-          close();
           setSaveModal({ visible: false, closeEditor: true });
         }}
         onSave={() => {
           if (!isEdit) {
             const validations = {
-              duplicate: queue.name,
+              duplicate: topicType.name,
             };
             if (!validators.checkAll(validations)) {
               return;
             }
           }
           setSpinner(true);
-          dispatch(UpdateTaskQueue(queue));
+          dispatch(updateCommentTopicType(topicType));
           setSaveModal({ visible: false, closeEditor: true });
         }}
-        saveDisable={isTaskUpdated(initialDefinition, queue)}
+        saveDisable={!isCommentUpdated(initialTopicType, topicType)}
         onCancel={() => {
           setSaveModal({ visible: false, closeEditor: false });
         }}
       />
-    </TaskEditor>
+    </CommentEditor>
   );
-};
+}
