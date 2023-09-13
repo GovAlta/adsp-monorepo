@@ -21,13 +21,13 @@ export const CommentTopicTypesTable: FunctionComponent<CommentTemplatesTableProp
               Topic ID
             </th>
             <th id="comment-topic-types-applicant" data-testid="comment-topic-types-table-header-applicant">
-              Administrator Roles
+              Administrator roles
             </th>
             <th id="comment-topic-types-clerk" data-testid="comment-topic-types-table-header-clerk">
-              Commenter Roles
+              Commenter roles
             </th>
             <th id="comment-topic-types-assessor" data-testid="comment-topic-types-table-header-assessor">
-              Reader Roles
+              Reader roles
             </th>
             <th id="comment-topic-types-action" data-testid="comment-topic-types-table-header-action">
               Actions
