@@ -72,7 +72,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
     <GoAModal
       testId="topicType-comment"
       open={open}
-      heading={`${isEdit ? 'Edit' : 'Add'} topicType`}
+      heading={`${isEdit ? 'Edit' : 'Add'} topic type`}
       width="640px"
       actions={
         <GoAButtonGroup alignment="end">
@@ -146,7 +146,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
               />
             </GoAFormItem>
           </CommentCommentItem>
-          <GoAFormItem label="TopicType ID">
+          <GoAFormItem label="Template ID">
             <CommentCommentItem>
               <GoAInput
                 name="comment-topicType-id"
