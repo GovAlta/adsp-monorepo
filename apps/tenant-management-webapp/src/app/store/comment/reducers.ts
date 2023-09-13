@@ -1,6 +1,7 @@
 import {
   FETCH_COMMENT_TOPIC_TYPES_SUCCESS_ACTION,
   UPDATE_COMMENT_TOPIC_TYPE_SUCCESS_ACTION,
+  DELETE_COMMENT_TOPIC_TYPE_SUCCESS_ACTION,
   CommentActionTypes,
 } from './action';
 
@@ -19,6 +20,14 @@ export default function (state: CommentState = defaultState, action: CommentActi
       };
 
     case UPDATE_COMMENT_TOPIC_TYPE_SUCCESS_ACTION:
+      return {
+        ...state,
+        topicTypes: {
+          ...action.payload,
+        },
+      };
+
+    case DELETE_COMMENT_TOPIC_TYPE_SUCCESS_ACTION:
       return {
         ...state,
         topicTypes: {

@@ -10,7 +10,7 @@ import { useHistory } from 'react-router-dom';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 
-import { GoAInput, GoAModal, GoAButtonGroup, GoAFormItem, GoAButton, GoAIcon } from '@abgov/react-components-new';
+import { GoAInput, GoAModal, GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components-new';
 interface AddEditCommentTopicTypeProps {
   open: boolean;
   isEdit: boolean;

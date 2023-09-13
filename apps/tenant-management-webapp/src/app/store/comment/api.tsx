@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { CommentTopicTypes, UpdateCommentConfig } from './model';
+import { CommentTopicTypes, UpdateCommentConfig, DeleteCommentConfig } from './model';
 
 export const fetchCommentTopicTypesApi = async (
   token: string,
@@ -12,6 +12,11 @@ export const fetchCommentTopicTypesApi = async (
 };
 
 export const updateCommentTopicTypesApi = async (token: string, url: string, body: UpdateCommentConfig) => {
+  const res = await axios.patch(url, body, { headers: { Authorization: `Bearer ${token}` } });
+  return res.data;
+};
+
+export const deleteCommentTopicTypesApi = async (token: string, url: string, body: DeleteCommentConfig) => {
   const res = await axios.patch(url, body, { headers: { Authorization: `Bearer ${token}` } });
   return res.data;
 };

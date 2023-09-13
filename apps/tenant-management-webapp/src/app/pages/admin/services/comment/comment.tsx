@@ -13,7 +13,6 @@ import AsideLinks from '@components/AsideLinks';
 export const Comment: FunctionComponent = () => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
-  const [openAddTemplate, setOpenAddTemplate] = useState(false);
 
   const [openAddTopicTypes, setOpenAddTopicTypes] = useState(false);
 

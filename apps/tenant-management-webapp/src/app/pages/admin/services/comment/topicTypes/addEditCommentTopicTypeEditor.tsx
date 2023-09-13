@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-import Editor from '@monaco-editor/react';
 import { CommentTopicTypes } from '@store/comment/model';
-
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
@@ -175,8 +173,6 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
     );
   };
 
-  console.log(JSON.stringify(topicType) + '<--topicType');
-
   const roles = useSelector((state: RootState) => state.tenant.realmRoles) || [];
 
   const roleNames = roles.map((role) => {
@@ -224,7 +220,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
 
-  const { errors, validators } = useValidators(
+  const { validators } = useValidators(
     'name',
     'name',
     badCharsCheck,

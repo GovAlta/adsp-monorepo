@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { GoAButton } from '@abgov/react-components-new';
 
 import { useDispatch, useSelector } from 'react-redux';
-import { getCommentTopicTypes, updateCommentTopicType } from '@store/comment/action';
+import { getCommentTopicTypes, updateCommentTopicType, deleteCommentTopicType } from '@store/comment/action';
 import { RootState } from '@store/index';
 import { renderNoItem } from '@components/NoItem';
 import { CommentTopicTypesTable } from './definitionsList';
@@ -20,7 +20,7 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [currentDefinition, setCurrentDefinition] = useState(defaultCommentTopicType);
 
-  const commentDefinitions = useSelector((state: RootState) => {
+  const commentTopicTypes = useSelector((state: RootState) => {
     return Object.entries(state?.comment?.topicTypes)
       .sort((template1, template2) => {
         return template1[1].name.localeCompare(template2[1].name);
@@ -54,7 +54,7 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
   };
 
   // eslint-disable-next-line
-  useEffect(() => {}, [commentDefinitions]);
+  useEffect(() => {}, [commentTopicTypes]);
   useEffect(() => {
     document.body.style.overflow = 'unset';
   }, []);
@@ -85,10 +85,10 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
           }}
         />
 
-        {!indicator.show && !commentDefinitions && renderNoItem('comment templates')}
-        {!indicator.show && commentDefinitions && (
+        {!indicator.show && !commentTopicTypes && renderNoItem('comment templates')}
+        {!indicator.show && commentTopicTypes && (
           <CommentTopicTypesTable
-            topicTypes={commentDefinitions}
+            topicTypes={commentTopicTypes}
             onDelete={(currentTemplate) => {
               setShowDeleteConfirmation(true);
               setCurrentDefinition(currentTemplate);
@@ -107,6 +107,7 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
           onCancel={() => setShowDeleteConfirmation(false)}
           onDelete={() => {
             setShowDeleteConfirmation(false);
+            dispatch(deleteCommentTopicType(currentDefinition?.id));
           }}
         />
       </div>
