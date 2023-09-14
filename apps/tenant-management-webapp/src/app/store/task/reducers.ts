@@ -30,7 +30,7 @@ export default function (state: TaskState = defaultState, action: TaskActionType
     case UPDATE_TASK_QUEUE_SUCCESS_ACTION:
       return {
         ...state,
-        tasks: action.payload,
+        queues: action.payload,
       };
 
     case DELETE_TASK_QUEUE_SUCCESS_ACTION:

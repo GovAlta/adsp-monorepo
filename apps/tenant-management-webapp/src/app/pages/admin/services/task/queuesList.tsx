@@ -70,9 +70,6 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
     setOpenAddQueue(false);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  useEffect(() => {}, [taskQueues]);
-
   return (
     <section>
       <div>
