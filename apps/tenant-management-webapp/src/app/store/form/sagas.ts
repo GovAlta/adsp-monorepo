@@ -85,7 +85,7 @@ export function* deleteFormDefinition({ definition }: DeleteFormDefinitionAction
   if (baseUrl && token) {
     try {
       const payload: DeleteFormConfig = { operation: 'DELETE', property: definition.id };
-      const url = `${baseUrl}/configuration/v2/configuration/platform/comment-service`;
+      const url = `${baseUrl}/configuration/v2/configuration/platform/form-service`;
       const { latest } = yield call(deleteFormDefinitionApi, token, url, payload);
 
       yield put(

@@ -16,8 +16,8 @@ export const FormDefinitionItem = ({ formDefinition, onDelete }: PdfTemplateItem
   const { url } = useRouteMatch();
   const [showSchema, setShowSchema] = useState(false);
   const formDescription =
-    formDefinition.description.length > 80
-      ? formDefinition.description.substring(0, 80) + '...'
+    formDefinition.description?.length > 80
+      ? formDefinition.description?.substring(0, 80) + '...'
       : formDefinition.description;
   const history = useHistory();
   return (
