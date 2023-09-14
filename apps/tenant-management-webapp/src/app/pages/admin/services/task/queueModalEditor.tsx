@@ -78,9 +78,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
   };
 
   useEffect(() => {
-    setTimeout(() => {
-      dispatch(getTaskQueues());
-    }, 1000);
+    dispatch(getTaskQueues());
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
   }, []);

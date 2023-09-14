@@ -39,7 +39,7 @@ export const TaskOverview = ({ setOpenAddDefinition }: TaskOverviewProps): JSX.E
               });
             }}
           >
-            Add Queue
+            Add queue
           </GoAButton>
         </>
       }
