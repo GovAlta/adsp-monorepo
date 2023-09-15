@@ -18,6 +18,7 @@ interface SubscriptionProps {
   criteria: Criteria;
   typeId: string;
   readonly?: boolean;
+  groupIndex: number;
   index: number;
   openModal?: (subscription: Subscription) => void;
   onDelete: (subscription: Subscriber, type: string) => void;
@@ -28,6 +29,7 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({
   criteria,
   onDelete,
   typeId,
+  groupIndex,
   index,
 }) => {
   function characterLimit(string, limit) {
@@ -53,10 +55,10 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({
   return (
     <>
       <tr>
-        <td headers="userName" data-testid={`userName_${index}`}>
+        <td headers={`userName_${groupIndex}`} data-testid={`userName_${groupIndex}_${index}`}>
           {characterLimit(subscriber?.addressAs, 30)}
         </td>
-        <td headers="channels" data-testid={`channels_${index}`}>
+        <td headers={`channels_${groupIndex}`} data-testid={`channels_${groupIndex}_${index}`}>
           {sortedChannels.map((channel, i) => (
             <div key={`channels-id-${i}`} style={{ display: 'flex' }}>
               <div>
@@ -80,7 +82,7 @@ const SubscriptionComponent: FunctionComponent<SubscriptionProps> = ({
             </div>
           ))}
         </td>
-        <td headers="actions" data-testid={`actions_${index}`}>
+        <td headers={`actions_${groupIndex}`} data-testid={`actions_${groupIndex}_${index}`}>
           <div style={{ display: 'flex', flexDirection: 'row-reverse' }}>
             <GoAContextMenuIcon
               testId={`delete-subscription-${subscriber.id}`}
@@ -191,17 +193,21 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
 
   return (
     <div className={className}>
-      {groups.map((type, index) => (
+      {groups.map((type, groupIndex) => (
         <div key={type.id}>
           <div className="group-name">{type.name}</div>
-          <DataTable id={`subscription-table-${index}`} data-testid={`subscription-table-${index}`}>
+          <DataTable id={`subscription-table-${groupIndex}`} data-testid={`subscription-table-${groupIndex}`}>
             <thead>
               <tr>
-                <th className="address-as" id="userName" data-testid={`subscription-header-address-as-${index}`}>
+                <th
+                  className="address-as"
+                  id={`userName_${groupIndex}`}
+                  data-testid={`subscription-header-address-as-${groupIndex}`}
+                >
                   Address as
                 </th>
-                <th id="channels">Channels</th>
-                <th id="actions">Actions</th>
+                <th id={`channels_${groupIndex}`}>Channels</th>
+                <th id={`actions_${groupIndex}`}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -211,6 +217,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
                   subscriber={subscription.subscriber}
                   criteria={subscription.criteria}
                   openModal={openModalFunction}
+                  groupIndex={groupIndex}
                   index={index}
                   typeId={subscription.typeId}
                   onDelete={onDelete}

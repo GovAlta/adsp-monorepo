@@ -35,10 +35,10 @@ export function* fetchTaskQueues(): SagaIterator {
   const token: string = yield call(getAccessToken);
   if (configBaseUrl && token) {
     try {
-      const url = `${configBaseUrl}/configuration/v2/configuration/platform/task-service/latest`;
+      const url = `${configBaseUrl}/configuration/v2/configuration/platform/task-service`;
       const Payload = yield call(fetchTaskQueuesApi, token, url);
 
-      yield put(getTaskQueuesSuccess(Payload?.queues || {}));
+      yield put(getTaskQueuesSuccess(Payload?.latest.configuration.queues || {}));
       yield put(
         UpdateIndicator({
           show: false,
