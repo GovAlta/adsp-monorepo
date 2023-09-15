@@ -47,7 +47,6 @@ export const TaskDefinitionEditor = (): JSX.Element => {
             </TabletMessage>
             <HideTablet>
               <NotificationTemplateEditorContainer>
-                {' '}
                 <QueueModalEditor />
               </NotificationTemplateEditorContainer>
             </HideTablet>

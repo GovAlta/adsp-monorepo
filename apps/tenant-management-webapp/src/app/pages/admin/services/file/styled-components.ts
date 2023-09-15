@@ -66,3 +66,40 @@ export const RetentionToolTip = styled.p`
   line-height: 1.5rem;
   z-index: 1000;
 `;
+
+export const FileTypeEditor = styled.div`
+  width: 100%;
+
+  .hr-resize {
+    margin-top: var(--goa-spacing-s);
+  }
+
+  .hr-resize-bottom {
+    margin-bottom: var(--goa-spacing-2xs);
+    margin-top: var(--goa-spacing-xl);
+  }
+`;
+
+export const FileTypeEditorTitle = styled.div`
+  font-size: var(--fs-xl);
+  line-height: var(--lh-lg);
+  font-weight: var(--fw-regular);
+`;
+
+export const SpinnerPadding = styled.div`
+  margin: 200px 0 0 0;
+`;
+
+export const SpinnerModalPadding = styled.div`
+  margin: 0 0 0 0;
+  height: 467px;
+`;
+
+export const SpinnerPaddingSmall = styled.div`
+  margin: 0 0 0 5px;
+  float: right;
+`;
+export const OverflowWrap = styled.div`
+  overflow-wrap: break-word;
+  overflow-y: hidden;
+`;

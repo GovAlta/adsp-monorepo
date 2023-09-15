@@ -7,7 +7,6 @@ import { HeaderCtx } from '@lib/headerContext';
 
 import Sidebar from './sidebar';
 import Dashboard from './dashboard';
-import { File } from './services/file';
 
 import AccessPage from './services/access/access';
 import { Directory } from './services/directory';
@@ -23,6 +22,7 @@ import { Calendar } from './services/calendar';
 import { PDFRouter } from './services/pdf';
 import { CommentRouter } from './services/comment';
 import { FormRouter } from './services/form';
+import { FileRouter } from './services/file';
 import { serviceVariables } from '../../../featureFlag';
 
 import { Script } from './services/script';
@@ -51,7 +51,7 @@ const TenantManagement = (): JSX.Element => {
       case 'Event':
         return <Events />;
       case 'File':
-        return <File />;
+        return <FileRouter />;
       case 'Form':
         return <FormRouter />;
       case 'Notification':
