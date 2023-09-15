@@ -682,15 +682,20 @@ Then('the user views an error message for duplicated file name', function () {
   fileServiceObj.fileTypesErrorMessage().invoke('text').should('contain', 'status code 400');
 });
 
-Then('the user views file type current in user modal for {string}', function (fileTypeName) {
-  fileServiceObj.fileTypeDeleteModalTitle().invoke('text').should('eq', 'File type current in use');
+Then('the user views file type current in use modal for {string}', function (fileTypeName) {
+  fileServiceObj.fileTypeInUseModalTitle().invoke('text').should('eq', 'File type current in use');
   fileServiceObj
-    .fileTypeDeleteModalContent()
+    .fileTypeInUseModalContent()
     .invoke('text')
     .should(
       'contain',
       'You are unable to delete the file type ' + fileTypeName + ' because there are files within the file type'
     );
+});
+
+When('the user clicks Okay button on file type current in use modal', function () {
+  fileServiceObj.fileTypeInUseModalOkayButton().shadow().find('button').scrollIntoView().click({ force: true });
+  cy.wait(2000); //Wait the file type list to refresh
 });
 
 Then('the user views the core file types with no actions', function () {

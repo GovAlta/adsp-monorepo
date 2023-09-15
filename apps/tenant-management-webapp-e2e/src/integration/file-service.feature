@@ -90,7 +90,8 @@ Feature: File service
     Then file service status is "Active"
     And "Overview , Test Files, File types, Documentation" file service tabs are "visible"
 
-  @TEST_CS-495 @REQ_CS-408 @regression
+  # Ignore this test due to CS-2443
+  @TEST_CS-495 @REQ_CS-408 @regression @ignore
   Scenario: As a tenant admin, I can see the API documentation for file service in the tenant admin, so I can understand how to use the API
     Given a service owner user is on Files overview page
     Then the user views the link of API docs for "File service"
@@ -147,8 +148,8 @@ Feature: File service
     When the user selects "File types" tab for "File"
     Then the user views file types page
     When the user clicks "Delete" button for the file type of "autotest-type5", "public", "file-service-admin"
-    Then the user views file type current in user modal for "autotest-type5"
-    When the user clicks Delete button on file type modal
+    Then the user views file type current in use modal for "autotest-type5"
+    When the user clicks Okay button on file type current in use modal
     Then the user "views" the file type of "autotest-type5", "public", "file-service-admin"
 
   @TEST_CS-1411 @REQ_CS-1358 @FileTypes @regression

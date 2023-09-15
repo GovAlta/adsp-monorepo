@@ -135,6 +135,20 @@ class FileServicePage {
     return cy.xpath('//*[@data-testid="delete-confirmation" and @open="true"]//p');
   }
 
+  fileTypeInUseModalTitle() {
+    return cy.xpath('//*[@data-testid="file-type-delete-modal" and @open="true"]//*[@slot="heading"]');
+  }
+
+  fileTypeInUseModalContent() {
+    return cy.xpath('//*[@data-testid="file-type-delete-modal" and @open="true"]//p');
+  }
+
+  fileTypeInUseModalOkayButton() {
+    return cy.xpath(
+      '//*[@data-testid="file-type-delete-modal" and @open="true"]//goa-button[@data-testid="file-type-delete-modal-cancel-btn"]'
+    );
+  }
+
   coreFileTypesTitle() {
     return cy.xpath('//*[text()="Core file types"]');
   }
