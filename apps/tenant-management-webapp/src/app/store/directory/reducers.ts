@@ -58,6 +58,7 @@ export default (state = DIRECTORY_INIT, action: ActionType): Directory => {
       );
       if (isExist) {
         isExist.metadata = action.payload.metadata;
+        isExist.loaded = action.payload?.loaded;
       }
       return { ...state, directory: [...directoryUpdateList] };
     }
