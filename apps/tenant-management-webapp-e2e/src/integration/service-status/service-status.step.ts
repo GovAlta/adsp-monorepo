@@ -153,6 +153,7 @@ When(
   'the user clicks {string} menu for the {string} notice of {string}, {string}, {string}, {string}, {string}, {string}',
   function (menu, mode, desc, app, startDate, startTime, endDate, endTime) {
     cy.viewport(1920, 1080);
+    cy.wait(2000); // Wait for the page to be loaded and stable before operating on menu items
     let startDateTime;
     let endDateTime;
     if (startDate == 'Today' && endDate == 'Today') {
