@@ -146,7 +146,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
               />
             </GoAFormItem>
           </CommentCommentItem>
-          <GoAFormItem label="Template ID">
+          <GoAFormItem label="Topic type ID">
             <CommentCommentItem>
               <GoAInput
                 name="comment-topicType-id"

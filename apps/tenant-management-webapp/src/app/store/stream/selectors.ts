@@ -15,7 +15,8 @@ export const selectTenantStreamById = createSelector(
   (state: RootState) => state?.stream?.tenant,
   (_, id: string) => id,
   (tenantStreams: Streams, id) => {
-    const [stream] = Object.entries(tenantStreams).find(([_id, stream]) => _id === id) as [string, Stream];
+    // eslint-disable-next-line
+    const [key, stream] = Object.entries(tenantStreams).find(([_id, stream]) => _id === id) as [string, Stream];
     return stream;
   }
 );
