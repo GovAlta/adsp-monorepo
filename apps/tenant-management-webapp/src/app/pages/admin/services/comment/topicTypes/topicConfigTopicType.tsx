@@ -38,7 +38,7 @@ export const TopicConfigTopicType = ({ topicType }: CommentConfigCommentProps) =
         <table>
           <thead>
             <tr>
-              <th>Definition ID</th>
+              <th>Template ID</th>
             </tr>
             <tr>
               <td data-testid="template-id" className="overflowContainer">

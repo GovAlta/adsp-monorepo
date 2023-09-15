@@ -18,7 +18,7 @@ export const CommentTopicTypesTable: FunctionComponent<CommentTemplatesTableProp
           <tr>
             <th data-testid="comment-topic-types-table-header-name">Name</th>
             <th id="comment-topic-types-template-id" data-testid="comment-topic-types-table-header-template-id">
-              Topic ID
+              Template ID
             </th>
             <th id="comment-topic-types-applicant" data-testid="comment-topic-types-table-header-applicant">
               Administrator roles
