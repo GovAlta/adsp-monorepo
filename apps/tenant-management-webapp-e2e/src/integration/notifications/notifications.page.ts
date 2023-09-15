@@ -238,7 +238,7 @@ class NotificationsPage {
 
   notificationRecordEyeIcon(notificationType, addressAs, email) {
     return cy.xpath(
-      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[contains(@data-testid, "userName") and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr/td[@headers="actions"]//*[@data-testid="toggle-details-visibility"]`
+      `//*[@class="group-name" and contains(text(), "${notificationType}")]/following-sibling::div//tbody//td[contains(@data-testid, "userName") and contains(text(), "${addressAs}")]/following-sibling::td//div[contains(text(), "${email}")]//ancestor::tr/td[contains(@headers, "actions")]//*[@data-testid="toggle-details-visibility"]`
     );
   }
 

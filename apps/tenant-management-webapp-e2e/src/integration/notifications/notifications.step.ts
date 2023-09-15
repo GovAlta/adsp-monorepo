@@ -1052,6 +1052,7 @@ When('the user clicks Delete button in Reset email template modal', function () 
 });
 
 When('the user clicks eye icon of {string}, {string} under {string}', function (addressAd, email, notificationType) {
+  cy.wait(2000); // Wait for eye icon to show
   notificationsObj
     .notificationRecordEyeIcon(notificationType, addressAd, email)
     .shadow()
