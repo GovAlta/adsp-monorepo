@@ -11,6 +11,7 @@ import { GoABadge } from '@abgov/react-components-new';
 import { QueueListTable } from './queueTable';
 import { QueueModal } from './queueModal';
 import { Buttonpadding } from './styled-components';
+import { BodyGlobalStyles } from '../styled-components';
 
 interface AddEditQueueProps {
   openAddDefinition: boolean;
@@ -52,10 +53,6 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
   }, [selectedQueue]);
 
   useEffect(() => {
-    document.body.style.overflow = 'unset';
-  }, []);
-
-  useEffect(() => {
     if (openAddDefinition) {
       reset();
       setOpenAddQueue(true);
@@ -72,6 +69,7 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
 
   return (
     <section>
+      <BodyGlobalStyles hideOverflow={false} />
       <div>
         <Buttonpadding>
           <GoAButton

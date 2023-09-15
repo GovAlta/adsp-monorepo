@@ -12,6 +12,7 @@ import { defaultCommentTopicType } from '@store/comment/model';
 
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditCommentTopicType } from './addEditCommentTopicType';
+import { BodyGlobalStyles } from '../../styled-components';
 
 interface CommentTopicTypesProps {
   openAddTopicTypes: boolean;
@@ -55,14 +56,12 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
 
   // eslint-disable-next-line
   useEffect(() => {}, [commentTopicTypes]);
-  useEffect(() => {
-    document.body.style.overflow = 'unset';
-  }, []);
 
   return (
     <>
       <div>
         <br />
+        <BodyGlobalStyles hideOverflow={false} />
         <GoAButton
           testId="add-topic-type"
           onClick={() => {

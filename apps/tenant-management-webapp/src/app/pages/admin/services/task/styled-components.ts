@@ -1,4 +1,4 @@
-import styled, { createGlobalStyle } from 'styled-components';
+import styled from 'styled-components';
 
 export const OverflowWrap = styled.div``;
 export const IdField = styled.div`
@@ -257,15 +257,6 @@ export const Modal = styled.div`
   left: 0;
   z-index: 10000;
   width: 100%;
-`;
-
-export const BodyGlobalStyles = createGlobalStyle<{ hideOverflow: boolean }>`
-  body {
-    overflow:  ${(props) => (props.hideOverflow ? `hidden` : `auto`)};
-  }
-`;
-export const ModalContent = styled.div`
-  background: white;
 `;
 
 export const TabletMessage = styled.div`

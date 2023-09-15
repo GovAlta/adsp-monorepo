@@ -276,14 +276,6 @@ export const Modal = styled.div`
   width: 100%;
 `;
 
-export const BodyGlobalStyles = createGlobalStyle<{ hideOverflow: boolean }>`
-  body {
-    overflow:  ${(props) => (props.hideOverflow ? `hidden` : `auto`)};
-  }
-`;
-export const ModalContent = styled.div`
-  background: white;
-`;
 export const PreviewTemplateContainer = styled.div`
   width: 40vw;
   margin-left: 2rem;

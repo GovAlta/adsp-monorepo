@@ -4,11 +4,10 @@ import {
   NotificationTemplateEditorContainer,
   OuterNotificationTemplateEditorContainer,
   Modal,
-  BodyGlobalStyles,
-  ModalContent,
   TabletMessage,
   HideTablet,
 } from '../styled-components';
+import { ModalContent, BodyGlobalStyles } from '../../styled-components';
 import { GoAButton } from '@abgov/react-components-new';
 import { TemplateEditor } from './previewEditor/TemplateEditor';
 import { PreviewTemplate } from './previewEditor/PreviewTemplate';
