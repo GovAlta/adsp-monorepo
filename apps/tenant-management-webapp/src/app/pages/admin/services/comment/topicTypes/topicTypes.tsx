@@ -85,7 +85,7 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
           }}
         />
 
-        {!indicator.show && Object.keys(commentTopicTypes).length === 0 && renderNoItem('comment templates')}
+        {!indicator.show && Object.keys(commentTopicTypes).length === 0 && renderNoItem('topic types')}
         {!indicator.show && Object.keys(commentTopicTypes).length > 0 && (
           <CommentTopicTypesTable
             topicTypes={commentTopicTypes}
