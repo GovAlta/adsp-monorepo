@@ -92,7 +92,7 @@ export function* updateTaskQueue({ payload }: UpdateTaskQueueAction): SagaIterat
       );
       yield put(
         UpdateTaskQueueSuccess({
-          ...latest.queue,
+          ...latest.configuration.queues,
         })
       );
     } catch (e) {
