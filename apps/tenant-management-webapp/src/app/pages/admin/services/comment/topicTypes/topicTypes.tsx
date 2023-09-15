@@ -85,8 +85,8 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
           }}
         />
 
-        {!indicator.show && !commentTopicTypes && renderNoItem('comment templates')}
-        {!indicator.show && commentTopicTypes && (
+        {!indicator.show && Object.keys(commentTopicTypes).length === 0 && renderNoItem('comment templates')}
+        {!indicator.show && Object.keys(commentTopicTypes).length > 0 && (
           <CommentTopicTypesTable
             topicTypes={commentTopicTypes}
             onDelete={(currentTemplate) => {
