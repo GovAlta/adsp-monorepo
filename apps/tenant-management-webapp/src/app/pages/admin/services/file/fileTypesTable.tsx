@@ -164,8 +164,8 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
                     key={`file-type-row-${fileType?.id}`}
                     {...rowProps}
                     onEdit={() => {
-                      history.push(`${url}/edit/${fileType?.id}`);
-                      // setEditId(fileType?.id);
+                      //history.push(`${url}/edit/${fileType?.id}`);
+                      setEditId(fileType?.id);
                     }}
                     onDelete={() => {
                       setDeleteId(fileType?.id);
@@ -203,7 +203,6 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
                       key={`file-type-row-${coreFileType?.id}`}
                       {...rowProps}
                       onEdit={() => {
-                        console.log('In here');
                         setEditId(coreFileType?.id);
                       }}
                       onDelete={() => {
