@@ -27,7 +27,7 @@ export const CommentTopicTypesEditor = (): JSX.Element => {
     <>
       <Modal data-testid="template-form">
         {/* Hides body overflow when the modal is up */}
-        <BodyGlobalStyles hideOverflow={true} />
+        {/* <BodyGlobalStyles hideOverflow={true} /> */}
         <ModalContent>
           <OuterNotificationTemplateEditorContainer>
             <TabletMessage>
@@ -46,7 +46,6 @@ export const CommentTopicTypesEditor = (): JSX.Element => {
             </TabletMessage>
             <HideTablet>
               <NotificationTemplateEditorContainer>
-                {' '}
                 <AddEditCommentTopicTypeEditor />
               </NotificationTemplateEditorContainer>
             </HideTablet>

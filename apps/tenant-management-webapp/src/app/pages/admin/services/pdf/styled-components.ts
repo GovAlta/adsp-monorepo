@@ -73,36 +73,6 @@ export const OuterNotificationTemplateEditorContainer = styled.div`
   height: 100vh;
   overflow: hidden;
 `;
-// Edit Template components
-export const TemplateEditorContainer = styled.div`
-  padding-right: var(--goa-spacing-m);
-  flex: auto;
-  margin-top: 4rem;
-  overflow: hidden;
-  &:hover {
-    overflow: auto;
-  }
-
-  .reduce-margin {
-    margin-top: 5px;
-  }
-
-  @media (min-width: 1279px) {
-    .mobile {
-      display: none;
-    }
-  }
-
-  @media (max-width: 1280px) {
-    .desktop {
-      display: none;
-    }
-
-    .mobile > div {
-      padding: 2px 0 2px 3px;
-    }
-  }
-`;
 
 export const TemplateEditorContainerPdf = styled.div`
   padding-right: var(--goa-spacing-m);
