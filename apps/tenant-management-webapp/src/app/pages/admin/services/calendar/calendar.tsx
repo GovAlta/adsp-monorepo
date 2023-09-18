@@ -8,8 +8,8 @@ import BetaBadge from '@icons/beta-badge.svg';
 import { useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { HeadingDiv } from './styled-components';
-
 import AsideLinks from '@components/AsideLinks';
+import { CalendarEvents } from './events';
 
 export const Calendar = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -42,6 +42,9 @@ export const Calendar = (): JSX.Element => {
             </Tab>
             <Tab label="Calendars" data-testid="calendars-tab">
               <CalendarsView activeEdit={activateEditState} />
+            </Tab>
+            <Tab label="Calendar events" data-testid="calendar-event-tab">
+              <CalendarEvents />
             </Tab>
           </Tabs>
         </>
