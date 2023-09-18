@@ -43,7 +43,7 @@ export const Calendar = (): JSX.Element => {
             <Tab label="Calendars" data-testid="calendars-tab">
               <CalendarsView activeEdit={activateEditState} />
             </Tab>
-            <Tab label="Calendar events" data-testid="calendar-event-tab">
+            <Tab label="Events" data-testid="calendar-event-tab">
               <CalendarEvents />
             </Tab>
           </Tabs>
