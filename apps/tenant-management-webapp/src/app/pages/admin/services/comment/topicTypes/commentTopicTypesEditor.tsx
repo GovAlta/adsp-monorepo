@@ -6,7 +6,7 @@ import {
   TabletMessage,
   HideTablet,
 } from '../styled-components';
-import { ModalContent, BodyGlobalStyles } from '../../styled-components';
+import { ModalContent } from '../../styled-components';
 
 import { GoAButton } from '@abgov/react-components-new';
 
@@ -26,8 +26,6 @@ export const CommentTopicTypesEditor = (): JSX.Element => {
   return (
     <>
       <Modal data-testid="template-form">
-        {/* Hides body overflow when the modal is up */}
-        {/* <BodyGlobalStyles hideOverflow={true} /> */}
         <ModalContent>
           <OuterNotificationTemplateEditorContainer>
             <TabletMessage>
