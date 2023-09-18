@@ -1,4 +1,4 @@
-import { CalendarItem, Indicator } from './models';
+import { CalendarItem, Indicator, CalendarEvent } from './models';
 
 export const FETCH_CALENDARS_ACTION = 'calendar/FETCH_CALENDAR_ACTION';
 export const FETCH_CALENDARS_SUCCESS_ACTION = 'calendar/FETCH_CALENDAR_SUCCESS_ACTION';
@@ -10,7 +10,11 @@ export const UPDATE_CALENDAR_ACTION = 'calendar/UPDATE_CALENDAR_ACTION';
 export const UPDATE_CALENDAR_SUCCESS_ACTION = 'calendar/UPDATE_CALENDAR_SUCCESS_ACTION';
 
 export const UPDATE_INDICATOR = 'calendar/indicator';
+export const FETCH_EVENTS_BY_CALENDAR_ACTION = 'calendar/events/fetch/calendar-name';
+export const FETCH_EVENTS_BY_CALENDAR_SUCCESS_ACTION = 'calendar/events/fetch/calendar-name/success';
 
+export const CREATE_EVENT_CALENDAR_ACTION = 'calendar/CREATE_EVENT_CALENDAR_ACTION';
+export const CREATE_EVENT_CALENDAR_SUCCESS_ACTION = 'calendar/CREATE_EVENT_CALENDAR_SUCCESS_ACTION';
 export interface FetchCalendarsAction {
   type: typeof FETCH_CALENDARS_ACTION;
 }
@@ -42,6 +46,26 @@ export interface UpdateIndicatorAction {
   payload: Indicator;
 }
 
+export interface FetchEventsByCalendarAction {
+  type: typeof FETCH_EVENTS_BY_CALENDAR_ACTION;
+  payload: string;
+}
+
+export interface FetchEventsByCalendarSuccessAction {
+  type: typeof FETCH_EVENTS_BY_CALENDAR_SUCCESS_ACTION;
+  payload: CalendarEvent[];
+}
+
+export interface CreateEventsByCalendarAction {
+  type: typeof CREATE_EVENT_CALENDAR_ACTION;
+  payload: CalendarEvent;
+}
+
+export interface CreateEventsByCalendarSuccessAction {
+  type: typeof CREATE_EVENT_CALENDAR_SUCCESS_ACTION;
+  payload: CalendarEvent;
+}
+
 export type ActionTypes =
   | FetchCalendarsAction
   | FetchCalendarsSuccessAction
@@ -49,7 +73,11 @@ export type ActionTypes =
   | UpdateCalendarSuccessAction
   | DeleteCalendarAction
   | DeleteCalendarSuccessAction
-  | UpdateIndicatorAction;
+  | UpdateIndicatorAction
+  | FetchEventsByCalendarAction
+  | FetchEventsByCalendarSuccessAction
+  | CreateEventsByCalendarAction
+  | CreateEventsByCalendarSuccessAction;
 
 export const fetchCalendars = (): FetchCalendarsAction => ({
   type: FETCH_CALENDARS_ACTION,
@@ -83,4 +111,23 @@ export const DeleteCalendarSuccess = (calendarId: string): DeleteCalendarSuccess
 export const UpdateIndicator = (indicator: Indicator): UpdateIndicatorAction => ({
   type: UPDATE_INDICATOR,
   payload: indicator,
+});
+
+export const FetchEventsByCalendar = (calendarId: string): FetchEventsByCalendarAction => ({
+  type: FETCH_EVENTS_BY_CALENDAR_ACTION,
+  payload: calendarId,
+});
+
+export const FetchEventsByCalendarSuccess = (event: CalendarEvent[]): FetchEventsByCalendarSuccessAction => ({
+  type: FETCH_EVENTS_BY_CALENDAR_SUCCESS_ACTION,
+  payload: event,
+});
+export const CreateEventsByCalendar = (event: CalendarEvent): CreateEventsByCalendarAction => ({
+  type: CREATE_EVENT_CALENDAR_ACTION,
+  payload: event,
+});
+
+export const CreateEventsByCalendarSuccess = (event: CalendarEvent): CreateEventsByCalendarSuccessAction => ({
+  type: CREATE_EVENT_CALENDAR_SUCCESS_ACTION,
+  payload: event,
 });
