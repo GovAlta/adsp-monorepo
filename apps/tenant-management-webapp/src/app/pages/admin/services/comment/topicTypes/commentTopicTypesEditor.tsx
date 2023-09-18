@@ -47,7 +47,6 @@ export const CommentTopicTypesEditor = (): JSX.Element => {
             </TabletMessage>
             <HideTablet>
               <NotificationTemplateEditorContainer>
-                {' '}
                 <AddEditCommentTopicTypeEditor />
               </NotificationTemplateEditorContainer>
             </HideTablet>
