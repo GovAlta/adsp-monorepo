@@ -71,9 +71,18 @@ const TenantManagement = (): JSX.Element => {
 
   return (
     <AdminLayout>
-      <SidebarWrapper>
-        <Sidebar type="desktop" />
-      </SidebarWrapper>
+      <Switch>
+        <Route path="/admin/services/form/edit"></Route>
+        <Route path="/admin/services/pdf/edit"></Route>
+        <Route path="/admin/services/task/edit"></Route>
+        <Route path="/admin/services/comment/edit"></Route>
+        <Route path="*">
+          <SidebarWrapper>
+            <Sidebar type="desktop" />
+          </SidebarWrapper>
+        </Route>
+      </Switch>
+
       <Container hs={1}>
         <Switch>
           <Route exact path="/admin">
