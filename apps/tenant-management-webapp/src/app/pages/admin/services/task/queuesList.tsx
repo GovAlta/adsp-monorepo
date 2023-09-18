@@ -52,10 +52,6 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
   }, [selectedQueue]);
 
   useEffect(() => {
-    document.body.style.overflow = 'unset';
-  }, []);
-
-  useEffect(() => {
     if (openAddDefinition) {
       reset();
       setOpenAddQueue(true);

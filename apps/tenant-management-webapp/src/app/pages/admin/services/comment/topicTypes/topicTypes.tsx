@@ -55,9 +55,6 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
 
   // eslint-disable-next-line
   useEffect(() => {}, [commentTopicTypes]);
-  useEffect(() => {
-    document.body.style.overflow = 'unset';
-  }, []);
 
   return (
     <>
