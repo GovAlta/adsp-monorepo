@@ -1,5 +1,5 @@
-import { Calendar } from '@pages/admin/services/calendar';
 import { ActionState } from '@store/session/models';
+
 export const EventDeleteModalType = 'calendar-event-delete-model';
 export const EventAddEditModalType = 'calendar-event-add-edit-modal';
 export interface CalendarItem {
@@ -8,6 +8,7 @@ export interface CalendarItem {
   description?: string;
   readRoles: string[];
   updateRoles: string[];
+  selectedCalendarEvents?: CalendarEvent[];
 }
 
 export type CalendarObjectType = Record<string, CalendarItem>;
@@ -15,7 +16,7 @@ export type CalendarObjectType = Record<string, CalendarItem>;
 export interface CalendarService {
   calendars: CalendarObjectType;
   indicator?: Indicator;
-  selectedCalendarEvents?: CalendarEvent[];
+  // selectedCalendarEvents?: CalendarEvent[];
 }
 export const defaultCalendar: CalendarItem = {
   name: '',
@@ -29,7 +30,7 @@ export const CALENDAR_INIT: CalendarService = {
   indicator: {
     details: {},
   },
-  selectedCalendarEvents: [],
+  // selectedCalendarEvents: [],
 };
 export interface Indicator {
   details?: Record<string, ActionState>;
@@ -48,7 +49,7 @@ export interface CalendarEvent {
   start: string;
   end: string;
   isPublic: boolean;
-  isAllDay: boolean;
+  isAllDay?: boolean;
   attendees?: Attendee[];
 }
 
@@ -59,6 +60,4 @@ export const CalendarEventDefault = {
   start: '',
   end: '',
   isPublic: false,
-  isAlLDay: false,
-  attendees: [],
 };
