@@ -28,7 +28,7 @@ Feature: PDF service
     Then the user views "No PDF's have been generated yet"
     Then the user views the PDF template editor screen
     Then the user views "autotest-pdftemplate", "autotest-pdftemplate" and "autotest PDF template desc" in PDF template editor
-    ## Edit PDF template modal is disabled in nightly test run, and could not be reproduced manually. Comment out edit template until a walk-around is found
+    ## Edit PDF template modal is disabled in test run build only, and could not be reproduced manually. Comment out edit template until a walk-around is found
     # When the user clicks "Edit" icon in editor screen
     # When the user enters "autotest-pdftemplate-new" as name and "autotest PDF template desc new" as description in PDF template modal
     # And the user clicks Save button in Add or Edit template modal
