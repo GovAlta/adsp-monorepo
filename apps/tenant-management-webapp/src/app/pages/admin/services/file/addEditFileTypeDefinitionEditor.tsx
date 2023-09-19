@@ -2,74 +2,158 @@ import React, { useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import {
   EditorPadding,
+  FileIdItem,
   FileTypeEditor,
   FileTypeEditorTitle,
   FileTypePermissions,
   FileTypesEditorTitle,
   FinalButtonPadding,
   FlexRow,
+  InfoCircleWrapper,
   NameDescriptionDataSchema,
+  RetentionPolicyLabel,
+  RetentionPolicyWrapper,
+  RetentionToolTip,
   ScrollPane,
   SpinnerModalPadding,
   TextLoadingIndicator,
 } from './styled-components';
+import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
 import { useWindowDimensions } from '@lib/useWindowDimensions';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton, GoAPageLoader } from '@abgov/react-components';
 import { FileTypeConfigDefinition } from './fileTypeConfigDefinition';
-import { GoAButtonGroup, GoAFormItem } from '@abgov/react-components-new';
-import { FetchFileTypeService } from '@store/file/actions';
+import { GoAButtonGroup, GoACheckbox, GoAFormItem, GoAInput, GoAPopover } from '@abgov/react-components-new';
 import { RootState } from '@store/index';
 import { FileTypeDefault, FileTypeItem } from '@store/file/models';
 import { useValidators } from '@lib/validation/useValidators';
 import { badCharsCheck, duplicateNameCheck, isNotEmptyCheck, wordMaxLengthCheck } from '@lib/validation/checkInput';
-import { createSelector } from 'reselect';
-import { ConfigServiceRole } from '@store/access/models';
-import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
-import { ActionState } from '@store/session/models';
+import { ConfigServiceRole, ServiceRoleConfig } from '@store/access/models';
 import { ClientRoleTable } from '@components/RoleTable';
+import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
+import { SaveFormModal } from '@components/saveModal';
+import { ActionState } from '@store/session/models';
+import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
+import { CreateFileTypeService, FetchFileTypeService, UpdateFileTypeService } from '@store/file/actions';
+import { toKebabName } from '@lib/kebabName';
+import { createSelector } from 'reselect';
+import { selectFileTyeNames } from './fileTypeNew';
 
 export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
   const dispatch = useDispatch();
   const history = useHistory();
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
-
+  const tenant = useSelector(tenantRolesAndClients);
+  const fileTypeNames = useSelector(selectFileTyeNames);
   const [spinner, setSpinner] = useState<boolean>(false);
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
   const [initialFileType, setInitialFileType] = useState<FileTypeItem>(FileTypeDefault);
-  //const [isAnonymous, setIsAnonymous] = useState(false);
+  const [fileType, setFileType] = useState<FileTypeItem>(FileTypeDefault);
+  const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
+    fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
+  }));
 
   const { height } = useWindowDimensions();
-  const heightCover = {
-    height: height - 480,
-  };
 
-  const selectServiceKeycloakRoles = createSelector(
+  const selectServiceKeyCloakRoles = createSelector(
     (state: RootState) => state.serviceRoles,
     (serviceRoles) => {
       return serviceRoles?.keycloak || {};
     }
   );
 
-  const roles = useSelector((state: RootState) => state.tenant.realmRoles);
+  const keyCloakClientRoles = useSelector(selectServiceKeyCloakRoles);
 
-  const keycloakClientRoles = useSelector(selectServiceKeycloakRoles);
-  let elements = [{ roleNames: [], clientId: '', currentElements: null }];
-  const clientElements =
-    Object.entries(keycloakClientRoles).length > 0 &&
-    Object.entries(keycloakClientRoles)
-      .filter(([clientId, config]) => {
-        return (config as ConfigServiceRole).roles.length > 0;
-      })
-      .map(([clientId, config]) => {
-        const roles = (config as ConfigServiceRole).roles;
-        const roleNames = roles.map((role) => {
-          return role.role;
+  const tenantClients = () => {
+    let clients: ServiceRoleConfig = {};
+    if (isEdit && tenant.tenantClients) {
+      clients = tenant.tenantClients;
+    } else {
+      clients = keyCloakClientRoles;
+    }
+
+    return clients;
+  };
+
+  const heightCover = {
+    height: height - 720,
+  };
+
+  const close = () => {
+    history.push({
+      pathname: '/admin/services/file',
+    });
+  };
+
+  const indicator = useSelector((state: RootState) => {
+    return state?.session?.indicator;
+  });
+
+  const fileTypes: FileTypeItem[] = useSelector((state: RootState) => state.fileService.fileTypes);
+
+  const roles = useSelector((state: RootState) => state.tenant.realmRoles);
+  const roleNames = roles?.map((role) => {
+    return role.name;
+  });
+
+  useEffect(() => {
+    if (!fileTypeNames) {
+      dispatch(FetchFileTypeService());
+    }
+  }, []);
+
+  useEffect(() => {
+    const foundFileType = fileTypes?.find((f) => f.id === id);
+    if (id && foundFileType) {
+      const selectedFileType = foundFileType;
+      setFileType(selectedFileType);
+      setInitialFileType(selectedFileType);
+    }
+  }, [fileTypes]);
+
+  const isKeyCloakInProcess = () => fetchKeycloakRolesState === ActionState.inProcess;
+  const { errors, validators } = useValidators(
+    'name',
+    'name',
+    badCharsCheck,
+    wordMaxLengthCheck(32, 'Name'),
+    isNotEmptyCheck('name')
+  )
+    .add('duplicated', 'name', duplicateNameCheck(fileTypeNames, 'File type'))
+    .build();
+
+  const isFileTypeUpdated = (prev: FileTypeItem, next: FileTypeItem): boolean => {
+    return (
+      prev?.name !== next?.name ||
+      prev?.id !== next?.id ||
+      prev?.readRoles !== next?.readRoles ||
+      prev?.updateRoles !== next?.updateRoles ||
+      prev?.rules?.retention !== next?.rules?.retention
+    );
+  };
+
+  let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
+  let clientElements = null;
+
+  if (!isKeyCloakInProcess()) {
+    const tClients = tenantClients();
+    clientElements =
+      tClients &&
+      Object.entries(tClients).length > 0 &&
+      Object.entries(tClients)
+        .filter(([clientId, config]) => {
+          return (config as ConfigServiceRole).roles.length > 0;
+        })
+        .map(([clientId, config]) => {
+          const roles = (config as ConfigServiceRole).roles;
+          const roleNames = roles?.map((role) => {
+            return role.role;
+          });
+          return { roleNames: roleNames, clientId: clientId, currentElements: null };
         });
-        return { roleNames: roleNames, clientId: clientId, currentElements: null };
-      });
-  elements = elements.concat(clientElements);
+    elements = elements.concat(clientElements);
+  }
 
   const ClientRole = ({ roleNames, clientId }) => {
     return (
@@ -77,70 +161,78 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
         <ClientRoleTable
           roles={roleNames}
           clientId={clientId}
-          anonymousRead={filteredFileType?.anonymousRead}
+          anonymousRead={fileType?.anonymousRead}
           roleSelectFunc={(roles, type) => {
             if (type === 'read') {
-              // setFileType({
-              //   ...fileType,
-              //   readRoles: roles,
-              // });
+              setFileType({
+                ...fileType,
+                readRoles: roles,
+              });
             } else {
-              // setFileType({
-              //   ...fileType,
-              //   updateRoles: roles,
-              // });
+              setFileType({
+                ...fileType,
+                updateRoles: roles,
+              });
             }
           }}
           service="FileType"
           nameColumnWidth={80}
           checkedRoles={[
-            { title: 'read', selectedRoles: filteredFileType?.readRoles },
-            { title: 'modify', selectedRoles: filteredFileType?.updateRoles },
+            { title: 'read', selectedRoles: fileType?.readRoles },
+            { title: 'modify', selectedRoles: fileType?.updateRoles },
           ]}
         />
       </>
     );
   };
 
-  const fileTypes: FileTypeItem[] = useSelector((state: RootState) => state.fileService.fileTypes);
-
-  const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
-    fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
-  }));
-
-  if (fetchKeycloakRolesState !== ActionState.inProcess) {
-    console.log('elements', elements);
-  }
-
-  //eslint-disable-next-line
-  useEffect(() => {}, [fetchKeycloakRolesState]);
-
-  useEffect(() => {
-    dispatch(FetchFileTypeService());
-  }, []);
-
-  const filteredFileType = fileTypes?.find((f) => f.id === id);
-  let fileTypeIds = [];
-  if (fileTypes) {
-    fileTypeIds = Object.keys(fileTypes ?? []);
-  }
-
-  const { validators } = useValidators(
-    'name',
-    'name',
-    badCharsCheck,
-    wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
-  )
-    .add('duplicate', 'name', duplicateNameCheck(fileTypeIds, 'filetype'))
-    .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
-    .build();
-  const isFileTypeUpdated = (prev: FileTypeItem, next: FileTypeItem): boolean => {
+  const renderTextBoxInputs = () => {
     return (
-      prev?.readRoles !== next?.readRoles ||
-      prev?.updateRoles !== next?.updateRoles ||
-      prev?.anonymousRead !== next?.anonymousRead ||
-      JSON.stringify(prev?.rules?.retention) !== JSON.stringify(next?.rules?.retention)
+      <>
+        <GoAFormItem error={errors?.['name']} label="Name">
+          <GoAInput
+            type="text"
+            name="name"
+            disabled={isEdit}
+            value={fileType?.name}
+            width="100%"
+            testId={`file-type-modal-name-input`}
+            onChange={(name, value) => {
+              const newFileType = {
+                ...fileType,
+                name: value,
+                id: !isEdit ? toKebabName(value) : fileType.id,
+              };
+
+              const validations = {
+                name: value,
+              };
+              validators.remove('name');
+              if (!isEdit) {
+                validations['duplicated'] = value;
+              }
+              validators.checkAll(validations);
+              setFileType(newFileType);
+            }}
+            aria-label="name"
+          />
+        </GoAFormItem>
+        <GoAFormItem label="Type ID">
+          <FileIdItem>
+            <GoAInput
+              testId={`file-type-modal-id`}
+              value={fileType?.id || ''}
+              disabled={true}
+              width="100%"
+              name="file-type-id"
+              type="text"
+              aria-label="goa-input-file-type-id"
+              //eslint-disable-next-line
+              onChange={() => {}}
+            />
+          </FileIdItem>
+        </GoAFormItem>
+      </>
     );
   };
 
@@ -156,39 +248,136 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
             <FileTypeEditorTitle>File Type</FileTypeEditorTitle>
             <hr className="hr-resize" />
 
-            <FileTypeConfigDefinition fileType={filteredFileType ?? FileTypeDefault} />
+            {isEdit && <FileTypeConfigDefinition fileType={fileType ?? FileTypeDefault} />}
+            {!isEdit && renderTextBoxInputs()}
+            <GoACheckbox
+              checked={fileType?.anonymousRead}
+              name="file-type-anonymousRead-checkbox"
+              testId="file-type-anonymousRead-checkbox"
+              ariaLabel={`file-type-anonymousRead-checkbox`}
+              onChange={() => {
+                setFileType({
+                  ...fileType,
+                  anonymousRead: !fileType.anonymousRead,
+                });
+              }}
+              text={'Make public (read only)'}
+            />
+
+            <GoAFormItem label="">
+              <RetentionPolicyLabel>
+                Retention policy
+                <InfoCircleWrapper>
+                  <GoAPopover testId={'file-type-retention-tooltip'} target={<InfoCircle />} maxWidth="260px">
+                    <RetentionToolTip>
+                      The untouched files within the file type will be deleted after the retention period provided.
+                    </RetentionToolTip>
+                  </GoAPopover>
+                </InfoCircleWrapper>
+              </RetentionPolicyLabel>
+              <RetentionPolicyWrapper>
+                <GoACheckbox
+                  name="retentionActive"
+                  key="retention-period-active-checkbox"
+                  checked={fileType?.rules?.retention?.active === true}
+                  onChange={(name, checked) => {
+                    setFileType({
+                      ...fileType,
+                      rules: {
+                        ...fileType?.rules,
+                        retention: {
+                          ...fileType?.rules?.retention,
+                          active: checked,
+                        },
+                      },
+                    });
+                  }}
+                  text={'Active retention policy'}
+                />
+                <b>Enter retention period</b>
+              </RetentionPolicyWrapper>
+            </GoAFormItem>
+            <GoAInput
+              onChange={(name, day) => {
+                if (parseInt(day) > 0) {
+                  setFileType({
+                    ...fileType,
+                    rules: {
+                      ...fileType?.rules,
+                      retention: {
+                        ...fileType?.rules?.retention,
+                        deleteInDays: parseInt(day),
+                        active: fileType?.rules?.retention?.active || false,
+                        createdAt: fileType?.rules?.retention?.createdAt || new Date().toISOString(),
+                      },
+                    },
+                  });
+                }
+              }}
+              testId={'delete-in-days-input'}
+              name="delete-in-days"
+              value={fileType?.rules?.retention?.deleteInDays?.toString()}
+              type="number"
+              disabled={fileType?.rules?.retention?.active !== true}
+              aria-label="goa-input-delete-in-days"
+              leadingContent="Days"
+              width="15%"
+            />
+
             <GoAFormItem label="">
               <EditorPadding>
                 <div style={heightCover}></div>
               </EditorPadding>
             </GoAFormItem>
+
             <hr className="hr-resize-bottom" />
             <FinalButtonPadding>
               <GoAButtonGroup alignment="start">
                 <GoAButton
                   type="primary"
                   testId="form-save"
-                  disabled={
-                    !isFileTypeUpdated(initialFileType, filteredFileType) ||
-                    !filteredFileType?.name ||
-                    validators.haveErrors()
-                  }
+                  disabled={!isFileTypeUpdated(initialFileType, fileType) || !fileType?.name || validators.haveErrors()}
                   onClick={() => {
-                    // if (indicator.show === true) {
-                    //   setSpinner(true);
-                    // } else {
-                    //   if (!isEdit) {
-                    //     const validations = {
-                    //       duplicate: queue.name,
-                    //     };
-                    //     if (!validators.checkAll(validations)) {
-                    //       return;
-                    //     }
-                    //   }
-                    //   setSpinner(true);
-                    //   dispatch(UpdateTaskQueue(queue));
-                    //   close();
-                    // }
+                    if (indicator.show === true) {
+                      setSpinner(true);
+                    } else {
+                      if (!isEdit) {
+                        const validations = {
+                          duplicate: fileType.name,
+                        };
+                        if (!validators.checkAll(validations)) {
+                          return;
+                        }
+                      }
+
+                      setSpinner(true);
+                      let elementNames = [];
+                      elements.forEach((e) => {
+                        if (e) {
+                          elementNames = elementNames.concat(
+                            e.roleNames.map((roleName) => (e.clientId ? `${e.clientId}:${roleName}` : roleName))
+                          );
+                        }
+                      });
+
+                      const cleanReadRoles = fileType.readRoles.filter((readRole) => {
+                        return elementNames.includes(readRole);
+                      });
+                      const cleanUpdateRoles = fileType.updateRoles.filter((updateRole) =>
+                        elementNames.includes(updateRole)
+                      );
+
+                      fileType.readRoles = cleanReadRoles;
+                      fileType.updateRoles = cleanUpdateRoles;
+
+                      console.log('fileType', fileType);
+                      if (!isEdit) {
+                        dispatch(CreateFileTypeService(fileType));
+                      } else {
+                        dispatch(UpdateFileTypeService(fileType));
+                      }
+                      close();
+                    }
                   }}
                 >
                   Save
@@ -197,15 +386,12 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                   testId="form-cancel"
                   type="secondary"
                   onClick={() => {
-                    history.push({
-                      pathname: '/admin/services/file',
-                    });
-                    // if (isTaskUpdated(initialDefinition, queue)) {
-                    //   validators.clear();
-                    //   close();
-                    // } else {
-                    //   setSaveModal({ visible: true, closeEditor: false });
-                    // }
+                    if (isFileTypeUpdated(initialFileType, fileType)) {
+                      setSaveModal({ visible: true, closeEditor: false });
+                    } else {
+                      validators.clear();
+                      close();
+                    }
                   }}
                 >
                   Back
@@ -217,17 +403,38 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
             <FileTypesEditorTitle>File Type permissions</FileTypesEditorTitle>
             <hr className="hr-resize" />
             <ScrollPane>
-              {fetchKeycloakRolesState === ActionState.inProcess ? (
-                <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
-              ) : (
-                elements?.map((e, key) => {
+              {tenantClients &&
+                elements.map((e, key) => {
                   return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
-                })
-              )}
+                })}
+              {isKeyCloakInProcess() && <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>}
             </ScrollPane>
           </FileTypePermissions>
         </FlexRow>
       )}
+      <SaveFormModal
+        open={saveModal.visible}
+        onDontSave={() => {
+          close();
+          setSaveModal({ visible: false, closeEditor: true });
+        }}
+        onSave={() => {
+          if (!isEdit) {
+            const validations = {
+              duplicate: fileType.name,
+            };
+            if (!validators.checkAll(validations)) {
+              return;
+            }
+          }
+          setSpinner(true);
+          setSaveModal({ visible: false, closeEditor: true });
+        }}
+        saveDisable={isFileTypeUpdated(initialFileType, fileType)}
+        onCancel={() => {
+          setSaveModal({ visible: false, closeEditor: false });
+        }}
+      />
     </FileTypeEditor>
   );
 };

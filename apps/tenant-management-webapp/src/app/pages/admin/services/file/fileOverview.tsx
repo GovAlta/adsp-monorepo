@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import { useHistory, useRouteMatch } from 'react-router-dom';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { GoAButton } from '@abgov/react-components-new';
 import { FileMetrics } from './metrics';
@@ -13,6 +14,9 @@ interface FileOverviewProps {
 
 const FileOverview = ({ setActiveEdit, setActiveIndex }: FileOverviewProps): JSX.Element => {
   const dispatch = useDispatch();
+  const { url } = useRouteMatch();
+  const history = useHistory();
+
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(FetchFileMetrics());
@@ -44,6 +48,7 @@ const FileOverview = ({ setActiveEdit, setActiveIndex }: FileOverviewProps): JSX
         <GoAButton
           testId="add-file-type-btn"
           onClick={() => {
+            history.push(`${url}/new`);
             setActiveEdit(true);
           }}
         >

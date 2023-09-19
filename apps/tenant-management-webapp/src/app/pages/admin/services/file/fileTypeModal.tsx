@@ -291,7 +291,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
           <FileIdItem>
             <GoAInput
               testId={`file-type-modal-id`}
-              value={fileType?.id || ''}
+              value={fileType?.id}
               disabled={true}
               width="100%"
               name="file-type-id"
