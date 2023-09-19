@@ -128,14 +128,14 @@ function* deleteCalendar(action: DeleteCalendarAction): SagaIterator {
 export function* fetchEventsByCalendar(action: FetchEventsByCalendarAction): SagaIterator {
   const calendarBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.calendarServiceApiUrl);
   const token: string = yield call(getAccessToken);
-  const calendarId = action.payload;
+  const calendarName = action.payload;
   if (calendarBaseUrl && token) {
     try {
-      const response = yield call(axios.get, `${calendarBaseUrl}/calendar/v1/calendars/${calendarId}/events`, {
+      const response = yield call(axios.get, `${calendarBaseUrl}/calendar/v1/calendars/${calendarName}/events`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      yield put(FetchEventsByCalendarSuccess(response.data?.results));
+      yield put(FetchEventsByCalendarSuccess(response.data?.results, calendarName));
     } catch (err) {
       yield put(ErrorNotification({ message: `Error fetching events by calendar: ${err.message}` }));
     }

@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { SelectCalendarHeader } from './styled-components';
-import { GoADropdown, GoADropdownItem, GoAButton } from '@abgov/react-components-new';
+import { GoADropdown, GoADropdownItem, GoAButton, GoATable } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
 import { CalendarObjectType, EventAddEditModalType } from '@store/calendar/models';
 import { fetchCalendars, FetchEventsByCalendar } from '@store/calendar/actions';
 import { UpdateModalState } from '@store/session/actions';
 import { selectCalendars } from '@store/calendar/selectors';
 import { EventAddEditModal } from './addEditModal';
+import { EventList } from './eventList';
 
 interface CalendarDropdownProps {
   calendars: CalendarObjectType;
@@ -17,7 +18,12 @@ const CalendarDropdown = ({ calendars, onSelect }: CalendarDropdownProps): JSX.E
   return (
     <GoADropdown name="calendars" width="100%" value={'red'} aria-label="select-calendar-dropdown" onChange={onSelect}>
       {Object.entries(calendars).map(([name, calendar]) => (
-        <GoADropdownItem label={calendar?.name} value={name} key={name} testId={`calendar-dropdown-${name}`} />
+        <GoADropdownItem
+          label={calendar?.name}
+          value={`${calendar.name}`}
+          key={name}
+          testId={`calendar-dropdown-${name}`}
+        />
       ))}
     </GoADropdown>
   );
@@ -60,6 +66,7 @@ export const CalendarEvents = (): JSX.Element => {
       >
         Add event
       </GoAButton>
+      {selectedCalendar && <EventList calendarName={selectedCalendar} />}
     </>
   );
 };
