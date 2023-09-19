@@ -9,7 +9,6 @@ import { renderNoItem } from '@components/NoItem';
 import { FormDefinitionsTable } from './definitionsList';
 import { PageIndicator } from '@components/Indicator';
 import { defaultFormDefinition } from '@store/form/model';
-
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
 
@@ -55,9 +54,6 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
 
   // eslint-disable-next-line
   useEffect(() => {}, [formDefinitions]);
-  useEffect(() => {
-    document.body.style.overflow = 'unset';
-  }, []);
 
   return (
     <>

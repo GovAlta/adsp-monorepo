@@ -3,11 +3,10 @@ import {
   NotificationTemplateEditorContainer,
   OuterNotificationTemplateEditorContainer,
   Modal,
-  BodyGlobalStyles,
-  ModalContent,
   TabletMessage,
   HideTablet,
 } from '../styled-components';
+import { ModalContent } from '../../styled-components';
 
 import { GoAButton } from '@abgov/react-components-new';
 
@@ -27,8 +26,6 @@ export const FormDefinitionEditor = (): JSX.Element => {
   return (
     <>
       <Modal data-testid="template-form">
-        {/* Hides body overflow when the modal is up */}
-        <BodyGlobalStyles hideOverflow={true} />
         <ModalContent>
           <OuterNotificationTemplateEditorContainer>
             <TabletMessage>

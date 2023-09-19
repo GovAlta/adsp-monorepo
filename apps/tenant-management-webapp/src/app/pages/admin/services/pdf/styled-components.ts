@@ -1,4 +1,4 @@
-import styled, { createGlobalStyle } from 'styled-components';
+import styled from 'styled-components';
 import { PreviewPortal } from './templates/previewPortal';
 
 export const FileTableStyles = styled.div`
@@ -137,14 +137,6 @@ export const Modal = styled.div`
   width: 100%;
 `;
 
-export const BodyGlobalStyles = createGlobalStyle<{ hideOverflow: boolean }>`
-  body {
-    overflow:  ${(props) => (props.hideOverflow ? `hidden` : `auto`)};
-  }
-`;
-export const ModalContent = styled.div`
-  background: var(--goa-color-greyscale-white);
-`;
 export const PreviewTemplateContainer = styled.div`
   width: calc(40vw + 3.9rem);
   margin-right: var(--goa-spacing-xl);

@@ -48,7 +48,7 @@ When('the user enters {string} as name, {string} as description in pdf template 
     .find('.goa-textarea')
     .invoke('removeAttr', 'disabled')
     .clear()
-    .type(description, { delay: 100, force: true });
+    .type(description, { delay: 200, force: true });
 });
 
 Then('the user clicks Save button in Add or Edit template modal', function () {
@@ -257,6 +257,7 @@ When(
       .pdfTemplateModalDescriptionField()
       .shadow()
       .find('.goa-textarea')
+      .invoke('removeAttr', 'disabled')
       .clear()
       .type(description, { delay: 100, force: true });
   }

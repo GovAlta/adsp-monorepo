@@ -374,7 +374,7 @@ Then('the user views {string} file type modal', function (addOrEdit) {
 
 When('the user enters {string}, {string}, {string} on file type modal', function (name, readRole, updateRole) {
   cy.viewport(1920, 1080);
-  cy.wait(2000); //Wait for the client roles in the modal to show up
+  cy.wait(4000); //Wait for the client roles in the modal to show up
   //Enter Name
   if (name !== 'N/A') {
     fileServiceObj
@@ -382,7 +382,7 @@ When('the user enters {string}, {string}, {string} on file type modal', function
       .shadow()
       .find('input')
       .clear({ force: true })
-      .wait(1000)
+      .wait(2000)
       .type(name, { delay: 200, force: true });
   }
 
