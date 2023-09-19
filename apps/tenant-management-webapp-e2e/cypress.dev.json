@@ -32,6 +32,7 @@
     "subscriptionUrl": "https://subscription.adsp-dev.gov.ab.ca"
   },
   "baseUrl": "https://adsp-dev.gov.ab.ca",
+  "numTestsKeptInMemory": 0,
   "fileServerFolder": ".",
   "fixturesFolder": "./src/fixtures",
   "integrationFolder": "./src/integration",
