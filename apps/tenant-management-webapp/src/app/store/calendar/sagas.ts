@@ -22,6 +22,9 @@ import {
   CreateEventsByCalendarAction,
   CREATE_EVENT_CALENDAR_ACTION,
   CreateEventsByCalendarSuccess,
+  DeleteCalendarEventAction,
+  DeleteCalendarEventSuccess,
+  DELETE_CALENDAR_EVENT_ACTION,
 } from './actions';
 
 import { ActionState } from '@store/session/models';
@@ -128,14 +131,14 @@ function* deleteCalendar(action: DeleteCalendarAction): SagaIterator {
 export function* fetchEventsByCalendar(action: FetchEventsByCalendarAction): SagaIterator {
   const calendarBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.calendarServiceApiUrl);
   const token: string = yield call(getAccessToken);
-  const calendarId = action.payload;
+  const calendarName = action.payload;
   if (calendarBaseUrl && token) {
     try {
-      const response = yield call(axios.get, `${calendarBaseUrl}/calendar/v1/calendars/${calendarId}/events`, {
+      const response = yield call(axios.get, `${calendarBaseUrl}/calendar/v1/calendars/${calendarName}/events`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      yield put(FetchEventsByCalendarSuccess(response.data?.results));
+      yield put(FetchEventsByCalendarSuccess(response.data?.results, calendarName));
     } catch (err) {
       yield put(ErrorNotification({ message: `Error fetching events by calendar: ${err.message}` }));
     }
@@ -164,10 +167,29 @@ export function* CreateEventByCalendar(action: CreateEventsByCalendarAction): Sa
   }
 }
 
+export function* DeleteCalendarEvent(action: DeleteCalendarEventAction): SagaIterator {
+  const calendarBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.calendarServiceApiUrl);
+  const token: string = yield call(getAccessToken);
+  const eventId = action.eventId;
+  const calendarName = action.calendarName;
+  if (calendarBaseUrl && token) {
+    try {
+      yield call(axios.delete, `${calendarBaseUrl}/calendar/v1/calendars/${calendarName}/events/${eventId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      yield put(DeleteCalendarEventSuccess(eventId, calendarName));
+    } catch (err) {
+      yield put(ErrorNotification({ message: `Error fetching events by calendar: ${err.message}` }));
+    }
+  }
+}
+
 export function* watchCalendarSagas(): Generator {
   yield takeEvery(FETCH_CALENDARS_ACTION, fetchCalendars);
   yield takeEvery(UPDATE_CALENDAR_ACTION, updateCalendar);
   yield takeEvery(DELETE_CALENDAR_ACTION, deleteCalendar);
   yield takeEvery(FETCH_EVENTS_BY_CALENDAR_ACTION, fetchEventsByCalendar);
   yield takeEvery(CREATE_EVENT_CALENDAR_ACTION, CreateEventByCalendar);
+  yield takeEvery(DELETE_CALENDAR_EVENT_ACTION, DeleteCalendarEvent);
 }
