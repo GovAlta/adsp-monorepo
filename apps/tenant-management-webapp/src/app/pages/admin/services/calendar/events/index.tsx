@@ -18,7 +18,12 @@ const CalendarDropdown = ({ calendars, onSelect }: CalendarDropdownProps): JSX.E
   return (
     <GoADropdown name="calendars" width="100%" value={'red'} aria-label="select-calendar-dropdown" onChange={onSelect}>
       {Object.entries(calendars).map(([name, calendar]) => (
-        <GoADropdownItem label={calendar?.name} value={name} key={name} testId={`calendar-dropdown-${name}`} />
+        <GoADropdownItem
+          label={calendar?.name}
+          value={`${calendar.name}`}
+          key={name}
+          testId={`calendar-dropdown-${name}`}
+        />
       ))}
     </GoADropdown>
   );
@@ -61,7 +66,7 @@ export const CalendarEvents = (): JSX.Element => {
       >
         Add event
       </GoAButton>
-      <EventList />
+      {selectedCalendar && <EventList calendarName={selectedCalendar} />}
     </>
   );
 };

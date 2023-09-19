@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectSelectedCalendarEvents } from '@store/calendar/selectors';
 import { CalendarEvent, EventAddEditModalType } from '@store/calendar/models';
@@ -7,6 +7,7 @@ import { renderNoItem } from '@components/NoItem';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { UpdateModalState } from '@store/session/actions';
 import moment from 'moment';
+import { RootState } from '@store/index';
 
 interface EventListRowProps {
   event: CalendarEvent;
@@ -68,13 +69,16 @@ const EventListRow = ({ event }: EventListRowProps): JSX.Element => {
   );
 };
 
-export const EventList = (): JSX.Element => {
-  const selectedEvents = useSelector(selectSelectedCalendarEvents);
+interface EventListProps {
+  calendarName: string;
+}
+export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
+  const selectedEvents = useSelector((state: RootState) => selectSelectedCalendarEvents(state, calendarName));
 
   // eslint-disable-next-line
   useEffect(() => {}, [selectedEvents]);
 
-  if (selectedEvents.length === 0) {
+  if (!selectedEvents || selectedEvents.length === 0) {
     return <>{renderNoItem('Calendar events')}</>;
   }
   return (

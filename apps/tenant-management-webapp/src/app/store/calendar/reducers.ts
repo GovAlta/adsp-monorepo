@@ -47,7 +47,10 @@ export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => 
       };
     }
     case FETCH_EVENTS_BY_CALENDAR_SUCCESS_ACTION: {
-      // return { ...state, selectedCalendarEvents: [...action.payload] };
+      const events = action.payload;
+      const name = action.calendarName;
+      state.calendars[name].selectedCalendarEvents = events;
+
       return {
         ...state,
       };

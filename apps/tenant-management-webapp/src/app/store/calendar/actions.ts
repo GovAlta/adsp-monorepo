@@ -54,6 +54,7 @@ export interface FetchEventsByCalendarAction {
 export interface FetchEventsByCalendarSuccessAction {
   type: typeof FETCH_EVENTS_BY_CALENDAR_SUCCESS_ACTION;
   payload: CalendarEvent[];
+  calendarName: string;
 }
 
 export interface CreateEventsByCalendarAction {
@@ -118,9 +119,13 @@ export const FetchEventsByCalendar = (calendarId: string): FetchEventsByCalendar
   payload: calendarId,
 });
 
-export const FetchEventsByCalendarSuccess = (event: CalendarEvent[]): FetchEventsByCalendarSuccessAction => ({
+export const FetchEventsByCalendarSuccess = (
+  event: CalendarEvent[],
+  calendarName: string
+): FetchEventsByCalendarSuccessAction => ({
   type: FETCH_EVENTS_BY_CALENDAR_SUCCESS_ACTION,
   payload: event,
+  calendarName,
 });
 export const CreateEventsByCalendar = (event: CalendarEvent): CreateEventsByCalendarAction => ({
   type: CREATE_EVENT_CALENDAR_ACTION,
