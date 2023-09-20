@@ -1,6 +1,6 @@
 import { createSelector } from 'reselect';
 import { RootState } from '../index';
-import { CalendarObjectType, CalendarEventDefault, EventAddEditModalType } from './models';
+import { CalendarObjectType, CalendarEventDefault, EventAddEditModalType, EventDeleteModalType } from './models';
 import { selectModalStateByType } from '@store/session/selectors';
 import { ModalState } from '@store/session/models';
 
@@ -30,6 +30,18 @@ export const selectEventById = createSelector(
   }
 );
 
+export const selectDeleteEventById = createSelector(
+  (state: RootState) => state,
+  selectModalStateByType(EventDeleteModalType),
+  (_, calendarName: string) => calendarName,
+  (state, modal: ModalState, calendarName) => {
+    if (modal && modal?.id) {
+      return selectSelectedCalendarEvents(state, calendarName)?.find((e) => `${e.id}` === modal.id);
+    }
+    return null;
+  }
+);
+
 export const selectIsOpenAddEditModal = createSelector(
   selectModalStateByType(EventAddEditModalType),
   (modal: ModalState) => {
@@ -55,5 +67,18 @@ export const selectSelectedCalendarEvents = createSelector(
   selectModalStateByType(EventAddEditModalType),
   (state, calendarName: string) => {
     return selectCalendarsById(state, calendarName)?.selectedCalendarEvents;
+  }
+);
+
+export const selectSelectedCalendarEventNames = createSelector(
+  (state: RootState) => state,
+  (_, calendarName: string) => calendarName,
+  (state, calendarName: string) => {
+    const events = selectSelectedCalendarEvents(state, calendarName);
+    if (events && events?.length > 0) {
+      return events.map((e) => e?.name);
+    }
+
+    return [];
   }
 );
