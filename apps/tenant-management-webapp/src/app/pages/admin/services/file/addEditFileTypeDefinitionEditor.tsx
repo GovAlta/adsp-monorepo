@@ -31,13 +31,10 @@ import { ConfigServiceRole } from '@store/access/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { ActionState } from '@store/session/models';
-import { FETCH_KEYCLOAK_SERVICE_ROLES, fetchKeycloakServiceRoles, fetchServiceRoles } from '@store/access/actions';
-import { CreateFileTypeService, FetchFileTypeService, UpdateFileTypeService } from '@store/file/actions';
-import { toKebabName } from '@lib/kebabName';
+import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
+import { CreateFileTypeService, UpdateFileTypeService } from '@store/file/actions';
 import { createSelector } from 'reselect';
 import { selectFileTyeNames } from './fileTypeNew';
-import { FetchRealmRoles } from '@store/tenant/actions';
-import { selectServiceCoreRoles } from '../access/serviceRoles/serviceRoles';
 
 export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -89,30 +86,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
     })
     .sort();
 
-  // #region UseEffect Hooks
   //eslint-disable-next-line
-  useEffect(() => {}, [fetchKeycloakRolesState]);
-  // useEffect(() => {
-  //   dispatch(FetchRealmRoles());
-  // }, []);
-
-  // const coreRoles = useSelector(selectServiceCoreRoles);
-  // useEffect(() => {
-  //   dispatch(fetchServiceRoles());
-  //   if (!fileTypeNames) {
-  //     dispatch(FetchFileTypeService());
-  //   }
-  // }, []);
-
-  // // We need to fetch the keyCloak roles, because the editor depends on the
-  // // roles that exists in Redux when the Editor opens up to load up the roles table.
-  // useEffect(() => {
-  //   // Fetch keycloak service roles after the roles from configuration service are fetched
-  //   if (Object.entries(coreRoles).length) {
-  //     dispatch(fetchKeycloakServiceRoles());
-  //   }
-  // }, [coreRoles]);
-
   useEffect(() => {
     const foundFileType = fileTypes?.find((f) => f.id === id);
     if (id && foundFileType) {
@@ -121,8 +95,6 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
       setInitialFileType(selectedFileType);
     }
   }, [fileTypes]);
-
-  // #endregion End of UseEffect hooks
 
   const { validators } = useValidators(
     'name',
@@ -195,54 +167,6 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
     );
   };
 
-  // const renderTextBoxInputs = () => {
-  //   return (
-  //     <>
-  //       <GoAFormItem error={errors?.['name']} label="Name">
-  //         <GoAInput
-  //           type="text"
-  //           name="name"
-  //           disabled={isEdit}
-  //           value={fileType?.name}
-  //           width="50%"
-  //           testId={`file-type-name-input`}
-  //           onChange={(name, value) => {
-  //             const newFileType = {
-  //               ...fileType,
-  //               name: value,
-  //               id: !isEdit ? toKebabName(value) : fileType.id,
-  //             };
-
-  //             const validations = {
-  //               name: value,
-  //             };
-  //             validators.remove('name');
-  //             if (!isEdit) {
-  //               validations['duplicated'] = value;
-  //             }
-  //             validators.checkAll(validations);
-  //             setFileType(newFileType);
-  //           }}
-  //           aria-label="name"
-  //         />
-  //       </GoAFormItem>
-  //       <GoAFormItem label="Type ID">
-  //         <GoAInput
-  //           testId={`file-type-id`}
-  //           value={fileType?.id || ''}
-  //           disabled={true}
-  //           width="50%"
-  //           name="file-type-id"
-  //           type="text"
-  //           aria-label="goa-input-file-type-id"
-  //           //eslint-disable-next-line
-  //           onChange={() => {}}
-  //         />
-  //       </GoAFormItem>
-  //     </>
-  //   );
-  // };
-
   return (
     <FileTypeEditor data-testid="filetype-editor">
       {spinner ? (
@@ -256,7 +180,6 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
             <hr className="hr-resize" />
 
             {isEdit && <FileTypeConfigDefinition fileType={fileType ?? FileTypeDefault} />}
-            {/* {!isEdit && renderTextBoxInputs()} */}
             <GoACheckbox
               checked={fileType?.anonymousRead}
               name="file-type-anonymousRead-checkbox"

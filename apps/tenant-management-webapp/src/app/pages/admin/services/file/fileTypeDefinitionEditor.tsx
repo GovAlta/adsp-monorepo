@@ -3,10 +3,9 @@ import {
   FileTypeTemplateEditorContainer,
   OuterFileTypeTemplateEditorContainer,
   Modal,
-  BodyGlobalStyles,
-  ModalContent,
   HideTablet,
 } from './styled-components';
+import { ModalContent } from '../styled-components';
 import { TabletMessage } from '@components/TabletMessage';
 import { useHistory } from 'react-router-dom';
 import { AddEditFileTypeDefinitionEditor } from './addEditFileTypeDefinitionEditor';
@@ -22,9 +21,7 @@ export const FileTypeDefinitionEditor = (): JSX.Element => {
 
   return (
     <>
-      <Modal data-testid="template-form">
-        {/* Hides body overflow when the modal is up */}
-        <BodyGlobalStyles hideOverflow={true} />
+      <Modal data-testid="fileType-form">
         <ModalContent>
           <OuterFileTypeTemplateEditorContainer>
             <TabletMessage goBack={goBack} />

@@ -15,7 +15,6 @@ import {
   ModalOverwrite,
   AnonymousReadWrapper,
   RetentionPolicyWrapper,
-  TextLoadingIndicator,
   InfoCircleWrapper,
   RetentionToolTip,
 } from './styled-components';
@@ -118,37 +117,6 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   useEffect(() => {
     setFileType(props.fileType);
   }, [props.fileType]);
-
-  const ClientRole = ({ roleNames, clientId }) => {
-    return (
-      <>
-        <ClientRoleTable
-          roles={roleNames}
-          clientId={clientId}
-          anonymousRead={fileType?.anonymousRead}
-          roleSelectFunc={(roles, type) => {
-            if (type === 'read') {
-              setFileType({
-                ...fileType,
-                readRoles: roles,
-              });
-            } else {
-              setFileType({
-                ...fileType,
-                updateRoles: roles,
-              });
-            }
-          }}
-          service="FileType"
-          nameColumnWidth={80}
-          checkedRoles={[
-            { title: 'read', selectedRoles: fileType?.readRoles },
-            { title: 'modify', selectedRoles: fileType?.updateRoles },
-          ]}
-        />
-      </>
-    );
-  };
 
   let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
 
@@ -370,12 +338,6 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
             }
           }}
         />
-        {/* {elements.map((e, key) => {
-          return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
-        })}
-        {fetchKeycloakRolesState === ActionState.inProcess && (
-          <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
-        )} */}
       </GoAModal>
     </ModalOverwrite>
   );

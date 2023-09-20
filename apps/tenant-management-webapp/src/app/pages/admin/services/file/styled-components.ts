@@ -131,16 +131,6 @@ export const TabletMessage = styled.div`
   }
 `;
 
-export const BodyGlobalStyles = createGlobalStyle<{ hideOverflow: boolean }>`
-  body {
-    overflow:  ${(props) => (props.hideOverflow ? `hidden` : `auto`)};
-  }
-`;
-
-export const ModalContent = styled.div`
-  background: white;
-`;
-
 export const Modal = styled.div`
   display: block;
   position: fixed;
