@@ -34,3 +34,7 @@ export const HeadingDiv = styled.div`
 export const OverFlowWrapTableCell = styled.td`
   overflow-wrap: anywhere;
 `;
+export const CheckBoxWrapper = styled.div`
+  line-height: 2.5em;
+  display: flex;
+`;

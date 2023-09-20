@@ -42,7 +42,7 @@ export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => 
       };
     }
     case CREATE_EVENT_CALENDAR_SUCCESS_ACTION: {
-      state.calendars[action.payload.id].selectedCalendarEvents.push(action.payload);
+      state.calendars[action.calendarName].selectedCalendarEvents.push(action.payload);
       return {
         ...state,
       };
