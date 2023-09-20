@@ -30,6 +30,13 @@ export const selectEventById = createSelector(
   }
 );
 
+export const selectIsOpenAddEditModal = createSelector(
+  selectModalStateByType(EventAddEditModalType),
+  (modal: ModalState) => {
+    return modal && modal?.isOpen === true;
+  }
+);
+
 export const selectAddModalEvent = createSelector(
   (state) => state,
   selectModalStateByType(EventAddEditModalType),
