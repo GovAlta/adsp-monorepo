@@ -1,4 +1,4 @@
-import styled, { createGlobalStyle } from 'styled-components';
+import styled from 'styled-components';
 
 export const RetentionPolicyLabel = styled.label`
   font-size: 24px !important;
