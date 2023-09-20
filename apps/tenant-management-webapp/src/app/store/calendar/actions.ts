@@ -75,11 +75,13 @@ export interface FetchEventsByCalendarSuccessAction {
 export interface CreateEventsByCalendarAction {
   type: typeof CREATE_EVENT_CALENDAR_ACTION;
   payload: CalendarEvent;
+  calendarName: string;
 }
 
 export interface CreateEventsByCalendarSuccessAction {
   type: typeof CREATE_EVENT_CALENDAR_SUCCESS_ACTION;
   payload: CalendarEvent;
+  calendarName: string;
 }
 
 export type ActionTypes =
@@ -144,14 +146,19 @@ export const FetchEventsByCalendarSuccess = (
   payload: event,
   calendarName,
 });
-export const CreateEventsByCalendar = (event: CalendarEvent): CreateEventsByCalendarAction => ({
+export const CreateEventsByCalendar = (calendarName: string, event: CalendarEvent): CreateEventsByCalendarAction => ({
   type: CREATE_EVENT_CALENDAR_ACTION,
   payload: event,
+  calendarName,
 });
 
-export const CreateEventsByCalendarSuccess = (event: CalendarEvent): CreateEventsByCalendarSuccessAction => ({
+export const CreateEventsByCalendarSuccess = (
+  calendarName: string,
+  event: CalendarEvent
+): CreateEventsByCalendarSuccessAction => ({
   type: CREATE_EVENT_CALENDAR_SUCCESS_ACTION,
   payload: event,
+  calendarName,
 });
 
 export const DeleteCalendarEvent = (eventId: string, calendarName: string): DeleteCalendarEventAction => ({

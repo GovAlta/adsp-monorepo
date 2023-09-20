@@ -148,7 +148,7 @@ export function* fetchEventsByCalendar(action: FetchEventsByCalendarAction): Sag
 export function* CreateEventByCalendar(action: CreateEventsByCalendarAction): SagaIterator {
   const calendarBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.calendarServiceApiUrl);
   const token: string = yield call(getAccessToken);
-  const calendarId = action.payload.name;
+  const calendarId = action.calendarName;
   if (calendarBaseUrl && token) {
     try {
       const response = yield call(
@@ -160,7 +160,7 @@ export function* CreateEventByCalendar(action: CreateEventsByCalendarAction): Sa
         }
       );
 
-      yield put(CreateEventsByCalendarSuccess(response.data?.results));
+      yield put(CreateEventsByCalendarSuccess(calendarId, response.data?.results));
     } catch (err) {
       yield put(ErrorNotification({ message: `Error fetching events by calendar: ${err.message}` }));
     }

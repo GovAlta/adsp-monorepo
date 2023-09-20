@@ -60,4 +60,5 @@ export const CalendarEventDefault = {
   start: '',
   end: '',
   isPublic: false,
+  isAllDay: false,
 };

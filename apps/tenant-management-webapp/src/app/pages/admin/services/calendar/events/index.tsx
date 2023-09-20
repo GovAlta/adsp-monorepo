@@ -43,12 +43,12 @@ export const CalendarEvents = (): JSX.Element => {
   }, []);
 
   const calendars = useSelector(selectCalendars);
-
+  /*calendarName={selectedCalendar} />*/
   return (
     <>
       <SelectCalendarHeader>Please select a calendar</SelectCalendarHeader>
       {calendars && <CalendarDropdown calendars={calendars} onSelect={onCalendarSelect} />}
-      <EventAddEditModal />
+      <EventAddEditModal calendarName={selectedCalendar} />
       <br /> <br />
       <GoAButton
         type="primary"
