@@ -28,6 +28,7 @@
     "fileApi": ""
   },
   "baseUrl": "https://tenant-management-webapp-core-services-test.os99.gov.ab.ca",
+  "numTestsKeptInMemory": 0,
   "fileServerFolder": ".",
   "fixturesFolder": "./src/fixtures",
   "integrationFolder": "./src/integration",
