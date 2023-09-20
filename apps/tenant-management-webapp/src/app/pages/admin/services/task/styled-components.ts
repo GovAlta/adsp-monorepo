@@ -287,3 +287,26 @@ export const HideTablet = styled.div`
 export const ButtonPadding = styled.div`
   padding-bottom: var(--goa-spacing-l);
 `;
+
+export const HelpText = styled.div`
+  font-size: var(--fs-sm);
+  color: var(--color-gray-900);
+  line-height: calc(var(--fs-sm) + 0.5rem);
+  display: flex;
+  display-direction: row;
+  justify-content: space-between;
+  margin-top: 2px;
+`;
+export const DescriptionItem = styled.div`
+  margin-left: 3px;
+  margin-right: 3px;
+`;
+
+export const ErrorMsg = styled.div`
+   {
+    display: inline-flex;
+    color: var(--color-red);
+    pointer-events: none;
+    gap: 0.25rem;
+  }
+`;
