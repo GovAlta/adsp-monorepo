@@ -17,7 +17,6 @@ import { ResetModalState } from '@store/session/actions';
 import { CheckBoxWrapper } from '../styled-components';
 import { CalendarEvent } from '@store/calendar/models';
 import { CreateEventsByCalendar } from '@store/calendar/actions';
-import moment from 'moment';
 
 interface EventAddEditModalProps {
   calendarName: string;

@@ -7,6 +7,7 @@ import {
   FETCH_EVENTS_BY_CALENDAR_SUCCESS_ACTION,
   CREATE_EVENT_CALENDAR_SUCCESS_ACTION,
   DELETE_CALENDAR_EVENT_SUCCESS_ACTION,
+  UPDATE_EVENT_CALENDAR_SUCCESS_ACTION,
 } from './actions';
 import { CalendarService, CALENDAR_INIT } from './models';
 
@@ -47,7 +48,15 @@ export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => 
         ...state,
       };
     }
-
+    case UPDATE_EVENT_CALENDAR_SUCCESS_ACTION: {
+      const eventIndex = state.calendars[action.calendarName].selectedCalendarEvents.findIndex(
+        (event) => event.id.toString() === action.eventId
+      );
+      state.calendars[action.calendarName].selectedCalendarEvents[eventIndex] = action.payload;
+      return {
+        ...state,
+      };
+    }
     case FETCH_EVENTS_BY_CALENDAR_SUCCESS_ACTION: {
       const events = action.payload;
       const name = action.calendarName;
