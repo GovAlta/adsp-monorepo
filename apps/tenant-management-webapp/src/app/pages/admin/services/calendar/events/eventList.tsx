@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectSelectedCalendarEvents } from '@store/calendar/selectors';
-import { CalendarEvent, EventAddEditModalType } from '@store/calendar/models';
+import { CalendarEvent, EventAddEditModalType, EventDeleteModalType } from '@store/calendar/models';
 import { GoATable } from '@abgov/react-components-new';
 import { renderNoItem } from '@components/NoItem';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
@@ -9,31 +9,33 @@ import { UpdateModalState } from '@store/session/actions';
 import moment from 'moment';
 import { RootState } from '@store/index';
 
+import { DeleteModal } from './deleterModal';
+
 interface EventListRowProps {
   event: CalendarEvent;
+  calendarName: string;
 }
 
 const eventDateFormat = (dateString: string) => {
   const date = new Date(dateString);
-
   return moment(date).format('DD-MMM-YY ddd HH:mm');
 };
 
-const dataTitleSpanStyle = {
+const dateTitleSpanStyle = {
   width: '2.5rem',
   display: 'inline-block',
 };
 
-const EventListRow = ({ event }: EventListRowProps): JSX.Element => {
+const EventListRow = ({ event, calendarName }: EventListRowProps): JSX.Element => {
   const dispatch = useDispatch();
   return (
     <tr>
       <td>
         <div>
-          <span style={dataTitleSpanStyle}>From</span>: {eventDateFormat(event.start)}
+          <span style={dateTitleSpanStyle}>From</span>: {eventDateFormat(event.start)}
         </div>
         <div>
-          <span style={dataTitleSpanStyle}>to</span>: {eventDateFormat(event.end)}
+          <span style={dateTitleSpanStyle}>to</span>: {eventDateFormat(event.end)}
         </div>
       </td>
       <td>{event.description}</td>
@@ -44,6 +46,7 @@ const EventListRow = ({ event }: EventListRowProps): JSX.Element => {
               testId="add-attendance-icon"
               title="add-attendance"
               type="person-circle"
+              // eslint-disable-next-line
               onClick={() => {}}
             />
 
@@ -61,7 +64,20 @@ const EventListRow = ({ event }: EventListRowProps): JSX.Element => {
                 );
               }}
             />
-            <GoAContextMenuIcon testId="delete-icon" title="Delete" type="trash" onClick={() => {}} />
+            <GoAContextMenuIcon
+              testId="delete-icon"
+              title="Delete"
+              type="trash"
+              onClick={() => {
+                dispatch(
+                  UpdateModalState({
+                    type: EventDeleteModalType,
+                    id: `${event.id}`,
+                    isOpen: true,
+                  })
+                );
+              }}
+            />
           </div>
         }
       </td>
@@ -81,20 +97,24 @@ export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
   if (!selectedEvents || selectedEvents.length === 0) {
     return <>{renderNoItem('Calendar events')}</>;
   }
+
   return (
-    <GoATable testId="calendar-selected-event-table">
-      <thead>
-        <tr>
-          <th>Event time</th>
-          <th>Description</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {selectedEvents.map((event) => {
-          return <EventListRow event={event} key={`calendar-event-row-${event.id}`} />;
-        })}
-      </tbody>
-    </GoATable>
+    <>
+      <DeleteModal calendarName={calendarName} />
+      <GoATable testId="calendar-selected-event-table">
+        <thead>
+          <tr>
+            <th>Event time</th>
+            <th>Description</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {selectedEvents.map((event) => {
+            return <EventListRow event={event} calendarName={calendarName} key={`calendar-event-row-${event.id}`} />;
+          })}
+        </tbody>
+      </GoATable>
+    </>
   );
 };
