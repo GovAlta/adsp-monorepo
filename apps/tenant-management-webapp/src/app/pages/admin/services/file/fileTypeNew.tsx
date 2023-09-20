@@ -6,7 +6,6 @@ import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import { FetchFileTypeService } from '@store/file/actions';
 import { createSelector } from 'reselect';
-
 interface AddFileTypeProps {
   roles: Role[];
   activeEdit: boolean;

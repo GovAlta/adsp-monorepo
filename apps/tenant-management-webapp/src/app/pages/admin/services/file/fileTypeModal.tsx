@@ -15,7 +15,6 @@ import {
   ModalOverwrite,
   AnonymousReadWrapper,
   RetentionPolicyWrapper,
-  TextLoadingIndicator,
   InfoCircleWrapper,
   RetentionToolTip,
 } from './styled-components';
@@ -26,11 +25,9 @@ import { toKebabName } from '@lib/kebabName';
 import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
-import { ClientRoleTable } from '@components/RoleTable';
 import { ConfigServiceRole } from '@store/access/models';
 import { useValidators } from '@lib/validation/useValidators';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
-import { ActionState } from '@store/session/models';
 import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { cloneDeep } from 'lodash';
@@ -118,37 +115,6 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   useEffect(() => {
     setFileType(props.fileType);
   }, [props.fileType]);
-
-  const ClientRole = ({ roleNames, clientId }) => {
-    return (
-      <>
-        <ClientRoleTable
-          roles={roleNames}
-          clientId={clientId}
-          anonymousRead={fileType?.anonymousRead}
-          roleSelectFunc={(roles, type) => {
-            if (type === 'read') {
-              setFileType({
-                ...fileType,
-                readRoles: roles,
-              });
-            } else {
-              setFileType({
-                ...fileType,
-                updateRoles: roles,
-              });
-            }
-          }}
-          service="FileType"
-          nameColumnWidth={80}
-          checkedRoles={[
-            { title: 'read', selectedRoles: fileType?.readRoles },
-            { title: 'modify', selectedRoles: fileType?.updateRoles },
-          ]}
-        />
-      </>
-    );
-  };
 
   let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
 
@@ -291,7 +257,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
           <FileIdItem>
             <GoAInput
               testId={`file-type-modal-id`}
-              value={fileType?.id || ''}
+              value={fileType?.id}
               disabled={true}
               width="100%"
               name="file-type-id"
@@ -370,12 +336,6 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
             }
           }}
         />
-        {elements.map((e, key) => {
-          return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
-        })}
-        {fetchKeycloakRolesState === ActionState.inProcess && (
-          <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
-        )}
       </GoAModal>
     </ModalOverwrite>
   );

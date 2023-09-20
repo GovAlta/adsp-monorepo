@@ -7,6 +7,7 @@ import { FileTypeDeleteModal } from './fileTypeDeleteModal';
 import styled from 'styled-components';
 import { GoABadge } from '@abgov/react-components-new';
 import { FileTypeItem } from '@store/file/models';
+import { useHistory, useRouteMatch } from 'react-router-dom';
 
 interface FileTypeRowProps extends FileTypeItem {
   editId: string;
@@ -115,6 +116,8 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const editFileType = fileTypes.find((x) => x && x.id === editId);
   const deleteFileType = fileTypes.find((x) => x && x.id === deleteId);
+  const { url } = useRouteMatch();
+  const history = useHistory();
 
   const editModalProps = {
     isOpen: !!editId,
@@ -161,6 +164,7 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
                     key={`file-type-row-${fileType?.id}`}
                     {...rowProps}
                     onEdit={() => {
+                      history.push(`${url}/edit/${fileType?.id}`);
                       setEditId(fileType?.id);
                     }}
                     onDelete={() => {
