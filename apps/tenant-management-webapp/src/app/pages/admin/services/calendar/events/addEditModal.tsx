@@ -23,8 +23,8 @@ interface EventAddEditModalProps {
   calendarName: string;
 }
 export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX.Element => {
-  const initCalendarEvent = useSelector(selectAddModalEvent);
-  const [calendarEvent, setCalendarEvent] = useState<CalendarEvent>(initCalendarEvent);
+  const initCalendarEvent = useSelector((state) => selectAddModalEvent(state, calendarName));
+  const [calendarEvent, setCalendarEvent] = useState<CalendarEvent>(null);
   const { errors, validators } = useValidators(
     'name',
     'name',
@@ -35,7 +35,11 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .build();
   // eslint-disable-next-line
-  useEffect(() => {}, [initCalendarEvent]);
+  useEffect(() => {
+    if (calendarEvent === null || calendarEvent?.name !== initCalendarEvent?.name) {
+      setCalendarEvent(initCalendarEvent);
+    }
+  }, [initCalendarEvent]);
   // eslint-disable-next-line
 
   const dispatch = useDispatch();
