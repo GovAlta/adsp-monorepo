@@ -38,29 +38,7 @@ import { FormConfigDefinition } from './formConfigDefinition';
 import { useHistory, useParams } from 'react-router-dom';
 
 import { GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components-new';
-
-function getWindowDimensions() {
-  const { innerWidth: width, innerHeight: height } = window;
-  return {
-    width,
-    height,
-  };
-}
-
-export default function useWindowDimensions() {
-  const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
-
-  useEffect(() => {
-    function handleResize() {
-      setWindowDimensions(getWindowDimensions());
-    }
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  return windowDimensions;
-}
+import useWindowDimensions from '@lib/useWindowDimensions';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   return (
@@ -78,11 +56,11 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const { id } = useParams<{ id: string }>();
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
 
-  const { height } = useWindowDimensions();
-
   const isEdit = !!id;
 
   const dispatch = useDispatch();
+
+  const { height } = useWindowDimensions();
 
   useEffect(() => {
     dispatch(fetchKeycloakServiceRoles());

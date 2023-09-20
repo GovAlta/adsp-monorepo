@@ -11,13 +11,14 @@ import { DashboardAside, DashboardDiv, HeadingDiv, ListWrapper } from './styled-
 import SupportLinks from '@components/SupportLinks';
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
 import { serviceVariables } from '../../../../featureFlag';
+import useWindowDimensions from '@lib/useWindowDimensions';
 
 const Dashboard = (): JSX.Element => {
   const [oldWindowSize, setOldWindowSize] = useState(null);
   const [fixedHeights, setFixedHeights] = useState([]);
   const [resetHeight, setResetHeight] = useState(true);
 
-  const size = useWindowSize();
+  const size = useWindowDimensions();
 
   const elementRefs = useRef([]);
 
@@ -209,25 +210,4 @@ const Dashboard = (): JSX.Element => {
   return hasAdminRole ? adminDashboard() : calloutMessage();
 };
 
-function useWindowSize() {
-  const [windowSize, setWindowSize] = useState({
-    width: undefined,
-    height: undefined,
-  });
-  useEffect(() => {
-    function handleResize() {
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    }
-
-    window.addEventListener('resize', handleResize);
-
-    handleResize();
-
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  return windowSize;
-}
 export default Dashboard;
