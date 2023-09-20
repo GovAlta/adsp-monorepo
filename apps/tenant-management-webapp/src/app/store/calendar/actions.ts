@@ -19,6 +19,8 @@ export const FETCH_EVENTS_BY_CALENDAR_SUCCESS_ACTION = 'calendar/events/fetch/ca
 export const CREATE_EVENT_CALENDAR_ACTION = 'calendar/CREATE_EVENT_CALENDAR_ACTION';
 export const CREATE_EVENT_CALENDAR_SUCCESS_ACTION = 'calendar/CREATE_EVENT_CALENDAR_SUCCESS_ACTION';
 
+export const UPDATE_EVENT_CALENDAR_ACTION = 'calendar/UPDATE_EVENT_CALENDAR_ACTION';
+export const UPDATE_EVENT_CALENDAR_SUCCESS_ACTION = 'calendar/UPDATE_EVENT_CALENDAR_SUCCESS_ACTION';
 export interface FetchCalendarsAction {
   type: typeof FETCH_CALENDARS_ACTION;
 }
@@ -84,6 +86,20 @@ export interface CreateEventsByCalendarSuccessAction {
   calendarName: string;
 }
 
+export interface UpdateEventsByCalendarAction {
+  type: typeof UPDATE_EVENT_CALENDAR_ACTION;
+  payload: CalendarEvent;
+  calendarName: string;
+  eventId: string;
+}
+
+export interface UpdateEventsByCalendarSuccessAction {
+  type: typeof UPDATE_EVENT_CALENDAR_SUCCESS_ACTION;
+  payload: CalendarEvent;
+  calendarName: string;
+  eventId: string;
+}
+
 export type ActionTypes =
   | FetchCalendarsAction
   | FetchCalendarsSuccessAction
@@ -95,9 +111,11 @@ export type ActionTypes =
   | FetchEventsByCalendarAction
   | FetchEventsByCalendarSuccessAction
   | CreateEventsByCalendarAction
+  | CreateEventsByCalendarSuccessAction
   | DeleteCalendarEventAction
   | DeleteCalendarEventSuccessAction
-  | CreateEventsByCalendarSuccessAction;
+  | UpdateEventsByCalendarAction
+  | UpdateEventsByCalendarSuccessAction;
 
 export const fetchCalendars = (): FetchCalendarsAction => ({
   type: FETCH_CALENDARS_ACTION,
@@ -174,4 +192,25 @@ export const DeleteCalendarEventSuccess = (
   type: DELETE_CALENDAR_EVENT_SUCCESS_ACTION,
   eventId,
   calendarName,
+});
+export const UpdateEventsByCalendar = (
+  calendarName: string,
+  event: CalendarEvent,
+  eventId: string
+): UpdateEventsByCalendarAction => ({
+  type: UPDATE_EVENT_CALENDAR_ACTION,
+  payload: event,
+  calendarName,
+  eventId,
+});
+
+export const UpdateEventsByCalendarSuccess = (
+  calendarName: string,
+  eventId: string,
+  event: CalendarEvent
+): UpdateEventsByCalendarSuccessAction => ({
+  type: UPDATE_EVENT_CALENDAR_SUCCESS_ACTION,
+  payload: event,
+  calendarName,
+  eventId,
 });

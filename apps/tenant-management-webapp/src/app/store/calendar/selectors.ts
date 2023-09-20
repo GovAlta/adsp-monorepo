@@ -52,10 +52,11 @@ export const selectIsOpenAddEditModal = createSelector(
 export const selectAddModalEvent = createSelector(
   (state) => state,
   selectModalStateByType(EventAddEditModalType),
-  (state, modal: ModalState) => {
+  (_, calendarName: string) => calendarName,
+  (state, modal: ModalState, calendarName: string) => {
     if (!modal.isOpen) return null;
     if (modal.id) {
-      return selectEventById(state, modal.id);
+      return selectEventById(state, calendarName);
     }
     return CalendarEventDefault;
   }
