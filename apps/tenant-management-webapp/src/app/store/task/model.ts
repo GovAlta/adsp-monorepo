@@ -7,6 +7,11 @@ export interface TaskDefinition {
   assignerRoles?: string[];
   workerRoles?: string[];
 }
+export interface QueueTaskDefinition {
+  name: string;
+  description: string;
+  priority: string;
+}
 export interface QueueService {
   queues: Record<string, TaskDefinition>;
   indicator?: Indicator;
