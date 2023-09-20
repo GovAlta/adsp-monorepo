@@ -72,10 +72,12 @@ const TenantManagement = (): JSX.Element => {
   return (
     <AdminLayout>
       <Switch>
+        {/* These paths forces the scrollbars to be hidden when in the editor */}
         <Route path="/admin/services/form/edit"></Route>
         <Route path="/admin/services/pdf/edit"></Route>
         <Route path="/admin/services/task/edit"></Route>
         <Route path="/admin/services/comment/edit"></Route>
+        <Route path="/admin/services/file/edit"></Route>
         <Route path="*">
           <SidebarWrapper>
             <Sidebar type="desktop" />
