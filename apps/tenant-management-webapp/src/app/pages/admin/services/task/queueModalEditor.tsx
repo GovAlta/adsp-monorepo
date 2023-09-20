@@ -30,29 +30,7 @@ import { useValidators } from '@lib/validation/useValidators';
 import { badCharsCheck, wordMaxLengthCheck, isNotEmptyCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { TaskConfigQueue } from './TaskConfigQueue';
 import { SaveFormModal } from '@components/saveModal';
-
-function getWindowDimensions() {
-  const { innerWidth: width, innerHeight: height } = window;
-  return {
-    width,
-    height,
-  };
-}
-
-export default function useWindowDimensions() {
-  const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
-
-  useEffect(() => {
-    function handleResize() {
-      setWindowDimensions(getWindowDimensions());
-    }
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  return windowDimensions;
-}
+import useWindowDimensions from '@lib/useWindowDimensions';
 
 const isTaskUpdated = (prev: TaskDefinition, next: TaskDefinition): boolean => {
   return (
@@ -62,7 +40,6 @@ const isTaskUpdated = (prev: TaskDefinition, next: TaskDefinition): boolean => {
 
 export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
   const dispatch = useDispatch();
-  // const location = useLocation();
   const [queue, setQueue] = useState<TaskDefinition>(defaultTaskQueue);
   const [initialDefinition, setInitialQueue] = useState<TaskDefinition>(defaultTaskQueue);
   const [spinner, setSpinner] = useState<boolean>(false);
