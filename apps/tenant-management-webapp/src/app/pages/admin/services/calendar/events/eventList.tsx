@@ -9,7 +9,7 @@ import { UpdateModalState } from '@store/session/actions';
 import moment from 'moment';
 import { RootState } from '@store/index';
 
-import { DeleteModal } from './deleterModal';
+import { DeleteModal } from './deleteModal';
 
 interface EventListRowProps {
   event: CalendarEvent;
