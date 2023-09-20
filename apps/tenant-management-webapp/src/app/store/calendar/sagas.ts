@@ -162,8 +162,7 @@ export function* CreateEventByCalendar(action: CreateEventsByCalendarAction): Sa
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
-      yield put(CreateEventsByCalendarSuccess(calendarId, response.data?.results));
+      yield put(CreateEventsByCalendarSuccess(calendarId, response.data));
     } catch (err) {
       yield put(ErrorNotification({ message: `Error creating events by calendar: ${err.message}` }));
     }
