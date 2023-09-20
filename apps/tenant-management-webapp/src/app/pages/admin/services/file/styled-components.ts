@@ -193,7 +193,7 @@ export const FileTypesEditorTitle = styled.div`
 `;
 
 export const FinalButtonPadding = styled.div`
-  padding-top: 20px;
+  padding-top: var(--goa-spacing-l);
 `;
 
 export const EditorPadding = styled.div`

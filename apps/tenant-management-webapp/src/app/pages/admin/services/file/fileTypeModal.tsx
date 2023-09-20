@@ -370,12 +370,12 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
             }
           }}
         />
-        {elements.map((e, key) => {
+        {/* {elements.map((e, key) => {
           return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
         })}
         {fetchKeycloakRolesState === ActionState.inProcess && (
           <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
-        )}
+        )} */}
       </GoAModal>
     </ModalOverwrite>
   );

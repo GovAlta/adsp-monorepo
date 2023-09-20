@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import {
   EditorPadding,
-  FileIdItem,
   FileTypeEditor,
   FileTypeEditorTitle,
   FileTypePermissions,
@@ -28,23 +27,23 @@ import { RootState } from '@store/index';
 import { FileTypeDefault, FileTypeItem } from '@store/file/models';
 import { useValidators } from '@lib/validation/useValidators';
 import { badCharsCheck, duplicateNameCheck, isNotEmptyCheck, wordMaxLengthCheck } from '@lib/validation/checkInput';
-import { ConfigServiceRole, ServiceRoleConfig } from '@store/access/models';
+import { ConfigServiceRole } from '@store/access/models';
 import { ClientRoleTable } from '@components/RoleTable';
-import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 import { SaveFormModal } from '@components/saveModal';
 import { ActionState } from '@store/session/models';
-import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
+import { FETCH_KEYCLOAK_SERVICE_ROLES, fetchKeycloakServiceRoles, fetchServiceRoles } from '@store/access/actions';
 import { CreateFileTypeService, FetchFileTypeService, UpdateFileTypeService } from '@store/file/actions';
 import { toKebabName } from '@lib/kebabName';
 import { createSelector } from 'reselect';
 import { selectFileTyeNames } from './fileTypeNew';
+import { FetchRealmRoles } from '@store/tenant/actions';
+import { selectServiceCoreRoles } from '../access/serviceRoles/serviceRoles';
 
 export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
   const dispatch = useDispatch();
   const history = useHistory();
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
-  const tenant = useSelector(tenantRolesAndClients);
   const fileTypeNames = useSelector(selectFileTyeNames);
   const [spinner, setSpinner] = useState<boolean>(false);
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
@@ -65,17 +64,8 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
 
   const keyCloakClientRoles = useSelector(selectServiceKeyCloakRoles);
 
-  const tenantClients = () => {
-    let clients: ServiceRoleConfig = {};
-    if (isEdit && tenant.tenantClients) {
-      clients = tenant.tenantClients;
-    } else {
-      clients = keyCloakClientRoles;
-    }
-
-    return clients;
-  };
-
+  //This is to add padding under the input text controls to space them vertically
+  //out between the text controls and the back and cancel buttons.
   const heightCover = {
     height: height - 720,
   };
@@ -93,15 +83,35 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
   const fileTypes: FileTypeItem[] = useSelector((state: RootState) => state.fileService.fileTypes);
 
   const roles = useSelector((state: RootState) => state.tenant.realmRoles);
-  const roleNames = roles?.map((role) => {
-    return role.name;
-  });
+  const roleNames = roles
+    ?.map((role) => {
+      return role.name;
+    })
+    .sort();
 
-  useEffect(() => {
-    if (!fileTypeNames) {
-      dispatch(FetchFileTypeService());
-    }
-  }, []);
+  // #region UseEffect Hooks
+  //eslint-disable-next-line
+  useEffect(() => {}, [fetchKeycloakRolesState]);
+  // useEffect(() => {
+  //   dispatch(FetchRealmRoles());
+  // }, []);
+
+  // const coreRoles = useSelector(selectServiceCoreRoles);
+  // useEffect(() => {
+  //   dispatch(fetchServiceRoles());
+  //   if (!fileTypeNames) {
+  //     dispatch(FetchFileTypeService());
+  //   }
+  // }, []);
+
+  // // We need to fetch the keyCloak roles, because the editor depends on the
+  // // roles that exists in Redux when the Editor opens up to load up the roles table.
+  // useEffect(() => {
+  //   // Fetch keycloak service roles after the roles from configuration service are fetched
+  //   if (Object.entries(coreRoles).length) {
+  //     dispatch(fetchKeycloakServiceRoles());
+  //   }
+  // }, [coreRoles]);
 
   useEffect(() => {
     const foundFileType = fileTypes?.find((f) => f.id === id);
@@ -112,8 +122,9 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
     }
   }, [fileTypes]);
 
-  const isKeyCloakInProcess = () => fetchKeycloakRolesState === ActionState.inProcess;
-  const { errors, validators } = useValidators(
+  // #endregion End of UseEffect hooks
+
+  const { validators } = useValidators(
     'name',
     'name',
     badCharsCheck,
@@ -124,36 +135,34 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
     .build();
 
   const isFileTypeUpdated = (prev: FileTypeItem, next: FileTypeItem): boolean => {
-    return (
+    const isUpdated =
       prev?.name !== next?.name ||
       prev?.id !== next?.id ||
+      prev?.anonymousRead !== next?.anonymousRead ||
       prev?.readRoles !== next?.readRoles ||
       prev?.updateRoles !== next?.updateRoles ||
-      prev?.rules?.retention !== next?.rules?.retention
-    );
+      prev?.rules?.retention !== next?.rules?.retention ||
+      prev?.rules?.retention?.active !== next?.rules?.retention?.active;
+    return isUpdated;
   };
 
   let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
   let clientElements = null;
 
-  if (!isKeyCloakInProcess()) {
-    const tClients = tenantClients();
-    clientElements =
-      tClients &&
-      Object.entries(tClients).length > 0 &&
-      Object.entries(tClients)
-        .filter(([clientId, config]) => {
-          return (config as ConfigServiceRole).roles.length > 0;
-        })
-        .map(([clientId, config]) => {
-          const roles = (config as ConfigServiceRole).roles;
-          const roleNames = roles?.map((role) => {
-            return role.role;
-          });
-          return { roleNames: roleNames, clientId: clientId, currentElements: null };
+  clientElements =
+    Object.entries(keyCloakClientRoles).length > 0 &&
+    Object.entries(keyCloakClientRoles)
+      .filter(([clientId, config]) => {
+        return (config as ConfigServiceRole).roles.length > 0;
+      })
+      .map(([clientId, config]) => {
+        const roles = (config as ConfigServiceRole).roles;
+        const roleNames = roles?.map((role) => {
+          return role.role;
         });
-    elements = elements.concat(clientElements);
-  }
+        return { roleNames: roleNames, clientId: clientId, currentElements: null };
+      });
+  elements = elements.concat(clientElements);
 
   const ClientRole = ({ roleNames, clientId }) => {
     return (
@@ -186,55 +195,53 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
     );
   };
 
-  const renderTextBoxInputs = () => {
-    return (
-      <>
-        <GoAFormItem error={errors?.['name']} label="Name">
-          <GoAInput
-            type="text"
-            name="name"
-            disabled={isEdit}
-            value={fileType?.name}
-            width="100%"
-            testId={`file-type-modal-name-input`}
-            onChange={(name, value) => {
-              const newFileType = {
-                ...fileType,
-                name: value,
-                id: !isEdit ? toKebabName(value) : fileType.id,
-              };
+  // const renderTextBoxInputs = () => {
+  //   return (
+  //     <>
+  //       <GoAFormItem error={errors?.['name']} label="Name">
+  //         <GoAInput
+  //           type="text"
+  //           name="name"
+  //           disabled={isEdit}
+  //           value={fileType?.name}
+  //           width="50%"
+  //           testId={`file-type-name-input`}
+  //           onChange={(name, value) => {
+  //             const newFileType = {
+  //               ...fileType,
+  //               name: value,
+  //               id: !isEdit ? toKebabName(value) : fileType.id,
+  //             };
 
-              const validations = {
-                name: value,
-              };
-              validators.remove('name');
-              if (!isEdit) {
-                validations['duplicated'] = value;
-              }
-              validators.checkAll(validations);
-              setFileType(newFileType);
-            }}
-            aria-label="name"
-          />
-        </GoAFormItem>
-        <GoAFormItem label="Type ID">
-          <FileIdItem>
-            <GoAInput
-              testId={`file-type-modal-id`}
-              value={fileType?.id || ''}
-              disabled={true}
-              width="100%"
-              name="file-type-id"
-              type="text"
-              aria-label="goa-input-file-type-id"
-              //eslint-disable-next-line
-              onChange={() => {}}
-            />
-          </FileIdItem>
-        </GoAFormItem>
-      </>
-    );
-  };
+  //             const validations = {
+  //               name: value,
+  //             };
+  //             validators.remove('name');
+  //             if (!isEdit) {
+  //               validations['duplicated'] = value;
+  //             }
+  //             validators.checkAll(validations);
+  //             setFileType(newFileType);
+  //           }}
+  //           aria-label="name"
+  //         />
+  //       </GoAFormItem>
+  //       <GoAFormItem label="Type ID">
+  //         <GoAInput
+  //           testId={`file-type-id`}
+  //           value={fileType?.id || ''}
+  //           disabled={true}
+  //           width="50%"
+  //           name="file-type-id"
+  //           type="text"
+  //           aria-label="goa-input-file-type-id"
+  //           //eslint-disable-next-line
+  //           onChange={() => {}}
+  //         />
+  //       </GoAFormItem>
+  //     </>
+  //   );
+  // };
 
   return (
     <FileTypeEditor data-testid="filetype-editor">
@@ -249,7 +256,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
             <hr className="hr-resize" />
 
             {isEdit && <FileTypeConfigDefinition fileType={fileType ?? FileTypeDefault} />}
-            {!isEdit && renderTextBoxInputs()}
+            {/* {!isEdit && renderTextBoxInputs()} */}
             <GoACheckbox
               checked={fileType?.anonymousRead}
               name="file-type-anonymousRead-checkbox"
@@ -343,7 +350,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                     } else {
                       if (!isEdit) {
                         const validations = {
-                          duplicate: fileType.name,
+                          name: fileType.name,
                         };
                         if (!validators.checkAll(validations)) {
                           return;
@@ -370,7 +377,6 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                       fileType.readRoles = cleanReadRoles;
                       fileType.updateRoles = cleanUpdateRoles;
 
-                      console.log('fileType', fileType);
                       if (!isEdit) {
                         dispatch(CreateFileTypeService(fileType));
                       } else {
@@ -400,14 +406,15 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
             </FinalButtonPadding>
           </NameDescriptionDataSchema>
           <FileTypePermissions className="task-permissions-wrapper">
-            <FileTypesEditorTitle>File Type permissions</FileTypesEditorTitle>
+            <FileTypesEditorTitle>Roles</FileTypesEditorTitle>
             <hr className="hr-resize" />
             <ScrollPane>
-              {tenantClients &&
-                elements.map((e, key) => {
-                  return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
-                })}
-              {isKeyCloakInProcess() && <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>}
+              {elements.map((e, key) => {
+                return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+              })}
+              {fetchKeycloakRolesState === ActionState.inProcess && (
+                <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
+              )}
             </ScrollPane>
           </FileTypePermissions>
         </FlexRow>
@@ -430,7 +437,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
           setSpinner(true);
           setSaveModal({ visible: false, closeEditor: true });
         }}
-        saveDisable={isFileTypeUpdated(initialFileType, fileType)}
+        saveDisable={!isFileTypeUpdated(initialFileType, fileType)}
         onCancel={() => {
           setSaveModal({ visible: false, closeEditor: false });
         }}
