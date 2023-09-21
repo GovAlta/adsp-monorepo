@@ -4,14 +4,13 @@ import {
   NotificationTemplateEditorContainer,
   OuterNotificationTemplateEditorContainer,
   Modal,
-  TabletMessage,
   HideTablet,
 } from '../styled-components';
 import { ModalContent } from '../../styled-components';
-import { GoAButton } from '@abgov/react-components-new';
 import { TemplateEditor } from './previewEditor/TemplateEditor';
 import { PreviewTemplate } from './previewEditor/PreviewTemplate';
 import { useHistory } from 'react-router-dom';
+import { TabletMessage } from '@components/TabletMessage';
 
 export const PdfTemplatesEditor = (): JSX.Element => {
   const history = useHistory();
@@ -28,20 +27,7 @@ export const PdfTemplatesEditor = (): JSX.Element => {
       <Modal data-testid="template-form">
         <ModalContent>
           <OuterNotificationTemplateEditorContainer>
-            <TabletMessage>
-              <h1>This editor requires your device to be at least 1440 pixels wide and 630 pixels high</h1>
-              <h3>Please rotate your device</h3>
-              <h3>For the best experience, please use a Desktop</h3>
-              <GoAButton
-                onClick={() => {
-                  goBack();
-                }}
-                testId="go-back-previous"
-                type="tertiary"
-              >
-                Go back
-              </GoAButton>
-            </TabletMessage>
+            <TabletMessage goBack={goBack} />
             <HideTablet>
               <NotificationTemplateEditorContainer>
                 <TemplateEditor />

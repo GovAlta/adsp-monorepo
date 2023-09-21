@@ -48,8 +48,8 @@ internal sealed class TenantMiddleware
         user.Name,
         user.Id,
         tenantId,
-        httpContext.Request.Method,
-        httpContext.Request.Path
+        httpContext.Request.Method?.Replace(Environment.NewLine, "", StringComparison.Ordinal),
+        httpContext.Request.Path.ToString().Replace(Environment.NewLine, "", StringComparison.Ordinal)
       );
     }
 

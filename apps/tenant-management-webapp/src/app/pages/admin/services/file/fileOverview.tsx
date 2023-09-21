@@ -13,6 +13,7 @@ interface FileOverviewProps {
 
 const FileOverview = ({ setActiveEdit, setActiveIndex }: FileOverviewProps): JSX.Element => {
   const dispatch = useDispatch();
+
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(FetchFileMetrics());

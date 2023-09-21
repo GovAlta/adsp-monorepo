@@ -4,8 +4,10 @@ import configureStore from 'redux-mock-store';
 import { fireEvent, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { FILE_INIT } from '@store/file/models';
-import { SESSION_INIT, FileTypeItem } from '@store/session/models';
+import { SESSION_INIT } from '@store/session/models';
+import { FileTypeItem } from '@store/file/models';
 import { FileTypes } from './fileTypes';
+import { MemoryRouter } from 'react-router-dom';
 
 describe('File types tab', () => {
   const mockStore = configureStore([]);
@@ -50,7 +52,9 @@ describe('File types tab', () => {
   it('render file types', () => {
     const { queryByTestId } = render(
       <Provider store={store}>
-        <FileTypes />
+        <MemoryRouter>
+          <FileTypes activeEdit={true} />
+        </MemoryRouter>
       </Provider>
     );
 
@@ -63,7 +67,9 @@ describe('File types tab', () => {
   it('render add file type', () => {
     const { queryByTestId, baseElement } = render(
       <Provider store={store}>
-        <FileTypes />
+        <MemoryRouter>
+          <FileTypes activeEdit={true} />
+        </MemoryRouter>
       </Provider>
     );
 
@@ -80,7 +86,9 @@ describe('File types tab', () => {
   it('check file type table actions', () => {
     const { queryByTestId, baseElement } = render(
       <Provider store={store}>
-        <FileTypes />
+        <MemoryRouter>
+          <FileTypes activeEdit={true} />
+        </MemoryRouter>
       </Provider>
     );
 
