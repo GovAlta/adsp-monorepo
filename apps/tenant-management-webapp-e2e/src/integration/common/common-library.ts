@@ -80,4 +80,21 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
   cy.wait(waitMilliSecs);
 }
 
-export default { tenantAdminDirectURLLogin, tenantAdminMenuItem };
+export function nowPlusMinusMinutes(nowPlusMinusMinutesString) {
+  if (nowPlusMinusMinutesString.match(/Now[+|-][0-9]+mins/g)) {
+    const minutes = nowPlusMinusMinutesString.match(/(?<=Now[+|-])[0-9]+(?=mins)/g);
+    const plusMinus = nowPlusMinusMinutesString.match(/(?<=Now)[+|-](?=[0-9]+mins)/g);
+    const date = new Date();
+    if (plusMinus == '+') {
+      date.setMinutes(date.getMinutes() + Number(minutes));
+    } else if (plusMinus == '-') {
+      date.setMinutes(date.getMinutes() - Number(minutes));
+    } else {
+      assert.fail('Failed to search Criteria string with Now plus or minus a number of minutes.');
+    }
+    const covertedTimeStamp = date.toISOString();
+    return covertedTimeStamp;
+  }
+}
+
+export default { tenantAdminDirectURLLogin, tenantAdminMenuItem, nowPlusMinusMinutes };
