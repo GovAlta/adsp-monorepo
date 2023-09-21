@@ -128,6 +128,10 @@ jobs:
             oc rollout latest dc/$app
             oc rollout status dc/$app
           done
+      - name: Warm up doc service
+        run: |
+          sleep 10 &&
+          curl https://api.adsp-dev.gov.ab.ca/autotest/?urls.primaryName=Calendar%20service
 
   devSmokeTest:
     runs-on: ubuntu-20.04
@@ -193,6 +197,10 @@ jobs:
             oc rollout latest dc/$app
             oc rollout status dc/$app
           done
+      - name: Warm up doc service
+        run: |
+          sleep 10 &&
+          curl https://api.adsp-uat.alberta.ca/platform/?urls.primaryName=Calendar%20service
 
   stagingSmokeTest:
     runs-on: ubuntu-20.04
