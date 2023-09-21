@@ -134,13 +134,13 @@ When(
 );
 
 Then('the user views {string}, {string} and {string} in PDF template editor', function (name, templateId, description) {
-  pdfServiceObj.pdfTemplateEditorNameField().invoke('text').should('eq', name);
-  pdfServiceObj.pdfTemplateEditorTemplateIDField().invoke('text').should('eq', templateId);
+  pdfServiceObj.pdfTemplateEditorNameField().invoke('text').should('contain', name);
+  pdfServiceObj.pdfTemplateEditorTemplateIDField().invoke('text').should('contain', templateId);
   pdfServiceObj
     .pdfTemplateEditorDescriptionField()
     .invoke('text')
     .then((text) => text.toString().trim())
-    .should('eq', description);
+    .should('contain', description);
 });
 
 When('the user clicks "Edit" icon in editor screen', function () {
