@@ -30,6 +30,7 @@ const EventListRow = ({ event, calendarName }: EventListRowProps): JSX.Element =
   const dispatch = useDispatch();
   return (
     <tr>
+      <td>{event?.name}</td>
       <td>
         <div>
           <span style={dateTitleSpanStyle}>From</span>: {eventDateFormat(event.start)}
@@ -104,6 +105,7 @@ export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
       <GoATable testId="calendar-selected-event-table">
         <thead>
           <tr>
+            <th>Name</th>
             <th>Event time</th>
             <th>Description</th>
             <th>Actions</th>
