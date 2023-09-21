@@ -843,3 +843,61 @@ Then('the user uncheck Active retention policy checkbox', function () {
   cy.wait(1000); // Wait for modal
   fileServiceObj.fileRetentionCheckBox().shadow().find('.goa-checkbox-container').click({ force: true });
 });
+
+Then('the user views uploaded files page', function () {
+  fileServiceObj.uploadedFilesPageTitle().should('exist');
+});
+
+When('the user searches {string} on Uploaded files page', function (fileName) {
+  fileServiceObj
+    .uploadedFilesSearchFileName()
+    .shadow()
+    .find('input')
+    .clear()
+    .type(fileName, { delay: 100, force: true });
+  fileServiceObj.uploadedFilesSearchButton().shadow().find('button').click({ force: true });
+  cy.wait(4000);
+});
+
+When('the user clicks download button for {string}', function (fileName) {
+  fileServiceObj.uploadedFilesDownloadButton(fileName).shadow().find('button').click({ force: true });
+});
+
+When(
+  'a developer user sends a file last access request with {string}, {string}, {string}',
+  function (endPoint, lastAccessAfter, lastAccessBefore) {
+    if (lastAccessAfter.match(/Now[+|-][0-9]+mins/g)) {
+      lastAccessAfter = commonlib.nowPlusMinusMinutes(lastAccessAfter);
+    }
+    if (lastAccessBefore.match(/Now[+|-][0-9]+mins/g)) {
+      lastAccessBefore = commonlib.nowPlusMinusMinutes(lastAccessBefore);
+    }
+    const requestURL =
+      Cypress.env('fileApi') +
+      endPoint +
+      '?criteria={"lastAccessedAfter":"' +
+      lastAccessAfter +
+      '", "lastAccessedBefore":"' +
+      lastAccessBefore +
+      '"}';
+    cy.request({
+      method: 'GET',
+      url: requestURL,
+      auth: {
+        bearer: Cypress.env('autotest-admin-token'),
+      },
+      failOnStatusCode: false,
+    }).then(function (response) {
+      responseObj = response;
+    });
+  }
+);
+
+Then(
+  '{string} is returned for the file last access request as well as {string} property for {string}',
+  function (statusCode, property, fileName) {
+    expect(responseObj.status).to.eq(Number(statusCode));
+    expect(responseObj.body.results[0].filename).to.eq(fileName);
+    expect(responseObj.body.results[0].lastAccessed).to.not.be.empty;
+  }
+);
