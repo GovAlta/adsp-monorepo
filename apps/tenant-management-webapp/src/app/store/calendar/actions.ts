@@ -195,8 +195,8 @@ export const DeleteCalendarEventSuccess = (
 });
 export const UpdateEventsByCalendar = (
   calendarName: string,
-  event: CalendarEvent,
-  eventId: string
+  eventId: string,
+  event: CalendarEvent
 ): UpdateEventsByCalendarAction => ({
   type: UPDATE_EVENT_CALENDAR_ACTION,
   payload: event,

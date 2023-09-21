@@ -202,7 +202,7 @@ export function* UpdateEventByCalendar(action: UpdateEventsByCalendarAction): Sa
         }
       );
 
-      yield put(UpdateEventsByCalendarSuccess(calendarId, action.eventId, response.data?.results));
+      yield put(UpdateEventsByCalendarSuccess(calendarId, action.eventId, response.data));
     } catch (err) {
       yield put(ErrorNotification({ message: `Error updating events by calendar: ${err.message}` }));
     }

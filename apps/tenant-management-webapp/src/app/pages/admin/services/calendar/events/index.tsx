@@ -43,7 +43,6 @@ export const CalendarEvents = (): JSX.Element => {
   }, []);
 
   const calendars = useSelector(selectCalendars);
-  /*calendarName={selectedCalendar} />*/
   return (
     <>
       <SelectCalendarHeader>Please select a calendar</SelectCalendarHeader>

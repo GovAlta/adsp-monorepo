@@ -75,11 +75,13 @@ export const selectSelectedCalendarEventNames = createSelector(
   (state: RootState) => state,
   (_, calendarName: string) => calendarName,
   (state, calendarName: string) => {
-    const events = selectSelectedCalendarEvents(state, calendarName);
-    if (events && events?.length > 0) {
-      return events.map((e) => e?.name);
+    if (calendarName) {
+      const events = selectSelectedCalendarEvents(state, calendarName);
+      if (events && events?.length > 0) {
+        return events.map((e) => e?.name);
+      }
+      return [];
     }
-
     return [];
   }
 );

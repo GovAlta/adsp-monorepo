@@ -9,14 +9,14 @@ import {
   GoAInputDateTime,
   GoACheckbox,
 } from '@abgov/react-components-new';
-import { selectAddModalEvent } from '@store/calendar/selectors';
+import { selectAddModalEvent, selectSelectedCalendarEventNames } from '@store/calendar/selectors';
 import { useSelector, useDispatch } from 'react-redux';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, duplicateNameCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { ResetModalState } from '@store/session/actions';
 import { CheckBoxWrapper } from '../styled-components';
 import { CalendarEvent } from '@store/calendar/models';
-import { CreateEventsByCalendar } from '@store/calendar/actions';
+import { CreateEventsByCalendar, UpdateEventsByCalendar } from '@store/calendar/actions';
 
 interface EventAddEditModalProps {
   calendarName: string;
@@ -24,6 +24,8 @@ interface EventAddEditModalProps {
 export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX.Element => {
   const initCalendarEvent = useSelector((state) => selectAddModalEvent(state, calendarName));
   const [calendarEvent, setCalendarEvent] = useState<CalendarEvent>(null);
+  const calendarEvents = useSelector((state) => selectSelectedCalendarEventNames(state, calendarName));
+
   const { errors, validators } = useValidators(
     'name',
     'name',
@@ -31,7 +33,10 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
     wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
   )
+    .add('duplicated', 'name', badCharsCheck, duplicateNameCheck(calendarEvents, 'Calendar Events'))
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
+    .add('start', 'start', isNotEmptyCheck('start'))
+    .add('end', 'end', isNotEmptyCheck('end'))
     .build();
   // eslint-disable-next-line
   useEffect(() => {
@@ -40,11 +45,13 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
     }
   }, [initCalendarEvent]);
   // eslint-disable-next-line
-
+  const isEdit = !!calendarEvent?.id;
+  const modalTitle = `${isEdit ? 'Edit' : 'Add'} calendar event`;
   const dispatch = useDispatch();
   return (
     <GoAModal
       open={initCalendarEvent !== null}
+      heading={modalTitle}
       actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
@@ -61,9 +68,21 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             testId="calendar-modal-save"
             disabled={validators.haveErrors()}
             onClick={() => {
-              console.log('calendarEvent', calendarEvent);
-              dispatch(CreateEventsByCalendar(calendarName, calendarEvent));
+              const validations = {
+                name: calendarEvent.name,
+                start: calendarEvent.start,
+                end: calendarEvent.end,
+              };
+              if (!validators.checkAll(validations)) {
+                return;
+              }
+              if (isEdit) {
+                dispatch(UpdateEventsByCalendar(calendarName, calendarEvent.id.toString(), calendarEvent));
+              } else {
+                dispatch(CreateEventsByCalendar(calendarName, calendarEvent));
+              }
               dispatch(ResetModalState());
+              validators.clear();
             }}
           >
             Save
@@ -97,9 +116,8 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           aria-label="description"
           width="100%"
           onChange={(name, value) => {
-            const description = value;
             validators.remove('description');
-            validators['description'].check(description);
+            validators['description'].check(value);
             setCalendarEvent({ ...calendarEvent, description: value });
           }}
         />
@@ -126,24 +144,28 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
       </CheckBoxWrapper>
       {!calendarEvent?.isAllDay && (
         <div>
-          <GoAFormItem label="Start time">
+          <GoAFormItem label="Start time" error={errors?.['start']}>
             <GoAInputDateTime
               name="Start time"
               value={new Date().toISOString()}
               width="100%"
               testId="calendar-event-modal-start-time-input"
               onChange={(name, value) => {
+                validators.remove('start');
+                validators['start'].check(value);
                 setCalendarEvent({ ...calendarEvent, start: new Date(value).toISOString() });
               }}
             />
           </GoAFormItem>
-          <GoAFormItem label="End time">
+          <GoAFormItem label="End time" error={errors?.['end']}>
             <GoAInputDateTime
               name="dateTimeExample"
               value={new Date()}
               width="100%"
               testId="calendar-event-modal-end-time-input"
               onChange={(name, value) => {
+                validators.remove('end');
+                validators['end'].check(value);
                 setCalendarEvent({ ...calendarEvent, end: new Date(value).toISOString() });
               }}
             />
