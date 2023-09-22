@@ -18,6 +18,8 @@ import {
 } from './styled-components';
 import { DeleteModal } from './deleteModal';
 import DataTable from '@components/DataTable';
+import { GoACircularProgress } from '@abgov/react-components-new';
+import { ProgressWrapper } from './styled-components';
 
 interface EventListRowProps {
   event: CalendarEvent;
@@ -135,7 +137,15 @@ export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
   // eslint-disable-next-line
   useEffect(() => {}, [selectedEvents]);
 
-  if (!selectedEvents || selectedEvents.length === 0) {
+  if (!selectedEvents) {
+    return (
+      <ProgressWrapper>
+        <GoACircularProgress visible={true} size="small" />
+      </ProgressWrapper>
+    );
+  }
+
+  if (selectedEvents && selectedEvents.length === 0) {
     return <>{renderNoItem('Calendar events')}</>;
   }
 

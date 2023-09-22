@@ -13,10 +13,10 @@ export const EventDetail = styled.div`
   background: #f3f3f3;
   white-space: pre-wrap;
   font-family: monospace;
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--goa-font-size-1);
+  line-height: var(--goa-spacing-m);
   text-align: left;
-  padding: 16px;
+  padding: var(--goa-spacing-m);
 `;
 
 export const EventDetailRow = styled.tr`
@@ -24,6 +24,10 @@ export const EventDetailRow = styled.tr`
   .event-name: {
     font-size: var(--goa-font-size-7);
   }
+`;
+
+export const ProgressWrapper = styled.div`
+  margin-left: 30%;
 `;
 
 export const EventDetailTd = styled.td`
