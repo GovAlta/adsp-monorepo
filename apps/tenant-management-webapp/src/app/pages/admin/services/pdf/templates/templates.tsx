@@ -12,13 +12,14 @@ import { useHistory } from 'react-router-dom';
 import { useRouteMatch } from 'react-router';
 import { DeleteModal } from '@components/DeleteModal';
 import { BodyGlobalStyles } from '../../styled-components';
-
+import { isEmpty } from 'lodash';
 interface PdfTemplatesProps {
   openAddTemplate: boolean;
 }
 export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
   const [openAddPdfTemplate, setOpenAddPdfTemplate] = useState(false);
   const openEditor = useSelector((state: RootState) => state.pdf.openEditor);
+
   const history = useHistory();
   const { url } = useRouteMatch();
 
@@ -58,8 +59,11 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
       setOpenAddPdfTemplate(true);
     }
   }, [openAddTemplate]);
+
   useEffect(() => {
-    dispatch(getPdfTemplates());
+    if (isEmpty(pdfTemplates)) {
+      dispatch(getPdfTemplates());
+    }
   }, []);
 
   // eslint-disable-next-line
