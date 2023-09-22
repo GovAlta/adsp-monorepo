@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import FileOverview from './fileOverview';
 import { FileTypes } from './fileTypes';
@@ -24,18 +24,27 @@ const HelpLink = (): JSX.Element => {
 export const File: FunctionComponent = () => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [activateEditState, setActivateEditState] = useState<boolean>(false);
+  const tenantName = useSelector((state: RootState) => state.tenant?.name);
 
   const activateEdit = (edit: boolean) => {
     setActiveIndex(1);
     setActivateEditState(edit);
   };
 
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, []);
+
+  const searchParams = new URLSearchParams(document.location.search);
+
+  const fileTypes = tenantName && searchParams.get('fileTypes');
+
   return (
     <Page>
       <Main>
         <>
           <h1 data-testid="file-title">File service</h1>
-          <Tabs activeIndex={activeIndex} data-testid="file-tabs">
+          <Tabs activeIndex={(fileTypes === 'true' ? 1 : 0) || activeIndex} data-testid="file-tabs">
             <Tab label="Overview" data-testid="file-overview-tab">
               <FileOverview setActiveIndex={setActiveIndex} setActiveEdit={activateEdit} />
             </Tab>

@@ -5,6 +5,7 @@ import { GoAButton } from '@abgov/react-components-new';
 import { FileMetrics } from './metrics';
 import { FetchFileMetrics } from '@store/file/actions';
 import { OverviewLayout } from '@components/Overview';
+import { useHistory } from 'react-router-dom';
 
 interface FileOverviewProps {
   setActiveEdit: (boolean) => void;
@@ -13,7 +14,7 @@ interface FileOverviewProps {
 
 const FileOverview = ({ setActiveEdit, setActiveIndex }: FileOverviewProps): JSX.Element => {
   const dispatch = useDispatch();
-
+  const history = useHistory();
   useEffect(() => {
     dispatch(FetchRealmRoles());
     dispatch(FetchFileMetrics());
@@ -46,6 +47,10 @@ const FileOverview = ({ setActiveEdit, setActiveIndex }: FileOverviewProps): JSX
           testId="add-file-type-btn"
           onClick={() => {
             setActiveEdit(true);
+            history.push({
+              pathname: '/admin/services/file',
+              search: '?fileTypes=true',
+            });
           }}
         >
           Add file type

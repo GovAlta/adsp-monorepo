@@ -1,20 +1,24 @@
 import styled from 'styled-components';
 
 export const RetentionPolicyLabel = styled.label`
-  font-size: 24px !important;
-  line-height: 32px;
-  margin-top: 24px;
-  font-weight: normal !important;
+  font-size: var(--goa-fontSize-7) !important;
+  line-height: var(--goa-line-height-4);
+  margin-top: var(--goa-spacing-l);
+  font-weight: var(--goa-font-weight-regular) !important;
 `;
 
 export const FileIdItem = styled.div`
-  background: #f1f1f1;
+  background: var(--goa-color-greyscale-100);
   .goa-input {
-    background: #f1f1f1 !important;
+    background: var(--goa-color-greyscale-100) !important;
   }
   .input--goa {
-    background: #f1f1f1 !important;
+    background: var(--goa-color-greyscale-100) !important;
   }
+`;
+
+export const MakePublicPadding = styled.div`
+  margin-bottom: var(--goa-spacing-xl);
 `;
 export const ModalOverwrite = styled.div`
   .modal {
@@ -24,25 +28,25 @@ export const ModalOverwrite = styled.div`
   }
 
   .title {
-    font-weight: 700;
-    font-size: var(--fs-lg);
+    font-weight: var(--goa-font-weight-bold);
+    font-size: var(--goa-font-size-5);
     margin-top: 15px;
   }
 `;
 
 export const AnonymousReadWrapper = styled.div`
-  line-height: 2.5em;
+  line-height: var(--goa-line-height-5);
   display: flex;
 `;
 
 export const RetentionPolicyWrapper = styled.div`
-  margin-top: 12px;
-  margin-bottom: 12px;
+  margin-top: var(--goa-spacing-s);
+  margin-bottom: var(--goa-spacing-s);
 `;
 
 export const TextLoadingIndicator = styled.div`
   animation: blinker 1s linear infinite;
-  font-size: 16px;
+  font-size: var(--goa-font-size-3);
   font-style: italic;
   text-align: center;
   @keyframes blinker {
@@ -56,14 +60,21 @@ export const InfoCircleWrapper = styled.div`
   position: relative;
   top: 3px;
   transform: scale(1.2);
-  margin-left: 0.5rem;
+  margin-left: var(--goa-spacing-xs);
   display: inline-block;
+  z-index: 1000;
+`;
+
+export const RetentionPeriodText = styled.div`
+  font-weight: var(--goa-font-weight-bold);
+  font-size: var(--goa-font-size-4);
+  line-height: var(--goa-line-height-3);
 `;
 
 export const RetentionToolTip = styled.p`
-  font-size: 16px !important;
+  font-size: var(--goa-font-size-3) !important;
   font-weight: normal;
-  line-height: 1.5rem;
+  line-height: var(--goa-line-height-2);
   z-index: 1000;
 `;
 
@@ -81,9 +92,9 @@ export const FileTypeEditor = styled.div`
 `;
 
 export const FileTypeEditorTitle = styled.div`
-  font-size: var(--fs-xl);
-  line-height: var(--lh-lg);
-  font-weight: var(--fw-regular);
+  font-size: var(--goa-font-size-7);
+  line-height: var(--goa-line-height-4);
+  font-weight: var(--goa-font-weight-regular);
 `;
 
 export const SpinnerPadding = styled.div`
@@ -115,22 +126,6 @@ export const HideTablet = styled.div`
   }
 `;
 
-export const TabletMessage = styled.div`
-  h1,
-  h3 {
-    text-align: center;
-    margin: 40px;
-  }
-
-  text-align: center !important;
-
-  @media (min-height: 630px) {
-    @media (min-width: 1440px) {
-      display: none;
-    }
-  }
-`;
-
 export const Modal = styled.div`
   display: block;
   position: fixed;
@@ -143,8 +138,8 @@ export const FileTypeTemplateEditorContainer = styled.div`
   display: flex;
   flex: auto;
   margin-top: 6px;
-  padding-left: 3rem;
-  padding-right: 3rem;
+  padding-left: var(--goa-spacing-2xl);
+  padding-right: var(--goa-spacing-2xl);
   width: 100%;
   height: 100vh;
   overflow: hidden;
@@ -164,7 +159,7 @@ export const FlexRow = styled.div`
 
 export const NameDescriptionDataSchema = styled.div`
   flex: 6;
-  padding-right: 3rem;
+  padding-right: var(--goa-spacing-2xl);
 `;
 
 export const FileTypePermissions = styled.div`
@@ -177,13 +172,13 @@ export const ScrollPane = styled.div`
 `;
 
 export const FileTypesEditorTitle = styled.div`
-  font-size: var(--fs-xl);
-  line-height: var(--lh-lg);
-  font-weight: var(--fw-regular);
+  font-size: var(--goa-font-size-7);
+  line-height: var(--goa-line-height-4);
+  font-weight: var(--goa-font-weight-regular);
 `;
 
 export const FinalButtonPadding = styled.div`
-  padding-top: var(--goa-spacing-l);
+  padding-top: var(--goa-spacing-xs);
 `;
 
 export const EditorPadding = styled.div`
@@ -200,20 +195,20 @@ export const EditorPadding = styled.div`
 `;
 
 export const ConfigTombStoneWrapper = styled.div`
-  margin-top: 2rem;
-  font-size: 16px;
-  color: #333333;
+  margin-top: var(--goa-spacing-xl);
+  margin-bottom: var(--goa-spacing-xl);
+  font-size: var(--goa-fontSize-3);
+  color: var(--goa-color-greyscale-black);
   padding-left: 3px;
   border: solid 1px #dcdcdc;
   border-radius: 3px;
   height: 7.375rem;
-  background-color: #f1f1f1;
-  padding-right: 1rem;
-  border-bottom: solid 16px #f1f1f1;
+  background-color: var(--goa-color-greyscale-100);
+  padding-right: var(--goa-spacing-m);
+  border-bottom: solid 16px var(--goa-color-greyscale-100);
   border: solid 1px #dcdcdc;
 
   display: flex;
-  margin-bottom: 1.5rem;
   .nameColumn {
     width: 180px;
     float: left;
@@ -232,7 +227,7 @@ export const ConfigTombStoneWrapper = styled.div`
     overflow: hidden;
   }
   .overflowContainer {
-    border-bottom: 16px solid #f1f1f1;
+    border-bottom: 16px solid var(--goa-color-greyscale-100);
     height: 64px;
     overflow: hidden;
     vertical-align: top;
@@ -241,10 +236,10 @@ export const ConfigTombStoneWrapper = styled.div`
     width: 56px;
     float: right;
     min-width: 50px;
-    margin-top: 0.5rem;
+    margin-top: var(--goa-spacing-xs);
   }
   .separator {
-    margin-top: 1rem;
+    margin-top: var(--goa-spacing-m);
     width: 1px;
     height: 5.375rem;
 
@@ -254,10 +249,10 @@ export const ConfigTombStoneWrapper = styled.div`
     overflow: hidden;
   }
   table {
-    margin: 1rem 1rem 1rem 1rem;
+    margin: var(--goa-spacing-m) var(--goa-spacing-m) var(--goa-spacing-m) var(--goa-spacing-m);
   }
   th {
     text-align: left;
-    padding-bottom: 0.5rem;
+    padding-bottom: var(--goa-spacing-xs);
   }
 `;

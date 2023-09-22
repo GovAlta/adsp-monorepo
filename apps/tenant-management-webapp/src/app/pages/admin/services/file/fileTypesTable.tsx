@@ -114,23 +114,15 @@ const CoreFileTypeTableRow = ({
 export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTableProps): JSX.Element => {
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const editFileType = fileTypes.find((x) => x && x.id === editId);
   const deleteFileType = fileTypes.find((x) => x && x.id === deleteId);
   const { url } = useRouteMatch();
   const history = useHistory();
-
-  const editModalProps = {
-    isOpen: !!editId,
-    fileType: editFileType,
-    onCancel: () => {
-      setEditId(null);
-    },
-  };
 
   const deleteModalProps = {
     isOpen: !!deleteId,
     fileType: deleteFileType,
     onCancel: () => {
+      document.body.style.overflow = 'unset';
       setDeleteId(null);
     },
   };
@@ -216,7 +208,6 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
           </TableLayout>
         </div>
       )}
-      <FileTypeModal {...{ ...editModalProps, roles, type: 'edit' }} />
       <FileTypeDeleteModal {...deleteModalProps} />
     </div>
   );
