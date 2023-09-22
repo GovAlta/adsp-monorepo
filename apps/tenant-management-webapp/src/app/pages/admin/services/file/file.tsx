@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { FunctionComponent, useState } from 'react';
 import { useSelector } from 'react-redux';
 import FileOverview from './fileOverview';
 import { FileTypes } from './fileTypes';
@@ -23,12 +23,11 @@ const HelpLink = (): JSX.Element => {
 };
 
 export const File: FunctionComponent = () => {
-  const [activeIndex, setActiveIndex] = useState<number>(0);
   const [activateEditState, setActivateEditState] = useState<boolean>(false);
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const [openAddFileType, setOpenAddFileType] = useState(false);
+
   const activateEdit = (edit: boolean) => {
-    setActiveIndex(1);
     setActivateEditState(edit);
   };
 
