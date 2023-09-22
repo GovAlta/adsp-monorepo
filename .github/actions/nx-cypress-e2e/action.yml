@@ -46,7 +46,7 @@ runs:
       uses: cypress-io/github-action@v5
       with:
         install-command: npm ci
-        command: npx nx e2e ${{ inputs.app }}-e2e --dev-server-target='' --browser chrome --cypress-config="apps/${{ inputs.app }}-e2e/cypress.${{ inputs.environment }}.json"
+        command: npx nx e2e ${{ inputs.app }}-e2e --dev-server-target='' --browser chrome --headed --cypress-config="apps/${{ inputs.app }}-e2e/cypress.${{ inputs.environment }}.json"
     - if: ${{ always() }}
       shell: bash
       run: |
