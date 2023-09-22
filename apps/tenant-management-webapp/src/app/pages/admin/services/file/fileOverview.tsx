@@ -5,14 +5,16 @@ import { GoAButton } from '@abgov/react-components-new';
 import { FileMetrics } from './metrics';
 import { FetchFileMetrics } from '@store/file/actions';
 import { OverviewLayout } from '@components/Overview';
+import { useHistory } from 'react-router-dom';
 
 interface FileOverviewProps {
   setActiveEdit: (boolean) => void;
-  setActiveIndex: (index: number) => void;
+  setOpenAddFileType: (boolean) => void;
 }
 
-const FileOverview = ({ setActiveEdit, setActiveIndex }: FileOverviewProps): JSX.Element => {
+const FileOverview = ({ setOpenAddFileType, setActiveEdit }: FileOverviewProps): JSX.Element => {
   const dispatch = useDispatch();
+  const history = useHistory();
 
   useEffect(() => {
     dispatch(FetchRealmRoles());
@@ -21,9 +23,14 @@ const FileOverview = ({ setActiveEdit, setActiveIndex }: FileOverviewProps): JSX
 
   useEffect(() => {
     setActiveEdit(false);
-    setActiveIndex(0);
   }, []);
 
+  useEffect(() => {
+    setOpenAddFileType(false);
+    history.push({
+      pathname: '/admin/services/file',
+    });
+  }, []);
   return (
     <OverviewLayout
       description={
@@ -45,7 +52,12 @@ const FileOverview = ({ setActiveEdit, setActiveIndex }: FileOverviewProps): JSX
         <GoAButton
           testId="add-file-type-btn"
           onClick={() => {
+            setOpenAddFileType(true);
             setActiveEdit(true);
+            history.push({
+              pathname: '/admin/services/file',
+              search: '?fileTypes=true',
+            });
           }}
         >
           Add file type

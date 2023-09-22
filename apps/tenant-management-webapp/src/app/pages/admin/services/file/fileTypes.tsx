@@ -12,6 +12,7 @@ import styled from 'styled-components';
 import { createSelector } from 'reselect';
 import { fetchServiceRoles, fetchKeycloakServiceRoles } from '@store/access/actions';
 import { Role } from '@store/tenant/models';
+import { BodyGlobalStyles } from '../styled-components';
 
 const NoContentContainer = styled.div`
   margin-bottom: 2em;
@@ -19,6 +20,7 @@ const NoContentContainer = styled.div`
 
 interface AddFileTypeProps {
   activeEdit: boolean;
+  openAddFileType: boolean;
 }
 
 export const FileTypes = ({ activeEdit }: AddFileTypeProps): JSX.Element => {
@@ -76,21 +78,20 @@ const FileTypesTableContainer = ({ roles }: FileTypesTableContainerProps): JSX.E
   useEffect(() => {}, [indicator]);
 
   return (
-    <div>
-      <div>
-        {!indicator.show && fileTypes && fileTypes.length === 0 && (
-          <NoContentContainer>{renderNoItem('file type')}</NoContentContainer>
-        )}
-        {indicator.show && <PageIndicator />}
-        {!indicator.show && fileTypes && (
-          <FileTypeTable
-            roles={roles}
-            fileTypes={fileTypes}
-            coreFileTypes={coreFileTypes}
-            data-testid="file-type-table"
-          />
-        )}
-      </div>
-    </div>
+    <>
+      <BodyGlobalStyles hideOverflow={false} />
+      {!indicator.show && fileTypes && fileTypes.length === 0 && (
+        <NoContentContainer>{renderNoItem('file type')}</NoContentContainer>
+      )}
+      {indicator.show && <PageIndicator />}
+      {!indicator.show && fileTypes && (
+        <FileTypeTable
+          roles={roles}
+          fileTypes={fileTypes}
+          coreFileTypes={coreFileTypes}
+          data-testid="file-type-table"
+        />
+      )}
+    </>
   );
 };

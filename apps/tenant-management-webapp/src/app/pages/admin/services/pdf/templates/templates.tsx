@@ -11,6 +11,7 @@ import { defaultPdfTemplate } from '@store/pdf/model';
 import { useHistory } from 'react-router-dom';
 import { useRouteMatch } from 'react-router';
 import { DeleteModal } from '@components/DeleteModal';
+import { BodyGlobalStyles } from '../../styled-components';
 
 interface PdfTemplatesProps {
   openAddTemplate: boolean;
@@ -68,6 +69,7 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
     <>
       <div>
         <br />
+        <BodyGlobalStyles hideOverflow={false} />
         <GoAButton
           testId="add-template"
           onClick={() => {
