@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import DataTable from '@components/DataTable';
 import { Role } from '@store/tenant/models';
-import { FileTypeModal } from './fileTypeModal';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { FileTypeDeleteModal } from './fileTypeDeleteModal';
 import styled from 'styled-components';
@@ -114,18 +113,9 @@ const CoreFileTypeTableRow = ({
 export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTableProps): JSX.Element => {
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const editFileType = fileTypes.find((x) => x && x.id === editId);
   const deleteFileType = fileTypes.find((x) => x && x.id === deleteId);
   const { url } = useRouteMatch();
   const history = useHistory();
-
-  const editModalProps = {
-    isOpen: !!editId,
-    fileType: editFileType,
-    onCancel: () => {
-      setEditId(null);
-    },
-  };
 
   const deleteModalProps = {
     isOpen: !!deleteId,
@@ -216,7 +206,6 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
           </TableLayout>
         </div>
       )}
-      <FileTypeModal {...{ ...editModalProps, roles, type: 'edit' }} />
       <FileTypeDeleteModal {...deleteModalProps} />
     </div>
   );

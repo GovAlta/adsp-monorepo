@@ -9,7 +9,9 @@ import {
   FinalButtonPadding,
   FlexRow,
   InfoCircleWrapper,
+  MakePublicPadding,
   NameDescriptionDataSchema,
+  RetentionPeriodText,
   RetentionPolicyLabel,
   RetentionPolicyWrapper,
   RetentionToolTip,
@@ -20,7 +22,8 @@ import {
 import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
 import { useWindowDimensions } from '@lib/useWindowDimensions';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAButton, GoAPageLoader } from '@abgov/react-components';
+import { GoAPageLoader } from '@abgov/react-components';
+import { GoAButton } from '@abgov/react-components-new';
 import { FileTypeConfigDefinition } from './fileTypeConfigDefinition';
 import { GoAButtonGroup, GoACheckbox, GoAFormItem, GoAInput, GoAPopover } from '@abgov/react-components-new';
 import { RootState } from '@store/index';
@@ -32,7 +35,12 @@ import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { ActionState } from '@store/session/models';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
-import { CreateFileTypeService, UpdateFileTypeService } from '@store/file/actions';
+import {
+  CreateFileTypeService,
+  FetchFileTypeService,
+  FetchFilesService,
+  UpdateFileTypeService,
+} from '@store/file/actions';
 import { createSelector } from 'reselect';
 import { selectFileTyeNames } from './fileTypeNew';
 
@@ -64,12 +72,13 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
   //This is to add padding under the input text controls to space them vertically
   //out between the text controls and the back and cancel buttons.
   const heightCover = {
-    height: height - 720,
+    height: height - 740,
   };
 
   const close = () => {
     history.push({
       pathname: '/admin/services/file',
+      search: 'fileTypes=true',
     });
   };
 
@@ -80,13 +89,15 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
   const fileTypes: FileTypeItem[] = useSelector((state: RootState) => state.fileService.fileTypes);
 
   const roles = useSelector((state: RootState) => state.tenant.realmRoles);
-  const roleNames = roles
-    ?.map((role) => {
-      return role.name;
-    })
-    .sort();
+  const roleNames = roles?.map((role) => {
+    return role.name;
+  });
 
-  //eslint-disable-next-line
+  useEffect(() => {
+    dispatch(FetchFilesService());
+    dispatch(FetchFileTypeService());
+  }, []);
+
   useEffect(() => {
     const foundFileType = fileTypes?.find((f) => f.id === id);
     if (id && foundFileType) {
@@ -96,6 +107,11 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
     }
   }, [fileTypes]);
 
+  useEffect(() => {
+    if (saveModal.closeEditor) {
+      close();
+    }
+  }, [saveModal]);
   const { validators } = useValidators(
     'name',
     'name',
@@ -176,23 +192,25 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
       ) : (
         <FlexRow>
           <NameDescriptionDataSchema>
-            <FileTypeEditorTitle>File Type</FileTypeEditorTitle>
+            <FileTypeEditorTitle>File type</FileTypeEditorTitle>
             <hr className="hr-resize" />
 
             {isEdit && <FileTypeConfigDefinition fileType={fileType ?? FileTypeDefault} />}
-            <GoACheckbox
-              checked={fileType?.anonymousRead}
-              name="file-type-anonymousRead-checkbox"
-              testId="file-type-anonymousRead-checkbox"
-              ariaLabel={`file-type-anonymousRead-checkbox`}
-              onChange={() => {
-                setFileType({
-                  ...fileType,
-                  anonymousRead: !fileType.anonymousRead,
-                });
-              }}
-              text={'Make public (read only)'}
-            />
+            <MakePublicPadding>
+              <GoACheckbox
+                checked={fileType?.anonymousRead}
+                name="file-type-anonymousRead-checkbox"
+                testId="file-type-anonymousRead-checkbox"
+                ariaLabel={`file-type-anonymousRead-checkbox`}
+                onChange={() => {
+                  setFileType({
+                    ...fileType,
+                    anonymousRead: !fileType.anonymousRead,
+                  });
+                }}
+                text={'Make public (read only)'}
+              />
+            </MakePublicPadding>
 
             <GoAFormItem label="">
               <RetentionPolicyLabel>
@@ -224,7 +242,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                   }}
                   text={'Active retention policy'}
                 />
-                <b>Enter retention period</b>
+                <RetentionPeriodText>Enter retention period</RetentionPeriodText>
               </RetentionPolicyWrapper>
             </GoAFormItem>
             <GoAInput
@@ -251,7 +269,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
               disabled={fileType?.rules?.retention?.active !== true}
               aria-label="goa-input-delete-in-days"
               leadingContent="Days"
-              width="15%"
+              width="265px"
             />
 
             <GoAFormItem label="">
@@ -345,7 +363,6 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
       <SaveFormModal
         open={saveModal.visible}
         onDontSave={() => {
-          close();
           setSaveModal({ visible: false, closeEditor: true });
         }}
         onSave={() => {

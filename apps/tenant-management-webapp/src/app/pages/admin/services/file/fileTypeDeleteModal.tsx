@@ -30,13 +30,14 @@ const OkButton = ({ onCancel }: OkButtonProps) => {
   );
 };
 
-export const FileTypeDeleteModal = ({ onCancel, fileType }: FileTypeDeleteModalProps): JSX.Element => {
+export const FileTypeDeleteModal = ({ onCancel, fileType, isOpen }: FileTypeDeleteModalProps): JSX.Element => {
   const dispatch = useDispatch();
+
   if (fileType?.hasFile === true) {
     return (
       <GoAModal
         testId="file-type-delete-modal"
-        open={true}
+        open={isOpen}
         heading="File type current in use"
         actions={
           <GoAButtonGroup alignment="end">
@@ -56,7 +57,7 @@ export const FileTypeDeleteModal = ({ onCancel, fileType }: FileTypeDeleteModalP
     return (
       <DeleteModal
         title="Delete file type"
-        isOpen={true}
+        isOpen={isOpen}
         onCancel={onCancel}
         content={
           <>
