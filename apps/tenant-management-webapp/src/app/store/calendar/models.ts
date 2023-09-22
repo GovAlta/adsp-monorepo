@@ -57,8 +57,8 @@ export const CalendarEventDefault = {
   id: null,
   name: '',
   description: '',
-  start: '',
-  end: '',
+  start: new Date().toISOString(),
+  end: new Date().toISOString(),
   isPublic: false,
   isAllDay: false,
 };
