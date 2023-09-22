@@ -166,5 +166,23 @@ class FileServicePage {
       '//*[@data-testid="file-type-modal" and @open="true"]//goa-input[@data-testid="delete-in-days-input"]'
     );
   }
+
+  uploadedFilesPageTitle() {
+    return cy.xpath('//h2[text()="Please upload a file"]');
+  }
+
+  uploadedFilesSearchFileName() {
+    return cy.xpath('//goa-input[@id="name"]');
+  }
+
+  uploadedFilesSearchButton() {
+    return cy.xpath('//goa-button[text()="Search"]');
+  }
+
+  uploadedFilesDownloadButton(fileName) {
+    return cy.xpath(
+      `//tbody//td[text()="${fileName}"]/following-sibling::td//goa-icon-button[@data-testid="download-icon"]`
+    );
+  }
 }
 export default FileServicePage;

@@ -65,7 +65,7 @@ Feature: File service
       | Request Endpoint                                           | Status Code |
       | /configuration/v2/configuration/platform/file-service?core | 200         |
 
-  @TEST_CS-2110 @REQ_CS-2037 @regression @api
+  @REQ_CS-2037 @regression @api
   Scenario Outline: As a developer, I can query files by last accessed time criteria, so I can file stale files
     When a developer of a GoA digital service can query files by last accessed time criteria with "<Request Endpoint>" for before yesterday
     Then "<Status Code>" is returned after file retention be set.
@@ -77,6 +77,21 @@ Feature: File service
     Examples:
       | Request Endpoint | Status Code |
       | /file/v1/files/  | 200         |
+
+  @TEST_CS-2305 @REQ_CS-2037 @regression  @api
+  Scenario Outline: As a developer, I can query files by last accessed time criteria, so I can file stale files
+    Given a service owner user is on Files overview page
+    When the user selects "Uploaded files" tab for "File"
+    Then the user views uploaded files page
+    When the user searches "autotest-file3.pdf" on Uploaded files page
+    And the user clicks download button for "autotest-file3.pdf"
+    And the user waits "5" seconds
+    And a developer user sends a file last access request with "<Request Endpoint>", "<Last Accessed After>", "<Last Accessed Before>"
+    Then "<Status Code>" is returned for the file last access request as well as "lastAccessed" property for "autotest-file3.pdf"
+
+    Examples:
+      | Request Endpoint | Last Accessed After | Last Accessed Before | Status Code |
+      | /file/v1/files   | Now-2mins           | Now+2mins            | 200         |
 
   # TODO: Test is no longer relevant with removal of file service enable/disable
   @TEST_CS-305 @REQ_CS-195 @regression @ignore
