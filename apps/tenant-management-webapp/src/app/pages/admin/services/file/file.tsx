@@ -8,6 +8,7 @@ import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 
 import AsideLinks from '@components/AsideLinks';
+import { BodyGlobalStyles } from '../styled-components';
 
 const HelpLink = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -25,31 +26,27 @@ export const File: FunctionComponent = () => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [activateEditState, setActivateEditState] = useState<boolean>(false);
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
-
+  const [openAddFileType, setOpenAddFileType] = useState(false);
   const activateEdit = (edit: boolean) => {
     setActiveIndex(1);
     setActivateEditState(edit);
   };
 
-  useEffect(() => {
-    document.body.style.overflow = 'unset';
-  }, []);
-
   const searchParams = new URLSearchParams(document.location.search);
-
   const fileTypes = tenantName && searchParams.get('fileTypes');
 
   return (
     <Page>
       <Main>
         <>
+          <BodyGlobalStyles hideOverflow={false} />
           <h1 data-testid="file-title">File service</h1>
-          <Tabs activeIndex={(fileTypes === 'true' ? 1 : 0) || activeIndex} data-testid="file-tabs">
+          <Tabs activeIndex={fileTypes === 'true' ? 1 : 0} data-testid="file-tabs">
             <Tab label="Overview" data-testid="file-overview-tab">
-              <FileOverview setActiveIndex={setActiveIndex} setActiveEdit={activateEdit} />
+              <FileOverview setOpenAddFileType={setOpenAddFileType} setActiveEdit={activateEdit} />
             </Tab>
             <Tab label="File types" data-testid="file-types-tab">
-              <FileTypes activeEdit={activateEditState} />
+              <FileTypes openAddFileType={openAddFileType} activeEdit={activateEditState} />
             </Tab>
             <Tab label="Uploaded files" data-testid="file-upload-tab">
               <FileList />

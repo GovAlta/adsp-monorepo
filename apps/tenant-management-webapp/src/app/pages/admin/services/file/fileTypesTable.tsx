@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import DataTable from '@components/DataTable';
 import { Role } from '@store/tenant/models';
-import { FileTypeModal } from './fileTypeModal';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { FileTypeDeleteModal } from './fileTypeDeleteModal';
 import styled from 'styled-components';
@@ -122,7 +121,6 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
     isOpen: !!deleteId,
     fileType: deleteFileType,
     onCancel: () => {
-      document.body.style.overflow = 'unset';
       setDeleteId(null);
     },
   };
