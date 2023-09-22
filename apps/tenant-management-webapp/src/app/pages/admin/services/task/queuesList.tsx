@@ -10,7 +10,8 @@ import { DeleteModal } from '@components/DeleteModal';
 import { GoABadge } from '@abgov/react-components-new';
 import { QueueListTable } from './queueTable';
 import { QueueModal } from './queueModal';
-import { Buttonpadding } from './styled-components';
+import { ButtonPadding } from './styled-components';
+import { BodyGlobalStyles } from '../styled-components';
 
 interface AddEditQueueProps {
   openAddDefinition: boolean;
@@ -69,7 +70,8 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
   return (
     <section>
       <div>
-        <Buttonpadding>
+        <BodyGlobalStyles hideOverflow={false} />
+        <ButtonPadding>
           <GoAButton
             testId="add-queue-btn"
             onClick={() => {
@@ -80,7 +82,7 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
           >
             Add queue
           </GoAButton>
-        </Buttonpadding>
+        </ButtonPadding>
       </div>
       <PageIndicator />
       {!indicator.show && Object.keys(taskQueues).length === 0 && renderNoItem('task queues')}
