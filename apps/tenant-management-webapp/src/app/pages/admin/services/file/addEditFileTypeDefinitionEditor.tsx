@@ -364,7 +364,6 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
         open={saveModal.visible}
         onDontSave={() => {
           setSaveModal({ visible: false, closeEditor: true });
-          // close();
         }}
         onSave={() => {
           if (!isEdit) {
