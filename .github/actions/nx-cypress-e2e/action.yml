@@ -1,5 +1,5 @@
-name: "NX cypress e2e run"
-description: "Executes nx e2e for target project."
+name: 'NX cypress e2e run'
+description: 'Executes nx e2e for target project.'
 inputs:
   app:
     description: APP to run against.
@@ -29,7 +29,7 @@ inputs:
     description: Test user 3 password.
     required: true
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - shell: bash
       run: |
@@ -46,7 +46,7 @@ runs:
       uses: cypress-io/github-action@v5
       with:
         install-command: npm ci
-        command: npx nx e2e ${{ inputs.app }}-e2e --dev-server-target='' --browser chrome --headless=true --cypress-config="apps/${{ inputs.app }}-e2e/cypress.${{ inputs.environment }}.json"
+        command: npx nx e2e ${{ inputs.app }}-e2e --dev-server-target='' --browser chrome --cypress-config="apps/${{ inputs.app }}-e2e/cypress.${{ inputs.environment }}.json"
     - if: ${{ always() }}
       shell: bash
       run: |
