@@ -19,8 +19,13 @@ interface PdfTemplatesProps {
 export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
   const [openAddPdfTemplate, setOpenAddPdfTemplate] = useState(false);
   const openEditor = useSelector((state: RootState) => state.pdf.openEditor);
+
   const history = useHistory();
   const { url } = useRouteMatch();
+
+  const isObjectEmpty = (obj) => {
+    return JSON.stringify(obj) === '{}';
+  };
 
   useEffect(() => {
     if (openEditor) {
@@ -58,8 +63,11 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
       setOpenAddPdfTemplate(true);
     }
   }, [openAddTemplate]);
+
   useEffect(() => {
-    dispatch(getPdfTemplates());
+    if (isObjectEmpty(pdfTemplates)) {
+      dispatch(getPdfTemplates());
+    }
   }, []);
 
   // eslint-disable-next-line
