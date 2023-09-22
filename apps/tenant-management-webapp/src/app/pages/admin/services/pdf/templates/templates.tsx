@@ -12,7 +12,7 @@ import { useHistory } from 'react-router-dom';
 import { useRouteMatch } from 'react-router';
 import { DeleteModal } from '@components/DeleteModal';
 import { BodyGlobalStyles } from '../../styled-components';
-import { isEmpty } from 'lodash';
+
 interface PdfTemplatesProps {
   openAddTemplate: boolean;
 }
@@ -22,6 +22,10 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
 
   const history = useHistory();
   const { url } = useRouteMatch();
+
+  const isObjectEmpty = (obj) => {
+    return JSON.stringify(obj) === '{}';
+  };
 
   useEffect(() => {
     if (openEditor) {
@@ -61,7 +65,7 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
   }, [openAddTemplate]);
 
   useEffect(() => {
-    if (isEmpty(pdfTemplates)) {
+    if (isObjectEmpty(pdfTemplates)) {
       dispatch(getPdfTemplates());
     }
   }, []);
