@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import $ from 'jquery';
+import React, { useEffect, useState, useRef, createRef } from 'react';
 
 import { GoAButton } from '@abgov/react-components-new';
 
@@ -12,12 +13,41 @@ import { defaultFormDefinition } from '@store/form/model';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
 
+import { GoATextArea } from '@abgov/react-components-new';
+import 'jquery-ui-sortable';
+declare const window: any;
+window.jQuery = $;
+window.$ = $;
+//require('jquery-ui-sortable');
+require('formBuilder');
+
+require('formBuilder/dist/form-render.min.js');
+
+const formDataDefault = [
+  {
+    type: 'header',
+    subtype: 'h1',
+    label: 'formBuilder in React',
+  },
+  {
+    type: 'paragraph',
+    label: 'This is a demonstration of formBuilder running in a React project.',
+  },
+];
+
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
 }
 export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => {
+  const fb = useRef();
+  const fr = useRef();
+  const myFormRef = useRef();
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [formData, setFormData] = useState(JSON.stringify(formDataDefault, undefined, 2) as any);
+  const [newFormData, setNewFormData] = useState(null);
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
+
+  const [createdFormData, setCreatedFormData] = useState('');
 
   const formDefinitions = useSelector((state: RootState) => {
     return Object.entries(state?.form?.definitions)
@@ -30,6 +60,19 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
       }, {});
   });
 
+  const onSave = function (evt, formData) {
+    //toggleEdit();
+    //$('.render-wrap').formRender({ formData });
+    console.log(JSON.stringify('wtf'));
+    setFormData(JSON.stringify(JSON.parse(formData), undefined, 2));
+    window.sessionStorage.setItem('formData', JSON.stringify(formData));
+  };
+
+  const myFunction = function (qqq) {
+    console.log(JSON.stringify('saving here '));
+    console.log(JSON.stringify(JSON.stringify(qqq)));
+  };
+
   const [openAddFormDefinition, setOpenAddFormDefinition] = useState(false);
 
   const indicator = useSelector((state: RootState) => {
@@ -37,6 +80,31 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
   });
 
   const dispatch = useDispatch();
+
+  const controlConfig = {
+    'textarea.tinymce': {
+      paste_data_images: false,
+    },
+  };
+
+  useEffect(() => {
+    $(fb.current).formBuilder({ formData, onSave, controlConfig });
+    $(fr.current).formRender({ formData });
+  }, []);
+  useEffect(() => {
+    //console.log(JSON.parse(formData))
+    $(fr.current).formRender({ formData: formData });
+    let tempCreatedFormData;
+    const $form = $(myFormRef.current);
+
+    $form.find('input').each(function () {
+      const name = $(this).attr('name');
+      const value = $(this).val();
+      tempCreatedFormData[name] = value;
+    });
+
+    setCreatedFormData(tempCreatedFormData);
+  }, [formData]);
 
   useEffect(() => {
     if (openAddDefinition) {
@@ -70,6 +138,31 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
         <br />
         <br />
         <PageIndicator />
+        <div id="fb-editor" ref={fb} />
+        {/* {JSON.stringify(formData, null, 2)} */}
+        {/* <div>{formData}</div> */}
+
+        <GoATextArea
+          rows={7}
+          name="supportInstruction"
+          value={newFormData || formData}
+          testId="form-support-instructions"
+          aria-label="name"
+          width="100%"
+          onChange={(name, value) => setNewFormData(value)}
+        />
+
+        <GoAButton
+          testId="add-definition"
+          onClick={() => {
+            setFormData(newFormData);
+          }}
+        >
+          Update Original
+        </GoAButton>
+        <div ref={myFormRef} id="myForm">
+          <div id="markup" ref={fr} />
+        </div>
 
         <AddEditFormDefinition
           open={openAddFormDefinition}
@@ -80,6 +173,8 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
             dispatch(updateFormDefinition(definition));
           }}
         />
+
+        {JSON.stringify(createdFormData)}
 
         {!indicator.show && !formDefinitions && renderNoItem('form templates')}
         {!indicator.show && formDefinitions && (
