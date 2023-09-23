@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 export const RetentionPolicyLabel = styled.label`
-  font-size: var(--goa-fontSize-7) !important;
+  font-size: var(--goa-font-size-7) !important;
   line-height: var(--goa-line-height-4);
   margin-top: var(--goa-spacing-l);
   font-weight: var(--goa-font-weight-regular) !important;
