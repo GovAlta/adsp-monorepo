@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { FetchFileTypeService } from '@store/file/actions';
 import { createSelector } from 'reselect';
 import { useHistory } from 'react-router-dom';
+import { FileTypeDefault } from '@store/file/models';
 interface AddFileTypeProps {
   roles: Role[];
   activeEdit: boolean;
@@ -69,14 +70,7 @@ export const AddFileType = ({ roles, activeEdit }: AddFileTypeProps): JSX.Elemen
         type="new"
         roles={roles}
         fileTypeNames={fileTypeNames}
-        fileType={{
-          name: '',
-          updateRoles: [],
-          readRoles: [],
-          anonymousRead: false,
-          hasFile: false,
-          id: null,
-        }}
+        initialValue={FileTypeDefault}
         onCancel={() => {
           setWillAddNew(false);
         }}
