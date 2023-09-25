@@ -132,6 +132,7 @@ export const calendarEventCreated = (user: User, entity: CalendarEventEntity): D
   context: {
     calendar: entity.calendar.name,
   },
+  correlationId: `calendar-${entity.calendar.name}`,
   payload: {
     calendar: {
       name: entity.calendar.name,
@@ -165,6 +166,7 @@ export const calendarEventUpdated = (
   context: {
     calendar: entity.calendar.name,
   },
+  correlationId: `calendar-${entity.calendar.name}`,
   payload: {
     calendar: {
       name: entity.calendar.name,
@@ -195,6 +197,7 @@ export const calendarEventDeleted = (user: User, entity: CalendarEventEntity): D
   context: {
     calendar: entity.calendar.name,
   },
+  correlationId: `calendar-${entity.calendar.name}`,
   payload: {
     calendar: {
       name: entity.calendar.name,
