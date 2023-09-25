@@ -11,7 +11,6 @@ import { PageIndicator } from '@components/Indicator';
 import { defaultFormDefinition } from '@store/form/model';
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditFormDefinition } from './addEditFormDefinition';
-import { BodyGlobalStyles } from '../../styled-components';
 
 interface FormDefinitionsProps {
   openAddDefinition: boolean;
@@ -56,11 +55,14 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
   // eslint-disable-next-line
   useEffect(() => {}, [formDefinitions]);
 
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, []);
+
   return (
     <>
       <div>
         <br />
-        <BodyGlobalStyles hideOverflow={false} />
         <GoAButton
           testId="add-definition"
           onClick={() => {
