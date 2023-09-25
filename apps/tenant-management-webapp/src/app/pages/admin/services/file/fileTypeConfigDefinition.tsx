@@ -8,7 +8,7 @@ interface FileTypeConfigFormProps {
 
 export const FileTypeConfigDefinition = ({ fileType }: FileTypeConfigFormProps) => {
   return (
-    <ConfigTombStoneWrapper data-testid="task-config-form">
+    <ConfigTombStoneWrapper data-testid="fileType-config-form">
       <div className="nameColumn">
         <table>
           <thead>
@@ -16,7 +16,7 @@ export const FileTypeConfigDefinition = ({ fileType }: FileTypeConfigFormProps) 
               <th>Name</th>
             </tr>
             <tr>
-              <td data-testid="queue-namespace" className="overflowContainer">
+              <td data-testid="fileType-name" className="overflowContainer">
                 {fileType.name}
               </td>
             </tr>
@@ -31,7 +31,7 @@ export const FileTypeConfigDefinition = ({ fileType }: FileTypeConfigFormProps) 
               <th>Type ID</th>
             </tr>
             <tr>
-              <td data-testid="queue-name" className="overflowContainer">
+              <td data-testid="fileType-Id" className="overflowContainer">
                 {fileType.id}
               </td>
             </tr>
