@@ -52,6 +52,10 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
   }, [selectedQueue]);
 
   useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, []);
+
+  useEffect(() => {
     if (openAddDefinition) {
       reset();
       setOpenAddQueue(true);
@@ -96,6 +100,7 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
           }}
         />
       )}
+
       <DeleteModal
         isOpen={showDeleteConfirmation}
         title="Delete task queue"

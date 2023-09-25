@@ -1,19 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { getTaskQueues, getTasks } from '@store/task/action';
-import { TaskDefinition, defaultTaskQueue } from '@store/task/model';
+import { getTaskQueues, getTasks, SetQueueTask, updateQueueTask } from '@store/task/action';
+import { TaskDefinition, defaultTaskQueue, QueueTaskDefinition, defaultQueuedTask } from '@store/task/model';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
 import { GoAButton, GoADropdown, GoADropdownItem, GoAFormItem, GoASkeleton } from '@abgov/react-components-new';
 import { TaskModal } from './taskModal';
-import { Buttonpadding } from './styled-components';
+import { Buttonpadding, HeaderFont } from './styled-components';
+import { TaskListTable } from './tasksTable';
 
 export const TasksList = (): JSX.Element => {
   const dispatch = useDispatch();
   const [openAddTask, setOpenAddTask] = useState(false);
-  const [selectedQueue, setSelectedQueue] = useState<TaskDefinition>(defaultTaskQueue);
+  const [modalType, setModalType] = useState('');
+  const [selectedQueue, setSelectedQueue] = useState('');
   const [selectedTask, setSelectedTask] = useState('');
+  const [editedTask, setUpdatedTask] = useState<QueueTaskDefinition>(defaultQueuedTask);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -38,10 +41,10 @@ export const TasksList = (): JSX.Element => {
   }, []);
 
   useEffect(() => {
-    if (selectedQueue.name.length > 0) {
-      dispatch(getTasks(selectedQueue));
+    if (selectedTask.length > 0) {
+      dispatch(getTasks(taskQueues[selectedTask]));
     }
-  }, [selectedQueue]);
+  }, [selectedTask]);
 
   useEffect(() => {
     document.body.style.overflow = 'unset';
@@ -50,22 +53,37 @@ export const TasksList = (): JSX.Element => {
   // eslint-disable-next-line
 
   const reset = () => {
-    setSelectedQueue(defaultTaskQueue);
+    //setSelectedQueue(defaultTaskQueue);
     setOpenAddTask(false);
+  };
+
+  const handleSave = async (task) => {
+    try {
+      if (modalType === 'new') {
+        await dispatch(SetQueueTask(task));
+      } else {
+        await dispatch(updateQueueTask(task));
+      }
+      setTimeout(() => {
+        dispatch(getTasks(taskQueues[selectedTask]));
+      }, 1000);
+    } catch (error) {
+      console.error('Error while saving task:', error);
+    }
   };
 
   return (
     <section>
       {!indicator.show && Object.keys(taskQueues).length === 0 && renderNoItem('task queues')}
       {!indicator.show && Object.keys(taskQueues).length > 0 && (
-        <GoAFormItem label="Select task">
+        <GoAFormItem label="Select a queue">
           {indicator.show && Object.keys(taskQueues).length === 0 && <GoASkeleton type="text" key={1}></GoASkeleton>}
           {Object.keys(taskQueues).length > 0 && (
             <GoADropdown
-              name="Tasks"
+              name="Queues"
               value={selectedTask}
-              onChange={(name: string, selectedTask: string | string[]) => {
-                setSelectedTask(selectedTask.toString());
+              onChange={(name: string, selectedTask: string) => {
+                setSelectedTask(selectedTask);
               }}
               aria-label="select-task-dropdown"
               width="100%"
@@ -73,7 +91,7 @@ export const TasksList = (): JSX.Element => {
             >
               {Object.keys(taskQueues).map((item) => (
                 <GoADropdownItem
-                  name="Tasks"
+                  name="Queues"
                   key={item}
                   label={item}
                   value={item}
@@ -84,27 +102,48 @@ export const TasksList = (): JSX.Element => {
           )}
         </GoAFormItem>
       )}
-      <PageIndicator />
       <div>
         <Buttonpadding>
           <GoAButton
             testId="add-queue-btn"
+            disabled={selectedTask === ''}
             onClick={() => {
+              setModalType('new');
+              setUpdatedTask(defaultQueuedTask);
               setOpenAddTask(true);
-              setSelectedQueue(defaultTaskQueue);
             }}
           >
             Add Task
           </GoAButton>
         </Buttonpadding>
       </div>
+      <div>
+        <HeaderFont>
+          <label>Task list</label>
+        </HeaderFont>
+      </div>
+      <PageIndicator />
+      {selectedTask !== '' && tasks?.length && (
+        <TaskListTable
+          tasks={tasks}
+          onEditTask={(updatedTask) => {
+            // dispatch(updateQueueTask(updatedTask));
+            setModalType('edit');
+            setUpdatedTask(updatedTask);
+            setOpenAddTask(true);
+          }}
+        />
+      )}
       {openAddTask && (
         <TaskModal
           open={true}
+          queue={selectedTask}
+          type={modalType}
+          initialValue={editedTask}
           onCancel={() => {
             reset();
           }}
-          onSave={(task) => console.log(task)}
+          onSave={handleSave}
         />
       )}
     </section>
