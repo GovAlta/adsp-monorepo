@@ -88,7 +88,7 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
         </GoAButton>
         <br />
         <br />
-        <PageIndicator />
+        {indicator.show && <PageIndicator />}
 
         <AddEditPdfTemplate
           open={openAddPdfTemplate}
