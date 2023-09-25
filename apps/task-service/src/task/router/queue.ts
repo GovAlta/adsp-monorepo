@@ -38,9 +38,6 @@ export const verifyQueuedTask: RequestHandler = (req, _res, next) => {
   try {
     const { id, namespace, name } = req.params;
     const task: TaskEntity = req[TASK_KEY];
-    console.log('req@@@@@@@@', req);
-    console.log('namespace@@@@@@@@', namespace);
-    console.log('name@@@@@@@@', name);
     if (task.queue.namespace !== namespace || task.queue.name !== name) {
       throw new NotFoundError('task', id);
     }

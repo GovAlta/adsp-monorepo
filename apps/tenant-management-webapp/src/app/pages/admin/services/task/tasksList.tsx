@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { getTaskQueues, getTasks, SetQueueTask, updateQueueTask } from '@store/task/action';
-import { TaskDefinition, defaultTaskQueue, QueueTaskDefinition, defaultQueuedTask } from '@store/task/model';
+import { QueueTaskDefinition, defaultQueuedTask } from '@store/task/model';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
 import { GoAButton, GoADropdown, GoADropdownItem, GoAFormItem, GoASkeleton } from '@abgov/react-components-new';
@@ -14,7 +14,6 @@ export const TasksList = (): JSX.Element => {
   const dispatch = useDispatch();
   const [openAddTask, setOpenAddTask] = useState(false);
   const [modalType, setModalType] = useState('');
-  const [selectedQueue, setSelectedQueue] = useState('');
   const [selectedTask, setSelectedTask] = useState('');
   const [editedTask, setUpdatedTask] = useState<QueueTaskDefinition>(defaultQueuedTask);
   const indicator = useSelector((state: RootState) => {
@@ -50,10 +49,7 @@ export const TasksList = (): JSX.Element => {
     document.body.style.overflow = 'unset';
   }, []);
 
-  // eslint-disable-next-line
-
   const reset = () => {
-    //setSelectedQueue(defaultTaskQueue);
     setOpenAddTask(false);
   };
 
@@ -127,7 +123,6 @@ export const TasksList = (): JSX.Element => {
         <TaskListTable
           tasks={tasks}
           onEditTask={(updatedTask) => {
-            // dispatch(updateQueueTask(updatedTask));
             setModalType('edit');
             setUpdatedTask(updatedTask);
             setOpenAddTask(true);
