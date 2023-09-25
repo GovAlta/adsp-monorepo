@@ -227,3 +227,18 @@ export const HeadingDiv = styled.div`
     margin-bottom: 4px;
   }
 `;
+
+export const FormStyles = styled.div`
+  color: red;
+  .SortableItem {
+    margin: 20px 0 !important;
+  }
+
+  .react-form-builder-form {
+    margin: 30px 0;
+  }
+
+  .static {
+    margin: 40px 0 !important;
+  }
+`;

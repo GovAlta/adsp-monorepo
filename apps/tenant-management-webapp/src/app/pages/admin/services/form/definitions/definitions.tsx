@@ -45,6 +45,7 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [formData, setFormData] = useState(JSON.stringify(formDataDefault, undefined, 2) as any);
   const [newFormData, setNewFormData] = useState(null);
+  const [grabFormData, setGrabFormData] = useState(null);
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
 
   const [createdFormData, setCreatedFormData] = useState('');
@@ -81,29 +82,27 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
 
   const dispatch = useDispatch();
 
-  const controlConfig = {
-    'textarea.tinymce': {
-      paste_data_images: false,
-    },
-  };
-
   useEffect(() => {
-    $(fb.current).formBuilder({ formData, onSave, controlConfig });
+    $(fb.current).formBuilder({ formData, onSave });
     $(fr.current).formRender({ formData });
   }, []);
   useEffect(() => {
+    if (grabFormData) {
+      let tempCreatedFormData;
+      const $form = $(myFormRef.current);
+
+      $form.find('input').each(function () {
+        const name = $(this).attr('name');
+        const value = $(this).val();
+        tempCreatedFormData[name] = value;
+      });
+      setCreatedFormData(tempCreatedFormData);
+      setGrabFormData(false);
+    }
+  }, [grabFormData]);
+  useEffect(() => {
     //console.log(JSON.parse(formData))
     $(fr.current).formRender({ formData: formData });
-    let tempCreatedFormData;
-    const $form = $(myFormRef.current);
-
-    $form.find('input').each(function () {
-      const name = $(this).attr('name');
-      const value = $(this).val();
-      tempCreatedFormData[name] = value;
-    });
-
-    setCreatedFormData(tempCreatedFormData);
   }, [formData]);
 
   useEffect(() => {
@@ -160,9 +159,19 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
         >
           Update Original
         </GoAButton>
+        <GoAButton
+          testId="add-definition"
+          onClick={() => {
+            setGrabFormData(true);
+          }}
+        >
+          Grab form data
+        </GoAButton>
         <div ref={myFormRef} id="myForm">
           <div id="markup" ref={fr} />
         </div>
+
+        {newFormData && JSON.stringify(newFormData, undefined, 2)}
 
         <AddEditFormDefinition
           open={openAddFormDefinition}

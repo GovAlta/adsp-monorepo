@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
-
+import ReactDOM from 'react-dom';
+import { ReactFormBuilder, ReactFormGenerator } from 'react-form-builder2';
+import 'react-form-builder2/dist/app.css';
 import { GoAButton } from '@abgov/react-components-new';
+import Axios from 'axios';
+import DemoBar from './demobar';
+import * as variables from './variables';
+import { FormStyles } from '../styled-components';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { getCommentTopicTypes, updateCommentTopicType, deleteCommentTopicType } from '@store/comment/action';
@@ -12,6 +18,23 @@ import { defaultCommentTopicType } from '@store/comment/model';
 
 import { DeleteModal } from '@components/DeleteModal';
 import { AddEditCommentTopicType } from './addEditCommentTopicType';
+
+const items = [
+  {
+    key: 'Header',
+    name: 'Header Text',
+    icon: 'fa fa-header',
+    static: true,
+    content: 'Placeholder Text...',
+  },
+  {
+    key: 'Paragraph',
+    name: 'Paragraph',
+    static: true,
+    icon: 'fa fa-paragraph',
+    content: 'Placeholder Text...',
+  },
+];
 
 interface CommentTopicTypesProps {
   openAddTopicTypes: boolean;
@@ -59,28 +82,44 @@ export const CommentTopicTypes = ({ openAddTopicTypes }: CommentTopicTypesProps)
   return (
     <>
       <div>
-        <br />
-        <GoAButton
-          testId="add-topic-type"
-          onClick={() => {
-            setOpenAddCommentTopicType(true);
-          }}
-        >
-          Add topic type
-        </GoAButton>
-        <br />
-        <br />
-        <PageIndicator />
+        <FormStyles>
+          <DemoBar variables={variables} />
+          <br />
+          <GoAButton
+            testId="add-topic-type"
+            onClick={() => {
+              setOpenAddCommentTopicType(true);
+            }}
+          >
+            Add topic type
+          </GoAButton>
+          <br />
+          <br />
+          <PageIndicator />
 
-        <AddEditCommentTopicType
-          open={openAddCommentTopicType}
-          isEdit={false}
-          onClose={reset}
-          initialValue={defaultCommentTopicType}
-          onSave={(definition) => {
-            dispatch(updateCommentTopicType(definition));
-          }}
-        />
+          <AddEditCommentTopicType
+            open={openAddCommentTopicType}
+            isEdit={false}
+            onClose={reset}
+            initialValue={defaultCommentTopicType}
+            onSave={(definition) => {
+              dispatch(updateCommentTopicType(definition));
+            }}
+          />
+          {/* <ReactFormBuilder saveUrl="http://localhost:3000/uptime" /> */}
+
+          <ReactFormBuilder onPost={(definition) => Axios.post('http://localhost:3000/uptime', definition)} />
+        </FormStyles>
+        <br />
+        {/* <ReactFormGenerator
+          back_action="/"
+          back_name="Back"
+          action_name="Save"
+          form_action="/"
+          form_method="POST"
+          data={''}
+        />*/}
+        {/* <ReactFormBuilder url="path/to/GET/initial.json" toolbarItems={items} saveUrl="path/to/POST/built/form.json" /> */}
 
         {!indicator.show && Object.keys(commentTopicTypes).length === 0 && renderNoItem('topic types')}
         {!indicator.show && Object.keys(commentTopicTypes).length > 0 && (

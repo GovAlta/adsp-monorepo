@@ -104,6 +104,7 @@
     "pg": "^8.3.3",
     "promise-retry": "^2.0.1",
     "puppeteer": "20.9.0",
+    "react-form-builder2": "^0.16.5",
     "redis": "^3.1.2",
     "rehype-raw": "^6.1.1",
     "remark-gfm": "^3.0.1",
