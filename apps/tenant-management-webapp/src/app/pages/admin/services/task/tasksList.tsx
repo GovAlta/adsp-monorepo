@@ -7,7 +7,7 @@ import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
 import { GoAButton, GoADropdown, GoADropdownItem, GoAFormItem, GoASkeleton } from '@abgov/react-components-new';
 import { TaskModal } from './taskModal';
-import { Buttonpadding, HeaderFont } from './styled-components';
+import { ButtonPadding, HeaderFont } from './styled-components';
 import { TaskListTable } from './tasksTable';
 
 export const TasksList = (): JSX.Element => {
@@ -103,7 +103,7 @@ export const TasksList = (): JSX.Element => {
         </GoAFormItem>
       )}
       <div>
-        <Buttonpadding>
+        <ButtonPadding>
           <GoAButton
             testId="add-queue-btn"
             disabled={selectedTask === ''}
@@ -115,7 +115,7 @@ export const TasksList = (): JSX.Element => {
           >
             Add Task
           </GoAButton>
-        </Buttonpadding>
+        </ButtonPadding>
       </div>
       <div>
         <HeaderFont>
