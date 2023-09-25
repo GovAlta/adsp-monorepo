@@ -16,7 +16,14 @@ interface CalendarDropdownProps {
 
 const CalendarDropdown = ({ calendars, onSelect }: CalendarDropdownProps): JSX.Element => {
   return (
-    <GoADropdown name="calendars" width="100%" value={'red'} aria-label="select-calendar-dropdown" onChange={onSelect}>
+    <GoADropdown
+      name="calendars"
+      width="100%"
+      placeholder="Select"
+      testId="calendar-event-dropdown-list"
+      aria-label="select-calendar-dropdown"
+      onChange={onSelect}
+    >
       {Object.entries(calendars).map(([name, calendar]) => (
         <GoADropdownItem
           label={calendar?.name}
@@ -45,7 +52,7 @@ export const CalendarEvents = (): JSX.Element => {
   const calendars = useSelector(selectCalendars);
   return (
     <>
-      <SelectCalendarHeader>Please select a calendar</SelectCalendarHeader>
+      <SelectCalendarHeader>Select a calendar</SelectCalendarHeader>
       <ProgressWrapper>
         <GoACircularProgress size="small" visible={!calendars} variant="inline" />
       </ProgressWrapper>

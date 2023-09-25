@@ -1,7 +1,8 @@
 import styled from 'styled-components';
 
 export const SelectCalendarHeader = styled.div`
-  margin-bottom: 1rem;
+  margin-bottom: var(--goa-spacing-m);
+  margin-top: var(--goa-spacing-m);
   font-weight: var(--fw-bold);
 `;
 
@@ -53,4 +54,12 @@ export const EventDetailDate = styled.div`
   font-size: var(--goa-font-size-4);
   color: var(--goa-color-greyscale-700);
   padding-bottom: var(--goa-spacing-m);
+`;
+
+export const CalendarEventListWrapper = styled.div`
+  margin-bottom: var(--goa-spacing-l);
+`;
+
+export const EventListNameTd = styled.td`
+  width: 10%;
 `;

@@ -6,7 +6,6 @@ import { GoACheckbox } from '@abgov/react-components-new';
 import { renderNoItem } from '@components/NoItem';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { UpdateModalState } from '@store/session/actions';
-import moment from 'moment';
 import { RootState } from '@store/index';
 import {
   TitleSpace,
@@ -19,7 +18,7 @@ import {
 import { DeleteModal } from './deleteModal';
 import DataTable from '@components/DataTable';
 import { GoACircularProgress } from '@abgov/react-components-new';
-import { ProgressWrapper } from './styled-components';
+import { ProgressWrapper, CalendarEventListWrapper, EventListNameTd } from './styled-components';
 
 interface EventListRowProps {
   event: CalendarEvent;
@@ -32,7 +31,9 @@ interface EventDetailsProps {
 
 const eventDateFormat = (dateString: string) => {
   const date = new Date(dateString);
-  return moment(date).format('DD-MMM-YY ddd HH:mm');
+  const time = date.toLocaleString('en-us', { hour: '2-digit', minute: '2-digit' });
+
+  return `${getDateString(date)}, ${time}`;
 };
 
 const getDateString = (date: Date): string => {
@@ -75,7 +76,7 @@ const EventListRow = ({ event, calendarName }: EventListRowProps): JSX.Element =
   return (
     <>
       <tr>
-        <td>{event?.name}</td>
+        <EventListNameTd>{event?.name}</EventListNameTd>
         <td>{eventDateFormat(event.start)}</td>
         <td>{eventDateFormat(event.end)}</td>
         <td headers="calendar-events-actions" data-testid="calendar-selected-events-actions">
@@ -153,22 +154,24 @@ export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
     <>
       <TitleSpace />
       <h2>Event list</h2>
-      <DeleteModal calendarName={calendarName} />
-      <DataTable testId="calendar-selected-event-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Start time</th>
-            <th>End time</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {selectedEvents.map((event) => {
-            return <EventListRow event={event} calendarName={calendarName} key={`calendar-event-row-${event.id}`} />;
-          })}
-        </tbody>
-      </DataTable>
+      <CalendarEventListWrapper>
+        <DeleteModal calendarName={calendarName} />
+        <DataTable testId="calendar-selected-event-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Start time</th>
+              <th>End time</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {selectedEvents.map((event) => {
+              return <EventListRow event={event} calendarName={calendarName} key={`calendar-event-row-${event.id}`} />;
+            })}
+          </tbody>
+        </DataTable>
+      </CalendarEventListWrapper>
     </>
   );
 };
