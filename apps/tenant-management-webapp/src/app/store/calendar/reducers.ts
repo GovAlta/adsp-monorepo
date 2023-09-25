@@ -4,6 +4,10 @@ import {
   DELETE_CALENDAR_SUCCESS_ACTION,
   UPDATE_CALENDAR_SUCCESS_ACTION,
   UPDATE_INDICATOR,
+  FETCH_EVENTS_BY_CALENDAR_SUCCESS_ACTION,
+  CREATE_EVENT_CALENDAR_SUCCESS_ACTION,
+  DELETE_CALENDAR_EVENT_SUCCESS_ACTION,
+  UPDATE_EVENT_CALENDAR_SUCCESS_ACTION,
 } from './actions';
 import { CalendarService, CALENDAR_INIT } from './models';
 
@@ -38,6 +42,42 @@ export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => 
         ...state,
       };
     }
+    case CREATE_EVENT_CALENDAR_SUCCESS_ACTION: {
+      state.calendars[action.calendarName].selectedCalendarEvents.push(action.payload);
+      return {
+        ...state,
+      };
+    }
+    case UPDATE_EVENT_CALENDAR_SUCCESS_ACTION: {
+      const eventIndex = state.calendars[action.calendarName].selectedCalendarEvents.findIndex(
+        (event) => event.id.toString() === action.eventId
+      );
+      state.calendars[action.calendarName].selectedCalendarEvents[eventIndex] = action.payload;
+      return {
+        ...state,
+      };
+    }
+    case FETCH_EVENTS_BY_CALENDAR_SUCCESS_ACTION: {
+      const events = action.payload;
+      const name = action.calendarName;
+      state.calendars[name].selectedCalendarEvents = events;
+
+      return {
+        ...state,
+      };
+    }
+
+    case DELETE_CALENDAR_EVENT_SUCCESS_ACTION: {
+      const calendarName = action.calendarName;
+      const eventId = Number(action.eventId);
+      state.calendars[calendarName].selectedCalendarEvents = state.calendars[
+        calendarName
+      ].selectedCalendarEvents.filter((e) => e.id !== eventId);
+      return {
+        ...state,
+      };
+    }
+
     default:
       return state;
   }
