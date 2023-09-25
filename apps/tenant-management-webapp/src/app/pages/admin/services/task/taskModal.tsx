@@ -18,7 +18,7 @@ import { GoAFormItem, GoAInput } from '@abgov/react-components-new';
 import { useSelector } from 'react-redux';
 import { useRouteMatch } from 'react-router';
 import { useHistory } from 'react-router-dom';
-import { QueueTaskDefinition } from '@store/task/model';
+import { TaskDefinition, QueueTaskDefinition } from '@store/task/model';
 import {
   badCharsCheck,
   wordMaxLengthCheck,
@@ -32,6 +32,8 @@ import { toKebabName } from '@lib/kebabName';
 import { DescriptionItem, HelpText, ErrorMsg } from './styled-components';
 interface TaskModalProps {
   initialValue?: QueueTaskDefinition;
+  type: string;
+  queue: string;
   onCancel?: () => void;
   onSave: (task: QueueTaskDefinition) => void;
   open: boolean;
@@ -39,13 +41,13 @@ interface TaskModalProps {
 
 export const TaskModal: FunctionComponent<TaskModalProps> = ({
   initialValue,
+  type,
   onCancel,
   onSave,
   open,
+  queue,
 }: TaskModalProps): JSX.Element => {
-  const isNew = 'new';
-  const { url } = useRouteMatch();
-  const history = useHistory();
+  const isNew = type === 'new';
 
   const [task, setTask] = useState<QueueTaskDefinition>(initialValue);
 
@@ -92,6 +94,8 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
         return;
       }
     }
+    task.priority = priority;
+    task.recordId = queue;
     onSave(task);
 
     onCancel();
@@ -142,7 +146,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
               />
 
               <HelpText>
-                {task?.description.length <= 180 ? (
+                {task?.description?.length <= 180 ? (
                   <div> {descErrMessage} </div>
                 ) : (
                   <ErrorMsg>
@@ -150,15 +154,15 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
                     {`  ${errors?.['description']}`}
                   </ErrorMsg>
                 )}
-                <div>{`${task?.description.length}/180`}</div>
+                <div>{`${task?.description?.length}/180`}</div>
               </HelpText>
             </DescriptionItem>
           </GoAFormItem>
           <GoAFormItem label="Priority">
             <GoARadioGroup name="color" value={task?.priority} onChange={(_name, value) => setPriority(value)}>
-              <GoARadioItem name="normal" value="Normal" />
-              <GoARadioItem name="high" value="High" />
-              <GoARadioItem name="urgent" value="Urgent" />
+              <GoARadioItem name="priority" value="Normal" />
+              <GoARadioItem name="priority" value="High" />
+              <GoARadioItem name="priority" value="Urgent" />
             </GoARadioGroup>
           </GoAFormItem>
         </GoAForm>

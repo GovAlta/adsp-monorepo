@@ -11,13 +11,21 @@ import {
   DeleteTaskDefinitionAction,
   deleteTaskQueueSuccess,
   GET_TASKS_ACTION,
+  GET_TASK_ACTION,
   GetsTasksAction,
+  GetsTaskAction,
   getTasksSuccess,
+  getTaskSuccess,
   UpdateTaskQueueAction,
   UpdateTaskQueueSuccess,
+  UpdateQueueTaskAction,
+  updateQueueTaskSuccess,
+  SetQueueTaskAction,
+  SET_QUEUE_TASK_ACTION,
+  UPDATE_QUEUE_TASK_ACTION,
 } from './action';
 import { getAccessToken } from '@store/tenant/sagas';
-import { fetchTaskQueuesApi, deleteTaskQueuesApi, getTasksApi } from './api';
+import { fetchTaskQueuesApi, deleteTaskQueuesApi, getTasksApi, postTasksApi, updateQueueTaskApi } from './api';
 import { DeleteTaskConfig, TaskDefinition } from './model';
 import axios from 'axios';
 
@@ -39,11 +47,7 @@ export function* fetchTaskQueues(): SagaIterator {
       const Payload = yield call(fetchTaskQueuesApi, token, url);
 
       yield put(getTaskQueuesSuccess(Payload?.latest.configuration.queues || {}));
-      yield put(
-        UpdateIndicator({
-          show: false,
-        })
-      );
+      yield put(UpdateIndicator({ show: false }));
     } catch (err) {
       yield put(ErrorNotification({ message: err.message }));
       yield put(
@@ -56,6 +60,12 @@ export function* fetchTaskQueues(): SagaIterator {
 }
 
 export function* updateTaskQueue({ payload }: UpdateTaskQueueAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading Definition...',
+    })
+  );
   const configBaseUrl: string = yield select(
     (state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl
   );
@@ -95,13 +105,21 @@ export function* updateTaskQueue({ payload }: UpdateTaskQueueAction): SagaIterat
           ...latest.configuration.queues,
         })
       );
+      yield put(UpdateIndicator({ show: false }));
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.message} - updateQueue` }));
+      yield put(UpdateIndicator({ show: false }));
     }
   }
 }
 
 export function* deleteTaskDefinition({ queue }: DeleteTaskDefinitionAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading Definition...',
+    })
+  );
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
   const existingQueues: Record<string, TaskDefinition> = yield select((state: RootState) => state.task.queues);
   const token: string = yield call(getAccessToken);
@@ -119,24 +137,103 @@ export function* deleteTaskDefinition({ queue }: DeleteTaskDefinitionAction): Sa
           ...latest.configuration?.queues,
         })
       );
+      yield put(UpdateIndicator({ show: false }));
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.response.data} - deleteTaskDefinition` }));
+      yield put(UpdateIndicator({ show: false }));
     }
   }
 }
 
 export function* getTasks({ queue }: GetsTasksAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading Definition...',
+    })
+  );
   const taskUrl: string = yield select((state: RootState) => state.config.serviceUrls?.taskServiceApiUrl);
   const token: string = yield call(getAccessToken);
 
   if (taskUrl && token) {
     try {
-      const url = `${taskUrl}/task/v1/queues/${queue.namespace}/${queue.name}/tasks`;
+      const url = `${taskUrl}/task/v1/queues/${queue.namespace}/${queue.name}/tasks?top=10`;
       const { results } = yield call(getTasksApi, token, url);
 
       yield put(getTasksSuccess(results));
+      yield put(UpdateIndicator({ show: false }));
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.response} - getTasks` }));
+      yield put(UpdateIndicator({ show: false }));
+    }
+  }
+}
+export function* getTask({ queue }: GetsTaskAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading Definition...',
+    })
+  );
+  const taskUrl: string = yield select((state: RootState) => state.config.serviceUrls?.taskServiceApiUrl);
+  const token: string = yield call(getAccessToken);
+
+  if (taskUrl && token) {
+    try {
+      const url = `${taskUrl}/task/v1/queues/${queue.namespace}/${queue.name}/tasks?top=10`;
+      const { results } = yield call(getTasksApi, token, url);
+
+      yield put(getTaskSuccess(results));
+      yield put(UpdateIndicator({ show: false }));
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.response} - getTasks` }));
+      yield put(UpdateIndicator({ show: false }));
+    }
+  }
+}
+export function* updateQueueTask({ payload }: UpdateQueueTaskAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading Definition...',
+    })
+  );
+  const taskUrl: string = yield select((state: RootState) => state.config.serviceUrls?.taskServiceApiUrl);
+  const token: string = yield call(getAccessToken);
+
+  if (taskUrl && token) {
+    try {
+      const url = `${taskUrl}/task/v1/queues/${payload.queue.namespace}/${payload.queue.name}/tasks/${payload.id}`;
+      const { results } = yield call(updateQueueTaskApi, token, url, payload);
+
+      yield put(updateQueueTaskSuccess(results));
+      yield put(UpdateIndicator({ show: false }));
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.response} - updateQueueTasks` }));
+      yield put(UpdateIndicator({ show: false }));
+    }
+  }
+}
+export function* createTask({ payload }: SetQueueTaskAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Loading Definition...',
+    })
+  );
+  const taskUrl: string = yield select((state: RootState) => state.config.serviceUrls?.taskServiceApiUrl);
+  const token: string = yield call(getAccessToken);
+  if (taskUrl && token) {
+    try {
+      // const payload: CreateTaskConfig = { operation: 'CREATE', configuration: { tasks: tasks } };
+      const url = `${taskUrl}/task/v1/queues/${payload.recordId.split(':')[0]}/${payload.recordId.split(':')[1]}/tasks`;
+      const { results } = yield call(postTasksApi, token, url, payload);
+
+      yield put(getTasksSuccess(results));
+      yield put(UpdateIndicator({ show: false }));
+    } catch (e) {
+      yield put(ErrorNotification({ message: `${e.response} - getTasks` }));
+      yield put(UpdateIndicator({ show: false }));
     }
   }
 }
@@ -146,4 +243,7 @@ export function* watchTaskSagas(): Generator {
   yield takeEvery(UPDATE_TASK_QUEUE_ACTION, updateTaskQueue);
   yield takeEvery(DELETE_TASK_QUEUE_ACTION, deleteTaskDefinition);
   yield takeEvery(GET_TASKS_ACTION, getTasks);
+  yield takeEvery(GET_TASK_ACTION, getTask);
+  yield takeEvery(SET_QUEUE_TASK_ACTION, createTask);
+  yield takeEvery(UPDATE_QUEUE_TASK_ACTION, updateQueueTask);
 }

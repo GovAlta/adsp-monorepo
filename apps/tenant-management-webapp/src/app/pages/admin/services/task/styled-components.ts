@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled, { createGlobalStyle } from 'styled-components';
 
 export const OverflowWrap = styled.div``;
 export const IdField = styled.div`
@@ -6,6 +6,9 @@ export const IdField = styled.div`
 `;
 
 export const TableDiv = styled.div`
+  .noPadding {
+    padding: 0;
+  }
   word-wrap: break-word;
   table-layout: fixed;
   & th:nth-child(3) {
@@ -259,6 +262,15 @@ export const Modal = styled.div`
   width: 100%;
 `;
 
+export const BodyGlobalStyles = createGlobalStyle<{ hideOverflow: boolean }>`
+  body {
+    overflow:  ${(props) => (props.hideOverflow ? `hidden` : `auto`)};
+  }
+`;
+export const ModalContent = styled.div`
+  background: white;
+`;
+
 export const TabletMessage = styled.div`
   h1,
   h3 {
@@ -286,6 +298,11 @@ export const HideTablet = styled.div`
 `;
 export const ButtonPadding = styled.div`
   padding-bottom: var(--goa-spacing-l);
+  padding-top: var(--goa-spacing-l);
+`;
+export const HeaderFont = styled.div`
+  font: var(--goa-typography-heading-m);
+  padding-bottom: var(--goa-spacing-2xs);
 `;
 
 export const HelpText = styled.div`
@@ -309,4 +326,26 @@ export const ErrorMsg = styled.div`
     pointer-events: none;
     gap: 0.25rem;
   }
+`;
+
+export const MoreDetails = styled.div`
+   {
+    background-color: var(--goa-color-greyscale-100);
+    padding: var(--goa-spacing-s) var(--goa-spacing-l) var(--goa-spacing-l) var(--goa-spacing-l);
+    width: 100%;
+    p {
+      font-weight: bold;
+      padding-top: var(--goa-spacing-s);
+      margin-bottom: var(--goa-spacing-xs);
+    }
+    span {
+    }
+  }
+`;
+
+export const IconDiv = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
 `;
