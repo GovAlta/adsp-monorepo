@@ -12,7 +12,6 @@ import styled from 'styled-components';
 import { createSelector } from 'reselect';
 import { fetchServiceRoles, fetchKeycloakServiceRoles } from '@store/access/actions';
 import { Role } from '@store/tenant/models';
-import { BodyGlobalStyles } from '../styled-components';
 
 const NoContentContainer = styled.div`
   margin-bottom: 2em;
@@ -77,9 +76,12 @@ const FileTypesTableContainer = ({ roles }: FileTypesTableContainerProps): JSX.E
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
 
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, []);
+
   return (
     <>
-      <BodyGlobalStyles hideOverflow={false} />
       {!indicator.show && fileTypes && fileTypes.length === 0 && (
         <NoContentContainer>{renderNoItem('file type')}</NoContentContainer>
       )}

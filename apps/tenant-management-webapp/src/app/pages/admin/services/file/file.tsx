@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import FileOverview from './fileOverview';
 import { FileTypes } from './fileTypes';
@@ -8,7 +8,6 @@ import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 
 import AsideLinks from '@components/AsideLinks';
-import { BodyGlobalStyles } from '../styled-components';
 
 const HelpLink = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -34,11 +33,14 @@ export const File: FunctionComponent = () => {
   const searchParams = new URLSearchParams(document.location.search);
   const fileTypes = tenantName && searchParams.get('fileTypes');
 
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, []);
+
   return (
     <Page>
       <Main>
         <>
-          <BodyGlobalStyles hideOverflow={false} />
           <h1 data-testid="file-title">File service</h1>
           <Tabs activeIndex={fileTypes === 'true' ? 1 : 0} data-testid="file-tabs">
             <Tab label="Overview" data-testid="file-overview-tab">
