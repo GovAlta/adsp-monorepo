@@ -7,9 +7,6 @@ import {
   ModalContent,
   HideTablet,
 } from './styled-components';
-
-import { GoAButton } from '@abgov/react-components-new';
-
 import { useHistory } from 'react-router-dom';
 import { QueueModalEditor } from './queueModalEditor';
 import { TabletMessage } from '@components/TabletMessage';
