@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectSelectedCalendarEvents } from '@store/calendar/selectors';
 import { CalendarEvent, EventAddEditModalType, EventDeleteModalType } from '@store/calendar/models';
-import { GoACheckbox } from '@abgov/react-components-new';
+import { GoABadge } from '@abgov/react-components-new';
 import { renderNoItem } from '@components/NoItem';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { UpdateModalState } from '@store/session/actions';
@@ -14,6 +14,9 @@ import {
   EventDetailName,
   EventDetailDescription,
   EventDetailDate,
+  CalendarEventRow,
+  EventDetailGap,
+  EventDetailsActionsWrapper,
 } from './styled-components';
 import { DeleteModal } from './deleteModal';
 import DataTable from '@components/DataTable';
@@ -63,9 +66,25 @@ const EventDetails = ({ event }: EventDetailsProps): JSX.Element => {
     <EventDetailTd colSpan={4}>
       <EventDetailName>{event.name}</EventDetailName>
       <EventDetailDate>{EventDetailTime(event.start, event.end)}</EventDetailDate>
-      <EventDetailDescription>{event.description}</EventDetailDescription>
-      <GoACheckbox name="event-detail-is-all-day" checked={event?.isAllDay} text={'All day '} disabled={true} />
-      <GoACheckbox name="event-detail-is-public" checked={event?.isPublic} text={'Public '} disabled={true} />
+      <EventDetailDescription>
+        {event.description?.length === 0 ? <b>No description</b> : event.description}
+      </EventDetailDescription>
+
+      {(event?.isAllDay === true || event?.isPublic === true) && <EventDetailGap />}
+
+      {event?.isAllDay === true && (
+        <div>
+          <GoABadge type="midtone" content="All day" />
+        </div>
+      )}
+
+      {event?.isAllDay === true && event?.isPublic === true && <EventDetailGap />}
+
+      {event?.isPublic === true && (
+        <div>
+          <GoABadge type="midtone" content=" Public " />
+        </div>
+      )}
     </EventDetailTd>
   );
 };
@@ -75,13 +94,13 @@ const EventListRow = ({ event, calendarName }: EventListRowProps): JSX.Element =
   const [showDetails, setShowDetails] = useState(false);
   return (
     <>
-      <tr>
+      <CalendarEventRow>
         <EventListNameTd>{event?.name}</EventListNameTd>
         <td>{eventDateFormat(event.start)}</td>
         <td>{eventDateFormat(event.end)}</td>
         <td headers="calendar-events-actions" data-testid="calendar-selected-events-actions">
           {
-            <div style={{ display: 'flex' }}>
+            <EventDetailsActionsWrapper>
               <GoAContextMenuIcon
                 type={showDetails ? 'eye-off' : 'eye'}
                 onClick={() => setShowDetails(!showDetails)}
@@ -116,10 +135,10 @@ const EventListRow = ({ event, calendarName }: EventListRowProps): JSX.Element =
                   );
                 }}
               />
-            </div>
+            </EventDetailsActionsWrapper>
           }
         </td>
-      </tr>
+      </CalendarEventRow>
       {showDetails && (
         <EventDetailRow>
           <EventDetails event={event} />
@@ -159,10 +178,10 @@ export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
         <DataTable testId="calendar-selected-event-table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Start time</th>
-              <th>End time</th>
-              <th>Action</th>
+              <th>Event name</th>
+              <th>Start date and time</th>
+              <th>End date and time</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
