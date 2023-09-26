@@ -25,20 +25,22 @@ class FileServicePage {
     return cy.get('[data-testid="add-file-type-btn"]');
   }
 
-  fileTypeModalTitle() {
+  addFileTypeModalTitle() {
     return cy.xpath('//*[@data-testid="file-type-modal" and @open="true"]//*[@slot="heading"]');
   }
 
-  fileTypeModalNameField() {
+  addFileTypeModalNameField() {
     return cy.xpath(
       '//*[@data-testid="file-type-modal" and @open="true"]//*[@data-testid="file-type-modal-name-input"]'
     );
   }
 
-  fileTypeModalPublicCheckbox() {
-    return cy.xpath(
-      '//*[@data-testid="file-type-modal" and @open="true"]//goa-checkbox[@name="file-type-anonymousRead-checkbox"]'
-    );
+  fileTypePageNameField() {
+    return cy.get('[data-testid="fileType-name"]');
+  }
+
+  fileTypePagePublicCheckbox() {
+    return cy.xpath('//goa-checkbox[@name="file-type-anonymousRead-checkbox"]');
   }
 
   fileTypeModalReadCheckbox(roleName) {
@@ -57,39 +59,43 @@ class FileServicePage {
     );
   }
 
-  fileTypeModalCheckboxesTables() {
-    return cy.xpath(`//*[@data-testid="file-type-modal" and @open="true"]//goa-table`);
+  fileTypePageCheckboxesTables() {
+    return cy.xpath('//*[@data-testid="filetype-editor"]//goa-table');
   }
 
-  fileTypeModalClientRolesTable(clientName) {
+  fileTypePageClientRolesTable(clientName) {
     return cy.xpath(
-      `//*[@data-testid="file-type-modal" and @open="true"]//h4/div[text()="${clientName}"]/parent::h4/following-sibling::goa-table`
+      `//*[@data-testid="filetype-editor"]//h4/div[text()="${clientName}"]/parent::h4/following-sibling::goa-table[1]`
     );
   }
 
-  fileTypeModalRolesTable() {
+  fileTypePageRolesTable() {
+    return cy.xpath('//*[@data-testid="filetype-editor"]//h4[text()="autotest"]/following-sibling::goa-table[1]');
+  }
+
+  fileTypePageModifyCheckbox(roleName) {
     return cy.xpath(
-      '//*[@data-testid="file-type-modal" and @open="true"]//h4[text()="autotest"]/following-sibling::goa-table[1]'
+      `//*[@data-testid="filetype-editor"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "modify-role")]`
     );
   }
 
-  fileTypeModalModifyCheckbox(roleName) {
-    return cy.xpath(
-      `//*[@data-testid="file-type-modal" and @open="true"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "modify-role")]`
-    );
+  fileTypePageModifyCheckboxes() {
+    return cy.xpath('//*[@data-testid="filetype-editor"]//goa-checkbox[contains(@name, "modify-role")]');
   }
 
-  fileTypeModalModifyCheckboxes() {
-    return cy.xpath(
-      '//*[@data-testid="file-type-modal" and @open="true"]//goa-checkbox[contains(@name, "modify-role")]'
-    );
+  fileTypePageSaveButton() {
+    return cy.xpath('//*[@data-testid="filetype-editor"]//*[@data-testid="form-save"]');
   }
 
-  fileTypeModalSaveButton() {
+  fileTypePageBackButton() {
+    return cy.xpath('//*[@data-testid="filetype-editor"]//*[@data-testid="form-cancel"]');
+  }
+
+  addFileTypeModalSaveButton() {
     return cy.xpath('//*[@data-testid="file-type-modal" and @open="true"]//*[@data-testid="file-type-modal-save"]');
   }
 
-  fileTypeModalCancelButton() {
+  addFileTypeModalCancelButton() {
     return cy.xpath('//*[@data-testid="file-type-modal" and @open="true"]//*[@data-testid="file-type-modal-cancel"]');
   }
 
@@ -158,13 +164,11 @@ class FileServicePage {
   }
 
   fileRetentionCheckBox() {
-    return cy.xpath('//*[@data-testid="file-type-modal" and @open="true"]//goa-checkbox[@name="retentionActive"]');
+    return cy.xpath('//goa-checkbox[@name="retentionActive"]');
   }
 
-  fileRetentionDelayInput() {
-    return cy.xpath(
-      '//*[@data-testid="file-type-modal" and @open="true"]//goa-input[@data-testid="delete-in-days-input"]'
-    );
+  fileRetentionPeriodInput() {
+    return cy.xpath('//goa-input[@data-testid="delete-in-days-input"]');
   }
 
   uploadedFilesPageTitle() {

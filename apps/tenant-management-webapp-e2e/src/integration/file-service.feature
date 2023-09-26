@@ -120,19 +120,22 @@ Feature: File service
     When the user selects "File types" tab for "File"
     Then the user views file types page
     When the user clicks Add file type button on file types page
-    Then the user views "Add" file type modal
-    When the user enters "autotest-addEditDelete", "public", "empty" on file type modal
-    And the user clicks Save button on file type modal
-    Then the user "views" the file type of "autotest-addEditDelete", "public", "empty"
-    When the user clicks "Edit" button for the file type of "autotest-addEditDelete", "public", "empty"
-    Then the user views "Edit" file type modal
-    When the user enters "N/A", "empty", "empty" on file type modal
-    And the user clicks Save button on file type modal
-    Then the user "views" the file type of "autotest-addEditDelete", "empty", "empty"
-    When the user clicks "Delete" button for the file type of "autotest-addEditDelete", "empty", "empty"
+    Then the user views Add file type modal
+    When the user enters "autotest-addEditDelete" on Add file type modal
+    And the user clicks Save button on Add file type modal
+    Then the user views file type page of "autotest-addEditDelete"
+    When the user enters "public", "auto-test-role1", "30" on file type page
+    And the user clicks Save button on file type page
+    Then the user "views" the file type of "autotest-addEditDelete", "public", "auto-test-role1", "30"
+    When the user clicks "Edit" button for the file type of "autotest-addEditDelete", "public", "auto-test-role1", "30"
+    Then the user views file type page of "autotest-addEditDelete"
+    When the user enters "auto-test-role1", "auto-test-role2", "10" on file type page
+    And the user clicks Save button on file type page
+    Then the user "views" the file type of "autotest-addEditDelete", "auto-test-role1", "auto-test-role2", "10"
+    When the user clicks "Delete" button for the file type of "autotest-addEditDelete", "auto-test-role1", "auto-test-role2", "10"
     Then the user views Delete file type modal for "autotest-addEditDelete"
     When the user clicks Delete button on file type modal
-    Then the user "should not view" the file type of "autotest-addEditDelete", "empty", "empty"
+    Then the user "should not view" the file type of "autotest-addEditDelete", "auto-test-role1", "auto-test-role2", "10"
 
   # TODO: This is broken after removal of the file service specific 'feedback zone'; re-enable after feedback zone implementation.
   @FileTypes @regression @ignore
@@ -141,8 +144,8 @@ Feature: File service
     When the user selects "File types" tab for "File"
     Then the user views file types page
     When the user clicks Add file type button on file types page
-    When the user enters "autotest-type6", "auto-test-role1", "auto-test-role2" on file type modal
-    And the user clicks Save button on file type modal
+    When the user enters "autotest-type6" on Add file type modal
+    And the user clicks Save button on Add file type modal
     Then the user views an error message for duplicated file name
 
   @accessibility @regression
@@ -162,10 +165,10 @@ Feature: File service
     Given a service owner user is on Files overview page
     When the user selects "File types" tab for "File"
     Then the user views file types page
-    When the user clicks "Delete" button for the file type of "autotest-type5", "public", "file-service-admin"
+    When the user clicks "Delete" button for the file type of "autotest-type5", "public", "file-service-admin", "N/A"
     Then the user views file type current in use modal for "autotest-type5"
     When the user clicks Okay button on file type current in use modal
-    Then the user "views" the file type of "autotest-type5", "public", "file-service-admin"
+    Then the user "views" the file type of "autotest-type5", "public", "file-service-admin", "N/A"
 
   @TEST_CS-1411 @REQ_CS-1358 @FileTypes @regression
   Scenario: As a tenant admin, can see core file types
@@ -173,16 +176,3 @@ Feature: File service
     When the user selects "File types" tab for "File"
     Then the user views file types page
     And the user views the core file types with no actions
-
-  @FileTypes @regression
-  Scenario: As a tenant admin, I can add /edit the file retention policy through the file type modal
-    Given a service owner user is on Files overview page
-    When the user selects "File types" tab for "File"
-    Then the user views file types page
-    When the user clicks "Edit" button for the file type of "autotype7", "public", "file-service-admin"
-    Then the user clicks Active retention policy checkbox
-    And the user clicks Save button on file type modal
-    When the user clicks "Edit" button for the file type of "autotype7", "public", "file-service-admin"
-    Then the user view retention policy 1 days in file type modal
-    Then the user uncheck Active retention policy checkbox
-    And the user clicks Save button on file type modal

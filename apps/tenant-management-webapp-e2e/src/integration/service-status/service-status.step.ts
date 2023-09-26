@@ -95,7 +95,7 @@ When(
 
 When('the user clicks Save as draft button', function () {
   statusObj.noticeModalSaveButton().shadow().find('button').click({ force: true });
-  cy.wait(2000);
+  cy.wait(4000);
 });
 
 When('the user clicks Cancel button in notice modal', function () {
