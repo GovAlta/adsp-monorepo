@@ -49,7 +49,6 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
     return state?.task?.tasks;
   });
   const descErrMessage = 'Description can not be over 180 characters';
-  const priorities = ['Normal', 'High', 'Urgent'];
   const taskNames = tasks ? Object.keys(tasks) : [];
   const title = isNew ? 'Add Task' : 'Edit Task';
   const namespaceCheck = (): Validator => {

@@ -1,5 +1,5 @@
 import { ActionState } from '@store/session/models';
-import { Task } from 'redux-saga';
+
 export interface TaskDefinition {
   id: string;
   name: string;
