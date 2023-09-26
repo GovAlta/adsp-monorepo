@@ -69,6 +69,7 @@ Feature: Configuration-service
     When the user sends a request to set active revision to "2" for "test" under "autotest"
     And the user sends a request to set active revision to "1" for "test" under "autotest"
     Then the user gets a response of active revision for "test" under "autotest" being "1"
+    When the user waits "10" seconds
     Given an admin user is on event log page
     When the user clicks Show details button for the latest event of "active-revision-set" for "configuration-service"
     Then the user views event details of "autotest", "test", "2", "1" of active-revision-set for configuration-service
