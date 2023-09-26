@@ -3,9 +3,10 @@ import {
   NotificationTemplateEditorContainer,
   OuterNotificationTemplateEditorContainer,
   Modal,
+  BodyGlobalStyles,
+  ModalContent,
   HideTablet,
 } from './styled-components';
-import { ModalContent } from '../styled-components';
 import { useHistory } from 'react-router-dom';
 import { QueueModalEditor } from './queueModalEditor';
 import { TabletMessage } from '@components/TabletMessage';
@@ -23,11 +24,14 @@ export const TaskDefinitionEditor = (): JSX.Element => {
   return (
     <>
       <Modal data-testid="template-form">
+        {/* Hides body overflow when the modal is up */}
+        <BodyGlobalStyles hideOverflow={true} />
         <ModalContent>
           <OuterNotificationTemplateEditorContainer>
             <TabletMessage goBack={goBack} />
             <HideTablet>
               <NotificationTemplateEditorContainer>
+                {' '}
                 <QueueModalEditor />
               </NotificationTemplateEditorContainer>
             </HideTablet>

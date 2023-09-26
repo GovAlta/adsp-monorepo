@@ -46,7 +46,7 @@ export const DeleteModal = ({ calendarName }: deleteModalProps) => {
         </GoAButtonGroup>
       }
     >
-      Are you going to delete the event: <b>{`${event?.name}`}</b>
+      Are you sure you wish to delete <b>{`${event?.name}`}</b>?
     </GoAModal>
   );
 };
