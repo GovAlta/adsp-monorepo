@@ -1,9 +1,9 @@
-import React, { useEffect, useState, FunctionComponent } from 'react';
+import React, { FunctionComponent } from 'react';
 import DataTable from '@components/DataTable';
 import { TaskTableItem } from './taskTableItem';
 import { QueueTaskDefinition } from '@store/task/model';
-import { TaskModal } from './taskModal';
-import { updateQueueTask } from '@store/task/action';
+
+import { HeaderFont } from './styled-components';
 
 export interface TaskTableProps {
   tasks: Record<string, object>;
@@ -14,6 +14,9 @@ export const TaskListTable: FunctionComponent<TaskTableProps> = ({ tasks, onEdit
 
   return (
     <>
+      <HeaderFont>
+        <label>Task list</label>
+      </HeaderFont>
       <DataTable data-testid="task-task-table">
         <thead data-testid="task-task-table-header">
           <tr>

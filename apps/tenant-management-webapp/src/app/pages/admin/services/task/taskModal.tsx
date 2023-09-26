@@ -1,24 +1,18 @@
 import React, { FunctionComponent, useState } from 'react';
-import {
-  GoAForm,
-  GoAModal,
-  GoAModalActions,
-  GoAModalContent,
-  GoAModalTitle,
-} from '@abgov/react-components/experimental';
+
 import {
   GoAButton,
   GoAButtonGroup,
-  GoATextArea,
+  GoAFormItem,
   GoAIcon,
+  GoAInput,
+  GoAModal,
   GoARadioGroup,
   GoARadioItem,
+  GoATextArea,
 } from '@abgov/react-components-new';
-import { GoAFormItem, GoAInput } from '@abgov/react-components-new';
 import { useSelector } from 'react-redux';
-import { useRouteMatch } from 'react-router';
-import { useHistory } from 'react-router-dom';
-import { TaskDefinition, QueueTaskDefinition } from '@store/task/model';
+import { QueueTaskDefinition } from '@store/task/model';
 import {
   badCharsCheck,
   wordMaxLengthCheck,
@@ -103,71 +97,11 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
   };
 
   return (
-    <GoAModal testId="add-task-modal" isOpen={open}>
-      <GoAModalTitle>{title}</GoAModalTitle>
-      <GoAModalContent>
-        <GoAForm>
-          <GoAFormItem error={errors?.['name']} label="Name">
-            <GoAInput
-              type="text"
-              name="name"
-              value={task?.name}
-              data-testid={`task-modal-name-input`}
-              aria-label="name"
-              disabled={!isNew}
-              onChange={(name, value) => {
-                const validations = {
-                  name: value,
-                };
-                validators.remove('name');
-                if (isNew) {
-                  validations['duplicated'] = value;
-                }
-                validators.checkAll(validations);
-                value = toKebabName(value);
-                setTask({ ...task, name: value });
-              }}
-            />
-          </GoAFormItem>
-
-          <GoAFormItem label="Description">
-            <DescriptionItem>
-              <GoATextArea
-                name="form-task-description"
-                value={task?.description}
-                width="100%"
-                testId="form-task-description"
-                aria-label="form-task-description"
-                onChange={(name, value) => {
-                  validators.remove('description');
-                  validators['description'].check(value);
-                  setTask({ ...task, description: value });
-                }}
-              />
-
-              <HelpText>
-                {task?.description?.length <= 180 ? (
-                  <div> {descErrMessage} </div>
-                ) : (
-                  <ErrorMsg>
-                    <GoAIcon type="warning" size="small" theme="filled" />
-                    {`  ${errors?.['description']}`}
-                  </ErrorMsg>
-                )}
-                <div>{`${task?.description?.length}/180`}</div>
-              </HelpText>
-            </DescriptionItem>
-          </GoAFormItem>
-          <GoAFormItem label="Priority">
-            <GoARadioGroup name="color" value={task?.priority} onChange={(_name, value) => setPriority(value)}>
-              <GoARadioItem name="priority" value="Normal" />
-              <GoARadioItem name="priority" value="High" />
-              <GoARadioItem name="priority" value="Urgent" />
-            </GoARadioGroup>
-          </GoAFormItem>
-        </GoAForm>
-      </GoAModalContent>
-      <GoAModalActions>
+    <GoAModal
+      heading={title}
+      testId="add-task-modal"
+      open={open}
+      actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
             type="secondary"
@@ -190,7 +124,72 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
             Save
           </GoAButton>
         </GoAButtonGroup>
-      </GoAModalActions>
+      }
+    >
+      <div>
+        <GoAFormItem error={errors?.['name']} label="Name">
+          <GoAInput
+            type="text"
+            name="name"
+            value={task?.name}
+            data-testid={`task-modal-name-input`}
+            aria-label="name"
+            onChange={(name, value) => {
+              const validations = {
+                name: value,
+              };
+              validators.remove('name');
+              if (isNew) {
+                validations['duplicated'] = value;
+              }
+              validators.checkAll(validations);
+              value = toKebabName(value);
+              setTask({ ...task, name: value });
+            }}
+          />
+        </GoAFormItem>
+
+        <GoAFormItem label="Description">
+          <DescriptionItem>
+            <GoATextArea
+              name="form-task-description"
+              value={task?.description}
+              width="100%"
+              testId="form-task-description"
+              aria-label="form-task-description"
+              onChange={(name, value) => {
+                validators.remove('description');
+                validators['description'].check(value);
+                setTask({ ...task, description: value });
+              }}
+            />
+
+            <HelpText>
+              {task?.description?.length <= 180 ? (
+                <div> {descErrMessage} </div>
+              ) : (
+                <ErrorMsg>
+                  <GoAIcon type="warning" size="small" theme="filled" />
+                  {`  ${errors?.['description']}`}
+                </ErrorMsg>
+              )}
+              <div>{`${task?.description?.length}/180`}</div>
+            </HelpText>
+          </DescriptionItem>
+        </GoAFormItem>
+        <GoAFormItem label="Priority">
+          <GoARadioGroup
+            name="color"
+            value={task?.priority}
+            onChange={(_name, value) => setPriority(value)}
+            disabled={!isNew}
+          >
+            <GoARadioItem name="priority" value="Normal" />
+            <GoARadioItem name="priority" value="High" />
+            <GoARadioItem name="priority" value="Urgent" />
+          </GoARadioGroup>
+        </GoAFormItem>
+      </div>
     </GoAModal>
   );
 };
