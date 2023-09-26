@@ -93,7 +93,7 @@ const Dashboard = (): JSX.Element => {
       setOldWindowSize(JSON.parse(JSON.stringify(size)));
       setResetHeight(false);
     }
-  }, [elementRefs, services, resetHeight]);
+  }, [services, resetHeight]);
 
   useEffect(() => {
     if (oldWindowSize?.width !== size?.width) {

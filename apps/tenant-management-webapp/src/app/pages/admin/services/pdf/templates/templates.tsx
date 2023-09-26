@@ -11,7 +11,6 @@ import { defaultPdfTemplate } from '@store/pdf/model';
 import { useHistory } from 'react-router-dom';
 import { useRouteMatch } from 'react-router';
 import { DeleteModal } from '@components/DeleteModal';
-import { BodyGlobalStyles } from '../../styled-components';
 
 interface PdfTemplatesProps {
   openAddTemplate: boolean;
@@ -19,8 +18,13 @@ interface PdfTemplatesProps {
 export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
   const [openAddPdfTemplate, setOpenAddPdfTemplate] = useState(false);
   const openEditor = useSelector((state: RootState) => state.pdf.openEditor);
+
   const history = useHistory();
   const { url } = useRouteMatch();
+
+  const isObjectEmpty = (obj) => {
+    return JSON.stringify(obj) === '{}';
+  };
 
   useEffect(() => {
     if (openEditor) {
@@ -58,18 +62,24 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
       setOpenAddPdfTemplate(true);
     }
   }, [openAddTemplate]);
+
   useEffect(() => {
-    dispatch(getPdfTemplates());
+    if (isObjectEmpty(pdfTemplates)) {
+      dispatch(getPdfTemplates());
+    }
   }, []);
 
   // eslint-disable-next-line
   useEffect(() => {}, [pdfTemplates]);
 
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, []);
+
   return (
     <>
       <div>
         <br />
-        <BodyGlobalStyles hideOverflow={false} />
         <GoAButton
           testId="add-template"
           onClick={() => {
@@ -80,7 +90,7 @@ export const PdfTemplates = ({ openAddTemplate }: PdfTemplatesProps) => {
         </GoAButton>
         <br />
         <br />
-        <PageIndicator />
+        {indicator.show && <PageIndicator />}
 
         <AddEditPdfTemplate
           open={openAddPdfTemplate}

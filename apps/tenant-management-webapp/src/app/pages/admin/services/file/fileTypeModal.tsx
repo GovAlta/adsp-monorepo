@@ -18,7 +18,7 @@ import { GoAPageLoader } from '@abgov/react-components';
 
 interface FileTypeModalProps {
   isOpen: boolean;
-  fileType?: FileTypeItem;
+  initialValue?: FileTypeItem;
   onCancel: () => void;
   fileTypeNames?: string[];
   type: 'new' | 'edit';
@@ -33,13 +33,19 @@ const validateRetentionPolicy = (type: FileTypeItem): boolean => {
   return true;
 };
 
-export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
-  const isNew = props.type === 'new';
-  const [fileType, setFileType] = useState({} as FileTypeItem);
+export const FileTypeModal = ({
+  initialValue,
+  isOpen,
+  type,
+  fileTypeNames,
+  onCancel,
+}: FileTypeModalProps): JSX.Element => {
+  const isNew = type === 'new';
+  const [fileType, setFileType] = useState(initialValue);
   const [spinner, setSpinner] = useState(false);
 
   const title = isNew ? 'Add file type' : 'Edit file type';
-  const cloneFileType = cloneDeep(props.fileType);
+  const cloneFileType = cloneDeep(initialValue);
 
   const history = useHistory();
   const { errors, validators } = useValidators(
@@ -49,7 +55,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
     wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
   )
-    .add('duplicated', 'name', duplicateNameCheck(props.fileTypeNames, 'File type'))
+    .add('duplicated', 'name', duplicateNameCheck(fileTypeNames, 'File type'))
     .build();
 
   const dispatch = useDispatch();
@@ -62,8 +68,8 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
   useEffect(() => {}, [fetchKeycloakRolesState]);
 
   useEffect(() => {
-    setFileType(props.fileType);
-  }, [props.fileType]);
+    setFileType(initialValue);
+  }, [isOpen]);
 
   const handleCancelClick = () => {
     if (isNew) {
@@ -88,14 +94,14 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
       setFileType(cloneFileType);
     }
     validators.clear();
-    props.onCancel();
+    onCancel();
   };
 
   return (
     <ModalOverwrite>
       <GoAModal
         testId="file-type-modal"
-        open={props.isOpen}
+        open={isOpen}
         heading={title}
         actions={
           <GoAButtonGroup alignment="end">
@@ -118,7 +124,7 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
                   name: fileType.name,
                 };
 
-                if (props.type === 'new') {
+                if (type === 'new') {
                   validations['duplicated'] = fileType.name;
                 }
 
@@ -149,8 +155,8 @@ export const FileTypeModal = (props: FileTypeModalProps): JSX.Element => {
               <GoAInput
                 type="text"
                 name="name"
-                disabled={props.type === 'edit'}
-                value={fileType?.name}
+                disabled={type === 'edit'}
+                value={fileType.name}
                 width="100%"
                 testId={`file-type-modal-name-input`}
                 onChange={(name, value) => {
