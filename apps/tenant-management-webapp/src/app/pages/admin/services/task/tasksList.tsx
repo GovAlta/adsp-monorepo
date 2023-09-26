@@ -3,11 +3,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { getTaskQueues, getTasks, SetQueueTask, updateQueueTask } from '@store/task/action';
 import { QueueTaskDefinition, defaultQueuedTask } from '@store/task/model';
-import { PageIndicator } from '@components/Indicator';
+
 import { renderNoItem } from '@components/NoItem';
 import { GoAButton, GoADropdown, GoADropdownItem, GoAFormItem, GoASkeleton } from '@abgov/react-components-new';
 import { TaskModal } from './taskModal';
-import { ButtonPadding, HeaderFont } from './styled-components';
+import { ButtonPadding } from './styled-components';
 import { TaskListTable } from './tasksTable';
 
 export const TasksList = (): JSX.Element => {
@@ -47,7 +47,7 @@ export const TasksList = (): JSX.Element => {
 
   useEffect(() => {
     document.body.style.overflow = 'unset';
-  }, []);
+  }, [openAddTask]);
 
   const reset = () => {
     setOpenAddTask(false);
@@ -71,7 +71,7 @@ export const TasksList = (): JSX.Element => {
   return (
     <section>
       {!indicator.show && Object.keys(taskQueues).length === 0 && renderNoItem('task queues')}
-      {!indicator.show && Object.keys(taskQueues).length > 0 && (
+      {Object.keys(taskQueues).length > 0 && (
         <GoAFormItem label="Select a queue">
           {indicator.show && Object.keys(taskQueues).length === 0 && <GoASkeleton type="text" key={1}></GoASkeleton>}
           {Object.keys(taskQueues).length > 0 && (
@@ -113,12 +113,7 @@ export const TasksList = (): JSX.Element => {
           </GoAButton>
         </ButtonPadding>
       </div>
-      <div>
-        <HeaderFont>
-          <label>Task list</label>
-        </HeaderFont>
-      </div>
-      <PageIndicator />
+
       {selectedTask !== '' && tasks?.length && (
         <TaskListTable
           tasks={tasks}
