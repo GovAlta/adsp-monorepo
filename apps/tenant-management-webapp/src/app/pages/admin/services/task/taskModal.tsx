@@ -131,7 +131,8 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
             type="text"
             name="name"
             value={task?.name}
-            data-testid={`task-modal-name-input`}
+            testId={`task-modal-name-input`}
+            width="100%"
             aria-label="name"
             onChange={(name, value) => {
               const validations = {

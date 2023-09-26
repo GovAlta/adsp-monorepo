@@ -113,7 +113,6 @@ export const TasksList = (): JSX.Element => {
           </GoAButton>
         </ButtonPadding>
       </div>
-
       {selectedTask !== '' && tasks?.length && (
         <TaskListTable
           tasks={tasks}
@@ -124,18 +123,17 @@ export const TasksList = (): JSX.Element => {
           }}
         />
       )}
-      {openAddTask && (
-        <TaskModal
-          open={true}
-          queue={selectedTask}
-          type={modalType}
-          initialValue={editedTask}
-          onCancel={() => {
-            reset();
-          }}
-          onSave={handleSave}
-        />
-      )}
+
+      <TaskModal
+        open={openAddTask}
+        queue={selectedTask}
+        type={modalType}
+        initialValue={editedTask}
+        onCancel={() => {
+          reset();
+        }}
+        onSave={handleSave}
+      />
     </section>
   );
 };
