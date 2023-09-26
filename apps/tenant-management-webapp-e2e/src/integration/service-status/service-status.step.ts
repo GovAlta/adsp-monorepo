@@ -229,6 +229,7 @@ When('the user selects {string} filter by status radio button', function (filter
     .shadow()
     .find('input[value="' + filterType.toLowerCase() + '"]')
     .click({ force: true });
+  cy.wait(2000);
 });
 
 Then('the user views {string} notices', function (filterType) {
