@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { SelectCalendarHeader, ProgressWrapper, CalendarEventTabWrapper, CalendarEventRow } from './styled-components';
+import { SelectCalendarHeader, ProgressWrapper, CalendarEventTabWrapper } from './styled-components';
 import { GoADropdown, GoADropdownItem, GoAButton, GoACircularProgress } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
 import { CalendarObjectType, EventAddEditModalType } from '@store/calendar/models';
