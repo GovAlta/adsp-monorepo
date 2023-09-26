@@ -32,10 +32,7 @@ export const ProgressWrapper = styled.div`
 `;
 
 export const EventDetailTd = styled.td`
-  padding-top: var(--goa-spacing-l) !important;
-  padding-right: var(--goa-spacing-l) !important;
-  padding-bottom: calc(var(--goa-spacing-l) - 10px)) !important;
-  padding-left: var(--goa-spacing-l) !important;
+  padding: var(--goa-spacing-l) !important;
 `;
 
 export const EventDetailName = styled.div`
@@ -45,7 +42,6 @@ export const EventDetailName = styled.div`
 
 export const EventDetailDescription = styled.div`
   color: var(--goa-color-greyscale-700);
-  padding-bottom: calc(var(--goa-spacing-m) - 10px);
   font-size: var(--goa-font-size-3);
   line-height: var(--var);
 `;
@@ -61,5 +57,27 @@ export const CalendarEventListWrapper = styled.div`
 `;
 
 export const EventListNameTd = styled.td`
-  width: 10%;
+  width: 15%;
+`;
+
+export const CalendarEventTabWrapper = styled.div`
+  width: 40rem;
+`;
+
+export const CalendarEventRow = styled.tr`
+  vertical-align: top;
+`;
+
+export const EventDetailGap = styled.div`
+  height: var(--goa-spacing-m);
+`;
+
+export const EventDetailsActionsWrapper = styled.div`
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  background-color: #fff;
+  gap: 0.25rem;
 `;

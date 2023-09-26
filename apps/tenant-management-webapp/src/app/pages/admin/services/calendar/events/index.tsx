@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { SelectCalendarHeader, ProgressWrapper } from './styled-components';
+import { SelectCalendarHeader, ProgressWrapper, CalendarEventTabWrapper } from './styled-components';
 import { GoADropdown, GoADropdownItem, GoAButton, GoACircularProgress } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
 import { CalendarObjectType, EventAddEditModalType } from '@store/calendar/models';
@@ -51,7 +51,7 @@ export const CalendarEvents = (): JSX.Element => {
 
   const calendars = useSelector(selectCalendars);
   return (
-    <>
+    <CalendarEventTabWrapper>
       <SelectCalendarHeader>Select a calendar</SelectCalendarHeader>
       <ProgressWrapper>
         <GoACircularProgress size="small" visible={!calendars} variant="inline" />
@@ -76,6 +76,6 @@ export const CalendarEvents = (): JSX.Element => {
         Add event
       </GoAButton>
       {selectedCalendar && <EventList calendarName={selectedCalendar} />}
-    </>
+    </CalendarEventTabWrapper>
   );
 };
