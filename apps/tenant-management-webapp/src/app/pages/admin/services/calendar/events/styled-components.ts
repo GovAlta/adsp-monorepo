@@ -78,6 +78,5 @@ export const EventDetailsActionsWrapper = styled.div`
   -webkit-box-align: center;
   -ms-flex-align: center;
   align-items: center;
-  background-color: #fff;
   gap: 0.25rem;
 `;

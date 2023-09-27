@@ -61,7 +61,7 @@ export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => 
       const events = action.payload;
       const name = action.calendarName;
       state.calendars[name].selectedCalendarEvents = events;
-
+      state.calendars[name].hasMore = action.hasMore;
       return {
         ...state,
       };

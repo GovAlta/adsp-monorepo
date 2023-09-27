@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useEffect, useState } from 'react';
 
 import {
   GoAButton,
@@ -12,7 +12,7 @@ import {
   GoATextArea,
 } from '@abgov/react-components-new';
 import { useSelector } from 'react-redux';
-import { QueueTaskDefinition } from '@store/task/model';
+import { QueueTaskDefinition, defaultQueuedTask } from '@store/task/model';
 import {
   badCharsCheck,
   wordMaxLengthCheck,
@@ -45,17 +45,22 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
 
   const [task, setTask] = useState<QueueTaskDefinition>(initialValue);
 
+  useEffect(() => {
+    setTask(initialValue);
+  }, [initialValue]);
+
   const tasks = useSelector((state: RootState) => {
     return state?.task?.tasks;
   });
   const descErrMessage = 'Description can not be over 180 characters';
   const taskNames = tasks ? Object.keys(tasks) : [];
-  const title = isNew ? 'Add Task' : 'Edit Task';
+  const title = isNew ? 'Add task' : 'Edit task';
   const namespaceCheck = (): Validator => {
     return (namespace: string) => {
       return namespace === 'platform' ? 'Cannot use the word platform as namespace' : '';
     };
   };
+
   const [priority, setPriority] = useState<string>('');
   const { errors, validators } = useValidators(
     'name',
@@ -67,27 +72,25 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
   )
     .add('duplicated', 'name', duplicateNameCheck(taskNames, 'Task'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
-    .add(
-      'namespace',
-      'namespace',
-      isNotEmptyCheck('namespace'),
-      wordMaxLengthCheck(32, 'Namespace'),
-      duplicateNameCheck(taskNames, 'Task')
-    )
+    .add('priority', 'priority', isNotEmptyCheck('priority'))
     .build();
+
   const validationCheck = () => {
     const validations = {
       name: task?.name,
+      description: task?.description,
+      priority: priority || task?.priority,
     };
 
     if (isNew) {
       validations['duplicated'] = task?.name;
-
-      if (!validators.checkAll(validations)) {
-        return;
-      }
+      validations['description'] = task?.description;
+      validations['priority'] = priority;
     }
-    task.priority = priority;
+    if (!validators.checkAll(validations)) {
+      return;
+    }
+
     task.recordId = queue;
     onSave(task);
 
@@ -107,6 +110,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
             testId="task-modal-cancel"
             onClick={() => {
               validators.clear();
+              setTask(defaultQueuedTask);
               onCancel();
             }}
           >
@@ -115,7 +119,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
           <GoAButton
             type="primary"
             testId="task-modal-save"
-            disabled={!task?.name || validators.haveErrors()}
+            disabled={!task.name || !task.description || (type === 'new' && !priority) || validators.haveErrors()}
             onClick={() => {
               validationCheck();
             }}
@@ -152,13 +156,12 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
         <GoAFormItem label="Description">
           <DescriptionItem>
             <GoATextArea
-              name="form-task-description"
+              name="description"
               value={task?.description}
               width="100%"
-              testId="form-task-description"
-              aria-label="form-task-description"
+              testId="description"
+              aria-label="description"
               onChange={(name, value) => {
-                validators.remove('description');
                 validators['description'].check(value);
                 setTask({ ...task, description: value });
               }}
@@ -177,11 +180,18 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
             </HelpText>
           </DescriptionItem>
         </GoAFormItem>
-        <GoAFormItem label="Priority">
+        <GoAFormItem label="Priority" error={errors?.['priority']}>
           <GoARadioGroup
-            name="color"
+            name="priority"
             value={task?.priority}
-            onChange={(_name, value) => setPriority(value)}
+            onChange={(_name, value) => {
+              if (type === 'new') {
+                const priority = value;
+                validators.remove('priority');
+                validators['priority'].check(priority);
+              }
+              setPriority(value);
+            }}
             disabled={!isNew}
           >
             <GoARadioItem name="priority" value="Normal" />

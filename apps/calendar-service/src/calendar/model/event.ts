@@ -50,11 +50,11 @@ export class CalendarEventEntity implements CalendarEvent {
       this.description = update.description;
     }
 
-    if (update.isPublic) {
+    if ('isPublic' in update) {
       this.isPublic = update.isPublic;
     }
 
-    if (update.isAllDay) {
+    if ('isAllDay' in update) {
       this.isAllDay = update.isAllDay;
     }
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { SelectCalendarHeader, ProgressWrapper, CalendarEventTabWrapper } from './styled-components';
-import { GoADropdown, GoADropdownItem, GoAButton, GoACircularProgress } from '@abgov/react-components-new';
+import { SelectCalendarHeader } from './styled-components';
+import { GoADropdown, GoADropdownItem, GoAButton, GoASkeleton } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
 import { CalendarObjectType, EventAddEditModalType } from '@store/calendar/models';
 import { fetchCalendars, FetchEventsByCalendar } from '@store/calendar/actions';
@@ -42,7 +42,7 @@ export const CalendarEvents = (): JSX.Element => {
 
   const onCalendarSelect = (name: string, value: string) => {
     setSelectedCalendar(value);
-    dispatch(FetchEventsByCalendar(value));
+    dispatch(FetchEventsByCalendar(value, 0));
   };
 
   useEffect(() => {
@@ -51,11 +51,9 @@ export const CalendarEvents = (): JSX.Element => {
 
   const calendars = useSelector(selectCalendars);
   return (
-    <CalendarEventTabWrapper>
+    <>
       <SelectCalendarHeader>Select a calendar</SelectCalendarHeader>
-      <ProgressWrapper>
-        <GoACircularProgress size="small" visible={!calendars} variant="inline" />
-      </ProgressWrapper>
+      {!calendars && <GoASkeleton type="text" key={1}></GoASkeleton>}
       {calendars && <CalendarDropdown calendars={calendars} onSelect={onCalendarSelect} />}
       <EventAddEditModal calendarName={selectedCalendar} />
       <br /> <br />
@@ -76,6 +74,6 @@ export const CalendarEvents = (): JSX.Element => {
         Add event
       </GoAButton>
       {selectedCalendar && <EventList calendarName={selectedCalendar} />}
-    </CalendarEventTabWrapper>
+    </>
   );
 };

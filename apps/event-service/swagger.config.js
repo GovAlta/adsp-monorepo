@@ -3,10 +3,16 @@ module.exports = {
   info: {
     title: 'Event service',
     version: '1.0.0',
-    description:
-      'The Event service allows consumers to send domain events. ' +
-      'These events are used for a variety of side effects to support additional functionality aside from domain services. ' +
-      'For example, events are recorded to an event log that provide traceability for domain record updates.',
+    description: `There are two main uses for the Event Service by GOA applications;
+1. For triggering notifications via the ADSP Notification Service.
+See [the tutorials](https://govalta.github.io/adsp-monorepo/tutorials/notification-service/notification-service.html)
+for a full description of how to use events with the Notification Service.
+2. For recording occurrences of specific domain events in a log.  When an event is logged, the payload is also recorded as
+a JSON object, giving the application full control over its content.
+
+Domain events are defined by developers in the [Tenant Admin Webapp](https://adsp-uat.alberta.ca), and then triggered
+by the API described below.
+`,
   },
   tags: [
     {
