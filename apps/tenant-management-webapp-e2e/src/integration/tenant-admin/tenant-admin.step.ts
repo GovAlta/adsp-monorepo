@@ -93,6 +93,7 @@ Then('the keycloak admin link can open tenant admin portal in a new tab', functi
 });
 
 Then('the user views the number of users in its tenant realm', function () {
+  cy.wait(4000); //Wait for stats to show up
   // Verify user count is present
   tenantAdminObj
     .userCount()
