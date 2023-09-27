@@ -341,6 +341,7 @@ export const MoreDetails = styled.div`
     background-color: var(--goa-color-greyscale-100);
     padding: var(--goa-spacing-s) var(--goa-spacing-l) var(--goa-spacing-l) var(--goa-spacing-l);
     width: 100%;
+    text-align: left;
     p {
       font-weight: bold;
       padding-top: var(--goa-spacing-s);
