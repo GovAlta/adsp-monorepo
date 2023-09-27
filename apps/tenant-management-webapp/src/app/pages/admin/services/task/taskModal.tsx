@@ -67,27 +67,24 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
   )
     .add('duplicated', 'name', duplicateNameCheck(taskNames, 'Task'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
-    .add(
-      'namespace',
-      'namespace',
-      isNotEmptyCheck('namespace'),
-      wordMaxLengthCheck(32, 'Namespace'),
-      duplicateNameCheck(taskNames, 'Task')
-    )
+    .add('priority', 'priority', isNotEmptyCheck('priority'))
     .build();
   const validationCheck = () => {
     const validations = {
       name: task?.name,
+      description: task?.description,
+      priority: priority || task?.priority,
     };
 
     if (isNew) {
       validations['duplicated'] = task?.name;
-
-      if (!validators.checkAll(validations)) {
-        return;
-      }
+      validations['description'] = task?.description;
+      validations['priority'] = priority;
     }
-    task.priority = priority;
+    if (!validators.checkAll(validations)) {
+      return;
+    }
+    // task.priority = priority;
     task.recordId = queue;
     onSave(task);
 
@@ -115,7 +112,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
           <GoAButton
             type="primary"
             testId="task-modal-save"
-            disabled={!task?.name || validators.haveErrors()}
+            disabled={!task.name || !task.description || (type === 'new' && !priority) || validators.haveErrors()}
             onClick={() => {
               validationCheck();
             }}
@@ -152,13 +149,12 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
         <GoAFormItem label="Description">
           <DescriptionItem>
             <GoATextArea
-              name="form-task-description"
+              name="description"
               value={task?.description}
               width="100%"
-              testId="form-task-description"
-              aria-label="form-task-description"
+              testId="description"
+              aria-label="description"
               onChange={(name, value) => {
-                validators.remove('description');
                 validators['description'].check(value);
                 setTask({ ...task, description: value });
               }}
@@ -177,11 +173,18 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
             </HelpText>
           </DescriptionItem>
         </GoAFormItem>
-        <GoAFormItem label="Priority">
+        <GoAFormItem label="Priority" error={errors?.['priority']}>
           <GoARadioGroup
-            name="color"
+            name="priority"
             value={task?.priority}
-            onChange={(_name, value) => setPriority(value)}
+            onChange={(_name, value) => {
+              if (type === 'new') {
+                const priority = value;
+                validators.remove('priority');
+                validators['priority'].check(priority);
+              }
+              setPriority(value);
+            }}
             disabled={!isNew}
           >
             <GoARadioItem name="priority" value="Normal" />
