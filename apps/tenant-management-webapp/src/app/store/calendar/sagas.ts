@@ -137,11 +137,13 @@ export function* fetchEventsByCalendar(action: FetchEventsByCalendarAction): Sag
   const calendarName = action.payload;
   if (calendarBaseUrl && token) {
     try {
-      const response = yield call(axios.get, `${calendarBaseUrl}/calendar/v1/calendars/${calendarName}/events`, {
+      const response = yield call(axios.get, `${calendarBaseUrl}/calendar/v1/calendars/${calendarName}/events?top=50`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      yield put(FetchEventsByCalendarSuccess(response.data?.results, calendarName));
+      yield put(
+        FetchEventsByCalendarSuccess(response.data?.results, calendarName, response?.data?.page?.next !== undefined)
+      );
     } catch (err) {
       yield put(ErrorNotification({ message: `Error fetching events by calendar: ${err.message}` }));
     }

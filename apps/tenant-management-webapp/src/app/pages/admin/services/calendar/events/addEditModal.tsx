@@ -33,6 +33,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
   const [endDate, setEndDate] = useState<string>('');
   //eslint-disable-next-line
   const [isEndBeforeStart, setIsEndBeforeStart] = useState(false);
+
   const isEdit = !!calendarEvent?.id;
   if (isEdit) {
     const indexToRemove: number = calendarEvents.indexOf(calendarEvent.name);
@@ -41,6 +42,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
       calendarEvents.splice(indexToRemove, 1);
     }
   }
+
   const { errors, validators } = useValidators(
     'name',
     'name',
