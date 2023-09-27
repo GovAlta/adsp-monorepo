@@ -110,7 +110,7 @@ export const TasksList = (): JSX.Element => {
                 setOpenAddTask(true);
               }}
             >
-              Add Task
+              Add task
             </GoAButton>
           </ButtonPadding>
         </div>

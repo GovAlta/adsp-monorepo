@@ -54,7 +54,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
   });
   const descErrMessage = 'Description can not be over 180 characters';
   const taskNames = tasks ? Object.keys(tasks) : [];
-  const title = isNew ? 'Add Task' : 'Edit Task';
+  const title = isNew ? 'Add task' : 'Edit task';
   const namespaceCheck = (): Validator => {
     return (namespace: string) => {
       return namespace === 'platform' ? 'Cannot use the word platform as namespace' : '';
