@@ -31,6 +31,8 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
   const [endTime, setEndTime] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
+  //eslint-disable-next-line
+  const [isEndBeforeStart, setIsEndBeforeStart] = useState(false);
   const { errors, validators } = useValidators(
     'name',
     'name',
@@ -100,15 +102,20 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
             testId="calendar-modal-save"
             disabled={validators.haveErrors()}
             onClick={() => {
+              if (new Date(calendarEvent.start) > new Date(calendarEvent.end)) {
+                setIsEndBeforeStart(true);
+                errors['end'] = 'End of event must be after start of event.';
+                return;
+              }
               const validations = {
                 name: calendarEvent.name,
-                start: calendarEvent.start,
                 end: calendarEvent.end,
               };
+              validations['duplicated'] = calendarEvent.name;
               if (!validators.checkAll(validations)) {
                 return;
               }
-              //reconstruct the calendar event start and end time
+
               if (calendarEvent.isAllDay) {
                 const theDay = new Date(calendarEvent.start);
                 const theDayStart = theDay.setHours(0, 0, 0, 0);
@@ -124,6 +131,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
               }
               dispatch(ResetModalState());
               validators.clear();
+              setIsEndBeforeStart(false);
             }}
           >
             Save
@@ -158,7 +166,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           width="100%"
           onChange={(name, value) => {
             validators.remove('description');
-            validators['description'].check();
+            validators['description'].check(value);
             setCalendarEvent({ ...calendarEvent, description: value });
           }}
         />
@@ -183,7 +191,6 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           }}
         />
       </CheckBoxWrapper>
-
       <GoAGrid minChildWidth="25ch" gap="s">
         <GoAFormItem label="Start Date" error={errors?.['start']}>
           <GoAInputDate
