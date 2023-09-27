@@ -84,7 +84,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
     if (!validators.checkAll(validations)) {
       return;
     }
-    // task.priority = priority;
+
     task.recordId = queue;
     onSave(task);
 
