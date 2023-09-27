@@ -98,22 +98,30 @@ export const TasksList = (): JSX.Element => {
           )}
         </GoAFormItem>
       )}
-      <div>
-        <ButtonPadding>
-          <GoAButton
-            testId="add-queue-btn"
-            disabled={selectedTask === ''}
-            onClick={() => {
-              setModalType('new');
-              setUpdatedTask(defaultQueuedTask);
-              setOpenAddTask(true);
-            }}
-          >
-            Add Task
-          </GoAButton>
-        </ButtonPadding>
-      </div>
-      {selectedTask !== '' && tasks?.length && (
+      {selectedTask !== '' && (
+        <div>
+          <ButtonPadding>
+            <GoAButton
+              testId="add-queue-btn"
+              disabled={selectedTask === ''}
+              onClick={() => {
+                setModalType('new');
+                setUpdatedTask(defaultQueuedTask);
+                setOpenAddTask(true);
+              }}
+            >
+              Add Task
+            </GoAButton>
+          </ButtonPadding>
+        </div>
+      )}
+
+      {!indicator.show &&
+        selectedTask !== '' &&
+        tasks &&
+        Object.keys(tasks).length === 0 &&
+        renderNoItem('queue tasks')}
+      {selectedTask !== '' && tasks && Object.keys(tasks).length !== 0 && (
         <TaskListTable
           tasks={tasks}
           onEditTask={(updatedTask) => {
@@ -123,17 +131,18 @@ export const TasksList = (): JSX.Element => {
           }}
         />
       )}
-
-      <TaskModal
-        open={openAddTask}
-        queue={selectedTask}
-        type={modalType}
-        initialValue={editedTask}
-        onCancel={() => {
-          reset();
-        }}
-        onSave={handleSave}
-      />
+      {openAddTask && (
+        <TaskModal
+          open={true}
+          queue={selectedTask}
+          type={modalType}
+          initialValue={editedTask}
+          onCancel={() => {
+            reset();
+          }}
+          onSave={handleSave}
+        />
+      )}
     </section>
   );
 };

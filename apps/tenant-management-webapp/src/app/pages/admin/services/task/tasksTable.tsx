@@ -3,7 +3,7 @@ import DataTable from '@components/DataTable';
 import { TaskTableItem } from './taskTableItem';
 import { QueueTaskDefinition } from '@store/task/model';
 
-import { HeaderFont } from './styled-components';
+import { HeaderFont, TableDiv } from './styled-components';
 
 export interface TaskTableProps {
   tasks: Record<string, object>;
@@ -17,20 +17,22 @@ export const TaskListTable: FunctionComponent<TaskTableProps> = ({ tasks, onEdit
       <HeaderFont>
         <label>Task list</label>
       </HeaderFont>
-      <DataTable data-testid="task-task-table">
-        <thead data-testid="task-task-table-header">
-          <tr>
-            <th data-testid="task-task-table-header-namespace">Name</th>
-            <th data-testid="task-task-table-header-name">Description</th>
-            <th data-testid="task-task-table-header-name">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Object.keys(newTasks).map((task) => {
-            return <TaskTableItem key={task} id={task} task={newTasks[task]} onEditTask={onEditTask} />;
-          })}
-        </tbody>
-      </DataTable>
+      <TableDiv>
+        <DataTable data-testid="task-task-table">
+          <thead data-testid="task-task-table-header">
+            <tr>
+              <th data-testid="task-task-table-header-namespace">Name</th>
+              <th data-testid="task-task-table-header-name">Description</th>
+              <th data-testid="task-task-table-header-name">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.keys(newTasks).map((task) => {
+              return <TaskTableItem key={task} id={task} task={newTasks[task]} onEditTask={onEditTask} />;
+            })}
+          </tbody>
+        </DataTable>
+      </TableDiv>
     </>
   );
 };
