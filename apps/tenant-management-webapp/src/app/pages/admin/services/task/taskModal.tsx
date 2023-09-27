@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useEffect, useState } from 'react';
 
 import {
   GoAButton,
@@ -12,7 +12,7 @@ import {
   GoATextArea,
 } from '@abgov/react-components-new';
 import { useSelector } from 'react-redux';
-import { QueueTaskDefinition } from '@store/task/model';
+import { QueueTaskDefinition, defaultQueuedTask } from '@store/task/model';
 import {
   badCharsCheck,
   wordMaxLengthCheck,
@@ -45,6 +45,10 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
 
   const [task, setTask] = useState<QueueTaskDefinition>(initialValue);
 
+  useEffect(() => {
+    setTask(initialValue);
+  }, [initialValue]);
+
   const tasks = useSelector((state: RootState) => {
     return state?.task?.tasks;
   });
@@ -56,6 +60,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
       return namespace === 'platform' ? 'Cannot use the word platform as namespace' : '';
     };
   };
+
   const [priority, setPriority] = useState<string>('');
   const { errors, validators } = useValidators(
     'name',
@@ -69,6 +74,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .add('priority', 'priority', isNotEmptyCheck('priority'))
     .build();
+
   const validationCheck = () => {
     const validations = {
       name: task?.name,
@@ -104,6 +110,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
             testId="task-modal-cancel"
             onClick={() => {
               validators.clear();
+              setTask(defaultQueuedTask);
               onCancel();
             }}
           >
