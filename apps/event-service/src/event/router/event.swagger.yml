@@ -12,17 +12,26 @@
             properties:
               namespace:
                 type: string
+                description: The namespace of the event definition.
+                example: application-events
               name:
                 type: string
+                description: The name of the event definition.
+                example: user-registration
               correlationId:
                 type: string
+                description: An optional reference to an object that can be used by the event receiver for matching purposes.
+                example: Bobs-user-id
               context:
                 type: object
+                description: An optional object that can be used by the event receiver for matching purposes.
               timestamp:
                 type: string
+                description: the time the event was triggered.
                 format: datetime
               payload:
                 type: object
+                description: An object with values matching the schema specified in the Event Definition that can be used by the event receiver.
             required:
               - namespace
               - name
