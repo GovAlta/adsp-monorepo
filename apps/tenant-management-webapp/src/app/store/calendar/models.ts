@@ -9,6 +9,7 @@ export interface CalendarItem {
   readRoles: string[];
   updateRoles: string[];
   selectedCalendarEvents?: CalendarEvent[];
+  hasMore?: boolean;
 }
 
 export type CalendarObjectType = Record<string, CalendarItem>;
@@ -16,8 +17,8 @@ export type CalendarObjectType = Record<string, CalendarItem>;
 export interface CalendarService {
   calendars: CalendarObjectType;
   indicator?: Indicator;
-  // selectedCalendarEvents?: CalendarEvent[];
 }
+
 export const defaultCalendar: CalendarItem = {
   name: '',
   displayName: '',
