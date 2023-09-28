@@ -38,11 +38,14 @@ interface LoadMoreEventsProps {
   calendarName: string;
 }
 
-const eventDateFormat = (dateString: string) => {
+const eventDateFormat = (dateString: string, isAllDay: boolean) => {
   const date = new Date(dateString);
   const time = date.toLocaleString('en-us', { hour: '2-digit', minute: '2-digit' });
-
-  return `${getDateString(date)}, ${time}`;
+  if (isAllDay) {
+    return `${getDateString(date)}`;
+  } else {
+    return `${getDateString(date)}, ${time}`;
+  }
 };
 
 const getDateString = (date: Date): string => {
@@ -52,7 +55,7 @@ const getDateString = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
-const EventDetailTime = (start: string, end: string): string => {
+const EventDetailTime = (start: string, end: string, isAllDay: boolean): string => {
   const startDate = new Date(start);
   const endDate = new Date(end);
   const startWeekDay = startDate.toLocaleString('en-us', { weekday: 'long' });
@@ -61,9 +64,17 @@ const EventDetailTime = (start: string, end: string): string => {
   const endDateDateString = getDateString(endDate);
   const endDateTimeString = startDate.toLocaleString('en-us', { hour: '2-digit', minute: '2-digit' });
   if (startDate.getDate() === endDate.getDate()) {
-    return `${startWeekDay}, ${startDateDateString}, ${stateDateTimeString} - ${endDateTimeString}`;
+    if (isAllDay) {
+      return `${startWeekDay}, ${startDateDateString}`;
+    } else {
+      return `${startWeekDay}, ${startDateDateString}, ${stateDateTimeString} - ${endDateTimeString}`;
+    }
   } else {
-    return `${startWeekDay}, ${startDateDateString} - ${endDateDateString}, ${stateDateTimeString} - ${endDateTimeString}`;
+    if (isAllDay) {
+      return `${startWeekDay}, ${startDateDateString} - ${endDateDateString}`;
+    } else {
+      return `${startWeekDay}, ${startDateDateString} - ${endDateDateString}, ${stateDateTimeString} - ${endDateTimeString}`;
+    }
   }
 };
 
@@ -105,7 +116,7 @@ const EventDetails = ({ event }: EventDetailsProps): JSX.Element => {
   return (
     <EventDetailTd colSpan={4}>
       <EventDetailName>{event.name}</EventDetailName>
-      <EventDetailDate>{EventDetailTime(event.start, event.end)}</EventDetailDate>
+      <EventDetailDate>{EventDetailTime(event.start, event.end, event?.isAllDay)}</EventDetailDate>
       <EventDetailDescription>
         {event.description?.length === 0 ? <b>No description</b> : event.description}
       </EventDetailDescription>
@@ -137,8 +148,8 @@ const EventListRow = ({ event }: EventListRowProps): JSX.Element => {
     <>
       <CalendarEventRow>
         <EventListNameTd>{event?.name}</EventListNameTd>
-        <td>{eventDateFormat(event.start)}</td>
-        <td>{eventDateFormat(event.end)}</td>
+        <td>{eventDateFormat(event.start, event?.isAllDay)}</td>
+        <td>{eventDateFormat(event.end, event?.isAllDay)}</td>
         <td headers="calendar-events-actions" data-testid="calendar-selected-events-actions">
           {
             <EventDetailsActionsWrapper>
