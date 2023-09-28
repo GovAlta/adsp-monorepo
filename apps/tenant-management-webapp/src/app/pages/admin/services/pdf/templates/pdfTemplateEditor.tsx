@@ -1,8 +1,8 @@
 import React from 'react';
 import {
   PreviewTemplateContainer,
-  NotificationTemplateEditorContainer,
-  OuterNotificationTemplateEditorContainer,
+  PDFTemplateEditorContainer,
+  OuterPDFTemplateEditorContainer,
   Modal,
   HideTablet,
 } from '../styled-components';
@@ -26,18 +26,18 @@ export const PdfTemplatesEditor = (): JSX.Element => {
     <>
       <Modal data-testid="template-form">
         <ModalContent>
-          <OuterNotificationTemplateEditorContainer>
+          <OuterPDFTemplateEditorContainer>
             <TabletMessage goBack={goBack} />
             <HideTablet>
-              <NotificationTemplateEditorContainer>
+              <PDFTemplateEditorContainer>
                 <TemplateEditor />
 
                 <PreviewTemplateContainer>
                   <PreviewTemplate channelTitle="PDF preview" />
                 </PreviewTemplateContainer>
-              </NotificationTemplateEditorContainer>
+              </PDFTemplateEditorContainer>
             </HideTablet>
-          </OuterNotificationTemplateEditorContainer>
+          </OuterPDFTemplateEditorContainer>
         </ModalContent>
       </Modal>
     </>

@@ -82,8 +82,11 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
 
   //eslint-disable-next-line
   useEffect(() => {
+    if (saveModal.closeEditor) {
+      cancel();
+    }
     setTmpTemplate(JSON.parse(JSON.stringify(pdfTemplate || '')));
-  }, [pdfTemplate]);
+  }, [pdfTemplate, saveModal.closeEditor]);
 
   useEffect(() => {
     if (saveModal.closeEditor) {
