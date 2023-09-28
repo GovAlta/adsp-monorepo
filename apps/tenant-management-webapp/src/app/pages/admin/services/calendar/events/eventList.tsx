@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectSelectedCalendarEvents } from '@store/calendar/selectors';
+import { selectSelectedCalendarEvents, selectSelectedCalendarNextEvents } from '@store/calendar/selectors';
 import { CalendarEvent, EventAddEditModalType, EventDeleteModalType } from '@store/calendar/models';
-import { GoABadge } from '@abgov/react-components-new';
+import { GoABadge, GoAButton, GoASkeleton } from '@abgov/react-components-new';
 import { renderNoItem } from '@components/NoItem';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { UpdateModalState } from '@store/session/actions';
@@ -22,6 +22,7 @@ import { DeleteModal } from './deleteModal';
 import DataTable from '@components/DataTable';
 import { GoACircularProgress } from '@abgov/react-components-new';
 import { ProgressWrapper, CalendarEventListWrapper, EventListNameTd } from './styled-components';
+import { FetchEventsByCalendar } from '@store/calendar/actions';
 
 interface EventListRowProps {
   event: CalendarEvent;
@@ -30,6 +31,11 @@ interface EventListRowProps {
 
 interface EventDetailsProps {
   event: CalendarEvent;
+}
+
+interface LoadMoreEventsProps {
+  next: string;
+  calendarName: string;
 }
 
 const eventDateFormat = (dateString: string) => {
@@ -59,6 +65,40 @@ const EventDetailTime = (start: string, end: string): string => {
   } else {
     return `${startWeekDay}, ${startDateDateString} - ${endDateDateString}, ${stateDateTimeString} - ${endDateTimeString}`;
   }
+};
+
+const LoadMoreEvents = ({ next, calendarName }: LoadMoreEventsProps): JSX.Element => {
+  const dispatch = useDispatch();
+  const { indicator } = useSelector((state: RootState) => ({
+    indicator: state.session?.elementIndicator,
+  }));
+
+  //eslint-disable-next-line
+  useEffect(() => {}, [indicator]);
+
+  if (indicator?.show) {
+    return (
+      <>
+        <GoASkeleton type="text" key={1} />
+      </>
+    );
+  }
+
+  return (
+    <>
+      {next && (
+        <GoAButton
+          testId="calendar-event-load-more-btn"
+          key="calendar-event-load-more-btn"
+          onClick={() => {
+            dispatch(FetchEventsByCalendar(calendarName, next));
+          }}
+        >
+          Loading more
+        </GoAButton>
+      )}
+    </>
+  );
 };
 
 const EventDetails = ({ event }: EventDetailsProps): JSX.Element => {
@@ -92,6 +132,7 @@ const EventDetails = ({ event }: EventDetailsProps): JSX.Element => {
 const EventListRow = ({ event }: EventListRowProps): JSX.Element => {
   const dispatch = useDispatch();
   const [showDetails, setShowDetails] = useState(false);
+
   return (
     <>
       <CalendarEventRow>
@@ -153,7 +194,7 @@ interface EventListProps {
 }
 export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
   const selectedEvents = useSelector((state: RootState) => selectSelectedCalendarEvents(state, calendarName));
-
+  const next = useSelector((state: RootState) => selectSelectedCalendarNextEvents(state, calendarName));
   // eslint-disable-next-line
   useEffect(() => {}, [selectedEvents]);
 
@@ -191,6 +232,8 @@ export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
           </tbody>
         </DataTable>
       </CalendarEventListWrapper>
+
+      <LoadMoreEvents next={next} calendarName={calendarName} />
     </>
   );
 };

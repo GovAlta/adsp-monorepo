@@ -60,8 +60,17 @@ export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => 
     case FETCH_EVENTS_BY_CALENDAR_SUCCESS_ACTION: {
       const events = action.payload;
       const name = action.calendarName;
-      state.calendars[name].selectedCalendarEvents = events;
-      state.calendars[name].hasMore = action.hasMore;
+      if (!state.calendars[name]?.selectedCalendarEvents) {
+        state.calendars[name].selectedCalendarEvents = [];
+      }
+      const eventIds = state.calendars[name]?.selectedCalendarEvents.map((e) => e.id);
+      for (const event of events) {
+        if (!(event?.id in eventIds)) {
+          state.calendars[name].selectedCalendarEvents.push(event);
+        }
+      }
+
+      state.calendars[name].nextEvents = action.nextEvents;
       return {
         ...state,
       };

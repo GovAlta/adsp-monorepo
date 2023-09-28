@@ -9,7 +9,7 @@ export interface CalendarItem {
   readRoles: string[];
   updateRoles: string[];
   selectedCalendarEvents?: CalendarEvent[];
-  hasMore?: boolean;
+  nextEvents?: string;
 }
 
 export type CalendarObjectType = Record<string, CalendarItem>;
