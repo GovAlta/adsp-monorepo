@@ -122,9 +122,7 @@ export const wordMaxLengthCheck = (maxLen: number, field: string): Validator => 
 
 export const duplicateNameCheck = (names: string[], service: string): Validator => {
   return (name: string) => {
-    return names.includes(name)
-      ? `Duplicated ${service} name ${name}, use another name for unique ${service} name`
-      : '';
+    return names.includes(name) ? `Duplicate ${service} name ${name}. Must be unique.` : '';
   };
 };
 
