@@ -48,7 +48,7 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
   const [grabFormData, setGrabFormData] = useState(null);
   const [currentDefinition, setCurrentDefinition] = useState(defaultFormDefinition);
 
-  const [createdFormData, setCreatedFormData] = useState('');
+  const [createdFormData, setCreatedFormData] = useState({});
 
   const formDefinitions = useSelector((state: RootState) => {
     return Object.entries(state?.form?.definitions)
@@ -88,7 +88,7 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
   }, []);
   useEffect(() => {
     if (grabFormData) {
-      let tempCreatedFormData;
+      const tempCreatedFormData = {};
       const $form = $(myFormRef.current);
 
       $form.find('input').each(function () {
@@ -141,7 +141,7 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
         {/* {JSON.stringify(formData, null, 2)} */}
         {/* <div>{formData}</div> */}
 
-        <GoATextArea
+        {/* <GoATextArea
           rows={7}
           name="supportInstruction"
           value={newFormData || formData}
@@ -149,29 +149,31 @@ export const FormDefinitions = ({ openAddDefinition }: FormDefinitionsProps) => 
           aria-label="name"
           width="100%"
           onChange={(name, value) => setNewFormData(value)}
-        />
+        /> */}
 
-        <GoAButton
+        {/* <GoAButton
           testId="add-definition"
           onClick={() => {
             setFormData(newFormData);
           }}
         >
           Update Original
-        </GoAButton>
+        </GoAButton> */}
+
+        <div ref={myFormRef} id="myForm">
+          <div id="markup" ref={fr} />
+        </div>
+
         <GoAButton
           testId="add-definition"
           onClick={() => {
             setGrabFormData(true);
           }}
         >
-          Grab form data
+          Submit Form
         </GoAButton>
-        <div ref={myFormRef} id="myForm">
-          <div id="markup" ref={fr} />
-        </div>
 
-        {newFormData && JSON.stringify(newFormData, undefined, 2)}
+        {/* {newFormData && JSON.stringify(newFormData, undefined, 2)} */}
 
         <AddEditFormDefinition
           open={openAddFormDefinition}

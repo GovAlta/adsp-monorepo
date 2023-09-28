@@ -229,7 +229,7 @@ export const HeadingDiv = styled.div`
 `;
 
 export const FormStyles = styled.div`
-  color: red;
+  //color: red;
   .SortableItem {
     margin: 20px 0 !important;
   }
