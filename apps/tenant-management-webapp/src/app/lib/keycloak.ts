@@ -27,10 +27,10 @@ export const getOrCreateKeycloakAuth = async (config: KeycloakConfig, realm: str
 
 export const getIdpHint = () => {
   const location: string = window.location.href;
-  const skipSSO = location.indexOf('kc_idp_hint') > -1;
   const urlParams = new URLSearchParams(window.location.search);
-  const idpFromUrl = encodeURIComponent(urlParams.get('kc_idp_hint'));
+  const skipSSO = location.indexOf('kc_idp_hint') > -1 && urlParams.get('kc_idp_hint') !== 'null';
   if (skipSSO) {
+    const idpFromUrl = encodeURIComponent(urlParams.get('kc_idp_hint'));
     return idpFromUrl;
   }
 
