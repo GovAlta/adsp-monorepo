@@ -15,7 +15,7 @@
 #   && yum install -y google-chrome-stable libXScrnSaver
 # # fipa-gothic-fonts wqy-zenhei-fonts thai-scalable-tlwgtypo-fonts kacst-one-fonts fonts-freefont-ttf
 
-FROM node:18.17
+FROM node:18
 
 USER 0
 
