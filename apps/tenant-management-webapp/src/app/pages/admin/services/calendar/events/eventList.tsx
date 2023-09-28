@@ -89,7 +89,7 @@ const EventDetails = ({ event }: EventDetailsProps): JSX.Element => {
   );
 };
 
-const EventListRow = ({ event, calendarName }: EventListRowProps): JSX.Element => {
+const EventListRow = ({ event }: EventListRowProps): JSX.Element => {
   const dispatch = useDispatch();
   const [showDetails, setShowDetails] = useState(false);
   return (

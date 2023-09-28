@@ -584,7 +584,7 @@ When('the user enters {string}, {string}, {string} on file type page', function 
           .fileRetentionPeriodInput()
           .shadow()
           .find('input')
-          .clear()
+          .clear({ force: true })
           .type(retention, { delay: 200, force: true });
       });
   }

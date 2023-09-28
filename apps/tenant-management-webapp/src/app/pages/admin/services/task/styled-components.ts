@@ -11,16 +11,24 @@ export const TableDiv = styled.div`
   }
   word-wrap: break-word;
   table-layout: fixed;
-  & th:nth-child(3) {
-    min-width: 160px;
-  }
-
-  & td:nth-child(3) {
-    min-width: 160px;
-    overflow: hidden;
+  & td:first-child {
+    width: 120px;
+    overflow-x: hidden;
     text-overflow: ellipsis;
+    word-wrap: break-word;
+  }
+  & td:nth-child(2) {
+    word-wrap: break-word;
+    word-break: break-word;
   }
 
+  & td:last-child {
+    width: 40px;
+    white-space: nowrap;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    text-align: right;
+  }
   & .meta {
     padding: 0;
   }
@@ -315,8 +323,8 @@ export const HelpText = styled.div`
   margin-top: 2px;
 `;
 export const DescriptionItem = styled.div`
-  margin-left: 3px;
-  margin-right: 3px;
+  margin-left: 0px;
+  margin-right: 0px;
 `;
 
 export const ErrorMsg = styled.div`
@@ -333,6 +341,7 @@ export const MoreDetails = styled.div`
     background-color: var(--goa-color-greyscale-100);
     padding: var(--goa-spacing-s) var(--goa-spacing-l) var(--goa-spacing-l) var(--goa-spacing-l);
     width: 100%;
+    text-align: left;
     p {
       font-weight: bold;
       padding-top: var(--goa-spacing-s);
@@ -348,4 +357,7 @@ export const IconDiv = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
+  goa-icon-button {
+    margin: 0 4px;
+  }
 `;
