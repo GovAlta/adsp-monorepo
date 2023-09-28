@@ -57,7 +57,7 @@ export const FlexRow = styled.div`
   flex-direction: row;
   padding-top: var(--goa-spacing-m);
 `;
-export const NotificationTemplateEditorContainer = styled.div`
+export const PDFTemplateEditorContainer = styled.div`
   display: flex;
   flex: auto;
   margin-top: 0px;
@@ -68,7 +68,7 @@ export const NotificationTemplateEditorContainer = styled.div`
   box-sizing: border-box;
 `;
 
-export const OuterNotificationTemplateEditorContainer = styled.div`
+export const OuterPDFTemplateEditorContainer = styled.div`
   width: 100%;
   height: 100vh;
   overflow: hidden;
