@@ -164,7 +164,7 @@ export const FlexColumn = styled.div`
   flex-direction: column;
   padding-top: 1rem;
 `;
-export const NotificationTemplateEditorContainer = styled.div`
+export const PDFTemplateEditorContainer = styled.div`
   display: flex;
   flex: auto;
   margin-top: 6px;
@@ -189,7 +189,7 @@ export const ScrollPane = styled.div`
   max-height: calc(100vh - 230px);
 `;
 
-export const OuterNotificationTemplateEditorContainer = styled.div`
+export const OuterPDFTemplateEditorContainer = styled.div`
   width: 100%;
   height: 100vh;
   overflow: hidden;
