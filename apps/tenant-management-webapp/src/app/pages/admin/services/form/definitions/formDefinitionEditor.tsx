@@ -1,5 +1,10 @@
 import React from 'react';
-import { OuterPDFTemplateEditorContainer, Modal, HideTablet, PDFTemplateEditorContainer } from '../styled-components';
+import {
+  NotificationTemplateEditorContainer,
+  OuterNotificationTemplateEditorContainer,
+  Modal,
+  HideTablet,
+} from '../styled-components';
 import { ModalContent } from '../../styled-components';
 import { useHistory } from 'react-router-dom';
 import { AddEditFormDefinitionEditor } from './addEditFormDefinitionEditor';
@@ -19,15 +24,15 @@ export const FormDefinitionEditor = (): JSX.Element => {
     <>
       <Modal data-testid="template-form">
         <ModalContent>
-          <OuterPDFTemplateEditorContainer>
+          <OuterNotificationTemplateEditorContainer>
             <TabletMessage goBack={goBack} />
 
             <HideTablet>
-              <PDFTemplateEditorContainer>
+              <NotificationTemplateEditorContainer>
                 <AddEditFormDefinitionEditor />
-              </PDFTemplateEditorContainer>
+              </NotificationTemplateEditorContainer>
             </HideTablet>
-          </OuterPDFTemplateEditorContainer>
+          </OuterNotificationTemplateEditorContainer>
         </ModalContent>
       </Modal>
     </>
