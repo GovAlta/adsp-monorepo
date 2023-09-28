@@ -71,12 +71,12 @@ export const selectSelectedCalendarEvents = createSelector(
   }
 );
 
-export const selectSelectedCalendarHasMoreEvents = createSelector(
+export const selectSelectedCalendarNextEvents = createSelector(
   (state: RootState) => state,
   (_, calendarName: string) => calendarName,
   selectModalStateByType(EventAddEditModalType),
   (state, calendarName: string) => {
-    return selectCalendarsById(state, calendarName)?.hasMore === true;
+    return selectCalendarsById(state, calendarName)?.nextEvents;
   }
 );
 
