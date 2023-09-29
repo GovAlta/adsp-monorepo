@@ -93,7 +93,7 @@ class TenantAdminPage {
     return cy.get('input[name="timestampMin"]');
   }
 
-  eventLogMaxTimesStamp() {
+  eventLogMaxTimeStamp() {
     return cy.get('input[name="timestampMax"]');
   }
 
