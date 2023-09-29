@@ -55,7 +55,6 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
     .add('start', 'start', isNotEmptyCheck('start'))
     .add('end', 'end', isNotEmptyCheck('end'))
     .build();
-  // eslint-disable-next-line
 
   useEffect(() => {
     if (calendarEvent === null || calendarEvent?.name !== initCalendarEvent?.name) {
@@ -68,10 +67,10 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
       setEndDate(initCalendarEvent?.end);
     }
   }, [initCalendarEvent]);
-  // eslint-disable-next-line
+
   const getTimeString = (calendarDateString: string) => {
-    const calendarDate = new Date(calendarDateString);
-    return `${calendarDate.getHours()}:${calendarDate.getMinutes()}:${calendarDate.getSeconds()}`;
+    const timeString = calendarDateString.split('T')[1];
+    return timeString ? timeString.substring(0, 8) : '';
   };
   const setTimeString = (dateString, timeString) => {
     const dateDate = new Date(dateString);
@@ -81,12 +80,6 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
       dateDate.setSeconds(timeString.split(':')[2]);
     }
     return dateDate.toISOString();
-  };
-  const getEndDateValue = () => {
-    if (calendarEvent?.isAllDay) {
-      return new Date(calendarEvent?.start);
-    }
-    return calendarEvent?.end ? new Date(calendarEvent?.end) : new Date();
   };
 
   const modalTitle = `${isEdit ? 'Edit' : 'Add'} calendar event`;
@@ -127,9 +120,8 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
               }
 
               if (calendarEvent.isAllDay) {
-                const theDay = new Date(calendarEvent.start);
-                const theDayStart = theDay.setHours(0, 0, 0, 0);
-                const theDayEnd = theDay.setHours(23, 59, 59, 999);
+                const theDayStart = new Date(calendarEvent.start).setHours(0, 0, 0, 0);
+                const theDayEnd = new Date(calendarEvent.end).setHours(23, 59, 59, 999);
                 calendarEvent.start = new Date(theDayStart).toISOString();
                 calendarEvent.end = new Date(theDayEnd).toISOString();
               }
@@ -235,7 +227,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
         <GoAFormItem label="End Date" error={errors?.['end']}>
           <GoAInputDate
             name="endDate"
-            value={getEndDateValue()}
+            value={calendarEvent?.end ? new Date(calendarEvent?.end) : new Date()}
             width="100%"
             testId="calendar-event-modal-end-date-input"
             onChange={(name, value) => {

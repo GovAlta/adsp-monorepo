@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DataTable from '@components/DataTable';
 import { Role } from '@store/tenant/models';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
@@ -124,6 +124,10 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
       setDeleteId(null);
     },
   };
+
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, []);
 
   return (
     <div>

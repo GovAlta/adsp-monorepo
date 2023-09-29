@@ -66,14 +66,14 @@ export interface UpdateIndicatorAction {
 export interface FetchEventsByCalendarAction {
   type: typeof FETCH_EVENTS_BY_CALENDAR_ACTION;
   payload: string;
-  after: number;
+  after: string;
 }
 
 export interface FetchEventsByCalendarSuccessAction {
   type: typeof FETCH_EVENTS_BY_CALENDAR_SUCCESS_ACTION;
   payload: CalendarEvent[];
   calendarName: string;
-  hasMore: boolean;
+  nextEvents: string;
 }
 
 export interface CreateEventsByCalendarAction {
@@ -153,21 +153,21 @@ export const UpdateIndicator = (indicator: Indicator): UpdateIndicatorAction => 
   payload: indicator,
 });
 
-export const FetchEventsByCalendar = (calendarId: string, after?: number): FetchEventsByCalendarAction => ({
+export const FetchEventsByCalendar = (calendarId: string, after?: string): FetchEventsByCalendarAction => ({
   type: FETCH_EVENTS_BY_CALENDAR_ACTION,
   payload: calendarId,
-  after: after || 0,
+  after,
 });
 
 export const FetchEventsByCalendarSuccess = (
   event: CalendarEvent[],
   calendarName: string,
-  hasMore: boolean
+  nextEvents: string
 ): FetchEventsByCalendarSuccessAction => ({
   type: FETCH_EVENTS_BY_CALENDAR_SUCCESS_ACTION,
   payload: event,
   calendarName,
-  hasMore,
+  nextEvents,
 });
 export const CreateEventsByCalendar = (calendarName: string, event: CalendarEvent): CreateEventsByCalendarAction => ({
   type: CREATE_EVENT_CALENDAR_ACTION,

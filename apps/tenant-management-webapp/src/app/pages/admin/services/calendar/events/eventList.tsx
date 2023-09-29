@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectSelectedCalendarEvents } from '@store/calendar/selectors';
+import { selectSelectedCalendarEvents, selectSelectedCalendarNextEvents } from '@store/calendar/selectors';
 import { CalendarEvent, EventAddEditModalType, EventDeleteModalType } from '@store/calendar/models';
-import { GoABadge } from '@abgov/react-components-new';
+import { GoABadge, GoAButton, GoASkeleton } from '@abgov/react-components-new';
 import { renderNoItem } from '@components/NoItem';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { UpdateModalState } from '@store/session/actions';
@@ -22,6 +22,7 @@ import { DeleteModal } from './deleteModal';
 import DataTable from '@components/DataTable';
 import { GoACircularProgress } from '@abgov/react-components-new';
 import { ProgressWrapper, CalendarEventListWrapper, EventListNameTd } from './styled-components';
+import { FetchEventsByCalendar } from '@store/calendar/actions';
 
 interface EventListRowProps {
   event: CalendarEvent;
@@ -32,11 +33,19 @@ interface EventDetailsProps {
   event: CalendarEvent;
 }
 
-const eventDateFormat = (dateString: string) => {
+interface LoadMoreEventsProps {
+  next: string;
+  calendarName: string;
+}
+
+const eventDateFormat = (dateString: string, isAllDay: boolean) => {
   const date = new Date(dateString);
   const time = date.toLocaleString('en-us', { hour: '2-digit', minute: '2-digit' });
-
-  return `${getDateString(date)}, ${time}`;
+  if (isAllDay) {
+    return `${getDateString(date)}`;
+  } else {
+    return `${getDateString(date)}, ${time}`;
+  }
 };
 
 const getDateString = (date: Date): string => {
@@ -46,7 +55,7 @@ const getDateString = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
-const EventDetailTime = (start: string, end: string): string => {
+const EventDetailTime = (start: string, end: string, isAllDay: boolean): string => {
   const startDate = new Date(start);
   const endDate = new Date(end);
   const startWeekDay = startDate.toLocaleString('en-us', { weekday: 'long' });
@@ -55,17 +64,59 @@ const EventDetailTime = (start: string, end: string): string => {
   const endDateDateString = getDateString(endDate);
   const endDateTimeString = startDate.toLocaleString('en-us', { hour: '2-digit', minute: '2-digit' });
   if (startDate.getDate() === endDate.getDate()) {
-    return `${startWeekDay}, ${startDateDateString}, ${stateDateTimeString} - ${endDateTimeString}`;
+    if (isAllDay) {
+      return `${startWeekDay}, ${startDateDateString}`;
+    } else {
+      return `${startWeekDay}, ${startDateDateString}, ${stateDateTimeString} - ${endDateTimeString}`;
+    }
   } else {
-    return `${startWeekDay}, ${startDateDateString} - ${endDateDateString}, ${stateDateTimeString} - ${endDateTimeString}`;
+    if (isAllDay) {
+      return `${startWeekDay}, ${startDateDateString} - ${endDateDateString}`;
+    } else {
+      return `${startWeekDay}, ${startDateDateString} - ${endDateDateString}, ${stateDateTimeString} - ${endDateTimeString}`;
+    }
   }
+};
+
+const LoadMoreEvents = ({ next, calendarName }: LoadMoreEventsProps): JSX.Element => {
+  const dispatch = useDispatch();
+  const { indicator } = useSelector((state: RootState) => ({
+    indicator: state.session?.elementIndicator,
+  }));
+
+  //eslint-disable-next-line
+  useEffect(() => {}, [indicator]);
+
+  if (indicator?.show) {
+    return (
+      <>
+        <GoASkeleton type="text" key={1} />
+      </>
+    );
+  }
+
+  return (
+    <>
+      {next && (
+        <GoAButton
+          testId="calendar-event-load-more-btn"
+          key="calendar-event-load-more-btn"
+          onClick={() => {
+            dispatch(FetchEventsByCalendar(calendarName, next));
+          }}
+        >
+          Loading more
+        </GoAButton>
+      )}
+    </>
+  );
 };
 
 const EventDetails = ({ event }: EventDetailsProps): JSX.Element => {
   return (
     <EventDetailTd colSpan={4}>
       <EventDetailName>{event.name}</EventDetailName>
-      <EventDetailDate>{EventDetailTime(event.start, event.end)}</EventDetailDate>
+      <EventDetailDate>{EventDetailTime(event.start, event.end, event?.isAllDay)}</EventDetailDate>
       <EventDetailDescription>
         {event.description?.length === 0 ? <b>No description</b> : event.description}
       </EventDetailDescription>
@@ -92,12 +143,13 @@ const EventDetails = ({ event }: EventDetailsProps): JSX.Element => {
 const EventListRow = ({ event }: EventListRowProps): JSX.Element => {
   const dispatch = useDispatch();
   const [showDetails, setShowDetails] = useState(false);
+
   return (
     <>
       <CalendarEventRow>
         <EventListNameTd>{event?.name}</EventListNameTd>
-        <td>{eventDateFormat(event.start)}</td>
-        <td>{eventDateFormat(event.end)}</td>
+        <td>{eventDateFormat(event.start, event?.isAllDay)}</td>
+        <td>{eventDateFormat(event.end, event?.isAllDay)}</td>
         <td headers="calendar-events-actions" data-testid="calendar-selected-events-actions">
           {
             <EventDetailsActionsWrapper>
@@ -153,7 +205,7 @@ interface EventListProps {
 }
 export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
   const selectedEvents = useSelector((state: RootState) => selectSelectedCalendarEvents(state, calendarName));
-
+  const next = useSelector((state: RootState) => selectSelectedCalendarNextEvents(state, calendarName));
   // eslint-disable-next-line
   useEffect(() => {}, [selectedEvents]);
 
@@ -191,6 +243,8 @@ export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
           </tbody>
         </DataTable>
       </CalendarEventListWrapper>
+
+      <LoadMoreEvents next={next} calendarName={calendarName} />
     </>
   );
 };

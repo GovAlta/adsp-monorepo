@@ -29,6 +29,7 @@ import {
   UPDATE_EVENT_CALENDAR_ACTION,
   UpdateEventsByCalendarSuccess,
 } from './actions';
+import { UpdateElementIndicator } from '@store/session/actions';
 
 import { ActionState } from '@store/session/models';
 
@@ -135,16 +136,25 @@ export function* fetchEventsByCalendar(action: FetchEventsByCalendarAction): Sag
   const calendarBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.calendarServiceApiUrl);
   const token: string = yield call(getAccessToken);
   const calendarName = action.payload;
+
   if (calendarBaseUrl && token) {
+    const params = {};
+
+    if (action?.after) {
+      params['after'] = action?.after;
+    }
+
     try {
-      const response = yield call(axios.get, `${calendarBaseUrl}/calendar/v1/calendars/${calendarName}/events?top=50`, {
+      yield put(UpdateElementIndicator({ show: true, id: FETCH_EVENTS_BY_CALENDAR_ACTION }));
+      const { data } = yield call(axios.get, `${calendarBaseUrl}/calendar/v1/calendars/${calendarName}/events`, {
         headers: { Authorization: `Bearer ${token}` },
+        params,
       });
 
-      yield put(
-        FetchEventsByCalendarSuccess(response.data?.results, calendarName, response?.data?.page?.next !== undefined)
-      );
+      yield put(FetchEventsByCalendarSuccess(data?.results, calendarName, data?.page?.next));
+      yield put(UpdateElementIndicator({ show: false, id: null }));
     } catch (err) {
+      yield put(UpdateElementIndicator({ show: false, id: null }));
       yield put(ErrorNotification({ message: `Error fetching events by calendar: ${err.message}` }));
     }
   }
