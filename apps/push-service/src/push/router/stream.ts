@@ -280,20 +280,10 @@ export const createStreamRouter = (
 
   webhookEvents.subscribe(async (next) => {
     if (`${next.namespace}:${next.name}` !== 'push-service:webhook-triggered') {
-      const tenants = await tenantService.getTenants();
-
-      const tenantId = tenants.find((tenant) => tenant.id?.resource === next.tenantId?.resource)?.id;
-
-      const token = await tokenProvider.getAccessToken();
-
-      const user = {
-        name: 'Push Service Admin',
-        id: 'push-service-admin',
-        tenantId,
-        roles: [ServiceUserRoles.Admin],
-      } as User;
-
       try {
+        const tenantId = next.tenantId;
+        const token = await tokenProvider.getAccessToken();
+
         const response = await configurationService.getConfiguration<Record<string, Webhook>, Record<string, Webhook>>(
           serviceId,
           token,
@@ -342,7 +332,6 @@ export const createStreamRouter = (
               } finally {
                 eventService.send(
                   webhookTriggered(
-                    user,
                     tenantId,
                     webhook.url,
                     webhook.targetId,
