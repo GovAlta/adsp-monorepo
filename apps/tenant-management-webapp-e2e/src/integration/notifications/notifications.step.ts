@@ -317,6 +317,7 @@ When('the user cannot select {string} in the event dropdown', function (event) {
 
 When('the user clicks Next button on Select an event page', function () {
   notificationsObj.selectAnEventModalNextBtn().shadow().find('button').click({ force: true });
+  cy.wait(2000);
 });
 
 When('the user clicks Cancel button in Select an event modal', function () {
