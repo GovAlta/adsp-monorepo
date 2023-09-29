@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import DataTable from '@components/DataTable';
 import { Role } from '@store/tenant/models';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
-import { FileTypeDeleteModal } from './fileTypeDeleteModal';
 import styled from 'styled-components';
-import { GoABadge } from '@abgov/react-components-new';
+import { GoABadge, GoAButtonGroup, GoAModal, GoAButton } from '@abgov/react-components-new';
 import { FileTypeItem } from '@store/file/models';
 import { useHistory, useRouteMatch } from 'react-router-dom';
+import { DeleteModal } from '@components/DeleteModal';
+import { useDispatch } from 'react-redux';
+import { DeleteFileTypeService } from '@store/file/actions';
 
 interface FileTypeRowProps extends FileTypeItem {
   editId: string;
@@ -116,18 +118,7 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
   const deleteFileType = fileTypes.find((x) => x && x.id === deleteId);
   const { url } = useRouteMatch();
   const history = useHistory();
-
-  const deleteModalProps = {
-    isOpen: !!deleteId,
-    fileType: deleteFileType,
-    onCancel: () => {
-      setDeleteId(null);
-    },
-  };
-
-  useEffect(() => {
-    document.body.style.overflow = 'unset';
-  }, []);
+  const dispatch = useDispatch();
 
   return (
     <div>
@@ -210,7 +201,50 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
           </TableLayout>
         </div>
       )}
-      <FileTypeDeleteModal {...deleteModalProps} />
+      <DeleteModal
+        title="Delete file type"
+        isOpen={deleteId && deleteFileType?.hasFile === false}
+        content={
+          <>
+            <p>
+              Delete the file type <b>{`${deleteFileType?.name}`}</b> cannot be undone.
+            </p>
+            <p>
+              <b>Are you sure you want to continue?</b>
+            </p>
+          </>
+        }
+        onCancel={() => {
+          setDeleteId(null);
+        }}
+        onDelete={() => {
+          dispatch(DeleteFileTypeService(deleteFileType));
+          setDeleteId(null);
+        }}
+      />
+      <GoAModal
+        testId="file-type-delete-modal"
+        open={deleteId && deleteFileType?.hasFile === true}
+        heading="File type current in use"
+        actions={
+          <GoAButtonGroup alignment="end">
+            <GoAButton
+              type="secondary"
+              testId="file-type-delete-modal-cancel-btn"
+              onClick={() => {
+                setDeleteId(null);
+              }}
+            >
+              Okay
+            </GoAButton>
+          </GoAButtonGroup>
+        }
+      >
+        <p>
+          You are unable to delete the file type <b>{`${deleteFileType?.name}`}</b> because there are files within the
+          file type
+        </p>
+      </GoAModal>
     </div>
   );
 };
