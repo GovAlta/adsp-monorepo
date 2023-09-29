@@ -11,6 +11,10 @@ class TenantAdminPage {
     return cy.contains('Keycloak admin');
   }
 
+  keycloakLinkOpenIcon() {
+    return cy.xpath('//a[contains(text(), "Keycloak admin")]/following-sibling::*[@data-testid="icon-open"]');
+  }
+
   userCount() {
     return cy.get('#user-count');
   }
