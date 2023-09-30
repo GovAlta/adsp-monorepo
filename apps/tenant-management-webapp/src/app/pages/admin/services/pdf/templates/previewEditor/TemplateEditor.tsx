@@ -14,7 +14,7 @@ import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { PdfTemplate } from '@store/pdf/model';
 import { languages } from 'monaco-editor';
 import { buildSuggestions, triggerInScope, convertToEditorSuggestion } from '@lib/autoComplete';
-import { GoAButton, GoAFormItem, GoAButtonGroup, GoASkeleton } from '@abgov/react-components-new';
+import { GoAButton, GoAFormItem, GoAButtonGroup } from '@abgov/react-components-new';
 import { Tab, Tabs } from '@components/Tabs';
 import { SaveFormModal } from '@components/saveModal';
 import { PDFConfigForm } from './PDFConfigForm';
@@ -166,7 +166,9 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   const backButtonDisabled = () => {
     if (!elementIndicator) return false;
 
-    if (elementIndicator && elementIndicator.show) return true;
+    if (elementIndicator?.show) return true;
+
+    return false;
   };
 
   return (
@@ -175,9 +177,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
       <PDFTitle>PDF / Template Editor</PDFTitle>
       <hr />
 
-      {elementIndicator?.show && <GoASkeleton type="paragraph" />}
-      {pdfTemplate && !elementIndicator?.show && <PDFConfigForm template={pdfTemplate} />}
-
+      {pdfTemplate && <PDFConfigForm template={pdfTemplate} />}
       <GoAFormItem label="">
         <Tabs activeIndex={0}>
           <Tab testId={`pdf-edit-header`} label={<PdfEditorLabelWrapper>Header</PdfEditorLabelWrapper>}>
