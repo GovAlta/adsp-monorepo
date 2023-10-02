@@ -1,7 +1,6 @@
-import type { AdspId, DomainEvent, DomainEventDefinition, User } from '@abgov/adsp-service-sdk';
+import type { AdspId, DomainEvent, DomainEventDefinition } from '@abgov/adsp-service-sdk';
 
 export const webhookTriggered = (
-  updatedBy: User,
   tenantId: AdspId,
   URL: string,
   targetId: string,
@@ -25,10 +24,6 @@ export const webhookTriggered = (
     targetId,
     URL,
     EventList,
-    updatedBy: {
-      name: updatedBy.name,
-      id: updatedBy.id,
-    },
     callStatus,
     callStatusCode,
     callDateTime,
@@ -71,13 +66,6 @@ export const WebhookTriggeredDefinition: DomainEventDefinition = {
       },
       callResponseTime: {
         type: 'number',
-      },
-      updatedBy: {
-        type: 'object',
-        properties: {
-          id: { type: 'string' },
-          name: { type: 'string' },
-        },
       },
     },
     required: ['name', 'updatedBy'],

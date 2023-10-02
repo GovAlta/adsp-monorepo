@@ -66,6 +66,10 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   const suggestion =
     pdfTemplate && pdfTemplate.variables && convertToEditorSuggestion(JSON.parse(pdfTemplate.variables));
 
+  const elementIndicator = useSelector((state: RootState) => {
+    return state?.session?.elementIndicator;
+  });
+
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const debouncedTmpTemplate = useDebounce(tmpTemplate, TEMPLATE_RENDER_DEBOUNCE_TIMER);
@@ -82,11 +86,8 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
 
   //eslint-disable-next-line
   useEffect(() => {
-    if (saveModal.closeEditor) {
-      cancel();
-    }
     setTmpTemplate(JSON.parse(JSON.stringify(pdfTemplate || '')));
-  }, [pdfTemplate, saveModal.closeEditor]);
+  }, [pdfTemplate]);
 
   useEffect(() => {
     if (saveModal.closeEditor) {
@@ -161,13 +162,22 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
   const pdfList = useSelector((state: RootState) =>
     state.pdf?.jobs?.filter((job) => job.templateId === pdfTemplate.id)
   );
+
+  const backButtonDisabled = () => {
+    if (!elementIndicator) return false;
+
+    if (elementIndicator?.show) return true;
+
+    return false;
+  };
+
   return (
     <TemplateEditorContainerPdf>
       <LogoutModal />
       <PDFTitle>PDF / Template Editor</PDFTitle>
       <hr />
-      {pdfTemplate && <PDFConfigForm template={pdfTemplate} />}
 
+      {pdfTemplate && <PDFConfigForm template={pdfTemplate} />}
       <GoAFormItem label="">
         <Tabs activeIndex={0}>
           <Tab testId={`pdf-edit-header`} label={<PdfEditorLabelWrapper>Header</PdfEditorLabelWrapper>}>
@@ -309,6 +319,7 @@ export const TemplateEditor = ({ errors }: TemplateEditorProps): JSX.Element => 
                 }}
                 testId="template-form-close"
                 type="secondary"
+                disabled={backButtonDisabled()}
               >
                 Back
               </GoAButton>

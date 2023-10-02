@@ -137,8 +137,17 @@ export function* fetchEventsByCalendar(action: FetchEventsByCalendarAction): Sag
   const token: string = yield call(getAccessToken);
   const calendarName = action.payload;
 
+  const criteria = yield select((state: RootState) => state?.calendarService?.eventSearchCriteria);
+
   if (calendarBaseUrl && token) {
     const params = {};
+
+    if (criteria) {
+      params['criteria'] = {
+        startsAfter: criteria.startDate,
+        endsBefore: criteria.endDate,
+      };
+    }
 
     if (action?.after) {
       params['after'] = action?.after;
@@ -151,7 +160,7 @@ export function* fetchEventsByCalendar(action: FetchEventsByCalendarAction): Sag
         params,
       });
 
-      yield put(FetchEventsByCalendarSuccess(data?.results, calendarName, data?.page?.next));
+      yield put(FetchEventsByCalendarSuccess(data?.results, calendarName, data?.page?.next, action?.after));
       yield put(UpdateElementIndicator({ show: false, id: null }));
     } catch (err) {
       yield put(UpdateElementIndicator({ show: false, id: null }));

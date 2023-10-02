@@ -8,7 +8,6 @@ import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { UpdateModalState } from '@store/session/actions';
 import { RootState } from '@store/index';
 import {
-  TitleSpace,
   EventDetailRow,
   EventDetailTd,
   EventDetailName,
@@ -21,7 +20,7 @@ import {
 import { DeleteModal } from './deleteModal';
 import DataTable from '@components/DataTable';
 import { GoACircularProgress } from '@abgov/react-components-new';
-import { ProgressWrapper, CalendarEventListWrapper, EventListNameTd } from './styled-components';
+import { ProgressWrapper, CalendarEventListWrapper, EventListNameTd, LoadMoreWrapper } from './styled-components';
 import { FetchEventsByCalendar } from '@store/calendar/actions';
 
 interface EventListRowProps {
@@ -98,15 +97,17 @@ const LoadMoreEvents = ({ next, calendarName }: LoadMoreEventsProps): JSX.Elemen
   return (
     <>
       {next && (
-        <GoAButton
-          testId="calendar-event-load-more-btn"
-          key="calendar-event-load-more-btn"
-          onClick={() => {
-            dispatch(FetchEventsByCalendar(calendarName, next));
-          }}
-        >
-          Loading more
-        </GoAButton>
+        <LoadMoreWrapper>
+          <GoAButton
+            testId="calendar-event-load-more-btn"
+            key="calendar-event-load-more-btn"
+            onClick={() => {
+              dispatch(FetchEventsByCalendar(calendarName, next));
+            }}
+          >
+            Loading more
+          </GoAButton>
+        </LoadMoreWrapper>
       )}
     </>
   );
@@ -223,7 +224,6 @@ export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
 
   return (
     <>
-      <TitleSpace />
       <h2>Event list</h2>
       <CalendarEventListWrapper>
         <DeleteModal calendarName={calendarName} />
@@ -243,7 +243,7 @@ export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
           </tbody>
         </DataTable>
       </CalendarEventListWrapper>
-
+      {!next && <LoadMoreWrapper />}
       <LoadMoreEvents next={next} calendarName={calendarName} />
     </>
   );

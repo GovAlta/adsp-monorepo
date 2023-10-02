@@ -1,7 +1,6 @@
 import styled from 'styled-components';
 
 export const SelectCalendarHeader = styled.div`
-  margin-bottom: var(--goa-spacing-m);
   margin-top: var(--goa-spacing-m);
   font-weight: var(--fw-bold);
 `;
@@ -43,7 +42,6 @@ export const EventDetailName = styled.div`
 export const EventDetailDescription = styled.div`
   color: var(--goa-color-greyscale-700);
   font-size: var(--goa-font-size-3);
-  line-height: var(--var);
 `;
 
 export const EventDetailDate = styled.div`
@@ -53,7 +51,7 @@ export const EventDetailDate = styled.div`
 `;
 
 export const CalendarEventListWrapper = styled.div`
-  margin-bottom: var(--goa-spacing-l);
+  padding-bottom: var(--goa-spacing-l);
 `;
 
 export const EventListNameTd = styled.td`
@@ -61,7 +59,7 @@ export const EventListNameTd = styled.td`
 `;
 
 export const CalendarEventTabWrapper = styled.div`
-  width: 40rem;
+  width: 37.5rem;
 `;
 
 export const CalendarEventRow = styled.tr`
@@ -79,4 +77,28 @@ export const EventDetailsActionsWrapper = styled.div`
   -ms-flex-align: center;
   align-items: center;
   gap: 0.25rem;
+`;
+
+export const EventFilterWrapper = styled.div`
+  width: 37.5rem;
+`;
+
+export const EventFilterButtonPosition = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 6px;
+`;
+
+export const CalendarEventFilterError = styled.span`
+  color: var(--goa-color-emergency-default);
+  padding-left: 5px;
+  display: inline-flex;
+  line-height: 2.5rem;
+  position: relative;
+  top: -3px;
+`;
+
+// There might be a bug for the scroll, we need more padding to show the load more button in some case
+export const LoadMoreWrapper = styled.div`
+  padding-bottom: var(--goa-spacing-4xl);
 `;

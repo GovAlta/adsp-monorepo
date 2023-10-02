@@ -8,8 +8,9 @@ import {
   CREATE_EVENT_CALENDAR_SUCCESS_ACTION,
   DELETE_CALENDAR_EVENT_SUCCESS_ACTION,
   UPDATE_EVENT_CALENDAR_SUCCESS_ACTION,
+  UPDATE_EVENT_SEARCH_CRITERIA_ACTION,
 } from './actions';
-import { CalendarService, CALENDAR_INIT } from './models';
+import { CalendarService, CALENDAR_INIT, getDefaultSearchCriteria } from './models';
 
 export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => {
   switch (action.type) {
@@ -60,6 +61,14 @@ export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => 
     case FETCH_EVENTS_BY_CALENDAR_SUCCESS_ACTION: {
       const events = action.payload;
       const name = action.calendarName;
+      if (!action.after) {
+        state.calendars[name].selectedCalendarEvents = events;
+        state.calendars[name].nextEvents = action.nextEvents;
+        return {
+          ...state,
+        };
+      }
+
       if (!state.calendars[name]?.selectedCalendarEvents) {
         state.calendars[name].selectedCalendarEvents = [];
       }
@@ -71,6 +80,18 @@ export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => 
       }
 
       state.calendars[name].nextEvents = action.nextEvents;
+      return {
+        ...state,
+      };
+    }
+
+    case UPDATE_EVENT_SEARCH_CRITERIA_ACTION: {
+      // Does not have the criteria, return the default value
+      if (!action.payload) {
+        state.eventSearchCriteria = getDefaultSearchCriteria();
+        return { ...state };
+      }
+      state.eventSearchCriteria = action.payload;
       return {
         ...state,
       };
