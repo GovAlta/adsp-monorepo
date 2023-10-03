@@ -227,10 +227,9 @@ export function* createTask({ payload }: SetQueueTaskAction): SagaIterator {
   const token: string = yield call(getAccessToken);
   if (taskUrl && token) {
     try {
-      // const payload: CreateTaskConfig = { operation: 'CREATE', configuration: { tasks: tasks } };
       const url = `${taskUrl}/task/v1/queues/${payload.recordId.split(':')[0]}/${payload.recordId.split(':')[1]}/tasks`;
       const { results } = yield call(postTasksApi, token, url, payload);
-      console.log('break');
+
       yield put(getTasksSuccess(results, '', ''));
 
       yield put(UpdateIndicator({ show: false }));
