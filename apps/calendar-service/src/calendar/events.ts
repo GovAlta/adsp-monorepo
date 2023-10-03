@@ -87,7 +87,7 @@ export const CalendarEventUpdatedDefinition: DomainEventDefinition = {
     properties: {
       calendar: calendarSchema,
       update: {
-        oneOf: [
+        anyOf: [
           { ...eventSchema, additionalProperties: false },
           {
             type: 'object',
