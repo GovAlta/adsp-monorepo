@@ -44,11 +44,9 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
   const isNew = type === 'new';
 
   const [task, setTask] = useState<QueueTaskDefinition>(initialValue);
-  // const [priority, setPriority] = useState<string>('');
 
   useEffect(() => {
     setTask(initialValue);
-    // setPriority('');
   }, [initialValue]);
 
   const tasks = useSelector((state: RootState) => {
@@ -194,7 +192,6 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
                 validators['priority'].check(value);
                 setTask({ ...task, priority: value });
               }
-              // setPriority(value);
             }}
             disabled={!isNew}
           >
