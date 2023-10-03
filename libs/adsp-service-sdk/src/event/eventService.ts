@@ -1,4 +1,5 @@
 import axios from 'axios';
+import * as HttpStatusCodes from 'http-status-codes';
 import { Logger } from 'winston';
 import { TokenProvider } from '../access';
 import { ServiceDirectory } from '../directory';
@@ -74,6 +75,12 @@ export class EventServiceImpl implements EventService {
         ...this.LOG_CONTEXT,
         tenant: tenantId?.toString(),
       });
+
+      if (axios.isAxiosError(err) && err.response?.data?.errorMessage) {
+        this.logger.debug(
+          `Event send failed with request status ${err.response.status} and error and message: ${err.response.data.errorMessage}`
+        );
+      }
     }
   }
 }
