@@ -1,4 +1,4 @@
-import { TaskDefinition, QueueTaskDefinition, Indicator } from './model';
+import { TaskDefinition, QueueTaskDefinition, Indicator, TaskEntry } from './model';
 
 export const FETCH_TASK_QUEUES_ACTION = 'queue/FETCH_TASK_QUEUE_ACTION';
 export const FETCH_TASK_QUEUES_SUCCESS_ACTION = 'queue/FETCH_TASK_QUEUE_SUCCESS_ACTION';
@@ -49,11 +49,14 @@ export interface DeleteTaskDefinitionSuccessAction {
 
 export interface GetsTasksSuccessAction {
   type: typeof GET_TASKS_SUCCESS_ACTION;
-  payload: Record<string, object>;
+  payload: TaskEntry[];
+  after: string;
+  next: string;
 }
 export interface GetsTasksAction {
   type: typeof GET_TASKS_ACTION;
   queue: TaskDefinition;
+  next: string;
 }
 
 export interface GetsTaskSuccessAction {
@@ -79,7 +82,7 @@ export interface SetQueueTaskAction {
 }
 export interface SetQueueTaskSuccessAction {
   type: typeof SET_QUEUE_TASK_SUCCESS_ACTION;
-  payload: Record<string, QueueTaskDefinition>;
+  payload: QueueTaskDefinition[];
 }
 
 export interface UpdateIndicatorAction {
@@ -127,7 +130,7 @@ export const SetQueueTask = (payload: QueueTaskDefinition): SetQueueTaskAction =
   payload,
 });
 
-export const SetQueueTaskSuccess = (task: Record<string, QueueTaskDefinition>): SetQueueTaskSuccessAction => ({
+export const SetQueueTaskSuccess = (task: QueueTaskDefinition[]): SetQueueTaskSuccessAction => ({
   type: SET_QUEUE_TASK_SUCCESS_ACTION,
   payload: task,
 });
@@ -137,14 +140,17 @@ export const UpdateIndicator = (indicator: Indicator): UpdateIndicatorAction => 
   payload: indicator,
 });
 
-export const getTasks = (payload: TaskDefinition): GetsTasksAction => ({
+export const getTasks = (payload: TaskDefinition, next?: string): GetsTasksAction => ({
   type: GET_TASKS_ACTION,
   queue: payload,
+  next,
 });
 
-export const getTasksSuccess = (results: Record<string, object>): GetsTasksSuccessAction => ({
+export const getTasksSuccess = (results: TaskEntry[], after: string, next: string): GetsTasksSuccessAction => ({
   type: GET_TASKS_SUCCESS_ACTION,
   payload: results,
+  after,
+  next,
 });
 export const getTask = (payload: TaskDefinition): GetsTaskAction => ({
   type: GET_TASK_ACTION,
@@ -159,7 +165,7 @@ export const updateQueueTask = (payload: QueueTaskDefinition): UpdateQueueTaskAc
   type: UPDATE_QUEUE_TASK_ACTION,
   payload: payload,
 });
-export const updateQueueTaskSuccess = (results: Record<string, QueueTaskDefinition>): UpdateQueueTaskSuccessAction => ({
+export const updateQueueTaskSuccess = (results: QueueTaskDefinition[]): UpdateQueueTaskSuccessAction => ({
   type: UPDATE_QUEUE_TASK_SUCCESS_ACTION,
   payload: results,
 });
@@ -169,14 +175,14 @@ export interface FetchQueueTasksAction {
 }
 export interface FetchQueueTasksSuccessAction {
   type: typeof FETCH_QUEUE_TASKS_SUCCESS_ACTION;
-  payload: Record<string, QueueTaskDefinition>;
+  payload: QueueTaskDefinition[];
 }
 
 export const getQueueTasks = (): FetchQueueTasksAction => ({
   type: FETCH_QUEUE_TASKS_ACTION,
 });
 
-export const getQueueTasksSuccess = (results: Record<string, QueueTaskDefinition>): FetchQueueTasksSuccessAction => ({
+export const getQueueTasksSuccess = (results: QueueTaskDefinition[]): FetchQueueTasksSuccessAction => ({
   type: FETCH_QUEUE_TASKS_SUCCESS_ACTION,
   payload: results,
 });
@@ -187,7 +193,7 @@ export interface UpdateQueueTaskAction {
 }
 export interface UpdateQueueTaskSuccessAction {
   type: typeof UPDATE_QUEUE_TASK_SUCCESS_ACTION;
-  payload: Record<string, QueueTaskDefinition>;
+  payload: QueueTaskDefinition[];
 }
 
 export const UpdateQueueTask = (payload: QueueTaskDefinition): UpdateQueueTaskAction => ({
@@ -195,7 +201,7 @@ export const UpdateQueueTask = (payload: QueueTaskDefinition): UpdateQueueTaskAc
   payload,
 });
 
-export const UpdateQueueTaskSuccess = (queue: Record<string, QueueTaskDefinition>): UpdateQueueTaskSuccessAction => ({
+export const UpdateQueueTaskSuccess = (queue: QueueTaskDefinition[]): UpdateQueueTaskSuccessAction => ({
   type: UPDATE_QUEUE_TASK_SUCCESS_ACTION,
   payload: queue,
 });

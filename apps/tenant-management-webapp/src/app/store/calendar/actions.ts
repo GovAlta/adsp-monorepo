@@ -1,4 +1,4 @@
-import { CalendarItem, Indicator, CalendarEvent } from './models';
+import { CalendarItem, Indicator, CalendarEvent, CalendarEventSearchCriteria } from './models';
 
 export const FETCH_CALENDARS_ACTION = 'calendar/FETCH_CALENDAR_ACTION';
 export const FETCH_CALENDARS_SUCCESS_ACTION = 'calendar/FETCH_CALENDAR_SUCCESS_ACTION';
@@ -21,6 +21,8 @@ export const CREATE_EVENT_CALENDAR_SUCCESS_ACTION = 'calendar/CREATE_EVENT_CALEN
 
 export const UPDATE_EVENT_CALENDAR_ACTION = 'calendar/UPDATE_EVENT_CALENDAR_ACTION';
 export const UPDATE_EVENT_CALENDAR_SUCCESS_ACTION = 'calendar/UPDATE_EVENT_CALENDAR_SUCCESS_ACTION';
+export const UPDATE_EVENT_SEARCH_CRITERIA_ACTION = 'calendar/event/search/criteria/update';
+
 export interface FetchCalendarsAction {
   type: typeof FETCH_CALENDARS_ACTION;
 }
@@ -67,6 +69,7 @@ export interface FetchEventsByCalendarAction {
   type: typeof FETCH_EVENTS_BY_CALENDAR_ACTION;
   payload: string;
   after: string;
+  criteria?: CalendarEventSearchCriteria;
 }
 
 export interface FetchEventsByCalendarSuccessAction {
@@ -74,6 +77,7 @@ export interface FetchEventsByCalendarSuccessAction {
   payload: CalendarEvent[];
   calendarName: string;
   nextEvents: string;
+  after?: string;
 }
 
 export interface CreateEventsByCalendarAction {
@@ -102,6 +106,11 @@ export interface UpdateEventsByCalendarSuccessAction {
   eventId: string;
 }
 
+export interface UpdateSearchCalendarEventCriteriaAction {
+  type: typeof UPDATE_EVENT_SEARCH_CRITERIA_ACTION;
+  payload?: CalendarEventSearchCriteria;
+}
+
 export type ActionTypes =
   | FetchCalendarsAction
   | FetchCalendarsSuccessAction
@@ -117,6 +126,7 @@ export type ActionTypes =
   | DeleteCalendarEventAction
   | DeleteCalendarEventSuccessAction
   | UpdateEventsByCalendarAction
+  | UpdateSearchCalendarEventCriteriaAction
   | UpdateEventsByCalendarSuccessAction;
 
 export const fetchCalendars = (): FetchCalendarsAction => ({
@@ -162,12 +172,14 @@ export const FetchEventsByCalendar = (calendarId: string, after?: string): Fetch
 export const FetchEventsByCalendarSuccess = (
   event: CalendarEvent[],
   calendarName: string,
-  nextEvents: string
+  nextEvents: string,
+  after: string
 ): FetchEventsByCalendarSuccessAction => ({
   type: FETCH_EVENTS_BY_CALENDAR_SUCCESS_ACTION,
   payload: event,
   calendarName,
   nextEvents,
+  after,
 });
 export const CreateEventsByCalendar = (calendarName: string, event: CalendarEvent): CreateEventsByCalendarAction => ({
   type: CREATE_EVENT_CALENDAR_ACTION,
@@ -218,4 +230,11 @@ export const UpdateEventsByCalendarSuccess = (
   payload: event,
   calendarName,
   eventId,
+});
+
+export const UpdateSearchCalendarEventCriteria = (
+  criteria?: CalendarEventSearchCriteria
+): UpdateSearchCalendarEventCriteriaAction => ({
+  type: UPDATE_EVENT_SEARCH_CRITERIA_ACTION,
+  payload: criteria,
 });

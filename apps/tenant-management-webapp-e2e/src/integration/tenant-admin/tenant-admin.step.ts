@@ -90,6 +90,7 @@ Then('the keycloak admin link can open tenant admin portal in a new tab', functi
   tenantAdminObj.keycloakLink().should('have.attr', 'href').and('match', hrefRegexString);
   // Validate the link has target="_blank" aka link opens in a new tab
   tenantAdminObj.keycloakLink().should('have.attr', 'target', '_blank');
+  tenantAdminObj.keycloakLinkOpenIcon().should('exist');
 });
 
 Then('the user views the number of users in its tenant realm', function () {

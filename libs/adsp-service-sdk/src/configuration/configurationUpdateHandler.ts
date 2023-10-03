@@ -40,6 +40,18 @@ export const handleConfigurationUpdates = async (
     logger.info('Connected for configuration updates...', LOG_CONTEXT);
   });
 
+  socket.on('reconnect_attempt', (attempt) => {
+    logger.info(`Reconnecting to configuration updates on attempt ${attempt}...`);
+  });
+
+  socket.on('reconnect_error', (err) => {
+    logger.warn(`Reconnect to configuration updates attempt failed with error: ${err}`);
+  });
+
+  socket.on('reconnect_failed', () => {
+    logger.error('Reconnect to configuration updates failed.');
+  });
+
   const invalidateCached = (e: StreamItem) => {
     const tenantId = AdspId.parse(e.tenantId);
     const serviceId = adspId`urn:ads:${e.payload.namespace}:${e.payload.name}`;

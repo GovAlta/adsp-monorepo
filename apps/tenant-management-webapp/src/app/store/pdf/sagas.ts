@@ -1,6 +1,6 @@
 import moment from 'moment';
 import { SagaIterator } from '@redux-saga/core';
-import { UpdateIndicator } from '@store/session/actions';
+import { UpdateElementIndicator, UpdateIndicator } from '@store/session/actions';
 import { RootState } from '../index';
 import { select, call, put, takeEvery, take, apply, fork } from 'redux-saga/effects';
 import { eventChannel } from 'redux-saga';
@@ -150,6 +150,9 @@ const connect = (pushServiceUrl, token, stream, tenantName) => {
 
 export function* updatePdfTemplate({ template, options }: UpdatePdfTemplatesAction): SagaIterator {
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
+
+  yield put(UpdateElementIndicator({ show: true }));
+
   const token: string = yield call(getAccessToken);
   if (baseUrl && token) {
     try {
@@ -179,7 +182,9 @@ export function* updatePdfTemplate({ template, options }: UpdatePdfTemplatesActi
           )
         );
       }
+      yield put(UpdateElementIndicator({ show: false }));
     } catch (err) {
+      yield put(UpdateElementIndicator({ show: false }));
       yield put(ErrorNotification({ error: err }));
     }
   }

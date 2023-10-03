@@ -178,7 +178,8 @@ When('the user clicks the {string} tab in PDF template editor and view content',
             pdfServiceObj.pdfTemplateBodyTab().click();
           }
         });
-      pdfServiceObj.pdfTemplateBodyEditor().invoke('text').should('exist');
+      cy.wait(1000); // Wait for editor content to show up
+      pdfServiceObj.pdfTemplateBodyEditor().contains('Default PDF Template');
       break;
     case 'header':
       pdfServiceObj
