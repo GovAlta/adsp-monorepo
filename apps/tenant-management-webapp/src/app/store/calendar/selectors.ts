@@ -67,7 +67,9 @@ export const selectSelectedCalendarEvents = createSelector(
   (_, calendarName: string) => calendarName,
   selectModalStateByType(EventAddEditModalType),
   (state, calendarName: string) => {
-    return selectCalendarsById(state, calendarName)?.selectedCalendarEvents;
+    return selectCalendarsById(state, calendarName)?.selectedCalendarEvents?.sort((a, b) => {
+      return new Date(b.start).valueOf() - new Date(a.start).valueOf();
+    });
   }
 );
 

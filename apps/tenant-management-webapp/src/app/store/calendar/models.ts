@@ -12,11 +12,20 @@ export interface CalendarItem {
   nextEvents?: string;
 }
 
+export const getDefaultSearchCriteria = (): CalendarEventSearchCriteria => {
+  return {
+    // using absolute unit time will be more intuitive than using setDate;
+    startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    endDate: new Date().toISOString(),
+  };
+};
+
 export type CalendarObjectType = Record<string, CalendarItem>;
 
 export interface CalendarService {
   calendars: CalendarObjectType;
   indicator?: Indicator;
+  eventSearchCriteria?: CalendarEventSearchCriteria;
 }
 
 export const defaultCalendar: CalendarItem = {
@@ -31,7 +40,7 @@ export const CALENDAR_INIT: CalendarService = {
   indicator: {
     details: {},
   },
-  // selectedCalendarEvents: [],
+  eventSearchCriteria: getDefaultSearchCriteria(),
 };
 export interface Indicator {
   details?: Record<string, ActionState>;
@@ -63,3 +72,8 @@ export const CalendarEventDefault = {
   isPublic: false,
   isAllDay: false,
 };
+
+export interface CalendarEventSearchCriteria {
+  startDate: string;
+  endDate: string;
+}

@@ -20,6 +20,9 @@ Feature: Service status
     Then the user views Edit notice dialog
     When the user enters "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>" on notice dialog
     And the user clicks Save as draft button
+    # Switch filter to reset the counter of refresh so that it won't refresh in the next 30 seconds
+    And the user selects "Active" filter by status radio button
+    And the user selects "Draft" filter by status radio button
     Then the user "views" the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     When the user clicks "delete" menu for the "Draft" notice of "<Description2>", "<Application2>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     Then the user views delete "notice" confirmation modal for "<Description2>"

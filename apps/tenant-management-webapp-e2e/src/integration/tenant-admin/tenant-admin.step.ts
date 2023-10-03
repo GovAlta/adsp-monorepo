@@ -90,6 +90,7 @@ Then('the keycloak admin link can open tenant admin portal in a new tab', functi
   tenantAdminObj.keycloakLink().should('have.attr', 'href').and('match', hrefRegexString);
   // Validate the link has target="_blank" aka link opens in a new tab
   tenantAdminObj.keycloakLink().should('have.attr', 'target', '_blank');
+  tenantAdminObj.keycloakLinkOpenIcon().should('exist');
 });
 
 Then('the user views the number of users in its tenant realm', function () {
@@ -603,7 +604,7 @@ When('the user searches with {string} as minimum timestamp, {string} as maximum 
   cy.log(timestampMax);
 
   tenantAdminObj.eventLogMinTimeStamp().type(timestampMin);
-  tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
+  tenantAdminObj.eventLogMaxTimeStamp().type(timestampMax);
   tenantAdminObj.eventLogSearchBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
@@ -617,8 +618,36 @@ Then(
     expect(maxTimestamp).to.match(
       /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
     );
-    const userMinTimestamp = timestampUtil(minTimestamp);
-    const userMaxTimestamp = timestampUtil(maxTimestamp);
+    let userMinTimestamp = timestampUtil(minTimestamp);
+    let userMaxTimestamp = timestampUtil(maxTimestamp);
+
+    // Double check if passed in time are the same as UI search timestamps; if not, i.e. now+1min is a minute later than UI max timestamp, UI search timestamps should be used
+    // For example: search with now+1min may have the time of 1:10 (59th second) and validation with now+1min may be 1:11(1st second), which is 2 second later.
+    let searchMinTimestamp;
+    tenantAdminObj
+      .eventLogMinTimeStamp()
+      .invoke('attr', 'value')
+      .then((value) => {
+        searchMinTimestamp = value;
+        cy.log('search minimum timestamp: ' + searchMinTimestamp);
+        cy.log('user validation minimum timestamp: ' + userMinTimestamp);
+        if (userMinTimestamp != searchMinTimestamp && searchMinTimestamp.includes('T')) {
+          userMinTimestamp = searchMinTimestamp;
+        }
+      });
+    let searchMaxTimestamp;
+    tenantAdminObj
+      .eventLogMaxTimeStamp()
+      .invoke('attr', 'value')
+      .then((value) => {
+        searchMaxTimestamp = value;
+        cy.log('search maximum timestamp: ' + searchMaxTimestamp);
+        cy.log('user validation maximum timestamp: ' + userMaxTimestamp);
+        if (userMaxTimestamp != searchMaxTimestamp && searchMaxTimestamp.includes('T')) {
+          userMaxTimestamp = searchMaxTimestamp;
+        }
+      });
+
     //checking each element from the first column
     tenantAdminObj
       .eventTableBody()
@@ -657,7 +686,23 @@ Then('the user views the events matching the search filter of {string} as min ti
   expect(minTimestamp).to.match(
     /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
   );
-  const userTimestamp = timestampUtil(minTimestamp);
+  let userTimestamp = timestampUtil(minTimestamp);
+
+  // Double check if passed in time are the same as UI search timestamps; if not, i.e. now+1min is a minute later than UI max timestamp, UI search timestamps should be used
+  // For example: search with now+1min may have the time of 1:10 (59th second) and validation with now+1min may be 1:11(1st second), which is 2 second later.
+  let searchMinTimestamp;
+  tenantAdminObj
+    .eventLogMinTimeStamp()
+    .invoke('attr', 'value')
+    .then((value) => {
+      searchMinTimestamp = value;
+      cy.log('search minimum timestamp: ' + searchMinTimestamp);
+      cy.log('user validation minimum timestamp: ' + userTimestamp);
+      if (userTimestamp != searchMinTimestamp && searchMinTimestamp.includes('T')) {
+        userTimestamp = searchMinTimestamp;
+      }
+    });
+
   //checking each element from the first column
   tenantAdminObj
     .eventTableBody()
@@ -680,7 +725,7 @@ When('the user searches with {string} as maximum timestamp', function (addmin) {
   const timestampMax = timestampUtil(addmin);
   cy.log(timestampMax);
 
-  tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
+  tenantAdminObj.eventLogMaxTimeStamp().type(timestampMax);
   tenantAdminObj.eventLogSearchBtn().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
@@ -689,7 +734,23 @@ Then('the user views the events matching the search filter of {string} as maximu
   expect(maxTimestamp).to.match(
     /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
   );
-  const userTimestamp = timestampUtil(maxTimestamp);
+  let userTimestamp = timestampUtil(maxTimestamp);
+
+  // Double check if passed in time are the same as UI search timestamps; if not, i.e. now+1min is a minute later than UI max timestamp, UI search timestamps should be used
+  // For example: search with now+1min may have the time of 1:10 (59th second) and validation with now+1min may be 1:11(1st second), which is 2 second later.
+  let searchMaxTimestamp;
+  tenantAdminObj
+    .eventLogMaxTimeStamp()
+    .invoke('attr', 'value')
+    .then((value) => {
+      searchMaxTimestamp = value;
+      cy.log('search maximum timestamp: ' + searchMaxTimestamp);
+      cy.log('user validation maximum timestamp: ' + userTimestamp);
+      if (userTimestamp != searchMaxTimestamp && searchMaxTimestamp.includes('T')) {
+        userTimestamp = searchMaxTimestamp;
+      }
+    });
+
   //checking each element from the first column
   tenantAdminObj
     .eventTableBody()
@@ -721,7 +782,7 @@ When(
     cy.log(timestampMax);
 
     tenantAdminObj.eventLogMinTimeStamp().type(timestampMin);
-    tenantAdminObj.eventLogMaxTimesStamp().type(timestampMax);
+    tenantAdminObj.eventLogMaxTimeStamp().type(timestampMax);
     tenantAdminObj.eventLogSearchBtn().shadow().find('button').click({ force: true });
     cy.wait(2000);
   }
@@ -748,8 +809,37 @@ Then(
     expect(maxTimestamp).to.match(
       /now([-+])([0-9]+)mins|[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])T(0[1-9]|1[0-9]|2[0-3]):[0-5][0-9]/
     );
-    const userMinTimestamp = timestampUtil(minTimestamp);
-    const userMaxTimestamp = timestampUtil(maxTimestamp);
+    let userMinTimestamp = timestampUtil(minTimestamp);
+    let userMaxTimestamp = timestampUtil(maxTimestamp);
+
+    // Double check if passed in time are the same as UI search timestamps; if not, i.e. now+1min is a minute later than UI max timestamp, UI search timestamps should be used
+    // For example: search with now+1min may have the time of 1:10 (59th second) and validation with now+1min may be 1:11(1st second), which is 2 second later.
+    let searchMinTimestamp;
+    tenantAdminObj
+      .eventLogMinTimeStamp()
+      .invoke('attr', 'value')
+      .then((value) => {
+        searchMinTimestamp = value;
+        cy.log('search minimum timestamp: ' + searchMinTimestamp);
+        cy.log('user validation minimum timestamp: ' + userMinTimestamp);
+        if (userMinTimestamp != searchMinTimestamp && searchMinTimestamp.includes('T')) {
+          userMinTimestamp = searchMinTimestamp;
+        }
+      });
+
+    let searchMaxTimestamp;
+    tenantAdminObj
+      .eventLogMaxTimeStamp()
+      .invoke('attr', 'value')
+      .then((value) => {
+        searchMaxTimestamp = value;
+        cy.log('search maximum timestamp: ' + searchMaxTimestamp);
+        cy.log('user validation maximum timestamp: ' + userMaxTimestamp);
+        if (userMaxTimestamp != searchMaxTimestamp && searchMaxTimestamp.includes('T')) {
+          userMaxTimestamp = searchMaxTimestamp;
+        }
+      });
+
     //checking each element from the first column
     tenantAdminObj
       .eventTableBody()
@@ -782,7 +872,7 @@ Then('the user resets event log views', function () {
 Then('the user views that search fields are empty', function () {
   tenantAdminObj.eventLogSearchBox().should('have.value', '');
   tenantAdminObj.eventLogMinTimeStamp().should('have.value', '');
-  tenantAdminObj.eventLogMaxTimesStamp().should('have.value', '');
+  tenantAdminObj.eventLogMaxTimeStamp().should('have.value', '');
 });
 
 Then(

@@ -11,6 +11,10 @@ class TenantAdminPage {
     return cy.contains('Keycloak admin');
   }
 
+  keycloakLinkOpenIcon() {
+    return cy.xpath('//a[contains(text(), "Keycloak admin")]/following-sibling::*[@data-testid="icon-open"]');
+  }
+
   userCount() {
     return cy.get('#user-count');
   }
@@ -93,7 +97,7 @@ class TenantAdminPage {
     return cy.get('input[name="timestampMin"]');
   }
 
-  eventLogMaxTimesStamp() {
+  eventLogMaxTimeStamp() {
     return cy.get('input[name="timestampMax"]');
   }
 

@@ -110,7 +110,12 @@ export const updateTask =
   async (req, res, next) => {
     try {
       const user = req.user;
-      const update: Update<Task> = req.body;
+      const update: Update<Task> = {
+        name: req.body.name,
+        description: req.body.description,
+        context: req.body.context,
+        data: req.body.data,
+      };
       const task: TaskEntity = req[TASK_KEY];
 
       const updated = await task.update(user, update);
@@ -136,26 +141,26 @@ export const taskOperation =
       switch (request.operation) {
         case OPERATION_START:
           result = await task.start(user);
-          event = taskStarted(apiId,user, result);
+          event = taskStarted(apiId, user, result);
           break;
         case OPERATION_COMPLETE:
           result = await task.complete(user);
-          event = taskCompleted(apiId,user, result);
+          event = taskCompleted(apiId, user, result);
           break;
         case OPERATION_CANCEL:
           result = await task.cancel(user);
-          event = taskCancelled(apiId,user, result, request.reason);
+          event = taskCancelled(apiId, user, result, request.reason);
           break;
         case OPERATION_SET_PRIORITY: {
           const from = task.priority;
           result = await task.setPriority(user, TaskPriority[request.priority]);
-          event = taskPrioritySet(apiId,user, result, from);
+          event = taskPrioritySet(apiId, user, result, from);
           break;
         }
         case OPERATION_ASSIGN: {
           const from = task.assignment;
           result = await task.assign(user, request.assignTo);
-          event = taskAssigned(apiId,user, result, from);
+          event = taskAssigned(apiId, user, result, from);
           break;
         }
         default:

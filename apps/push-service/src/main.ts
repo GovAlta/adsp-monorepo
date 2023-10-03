@@ -100,7 +100,7 @@ const initializeApp = async (): Promise<Server> => {
   });
 
   app.use(passport.initialize());
-  app.use('/stream', passport.authenticate(['jwt', 'anonymous'], { session: false }), configurationHandler);
+  app.use('/stream', passport.authenticate(['core', 'jwt', 'anonymous'], { session: false }), configurationHandler);
 
   const { REDIS_HOST, REDIS_PORT, REDIS_PASSWORD } = environment;
   const credentials = REDIS_PASSWORD ? `:${REDIS_PASSWORD}@` : '';

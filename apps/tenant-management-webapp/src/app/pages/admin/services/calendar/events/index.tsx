@@ -3,11 +3,12 @@ import { SelectCalendarHeader } from './styled-components';
 import { GoADropdown, GoADropdownItem, GoAButton, GoASkeleton } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
 import { CalendarObjectType, EventAddEditModalType } from '@store/calendar/models';
-import { fetchCalendars, FetchEventsByCalendar } from '@store/calendar/actions';
+import { fetchCalendars, FetchEventsByCalendar, UpdateSearchCalendarEventCriteria } from '@store/calendar/actions';
 import { UpdateModalState } from '@store/session/actions';
 import { selectCalendars } from '@store/calendar/selectors';
 import { EventAddEditModal } from './addEditModal';
 import { EventList } from './eventList';
+import { EventListFilter } from './eventListFilter';
 
 interface CalendarDropdownProps {
   calendars: CalendarObjectType;
@@ -43,6 +44,7 @@ export const CalendarEvents = (): JSX.Element => {
   const onCalendarSelect = (name: string, value: string) => {
     setSelectedCalendar(value);
     dispatch(FetchEventsByCalendar(value, null));
+    dispatch(UpdateSearchCalendarEventCriteria());
   };
 
   useEffect(() => {
@@ -51,7 +53,7 @@ export const CalendarEvents = (): JSX.Element => {
 
   const calendars = useSelector(selectCalendars);
   return (
-    <>
+    <div>
       <SelectCalendarHeader>Select a calendar</SelectCalendarHeader>
       {!calendars && <GoASkeleton type="text" key={1}></GoASkeleton>}
       {calendars && <CalendarDropdown calendars={calendars} onSelect={onCalendarSelect} />}
@@ -73,7 +75,8 @@ export const CalendarEvents = (): JSX.Element => {
       >
         Add event
       </GoAButton>
+      {selectedCalendar && <EventListFilter calenderName={selectedCalendar} />}
       {selectedCalendar && <EventList calendarName={selectedCalendar} />}
-    </>
+    </div>
   );
 };
