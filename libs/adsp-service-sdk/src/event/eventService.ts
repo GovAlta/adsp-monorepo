@@ -1,5 +1,4 @@
 import axios from 'axios';
-import * as HttpStatusCodes from 'http-status-codes';
 import { Logger } from 'winston';
 import { TokenProvider } from '../access';
 import { ServiceDirectory } from '../directory';
