@@ -75,6 +75,8 @@ export async function createMetricsHandler(
           path,
           route,
           ip,
+          user: req.user?.name,
+          userId: req.user?.id,
         },
         value: {
           ...metrics,
