@@ -78,7 +78,7 @@ export function* fetchConfigurationDefinitions(action: FetchConfigurationDefinit
         })
       );
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
@@ -127,7 +127,7 @@ export function* fetchConfigurations(action: FetchConfigurationsAction): SagaIte
         })
       );
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
@@ -230,7 +230,7 @@ export function* updateConfigurationDefinition({
         )
       );
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -254,7 +254,7 @@ export function* deleteConfigurationDefinition({ definitionName }: DeleteConfigu
 
       yield put(deleteConfigurationDefinitionSuccess({ ...latest }));
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -279,7 +279,7 @@ export function* setConfigurationRevision(action: SetConfigurationRevisionAction
 
       yield put(setConfigurationRevisionSuccessAction(action.service, revision));
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -304,7 +304,7 @@ export function* setConfigurationRevisionActive(action: SetConfigurationRevision
 
       yield put(setConfigurationRevisionActiveSuccessAction(action.service, revision));
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }

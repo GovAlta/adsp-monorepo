@@ -69,14 +69,15 @@ export function* uploadFile(file) {
         state: 'completed',
       })
     );
-  } catch (e) {
+  } catch (err) {
     yield put(
       UpdateLoadingState({
         name: UPLOAD_FILE,
         state: 'error',
       })
     );
-    yield put(ErrorNotification({ message: e.message }));
+
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
@@ -101,8 +102,8 @@ export function* fetchFiles(action: FetchFilesAction): SagaIterator {
         show: false,
       })
     );
-  } catch (e) {
-    yield put(ErrorNotification({ message: e.message }));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
     yield put(
       UpdateIndicator({
         show: false,
@@ -127,8 +128,8 @@ export function* fetchFile(action: FetchFileAction): SagaIterator {
     const file = yield call([api, api.fetchFile], action.fileId);
 
     yield put(FetchFileSuccessService({ data: file }));
-  } catch (e) {
-    yield put(ErrorNotification({ message: e.message }));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
     yield put(
       UpdateIndicator({
         show: false,
@@ -144,8 +145,8 @@ export function* deleteFile(file: DeleteFileAction): SagaIterator {
     const api = new FileApi(state.config, token);
     yield call([api, api.deleteFile], file.payload.data);
     yield put(DeleteFileSuccessService(file.payload.data));
-  } catch (e) {
-    yield put(ErrorNotification({ message: e.message }));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
@@ -161,8 +162,8 @@ export function* downloadFile(file) {
     element.download = file.payload.data.filename;
     document.body.appendChild(element);
     element.click();
-  } catch (e) {
-    yield put(ErrorNotification({ message: e.message }));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
@@ -214,8 +215,8 @@ export function* fetchFileTypes(): SagaIterator {
           show: false,
         })
       );
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchFileTypes` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
@@ -245,8 +246,8 @@ export function* deleteFileTypes(action: DeleteFileTypeAction): SagaIterator {
       );
 
       yield put(FetchFileTypeService());
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.response.data} - deleteFileTypes` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -274,8 +275,8 @@ export function* createFileType({ payload }: CreateFileTypeAction): SagaIterator
         }
       );
       yield put(FetchFileTypeService());
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - createFileType` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -304,8 +305,8 @@ export function* updateFileType({ payload }: UpdateFileTypeAction): SagaIterator
         }
       );
       yield put(UpdateFileTypeSucceededService(payload));
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - updateFileType` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -317,8 +318,8 @@ export function* fetchFileTypeHasFile(action: FetchFileTypeHasFileAction): SagaI
     const api = new FileApi(state.config, token);
     const hasFile = yield call([api, api.fetchFileTypeHasFile], action.payload);
     yield put(FetchFileTypeHasFileSucceededService(hasFile, action.payload));
-  } catch (e) {
-    yield put(ErrorNotification({ message: `${e.message} - fetchFileType.` }));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
@@ -354,8 +355,8 @@ export function* fetchFileMetrics(): SagaIterator {
             : null,
         })
       );
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationMetrics` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }

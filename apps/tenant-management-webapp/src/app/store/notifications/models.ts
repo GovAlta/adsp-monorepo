@@ -5,9 +5,33 @@ export enum MessageType {
 
 export interface Notification {
   type?: MessageType;
-  message: string;
+  message?: string;
   expiry?: number;
   disabled?: boolean;
+  error?: ErrorResponse;
+}
+
+interface ErrorResponse {
+  message?: string;
+  response?: ResponseObject;
+}
+
+interface ResponseObject {
+  data: {
+    errorMessage?: string;
+    error?: string;
+  };
+  status: number;
+  statusText: string;
+  headers: any;
+  config: {
+    url: string;
+    method: string;
+    headers: {
+      Accept: string;
+      Authorization: string;
+    };
+  };
 }
 
 export interface NotificationState {

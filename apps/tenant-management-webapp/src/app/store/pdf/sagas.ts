@@ -73,7 +73,7 @@ export function* fetchPdfTemplates(): SagaIterator {
         })
       );
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
@@ -180,7 +180,7 @@ export function* updatePdfTemplate({ template, options }: UpdatePdfTemplatesActi
         );
       }
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -203,7 +203,7 @@ export function* showCurrentFilePdf(action: ShowCurrentFilePdfAction): SagaItera
         })
       );
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -223,8 +223,8 @@ export function* deletePdfTemplate({ template }: DeletePdfTemplatesAction): Saga
           ...latest.configuration,
         })
       );
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.response.data} - deleteFileTypes` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -324,7 +324,7 @@ export function* generatePdf({ payload }: GeneratePdfAction): SagaIterator {
       const pdfResponse = { ...body, ...data };
       yield put(generatePdfSuccess(pdfResponse, saveBody.update));
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
@@ -361,8 +361,8 @@ export function* fetchPdfMetrics(): SagaIterator {
             : null,
         })
       );
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationMetrics` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }

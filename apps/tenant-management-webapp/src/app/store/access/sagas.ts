@@ -86,7 +86,12 @@ export function* fetchAccess() {
         show: false,
       })
     );
-    yield put(ErrorNotification({ message: e.message }));
+
+    yield put(
+      ErrorNotification({
+        error: e,
+      })
+    );
   }
 }
 
@@ -125,7 +130,11 @@ export function* fetchServiceRoles(action: FetchServiceRolesAction): SagaIterato
         })
       );
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(
+        ErrorNotification({
+          error: err,
+        })
+      );
       yield put(
         UpdateIndicator({
           show: false,
@@ -204,7 +213,12 @@ export function* fetchKeycloakServiceRoles(action: FetchKeycloakServiceRolesActi
           details,
         })
       );
-      yield put(ErrorNotification({ message: err.message }));
+
+      yield put(
+        ErrorNotification({
+          error: err,
+        })
+      );
     }
   }
 }
@@ -327,7 +341,11 @@ export function* createKeycloakClient(action: CreateKeycloakRoleAction): SagaIte
       })
     );
   } catch (err) {
-    yield put(ErrorNotification({ message: err.message }));
+    yield put(
+      ErrorNotification({
+        error: err,
+      })
+    );
 
     yield put(
       UpdateLoadingState({
