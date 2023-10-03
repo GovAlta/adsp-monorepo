@@ -44,16 +44,18 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
   const isNew = type === 'new';
 
   const [task, setTask] = useState<QueueTaskDefinition>(initialValue);
+  // const [priority, setPriority] = useState<string>('');
 
   useEffect(() => {
     setTask(initialValue);
+    // setPriority('');
   }, [initialValue]);
 
   const tasks = useSelector((state: RootState) => {
     return state?.task?.tasks;
   });
   const descErrMessage = 'Description can not be over 180 characters';
-  const taskNames = tasks ? Object.keys(tasks) : [];
+  const taskNames = tasks && Array.isArray(tasks) ? tasks.map((t) => t.name) : [];
   const title = isNew ? 'Add task' : 'Edit task';
   const namespaceCheck = (): Validator => {
     return (namespace: string) => {
@@ -61,7 +63,6 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
     };
   };
 
-  const [priority, setPriority] = useState<string>('');
   const { errors, validators } = useValidators(
     'name',
     'name',
@@ -70,8 +71,14 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
     wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
   )
-    .add('duplicated', 'name', duplicateNameCheck(taskNames, 'Task'))
-    .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
+    .add(
+      'duplicated',
+      'name',
+      isNotEmptyCheck('name'),
+      wordMaxLengthCheck(180, 'Description'),
+      duplicateNameCheck(taskNames, 'Task')
+    )
+    .add('description', 'description', isNotEmptyCheck('name'), wordMaxLengthCheck(180, 'Description'))
     .add('priority', 'priority', isNotEmptyCheck('priority'))
     .build();
 
@@ -79,13 +86,14 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
     const validations = {
       name: task?.name,
       description: task?.description,
-      priority: priority || task?.priority,
+      priority: task?.priority,
     };
 
     if (isNew) {
+      validations['name'] = task?.name;
       validations['duplicated'] = task?.name;
       validations['description'] = task?.description;
-      validations['priority'] = priority;
+      validations['priority'] = task?.priority;
     }
     if (!validators.checkAll(validations)) {
       return;
@@ -119,9 +127,10 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
           <GoAButton
             type="primary"
             testId="task-modal-save"
-            disabled={!task.name || !task.description || (type === 'new' && !priority) || validators.haveErrors()}
+            disabled={!task.name || !task.description || !task.priority || validators.haveErrors()}
             onClick={() => {
               validationCheck();
+              setTask(defaultQueuedTask);
             }}
           >
             Save
@@ -139,14 +148,8 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
             width="100%"
             aria-label="name"
             onChange={(name, value) => {
-              const validations = {
-                name: value,
-              };
               validators.remove('name');
-              if (isNew) {
-                validations['duplicated'] = value;
-              }
-              validators.checkAll(validations);
+              validators['name'].check(value);
               value = toKebabName(value);
               setTask({ ...task, name: value });
             }}
@@ -162,6 +165,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
               testId="description"
               aria-label="description"
               onChange={(name, value) => {
+                validators.remove('description');
                 validators['description'].check(value);
                 setTask({ ...task, description: value });
               }}
@@ -184,13 +188,13 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
           <GoARadioGroup
             name="priority"
             value={task?.priority}
-            onChange={(_name, value) => {
+            onChange={(name, value) => {
               if (type === 'new') {
-                const priority = value;
                 validators.remove('priority');
-                validators['priority'].check(priority);
+                validators['priority'].check(value);
+                setTask({ ...task, priority: value });
               }
-              setPriority(value);
+              // setPriority(value);
             }}
             disabled={!isNew}
           >

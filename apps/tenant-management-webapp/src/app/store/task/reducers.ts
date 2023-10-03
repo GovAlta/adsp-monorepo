@@ -3,17 +3,19 @@ import {
   TaskActionTypes,
   DELETE_TASK_QUEUE_SUCCESS_ACTION,
   GET_TASKS_SUCCESS_ACTION,
+  GET_TASKS_ACTION,
   UPDATE_TASK_QUEUE_SUCCESS_ACTION,
   FETCH_QUEUE_TASKS_SUCCESS_ACTION,
   UPDATE_QUEUE_TASK_SUCCESS_ACTION,
-  SET_QUEUE_TASK_SUCCESS_ACTION
+  SET_QUEUE_TASK_SUCCESS_ACTION,
 } from './action';
 
 import { TaskState } from './model';
 
 export const defaultState: TaskState = {
   queues: {},
-  tasks: {},
+  tasks: null,
+  nextEntries: null,
 };
 
 export default function (state: TaskState = defaultState, action: TaskActionTypes): TaskState {
@@ -34,10 +36,21 @@ export default function (state: TaskState = defaultState, action: TaskActionType
         ...state,
         tasks: action.payload,
       };
-    case GET_TASKS_SUCCESS_ACTION:
+    case GET_TASKS_SUCCESS_ACTION: {
       return {
         ...state,
-        tasks: action.payload,
+        tasks:
+          action.after && action.after !== ''
+            ? [...state.tasks, ...action.payload]
+            : action.payload
+            ? action.payload
+            : state.tasks,
+        nextEntries: action.next,
+      };
+    }
+    case GET_TASKS_ACTION:
+      return {
+        ...state,
       };
 
     case UPDATE_TASK_QUEUE_SUCCESS_ACTION:

@@ -145,7 +145,7 @@ export function* deleteTaskDefinition({ queue }: DeleteTaskDefinitionAction): Sa
   }
 }
 
-export function* getTasks({ queue }: GetsTasksAction): SagaIterator {
+export function* getTasks(payload: GetsTasksAction): SagaIterator {
   yield put(
     UpdateIndicator({
       show: true,
@@ -154,13 +154,15 @@ export function* getTasks({ queue }: GetsTasksAction): SagaIterator {
   );
   const taskUrl: string = yield select((state: RootState) => state.config.serviceUrls?.taskServiceApiUrl);
   const token: string = yield call(getAccessToken);
+  const queue = payload.queue;
+  const next = payload.next ? payload.next : '';
 
   if (taskUrl && token) {
     try {
-      const url = `${taskUrl}/task/v1/queues/${queue.namespace}/${queue.name}/tasks?top=10`;
-      const { results } = yield call(getTasksApi, token, url);
+      const url = `${taskUrl}/task/v1/queues/${queue.namespace}/${queue.name}/tasks?top=10&after=${next}`;
+      const { results, page } = yield call(getTasksApi, token, url);
 
-      yield put(getTasksSuccess(results));
+      yield put(getTasksSuccess(results, page.after, page.next));
       yield put(UpdateIndicator({ show: false }));
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.response} - getTasks` }));
@@ -228,8 +230,9 @@ export function* createTask({ payload }: SetQueueTaskAction): SagaIterator {
       // const payload: CreateTaskConfig = { operation: 'CREATE', configuration: { tasks: tasks } };
       const url = `${taskUrl}/task/v1/queues/${payload.recordId.split(':')[0]}/${payload.recordId.split(':')[1]}/tasks`;
       const { results } = yield call(postTasksApi, token, url, payload);
+      console.log('break');
+      yield put(getTasksSuccess(results, '', ''));
 
-      yield put(getTasksSuccess(results));
       yield put(UpdateIndicator({ show: false }));
     } catch (e) {
       yield put(ErrorNotification({ message: `${e.response} - getTasks` }));
