@@ -15,8 +15,8 @@ export function* fetchContactInfo(action: FetchContactInfoAction): SagaIterator 
     }
 
     yield put(FetchContactInfoSucceededService({ data: contactInfo }));
-  } catch (e) {
-    yield put(ErrorNotification({ message: `${e.message} - fetchContactInfo` }));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err}));
   }
 }
 

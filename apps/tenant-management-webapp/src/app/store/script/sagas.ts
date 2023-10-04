@@ -68,8 +68,8 @@ export function* updateScript({ payload, executeOnCompletion }: UpdateScriptActi
           })
         );
       }
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - updateScript` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -103,7 +103,7 @@ export function* fetchScripts(action: FetchScriptsAction): SagaIterator {
         })
       );
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
       details[action.type] = ActionState.error;
       yield put(
         UpdateIndicator({
@@ -170,7 +170,7 @@ export function* executeScript(action: RunScriptAction): SagaIterator {
           })
         );
       } else {
-        yield put(ErrorNotification({ message: err.message }));
+        yield put(ErrorNotification({ error: err }));
       }
 
       yield put(
@@ -202,7 +202,7 @@ function* deleteScript(action: DeleteScriptAction): SagaIterator {
 
       yield put(DeleteScriptSuccess(scriptId));
     } catch (err) {
-      yield put(ErrorNotification({ message: `Script (delete script): ${err.message}` }));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }

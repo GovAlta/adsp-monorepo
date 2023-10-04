@@ -66,8 +66,8 @@ export function* fetchDirectory(action: FetchDirectoryAction): SagaIterator {
           show: false,
         })
       );
-    } catch (e) {
-      yield put(ErrorNotification({ message: 'Failed to fetch directory service' }));
+    } catch (err) {
+      yield put(ErrorNotification({ message: 'Failed to fetch directory service:', error: err }));
       yield put(
         UpdateIndicator({
           show: false,
@@ -146,7 +146,7 @@ export function* updateEntryDirectory(action: UpdateEntryAction): SagaIterator {
       yield put(updateEntrySuccess(action.data));
     }
   } catch (err) {
-    yield put(ErrorNotification({ message: `Failed to update service: ${err.message}` }));
+    yield put(ErrorNotification({ message: 'Failed to update service:', error: err }));
   }
 }
 
@@ -168,7 +168,7 @@ export function* deleteEntryDirectory(action: DeleteEntryAction): SagaIterator {
       yield put(deleteEntrySuccess(action.data));
     }
   } catch (err) {
-    yield put(ErrorNotification({ message: `Failed to delete directory service entry ${action.data.service} ` }));
+    yield put(ErrorNotification({ message: 'Failed to delete directory service entry:', error: err }));
   }
 }
 
@@ -256,6 +256,6 @@ export function* fetchDirectoryByDetailURNs(action: FetchEntryDetailByURNsAction
       }
     }
   } catch (err) {
-    yield put(ErrorNotification({ message: `Failed to fetch metadata by urns: ${err.message}` }));
+    yield put(ErrorNotification({ message: 'Failed to fetch metadata by urns:', error: err }));
   }
 }

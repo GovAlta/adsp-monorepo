@@ -66,13 +66,13 @@ export function* fetchEventStreams(): SagaIterator {
         show: false,
       })
     );
-  } catch (e) {
+  } catch (err) {
     yield put(
       UpdateIndicator({
         show: false,
       })
     );
-    yield put(ErrorNotification({ message: e.message }));
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
@@ -104,7 +104,7 @@ export function* updateEventStream({ stream }: UpdateEventStreamAction): SagaIte
         })
       );
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -127,7 +127,7 @@ export function* deleteEventStream({ eventStreamId }: DeleteEventStreamAction): 
 
       yield put(deleteEventStreamSuccess({ ...latest.configuration }));
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }

@@ -71,7 +71,7 @@ export function* getSubscriberDetails(action: GetSubscriberAction): SagaIterator
         action: '',
       })
     );
-  } catch (e) {
+  } catch (err) {
     yield put(
       UpdateIndicator({
         show: false,
@@ -79,7 +79,7 @@ export function* getSubscriberDetails(action: GetSubscriberAction): SagaIterator
         action: '',
       })
     );
-    yield put(ErrorNotification({ message: `${e.response.data.errorMessage ?? e.message}` }));
+    yield put(ErrorNotification({ error: err}));
   }
 }
 
@@ -106,8 +106,8 @@ function* createSubscriber(action: CreateSubscribeAction): SagaIterator {
           message: `You are subscribed! You will receive notifications on ${email} .`,
         })
       );
-    } catch (e) {
-      yield put(ErrorNotification({ message: `Subscriptions (addTypeSubscription): ${e.message}` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err}));
     }
   }
 }
@@ -157,7 +157,7 @@ export function* patchSubscriber(action: PatchSubscriberAction): SagaIterator {
           })
         );
       }
-    } catch (e) {
+    } catch (err) {
       if (action.payload.action) {
         yield put(
           UpdateIndicator({
@@ -167,7 +167,7 @@ export function* patchSubscriber(action: PatchSubscriberAction): SagaIterator {
           })
         );
       }
-      yield put(ErrorNotification({ message: `${e.message} - failed to updated contact information` }));
+      yield put(ErrorNotification({ message: 'failed to updated contact information', error: err}));
     }
   }
 }
@@ -187,8 +187,8 @@ export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
 
       // remove the deleted subscription from the list after its successful
       yield put(UnsubscribeSuccess(type));
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - failed to delete subscription` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err}));
     }
   }
 }
@@ -216,8 +216,8 @@ export function* signedOutUnsubscribe(action: GetSignedOutSubscriberAction): Sag
     });
 
     yield put(UnsubscribeSuccess(type));
-  } catch (e) {
-    yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err}));
   }
 }
 

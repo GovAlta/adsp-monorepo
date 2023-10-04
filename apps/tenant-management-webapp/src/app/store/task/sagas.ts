@@ -46,10 +46,10 @@ export function* fetchTaskQueues(): SagaIterator {
       const url = `${configBaseUrl}/configuration/v2/configuration/platform/task-service`;
       const Payload = yield call(fetchTaskQueuesApi, token, url);
 
-      yield put(getTaskQueuesSuccess(Payload?.latest.configuration.queues || {}));
+      yield put(getTaskQueuesSuccess(Payload?.latest?.configuration.queues || {}));
       yield put(UpdateIndicator({ show: false }));
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
@@ -106,8 +106,8 @@ export function* updateTaskQueue({ payload }: UpdateTaskQueueAction): SagaIterat
         })
       );
       yield put(UpdateIndicator({ show: false }));
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - updateQueue` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
       yield put(UpdateIndicator({ show: false }));
     }
   }
@@ -138,8 +138,8 @@ export function* deleteTaskDefinition({ queue }: DeleteTaskDefinitionAction): Sa
         })
       );
       yield put(UpdateIndicator({ show: false }));
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.response.data} - deleteTaskDefinition` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
       yield put(UpdateIndicator({ show: false }));
     }
   }
@@ -164,8 +164,8 @@ export function* getTasks(payload: GetsTasksAction): SagaIterator {
 
       yield put(getTasksSuccess(results, page.after, page.next));
       yield put(UpdateIndicator({ show: false }));
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.response} - getTasks` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
       yield put(UpdateIndicator({ show: false }));
     }
   }
@@ -187,8 +187,8 @@ export function* getTask({ queue }: GetsTaskAction): SagaIterator {
 
       yield put(getTaskSuccess(results));
       yield put(UpdateIndicator({ show: false }));
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.response} - getTasks` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
       yield put(UpdateIndicator({ show: false }));
     }
   }
@@ -210,8 +210,8 @@ export function* updateQueueTask({ payload }: UpdateQueueTaskAction): SagaIterat
 
       yield put(updateQueueTaskSuccess(results));
       yield put(UpdateIndicator({ show: false }));
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.response} - updateQueueTasks` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
       yield put(UpdateIndicator({ show: false }));
     }
   }
@@ -233,8 +233,8 @@ export function* createTask({ payload }: SetQueueTaskAction): SagaIterator {
       yield put(getTasksSuccess(results, '', ''));
 
       yield put(UpdateIndicator({ show: false }));
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.response} - getTasks` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
       yield put(UpdateIndicator({ show: false }));
     }
   }
