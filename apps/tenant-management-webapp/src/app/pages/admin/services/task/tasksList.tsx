@@ -23,6 +23,7 @@ export const TasksList = (): JSX.Element => {
   const tasks = useSelector((state: RootState) => {
     return state?.task?.tasks;
   });
+  const next = useSelector((state: RootState) => state.task.nextEntries);
 
   const taskQueues = useSelector((state: RootState) => {
     return Object.entries(state?.task?.queues)
@@ -41,7 +42,7 @@ export const TasksList = (): JSX.Element => {
 
   useEffect(() => {
     if (selectedTask.length > 0) {
-      dispatch(getTasks(taskQueues[selectedTask]));
+      dispatch(getTasks(taskQueues[selectedTask], next));
     }
   }, [selectedTask]);
 
@@ -53,19 +54,23 @@ export const TasksList = (): JSX.Element => {
     setOpenAddTask(false);
   };
 
-  const handleSave = async (task) => {
+  const handleSave = (task) => {
     try {
       if (modalType === 'new') {
-        await dispatch(SetQueueTask(task));
+        dispatch(SetQueueTask(task));
       } else {
-        await dispatch(updateQueueTask(task));
+        dispatch(updateQueueTask(task));
       }
       setTimeout(() => {
         dispatch(getTasks(taskQueues[selectedTask]));
-      }, 1000);
+      }, 800);
     } catch (error) {
       console.error('Error while saving task:', error);
     }
+  };
+
+  const onNext = () => {
+    dispatch(getTasks(taskQueues[selectedTask], next));
   };
 
   return (
@@ -131,7 +136,11 @@ export const TasksList = (): JSX.Element => {
           }}
         />
       )}
-
+      {next && (
+        <GoAButton testId="calendar-event-load-more-btn" key="calendar-event-load-more-btn" onClick={onNext}>
+          Load more
+        </GoAButton>
+      )}
       <TaskModal
         open={openAddTask}
         queue={selectedTask}

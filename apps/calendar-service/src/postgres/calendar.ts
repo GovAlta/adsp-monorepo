@@ -109,9 +109,11 @@ export class PostgresCalendarRepository implements CalendarRepository {
     criteria?: CalendarEventCriteria
   ): Promise<Results<CalendarEventEntity>> {
     const skip = decodeAfter(after);
+    // to determine whether there is next page, we need to query one more.
+    const topChecked = top + 1;
 
     let query = this.knex<EventRecord>('calendar_events AS e');
-    query = query.select('e.*').distinctOn('e.id').offset(skip).limit(top);
+    query = query.select('e.*').distinctOn('e.id').offset(skip).limit(topChecked);
     query = query.where('e.tenant', '=', calendar.tenantId.toString()).andWhere('e.calendar', '=', calendar.name);
 
     if (criteria) {
@@ -164,11 +166,11 @@ export class PostgresCalendarRepository implements CalendarRepository {
     const rows = await query.orderBy('e.id', 'asc');
 
     return {
-      results: rows.map((r) => this.mapEventRecord(calendar, r)),
+      results: rows.map((r) => this.mapEventRecord(calendar, r)).slice(0, top),
       page: {
         after,
-        next: encodeNext(rows.length, top, skip),
-        size: rows.length,
+        next: encodeNext(rows.length, topChecked, skip - 1),
+        size: rows.length > top ? top : rows.length,
       },
     };
   }

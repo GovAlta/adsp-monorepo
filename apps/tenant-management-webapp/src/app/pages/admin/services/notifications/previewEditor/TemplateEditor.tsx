@@ -240,7 +240,7 @@ export const TemplateEditor: FunctionComponent<TemplateEditorProps> = ({
         }}
         onSave={() => {
           saveChangesAction();
-          saveAndReset();
+          saveAndReset(true);
           setSaveModal(false);
         }}
         onCancel={() => {

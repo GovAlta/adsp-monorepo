@@ -63,7 +63,11 @@ export function* fetchCalendars(action: FetchCalendarsAction): SagaIterator {
         })
       );
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(
+        ErrorNotification({
+          error: err,
+        })
+      );
       details[action.type] = ActionState.error;
       yield put(
         UpdateIndicator({
@@ -90,7 +94,7 @@ export function* updateCalendar({ payload }: UpdateCalendarAction): SagaIterator
         `${configBaseUrl}/configuration/v2/configuration/platform/calendar-service`,
         {
           operation: 'UPDATE',
-          update: { ...calendar },
+          updatex: { ...calendar },
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -101,8 +105,8 @@ export function* updateCalendar({ payload }: UpdateCalendarAction): SagaIterator
           ...latest.configuration,
         })
       );
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - updateCalendar` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -127,7 +131,7 @@ function* deleteCalendar(action: DeleteCalendarAction): SagaIterator {
 
       yield put(DeleteCalendarSuccess(calendarId));
     } catch (err) {
-      yield put(ErrorNotification({ message: `Calendar (delete calendar): ${err.message}` }));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -164,7 +168,11 @@ export function* fetchEventsByCalendar(action: FetchEventsByCalendarAction): Sag
       yield put(UpdateElementIndicator({ show: false, id: null }));
     } catch (err) {
       yield put(UpdateElementIndicator({ show: false, id: null }));
-      yield put(ErrorNotification({ message: `Error fetching events by calendar: ${err.message}` }));
+      yield put(
+        ErrorNotification({
+          error: err,
+        })
+      );
     }
   }
 }
@@ -185,7 +193,7 @@ export function* CreateEventByCalendar(action: CreateEventsByCalendarAction): Sa
       );
       yield put(CreateEventsByCalendarSuccess(calendarId, response.data));
     } catch (err) {
-      yield put(ErrorNotification({ message: `Error creating events by calendar: ${err.message}` }));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -203,7 +211,7 @@ export function* DeleteCalendarEvent(action: DeleteCalendarEventAction): SagaIte
 
       yield put(DeleteCalendarEventSuccess(eventId, calendarName));
     } catch (err) {
-      yield put(ErrorNotification({ message: `Error deleting events by calendar: ${err.message}` }));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -225,7 +233,7 @@ export function* UpdateEventByCalendar(action: UpdateEventsByCalendarAction): Sa
 
       yield put(UpdateEventsByCalendarSuccess(calendarId, action.eventId, response.data));
     } catch (err) {
-      yield put(ErrorNotification({ message: `Error updating events by calendar: ${err.message}` }));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }

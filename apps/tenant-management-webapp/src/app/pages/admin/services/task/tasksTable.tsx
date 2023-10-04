@@ -6,7 +6,7 @@ import { QueueTaskDefinition } from '@store/task/model';
 import { HeaderFont, TableDiv } from './styled-components';
 
 export interface TaskTableProps {
-  tasks: Record<string, object>;
+  tasks: QueueTaskDefinition[];
   onEditTask?: (queueTask) => void;
 }
 export const TaskListTable: FunctionComponent<TaskTableProps> = ({ tasks, onEditTask }) => {

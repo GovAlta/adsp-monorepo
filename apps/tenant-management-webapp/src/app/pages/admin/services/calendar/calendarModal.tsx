@@ -52,7 +52,7 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .build();
 
-  const roleNames = realmRoles.map((role) => {
+  const roleNames = realmRoles?.map((role) => {
     return role.name;
   });
   useEffect(() => {
