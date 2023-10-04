@@ -1,8 +1,24 @@
+//import { SecurityClassifications } from '@abgov/adsp-service-sdk';
+
+export enum SecurityClassifications {
+  Protected_A = 'Protected A',
+  Protected_B = 'Protected B',
+  Protected_C = 'Protected C',
+  Public = 'Public',
+}
+
+//Converts the Secure Classifications Enum to a array.
+export const SecurityClassificationsMap: {
+  value: string;
+  text: string;
+}[] = Object.entries(SecurityClassifications).map(([value, text]) => ({ value, text }));
+
 export interface RetentionPolicy {
   active: boolean;
   deleteInDays: number | string;
   createdAt: string;
 }
+
 export interface FileTypeItem {
   id: string;
   name: string;
@@ -10,6 +26,7 @@ export interface FileTypeItem {
   readRoles: string[];
   anonymousRead: boolean;
   hasFile?: boolean;
+  securityClassification?: string;
   tableData?: {
     id: string;
   };
@@ -25,6 +42,7 @@ export const FileTypeDefault: FileTypeItem = {
   readRoles: [],
   anonymousRead: false,
   hasFile: false,
+  securityClassification: SecurityClassificationsMap.find((y) => y.text === SecurityClassifications.Protected_A).value,
 };
 
 export interface FileItem {

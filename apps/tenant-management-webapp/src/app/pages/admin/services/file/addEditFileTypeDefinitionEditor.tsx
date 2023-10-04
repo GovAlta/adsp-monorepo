@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import {
+  DropDownZIndex,
   EditorPadding,
   FileTypeEditor,
   FileTypeEditorTitle,
+  FileTypeEditorWarningCalloutWrapper,
   FileTypePermissions,
   FileTypesEditorTitle,
   FinalButtonPadding,
@@ -23,11 +25,11 @@ import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
 import { useWindowDimensions } from '@lib/useWindowDimensions';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAPageLoader } from '@abgov/react-components';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton, GoACallout, GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { FileTypeConfigDefinition } from './fileTypeConfigDefinition';
 import { GoAButtonGroup, GoACheckbox, GoAFormItem, GoAInput, GoAPopover } from '@abgov/react-components-new';
 import { RootState } from '@store/index';
-import { FileTypeDefault, FileTypeItem } from '@store/file/models';
+import { FileTypeDefault, FileTypeItem, SecurityClassifications, SecurityClassificationsMap } from '@store/file/models';
 import { useValidators } from '@lib/validation/useValidators';
 import { badCharsCheck, duplicateNameCheck, isNotEmptyCheck, wordMaxLengthCheck } from '@lib/validation/checkInput';
 import { ConfigServiceRole } from '@store/access/models';
@@ -51,6 +53,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
   const isEdit = !!id;
   const fileTypeNames = useSelector(selectFileTyeNames);
   const [spinner, setSpinner] = useState<boolean>(false);
+  const [isSecurityClassificationModalOpen, setIsSecurityClassificationModalOpen] = useState<boolean>(false);
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
   const [initialFileType, setInitialFileType] = useState<FileTypeItem>(FileTypeDefault);
   const [fileType, setFileType] = useState<FileTypeItem>(FileTypeDefault);
@@ -72,7 +75,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
   //This is to add padding under the input text controls to space them vertically
   //out between the text controls and the back and cancel buttons.
   const heightCover = {
-    height: height - 740,
+    height: height - (!isSecurityClassificationModalOpen ? 800 : 875),
   };
 
   const close = () => {
@@ -127,12 +130,23 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
       prev?.name !== next?.name ||
       prev?.id !== next?.id ||
       prev?.anonymousRead !== next?.anonymousRead ||
+      prev?.securityClassification !== next?.securityClassification ||
       prev?.readRoles !== next?.readRoles ||
       prev?.updateRoles !== next?.updateRoles ||
       prev?.rules?.retention !== next?.rules?.retention ||
       prev?.rules?.retention?.active !== next?.rules?.retention?.active;
     return isUpdated;
   };
+
+  // const defaultSecurityClassificationType = () => {
+  //   const protectedA = SecurityClassificationsMap.find((s) => s.text === SecurityClassifications.Protected_A);
+
+  //   if (!isEdit && protectedA) return protectedA;
+
+  //   if (isEdit && fileType?.securityClassification === '') return protectedA;
+
+  //   return fileType?.securityClassification;
+  // };
 
   let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
   let clientElements = null;
@@ -197,19 +211,66 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
 
             {isEdit && <FileTypeConfigDefinition fileType={fileType ?? FileTypeDefault} />}
             <MakePublicPadding>
-              <GoACheckbox
-                checked={fileType?.anonymousRead}
-                name="file-type-anonymousRead-checkbox"
-                testId="file-type-anonymousRead-checkbox"
-                ariaLabel={`file-type-anonymousRead-checkbox`}
-                onChange={() => {
-                  setFileType({
-                    ...fileType,
-                    anonymousRead: !fileType.anonymousRead,
-                  });
-                }}
-                text={'Make public (read only)'}
-              />
+              <DropDownZIndex>
+                <GoAFormItem label="Security classification">
+                  <GoADropdown
+                    name="securityClassifications"
+                    width="265px"
+                    value={fileType?.securityClassification}
+                    onChange={(name: string, value: string) => {
+                      setFileType({
+                        ...fileType,
+                        securityClassification: value,
+                      });
+                      if (value !== SecurityClassifications.Public && fileType?.anonymousRead) {
+                        setIsSecurityClassificationModalOpen(true);
+                      } else {
+                        setIsSecurityClassificationModalOpen(false);
+                      }
+                    }}
+                  >
+                    {SecurityClassificationsMap &&
+                      SecurityClassificationsMap.map((classification) => (
+                        <GoADropdownItem
+                          testId={`securityClassification_${classification}`}
+                          name={`securityClassification_${classification}`}
+                          key={`securityClassification_${classification}`}
+                          value={classification.value}
+                          label={classification.text}
+                        />
+                      ))}
+                  </GoADropdown>
+                </GoAFormItem>
+                <GoACheckbox
+                  checked={fileType?.anonymousRead}
+                  name="file-type-anonymousRead-checkbox"
+                  testId="file-type-anonymousRead-checkbox"
+                  ariaLabel={`file-type-anonymousRead-checkbox`}
+                  onChange={() => {
+                    //anonymousRead is false before it is updated in the useState(but in actually it has been changed)
+                    if (
+                      fileType?.securityClassification !== SecurityClassifications.Public &&
+                      !fileType?.anonymousRead
+                    ) {
+                      setIsSecurityClassificationModalOpen(true);
+                    } else {
+                      setIsSecurityClassificationModalOpen(false);
+                    }
+                    setFileType({
+                      ...fileType,
+                      anonymousRead: !fileType.anonymousRead,
+                    });
+                  }}
+                  text={'Make public (read only)'}
+                />
+              </DropDownZIndex>
+              {isSecurityClassificationModalOpen && (
+                <FileTypeEditorWarningCalloutWrapper>
+                  <GoACallout type="important" heading="">
+                    The protected file is publicly accessible.
+                  </GoACallout>
+                </FileTypeEditorWarningCalloutWrapper>
+              )}
             </MakePublicPadding>
 
             <GoAFormItem label="">

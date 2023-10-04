@@ -152,6 +152,11 @@ export const OuterFileTypeTemplateEditorContainer = styled.div`
   overflow: hidden;
 `;
 
+export const DropDownZIndex = styled.div`
+  z-index: 1100;
+  position: relative;
+`;
+
 export const FlexRow = styled.div`
   display: flex;
   flex-direction: row;
@@ -255,4 +260,8 @@ export const ConfigTombStoneWrapper = styled.div`
     text-align: left;
     padding-bottom: var(--goa-spacing-xs);
   }
+`;
+
+export const FileTypeEditorWarningCalloutWrapper = styled.div`
+  width: 700px;
 `;

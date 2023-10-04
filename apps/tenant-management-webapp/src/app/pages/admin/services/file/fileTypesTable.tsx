@@ -4,7 +4,7 @@ import { Role } from '@store/tenant/models';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import styled from 'styled-components';
 import { GoABadge, GoAButtonGroup, GoAModal, GoAButton } from '@abgov/react-components-new';
-import { FileTypeItem } from '@store/file/models';
+import { FileTypeItem, SecurityClassifications } from '@store/file/models';
 import { useHistory, useRouteMatch } from 'react-router-dom';
 import { DeleteModal } from '@components/DeleteModal';
 import { useDispatch } from 'react-redux';
@@ -30,6 +30,7 @@ const FileTypeTableRow = ({
   readRoles,
   updateRoles,
   anonymousRead,
+  securityClassification,
   rules,
   onEdit,
   onDelete,
@@ -53,6 +54,7 @@ const FileTypeTableRow = ({
           return <GoABadge key={`update-roles-${id}-${role}`} type="information" content={role} />;
         })}
       </td>
+      <td>{securityClassification ? SecurityClassifications[securityClassification] : ''}</td>
       <td>{rules?.retention?.active ? rules?.retention?.deleteInDays : 'N/A'}</td>
       <td className="actionCol">
         <GoAContextMenu>
@@ -132,6 +134,7 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
                 </th>
                 <th id="read-roles">Read roles</th>
                 <th id="write-roles">Modify roles</th>
+                <th id="security-classification">Security Classification</th>
                 <th id="retention-policy">Retention period</th>
                 <th className="actionsCol" id="actions">
                   Actions
