@@ -168,11 +168,6 @@ export function* fetchEventsByCalendar(action: FetchEventsByCalendarAction): Sag
       yield put(UpdateElementIndicator({ show: false, id: null }));
     } catch (err) {
       yield put(UpdateElementIndicator({ show: false, id: null }));
-      console.log(JSON.stringify(err) + '<err');
-      console.log(JSON.stringify(err.response) + '<err.response');
-      console.log(err.response?.data?.errorMessage);
-      console.log(err.response.status);
-      console.log(err.response.headers);
       yield put(
         ErrorNotification({
           error: err,
