@@ -15,7 +15,7 @@ import { EventItem, baseTemplate } from '@store/notification/models';
 
 interface NotificationDefinitionFormProps {
   initialValue?: NotificationItem;
-  onCancel?: () => void;
+  onCancel?: (closeEventModal: boolean) => void;
   onClickedOutside?: () => void;
   onNext?: (notify: NotificationItem, event: EventItem) => void;
   open: boolean;
@@ -43,7 +43,8 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
   }, []);
 
   useEffect(() => {
-    if (selectedEvent) {
+    // only show next if there is an event selected and its name isnt empty
+    if (selectedEvent && selectedEvent.name !== '') {
       setValues([`${selectedEvent.namespace}:${selectedEvent.name}`]);
     } else {
       setValues(['']);
@@ -100,7 +101,7 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
             type="secondary"
             onClick={() => {
               setValues(['']);
-              onCancel();
+              onCancel(true);
             }}
           >
             Cancel
@@ -114,15 +115,14 @@ export const EventModalForm: FunctionComponent<NotificationDefinitionFormProps> 
               const eventObject: EventItem = {
                 namespace: dropdownObject.nameSpace,
                 name: dropdownObject.name,
-                templates: baseTemplate,
+                templates: JSON.parse(JSON.stringify(baseTemplate)),
               };
               // deep cloning props to avoid unwanted side effects
               // note: do not mutate props directly, it will cause unnecessary side effects
               const deepClonedDefinition = JSON.parse(JSON.stringify(definition));
               deepClonedDefinition.events.push(eventObject);
-              onCancel();
+              onCancel(true);
               onNext(deepClonedDefinition, eventObject);
-
               setValues(['']);
             }}
           >
