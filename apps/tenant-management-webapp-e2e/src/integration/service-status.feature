@@ -71,6 +71,11 @@ Feature: Service status
     Then the user "views" the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
     And the user should not view "edit menu" for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
     And the user should not view "delete menu" for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
+    # Because notices page refreshs every 30 seconds and the following step randomly fails, add steps to go off and back to the notices page so that the following step is done before the next refresh
+    When the user selects the "Access" menu item
+    And the user selects the "Status" menu item
+    And the user selects "Notices" tab for "Status"
+    And the user selects "Published" filter by status radio button
     When the user clicks "archive" menu for the "Published" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
     And the user selects "Archived" filter by status radio button
     Then the user "views" the "Archived" notice of "Autotest-AddPublishArchive", "Autotest", "Today", "10:00 am", "Today", "02:00 pm"
@@ -137,15 +142,15 @@ Feature: Service status
     And the user clicks Save as draft button
     Then the user "views" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     # Publish the notice
+    # Because notices page refreshs every 30 seconds and the following step randomly fails, add steps to go off and back to the notices page so that the following step is done before the next refresh
+    When the user selects the "Access" menu item
+    And the user selects the "Status" menu item
+    And the user selects "Notices" tab for "Status"
+    And the user selects "Draft" filter by status radio button
     When the user clicks "publish" menu for the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     And the user selects "Published" filter by status radio button
     Then the user "views" the "Published" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     # Unpublish the notice
-    # Because notices page refreshs every 30 seconds and our unpublish/delete step randomly fails, add steps to go off and back to the notices page so that the unpublish/delete step is done before the next refresh
-    When the user selects the "Access" menu item
-    And the user selects the "Status" menu item
-    And the user selects "Notices" tab for "Status"
-    And the user selects "Published" filter by status radio button
     When the user clicks "unpublish" menu for the "Published" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
     And the user selects "Draft" filter by status radio button
     Then the user "views" the "Draft" notice of "<Description2>", "<Application>", "<Start Date 2>", "<Start Time 2>", "<End Date 2>", "<End Time 2>"
