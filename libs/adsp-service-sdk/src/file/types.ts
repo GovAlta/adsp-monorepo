@@ -17,4 +17,5 @@ export interface FileType {
   readRoles: string[];
   updateRoles: string[];
   rules?: FileTypeRules;
+  securityClassification?: string;
 }

@@ -1,8 +1,11 @@
+import { SecurityClassification } from '@store/common/models';
+
 export interface RetentionPolicy {
   active: boolean;
   deleteInDays: number | string;
   createdAt: string;
 }
+
 export interface FileTypeItem {
   id: string;
   name: string;
@@ -10,6 +13,7 @@ export interface FileTypeItem {
   readRoles: string[];
   anonymousRead: boolean;
   hasFile?: boolean;
+  securityClassification?: string;
   tableData?: {
     id: string;
   };
@@ -25,6 +29,7 @@ export const FileTypeDefault: FileTypeItem = {
   readRoles: [],
   anonymousRead: false,
   hasFile: false,
+  securityClassification: SecurityClassification.ProtectedA,
 };
 
 export interface FileItem {
