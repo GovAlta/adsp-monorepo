@@ -235,10 +235,10 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
                   }
                   width="25rem"
                 >
-                  <GoADropdownItem value={SecurityClassification.public} label="public" />
-                  <GoADropdownItem value={SecurityClassification.protectedA} label="protected a" />
-                  <GoADropdownItem value={SecurityClassification.protectedB} label="protected b" />
-                  <GoADropdownItem value={SecurityClassification.protectedC} label="protected c" />
+                  <GoADropdownItem value={SecurityClassification.public} label="Public" />
+                  <GoADropdownItem value={SecurityClassification.protectedA} label="Protected a" />
+                  <GoADropdownItem value={SecurityClassification.protectedB} label="Protected b" />
+                  <GoADropdownItem value={SecurityClassification.protectedC} label="Protected c" />
                 </GoADropdown>
                 {/* <Editor height={height - 550} /> */}
                 <div style={heightCover}></div>
