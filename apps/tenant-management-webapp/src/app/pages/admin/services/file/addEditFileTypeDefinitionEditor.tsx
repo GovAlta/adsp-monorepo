@@ -108,8 +108,17 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
       const selectedFileType = foundFileType;
       setFileType(selectedFileType);
       setInitialFileType(selectedFileType);
+      if (
+        !foundFileType?.securityClassification ||
+        foundFileType?.securityClassification === undefined ||
+        foundFileType.securityClassification === null
+      ) {
+        fileType.securityClassification = '';
+      }
       const isCalloutOpen =
-        selectedFileType.anonymousRead && selectedFileType.securityClassification !== SecurityClassification.Public;
+        selectedFileType.anonymousRead &&
+        selectedFileType.securityClassification !== SecurityClassification.Public &&
+        selectedFileType.securityClassification !== '';
       setIsSecurityClassificationCalloutIsOpen(isCalloutOpen);
     }
   }, [fileTypes]);
@@ -191,6 +200,17 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
     );
   };
 
+  const securityClassificationValue = () => {
+    if (
+      fileType?.securityClassification === null ||
+      fileType?.securityClassification === undefined ||
+      fileType.securityClassification === ''
+    )
+      return '';
+
+    return fileType?.securityClassification;
+  };
+
   return (
     <FileTypeEditor data-testid="filetype-editor">
       {spinner ? (
@@ -210,20 +230,23 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                   <GoADropdown
                     name="securityClassifications"
                     width="25rem"
-                    value={fileType?.securityClassification}
+                    value={securityClassificationValue()}
                     onChange={(name: string, value: SecurityClassification) => {
                       setFileType({
                         ...fileType,
                         securityClassification: value,
                       });
-                      if (value !== SecurityClassification.Public && fileType?.anonymousRead) {
+                      if (
+                        fileType?.securityClassification &&
+                        value !== SecurityClassification.Public &&
+                        fileType?.anonymousRead
+                      ) {
                         setIsSecurityClassificationCalloutIsOpen(true);
                       } else {
                         setIsSecurityClassificationCalloutIsOpen(false);
                       }
                     }}
                   >
-                    {!fileType.securityClassification ? <GoADropdownItem value={' '} label={' '} /> : ''}
                     <GoADropdownItem value={SecurityClassification.Public} label="Public" />
                     <GoADropdownItem value={SecurityClassification.ProtectedA} label="Protected A" />
                     <GoADropdownItem value={SecurityClassification.ProtectedB} label="Protected B" />
@@ -238,6 +261,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                   onChange={() => {
                     //anonymousRead is false before it is updated in the useState(but in actually it has been changed)
                     if (
+                      fileType?.securityClassification &&
                       fileType?.securityClassification !== SecurityClassification.Public &&
                       !fileType?.anonymousRead
                     ) {
@@ -365,7 +389,8 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                         elementNames.includes(updateRole)
                       );
 
-                      if (!fileType?.securityClassification && isEdit) {
+                      //Default to Protected A if there was no security classification
+                      if (!fileType?.securityClassification && fileType?.securityClassification.length > 0 && isEdit) {
                         fileType.securityClassification = SecurityClassification.ProtectedA;
                       }
 
