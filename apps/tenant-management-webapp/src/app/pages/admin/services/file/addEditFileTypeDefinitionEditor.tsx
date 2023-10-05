@@ -54,7 +54,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
   const isEdit = !!id;
   const fileTypeNames = useSelector(selectFileTyeNames);
   const [spinner, setSpinner] = useState<boolean>(false);
-  const [isSecurityClassificationModalOpen, setIsSecurityClassificationModalOpen] = useState<boolean>(false);
+  const [isSecurityClassificationCalloutOpen, setIsSecurityClassificationCalloutIsOpen] = useState<boolean>(false);
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
   const [initialFileType, setInitialFileType] = useState<FileTypeItem>(FileTypeDefault);
   const [fileType, setFileType] = useState<FileTypeItem>(FileTypeDefault);
@@ -76,7 +76,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
   //This is to add padding under the input text controls to space them vertically
   //out between the text controls and the back and cancel buttons.
   const heightCover = {
-    height: height - (!isSecurityClassificationModalOpen ? 800 : 875),
+    height: height - (!isSecurityClassificationCalloutOpen ? 800 : 875),
   };
 
   const close = () => {
@@ -108,6 +108,9 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
       const selectedFileType = foundFileType;
       setFileType(selectedFileType);
       setInitialFileType(selectedFileType);
+      const isCalloutOpen =
+        selectedFileType.anonymousRead && selectedFileType.securityClassification !== SecurityClassification.Public;
+      setIsSecurityClassificationCalloutIsOpen(isCalloutOpen);
     }
   }, [fileTypes]);
 
@@ -214,9 +217,9 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                         securityClassification: value,
                       });
                       if (value !== SecurityClassification.Public && fileType?.anonymousRead) {
-                        setIsSecurityClassificationModalOpen(true);
+                        setIsSecurityClassificationCalloutIsOpen(true);
                       } else {
-                        setIsSecurityClassificationModalOpen(false);
+                        setIsSecurityClassificationCalloutIsOpen(false);
                       }
                     }}
                   >
@@ -237,9 +240,9 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                       fileType?.securityClassification !== SecurityClassification.Public &&
                       !fileType?.anonymousRead
                     ) {
-                      setIsSecurityClassificationModalOpen(true);
+                      setIsSecurityClassificationCalloutIsOpen(true);
                     } else {
-                      setIsSecurityClassificationModalOpen(false);
+                      setIsSecurityClassificationCalloutIsOpen(false);
                     }
                     setFileType({
                       ...fileType,
@@ -249,7 +252,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                   text={'Make public (read only)'}
                 />
               </DropDownZIndex>
-              {isSecurityClassificationModalOpen && (
+              {isSecurityClassificationCalloutOpen && (
                 <FileTypeEditorWarningCalloutWrapper>
                   <GoACallout type="important" heading="">
                     The protected file is publicly accessible.
