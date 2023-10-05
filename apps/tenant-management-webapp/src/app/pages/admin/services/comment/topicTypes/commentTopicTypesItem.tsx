@@ -55,6 +55,7 @@ export const CommentTopicTypesItem = ({ commentTopicType, onDelete }: PdfTemplat
             })}
           </OverflowWrap>
         </td>
+        <td data-testid="comment-topic-types-assessor">{commentTopicType.securityClassification}</td>
         <td data-testid="comment-topic-types-action">
           <GoAContextMenu>
             <GoAContextMenuIcon
