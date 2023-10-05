@@ -1,15 +1,15 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import { CalendarItem } from '@store/calendar/models';
-import { GoABadge, GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components-new';
+
+import { GoAButton, GoAButtonGroup, GoAModal } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
-import DataTable from '@components/DataTable';
-import { TableDiv, OverFlowWrapTableCell } from './styled-components';
+
+import { TableDiv } from './styled-components';
 import { DeleteModal } from '@components/DeleteModal';
-import { DeleteCalendar, FetchEventsByCalendar } from '@store/calendar/actions';
-import { GoAContextMenuIcon } from '@components/ContextMenu';
+import { DeleteCalendar } from '@store/calendar/actions';
+
 import { RootState } from '@store/index';
 
-import { selectSelectedCalendarEvents, selectSelectedCalendarNextEvents } from '@store/calendar/selectors';
+import { selectSelectedCalendarEvents } from '@store/calendar/selectors';
 
 interface calendarTableProps {
   calendarName;
@@ -27,22 +27,6 @@ export const DeleteConfirmationsView: FunctionComponent<calendarTableProps> = ({
       setShowDeleteConfirmation(true);
     }
   }, [selectedEvents]);
-
-  // const onDelete = (calendar) => {
-  //   dispatch(FetchEventsByCalendar(calendar.name));
-  //   setSelectedDeleteCalendar(calendar);
-  //   setTimeout(() => {
-  //     if (calendarHasEvents) {
-  //       setShowUnableToDeleteConfirmation(true);
-  //     } else {
-  //       setShowDeleteConfirmation(true);
-  //     }
-  //   }, 1000);
-  // };
-
-  // const calendarHasEvents = useSelector(
-  //   (state: RootState) => state?.calendarService?.calendars[selectedDeleteCalendar?.name]?.selectedCalendarEvents
-  // );
 
   return (
     <TableDiv key="calendar">
