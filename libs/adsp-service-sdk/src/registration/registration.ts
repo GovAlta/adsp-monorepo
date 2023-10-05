@@ -98,6 +98,7 @@ export class ServiceRegistrarImpl implements ServiceRegistrar {
             id: type.id,
             name: type.name,
             anonymousRead: type.anonymousRead,
+            securityClassification: type.securityClassification,
             readRoles: type.readRoles,
             updateRoles: type.updateRoles,
             rules: type?.rules,

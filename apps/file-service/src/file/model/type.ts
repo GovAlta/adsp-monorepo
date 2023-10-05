@@ -17,6 +17,7 @@ export class FileTypeEntity implements FileType {
   logger?: Logger;
   name: string;
   anonymousRead = false;
+  securityClassification?: string;
   readRoles: string[] = [];
   updateRoles: string[] = [];
   rules?: FileTypeRules;
@@ -28,7 +29,8 @@ export class FileTypeEntity implements FileType {
     anonymousRead: boolean,
     readRoles: string[],
     updateRoles: string[],
-    rules?: FileTypeRules
+    rules?: FileTypeRules,
+    securityClassification?: string
   ): FileTypeEntity {
     const newType: FileType = {
       tenantId,
@@ -38,6 +40,7 @@ export class FileTypeEntity implements FileType {
       readRoles,
       updateRoles,
       rules,
+      securityClassification,
     };
     return new FileTypeEntity(newType);
   }
@@ -50,6 +53,7 @@ export class FileTypeEntity implements FileType {
     this.readRoles = type.readRoles || [];
     this.updateRoles = type.updateRoles || [];
     this.rules = type?.rules;
+    this.securityClassification = type?.securityClassification;
   }
 
   canAccessFile(user: User): boolean {

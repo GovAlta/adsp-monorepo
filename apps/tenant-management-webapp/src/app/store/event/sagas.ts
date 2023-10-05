@@ -73,7 +73,7 @@ export function* fetchEventDefinitions(action: FetchEventDefinitionsAction): Sag
         })
       );
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
@@ -128,7 +128,7 @@ export function* updateEventDefinition({ definition }: UpdateEventDefinitionActi
         })
       );
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -175,7 +175,7 @@ export function* deleteEventDefinition({ definition }: UpdateEventDefinitionActi
 
       yield put(deleteEventDefinitionSuccess(definition));
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -238,7 +238,7 @@ export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaI
         })
       );
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
@@ -277,8 +277,8 @@ export function* fetchEventMetrics(): SagaIterator {
           avgPerDay: data.values.length ? sum / data.values.length : 0,
         })
       );
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationMetrics` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }

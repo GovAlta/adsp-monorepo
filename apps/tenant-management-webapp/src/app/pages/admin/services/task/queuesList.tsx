@@ -22,6 +22,7 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [openAddQueue, setOpenAddQueue] = useState(false);
   const [selectedQueue, setSelectedQueue] = useState<TaskDefinition>(defaultTaskQueue);
+  const next = useSelector((state: RootState) => state.task.nextEntries);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -47,7 +48,7 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
 
   useEffect(() => {
     if (selectedQueue.name.length > 0) {
-      dispatch(getTasks(selectedQueue));
+      dispatch(getTasks(selectedQueue, next));
     }
   }, [selectedQueue]);
 

@@ -24,8 +24,8 @@ export function* fetchTenant(action: FetchTenantAction): SagaIterator {
     const tenant = (yield call(axios.get, `/api/tenant/v1/tenant/${tenantId}`)).data;
 
     yield put(FetchTenantSucceededService(tenant));
-  } catch (e) {
-    yield put(ErrorNotification({ message: `${e.message} - fetchTenant` }));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err}));
   }
 }
 
@@ -49,8 +49,8 @@ export function* keycloakCheckSSO(action: KeycloakCheckSSOAction): SagaIterator 
         console.error('Failed to check the SSO');
       }
     );
-  } catch (e) {
-    yield put(ErrorNotification({ message: `Failed to check keycloak SSO: ${e.message}` }));
+  } catch (err) {
+    yield put(ErrorNotification({ message: 'Failed to check keycloak SSO', error: err }));
   }
 }
 
@@ -72,8 +72,8 @@ export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAc
         window.location.replace(url);
       }
     );
-  } catch (e) {
-    yield put(ErrorNotification({ message: `Failed to check keycloak SSO: ${e.message}` }));
+  } catch (err) {
+    yield put(ErrorNotification({ message: 'Failed to check keycloak SSO', error: err }));
   }
 }
 
@@ -84,8 +84,8 @@ export function* tenantLogin(action: TenantLoginAction): SagaIterator {
     const keycloakConfig = state.config.keycloakApi;
     createKeycloakAuth({ ...keycloakConfig }, loginRedirectUrl);
     keycloakAuth.loginByIdP('core', action.payload);
-  } catch (e) {
-    yield put(ErrorNotification({ message: `Failed to tenant login: ${e.message}` }));
+  } catch (err) {
+    yield put(ErrorNotification({ message: 'Failed to check keycloak SSO', error: err }));
   }
 }
 
@@ -105,8 +105,8 @@ export function* keycloakRefreshToken(realm?: string): SagaIterator {
     } else {
       console.warn(`Try to fresh keycloak token. But, keycloak instance is empty.`);
     }
-  } catch (e) {
-    yield put(ErrorNotification({ message: `Failed to tenant login: ${e.message}` }));
+  } catch (err) {
+    yield put(ErrorNotification({ message: 'Failed to tenant login', error: err }));
   }
 }
 
@@ -115,8 +115,8 @@ export function* tenantLogout(): SagaIterator {
     if (keycloakAuth) {
       Promise.resolve(keycloakAuth.logout());
     }
-  } catch (e) {
-    yield put(ErrorNotification({ message: `Failed to tenant out: ${e.message}` }));
+  } catch (err) {
+    yield put(ErrorNotification({ message: 'Failed to tenant out', error: err }));
   }
 }
 

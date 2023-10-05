@@ -59,9 +59,9 @@ export class PostgresTaskRepository implements TaskRepository {
     criteria?: TaskCriteria
   ): Promise<Results<TaskEntity>> {
     const skip = decodeAfter(after);
-
+    const topChecked = top + 1;
     let query = this.knex<TaskRecord>('tasks');
-    query = query.offset(skip).limit(top);
+    query = query.offset(skip).limit(topChecked);
 
     if (criteria) {
       const queryCriteria: Record<string, unknown> = {};
@@ -93,11 +93,11 @@ export class PostgresTaskRepository implements TaskRepository {
     const rows = await query.orderBy('priority', 'desc').orderBy('createdOn', 'asc');
 
     return {
-      results: rows.map((r) => this.mapRecord(r, queues)),
+      results: rows.map((r) => this.mapRecord(r, queues)).slice(0, top),
       page: {
         after,
-        next: encodeNext(rows.length, top, skip),
-        size: rows.length,
+        next: encodeNext(rows.length, topChecked, skip - 1),
+        size: rows.length > top ? top : rows.length,
       },
     };
   }

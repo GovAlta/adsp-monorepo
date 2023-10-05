@@ -9,7 +9,7 @@ import { useHistory, useRouteMatch } from 'react-router-dom';
 import { DeleteModal } from '@components/DeleteModal';
 import { useDispatch } from 'react-redux';
 import { DeleteFileTypeService } from '@store/file/actions';
-
+import { upperCaseFirstLetterInClassificationType } from '@lib/stringHelpers';
 interface FileTypeRowProps extends FileTypeItem {
   editId: string;
   editable?: boolean;
@@ -30,6 +30,7 @@ const FileTypeTableRow = ({
   readRoles,
   updateRoles,
   anonymousRead,
+  securityClassification,
   rules,
   onEdit,
   onDelete,
@@ -53,6 +54,7 @@ const FileTypeTableRow = ({
           return <GoABadge key={`update-roles-${id}-${role}`} type="information" content={role} />;
         })}
       </td>
+      <td>{securityClassification ? upperCaseFirstLetterInClassificationType(securityClassification) : ''}</td>
       <td>{rules?.retention?.active ? rules?.retention?.deleteInDays : 'N/A'}</td>
       <td className="actionCol">
         <GoAContextMenu>
@@ -83,6 +85,7 @@ const CoreFileTypeTableRow = ({
   name,
   readRoles,
   updateRoles,
+  securityClassification,
   anonymousRead,
   rules,
   onEdit,
@@ -107,6 +110,7 @@ const CoreFileTypeTableRow = ({
           return <GoABadge key={`update-roles-${id}-${role}`} type="information" content={role} />;
         })}
       </td>
+      <td>{securityClassification ? upperCaseFirstLetterInClassificationType(securityClassification) : 'N/A'}</td>
       <td>{rules?.retention?.active ? rules?.retention?.deleteInDays : 'N/A'}</td>
     </tr>
   );
@@ -132,6 +136,7 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
                 </th>
                 <th id="read-roles">Read roles</th>
                 <th id="write-roles">Modify roles</th>
+                <th id="security-classification">Security classification</th>
                 <th id="retention-policy">Retention period</th>
                 <th className="actionsCol" id="actions">
                   Actions
@@ -174,6 +179,7 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
                   </th>
                   <th id="read-roles-core">Read roles</th>
                   <th id="write-roles-core">Modify roles</th>
+                  <th id="security-classification-core">Security classification</th>
                   <th id="retention-policy-core">Retention period</th>
                 </tr>
               </thead>

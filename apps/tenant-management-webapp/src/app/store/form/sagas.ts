@@ -41,7 +41,7 @@ export function* fetchFormDefinitions(): SagaIterator {
         })
       );
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
@@ -73,7 +73,7 @@ export function* updateFormDefinition({ definition, options }: UpdateFormDefinit
         })
       );
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -93,8 +93,8 @@ export function* deleteFormDefinition({ definition }: DeleteFormDefinitionAction
           ...latest.configuration,
         })
       );
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.response.data} - deleteFormDefinition` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }

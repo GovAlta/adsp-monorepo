@@ -41,7 +41,7 @@ export function* fetchCommentTopicTypess(): SagaIterator {
         })
       );
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
@@ -73,7 +73,7 @@ export function* updateCommentTopicTypes({ topicType, options }: UpdateCommentTo
         })
       );
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -93,8 +93,8 @@ export function* deleteCommentTopicTypes({ topicTypeId }: DeleteCommentTopicType
           ...latest.configuration,
         })
       );
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.response.data} - deleteCommentTopicTypes` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }

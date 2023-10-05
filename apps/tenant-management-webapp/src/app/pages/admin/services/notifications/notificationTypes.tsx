@@ -83,6 +83,7 @@ interface ParentCompProps {
 export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEdit, activateEdit }) => {
   const [editType, setEditType] = useState(false);
   const [selectedType, setSelectedType] = useState(emptyNotificationType);
+  const [editEventOpen, setEditEventOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [editEvent, setEditEvent] = useState(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -204,6 +205,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
     setEditType(false);
     if (closeEventModal) {
       setEditEvent(null);
+      setEditEventOpen(false);
+      setSelectedEvent(null);
     }
     setTemplateEditErrors(templateDefaultError);
     setSelectedType(emptyNotificationType);
@@ -526,6 +529,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
                           onClick={() => {
                             setSelectedEvent(emptyEvent);
                             manageEvents(notificationType);
+                            setEditEventOpen(true);
                           }}
                         >
                           + Select an event
@@ -726,7 +730,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
       />
       {/* add an event */}
       <EventModalForm
-        open={editEvent}
+        open={editEventOpen}
         initialValue={editEvent}
         selectedEvent={selectedEvent}
         errors={errors}
@@ -735,8 +739,9 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           setSelectedType(notifications);
           setShowTemplateForm(true);
         }}
-        onCancel={() => {
-          reset(true);
+        onCancel={(closeEventModal: boolean) => {
+          reset(closeEventModal);
+          // reset(true);
         }}
         onClickedOutside={() => {
           reset(true);
@@ -797,7 +802,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
               saveCurrentTemplate={() => saveOrAddEventTemplate()}
               resetToSavedAction={() => {
                 setTemplates(JSON.parse(JSON.stringify(savedTemplates)));
-                reset();
+                reset(true);
               }}
               saveAndReset={saveAndReset}
               validateEventTemplateFields={() => validateEventTemplateFields()}

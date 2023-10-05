@@ -25,9 +25,21 @@ export interface Indicator {
   details?: Record<string, ActionState>;
 }
 
+export interface TaskEntry {
+  name: string;
+  namespace: string;
+  id: string;
+  recordId?: string;
+  description: string;
+  priority: string;
+  createdOn?: string;
+  status?: string;
+  queue: Record<string, TaskDefinition>;
+}
 export interface TaskState {
   queues: Record<string, TaskDefinition>;
-  tasks: Record<string, object>;
+  tasks: QueueTaskDefinition[];
+  nextEntries: string;
 }
 
 export interface DeleteTaskConfig {
@@ -36,7 +48,7 @@ export interface DeleteTaskConfig {
 }
 export interface CreateTaskConfig {
   operation: string;
-  configuration: { tasks: Record<string, QueueTaskDefinition> };
+  configuration: { tasks: QueueTaskDefinition[] };
 }
 
 export interface QueueTaskDefinition {
@@ -51,7 +63,7 @@ export interface QueueTaskDefinition {
   queue: Record<string, TaskDefinition>;
 }
 export interface QueueTaskService {
-  tasks: Record<string, QueueTaskDefinition>;
+  tasks: QueueTaskDefinition[];
   indicator?: Indicator;
 }
 export const defaultQueuedTask: QueueTaskDefinition = {

@@ -27,9 +27,9 @@ export function* saveNotice(action: SaveNoticeAction): SagaIterator {
     const data = yield call([api, api.saveNotice], action.payload);
     yield put(saveNoticeSuccess(data));
     yield put(UpdateIndicator({ show: false }));
-  } catch (e) {
+  } catch (err) {
     yield put(UpdateIndicator({ show: false }));
-    yield put(ErrorNotification({ message: e.message }));
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
@@ -42,8 +42,8 @@ export function* getNotices(): SagaIterator {
     const api = new NoticeApi(baseUrl, token);
     const notices: NoticesResult = yield call([api, api.getNotices]);
     yield put(getNoticesSuccess(notices.results));
-  } catch (e) {
-    yield put(ErrorNotification({ message: e.message }));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
@@ -59,9 +59,9 @@ export function* deleteNotice(action: DeleteNoticeAction): SagaIterator {
     const notice: Notice = yield call([api, api.deleteNotice], action.payload);
     yield put(deleteNoticeSuccess(notice));
     yield put(UpdateIndicator({ show: false }));
-  } catch (e) {
+  } catch (err) {
     yield put(UpdateIndicator({ show: false }));
-    yield put(ErrorNotification({ message: e.message }));
+    yield put(ErrorNotification({ error: err }));
   }
 }
 

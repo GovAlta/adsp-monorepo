@@ -42,7 +42,7 @@ function* fetchServices() {
 
       yield put(fetchServicesSuccess(services));
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -127,7 +127,7 @@ function* fetchServiceMetrics(action: FetchServiceMetricsAction): SagaIterator {
         )
       );
     } catch (err) {
-      yield put(ErrorNotification({ message: err.message }));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }

@@ -45,8 +45,8 @@ export function* fetchServiceStatusAppHealthEffect(api: StatusApi, application: 
     const entryMap: EndpointStatusEntry[] = yield call([api, api.getEndpointStatusEntries], application.appKey);
     application.endpoint.statusEntries = entryMap;
     yield put(fetchServiceStatusAppHealthSuccess(application.appKey, application.endpoint.url, entryMap));
-  } catch (e) {
-    yield put(ErrorNotification({ message: `${e.message} - fetchServiceStatusAppHealthEffect` }));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
@@ -80,8 +80,8 @@ export function* fetchServiceStatusApps(): SagaIterator {
         state: 'completed',
       })
     );
-  } catch (e) {
-    yield put(ErrorNotification({ message: e.message }));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
     yield put(
       UpdateLoadingState({
         name: FETCH_SERVICE_STATUS_APPS_ACTION,
@@ -109,8 +109,8 @@ export function* saveApplication(action: SaveApplicationAction): SagaIterator {
     }
     yield put(saveApplicationSuccess(data));
     yield put(refreshServiceStatusApps());
-  } catch (e) {
-    yield put(ErrorNotification({ message: e.message }));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
@@ -154,8 +154,8 @@ export function* saveWebhook(action: saveWebhookAction): SagaIterator {
 
     yield put(SaveWebhookSuccess(data.latest.configuration?.webhooks, hookIntervalResponse));
     yield put(refreshServiceStatusApps());
-  } catch (e) {
-    yield put(ErrorNotification({ message: e.message }));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
@@ -177,8 +177,8 @@ export function* fetchWebhook(action: saveWebhookAction): SagaIterator {
 
     yield put(fetchWebhooksSuccess(configuration, hookIntervals));
     yield put(refreshServiceStatusApps());
-  } catch (e) {
-    yield put(ErrorNotification({ message: e.message }));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
@@ -193,8 +193,8 @@ export function* deleteApplication(action: DeleteApplicationAction): SagaIterato
     yield call([api, api.deleteApplication], action.payload.appKey);
 
     yield put(deleteApplicationSuccess(action.payload.appKey));
-  } catch (e) {
-    yield put(ErrorNotification({ message: e.message }));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
@@ -215,8 +215,8 @@ export function* deleteWebhook(action: DeleteWebhookAction): SagaIterator {
     yield call([api, api.saveWebhookPush], pushService);
 
     yield put(deleteWebhookSuccess(action.payload.id));
-  } catch (e) {
-    yield put(ErrorNotification({ message: e.message }));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
   }
 }
 export function* testWebhook(action: TestWebhookAction): SagaIterator {
@@ -244,13 +244,13 @@ export function* testWebhook(action: TestWebhookAction): SagaIterator {
     );
 
     yield put(TestWebhooksSuccess(response));
-  } catch (e) {
+  } catch (err) {
     yield put(
       UpdateIndicator({
         show: false,
       })
     );
-    yield put(ErrorNotification({ message: e.message }));
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
@@ -269,8 +269,8 @@ export function* setApplicationStatus(action: SetApplicationStatusAction): SagaI
     data.endpoint.statusEntries = entryMap;
 
     yield put(setApplicationStatusSuccess(data));
-  } catch (e) {
-    yield put(ErrorNotification({ message: e.message }));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
@@ -292,8 +292,8 @@ export function* toggleApplicationStatus(action: ToggleApplicationStatusAction):
     // set as pending after toggling
     data.internalStatus = 'pending';
     yield put(toggleApplicationStatusSuccess(data));
-  } catch (e) {
-    yield put(ErrorNotification({ message: e.message }));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
@@ -356,8 +356,8 @@ export function* fetchStatusMetrics(): SagaIterator {
       };
 
       yield put(fetchStatusMetricsSucceeded(parsedMetrics));
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchStatusMetrics` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -387,8 +387,8 @@ export function* updateStatusContactInformation({ payload }: UpdateStatusContact
       );
 
       yield put(FetchStatusConfigurationService());
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - updateNotificationType` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -424,8 +424,8 @@ export function* fetchStatusConfiguration(): SagaIterator {
           state: 'completed',
         })
       );
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchStatusConfiguration` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateLoadingState({
           name: FETCH_STATUS_CONFIGURATION,

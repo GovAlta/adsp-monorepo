@@ -89,6 +89,7 @@ const initializeApp = async (): Promise<express.Application> => {
           {} as Record<string, TopicTypeEntity>
         ),
       combineConfiguration: (tenant) => tenant,
+      enableConfigurationInvalidation: true,
       values: [ServiceMetricsValueDefinition],
     },
     { logger }
