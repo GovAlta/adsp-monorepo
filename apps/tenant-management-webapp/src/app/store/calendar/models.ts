@@ -13,10 +13,15 @@ export interface CalendarItem {
 }
 
 export const getDefaultSearchCriteria = (): CalendarEventSearchCriteria => {
+  const start = new Date();
+  start.setHours(24, 0, 0, 0);
+  const end = new Date();
+  end.setHours(24, 0, 0, 0);
+
   return {
     // using absolute unit time will be more intuitive than using setDate;
-    startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    endDate: new Date().toISOString(),
+    startDate: new Date(start.valueOf() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    endDate: end.toISOString(),
   };
 };
 

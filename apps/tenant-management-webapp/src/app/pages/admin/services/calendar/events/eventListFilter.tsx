@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { EventFilterWrapper, EventFilterButtonPosition, TitleSpace } from './styled-components';
-import { GoAGrid, GoAFormItem, GoAInputDateTime, GoAButton, GoABadge } from '@abgov/react-components-new';
+import { EventFilterWrapper, EventFilterButtonWrapper } from './styled-components';
+import { GoAGrid, GoAFormItem, GoAInputDate, GoAButton, GoABadge } from '@abgov/react-components-new';
 import { UpdateSearchCalendarEventCriteria, FetchEventsByCalendar } from '@store/calendar/actions';
 import { CalendarEventSearchCriteria } from '@store/calendar/models';
 import { useDispatch, useSelector } from 'react-redux';
@@ -22,10 +22,9 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
 
   return (
     <EventFilterWrapper>
-      <TitleSpace />
       <GoAGrid minChildWidth="30ch" gap="xs">
         <GoAFormItem label="Start date after">
-          <GoAInputDateTime
+          <GoAInputDate
             name="calendar-event-filter-start-date"
             value={criteria.startDate}
             onChange={(name, value) => {
@@ -41,7 +40,7 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
         </GoAFormItem>
 
         <GoAFormItem label="End date before">
-          <GoAInputDateTime
+          <GoAInputDate
             name="calendar-event-filter-end-date"
             value={criteria.endDate}
             onChange={(name, value) => {
@@ -65,7 +64,7 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
         </>
       )}
       <GoAFormItem label="">
-        <EventFilterButtonPosition>
+        <EventFilterButtonWrapper>
           <GoAButton
             type="secondary"
             testId="calendar-event-filter-submit-btn"
@@ -76,7 +75,7 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
           >
             Show event
           </GoAButton>
-        </EventFilterButtonPosition>
+        </EventFilterButtonWrapper>
       </GoAFormItem>
     </EventFilterWrapper>
   );

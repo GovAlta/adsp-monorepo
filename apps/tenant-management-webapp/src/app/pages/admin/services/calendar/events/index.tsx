@@ -75,7 +75,6 @@ export const CalendarEvents = (): JSX.Element => {
       >
         Add event
       </GoAButton>
-      {selectedCalendar && <EventListFilter calenderName={selectedCalendar} />}
       {selectedCalendar && <EventList calendarName={selectedCalendar} />}
     </div>
   );

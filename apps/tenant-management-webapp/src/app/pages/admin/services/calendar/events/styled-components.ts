@@ -3,6 +3,7 @@ import styled from 'styled-components';
 export const SelectCalendarHeader = styled.div`
   margin-top: var(--goa-spacing-m);
   font-weight: var(--fw-bold);
+  margin-bottom: var(--goa-spacing-xs);
 `;
 
 export const TitleSpace = styled.div`
@@ -83,10 +84,12 @@ export const EventFilterWrapper = styled.div`
   width: 37.5rem;
 `;
 
-export const EventFilterButtonPosition = styled.div`
+export const EventFilterButtonWrapper = styled.div`
   display: flex;
   justify-content: flex-end;
   padding-right: 6px;
+  margin-top: var(--goa-spacing-l);
+  margin-bottom: var(--goa-spacing-xl);
 `;
 
 export const CalendarEventFilterError = styled.span`
@@ -101,4 +104,15 @@ export const CalendarEventFilterError = styled.span`
 // There might be a bug for the scroll, we need more padding to show the load more button in some case
 export const LoadMoreWrapper = styled.div`
   padding-bottom: var(--goa-spacing-4xl);
+`;
+
+export const EventTableHeader = styled.div`
+  font-size: var(--goa-font-size-7);
+  line-height: var(--goa-spacing-xl);
+  margin-top: var(--goa-spacing-xl);
+  margin-bottom: var(--goa-spacing-xl);
+`;
+
+export const FilterTitle = styled.h4`
+  margin: 0px !important;
 `;

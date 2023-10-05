@@ -3,14 +3,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { selectSelectedCalendarEvents, selectSelectedCalendarNextEvents } from '@store/calendar/selectors';
 import { CalendarEvent, EventAddEditModalType, EventDeleteModalType } from '@store/calendar/models';
 import { GoABadge, GoAButton, GoASkeleton } from '@abgov/react-components-new';
-import { renderNoItem } from '@components/NoItem';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { UpdateModalState } from '@store/session/actions';
 import { RootState } from '@store/index';
 import {
   EventDetailRow,
   EventDetailTd,
-  EventDetailName,
   EventDetailDescription,
   EventDetailDate,
   CalendarEventRow,
@@ -20,8 +18,16 @@ import {
 import { DeleteModal } from './deleteModal';
 import DataTable from '@components/DataTable';
 import { GoACircularProgress } from '@abgov/react-components-new';
-import { ProgressWrapper, CalendarEventListWrapper, EventListNameTd, LoadMoreWrapper } from './styled-components';
+import {
+  ProgressWrapper,
+  CalendarEventListWrapper,
+  EventListNameTd,
+  LoadMoreWrapper,
+  EventTableHeader,
+  FilterTitle,
+} from './styled-components';
 import { FetchEventsByCalendar } from '@store/calendar/actions';
+import { EventListFilter } from './eventListFilter';
 
 interface EventListRowProps {
   event: CalendarEvent;
@@ -116,7 +122,7 @@ const LoadMoreEvents = ({ next, calendarName }: LoadMoreEventsProps): JSX.Elemen
 const EventDetails = ({ event }: EventDetailsProps): JSX.Element => {
   return (
     <EventDetailTd colSpan={4}>
-      <EventDetailName>{event.name}</EventDetailName>
+      <h3>{event.name}</h3>
       <EventDetailDate>{EventDetailTime(event.start, event.end, event?.isAllDay)}</EventDetailDate>
       <EventDetailDescription>
         {event.description?.length === 0 ? <b>No description</b> : event.description}
@@ -218,13 +224,11 @@ export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
     );
   }
 
-  if (selectedEvents && selectedEvents.length === 0) {
-    return <>{renderNoItem('Calendar events')}</>;
-  }
-
   return (
     <>
-      <h2>Event list</h2>
+      <EventTableHeader>Event list</EventTableHeader>
+      <FilterTitle>Event filter</FilterTitle>
+      <EventListFilter calenderName={calendarName} />
       <CalendarEventListWrapper>
         <DeleteModal calendarName={calendarName} />
         <DataTable testId="calendar-selected-event-table">
