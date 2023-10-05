@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { getTaskQueues, getTasks, SetQueueTask, updateQueueTask } from '@store/task/action';
 import { QueueTaskDefinition, defaultQueuedTask } from '@store/task/model';
@@ -9,6 +10,15 @@ import { GoAButton, GoADropdown, GoADropdownItem, GoAFormItem, GoASkeleton } fro
 import { TaskModal } from './taskModal';
 import { ButtonPadding } from './styled-components';
 import { TaskListTable } from './tasksTable';
+import { PageIndicator } from '@components/Indicator';
+
+interface VisibleProps {
+  visible: boolean;
+}
+
+const Visible = styled.div<VisibleProps>`
+  visibility: ${(props) => `${props.visible ? 'visible' : 'hidden'}`};
+`;
 
 export const TasksList = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -42,7 +52,7 @@ export const TasksList = (): JSX.Element => {
 
   useEffect(() => {
     if (selectedTask.length > 0) {
-      dispatch(getTasks(taskQueues[selectedTask], next));
+      dispatch(getTasks(taskQueues[selectedTask]));
     }
   }, [selectedTask]);
 
@@ -121,20 +131,23 @@ export const TasksList = (): JSX.Element => {
         </div>
       )}
 
+      {indicator.show && <PageIndicator />}
       {!indicator.show &&
         selectedTask !== '' &&
         tasks &&
         Object.keys(tasks).length === 0 &&
         renderNoItem('queue tasks')}
       {selectedTask !== '' && tasks && Object.keys(tasks).length !== 0 && (
-        <TaskListTable
-          tasks={tasks}
-          onEditTask={(updatedTask) => {
-            setModalType('edit');
-            setUpdatedTask(updatedTask);
-            setOpenAddTask(true);
-          }}
-        />
+        <Visible visible={!indicator.show}>
+          <TaskListTable
+            tasks={tasks}
+            onEditTask={(updatedTask) => {
+              setModalType('edit');
+              setUpdatedTask(updatedTask);
+              setOpenAddTask(true);
+            }}
+          />
+        </Visible>
       )}
       {next && (
         <GoAButton testId="calendar-event-load-more-btn" key="calendar-event-load-more-btn" onClick={onNext}>
