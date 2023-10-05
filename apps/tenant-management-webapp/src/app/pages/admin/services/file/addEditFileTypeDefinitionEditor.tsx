@@ -139,16 +139,6 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
     return isUpdated;
   };
 
-  // const defaultSecurityClassificationType = () => {
-  //   const protectedA = SecurityClassificationsMap.find((s) => s.text === SecurityClassifications.Protected_A);
-
-  //   if (!isEdit && protectedA) return protectedA;
-
-  //   if (isEdit && fileType?.securityClassification === '') return protectedA;
-
-  //   return fileType?.securityClassification;
-  // };
-
   let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
   let clientElements = null;
 
