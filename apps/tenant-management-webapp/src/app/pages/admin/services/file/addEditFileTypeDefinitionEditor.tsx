@@ -29,7 +29,8 @@ import { GoAButton, GoACallout, GoADropdown, GoADropdownItem } from '@abgov/reac
 import { FileTypeConfigDefinition } from './fileTypeConfigDefinition';
 import { GoAButtonGroup, GoACheckbox, GoAFormItem, GoAInput, GoAPopover } from '@abgov/react-components-new';
 import { RootState } from '@store/index';
-import { FileTypeDefault, FileTypeItem, SecurityClassifications, SecurityClassificationsMap } from '@store/file/models';
+import { FileTypeDefault, FileTypeItem } from '@store/file/models';
+import { SecurityClassifications, SecurityClassificationsOptions } from '@store/common/models';
 import { useValidators } from '@lib/validation/useValidators';
 import { badCharsCheck, duplicateNameCheck, isNotEmptyCheck, wordMaxLengthCheck } from '@lib/validation/checkInput';
 import { ConfigServiceRole } from '@store/access/models';
@@ -229,8 +230,8 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                       }
                     }}
                   >
-                    {SecurityClassificationsMap &&
-                      SecurityClassificationsMap.map((classification) => (
+                    {SecurityClassificationsOptions &&
+                      SecurityClassificationsOptions.map((classification) => (
                         <GoADropdownItem
                           testId={`securityClassification_${classification}`}
                           name={`securityClassification_${classification}`}

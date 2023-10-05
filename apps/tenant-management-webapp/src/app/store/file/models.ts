@@ -1,11 +1,11 @@
-//import { SecurityClassifications } from '@abgov/adsp-service-sdk';
+import { SecurityClassifications } from '@store/common/models';
 
-export enum SecurityClassifications {
-  Protected_A = 'Protected A',
-  Protected_B = 'Protected B',
-  Protected_C = 'Protected C',
-  Public = 'Public',
-}
+// export enum SecurityClassifications {
+//   Protected_A = 'Protected A',
+//   Protected_B = 'Protected B',
+//   Protected_C = 'Protected C',
+//   Public = 'Public',
+// }
 
 //Converts the Secure Classifications Enum to a array.
 export const SecurityClassificationsMap: {

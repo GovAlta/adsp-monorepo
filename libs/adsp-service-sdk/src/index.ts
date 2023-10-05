@@ -13,7 +13,7 @@ export type {
   IntervalDefinition,
 } from './event';
 export type { FileType, FileTypeRules } from './file';
-export { SecurityClassifications } from './file';
+export { SecurityClassifications } from './common';
 export type { EventCriteria, StreamEvent, Stream } from './push';
 export { Channel } from './notification';
 export type { Template, NotificationType, NotificationTypeEvent } from './notification';
