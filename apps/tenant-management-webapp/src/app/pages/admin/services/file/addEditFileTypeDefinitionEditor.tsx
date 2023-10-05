@@ -30,7 +30,7 @@ import { FileTypeConfigDefinition } from './fileTypeConfigDefinition';
 import { GoAButtonGroup, GoACheckbox, GoAFormItem, GoAInput, GoAPopover } from '@abgov/react-components-new';
 import { RootState } from '@store/index';
 import { FileTypeDefault, FileTypeItem } from '@store/file/models';
-import { SecurityClassifications, SecurityClassificationsOptions } from '@store/common/models';
+import { SecurityClassification } from '@store/common/models';
 import { useValidators } from '@lib/validation/useValidators';
 import { badCharsCheck, duplicateNameCheck, isNotEmptyCheck, wordMaxLengthCheck } from '@lib/validation/checkInput';
 import { ConfigServiceRole } from '@store/access/models';
@@ -206,30 +206,24 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                 <GoAFormItem label="Security classification">
                   <GoADropdown
                     name="securityClassifications"
-                    width="265px"
+                    width="25rem"
                     value={fileType?.securityClassification}
-                    onChange={(name: string, value: string) => {
+                    onChange={(name: string, value: SecurityClassification) => {
                       setFileType({
                         ...fileType,
                         securityClassification: value,
                       });
-                      if (value !== SecurityClassifications.Public && fileType?.anonymousRead) {
+                      if (value !== SecurityClassification.Public && fileType?.anonymousRead) {
                         setIsSecurityClassificationModalOpen(true);
                       } else {
                         setIsSecurityClassificationModalOpen(false);
                       }
                     }}
                   >
-                    {SecurityClassificationsOptions &&
-                      SecurityClassificationsOptions.map((classification) => (
-                        <GoADropdownItem
-                          testId={`securityClassification_${classification}`}
-                          name={`securityClassification_${classification}`}
-                          key={`securityClassification_${classification}`}
-                          value={classification.value}
-                          label={classification.text}
-                        />
-                      ))}
+                    <GoADropdownItem value={SecurityClassification.Public} label="Public" />
+                    <GoADropdownItem value={SecurityClassification.ProtectedA} label="Protected A" />
+                    <GoADropdownItem value={SecurityClassification.ProtectedB} label="Protected B" />
+                    <GoADropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
                   </GoADropdown>
                 </GoAFormItem>
                 <GoACheckbox
@@ -240,7 +234,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                   onChange={() => {
                     //anonymousRead is false before it is updated in the useState(but in actually it has been changed)
                     if (
-                      fileType?.securityClassification !== SecurityClassifications.Public &&
+                      fileType?.securityClassification !== SecurityClassification.Public &&
                       !fileType?.anonymousRead
                     ) {
                       setIsSecurityClassificationModalOpen(true);

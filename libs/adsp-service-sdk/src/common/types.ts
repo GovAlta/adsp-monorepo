@@ -1,6 +1,6 @@
 export enum SecurityClassifications {
-  Protected_A = 'Protected A',
-  Protected_B = 'Protected B',
-  Protected_C = 'Protected C',
-  Public = 'Public',
+  ProtectedA = 'protected a',
+  ProtectedB = 'protected b',
+  ProtectedC = 'protected c',
+  Public = 'public',
 }

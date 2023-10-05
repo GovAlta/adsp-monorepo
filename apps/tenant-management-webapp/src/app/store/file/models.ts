@@ -1,4 +1,4 @@
-import { SecurityClassifications, SecurityClassificationsOptions } from '@store/common/models';
+import { SecurityClassification } from '@store/common/models';
 
 export interface RetentionPolicy {
   active: boolean;
@@ -29,8 +29,7 @@ export const FileTypeDefault: FileTypeItem = {
   readRoles: [],
   anonymousRead: false,
   hasFile: false,
-  securityClassification: SecurityClassificationsOptions.find((y) => y.text === SecurityClassifications.Protected_A)
-    .value,
+  securityClassification: SecurityClassification.ProtectedA,
 };
 
 export interface FileItem {

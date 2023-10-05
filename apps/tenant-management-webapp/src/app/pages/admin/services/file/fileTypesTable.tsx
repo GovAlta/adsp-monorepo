@@ -5,12 +5,11 @@ import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import styled from 'styled-components';
 import { GoABadge, GoAButtonGroup, GoAModal, GoAButton } from '@abgov/react-components-new';
 import { FileTypeItem } from '@store/file/models';
-import { SecurityClassifications } from '@store/common/models';
 import { useHistory, useRouteMatch } from 'react-router-dom';
 import { DeleteModal } from '@components/DeleteModal';
 import { useDispatch } from 'react-redux';
 import { DeleteFileTypeService } from '@store/file/actions';
-
+import { upperCaseFirstLetterInClassificationType } from '@lib/stringHelpers';
 interface FileTypeRowProps extends FileTypeItem {
   editId: string;
   editable?: boolean;
@@ -55,7 +54,7 @@ const FileTypeTableRow = ({
           return <GoABadge key={`update-roles-${id}-${role}`} type="information" content={role} />;
         })}
       </td>
-      <td>{securityClassification ? SecurityClassifications[securityClassification] : 'N/A'}</td>
+      <td>{securityClassification ? upperCaseFirstLetterInClassificationType(securityClassification) : ''}</td>
       <td>{rules?.retention?.active ? rules?.retention?.deleteInDays : 'N/A'}</td>
       <td className="actionCol">
         <GoAContextMenu>
@@ -111,7 +110,7 @@ const CoreFileTypeTableRow = ({
           return <GoABadge key={`update-roles-${id}-${role}`} type="information" content={role} />;
         })}
       </td>
-      <td>{securityClassification ? SecurityClassifications[securityClassification] : 'N/A'}</td>
+      <td>{securityClassification ? upperCaseFirstLetterInClassificationType(securityClassification) : 'N/A'}</td>
       <td>{rules?.retention?.active ? rules?.retention?.deleteInDays : 'N/A'}</td>
     </tr>
   );

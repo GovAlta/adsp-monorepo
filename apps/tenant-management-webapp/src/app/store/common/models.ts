@@ -1,12 +1,12 @@
-export enum SecurityClassifications {
-  Protected_A = 'Protected A',
-  Protected_B = 'Protected B',
-  Protected_C = 'Protected C',
-  Public = 'Public',
+export enum SecurityClassification {
+  ProtectedA = 'protected a',
+  ProtectedB = 'protected b',
+  ProtectedC = 'protected c',
+  Public = 'public',
 }
 
 //Converts the Secure Classifications Enum to a array.
 export const SecurityClassificationsOptions: {
   value: string;
   text: string;
-}[] = Object.entries(SecurityClassifications).map(([value, text]) => ({ value, text }));
+}[] = Object.entries(SecurityClassification).map(([value, text]) => ({ value, text }));

@@ -263,5 +263,5 @@ export const ConfigTombStoneWrapper = styled.div`
 `;
 
 export const FileTypeEditorWarningCalloutWrapper = styled.div`
-  width: 700px;
+  width: 25rem;
 `;
