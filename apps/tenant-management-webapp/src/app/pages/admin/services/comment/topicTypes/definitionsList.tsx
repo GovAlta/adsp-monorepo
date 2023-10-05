@@ -29,6 +29,12 @@ export const CommentTopicTypesTable: FunctionComponent<CommentTemplatesTableProp
             <th id="comment-topic-types-assessor" data-testid="comment-topic-types-table-header-assessor">
               Reader roles
             </th>
+            <th
+              id="comment-topic-types-assessor"
+              data-testid="comment-topic-types-table-header-security-classification"
+            >
+              Security classification
+            </th>
             <th id="comment-topic-types-action" data-testid="comment-topic-types-table-header-action">
               Actions
             </th>
