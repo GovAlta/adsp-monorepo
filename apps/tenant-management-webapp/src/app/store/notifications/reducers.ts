@@ -35,8 +35,9 @@ export default function (state: NotificationState = NOTIFICATION_INIT, action: A
         errorMessage = `${errorMessage ? errorMessage + ': ' : ''}${
           error?.response?.data?.errorMessage || error?.response?.data?.error || error?.response?.data
         }`;
+      } else if (error.response.status >= 500 && error.response.status <= 400) {
+        errorMessage = `${errorMessage ? errorMessage + ': ' : ''}${error?.message}`;
       }
-
       return {
         notifications: [
           ...state.notifications,
