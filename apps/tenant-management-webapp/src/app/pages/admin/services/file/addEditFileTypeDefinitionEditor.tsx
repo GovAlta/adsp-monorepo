@@ -223,6 +223,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                       }
                     }}
                   >
+                    {!fileType.securityClassification ? <GoADropdownItem value={' '} label={' '} /> : ''}
                     <GoADropdownItem value={SecurityClassification.Public} label="Public" />
                     <GoADropdownItem value={SecurityClassification.ProtectedA} label="Protected A" />
                     <GoADropdownItem value={SecurityClassification.ProtectedB} label="Protected B" />
@@ -363,6 +364,10 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                       const cleanUpdateRoles = fileType.updateRoles.filter((updateRole) =>
                         elementNames.includes(updateRole)
                       );
+
+                      if (!fileType?.securityClassification && isEdit) {
+                        fileType.securityClassification = SecurityClassification.ProtectedA;
+                      }
 
                       fileType.readRoles = cleanReadRoles;
                       fileType.updateRoles = cleanUpdateRoles;
