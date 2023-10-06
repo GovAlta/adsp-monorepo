@@ -107,8 +107,9 @@ export const defaultFeaturesVisible = {
   Task: false,
 };
 
-export const serviceVariables = (featuresVisible = defaultFeaturesVisible) => {
+export const serviceVariables = (featuresVisible = {}) => {
+  const mergedFeaturesVisible = { ...defaultFeaturesVisible, ...featuresVisible };
   return completeServiceVariables.filter((adminF) => {
-    return !(Object.keys(featuresVisible).includes(adminF.name) && featuresVisible[adminF.name] === false);
+    return mergedFeaturesVisible[adminF.name];
   });
 };
