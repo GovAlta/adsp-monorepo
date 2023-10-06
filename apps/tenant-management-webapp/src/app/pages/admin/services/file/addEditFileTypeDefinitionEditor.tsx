@@ -223,7 +223,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                         securityClassification: value,
                       });
                       if (
-                        fileType?.securityClassification !== undefined &&
+                        (fileType?.securityClassification !== undefined || value !== undefined) &&
                         fileType?.securityClassification !== '' &&
                         value !== SecurityClassification.Public &&
                         fileType?.anonymousRead
