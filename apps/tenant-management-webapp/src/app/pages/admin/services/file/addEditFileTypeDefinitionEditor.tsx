@@ -29,7 +29,7 @@ import { GoAButton, GoACallout, GoADropdown, GoADropdownItem } from '@abgov/reac
 import { FileTypeConfigDefinition } from './fileTypeConfigDefinition';
 import { GoAButtonGroup, GoACheckbox, GoAFormItem, GoAInput, GoAPopover } from '@abgov/react-components-new';
 import { RootState } from '@store/index';
-import { FileTypeDefault, FileTypeItem } from '@store/file/models';
+import { FileTypeDefault, FileTypeDefaultOnEdit, FileTypeItem } from '@store/file/models';
 import { SecurityClassification } from '@store/common/models';
 import { useValidators } from '@lib/validation/useValidators';
 import { badCharsCheck, duplicateNameCheck, isNotEmptyCheck, wordMaxLengthCheck } from '@lib/validation/checkInput';
@@ -57,7 +57,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
   const [isSecurityClassificationCalloutOpen, setIsSecurityClassificationCalloutIsOpen] = useState<boolean>(false);
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
   const [initialFileType, setInitialFileType] = useState<FileTypeItem>(FileTypeDefault);
-  const [fileType, setFileType] = useState<FileTypeItem>(FileTypeDefault);
+  const [fileType, setFileType] = useState<FileTypeItem>(FileTypeDefaultOnEdit);
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
     fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
   }));
@@ -108,17 +108,14 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
       const selectedFileType = foundFileType;
       setFileType(selectedFileType);
       setInitialFileType(selectedFileType);
-      if (
-        !foundFileType?.securityClassification ||
-        foundFileType?.securityClassification === undefined ||
-        foundFileType.securityClassification === null
-      ) {
+      //For backwards comptability
+      if (!foundFileType?.securityClassification || foundFileType?.securityClassification === undefined) {
         fileType.securityClassification = '';
       }
       const isCalloutOpen =
-        selectedFileType.anonymousRead &&
-        selectedFileType.securityClassification !== SecurityClassification.Public &&
-        selectedFileType.securityClassification !== '';
+        fileType.anonymousRead &&
+        fileType.securityClassification !== SecurityClassification.Public &&
+        fileType.securityClassification !== '';
       setIsSecurityClassificationCalloutIsOpen(isCalloutOpen);
     }
   }, [fileTypes]);
@@ -200,17 +197,6 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
     );
   };
 
-  const securityClassificationValue = () => {
-    if (
-      fileType?.securityClassification === null ||
-      fileType?.securityClassification === undefined ||
-      fileType.securityClassification === ''
-    )
-      return '';
-
-    return fileType?.securityClassification;
-  };
-
   return (
     <FileTypeEditor data-testid="filetype-editor">
       {spinner ? (
@@ -230,14 +216,15 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                   <GoADropdown
                     name="securityClassifications"
                     width="25rem"
-                    value={securityClassificationValue()}
+                    value={fileType?.securityClassification}
                     onChange={(name: string, value: SecurityClassification) => {
                       setFileType({
                         ...fileType,
                         securityClassification: value,
                       });
                       if (
-                        fileType?.securityClassification &&
+                        fileType?.securityClassification !== undefined &&
+                        fileType?.securityClassification !== '' &&
                         value !== SecurityClassification.Public &&
                         fileType?.anonymousRead
                       ) {
@@ -261,7 +248,8 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                   onChange={() => {
                     //anonymousRead is false before it is updated in the useState(but in actually it has been changed)
                     if (
-                      fileType?.securityClassification &&
+                      fileType?.securityClassification !== undefined &&
+                      fileType?.securityClassification !== '' &&
                       fileType?.securityClassification !== SecurityClassification.Public &&
                       !fileType?.anonymousRead
                     ) {
