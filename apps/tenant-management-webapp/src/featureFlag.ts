@@ -94,7 +94,7 @@ const completeServiceVariables = [
 export const defaultFeaturesVisible = {
   Access: true,
   Calendar: true,
-  Comment: true,
+  Comment: false,
   Configuration: true,
   Form: false,
   Directory: true,
@@ -104,7 +104,7 @@ export const defaultFeaturesVisible = {
   PDF: true,
   Script: true,
   Status: true,
-  Task: true,
+  Task: false,
 };
 
 export const serviceVariables = (featuresVisible = defaultFeaturesVisible) => {
