@@ -222,7 +222,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
             <CommentEditorTitle>Comment / Topic type editor</CommentEditorTitle>
             <hr className="hr-resize" />
             {topicType && <TopicConfigTopicType topicType={topicType} />}
-            <GoAFormItem label="Security classification">
+            <GoAFormItem label="Please select a security classification">
               <EditorPadding>
                 <GoADropdown
                   name="Time period"
