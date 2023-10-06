@@ -94,7 +94,7 @@ export function* updateCalendar({ payload }: UpdateCalendarAction): SagaIterator
         `${configBaseUrl}/configuration/v2/configuration/platform/calendar-service`,
         {
           operation: 'UPDATE',
-          updatex: { ...calendar },
+          update: { ...calendar },
         },
         {
           headers: { Authorization: `Bearer ${token}` },
