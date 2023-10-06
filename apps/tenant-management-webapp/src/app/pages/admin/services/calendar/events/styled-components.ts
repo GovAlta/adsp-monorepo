@@ -113,6 +113,11 @@ export const EventTableHeader = styled.div`
   margin-bottom: var(--goa-spacing-xl);
 `;
 
+export const CalendarNameText = styled.span`
+  max-width: 5rem;
+  word-break: break-all;
+`;
+
 export const FilterTitle = styled.h4`
   margin: 0px !important;
 `;

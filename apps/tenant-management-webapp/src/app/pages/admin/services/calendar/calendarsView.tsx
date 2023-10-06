@@ -57,9 +57,6 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
     setModalType('edit');
     setEditCalendar(true);
   };
-  const onDelete = (calendar) => {
-    alert(calendar);
-  };
 
   return (
     <>
@@ -79,7 +76,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
       {fetchCalendarState === ActionState.completed && !calendars && renderNoItem('calendar')}
       {fetchCalendarState === ActionState.completed && calendars && (
         <div>
-          <CalendarTableComponent calendars={calendars} onEdit={onEdit} onDelete={onDelete} />
+          <CalendarTableComponent calendars={calendars} onEdit={onEdit} />
         </div>
       )}
 

@@ -32,6 +32,16 @@ export const FileTypeDefault: FileTypeItem = {
   securityClassification: SecurityClassification.ProtectedA,
 };
 
+export const FileTypeDefaultOnEdit: FileTypeItem = {
+  id: null,
+  name: '',
+  updateRoles: [],
+  readRoles: [],
+  anonymousRead: false,
+  hasFile: false,
+  securityClassification: '',
+};
+
 export interface FileItem {
   id: string;
   filename: string;

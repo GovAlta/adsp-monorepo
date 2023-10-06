@@ -12,7 +12,7 @@ interface PdfTemplateItemProps {
   onDelete: (CommentTopicType) => void;
 }
 function capitalizeFirstLetter(string) {
-  return string.charAt(0).toUpperCase() + string.slice(1);
+  return string ? string.charAt(0).toUpperCase() + string.slice(1) : '';
 }
 
 export const CommentTopicTypesItem = ({ commentTopicType, onDelete }: PdfTemplateItemProps): JSX.Element => {

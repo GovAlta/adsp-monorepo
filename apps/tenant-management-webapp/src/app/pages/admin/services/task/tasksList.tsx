@@ -6,11 +6,17 @@ import { getTaskQueues, getTasks, SetQueueTask, updateQueueTask } from '@store/t
 import { QueueTaskDefinition, defaultQueuedTask } from '@store/task/model';
 
 import { renderNoItem } from '@components/NoItem';
-import { GoAButton, GoADropdown, GoADropdownItem, GoAFormItem, GoASkeleton } from '@abgov/react-components-new';
+import {
+  GoAButton,
+  GoACircularProgress,
+  GoADropdown,
+  GoADropdownItem,
+  GoAFormItem,
+  GoASkeleton,
+} from '@abgov/react-components-new';
 import { TaskModal } from './taskModal';
-import { ButtonPadding } from './styled-components';
+import { ButtonPadding, ProgressWrapper } from './styled-components';
 import { TaskListTable } from './tasksTable';
-import { PageIndicator } from '@components/Indicator';
 
 interface VisibleProps {
   visible: boolean;
@@ -131,7 +137,11 @@ export const TasksList = (): JSX.Element => {
         </div>
       )}
 
-      {indicator.show && <PageIndicator />}
+      {indicator.show && (
+        <ProgressWrapper>
+          <GoACircularProgress visible={indicator.show} size="small" />
+        </ProgressWrapper>
+      )}
       {!indicator.show &&
         selectedTask !== '' &&
         tasks &&
@@ -149,7 +159,7 @@ export const TasksList = (): JSX.Element => {
           />
         </Visible>
       )}
-      {next && (
+      {selectedTask !== '' && next && (
         <GoAButton testId="calendar-event-load-more-btn" key="calendar-event-load-more-btn" onClick={onNext}>
           Load more
         </GoAButton>

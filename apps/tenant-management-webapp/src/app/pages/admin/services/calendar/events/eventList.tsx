@@ -14,6 +14,7 @@ import {
   CalendarEventRow,
   EventDetailGap,
   EventDetailsActionsWrapper,
+  CalendarNameText,
 } from './styled-components';
 import { DeleteModal } from './deleteModal';
 import DataTable from '@components/DataTable';
@@ -64,6 +65,7 @@ const EventDetailTime = (start: string, end: string, isAllDay: boolean): string 
   const startDate = new Date(start);
   const endDate = new Date(end);
   const startWeekDay = startDate.toLocaleString('en-us', { weekday: 'long' });
+  const endWeekDay = endDate.toLocaleString('en-us', { weekday: 'long' });
   const startDateDateString = getDateString(startDate);
   const stateDateTimeString = startDate.toLocaleString('en-us', { hour: '2-digit', minute: '2-digit' });
   const endDateDateString = getDateString(endDate);
@@ -76,9 +78,9 @@ const EventDetailTime = (start: string, end: string, isAllDay: boolean): string 
     }
   } else {
     if (isAllDay) {
-      return `${startWeekDay}, ${startDateDateString} - ${endDateDateString}`;
+      return `${startWeekDay}, ${startDateDateString} - ${endWeekDay}, ${endDateDateString}`;
     } else {
-      return `${startWeekDay}, ${startDateDateString} - ${endDateDateString}, ${stateDateTimeString} - ${endDateTimeString}`;
+      return `${startWeekDay}, ${startDateDateString}, ${stateDateTimeString} - ${endWeekDay}, ${endDateDateString}, ${endDateTimeString}`;
     }
   }
 };
@@ -154,8 +156,10 @@ const EventListRow = ({ event }: EventListRowProps): JSX.Element => {
   return (
     <>
       <CalendarEventRow>
-        <EventListNameTd>{event?.name}</EventListNameTd>
-        <td>{eventDateFormat(event.start, event?.isAllDay)}</td>
+        <td>
+          <CalendarNameText>{event?.name}</CalendarNameText>
+        </td>
+        <EventListNameTd>{eventDateFormat(event.start, event?.isAllDay)}</EventListNameTd>
         <td>{eventDateFormat(event.end, event?.isAllDay)}</td>
         <td headers="calendar-events-actions" data-testid="calendar-selected-events-actions">
           {
