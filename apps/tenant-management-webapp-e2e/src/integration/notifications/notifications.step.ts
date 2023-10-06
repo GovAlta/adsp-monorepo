@@ -38,7 +38,7 @@ When(
       .shadow()
       .find('input')
       .clear()
-      .type(name, { delay: 100, force: true });
+      .type(name, { delay: 200, force: true });
     notificationsObj
       .notificationTypeModalDescriptionField()
       .shadow()
