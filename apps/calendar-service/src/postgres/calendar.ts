@@ -125,16 +125,35 @@ export class PostgresCalendarRepository implements CalendarRepository {
 
       query = query.andWhere(queryCriteria);
 
-      if (criteria.startsAfter) {
+      if (criteria.startsAfter && criteria.endsBefore) {
+        // Where e.start_date is greater than startsAfterDate and time is greater or equal.
+        const startsAfterDate = toDateId(criteria.startsAfter);
+        const startsAfterTime = toTimeId(criteria.startsAfter);
+
+        // Where e.end_date is less than endsBeforeDate and time is lesser or equal.
+        const endsBeforeDate = toDateId(criteria.endsBefore);
+        const endsBeforeTime = toTimeId(criteria.endsBefore);
+
+        query = query
+          .andWhere((query) => {
+            query.where('e.start_date', '>', startsAfterDate).orWhere((q) => {
+              q.where('e.start_date', '=', startsAfterDate).andWhere('e.start_time', '>=', startsAfterTime);
+            });
+          })
+          .andWhere((query) => {
+            query.where('e.end_date', '<', endsBeforeDate).orWhere((q) => {
+              q.where('e.end_date', '=', endsBeforeDate).andWhere('e.end_time', '<=', endsBeforeTime);
+            });
+          });
+      } else if (criteria.startsAfter) {
         // Where date is greater or date is equal and time is greater or equal.
         const afterDate = toDateId(criteria.startsAfter);
         const afterTime = toTimeId(criteria.startsAfter);
+
         query = query.andWhere('e.start_date', '>', afterDate).orWhere((query) => {
           query.where('e.start_date', '=', afterDate).andWhere('e.start_time', '>=', afterTime);
         });
-      }
-
-      if (criteria.endsBefore) {
+      } else if (criteria.endsBefore) {
         // Where date is less or date is equal and time is lesser or equal.
         const beforeDate = toDateId(criteria.endsBefore);
         const beforeTime = toTimeId(criteria.endsBefore);
