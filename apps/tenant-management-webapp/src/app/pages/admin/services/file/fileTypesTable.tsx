@@ -139,7 +139,10 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
                 </th>
                 <th id="read-roles">Read roles</th>
                 <th id="write-roles">Modify roles</th>
-                <th id="security-classification">Security classification</th>
+                <th id="security-classification">
+                  Security
+                  <br /> classification
+                </th>
                 <th id="retention-policy">Retention period</th>
                 <th className="actionsCol" id="actions">
                   Actions
@@ -182,7 +185,9 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
                   </th>
                   <th id="read-roles-core">Read roles</th>
                   <th id="write-roles-core">Modify roles</th>
-                  <th id="security-classification-core">Security classification</th>
+                  <th id="security-classification-core">
+                    Security <br /> classification
+                  </th>
                   <th id="retention-policy-core">Retention period</th>
                 </tr>
               </thead>
