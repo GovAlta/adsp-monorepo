@@ -9,9 +9,10 @@ import { DeleteModal } from '@components/DeleteModal';
 import { deleteTaskQueue } from '@store/task/action';
 
 import { RootState } from '@store/index';
+import { TaskDefinition } from '@store/task/model';
 
 interface calendarTableProps {
-  queue;
+  queue: TaskDefinition;
 }
 
 export const DeleteConfirmationsView: FunctionComponent<calendarTableProps> = ({ queue }) => {
@@ -24,7 +25,7 @@ export const DeleteConfirmationsView: FunctionComponent<calendarTableProps> = ({
   });
 
   useEffect(() => {
-    if (tasks?.length > 0 && tasks[0].queue.name === queue.name) {
+    if (tasks?.length > 0 && tasks && tasks[0].queue.name === queue.name) {
       setShowUnableToDeleteConfirmation(true);
     } else if (tasks) {
       tasks = [];
