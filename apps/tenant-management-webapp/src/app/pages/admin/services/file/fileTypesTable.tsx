@@ -9,7 +9,7 @@ import { useHistory, useRouteMatch } from 'react-router-dom';
 import { DeleteModal } from '@components/DeleteModal';
 import { useDispatch } from 'react-redux';
 import { DeleteFileTypeService } from '@store/file/actions';
-import { upperCaseFirstLetterInClassificationType } from '@lib/stringHelpers';
+
 interface FileTypeRowProps extends FileTypeItem {
   editId: string;
   editable?: boolean;
@@ -22,6 +22,9 @@ interface FileTypeTableProps {
   roles;
   fileTypes;
   coreFileTypes;
+}
+function capitalizeFirstLetter(string) {
+  return string ? string.charAt(0).toUpperCase() + string.slice(1) : '';
 }
 
 const FileTypeTableRow = ({
@@ -54,7 +57,7 @@ const FileTypeTableRow = ({
           return <GoABadge key={`update-roles-${id}-${role}`} type="information" content={role} />;
         })}
       </td>
-      <td>{securityClassification ? upperCaseFirstLetterInClassificationType(securityClassification) : ''}</td>
+      <td>{securityClassification ? capitalizeFirstLetter(securityClassification) : ''}</td>
       <td>{rules?.retention?.active ? rules?.retention?.deleteInDays : 'N/A'}</td>
       <td className="actionCol">
         <GoAContextMenu>
@@ -110,7 +113,7 @@ const CoreFileTypeTableRow = ({
           return <GoABadge key={`update-roles-${id}-${role}`} type="information" content={role} />;
         })}
       </td>
-      <td>{securityClassification ? upperCaseFirstLetterInClassificationType(securityClassification) : 'N/A'}</td>
+      <td>{securityClassification ? capitalizeFirstLetter(securityClassification) : ''}</td>
       <td>{rules?.retention?.active ? rules?.retention?.deleteInDays : 'N/A'}</td>
     </tr>
   );
