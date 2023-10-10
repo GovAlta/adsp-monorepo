@@ -33,7 +33,7 @@ export function* fetchTaskQueues(): SagaIterator {
   yield put(
     UpdateIndicator({
       show: true,
-      message: 'Loading Definition...',
+      message: 'Loading Queues...',
     })
   );
 
@@ -63,7 +63,7 @@ export function* updateTaskQueue({ payload }: UpdateTaskQueueAction): SagaIterat
   yield put(
     UpdateIndicator({
       show: true,
-      message: 'Loading Definition...',
+      message: 'Updating Queue...',
     })
   );
   const configBaseUrl: string = yield select(
@@ -117,7 +117,7 @@ export function* deleteTaskDefinition({ queue }: DeleteTaskDefinitionAction): Sa
   yield put(
     UpdateIndicator({
       show: true,
-      message: 'Loading Definition...',
+      message: 'Deleting Queue...',
     })
   );
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
@@ -149,7 +149,7 @@ export function* getTasks(payload: GetsTasksAction): SagaIterator {
   yield put(
     UpdateIndicator({
       show: true,
-      message: 'Loading Definition...',
+      message: 'Loading Tasks...',
     })
   );
   const taskUrl: string = yield select((state: RootState) => state.config.serviceUrls?.taskServiceApiUrl);
@@ -174,7 +174,7 @@ export function* getTask({ queue }: GetsTaskAction): SagaIterator {
   yield put(
     UpdateIndicator({
       show: true,
-      message: 'Loading Definition...',
+      message: 'Loading Tasks...',
     })
   );
   const taskUrl: string = yield select((state: RootState) => state.config.serviceUrls?.taskServiceApiUrl);
@@ -197,7 +197,7 @@ export function* updateQueueTask({ payload }: UpdateQueueTaskAction): SagaIterat
   yield put(
     UpdateIndicator({
       show: true,
-      message: 'Loading Definition...',
+      message: 'Updating Task...',
     })
   );
   const taskUrl: string = yield select((state: RootState) => state.config.serviceUrls?.taskServiceApiUrl);
@@ -220,7 +220,7 @@ export function* createTask({ payload }: SetQueueTaskAction): SagaIterator {
   yield put(
     UpdateIndicator({
       show: true,
-      message: 'Loading Definition...',
+      message: 'Creating Task...',
     })
   );
   const taskUrl: string = yield select((state: RootState) => state.config.serviceUrls?.taskServiceApiUrl);
