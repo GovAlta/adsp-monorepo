@@ -157,9 +157,11 @@ export const TasksList = (): JSX.Element => {
               setOpenAddTask(true);
             }}
           />
-          <GoAButton testId="calendar-event-load-more-btn" key="calendar-event-load-more-btn" onClick={onNext}>
-            Load more
-          </GoAButton>
+          {next && (
+            <GoAButton testId="calendar-event-load-more-btn" key="calendar-event-load-more-btn" onClick={onNext}>
+              Load more
+            </GoAButton>
+          )}
         </Visible>
       )}
       <TaskModal
