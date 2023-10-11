@@ -28,14 +28,13 @@ export default function (state: NotificationState = NOTIFICATION_INIT, action: A
       let errorMessage = action.payload.message;
 
       const error = action.payload.error;
-
       if (!error?.response) {
         errorMessage = `${errorMessage ? errorMessage + ': ' : ''}${error?.message || error}`;
       } else if (error.response.status >= 400 && error.response.status < 500) {
         errorMessage = `${errorMessage ? errorMessage + ': ' : ''}${
           error?.response?.data?.errorMessage || error?.response?.data?.error || error?.response?.data
         }`;
-      } else if (error.response.status >= 500 && error.response.status <= 400) {
+      } else {
         errorMessage = `${errorMessage ? errorMessage + ': ' : ''}${error?.message}`;
       }
       return {
