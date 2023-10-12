@@ -58,8 +58,8 @@ export const CommentTopicTypesItem = ({ commentTopicType, onDelete }: PdfTemplat
             })}
           </OverflowWrap>
         </td>
-        <td data-testid="comment-topic-types-security-classification">
-          {capitalizeFirstLetter(commentTopicType.securityClassification)}
+        <td data-testid="comment-topic-types-security-classification" style={{ textTransform: 'capitalize' }}>
+          {commentTopicType.securityClassification}
         </td>
         <td data-testid="comment-topic-types-action">
           <GoAContextMenu>
