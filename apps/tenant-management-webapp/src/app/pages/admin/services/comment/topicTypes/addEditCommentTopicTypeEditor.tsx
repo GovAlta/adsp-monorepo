@@ -2,7 +2,13 @@ import React, { useState, useEffect } from 'react';
 
 import { CommentTopicTypes } from '@store/comment/model';
 import { useValidators } from '@lib/validation/useValidators';
-import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
+import {
+  isNotEmptyCheck,
+  wordMaxLengthCheck,
+  badCharsCheck,
+  duplicateNameCheck,
+  isNotUndefinedCheck,
+} from '@lib/validation/checkInput';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
@@ -31,7 +37,7 @@ import { createSelector } from 'reselect';
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
-import { defaultCommentTopicType, SecurityClassification } from '@store/comment/model';
+import { defaultCommentTopicType, defaultEditCommentTopicType, SecurityClassification } from '@store/comment/model';
 import { TopicConfigTopicType } from './topicConfigTopicType';
 
 import { useHistory, useParams } from 'react-router-dom';
@@ -49,17 +55,16 @@ const isCommentUpdated = (prev: CommentTopicTypes, next: CommentTopicTypes): boo
 };
 
 export function AddEditCommentTopicTypeEditor(): JSX.Element {
-  const [topicType, setTopicType] = useState<CommentTopicTypes>(defaultCommentTopicType);
+  const { id } = useParams<{ id: string }>();
+  const [topicType, setTopicType] = useState<CommentTopicTypes>(
+    id ? defaultEditCommentTopicType : defaultCommentTopicType
+  );
   const [initialTopicType, setInitialTopicType] = useState<CommentTopicTypes>(defaultCommentTopicType);
   const [spinner, setSpinner] = useState<boolean>(false);
-  const { id } = useParams<{ id: string }>();
+
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
 
   const { height } = useWindowDimensions();
-
-  const heightCover = {
-    height: height - 561,
-  };
 
   const isEdit = !!id;
 
@@ -72,9 +77,9 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
   }, []);
 
   const types = [
-    { type: 'adminRoles', name: 'Admin Roles' },
-    { type: 'commenterRoles', name: 'Commenter Roles' },
-    { type: 'readerRoles', name: 'Reader Roles' },
+    { type: 'adminRoles', name: 'Admin roles' },
+    { type: 'commenterRoles', name: 'Commenter roles' },
+    { type: 'readerRoles', name: 'Reader roles' },
   ];
 
   const commentTopicTypes = useSelector((state: RootState) => state?.comment?.topicTypes || []);
@@ -94,8 +99,12 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
 
   useEffect(() => {
     if (id && commentTopicTypes[id]) {
-      setTopicType(commentTopicTypes[id]);
-      setInitialTopicType(commentTopicTypes[id]);
+      const topicTypes = JSON.parse(JSON.stringify(commentTopicTypes[id]));
+      if (!topicTypes.securityClassification) {
+        topicTypes.securityClassification = undefined;
+      }
+      setTopicType(topicTypes);
+      setInitialTopicType(topicTypes);
     }
   }, [commentTopicTypes]);
 
@@ -200,16 +209,28 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
 
-  const { validators } = useValidators(
+  const { validators, errors } = useValidators(
     'name',
     'name',
     badCharsCheck,
     wordMaxLengthCheck(32, 'Name'),
-    isNotEmptyCheck('name')
+    isNotEmptyCheck('name'),
+    isNotEmptyCheck('securityClassification')
   )
     .add('duplicate', 'name', duplicateNameCheck(topicTypeIds, 'topicType'))
+    .add(
+      'securityClassification',
+      'securityClassification',
+      isNotUndefinedCheck(topicType.securityClassification, 'Security classification')
+    )
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
+
+  const errorOffset = errors?.['securityClassification'] ? 26 : 0;
+  const heightCover = {
+    height: height - 561 - errorOffset,
+  };
+
   return (
     <CommentEditor>
       {spinner ? (
@@ -222,28 +243,30 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
             <CommentEditorTitle>Comment / Topic type editor</CommentEditorTitle>
             <hr className="hr-resize" />
             {topicType && <TopicConfigTopicType topicType={topicType} />}
-            <GoAFormItem label="Please select a security classification">
-              <EditorPadding>
+
+            <EditorPadding>
+              <GoAFormItem error={errors?.['securityClassification']} label="Select a security classification">
                 <GoADropdown
-                  name="Time period"
-                  value={topicType.securityClassification}
-                  onChange={(_n: string, value: SecurityClassification) =>
+                  name="securityClassifications"
+                  value={topicType?.securityClassification}
+                  onChange={(_n: string, value: SecurityClassification) => {
+                    validators['securityClassification'].check(value);
                     setTopicType({
                       ...topicType,
                       securityClassification: value,
-                    })
-                  }
+                    });
+                  }}
                   width="25rem"
                 >
                   <GoADropdownItem value={SecurityClassification.public} label="Public" />
-                  <GoADropdownItem value={SecurityClassification.protectedA} label="Protected a" />
-                  <GoADropdownItem value={SecurityClassification.protectedB} label="Protected b" />
-                  <GoADropdownItem value={SecurityClassification.protectedC} label="Protected c" />
+                  <GoADropdownItem value={SecurityClassification.protectedA} label="Protected A" />
+                  <GoADropdownItem value={SecurityClassification.protectedB} label="Protected B" />
+                  <GoADropdownItem value={SecurityClassification.protectedC} label="Protected C" />
                 </GoADropdown>
-                {/* <Editor height={height - 550} /> */}
-                <div style={heightCover}></div>
-              </EditorPadding>
-            </GoAFormItem>
+              </GoAFormItem>
+              <div style={heightCover}></div>
+            </EditorPadding>
+
             <hr className="hr-resize-bottom" />
             <FinalButtonPadding>
               <GoAButtonGroup alignment="start">
@@ -260,6 +283,13 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
                       if (!isEdit) {
                         const validations = {
                           duplicate: topicType.name,
+                        };
+                        if (!validators.checkAll(validations)) {
+                          return;
+                        }
+                      } else {
+                        const validations = {
+                          securityClassification: topicType.securityClassification,
                         };
                         if (!validators.checkAll(validations)) {
                           return;
@@ -311,10 +341,19 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
           setSaveModal({ visible: false, closeEditor: true });
         }}
         onSave={() => {
+          console.log(JSON.stringify(isEdit) + '<isEdit');
           if (!isEdit) {
             const validations = {
               duplicate: topicType.name,
             };
+            if (!validators.checkAll(validations)) {
+              return;
+            }
+          } else {
+            const validations = {
+              securityClassification: topicType.securityClassification,
+            };
+            console.log(JSON.stringify(validators.checkAll(validations)) + '<validators.checkAll(validations)');
             if (!validators.checkAll(validations)) {
               return;
             }
