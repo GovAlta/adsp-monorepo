@@ -6,9 +6,8 @@ import { Grid, GridItem } from '@components/Grid';
 import Footer from '@components/Footer';
 import ServiceStatus from './statusCard';
 import { useLocation } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 
-import { useDispatch } from 'react-redux';
 import {
   fetchApplications,
   subscribeToTenant,
@@ -18,7 +17,6 @@ import {
 import { clearNotification } from '@store/session/actions';
 import { toTenantName } from '@store/status/models';
 import { RootState } from '@store/index';
-import { PageLoader } from '@components/PageLoader';
 
 import { LocalTime } from '@components/Date';
 import moment from 'moment';
@@ -86,52 +84,59 @@ const ServiceStatusPage = (): JSX.Element => {
   const Services = () => {
     return (
       <div className="small-container">
-        <PageLoader />
-        <Title data-testid="service-name">All {capitalizeFirstLetter(tenantName)} services</Title>
-        <div className="section-vs">
-          These are the services currently being offered by{' '}
-          {location.pathname.slice(1) ? capitalizeFirstLetter(tenantName) : 'the Alberta Digital Service Platform'}. All
-          statuses are in real time and reflect current states of the individual services. Please{' '}
-          <a href={`mailto: ${contactEmail}`}>contact support</a> for additional information, or to report issues, or
-          for any other inquiries regarding service statuses.
-        </div>
+        {applications ? (
+          <div>
+            <Title data-testid="service-name">All {capitalizeFirstLetter(tenantName)} services</Title>
+            <div className="section-vs">
+              These are the services currently being offered by{' '}
+              {location.pathname.slice(1) ? capitalizeFirstLetter(tenantName) : 'the Alberta Digital Service Platform'}.
+              All statuses are in real time and reflect current states of the individual services. Please{' '}
+              <a href={`mailto: ${contactEmail}`}>contact support</a> for additional information, or to report issues,
+              or for any other inquiries regarding service statuses.
+            </div>
+          </div>
+        ) : (
+          <PlatformLoading />
+        )}
 
         <div className="section-vs-small">
-          {allApplicationsNotices.length > 0 && <AllApplicationsNotices />}
+          {!applications && <AllServiceLoadings />}
+          {allApplicationsNotices && allApplicationsNotices.length > 0 && <AllApplicationsNotices />}
           {applications?.length === 0 && <div>There are no services available by this provider</div>}
         </div>
 
-        {noMonitorOnlyApplications?.length > 0 && (
-          <div className="title-line">
-            <Grid>
-              <GridItem md={7}>
-                <h3>Service specific statuses and notices</h3>
-              </GridItem>
-              <div className="line-vs" />
+        <div className="title-line">
+          <Grid>
+            <GridItem md={7}>
+              <h3>Service specific statuses and notices</h3>
+            </GridItem>
+            <div className="line-vs" />
+            {noMonitorOnlyApplications?.length > 0 && (
               <GridItem md={5}>
                 {allApplicationsNotices?.length === 0 && (
                   <div className="timezone-text">All times are in {timeZone}</div>
                 )}
               </GridItem>
-            </Grid>
-          </div>
-        )}
-
+            )}
+          </Grid>
+        </div>
+        {!applications && <GoASkeleton type="card" lineCount={15} />}
         <Grid>
-          {noMonitorOnlyApplications.map((app, index) => {
-            return (
-              <GridItem key={index} md={12} vSpacing={1} hSpacing={0.5}>
-                <ServiceStatus
-                  data-testid={`service-${app.name}`}
-                  name={app.name}
-                  state={app.status}
-                  date={app.lastUpdated ? moment(app.lastUpdated).calendar() : 'Never Ran Yet'}
-                  description={app.description}
-                  notices={app.notices}
-                />
-              </GridItem>
-            );
-          })}
+          {noMonitorOnlyApplications &&
+            noMonitorOnlyApplications.map((app, index) => {
+              return (
+                <GridItem key={index} md={12} vSpacing={1} hSpacing={0.5}>
+                  <ServiceStatus
+                    data-testid={`service-${app.name}`}
+                    name={app.name}
+                    state={app.status}
+                    date={app.lastUpdated ? moment(app.lastUpdated).calendar() : 'Never Ran Yet'}
+                    description={app.description}
+                    notices={app.notices}
+                  />
+                </GridItem>
+              );
+            })}
         </Grid>
       </div>
     );
@@ -151,16 +156,29 @@ const ServiceStatusPage = (): JSX.Element => {
       if (loaded) {
         return noProvider();
       }
-      return (
-        <SkeletonLoading>
-          <GoASkeleton type="card" lineCount={60} maxWidth="800px" />
-        </SkeletonLoading>
-      );
-    } else {
-      return Services();
     }
+    return Services();
+  };
+  const PlatformLoading = () => {
+    return (
+      <SkeletonLoading>
+        <GoASkeleton type="header" size={4} />
+        <GoASkeleton type="paragraph" />
+        <GoASkeleton type="text" />
+        <GoASkeleton type="text-small" />
+        <br />
+      </SkeletonLoading>
+    );
   };
 
+  const AllServiceLoadings = () => {
+    return (
+      <div>
+        <AllService />
+        <GoASkeleton type="card" lineCount={0} />
+      </div>
+    );
+  };
   function formErrorsFunc() {
     const validEmailSelectedConst = emailError(email);
 
@@ -183,33 +201,45 @@ const ServiceStatusPage = (): JSX.Element => {
     setEmail(value);
   };
 
-  const AllApplicationsNotices = () => {
+  const AllService = () => {
     return (
       <AllApplications>
         <div className="title-line">
           <Grid>
             <GridItem md={6}>
-              <h3>All services notice</h3>
+              <h3>General notice</h3>
             </GridItem>
             <GridItem md={6}>
               <div className="timezone-text">All times are in {timeZone}</div>
             </GridItem>
           </Grid>
         </div>
-        {allApplicationsNotices.map((notice) => {
-          return (
-            <div data-testid="all-application-notice" className="mb-1">
-              <GoACallout heading="Notice" type="important" key={`{notice-${notice.id}}`}>
-                <div data-testid="all-application-notice-message">{notice.message}</div>
-                <br />
-                <div data-testid="service-notice-date-range">
-                  From <LocalTime date={notice.startDate} /> to <LocalTime date={notice.endDate} />
-                </div>
-              </GoACallout>
-            </div>
-          );
-        })}
       </AllApplications>
+    );
+  };
+  const AllApplicationsNotices = () => {
+    return (
+      <>
+        <AllService />
+        <AllApplications>
+          {allApplicationsNotices.map((notice) => {
+            if (!applications) return <GoASkeleton type="card" lineCount={60} maxWidth="800px" />;
+            else {
+              return (
+                <div data-testid="all-application-notice" className="mb-1">
+                  <GoACallout heading="Notice" type="important" key={`{notice-${notice.id}}`}>
+                    <div data-testid="all-application-notice-message">{notice.message}</div>
+                    <br />
+                    <div data-testid="service-notice-date-range">
+                      From <LocalTime date={notice.startDate} /> to <LocalTime date={notice.endDate} />
+                    </div>
+                  </GoACallout>
+                </div>
+              );
+            }
+          })}
+        </AllApplications>
+      </>
     );
   };
 
@@ -235,58 +265,63 @@ const ServiceStatusPage = (): JSX.Element => {
             <SectionView />
           </section>
           <div className="line-vs-small" />
-          {applications && (
-            <div className="small-container">
-              <div>
-                <h3>Sign up for notifications</h3>
-                <div>
-                  Sign up to receive notifications by email for status change of the individual services and notices.
-                  Please contact <a href={`mailto: ${contactEmail}`}>{contactEmail}</a> for additional information, or
-                  to report issues, or for any other inquiries regarding service statuses.
-                </div>
-                <div>
-                  <Grid>
-                    <GridItem md={4.6}>
-                      <GoAFormItem
-                        error={formErrors?.['email'] || error?.length > 0 ? formErrors?.['email'] : ''}
-                        label="Enter your email to receive updates"
-                      >
-                        <GoAInput
-                          type="email"
-                          id="email"
-                          name="email"
-                          value={email}
-                          testId="email"
-                          onChange={setValue}
-                          aria-label="email"
-                          width="100%"
-                        />
-                      </GoAFormItem>
-                    </GridItem>
-                  </Grid>
 
-                  <GoAFormActionOverwrite>
-                    <GoAButton type="primary" testId="subscribe" onClick={onSave}>
-                      Submit
-                    </GoAButton>
-                  </GoAFormActionOverwrite>
-                  <br />
-                </div>
-                {subscriber && indicator && !indicator.show && (
-                  <GoACallout key="success" type="success" heading="You have signed up for notifications">
-                    Thank you for signing up. You will receive notifications regarding service statuses on{' '}
-                    {subscriber.channels[emailIndex].address}.
-                  </GoACallout>
-                )}
-                {error && error.length > 0 && indicator && !indicator.show && (
-                  <GoACallout key="error" type="emergency" heading="Your sign up attempt has failed">
-                    <p> {error[error.length - 1].message}</p>
-                  </GoACallout>
-                )}
-                {indicator && indicator.show && <IndicatorWithDelay message="Loading..." pageLock={false} />}
+          <div className="small-container">
+            <div>
+              <h3>Sign up for notifications</h3>
+              <div>
+                Sign up to receive notifications by email for status change of the individual services and notices.
+                Please contact <a href={`mailto: ${contactEmail}`}>{contactEmail}</a> for additional information, or to
+                report issues, or for any other inquiries regarding service statuses.
               </div>
+              <div>
+                {!applications ? (
+                  <GoASkeleton type="paragraph" />
+                ) : (
+                  <>
+                    {' '}
+                    <Grid>
+                      <GridItem md={4.6}>
+                        <GoAFormItem
+                          error={formErrors?.['email'] || error?.length > 0 ? formErrors?.['email'] : ''}
+                          label="Enter your email to receive updates"
+                        >
+                          <GoAInput
+                            type="email"
+                            id="email"
+                            name="email"
+                            value={email}
+                            testId="email"
+                            onChange={setValue}
+                            aria-label="email"
+                            width="100%"
+                          />
+                        </GoAFormItem>
+                      </GridItem>
+                    </Grid>
+                    <GoAFormActionOverwrite>
+                      <GoAButton type="primary" testId="subscribe" onClick={onSave}>
+                        Submit
+                      </GoAButton>
+                    </GoAFormActionOverwrite>
+                    <br />
+                  </>
+                )}
+              </div>
+              {subscriber && indicator && !indicator.show && (
+                <GoACallout key="success" type="success" heading="You have signed up for notifications">
+                  Thank you for signing up. You will receive notifications regarding service statuses on{' '}
+                  {subscriber.channels[emailIndex].address}.
+                </GoACallout>
+              )}
+              {error && error.length > 0 && indicator && !indicator.show && (
+                <GoACallout key="error" type="emergency" heading="Your sign up attempt has failed">
+                  <p> {error[error.length - 1].message}</p>
+                </GoACallout>
+              )}
+              {indicator && indicator.show && <IndicatorWithDelay message="Loading..." pageLock={false} />}
             </div>
-          )}
+          </div>
         </ServiceStatusesCss>
       </Main>
       <Footer logoSrc={GoaLogo} />
