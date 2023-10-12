@@ -5,6 +5,7 @@ import { RootState } from '@store/index';
 
 import { GoANotification } from '@abgov/react-components-new';
 import { clearNotification } from '@store/notifications/actions';
+import styled from 'styled-components';
 
 export function NotificationBanner(): JSX.Element {
   const notification = useSelector((state: RootState) => state.notifications.notification);
@@ -20,7 +21,9 @@ export function NotificationBanner(): JSX.Element {
             }}
             type={notification.type}
           >
-            {notification.message}
+            <NotificationStyles>
+              <div dangerouslySetInnerHTML={{ __html: notification.message }} />
+            </NotificationStyles>
           </GoANotification>
         </div>
       ) : (
@@ -29,3 +32,10 @@ export function NotificationBanner(): JSX.Element {
     </div>
   );
 }
+
+export const NotificationStyles = styled.div`
+  pre {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+`;

@@ -1,14 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { getTaskQueues, getTasks, SetQueueTask, updateQueueTask } from '@store/task/action';
 import { QueueTaskDefinition, defaultQueuedTask } from '@store/task/model';
 
 import { renderNoItem } from '@components/NoItem';
-import { GoAButton, GoADropdown, GoADropdownItem, GoAFormItem, GoASkeleton } from '@abgov/react-components-new';
+import {
+  GoAButton,
+  GoACircularProgress,
+  GoADropdown,
+  GoADropdownItem,
+  GoAFormItem,
+  GoASkeleton,
+} from '@abgov/react-components-new';
 import { TaskModal } from './taskModal';
-import { ButtonPadding } from './styled-components';
+import { ButtonPadding, ProgressWrapper } from './styled-components';
 import { TaskListTable } from './tasksTable';
+
+interface VisibleProps {
+  visible: boolean;
+}
+
+const Visible = styled.div<VisibleProps>`
+  visibility: ${(props) => `${props.visible ? 'visible' : 'hidden'}`};
+`;
 
 export const TasksList = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -23,6 +39,7 @@ export const TasksList = (): JSX.Element => {
   const tasks = useSelector((state: RootState) => {
     return state?.task?.tasks;
   });
+  const next = useSelector((state: RootState) => state.task.nextEntries);
 
   const taskQueues = useSelector((state: RootState) => {
     return Object.entries(state?.task?.queues)
@@ -53,19 +70,23 @@ export const TasksList = (): JSX.Element => {
     setOpenAddTask(false);
   };
 
-  const handleSave = async (task) => {
+  const handleSave = (task) => {
     try {
       if (modalType === 'new') {
-        await dispatch(SetQueueTask(task));
+        dispatch(SetQueueTask(task));
       } else {
-        await dispatch(updateQueueTask(task));
+        dispatch(updateQueueTask(task));
       }
       setTimeout(() => {
         dispatch(getTasks(taskQueues[selectedTask]));
-      }, 1000);
+      }, 800);
     } catch (error) {
       console.error('Error while saving task:', error);
     }
+  };
+
+  const onNext = () => {
+    dispatch(getTasks(taskQueues[selectedTask], next));
   };
 
   return (
@@ -116,22 +137,33 @@ export const TasksList = (): JSX.Element => {
         </div>
       )}
 
+      {indicator.show && (
+        <ProgressWrapper>
+          <GoACircularProgress visible={indicator.show} size="small" />
+        </ProgressWrapper>
+      )}
       {!indicator.show &&
         selectedTask !== '' &&
         tasks &&
         Object.keys(tasks).length === 0 &&
         renderNoItem('queue tasks')}
       {selectedTask !== '' && tasks && Object.keys(tasks).length !== 0 && (
-        <TaskListTable
-          tasks={tasks}
-          onEditTask={(updatedTask) => {
-            setModalType('edit');
-            setUpdatedTask(updatedTask);
-            setOpenAddTask(true);
-          }}
-        />
+        <Visible visible={!indicator.show}>
+          <TaskListTable
+            tasks={tasks}
+            onEditTask={(updatedTask) => {
+              setModalType('edit');
+              setUpdatedTask(updatedTask);
+              setOpenAddTask(true);
+            }}
+          />
+          {next && (
+            <GoAButton testId="calendar-event-load-more-btn" key="calendar-event-load-more-btn" onClick={onNext}>
+              Load more
+            </GoAButton>
+          )}
+        </Visible>
       )}
-
       <TaskModal
         open={openAddTask}
         queue={selectedTask}

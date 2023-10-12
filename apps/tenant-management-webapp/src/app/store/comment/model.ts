@@ -4,6 +4,14 @@ export interface CommentTopicTypes {
   adminRoles: string[];
   commenterRoles: string[];
   readerRoles: string[];
+  securityClassification: SecurityClassification;
+}
+
+export enum SecurityClassification {
+  protectedA = 'protected a',
+  protectedB = 'protected b',
+  protectedC = 'protected c',
+  public = 'public',
 }
 
 export const defaultCommentTopicType: CommentTopicTypes = {
@@ -12,6 +20,7 @@ export const defaultCommentTopicType: CommentTopicTypes = {
   adminRoles: [],
   commenterRoles: [],
   readerRoles: [],
+  securityClassification: SecurityClassification.protectedA,
 };
 
 export interface CommentState {

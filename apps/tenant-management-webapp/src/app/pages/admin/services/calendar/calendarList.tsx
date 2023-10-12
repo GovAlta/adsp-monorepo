@@ -4,9 +4,11 @@ import { GoABadge } from '@abgov/react-components-new';
 import { useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
 import { TableDiv, OverFlowWrapTableCell } from './styled-components';
-import { DeleteModal } from '@components/DeleteModal';
-import { DeleteCalendar } from '@store/calendar/actions';
+
+import { FetchEventsByCalendar } from '@store/calendar/actions';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
+
+import { DeleteConfirmationsView } from './deleteConfirmationsView';
 
 interface CalendarItemProps {
   calendar: CalendarItem;
@@ -92,8 +94,11 @@ export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ 
   const dispatch = useDispatch();
 
   const onDelete = (calendar) => {
+    dispatch(FetchEventsByCalendar(calendar.name));
     setSelectedDeleteCalendar(calendar);
-    setShowDeleteConfirmation(true);
+    setTimeout(() => {
+      setShowDeleteConfirmation(true);
+    }, 600);
   };
 
   return (
@@ -128,22 +133,9 @@ export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ 
           ))}
         </tbody>
       </DataTable>
-      <DeleteModal
-        title="Delete calendar"
-        isOpen={showDeleteConfirmation}
-        onCancel={() => {
-          setShowDeleteConfirmation(false);
-        }}
-        content={
-          <div>
-            <div>Delete {selectedDeleteCalendar?.name}?</div>
-          </div>
-        }
-        onDelete={() => {
-          setShowDeleteConfirmation(false);
-          dispatch(DeleteCalendar(selectedDeleteCalendar?.name));
-        }}
-      />
+      {showDeleteConfirmation && selectedDeleteCalendar && (
+        <DeleteConfirmationsView calendarName={selectedDeleteCalendar.name}></DeleteConfirmationsView>
+      )}
       <br />
     </TableDiv>
   );

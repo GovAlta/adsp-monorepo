@@ -17,7 +17,7 @@ export function* fetchConfig(): SagaIterator {
       };
       yield put(action);
     }
-  } catch (e) {
-    yield put(ErrorNotification({ message: e.message }));
+  } catch (err) {
+    yield put(ErrorNotification({error: err}));
   }
 }

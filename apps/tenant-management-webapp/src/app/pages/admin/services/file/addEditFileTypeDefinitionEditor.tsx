@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import {
+  DropDownZIndex,
   EditorPadding,
   FileTypeEditor,
   FileTypeEditorTitle,
+  FileTypeEditorWarningCalloutWrapper,
   FileTypePermissions,
   FileTypesEditorTitle,
   FinalButtonPadding,
@@ -23,11 +25,12 @@ import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
 import { useWindowDimensions } from '@lib/useWindowDimensions';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAPageLoader } from '@abgov/react-components';
-import { GoAButton } from '@abgov/react-components-new';
+import { GoAButton, GoACallout, GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { FileTypeConfigDefinition } from './fileTypeConfigDefinition';
 import { GoAButtonGroup, GoACheckbox, GoAFormItem, GoAInput, GoAPopover } from '@abgov/react-components-new';
 import { RootState } from '@store/index';
-import { FileTypeDefault, FileTypeItem } from '@store/file/models';
+import { FileTypeDefault, FileTypeDefaultOnEdit, FileTypeItem } from '@store/file/models';
+import { SecurityClassification } from '@store/common/models';
 import { useValidators } from '@lib/validation/useValidators';
 import { badCharsCheck, duplicateNameCheck, isNotEmptyCheck, wordMaxLengthCheck } from '@lib/validation/checkInput';
 import { ConfigServiceRole } from '@store/access/models';
@@ -51,9 +54,10 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
   const isEdit = !!id;
   const fileTypeNames = useSelector(selectFileTyeNames);
   const [spinner, setSpinner] = useState<boolean>(false);
+  const [isSecurityClassificationCalloutOpen, setIsSecurityClassificationCalloutIsOpen] = useState<boolean>(false);
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
   const [initialFileType, setInitialFileType] = useState<FileTypeItem>(FileTypeDefault);
-  const [fileType, setFileType] = useState<FileTypeItem>(FileTypeDefault);
+  const [fileType, setFileType] = useState<FileTypeItem>(FileTypeDefaultOnEdit);
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
     fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
   }));
@@ -72,7 +76,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
   //This is to add padding under the input text controls to space them vertically
   //out between the text controls and the back and cancel buttons.
   const heightCover = {
-    height: height - 740,
+    height: height - (!isSecurityClassificationCalloutOpen ? 800 : 875),
   };
 
   const close = () => {
@@ -104,6 +108,15 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
       const selectedFileType = foundFileType;
       setFileType(selectedFileType);
       setInitialFileType(selectedFileType);
+      //For backwards comptability
+      if (!foundFileType?.securityClassification || foundFileType?.securityClassification === undefined) {
+        fileType.securityClassification = '';
+      }
+      const isCalloutOpen =
+        fileType.anonymousRead &&
+        fileType.securityClassification !== SecurityClassification.Public &&
+        fileType.securityClassification !== '';
+      setIsSecurityClassificationCalloutIsOpen(isCalloutOpen);
     }
   }, [fileTypes]);
 
@@ -127,6 +140,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
       prev?.name !== next?.name ||
       prev?.id !== next?.id ||
       prev?.anonymousRead !== next?.anonymousRead ||
+      prev?.securityClassification !== next?.securityClassification ||
       prev?.readRoles !== next?.readRoles ||
       prev?.updateRoles !== next?.updateRoles ||
       prev?.rules?.retention !== next?.rules?.retention ||
@@ -197,19 +211,67 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
 
             {isEdit && <FileTypeConfigDefinition fileType={fileType ?? FileTypeDefault} />}
             <MakePublicPadding>
-              <GoACheckbox
-                checked={fileType?.anonymousRead}
-                name="file-type-anonymousRead-checkbox"
-                testId="file-type-anonymousRead-checkbox"
-                ariaLabel={`file-type-anonymousRead-checkbox`}
-                onChange={() => {
-                  setFileType({
-                    ...fileType,
-                    anonymousRead: !fileType.anonymousRead,
-                  });
-                }}
-                text={'Make public (read only)'}
-              />
+              <DropDownZIndex>
+                <GoAFormItem label="Please select a security classification">
+                  <GoADropdown
+                    name="securityClassifications"
+                    width="25rem"
+                    value={fileType?.securityClassification}
+                    onChange={(name: string, value: SecurityClassification) => {
+                      setFileType({
+                        ...fileType,
+                        securityClassification: value,
+                      });
+                      if (
+                        (fileType?.securityClassification !== undefined || value !== undefined) &&
+                        fileType?.securityClassification !== '' &&
+                        value !== SecurityClassification.Public &&
+                        fileType?.anonymousRead
+                      ) {
+                        setIsSecurityClassificationCalloutIsOpen(true);
+                      } else {
+                        setIsSecurityClassificationCalloutIsOpen(false);
+                      }
+                    }}
+                  >
+                    <GoADropdownItem value={SecurityClassification.Public} label="Public" />
+                    <GoADropdownItem value={SecurityClassification.ProtectedA} label="Protected a" />
+                    <GoADropdownItem value={SecurityClassification.ProtectedB} label="Protected b" />
+                    <GoADropdownItem value={SecurityClassification.ProtectedC} label="Protected c" />
+                  </GoADropdown>
+                </GoAFormItem>
+                <GoACheckbox
+                  checked={fileType?.anonymousRead}
+                  name="file-type-anonymousRead-checkbox"
+                  testId="file-type-anonymousRead-checkbox"
+                  ariaLabel={`file-type-anonymousRead-checkbox`}
+                  onChange={() => {
+                    //anonymousRead is false before it is updated in the useState(but in actually it has been changed)
+                    if (
+                      fileType?.securityClassification !== undefined &&
+                      fileType?.securityClassification !== '' &&
+                      fileType?.securityClassification !== SecurityClassification.Public &&
+                      !fileType?.anonymousRead
+                    ) {
+                      setIsSecurityClassificationCalloutIsOpen(true);
+                    } else {
+                      setIsSecurityClassificationCalloutIsOpen(false);
+                    }
+                    setFileType({
+                      ...fileType,
+                      anonymousRead: !fileType.anonymousRead,
+                    });
+                  }}
+                  text={'Make public (read only)'}
+                />
+              </DropDownZIndex>
+              {isSecurityClassificationCalloutOpen && (
+                <FileTypeEditorWarningCalloutWrapper>
+                  <GoACallout type="important" heading="">
+                    The protected file is publicly accessible.
+                  </GoACallout>
+                </FileTypeEditorWarningCalloutWrapper>
+              )}
             </MakePublicPadding>
 
             <GoAFormItem label="">
@@ -314,6 +376,11 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                       const cleanUpdateRoles = fileType.updateRoles.filter((updateRole) =>
                         elementNames.includes(updateRole)
                       );
+
+                      //Default to Protected A if there was no security classification
+                      if (!fileType?.securityClassification && fileType?.securityClassification.length > 0 && isEdit) {
+                        fileType.securityClassification = SecurityClassification.ProtectedA;
+                      }
 
                       fileType.readRoles = cleanReadRoles;
                       fileType.updateRoles = cleanUpdateRoles;

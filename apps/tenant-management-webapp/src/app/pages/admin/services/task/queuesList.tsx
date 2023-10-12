@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
-import { getTaskQueues, deleteTaskQueue, getTasks, UpdateTaskQueue } from '@store/task/action';
+import { getTaskQueues, getTasks, UpdateTaskQueue } from '@store/task/action';
 import { TaskDefinition, defaultTaskQueue } from '@store/task/model';
-import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
-import { GoAButton } from '@abgov/react-components-new';
-import { DeleteModal } from '@components/DeleteModal';
-import { GoABadge } from '@abgov/react-components-new';
+import { GoAButton, GoACircularProgress } from '@abgov/react-components-new';
 import { QueueListTable } from './queueTable';
 import { QueueModal } from './queueModal';
-import { ButtonPadding } from './styled-components';
+import { ButtonPadding, ProgressWrapper } from './styled-components';
+import { DeleteConfirmationsView } from './deleteConfirmationsView';
 
 interface AddEditQueueProps {
   openAddDefinition: boolean;
@@ -21,13 +19,11 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
   const [editQueue, setEditQueue] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [openAddQueue, setOpenAddQueue] = useState(false);
+  const [deleteAction, setDeleteAction] = useState(false);
   const [selectedQueue, setSelectedQueue] = useState<TaskDefinition>(defaultTaskQueue);
+  const next = useSelector((state: RootState) => state.task.nextEntries);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
-  });
-
-  const tasks = useSelector((state: RootState) => {
-    return state?.task?.tasks;
   });
 
   const taskQueues = useSelector((state: RootState) => {
@@ -47,7 +43,10 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
 
   useEffect(() => {
     if (selectedQueue.name.length > 0) {
-      dispatch(getTasks(selectedQueue));
+      dispatch(getTasks(selectedQueue, next));
+    }
+    if (deleteAction) {
+      setShowDeleteConfirmation(true);
     }
   }, [selectedQueue]);
 
@@ -89,44 +88,24 @@ export const QueuesList = ({ openAddDefinition }: AddEditQueueProps): JSX.Elemen
           </GoAButton>
         </ButtonPadding>
       </div>
-      <PageIndicator />
+      {indicator.show && Object.keys(taskQueues).length === 0 && !showDeleteConfirmation && (
+        <ProgressWrapper>
+          <GoACircularProgress visible={indicator.show} size="small" />
+        </ProgressWrapper>
+      )}
       {!indicator.show && Object.keys(taskQueues).length === 0 && renderNoItem('task queues')}
-      {!indicator.show && Object.keys(taskQueues).length > 0 && (
+      {Object.keys(taskQueues).length > 0 && (
         <QueueListTable
           taskQueues={taskQueues}
           onDelete={(currentTemplate) => {
-            setShowDeleteConfirmation(true);
             setSelectedQueue(currentTemplate);
+            setDeleteAction(true);
           }}
         />
       )}
-
-      <DeleteModal
-        isOpen={showDeleteConfirmation}
-        title="Delete task queue"
-        content={
-          <div>
-            <div>
-              Are you sure you wish to delete <b>{`${selectedQueue?.name}?`}</b>
-            </div>
-            <div style={{ margin: '10px 0' }}>
-              {tasks && Object.keys(tasks).length > 0 && (
-                <GoABadge
-                  key="unended-tasks"
-                  type="emergency"
-                  icon
-                  content={`${selectedQueue?.name} contains unended tasks`}
-                />
-              )}
-            </div>
-          </div>
-        }
-        onCancel={() => setShowDeleteConfirmation(false)}
-        onDelete={() => {
-          setShowDeleteConfirmation(false);
-          dispatch(deleteTaskQueue(selectedQueue));
-        }}
-      />
+      {showDeleteConfirmation && selectedQueue && (
+        <DeleteConfirmationsView queue={selectedQueue}></DeleteConfirmationsView>
+      )}
 
       {(editQueue || openAddQueue) && (
         <QueueModal

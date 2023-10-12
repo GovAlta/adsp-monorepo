@@ -54,7 +54,12 @@ export function* fetchTenant(action: FetchTenantAction): SagaIterator {
     const tenant = yield call([api, api.fetchTenantByRealm], realm);
     yield put(FetchTenantSuccess(tenant));
   } catch (e) {
-    yield put(ErrorNotification({ message: 'failed to fetch tenant' }));
+    yield put(
+      ErrorNotification({
+        message: 'failed to fetch tenant',
+        error: e,
+      })
+    );
   }
 }
 
@@ -82,7 +87,7 @@ export function* createTenant(action: CreateTenantAction): SagaIterator {
     const result = yield call([api, api.createTenant], name);
     yield put(CreateTenantSuccess(result.realm));
   } catch (err) {
-    yield put(ErrorNotification({ message: `${err.message}` }));
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
@@ -91,7 +96,7 @@ export function* tenantAdminLogin(action: TenantAdminLoginAction): SagaIterator 
     const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, 'core');
     yield call([keycloakAuth, keycloakAuth.loginByCore], LOGIN_TYPES.tenantAdmin, action.payload);
   } catch (e) {
-    yield put(ErrorNotification({ message: `Failed to login as admin: ${e.message}` }));
+    yield put(ErrorNotification({ message: 'Failed to login as admin', error: e }));
   }
 }
 
@@ -100,7 +105,7 @@ export function* tenantCreationInitLogin(action: TenantCreationLoginInitAction):
     const keycloakAuth: KeycloakAuth = yield call(initializeKeycloakAuth, 'core');
     yield call([keycloakAuth, keycloakAuth.loginByCore], LOGIN_TYPES.tenantCreationInit, action.payload);
   } catch (e) {
-    yield put(ErrorNotification({ message: `Failed to first step of tenant creation: ${e.message}` }));
+    yield put(ErrorNotification({ message: 'Failed to first step of tenant creation', error: e }));
   }
 }
 
@@ -117,7 +122,7 @@ export function* keycloakCheckSSO(action: KeycloakCheckSSOAction): SagaIterator 
       yield put(IsTenantAdmin(session.userInfo.email));
     }
   } catch (e) {
-    yield put(ErrorNotification({ message: `Failed to check keycloak SSO: ${e.message}` }));
+    yield put(ErrorNotification({ message: 'Failed to check keycloak SSO', error: e }));
   }
 }
 
@@ -135,7 +140,7 @@ export function* keycloakCheckSSOWithLogout(action: KeycloakCheckSSOWithLogOutAc
       yield put(SessionLoginSuccess(session));
     }
   } catch (e) {
-    yield put(ErrorNotification({ message: `Failed to check keycloak SSO: ${e.message}` }));
+    yield put(ErrorNotification({ message: 'Failed to check keycloak SSO', error: e }));
   }
 }
 
@@ -152,7 +157,7 @@ export function* tenantLogin(action: TenantLoginAction): SagaIterator {
 
     yield call([keycloakAuth, keycloakAuth.loginByTenant], idp);
   } catch (e) {
-    yield put(ErrorNotification({ message: `Failed to tenant login: ${e.message}` }));
+    yield put(ErrorNotification({ message: 'Failed to tenant login', error: e }));
   }
 }
 
@@ -194,7 +199,7 @@ export function* tenantLogout(): SagaIterator {
       yield call([keycloakAuth, keycloakAuth.logout]);
     }
   } catch (e) {
-    yield put(ErrorNotification({ message: `Failed to log tenant out: ${e.message}` }));
+    yield put(ErrorNotification({ message: 'Failed to log tenant out', error: e }));
   }
 }
 
@@ -222,7 +227,7 @@ export function* fetchRealmRoles(): SagaIterator {
         show: false,
       })
     );
-    yield put(ErrorNotification({ message: `Failed to fetch realm roles: ${e.message}` }));
+    yield put(ErrorNotification({ message: 'Failed to fetch realm roles', error: e }));
   }
 }
 

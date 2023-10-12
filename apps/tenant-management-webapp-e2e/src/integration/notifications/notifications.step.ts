@@ -38,7 +38,7 @@ When(
       .shadow()
       .find('input')
       .clear()
-      .type(name, { delay: 100, force: true });
+      .type(name, { delay: 200, force: true });
     notificationsObj
       .notificationTypeModalDescriptionField()
       .shadow()
@@ -1136,3 +1136,50 @@ Then('the user {string} GoA header and footer in the email preview', function (v
       expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
   }
 });
+
+Then(
+  'the user should be able to view {string}, {string} and {string} as contact information in the subscription app',
+  function (email, phone, instructions) {
+    // Visit notification page of the realm
+    cy.visit(Cypress.env('subscriptionUrl') + '/' + Cypress.env('realm') + '/login?kc_idp_hint=');
+    cy.wait(4000); // Wait all the redirects to settle down
+
+    // Verify the support info
+    const editedEmail = email.match(/(?<=rnd{)[^{}]+(?=})/g);
+    if (editedEmail == '') {
+      notificationsObj.subscriptionAppContactSupportEmail().invoke('text').should('contain', email);
+    } else {
+      notificationsObj.subscriptionAppContactSupportEmail().invoke('text').should('contain', emailInput);
+    }
+    const editedPhone = phone.match(/(?<=rnd{)[^{}]+(?=})/g);
+    if (editedPhone == '') {
+      notificationsObj
+        .subscriptionAppContactSupportPhone()
+        .invoke('text')
+        .then(($text) => {
+          const phoneNumber = $text
+            .replace(/([^0-9])+/, '')
+            .replace(' ', '')
+            .replace(' ', '');
+          cy.wrap(phoneNumber).should('contain', phoneInput);
+        });
+    } else {
+      notificationsObj
+        .subscriptionAppContactSupportPhone()
+        .invoke('text')
+        .then(($text) => {
+          const phoneNumber = $text
+            .replace(/([^0-9])+/, '')
+            .replace(' ', '')
+            .replace(' ', '');
+          cy.wrap(phoneNumber).should('contain', phoneInput);
+        });
+    }
+    const editedInstructions = instructions.match(/(?<=rnd{)[^{}]+(?=})/g);
+    if (editedInstructions == '') {
+      notificationsObj.subscriptionAppContactSupportsInstructions().invoke('text').should('contain', instructions);
+    } else {
+      notificationsObj.subscriptionAppContactSupportsInstructions().invoke('text').should('contain', instructionsInput);
+    }
+  }
+);

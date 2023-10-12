@@ -62,10 +62,10 @@ export function* getMySubscriber(): SagaIterator {
       const result = response.data;
 
       yield put(GetMySubscriberSuccess(result));
-    } catch (e) {
+    } catch (err) {
       // Don't show error for 404 since that is expected when user has never subscribed before.
-      if (!axios.isAxiosError(e) || e.response.status !== 404) {
-        yield put(ErrorNotification({ message: `Subscriptions (getSubscriber): ${e.message}` }));
+      if (!axios.isAxiosError(err) || err.response.status !== 404) {
+        yield put(ErrorNotification({ error: err }));
       }
     }
   }
@@ -102,8 +102,8 @@ function* subscribe(action: SubscribeAction): SagaIterator {
           message: `You are subscribed! You will receive notifications on ${email} for ${action.payload.notificationInfo.data.type}.`,
         })
       );
-    } catch (e) {
-      yield put(ErrorNotification({ message: `Subscriptions (addTypeSubscription): ${e.message}` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -131,8 +131,8 @@ function* unsubscribe(action: UnsubscribeAction): SagaIterator {
           })
         );
       }
-    } catch (e) {
-      yield put(ErrorNotification({ message: `Subscriptions (unsubscribe): ${e.message}` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -153,8 +153,8 @@ function* deleteSubscription(action: UnsubscribeAction): SagaIterator {
       });
 
       yield put(DeleteSubscriptionSuccess(subscriber, type));
-    } catch (e) {
-      yield put(ErrorNotification({ message: `Subscriptions (unsubscribe): ${e.message}` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -245,8 +245,8 @@ function* getTypeSubscriptions(action: GetTypeSubscriptionsActions): SagaIterato
       const subscriptions = response.data.results;
 
       yield put(GetTypeSubscriptionSuccess(type, subscriptions, after, response.data.page.next));
-    } catch (e) {
-      yield put(ErrorNotification({ message: `Subscriptions (getTypeSubscriptions): ${e.message}` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -264,8 +264,8 @@ function* updateSubscriber(action: UpdateSubscriberAction): SagaIterator {
 
       const result = response;
       yield put(UpdateSubscriberSuccess(result));
-    } catch (e) {
-      yield put(ErrorNotification({ message: `Subscriptions (updateSubscriber): ${e.message}` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -273,9 +273,7 @@ function* updateSubscriber(action: UpdateSubscriberAction): SagaIterator {
 function* findSubscribers(action: FindSubscribersAction): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield call(getAccessToken);
-  const hasNotificationAdminRole = yield select((state: RootState) =>
-    state.session?.resourceAccess?.['urn:ads:platform:notification-service']?.roles?.includes('subscription-admin')
-  );
+
   const findSubscriberPath = 'subscription/v1/subscribers';
   const criteria = action.payload;
   const params: Record<string, string | number> = { top: 10 };
@@ -320,13 +318,8 @@ function* findSubscribers(action: FindSubscribersAction): SagaIterator {
           show: false,
         })
       );
-    } catch (e) {
-      yield put(
-        ErrorNotification({
-          message: `Subscriptions (findSubscribers): ${e.message}`,
-          disabled: hasNotificationAdminRole !== true,
-        })
-      );
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
@@ -380,8 +373,8 @@ function* deleteSubscriber(action: DeleteSubscriberAction): SagaIterator {
       headers: { Authorization: `Bearer ${token}` },
     });
     yield put(DeleteSubscriberSuccess(action.payload.subscriberId));
-  } catch (e) {
-    yield put(ErrorNotification({ message: `Subscriptions (deleteSubscriber): ${e.message}` }));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
   }
 }
 

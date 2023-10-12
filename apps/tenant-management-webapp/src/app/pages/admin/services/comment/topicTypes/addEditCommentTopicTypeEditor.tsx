@@ -24,13 +24,14 @@ import { FetchRealmRoles } from '@store/tenant/actions';
 import { ConfigServiceRole } from '@store/access/models';
 import { getCommentTopicTypes } from '@store/comment/action';
 import { updateCommentTopicType } from '@store/comment/action';
+import { GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 
 import { createSelector } from 'reselect';
 
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
-import { defaultCommentTopicType } from '@store/comment/model';
+import { defaultCommentTopicType, SecurityClassification } from '@store/comment/model';
 import { TopicConfigTopicType } from './topicConfigTopicType';
 
 import { useHistory, useParams } from 'react-router-dom';
@@ -42,7 +43,8 @@ const isCommentUpdated = (prev: CommentTopicTypes, next: CommentTopicTypes): boo
   return (
     prev?.adminRoles !== next?.adminRoles ||
     prev?.commenterRoles !== next?.commenterRoles ||
-    prev?.readerRoles !== next?.readerRoles
+    prev?.readerRoles !== next?.readerRoles ||
+    prev?.securityClassification !== next?.securityClassification
   );
 };
 
@@ -56,7 +58,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
   const { height } = useWindowDimensions();
 
   const heightCover = {
-    height: height - 480,
+    height: height - 561,
   };
 
   const isEdit = !!id;
@@ -220,8 +222,24 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
             <CommentEditorTitle>Comment / Topic type editor</CommentEditorTitle>
             <hr className="hr-resize" />
             {topicType && <TopicConfigTopicType topicType={topicType} />}
-            <GoAFormItem label="">
+            <GoAFormItem label="Please select a security classification">
               <EditorPadding>
+                <GoADropdown
+                  name="Time period"
+                  value={topicType.securityClassification}
+                  onChange={(_n: string, value: SecurityClassification) =>
+                    setTopicType({
+                      ...topicType,
+                      securityClassification: value,
+                    })
+                  }
+                  width="25rem"
+                >
+                  <GoADropdownItem value={SecurityClassification.public} label="Public" />
+                  <GoADropdownItem value={SecurityClassification.protectedA} label="Protected a" />
+                  <GoADropdownItem value={SecurityClassification.protectedB} label="Protected b" />
+                  <GoADropdownItem value={SecurityClassification.protectedC} label="Protected c" />
+                </GoADropdown>
                 {/* <Editor height={height - 550} /> */}
                 <div style={heightCover}></div>
               </EditorPadding>

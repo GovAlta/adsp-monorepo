@@ -11,6 +11,9 @@ interface PdfTemplateItemProps {
   commentTopicType: CommentTopicTypes;
   onDelete: (CommentTopicType) => void;
 }
+function capitalizeFirstLetter(string) {
+  return string ? string.charAt(0).toUpperCase() + string.slice(1) : '';
+}
 
 export const CommentTopicTypesItem = ({ commentTopicType, onDelete }: PdfTemplateItemProps): JSX.Element => {
   const { url } = useRouteMatch();
@@ -54,6 +57,9 @@ export const CommentTopicTypesItem = ({ commentTopicType, onDelete }: PdfTemplat
               );
             })}
           </OverflowWrap>
+        </td>
+        <td data-testid="comment-topic-types-security-classification">
+          {capitalizeFirstLetter(commentTopicType.securityClassification)}
         </td>
         <td data-testid="comment-topic-types-action">
           <GoAContextMenu>

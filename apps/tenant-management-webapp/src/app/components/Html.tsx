@@ -37,8 +37,9 @@ const Main = styled.main`
   h2 {
     font-size: var(--fs-xl);
   }
+
   h3 {
-    font-size: var(--fs-lg);
+    font-size: var(--goa-font-size-7);
   }
 
   /* Set top margin to subsequent headers */

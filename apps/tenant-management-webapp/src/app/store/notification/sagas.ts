@@ -59,8 +59,8 @@ export function* fetchNotificationTypes(): SagaIterator {
           state: 'completed',
         })
       );
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationTypes` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
 
       yield put(
         UpdateLoadingState({
@@ -101,8 +101,8 @@ export function* fetchCoreNotificationTypes(): SagaIterator {
           show: false,
         })
       );
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchCoreNotificationTypes` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
       yield put(
         UpdateIndicator({
           show: false,
@@ -131,8 +131,8 @@ export function* deleteNotificationTypes(action: DeleteNotificationTypeAction): 
         }
       );
       yield put(FetchNotificationConfigurationService());
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.response.data} - deleteNotificationTypes` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -207,8 +207,8 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
       }
 
       yield put(FetchNotificationConfigurationService());
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - updateNotificationType` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -240,8 +240,8 @@ export function* updateContactInformation({ payload }: UpdateContactInformationA
       );
 
       yield put(FetchNotificationConfigurationService());
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - updateNotificationType` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -280,8 +280,8 @@ export function* fetchNotificationMetrics(): SagaIterator {
             : null,
         })
       );
-    } catch (e) {
-      yield put(ErrorNotification({ message: `${e.message} - fetchNotificationMetrics` }));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
