@@ -4,12 +4,12 @@ import * as mkdirp from 'mkdirp';
 import * as path from 'path';
 import { Readable } from 'stream';
 import { Logger } from 'winston';
-import { FileEntity, FileStorageProvider } from '../file';
+import { FileEntity, FileStorageProvider, FileTypeEntity } from '../file';
 
 export class FileSystemStorageProvider implements FileStorageProvider {
   constructor(private logger: Logger, private storageRoot: string) {}
 
-  async saveFile(entity: FileEntity, content: Readable): Promise<boolean> {
+  async saveFile(entity: FileEntity, entityFileType: FileTypeEntity, content: Readable): Promise<boolean> {
     const filePath = this.getFilePath(entity);
     await mkdirp(path.dirname(filePath));
     return await new Promise<boolean>((resolve) => {

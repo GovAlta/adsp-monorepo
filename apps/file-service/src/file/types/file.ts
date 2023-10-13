@@ -13,7 +13,8 @@ export interface File {
   createdBy: UserInfo;
   created: Date;
   lastAccessed?: Date;
-  retentionDays?: number
+  retentionDays?: number;
+  securityClassification?: string;
 }
 
 export interface FileRecord extends File {

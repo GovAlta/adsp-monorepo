@@ -45,8 +45,8 @@ function mapFileType(entity: FileTypeEntity) {
   };
 }
 
-function mapFile(apiId: AdspId, entity: FileEntity) {
-  return {
+function mapFile(apiId: AdspId, entity: FileEntity, entityFileType?: FileTypeEntity) {
+  const mappedFile = {
     urn: adspId`${apiId}:/files/${entity.id}`.toString(),
     id: entity.id,
     filename: entity.filename,
@@ -58,7 +58,20 @@ function mapFile(apiId: AdspId, entity: FileEntity) {
     lastAccessed: entity.lastAccessed,
     scanned: entity.scanned,
     infected: entity.infected,
+    securityClassification: '',
   };
+
+  // For old files Security Classification doesnt exist.
+  // So, if they have updated the File Types with a security classification
+  // then the security classification should be added to the object.
+  if (entity?.typeId && entityFileType?.securityClassification !== undefined) {
+    return {
+      ...mappedFile,
+      securityClassification: entityFileType.securityClassification,
+    };
+  }
+
+  return mappedFile;
 }
 
 export const getTypes: RequestHandler = async (req, res, next) => {
@@ -177,13 +190,23 @@ export function getFile(repository: FileRepository): RequestHandler {
       const { fileId } = req.params;
 
       const fileEntity = await repository.get(fileId);
+
       if (!fileEntity) {
         throw new NotFoundError('File', fileId);
       } else if (!fileEntity.canAccess(user)) {
         throw new UnauthorizedError('User not authorized to access file.');
       }
 
+      const configuration = await req.getConfiguration<ServiceConfiguration, ServiceConfiguration>();
+      if (fileEntity.typeId) {
+        const fileType = configuration?.[fileEntity?.typeId];
+
+        if (fileType) {
+          req.fileTypeEntity = fileType;
+        }
+      }
       req.fileEntity = fileEntity;
+
       if (!req.tenant) {
         req.tenant = { id: fileEntity.tenantId, name: null, realm: null };
       }
@@ -342,7 +365,7 @@ export const createFileRouter = ({
     '/files/:fileId',
     createValidationHandler(param('fileId').isUUID()),
     getFile(fileRepository),
-    (req: Request, res: Response) => res.send(mapFile(apiId, req.fileEntity))
+    (req: Request, res: Response) => res.send(mapFile(apiId, req.fileEntity, req.fileTypeEntity))
   );
   fileRouter.get(
     '/files/:fileId/download',

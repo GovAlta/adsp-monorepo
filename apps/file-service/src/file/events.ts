@@ -21,6 +21,17 @@ const fileSchema = {
     },
     created: { type: 'string', format: 'date-time' },
     lastAccessed: { type: 'string', format: 'date-time' },
+    securityClassification: {
+      type: 'string',
+      enum: [
+        'public',
+        'protected a',
+        'protected b',
+        'protected c',
+        '', //The empty string is to handle old file types that do not have a security classification
+      ],
+      default: 'protected a',
+    },
   },
 };
 export const FileUploadedDefinition: DomainEventDefinition = {

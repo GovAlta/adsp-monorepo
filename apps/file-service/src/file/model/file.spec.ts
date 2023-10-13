@@ -87,7 +87,9 @@ describe('File Entity', () => {
 
   it('can create new', async () => {
     typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);
-    storageProviderMock.setup((m) => m.saveFile(It.IsAny(), contentMock.object())).returns(Promise.resolve(true));
+    storageProviderMock
+      .setup((m) => m.saveFile(It.IsAny(), It.IsAny(), contentMock.object()))
+      .returns(Promise.resolve(true));
     repositoryMock.setup((m) => m.save(It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
 
     const file = {
@@ -115,7 +117,9 @@ describe('File Entity', () => {
 
   it('can create new and delete on storage failure', async () => {
     typeMock.setup((m) => m.canUpdateFile(It.IsAny())).returns(true);
-    storageProviderMock.setup((m) => m.saveFile(It.IsAny(), contentMock.object())).returns(Promise.resolve(false));
+    storageProviderMock
+      .setup((m) => m.saveFile(It.IsAny(), It.IsAny(), contentMock.object()))
+      .returns(Promise.resolve(false));
     storageProviderMock.setup((m) => m.deleteFile(It.IsAny())).returns(Promise.resolve(true));
     repositoryMock.setup((m) => m.save(It.IsAny(), It.IsAny())).callback((i) => Promise.resolve(i.args[0]));
     repositoryMock.setup((m) => m.delete(It.IsAny())).returns(Promise.resolve(true));
@@ -193,7 +197,9 @@ describe('File Entity', () => {
       entity = new FileEntity(storageProviderMock.object(), repositoryMock.object(), typeMock.object(), file);
 
       typeMock.setup((m) => m.canUpdateFile(user)).returns(true);
-      storageProviderMock.setup((m) => m.saveFile(entity, contentMock.object())).returns(Promise.resolve(true));
+      storageProviderMock
+        .setup((m) => m.saveFile(entity, It.IsAny(), contentMock.object()))
+        .returns(Promise.resolve(true));
       repositoryMock.setup((m) => m.save(It.IsAny(), It.IsAny())).returns(Promise.resolve(entity));
     });
 
