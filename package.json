@@ -65,6 +65,7 @@
     "crypto-random-string": "^3.3.1",
     "dashify": "^2.0.0",
     "dayjs": "^1.10.7",
+    "detect-file-type": "^0.2.8",
     "dompurify": "^2.3.4",
     "dotenv": "10.0.0",
     "envalid": "^7.1.0",
@@ -264,6 +265,7 @@
     "url-loader": "^4.1.1",
     "webpack": "^5.75.0",
     "webpack-merge": "^5.8.0",
+    "webpack-node-externals": "^3.0.0",
     "yaml": "^1.10.0"
   },
   "overrides": {

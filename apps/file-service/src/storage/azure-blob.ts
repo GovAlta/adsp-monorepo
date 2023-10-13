@@ -2,6 +2,7 @@ import { BlobServiceClient, ContainerClient, StorageSharedKeyCredential } from '
 import * as hasha from 'hasha';
 import { Readable } from 'stream';
 import { Logger } from 'winston';
+import * as detect from 'detect-file-type';
 import { FileEntity, FileStorageProvider } from '../file';
 
 interface AzureBlobStorageProviderProps {
@@ -72,7 +73,66 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
         tags.recordId = hasha(entity.recordId, { algorithm: 'sha1', encoding: 'base64' });
       }
 
+      const start0 = Date.now();
+      console.log('Start0:' + start0);
+
+      let accumulatedData = Buffer.alloc(0); // Start with an empty buffer
+
+      const onData = (chunk) => {
+        accumulatedData = Buffer.concat([accumulatedData, chunk]);
+
+        console.log('accumulatedData.length0:' + JSON.stringify(accumulatedData.length));
+        console.log('accumulatedData0:' + JSON.stringify(accumulatedData));
+        console.log('chunk:' + JSON.stringify(chunk));
+
+        if (accumulatedData.length >= 8) {
+          // You have enough data to detect the file type
+
+          detect.fromBuffer(accumulatedData, (err, result) => {
+            if (err) {
+              console.log('err below');
+              return console.log(err);
+            }
+            console.log(result); // { ext: 'jpg', mime: 'image/jpeg' }
+            console.log('Extension above');
+            //accumulatedData = Buffer.alloc(0);
+          });
+
+          // Stop listening to data events if needed
+          content.removeListener('data', onData);
+          // content.pause(); // Pause the stream to stop reading further
+        }
+
+        console.log('ondata:' + Date.now());
+        // console.log('header:' + JSON.stringify(header));
+      };
+
+      content.on('data', onData);
+
+      content.on('end', () => {
+        // const header = buffer.toString('hex'); //.toString('hex', 0, 8);
+        console.log('accumulatedData.length:' + JSON.stringify(accumulatedData.length));
+        console.log('accumulatedData:' + JSON.stringify(accumulatedData));
+        if (accumulatedData.length < 8) {
+          console.error('Stream ended prematurely, not enough data to detect the file type.');
+        }
+        console.log('done');
+      });
+
+      content.on('error', (err) => {
+        console.error('An error occurred:', err);
+      });
+
+      content.resume();
+
+      const end = Date.now();
+
+      console.log('End:' + end);
+      console.log('Diff:' + (end - start0));
+
       const { requestId } = await blobClient.uploadStream(content, BUFFER_SIZE, MAX_BUFFERS, { tags });
+
+      console.log('requestId:' + requestId);
 
       const properties = await blobClient.getProperties();
       await entity.setSize(properties.contentLength);
