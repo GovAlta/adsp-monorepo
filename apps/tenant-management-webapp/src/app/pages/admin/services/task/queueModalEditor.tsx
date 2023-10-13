@@ -93,9 +93,12 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
   }));
 
   const types = [
-    { type: 'assignerRoles', name: 'Assigner Roles' },
-    { type: 'workerRoles', name: 'Worker Roles' },
+    { type: 'assignerRoles', name: 'Assigner roles' },
+    { type: 'workerRoles', name: 'Worker roles' },
   ];
+
+  const assignerRoles = types[0];
+  const workerRoles = types[1];
   //eslint-disable-next-line
   useEffect(() => {}, [fetchKeycloakRolesState]);
   const ClientRole = ({ roleNames, clientId }) => {
@@ -105,7 +108,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
           roles={roleNames}
           clientId={clientId}
           roleSelectFunc={(roles, type) => {
-            if (type === 'Assigner Roles') {
+            if (type === assignerRoles.name) {
               setQueue({
                 ...queue,
                 assignerRoles: roles,
@@ -120,8 +123,8 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
           nameColumnWidth={40}
           service="Queue"
           checkedRoles={[
-            { title: types[0].name, selectedRoles: queue[types[0].type] },
-            { title: types[1].name, selectedRoles: queue[types[1].type] },
+            { title: assignerRoles.name, selectedRoles: queue[assignerRoles.type] },
+            { title: workerRoles.name, selectedRoles: queue[workerRoles.type] },
           ]}
         />
       </>

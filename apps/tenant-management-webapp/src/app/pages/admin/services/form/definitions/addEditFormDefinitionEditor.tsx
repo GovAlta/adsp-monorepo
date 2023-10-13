@@ -69,9 +69,9 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   }, []);
 
   const types = [
-    { type: 'applicantRoles', name: 'Applicant Roles' },
-    { type: 'clerkRoles', name: 'Clerk Roles' },
-    { type: 'assessorRoles', name: 'Assessor Roles' },
+    { type: 'applicantRoles', name: 'Applicant roles' },
+    { type: 'clerkRoles', name: 'Clerk roles' },
+    { type: 'assessorRoles', name: 'Assessor roles' },
   ];
 
   const formDefinitions = useSelector((state: RootState) => state?.form?.definitions || []);

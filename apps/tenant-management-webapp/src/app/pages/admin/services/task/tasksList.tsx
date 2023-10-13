@@ -137,7 +137,7 @@ export const TasksList = (): JSX.Element => {
         </div>
       )}
 
-      {indicator.show && (
+      {!next && indicator.show && (
         <ProgressWrapper>
           <GoACircularProgress visible={indicator.show} size="small" />
         </ProgressWrapper>
@@ -148,7 +148,7 @@ export const TasksList = (): JSX.Element => {
         Object.keys(tasks).length === 0 &&
         renderNoItem('queue tasks')}
       {selectedTask !== '' && tasks && Object.keys(tasks).length !== 0 && (
-        <Visible visible={!indicator.show}>
+        <Visible visible={true}>
           <TaskListTable
             tasks={tasks}
             onEditTask={(updatedTask) => {
