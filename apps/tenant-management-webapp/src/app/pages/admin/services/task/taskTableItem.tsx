@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useEffect, useState } from 'react';
 import { IconDiv, MoreDetails } from './styled-components';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { QueueTaskDefinition } from '@store/task/model';
@@ -11,6 +11,10 @@ interface TaskTableItemProps {
 
 export const TaskTableItem: FunctionComponent<TaskTableItemProps> = ({ id, task, onEditTask }: TaskTableItemProps) => {
   const [showDetails, setShowDetails] = useState(false);
+
+  useEffect(() => {
+    setShowDetails(false);
+  }, [task]);
 
   const createdOnDate = new Date(task.createdOn);
 

@@ -212,7 +212,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
             {isEdit && <FileTypeConfigDefinition fileType={fileType ?? FileTypeDefault} />}
             <MakePublicPadding>
               <DropDownZIndex>
-                <GoAFormItem label="Please select a security classification">
+                <GoAFormItem label="Select a security classification">
                   <GoADropdown
                     name="securityClassifications"
                     width="25rem"
@@ -235,9 +235,9 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                     }}
                   >
                     <GoADropdownItem value={SecurityClassification.Public} label="Public" />
-                    <GoADropdownItem value={SecurityClassification.ProtectedA} label="Protected a" />
-                    <GoADropdownItem value={SecurityClassification.ProtectedB} label="Protected b" />
-                    <GoADropdownItem value={SecurityClassification.ProtectedC} label="Protected c" />
+                    <GoADropdownItem value={SecurityClassification.ProtectedA} label="Protected A" />
+                    <GoADropdownItem value={SecurityClassification.ProtectedB} label="Protected B" />
+                    <GoADropdownItem value={SecurityClassification.ProtectedC} label="Protected C" />
                   </GoADropdown>
                 </GoAFormItem>
                 <GoACheckbox
