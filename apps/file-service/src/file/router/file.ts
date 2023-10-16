@@ -85,8 +85,8 @@ function getTypeOnRequest(_logger: Logger): RequestHandler {
       const user = req.user;
       const fileEntity = req.fileEntity;
       const configuration = await req.getConfiguration<ServiceConfiguration, ServiceConfiguration>();
-
       const entity = configuration?.[fileEntity.typeId];
+
       if (!entity) {
         throw new NotFoundError('File Type', fileEntity.typeId);
       } else if (!entity.canAccess(user)) {
@@ -94,6 +94,7 @@ function getTypeOnRequest(_logger: Logger): RequestHandler {
       }
 
       req.fileTypeEntity = entity;
+      next();
     } catch (err) {
       next(err);
     }
@@ -306,6 +307,7 @@ export function deleteFile(logger: Logger, eventService: EventService): RequestH
 
       const user = req.user;
       const fileEntity = req.fileEntity;
+      const fileTypeEntity = req.fileTypeEntity;
       await fileEntity.markForDeletion(user);
 
       logger.info(
@@ -330,6 +332,7 @@ export function deleteFile(logger: Logger, eventService: EventService): RequestH
           created: fileEntity.created,
           lastAccessed: fileEntity.lastAccessed,
           createdBy: fileEntity.createdBy,
+          securityClassification: fileTypeEntity.securityClassification,
         })
       );
     } catch (err) {
