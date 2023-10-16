@@ -73,19 +73,15 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
         tags.recordId = hasha(entity.recordId, { algorithm: 'sha1', encoding: 'base64' });
       }
 
-      const start0 = Date.now();
-      console.log('Start0:' + start0);
+      const start = Date.now();
+      console.log('Start:' + start);
 
       let accumulatedData = Buffer.alloc(0); // Start with an empty buffer
 
       const onData = (chunk) => {
         accumulatedData = Buffer.concat([accumulatedData, chunk]);
 
-        console.log('accumulatedData.length0:' + JSON.stringify(accumulatedData.length));
-        console.log('accumulatedData0:' + JSON.stringify(accumulatedData));
-        console.log('chunk:' + JSON.stringify(chunk));
-
-        if (accumulatedData.length >= 8) {
+        if (accumulatedData.length > 0) {
           // You have enough data to detect the file type
 
           detect.fromBuffer(accumulatedData, (err, result) => {
@@ -93,26 +89,22 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
               console.log('err below');
               return console.log(err);
             }
-            console.log(result); // { ext: 'jpg', mime: 'image/jpeg' }
-            console.log('Extension above');
-            //accumulatedData = Buffer.alloc(0);
+            console.log('Extension: ' + JSON.stringify(result)); // { ext: 'jpg', mime: 'image/jpeg' }
           });
 
-          // Stop listening to data events if needed
+          // Stop listening to data events - if you remove the following line, it will keep going through every chunking to determine file type - having it there only checks the first chunk (65536 bytes seems to be the default)
           content.removeListener('data', onData);
-          // content.pause(); // Pause the stream to stop reading further
+          //content.pause(); // Some examples have this, but if you uncomment it the app just hangs here - we need to free up 'content' to allow it to be uploaded afterwards
         }
 
         console.log('ondata:' + Date.now());
-        // console.log('header:' + JSON.stringify(header));
       };
 
       content.on('data', onData);
 
       content.on('end', () => {
-        // const header = buffer.toString('hex'); //.toString('hex', 0, 8);
         console.log('accumulatedData.length:' + JSON.stringify(accumulatedData.length));
-        console.log('accumulatedData:' + JSON.stringify(accumulatedData));
+
         if (accumulatedData.length < 8) {
           console.error('Stream ended prematurely, not enough data to detect the file type.');
         }
@@ -123,12 +115,10 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
         console.error('An error occurred:', err);
       });
 
-      content.resume();
-
       const end = Date.now();
 
       console.log('End:' + end);
-      console.log('Diff:' + (end - start0));
+      console.log('Diff:' + (end - start));
 
       const { requestId } = await blobClient.uploadStream(content, BUFFER_SIZE, MAX_BUFFERS, { tags });
 
