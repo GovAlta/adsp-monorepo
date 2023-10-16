@@ -272,6 +272,7 @@ describe('File Entity', () => {
         recordId: 'my-record-1',
         size: 100,
         created: new Date(),
+        securityClassification: 'protected a',
         createdBy: {
           id: 'user-1',
           name: 'testy',

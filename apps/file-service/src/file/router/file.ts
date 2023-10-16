@@ -69,9 +69,35 @@ function mapFile(apiId: AdspId, entity: FileEntity, entityFileType?: FileTypeEnt
       ...mappedFile,
       securityClassification: entityFileType.securityClassification,
     };
+  } else if (entity?.typeId && entity.securityClassification !== undefined) {
+    return {
+      ...mappedFile,
+      securityClassification: entity.securityClassification,
+    };
   }
 
   return mappedFile;
+}
+
+function getTypeOnRequest(_logger: Logger): RequestHandler {
+  return async (req, _res, next) => {
+    try {
+      const user = req.user;
+      const fileEntity = req.fileEntity;
+      const configuration = await req.getConfiguration<ServiceConfiguration, ServiceConfiguration>();
+
+      const entity = configuration?.[fileEntity.typeId];
+      if (!entity) {
+        throw new NotFoundError('File Type', fileEntity.typeId);
+      } else if (!entity.canAccess(user)) {
+        throw new UnauthorizedUserError('Access file type', user);
+      }
+
+      req.fileTypeEntity = entity;
+    } catch (err) {
+      next(err);
+    }
+  };
 }
 
 export const getTypes: RequestHandler = async (req, res, next) => {
@@ -102,7 +128,7 @@ export function getType(_logger: Logger): RequestHandler {
       } else if (!entity.canAccess(user)) {
         throw new UnauthorizedUserError('Access file type', user);
       }
-
+      req.fileTypeEntity = entity;
       res.send(mapFileType(entity));
     } catch (err) {
       next(err);
@@ -147,13 +173,16 @@ export function uploadFile(apiId: AdspId, logger: Logger, eventService: EventSer
     try {
       const user = req.user;
       const fileEntity = req.fileEntity;
+      const fileTypeEntity = req.fileTypeEntity;
+
       if (!fileEntity) {
         throw new InvalidOperationError('No file uploaded.');
       }
 
       // Start of the handling happens in the upload (multer storage engine).
       benchmark(req, 'operation-handler-time');
-      res.send(mapFile(apiId, fileEntity));
+      const mappedFile = mapFile(apiId, fileEntity);
+      res.send(mappedFile);
 
       eventService.send(
         fileUploaded(fileEntity.tenantId, user, {
@@ -164,6 +193,7 @@ export function uploadFile(apiId: AdspId, logger: Logger, eventService: EventSer
           created: fileEntity.created,
           lastAccessed: fileEntity.lastAccessed,
           createdBy: fileEntity.createdBy,
+          securityClassification: fileTypeEntity.securityClassification,
         })
       );
 
@@ -306,6 +336,7 @@ export function deleteFile(logger: Logger, eventService: EventService): RequestH
       next(err);
     }
   };
+  ``;
 }
 
 export const createFileRouter = ({
@@ -352,7 +383,13 @@ export const createFileRouter = ({
     ),
     getFiles(apiId, fileRepository)
   );
-  fileRouter.post('/files', assertAuthenticatedHandler, upload.single('file'), uploadFile(apiId, logger, eventService));
+  fileRouter.post(
+    '/files',
+    assertAuthenticatedHandler,
+    upload.single('file'),
+    getTypeOnRequest(logger),
+    uploadFile(apiId, logger, eventService)
+  );
 
   fileRouter.delete(
     '/files/:fileId',

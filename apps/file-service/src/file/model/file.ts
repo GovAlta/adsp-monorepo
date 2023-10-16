@@ -21,6 +21,7 @@ export class FileEntity implements File {
   deleted = false;
   infected = false;
   retentionDays?: number;
+  securityClassification?: string;
 
   static async create(
     storageProvider: FileStorageProvider,
@@ -69,6 +70,7 @@ export class FileEntity implements File {
 
     if (record.id) {
       this.typeId = type?.id;
+      this.securityClassification = type?.securityClassification;
       this.tenantId = record.tenantId;
       this.id = record.id;
       this.lastAccessed = record.lastAccessed;
