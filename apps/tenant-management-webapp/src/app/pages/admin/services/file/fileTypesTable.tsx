@@ -23,9 +23,6 @@ interface FileTypeTableProps {
   fileTypes;
   coreFileTypes;
 }
-function capitalizeFirstLetter(string) {
-  return string ? string.charAt(0).toUpperCase() + string.slice(1) : '';
-}
 
 const FileTypeTableRow = ({
   id,
@@ -57,7 +54,7 @@ const FileTypeTableRow = ({
           return <GoABadge key={`update-roles-${id}-${role}`} type="information" content={role} />;
         })}
       </td>
-      <td>{securityClassification ? capitalizeFirstLetter(securityClassification) : ''}</td>
+      <td style={{ textTransform: 'capitalize' }}>{securityClassification ? securityClassification : ''}</td>
       <td>{rules?.retention?.active ? rules?.retention?.deleteInDays : 'N/A'}</td>
       <td className="actionCol">
         <GoAContextMenu>
@@ -113,7 +110,7 @@ const CoreFileTypeTableRow = ({
           return <GoABadge key={`update-roles-${id}-${role}`} type="information" content={role} />;
         })}
       </td>
-      <td>{securityClassification ? capitalizeFirstLetter(securityClassification) : ''}</td>
+      <td style={{ textTransform: 'capitalize' }}>{securityClassification ? securityClassification : ''}</td>
       <td>{rules?.retention?.active ? rules?.retention?.deleteInDays : 'N/A'}</td>
     </tr>
   );

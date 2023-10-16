@@ -36,6 +36,10 @@ interface ClientRoleTableProps {
   nameColumnWidth?: number;
 }
 
+function capitalizeFirstLetter(string) {
+  return string ? string.charAt(0).toUpperCase() + string.slice(1) : '';
+}
+
 export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
   const { tenantName } = useSelector((state: RootState) => {
     return {
@@ -65,7 +69,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
             {props.checkedRoles.map((role) => {
               return (
                 <th id={`${role.title}-role-action-${getClientId()}`} className="role">
-                  <div style={{ textTransform: 'capitalize' }}>{role.title}</div>
+                  <div>{capitalizeFirstLetter(role.title)}</div>
                 </th>
               );
             })}
