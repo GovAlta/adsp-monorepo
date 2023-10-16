@@ -57,8 +57,8 @@ export const CalendarEvents = (): JSX.Element => {
       <SelectCalendarHeader>Select a calendar</SelectCalendarHeader>
       {!calendars && <GoASkeleton type="text" key={1}></GoASkeleton>}
       {calendars && <CalendarDropdown calendars={calendars} onSelect={onCalendarSelect} />}
+      {calendars && <EventListFilter calenderName={selectedCalendar} />}
       <EventAddEditModal calendarName={selectedCalendar} />
-      <br /> <br />
       <GoAButton
         type="primary"
         testId="show-calendar-event-table"
