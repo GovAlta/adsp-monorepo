@@ -23,6 +23,8 @@ export const UPDATE_EVENT_CALENDAR_ACTION = 'calendar/UPDATE_EVENT_CALENDAR_ACTI
 export const UPDATE_EVENT_CALENDAR_SUCCESS_ACTION = 'calendar/UPDATE_EVENT_CALENDAR_SUCCESS_ACTION';
 export const UPDATE_EVENT_SEARCH_CRITERIA_ACTION = 'calendar/event/search/criteria/update';
 
+export const UPDATE_EVENT_CALENDAR_AND_FETCH_ACTION = 'calendar/event/search/criteria/update/event/fetch';
+
 export interface FetchCalendarsAction {
   type: typeof FETCH_CALENDARS_ACTION;
 }
@@ -111,6 +113,11 @@ export interface UpdateSearchCalendarEventCriteriaAction {
   payload?: CalendarEventSearchCriteria;
 }
 
+export interface UpdateSearchCalendarEventCriteriaAndFetchEventsAction {
+  type: typeof UPDATE_EVENT_CALENDAR_AND_FETCH_ACTION;
+  payload?: CalendarEventSearchCriteria;
+}
+
 export type ActionTypes =
   | FetchCalendarsAction
   | FetchCalendarsSuccessAction
@@ -127,6 +134,7 @@ export type ActionTypes =
   | DeleteCalendarEventSuccessAction
   | UpdateEventsByCalendarAction
   | UpdateSearchCalendarEventCriteriaAction
+  | UpdateSearchCalendarEventCriteriaAndFetchEventsAction
   | UpdateEventsByCalendarSuccessAction;
 
 export const fetchCalendars = (): FetchCalendarsAction => ({
@@ -236,5 +244,12 @@ export const UpdateSearchCalendarEventCriteria = (
   criteria?: CalendarEventSearchCriteria
 ): UpdateSearchCalendarEventCriteriaAction => ({
   type: UPDATE_EVENT_SEARCH_CRITERIA_ACTION,
+  payload: criteria,
+});
+
+export const UpdateSearchCriteriaAndFetchEvents = (
+  criteria?: CalendarEventSearchCriteria
+): UpdateSearchCalendarEventCriteriaAndFetchEventsAction => ({
+  type: UPDATE_EVENT_CALENDAR_AND_FETCH_ACTION,
   payload: criteria,
 });
