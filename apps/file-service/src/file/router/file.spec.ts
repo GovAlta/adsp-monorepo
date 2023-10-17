@@ -124,7 +124,7 @@ describe('file router', () => {
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ id: 'test', name: 'Test' }));
     });
 
-    it('can call next with not foundcls', async () => {
+    it('can call next with not found', async () => {
       const req = {
         getConfiguration: jest.fn(),
         params: { fileTypeId: 'test' },
