@@ -32,6 +32,7 @@ function mapTopic(apiId: AdspId, topic: Topic) {
         description: topic.description,
         resourceId: topic.resourceId?.toString(),
         commenters: topic.commenters,
+        securityClassification: topic.securityClassification,
       }
     : null;
 }
@@ -83,7 +84,6 @@ export function createTopic(
       if (!type) {
         throw new NotFoundError('topic type', typeId);
       }
-
       const result = await TopicEntity.create(user, repository, type, {
         typeId,
         resourceId: isAdspId(resourceIdValue) ? AdspId.parse(resourceIdValue) : resourceIdValue,
@@ -333,6 +333,7 @@ export function createTopicRouter({ apiId, logger, eventService, repository }: T
       body('typeId').isString().isLength({ min: 1, max: 50 }),
       body('name').isString().isLength({ min: 1, max: 50 }),
       body('description').optional().isString(),
+      body('securityClassification').optional().isString(),
       body('resourceId').optional().isString().isLength({ min: 1, max: 1200 })
     ),
     createTopic(apiId, logger, repository, eventService)
