@@ -160,7 +160,10 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   };
   const hasChanged = () => {
     return (
-      selectedScript.name !== name || selectedScript.description !== description || selectedScript.script !== scriptStr
+      selectedScript.name !== name ||
+      selectedScript.description !== description ||
+      selectedScript.script !== scriptStr ||
+      selectedScript.testInputs !== testInput
     );
   };
 
