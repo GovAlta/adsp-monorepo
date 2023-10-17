@@ -23,6 +23,7 @@ interface ResponseObject {
   };
   status: number;
   statusText: string;
+  // eslint-disable-next-line
   headers: any;
   config: {
     url: string;
