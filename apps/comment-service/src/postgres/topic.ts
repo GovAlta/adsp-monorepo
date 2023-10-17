@@ -15,6 +15,7 @@ export class PostgresTopicRepository implements TopicRepository {
           id: record.id,
           name: record.name,
           description: record.description,
+          securityClassification: record.securityClassification,
           type: types[record.type],
           resourceId: isAdspId(record.resource) ? AdspId.parse(record.resource) : record.resource,
           commenters: record.commenters,
@@ -160,6 +161,7 @@ export class PostgresTopicRepository implements TopicRepository {
           type: entity.type.id,
           name: entity.name,
           description: entity.description,
+          securityClassification: entity.securityClassification,
           resource: entity.resourceId?.toString(),
           commenters: entity.commenters,
         })
