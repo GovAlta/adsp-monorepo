@@ -50,7 +50,7 @@ describe('ServiceRegistrar', () => {
 
     expect(axiosMock.patch).toHaveBeenCalledTimes(1);
     expect(axiosMock.patch.mock.calls[0][0]).toContain('event-service');
-    expect(axiosMock.patch.mock.calls[0][1].update).toHaveProperty('test-service');
+    expect(axiosMock.patch.mock.calls[0][1]).toHaveProperty('update.test-service');
   });
 
   it('can register events with new event service options', async () => {
@@ -79,7 +79,7 @@ describe('ServiceRegistrar', () => {
     });
 
     expect(axiosMock.patch).toHaveBeenCalledTimes(3);
-    expect(axiosMock.patch.mock.calls[2][1].update).toHaveProperty('test-service');
+    expect(axiosMock.patch.mock.calls[2][1]).toHaveProperty('update.test-service');
   });
 
   it('can register roles', async () => {
@@ -102,7 +102,7 @@ describe('ServiceRegistrar', () => {
 
     expect(axiosMock.patch).toHaveBeenCalledTimes(1);
     expect(axiosMock.patch.mock.calls[0][0]).toContain('tenant-service');
-    expect(axiosMock.patch.mock.calls[0][1].update).toHaveProperty('urn:ads:platform:test-service');
+    expect(axiosMock.patch.mock.calls[0][1]).toHaveProperty('update.urn:ads:platform:test-service');
   });
 
   it('can register notifications', async () => {
@@ -129,7 +129,7 @@ describe('ServiceRegistrar', () => {
 
     expect(axiosMock.patch).toHaveBeenCalledTimes(1);
     expect(axiosMock.patch.mock.calls[0][0]).toContain('notification-service');
-    expect(axiosMock.patch.mock.calls[0][1].update).toHaveProperty('test-notification');
+    expect(axiosMock.patch.mock.calls[0][1]).toHaveProperty('update.test-notification');
   });
 
   it('can register push streams', async () => {
@@ -160,7 +160,7 @@ describe('ServiceRegistrar', () => {
 
     expect(axiosMock.patch).toHaveBeenCalledTimes(1);
     expect(axiosMock.patch.mock.calls[0][0]).toContain('push-service');
-    expect(axiosMock.patch.mock.calls[0][1].update).toHaveProperty('configuration-updates');
+    expect(axiosMock.patch.mock.calls[0][1]).toHaveProperty('update.configuration-updates');
   });
 
   it('can register file types', async () => {
@@ -185,7 +185,7 @@ describe('ServiceRegistrar', () => {
 
     expect(axiosMock.patch).toHaveBeenCalledTimes(1);
     expect(axiosMock.patch.mock.calls[0][0]).toContain('file-service');
-    expect(axiosMock.patch.mock.calls[0][1].update).toHaveProperty('service-files');
+    expect(axiosMock.patch.mock.calls[0][1]).toHaveProperty('update.service-files');
   });
 
   it('can register value definitions', async () => {
@@ -209,7 +209,7 @@ describe('ServiceRegistrar', () => {
 
     expect(axiosMock.patch).toHaveBeenCalledTimes(1);
     expect(axiosMock.patch.mock.calls[0][0]).toContain('value-service');
-    expect(axiosMock.patch.mock.calls[0][1].update).toHaveProperty('test-service');
+    expect(axiosMock.patch.mock.calls[0][1]).toHaveProperty('update.test-service');
   });
 
   it('can register additional', async () => {
@@ -231,6 +231,6 @@ describe('ServiceRegistrar', () => {
 
     expect(axiosMock.patch).toHaveBeenCalledTimes(1);
     expect(axiosMock.patch.mock.calls[0][0]).toContain('test-service');
-    expect(axiosMock.patch.mock.calls[0][1].update).toBe(configuration);
+    expect(axiosMock.patch.mock.calls[0][1]).toMatchObject({ update: configuration });
   });
 });
