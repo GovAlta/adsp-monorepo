@@ -81,4 +81,5 @@ export const CalendarEventDefault = {
 export interface CalendarEventSearchCriteria {
   startDate: string;
   endDate: string;
+  calendarName?: string;
 }

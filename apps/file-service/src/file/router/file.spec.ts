@@ -34,13 +34,14 @@ describe('file router', () => {
     send: jest.fn(),
   };
 
-  const fileType: FileType = {
+  const fileType: FileType & { typeId: string } = {
     tenantId,
     id: 'test',
     name: 'Test',
     anonymousRead: false,
     readRoles: ['test-reader'],
     updateRoles: ['test-updater'],
+    typeId: 'generated-pdf',
   };
 
   const file = new FileEntity(storageProviderMock, fileRepositoryMock, new FileTypeEntity(fileType), {
@@ -53,6 +54,7 @@ describe('file router', () => {
     size: 123,
     created: new Date(),
     createdBy: { id: 'tester', name: 'Tester' },
+    securityClassification: 'protected a',
   });
 
   beforeEach(() => {
@@ -272,6 +274,7 @@ describe('file router', () => {
           id: 'test',
           roles: ['test-reader'],
         },
+        fileEntity: file,
         getConfiguration: jest.fn(),
         params: { fileId: 'test' },
       };
@@ -294,6 +297,7 @@ describe('file router', () => {
           id: 'test',
           roles: [],
         },
+        FileEntity: file,
         getConfiguration: jest.fn(),
         params: { fileId: 'test' },
       };

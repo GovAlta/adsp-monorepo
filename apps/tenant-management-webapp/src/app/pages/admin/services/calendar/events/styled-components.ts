@@ -82,6 +82,8 @@ export const EventDetailsActionsWrapper = styled.div`
 
 export const EventFilterWrapper = styled.div`
   width: 37.5rem;
+  margin-top: calc(var(--goa-spacing-l) - 8px);
+  margin-bottom: var(--goa-spacing-l);
 `;
 
 export const EventFilterButtonWrapper = styled.div`
@@ -110,7 +112,7 @@ export const EventTableHeader = styled.div`
   font-size: var(--goa-font-size-7);
   line-height: var(--goa-spacing-xl);
   margin-top: var(--goa-spacing-xl);
-  margin-bottom: var(--goa-spacing-xl);
+  margin-bottom: var(--goa-spacing-l);
 `;
 
 export const CalendarNameText = styled.span`
