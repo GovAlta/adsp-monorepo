@@ -198,6 +198,48 @@ When('the user enters {string} as description in Edit calendar modal', function 
   calendarObj.editCalendarModalDescriptionField().shadow().find('.goa-textarea').clear().type(description, { force: true });
 });
 
+When('the user select {string} as role in Edit calendar modal', function (role) {
+  // calendarObj.editCalendarModalDescriptionField().shadow().find('.goa-textarea').clear().type(description, { force: true });
+  const roles = role.split(',');
+    for (let i = 0; i < roles.length; i++) {
+      if (roles[i].includes(':')) {
+     const clientRoleStringArray = roles[i].split(':');
+     let clientName = '';
+     for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
+       if (j !== clientRoleStringArray.length - 2) {
+         clientName = clientName + clientRoleStringArray[j].trim() + ':';
+       } else {
+         clientName = clientName + clientRoleStringArray[j];
+       }
+     }
+      const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
+      calendarObj
+       .addCalendarModalClientRolesTable(clientName)
+       .shadow()
+       .find('.role-name')
+       .contains(roleName)
+       .next()
+       .find('goa-checkbox')
+       .shadow()
+       .find('.goa-checkbox-container')
+       .scrollIntoView()
+       .click({ force: true });
+    } else {
+    calendarObj
+       .addCalendarModalRolesTable()
+       .shadow()
+       .find('.role-name')
+       .contains(roles[i].trim())
+       .next()
+       .find('goa-checkbox')
+       .shadow()
+       .find('.goa-checkbox-container')
+       .scrollIntoView()
+       .click({ force: true });
+      }
+  }
+});
+
 When('the user clicks Save button in Edit calendar modal', function () {
   cy.wait(1000); // Wait for the button to enable
   calendarObj.calendarModalSaveButton().shadow().find('button').scrollIntoView().click({ force: true });

@@ -40,8 +40,9 @@ Feature: Calendar
     When the user clicks "Edit" button for the calendar of "autotest-addcalendar", "autotest calendar desc", "auto-test-role1, urn:ads:autotest:chat-service:chat-admin"
     Then the user views Edit calendar modal
     When the user enters "autotest calendar desc edit" as description in Edit calendar modal
+    Then the user select "auto-test-role2" as role in Edit calendar modal
     And the user clicks Save button in Edit calendar modal
-    Then the user "views" the calendar of "autotest-addcalendar", "autotest calendar desc edit", "auto-test-role1, urn:ads:autotest:chat-service:chat-admin"
+    Then the user "views" the calendar of "autotest-addcalendar", "autotest calendar desc edit", "auto-test-role1, auto-test-role2"
      # Delete
     When the user clicks "Delete" button for the calendar of "autotest-addcalendar", "autotest calendar desc edit", "auto-test-role1, urn:ads:autotest:chat-service:chat-admin"
     Then the user views delete "calendar" confirmation modal for "autotest-addcalendar"
