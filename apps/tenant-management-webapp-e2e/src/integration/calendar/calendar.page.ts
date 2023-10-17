@@ -81,10 +81,5 @@ class CalendarPage {
     return cy.xpath('//*[@data-testid="add-calendar-modal" and @open]//*[@data-testid="calendar-modal-description-input"]');
   }
 
-  // editCalendarModalSaveBtn() {
-  //   return cy.xpath(
-  //     '//*[@data-testid="add-calendar-modal" and @open]//goa-button[@data-testid="calendar-modal-save" and @type="primary"]'
-  //   );
-  // }
 }
 export default CalendarPage;
