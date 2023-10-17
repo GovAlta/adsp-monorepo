@@ -28,7 +28,6 @@ import {
   FilterTitle,
 } from './styled-components';
 import { FetchEventsByCalendar } from '@store/calendar/actions';
-import { EventListFilter } from './eventListFilter';
 
 interface EventListRowProps {
   event: CalendarEvent;
@@ -109,6 +108,7 @@ const LoadMoreEvents = ({ next, calendarName }: LoadMoreEventsProps): JSX.Elemen
           <GoAButton
             testId="calendar-event-load-more-btn"
             key="calendar-event-load-more-btn"
+            type="tertiary"
             onClick={() => {
               dispatch(FetchEventsByCalendar(calendarName, next));
             }}
@@ -232,7 +232,6 @@ export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
     <>
       <EventTableHeader>Event list</EventTableHeader>
       <FilterTitle>Event filter</FilterTitle>
-      <EventListFilter calenderName={calendarName} />
       <CalendarEventListWrapper>
         <DeleteModal calendarName={calendarName} />
         <DataTable testId="calendar-selected-event-table">
