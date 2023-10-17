@@ -112,7 +112,7 @@ export const EventTableHeader = styled.div`
   font-size: var(--goa-font-size-7);
   line-height: var(--goa-spacing-xl);
   margin-top: var(--goa-spacing-xl);
-  margin-bottom: var(--goa-spacing-xl);
+  margin-bottom: var(--goa-spacing-l);
 `;
 
 export const CalendarNameText = styled.span`

@@ -231,7 +231,6 @@ export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
   return (
     <>
       <EventTableHeader>Event list</EventTableHeader>
-      <FilterTitle>Event filter</FilterTitle>
       <CalendarEventListWrapper>
         <DeleteModal calendarName={calendarName} />
         <DataTable testId="calendar-selected-event-table">
