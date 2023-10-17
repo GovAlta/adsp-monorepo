@@ -3,6 +3,7 @@ class CalendarPage {
   addCalendarOverviewTabBtn() {
     return cy.get('[data-testid="overall-calendar-add-btn"]');
   }
+
   addCalendarBtn() {
     return cy.get('[data-testid="add-calendar-btn"]');
   }
@@ -80,10 +81,10 @@ class CalendarPage {
     return cy.xpath('//*[@data-testid="add-calendar-modal" and @open]//*[@data-testid="calendar-modal-description-input"]');
   }
 
-  editCalendarModalSaveBtn() {
-    return cy.xpath(
-      '//*[@data-testid="add-calendar-modal" and @open]//goa-button[@data-testid="calendar-modal-save" and @type="primary"]'
-    );
-  }
+  // editCalendarModalSaveBtn() {
+  //   return cy.xpath(
+  //     '//*[@data-testid="add-calendar-modal" and @open]//goa-button[@data-testid="calendar-modal-save" and @type="primary"]'
+  //   );
+  // }
 }
 export default CalendarPage;

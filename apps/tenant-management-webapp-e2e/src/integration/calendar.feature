@@ -26,7 +26,7 @@ Feature: Calendar
     When the user clicks Add calendar button on overview tab
     Then the user views Add calendar modal
     When the user clicks Cancel button in Add calendar modal
-    Then the user views Calendar tab table header
+    Then the user views Calendar tab table header on calendars page
     When the user clicks Add calendar button
     Then the user views Add calendar modal
     # Invalid data

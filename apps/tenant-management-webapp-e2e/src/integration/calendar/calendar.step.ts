@@ -37,7 +37,7 @@ When('the user clicks Cancel button in Add calendar modal', function () {
   calendarObj.calendarModalCancelButton().shadow().find('button').click({ force: true });
 });
 
-Then('the user views Calendar tab table header', function () {
+Then('the user views Calendar tab table header on calendars page', function () {
 calendarObj.calendarTableHeader().should('be.visible');
 });
 
@@ -60,9 +60,9 @@ When('the user enters {string}, {string}, {string} in Add calendar modal',
     calendarObj.addCalendarModalNameField().shadow().find('input').clear().type(name, { delay: 100, force: true });
     calendarObj.addCalendarModalDescriptionField().shadow().find('.goa-textarea').clear().type(desc, { force: true });
     // Select roles or client roles
- const roles = role.split(',');
- for (let i = 0; i < roles.length; i++) {
-   if (roles[i].includes(':')) {
+    const roles = role.split(',');
+    for (let i = 0; i < roles.length; i++) {
+      if (roles[i].includes(':')) {
      const clientRoleStringArray = roles[i].split(':');
      let clientName = '';
      for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
@@ -84,7 +84,7 @@ When('the user enters {string}, {string}, {string} in Add calendar modal',
        .find('.goa-checkbox-container')
        .scrollIntoView()
        .click({ force: true });
-   } else {
+    } else {
     calendarObj
        .addCalendarModalRolesTable()
        .shadow()
@@ -200,6 +200,6 @@ When('the user enters {string} as description in Edit calendar modal', function 
 
 When('the user clicks Save button in Edit calendar modal', function () {
   cy.wait(1000); // Wait for the button to enable
-  calendarObj.editCalendarModalSaveBtn().shadow().find('button').scrollIntoView().click({ force: true });
+  calendarObj.calendarModalSaveButton().shadow().find('button').scrollIntoView().click({ force: true });
   cy.wait(2000); // Wait for the save operation
 });
