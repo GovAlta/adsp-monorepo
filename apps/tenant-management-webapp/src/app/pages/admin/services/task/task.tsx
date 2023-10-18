@@ -3,15 +3,21 @@ import { Page, Main, Aside } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { QueuesList } from './queuesList';
 import { TasksList } from './tasksList';
+import { useSelector } from 'react-redux';
+import { RootState } from '@store/index';
 import { TaskOverview } from './taskOverview';
 import AsideLinks from '@components/AsideLinks';
 
 export const Task: FunctionComponent = () => {
   const [openAddDefinition, setOpenAddDefinition] = useState(false);
-  function getTasksupportcodeLink() {
+  const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
+  const tenantName = useSelector((state: RootState) => state.tenant?.name);
+  const getTaskSupportCodeLink = () => {
     return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/task-service';
-  }
-
+  };
+  const getTaskDocsLink = () => {
+    return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Task service`;
+  };
   const searchParams = new URLSearchParams(document.location.search);
 
   const queues = searchParams.get('definitions');
@@ -35,7 +41,7 @@ export const Task: FunctionComponent = () => {
 
       <Aside>
         <>
-          <AsideLinks serviceLink={getTasksupportcodeLink()} />
+          <AsideLinks serviceLink={getTaskSupportCodeLink()} docsLink={getTaskDocsLink()} />
         </>
       </Aside>
     </Page>
