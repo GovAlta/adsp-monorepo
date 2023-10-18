@@ -112,7 +112,7 @@ const LoadMoreEvents = ({ next, calendarName }: LoadMoreEventsProps): JSX.Elemen
               dispatch(FetchEventsByCalendar(calendarName, next));
             }}
           >
-            Loading more
+            Load more
           </GoAButton>
         </LoadMoreWrapper>
       )}
@@ -224,6 +224,15 @@ export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
       <ProgressWrapper>
         <GoACircularProgress visible={true} size="small" />
       </ProgressWrapper>
+    );
+  }
+
+  if (!selectedEvents || selectedEvents.length === 0) {
+    return (
+      <div>
+        <br />
+        <b> There are no events available between the selected dates in this calendar</b>
+      </div>
     );
   }
 
