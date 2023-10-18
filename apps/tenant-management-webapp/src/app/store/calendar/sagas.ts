@@ -151,10 +151,10 @@ export function* fetchEventsByCalendar(action: FetchEventsByCalendarAction): Sag
     const params = {};
 
     if (criteria) {
-      params['criteria'] = {
+      params['criteria'] = JSON.stringify({
         startsAfter: criteria.startDate,
         endsBefore: criteria.endDate,
-      };
+      });
     }
 
     if (action?.after) {
