@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import { Tenant, Role } from './models';
 import { TenantApi as TenantApiConfig } from '@store/config/models';
 
@@ -14,10 +14,10 @@ export class TenantApi {
     }
 
     this.http = axios.create({ baseURL: config.host });
-    this.http.interceptors.request.use((req: AxiosRequestConfig) => {
-      req.headers['Authorization'] = `Bearer ${token}`;
-      req.headers['Content-Type'] = 'application/json;charset=UTF-8';
-      return req;
+    this.http.interceptors.request.use((config) => {
+      config.headers.Authorization = `Bearer ${token}`;
+      config.headers['Content-Type'] = 'application/json;charset=UTF-8';
+      return config;
     });
   }
 
