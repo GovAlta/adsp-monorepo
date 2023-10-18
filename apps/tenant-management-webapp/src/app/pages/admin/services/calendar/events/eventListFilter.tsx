@@ -23,7 +23,7 @@ export const EventListFilter = ({ calenderName }: EventListFilterProps): JSX.Ele
 
   return (
     <EventFilterWrapper>
-      <GoAGrid minChildWidth="30ch" gap="xs">
+      <GoAGrid minChildWidth="20ch">
         <GoAFormItem label="Start date">
           <GoAInputDate
             name="calendar-event-filter-start-date"

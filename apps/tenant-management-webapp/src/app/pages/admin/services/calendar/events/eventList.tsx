@@ -25,7 +25,6 @@ import {
   EventListNameTd,
   LoadMoreWrapper,
   EventTableHeader,
-  FilterTitle,
 } from './styled-components';
 import { FetchEventsByCalendar } from '@store/calendar/actions';
 

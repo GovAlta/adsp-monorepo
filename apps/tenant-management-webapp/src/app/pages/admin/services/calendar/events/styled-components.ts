@@ -103,6 +103,10 @@ export const CalendarEventFilterError = styled.span`
   top: -3px;
 `;
 
+export const CalendarDropdownWrapper = styled.div`
+  padding-right: 3px;
+`;
+
 // There might be a bug for the scroll, we need more padding to show the load more button in some case
 export const LoadMoreWrapper = styled.div`
   padding-bottom: var(--goa-spacing-4xl);
