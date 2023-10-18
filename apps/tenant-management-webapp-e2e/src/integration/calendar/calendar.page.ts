@@ -81,5 +81,9 @@ class CalendarPage {
     return cy.xpath('//*[@data-testid="add-calendar-modal" and @open]//*[@data-testid="calendar-modal-description-input"]');
   }
 
+  editCalendarModalTable() {
+    return cy.xpath('//*[@data-testid="add-calendar-modal"]//goa-table');
+  }
+
 }
 export default CalendarPage;

@@ -117,7 +117,6 @@ Then('the user {string} the calendar of {string}, {string}, {string}', function 
     }
   });
 });
-
 //Find a calendar with name, description and role(s)
 //Input: calendar name, calendar description, role(s) in a string separated with comma
 //Return: row number if the calendar is found; zero if the script isn't found
@@ -194,12 +193,23 @@ Then('the user views Edit calendar modal', function () {
   calendarObj.editCalendarModal().should('exist');
 });
 
-When('the user enters {string} as description in Edit calendar modal', function (description) {
+When('the user enters {string} as description and selects {string} as role in Edit calendar modal', function (description, role) {
   calendarObj.editCalendarModalDescriptionField().shadow().find('.goa-textarea').clear().type(description, { force: true });
-});
-
-When('the user select {string} as role in Edit calendar modal', function (role) {
-  // calendarObj.editCalendarModalDescriptionField().shadow().find('.goa-textarea').clear().type(description, { force: true });
+  //Unselect all checkboxes
+  calendarObj
+  .editCalendarModalTable()
+  .shadow()
+  .find('goa-checkbox')
+  .shadow()
+  .find('.goa-checkbox-container')
+  .then((elements) => {
+    for (let i = 0; i < elements.length; i++) {
+      if (elements[i].getAttribute('class')?.includes('--selected')) {
+        elements[i].click();
+      }
+    }
+  });
+  // Select roles
   const roles = role.split(',');
     for (let i = 0; i < roles.length; i++) {
       if (roles[i].includes(':')) {
