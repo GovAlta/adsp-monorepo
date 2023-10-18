@@ -2,7 +2,7 @@ import { BlobServiceClient, ContainerClient, StorageSharedKeyCredential } from '
 import * as hasha from 'hasha';
 import { Readable } from 'stream';
 import { Logger } from 'winston';
-import { FileEntity, FileStorageProvider } from '../file';
+import { FileEntity, FileStorageProvider, FileTypeEntity } from '../file';
 
 interface AzureBlobStorageProviderProps {
   BLOB_ACCOUNT_NAME: string;
@@ -55,10 +55,15 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
     }
   }
 
-  async saveFile(entity: FileEntity, content: Readable): Promise<boolean> {
+  async saveFile(entity: FileEntity, entityFileType: FileTypeEntity, content: Readable): Promise<boolean> {
     try {
       const containerClient = await this.getContainerClient(entity);
       const blobClient = containerClient.getBlockBlobClient(entity.id);
+      let securityClassification = '';
+
+      if (entity?.typeId && entityFileType.securityClassification !== undefined) {
+        securityClassification = entityFileType.securityClassification;
+      }
 
       const tags: Record<string, string> = {
         tenant: entity.tenantId.resource,
@@ -66,6 +71,7 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
         typeId: entity.type.id,
         filename: hasha(entity.filename, { algorithm: 'sha1', encoding: 'base64' }),
         createdById: entity.createdBy.id,
+        securityClassification: securityClassification,
       };
 
       if (entity.recordId) {

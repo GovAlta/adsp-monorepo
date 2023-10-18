@@ -83,6 +83,10 @@ components:
           example: 2023-04-03T21:27:20.245Z
           type: string
           format: date-time
+        securityClassification:
+          description: The data security classification for the file type.  If a security classification is empty that indicates the file type was created before the security classication was added.
+          example: public, protected a, protected b, protected c
+          type: string
 
 /file/v1/types:
   get:
