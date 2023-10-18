@@ -54,12 +54,6 @@ class CalendarPage {
     );
   }
 
-  addScriptModalClientRolesTable(clientName) {
-    return cy.xpath(
-      `//*[@data-testid="add-script-modal" and @open="true"]//h4/div[text()="${clientName}"]/parent::h4/following-sibling::goa-table`
-    );
-  }
-
   calendarTableBody() {
     return cy.xpath('//table[@data-testid="calendar-table"]//tbody');
   }
@@ -74,7 +68,6 @@ class CalendarPage {
 
   editCalendarModal() {
     return cy.xpath('//*[@data-testid="add-calendar-modal" and @open]');
-    // return cy.get('[data-testid="add-calendar-modal"]');
   }
 
   editCalendarModalDescriptionField() {
