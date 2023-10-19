@@ -99,6 +99,12 @@ export const isNotEmptyCheck = (label: string): Validator => {
   };
 };
 
+export const isNotUndefinedCheck = (value: string, label: string): Validator => {
+  return (input: string) => {
+    return input !== undefined ? '' : `${label} is required`;
+  };
+};
+
 export const isValidJSONCheck = (label?: string): Validator => {
   return (str: string) => {
     try {

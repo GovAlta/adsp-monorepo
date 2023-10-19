@@ -17,3 +17,33 @@ Feature: Calendar
     Then no critical or serious accessibility issues on "calendar overview page"
     When the user selects "Calendars" tab for "Calendar"
     Then no critical or serious accessibility issues on "calendar calendars page"
+
+  @TEST_CS-330 @REQ_CS-580 @REQ_CS-1652 @REQ_CS-1709 @regression
+  Scenario: As a tenant admin, I can add, edit and delete calendars in the tenant admin view
+    Given a tenant admin user is on tenant admin page
+    When the user selects the "Calendar" menu item
+    Then the user views the "Calendar service" overview content "The calendar service provides"
+    When the user clicks Add calendar button on overview tab
+    Then the user views Add calendar modal
+    When the user clicks Cancel button in Add calendar modal
+    Then the user views Calendar tab table header on calendars page
+    When the user clicks Add calendar button
+    Then the user views Add calendar modal
+    # Invalid data
+    When the user enters "auto-test-1A $" in name field in calendar modal
+    Then the user views the error message of "Allowed characters are: a-z, A-Z, 0-9, -, [space]" on namespace in calendar modal
+    # Validate data
+    When the user enters "autotest-addcalendar", "autotest calendar desc", "auto-test-role1, urn:ads:autotest:chat-service:chat-admin" in Add calendar modal
+    And the user clicks Save button in Add calendar modal
+    Then the user "views" the calendar of "autotest-addcalendar", "autotest calendar desc", "auto-test-role1, urn:ads:autotest:chat-service:chat-admin"
+    # Edit
+    When the user clicks "Edit" button for the calendar of "autotest-addcalendar", "autotest calendar desc", "auto-test-role1, urn:ads:autotest:chat-service:chat-admin"
+    Then the user views Edit calendar modal
+    When the user enters "autotest calendar desc edit" as description and selects "auto-test-role2" as role in Edit calendar modal
+    And the user clicks Save button in Edit calendar modal
+    Then the user "views" the calendar of "autotest-addcalendar", "autotest calendar desc edit", "auto-test-role2"
+     # Delete
+    When the user clicks "Delete" button for the calendar of "autotest-addcalendar", "autotest calendar desc edit", "auto-test-role2"
+    Then the user views delete "calendar" confirmation modal for "autotest-addcalendar"
+    When the user clicks Delete button in delete confirmation modal
+    Then the user "should not view" the calendar of "autotest-addcalendar", "autotest script desc edit", "auto-test-role2"

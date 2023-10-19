@@ -1,13 +1,13 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import { User, Role } from './models';
 
 export class KeycloakApi {
   private http: AxiosInstance;
   constructor(baseUrl: string, private realm: string, private token: string) {
     this.http = axios.create({ baseURL: `${baseUrl}/admin/realms` });
-    this.http.interceptors.request.use((req: AxiosRequestConfig) => {
-      req.headers['Authorization'] = `Bearer ${this.token}`;
-      return req;
+    this.http.interceptors.request.use((config) => {
+      config.headers.Authorization = `Bearer ${this.token}`;
+      return config;
     });
   }
 

@@ -25,10 +25,8 @@ import {
   EventListNameTd,
   LoadMoreWrapper,
   EventTableHeader,
-  FilterTitle,
 } from './styled-components';
 import { FetchEventsByCalendar } from '@store/calendar/actions';
-import { EventListFilter } from './eventListFilter';
 
 interface EventListRowProps {
   event: CalendarEvent;
@@ -109,11 +107,12 @@ const LoadMoreEvents = ({ next, calendarName }: LoadMoreEventsProps): JSX.Elemen
           <GoAButton
             testId="calendar-event-load-more-btn"
             key="calendar-event-load-more-btn"
+            type="tertiary"
             onClick={() => {
               dispatch(FetchEventsByCalendar(calendarName, next));
             }}
           >
-            Loading more
+            Load more
           </GoAButton>
         </LoadMoreWrapper>
       )}
@@ -228,11 +227,18 @@ export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
     );
   }
 
+  if (!selectedEvents || selectedEvents.length === 0) {
+    return (
+      <div>
+        <br />
+        <b> There are no events available between the selected dates in this calendar</b>
+      </div>
+    );
+  }
+
   return (
     <>
       <EventTableHeader>Event list</EventTableHeader>
-      <FilterTitle>Event filter</FilterTitle>
-      <EventListFilter calenderName={calendarName} />
       <CalendarEventListWrapper>
         <DeleteModal calendarName={calendarName} />
         <DataTable testId="calendar-selected-event-table">

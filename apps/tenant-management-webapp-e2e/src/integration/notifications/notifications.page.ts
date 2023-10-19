@@ -525,5 +525,17 @@ class NotificationsPage {
   templateModalBodyWithHelpText() {
     return cy.xpath('//*[@data-testid="template-form"]//goa-form-item[contains(@helptext, "*")]');
   }
+
+  subscriptionAppContactSupportsInstructions() {
+    return cy.xpath('//*[@id="contactSupport"]//goa-callout/div[1]');
+  }
+
+  subscriptionAppContactSupportEmail() {
+    return cy.xpath('//*[@id="contactSupport"]//goa-callout/div[2]/a');
+  }
+
+  subscriptionAppContactSupportPhone() {
+    return cy.xpath('//*[@id="contactSupport"]//goa-callout/div[3]');
+  }
 }
 export default NotificationsPage;

@@ -705,7 +705,7 @@ function findFileType(name, readRole, updateRole, retention) {
                 counter = counter + 1;
               }
             });
-            if (rowElement.cells[3].innerHTML.includes(retention)) {
+            if (rowElement.cells[4].innerHTML.includes(retention)) {
               counter = counter + 1;
             }
             Cypress.log({
@@ -904,7 +904,7 @@ When('the user searches {string} on Uploaded files page', function (fileName) {
     .shadow()
     .find('input')
     .clear()
-    .type(fileName, { delay: 100, force: true });
+    .type(fileName, { delay: 200, force: true });
   fileServiceObj.uploadedFilesSearchButton().shadow().find('button').click({ force: true });
   cy.wait(4000);
 });

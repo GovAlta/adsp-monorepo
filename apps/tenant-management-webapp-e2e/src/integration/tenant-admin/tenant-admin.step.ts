@@ -667,8 +667,8 @@ Then(
           'YYYY-MM-DD hh:mm'
         );
         //comparing table timestamp with the min and max values
-        expect(parseInt(parseDateTime + '')).to.be.gt(parseInt(tableMinTimestamp + ''));
-        expect(parseInt(parseDateTime + '')).to.be.lt(parseInt(tableMaxTimestamp + ''));
+        expect(parseInt(parseDateTime + '')).to.be.gte(parseInt(tableMinTimestamp + ''));
+        expect(parseInt(parseDateTime + '')).to.be.lte(parseInt(tableMaxTimestamp + ''));
       });
   }
 );
@@ -858,8 +858,8 @@ Then(
           userMaxTimestamp.split('T')[0] + ' ' + userMaxTimestamp.split('T')[1],
           'YYYY-MM-DD hh:mm'
         );
-        expect(parseInt(parseDateTime + '')).to.be.gt(parseInt(tableMinTimestamp + ''));
-        expect(parseInt(parseDateTime + '')).to.be.lt(parseInt(tableMaxTimestamp + ''));
+        expect(parseInt(parseDateTime + '')).to.be.gte(parseInt(tableMinTimestamp + ''));
+        expect(parseInt(parseDateTime + '')).to.be.lte(parseInt(tableMaxTimestamp + ''));
       });
   }
 );

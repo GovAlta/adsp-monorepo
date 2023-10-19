@@ -14,10 +14,10 @@ export class FileApi {
     this.fileConfig = config.fileApi;
     this.after = after;
     this.http = axios.create({ baseURL: this.fileConfig.host });
-    this.http.interceptors.request.use((req: AxiosRequestConfig) => {
-      req.headers['Authorization'] = `Bearer ${token}`;
-      req.headers['Content-Type'] = 'application/json;charset=UTF-8';
-      return req;
+    this.http.interceptors.request.use((config) => {
+      config.headers.Authorization = `Bearer ${token}`;
+      config.headers['Content-Type'] = 'application/json;charset=UTF-8';
+      return config;
     });
   }
 

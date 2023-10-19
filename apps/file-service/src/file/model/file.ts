@@ -12,6 +12,7 @@ export class FileEntity implements File {
   id: string;
   recordId: string;
   filename: string;
+  typeId: string;
   size: number;
   createdBy: UserInfo;
   created: Date;
@@ -20,6 +21,7 @@ export class FileEntity implements File {
   deleted = false;
   infected = false;
   retentionDays?: number;
+  securityClassification?: string;
 
   static async create(
     storageProvider: FileStorageProvider,
@@ -43,7 +45,7 @@ export class FileEntity implements File {
     });
 
     entity = await repository.save(entity);
-    const saved = await storageProvider.saveFile(entity, content);
+    const saved = await storageProvider.saveFile(entity, type, content);
     if (!saved) {
       // Deleted the record if the storage failed to save the file so we don't end up with orphans.
       await entity.delete(true);
@@ -67,6 +69,8 @@ export class FileEntity implements File {
     const record = values as FileRecord;
 
     if (record.id) {
+      this.typeId = type?.id;
+      this.securityClassification = type?.securityClassification;
       this.tenantId = record.tenantId;
       this.id = record.id;
       this.lastAccessed = record.lastAccessed;

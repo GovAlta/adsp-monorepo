@@ -14,6 +14,15 @@ export enum SecurityClassification {
   public = 'public',
 }
 
+export const defaultEditCommentTopicType: CommentTopicTypes = {
+  id: '',
+  name: '',
+  adminRoles: [],
+  commenterRoles: [],
+  readerRoles: [],
+  securityClassification: undefined,
+};
+
 export const defaultCommentTopicType: CommentTopicTypes = {
   id: '',
   name: '',

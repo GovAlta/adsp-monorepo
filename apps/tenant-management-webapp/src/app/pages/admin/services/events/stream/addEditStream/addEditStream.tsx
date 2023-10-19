@@ -110,6 +110,7 @@ export const AddEditStream = ({ onSave, eventDefinitions, streams }: AddEditStre
                 }
                 onSave(stream);
                 dispatch(ResetModalState());
+                setStream(initialStream);
               }}
             >
               Save

@@ -148,6 +148,7 @@ Feature: Notifications
     And the user clicks Save button in Edit contact information modal
     Then the user views contact information of "<Email>", "<Phone>" and "<Instructions>" on notifications page
     # In the step definition, rnd{} will use a random 4-digit number to attach/replace part of the static strings in {}
+    And the user should be able to view "<Email>", "<Phone>" and "<Instructions>" as contact information in the subscription app
     Examples:
       | Email              | Phone           | Instructions  |
       | rnd{abc@gov.ab.ca} | rnd{7805671456} | rnd{autotest} |

@@ -137,7 +137,7 @@ export const TasksList = (): JSX.Element => {
         </div>
       )}
 
-      {indicator.show && (
+      {!next && indicator.show && (
         <ProgressWrapper>
           <GoACircularProgress visible={indicator.show} size="small" />
         </ProgressWrapper>
@@ -148,7 +148,7 @@ export const TasksList = (): JSX.Element => {
         Object.keys(tasks).length === 0 &&
         renderNoItem('queue tasks')}
       {selectedTask !== '' && tasks && Object.keys(tasks).length !== 0 && (
-        <Visible visible={!indicator.show}>
+        <Visible visible={true}>
           <TaskListTable
             tasks={tasks}
             onEditTask={(updatedTask) => {
@@ -157,12 +157,12 @@ export const TasksList = (): JSX.Element => {
               setOpenAddTask(true);
             }}
           />
+          {next && (
+            <GoAButton testId="calendar-event-load-more-btn" key="calendar-event-load-more-btn" onClick={onNext}>
+              Load more
+            </GoAButton>
+          )}
         </Visible>
-      )}
-      {selectedTask !== '' && next && (
-        <GoAButton testId="calendar-event-load-more-btn" key="calendar-event-load-more-btn" onClick={onNext}>
-          Load more
-        </GoAButton>
       )}
       <TaskModal
         open={openAddTask}

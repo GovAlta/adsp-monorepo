@@ -11,6 +11,7 @@ export class TopicEntity implements Topic {
   type?: TopicTypeEntity;
   name: string;
   description: string;
+  securityClassification?: string;
   resourceId?: AdspId | string;
   commenters?: string[] = [];
 
@@ -31,6 +32,7 @@ export class TopicEntity implements Topic {
     this.resourceId = topic.resourceId;
     this.name = topic.name;
     this.description = topic.description;
+    this.securityClassification = topic.securityClassification;
     this.commenters = topic.commenters || [];
 
     const record = topic as Topic;
