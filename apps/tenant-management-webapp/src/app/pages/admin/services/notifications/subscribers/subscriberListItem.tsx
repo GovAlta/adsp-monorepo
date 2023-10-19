@@ -2,8 +2,11 @@ import React, { FunctionComponent, useState } from 'react';
 import { Subscriber } from '@store/subscription/models';
 import { phoneWrapper } from '@lib/wrappers';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
+import styled from 'styled-components';
+import { GoAIcon } from '@abgov/react-components-new';
 import { RowFlex } from './styled-components';
 import { getSubcriberSubscriptions } from './apis';
+
 interface ActionComponentProps {
   subscriber: Subscriber;
   openModalFunction?: (subscriber: Subscriber) => void;
@@ -32,12 +35,42 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
 
   const email = subscriber?.channels?.find(({ channel }) => channel === 'email')?.address;
   const sms = subscriber?.channels?.find(({ channel }) => channel === 'sms')?.address;
+  const emailVerified = subscriber?.channels?.find(({ channel }) => channel === 'email')?.verified;
+  const smsVerified = subscriber?.channels?.find(({ channel }) => channel === 'sms')?.verified;
   return (
     <>
       <tr key={subscriber.id}>
         <td>{characterLimit(subscriber?.addressAs, 30)}</td>
-        <td>{characterLimit(email, 30)}</td>
-        <td className="no-wrap">{phoneWrapper(sms)}</td>
+        <td>
+          <div style={{ display: 'flex' }}>
+            <div>
+              {emailVerified && (
+                <IconsCell>
+                  <div className="hover-blue tooltip">
+                    <GoAIcon data-testid="mail-icon" size="small" type="checkmark" />
+                    <span className="tooltip-text">Verified</span>
+                  </div>
+                </IconsCell>
+              )}
+            </div>
+            <div>{characterLimit(email, 30)}</div>
+          </div>
+        </td>
+        <td className="no-wrap">
+          <div style={{ display: 'flex' }}>
+            <div>
+              {smsVerified && (
+                <IconsCell>
+                  <div className="hover-blue tooltip">
+                    <GoAIcon data-testid="mail-icon" size="small" type="shield" />
+                    <span className="tooltip-text">Verified</span>
+                  </div>
+                </IconsCell>
+              )}
+            </div>
+            <div> {phoneWrapper(sms)}</div>
+          </div>
+        </td>
         {!hideUserActions ? (
           <td>
             <RowFlex>
@@ -109,3 +142,11 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
     </>
   );
 };
+
+const IconsCell = styled.div`
+  display: flex;
+  justify-content: space-around;
+  width: 90%;
+  width: 50%;
+  margin: 2px 2px 0 0;
+`;

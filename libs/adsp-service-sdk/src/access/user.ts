@@ -12,6 +12,7 @@ export interface User {
     aud: string;
     iss: string;
     bearer: string;
+    email_verified: boolean;
     [x: string]: unknown;
   };
 }
