@@ -11,7 +11,7 @@ components:
       type: object
       properties:
         type:
-          $ref: "#/components/schemas/TopicType"
+          $ref: '#/components/schemas/TopicType'
         id:
           type: integer
         urn:
@@ -26,6 +26,8 @@ components:
           type: array
           items:
             type: string
+        securityClassification:
+          type: string
     Comment:
       type: object
       properties:
@@ -98,7 +100,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Topic"
+                    $ref: '#/components/schemas/Topic'
                 page:
                   type: object
                   properties:
@@ -140,6 +142,10 @@ components:
                 type: string
                 description: A description of the topic.
                 example: Comments on the case.
+              securityClassification:
+                type: string
+                description: The security classification type of the topic.
+                example: public, protected a, protected b, protected c.
               commenters:
                 type: array
                 items:
@@ -156,7 +162,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Topic"
+              $ref: '#/components/schemas/Topic'
       401:
         description: Not authorized.
       403:
@@ -182,7 +188,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Topic"
+              $ref: '#/components/schemas/Topic'
       401:
         description: Not authorized.
       403:
@@ -226,7 +232,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Topic"
+              $ref: '#/components/schemas/Topic'
       401:
         description: Not authorized.
       403:
@@ -309,7 +315,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Comment"
+                    $ref: '#/components/schemas/Comment'
                 page:
                   type: object
                   properties:
@@ -362,7 +368,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Comment"
+              $ref: '#/components/schemas/Comment'
       401:
         description: Not authorized.
       403:
@@ -394,7 +400,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Comment"
+              $ref: '#/components/schemas/Comment'
       401:
         description: Not authorized.
       403:
@@ -437,7 +443,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Comment"
+              $ref: '#/components/schemas/Comment'
       401:
         description: Not authorized.
       403:

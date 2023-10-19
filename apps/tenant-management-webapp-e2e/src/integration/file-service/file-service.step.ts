@@ -1,8 +1,6 @@
 import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
 import fd = require('form-data');
-// NOTE: import from dist since browserify/tsify preprocessors don't seem to handle resolving axios module properly.
-import axios from 'axios/dist/browser/axios.cjs';
-import type { AxiosResponse } from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import commonlib from '../common/common-library';
 import fileServicePage from './file-service.page';
 
