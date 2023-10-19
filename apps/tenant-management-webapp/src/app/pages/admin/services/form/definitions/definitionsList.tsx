@@ -18,7 +18,7 @@ export const FormDefinitionsTable: FunctionComponent<PdfTemplatesTableProps> = (
           <tr>
             <th data-testid="pdf-definitions-table-header-name">Name</th>
             <th id="pdf-definitions-template-id" data-testid="pdf-definitions-table-header-template-id">
-              Template ID
+              Definition ID
             </th>
             <th id="pdf-definitions-Description" data-testid="pdf-definitions-table-header-description">
               Description
