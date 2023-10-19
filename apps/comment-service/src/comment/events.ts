@@ -21,6 +21,11 @@ const topicSchema = {
     name: { type: 'string' },
     description: { type: ['string', 'null'] },
     resourceId: { type: ['string', 'null'] },
+    securityClassification: {
+      type: 'string',
+      enum: ['public', 'protected a', 'protected b', 'protected c', ''],
+      default: 'protected a',
+    },
   },
   required: ['id', 'name'],
 };
@@ -126,6 +131,7 @@ function mapTopic(topic: Topic) {
     description: topic.description,
     resourceId: topic.resourceId?.toString(),
     commenters: topic.commenters,
+    securityClassification: topic.securityClassification,
   };
 }
 
