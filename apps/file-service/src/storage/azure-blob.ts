@@ -4,7 +4,10 @@ import { Readable } from 'stream';
 import { Logger } from 'winston';
 import * as detect from 'detect-file-type';
 import { FileEntity, FileStorageProvider } from '../file';
+//import { concat } from 'stream-concat';
 
+//import * as concatStream from 'stream-concat';
+import * as concatStream from 'concat-stream';
 interface AzureBlobStorageProviderProps {
   BLOB_ACCOUNT_NAME: string;
   BLOB_ACCOUNT_KEY: string;
@@ -74,53 +77,22 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
       }
 
       const start = Date.now();
-      console.log('Start:' + start);
 
-      let accumulatedData = Buffer.alloc(0); // Start with an empty buffer
+      const response = (await createCustomConcatStream(content)) as any;
 
-      const onData = (chunk) => {
-        accumulatedData = Buffer.concat([accumulatedData, chunk]);
+      const fullStream = response.fileStream;
+      const fileType = response.fileType;
 
-        if (accumulatedData.length > 0) {
-          // You have enough data to detect the file type
-
-          detect.fromBuffer(accumulatedData, (err, result) => {
-            if (err) {
-              console.log('err below');
-              return console.log(err);
-            }
-            console.log('Extension: ' + JSON.stringify(result)); // { ext: 'jpg', mime: 'image/jpeg' }
-          });
-
-          // Stop listening to data events - if you remove the following line, it will keep going through every chunking to determine file type - having it there only checks the first chunk (65536 bytes seems to be the default)
-          content.removeListener('data', onData);
-          //content.pause(); // Some examples have this, but if you uncomment it the app just hangs here - we need to free up 'content' to allow it to be uploaded afterwards
-        }
-
-        console.log('ondata:' + Date.now());
-      };
-
-      content.on('data', onData);
-
-      content.on('end', () => {
-        console.log('accumulatedData.length:' + JSON.stringify(accumulatedData.length));
-
-        if (accumulatedData.length < 8) {
-          console.error('Stream ended prematurely, not enough data to detect the file type.');
-        }
-        console.log('done');
-      });
-
-      content.on('error', (err) => {
-        console.error('An error occurred:', err);
-      });
+      this.logger.debug(`File type: ${JSON.stringify(fileType)}`);
 
       const end = Date.now();
 
       console.log('End:' + end);
       console.log('Diff:' + (end - start));
 
-      const { requestId } = await blobClient.uploadStream(content, BUFFER_SIZE, MAX_BUFFERS, { tags });
+      console.log('content length of fullStream: ' + fullStream.readableLength);
+
+      const { requestId } = await blobClient.uploadStream(fullStream, BUFFER_SIZE, MAX_BUFFERS, { tags });
 
       console.log('requestId:' + requestId);
 
@@ -168,4 +140,43 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
 
     return containerClient;
   }
+}
+
+function createCustomConcatStream(readableStream) {
+  return new Promise((resolve, reject) => {
+    const customStream = new Readable({
+      read() {},
+    });
+
+    let fileType;
+
+    readableStream.on('data', (data) => {
+      if (customStream.readableLength === 0) {
+        let accumulatedData = Buffer.alloc(0); // Start with an empty buffer
+        accumulatedData = Buffer.concat([accumulatedData, data]);
+
+        detect.fromBuffer(accumulatedData, (err, result) => {
+          if (err) {
+            console.log('err below');
+            return console.log(err);
+          }
+          console.log('Extension: ' + JSON.stringify(result)); // { ext: 'jpg', mime: 'image/jpeg' }
+          fileType = result;
+        });
+      }
+
+      customStream.push(data);
+    });
+
+    // Resolve the promise when the concatStream operation is complete
+    readableStream.on('end', () => {
+      customStream.push(null); // Signal the end of the readable stream
+      resolve({ fileStream: customStream, fileType: fileType });
+    });
+
+    // Handle any errors
+    readableStream.on('error', (err) => {
+      reject(err);
+    });
+  });
 }
