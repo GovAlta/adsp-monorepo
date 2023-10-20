@@ -52,7 +52,7 @@ export const QueueTableItem = ({ id, queue, onDelete }: QueueTableItemProps): JS
             onClick={() => history.push(`${url}/edit/${queue.namespace}:${queue.name}`)}
           />
           <GoAContextMenuIcon
-            testId={`form-definition-delete`}
+            testId={`task-definition-delete`}
             title="Delete"
             type="trash"
             onClick={() => {
