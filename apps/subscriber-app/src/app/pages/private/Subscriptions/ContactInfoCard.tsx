@@ -33,6 +33,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
     : userInfo?.email;
 
   const isEmailVerified = subscriber && subscriber?.channels?.find((c) => c.channel === Channels.email)?.verified;
+  const isSmsVerified = subscriber && subscriber?.channels?.find((c) => c.channel === Channels.sms)?.verified;
 
   const subscriberSMS =
     subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === Channels.sms)[0]?.address || '';
@@ -84,23 +85,6 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
 
     // allow empty phone number
     return true;
-  };
-
-  const inValidSMSInput = (smsInput: string): boolean => {
-    if (smsInput) {
-      // eslint-disable-next-line
-      return /^[0-9\.\-\/]+$/.test(smsInput);
-    }
-
-    return true;
-  };
-
-  const sanitizeSMS = (sms: string) => {
-    return sms
-      .toLowerCase()
-      .split('')
-      .filter((c) => c >= '0' && c <= '9')
-      .join('');
   };
 
   const saveContactInformation = async () => {
@@ -268,24 +252,34 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                   <div data-testid="email-label">
                     <Label>Email</Label>
                     <p>
-                      {subscriberEmail}
-                      {isEmailVerified !== undefined && isEmailVerified === true && (
-                        <VerificationWrapper>
+                      <VerificationWrapper>
+                        {isEmailVerified !== undefined && isEmailVerified === true && (
                           <GoABadge type="success" content="Verified" />
-                        </VerificationWrapper>
-                      )}
-                      {isEmailVerified !== undefined && isEmailVerified === false && (
-                        <VerificationWrapper>
+                        )}
+                        {isEmailVerified !== undefined && isEmailVerified === false && (
                           <GoABadge type="important" content="Not verified" />
-                        </VerificationWrapper>
-                      )}
+                        )}
+                      </VerificationWrapper>
+
+                      {subscriberEmail}
                     </p>{' '}
                   </div>
                 </GridItem>
                 <GridItem md={3.5} hSpacing={1}>
                   <div data-testid="phone-number-label">
                     <Label>Phone number</Label>
-                    <p>{phoneWrapper(subscriberSMS)}</p>
+                    <p>
+                      <VerificationWrapper>
+                        {isSmsVerified !== undefined && isSmsVerified === true && (
+                          <GoABadge type="success" content="Verified" />
+                        )}
+                        {isSmsVerified !== undefined && isSmsVerified === false && (
+                          <GoABadge type="important" content="Not verified" />
+                        )}
+                      </VerificationWrapper>
+
+                      {phoneWrapper(subscriberSMS)}
+                    </p>
                   </div>
                 </GridItem>
                 <GridItem md={5}>
