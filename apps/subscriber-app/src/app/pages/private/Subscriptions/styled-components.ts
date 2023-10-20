@@ -36,5 +36,5 @@ export const VerificationWrapper = styled.div`
   display: inline-block;
   position: relative;
   top: 3px;
-  margin-right: 0.5rem;
+  margin-right: var(--goa-spacing-xs);
 `;
