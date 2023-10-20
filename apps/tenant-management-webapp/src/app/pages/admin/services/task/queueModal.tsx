@@ -95,7 +95,7 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
               type="text"
               name="namespace"
               value={queue.namespace}
-              data-testid={`queue-modal-namesppace-input`}
+              data-testid={`queue-modal-namespace-input`}
               aria-label="namespace"
               disabled={!isNew}
               onChange={(namespace, value) => {
