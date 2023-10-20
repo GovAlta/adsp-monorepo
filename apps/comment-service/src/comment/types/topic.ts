@@ -15,6 +15,7 @@ export interface Topic {
   id: number;
   resourceId?: AdspId | string;
   name: string;
+  securityClassification?: string;
   description: string;
   commenters?: string[];
 }

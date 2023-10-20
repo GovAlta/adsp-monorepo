@@ -23,7 +23,7 @@ interface ResponseObject {
   };
   status: number;
   statusText: string;
-  headers: any;
+  headers: unknown;
   config: {
     url: string;
     method: string;

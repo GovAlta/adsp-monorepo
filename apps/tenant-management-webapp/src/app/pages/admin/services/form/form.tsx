@@ -54,7 +54,7 @@ export const Form: FunctionComponent = () => {
             <Tab label="Overview" data-testid="form-overview-tab">
               <FormOverview setOpenAddDefinition={setOpenAddDefinition} />
             </Tab>
-            <Tab label="Templates" data-testid="form-templates">
+            <Tab label="Definitions" data-testid="form-templates">
               <FormDefinitions openAddDefinition={openAddDefinition} />
             </Tab>
           </Tabs>

@@ -96,6 +96,7 @@ export function createTypeSubscription(apiId: AdspId, repository: SubscriptionRe
     try {
       const tenantId = req.tenant.id;
       const user = req.user as User;
+      const token = req.user?.token;
       const type: NotificationTypeEntity = req[TYPE_KEY];
       const { criteria, id, userId, addressAs, channels } = req.body;
       const subscriber: Subscriber =
@@ -108,6 +109,7 @@ export function createTypeSubscription(apiId: AdspId, repository: SubscriptionRe
                 {
                   channel: Channel.email,
                   address: user.email,
+                  verified: token?.email_verified || false,
                 },
               ],
             }
@@ -259,6 +261,7 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
   return async (req, res, next) => {
     try {
       const user = req.user;
+      const token = req.user?.token;
       const tenantId = req.tenant.id;
       // Omit the id field from the request body.
       const { userId, addressAs, channels } = req.body;
@@ -273,6 +276,7 @@ export function createSubscriber(apiId: AdspId, repository: SubscriptionReposito
                 {
                   channel: Channel.email,
                   address: user.email,
+                  verified: token?.email_verified || false,
                 },
               ],
             }

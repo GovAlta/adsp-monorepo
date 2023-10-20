@@ -8,10 +8,17 @@ import { Channels } from '@store/subscription/models';
 import { Grid, GridItem } from '@components/Grid';
 import { SubscriberChannel, Subscriber } from '@store/subscription/models';
 import { InfoCard } from './InfoCard';
-import { Label, GapVS } from './styled-components';
+import { Label, GapVS, VerificationWrapper } from './styled-components';
 import { RootState } from '@store/index';
 import { phoneWrapper } from '@lib/wrappers';
-import { GoAButton, GoAInput, GoAButtonGroup, GoARadioItem, GoARadioGroup } from '@abgov/react-components-new';
+import {
+  GoAButton,
+  GoAInput,
+  GoAButtonGroup,
+  GoARadioItem,
+  GoARadioGroup,
+  GoABadge,
+} from '@abgov/react-components-new';
 interface ContactInfoCardProps {
   subscriber?: Subscriber;
 }
@@ -24,6 +31,9 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
   const subscriberEmail = subscriber
     ? subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === Channels.email)[0]?.address
     : userInfo?.email;
+
+  const isEmailVerified = subscriber && subscriber?.channels?.find((c) => c.channel === Channels.email)?.verified;
+
   const subscriberSMS =
     subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === Channels.sms)[0]?.address || '';
 
@@ -257,7 +267,19 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                 <GridItem md={3.5} hSpacing={1}>
                   <div data-testid="email-label">
                     <Label>Email</Label>
-                    <p>{subscriberEmail}</p>
+                    <p>
+                      {subscriberEmail}
+                      {isEmailVerified !== undefined && isEmailVerified === true && (
+                        <VerificationWrapper>
+                          <GoABadge type="success" content="Verified" />
+                        </VerificationWrapper>
+                      )}
+                      {isEmailVerified !== undefined && isEmailVerified === false && (
+                        <VerificationWrapper>
+                          <GoABadge type="important" content="Not verified" />
+                        </VerificationWrapper>
+                      )}
+                    </p>{' '}
                   </div>
                 </GridItem>
                 <GridItem md={3.5} hSpacing={1}>

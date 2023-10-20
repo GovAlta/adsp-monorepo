@@ -2,8 +2,11 @@ import React, { FunctionComponent, useState } from 'react';
 import { Subscriber } from '@store/subscription/models';
 import { phoneWrapper } from '@lib/wrappers';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
+import styled from 'styled-components';
+import { GoAIcon, GoABadge } from '@abgov/react-components-new';
 import { RowFlex } from './styled-components';
 import { getSubcriberSubscriptions } from './apis';
+
 interface ActionComponentProps {
   subscriber: Subscriber;
   openModalFunction?: (subscriber: Subscriber) => void;
@@ -32,12 +35,44 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
 
   const email = subscriber?.channels?.find(({ channel }) => channel === 'email')?.address;
   const sms = subscriber?.channels?.find(({ channel }) => channel === 'sms')?.address;
+  const emailVerified = subscriber?.channels?.find(({ channel }) => channel === 'email')?.verified;
+  const smsVerified = subscriber?.channels?.find(({ channel }) => channel === 'sms')?.verified;
   return (
     <>
       <tr key={subscriber.id}>
         <td>{characterLimit(subscriber?.addressAs, 30)}</td>
-        <td>{characterLimit(email, 30)}</td>
-        <td className="no-wrap">{phoneWrapper(sms)}</td>
+        <td>
+          <div style={{ display: 'flex' }}>
+            {email && (
+              <GoABadgeWrapper>
+                {emailVerified ? (
+                  <GoABadge key="email-verified" type="success" content="Verified" />
+                ) : (
+                  <GoABadge key="email-not-verified" type="important" content="Not verified" />
+                )}
+              </GoABadgeWrapper>
+            )}
+            <div>{characterLimit(email, 30)}</div>
+          </div>
+        </td>
+        {!hideUserActions ? (
+          <td className="no-wrap">
+            <div style={{ display: 'flex' }}>
+              {sms && (
+                <GoABadgeWrapper>
+                  {smsVerified ? (
+                    <GoABadge key="sms-verified" type="success" content="Verified" />
+                  ) : (
+                    <GoABadge key="sms-not-verified" type="important" content="Not verified" />
+                  )}
+                </GoABadgeWrapper>
+              )}
+              <div>{phoneWrapper(sms)}</div>
+            </div>
+          </td>
+        ) : (
+          ''
+        )}
         {!hideUserActions ? (
           <td>
             <RowFlex>
@@ -109,3 +144,8 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
     </>
   );
 };
+
+const GoABadgeWrapper = styled.div`
+  margin-right: var(--goa-spacing-s);
+  text-wrap: nowrap;
+`;

@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import { ConfigState, FileApi as FileApiConfig } from '@store/config/models';
 import { FileService, FileCriteria } from './models';
 
@@ -16,7 +16,6 @@ export class FileApi {
     this.http = axios.create({ baseURL: this.fileConfig.host });
     this.http.interceptors.request.use((config) => {
       config.headers.Authorization = `Bearer ${token}`;
-      config.headers['Content-Type'] = 'application/json;charset=UTF-8';
       return config;
     });
   }

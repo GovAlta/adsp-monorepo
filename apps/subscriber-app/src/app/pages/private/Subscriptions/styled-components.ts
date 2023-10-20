@@ -31,3 +31,10 @@ export const ContactInformationContainer = styled.div`
 export const SubscriptionListContainer = styled.div`
   padding-top: 0rem;
 `;
+
+export const VerificationWrapper = styled.div`
+  display: inline-block;
+  position: relative;
+  top: 3px;
+  margin-left: 0.5rem;
+`;
