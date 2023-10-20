@@ -55,7 +55,7 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
     wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
   )
-    .add('duplicated', 'name', duplicateNameCheck(queueNames, 'Queue'))
+    .add('duplicated', 'name', isNotEmptyCheck('name'), duplicateNameCheck(queueNames, 'Queue'))
     .add(
       'namespace',
       'namespace',
@@ -71,7 +71,7 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
     };
 
     if (isNew) {
-      validations['duplicated'] = queue.name;
+      validations['duplicated'] = `${queue?.namespace}:${queue?.name}`;
 
       if (!validators.checkAll(validations)) {
         return;
