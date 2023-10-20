@@ -25,7 +25,7 @@ When('the user clicks Add calendar button', function () {
 });
 
 Then('the user views Add calendar modal', function () {
-  calendarObj.addScriptModalTitle().invoke('text').should('eq', 'Add calendar');
+  calendarObj.addCalendarModalTitle().invoke('text').should('eq', 'Add calendar');
 });
 
 When('the user clicks Save button in Add calendar modal', function () {
@@ -255,3 +255,72 @@ When('the user clicks Save button in Edit calendar modal', function () {
   calendarObj.calendarModalSaveButton().shadow().find('button').scrollIntoView().click({ force: true });
   cy.wait(2000); // Wait for the save operation
 });
+
+Then('the user views Calendar Events page', function () {
+  calendarObj.calendarEventsPage().should('be.visible');
+  });
+
+  When('the user selects {string} calendar from calendar dropdown', function (event) {
+    calendarObj
+      .selectEventDropdown()
+      .click({ force: true });
+    calendarObj
+      .selectEventDropdown()
+      .shadow()
+      .find('li[data-value="' + event + '"]')
+      .scrollIntoView()
+      .click({ force: true });
+      cy.wait(2000);
+  });
+
+  Then('the user views {string} on calendar events page', function(text) {
+    calendarObj.selectNoEventText().contains(text);
+  });
+
+  When('the user selects start and end date', function() {
+    calendarObj.eventStartDate().click({ force: true });
+      // .invoke('removeAttr','type').type("2023-10-01{enter}")
+  })
+
+  When('the user clicks Add event button', function () {
+    calendarObj.addEventBtn().shadow().find('button').click({ force: true });
+    cy.wait(2000);
+  });
+
+  Then('the user views Add event modal', function () {
+    calendarObj.addEventModalTitle().invoke('text').should('eq', 'Add calendar event');
+  });
+
+  When('the user clicks Save button in Add event modal', function () {
+    calendarObj.calendarModalSaveButton().shadow().find('button').click({ force: true });
+    cy.wait(1000);
+  });
+
+  When('the user enters {string} in name field in event modal', function (name) {
+    calendarObj.addEventModalNameField().shadow().find('input').clear().type(name, { delay: 100, force: true });
+  });
+
+  Then('the user views the error message of {string} on name in event modal', function (errorMsg) {
+    calendarObj
+      .addEventModalNameFormItem()
+      .shadow()
+      .find('[class="error-msg"]')
+      .invoke('text')
+      .should('contain', errorMsg);
+  });
+
+  When('the user enters {string}, {string}, {string} in Add event modal',
+  function (name, desc, checkbox) {
+    cy.viewport(1920, 1080);
+    calendarObj.addEventModalNameField().shadow().find('input').clear().type(name, { delay: 100, force: true });
+    calendarObj.editEventModalDescriptionField().shadow().find('.goa-textarea').clear().type(desc, { force: true });
+    switch (checkbox) {
+      case 'yesAllDay':
+        calendarObj.addEventModalAllDayCheckbox().shadow().find('.goa-checkbox-container').click();
+        break;
+      case 'noAllDay':
+        break;
+      default:
+        expect(checkbox).to.be.oneOf(['yes', 'no']);
+    }
+  });
