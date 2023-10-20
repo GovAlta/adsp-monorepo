@@ -8,7 +8,6 @@ import { NextLoader } from './nextLoader';
 import { CheckSubscriberRoles } from '../subscription/checkSubscriberRoles';
 import { PageIndicator } from '@components/Indicator';
 import { RootState } from '@store/index';
-import styled from 'styled-components';
 
 interface SubscribersProps {
   subscribers?: Subscriber[];
@@ -54,53 +53,18 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
 
   return (
     <CheckSubscriberRoles>
-      <SubscriberStyle>
-        <div data-testid="subscribers-list-title">
-          <SubscribersSearchForm
-            onSearch={searchFn2}
-            reset={resetState}
-            searchCriteria={criteriaState}
-            onUpdate={setCriteriaState}
-          />
+      <div data-testid="subscribers-list-title">
+        <SubscribersSearchForm
+          onSearch={searchFn2}
+          reset={resetState}
+          searchCriteria={criteriaState}
+          onUpdate={setCriteriaState}
+        />
 
-          <SubscriberList searchCriteria={criteriaState} />
-          {indicator.show === false && <NextLoader onSearch={searchFn} searchCriteria={criteriaState} />}
-          {indicator.show && <PageIndicator />}
-        </div>
-      </SubscriberStyle>
+        <SubscriberList searchCriteria={criteriaState} />
+        {indicator.show === false && <NextLoader onSearch={searchFn} searchCriteria={criteriaState} />}
+        {indicator.show && <PageIndicator />}
+      </div>
     </CheckSubscriberRoles>
   );
 };
-
-const SubscriberStyle = styled.div`
-  .tooltip {
-    position: relative;
-    display: inline-block;
-  }
-
-  .tooltip .tooltip-text {
-    visibility: hidden;
-    width: 60px;
-    background-color: white;
-    color: #0f0f0f;
-    font-size: 12px;
-    text-align: center;
-    border: 1px solid black;
-
-    /* Position the tooltip */
-    position: absolute;
-    z-index: 1;
-    top: 0px;
-    left: 100%;
-  }
-
-  .tooltip:hover .tooltip-text {
-    visibility: visible;
-    transition: all 0.4s 0.7s ease;
-  }
-
-  .hover-blue:hover {
-    background: #f1f1f1;
-    cursor: pointer;
-  }
-`;

@@ -3,7 +3,7 @@ import { Subscriber } from '@store/subscription/models';
 import { phoneWrapper } from '@lib/wrappers';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import styled from 'styled-components';
-import { GoAIcon } from '@abgov/react-components-new';
+import { GoAIcon, GoABadge } from '@abgov/react-components-new';
 import { RowFlex } from './styled-components';
 import { getSubcriberSubscriptions } from './apis';
 
@@ -43,34 +43,36 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
         <td>{characterLimit(subscriber?.addressAs, 30)}</td>
         <td>
           <div style={{ display: 'flex' }}>
-            <div>
-              {emailVerified && (
-                <IconsCell>
-                  <div className="hover-blue tooltip">
-                    <GoAIcon data-testid="mail-icon" size="small" type="checkmark" />
-                    <span className="tooltip-text">Verified</span>
-                  </div>
-                </IconsCell>
-              )}
-            </div>
+            {email && (
+              <GoABadgeWrapper>
+                {emailVerified ? (
+                  <GoABadge key="email-verified" type="success" content="Verified" />
+                ) : (
+                  <GoABadge key="email-not-verified" type="important" content="Not verified" />
+                )}
+              </GoABadgeWrapper>
+            )}
             <div>{characterLimit(email, 30)}</div>
           </div>
         </td>
-        <td className="no-wrap">
-          <div style={{ display: 'flex' }}>
-            <div>
-              {smsVerified && (
-                <IconsCell>
-                  <div className="hover-blue tooltip">
-                    <GoAIcon data-testid="mail-icon" size="small" type="shield" />
-                    <span className="tooltip-text">Verified</span>
-                  </div>
-                </IconsCell>
+        {!hideUserActions ? (
+          <td className="no-wrap">
+            <div style={{ display: 'flex' }}>
+              {sms && (
+                <GoABadgeWrapper>
+                  {smsVerified ? (
+                    <GoABadge key="sms-verified" type="success" content="Verified" />
+                  ) : (
+                    <GoABadge key="sms-not-verified" type="important" content="Not verified" />
+                  )}
+                </GoABadgeWrapper>
               )}
+              <div>{phoneWrapper(sms)}</div>
             </div>
-            <div> {phoneWrapper(sms)}</div>
-          </div>
-        </td>
+          </td>
+        ) : (
+          ''
+        )}
         {!hideUserActions ? (
           <td>
             <RowFlex>
@@ -143,10 +145,7 @@ export const SubscriberListItem: FunctionComponent<ActionComponentProps> = ({
   );
 };
 
-const IconsCell = styled.div`
-  display: flex;
-  justify-content: space-around;
-  width: 90%;
-  width: 50%;
-  margin: 2px 2px 0 0;
+const GoABadgeWrapper = styled.div`
+  margin-right: var(--goa-spacing-s);
+  text-wrap: nowrap;
 `;
