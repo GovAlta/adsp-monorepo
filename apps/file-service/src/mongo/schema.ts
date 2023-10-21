@@ -14,6 +14,10 @@ export const fileSchema = new Schema({
     type: Number,
     required: true,
   },
+  mimeType: {
+    type: String,
+    required: false,
+  },
   filename: {
     type: String,
     required: true,

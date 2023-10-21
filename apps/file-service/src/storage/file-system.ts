@@ -5,6 +5,7 @@ import * as path from 'path';
 import { Readable } from 'stream';
 import { Logger } from 'winston';
 import { FileEntity, FileStorageProvider, FileTypeEntity } from '../file';
+import { BlobGetPropertiesResponse } from '@azure/storage-blob';
 
 export class FileSystemStorageProvider implements FileStorageProvider {
   constructor(private logger: Logger, private storageRoot: string) {}
@@ -22,9 +23,11 @@ export class FileSystemStorageProvider implements FileStorageProvider {
           context: 'FileSystemStorageProvider',
         });
       });
+
       stream.on('finish', function () {
         stat(filePath, (_err, stats) => {
-          entity.setSize(stats.size);
+          const properties = { contentLength: stats.size } as BlobGetPropertiesResponse;
+          entity.setProperties(properties);
           resolve(true);
         });
       });

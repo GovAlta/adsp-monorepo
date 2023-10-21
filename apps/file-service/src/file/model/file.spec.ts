@@ -7,6 +7,7 @@ import { FileRecord, ServiceUserRoles } from '../types';
 import { FileEntity } from './file';
 import { FileTypeEntity } from './type';
 import { FileStorageProvider } from '../storage';
+import { BlobGetPropertiesResponse } from '@azure/storage-blob';
 
 describe('File Entity', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -339,7 +340,8 @@ describe('File Entity', () => {
     });
 
     it('can set size', (done) => {
-      entity.setSize(101).then((entity) => {
+      const properties = { contentLength: 101 } as BlobGetPropertiesResponse;
+      entity.setProperties(properties).then((entity) => {
         expect(entity.size).toBe(101);
         done();
       });

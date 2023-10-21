@@ -13,6 +13,11 @@ interface AzureBlobStorageProviderProps {
   BLOB_ACCOUNT_URL: string;
 }
 
+interface CustomConcatStream {
+  fileStream: Readable;
+  fileType: { mime: string };
+}
+
 const BUFFER_SIZE = 4 * 1024 * 1024;
 const MAX_BUFFERS = 20;
 
@@ -83,26 +88,24 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
 
       const start = Date.now();
 
-      const response = (await createCustomConcatStream(content)) as any;
+      const response = (await createCustomConcatStream(content)) as CustomConcatStream;
 
       const fullStream = response.fileStream;
       const fileType = response.fileType;
 
-      this.logger.debug(`File type: ${JSON.stringify(fileType)}`);
-
       const end = Date.now();
 
-      console.log('End:' + end);
-      console.log('Diff:' + (end - start));
+      this.logger.debug('Size of file to be uploaded: ' + fullStream.readableLength / 1000 + 'kb');
+      this.logger.debug('File type as determined: ' + fileType?.mime);
+      this.logger.debug('Time to determine file type: ' + (end - start) / 1000 + 's');
 
-      console.log('content length of fullStream: ' + fullStream.readableLength);
+      const blobOptions = { blobHTTPHeaders: { blobContentType: fileType?.mime }, tags };
 
-      const { requestId } = await blobClient.uploadStream(fullStream, BUFFER_SIZE, MAX_BUFFERS, { tags });
-
-      console.log('requestId:' + requestId);
+      const { requestId } = await blobClient.uploadStream(fullStream, BUFFER_SIZE, MAX_BUFFERS, blobOptions);
 
       const properties = await blobClient.getProperties();
-      await entity.setSize(properties.contentLength);
+
+      await entity.setProperties(properties);
 
       this.logger.debug(
         `Uploaded file ${entity.filename} (ID: ${entity.id}) as blob ${entity.id} with requestId: ${requestId}`,
@@ -150,6 +153,7 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
 function createCustomConcatStream(readableStream) {
   return new Promise((resolve, reject) => {
     const customStream = new Readable({
+      //eslint-disable-next-line
       read() {},
     });
 
@@ -176,7 +180,8 @@ function createCustomConcatStream(readableStream) {
     // Resolve the promise when the concatStream operation is complete
     readableStream.on('end', () => {
       customStream.push(null); // Signal the end of the readable stream
-      resolve({ fileStream: customStream, fileType: fileType });
+      const response: CustomConcatStream = { fileStream: customStream, fileType: fileType };
+      resolve(response);
     });
 
     // Handle any errors

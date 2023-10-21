@@ -6,6 +6,7 @@ import { FileRepository } from '../repository';
 import { FileTypeEntity } from './type';
 import { v4 as uuidv4 } from 'uuid';
 import { FileStorageProvider } from '../storage';
+import { BlobGetPropertiesResponse } from '@azure/storage-blob';
 
 export class FileEntity implements File {
   tenantId: AdspId;
@@ -14,6 +15,7 @@ export class FileEntity implements File {
   filename: string;
   typeId: string;
   size: number;
+  mimeType?: string;
   createdBy: UserInfo;
   created: Date;
   lastAccessed?: Date;
@@ -78,6 +80,7 @@ export class FileEntity implements File {
       this.deleted = record.deleted;
       this.infected = record.infected;
       this.size = record.size;
+      this.mimeType = record.mimeType;
     } else {
       this.tenantId = type.tenantId;
       this.id = uuidv4();
@@ -113,8 +116,13 @@ export class FileEntity implements File {
     return this.repository.save(this, { deleted: this.deleted });
   }
 
-  setSize(size: number): Promise<FileEntity> {
-    this.size = size;
+  setProperties(properties: BlobGetPropertiesResponse): Promise<FileEntity> {
+    this.size = properties?.contentLength;
+    this.mimeType = properties?.contentType;
+    return this.repository.save(this, { size: this.size, mimeType: this.mimeType });
+  }
+  setType(mimeType: string): Promise<FileEntity> {
+    this.mimeType = mimeType;
     return this.repository.save(this, { size: this.size });
   }
 
