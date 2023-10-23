@@ -28,6 +28,10 @@ import {
   UpdateEventsByCalendarAction,
   UPDATE_EVENT_CALENDAR_ACTION,
   UpdateEventsByCalendarSuccess,
+  UpdateSearchCalendarEventCriteriaAndFetchEventsAction,
+  FetchEventsByCalendar,
+  UPDATE_EVENT_CALENDAR_AND_FETCH_ACTION,
+  UpdateSearchCalendarEventCriteria,
 } from './actions';
 import { UpdateElementIndicator } from '@store/session/actions';
 
@@ -147,10 +151,10 @@ export function* fetchEventsByCalendar(action: FetchEventsByCalendarAction): Sag
     const params = {};
 
     if (criteria) {
-      params['criteria'] = {
+      params['criteria'] = JSON.stringify({
         startsAfter: criteria.startDate,
         endsBefore: criteria.endDate,
-      };
+      });
     }
 
     if (action?.after) {
@@ -238,6 +242,17 @@ export function* UpdateEventByCalendar(action: UpdateEventsByCalendarAction): Sa
   }
 }
 
+export function* UpdateEventSearchCriteriaAndUpdateEvent(
+  action: UpdateSearchCalendarEventCriteriaAndFetchEventsAction
+): SagaIterator {
+  try {
+    yield put(UpdateSearchCalendarEventCriteria(action.payload));
+    yield put(FetchEventsByCalendar(action.payload?.calendarName));
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
+  }
+}
+
 export function* watchCalendarSagas(): Generator {
   yield takeEvery(FETCH_CALENDARS_ACTION, fetchCalendars);
   yield takeEvery(UPDATE_CALENDAR_ACTION, updateCalendar);
@@ -246,4 +261,5 @@ export function* watchCalendarSagas(): Generator {
   yield takeEvery(CREATE_EVENT_CALENDAR_ACTION, CreateEventByCalendar);
   yield takeEvery(DELETE_CALENDAR_EVENT_ACTION, DeleteCalendarEvent);
   yield takeEvery(UPDATE_EVENT_CALENDAR_ACTION, UpdateEventByCalendar);
+  yield takeEvery(UPDATE_EVENT_CALENDAR_AND_FETCH_ACTION, UpdateEventSearchCriteriaAndUpdateEvent);
 }

@@ -126,43 +126,6 @@ function Status(): JSX.Element {
   return (
     <Page>
       <Main>
-        <ApplicationFormModal
-          isOpen={showAddApplicationModal}
-          testId={'add-application'}
-          isEdit={false}
-          title="Add application"
-          onCancel={() => {
-            setShowAddApplicationModal(false);
-          }}
-          onSave={() => {
-            if (activeIndex !== 1) {
-              setActiveIndex(1);
-            }
-            setShowAddApplicationModal(false);
-          }}
-          defaultApplication={{
-            name: '',
-            appKey: '',
-            tenantId: '',
-            enabled: false,
-            description: '',
-            endpoint: { url: '', status: 'offline' },
-          }}
-        />
-
-        <WebhookFormModal
-          defaultWebhooks={defaultHooks}
-          isOpen={showAddWebhookModal}
-          testId={'add-webhook'}
-          isEdit={false}
-          title="Add webhook"
-          onCancel={() => {
-            setShowAddWebhookModal(false);
-          }}
-          onSave={() => {
-            setShowAddWebhookModal(false);
-          }}
-        />
         <h1 data-testid="status-title">Status service</h1>
         <Tabs activeIndex={activeIndex} data-testid="status-tabs">
           <Tab label="Overview" data-testid="status-overview-tab">
@@ -238,6 +201,42 @@ function Status(): JSX.Element {
             <NoticeList />
           </Tab>
         </Tabs>
+        <ApplicationFormModal
+          isOpen={showAddApplicationModal}
+          testId={'add-application'}
+          isEdit={false}
+          title="Add application"
+          onCancel={() => {
+            setShowAddApplicationModal(false);
+          }}
+          onSave={() => {
+            if (activeIndex !== 1) {
+              setActiveIndex(1);
+            }
+            setShowAddApplicationModal(false);
+          }}
+          defaultApplication={{
+            name: '',
+            appKey: '',
+            tenantId: '',
+            enabled: false,
+            description: '',
+            endpoint: { url: '', status: 'offline' },
+          }}
+        />
+        <WebhookFormModal
+          defaultWebhooks={defaultHooks}
+          isOpen={showAddWebhookModal}
+          testId={'add-webhook'}
+          isEdit={false}
+          title="Add webhook"
+          onCancel={() => {
+            setShowAddWebhookModal(false);
+          }}
+          onSave={() => {
+            setShowAddWebhookModal(false);
+          }}
+        />
       </Main>
 
       <Aside>

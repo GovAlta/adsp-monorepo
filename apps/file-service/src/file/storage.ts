@@ -1,8 +1,8 @@
 import { Readable } from 'stream';
-import { FileEntity } from './model';
+import { FileEntity, FileTypeEntity } from './model';
 
 export interface FileStorageProvider {
   readFile(entity: FileEntity): Promise<Readable>;
-  saveFile(entity: FileEntity, content: Readable): Promise<boolean>;
+  saveFile(entity: FileEntity, entityFileType: FileTypeEntity, content: Readable): Promise<boolean>;
   deleteFile(entity: FileEntity): Promise<boolean>;
 }
