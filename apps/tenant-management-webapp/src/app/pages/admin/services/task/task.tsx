@@ -25,15 +25,15 @@ export const Task: FunctionComponent = () => {
   return (
     <Page>
       <Main>
-        <h1 data-testid="status-title">Task service</h1>
+        <h1 data-testid="task-title">Task service</h1>
         <Tabs activeIndex={queues === 'true' ? 1 : 0}>
-          <Tab label="Overview">
+          <Tab label="Overview" data-testid="task-service-overview-tab">
             <TaskOverview setOpenAddDefinition={setOpenAddDefinition} />
           </Tab>
-          <Tab label="Queues">
+          <Tab label="Queues" data-testid="task-service-queues-tab">
             <QueuesList openAddDefinition={openAddDefinition} />
           </Tab>
-          <Tab label="Tasks">
+          <Tab label="Tasks" data-testid="task-service-tasks-tab">
             <TasksList />
           </Tab>
         </Tabs>

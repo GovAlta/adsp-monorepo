@@ -266,7 +266,7 @@ components:
     description: Creates a subscription for a notification type.
     parameters:
       - name: userSub
-        description: Flag indicating subscription is for the current user. When userSub is true, only criteria property is optional and the rest properties are not required.
+        description: Flag indicating subscription is for the current user. When userSub is true, only criteria property is optional and the rest of the properties are not required.
         in: query
         required: true
         schema:
