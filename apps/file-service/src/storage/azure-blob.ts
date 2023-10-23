@@ -166,10 +166,10 @@ function createCustomConcatStream(readableStream) {
 
         detect.fromBuffer(accumulatedData, (err, result) => {
           if (err) {
-            console.log('err below');
-            return console.log(err);
+            console.error(err);
+            reject(err);
           }
-          console.log('Extension: ' + JSON.stringify(result)); // { ext: 'jpg', mime: 'image/jpeg' }
+
           fileType = result;
         });
       }
