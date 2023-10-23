@@ -58,5 +58,9 @@ class Common {
   serviceOverviewContent(serviceOverviewTitle) {
     return cy.xpath(`//h1[text()="${serviceOverviewTitle}"]/ancestor::main//p`);
   }
+
+  activeTab() {
+    return cy.xpath('//div[contains(@data-testid, "tab-btn") and contains(@class, "active")]');
+  }
 }
 export default Common;
