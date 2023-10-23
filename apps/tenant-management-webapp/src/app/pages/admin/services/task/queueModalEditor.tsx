@@ -210,7 +210,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
               <GoAButtonGroup alignment="start">
                 <GoAButton
                   type="primary"
-                  testId="form-save"
+                  testId="queue-save"
                   disabled={isTaskUpdated(initialDefinition, queue) || validators.haveErrors()}
                   onClick={() => {
                     if (indicator.show === true) {
@@ -233,7 +233,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
                   Save
                 </GoAButton>
                 <GoAButton
-                  testId="form-cancel"
+                  testId="queue-cancel"
                   type="secondary"
                   onClick={() => {
                     if (isTaskUpdated(initialDefinition, queue)) {
