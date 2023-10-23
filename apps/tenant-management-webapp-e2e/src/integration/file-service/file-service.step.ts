@@ -376,7 +376,7 @@ When('the user enters {string} on Add file type modal', function (name) {
     .shadow()
     .find('input')
     .clear({ force: true })
-    .type(name, { delay: 100, force: true });
+    .type(name, { delay: 200, force: true });
 });
 
 When('the user enters {string}, {string}, {string} on file type page', function (readRole, updateRole, retention) {
