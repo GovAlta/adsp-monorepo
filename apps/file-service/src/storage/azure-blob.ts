@@ -3,19 +3,12 @@ import * as hasha from 'hasha';
 import { Readable } from 'stream';
 import { Logger } from 'winston';
 
-import * as detect from 'detect-file-type';
-
 import { FileEntity, FileStorageProvider, FileTypeEntity } from '../file';
 
 interface AzureBlobStorageProviderProps {
   BLOB_ACCOUNT_NAME: string;
   BLOB_ACCOUNT_KEY: string;
   BLOB_ACCOUNT_URL: string;
-}
-
-interface CustomConcatStream {
-  fileStream: Readable;
-  fileType: { mime: string };
 }
 
 const BUFFER_SIZE = 4 * 1024 * 1024;
@@ -86,26 +79,12 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
         tags.recordId = hasha(entity.recordId, { algorithm: 'sha1', encoding: 'base64' });
       }
 
-      const start = Date.now();
+      const blobOptions = { blobHTTPHeaders: { blobContentType: entity.mimeType }, tags };
 
-      const response = (await createCustomConcatStream(content)) as CustomConcatStream;
-
-      const fullStream = response.fileStream;
-      const fileType = response.fileType;
-
-      const end = Date.now();
-
-      this.logger.debug('Size of file to be uploaded: ' + fullStream.readableLength / 1000 + 'kb');
-      this.logger.debug('File type as determined: ' + fileType?.mime);
-      this.logger.debug('Time to determine file type: ' + (end - start) / 1000 + 's');
-
-      const blobOptions = { blobHTTPHeaders: { blobContentType: fileType?.mime }, tags };
-
-      const { requestId } = await blobClient.uploadStream(fullStream, BUFFER_SIZE, MAX_BUFFERS, blobOptions);
+      const { requestId } = await blobClient.uploadStream(content, BUFFER_SIZE, MAX_BUFFERS, blobOptions);
 
       const properties = await blobClient.getProperties();
-
-      await entity.setProperties(properties);
+      await entity.setSize(properties.contentLength);
 
       this.logger.debug(
         `Uploaded file ${entity.filename} (ID: ${entity.id}) as blob ${entity.id} with requestId: ${requestId}`,
@@ -148,45 +127,4 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
 
     return containerClient;
   }
-}
-
-function createCustomConcatStream(readableStream) {
-  return new Promise((resolve, reject) => {
-    const customStream = new Readable({
-      //eslint-disable-next-line
-      read() {},
-    });
-
-    let fileType;
-
-    readableStream.on('data', (data) => {
-      if (customStream.readableLength === 0) {
-        let accumulatedData = Buffer.alloc(0); // Start with an empty buffer
-        accumulatedData = Buffer.concat([accumulatedData, data]);
-
-        detect.fromBuffer(accumulatedData, (err, result) => {
-          if (err) {
-            console.error(err);
-            reject(err);
-          }
-
-          fileType = result;
-        });
-      }
-
-      customStream.push(data);
-    });
-
-    // Resolve the promise when the concatStream operation is complete
-    readableStream.on('end', () => {
-      customStream.push(null); // Signal the end of the readable stream
-      const response: CustomConcatStream = { fileStream: customStream, fileType: fileType };
-      resolve(response);
-    });
-
-    // Handle any errors
-    readableStream.on('error', (err) => {
-      reject(err);
-    });
-  });
 }

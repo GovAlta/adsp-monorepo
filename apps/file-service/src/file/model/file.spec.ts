@@ -2,12 +2,23 @@ import { adspId, User } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
 import { Mock, It } from 'moq.ts';
 import { Readable } from 'stream';
+import { Logger } from 'winston';
 import { FileRepository } from '../repository';
 import { FileRecord, ServiceUserRoles } from '../types';
 import { FileEntity } from './file';
 import { FileTypeEntity } from './type';
 import { FileStorageProvider } from '../storage';
-import { BlobGetPropertiesResponse } from '@azure/storage-blob';
+
+let contentMock: Mock<Readable>;
+
+jest.mock('../../utils/fileTypeDetector', () => ({
+  FileTypeDetector: jest.fn().mockImplementation(() => ({
+    detect: jest.fn().mockResolvedValue({
+      fileType: { mime: 'image/jpeg' },
+      fileStream: contentMock.object(),
+    }),
+  })),
+}));
 
 describe('File Entity', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -21,10 +32,15 @@ describe('File Entity', () => {
     token: null,
   };
 
+  const loggerMock = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+  } as unknown;
+
   let storageProviderMock: Mock<FileStorageProvider> = null;
   let repositoryMock: Mock<FileRepository> = null;
   let typeMock: Mock<FileTypeEntity> = null;
-  let contentMock: Mock<Readable>;
 
   beforeEach(() => {
     storageProviderMock = new Mock<FileStorageProvider>();
@@ -105,6 +121,7 @@ describe('File Entity', () => {
     };
 
     const fileEntity = await FileEntity.create(
+      loggerMock as Logger,
       storageProviderMock.object(),
       repositoryMock.object(),
       user,
@@ -138,6 +155,7 @@ describe('File Entity', () => {
 
     await expect(
       FileEntity.create(
+        loggerMock as Logger,
         storageProviderMock.object(),
         repositoryMock.object(),
         user,
@@ -164,6 +182,7 @@ describe('File Entity', () => {
 
     try {
       await FileEntity.create(
+        loggerMock as Logger,
         storageProviderMock.object(),
         repositoryMock.object(),
         user,
@@ -340,8 +359,7 @@ describe('File Entity', () => {
     });
 
     it('can set size', (done) => {
-      const properties = { contentLength: 101 } as BlobGetPropertiesResponse;
-      entity.setProperties(properties).then((entity) => {
+      entity.setSize(101).then((entity) => {
         expect(entity.size).toBe(101);
         done();
       });

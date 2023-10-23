@@ -6,7 +6,8 @@ import { FileRepository } from '../repository';
 import { FileTypeEntity } from './type';
 import { v4 as uuidv4 } from 'uuid';
 import { FileStorageProvider } from '../storage';
-import { BlobGetPropertiesResponse } from '@azure/storage-blob';
+import { FileTypeDetector } from '../../utils/fileTypeDetector';
+import { Logger } from 'winston';
 
 export class FileEntity implements File {
   tenantId: AdspId;
@@ -26,6 +27,7 @@ export class FileEntity implements File {
   securityClassification?: string;
 
   static async create(
+    logger: Logger,
     storageProvider: FileStorageProvider,
     repository: FileRepository,
     user: User,
@@ -46,8 +48,13 @@ export class FileEntity implements File {
       },
     });
 
+    const fileTypeDetector = new FileTypeDetector(logger, content);
+    const result = await fileTypeDetector.detect();
+
+    entity.mimeType = result.fileType?.mime;
+
     entity = await repository.save(entity);
-    const saved = await storageProvider.saveFile(entity, type, content);
+    const saved = await storageProvider.saveFile(entity, type, result.fileStream);
     if (!saved) {
       // Deleted the record if the storage failed to save the file so we don't end up with orphans.
       await entity.delete(true);
@@ -116,13 +123,8 @@ export class FileEntity implements File {
     return this.repository.save(this, { deleted: this.deleted });
   }
 
-  setProperties(properties: BlobGetPropertiesResponse): Promise<FileEntity> {
-    this.size = properties?.contentLength;
-    this.mimeType = properties?.contentType;
-    return this.repository.save(this, { size: this.size, mimeType: this.mimeType });
-  }
-  setType(mimeType: string): Promise<FileEntity> {
-    this.mimeType = mimeType;
+  setSize(size: number): Promise<FileEntity> {
+    this.size = size;
     return this.repository.save(this, { size: this.size });
   }
 
