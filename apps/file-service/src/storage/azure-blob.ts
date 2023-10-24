@@ -2,6 +2,7 @@ import { BlobServiceClient, ContainerClient, StorageSharedKeyCredential } from '
 import * as hasha from 'hasha';
 import { Readable } from 'stream';
 import { Logger } from 'winston';
+
 import { FileEntity, FileStorageProvider, FileTypeEntity } from '../file';
 
 interface AzureBlobStorageProviderProps {
@@ -78,7 +79,9 @@ export class AzureBlobStorageProvider implements FileStorageProvider {
         tags.recordId = hasha(entity.recordId, { algorithm: 'sha1', encoding: 'base64' });
       }
 
-      const { requestId } = await blobClient.uploadStream(content, BUFFER_SIZE, MAX_BUFFERS, { tags });
+      const blobOptions = { blobHTTPHeaders: { blobContentType: entity.mimeType }, tags };
+
+      const { requestId } = await blobClient.uploadStream(content, BUFFER_SIZE, MAX_BUFFERS, blobOptions);
 
       const properties = await blobClient.getProperties();
       await entity.setSize(properties.contentLength);

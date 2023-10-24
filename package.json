@@ -65,6 +65,7 @@
     "crypto-random-string": "^3.3.1",
     "dashify": "^2.0.0",
     "dayjs": "^1.10.7",
+    "detect-file-type": "^0.2.8",
     "dompurify": "^2.3.4",
     "dotenv": "10.0.0",
     "envalid": "^7.1.0",
