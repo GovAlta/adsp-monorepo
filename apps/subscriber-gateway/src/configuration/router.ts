@@ -116,7 +116,7 @@ export const createConfigurationRouter = ({ tenantService, tokenProvider, direct
   );
   router.get(
     '/status-support-info/:name',
-    createValidationHandler(param('realm').isLength({ min: 2 })),
+    createValidationHandler(param('name').isLength({ min: 2 })),
     getStatusSupportInfo(tenantService, tokenProvider, directory)
   );
 
