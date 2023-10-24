@@ -33,7 +33,18 @@ ask the _realm owner_ to add you as a user with the _tenant admin_ role so that 
 - log in to Keycloak and configure it as needed, and
 - log in to ADSP's _Tenant Admin Webapp_ to configure it as needed.
 
-The _realm owner_ will be a member of your group that has the responsibility for approving and adding developers as tenant-admins.
+#### Adding Developers as Tenant-admins
+
+Realm owners are responsible for approving and adding developers as tenant-admins. The owner must:
+
+- add the new user
+- click on the new user to configure their roles,
+- click on the _Role Mapping_ tab,
+- then add the role from the urn:ads:platform:tenant-service, as illustrated:
+
+![](/adsp-monorepo/assets/access-service/tenant-admin-role.png){: width="400" }
+
+Once you have the tenant-admin role you will be able to sign-in to the [Tenant Admin Webapp](https://adsp-uat.alberta.ca/get-started) with full permission to configure your ADSP services.
 
 ### Create a new Tenant
 
