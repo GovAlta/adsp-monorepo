@@ -1,7 +1,8 @@
 import { adspId, ServiceDirectory, TenantService, TokenProvider } from '@abgov/adsp-service-sdk';
-import { NotFoundError } from '@core-services/core-common';
+import { NotFoundError, createValidationHandler } from '@core-services/core-common';
 import axios from 'axios';
 import { RequestHandler, Router } from 'express';
+import { param } from 'express-validator';
 
 export const toTenantName = (nameInUrl: string): string => {
   return nameInUrl.replace(/-/g, ' ');
@@ -102,9 +103,22 @@ interface RouterProps {
 export const createConfigurationRouter = ({ tenantService, tokenProvider, directory }: RouterProps): Router => {
   const router = Router();
 
-  router.get('/support-info/:realm', getSupportInfo(tenantService, tokenProvider, directory));
-  router.get('/support-info-tenant-id/:tenantId', getSupportInfoTenantId(tenantService, tokenProvider, directory));
-  router.get('/status-support-info/:name', getStatusSupportInfo(tenantService, tokenProvider, directory));
+  router.get(
+    '/support-info/:realm',
+    // due to some history issue, the realm and tenant name formats are not consisted.
+    createValidationHandler(param('realm').isLength({ min: 2 })),
+    getSupportInfo(tenantService, tokenProvider, directory)
+  );
+  router.get(
+    '/support-info-tenant-id/:tenantId',
+    createValidationHandler(param('tenantId').isMongoId()),
+    getSupportInfoTenantId(tenantService, tokenProvider, directory)
+  );
+  router.get(
+    '/status-support-info/:name',
+    createValidationHandler(param('realm').isLength({ min: 2 })),
+    getStatusSupportInfo(tenantService, tokenProvider, directory)
+  );
 
   return router;
 };
