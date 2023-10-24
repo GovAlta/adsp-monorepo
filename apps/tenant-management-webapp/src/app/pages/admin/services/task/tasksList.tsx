@@ -158,7 +158,7 @@ export const TasksList = (): JSX.Element => {
             }}
           />
           {next && (
-            <GoAButton testId="calendar-event-load-more-btn" key="calendar-event-load-more-btn" onClick={onNext}>
+            <GoAButton testId="task-load-more-btn" key="task-load-more-btn" onClick={onNext}>
               Load more
             </GoAButton>
           )}

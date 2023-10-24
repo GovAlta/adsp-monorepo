@@ -1,6 +1,7 @@
 import { adspId, TenantService } from '@abgov/adsp-service-sdk';
-import { NotFoundError } from '@core-services/core-common';
+import { NotFoundError, createValidationHandler } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
+import { param } from 'express-validator';
 
 export function getTenant(tenantService: TenantService): RequestHandler {
   return async (req, res, next) => {
@@ -26,7 +27,7 @@ interface RouterProps {
 export const createTenantRouter = ({ tenantService }: RouterProps): Router => {
   const router = Router();
 
-  router.get('/tenant/:tenantId', getTenant(tenantService));
+  router.get('/tenant/:tenantId', createValidationHandler(param('tenantId').isMongoId()), getTenant(tenantService));
 
   return router;
 };

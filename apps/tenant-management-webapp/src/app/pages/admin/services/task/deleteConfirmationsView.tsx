@@ -36,7 +36,7 @@ export const DeleteConfirmationsView: FunctionComponent<calendarTableProps> = ({
   useEffect(() => {}, [tasks]);
 
   return (
-    <TableDiv key="calendar">
+    <TableDiv key="task">
       <DeleteModal
         title="Delete task queue"
         isOpen={showDeleteConfirmation}
@@ -54,14 +54,14 @@ export const DeleteConfirmationsView: FunctionComponent<calendarTableProps> = ({
         }}
       />
       <GoAModal
-        testId="file-type-delete-modal"
+        testId="queue-delete-modal"
         open={showUnableToDeleteConfirmation}
         heading="Queue current in use"
         actions={
           <GoAButtonGroup alignment="end">
             <GoAButton
               type="secondary"
-              testId="file-type-delete-modal-cancel-btn"
+              testId="queue-delete-modal-cancel-btn"
               onClick={() => {
                 setShowUnableToDeleteConfirmation(false);
               }}

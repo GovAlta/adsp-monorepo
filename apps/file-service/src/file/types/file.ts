@@ -10,6 +10,7 @@ export interface File {
   recordId: string;
   filename: string;
   size: number;
+  mimeType?: string;
   createdBy: UserInfo;
   created: Date;
   lastAccessed?: Date;

@@ -103,6 +103,7 @@ export const QueueModal: FunctionComponent<QueueModalProps> = ({
                   namespace: value,
                 };
                 validators.remove('namespace');
+                validators.remove('name');
                 if (isNew) {
                   validations['namespace'] = value;
                 }
