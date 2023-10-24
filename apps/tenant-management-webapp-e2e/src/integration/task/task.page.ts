@@ -17,7 +17,7 @@ class TaskPage {
 
   namespaceTextField() {
     return cy.xpath(
-      '//*[@class="goa-form-item"]/label[text()="Namespace"]/following-sibling::*[@class="goa-input"]/*[@data-testid="queue-modal-name-input"]'
+      '//*[@class="goa-form-item"]/label[text()="Namespace"]/following-sibling::*[@class="goa-input"]/*[@data-testid="queue-modal-namespace-input"]'
     );
   }
 
@@ -43,42 +43,42 @@ class TaskPage {
     return cy.get('[data-testid="queue-name"]');
   }
 
-  queueSavebutton() {
-    return cy.xpath('//*[@data-testid="form-save" and @disabled="false"]');
+  queuePageSaveButton() {
+    return cy.xpath('//*[@data-testid="queue-save" and @disabled="false"]');
+  }
+
+  queuePageBackButton() {
+    return cy.xpath('//*[@data-testid="queue-cancel" and @disabled="false"]');
   }
 
   queuePageCheckboxesTables() {
-    return cy.xpath('//*[@data-testid="template-form"]//goa-table');
+    return cy.xpath('//*[@data-testid="queue-editor"]//goa-table');
   }
 
   queuePageClientRolesTable(clientName) {
     return cy.xpath(
-      `//*[@data-testid="template-form"]//h4/div[text()="${clientName}"]/parent::h4/following-sibling::goa-table[1]`
+      `//*[@data-testid="queue-editor"]//h4/div[text()="${clientName}"]/parent::h4/following-sibling::goa-table[1]`
     );
   }
 
   queuePageRolesTable() {
-    return cy.xpath('//*[@data-testid="template-form"]//h4[text()="autotest"]/following-sibling::goa-table[1]');
+    return cy.xpath('//*[@data-testid="queue-editor"]//h4[text()="autotest"]/following-sibling::goa-table[1]');
   }
 
-  // queuePageAssignerCheckbox(roleName) {
-  //   return cy.xpath(
-  //     `//*[@data-testid="template-form"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "Assigner roles")]`
-  //   );
-  // }
+  queueTableBody() {
+    return cy.xpath('//table[@data-testid="task-queue-table"]//tbody');
+  }
 
-  // queuePageAssignerCheckboxes() {
-  //   return cy.xpath('//*[@data-testid="template-form"]//goa-checkbox[contains(@name, "Assigner roles")]');
-  // }
+  queueEditButton(rowNumber) {
+    return cy.xpath(
+      `(//table[@data-testid="task-queue-table"]//*[contains(@data-testid, "task-definition-edit")])[${rowNumber}]`
+    );
+  }
 
-  // queuePageWorkerCheckbox(roleName) {
-  //   return cy.xpath(
-  //     `//*[@data-testid="template-form"]//td[text()="${roleName}"]/following-sibling::td//goa-checkbox[contains(@name, "Worker roles")]`
-  //   );
-  // }
-
-  // queuePageWorkerCheckboxes() {
-  //   return cy.xpath('//*[@data-testid="template-form"]//goa-checkbox[contains(@name, "Worker roles")]');
-  // }
+  queueDeleteButton(rowNumber) {
+    return cy.xpath(
+      `(//table[@data-testid="task-queue-table"]//*[contains(@data-testid, "task-definition-delete")])[${rowNumber}]`
+    );
+  }
 }
 export default TaskPage;

@@ -62,5 +62,9 @@ class Common {
   activeTab() {
     return cy.xpath('//div[contains(@data-testid, "tab-btn") and contains(@class, "active")]');
   }
+
+  dontSaveButton() {
+    return cy.xpath('//goa-button[@data-testid="form-dont-save"]');
+  }
 }
 export default Common;
