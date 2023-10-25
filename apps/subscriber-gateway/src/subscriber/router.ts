@@ -209,7 +209,7 @@ export const createSubscriberRouter = ({
   router.post(
     '/application-status',
     verifyCaptcha(logger, RECAPTCHA_SECRET),
-    createValidationHandler(body('tenantName').isString(), body('email').isEmail()),
+    createValidationHandler(body('tenant').isString(), body('email').isEmail()),
     subscribeStatus(tenantService, tokenProvider, directory, logger)
   );
 
