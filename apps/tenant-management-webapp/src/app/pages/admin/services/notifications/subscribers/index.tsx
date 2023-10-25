@@ -35,7 +35,7 @@ export const Subscribers: FunctionComponent<SubscribersProps> = () => {
   };
 
   const searchFn2 = (criteria: SubscriberSearchCriteria) => {
-    const resetCriteria = { ...criteria, reset: true };
+    const resetCriteria = { ...criteria, paginationReset: true };
     dispatch(FindSubscribers(resetCriteria));
     setCriteriaState(criteria);
   };

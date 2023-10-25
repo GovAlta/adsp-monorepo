@@ -91,6 +91,7 @@ export interface SubscriberSearchCriteria {
   next?: string;
   sms?: string;
   reset?: boolean;
+  paginationReset?: boolean;
 }
 
 export interface SubscriptionSearchCriteria {
