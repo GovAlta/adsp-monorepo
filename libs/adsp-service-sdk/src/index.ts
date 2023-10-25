@@ -1,4 +1,13 @@
-export { adspId, AdspId, AdspIdFormatError, assertAdspId, GoAError, LimitToOne, toKebabName } from './utils';
+export {
+  addTraceFormat,
+  adspId,
+  AdspId,
+  AdspIdFormatError,
+  assertAdspId,
+  GoAError,
+  LimitToOne,
+  toKebabName,
+} from './utils';
 export { AssertCoreRole, AssertRole, isAllowedUser, UnauthorizedUserError, hasRequiredRole } from './access';
 export type { TokenProvider, User } from './access';
 export type { GoAErrorExtra } from './utils';
@@ -20,4 +29,5 @@ export type { Template, NotificationType, NotificationTypeEvent } from './notifi
 export type { ValueDefinition } from './value';
 export type { ServiceRegistration, ServiceRole } from './registration';
 export { benchmark, startBenchmark, ServiceMetricsValueDefinition } from './metrics';
+export { getContextTrace } from './trace';
 export { initializePlatform, initializeService } from './initialize';

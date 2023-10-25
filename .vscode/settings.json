@@ -67,6 +67,7 @@
     "reduxjs",
     "signin",
     "testid",
+    "traceparent",
     "uninstantiated",
     "upsert",
     "uuidv"
