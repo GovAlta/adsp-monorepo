@@ -72,7 +72,7 @@ describe('verify', () => {
         axiosMock.post.mockResolvedValueOnce({ data: { code: '123' } });
         await expect(
           service.sendCode(
-            { channel: Channel.sms, address: '123', verifyKey: 'key', verified: false },
+            { channel: Channel.mail, address: '123', verifyKey: 'key', verified: false },
             'Verifying stuff.'
           )
         ).rejects.toThrowError(InvalidOperationError);

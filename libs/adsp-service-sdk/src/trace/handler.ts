@@ -41,7 +41,10 @@ export function createTraceHandler({ logger, sampleRate }: TraceHandlerOptions):
           });
           context.set(TRACE_PARENT_CTX, trace);
 
-          logger.debug(`${req.method}: ${req.originalUrl} from ${req.ip}`);
+          // Debug log non-root endpoint requests.
+          if (req.originalUrl?.length > 1) {
+            logger.debug(`${req.method}: ${req.originalUrl} from ${req.ip}`);
+          }
         } catch (traceErr) {
           err = traceErr;
         }
