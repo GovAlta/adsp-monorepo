@@ -1,10 +1,10 @@
 import { UnauthorizedUserError, isAllowedUser } from '@abgov/adsp-service-sdk';
+import { NotFoundError } from '@core-services/core-common';
 import { RequestHandler, Router } from 'express';
 import { TopicTypeEntity } from '../model';
 import { TopicRepository } from '../repository';
 import { ServiceRoles } from '../roles';
 import { CommentCriteria } from '../types';
-import { NotFoundError } from '@core-services/core-common';
 
 interface CommentRouterProps {
   repository: TopicRepository;

@@ -2,7 +2,6 @@ import { AdspId } from '@abgov/adsp-service-sdk';
 import { Results, decodeAfter, encodeNext } from '@core-services/core-common';
 import { Knex } from 'knex';
 import { TopicCriteria, Comment, CommentCriteria, TopicEntity, TopicRepository, TopicTypeEntity } from '../comment';
-import { isAdspId } from '../utils';
 import { CommentRecord, TopicRecord } from './types';
 
 export class PostgresTopicRepository implements TopicRepository {
@@ -17,7 +16,7 @@ export class PostgresTopicRepository implements TopicRepository {
           description: record.description,
           securityClassification: record.securityClassification,
           type: types[record.type],
-          resourceId: isAdspId(record.resource) ? AdspId.parse(record.resource) : record.resource,
+          resourceId: AdspId.isAdspId(record.resource) ? AdspId.parse(record.resource) : record.resource,
           commenters: record.commenters,
         })
       : null;
