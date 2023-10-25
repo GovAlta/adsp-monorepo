@@ -61,10 +61,11 @@ describe('handler', () => {
         };
         const res = {};
         const next = jest.fn();
+        contextMock.middleware.mockImplementationOnce((_req, _res, next) => next());
 
         const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
         handler(req as unknown as Request, res as Response, next);
-        expect(next).toHaveBeenCalled();
+        expect(next).toHaveBeenCalledWith(undefined);
         expect(contextMock.set).toHaveBeenCalledWith('adsp_traceparent', expect.any(TraceParent));
       });
 
@@ -74,10 +75,11 @@ describe('handler', () => {
         };
         const res = {};
         const next = jest.fn();
+        contextMock.middleware.mockImplementationOnce((_req, _res, next) => next());
 
         const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
         handler(req as unknown as Request, res as Response, next);
-        expect(next).toHaveBeenCalled();
+        expect(next).toHaveBeenCalledWith(undefined);
         expect(contextMock.set).toHaveBeenCalledWith(
           'adsp_traceparent',
           expect.objectContaining({
@@ -88,6 +90,21 @@ describe('handler', () => {
             recorded: true,
           })
         );
+      });
+
+      it('can passthrough error', () => {
+        const req = {
+          headers: { traceparent: '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01' },
+        };
+        const res = {};
+        const next = jest.fn();
+        const err = new Error('oh noes!');
+        contextMock.middleware.mockImplementationOnce((_req, _res, next) => next(err));
+
+        const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
+        handler(req as unknown as Request, res as Response, next);
+        expect(next).toHaveBeenCalledWith(err);
+        expect(contextMock.set).not.toHaveBeenCalled();
       });
     });
   });
