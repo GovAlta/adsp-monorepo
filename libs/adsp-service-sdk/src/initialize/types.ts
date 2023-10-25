@@ -200,6 +200,13 @@ export interface PlatformCapabilities extends PlatformServices {
    */
   metricsHandler: RequestHandler;
   /**
+   * Trace handler: Request handler that puts trace context into request context for
+   * subsequent requests. See https://www.w3.org/TR/trace-context/
+   * @type {RequestHandler}
+   * @memberof PlatformCapabilities
+   */
+  traceHandler: RequestHandler;
+  /**
    * Logger used by SDK components.
    *
    * @type {Logger}

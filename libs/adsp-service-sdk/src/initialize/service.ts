@@ -38,6 +38,7 @@ export async function initializeService(options: Options, logOptions: Logger | L
     tenantStrategy,
     healthCheck,
     clearCached,
+    traceHandler,
     logger,
   } = await initializePlatform({ ...options }, logOptions);
 
@@ -62,6 +63,7 @@ export async function initializeService(options: Options, logOptions: Logger | L
     tenantStrategy,
     healthCheck,
     metricsHandler,
+    traceHandler,
     logger,
     clearCached: (serviceId) => clearCached(tenant?.id, serviceId),
   };

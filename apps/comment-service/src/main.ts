@@ -51,6 +51,7 @@ const initializeApp = async (): Promise<express.Application> => {
     metricsHandler,
     tenantStrategy,
     tenantHandler,
+    traceHandler,
     healthCheck,
   } = await initializePlatform(
     {
@@ -107,6 +108,7 @@ const initializeApp = async (): Promise<express.Application> => {
   });
 
   app.use(passport.initialize());
+  app.use(traceHandler);
   app.use(
     '/comment',
     metricsHandler,

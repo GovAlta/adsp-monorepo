@@ -1,8 +1,9 @@
+import { getContextTrace } from '@abgov/adsp-service-sdk';
+import type { DomainEvent } from '@core-services/core-common';
+import { AmqpEventSubscriberService, InvalidOperationError } from '@core-services/core-common';
 import { AmqpConnectionManager } from 'amqp-connection-manager';
 import * as dashify from 'dashify';
 import type { Logger } from 'winston';
-import type { DomainEvent } from '@core-services/core-common';
-import { AmqpEventSubscriberService, InvalidOperationError } from '@core-services/core-common';
 import type { DomainEventService } from '../event';
 
 export class AmqpDomainEventService extends AmqpEventSubscriberService implements DomainEventService {
@@ -17,6 +18,7 @@ export class AmqpDomainEventService extends AmqpEventSubscriberService implement
 
     const routingKey = this.getRoutingKey(event);
     const { namespace, name, timestamp, tenantId, correlationId, context, payload } = event;
+    const trace = getContextTrace();
 
     try {
       const sent = await this.channel.publish('domain-events', routingKey, Buffer.from(JSON.stringify(payload)), {
@@ -28,6 +30,7 @@ export class AmqpDomainEventService extends AmqpEventSubscriberService implement
           correlationId,
           context,
           timestamp: timestamp.toISOString(),
+          traceparent: trace?.toString(),
         },
         correlationId,
       });
