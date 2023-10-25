@@ -41,7 +41,7 @@ export class FileTypeDetector {
 
       let fileType;
 
-      readableStream.on('data', (data) => {
+      const onData = (data) => {
         if (customStream.readableLength === 0) {
           let accumulatedData = Buffer.alloc(0); // Start with an empty buffer
           accumulatedData = Buffer.concat([accumulatedData, data]);
@@ -57,12 +57,15 @@ export class FileTypeDetector {
         }
 
         customStream.push(data);
-      });
+      };
+
+      readableStream.on('data', onData);
 
       // Resolve the promise when the concatStream operation is complete
       readableStream.on('end', () => {
         customStream.push(null); // Signal the end of the readable stream
         const response: CustomConcatStream = { fileStream: customStream, fileType: fileType };
+        readableStream.removeListener('data', onData);
         resolve(response);
       });
 
