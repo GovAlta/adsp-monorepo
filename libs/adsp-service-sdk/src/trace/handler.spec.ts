@@ -1,14 +1,21 @@
 import axios from 'axios';
-import * as context from 'express-http-context';
-import { createTraceHandler, getContextTrace } from './handler';
-import TraceParent = require('traceparent');
 import { Request, Response } from 'express';
+import * as context from 'express-http-context';
+import TraceParent = require('traceparent');
+import { Logger } from 'winston';
+import { createTraceHandler, getContextTrace } from './handler';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;
 
 jest.mock('express-http-context');
 const contextMock = context as jest.Mocked<typeof context>;
+
+const loggerMock = {
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+} as unknown as Logger;
 
 describe('handler', () => {
   describe('getContextTrace', () => {
@@ -42,7 +49,7 @@ describe('handler', () => {
     });
 
     it('can create handler', () => {
-      const handler = createTraceHandler({ sampleRate: 0 });
+      const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
       expect(handler).toBeTruthy();
       expect(axiosMock.interceptors.request.use).toHaveBeenCalled();
     });
@@ -55,7 +62,7 @@ describe('handler', () => {
         const res = {};
         const next = jest.fn();
 
-        const handler = createTraceHandler({ sampleRate: 0 });
+        const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
         handler(req as unknown as Request, res as Response, next);
         expect(next).toHaveBeenCalled();
         expect(contextMock.set).toHaveBeenCalledWith('adsp_traceparent', expect.any(TraceParent));
@@ -68,7 +75,7 @@ describe('handler', () => {
         const res = {};
         const next = jest.fn();
 
-        const handler = createTraceHandler({ sampleRate: 0 });
+        const handler = createTraceHandler({ logger: loggerMock, sampleRate: 0 });
         handler(req as unknown as Request, res as Response, next);
         expect(next).toHaveBeenCalled();
         expect(contextMock.set).toHaveBeenCalledWith(
