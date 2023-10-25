@@ -1,4 +1,4 @@
 declare module '*.hbs' {
   const content: string;
-  export = content;
+  export default content;
 }

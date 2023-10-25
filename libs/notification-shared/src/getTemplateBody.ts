@@ -1,8 +1,8 @@
 import * as handlebars from 'handlebars';
-import * as emailWrapper from './templates/email-wrapper.hbs';
-import * as pdfWrapper from './templates/pdf-wrapper.hbs';
-import * as pdfFooterWrapper from './templates/pdf-footer-wrapper.hbs';
-import * as pdfHeaderWrapper from './templates/pdf-header-wrapper.hbs';
+import emailWrapper from './templates/email-wrapper.hbs';
+import pdfWrapper from './templates/pdf-wrapper.hbs';
+import pdfFooterWrapper from './templates/pdf-footer-wrapper.hbs';
+import pdfHeaderWrapper from './templates/pdf-header-wrapper.hbs';
 
 const emailWrapperTemplate = handlebars.compile(emailWrapper, { noEscape: true });
 const pdfWrapperTemplate = handlebars.compile(pdfWrapper, { noEscape: true });
