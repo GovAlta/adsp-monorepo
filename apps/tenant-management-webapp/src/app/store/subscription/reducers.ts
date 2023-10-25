@@ -117,7 +117,10 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
           (subs, sub) => ({ ...subs, [sub.id]: { ...subs[sub.id], ...sub } }),
           state.subscribers
         );
-        results = [...(after ? state.subscriberSearch.results : []), ...subscribers.map((subscriber) => subscriber.id)];
+        results = [
+          ...(after && state.subscriberSearch.results ? state.subscriberSearch.results : []),
+          ...subscribers.map((subscriber) => subscriber.id),
+        ];
       }
 
       return {
