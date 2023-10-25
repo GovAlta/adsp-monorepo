@@ -4,9 +4,9 @@ import { getTemplateBody } from '@core-services/notification-shared';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { Providers, SubscriberChannel, TemplateService, VerifyService } from './notification';
-import verifyEmailTemplate from './assets/verify-email-template.hbs';
-import verifySlackTemplate from './assets/verify-slack-template.hbs';
-import verifySmsTemplate from './assets/verify-sms-template.hbs';
+import * as verifyEmailTemplate from './assets/verify-email-template.hbs';
+import * as verifySlackTemplate from './assets/verify-slack-template.hbs';
+import * as verifySmsTemplate from './assets/verify-sms-template.hbs';
 
 const verifyTemplates = {
   [Channel.email]: verifyEmailTemplate,
