@@ -217,7 +217,7 @@ export const createSubscriberRouter = ({
     '/get-subscriber/:subscriberId',
     createValidationHandler(
       param('subscriberId')
-        .customSanitizer((value) => value.replace(/[^a-zA-Z0-9 ]/g, ''))
+        .customSanitizer((value) => value.replace(/[^a-zA-Z0-9- ]/g, ''))
         .isUUID(4)
     ),
     getSubscriber(tokenProvider, directory)
