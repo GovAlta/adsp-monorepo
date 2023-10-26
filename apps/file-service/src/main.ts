@@ -55,6 +55,7 @@ async function initializeApp(): Promise<express.Application> {
     eventService,
     metricsHandler,
     tenantService,
+    traceHandler,
   } = await initializePlatform(
     {
       serviceId,
@@ -99,6 +100,7 @@ async function initializeApp(): Promise<express.Application> {
   });
 
   app.use(passport.initialize());
+  app.use(traceHandler);
 
   app.use(
     '/file',

@@ -6,6 +6,8 @@ import { FileRepository } from '../repository';
 import { FileTypeEntity } from './type';
 import { v4 as uuidv4 } from 'uuid';
 import { FileStorageProvider } from '../storage';
+import { FileTypeDetector } from '../../utils/fileTypeDetector';
+import { Logger } from 'winston';
 
 export class FileEntity implements File {
   tenantId: AdspId;
@@ -14,6 +16,7 @@ export class FileEntity implements File {
   filename: string;
   typeId: string;
   size: number;
+  mimeType?: string;
   createdBy: UserInfo;
   created: Date;
   lastAccessed?: Date;
@@ -24,6 +27,7 @@ export class FileEntity implements File {
   securityClassification?: string;
 
   static async create(
+    logger: Logger,
     storageProvider: FileStorageProvider,
     repository: FileRepository,
     user: User,
@@ -44,8 +48,13 @@ export class FileEntity implements File {
       },
     });
 
+    const fileTypeDetector = new FileTypeDetector(logger, content);
+    const result = await fileTypeDetector.detect();
+
+    entity.mimeType = result.fileType?.mime;
+
     entity = await repository.save(entity);
-    const saved = await storageProvider.saveFile(entity, type, content);
+    const saved = await storageProvider.saveFile(entity, type, result.fileStream);
     if (!saved) {
       // Deleted the record if the storage failed to save the file so we don't end up with orphans.
       await entity.delete(true);
@@ -78,6 +87,7 @@ export class FileEntity implements File {
       this.deleted = record.deleted;
       this.infected = record.infected;
       this.size = record.size;
+      this.mimeType = record.mimeType;
     } else {
       this.tenantId = type.tenantId;
       this.id = uuidv4();

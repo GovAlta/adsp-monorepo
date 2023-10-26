@@ -34,7 +34,7 @@ const initializeApp = async (): Promise<express.Application> => {
   }
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
-  const { coreStrategy, tenantStrategy, tenantHandler, eventService, healthCheck, metricsHandler } =
+  const { coreStrategy, tenantStrategy, tenantHandler, eventService, healthCheck, metricsHandler, traceHandler } =
     await initializePlatform(
       {
         serviceId,
@@ -79,6 +79,7 @@ const initializeApp = async (): Promise<express.Application> => {
   });
 
   app.use(passport.initialize());
+  app.use(traceHandler);
   app.use(
     '/configuration',
     metricsHandler,

@@ -244,10 +244,10 @@ export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
         <DataTable testId="calendar-selected-event-table">
           <thead>
             <tr>
-              <th>Event name</th>
-              <th>Start date and time</th>
-              <th>End date and time</th>
-              <th>Actions</th>
+              <th data-testid="event-name-th">Event name</th>
+              <th data-testid="start-date-and-time-th">Start date and time</th>
+              <th data-testid="end-date-and-time-th">End date and time</th>
+              <th data-testid="action-th">Actions</th>
             </tr>
           </thead>
           <tbody>

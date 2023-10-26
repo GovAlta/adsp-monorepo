@@ -22,6 +22,7 @@ export class FileSystemStorageProvider implements FileStorageProvider {
           context: 'FileSystemStorageProvider',
         });
       });
+
       stream.on('finish', function () {
         stat(filePath, (_err, stats) => {
           entity.setSize(stats.size);

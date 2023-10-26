@@ -302,9 +302,12 @@ function* findSubscribers(action: FindSubscribersAction): SagaIterator {
   }
 
   if (criteria.next) {
-    params.after = criteria.next;
+    if (action.payload.paginationReset) {
+      params.after = null;
+    } else {
+      params.after = criteria.next;
+    }
   }
-
   if (configBaseUrl && token) {
     try {
       const response = yield call(axios.get, `${configBaseUrl}/${findSubscriberPath}`, {

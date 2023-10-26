@@ -23,7 +23,7 @@ export const TaskDefinitionEditor = (): JSX.Element => {
 
   return (
     <>
-      <Modal data-testid="template-form">
+      <Modal data-testid="queue-editor">
         {/* Hides body overflow when the modal is up */}
         <BodyGlobalStyles hideOverflow={true} />
         <ModalContent>
