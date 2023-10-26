@@ -17,7 +17,10 @@ module.exports = (config) => {
         ...config.module.rules,
         {
           test: /\.hbs/,
-          type: 'asset/source',
+          type: 'javascript/auto',
+          use: {
+            loader: 'raw-loader',
+          },
         },
       ],
     },
