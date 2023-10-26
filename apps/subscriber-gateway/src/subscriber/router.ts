@@ -218,7 +218,7 @@ export const createSubscriberRouter = ({
     createValidationHandler(
       param('subscriberId')
         .customSanitizer((value) => value.replace(/[^a-zA-Z0-9 ]/g, ''))
-        .isMongoId()
+        .isUUID(4)
     ),
     getSubscriber(tokenProvider, directory)
   );
