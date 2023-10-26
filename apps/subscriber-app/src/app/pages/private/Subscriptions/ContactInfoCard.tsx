@@ -257,7 +257,24 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                           <GoABadge type="success" content="Verified" />
                         )}
                         {isEmailVerified !== undefined && isEmailVerified === false && (
-                          <GoABadge type="important" content="Not verified" />
+                          <div>
+                            <GoABadge type="important" content="Not verified" />
+                            <GoAButton
+                              size="compact"
+                              testId="edit-contact-button"
+                              onClick={() => {
+                                if (!subscriber) {
+                                  dispatch(createSubscriber());
+                                }
+                                setEditContactInformation(!editContactInformation);
+                                setEmailContactInformation(subscriberEmail);
+                                setSMSContactInformation(subscriberSMS);
+                                setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
+                              }}
+                            >
+                              Verify email
+                            </GoAButton>
+                          </div>
                         )}
                       </VerificationWrapper>
 
@@ -274,7 +291,24 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                           <GoABadge type="success" content="Verified" />
                         )}
                         {isSmsVerified !== undefined && isSmsVerified === false && (
-                          <GoABadge type="important" content="Not verified" />
+                          <div>
+                            <GoABadge type="important" content="Not verified" />
+                            <GoAButton
+                              size="compact"
+                              testId="edit-contact-button"
+                              onClick={() => {
+                                if (!subscriber) {
+                                  dispatch(createSubscriber());
+                                }
+                                setEditContactInformation(!editContactInformation);
+                                setEmailContactInformation(subscriberEmail);
+                                setSMSContactInformation(subscriberSMS);
+                                setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
+                              }}
+                            >
+                              Verify Phone Number
+                            </GoAButton>
+                          </div>
                         )}
                       </VerificationWrapper>
 
