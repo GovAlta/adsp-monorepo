@@ -230,6 +230,7 @@
     "multiple-cucumber-html-reporter": "^1.18.0",
     "nx": "15.9.7",
     "prettier": "2.7.1",
+    "raw-loader": "^4.0.2",
     "react": "18.2.0",
     "react-chartjs-2": "^4.1.0",
     "react-date-picker": "^8.4.0",
