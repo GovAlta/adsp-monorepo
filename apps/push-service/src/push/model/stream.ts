@@ -1,8 +1,9 @@
+import { AdspId, hasRequiredRole, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { DomainEvent, InvalidOperationError } from '@core-services/core-common';
 import * as _ from 'lodash';
 import { Observable } from 'rxjs';
 import { map, filter } from 'rxjs/operators';
-import { AdspId, hasRequiredRole, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
-import { DomainEvent, InvalidOperationError } from '@core-services/core-common';
+import { Logger } from 'winston';
 import { PushServiceRoles } from '../roles';
 import { EventCriteria, Stream, StreamEvent } from '../types';
 
@@ -17,7 +18,7 @@ export class StreamEntity implements Stream {
 
   stream: Observable<StreamItem>;
 
-  constructor(public tenantId: AdspId, stream: Stream) {
+  constructor(private logger: Logger, public tenantId: AdspId, stream: Stream) {
     this.id = stream.id;
     this.name = stream.name;
     this.description = stream.description;
@@ -40,7 +41,16 @@ export class StreamEntity implements Stream {
               this.isMatch(event, se.criteria)
           ),
         ]),
-        filter(([_, streamEvent]) => !!streamEvent),
+        filter(([_, streamEvent]) => {
+          const hasMatch = !!streamEvent;
+          if (hasMatch) {
+            this.logger.debug(
+              `Matched event ${streamEvent.namespace}:${streamEvent.name} to stream ${this.name} (ID: ${this.id})...`,
+              { context: 'StreamEntity', tenant: this.tenantId?.toString() }
+            );
+          }
+          return hasMatch;
+        }),
         map(([event, streamEvent]: [DomainEvent, StreamEvent]) => this.mapEvent(event, streamEvent))
       );
     }
@@ -94,6 +104,16 @@ export class StreamEntity implements Stream {
       throw new InvalidOperationError('Stream not connected.');
     }
 
-    return this.stream.pipe(filter((o) => this.isMatch(o, criteria)));
+    return this.stream.pipe(
+      filter((o) => {
+        const isMatch = this.isMatch(o, criteria);
+        this.logger.debug(
+          `Filtering event ${o.namespace}:${o.name} for subscriber ${user.name} (ID: ${user.id})` +
+            ` on stream ${this.name} (ID: ${this.id}) with result: ${isMatch}`,
+          { context: 'StreamEntity', tenant: this.tenantId?.toString() }
+        );
+        return isMatch;
+      })
+    );
   }
 }
