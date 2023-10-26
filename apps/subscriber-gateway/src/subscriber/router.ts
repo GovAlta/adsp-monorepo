@@ -209,7 +209,7 @@ export const createSubscriberRouter = ({
   router.post(
     '/application-status',
     verifyCaptcha(logger, RECAPTCHA_SECRET),
-    createValidationHandler(body('tenantName').isString(), body('email').isEmail()),
+    createValidationHandler(body('tenant').isString(), body('email').isEmail()),
     subscribeStatus(tenantService, tokenProvider, directory, logger)
   );
 
@@ -217,8 +217,8 @@ export const createSubscriberRouter = ({
     '/get-subscriber/:subscriberId',
     createValidationHandler(
       param('subscriberId')
-        .customSanitizer((value) => value.replace(/[^a-zA-Z0-9 ]/g, ''))
-        .isMongoId()
+        .customSanitizer((value) => value.replace(/[^a-zA-Z0-9- ]/g, ''))
+        .isUUID(4)
     ),
     getSubscriber(tokenProvider, directory)
   );

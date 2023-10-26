@@ -1,8 +1,7 @@
 import React, { FC, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { TestWebhooks } from '../../../../store/status/actions';
-import { Webhooks } from '../../../../store/status/models';
-import DataTable from '@components/DataTable';
+import { TestWebhooks } from '@store/status/actions';
+import { Webhooks } from '@store/status/models';
 import { EventSearchCriteria } from '@store/event/models';
 import { getEventLogEntries } from '@store/event/actions';
 import {
@@ -18,7 +17,7 @@ import { GoAPageLoader } from '@abgov/react-components';
 import { renderNoItem } from '@components/NoItem';
 import styled from 'styled-components';
 
-import { RootState } from '../../../../store/index';
+import { RootState } from '@store/index';
 
 interface Props {
   isOpen: boolean;
@@ -121,17 +120,18 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
         <GoAFormItem label="Events">
           {!orderedGroupNames && renderNoItem('event definition')}
 
-          <DataTable data-testid="events-definitions-table">
-            <GoARadioGroup name="option" onChange={(_, value) => setSelectedStatusName(value)}>
-              {events?.map((name) => {
-                return (
-                  <GoARadioItem name="option" value={name}>
-                    {name}
-                  </GoARadioItem>
-                );
-              })}
+          {events && (
+            <GoARadioGroup
+              name="option"
+              onChange={(_, value) => setSelectedStatusName(value)}
+              orientation="vertical"
+              testId="status-radio-group"
+            >
+              {events?.map((val) => (
+                <GoARadioItem name="option" value={val}></GoARadioItem>
+              ))}
             </GoARadioGroup>
-          </DataTable>
+          )}
         </GoAFormItem>
 
         {(showEntries || (indicator.show && indicator.message !== 'Loading...')) && (

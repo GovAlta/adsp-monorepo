@@ -1,8 +1,15 @@
 import { adspId, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError } from '@core-services/core-common';
 import { of } from 'rxjs';
+import { Logger } from 'winston';
 import { PushServiceRoles } from '../roles';
 import { StreamEntity } from './stream';
+
+const loggerMock = {
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+} as unknown as Logger;
 
 describe('StreamEntity', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
@@ -10,7 +17,7 @@ describe('StreamEntity', () => {
   let entity: StreamEntity;
 
   beforeEach(() => {
-    entity = new StreamEntity(tenantId, {
+    entity = new StreamEntity(loggerMock, tenantId, {
       id: 'test',
       name: 'Test Stream',
       description: null,
@@ -26,7 +33,7 @@ describe('StreamEntity', () => {
   });
 
   it('can be created', () => {
-    const newEntity = new StreamEntity(tenantId, {
+    const newEntity = new StreamEntity(loggerMock, tenantId, {
       id: 'test',
       name: 'Test Stream',
       description: null,
@@ -68,7 +75,7 @@ describe('StreamEntity', () => {
     });
 
     it('can return true for public stream', () => {
-      const publicEntity = new StreamEntity(tenantId, {
+      const publicEntity = new StreamEntity(loggerMock, tenantId, {
         id: 'test',
         name: 'Test Stream',
         description: null,
@@ -86,7 +93,7 @@ describe('StreamEntity', () => {
     });
 
     it('can return false for cross-tenant non-core user', () => {
-      const stream = new StreamEntity(null, {
+      const stream = new StreamEntity(loggerMock, null, {
         id: 'test',
         name: 'Test Stream',
         description: null,
@@ -105,7 +112,7 @@ describe('StreamEntity', () => {
     });
 
     it('can return true for cross-tenant core user with role', () => {
-      const stream = new StreamEntity(null, {
+      const stream = new StreamEntity(loggerMock, null, {
         id: 'test',
         name: 'Test Stream',
         description: null,
@@ -124,7 +131,7 @@ describe('StreamEntity', () => {
     });
 
     it('can return false for cross-tenant public stream', () => {
-      const publicEntity = new StreamEntity(null, {
+      const publicEntity = new StreamEntity(loggerMock, null, {
         id: 'test',
         name: 'Test Stream',
         description: null,
@@ -153,7 +160,7 @@ describe('StreamEntity', () => {
   });
 
   describe('isMatch', () => {
-    const stream = new StreamEntity(tenantId, {
+    const stream = new StreamEntity(loggerMock, tenantId, {
       id: 'test',
       name: 'Test Stream',
       description: null,
@@ -219,7 +226,7 @@ describe('StreamEntity', () => {
 
   describe('getEvents', () => {
     it('can get events', (done) => {
-      const stream = new StreamEntity(tenantId, {
+      const stream = new StreamEntity(loggerMock, tenantId, {
         id: 'test',
         name: 'Test Stream',
         description: null,
