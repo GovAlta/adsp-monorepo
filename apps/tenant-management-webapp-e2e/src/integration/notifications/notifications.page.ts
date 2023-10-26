@@ -302,31 +302,31 @@ class NotificationsPage {
 
   subscriberIconEye(addressAs, email) {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[@data-testid="toggle-details-visibility"]`
+      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::td//*[contains(text(), "${email}")]/ancestor::tr//*[@data-testid="toggle-details-visibility"]`
     );
   }
 
   subscriberDeleteIcon(addressAs, email) {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[@data-testid="delete-icon"]`
+      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::td//*[contains(text(), "${email}")]/ancestor::tr//*[@data-testid="delete-icon"]`
     );
   }
 
   subscriberSubscriptions(addressAs, email) {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//following-sibling::tr[1]`
+      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::td//*[contains(text(), "${email}")]/ancestor::tr/following-sibling::tr[1]`
     );
   }
 
   subscriber(addressAs, email) {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//table/div/tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*`
+      `//*[@data-testid="subscribers-list-title"]//table/div/tbody//td[contains(text(), "${addressAs}")]/following-sibling::td//*[contains(text(), "${email}")]/ancestor::tr`
     );
   }
 
   subscriberWithPhoneNumber(addressAs, email, phoneNumber) {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//table/div/tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/following-sibling::*[contains(text(), "${phoneNumber}")]/parent::*`
+      `//*[@data-testid="subscribers-list-title"]//table/div/tbody//td[contains(text(), "${addressAs}")]/following-sibling::td//*[contains(text(), "${email}")]/ancestor::td/following-sibling::td//*[contains(text(), "${phoneNumber}")]/parent::*`
     );
   }
 
@@ -380,7 +380,7 @@ class NotificationsPage {
 
   subscriberEditIcon(addressAs, email) {
     return cy.xpath(
-      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::*[contains(text(), "${email}")]/parent::*//*[contains(@data-testid, "edit-subscription-item")]`
+      `//*[@data-testid="subscribers-list-title"]//tbody//td[contains(text(), "${addressAs}")]/following-sibling::td//*[contains(text(), "${email}")]/ancestor::tr//*[contains(@data-testid, "edit-subscription-item")]`
     );
   }
 
