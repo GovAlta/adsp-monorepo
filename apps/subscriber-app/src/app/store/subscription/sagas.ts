@@ -18,12 +18,16 @@ import {
   CREATE_SUBSCRIBER,
   CreateSubscribeAction,
   createSubscriberSuccess,
+  VERIFY_EMAIL,
+  VerifyEmailAction,
+  CHECK_CODE,
 } from './actions';
 import { UpdateIndicator } from '@store/session/actions';
 import { ConfigState } from '@store/config/models';
 
 import { RootState } from '../index';
 import axios from 'axios';
+import { verify } from 'crypto';
 
 export function* getMySubscriberDetails(): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
@@ -79,7 +83,7 @@ export function* getSubscriberDetails(action: GetSubscriberAction): SagaIterator
         action: '',
       })
     );
-    yield put(ErrorNotification({ error: err}));
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
@@ -107,7 +111,7 @@ function* createSubscriber(action: CreateSubscribeAction): SagaIterator {
         })
       );
     } catch (err) {
-      yield put(ErrorNotification({ error: err}));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -167,7 +171,7 @@ export function* patchSubscriber(action: PatchSubscriberAction): SagaIterator {
           })
         );
       }
-      yield put(ErrorNotification({ message: 'failed to updated contact information', error: err}));
+      yield put(ErrorNotification({ message: 'failed to updated contact information', error: err }));
     }
   }
 }
@@ -188,7 +192,7 @@ export function* unsubscribe(action: UnsubscribeAction): SagaIterator {
       // remove the deleted subscription from the list after its successful
       yield put(UnsubscribeSuccess(type));
     } catch (err) {
-      yield put(ErrorNotification({ error: err}));
+      yield put(ErrorNotification({ error: err }));
     }
   }
 }
@@ -217,7 +221,104 @@ export function* signedOutUnsubscribe(action: GetSignedOutSubscriberAction): Sag
 
     yield put(UnsubscribeSuccess(type));
   } catch (err) {
-    yield put(ErrorNotification({ error: err}));
+    yield put(ErrorNotification({ error: err }));
+  }
+}
+
+export function* verifyEmail(action: VerifyEmailAction): SagaIterator {
+  const subscriber = action.subscriber;
+
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const realm: string = yield select((state: RootState) => state.session.realm);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const email: string = yield select((state: RootState) => state.session.userInfo.email);
+
+  console.log(JSON.stringify(token) + '<token');
+  console.log(JSON.stringify(email) + '<email');
+  console.log(JSON.stringify(configBaseUrl) + '<configBaseUrl');
+  console.log(
+    JSON.stringify(subscriber.channels.find((channel) => channel.channel === 'email')?.address) +
+      '<subscriber.channels.find((channel) => channel.channel ==='
+  );
+
+  const link = `${window.location.origin}/${realm}/login`;
+
+  const reason = `Verification Link: ${link} - This link will expire in 1 hour, so please make sure to click it soon to confirm the accuracy of your notification email/phone number. Verifying this information is essential to ensure that you continue to receive important updates and notifications from us. Thank you for your prompt attention to this matter. If you have any questions or encounter any issues during the verification process, please do not hesitate to contact our support team at [Support Email Address] or [Support Phone Number]. Your security and privacy are of utmost importance to us, and this verification process is designed to enhance the protection of your account.`;
+
+  const address = subscriber.channels.find((channel) => channel.channel === 'email')?.address;
+
+  if (configBaseUrl && token) {
+    try {
+      const response = yield call(
+        axios.post,
+        `${configBaseUrl}/subscription/v1/subscribers/${subscriber.id}`,
+        {
+          operation: 'send-code',
+          channel: 'email',
+          address: address,
+          reason: reason,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      console.log(JSON.stringify(response) + ' <response');
+
+      yield put(
+        SuccessNotification({
+          message: `A verification email has been sent to ${address}..`,
+        })
+      );
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
+    }
+  }
+}
+
+export function* checkCode(action: VerifyEmailAction): SagaIterator {
+  const subscriber = action.subscriber;
+
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const token: string = yield select((state: RootState) => state.session.credentials?.token);
+  const email: string = yield select((state: RootState) => state.session.userInfo.email);
+
+  console.log(JSON.stringify(token) + '<token');
+  console.log(JSON.stringify(email) + '<email');
+  console.log(JSON.stringify(configBaseUrl) + '<configBaseUrl');
+  console.log(
+    JSON.stringify(subscriber.channels.find((channel) => channel.channel === 'email')?.address) +
+      '<subscriber.channels.find((channel) => channel.channel ==='
+  );
+
+  if (configBaseUrl && token) {
+    try {
+      const response = yield call(
+        axios.post,
+        `${configBaseUrl}/subscription/v1/subscribers/${subscriber.id}`,
+        {
+          operation: 'send-code',
+          channel: 'email',
+          address: subscriber.channels.find((channel) => channel.channel === 'email')?.address,
+          reason: 'string',
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      console.log(JSON.stringify(response) + ' <response');
+
+      // yield put(createSubscriberSuccess(response.data));
+
+      // yield put(
+      //   SuccessNotification({
+      //     message: `You are subscribed! You will receive notifications on ${email} .`,
+      //   })
+      // );
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
+    }
   }
 }
 
@@ -228,4 +329,6 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(SIGNED_OUT_UNSUBSCRIBE, signedOutUnsubscribe);
   yield takeEvery(PATCH_SUBSCRIBER, patchSubscriber);
   yield takeEvery(CREATE_SUBSCRIBER, createSubscriber);
+  yield takeEvery(VERIFY_EMAIL, verifyEmail);
+  yield takeEvery(CHECK_CODE, checkCode);
 }

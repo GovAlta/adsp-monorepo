@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { GoAFormItem } from '@abgov/react-components/experimental';
 import { useDispatch, useSelector } from 'react-redux';
-import { patchSubscriber, createSubscriber } from '@store/subscription/actions';
+import { patchSubscriber, createSubscriber, VerifyEmail, CheckCode } from '@store/subscription/actions';
 import { actionTypes } from '@store/subscription/models';
 import { Channels } from '@store/subscription/models';
 import { Grid, GridItem } from '@components/Grid';
@@ -11,6 +11,7 @@ import { InfoCard } from './InfoCard';
 import { Label, GapVS, VerificationWrapper } from './styled-components';
 import { RootState } from '@store/index';
 import { phoneWrapper } from '@lib/wrappers';
+import { useParams } from 'react-router-dom-6';
 import {
   GoAButton,
   GoAInput,
@@ -27,21 +28,28 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
   const dispatch = useDispatch();
   const [formErrors, setFormErrors] = useState({});
   const userInfo = useSelector((state: RootState) => state.session?.userInfo);
+  const { code } = useParams();
 
   const subscriberEmail = subscriber
-    ? subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === Channels.email)[0]?.address
+    ? subscriber?.channels?.filter((chn: SubscriberChannel) => chn.channel === Channels.email)[0]?.address
     : userInfo?.email;
 
   const isEmailVerified = subscriber && subscriber?.channels?.find((c) => c.channel === Channels.email)?.verified;
   const isSmsVerified = subscriber && subscriber?.channels?.find((c) => c.channel === Channels.sms)?.verified;
 
   const subscriberSMS =
-    subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === Channels.sms)[0]?.address || '';
+    subscriber?.channels?.filter((chn: SubscriberChannel) => chn.channel === Channels.sms)[0]?.address || '';
 
   useEffect(() => {
     setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
   }, [subscriber]);
   // we need to wait for userInfo api call so that the followup api calls can make use of the jwt token
+
+  useEffect(() => {
+    if (code) {
+      dispatch(CheckCode(code, subscriber));
+    }
+  }, [code]);
 
   const [emailContactInformation, setEmailContactInformation] = useState(subscriberEmail);
   const [SMSContactInformation, setSMSContactInformation] = useState(subscriberSMS);
@@ -261,15 +269,9 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                             <GoABadge type="important" content="Not verified" />
                             <GoAButton
                               size="compact"
-                              testId="edit-contact-button"
+                              testId="verify-email"
                               onClick={() => {
-                                if (!subscriber) {
-                                  dispatch(createSubscriber());
-                                }
-                                setEditContactInformation(!editContactInformation);
-                                setEmailContactInformation(subscriberEmail);
-                                setSMSContactInformation(subscriberSMS);
-                                setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
+                                dispatch(VerifyEmail(subscriber));
                               }}
                             >
                               Verify email

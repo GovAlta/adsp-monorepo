@@ -160,7 +160,7 @@ const Subscriptions = (): JSX.Element => {
               <GoAModal></GoAModal>
               <SubscriptionListContainer>
                 <DataTable data-testid="subscriptions-table">
-                  {!subscriber || subscriber?.subscriptions.length > 0 ? (
+                  {!subscriber || subscriber?.subscriptions?.length > 0 ? (
                     <tr>
                       <th id="subscriptions">Subscription</th>
                       <th id="descriptions">Description</th>

@@ -17,6 +17,10 @@ export const NO_SUBSCRIBER = 'tenant/notification-service/no-subscriber';
 
 export const CREATE_SUBSCRIBER = 'tenant/notification-service/create-subscriber';
 export const CREATE_SUBSCRIBER_SUCCESS = 'tenant/notification-service/create-subscriber-success';
+export const VERIFY_EMAIL = 'tenant/notification-service/verify-email';
+export const VERIFY_EMAIL_SUCCESS = 'tenant/notification-service/verify-email-success';
+export const CHECK_CODE = 'tenant/notification-service/check-code';
+export const CHECK_CODE_SUCCESS = 'tenant/notification-service/check-code-success';
 
 // =============
 // Actions Types
@@ -87,6 +91,29 @@ export interface CreateSubscriptionActionSuccess {
   type: typeof CREATE_SUBSCRIBER_SUCCESS;
   payload: {
     subscriber: Subscriber;
+  };
+}
+export interface VerifyEmailAction {
+  type: typeof VERIFY_EMAIL;
+  subscriber: Subscriber;
+}
+
+export interface VerifyEmailActionSuccess {
+  type: typeof VERIFY_EMAIL_SUCCESS;
+  payload: {
+    response: any;
+  };
+}
+export interface CheckCodeAction {
+  type: typeof CHECK_CODE;
+  code: string;
+  subscriber: Subscriber;
+}
+
+export interface CheckCodeActionSuccess {
+  type: typeof CHECK_CODE_SUCCESS;
+  payload: {
+    response: any;
   };
 }
 
@@ -171,5 +198,28 @@ export const createSubscriberSuccess = (subscriber): CreateSubscriptionActionSuc
   type: CREATE_SUBSCRIBER_SUCCESS,
   payload: {
     subscriber,
+  },
+});
+export const VerifyEmail = (subscriber: Subscriber): VerifyEmailAction => ({
+  type: VERIFY_EMAIL,
+  subscriber,
+});
+
+export const VerifyEmailSuccess = (response): VerifyEmailActionSuccess => ({
+  type: VERIFY_EMAIL_SUCCESS,
+  payload: {
+    response,
+  },
+});
+export const CheckCode = (code: string, subscriber: Subscriber): CheckCodeAction => ({
+  type: CHECK_CODE,
+  code,
+  subscriber,
+});
+
+export const CheckCodeSuccess = (response): CheckCodeActionSuccess => ({
+  type: CHECK_CODE_SUCCESS,
+  payload: {
+    response,
   },
 });
