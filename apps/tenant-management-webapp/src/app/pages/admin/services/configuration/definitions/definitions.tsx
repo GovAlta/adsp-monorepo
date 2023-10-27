@@ -62,16 +62,18 @@ export const ConfigurationDefinitions: FunctionComponent<ParentCompProps> = ({ a
       </GoAButton>
 
       {/*Add/Edit definition */}
-      <AddEditConfigDefinition
-        open={isEdit || openAddDefinition}
-        onClose={reset}
-        isEdit={isEdit}
-        initialValue={selectedDefinition}
-        configurations={{ ...tenantConfigDefinitions?.configuration, ...coreConfigDefinitions?.configuration }}
-        onSave={(definition) => {
-          dispatch(updateConfigurationDefinition(definition, false));
-        }}
-      />
+      {openAddDefinition && (
+        <AddEditConfigDefinition
+          open={isEdit || openAddDefinition}
+          onClose={reset}
+          isEdit={isEdit}
+          initialValue={selectedDefinition}
+          configurations={{ ...tenantConfigDefinitions?.configuration, ...coreConfigDefinitions?.configuration }}
+          onSave={(definition) => {
+            dispatch(updateConfigurationDefinition(definition, false));
+          }}
+        />
+      )}
       {indicator.show && <PageIndicator />}
       {/* tenant config definition */}
       <div>
