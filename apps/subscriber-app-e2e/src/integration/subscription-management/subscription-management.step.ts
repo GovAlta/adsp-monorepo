@@ -137,7 +137,7 @@ When(
 And('the user views contact information of {string}, {string} and {string}', function (email, phone, channel) {
   subscriptionManagementObj.emailDisplay().invoke('text').should('contain', email);
   if (phone == 'EMPTY') {
-    subscriptionManagementObj.phoneNumberDisplay().should('be.empty');
+    subscriptionManagementObj.phoneNumberDisplay().invoke('text').should('be.empty');
   } else {
     subscriptionManagementObj.phoneNumberDisplay().invoke('text').should('contain', phone);
   }
