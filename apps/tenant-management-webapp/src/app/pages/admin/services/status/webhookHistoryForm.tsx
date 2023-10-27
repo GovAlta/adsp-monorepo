@@ -19,6 +19,7 @@ import styled from 'styled-components';
 
 import { RootState } from '../../../../store/index';
 import { HoverWrapper, ToolTip } from './styled-components';
+import { LoadMoreWrapper } from '../calendar/events/styled-components';
 
 interface Props {
   isOpen: boolean;
@@ -275,14 +276,16 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ isOpen, onCancel
               )}
               {next && (
                 <div className="mt-1">
-                  <GoAButton
-                    type="tertiary"
-                    testId="webhook-history-form-load-more"
-                    disabled={isLoading}
-                    onClick={onNext}
-                  >
-                    Load more...
-                  </GoAButton>
+                  <LoadMoreWrapper>
+                    <GoAButton
+                      type="tertiary"
+                      testId="webhook-history-form-load-more"
+                      disabled={isLoading}
+                      onClick={onNext}
+                    >
+                      Load more
+                    </GoAButton>
+                  </LoadMoreWrapper>
                 </div>
               )}
             </>
