@@ -78,5 +78,83 @@ class CalendarPage {
     return cy.xpath('//*[@data-testid="add-calendar-modal"]//goa-table');
   }
 
+  calendarEventsPage() {
+    return cy.get('[data-testid="calendar-event-tab"]');
+  }
+
+  selectEventDropdown() {
+    return cy.get('[data-testid="calendar-event-dropdown-list"]');
+  }
+
+  selectNoEventText() {
+    return cy.get('b');
+  }
+
+  eventStartDate() {
+    return cy.get('[label="Start date"] > goa-input');
+  }
+
+  eventEndDate() {
+    return cy.get('[label="End date"] > goa-input');
+  }
+
+  addEventBtn() {
+    return cy.get('[data-testid="show-calendar-event-table"]');
+  }
+
+  addEventModalTitle()
+  {
+    return cy.get('[data-testid="calendar-event-tab"] > :nth-child(1) > goa-modal > [slot="heading"]')
+  }
+
+  addEventModalNameField() {
+    return cy.get('[data-testid="calendar-event-modal-name-input"]');
+  }
+
+  addEventModalNameFormItem() {
+    return cy.get('[label="Name"]');
+  }
+
+  editEventModalDescriptionField() {
+    return cy.get('[data-testid="calendar-event-modal-description-input"]');
+  }
+
+  addEventModalAllDayCheckbox() {
+    return cy.get(':nth-child(6) > goa-checkbox');
+  }
+
+  addEventModalPublicCheckbox() {
+    return cy.get(':nth-child(5) > goa-checkbox');
+  }
+
+  addEventModalStartDate() {
+  return cy.get('[data-testid="calendar-event-modal-start-date-input"]');
+  }
+
+  addEventModalEndDate() {
+    return cy.get('[data-testid="calendar-event-modal-end-date-input"]');
+  }
+
+  eventTableBody() {
+    return cy.xpath('//table[@data-testid="event-table"]//tbody');
+  }
+
+  eventTableBodyName(name) {
+    return cy.xpath(
+      `//*[@data-testid="event-table"]//tbody/tr/td/parent::*/following-sibling::tr//*[@data-testid="event-name" and contains(text(), "${name}")]`      );
+  }
+
+  eventNameValue() {
+    return cy.get('[data-testid="event-name-th"]');
+  }
+
+  eventEditButton() {
+    return cy.get('[data-testid="calendar-event-52"]')
+  }
+
+  eventDeleteButton() {
+    return cy.get('[data-testid="delete-icon"]')
+  }
+
 }
 export default CalendarPage;
