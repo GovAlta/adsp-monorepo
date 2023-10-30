@@ -173,9 +173,21 @@ When(
       case 'eye':
         configurationObj
           .configurationDefinitionEyeBtn(namespace, name, desc)
-          .shadow()
-          .find('button')
-          .click({ force: true });
+          .invoke('attr', 'icon')
+          .then((iconValue) => {
+            if (iconValue == 'eye') {
+              configurationObj
+                .configurationDefinitionEyeBtn(namespace, name, desc)
+                .shadow()
+                .find('button')
+                .click({ force: true });
+              cy.wait(1000);
+              configurationObj
+                .configurationDefinitionEyeBtn(namespace, name, desc)
+                .invoke('attr', 'icon')
+                .should('eq', 'eye-off');
+            }
+          });
         break;
       default:
         expect(buttonName.toLowerCase()).to.be.oneOf(['edit', 'delete', 'eye']);
@@ -216,7 +228,9 @@ When('the user enters {string} in payload schema in configuration definition mod
     .click({ force: true })
     .focus()
     .type('{ctrl}a', { force: true })
+    .wait(1000)
     .clear({ force: true })
+    .wait(1000)
     .type(payload, { force: true });
 });
 
