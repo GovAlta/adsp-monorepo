@@ -482,13 +482,13 @@ When('the user clicks Search button on notifications page', function () {
 //notification type in sentence case, only first letter is upper case
 Then(
   'the user {string} the subscription of {string}, {string} under {string}',
-  function (viewOrNot, addressAd, email, notificationType) {
+  function (viewOrNot, addressAs, email, notificationType) {
     switch (viewOrNot) {
       case 'views':
-        notificationsObj.notificationRecord(notificationType, addressAd, email).should('exist');
+        notificationsObj.notificationRecord(notificationType, addressAs, email).should('exist');
         break;
       case 'should not view':
-        notificationsObj.notificationRecord(notificationType, addressAd, email).should('not.exist');
+        notificationsObj.notificationRecord(notificationType, addressAs, email).should('not.exist');
         break;
       default:
         expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
@@ -498,9 +498,9 @@ Then(
 
 When(
   'the user clicks delete button of {string}, {string} under {string}',
-  function (addressAd, email, notificationType) {
+  function (addressAs, email, notificationType) {
     notificationsObj
-      .deleteIconForNotificationRecord(notificationType, addressAd, email)
+      .deleteIconForNotificationRecord(notificationType, addressAs, email)
       .shadow()
       .find('button')
       .click({ force: true });
@@ -1052,27 +1052,27 @@ When('the user clicks Delete button in Reset email template modal', function () 
   cy.wait(2000); // Wait for the modal and reset button to go away
 });
 
-When('the user clicks eye icon of {string}, {string} under {string}', function (addressAd, email, notificationType) {
+When('the user clicks eye icon of {string}, {string} under {string}', function (addressAs, email, notificationType) {
   cy.wait(2000); // Wait for eye icon to show
   notificationsObj
-    .notificationRecordEyeIcon(notificationType, addressAd, email)
+    .notificationRecordEyeIcon(notificationType, addressAs, email)
     .shadow()
     .find('button')
     .click({ force: true });
   cy.wait(1000);
   notificationsObj
-    .notificationRecordEyeIcon(notificationType, addressAd, email)
+    .notificationRecordEyeIcon(notificationType, addressAs, email)
     .invoke('attr', 'icon')
     .should('eq', 'eye-off');
 });
 
-Then('the user views the details of {string}, {string} under {string}', function (addressAd, email, notificationType) {
+Then('the user views the details of {string}, {string} under {string}', function (addressAs, email, notificationType) {
   notificationsObj
-    .notificationRecordDetailsCriteria(notificationType, addressAd, email)
+    .notificationRecordDetailsCriteria(notificationType, addressAs, email)
     .invoke('text')
     .should('contains', 'correlationId');
   notificationsObj
-    .notificationRecordDetailsCriteria(notificationType, addressAd, email)
+    .notificationRecordDetailsCriteria(notificationType, addressAs, email)
     .invoke('text')
     .should('contains', 'context');
 });
