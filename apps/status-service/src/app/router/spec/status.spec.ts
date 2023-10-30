@@ -14,7 +14,7 @@ import {
 import { Request, Response } from 'express';
 import { ServiceStatusApplicationEntity } from '../../model';
 import * as eventFuncs from '../../events';
-import { DomainEvent } from '@abgov/adsp-service-sdk';
+import { DomainEvent, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 import { adspId } from '@abgov/adsp-service-sdk';
 import axios from 'axios';
@@ -208,6 +208,12 @@ describe('Service router', () => {
   );
 
   describe('createStatusServiceRouter', () => {
+    const configurationService = {
+      getConfiguration: jest.fn(() => Promise.resolve({})),
+    };
+    beforeEach(() => {
+      configurationService.getConfiguration.mockClear();
+    });
     it('Can create status service routers', () => {
       const publicRouter = createPublicServiceStatusRouter({
         logger: loggerMock,
@@ -224,6 +230,7 @@ describe('Service router', () => {
         tokenProvider: tokenProviderMock,
         directory: serviceDirectoryMock,
         serviceId: serviceId,
+        configurationService: configurationService as unknown as ConfigurationService,
       });
 
       expect(publicRouter).toBeTruthy();
@@ -421,8 +428,6 @@ describe('Service router', () => {
   });
   describe('Can create application', () => {
     it('Can create new application', async () => {
-      // const createMock = jest.fn().mockReturnValue(applicationStatusMock[1]);
-      // ServiceStatusApplicationEntity.create = createMock;
       const req: Request = {
         user: {
           tenantId,
