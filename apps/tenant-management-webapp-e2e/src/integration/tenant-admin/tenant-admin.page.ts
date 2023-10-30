@@ -118,7 +118,7 @@ class TenantAdminPage {
   }
 
   eventLoadMoreBtn() {
-    return cy.get('goa-button:contains("Load more...")');
+    return cy.get('goa-button:contains("Load more")');
   }
 
   eventToggleDetailsIcons() {
