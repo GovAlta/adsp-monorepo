@@ -476,7 +476,7 @@ When('the user types {string} in Search subscriber email field', function (email
 
 When('the user clicks Search button on notifications page', function () {
   notificationsObj.notificationSearchBtn().shadow().find('button').click({ force: true });
-  cy.wait(1000);
+  cy.wait(4000);
 });
 
 //notification type in sentence case, only first letter is upper case
@@ -1059,6 +1059,11 @@ When('the user clicks eye icon of {string}, {string} under {string}', function (
     .shadow()
     .find('button')
     .click({ force: true });
+  cy.wait(1000);
+  notificationsObj
+    .notificationRecordEyeIcon(notificationType, addressAd, email)
+    .invoke('attr', 'icon')
+    .should('eq', 'eye-off');
 });
 
 Then('the user views the details of {string}, {string} under {string}', function (addressAd, email, notificationType) {
