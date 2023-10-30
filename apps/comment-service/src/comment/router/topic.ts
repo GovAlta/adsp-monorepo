@@ -3,7 +3,6 @@ import { NotFoundError, createValidationHandler, decodeAfter } from '@core-servi
 import { Request, RequestHandler, Response, Router } from 'express';
 import { body, param, query } from 'express-validator';
 import { Logger } from 'winston';
-import { isAdspId } from '../../utils';
 import { commentCreated, commentDeleted, commentUpdated, topicCreated, topicDeleted, topicUpdated } from '../events';
 import { TopicEntity, TopicTypeEntity } from '../model';
 import { TopicRepository } from '../repository';
@@ -86,7 +85,7 @@ export function createTopic(
       }
       const result = await TopicEntity.create(user, repository, type, {
         typeId,
-        resourceId: isAdspId(resourceIdValue) ? AdspId.parse(resourceIdValue) : resourceIdValue,
+        resourceId: AdspId.isAdspId(resourceIdValue) ? AdspId.parse(resourceIdValue) : resourceIdValue,
         ...topic,
       });
       res.send(mapTopic(apiId, result));

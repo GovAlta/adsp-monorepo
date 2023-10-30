@@ -70,6 +70,7 @@ export class FileStorageEngine implements multer.StorageEngine {
       }
 
       const fileEntity = await FileEntity.create(
+        this.logger,
         this.storageProvider,
         this.fileRepository,
         user,

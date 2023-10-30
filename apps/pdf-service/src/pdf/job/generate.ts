@@ -61,7 +61,7 @@ export function createGenerateJob({
 
       logger.debug(`Generation of PDF (ID: ${jobId}) completed PDF creation from content with ${pdf.length} bytes...`, {
         context,
-        tenant: tenantId,
+        tenant: tenantId?.toString(),
       });
 
       const result = await fileService.upload(tenantId, fileType, recordId, filename, pdf);
@@ -70,7 +70,7 @@ export function createGenerateJob({
 
       logger.info(`Generated PDF (ID: ${jobId}) file ${filename} and uploaded to file service at: ${result.urn}`, {
         context,
-        tenant: tenantId,
+        tenant: tenantId?.toString(),
       });
 
       await repository.update(jobId, 'completed', result);

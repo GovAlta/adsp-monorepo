@@ -21,7 +21,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { directory, tenantService, tokenProvider, healthCheck } = await initializePlatform(
+  const { directory, tenantService, tokenProvider, healthCheck, traceHandler } = await initializePlatform(
     {
       serviceId,
       displayName: 'Subscriber gateway',
@@ -34,6 +34,8 @@ const initializeApp = async (): Promise<express.Application> => {
     },
     { logger }
   );
+
+  app.use(traceHandler);
 
   const subscriberRouter = createSubscriberRouter({ ...environment, logger, directory, tenantService, tokenProvider });
   const configurationRouter = createConfigurationRouter({

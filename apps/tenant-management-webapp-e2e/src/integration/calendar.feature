@@ -42,7 +42,7 @@ Feature: Calendar
     When the user enters "autotest calendar desc edit" as description and selects "auto-test-role2" as role in Edit calendar modal
     And the user clicks Save button in Edit calendar modal
     Then the user "views" the calendar of "autotest-addcalendar", "autotest calendar desc edit", "auto-test-role2"
-     # Delete
+    # Delete
     When the user clicks "Delete" button for the calendar of "autotest-addcalendar", "autotest calendar desc edit", "auto-test-role2"
     Then the user views delete "calendar" confirmation modal for "autotest-addcalendar"
     When the user clicks Delete button in delete confirmation modal

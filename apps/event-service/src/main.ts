@@ -52,6 +52,7 @@ const initializeApp = async (): Promise<express.Application> => {
     clearCached,
     healthCheck,
     metricsHandler,
+    traceHandler,
   } = await initializePlatform(
     {
       serviceId,
@@ -124,6 +125,7 @@ const initializeApp = async (): Promise<express.Application> => {
   });
 
   app.use(passport.initialize());
+  app.use(traceHandler);
   app.use(
     '/event',
     (req, res, next) => {

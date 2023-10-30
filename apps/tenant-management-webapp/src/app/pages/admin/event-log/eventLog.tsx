@@ -8,6 +8,7 @@ import { EventSearchForm } from './eventSearchForm';
 import { GoAButton, GoACallout } from '@abgov/react-components-new';
 
 import { EventSearchCriteria } from '@store/event/models';
+import { LoadMoreWrapper } from '../services/calendar/events/styled-components';
 
 export const EventLog: FunctionComponent = () => {
   const readerRole = 'value-reader';
@@ -61,9 +62,11 @@ export const EventLog: FunctionComponent = () => {
             <br />
             <EventLogEntries onSearch={onSearch} />
             {next && (
-              <GoAButton disabled={isLoading} onClick={onNext}>
-                Load more...
-              </GoAButton>
+              <LoadMoreWrapper>
+                <GoAButton disabled={isLoading} type="tertiary" onClick={onNext}>
+                  Load more
+                </GoAButton>
+              </LoadMoreWrapper>
             )}
           </>
         ) : (

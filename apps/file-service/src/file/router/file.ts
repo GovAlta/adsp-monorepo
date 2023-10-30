@@ -275,7 +275,7 @@ export function downloadFile(logger: Logger): RequestHandler {
       end();
 
       res.status(200);
-      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Type', fileEntity.mimeType || 'application/octet-stream');
       res.setHeader('Content-Length', fileEntity.size);
       if (embed === 'true') {
         res.setHeader('Cache-Control', fileEntity.type?.anonymousRead ? 'public' : 'no-store');

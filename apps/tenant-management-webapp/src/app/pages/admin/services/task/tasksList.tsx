@@ -17,6 +17,7 @@ import {
 import { TaskModal } from './taskModal';
 import { ButtonPadding, ProgressWrapper } from './styled-components';
 import { TaskListTable } from './tasksTable';
+import { LoadMoreWrapper } from '../calendar/events/styled-components';
 
 interface VisibleProps {
   visible: boolean;
@@ -158,9 +159,11 @@ export const TasksList = (): JSX.Element => {
             }}
           />
           {next && (
-            <GoAButton testId="calendar-event-load-more-btn" key="calendar-event-load-more-btn" onClick={onNext}>
-              Load more
-            </GoAButton>
+            <LoadMoreWrapper>
+              <GoAButton testId="task-load-more-btn" key="task-load-more-btn" type="tertiary" onClick={onNext}>
+                Load more
+              </GoAButton>
+            </LoadMoreWrapper>
           )}
         </Visible>
       )}

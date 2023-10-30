@@ -1,3 +1,4 @@
+import { addTraceFormat } from '@abgov/adsp-service-sdk';
 import * as winston from 'winston';
 
 const levels = {
@@ -24,7 +25,12 @@ export const createLogger = (service: string, level: string): winston.Logger =>
   winston.createLogger({
     level: level || 'info',
     levels: levels,
-    format: winston.format.combine(winston.format.timestamp(), winston.format.colorize(), winston.format.simple()),
+    format: winston.format.combine(
+      addTraceFormat(),
+      winston.format.timestamp(),
+      winston.format.colorize(),
+      winston.format.simple()
+    ),
     defaultMeta: { service: service },
     transports: [new winston.transports.Console()],
   });

@@ -6,6 +6,15 @@ import { FileEntity, FileTypeEntity } from '../model';
 import { FileType } from '../types';
 import { FileStorageEngine } from './upload';
 
+jest.mock('../../utils/fileTypeDetector', () => ({
+  FileTypeDetector: jest.fn().mockImplementation(() => ({
+    detect: jest.fn().mockResolvedValue({
+      fileType: { mime: 'image/jpeg' },
+      fileStream: {},
+    }),
+  })),
+}));
+
 describe('upload', () => {
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const loggerMock = {

@@ -232,3 +232,7 @@ Then('the user views the link of {string} under Support', function (asideLink) {
 Then('the user views the {string} overview content {string}', function (serviceTitle, content) {
   commonObj.serviceOverviewContent(serviceTitle).invoke('text').should('contain', content);
 });
+
+When('the user clicks {string} button on unsaved changes modal', function (button) {
+  commonObj.dontSaveButton().shadow().find('button').click({ force: true });
+});

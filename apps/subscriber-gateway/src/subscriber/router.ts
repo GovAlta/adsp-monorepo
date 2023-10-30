@@ -1,8 +1,15 @@
 import { adspId, Channel, ServiceDirectory, TenantService, TokenProvider } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError, UnauthorizedError } from '@core-services/core-common';
+import {
+  InvalidOperationError,
+  NotFoundError,
+  UnauthorizedError,
+  createValidationHandler,
+  InvalidValueError,
+} from '@core-services/core-common';
 import axios from 'axios';
 import { RequestHandler, Router } from 'express';
 import { Logger } from 'winston';
+import { body, param, query } from 'express-validator';
 
 interface SiteVerifyResponse {
   success: boolean;
@@ -111,10 +118,8 @@ export function getSubscriber(tokenProvider: TokenProvider, directory: ServiceDi
       const notificationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:notification-service`);
       const token = await tokenProvider.getAccessToken();
 
-      const filteredSubscriberId = subscriberId.replace(/[^a-zA-Z0-9 ]/g, '');
-
       const subscribersUrl = new URL(
-        `/subscription/v1/subscribers/${filteredSubscriberId}?includeSubscriptions=true`,
+        `/subscription/v1/subscribers/${subscriberId}?includeSubscriptions=true`,
         notificationServiceUrl
       );
 
@@ -125,7 +130,7 @@ export function getSubscriber(tokenProvider: TokenProvider, directory: ServiceDi
         res.send(data);
       } catch (err) {
         if (err?.response?.status === 404) {
-          throw new NotFoundError('Subscriber Id', filteredSubscriberId);
+          throw new NotFoundError('Subscriber Id', subscriberId);
         }
 
         throw new InvalidOperationError(`Failed fetching subscriber.`);
@@ -143,11 +148,9 @@ export function getSubscriptionChannels(tokenProvider: TokenProvider, directory:
 
       const notificationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:notification-service`);
       const token = await tokenProvider.getAccessToken();
-      const filteredSubscriber = subscriber.replace(/[^a-zA-Z0-9 ]/g, '');
-      const filteredType = type.replace(/[^a-zA-Z0-9 ]/g, '');
 
       const subscribersUrl = new URL(
-        `/subscription/v1/subscribers/${filteredSubscriber}/${filteredType}/:type/channels`,
+        `/subscription/v1/subscribers/${subscriber}/types/${type}/channels`,
         notificationServiceUrl
       );
 
@@ -169,16 +172,8 @@ export function unsubscribe(tokenProvider: TokenProvider, directory: ServiceDire
 
       const notificationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:notification-service`);
       const token = await tokenProvider.getAccessToken();
-
-      const filteredTenantId = tenantId.replace(/[^a-zA-Z0-9-:/ ]/g, '');
-      const tenantIOParts = filteredTenantId.split('/');
-      const newTenantId = tenantIOParts[0] + '/tenants/' + tenantIOParts[tenantIOParts.length - 1];
-
-      const filteredId = id.replace(/[^a-zA-Z0-9 ]/g, '');
-      const filteredType = type.replace(/[^a-zA-Z0-9- ]/g, '');
-
       const subscribersUrl = new URL(
-        `/subscription/v1/types/${filteredType}/subscriptions/${filteredId}?tenantId=${newTenantId}`,
+        `/subscription/v1/types/${type}/subscriptions/${id}?tenantId=${tenantId}`,
         notificationServiceUrl
       );
 
@@ -214,17 +209,53 @@ export const createSubscriberRouter = ({
   router.post(
     '/application-status',
     verifyCaptcha(logger, RECAPTCHA_SECRET),
+    createValidationHandler(body('tenant').isString(), body('email').isEmail()),
     subscribeStatus(tenantService, tokenProvider, directory, logger)
   );
 
-  router.get('/get-subscriber/:subscriberId', getSubscriber(tokenProvider, directory));
+  router.get(
+    '/get-subscriber/:subscriberId',
+    createValidationHandler(
+      param('subscriberId')
+        .customSanitizer((value) => value.replace(/[^a-zA-Z0-9- ]/g, ''))
+        .isMongoId()
+    ),
+    getSubscriber(tokenProvider, directory)
+  );
 
   router.delete(
     '/types/:type/subscriptions/:id',
     verifyCaptcha(logger, SUBSCRIPTION_RECAPTCHA_SECRET),
+    createValidationHandler(
+      param('type')
+        .customSanitizer((value) => value.replace(/[^a-zA-Z0-9- ]/g, ''))
+        .matches(/^[a-zA-Z0-9-_ ]{1,50}$/), // get this regex from the configuration of the notification service
+      param('id')
+        .customSanitizer((value) => value.replace(/[^a-zA-Z0-9- ]/g, ''))
+        .isMongoId(),
+      // example of the tenant id here: urn:ads:platform:tenant-service:v2:/tenants/61e9adcc9423490012a9ae46
+      query('tenantId')
+        .customSanitizer((value) => value.replace(/[^a-zA-Z0-9-:/ ]/g, ''))
+        .customSanitizer((tenantId) => {
+          const tenantIOParts = tenantId.split('/');
+          if (tenantIOParts.length < 3) {
+            throw new InvalidValueError('tenantId', tenantId);
+          }
+          return tenantIOParts[0] + '/tenants/' + tenantIOParts[tenantIOParts.length - 1];
+        })
+        .isString()
+    ),
     unsubscribe(tokenProvider, directory)
   );
-  router.get('/subscribers/:subscriber/types/:type/channels', getSubscriptionChannels(tokenProvider, directory));
+
+  router.get(
+    '/subscribers/:subscriber/types/:type/channels',
+    createValidationHandler(
+      param('type').customSanitizer((value) => value.replace(/[^a-zA-Z0-9- ]/g, '')),
+      param('subscriber').customSanitizer((value) => value.replace(/[^a-zA-Z0-9- ]/g, ''))
+    ),
+    getSubscriptionChannels(tokenProvider, directory)
+  );
 
   return router;
 };

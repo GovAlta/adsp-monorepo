@@ -18,7 +18,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { directory, tokenProvider, tenantService } = await initializePlatform(
+  const { directory, tokenProvider, tenantService, traceHandler } = await initializePlatform(
     {
       serviceId,
       displayName: 'API Docs App',
@@ -30,6 +30,8 @@ const initializeApp = async (): Promise<express.Application> => {
     },
     { logger }
   );
+
+  app.use(traceHandler);
 
   app.use('/assets', express.static(path.join(__dirname, 'assets')));
   await applyDocsMiddleware(app, { logger, accessServiceUrl, directory, tenantService, tokenProvider });

@@ -3,9 +3,10 @@ import { Main } from '@components/Html';
 import Container from '@components/Container';
 import DataTable from '@components/DataTable';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
-import { GoAContainer, GoAButton, GoACallout, GoAButtonGroup, GoAModal } from '@abgov/react-components-new';
+import { GoAContainer, GoAButton, GoACallout, GoAButtonGroup, GoAModal, GoABadge } from '@abgov/react-components-new';
 import { FetchContactInfoService } from '@store/notification/actions';
 import { FetchTenantService } from '@store/tenant/actions';
+import { Channels } from '@store/subscription/models';
 
 import styled from 'styled-components';
 import {
@@ -15,6 +16,7 @@ import {
   CalloutWrapper,
   SubscriptionListContainer,
   DescriptionWrapper,
+  VerificationWrapper,
 } from '../private/Subscriptions/styled-components';
 
 import { useParams } from 'react-router-dom-6';
@@ -42,6 +44,7 @@ const Subscriptions = (): JSX.Element => {
   const [showUnSubscribeModal, setShowUnSubscribeModal] = useState(false);
   const [selectedUnsubscribeSub, setSelectedUnsubscribeSub] = useState<Subscription>();
   const { subscriberId } = useParams();
+  const isEmailVerified = subscriber && subscriber?.channels?.find((c) => c.channel === Channels.email)?.verified;
 
   const phoneWrapper = (phoneNumber) => {
     if (phoneNumber) {
@@ -131,9 +134,18 @@ const Subscriptions = (): JSX.Element => {
               >
                 <Label>Email</Label>
                 <ContactInformationContainer>
-                  <div>
-                    <p>{subscriberEmail}</p>
-                  </div>
+                  <p>
+                    <VerificationWrapper>
+                      {isEmailVerified !== undefined && isEmailVerified === true && (
+                        <GoABadge type="success" content="Verified" />
+                      )}
+                      {isEmailVerified !== undefined && isEmailVerified === false && (
+                        <GoABadge type="important" content="Not verified" />
+                      )}
+                    </VerificationWrapper>
+
+                    {subscriberEmail}
+                  </p>{' '}
                 </ContactInformationContainer>
                 {!subscriberEmail &&
                   (indicator?.show ? (

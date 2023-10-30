@@ -7,6 +7,7 @@ import { TokenProvider } from '../access';
 import { ServiceDirectory } from '../directory';
 import { adspId, AdspId } from '../utils';
 import { RequestBenchmark, REQ_BENCHMARK } from './types';
+import { getContextTrace } from '../trace';
 
 export async function writeMetrics(
   serviceId: AdspId,
@@ -65,10 +66,11 @@ export async function createMetricsHandler(
       const path = `${req.baseUrl || ''}${req.path || ''}` || req.originalUrl;
       const route = req.route?.path;
       const ip = req.ip;
+      const trace = getContextTrace();
 
       const value = {
         timestamp: new Date(),
-        correlationId: `${method}:${route || path}`,
+        correlationId: trace ? trace.toString() : `${method}:${route || path}`,
         tenantId: tenantId.toString(),
         context: {
           method,
@@ -77,6 +79,7 @@ export async function createMetricsHandler(
           ip,
           user: req.user?.name,
           userId: req.user?.id,
+          trace: trace?.toString(),
         },
         value: {
           ...metrics,

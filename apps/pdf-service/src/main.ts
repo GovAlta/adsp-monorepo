@@ -44,33 +44,19 @@ const initializeApp = async (): Promise<express.Application> => {
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
 
-  const { directory } = await initializePlatform(
-    {
-      serviceId,
-      displayName: 'PDF service',
-      description: 'Provides utility PDF capabilities.',
-      clientSecret: environment.CLIENT_SECRET,
-      accessServiceUrl,
-
-      directoryUrl: new URL(environment.DIRECTORY_URL),
-    },
-    { logger }
-  );
-
-  const templateService = createTemplateService(directory);
-  const pdfService = await createPdfService();
-
   const {
     clearCached,
     configurationHandler,
     configurationService,
     coreStrategy,
+    directory,
     eventService,
     healthCheck,
     metricsHandler,
     tenantHandler,
     tenantStrategy,
     tokenProvider,
+    traceHandler,
   } = await initializePlatform(
     {
       serviceId,
@@ -107,6 +93,9 @@ const initializeApp = async (): Promise<express.Application> => {
     { logger }
   );
 
+  const templateService = createTemplateService(directory);
+  const pdfService = await createPdfService();
+
   passport.use('core', coreStrategy);
   passport.use('tenant', tenantStrategy);
 
@@ -129,6 +118,8 @@ const initializeApp = async (): Promise<express.Application> => {
   });
 
   app.use(passport.initialize());
+  app.use(traceHandler);
+
   app.use(
     '/pdf',
     metricsHandler,

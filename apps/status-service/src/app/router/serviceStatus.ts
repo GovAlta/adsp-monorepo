@@ -11,7 +11,7 @@ import { ApplicationConfiguration } from '../model';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { PublicServiceStatusType } from '../types';
-import { TenantService, EventService } from '@abgov/adsp-service-sdk';
+import { TenantService, EventService, ConfigurationService } from '@abgov/adsp-service-sdk';
 import { applicationStatusToStarted, applicationStatusToStopped, applicationStatusChange } from '../events';
 import { ApplicationRepo } from './ApplicationRepo';
 import { WebhookRepo } from './WebhookRepo';
@@ -26,6 +26,7 @@ export interface ServiceStatusRouterProps {
   tokenProvider: TokenProvider;
   directory: ServiceDirectory;
   serviceId: AdspId;
+  configurationService: ConfigurationService;
 }
 
 export const getApplications = (logger: Logger, applicationRepo: ApplicationRepo): RequestHandler => {
@@ -310,7 +311,6 @@ export const testWebhook =
       if (!webhook) {
         throw new NotFoundError('Webhook', id);
       }
-
       const app = await applicationRepo.getApp(webhook.targetId, user.tenantId);
       if (!app) {
         throw new NotFoundError('Status application', webhook.targetId);
@@ -344,6 +344,7 @@ export function createServiceStatusRouter({
   tokenProvider,
   directory,
   serviceId,
+  configurationService,
 }: ServiceStatusRouterProps): Router {
   const router = Router();
   const applicationRepo = new ApplicationRepo(
@@ -359,7 +360,8 @@ export function createServiceStatusRouter({
     endpointStatusEntryRepository,
     serviceId,
     directory,
-    tokenProvider
+    tokenProvider,
+    configurationService
   );
 
   // Get the service for the tenant

@@ -30,7 +30,7 @@ export const TaskOverview = ({ setOpenAddDefinition }: TaskOverviewProps): JSX.E
       addButton={
         <>
           <GoAButton
-            testId="add-definition"
+            testId="add-queue"
             onClick={() => {
               setOpenAddDefinition(true);
               history.push({

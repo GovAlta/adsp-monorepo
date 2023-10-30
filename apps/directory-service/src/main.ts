@@ -36,7 +36,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, eventService, healthCheck, tenantStrategy, tenantService, metricsHandler } =
+  const { coreStrategy, eventService, healthCheck, tenantStrategy, tenantService, metricsHandler, traceHandler } =
     await initializePlatform(
       {
         serviceId,
@@ -80,6 +80,8 @@ const initializeApp = async (): Promise<express.Application> => {
   });
 
   app.use(passport.initialize());
+  app.use(traceHandler);
+
   app.use('/directory', metricsHandler, passport.authenticate(['core', 'tenant', 'anonymous'], { session: false }));
   applyDirectoryV2Middleware(app, { ...repositories, logger, tenantService, eventService });
 
