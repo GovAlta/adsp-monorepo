@@ -28,6 +28,12 @@ components:
             type: string
         securityClassification:
           type: string
+          enum:
+            - public
+            - protected a
+            - protected b
+            - protected c
+
     Comment:
       type: object
       properties:
@@ -143,9 +149,15 @@ components:
                 description: A description of the topic.
                 example: Comments on the case.
               securityClassification:
-                type: string
                 description: The security classification type of the topic.
-                example: public, protected a, protected b, protected c.
+                type: string
+                default: protected a
+                enum:
+                  - public
+                  - protected a
+                  - protected b
+                  - protected c
+
               commenters:
                 type: array
                 items:

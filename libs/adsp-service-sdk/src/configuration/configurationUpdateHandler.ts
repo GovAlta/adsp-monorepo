@@ -24,14 +24,15 @@ export const handleConfigurationUpdates = async (
 ) => {
   const pushServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:push-service`);
   const streamUrl = new URL('', pushServiceUrl);
-  streamUrl.protocol = 'wss';
 
-  const token = await tokenProvider.getAccessToken();
+  let token = await tokenProvider.getAccessToken();
   const socket = io(streamUrl.href, {
     autoConnect: true,
+    reconnection: false,
     query: {
       stream: 'configuration-updates',
     },
+    transports: ['websocket'],
     withCredentials: true,
     extraHeaders: { Authorization: `Bearer ${token}` },
   });
@@ -40,16 +41,12 @@ export const handleConfigurationUpdates = async (
     logger.info('Connected for configuration updates...', LOG_CONTEXT);
   });
 
-  socket.on('reconnect_attempt', (attempt) => {
-    logger.info(`Reconnecting to configuration updates on attempt ${attempt}...`);
-  });
+  socket.on('disconnect', async (reason) => {
+    logger.debug(`Disconnected from configuration updates due to reason: ${reason}`);
 
-  socket.on('reconnect_error', (err) => {
-    logger.warn(`Reconnect to configuration updates attempt failed with error: ${err}`);
-  });
-
-  socket.on('reconnect_failed', () => {
-    logger.error('Reconnect to configuration updates failed.');
+    token = await tokenProvider.getAccessToken();
+    socket.io.opts.extraHeaders = { Authorization: `Bearer ${token}` };
+    socket.connect();
   });
 
   const invalidateCached = (e: StreamItem) => {

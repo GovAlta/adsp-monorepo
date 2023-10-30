@@ -25,6 +25,7 @@ import { PageIndicator } from '@components/Indicator';
 import styled from 'styled-components';
 import { selectActionStateStart, selectActionStateCompleted } from '@store/session/selectors';
 import { UPLOAD_FILE } from '@store/file/actions';
+import { LoadMoreWrapper } from '../calendar/events/styled-components';
 
 const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<FileItem>(null);
@@ -278,9 +279,11 @@ const FileList = (): JSX.Element => {
       {!indicator.show && fileList?.length > 0 && renderFileTable()}
       {indicator.show && <PageIndicator />}
       {next && (
-        <GoAButton disabled={isLoading} onClick={onNext}>
-          Load more...
-        </GoAButton>
+        <LoadMoreWrapper>
+          <GoAButton type="tertiary" disabled={isLoading} onClick={onNext}>
+            Load more
+          </GoAButton>
+        </LoadMoreWrapper>
       )}
     </FileTable>
   );
