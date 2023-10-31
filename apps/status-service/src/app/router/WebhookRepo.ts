@@ -1,12 +1,7 @@
-import { adspId, AdspId, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
-
-import axios from 'axios';
-
-import { StatusServiceConfiguration } from '../model';
+import { AdspId, ServiceDirectory, TokenProvider, ConfigurationService } from '@abgov/adsp-service-sdk';
 
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { ServiceStatusRepository } from '../repository/serviceStatus';
-
 import { Webhooks } from '../model';
 
 /**
@@ -14,25 +9,28 @@ import { Webhooks } from '../model';
  * dynamic, status data) and the configuration-service f(or
  * static information).
  */
+
 export class WebhookRepo {
   #repository: ServiceStatusRepository;
   #endpointStatusEntryRepository: EndpointStatusEntryRepository;
   #serviceId: AdspId;
   #directoryService: ServiceDirectory;
   #tokenProvider: TokenProvider;
-
+  #configurationService: ConfigurationService;
   constructor(
     repository: ServiceStatusRepository,
     endpointStatusEntryRepository: EndpointStatusEntryRepository,
     serviceId: AdspId,
     directoryService: ServiceDirectory,
-    tokenProvider: TokenProvider
+    tokenProvider: TokenProvider,
+    configurationService: ConfigurationService
   ) {
     this.#repository = repository;
     this.#serviceId = serviceId;
     this.#directoryService = directoryService;
     this.#tokenProvider = tokenProvider;
     this.#endpointStatusEntryRepository = endpointStatusEntryRepository;
+    this.#configurationService = configurationService;
   }
 
   getWebhook = async (appKey: string, tenantId: AdspId): Promise<Webhooks> => {
@@ -44,22 +42,20 @@ export class WebhookRepo {
   };
 
   getWebhooks = async (tenantId: AdspId): Promise<Record<string, Webhooks>> => {
-    const baseUrl = await this.#directoryService.getServiceUrl(adspId`urn:ads:platform:configuration-service:v2`);
-    const configUrl = new URL(
-      `/configuration/v2/configuration/${this.#serviceId.namespace}/push-service/latest?tenantId=${tenantId}`,
-      baseUrl
-    );
     const token = await this.#tokenProvider.getAccessToken();
-    const { data } = await axios.get<StatusServiceConfiguration>(configUrl.href, {
-      headers: { Authorization: `Bearer ${token}` },
+    const pushServiceId = AdspId.parse('urn:ads:platform:push-service');
+    const response = await this.#configurationService.getConfiguration<
+      Record<string, Webhooks>,
+      Record<string, Webhooks>
+    >(pushServiceId, token, tenantId);
+
+    const webhooksRes = response?.webhooks;
+    const webhooks = {} as Record<string, Webhooks>;
+    Object.keys(webhooksRes).map(async (key) => {
+      if (webhooksRes[key]) {
+        webhooks[key] = { ...webhooksRes[key], tenantId: tenantId };
+      }
     });
-    const keys = Object.keys(data?.webhooks);
-    const webhooks = {};
-    // Add the tenantId in, cause its not part of the configuration.
-    data?.webhooks &&
-      keys.forEach((k) => {
-        webhooks[k] = { ...data.webhooks[k], tenantId: tenantId };
-      });
     return webhooks;
   };
 }
