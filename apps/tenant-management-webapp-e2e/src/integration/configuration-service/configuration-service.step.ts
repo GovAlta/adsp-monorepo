@@ -223,6 +223,7 @@ When('the user enters "{string}" in payload schema in configuration definition m
 });
 
 When('the user enters {string} in payload schema in configuration definition modal', function (payload) {
+  cy.wait(1000); // Wait for the schema field to be editable
   configurationObj
     .configurationDefinitionModalPayloadEditor()
     .click({ force: true })
