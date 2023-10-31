@@ -21,6 +21,7 @@ export const VERIFY_EMAIL = 'tenant/notification-service/verify-email';
 export const VERIFY_EMAIL_SUCCESS = 'tenant/notification-service/verify-email-success';
 export const CHECK_CODE = 'tenant/notification-service/check-code';
 export const CHECK_CODE_SUCCESS = 'tenant/notification-service/check-code-success';
+export const CHECK_CODE_FAILURE = 'tenant/notification-service/check-code-failure';
 
 // =============
 // Actions Types
@@ -32,7 +33,9 @@ export type ActionTypes =
   | GetMySubscriberActionSuccess
   | UnsubscribeActionSuccess
   | GetSubscriberActionSuccess
-  | CreateSubscriptionActionSuccess;
+  | CreateSubscriptionActionSuccess
+  | CheckCodeActionSuccess
+  | CheckCodeActionFailure;
 export interface GetMySubscriberActionSuccess {
   type: typeof GET_MY_SUBSCRIBER_DETAILS_SUCCESS;
   payload: {
@@ -115,6 +118,10 @@ export interface CheckCodeActionSuccess {
   payload: {
     response: any;
   };
+}
+
+export interface CheckCodeActionFailure {
+  type: typeof CHECK_CODE_FAILURE;
 }
 
 // ==============
@@ -222,4 +229,7 @@ export const CheckCodeSuccess = (response): CheckCodeActionSuccess => ({
   payload: {
     response,
   },
+});
+export const CheckCodeFailure = (): CheckCodeActionFailure => ({
+  type: CHECK_CODE_FAILURE,
 });

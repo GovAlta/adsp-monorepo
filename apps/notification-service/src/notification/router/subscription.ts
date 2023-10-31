@@ -1,6 +1,6 @@
 import { Request, RequestHandler, Response, Router } from 'express';
 import { Logger } from 'winston';
-import { adspId, AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, isAllowedUser, TenantService, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError, decodeAfter } from '@core-services/core-common';
 import { SubscriptionRepository } from '../repository';
 import { NotificationTypeEntity, SubscriberEntity } from '../model';
@@ -21,6 +21,7 @@ interface SubscriptionRouterProps {
   logger: Logger;
   subscriptionRepository: SubscriptionRepository;
   verifyService: VerifyService;
+  tenantService: TenantService;
 }
 
 export const assertHasTenant: RequestHandler = (req, _res, next) => {
@@ -357,6 +358,8 @@ export function updateSubscriber(apiId: AdspId): RequestHandler {
       const update = req.body;
       const subscriber: SubscriberEntity = req[SUBSCRIBER_KEY];
 
+      console.log(JSON.stringify(update) + '<---update');
+
       const updated = await subscriber.update(user, update);
       res.send(mapSubscriber(apiId, updated));
     } catch (err) {
@@ -365,7 +368,7 @@ export function updateSubscriber(apiId: AdspId): RequestHandler {
   };
 }
 
-export function subscriberOperations(verifyService: VerifyService): RequestHandler {
+export function subscriberOperations(verifyService: VerifyService, tenantService: TenantService): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -375,7 +378,14 @@ export function subscriberOperations(verifyService: VerifyService): RequestHandl
       let result = null;
       switch (request.operation) {
         case SUBSCRIBER_SEND_VERIFY_CODE:
-          await subscriber.sendVerifyCode(verifyService, user, request.channel, request.address, request.reason);
+          await subscriber.sendVerifyCode(
+            verifyService,
+            tenantService,
+            user,
+            request.channel,
+            request.address,
+            request.reason
+          );
           result = { sent: true };
           break;
         case SUBSCRIBER_CHECK_CODE: {
@@ -386,7 +396,12 @@ export function subscriberOperations(verifyService: VerifyService): RequestHandl
             request.address,
             request.code
           );
+          console.log(JSON.stringify(verified) + '<we are verified0');
+
           result = { verified };
+
+          console.log(JSON.stringify(result) + '<result0');
+
           break;
         }
         case SUBSCRIBER_VERIFY_CHANNEL: {
@@ -398,7 +413,12 @@ export function subscriberOperations(verifyService: VerifyService): RequestHandl
             request.code,
             true
           );
+
+          console.log(JSON.stringify(verified) + '<we are verified');
+
           result = { verified };
+
+          console.log(JSON.stringify(result) + '<result');
           break;
         }
         default:
@@ -507,6 +527,7 @@ export const createSubscriptionRouter = ({
   serviceId,
   subscriptionRepository,
   verifyService,
+  tenantService,
 }: SubscriptionRouterProps): Router => {
   const apiId = adspId`${serviceId}:v1`;
   const subscriptionRouter = Router();
@@ -649,7 +670,7 @@ export const createSubscriptionRouter = ({
       )
     ),
     getSubscriber(subscriptionRepository),
-    subscriberOperations(verifyService)
+    subscriberOperations(verifyService, tenantService)
   );
   subscriptionRouter.delete(
     '/subscribers/:subscriber',

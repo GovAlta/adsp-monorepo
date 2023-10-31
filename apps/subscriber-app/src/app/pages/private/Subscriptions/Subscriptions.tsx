@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Main } from '@components/Html';
 import Container from '@components/Container';
 import DataTable from '@components/DataTable';
+import { useSearchParams, redirect } from 'react-router-dom-6';
+import { useHistory } from 'react-router-dom';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { GoAButton, GoACallout, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
 import { FetchContactInfoService } from '@store/notification/actions';
@@ -10,7 +12,7 @@ import SubscriptionsList from '@components/SubscriptionsList';
 
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
-import { getMySubscriberDetails, unsubscribe } from '@store/subscription/actions';
+import { getMySubscriberDetails, unsubscribe, CheckCode } from '@store/subscription/actions';
 import { RootState } from '@store/index';
 import { Subscription } from '@store/subscription/models';
 import {
@@ -29,18 +31,26 @@ interface SubscriptionsProps {
 }
 
 const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
+  const [searchParams, _] = useSearchParams();
+  const history = useHistory();
+
+  console.log(JSON.stringify(window.location) + '<window.location');
+
   const dispatch = useDispatch();
   const { subscriber, hasSubscriberId } = useSelector((state: RootState) => ({
     subscriber: state.subscription.subscriber,
     hasSubscriberId: state.subscription.hasSubscriberId,
   }));
   const contact = useSelector((state: RootState) => state.notification?.contactInfo);
+  const previouslyVerified = useSelector((state: RootState) => state.subscription.previouslyVerified);
   const [showUnSubscribeModal, setShowUnSubscribeModal] = useState(false);
   const [selectedUnsubscribeSub, setSelectedUnsubscribeSub] = useState<Subscription>();
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
+
+  const code = searchParams.get('code');
 
   // we need to wait for userInfo api call so that the followup api calls can make use of the jwt token
   const userInfo = useSelector((state: RootState) => state.session?.userInfo);
@@ -62,6 +72,29 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
       dispatch(FetchContactInfoService({ realm }));
     }
   }, [userInfo]);
+
+  useEffect(() => {
+    console.log(JSON.stringify(previouslyVerified) + '<previouslyVerified');
+    console.log(JSON.stringify(code) + '<code');
+
+    if (previouslyVerified && code !== 'null' && code) {
+      console.log(
+        JSON.stringify(`${window.location.origin}${window.location.pathname}`) +
+          '<`${window.location.origin}${window.location.pathname}`'
+      );
+      //
+      history.push(`${window.location.pathname}`);
+    }
+  }, [previouslyVerified]);
+
+  useEffect(() => {
+    console.log(JSON.stringify(code) + '<---code');
+    console.log(code + '<---codekk');
+    if (code !== 'null' && userInfo !== undefined && subscriber && code) {
+      console.log(code + '<---codekk2');
+      dispatch(CheckCode(code, subscriber));
+    }
+  }, [searchParams, userInfo, subscriber]);
 
   const unSubscribe = (typeId: string) => {
     setShowUnSubscribeModal(true);

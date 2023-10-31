@@ -21,13 +21,15 @@ import {
   VERIFY_EMAIL,
   VerifyEmailAction,
   CHECK_CODE,
+  CheckCodeAction,
+  CheckCodeSuccess,
+  CheckCodeFailure,
 } from './actions';
 import { UpdateIndicator } from '@store/session/actions';
 import { ConfigState } from '@store/config/models';
 
 import { RootState } from '../index';
 import axios from 'axios';
-import { verify } from 'crypto';
 
 export function* getMySubscriberDetails(): SagaIterator {
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
@@ -276,8 +278,9 @@ export function* verifyEmail(action: VerifyEmailAction): SagaIterator {
   }
 }
 
-export function* checkCode(action: VerifyEmailAction): SagaIterator {
+export function* checkCode(action: CheckCodeAction): SagaIterator {
   const subscriber = action.subscriber;
+  const code = action.code;
 
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
   const token: string = yield select((state: RootState) => state.session.credentials?.token);
@@ -285,6 +288,8 @@ export function* checkCode(action: VerifyEmailAction): SagaIterator {
 
   console.log(JSON.stringify(token) + '<token');
   console.log(JSON.stringify(email) + '<email');
+  console.log(JSON.stringify(code) + '<codexx');
+  console.log(JSON.stringify(action) + '<actionx');
   console.log(JSON.stringify(configBaseUrl) + '<configBaseUrl');
   console.log(
     JSON.stringify(subscriber.channels.find((channel) => channel.channel === 'email')?.address) +
@@ -297,25 +302,54 @@ export function* checkCode(action: VerifyEmailAction): SagaIterator {
         axios.post,
         `${configBaseUrl}/subscription/v1/subscribers/${subscriber.id}`,
         {
-          operation: 'send-code',
+          operation: 'verify-channel',
           channel: 'email',
           address: subscriber.channels.find((channel) => channel.channel === 'email')?.address,
-          reason: 'string',
+          code: code,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      console.log(JSON.stringify(response) + ' <response');
+      console.log(JSON.stringify(response) + ' <response checkCode');
 
-      // yield put(createSubscriberSuccess(response.data));
+      if (response.data.verified) {
+        yield put(CheckCodeSuccess(response.data));
 
-      // yield put(
-      //   SuccessNotification({
-      //     message: `You are subscribed! You will receive notifications on ${email} .`,
-      //   })
-      // );
+      
+
+        // update subscriber  //
+     
+          const channelIndex = subscriber.channels.findIndex((channel) => channel.channel === 'email');
+          subscriber.channels[channelIndex].verified = true;
+
+           console.log(JSON.stringify(channelIndex) + "<--channelIndex")
+           console.log(JSON.stringify(subscriber) + "<--subscriber")
+
+              const updateResponse = yield call(
+          axios.patch,
+          `${configBaseUrl}/subscription/v1/subscribers/${subscriber.id}`,
+          subscriber,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+
+        console.log(JSON.stringify(updateResponse) + "<--updatteREpsonse")
+
+        // done updating subscriber //
+
+        yield put(
+          SuccessNotification({
+            message: `Verification for ${email} is successful .`,
+          })
+        );
+      } else {
+        yield put(ErrorNotification({ message: 'The code is wrong' }));
+        yield put(CheckCodeFailure());
+      }
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
     }

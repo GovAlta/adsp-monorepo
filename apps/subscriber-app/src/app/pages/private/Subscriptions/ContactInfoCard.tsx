@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { GoAFormItem } from '@abgov/react-components/experimental';
 import { useDispatch, useSelector } from 'react-redux';
-import { patchSubscriber, createSubscriber, VerifyEmail, CheckCode } from '@store/subscription/actions';
+import { patchSubscriber, createSubscriber, VerifyEmail } from '@store/subscription/actions';
 import { actionTypes } from '@store/subscription/models';
 import { Channels } from '@store/subscription/models';
 import { Grid, GridItem } from '@components/Grid';
@@ -11,7 +11,7 @@ import { InfoCard } from './InfoCard';
 import { Label, GapVS, VerificationWrapper } from './styled-components';
 import { RootState } from '@store/index';
 import { phoneWrapper } from '@lib/wrappers';
-import { useParams } from 'react-router-dom-6';
+
 import {
   GoAButton,
   GoAInput,
@@ -28,7 +28,6 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
   const dispatch = useDispatch();
   const [formErrors, setFormErrors] = useState({});
   const userInfo = useSelector((state: RootState) => state.session?.userInfo);
-  const { code } = useParams();
 
   const subscriberEmail = subscriber
     ? subscriber?.channels?.filter((chn: SubscriberChannel) => chn.channel === Channels.email)[0]?.address
@@ -44,12 +43,6 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
     setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
   }, [subscriber]);
   // we need to wait for userInfo api call so that the followup api calls can make use of the jwt token
-
-  useEffect(() => {
-    if (code) {
-      dispatch(CheckCode(code, subscriber));
-    }
-  }, [code]);
 
   const [emailContactInformation, setEmailContactInformation] = useState(subscriberEmail);
   const [SMSContactInformation, setSMSContactInformation] = useState(subscriberSMS);
