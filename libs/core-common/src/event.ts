@@ -3,7 +3,7 @@ import { WorkItem, WorkQueueService } from './work';
 
 export interface DomainEvent extends BaseDomainEvent {
   namespace: string;
-  traceparent: string;
+  traceparent?: string;
 }
 
 export type DomainEventWorkItem = WorkItem<DomainEvent>;
