@@ -22,6 +22,7 @@ export class AmqpEventSubscriberService
       payload,
       timestamp: new Date(headers.timestamp),
       tenantId: AdspId.parse(`${headers.tenantId}`),
+      traceparent: headers.traceparent,
     } as DomainEvent;
   }
 

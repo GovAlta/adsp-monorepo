@@ -49,6 +49,7 @@ describe('EventDescriptionEntity', () => {
       timestamp: new Date(),
       tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       payload: {},
+      traceparent: '123',
     });
   });
 });

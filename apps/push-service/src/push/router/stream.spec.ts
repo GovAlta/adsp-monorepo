@@ -308,6 +308,7 @@ describe('stream router', () => {
           timestamp: new Date(),
           correlationId: '321',
           payload: {},
+          traceparent: '123',
         })
       );
       handler(req as unknown as Request, res as unknown as Response, next);
@@ -349,6 +350,7 @@ describe('stream router', () => {
           timestamp: new Date(),
           correlationId: '321',
           payload: {},
+          traceparent: '123',
         })
       );
       listener(socket as unknown as Socket);
