@@ -86,7 +86,7 @@ export const createLogEventJob =
   ({ logger, serviceId, valueServiceUrl, tokenProvider, configurationService }: LogEventJobProps) =>
   async (event: DomainEvent, done: (err?: unknown) => void): Promise<void> => {
     const logUrl = new URL('v1/event-service/values/event', valueServiceUrl);
-    const { timestamp, correlationId, tenantId, context, namespace, name, payload } = event;
+    const { timestamp, correlationId, tenantId, traceparent, context, namespace, name, payload } = event;
 
     logger.debug(`Writing event to log (${namespace}:${name})...`, { context: 'EventLog', tenantId });
 
@@ -115,6 +115,7 @@ export const createLogEventJob =
         tenantId: `${tenantId}`,
         context: {
           ...(context || {}),
+          trace: traceparent,
           namespace,
           name,
         },

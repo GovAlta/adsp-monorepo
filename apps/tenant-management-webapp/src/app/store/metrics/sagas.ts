@@ -97,7 +97,7 @@ function* fetchServiceMetrics(action: FetchServiceMetricsAction): SagaIterator {
   const intervalMin = intervalMax.clone().subtract(intervalDelta[chartInterval], 'hours');
   const samples = Array.from(generateSampleIntervals(intervalMin, intervalMax, chartInterval));
 
-  const metricsUrl = `${baseUrl}/value/v1/${action.service}/values/service-metrics/metrics?interval=${
+  const metricsUrl = `${baseUrl}/value/v1/${action.service}/values/service-metrics/metrics?top=500&interval=${
     chartInterval === '15 mins' ? 'one_minute' : 'five_minutes'
   }&criteria=${JSON.stringify({
     metricLike: 'total',

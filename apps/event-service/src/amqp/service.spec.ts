@@ -41,6 +41,7 @@ describe('AmqpDomainEventService', () => {
       tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       correlationId: 'urn:ads:platform:file-service:v1:/files/123',
       payload: {},
+      traceparent: '123',
     };
 
     const service = new AmqpDomainEventService(logger, connection as unknown as AmqpConnectionManager);
@@ -64,6 +65,7 @@ describe('AmqpDomainEventService', () => {
       tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       correlationId: 'urn:ads:platform:file-service:v1:/files/123',
       payload: {},
+      traceparent: '123',
     };
 
     const service = new AmqpDomainEventService(logger, connection as unknown as AmqpConnectionManager);

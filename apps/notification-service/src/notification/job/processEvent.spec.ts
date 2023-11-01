@@ -152,6 +152,7 @@ describe('createProcessEventJob', () => {
           name: 'test-run',
           timestamp: new Date(),
           payload: {},
+          traceparent: '123',
         },
         (err) => {
           expect(err).toBeFalsy();
@@ -258,6 +259,7 @@ describe('createProcessEventJob', () => {
           name: 'test-run',
           timestamp: new Date(),
           payload: {},
+          traceparent: '123',
         },
         (err) => {
           expect(err).toBeFalsy();
@@ -356,6 +358,7 @@ describe('createProcessEventJob', () => {
           name: 'test-run',
           timestamp: new Date(),
           payload: {},
+          traceparent: '123',
         },
         (err) => {
           expect(repositoryDoubleMock.getSubscriptions).toHaveBeenCalledTimes(1);
@@ -388,6 +391,7 @@ describe('createProcessEventJob', () => {
           name: 'test-run',
           timestamp: new Date(),
           payload: {},
+          traceparent: '123',
         },
         (err) => {
           expect(err).toBe(error);
@@ -419,6 +423,7 @@ describe('createProcessEventJob', () => {
           name: 'test-run',
           timestamp: new Date(),
           payload: {},
+          traceparent: '123',
         },
         (err) => {
           expect(err).toBeFalsy();

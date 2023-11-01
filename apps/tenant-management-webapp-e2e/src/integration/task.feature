@@ -37,3 +37,11 @@ Feature: Task
     Then the user views delete "task queue" confirmation modal for "addEditDeleteQueue"
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the queue of "autotest", "addEditDeleteQueue", "auto-test-role2", "auto-test-role2, urn:ads:autotest:chat-service:chat-admin"
+
+  @TEST_CS-2296 @REQ_CS-1747 @regression
+  Scenario: As a tenant admin, I can see the overview for a task service, so I know about it
+    Given a tenant admin user is on task service overview page
+    Then the user views the "Task service" overview content "The task service provides"
+    And the user views the link of API docs for "Task service"
+    And the user views the link of See the code for "task-service"
+    And the user views the link of "Get support" under Support
