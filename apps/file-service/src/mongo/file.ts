@@ -123,6 +123,7 @@ export class MongoFileRepository implements FileRepository {
       filename: update.filename,
       size: update.size,
       mimeType: update?.mimeType,
+      securityClassification: update?.securityClassification,
       createdBy: update.createdBy,
       created: update.created,
       lastAccessed: update.lastAccessed,

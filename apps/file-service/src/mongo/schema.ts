@@ -18,6 +18,10 @@ export const fileSchema = new Schema({
     type: String,
     required: false,
   },
+  securityClassification: {
+    type: String,
+    required: false,
+  },
   filename: {
     type: String,
     required: true,
