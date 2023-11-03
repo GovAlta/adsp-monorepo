@@ -36,7 +36,6 @@ import { createSelector } from 'reselect';
 
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultCommentTopicType, defaultEditCommentTopicType, SecurityClassification } from '@store/comment/model';
 import { TopicConfigTopicType } from './topicConfigTopicType';
 
@@ -71,7 +70,6 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(fetchKeycloakServiceRoles());
     dispatch(getCommentTopicTypes());
     dispatch(FetchRealmRoles());
   }, []);

@@ -31,7 +31,6 @@ import { createSelector } from 'reselect';
 
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
 
@@ -63,7 +62,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const { height } = useWindowDimensions();
 
   useEffect(() => {
-    dispatch(fetchKeycloakServiceRoles());
     dispatch(getFormDefinitions());
     dispatch(FetchRealmRoles());
   }, []);
