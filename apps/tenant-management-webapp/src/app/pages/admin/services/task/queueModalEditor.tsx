@@ -23,7 +23,7 @@ import { TaskDefinition, defaultTaskQueue } from '@store/task/model';
 import { ServiceRoleConfig } from '@store/access/models';
 import { ConfigServiceRole } from '@store/access/models';
 import { RootState } from '@store/index';
-import { FETCH_KEYCLOAK_SERVICE_ROLES, fetchKeycloakServiceRoles } from '@store/access/actions';
+import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { ActionState } from '@store/session/models';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { useValidators } from '@lib/validation/useValidators';
@@ -57,7 +57,6 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
   useEffect(() => {
     dispatch(getTaskQueues());
     dispatch(FetchRealmRoles());
-    dispatch(fetchKeycloakServiceRoles());
   }, []);
 
   useEffect(() => {

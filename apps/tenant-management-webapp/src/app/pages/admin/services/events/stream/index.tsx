@@ -11,7 +11,6 @@ import { AddEditStream } from './addEditStream/addEditStream';
 import { GoAButton } from '@abgov/react-components-new';
 import { initialStream } from '@store/stream/models';
 import { DeleteModal } from '@components/DeleteModal';
-import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { UpdateModalState } from '@store/session/actions';
 import { AddModalType, EditModalType } from '@store/stream/models';
 import { selectTenantStreams } from '@store/stream/selectors';
@@ -32,7 +31,6 @@ export const EventStreams = (): JSX.Element => {
   const [selectedStream, setSelectedStream] = useState(initialStream);
   useEffect(() => {
     dispatch(FetchRealmRoles());
-    dispatch(fetchKeycloakServiceRoles());
     dispatch(fetchEventStreams());
   }, []);
 
