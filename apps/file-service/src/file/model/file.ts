@@ -52,6 +52,7 @@ export class FileEntity implements File {
     const result = await fileTypeDetector.detect();
 
     entity.mimeType = result.fileType?.mime;
+    entity.securityClassification = type?.securityClassification;
 
     entity = await repository.save(entity);
     const saved = await storageProvider.saveFile(entity, type, result.fileStream);
