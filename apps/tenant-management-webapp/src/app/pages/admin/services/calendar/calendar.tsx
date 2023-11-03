@@ -1,7 +1,7 @@
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { CalendarOverview } from './overview';
-import { CalendarsView } from './calendarsView';
+import { CalendarsView } from './calendar/calendarsView';
 import React, { useState } from 'react';
 
 import BetaBadge from '@icons/beta-badge.svg';
@@ -21,12 +21,12 @@ export const Calendar = (): JSX.Element => {
     setActiveIndex(1);
     setActivateEditState(edit);
   };
-  function getCalenderDocsLink() {
+  const getCalenderDocsLink = () => {
     return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Calendar service`;
-  }
-  function getCalendersupportcodeLink() {
+  };
+  const getCalenderSupportCodeLink = () => {
     return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/calendar-service';
-  }
+  };
   return (
     <Page>
       <Main>
@@ -50,7 +50,7 @@ export const Calendar = (): JSX.Element => {
         </>
       </Main>
       <Aside>
-        <AsideLinks serviceLink={getCalendersupportcodeLink()} docsLink={getCalenderDocsLink()} />
+        <AsideLinks serviceLink={getCalenderSupportCodeLink()} docsLink={getCalenderDocsLink()} />
       </Aside>
     </Page>
   );
