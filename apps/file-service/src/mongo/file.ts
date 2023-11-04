@@ -90,12 +90,6 @@ export class MongoFileRepository implements FileRepository {
   }
 
   fromDoc(type: FileTypeEntity, values: FileDoc): FileEntity {
-    let typeSecurityClassification = '';
-
-    if (values.typeId && type.securityClassification !== undefined) {
-      typeSecurityClassification = type.securityClassification;
-    }
-
     return values
       ? new FileEntity(this.storageProvider, this, type, {
           tenantId: values.spaceId ? AdspId.parse(values.spaceId) : null,
@@ -110,7 +104,7 @@ export class MongoFileRepository implements FileRepository {
           scanned: values.scanned,
           infected: values.infected,
           deleted: values.deleted,
-          securityClassification: typeSecurityClassification,
+          securityClassification: values.securityClassification,
         })
       : null;
   }
