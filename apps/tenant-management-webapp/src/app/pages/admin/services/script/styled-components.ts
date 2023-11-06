@@ -74,8 +74,8 @@ export const TestInputDivBody = styled.div`
 export const ScriptPanelContainer = styled.div`
   display: flex;
   flex: auto;
-  padding-left: 2rem;
-  padding-right: 2rem;
+  padding-left: var(--goa-spacing-xl);
+  padding-right: var(--goa-spacing-xl);
   height: 100vh;
   margin-top: 90px;
   overflow: hidden;
@@ -85,7 +85,7 @@ export const EditScriptActions = styled.div`
   display: flex;
   justify-content: left;
   gap: 1rem;
-  padding-top: 1.5rem;
+  padding-top: var(--goa-spacing-l);
   border-top: 1px solid #adadad;
 `;
 
@@ -116,7 +116,7 @@ export const ScriptEditorContainer = styled.div`
 export const EditModalStyle = styled.div`
   width: 100%;
   display: flex;
-  padding-top: 2rem;
+  padding-top: var(--goa-spacing-xl);
   .half-width {
     width: 50%;
     display: flex;
@@ -222,7 +222,7 @@ export const ResponseTableStyles = styled.div`
     width: 40%;
   }
   td {
-    padding: 0.75rem 0 0.5rem;
+    padding: var(--goa-spacing-s) 0 var(--goa-spacing-xs);
   }
 
   tr + tr {
@@ -270,41 +270,41 @@ export const ResponseTableStyles = styled.div`
 `;
 
 export const TombStoneWrapper = styled.div`
-  margin-top: 2rem;
-  font-size: 16px;
-  color: #333333;
-  border-radius: 3px;
+  margin-top: var(--goa-spacing-xl);
+  font-size: var(--goa-fontSize-3);
+  color: var(--goa-color-text-default);
+  border-radius: var(--goa-borderRadius-m);
   height: 7.375rem;
-  background-color: #f1f1f1;
+  background-color: var(--goa-color-greyscale-100);
   border: 1px solid #adadad;
 
   display: flex;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--goa-spacing-l);
   .nameColumn {
     width: 92px;
     float: left;
-    margin: 1rem;
+    margin: var(--goa-spacing-m);
   }
   .idColumn {
     width: 94px;
     float: left;
     height: 100%;
-    margin: 1rem;
+    margin: var(--goa-spacing-m);
   }
   .descColumn {
     width: calc(100% - 304px);
     float: left;
-    margin: 1rem;
+    margin: var(--goa-spacing-m);
   }
   .editColumn {
     width: 57px;
     float: right;
     min-width: 50px;
-    margin-top: 1rem;
-    margin-right: 1rem;
+    margin-top: var(--goa-spacing-m);
+    margin-right: var(--goa-spacing-m);
   }
   .separator {
-    margin-top: 1rem;
+    margin-top: var(--goa-spacing-m);
     width: 1px;
     height: 5.375rem;
 
@@ -317,7 +317,7 @@ export const TombStoneWrapper = styled.div`
   }
   th {
     text-align: left;
-    padding-bottom: 0.5rem;
+    padding-bottom: var(--goa-spacing-xs);
     font-size: 18px;
   }
 
@@ -329,10 +329,10 @@ export const TombStoneWrapper = styled.div`
     -webkit-box-orient: vertical;
     display: -webkit-box;
     -webkit-line-clamp: 2;
-    font-size: 16px;
-    font-weight: 400;
+    font-size: var(--goa-fontSize-3);
+    font-weight: var(--goa-fontWeight-regular);
     font-family: 'acumin-pro-semi-condensed';
-    line-height: 24px;
+    line-height: var(--goa-lineHeight-2);
     word-wrap: break-word;
     word-break: break-word;
   }
@@ -355,10 +355,10 @@ export const Edit = styled.div`
   }
 
   a {
-    margin-right: 4px;
+    margin-right: var(--goa-spacing-2xs);
     text-decoration: underline;
-    line-height: 28px;
-    font-size: 18px;
+    line-height: var(--goa-lineHeight-3);
+    font-size: var(--goa-fontSize-4);
   }
   display: flex;
   flex-direction: row;
@@ -370,7 +370,7 @@ export const ScrollPane = styled.div`
 `;
 export const TextLoadingIndicator = styled.div`
   animation: blinker 1s linear infinite;
-  font-size: 16px;
+  font-size: var(--goa-fontSize-3);
   font-style: italic;
   text-align: center;
   @keyframes blinker {
@@ -395,6 +395,6 @@ export const Tooltip = styled.div`
     bottom: -37px;
     width: max-content;
     min-width: 200px;
-    font-size: 16px;
+    font-size: var(--goa-fontSize-3);
   }
 `;

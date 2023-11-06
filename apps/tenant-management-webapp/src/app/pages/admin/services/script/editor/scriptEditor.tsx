@@ -187,7 +187,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     );
   };
 
-  const types = [{ type: 'runnerRoles', name: 'Runner Roles' }];
+  const types = [{ type: 'runnerRoles', name: 'Modify' }];
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
     fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
@@ -218,8 +218,8 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               });
             }
           }}
-          nameColumnWidth={40}
-          service="FileType"
+          nameColumnWidth={80}
+          service="Script"
           checkedRoles={[{ title: types[0].name, selectedRoles: script[types[0].type] }]}
         />
       </>
