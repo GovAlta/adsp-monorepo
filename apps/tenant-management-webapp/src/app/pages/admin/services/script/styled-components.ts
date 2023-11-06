@@ -145,7 +145,7 @@ export const EditModalStyle = styled.div`
   }
 
   .execute-button {
-    margin: 0 0 10px 10px;
+    margin: 0 0 var(--goa-spacing-s) 0px;
     display: flex;
     justify-content: right;
   }
@@ -222,7 +222,7 @@ export const ResponseTableStyles = styled.div`
     width: 40%;
   }
   td {
-    padding: var(--goa-spacing-s) 0 var(--goa-spacing-xs);
+    padding: var(--goa-spacing-s) var(--goa-spacing-m) var(--goa-spacing-xs) var(--goa-spacing-m);
   }
 
   tr + tr {
@@ -241,7 +241,7 @@ export const ResponseTableStyles = styled.div`
     color: var(--color-th);
     font-size: var(--fs-base);
     font-weight: var(--fw-bold);
-    padding: 0.5rem;
+    padding: 0 var(--goa-spacing-m) var(--goa-spacing-xs) var(--goa-spacing-m);
     text-align: left;
     white-space: nowrap;
     background: white;
