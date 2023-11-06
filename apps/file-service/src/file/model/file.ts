@@ -1,7 +1,7 @@
 import { AdspId, isAllowedUser, User } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
 import { Readable } from 'stream';
-import { File, FileRecord, NewFile, ServiceUserRoles, UserInfo } from '../types';
+import { File, FileRecord, NewFile, SecurityClassificationInfo, ServiceUserRoles, UserInfo } from '../types';
 import { FileRepository } from '../repository';
 import { FileTypeEntity } from './type';
 import { v4 as uuidv4 } from 'uuid';
@@ -32,7 +32,7 @@ export class FileEntity implements File {
     repository: FileRepository,
     user: User,
     type: FileTypeEntity,
-    values: NewFile,
+    values: NewFile & SecurityClassificationInfo,
     content: Readable
   ): Promise<FileEntity> {
     if (!type.canUpdateFile(user)) {

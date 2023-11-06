@@ -78,6 +78,7 @@ export class FileStorageEngine implements multer.StorageEngine {
         {
           filename: filename || file.originalname,
           recordId,
+          securityClassification: fileType.securityClassification,
         },
         file.stream
       );
