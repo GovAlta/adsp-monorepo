@@ -52,6 +52,7 @@ export class FileEntity implements File {
     const result = await fileTypeDetector.detect();
 
     entity.mimeType = result.fileType?.mime;
+    entity.securityClassification = type?.securityClassification;
 
     entity = await repository.save(entity);
     const saved = await storageProvider.saveFile(entity, type, result.fileStream);
@@ -75,11 +76,11 @@ export class FileEntity implements File {
     this.createdBy = values.createdBy;
     this.created = values.created;
     this.lastAccessed = values.created;
+    this.securityClassification = type?.securityClassification || null;
     const record = values as FileRecord;
 
     if (record.id) {
       this.typeId = type?.id;
-      this.securityClassification = type?.securityClassification;
       this.tenantId = record.tenantId;
       this.id = record.id;
       this.lastAccessed = record.lastAccessed;

@@ -9,7 +9,7 @@ import { useValidators } from '@lib/validation/useValidators';
 import { toKebabName } from '@lib/kebabName';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { isNotEmptyCheck, wordMaxLengthCheck, duplicateNameCheck, badCharsCheck } from '@lib/validation/checkInput';
-import { IdField } from './styled-components';
+import { IdField } from '../styled-components';
 import { ServiceRoleConfig } from '@store/access/models';
 import { RootState } from '@store/index';
 interface CalendarModalProps {
