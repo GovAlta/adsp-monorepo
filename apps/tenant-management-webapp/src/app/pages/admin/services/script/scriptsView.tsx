@@ -79,6 +79,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   };
 
   const saveScript = (script) => {
+    setSelectedScript(script);
     dispatch(UpdateScript(script, false));
   };
 
@@ -135,9 +136,9 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
           <ScriptTableComponent scripts={scripts} onEdit={onEdit} />
         </div>
       )}
-
       <AddScriptModal
         open={openAddScript}
+        isNew={true}
         initialValue={selectedScript}
         realmRoles={tenant.realmRoles}
         tenantClients={tenant.tenantClients ? tenant.tenantClients : {}}
@@ -147,29 +148,32 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
         onSave={saveScript}
       />
 
-      <Modal open={showScriptEditForm} data-testid="script-edit-form">
-        {/* Hides body overflow when the modal is up */}
-        <BodyGlobalStyles hideOverflow={showScriptEditForm} />
-        <ModalContent>
-          <ScriptPanelContainer>
-            <ScriptEditor
-              editorConfig={scriptEditorConfig}
-              name={name}
-              description={description}
-              scriptStr={script}
-              selectedScript={selectedScript}
-              testInput={testInput}
-              testInputUpdate={testInputUpdate}
-              onNameChange={onNameChange}
-              onDescriptionChange={onDescriptionChange}
-              onScriptChange={onScriptChange}
-              errors={errors}
-              saveAndReset={saveScript}
-              onEditorCancel={reset}
-            />
-          </ScriptPanelContainer>
-        </ModalContent>
-      </Modal>
+      {showScriptEditForm && (
+        <Modal open={showScriptEditForm} data-testid="script-edit-form">
+          {/* Hides body overflow when the modal is up */}
+          <BodyGlobalStyles hideOverflow={showScriptEditForm} />
+          <ModalContent>
+            <ScriptPanelContainer>
+              <ScriptEditor
+                editorConfig={scriptEditorConfig}
+                name={name}
+                description={description}
+                scriptStr={script}
+                selectedScript={selectedScript}
+                testInput={testInput}
+                testInputUpdate={testInputUpdate}
+                onNameChange={onNameChange}
+                onDescriptionChange={onDescriptionChange}
+                onScriptChange={onScriptChange}
+                errors={errors}
+                saveAndReset={saveScript}
+                onEditorCancel={reset}
+                onSave={saveScript}
+              />
+            </ScriptPanelContainer>
+          </ModalContent>
+        </Modal>
+      )}
     </>
   );
 };
