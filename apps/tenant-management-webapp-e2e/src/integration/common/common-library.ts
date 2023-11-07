@@ -62,6 +62,9 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
     case 'Task':
       menuItemTestid = 'menu-task';
       break;
+    case 'Form':
+      menuItemTestid = 'menu-form';
+      break;
     default:
       expect(menuItem).to.be.oneOf([
         'File',
@@ -78,6 +81,7 @@ export function tenantAdminMenuItem(menuItem, waitMilliSecs) {
         'Script',
         'Service metrics',
         'Task',
+        'Form',
       ]);
   }
   commonObj.adminMenuItem(menuItemTestid).click();
