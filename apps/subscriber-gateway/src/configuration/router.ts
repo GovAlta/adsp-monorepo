@@ -1,6 +1,5 @@
-import { adspId, ServiceDirectory, TenantService, TokenProvider } from '@abgov/adsp-service-sdk';
+import { AdspId, adspId, ConfigurationService, TenantService, TokenProvider } from '@abgov/adsp-service-sdk';
 import { NotFoundError, createValidationHandler } from '@core-services/core-common';
-import axios from 'axios';
 import { RequestHandler, Router } from 'express';
 import { param } from 'express-validator';
 
@@ -8,10 +7,32 @@ export const toTenantName = (nameInUrl: string): string => {
   return nameInUrl.replace(/-/g, ' ');
 };
 
-export function getSupportInfo(
-  tenantService: TenantService,
+interface ContactInformation {
+  contactEmail?: string;
+  phoneNumber?: string;
+  supportInstructions?: string;
+}
+
+async function getContactConfiguration(
+  configurationService: ConfigurationService,
   tokenProvider: TokenProvider,
-  directory: ServiceDirectory
+  serviceId: AdspId,
+  tenantId: AdspId
+): Promise<ContactInformation> {
+  const token = await tokenProvider.getAccessToken();
+  const [config] = await configurationService.getConfiguration<{ contact: ContactInformation }>(
+    serviceId,
+    token,
+    tenantId
+  );
+
+  return config.contact || {};
+}
+
+export function getSupportInfo(
+  configurationService: ConfigurationService,
+  tenantService: TenantService,
+  tokenProvider: TokenProvider
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -20,16 +41,15 @@ export function getSupportInfo(
       if (!tenant) {
         throw new NotFoundError('Tenant', realm);
       }
-      const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
-      const token = await tokenProvider.getAccessToken();
-      const subscribersUrl = new URL(
-        `/configuration/v2/configuration/platform/notification-service?tenantId=${tenant.id}`,
-        configurationServiceUrl
+
+      const result = await getContactConfiguration(
+        configurationService,
+        tokenProvider,
+        adspId`urn:ads:platform:notification-service`,
+        tenant.id
       );
-      const { data } = await axios.get(subscribersUrl.href, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      res.send(data.latest?.configuration?.contact);
+
+      res.send(result);
     } catch (err) {
       next(err);
     }
@@ -37,9 +57,9 @@ export function getSupportInfo(
 }
 
 export function getSupportInfoTenantId(
+  configurationService: ConfigurationService,
   tenantService: TenantService,
-  tokenProvider: TokenProvider,
-  directory: ServiceDirectory
+  tokenProvider: TokenProvider
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -50,16 +70,15 @@ export function getSupportInfoTenantId(
       if (!tenant) {
         throw new NotFoundError('Tenant', tenantId);
       }
-      const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
-      const token = await tokenProvider.getAccessToken();
-      const subscribersUrl = new URL(
-        `/configuration/v2/configuration/platform/notification-service?tenantId=${tenant.id}`,
-        configurationServiceUrl
+
+      const result = await getContactConfiguration(
+        configurationService,
+        tokenProvider,
+        adspId`urn:ads:platform:notification-service`,
+        tenant.id
       );
-      const { data } = await axios.get(subscribersUrl.href, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      res.send(data.latest?.configuration?.contact);
+
+      res.send(result);
     } catch (err) {
       next(err);
     }
@@ -67,9 +86,9 @@ export function getSupportInfoTenantId(
 }
 
 export function getStatusSupportInfo(
+  configurationService: ConfigurationService,
   tenantService: TenantService,
-  tokenProvider: TokenProvider,
-  directory: ServiceDirectory
+  tokenProvider: TokenProvider
 ): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -78,16 +97,15 @@ export function getStatusSupportInfo(
       if (!tenant) {
         throw new NotFoundError('Tenant', name);
       }
-      const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
-      const token = await tokenProvider.getAccessToken();
-      const subscribersUrl = new URL(
-        `/configuration/v2/configuration/platform/status-service?tenantId=${tenant.id}`,
-        configurationServiceUrl
+
+      const result = await getContactConfiguration(
+        configurationService,
+        tokenProvider,
+        adspId`urn:ads:platform:status-service`,
+        tenant.id
       );
-      const { data } = await axios.get(subscribersUrl.href, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      res.send(data.latest?.configuration?.contact);
+
+      res.send(result);
     } catch (err) {
       next(err);
     }
@@ -95,29 +113,33 @@ export function getStatusSupportInfo(
 }
 
 interface RouterProps {
-  directory: ServiceDirectory;
+  configurationService: ConfigurationService;
   tenantService: TenantService;
   tokenProvider: TokenProvider;
 }
 
-export const createConfigurationRouter = ({ tenantService, tokenProvider, directory }: RouterProps): Router => {
+export const createConfigurationRouter = ({
+  configurationService,
+  tenantService,
+  tokenProvider,
+}: RouterProps): Router => {
   const router = Router();
 
   router.get(
     '/support-info/:realm',
     // due to some history issue, the realm and tenant name formats are not consisted.
     createValidationHandler(param('realm').isLength({ min: 2 })),
-    getSupportInfo(tenantService, tokenProvider, directory)
+    getSupportInfo(configurationService, tenantService, tokenProvider)
   );
   router.get(
     '/support-info-tenant-id/:tenantId',
     createValidationHandler(param('tenantId').isMongoId()),
-    getSupportInfoTenantId(tenantService, tokenProvider, directory)
+    getSupportInfoTenantId(configurationService, tenantService, tokenProvider)
   );
   router.get(
     '/status-support-info/:name',
     createValidationHandler(param('name').isLength({ min: 2 })),
-    getStatusSupportInfo(tenantService, tokenProvider, directory)
+    getStatusSupportInfo(configurationService, tenantService, tokenProvider)
   );
 
   return router;
