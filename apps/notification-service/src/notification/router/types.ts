@@ -6,6 +6,8 @@ export interface SendVerifyCodeRequest {
   channel: Channel;
   address: string;
   reason?: string;
+  expireIn?: number;
+  verificationLink?: string;
 }
 
 export const SUBSCRIBER_CHECK_CODE = 'check-code';

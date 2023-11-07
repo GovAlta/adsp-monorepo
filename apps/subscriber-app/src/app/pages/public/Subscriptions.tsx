@@ -2,11 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { Main } from '@components/Html';
 import Container from '@components/Container';
 import DataTable from '@components/DataTable';
+import { useSearchParams } from 'react-router-dom-6';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { GoAContainer, GoAButton, GoACallout, GoAButtonGroup, GoAModal, GoABadge } from '@abgov/react-components-new';
 import { FetchContactInfoService } from '@store/notification/actions';
 import { FetchTenantService } from '@store/tenant/actions';
-import { Channels } from '@store/subscription/models';
+import { Channels, expireMinutes } from '@store/subscription/models';
+import { GoAFormItem } from '@abgov/react-components/experimental';
+import { CheckCode, VerifyEmail } from '@store/subscription/actions';
+
+import { GoAInput } from '@abgov/react-components-new';
 
 import styled from 'styled-components';
 import {
@@ -20,7 +25,7 @@ import {
 } from '../private/Subscriptions/styled-components';
 
 import { useParams } from 'react-router-dom-6';
-
+import { useHistory } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getSubscriberDetails, signedOutUnsubscribe } from '@store/subscription/actions';
 import { RootState } from '@store/index';
@@ -28,6 +33,8 @@ import SubscriptionsList from '@components/SubscriptionsList';
 import { SubscriberChannel, Subscription } from '@store/subscription/models';
 
 const Subscriptions = (): JSX.Element => {
+  const [searchParams, _] = useSearchParams();
+  const history = useHistory();
   const dispatch = useDispatch();
   const EMAIL = 'email';
   const { subscriber } = useSelector((state: RootState) => ({
@@ -38,10 +45,14 @@ const Subscriptions = (): JSX.Element => {
     return state?.session?.indicator;
   });
 
+  const code = searchParams.get('code');
+
   const contact = useSelector((state: RootState) => state.notification?.contactInfo);
+  const previouslyVerified = useSelector((state: RootState) => state.subscription.previouslyVerified);
 
   const subscriberEmail = subscriber?.channels.find((chn: SubscriberChannel) => chn.channel === EMAIL)?.address;
   const [showUnSubscribeModal, setShowUnSubscribeModal] = useState(false);
+  const [emailCode, setEmailCode] = useState('');
   const [selectedUnsubscribeSub, setSelectedUnsubscribeSub] = useState<Subscription>();
   const { subscriberId } = useParams();
   const isEmailVerified = subscriber && subscriber?.channels?.find((c) => c.channel === Channels.email)?.verified;
@@ -65,6 +76,18 @@ const Subscriptions = (): JSX.Element => {
     }
   }, [subscriber]);
 
+  useEffect(() => {
+    if (previouslyVerified && code !== 'null' && code) {
+      history.push(`${window.location.pathname}`);
+    }
+  }, [previouslyVerified]);
+
+  useEffect(() => {
+    if (code !== 'null' && subscriber && code) {
+      dispatch(CheckCode('email', code, subscriber, true));
+    }
+  }, [searchParams, subscriber]);
+
   const unSubscribe = (typeId: string) => {
     setShowUnSubscribeModal(true);
     setSelectedUnsubscribeSub(subscriber?.subscriptions.filter((item) => item.typeId === typeId)[0]);
@@ -73,6 +96,14 @@ const Subscriptions = (): JSX.Element => {
     setShowUnSubscribeModal(false);
     setSelectedUnsubscribeSub(undefined);
   };
+
+  const emailChannelIndex = subscriber?.channels?.findIndex((channel) => {
+    return channel.channel === Channels?.email;
+  });
+
+  const validCodeExists =
+    subscriber?.channels[emailChannelIndex]?.pendingVerification &&
+    subscriber?.channels[emailChannelIndex]?.timeCodeSent + 1000 * 60 * expireMinutes > Date.now();
 
   const unSubscribeModal = () => {
     return (
@@ -140,12 +171,50 @@ const Subscriptions = (): JSX.Element => {
                         <GoABadge type="success" content="Verified" />
                       )}
                       {isEmailVerified !== undefined && isEmailVerified === false && (
-                        <GoABadge type="important" content="Not verified" />
+                        <div>
+                          <GoABadge type="important" content="Not verified" />
+                          {validCodeExists ? (
+                            <div>
+                              <Label>Enter your verification Code</Label>
+                              <GoAFormItem>
+                                <GoAInput
+                                  type="tel"
+                                  aria-label="sms"
+                                  name="sms"
+                                  width="100%"
+                                  value={emailCode}
+                                  testId="contact-sms-input"
+                                  onChange={(_, value) => setEmailCode(value)}
+                                />
+                              </GoAFormItem>
+
+                              <GoAButton
+                                size="compact"
+                                testId="verify-code"
+                                onClick={() => {
+                                  dispatch(CheckCode('email', emailCode, subscriber, true));
+                                }}
+                              >
+                                Validate code
+                              </GoAButton>
+                            </div>
+                          ) : (
+                            <GoAButton
+                              size="compact"
+                              testId="verify-email"
+                              onClick={() => {
+                                dispatch(VerifyEmail(subscriber, true));
+                              }}
+                            >
+                              Verify email
+                            </GoAButton>
+                          )}
+                        </div>
                       )}
                     </VerificationWrapper>
 
                     {subscriberEmail}
-                  </p>{' '}
+                  </p>
                 </ContactInformationContainer>
                 {!subscriberEmail &&
                   (indicator?.show ? (
@@ -160,7 +229,7 @@ const Subscriptions = (): JSX.Element => {
               <GoAModal></GoAModal>
               <SubscriptionListContainer>
                 <DataTable data-testid="subscriptions-table">
-                  {!subscriber || subscriber?.subscriptions.length > 0 ? (
+                  {!subscriber || subscriber?.subscriptions?.length > 0 ? (
                     <tr>
                       <th id="subscriptions">Subscription</th>
                       <th id="descriptions">Description</th>

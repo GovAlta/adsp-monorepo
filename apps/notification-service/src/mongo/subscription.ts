@@ -249,6 +249,8 @@ export class MongoSubscriptionRepository implements SubscriptionRepository {
               address: c.address,
               verified: !!c.verified,
               verifyKey: c.verifyKey,
+              pendingVerification: c.pendingVerification,
+              timeCodeSent: c.timeCodeSent,
             })) || [],
         })
       : null;
