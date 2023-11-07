@@ -3,12 +3,12 @@ import DataTable from '@components/DataTable';
 import { FormDefinitionItem } from './formDefinitionItem';
 import { PdfTemplate } from '@store/pdf/model';
 
-export interface formTemplatesTableProps {
+export interface formDefinitionTableProps {
   definitions: Record<string, PdfTemplate>;
   onDelete?: (PdfTemplate) => void;
   onEdit?: (PdfTemplate) => void;
 }
-export const FormDefinitionsTable: FunctionComponent<formTemplatesTableProps> = ({ definitions, onDelete }) => {
+export const FormDefinitionsTable: FunctionComponent<formDefinitionTableProps> = ({ definitions, onDelete }) => {
   const newTemplates = JSON.parse(JSON.stringify(definitions));
 
   return (
