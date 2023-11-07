@@ -69,14 +69,14 @@ export class FileEntity implements File {
     private storageProvider: FileStorageProvider,
     private repository: FileRepository,
     public type: FileTypeEntity,
-    values: (NewFile & { createdBy: UserInfo; created: Date }) | FileRecord
+    values: (NewFile & SecurityClassificationInfo & { createdBy: UserInfo; created: Date }) | FileRecord
   ) {
     this.recordId = values.recordId;
     this.filename = values.filename;
     this.createdBy = values.createdBy;
     this.created = values.created;
     this.lastAccessed = values.created;
-    this.securityClassification = type?.securityClassification || null;
+    this.securityClassification = values.securityClassification || null;
     const record = values as FileRecord;
 
     if (record.id) {
