@@ -366,7 +366,7 @@ export function updateSubscriber(apiId: AdspId): RequestHandler {
   };
 }
 
-export function subscriberOperations(verifyService: VerifyService, tenantService: TenantService): RequestHandler {
+export function subscriberOperations(verifyService: VerifyService): RequestHandler {
   return async (req, res, next) => {
     try {
       const user = req.user;
@@ -378,7 +378,6 @@ export function subscriberOperations(verifyService: VerifyService, tenantService
         case SUBSCRIBER_SEND_VERIFY_CODE:
           await subscriber.sendVerifyCode(
             verifyService,
-            tenantService,
             user,
             request.channel,
             request.address,
@@ -665,7 +664,7 @@ export const createSubscriptionRouter = ({
       )
     ),
     getSubscriber(subscriptionRepository),
-    subscriberOperations(verifyService, tenantService)
+    subscriberOperations(verifyService)
   );
   subscriptionRouter.delete(
     '/subscribers/:subscriber',

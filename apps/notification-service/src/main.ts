@@ -148,13 +148,12 @@ async function initializeApp() {
   const templateService = createTemplateService();
 
   const providers = initializeProviders(logger, app, botRepository, environment);
-  const subscriberAppHost = environment.SUBSCRIBER_APP_HOST;
+
   const verifyService = createVerifyService({
     providers,
     templateService,
     directory,
     tokenProvider,
-    subscriberAppHost,
   });
 
   applyNotificationMiddleware(app, {

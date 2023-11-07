@@ -20,7 +20,6 @@ export class VerifyServiceImpl implements VerifyService {
     private templateService: TemplateService,
     private directory: ServiceDirectory,
     private tokenProvider: TokenProvider,
-    private subscriberAppHost: string,
     private templates: Partial<Record<Channel, Template>> = {}
   ) {
     Object.keys(providers).forEach((channel: Channel) => {
@@ -37,7 +36,6 @@ export class VerifyServiceImpl implements VerifyService {
   async sendCode(
     { channel, address }: SubscriberChannel,
     reason: string,
-    realm: string,
     expireIn?: number,
     verificationLink?: string
   ): Promise<string> {
@@ -114,7 +112,6 @@ interface VerifyServiceProps {
   templateService: TemplateService;
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
-  subscriberAppHost: string;
 }
 
 export function createVerifyService({
@@ -122,7 +119,6 @@ export function createVerifyService({
   templateService,
   directory,
   tokenProvider,
-  subscriberAppHost,
 }: VerifyServiceProps): VerifyService {
-  return new VerifyServiceImpl(providers, templateService, directory, tokenProvider, subscriberAppHost);
+  return new VerifyServiceImpl(providers, templateService, directory, tokenProvider);
 }
