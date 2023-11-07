@@ -307,7 +307,7 @@ export function* verifyEmail(action: VerifyEmailAction): SagaIterator {
 
   const link = action.nonLoggedIn ? loggedOutLink : loggedInLink;
 
-  const reason = `Verification Link: ${link} - This link will expire in ${expireMinutes} minutes, so please make sure to click it soon to confirm the accuracy of your notification email. Please disregard this email if you did not initiate the verification.`;
+  const reason = `The code will expire in ${expireMinutes} minutes, so please make sure to click the link soon to confirm the accuracy of your notification email. Please disregard this email if you did not initiate the verification.`;
 
   const address = subscriber.channels.find((channel) => channel.channel === 'email')?.address;
 
