@@ -365,7 +365,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                       elements.forEach((e) => {
                         if (e) {
                           elementNames = elementNames.concat(
-                            e.roleNames.map((roleName) => (e.clientId ? `${e.clientId}:${roleName}` : roleName))
+                            e.roleNames?.map((roleName) => (e.clientId ? `${e.clientId}:${roleName}` : roleName))
                           );
                         }
                       });
@@ -378,7 +378,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                       );
 
                       //Default to Protected A if there was no security classification
-                      if (!fileType?.securityClassification && fileType?.securityClassification.length > 0 && isEdit) {
+                      if (!fileType?.securityClassification && fileType?.securityClassification?.length > 0 && isEdit) {
                         fileType.securityClassification = SecurityClassification.ProtectedA;
                       }
 

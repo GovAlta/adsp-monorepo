@@ -145,90 +145,85 @@ export function* fetchServiceRoles(action: FetchServiceRolesAction): SagaIterato
 }
 
 export function* fetchKeycloakServiceRoles(action: FetchKeycloakServiceRolesAction): SagaIterator {
-  const cachedData = yield select((state: RootState) => state.tenant.realmRoles);
-  if (cachedData) {
-    yield put(fetchKeycloakServiceRolesSuccess(cachedData));
-  } else {
-    const token: string = yield call(getAccessToken);
-    const keycloakBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.keycloakUrl);
-    const realm: string = yield select((state: RootState) => state.session.realm);
+  const token: string = yield call(getAccessToken);
+  const keycloakIdMap = {};
+  const keycloakBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.keycloakUrl);
+  const realm: string = yield select((state: RootState) => state.session.realm);
 
-    const defaultRealmClients = ['broker', 'realm-management', 'account'];
-    const keycloakIdMap = {};
-    const details = {};
-    details[FETCH_KEYCLOAK_SERVICE_ROLES] = ActionState.inProcess;
+  const defaultRealmClients = ['broker', 'realm-management', 'account'];
+  const details = {};
+  details[FETCH_KEYCLOAK_SERVICE_ROLES] = ActionState.inProcess;
 
-    yield put(
-      UpdateIndicator({
-        details,
-      })
-    );
+  yield put(
+    UpdateIndicator({
+      details,
+    })
+  );
 
-    if (token && keycloakBaseUrl && realm) {
-      try {
-        const url = `${keycloakBaseUrl}/auth/admin/realms/${realm}/clients`;
+  if (token && keycloakBaseUrl && realm) {
+    try {
+      const url = `${keycloakBaseUrl}/auth/admin/realms/${realm}/clients`;
 
-        const { data } = yield call(axios.get, url, {
+      const { data } = yield call(axios.get, url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const keycloakRoles = {};
+      const keycloakRoleIds: string[] = [];
+      const keycloakRoleNames: string[] = [];
+
+      data
+        .filter((c) => {
+          return !defaultRealmClients.includes(c.clientId);
+        })
+        .forEach((c) => {
+          keycloakRoleNames.push(c.clientId);
+          keycloakRoleIds.push(c.id);
+          keycloakIdMap[c.clientId] = c.id;
+        });
+
+      const rolePromises = keycloakRoleIds.map((id, index) => {
+        const url = `${keycloakBaseUrl}/auth/admin/realms/${realm}/clients/${id}/roles`;
+        return call(axios.get, url, {
           headers: { Authorization: `Bearer ${token}` },
         });
+      });
 
-        const keycloakRoles = {};
-        const keycloakRoleIds: string[] = [];
-        const keycloakRoleNames: string[] = [];
+      const roleResponses = yield all(rolePromises);
 
-        data
-          .filter((c) => {
-            return !defaultRealmClients.includes(c.clientId);
-          })
-          .forEach((c) => {
-            keycloakRoleNames.push(c.clientId);
-            keycloakRoleIds.push(c.id);
-            keycloakIdMap[c.clientId] = c.id;
-          });
+      roleResponses.forEach((response, index) => {
+        keycloakRoles[keycloakRoleNames[index]] = {
+          roles: KeycloakRoleToServiceRole(response.data),
+        };
+      });
 
-        const rolePromises = keycloakRoleIds.map((id, index) => {
-          const url = `${keycloakBaseUrl}/auth/admin/realms/${realm}/clients/${id}/roles`;
-          return call(axios.get, url, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-        });
+      yield put(
+        fetchKeycloakServiceRolesSuccess({
+          keycloak: keycloakRoles,
+          keycloakIdMap,
+        })
+      );
 
-        const roleResponses = yield all(rolePromises);
+      details[FETCH_KEYCLOAK_SERVICE_ROLES] = ActionState.completed;
 
-        roleResponses.forEach((response, index) => {
-          keycloakRoles[keycloakRoleNames[index]] = {
-            roles: KeycloakRoleToServiceRole(response.data),
-          };
-        });
+      yield put(
+        UpdateIndicator({
+          details,
+        })
+      );
+    } catch (err) {
+      details[FETCH_KEYCLOAK_SERVICE_ROLES] = ActionState.error;
+      yield put(
+        UpdateIndicator({
+          details,
+        })
+      );
 
-        yield put(
-          fetchKeycloakServiceRolesSuccess({
-            keycloak: keycloakRoles,
-            keycloakIdMap,
-          })
-        );
-
-        details[FETCH_KEYCLOAK_SERVICE_ROLES] = ActionState.completed;
-
-        yield put(
-          UpdateIndicator({
-            details,
-          })
-        );
-      } catch (err) {
-        details[FETCH_KEYCLOAK_SERVICE_ROLES] = ActionState.error;
-        yield put(
-          UpdateIndicator({
-            details,
-          })
-        );
-
-        yield put(
-          ErrorNotification({
-            error: err,
-          })
-        );
-      }
+      yield put(
+        ErrorNotification({
+          error: err,
+        })
+      );
     }
   }
 }

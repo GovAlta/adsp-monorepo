@@ -27,6 +27,7 @@ interface AddScriptModalProps {
   onCancel?: () => void;
   onSave: (script: ScriptItem) => void;
   open: boolean;
+  isNew: boolean;
   realmRoles: Role[];
   tenantClients: ServiceRoleConfig;
 }
@@ -36,6 +37,7 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
   onCancel,
   onSave,
   open,
+  isNew,
   realmRoles,
   tenantClients,
 }: AddScriptModalProps): JSX.Element => {
@@ -86,9 +88,9 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
     const validations = {
       name: script.id,
     };
-
-    validations['duplicated'] = script.id;
-
+    if (isNew) {
+      validations['duplicated'] = script.id;
+    }
     if (!validators.checkAll(validations)) {
       return;
     }
@@ -165,7 +167,11 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
             };
             validations['duplicated'] = scriptId;
             validators.checkAll(validations);
-            setScript({ ...script, name: value, id: scriptId });
+            if (isNew) {
+              setScript({ ...script, name: value, id: scriptId });
+            } else {
+              setScript({ ...script, name: value });
+            }
           }}
         />
       </GoAFormItem>

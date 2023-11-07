@@ -7,7 +7,12 @@ import {
   ScriptPane,
   ResponseTableStyles,
   TestInputDivBody,
+  UseServiceAccountWrapper,
+  ScrollPane,
+  TextLoadingIndicator,
+  MonacoDivTabBody,
 } from '../styled-components';
+import { TombStone } from './tombstone';
 
 import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
@@ -21,7 +26,15 @@ import { RootState } from '@store/index';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { functionSuggestion, functionSignature } from '@lib/luaCodeCompletion';
 import { buildSuggestions } from '@lib/autoComplete';
-import { GoATextArea, GoAInput, GoAButton, GoAFormItem } from '@abgov/react-components-new';
+import { GoAButton, GoAFormItem, GoACheckbox } from '@abgov/react-components-new';
+import { TaskEditorTitle } from '../styled-components';
+import { Tab, Tabs } from '@components/Tabs';
+import { ClientRoleTable } from '@components/RoleTable';
+import { createSelector } from 'reselect';
+import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
+import { ActionState } from '@store/session/models';
+import { ConfigServiceRole } from '@store/access/models';
+
 interface ScriptEditorProps {
   editorConfig?: EditorProps;
   name: string;
@@ -37,6 +50,7 @@ interface ScriptEditorProps {
   errors?: any;
   saveAndReset: (script: ScriptItem) => void;
   onEditorCancel: () => void;
+  onSave;
 }
 
 export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
@@ -53,9 +67,12 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   errors,
   saveAndReset,
   onEditorCancel,
+  onSave,
 }) => {
   const dispatch = useDispatch();
   const [saveModal, setSaveModal] = useState(false);
+  const [script, setScript] = useState<ScriptItem>(selectedScript);
+  const [activeIndex] = useState<number>(0);
 
   const resetSavedAction = () => {
     onNameChange(selectedScript?.name || '');
@@ -65,6 +82,10 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   const monaco = useMonaco();
   let activeParam = 0;
   let activeSignature = 0;
+
+  useEffect(() => {
+    setScript(selectedScript);
+  }, []);
   useEffect(() => {
     if (monaco) {
       const completionProvider = monaco.languages.registerCompletionItemProvider('lua', {
@@ -167,6 +188,69 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     );
   };
 
+  const types = [{ type: 'runnerRoles', name: 'Modify' }];
+
+  const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
+    fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
+  }));
+  //eslint-disable-next-line
+  useEffect(() => {}, [fetchKeycloakRolesState]);
+
+  const selectServiceKeycloakRoles = createSelector(
+    (state: RootState) => state.serviceRoles,
+    (serviceRoles) => {
+      return serviceRoles?.keycloak || {};
+    }
+  );
+
+  const ClientRole = ({ roleNames, clientId }) => {
+    const runnerRoles = types[0];
+
+    return (
+      <>
+        <ClientRoleTable
+          roles={roleNames}
+          clientId={clientId}
+          roleSelectFunc={(roles, type) => {
+            if (type === runnerRoles.name) {
+              setScript({
+                ...script,
+                runnerRoles: roles,
+              });
+            }
+          }}
+          nameColumnWidth={80}
+          service="Script"
+          checkedRoles={[{ title: types[0].name, selectedRoles: script[types[0].type] }]}
+        />
+      </>
+    );
+  };
+
+  const roles = useSelector((state: RootState) => state.tenant.realmRoles) || [];
+
+  const roleNames = roles.map((role) => {
+    return role.name;
+  });
+
+  const keycloakClientRoles = useSelector(selectServiceKeycloakRoles);
+  let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
+
+  const clientElements =
+    Object.entries(keycloakClientRoles).length > 0 &&
+    Object.entries(keycloakClientRoles)
+      .filter(([clientId, config]) => {
+        return (config as ConfigServiceRole).roles.length > 0;
+      })
+      .map(([clientId, config]) => {
+        const roles = (config as ConfigServiceRole).roles;
+        const roleNames = roles.map((role) => {
+          return role.role;
+        });
+        return { roleNames: roleNames, clientId: clientId, currentElements: null };
+      });
+  elements = elements.concat(clientElements);
+
   //eslint-disable-next-line
   const parseTestResult = (result: string | Record<string, any>) => {
     if (typeof result !== 'string') {
@@ -178,59 +262,53 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   return (
     <EditModalStyle>
       <ScriptEditorContainer>
-        <GoAFormItem error={errors?.['name']} label="Name">
-          <GoAInput
-            type="text"
-            name="name"
-            width="100%"
-            value={name}
-            testId={`script-modal-name-input`}
-            aria-label="script-name"
-            onChange={(key, value) => {
-              onNameChange(value);
+        <TaskEditorTitle>Script editor</TaskEditorTitle>
+        <hr className="hr-resize" />
+        <TombStone selectedScript={selectedScript} onSave={onSave} />
+
+        <UseServiceAccountWrapper>
+          <GoACheckbox
+            checked={selectedScript.useServiceAccount}
+            name="script-use-service-account-checkbox"
+            testId="script-use-service-account-checkbox"
+            onChange={() => {
+              setScript({
+                ...selectedScript,
+                useServiceAccount: !selectedScript.useServiceAccount,
+              });
             }}
+            ariaLabel={`script-use-service-account-checkbox`}
           />
-        </GoAFormItem>
-        <GoAFormItem error={errors?.['description']} label="Description">
-          <GoATextArea
-            name="description"
-            value={description}
-            testId={`script-modal-description-input`}
-            aria-label="script-description"
-            width="100%"
-            onChange={(name, value) => {
-              onDescriptionChange(value);
-            }}
-          />
-        </GoAFormItem>
-        <GoAFormItem label="Lua script">
-          <MonacoDivBody data-testid="templated-editor-body">
-            <MonacoEditor
-              language={'lua'}
-              value={scriptStr}
-              {...editorConfig}
-              onChange={(value) => {
-                onScriptChange(value);
-              }}
-            />
-          </MonacoDivBody>
-        </GoAFormItem>
+          Use service account
+        </UseServiceAccountWrapper>
+        <Tabs activeIndex={activeIndex} data-testid="editor-tabs">
+          <Tab label="Lua script" data-testid="script-editor-tab">
+            <MonacoDivBody data-testid="templated-editor-body">
+              <MonacoEditor
+                language={'lua'}
+                value={scriptStr}
+                {...editorConfig}
+                onChange={(value) => {
+                  onScriptChange(value);
+                }}
+              />
+            </MonacoDivBody>
+          </Tab>
+          <Tab label="Roles" data-testid="script-roles-tab">
+            <MonacoDivTabBody data-testid="roles-editor-body">
+              <ScrollPane>
+                {elements.map((e, key) => {
+                  return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+                })}
+                {fetchKeycloakRolesState === ActionState.inProcess && (
+                  <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
+                )}
+              </ScrollPane>
+            </MonacoDivTabBody>
+          </Tab>
+        </Tabs>
 
         <EditScriptActions>
-          <GoAButton
-            onClick={() => {
-              if (hasChanged()) {
-                setSaveModal(true);
-              } else {
-                onEditorCancel();
-                dispatch(ClearScripts());
-              }
-            }}
-            testId="template-form-close"
-            type="secondary"
-          >
-            Back
-          </GoAButton>
           <div>
             <GoAButton
               onClick={() => {
@@ -246,6 +324,20 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               Save
             </GoAButton>
           </div>
+          <GoAButton
+            onClick={() => {
+              if (hasChanged()) {
+                setSaveModal(true);
+              } else {
+                onEditorCancel();
+                dispatch(ClearScripts());
+              }
+            }}
+            testId="template-form-close"
+            type="secondary"
+          >
+            Back
+          </GoAButton>
         </EditScriptActions>
       </ScriptEditorContainer>
       {/* Form */}
@@ -272,7 +364,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
         <ScriptPane>
           <div className="flex-column">
             <div className="flex-one">
-              <GoAFormItem error={errors?.['payloadSchema']} label="Test input">
+              <TaskEditorTitle>Test input</TaskEditorTitle>
+              <hr className="hr-resize" />
+              <GoAFormItem error={errors?.['payloadSchema']} label="">
                 <TestInputDivBody data-testid="templated-editor-test">
                   <MonacoEditor
                     language={'json'}

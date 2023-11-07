@@ -40,3 +40,7 @@ export type NewFile = {
   recordId: string;
   filename: string;
 };
+
+export type SecurityClassificationInfo = {
+  securityClassification: string;
+};

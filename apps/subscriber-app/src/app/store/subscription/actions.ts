@@ -17,6 +17,13 @@ export const NO_SUBSCRIBER = 'tenant/notification-service/no-subscriber';
 
 export const CREATE_SUBSCRIBER = 'tenant/notification-service/create-subscriber';
 export const CREATE_SUBSCRIBER_SUCCESS = 'tenant/notification-service/create-subscriber-success';
+export const VERIFY_EMAIL = 'tenant/notification-service/verify-email';
+export const VERIFY_EMAIL_SUCCESS = 'tenant/notification-service/verify-email-success';
+export const VERIFY_PHONE = 'tenant/notification-service/verify-phone';
+export const VERIFY_PHONE_SUCCESS = 'tenant/notification-service/verify-phone-success';
+export const CHECK_CODE = 'tenant/notification-service/check-code';
+export const CHECK_CODE_SUCCESS = 'tenant/notification-service/check-code-success';
+export const CHECK_CODE_FAILURE = 'tenant/notification-service/check-code-failure';
 
 // =============
 // Actions Types
@@ -28,7 +35,11 @@ export type ActionTypes =
   | GetMySubscriberActionSuccess
   | UnsubscribeActionSuccess
   | GetSubscriberActionSuccess
-  | CreateSubscriptionActionSuccess;
+  | CreateSubscriptionActionSuccess
+  | VerifyEmailActionSuccess
+  | VerifyPhoneActionSuccess
+  | CheckCodeActionSuccess
+  | CheckCodeActionFailure;
 export interface GetMySubscriberActionSuccess {
   type: typeof GET_MY_SUBSCRIBER_DETAILS_SUCCESS;
   payload: {
@@ -88,6 +99,48 @@ export interface CreateSubscriptionActionSuccess {
   payload: {
     subscriber: Subscriber;
   };
+}
+export interface VerifyEmailAction {
+  type: typeof VERIFY_EMAIL;
+  subscriber: Subscriber;
+  nonLoggedIn?: boolean;
+}
+
+export interface VerifyEmailActionSuccess {
+  type: typeof VERIFY_EMAIL_SUCCESS;
+  payload: {
+    response: any;
+  };
+}
+export interface VerifyPhoneAction {
+  type: typeof VERIFY_PHONE;
+  subscriber: Subscriber;
+  nonLoggedIn?: boolean;
+}
+
+export interface VerifyPhoneActionSuccess {
+  type: typeof VERIFY_PHONE_SUCCESS;
+  payload: {
+    response: any;
+  };
+}
+export interface CheckCodeAction {
+  type: typeof CHECK_CODE;
+  channel: string;
+  code: string;
+  subscriber: Subscriber;
+  nonLoggedIn?: boolean;
+}
+
+export interface CheckCodeActionSuccess {
+  type: typeof CHECK_CODE_SUCCESS;
+  payload: {
+    response: {channelIndex: number};
+  };
+}
+
+export interface CheckCodeActionFailure {
+  type: typeof CHECK_CODE_FAILURE;
 }
 
 // ==============
@@ -172,4 +225,50 @@ export const createSubscriberSuccess = (subscriber): CreateSubscriptionActionSuc
   payload: {
     subscriber,
   },
+});
+export const VerifyEmail = (subscriber: Subscriber, nonLoggedIn: boolean): VerifyEmailAction => ({
+  type: VERIFY_EMAIL,
+  subscriber,
+  nonLoggedIn,
+});
+
+export const VerifyEmailSuccess = (response): VerifyEmailActionSuccess => ({
+  type: VERIFY_EMAIL_SUCCESS,
+  payload: {
+    response,
+  },
+});
+export const VerifyPhone = (subscriber: Subscriber, nonLoggedIn: boolean): VerifyPhoneAction => ({
+  type: VERIFY_PHONE,
+  subscriber,
+  nonLoggedIn,
+});
+
+export const VerifyPhoneSuccess = (response): VerifyPhoneActionSuccess => ({
+  type: VERIFY_PHONE_SUCCESS,
+  payload: {
+    response,
+  },
+});
+export const CheckCode = (
+  channel: string,
+  code: string,
+  subscriber: Subscriber,
+  nonLoggedIn: boolean
+): CheckCodeAction => ({
+  type: CHECK_CODE,
+  channel,
+  code,
+  subscriber,
+  nonLoggedIn,
+});
+
+export const CheckCodeSuccess = (response): CheckCodeActionSuccess => ({
+  type: CHECK_CODE_SUCCESS,
+  payload: {
+    response,
+  },
+});
+export const CheckCodeFailure = (): CheckCodeActionFailure => ({
+  type: CHECK_CODE_FAILURE,
 });

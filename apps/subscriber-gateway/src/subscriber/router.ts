@@ -9,12 +9,22 @@ import {
 import axios from 'axios';
 import { RequestHandler, Router } from 'express';
 import { Logger } from 'winston';
-import { body, param, query } from 'express-validator';
+import { body, param, query, checkSchema } from 'express-validator';
 
 interface SiteVerifyResponse {
   success: boolean;
   score: number;
   action: string;
+}
+
+interface SubscriberOperations {
+  operation: boolean;
+  channel: string;
+  address: string;
+  reason?: string;
+  code?: string;
+  expireIn?: number;
+  verificationLink?: string;
 }
 
 export function verifyCaptcha(logger: Logger, RECAPTCHA_SECRET: string, SCORE_THRESHOLD = 0.5): RequestHandler {
@@ -187,6 +197,41 @@ export function unsubscribe(tokenProvider: TokenProvider, directory: ServiceDire
   };
 }
 
+export function subscriberOperations(tokenProvider: TokenProvider, directory: ServiceDirectory): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const { subscriber } = req.params;
+      const { operation, channel, address, reason, code, expireIn, verificationLink } =
+        req.body as unknown as SubscriberOperations;
+
+      const notificationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:notification-service`);
+      const token = await tokenProvider.getAccessToken();
+
+      const postBody: SubscriberOperations = { operation, channel, address };
+      if (code) {
+        postBody.code = code;
+      }
+      if (reason) {
+        postBody.reason = reason;
+      }
+      if (expireIn) {
+        postBody.expireIn = expireIn;
+      }
+      if (verificationLink) {
+        postBody.verificationLink = verificationLink;
+      }
+
+      const result = await axios.post(`${notificationServiceUrl}subscription/v1/subscribers/${subscriber}`, postBody, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      res.send(result?.data);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 interface RouterProps {
   logger: Logger;
   directory: ServiceDirectory;
@@ -221,6 +266,26 @@ export const createSubscriberRouter = ({
         .isMongoId()
     ),
     getSubscriber(tokenProvider, directory)
+  );
+
+  router.post(
+    '/subscribers/:subscriber',
+    verifyCaptcha(logger, SUBSCRIPTION_RECAPTCHA_SECRET),
+
+    createValidationHandler(
+      ...checkSchema(
+        {
+          operation: { isString: true },
+          channel: { optional: true, isString: true },
+          address: { optional: true, isString: true },
+          code: { optional: true, isString: true },
+          reason: { optional: true, isString: true },
+          verificationLink: { optional: true, isString: true },
+        },
+        ['body']
+      )
+    ),
+    subscriberOperations(tokenProvider, directory)
   );
 
   router.delete(

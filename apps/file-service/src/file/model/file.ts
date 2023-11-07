@@ -1,7 +1,7 @@
 import { AdspId, isAllowedUser, User } from '@abgov/adsp-service-sdk';
 import { UnauthorizedError, InvalidOperationError } from '@core-services/core-common';
 import { Readable } from 'stream';
-import { File, FileRecord, NewFile, ServiceUserRoles, UserInfo } from '../types';
+import { File, FileRecord, NewFile, SecurityClassificationInfo, ServiceUserRoles, UserInfo } from '../types';
 import { FileRepository } from '../repository';
 import { FileTypeEntity } from './type';
 import { v4 as uuidv4 } from 'uuid';
@@ -32,7 +32,7 @@ export class FileEntity implements File {
     repository: FileRepository,
     user: User,
     type: FileTypeEntity,
-    values: NewFile,
+    values: NewFile & SecurityClassificationInfo,
     content: Readable
   ): Promise<FileEntity> {
     if (!type.canUpdateFile(user)) {
@@ -52,6 +52,7 @@ export class FileEntity implements File {
     const result = await fileTypeDetector.detect();
 
     entity.mimeType = result.fileType?.mime;
+    entity.securityClassification = type?.securityClassification;
 
     entity = await repository.save(entity);
     const saved = await storageProvider.saveFile(entity, type, result.fileStream);
@@ -68,18 +69,18 @@ export class FileEntity implements File {
     private storageProvider: FileStorageProvider,
     private repository: FileRepository,
     public type: FileTypeEntity,
-    values: (NewFile & { createdBy: UserInfo; created: Date }) | FileRecord
+    values: (NewFile & SecurityClassificationInfo & { createdBy: UserInfo; created: Date }) | FileRecord
   ) {
     this.recordId = values.recordId;
     this.filename = values.filename;
     this.createdBy = values.createdBy;
     this.created = values.created;
     this.lastAccessed = values.created;
+    this.securityClassification = values.securityClassification || null;
     const record = values as FileRecord;
 
     if (record.id) {
       this.typeId = type?.id;
-      this.securityClassification = type?.securityClassification;
       this.tenantId = record.tenantId;
       this.id = record.id;
       this.lastAccessed = record.lastAccessed;
