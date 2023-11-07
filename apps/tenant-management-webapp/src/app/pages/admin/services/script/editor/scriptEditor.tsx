@@ -10,6 +10,7 @@ import {
   UseServiceAccountWrapper,
   ScrollPane,
   TextLoadingIndicator,
+  MonacoDivTabBody,
 } from '../styled-components';
 import { TombStone } from './tombstone';
 
@@ -294,7 +295,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
             </MonacoDivBody>
           </Tab>
           <Tab label="Roles" data-testid="script-roles-tab">
-            <MonacoDivBody data-testid="roles-editor-body">
+            <MonacoDivTabBody data-testid="roles-editor-body">
               <ScrollPane>
                 {elements.map((e, key) => {
                   return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
@@ -303,7 +304,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                   <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
                 )}
               </ScrollPane>
-            </MonacoDivBody>
+            </MonacoDivTabBody>
           </Tab>
         </Tabs>
 
