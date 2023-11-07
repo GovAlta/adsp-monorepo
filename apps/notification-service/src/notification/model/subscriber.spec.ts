@@ -309,7 +309,9 @@ describe('SubscriberEntity', () => {
       );
       expect(verifyServiceMock.sendCode).toHaveBeenCalledWith(
         entity.channels[0],
-        'Enter this code to verify your contact address.'
+        'Enter this code to verify your contact address.',
+        10,
+        undefined
       );
     });
 
@@ -337,7 +339,9 @@ describe('SubscriberEntity', () => {
       );
       expect(verifyServiceMock.sendCode).toHaveBeenCalledWith(
         entity.channels[0],
-        'Enter this code to verify your contact address.'
+        'Enter this code to verify your contact address.',
+        10,
+        undefined
       );
     });
 
@@ -365,7 +369,9 @@ describe('SubscriberEntity', () => {
       );
       expect(verifyServiceMock.sendCode).toHaveBeenCalledWith(
         entity.channels[0],
-        'Enter this code to verify your contact address.'
+        'Enter this code to verify your contact address.',
+        10,
+        undefined
       );
     });
 

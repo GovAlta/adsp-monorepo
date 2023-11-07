@@ -1601,7 +1601,9 @@ describe('subscription router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(verifyServiceMock.sendCode).toHaveBeenCalledWith(
         subscriber.channels[0],
-        'Enter this code to verify your contact address.'
+        'Enter this code to verify your contact address.',
+        10,
+        undefined
       );
       expect(subscriber.channels[0].verifyKey).toBe('key');
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ sent: true }));
