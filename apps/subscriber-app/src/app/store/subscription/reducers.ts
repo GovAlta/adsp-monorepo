@@ -7,6 +7,8 @@ import {
   CREATE_SUBSCRIBER_SUCCESS,
   CHECK_CODE_SUCCESS,
   CHECK_CODE_FAILURE,
+  VERIFY_EMAIL_SUCCESS,
+  VERIFY_PHONE_SUCCESS,
 } from './actions';
 import { SUBSCRIBER_INIT, SubscriberService } from './models';
 
@@ -51,12 +53,27 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
         subscriber: action.payload.subscriber,
       };
     }
+    case VERIFY_EMAIL_SUCCESS: {
+        const channelIndex = state.subscriber.channels.findIndex((channel) => channel.channel === 'email');
+        state.subscriber.channels[channelIndex].pendingVerification = true;
+        state.subscriber.channels[channelIndex].timeCodeSent = Date.now();
+      return {
+        ...state,
+        subscriber: state.subscriber,
+      };
+    }
+    case VERIFY_PHONE_SUCCESS: {
+        const channelIndex = state.subscriber.channels.findIndex((channel) => channel.channel === 'sms');
+        state.subscriber.channels[channelIndex].pendingVerification = true;
+        state.subscriber.channels[channelIndex].timeCodeSent = Date.now();
+      return {
+        ...state,
+        subscriber: state.subscriber,
+      };
+    }
     case CHECK_CODE_SUCCESS: {
-      const checkedChannel = action.payload.response.channel as string;
-
-      const channelIndex = state.subscriber.channels.findIndex((channel) => channel.channel === checkedChannel);
-
-      state.subscriber.channels[0].verified = true;
+      const channelIndex = action.payload?.response?.channelIndex;
+      state.subscriber.channels[channelIndex] = {...state.subscriber.channels[channelIndex], verified: true, pendingVerification: false}
 
       return {
         ...state,

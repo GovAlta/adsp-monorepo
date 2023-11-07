@@ -358,8 +358,6 @@ export function updateSubscriber(apiId: AdspId): RequestHandler {
       const update = req.body;
       const subscriber: SubscriberEntity = req[SUBSCRIBER_KEY];
 
-      console.log(JSON.stringify(update) + '<---update');
-
       const updated = await subscriber.update(user, update);
       res.send(mapSubscriber(apiId, updated));
     } catch (err) {
@@ -384,7 +382,9 @@ export function subscriberOperations(verifyService: VerifyService, tenantService
             user,
             request.channel,
             request.address,
-            request.reason
+            request.reason,
+            request.expireIn,
+            request.verificationLink
           );
           result = { sent: true };
           break;
@@ -396,11 +396,8 @@ export function subscriberOperations(verifyService: VerifyService, tenantService
             request.address,
             request.code
           );
-          console.log(JSON.stringify(verified) + '<we are verified0');
 
           result = { verified };
-
-          console.log(JSON.stringify(result) + '<result0');
 
           break;
         }
@@ -414,11 +411,8 @@ export function subscriberOperations(verifyService: VerifyService, tenantService
             true
           );
 
-          console.log(JSON.stringify(verified) + '<we are verified');
-
           result = { verified };
 
-          console.log(JSON.stringify(result) + '<result');
           break;
         }
         default:
@@ -665,6 +659,7 @@ export const createSubscriptionRouter = ({
           address: { optional: true, isString: true },
           code: { optional: true, isString: true },
           reason: { optional: true, isString: true },
+          verificationLink: { optional: true, isString: true },
         },
         ['body']
       )

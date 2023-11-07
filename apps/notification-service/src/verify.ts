@@ -12,6 +12,7 @@ export class VerifyServiceImpl implements VerifyService {
     private templateService: TemplateService,
     private directory: ServiceDirectory,
     private tokenProvider: TokenProvider,
+    private subscriberAppHost: string,
     private templates: Partial<Record<Channel, Template>> = {}
   ) {
     Object.keys(providers).forEach((channel: Channel) => {
@@ -26,7 +27,13 @@ export class VerifyServiceImpl implements VerifyService {
     });
   }
 
-  async sendCode({ channel, address }: SubscriberChannel, reason: string): Promise<string> {
+  async sendCode(
+    { channel, address }: SubscriberChannel,
+    reason: string,
+    realm: string,
+    expireIn?: number,
+    verificationLink?: string
+  ): Promise<string> {
     const provider = this.providers[channel];
     if (!provider) {
       throw new InvalidOperationError(`No provider for channel ${channel}.`);
@@ -37,28 +44,39 @@ export class VerifyServiceImpl implements VerifyService {
       throw new InvalidOperationError(`No verify template for channel ${channel}.`);
     }
 
+    if (!expireIn) {
+      expireIn = 10;
+    }
+
     const verifyServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:verify-service`);
 
     const key = uuidv4();
-    const verifyRequestUrl = new URL(`/verify/v1/codes/${key}`, verifyServiceUrl);
+    const verifyRequestUrl = new URL(`/verify/v1/codes/${key}?expireIn=${expireIn}`, verifyServiceUrl);
 
     const token = await this.tokenProvider.getAccessToken();
     const { data } = await axios.post<{ code: string; expiresAt: string }>(
       verifyRequestUrl.href,
-      {},
+      { expireIn },
       { headers: { Authorization: `Bearer ${token}` } }
     );
+
+    const verifyLink = `${verificationLink}?code=${data.code}`;
 
     const message = this.templateService.generateMessage(template, {
       reason,
       code: data.code,
       expiresAt: new Date(data.expiresAt),
+      verifyLink: verifyLink,
     });
 
-    await provider.send({
-      to: address,
-      message,
-    });
+    try {
+      await provider.send({
+        to: address,
+        message,
+      });
+    } catch (error) {
+      console.log('error:' + JSON.stringify(error));
+    }
 
     return key;
   }
@@ -89,6 +107,7 @@ interface VerifyServiceProps {
   templateService: TemplateService;
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
+  subscriberAppHost: string;
 }
 
 export function createVerifyService({
@@ -96,6 +115,7 @@ export function createVerifyService({
   templateService,
   directory,
   tokenProvider,
+  subscriberAppHost,
 }: VerifyServiceProps): VerifyService {
-  return new VerifyServiceImpl(providers, templateService, directory, tokenProvider);
+  return new VerifyServiceImpl(providers, templateService, directory, tokenProvider, subscriberAppHost);
 }

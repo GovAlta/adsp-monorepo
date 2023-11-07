@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { GoAFormItem } from '@abgov/react-components/experimental';
 import { useDispatch, useSelector } from 'react-redux';
-import { patchSubscriber, createSubscriber, VerifyEmail } from '@store/subscription/actions';
+import { patchSubscriber, createSubscriber, VerifyEmail, VerifyPhone, CheckCode } from '@store/subscription/actions';
 import { actionTypes } from '@store/subscription/models';
-import { Channels } from '@store/subscription/models';
+import { Channels, expireMinutes } from '@store/subscription/models';
+
 import { Grid, GridItem } from '@components/Grid';
 import { SubscriberChannel, Subscriber } from '@store/subscription/models';
 import { InfoCard } from './InfoCard';
@@ -46,6 +47,8 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
 
   const [emailContactInformation, setEmailContactInformation] = useState(subscriberEmail);
   const [SMSContactInformation, setSMSContactInformation] = useState(subscriberSMS);
+  const [emailCode, setEmailCode] = useState('');
+  const [SMSCode, setSMSCode] = useState('');
   const [editContactInformation, setEditContactInformation] = useState(false);
   const [preferredChannel, setPreferredChannel] = useState(null);
   const indicator = useSelector((state: RootState) => {
@@ -88,6 +91,14 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
     return true;
   };
 
+  const emailChannelIndex = subscriber?.channels?.findIndex((channel) => {
+    return channel.channel === Channels.email;
+  });
+
+  const smsChannelIndex = subscriber?.channels?.findIndex((channel) => {
+    return channel.channel === Channels.sms;
+  });
+
   const saveContactInformation = async () => {
     setFormErrors({});
 
@@ -110,14 +121,6 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
     if (subscriber?.channels) {
       channels = [...subscriber.channels];
     }
-
-    const emailChannelIndex = subscriber?.channels?.findIndex((channel) => {
-      return channel.channel === Channels.email;
-    });
-
-    const smsChannelIndex = subscriber?.channels?.findIndex((channel) => {
-      return channel.channel === Channels.sms;
-    });
 
     if (emailChannelIndex !== -1 && subscriber) {
       channels[emailChannelIndex].address = emailContactInformation;
@@ -191,6 +194,10 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
     setPreferredChannel(channel);
   };
 
+  const validCodeExists =
+    subscriber?.channels[emailChannelIndex]?.pendingVerification &&
+    subscriber?.channels[emailChannelIndex]?.timeCodeSent + 1000 * 60 * expireMinutes > Date.now();
+
   return (
     <InfoCard title="Contact information">
       {!indicator && (
@@ -260,15 +267,42 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                         {isEmailVerified !== undefined && isEmailVerified === false && (
                           <div>
                             <GoABadge type="important" content="Not verified" />
-                            <GoAButton
-                              size="compact"
-                              testId="verify-email"
-                              onClick={() => {
-                                dispatch(VerifyEmail(subscriber));
-                              }}
-                            >
-                              Verify email
-                            </GoAButton>
+                            {validCodeExists ? (
+                              <div>
+                                <Label>Enter your verification Code</Label>
+                                <GoAFormItem error={formErrors?.['code']}>
+                                  <GoAInput
+                                    type="tel"
+                                    aria-label="sms"
+                                    name="sms"
+                                    width="100%"
+                                    value={emailCode}
+                                    testId="contact-sms-input"
+                                    onChange={(_, value) => setEmailCode(value)}
+                                  />
+                                </GoAFormItem>
+
+                                <GoAButton
+                                  size="compact"
+                                  testId="verify-code"
+                                  onClick={() => {
+                                    dispatch(CheckCode('email', emailCode, subscriber, false));
+                                  }}
+                                >
+                                  Validate code
+                                </GoAButton>
+                              </div>
+                            ) : (
+                              <GoAButton
+                                size="compact"
+                                testId="verify-email"
+                                onClick={() => {
+                                  dispatch(VerifyEmail(subscriber, false));
+                                }}
+                              >
+                                Verify email
+                              </GoAButton>
+                            )}
                           </div>
                         )}
                       </VerificationWrapper>
@@ -288,21 +322,42 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                         {isSmsVerified !== undefined && isSmsVerified === false && (
                           <div>
                             <GoABadge type="important" content="Not verified" />
-                            <GoAButton
-                              size="compact"
-                              testId="edit-contact-button"
-                              onClick={() => {
-                                if (!subscriber) {
-                                  dispatch(createSubscriber());
-                                }
-                                setEditContactInformation(!editContactInformation);
-                                setEmailContactInformation(subscriberEmail);
-                                setSMSContactInformation(subscriberSMS);
-                                setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
-                              }}
-                            >
-                              Verify Phone Number
-                            </GoAButton>
+                            {subscriber.channels[smsChannelIndex]?.pendingVerification ? (
+                              <div>
+                                <Label>Enter your verification Code</Label>
+                                <GoAFormItem error={formErrors?.['code']}>
+                                  <GoAInput
+                                    type="tel"
+                                    aria-label="sms"
+                                    name="sms"
+                                    width="100%"
+                                    value={SMSCode}
+                                    testId="contact-sms-input"
+                                    onChange={(_, value) => setSMSCode(value)}
+                                  />
+                                </GoAFormItem>
+
+                                <GoAButton
+                                  size="compact"
+                                  testId="verify-code"
+                                  onClick={() => {
+                                    dispatch(CheckCode('sms', SMSCode, subscriber, false));
+                                  }}
+                                >
+                                  Validate code
+                                </GoAButton>
+                              </div>
+                            ) : (
+                              <GoAButton
+                                size="compact"
+                                testId="edit-contact-button"
+                                onClick={() => {
+                                  dispatch(VerifyPhone(subscriber, false));
+                                }}
+                              >
+                                Verify Phone Number
+                              </GoAButton>
+                            )}
                           </div>
                         )}
                       </VerificationWrapper>

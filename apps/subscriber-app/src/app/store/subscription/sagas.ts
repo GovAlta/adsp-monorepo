@@ -20,13 +20,18 @@ import {
   createSubscriberSuccess,
   VERIFY_EMAIL,
   VerifyEmailAction,
+  VerifyPhoneAction,
+  VERIFY_PHONE,
   CHECK_CODE,
   CheckCodeAction,
   CheckCodeSuccess,
   CheckCodeFailure,
+  VerifyEmailSuccess,
+  VerifyPhoneSuccess,
 } from './actions';
 import { UpdateIndicator } from '@store/session/actions';
 import { ConfigState } from '@store/config/models';
+import { expireMinutes } from '@store/subscription/models';
 
 import { RootState } from '../index';
 import axios from 'axios';
@@ -227,51 +232,110 @@ export function* signedOutUnsubscribe(action: GetSignedOutSubscriberAction): Sag
   }
 }
 
-export function* verifyEmail(action: VerifyEmailAction): SagaIterator {
+export function* verifyPhone(action: VerifyPhoneAction): SagaIterator {
   const subscriber = action.subscriber;
 
   const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
-  const realm: string = yield select((state: RootState) => state.session.realm);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
-  const email: string = yield select((state: RootState) => state.session.userInfo.email);
 
-  console.log(JSON.stringify(token) + '<token');
-  console.log(JSON.stringify(email) + '<email');
-  console.log(JSON.stringify(configBaseUrl) + '<configBaseUrl');
-  console.log(
-    JSON.stringify(subscriber.channels.find((channel) => channel.channel === 'email')?.address) +
-      '<subscriber.channels.find((channel) => channel.channel ==='
+  const token: string = yield select((state: RootState) =>
+    action.nonLoggedIn ? 'none' : state.session.credentials?.token
   );
 
-  const link = `${window.location.origin}/${realm}/login`;
+  const baseUrl = action.nonLoggedIn ? '/api/subscriber' : `${configBaseUrl}/subscription`;
+  const reason = `This code will expire in ${expireMinutes} minutes, so please make sure to click it soon to confirm the accuracy of your notification phone number. Please disregard this sms if you did not initiate the verification.`;
+  const address = subscriber.channels.find((channel) => channel.channel === 'sms')?.address;
 
-  const reason = `Verification Link: ${link} - This link will expire in 1 hour, so please make sure to click it soon to confirm the accuracy of your notification email/phone number. Verifying this information is essential to ensure that you continue to receive important updates and notifications from us. Thank you for your prompt attention to this matter. If you have any questions or encounter any issues during the verification process, please do not hesitate to contact our support team at [Support Email Address] or [Support Phone Number]. Your security and privacy are of utmost importance to us, and this verification process is designed to enhance the protection of your account.`;
-
-  const address = subscriber.channels.find((channel) => channel.channel === 'email')?.address;
-
-  if (configBaseUrl && token) {
+  if (baseUrl && token) {
     try {
       const response = yield call(
         axios.post,
-        `${configBaseUrl}/subscription/v1/subscribers/${subscriber.id}`,
+        `${baseUrl}/v1/subscribers/${subscriber.id}`,
         {
           operation: 'send-code',
-          channel: 'email',
+          channel: 'sms',
           address: address,
           reason: reason,
+          expireIn: expireMinutes,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      console.log(JSON.stringify(response) + ' <response');
+      yield put(
+        SuccessNotification({
+          message: `A verification email has been sent to ${address}..`,
+        })
+      );
+      yield put(VerifyPhoneSuccess(response));
+    } catch (err) {
+      yield put(ErrorNotification({ error: err }));
+    }
+  }
+}
+
+export function* verifyEmail(action: VerifyEmailAction): SagaIterator {
+  const subscriber = action.subscriber;
+
+  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
+  const realm: string = yield select((state: RootState) => (action.nonLoggedIn ? null : state.session.realm));
+  const token: string = yield select((state: RootState) =>
+    action.nonLoggedIn ? 'none' : state.session.credentials?.token
+  );
+
+  let data = {};
+
+  if (action.nonLoggedIn) {
+    const configState: ConfigState = yield select((state: RootState) => state.config);
+    let recaptchaToken = null;
+    const grecaptcha = configState.grecaptcha;
+
+    if (grecaptcha) {
+      recaptchaToken = yield call([grecaptcha, grecaptcha.execute], configState.recaptchaKey, {
+        action: 'subscription_verify_email',
+      });
+
+      data = {
+        token: recaptchaToken,
+      };
+    }
+  }
+
+  const baseUrl = action.nonLoggedIn ? '/api/subscriber' : `${configBaseUrl}/subscription`;
+  const loggedInLink = `${window.location.origin}/${action.nonLoggedIn ? subscriber.id : `${realm}/login`}`;
+  const loggedOutLink = `${window.location.origin}/${action.subscriber.id}`;
+
+  const link = action.nonLoggedIn ? loggedOutLink : loggedInLink;
+
+  const reason = `Verification Link: ${link} - This link will expire in ${expireMinutes} minutes, so please make sure to click it soon to confirm the accuracy of your notification email. Please disregard this email if you did not initiate the verification.`;
+
+  const address = subscriber.channels.find((channel) => channel.channel === 'email')?.address;
+
+  if (baseUrl && token) {
+    try {
+      const response = yield call(
+        axios.post,
+        `${baseUrl}/v1/subscribers/${subscriber.id}`,
+        {
+          operation: 'send-code',
+          channel: 'email',
+          address: address,
+          reason: reason,
+          verificationLink: link,
+          expireIn: expireMinutes,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          data,
+        }
+      );
 
       yield put(
         SuccessNotification({
           message: `A verification email has been sent to ${address}..`,
         })
       );
+      yield put(VerifyEmailSuccess(response));
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
     }
@@ -281,78 +345,66 @@ export function* verifyEmail(action: VerifyEmailAction): SagaIterator {
 export function* checkCode(action: CheckCodeAction): SagaIterator {
   const subscriber = action.subscriber;
   const code = action.code;
+  const givenChannel = action.channel;
 
-  const configBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.notificationServiceUrl);
-  const token: string = yield select((state: RootState) => state.session.credentials?.token);
-  const email: string = yield select((state: RootState) => state.session.userInfo.email);
-
-  console.log(JSON.stringify(token) + '<token');
-  console.log(JSON.stringify(email) + '<email');
-  console.log(JSON.stringify(code) + '<codexx');
-  console.log(JSON.stringify(action) + '<actionx');
-  console.log(JSON.stringify(configBaseUrl) + '<configBaseUrl');
-  console.log(
-    JSON.stringify(subscriber.channels.find((channel) => channel.channel === 'email')?.address) +
-      '<subscriber.channels.find((channel) => channel.channel ==='
+  const configBaseUrl: string = yield select((state: RootState) =>
+    action.nonLoggedIn ? null : state.config.serviceUrls?.notificationServiceUrl
+  );
+  const token: string = yield select((state: RootState) =>
+    action.nonLoggedIn ? 'none' : state.session.credentials?.token
   );
 
-  if (configBaseUrl && token) {
-    try {
-      const response = yield call(
-        axios.post,
-        `${configBaseUrl}/subscription/v1/subscribers/${subscriber.id}`,
-        {
-          operation: 'verify-channel',
-          channel: 'email',
-          address: subscriber.channels.find((channel) => channel.channel === 'email')?.address,
-          code: code,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+  let data = {};
 
-      console.log(JSON.stringify(response) + ' <response checkCode');
+  if (action.nonLoggedIn) {
+    const configState: ConfigState = yield select((state: RootState) => state.config);
+    let recaptchaToken = null;
+    const grecaptcha = configState.grecaptcha;
 
-      if (response.data.verified) {
-        yield put(CheckCodeSuccess(response.data));
+    if (grecaptcha) {
+      recaptchaToken = yield call([grecaptcha, grecaptcha.execute], configState.recaptchaKey, {
+        action: 'subscription_check_code',
+      });
 
-      
-
-        // update subscriber  //
-     
-          const channelIndex = subscriber.channels.findIndex((channel) => channel.channel === 'email');
-          subscriber.channels[channelIndex].verified = true;
-
-           console.log(JSON.stringify(channelIndex) + "<--channelIndex")
-           console.log(JSON.stringify(subscriber) + "<--subscriber")
-
-              const updateResponse = yield call(
-          axios.patch,
-          `${configBaseUrl}/subscription/v1/subscribers/${subscriber.id}`,
-          subscriber,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-
-        console.log(JSON.stringify(updateResponse) + "<--updatteREpsonse")
-
-        // done updating subscriber //
-
-        yield put(
-          SuccessNotification({
-            message: `Verification for ${email} is successful .`,
-          })
-        );
-      } else {
-        yield put(ErrorNotification({ message: 'The code is wrong' }));
-        yield put(CheckCodeFailure());
-      }
-    } catch (err) {
-      yield put(ErrorNotification({ error: err }));
+      data = {
+        token: recaptchaToken,
+      };
     }
+  }
+
+  const baseUrl = action.nonLoggedIn ? '/api/subscriber' : `${configBaseUrl}/subscription`;
+
+  try {
+    const response = yield call(
+      axios.post,
+      `${baseUrl}/v1/subscribers/${subscriber.id}`,
+      {
+        operation: 'verify-channel',
+        channel: givenChannel,
+        address: subscriber.channels.find((channel) => channel.channel === givenChannel)?.address,
+        code: code,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        data,
+      }
+    );
+
+    if (response.data?.verified) {
+      const channelIndex = subscriber.channels.findIndex((channel) => channel.channel === givenChannel);
+      yield put(CheckCodeSuccess({ channelIndex }));
+
+      yield put(
+        SuccessNotification({
+          message: `Verification for ${subscriber.channels[channelIndex]?.address} is successful .`,
+        })
+      );
+    } else {
+      yield put(ErrorNotification({ message: 'The code you have entered is incorrect' }));
+      yield put(CheckCodeFailure());
+    }
+  } catch (err) {
+    yield put(ErrorNotification({ error: err }));
   }
 }
 
@@ -364,5 +416,6 @@ export function* watchSubscriptionSagas(): Generator {
   yield takeEvery(PATCH_SUBSCRIBER, patchSubscriber);
   yield takeEvery(CREATE_SUBSCRIBER, createSubscriber);
   yield takeEvery(VERIFY_EMAIL, verifyEmail);
+  yield takeEvery(VERIFY_PHONE, verifyPhone);
   yield takeEvery(CHECK_CODE, checkCode);
 }

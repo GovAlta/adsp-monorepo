@@ -1,4 +1,4 @@
-import { AdspId, Channel, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { AdspId, Channel, isAllowedUser, TenantService, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, New, UnauthorizedError, Update } from '@core-services/core-common';
 import { VerifyService } from '../verify';
 import { SubscriptionRepository } from '../repository';
@@ -69,11 +69,13 @@ export class SubscriberEntity implements Subscriber {
 
     if (update.channels) {
       // Retain verified status for matching channel/address values.
-      this.channels = update.channels.map(({ channel, address }) => ({
-        channel,
-        address,
-        verified: this.channels.find((c) => c.channel === channel && c.address === address)?.verified || false,
-      }));
+      this.channels = update.channels.map(({ channel, address }) => {
+        return {
+          channel,
+          address,
+          verified: this.channels.find((c) => c.channel === channel && c.address === address)?.verified || false,
+        };
+      });
     }
 
     if (update.addressAs !== null) {
@@ -93,24 +95,43 @@ export class SubscriberEntity implements Subscriber {
 
   async sendVerifyCode(
     verifyService: VerifyService,
+    tenantService: TenantService,
     user: User,
     channel: Channel,
     address: string,
-    reason: string = null
+    reason: string = null,
+    expireIn = 10,
+    verificationLink?: string
   ): Promise<void> {
     if (!this.canUpdate(user) && !isAllowedUser(user, this.tenantId, ServiceUserRoles.CodeSender, true)) {
       throw new UnauthorizedUserError('send code to subscriber', user);
     }
 
-    const verifyChannel = this.channels.find((sub) => sub.channel === channel && sub.address === address);
+    const verifyChannel = this.channels.find((sub) => {
+      return sub.channel === channel && sub.address === address;
+    });
+
     if (!verifyChannel) {
       throw new InvalidOperationError('Specified subscriber channel not recognized.');
     }
 
+    const tenant = await tenantService.getTenant(this.tenantId);
+
     verifyChannel.verifyKey = await verifyService.sendCode(
       verifyChannel,
-      reason || 'Enter this code to verify your contact address.'
+      reason || 'Enter this code to verify your contact address.',
+      tenant.realm,
+      expireIn,
+      verificationLink
     );
+
+    const verifyChannelIndex = this.channels.findIndex((sub) => {
+      return sub.channel === channel && sub.address === address;
+    });
+
+    this.channels[verifyChannelIndex].pendingVerification = true;
+    this.channels[verifyChannelIndex].timeCodeSent = Date.now();
+
     await this.repository.saveSubscriber(this);
   }
 
@@ -135,8 +156,14 @@ export class SubscriberEntity implements Subscriber {
     }
 
     const verified = await verifyService.verifyCode(codeChannel, code);
+
     if (verifyChannel) {
       codeChannel.verified = verified;
+      const verifyChannelIndex = this.channels.findIndex((sub) => {
+        return sub.channel === channel && sub.address === address;
+      });
+      this.channels[verifyChannelIndex].pendingVerification = !verified;
+
       await this.repository.saveSubscriber(this);
     }
 

@@ -34,8 +34,6 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
   const [searchParams, _] = useSearchParams();
   const history = useHistory();
 
-  console.log(JSON.stringify(window.location) + '<window.location');
-
   const dispatch = useDispatch();
   const { subscriber, hasSubscriberId } = useSelector((state: RootState) => ({
     subscriber: state.subscription.subscriber,
@@ -74,25 +72,14 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
   }, [userInfo]);
 
   useEffect(() => {
-    console.log(JSON.stringify(previouslyVerified) + '<previouslyVerified');
-    console.log(JSON.stringify(code) + '<code');
-
     if (previouslyVerified && code !== 'null' && code) {
-      console.log(
-        JSON.stringify(`${window.location.origin}${window.location.pathname}`) +
-          '<`${window.location.origin}${window.location.pathname}`'
-      );
-      //
       history.push(`${window.location.pathname}`);
     }
   }, [previouslyVerified]);
 
   useEffect(() => {
-    console.log(JSON.stringify(code) + '<---code');
-    console.log(code + '<---codekk');
     if (code !== 'null' && userInfo !== undefined && subscriber && code) {
-      console.log(code + '<---codekk2');
-      dispatch(CheckCode(code, subscriber));
+      dispatch(CheckCode('email', code, subscriber, false));
     }
   }, [searchParams, userInfo, subscriber]);
 

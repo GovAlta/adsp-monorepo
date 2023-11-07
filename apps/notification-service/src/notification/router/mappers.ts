@@ -10,6 +10,8 @@ export const mapSubscriber = (apiId: AdspId, subscriber: SubscriberEntity): Reco
     channel: c.channel,
     address: c.address,
     verified: c.verified,
+    pendingVerification: c.pendingVerification,
+    timeCodeSent: c.timeCodeSent,
   })),
   userId: subscriber.userId,
 });
