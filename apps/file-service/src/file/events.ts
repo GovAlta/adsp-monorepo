@@ -22,13 +22,14 @@ const fileSchema = {
     created: { type: 'string', format: 'date-time' },
     lastAccessed: { type: 'string', format: 'date-time' },
     securityClassification: {
-      type: 'string',
+      type: ['string', 'null'],
       enum: [
         'public',
         'protected a',
         'protected b',
         'protected c',
         '', //The empty string is to handle old file types that do not have a security classification
+        null,
       ],
       default: 'protected a',
     },

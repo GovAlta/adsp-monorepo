@@ -36,7 +36,7 @@ const initializeApp = async () => {
 
   const repositories = await createRepositories({ ...environment, logger });
 
-  const { coreStrategy, tenantStrategy, tenantHandler, configurationHandler, eventService, healthCheck } =
+  const { coreStrategy, tenantStrategy, tenantHandler, configurationHandler, eventService, healthCheck, traceHandler } =
     await initializePlatform(
       {
         serviceId: AdspId.parse(environment.CLIENT_ID),
@@ -102,6 +102,7 @@ const initializeApp = async () => {
   });
 
   app.use(passport.initialize());
+  app.use(traceHandler);
   app.use(
     '/value',
     passport.authenticate(['core', 'tenant'], { session: false }),

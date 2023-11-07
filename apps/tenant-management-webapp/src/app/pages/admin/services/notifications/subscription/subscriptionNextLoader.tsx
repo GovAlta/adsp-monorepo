@@ -3,6 +3,7 @@ import React, { FunctionComponent } from 'react';
 import type { SubscriptionSearchCriteria } from '@store/subscription/models';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
+import { LoadMoreWrapper } from '../../calendar/events/styled-components';
 
 interface SubscriptionSearchNextProps {
   onSearch?: (searchInfo: SearchInfo) => void;
@@ -24,22 +25,25 @@ export const SubscriptionNextLoader: FunctionComponent<SubscriptionSearchNextPro
 
   if (next) {
     return (
-      <GoAButton
-        testId="subscription-next-loader"
-        onClick={() => {
-          searchCriteria.next = next;
-          const searchInfo: SearchInfo = {
-            searchCriteria,
-          };
-          if (type) {
-            searchInfo.type = type;
-          }
+      <LoadMoreWrapper>
+        <GoAButton
+          testId="subscription-next-loader"
+          type="tertiary"
+          onClick={() => {
+            searchCriteria.next = next;
+            const searchInfo: SearchInfo = {
+              searchCriteria,
+            };
+            if (type) {
+              searchInfo.type = type;
+            }
 
-          onSearch(searchInfo);
-        }}
-      >
-        Load more...
-      </GoAButton>
+            onSearch(searchInfo);
+          }}
+        >
+          Load more
+        </GoAButton>
+      </LoadMoreWrapper>
     );
   } else {
     return <></>;

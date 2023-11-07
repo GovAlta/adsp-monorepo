@@ -3,6 +3,7 @@ import React, { FunctionComponent } from 'react';
 import type { SubscriberSearchCriteria } from '@store/subscription/models';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
+import { LoadMoreWrapper } from '../../calendar/events/styled-components';
 
 interface EventSearchNextProps {
   onSearch?: (searchInfo: SearchInfo) => void;
@@ -20,22 +21,25 @@ export const NextLoader: FunctionComponent<EventSearchNextProps> = ({ onSearch, 
 
   if (next) {
     return (
-      <GoAButton
-        testId="next-loader"
-        onClick={() => {
-          searchCriteria.next = next;
-          const searchInfo: SearchInfo = {
-            searchCriteria,
-          };
-          if (type) {
-            searchInfo.type = type;
-          }
+      <LoadMoreWrapper>
+        <GoAButton
+          testId="next-loader"
+          type="tertiary"
+          onClick={() => {
+            searchCriteria.next = next;
+            const searchInfo: SearchInfo = {
+              searchCriteria,
+            };
+            if (type) {
+              searchInfo.type = type;
+            }
 
-          onSearch(searchInfo);
-        }}
-      >
-        Load more...
-      </GoAButton>
+            onSearch(searchInfo);
+          }}
+        >
+          Load more
+        </GoAButton>
+      </LoadMoreWrapper>
     );
   } else {
     return <></>;

@@ -64,15 +64,16 @@ function mapFile(apiId: AdspId, entity: FileEntity, entityFileType?: FileTypeEnt
   // For old files Security Classification doesnt exist.
   // So, if they have updated the File Types with a security classification
   // then the security classification should be added to the object.
+  if (entity?.typeId && entity.securityClassification !== undefined) {
+    return {
+      ...mappedFile,
+      securityClassification: entity.securityClassification,
+    };
+  }
   if (entity?.typeId && entityFileType?.securityClassification !== undefined) {
     return {
       ...mappedFile,
       securityClassification: entityFileType.securityClassification,
-    };
-  } else if (entity?.typeId && entity.securityClassification !== undefined) {
-    return {
-      ...mappedFile,
-      securityClassification: entity.securityClassification,
     };
   }
 

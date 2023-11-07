@@ -17,6 +17,7 @@ import {
   setConfigurationRevisionActive,
 } from '@store/configuration/action';
 import { RowFlex } from '../styled-components';
+import { LoadMoreWrapper } from '../../calendar/events/styled-components';
 interface VisibleProps {
   visible: boolean;
 }
@@ -222,9 +223,11 @@ const RevisionTableComponent: FunctionComponent<RevisionTableComponentProps> = (
       {indicator.show && <PageIndicator />}
       {!indicator.show && revisions && revisions.length === 0 && isCore && renderNoItem(`revisions`)}
       {next && (
-        <GoAButton onClick={onNext} type="secondary">
-          Load more...
-        </GoAButton>
+        <LoadMoreWrapper>
+          <GoAButton onClick={onNext} type="tertiary">
+            Load more
+          </GoAButton>
+        </LoadMoreWrapper>
       )}
       <GoAModal
         open={showCreateNewRevision}

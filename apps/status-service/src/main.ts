@@ -56,6 +56,7 @@ app.use(express.json({ limit: '1mb' }));
     tokenProvider,
     directory,
     healthCheck,
+    traceHandler,
   } = await initializePlatform(
     {
       serviceId,
@@ -111,6 +112,8 @@ app.use(express.json({ limit: '1mb' }));
   });
 
   app.use(passport.initialize());
+  app.use(traceHandler);
+
   app.use('/status', configurationHandler);
   app.use('/public_status', configurationHandler);
   app.use('/notice', configurationHandler);
@@ -196,6 +199,7 @@ app.use(express.json({ limit: '1mb' }));
       eventService,
       tokenProvider,
       directory,
+      configurationService,
       serviceId,
       ...repositories,
     });

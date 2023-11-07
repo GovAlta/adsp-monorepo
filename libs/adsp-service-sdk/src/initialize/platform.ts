@@ -7,8 +7,9 @@ import { createHealthCheck } from '../healthCheck';
 import { createMetricsHandler } from '../metrics';
 import { createServiceRegistrar } from '../registration';
 import { createTenantHandler, createTenantService } from '../tenant';
-import { AdspId, assertAdspId, createLogger } from '../utils';
+import { createTraceHandler } from '../trace';
 import { LogOptions, PlatformCapabilities, PlatformOptions, PlatformServices } from './types';
+import { AdspId, assertAdspId, createLogger } from '../utils';
 
 export async function initializePlatform(
   {
@@ -103,6 +104,9 @@ export async function initializePlatform(
 
   const metricsHandler = await createMetricsHandler(serviceId, logger, tokenProvider, directory);
 
+  // Note: Sample rate is not currently used in the SDK.
+  const traceHandler = createTraceHandler({ logger, sampleRate: 0 });
+
   return {
     tokenProvider,
     coreStrategy,
@@ -116,6 +120,7 @@ export async function initializePlatform(
     healthCheck,
     clearCached,
     metricsHandler,
+    traceHandler,
     logger,
   };
 }

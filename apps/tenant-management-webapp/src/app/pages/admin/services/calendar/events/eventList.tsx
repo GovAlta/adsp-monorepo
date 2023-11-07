@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectSelectedCalendarEvents, selectSelectedCalendarNextEvents } from '@store/calendar/selectors';
 import { CalendarEvent, EventAddEditModalType, EventDeleteModalType } from '@store/calendar/models';
-import { GoABadge, GoAButton, GoASkeleton } from '@abgov/react-components-new';
+import { GoABadge, GoAButton, GoASkeleton, GoACircularProgress } from '@abgov/react-components-new';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { UpdateModalState } from '@store/session/actions';
 import { RootState } from '@store/index';
@@ -18,7 +18,7 @@ import {
 } from './styled-components';
 import { DeleteModal } from './deleteModal';
 import DataTable from '@components/DataTable';
-import { GoACircularProgress } from '@abgov/react-components-new';
+
 import {
   ProgressWrapper,
   CalendarEventListWrapper,
@@ -244,10 +244,10 @@ export const EventList = ({ calendarName }: EventListProps): JSX.Element => {
         <DataTable testId="calendar-selected-event-table">
           <thead>
             <tr>
-              <th>Event name</th>
-              <th>Start date and time</th>
-              <th>End date and time</th>
-              <th>Actions</th>
+              <th data-testid="event-name-th">Event name</th>
+              <th data-testid="start-date-and-time-th">Start date and time</th>
+              <th data-testid="end-date-and-time-th">End date and time</th>
+              <th data-testid="action-th">Actions</th>
             </tr>
           </thead>
           <tbody>

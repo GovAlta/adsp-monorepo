@@ -411,6 +411,7 @@ describe('NotificationTypeEntity', () => {
         name: 'test-started',
         timestamp: new Date(),
         payload: {},
+        traceparent: '123',
       };
       const [notification] = entity.generateNotifications(
         logger,
@@ -480,6 +481,7 @@ describe('NotificationTypeEntity', () => {
         name: 'test-started',
         timestamp: new Date(),
         payload: {},
+        traceparent: '123',
       };
 
       const notifications = entity.generateNotifications(
@@ -555,6 +557,7 @@ describe('NotificationTypeEntity', () => {
         timestamp: new Date(),
         payload: {},
         correlationId: '123',
+        traceparent: '123',
       };
 
       const [notification] = entity.generateNotifications(
@@ -631,6 +634,7 @@ describe('NotificationTypeEntity', () => {
         timestamp: new Date(),
         payload: {},
         correlationId: '123',
+        traceparent: '123',
       };
 
       const [notification] = entity.generateNotifications(
@@ -701,6 +705,7 @@ describe('NotificationTypeEntity', () => {
         timestamp: new Date(),
         payload: {},
         correlationId: '213',
+        traceparent: '123',
       };
 
       const notifications = entity.generateNotifications(

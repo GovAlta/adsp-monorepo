@@ -30,19 +30,15 @@ jobs:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
       - run: npm ci
-      # Using a fork of the action that allows events other than 'push'.
       - name: Get last successful commit
-        uses: simondotm/last-successful-commit-action@v2
+        uses: nrwl/nx-set-shas@v3
         id: last_successful_commit
         with:
-          branch: main
-          workflow_id: promote.yml
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          workflow_event: workflow_dispatch
+          last-successful-event: workflow_dispatch
       - name: Get affected apps
         id: get-affected
         shell: bash
-        run: echo "affected_apps=$(npx nx affected:apps --plain --base=${{ steps.last_successful_commit.outputs.commit_hash }})" >> $GITHUB_OUTPUT
+        run: echo "affected_apps=$(npx nx affected:apps --plain --base=${{ steps.last_successful_commit.outputs.base }})" >> $GITHUB_OUTPUT
 
   stagingRegression:
     runs-on: ubuntu-20.04

@@ -2,9 +2,17 @@ import { adspId, Channel, ServiceDirectory, Template, TokenProvider } from '@abg
 import { InvalidOperationError } from '@core-services/core-common';
 import { getTemplateBody } from '@core-services/notification-shared';
 import axios from 'axios';
-import { readFile } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { Providers, SubscriberChannel, TemplateService, VerifyService } from './notification';
+import verifyEmailTemplate from './assets/verify-email-template.hbs';
+import verifySlackTemplate from './assets/verify-slack-template.hbs';
+import verifySmsTemplate from './assets/verify-sms-template.hbs';
+
+const verifyTemplates = {
+  [Channel.email]: verifyEmailTemplate,
+  [Channel.bot]: verifySlackTemplate,
+  [Channel.sms]: verifySmsTemplate,
+};
 
 export class VerifyServiceImpl implements VerifyService {
   constructor(
@@ -16,14 +24,13 @@ export class VerifyServiceImpl implements VerifyService {
     private templates: Partial<Record<Channel, Template>> = {}
   ) {
     Object.keys(providers).forEach((channel: Channel) => {
-      readFile(`${__dirname}/assets/verify-${channel}-template.hbs`, { encoding: 'utf-8' }, (err, value) => {
-        if (!err) {
-          this.templates[channel] = {
-            subject: 'Your verify code',
-            body: channel === Channel.email ? getTemplateBody(value, channel) : value,
-          };
-        }
-      });
+      const value = verifyTemplates[channel];
+      if (value) {
+        this.templates[channel] = {
+          subject: 'Your verify code',
+          body: channel === Channel.email ? getTemplateBody(value, channel) : value,
+        };
+      }
     });
   }
 

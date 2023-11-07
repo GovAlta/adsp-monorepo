@@ -58,6 +58,7 @@ async function initializeApp() {
     eventService,
     healthCheck,
     metricsHandler,
+    traceHandler,
   } = await initializePlatform(
     {
       displayName: 'Notification service',
@@ -110,6 +111,8 @@ async function initializeApp() {
   });
 
   app.use(passport.initialize());
+  app.use(traceHandler);
+
   app.use(
     '/subscription',
     metricsHandler,

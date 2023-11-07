@@ -44,7 +44,7 @@ describe('stream router', () => {
     send: jest.fn(),
   };
 
-  let stream: StreamEntity = new StreamEntity(tenantId, {
+  let stream: StreamEntity = new StreamEntity(loggerMock, tenantId, {
     id: 'test',
     name: 'Test Stream',
     description: null,
@@ -60,7 +60,7 @@ describe('stream router', () => {
 
   beforeEach(() => {
     tenantServiceMock.getTenantByName.mockReset();
-    stream = new StreamEntity(tenantId, {
+    stream = new StreamEntity(loggerMock, tenantId, {
       id: 'test',
       name: 'Test Stream',
       description: null,
@@ -308,6 +308,7 @@ describe('stream router', () => {
           timestamp: new Date(),
           correlationId: '321',
           payload: {},
+          traceparent: '123',
         })
       );
       handler(req as unknown as Request, res as unknown as Response, next);
@@ -349,6 +350,7 @@ describe('stream router', () => {
           timestamp: new Date(),
           correlationId: '321',
           payload: {},
+          traceparent: '123',
         })
       );
       listener(socket as unknown as Socket);

@@ -22,8 +22,8 @@ const topicSchema = {
     description: { type: ['string', 'null'] },
     resourceId: { type: ['string', 'null'] },
     securityClassification: {
-      type: 'string',
-      enum: ['public', 'protected a', 'protected b', 'protected c', ''],
+      type: ['string', 'null'],
+      enum: ['public', 'protected a', 'protected b', 'protected c', '', null],
       default: 'protected a',
     },
   },
