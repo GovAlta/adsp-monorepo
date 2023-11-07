@@ -84,7 +84,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
 
   useEffect(() => {
     setScript(selectedScript);
-  }, [selectedScript]);
+  }, []);
   useEffect(() => {
     if (monaco) {
       const completionProvider = monaco.languages.registerCompletionItemProvider('lua', {
