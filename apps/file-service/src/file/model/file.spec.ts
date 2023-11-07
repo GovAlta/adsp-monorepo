@@ -53,6 +53,7 @@ describe('File Entity', () => {
     const file = {
       filename: 'test.txt',
       recordId: 'my-record-1',
+      securityClassification: 'Public',
       created: new Date(),
       createdBy: {
         id: 'user-1',
