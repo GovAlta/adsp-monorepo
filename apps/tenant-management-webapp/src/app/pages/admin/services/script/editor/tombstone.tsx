@@ -12,7 +12,7 @@ interface props {
   selectedScript: ScriptItem;
   onSave;
 }
-export const TombStone: FunctionComponent<props> = ({ selectedScript, onSave }) => {
+export const TombStone = ({ selectedScript, onSave }: props): JSX.Element => {
   const [openAddScript, setOpenAddScript] = useState(false);
   const tenant = useSelector(tenantRolesAndClients);
   const [isNameElipsisActive, setIsNameElipsisActive] = useState(false);

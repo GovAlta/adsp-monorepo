@@ -114,6 +114,10 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   const onScriptChange = (value) => {
     setScript(value);
   };
+
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, [showScriptEditForm]);
   return (
     <>
       <div>
