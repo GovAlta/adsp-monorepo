@@ -131,6 +131,7 @@ app.use(express.json({ limit: '1mb' }));
 
   const healthCheckSchedulingProps = {
     logger,
+    configurationService,
     eventService,
     serviceStatusRepository: repositories.serviceStatusRepository,
     endpointStatusEntryRepository: repositories.endpointStatusEntryRepository,

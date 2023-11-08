@@ -1,6 +1,6 @@
 import { Request, RequestHandler, Response, Router } from 'express';
 import { Logger } from 'winston';
-import { adspId, AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, isAllowedUser, TenantService, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError, decodeAfter } from '@core-services/core-common';
 import { SubscriptionRepository } from '../repository';
 import { NotificationTypeEntity, SubscriberEntity } from '../model';
@@ -21,6 +21,7 @@ interface SubscriptionRouterProps {
   logger: Logger;
   subscriptionRepository: SubscriptionRepository;
   verifyService: VerifyService;
+  tenantService: TenantService;
 }
 
 export const assertHasTenant: RequestHandler = (req, _res, next) => {
@@ -375,7 +376,15 @@ export function subscriberOperations(verifyService: VerifyService): RequestHandl
       let result = null;
       switch (request.operation) {
         case SUBSCRIBER_SEND_VERIFY_CODE:
-          await subscriber.sendVerifyCode(verifyService, user, request.channel, request.address, request.reason);
+          await subscriber.sendVerifyCode(
+            verifyService,
+            user,
+            request.channel,
+            request.address,
+            request.reason,
+            request.expireIn,
+            request.verificationLink
+          );
           result = { sent: true };
           break;
         case SUBSCRIBER_CHECK_CODE: {
@@ -386,7 +395,9 @@ export function subscriberOperations(verifyService: VerifyService): RequestHandl
             request.address,
             request.code
           );
+
           result = { verified };
+
           break;
         }
         case SUBSCRIBER_VERIFY_CHANNEL: {
@@ -398,7 +409,9 @@ export function subscriberOperations(verifyService: VerifyService): RequestHandl
             request.code,
             true
           );
+
           result = { verified };
+
           break;
         }
         default:
@@ -507,6 +520,7 @@ export const createSubscriptionRouter = ({
   serviceId,
   subscriptionRepository,
   verifyService,
+  tenantService,
 }: SubscriptionRouterProps): Router => {
   const apiId = adspId`${serviceId}:v1`;
   const subscriptionRouter = Router();
@@ -644,6 +658,7 @@ export const createSubscriptionRouter = ({
           address: { optional: true, isString: true },
           code: { optional: true, isString: true },
           reason: { optional: true, isString: true },
+          verificationLink: { optional: true, isString: true },
         },
         ['body']
       )

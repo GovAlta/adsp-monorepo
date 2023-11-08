@@ -88,7 +88,14 @@ export const EditScriptActions = styled.div`
   padding-top: var(--goa-spacing-l);
   border-top: 1px solid #adadad;
 `;
-
+export const MonacoDivTabBody = styled.div`
+  display: flex;
+  border-radius: 3px;
+  padding: 0.15rem 0.15rem;
+  min-height: 65px;
+  height: calc(72vh - 310px);
+  margin-bottom: 1rem;
+`;
 export const ScriptEditorContainer = styled.div`
   width: 50%;
   padding-right: 1rem;
@@ -211,6 +218,7 @@ export const ResponseTableStyles = styled.div`
   & td:nth-child(2) {
     text-overflow: ellipsis;
     width: 30%;
+    display: flex;
   }
 
   & th:nth-child(1) {

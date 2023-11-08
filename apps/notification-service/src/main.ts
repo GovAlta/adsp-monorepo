@@ -149,7 +149,12 @@ async function initializeApp() {
 
   const providers = initializeProviders(logger, app, botRepository, environment);
 
-  const verifyService = createVerifyService({ providers, templateService, directory, tokenProvider });
+  const verifyService = createVerifyService({
+    providers,
+    templateService,
+    directory,
+    tokenProvider,
+  });
 
   applyNotificationMiddleware(app, {
     ...repositories,

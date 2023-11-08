@@ -10,7 +10,6 @@ import * as handlebars from 'handlebars';
 import { DeleteModal } from '@components/DeleteModal';
 
 import { GoAIcon } from '@abgov/react-components/experimental';
-import { FetchRealmRoles } from '@store/tenant/actions';
 
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
@@ -190,7 +189,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   useEffect(() => {
     dispatch(FetchNotificationConfigurationService());
-    dispatch(FetchRealmRoles());
   }, [dispatch]);
 
   useEffect(() => {

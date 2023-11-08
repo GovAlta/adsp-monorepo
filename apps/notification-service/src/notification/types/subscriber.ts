@@ -5,6 +5,8 @@ export interface SubscriberChannel {
   address?: string;
   verified?: boolean;
   verifyKey?: string;
+  pendingVerification?: boolean;
+  timeCodeSent?: number;
 }
 
 export interface Subscriber {
