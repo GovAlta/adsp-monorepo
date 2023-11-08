@@ -60,10 +60,8 @@ export const ServiceRoles = (): JSX.Element => {
   useEffect(() => {}, [updateState]);
 
   useEffect(() => {
-    if (Object.entries(coreRoles).length === 0) {
-      dispatch(fetchServiceRoles());
-      dispatch(fetchKeycloakServiceRoles());
-    }
+    dispatch(fetchServiceRoles());
+    dispatch(fetchKeycloakServiceRoles(true));
   }, []);
 
   return (

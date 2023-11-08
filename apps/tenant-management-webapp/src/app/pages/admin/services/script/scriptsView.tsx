@@ -5,7 +5,8 @@ import { UpdateScript, FETCH_SCRIPTS_ACTION, fetchScripts } from '@store/script/
 import { ScriptItem, defaultScript } from '@store/script/models';
 
 import { GoAButton } from '@abgov/react-components-new';
-
+import { FetchRealmRoles } from '@store/tenant/actions';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { AddScriptModal } from './addScriptModal';
 
 import { fetchEventStreams } from '@store/stream/actions';
@@ -43,7 +44,8 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
 
   useEffect(() => {
     dispatch(fetchScripts());
-
+    dispatch(FetchRealmRoles());
+    dispatch(fetchKeycloakServiceRoles());
     dispatch(fetchEventStreams());
   }, []);
   const tenant = useSelector(tenantRolesAndClients);
