@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { FetchRealmRoles } from '@store/tenant/actions';
+
 import { GoAButton } from '@abgov/react-components-new';
 import { FileMetrics } from './metrics';
 import { FetchFileMetrics } from '@store/file/actions';
@@ -17,7 +17,6 @@ const FileOverview = ({ setOpenAddFileType, setActiveEdit }: FileOverviewProps):
   const history = useHistory();
 
   useEffect(() => {
-    dispatch(FetchRealmRoles());
     dispatch(FetchFileMetrics());
   }, []);
 

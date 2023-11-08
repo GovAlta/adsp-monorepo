@@ -25,7 +25,7 @@ import { ConfigServiceRole } from '@store/access/models';
 import { RootState } from '@store/index';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { ActionState } from '@store/session/models';
-import { FetchRealmRoles } from '@store/tenant/actions';
+
 import { useValidators } from '@lib/validation/useValidators';
 import { badCharsCheck, wordMaxLengthCheck, isNotEmptyCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { TaskConfigQueue } from './TaskConfigQueue';
@@ -56,7 +56,6 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
 
   useEffect(() => {
     dispatch(getTaskQueues());
-    dispatch(FetchRealmRoles());
   }, []);
 
   useEffect(() => {

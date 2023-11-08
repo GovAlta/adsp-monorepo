@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import React from 'react';
 import { FetchFileTypeService } from '@store/file/actions';
-import { FetchRealmRoles } from '@store/tenant/actions';
+
 import { RootState } from '@store/index';
 import { FileTypeTable } from './fileTypesTable';
 import { PageIndicator } from '@components/Indicator';
@@ -21,12 +21,7 @@ interface AddFileTypeProps {
 }
 
 export const FileTypes = ({ activeEdit }: AddFileTypeProps): JSX.Element => {
-  const dispatch = useDispatch();
   const roles = useSelector((state: RootState) => state.tenant.realmRoles);
-
-  useEffect(() => {
-    dispatch(FetchRealmRoles());
-  }, []);
 
   return (
     <div>
