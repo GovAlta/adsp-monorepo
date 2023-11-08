@@ -22,7 +22,7 @@ import {
   ScrollPane,
 } from '../styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
-import { FetchRealmRoles } from '@store/tenant/actions';
+
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
 import { updateFormDefinition } from '@store/form/action';
@@ -63,7 +63,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   useEffect(() => {
     dispatch(getFormDefinitions());
-    dispatch(FetchRealmRoles());
   }, []);
 
   const types = [
