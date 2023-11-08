@@ -12,7 +12,7 @@ class FormPage {
   }
 
   definitionTable() {
-    return cy.get('[data-testid="pdf-definitions-table"]');
+    return cy.get('[data-testid="form-definitions-table"]');
   }
 
   addDefinitionNameTextField() {
@@ -62,18 +62,18 @@ class FormPage {
   }
 
   definitionsTableBody() {
-    return cy.xpath('//table[@data-testid="pdf-definitions-table"]//tbody');
+    return cy.xpath('//table[@data-testid="form-definitions-table"]//tbody');
   }
 
   definitionEditButton(rowNumber) {
     return cy.xpath(
-      `(//table[@data-testid="pdf-definitions-table"]//*[contains(@data-testid, "form-definition-edit")])[${rowNumber}]`
+      `(//table[@data-testid="form-definitions-table"]//*[contains(@data-testid, "form-definition-edit")])[${rowNumber}]`
     );
   }
 
   definitionDeleteButton(rowNumber) {
     return cy.xpath(
-      `(//table[@data-testid="pdf-definitions-table"]//*[contains(@data-testid, "form-definition-delete")])[${rowNumber}]`
+      `(//table[@data-testid="form-definitions-table"]//*[contains(@data-testid, "form-definition-delete")])[${rowNumber}]`
     );
   }
 }
