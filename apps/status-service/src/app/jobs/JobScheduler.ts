@@ -43,7 +43,7 @@ export class HealthCheckJobScheduler {
     scheduleCacheReload: () => Promise<void>
   ): Promise<void> => {
     try {
-      this.#logger.error('Start to load the enabled application configurations');
+      this.#logger.info('Start to load the enabled application configurations');
       const applications = await this.#appManager.findEnabledApps();
       this.#jobCache.addBatch(applications, scheduleHealthChecks);
       scheduleCacheReload();
