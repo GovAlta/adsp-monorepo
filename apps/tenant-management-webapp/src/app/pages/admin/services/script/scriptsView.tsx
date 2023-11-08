@@ -93,6 +93,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   };
 
   const onEdit = (script) => {
+    script.testInputs = testInput;
     setSelectedScript(script);
     setShowScriptEditForm(true);
   };
