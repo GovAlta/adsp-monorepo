@@ -32,6 +32,9 @@ import {
   FetchEventsByCalendar,
   UPDATE_EVENT_CALENDAR_AND_FETCH_ACTION,
   UpdateSearchCalendarEventCriteria,
+  CalendarEventExportAction,
+  EXPORT_EVENT_CALENDAR_ACTION,
+  ExportCalendarEventsSuccess,
 } from './actions';
 import { UpdateElementIndicator } from '@store/session/actions';
 
@@ -252,6 +255,44 @@ export function* UpdateEventSearchCriteriaAndUpdateEvent(
     yield put(ErrorNotification({ error: err }));
   }
 }
+export function* exportEventsByCalendar(action: CalendarEventExportAction): SagaIterator {
+  const calendarBaseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.calendarServiceApiUrl);
+  const token: string = yield call(getAccessToken);
+  const calendarName = action.calendarName;
+
+  const criteria = yield select((state: RootState) => state?.calendarService?.eventSearchCriteria);
+
+  if (calendarBaseUrl && token) {
+    const params = {};
+
+    if (criteria) {
+      params['criteria'] = JSON.stringify({
+        startsAfter: criteria.startDate,
+        endsBefore: criteria.endDate,
+      });
+    }
+    if (action.top) {
+      params['top'] = action.top;
+    }
+    try {
+      yield put(UpdateElementIndicator({ show: true, id: EXPORT_EVENT_CALENDAR_ACTION }));
+      const { data } = yield call(axios.get, `${calendarBaseUrl}/calendar/v1/calendars/${calendarName}/export`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params,
+      });
+
+      yield put(ExportCalendarEventsSuccess(data));
+      yield put(UpdateElementIndicator({ show: false, id: null }));
+    } catch (err) {
+      yield put(UpdateElementIndicator({ show: false, id: null }));
+      yield put(
+        ErrorNotification({
+          error: err,
+        })
+      );
+    }
+  }
+}
 
 export function* watchCalendarSagas(): Generator {
   yield takeEvery(FETCH_CALENDARS_ACTION, fetchCalendars);
@@ -262,4 +303,5 @@ export function* watchCalendarSagas(): Generator {
   yield takeEvery(DELETE_CALENDAR_EVENT_ACTION, DeleteCalendarEvent);
   yield takeEvery(UPDATE_EVENT_CALENDAR_ACTION, UpdateEventByCalendar);
   yield takeEvery(UPDATE_EVENT_CALENDAR_AND_FETCH_ACTION, UpdateEventSearchCriteriaAndUpdateEvent);
+  yield takeEvery(EXPORT_EVENT_CALENDAR_ACTION, exportEventsByCalendar);
 }

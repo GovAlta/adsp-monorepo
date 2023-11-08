@@ -6,7 +6,7 @@ import { StreamTable } from './streamTable';
 import { CORE_TENANT } from '@store/tenant/models';
 import { NameDiv } from './styleComponents';
 import { PageIndicator } from '@components/Indicator';
-import { FetchRealmRoles } from '@store/tenant/actions';
+
 import { AddEditStream } from './addEditStream/addEditStream';
 import { GoAButton } from '@abgov/react-components-new';
 import { initialStream } from '@store/stream/models';
@@ -30,7 +30,6 @@ export const EventStreams = (): JSX.Element => {
 
   const [selectedStream, setSelectedStream] = useState(initialStream);
   useEffect(() => {
-    dispatch(FetchRealmRoles());
     dispatch(fetchEventStreams());
   }, []);
 

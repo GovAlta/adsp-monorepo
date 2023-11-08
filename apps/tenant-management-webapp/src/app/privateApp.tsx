@@ -5,7 +5,7 @@ import Header from '@components/AppHeader';
 import { HeaderCtx } from '@lib/headerContext';
 import Container from '@components/Container';
 import { RootState } from '@store/index';
-import { KeycloakCheckSSOWithLogout } from '@store/tenant/actions';
+import { FetchRealmRoles, KeycloakCheckSSOWithLogout } from '@store/tenant/actions';
 import { GoAPageLoader } from '@abgov/react-components';
 import { NotificationBanner } from './notificationBanner';
 import styled from 'styled-components';
@@ -77,6 +77,7 @@ export function PrivateRoute({ component: Component, ...rest }): JSX.Element {
   // eslint-disable-next-line
   useEffect(() => {
     dispatch(fetchKeycloakServiceRoles());
+    dispatch(FetchRealmRoles());
   }, []);
 
   return <Route {...rest} render={(props) => (ready ? <Component {...props} /> : <PageLoader />)} />;

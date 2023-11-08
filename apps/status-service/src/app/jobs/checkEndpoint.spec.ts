@@ -41,6 +41,10 @@ describe('checkEndpoint', () => {
     send: jest.fn(),
   };
 
+  const configurationServiceMock = {
+    getConfiguration: jest.fn(),
+  };
+
   const mockTokenProvider = {
     getAccessToken: jest.fn(),
   };
@@ -61,6 +65,7 @@ describe('checkEndpoint', () => {
         eventService: eventServiceMock,
         tokenProvider: mockTokenProvider,
         directory: serviceDirectoryMock,
+        configurationService: configurationServiceMock,
         serviceId: adspId`urn:ads:platform:test-service`,
       });
 
@@ -83,6 +88,7 @@ describe('checkEndpoint', () => {
         eventService: eventServiceMock,
         tokenProvider: mockTokenProvider,
         directory: serviceDirectoryMock,
+        configurationService: configurationServiceMock,
         serviceId: adspId`urn:ads:platform:test-service`,
       });
 
@@ -92,6 +98,7 @@ describe('checkEndpoint', () => {
         endpointRepositoryMock.findRecentByUrlAndApplicationId.mockReset();
         statusRepositoryMock.get.mockReset();
         statusRepositoryMock.save.mockReset();
+        configurationServiceMock.getConfiguration.mockReset();
       });
 
       it('can updated application healthy', async () => {
@@ -122,10 +129,9 @@ describe('checkEndpoint', () => {
         ]);
 
         mockTokenProvider.getAccessToken.mockResolvedValueOnce('test');
-
-        axiosMock.get.mockResolvedValueOnce({ data: { latest: { configuration: {} } } }).mockResolvedValueOnce({
-          data: { latest: { configuration: { applicationWebhookIntervals: {} } } },
-        });
+        configurationServiceMock.getConfiguration
+          .mockReturnValueOnce({})
+          .mockResolvedValueOnce({ applicationWebhookIntervals: {} });
 
         statusRepositoryMock.get.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
@@ -168,10 +174,10 @@ describe('checkEndpoint', () => {
           },
         ]);
         mockTokenProvider.getAccessToken.mockResolvedValueOnce('test');
+        configurationServiceMock.getConfiguration
+          .mockReturnValueOnce({})
+          .mockResolvedValueOnce({ applicationWebhookIntervals: {} });
 
-        axiosMock.get.mockResolvedValueOnce({ data: { latest: { configuration: {} } } }).mockResolvedValueOnce({
-          data: { latest: { configuration: { applicationWebhookIntervals: {} } } },
-        });
         statusRepositoryMock.get.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
@@ -234,12 +240,10 @@ describe('checkEndpoint', () => {
           },
         ]);
         mockTokenProvider.getAccessToken.mockResolvedValueOnce('test');
+        configurationServiceMock.getConfiguration.mockResolvedValueOnce({ webhooks: webHooks }).mockResolvedValueOnce({
+          applicationWebhookIntervals: applicationWebhookIntervals,
+        });
 
-        axiosMock.get
-          .mockResolvedValueOnce({ data: { latest: { configuration: { webhooks: webHooks } } } })
-          .mockResolvedValueOnce({
-            data: { latest: { configuration: { applicationWebhookIntervals: applicationWebhookIntervals } } },
-          });
         statusRepositoryMock.get.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
@@ -299,10 +303,10 @@ describe('checkEndpoint', () => {
           },
         ]);
         mockTokenProvider.getAccessToken.mockResolvedValueOnce('test');
-
-        axiosMock.get.mockResolvedValueOnce({ data: { latest: { configuration: webHooks } } }).mockResolvedValueOnce({
-          data: { latest: { configuration: { applicationWebhookIntervals: applicationWebhookIntervals } } },
+        configurationServiceMock.getConfiguration.mockResolvedValueOnce({ webhooks: webHooks }).mockResolvedValueOnce({
+          applicationWebhookIntervals: applicationWebhookIntervals,
         });
+
         statusRepositoryMock.get.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
@@ -362,12 +366,10 @@ describe('checkEndpoint', () => {
           },
         ]);
         mockTokenProvider.getAccessToken.mockResolvedValueOnce('test');
+        configurationServiceMock.getConfiguration.mockResolvedValueOnce({ webhooks: webHooks }).mockResolvedValueOnce({
+          applicationWebhookIntervals: applicationWebhookIntervals,
+        });
 
-        axiosMock.get
-          .mockResolvedValueOnce({ data: { latest: { configuration: { webhooks: webHooks } } } })
-          .mockResolvedValueOnce({
-            data: { latest: { configuration: { applicationWebhookIntervals: applicationWebhookIntervals } } },
-          });
         statusRepositoryMock.get.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
@@ -411,10 +413,10 @@ describe('checkEndpoint', () => {
           },
         ]);
         mockTokenProvider.getAccessToken.mockResolvedValueOnce('test');
-
-        axiosMock.get.mockResolvedValueOnce({ data: { latest: { configuration: {} } } }).mockResolvedValueOnce({
-          data: { latest: { configuration: { applicationWebhookIntervals: applicationWebhookIntervals } } },
+        configurationServiceMock.getConfiguration.mockResolvedValueOnce({}).mockResolvedValueOnce({
+          applicationWebhookIntervals: applicationWebhookIntervals,
         });
+
         statusRepositoryMock.get.mockResolvedValueOnce(
           new ServiceStatusApplicationEntity(statusRepositoryMock, {
             _id: 'test-app',
