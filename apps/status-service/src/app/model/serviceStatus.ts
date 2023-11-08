@@ -10,7 +10,9 @@ import {
 } from '../types';
 
 // Stored in the configuration service repository
-export type StatusServiceConfiguration = Record<string, ApplicationConfiguration>;
+export type StatusServiceConfiguration = Record<string, ApplicationConfiguration> & {
+  applicationWebhookIntervals?: Record<string, HookInterval>;
+};
 
 // The application bits that rarely change (so not quite static)
 // and are stored as part of the status-service
@@ -33,11 +35,8 @@ export interface StaticApplicationData extends ApplicationConfiguration {
   tenantId: AdspId;
 }
 
-export interface Configuration {
-  latest: { configuration: { webhooks: Record<string, Webhooks> } };
-}
-export interface StatusConfiguration {
-  latest: { configuration: { applicationWebhookIntervals: Record<string, HookInterval> } };
+export interface PushServiceConfiguration {
+  webhooks: Record<string, Webhooks>;
 }
 
 export interface HookInterval {

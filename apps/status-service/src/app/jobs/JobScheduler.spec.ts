@@ -135,6 +135,7 @@ describe('JobScheduler', () => {
     applicationManager: appManagerFactory('urn:ads:mock-tenant:mock-service'),
     tokenProvider: mockTokenProvider,
     directory: serviceDirectoryMock,
+    configurationService: configurationServiceMock,
     serviceId: adspId`urn:ads:platform:test-service`,
   };
   const jobScheduler = new HealthCheckJobScheduler(props);
