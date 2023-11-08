@@ -9,7 +9,9 @@ import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
 import { AddFileType } from './fileTypeNew';
 import styled from 'styled-components';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { Role } from '@store/tenant/models';
+import { FetchRealmRoles } from '@store/tenant/actions';
 
 const NoContentContainer = styled.div`
   margin-bottom: 2em;
@@ -21,7 +23,12 @@ interface AddFileTypeProps {
 }
 
 export const FileTypes = ({ activeEdit }: AddFileTypeProps): JSX.Element => {
+  const dispatch = useDispatch();
   const roles = useSelector((state: RootState) => state.tenant.realmRoles);
+  useEffect(() => {
+    dispatch(fetchKeycloakServiceRoles());
+    dispatch(FetchRealmRoles());
+  }, []);
 
   return (
     <div>

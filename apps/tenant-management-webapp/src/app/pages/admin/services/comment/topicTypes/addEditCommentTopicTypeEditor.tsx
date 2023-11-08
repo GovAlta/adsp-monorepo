@@ -26,6 +26,7 @@ import {
   EditorPadding,
 } from '../styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
+import { FetchRealmRoles } from '@store/tenant/actions';
 
 import { ConfigServiceRole } from '@store/access/models';
 import { getCommentTopicTypes } from '@store/comment/action';
@@ -36,6 +37,7 @@ import { createSelector } from 'reselect';
 
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultCommentTopicType, defaultEditCommentTopicType, SecurityClassification } from '@store/comment/model';
 import { TopicConfigTopicType } from './topicConfigTopicType';
 
@@ -70,6 +72,8 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
   const dispatch = useDispatch();
 
   useEffect(() => {
+    dispatch(fetchKeycloakServiceRoles());
+    dispatch(FetchRealmRoles());
     dispatch(getCommentTopicTypes());
   }, []);
 

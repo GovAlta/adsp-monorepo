@@ -42,6 +42,7 @@ import { dynamicGeneratePayload } from '@lib/dynamicPlaceHolder';
 import { convertToSuggestion } from '@lib/autoComplete';
 import { useDebounce } from '@lib/useDebounce';
 import { subscriberAppUrlSelector } from './selectors';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 import {
   Buttons,
@@ -52,6 +53,7 @@ import {
   NotificationStyles,
   DescriptionText,
 } from './styled-components';
+import { FetchRealmRoles } from '@store/tenant/actions';
 
 const emptyNotificationType: NotificationItem = {
   name: '',
@@ -189,6 +191,8 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   useEffect(() => {
     dispatch(FetchNotificationConfigurationService());
+    dispatch(fetchKeycloakServiceRoles());
+    dispatch(FetchRealmRoles());
   }, [dispatch]);
 
   useEffect(() => {

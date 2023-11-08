@@ -5,13 +5,12 @@ import Header from '@components/AppHeader';
 import { HeaderCtx } from '@lib/headerContext';
 import Container from '@components/Container';
 import { RootState } from '@store/index';
-import { FetchRealmRoles, KeycloakCheckSSOWithLogout } from '@store/tenant/actions';
+import { KeycloakCheckSSOWithLogout } from '@store/tenant/actions';
 import { GoAPageLoader } from '@abgov/react-components';
 import { NotificationBanner } from './notificationBanner';
 import styled from 'styled-components';
 import { LogoutModal } from '@components/LogoutModal';
 import { useTokenExpiryCount } from '@lib/useTokenExpiryCount';
-import { fetchKeycloakServiceRoles } from '@store/access/actions';
 
 interface privateAppProps {
   children: ReactNode;
@@ -72,13 +71,6 @@ const PageLoader = (): JSX.Element => {
 export function PrivateRoute({ component: Component, ...rest }): JSX.Element {
   const userInfo = useSelector((state: RootState) => state.session?.userInfo);
   const ready = !!userInfo;
-  const dispatch = useDispatch();
-
-  // eslint-disable-next-line
-  useEffect(() => {
-    dispatch(fetchKeycloakServiceRoles());
-    dispatch(FetchRealmRoles());
-  }, []);
 
   return <Route {...rest} render={(props) => (ready ? <Component {...props} /> : <PageLoader />)} />;
 }
