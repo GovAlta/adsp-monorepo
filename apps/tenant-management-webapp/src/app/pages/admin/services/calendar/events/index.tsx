@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { SelectCalendarHeader, CalendarDropdownWrapper } from './styled-components';
-import { GoADropdown, GoADropdownItem, GoAButton, GoASkeleton, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoADropdown, GoADropdownItem, GoAButton, GoASkeleton } from '@abgov/react-components-new';
 import { useDispatch, useSelector } from 'react-redux';
 import { CalendarObjectType, EventAddEditModalType } from '@store/calendar/models';
-import { fetchCalendars, FetchEventsByCalendar, UpdateSearchCalendarEventCriteria } from '@store/calendar/actions';
+import {
+  fetchCalendars,
+  FetchEventsByCalendar,
+  UpdateSearchCalendarEventCriteria,
+  ExportCalendarEventsAction,
+} from '@store/calendar/actions';
 import { UpdateModalState } from '@store/session/actions';
 import { selectCalendars, selectSelectedCalendarEvents } from '@store/calendar/selectors';
 
@@ -44,7 +49,9 @@ const CalendarDropdown = ({ calendars, onSelect }: CalendarDropdownProps): JSX.E
 export const CalendarEvents = (): JSX.Element => {
   const dispatch = useDispatch();
   const [selectedCalendar, setSelectedCalendar] = useState<string>(null);
-
+  const { exportEvents } = useSelector((state: RootState) => ({
+    exportEvents: state.calendarService?.export,
+  }));
   const onCalendarSelect = (name: string, value: string) => {
     setSelectedCalendar(value);
     dispatch(FetchEventsByCalendar(value, null));
@@ -54,34 +61,15 @@ export const CalendarEvents = (): JSX.Element => {
   useEffect(() => {
     dispatch(fetchCalendars());
   }, []);
+  useEffect(() => {
+    downloadICalFile(exportEvents, 'events.ics');
+  }, [exportEvents]);
 
   const calendars = useSelector(selectCalendars);
   const selectedEvents = useSelector((state: RootState) => selectSelectedCalendarEvents(state, selectedCalendar));
 
   const handleExport = () => {
-    const iCalContent = generateICalContent(selectedEvents);
-    downloadICalFile(iCalContent, 'events.ics');
-  };
-
-  const generateICalContent = (events) => {
-    const lines: string[] = [];
-
-    lines.push('BEGIN:VCALENDAR');
-    lines.push('VERSION:2.0');
-    lines.push('PRODID:-//Example Calendar//EN');
-
-    events.forEach((event, index) => {
-      lines.push('BEGIN:VEVENT');
-      lines.push(`SUMMARY:${event.name}`);
-      lines.push(`DESCRIPTION:${event.description}`);
-      lines.push(`LOCATION:${'online'}`);
-      lines.push(`DTSTART:${event.start}`);
-      lines.push(`DTEND:${event.end}`);
-      lines.push('END:VEVENT');
-    });
-
-    lines.push('END:VCALENDAR');
-    return lines.join('\n');
+    dispatch(ExportCalendarEventsAction(selectedCalendar, selectedEvents?.length));
   };
 
   const downloadICalFile = (content: string, fileName: string) => {

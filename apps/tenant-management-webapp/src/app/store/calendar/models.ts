@@ -31,6 +31,7 @@ export interface CalendarService {
   calendars: CalendarObjectType;
   indicator?: Indicator;
   eventSearchCriteria?: CalendarEventSearchCriteria;
+  export: string | null;
 }
 
 export const defaultCalendar: CalendarItem = {
@@ -46,6 +47,7 @@ export const CALENDAR_INIT: CalendarService = {
     details: {},
   },
   eventSearchCriteria: getDefaultSearchCriteria(),
+  export: null,
 };
 export interface Indicator {
   details?: Record<string, ActionState>;
