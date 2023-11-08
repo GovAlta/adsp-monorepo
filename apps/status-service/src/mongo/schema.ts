@@ -109,7 +109,7 @@ export const noticeApplicationSchema = new Schema(
 );
 
 // An application property is pretty wide open.
-export const appPropertyRegex = '^.+$';
+export const appPropertyRegex = '^.{1,100}$';
 
 // A poor mans test for a valid application
 export const isApp = (app): boolean => {
@@ -126,19 +126,22 @@ export const configurationSchema = {
       },
     },
     applicationWebhookIntervals: {
-      appPropertyRegex: {
-        type: 'object',
-        properties: {
-          appId: { type: 'string', description: 'The unique application identifier' },
-          waitTimeInterval: { type: 'string', description: 'Webhook wait time for application (in minutes)' },
+      type: 'object',
+      patternProperties: {
+        [appPropertyRegex]: {
+          type: 'object',
+          properties: {
+            appId: { type: 'string', description: 'The unique application identifier' },
+            waitTimeInterval: { type: 'string', description: 'Webhook wait time for application (in minutes)' },
+          },
+          required: ['appId', 'waitTimeInterval'],
+          additionalProperties: false,
         },
-        required: ['appId', 'waitTimeInterval'],
-        additionalProperties: false,
       },
     },
   },
   patternProperties: {
-    appPropertyRegex: {
+    [appPropertyRegex]: {
       type: 'object',
       properties: {
         appKey: { type: 'string', description: 'A unique identifier for the application' },
