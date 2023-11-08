@@ -132,7 +132,7 @@ export const configurationSchema = {
           type: 'object',
           properties: {
             appId: { type: 'string', description: 'The unique application identifier' },
-            waitTimeInterval: { type: 'string', description: 'Webhook wait time for application (in minutes)' },
+            waitTimeInterval: { type: 'number', description: 'Webhook wait time for application (in minutes)' },
           },
           required: ['appId', 'waitTimeInterval'],
           additionalProperties: false,
