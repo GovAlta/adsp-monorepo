@@ -98,11 +98,6 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
   });
 
   useEffect(() => {
-    dispatch(FetchFilesService());
-    dispatch(FetchFileTypeService());
-  }, []);
-
-  useEffect(() => {
     const foundFileType = fileTypes?.find((f) => f.id === id);
     if (id && foundFileType) {
       const selectedFileType = foundFileType;
