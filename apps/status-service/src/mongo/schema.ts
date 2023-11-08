@@ -140,21 +140,18 @@ export const configurationSchema = {
       },
     },
   },
-  patternProperties: {
-    [appPropertyRegex]: {
-      type: 'object',
-      properties: {
-        appKey: { type: 'string', description: 'A unique identifier for the application' },
-        name: { type: 'string', description: 'Name of the application' },
-        url: { type: 'string', description: 'URL to be checked' },
-        description: { type: ['string', 'null'], description: 'Tell us about your application' },
-        monitorOnly: { type: 'boolean', description: 'If selected, do not show publicly' },
-        autoChangeStatus: { type: 'boolean' },
-      },
-      required: ['appKey', 'name', 'url'],
+  additionalProperties: {
+    type: 'object',
+    properties: {
+      appKey: { type: 'string', description: 'A unique identifier for the application' },
+      name: { type: 'string', description: 'Name of the application' },
+      url: { type: 'string', description: 'URL to be checked' },
+      description: { type: ['string', 'null'], description: 'Tell us about your application' },
+      monitorOnly: { type: 'boolean', description: 'If selected, do not show publicly' },
+      autoChangeStatus: { type: 'boolean' },
     },
+    required: ['appKey', 'name', 'url'],
   },
-  additionalProperties: true,
 };
 
 noticeApplicationSchema.index({ createdAt: 1 });
