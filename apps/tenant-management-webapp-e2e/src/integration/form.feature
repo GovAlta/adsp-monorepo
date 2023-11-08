@@ -18,6 +18,7 @@ Feature: Form
     Then the user views form definitions page
     # Invalid data
     When the user clicks Add definition button on form definitions page
+    Then the user views Add form definition modal
     When the user enters "auto-test-1-$", "autotest desc" in Add form definition modal
     Then the user views the error message of "Allowed characters are: a-z, A-Z, 0-9, -, [space]" for Name field in Add form definition modal
     # Validate data
