@@ -3,7 +3,7 @@ import React, { FunctionComponent } from 'react';
 import type { SubscriberSearchCriteria } from '@store/subscription/models';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
-import { LoadMoreWrapper } from '../../calendar/events/styled-components';
+import { LoadMoreWrapper } from '@components/styled-components';
 
 interface EventSearchNextProps {
   onSearch?: (searchInfo: SearchInfo) => void;

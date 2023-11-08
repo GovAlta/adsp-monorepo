@@ -5,7 +5,7 @@ import { Webhooks } from '../../../../store/status/models';
 import DataTable from '@components/DataTable';
 import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
 import { getEventDefinitions } from '@store/event/actions';
-
+import { LoadMoreWrapper } from '@components/styled-components';
 import {
   GoABadge,
   GoAButton,
@@ -19,7 +19,6 @@ import styled from 'styled-components';
 
 import { RootState } from '../../../../store/index';
 import { HoverWrapper, ToolTip } from './styled-components';
-import { LoadMoreWrapper } from '../calendar/events/styled-components';
 
 interface Props {
   isOpen: boolean;

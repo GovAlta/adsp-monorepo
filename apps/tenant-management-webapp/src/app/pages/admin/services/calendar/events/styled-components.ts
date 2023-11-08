@@ -108,9 +108,9 @@ export const CalendarDropdownWrapper = styled.div`
 `;
 
 // There might be a bug for the scroll, we need more padding to show the load more button in some case
-export const LoadMoreWrapper = styled.div`
-  padding-bottom: var(--goa-spacing-4xl);
-`;
+// export const LoadMoreWrapper = styled.div`
+//   padding-bottom: var(--goa-spacing-4xl);
+// `;
 
 export const EventTableHeader = styled.div`
   font-size: var(--goa-font-size-7);

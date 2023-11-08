@@ -49,9 +49,11 @@ const CalendarDropdown = ({ calendars, onSelect }: CalendarDropdownProps): JSX.E
 export const CalendarEvents = (): JSX.Element => {
   const dispatch = useDispatch();
   const [selectedCalendar, setSelectedCalendar] = useState<string>(null);
+  const [willExport, setWillExport] = useState(false);
   const { exportEvents } = useSelector((state: RootState) => ({
     exportEvents: state.calendarService?.export,
   }));
+
   const onCalendarSelect = (name: string, value: string) => {
     setSelectedCalendar(value);
     dispatch(FetchEventsByCalendar(value, null));
@@ -61,14 +63,18 @@ export const CalendarEvents = (): JSX.Element => {
   useEffect(() => {
     dispatch(fetchCalendars());
   }, []);
+
   useEffect(() => {
-    downloadICalFile(exportEvents, 'events.ics');
+    if (exportEvents && willExport) {
+      downloadICalFile(exportEvents, 'events.ics');
+    }
   }, [exportEvents]);
 
   const calendars = useSelector(selectCalendars);
   const selectedEvents = useSelector((state: RootState) => selectSelectedCalendarEvents(state, selectedCalendar));
 
   const handleExport = () => {
+    setWillExport(true);
     dispatch(ExportCalendarEventsAction(selectedCalendar, selectedEvents?.length));
   };
 
