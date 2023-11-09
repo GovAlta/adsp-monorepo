@@ -87,7 +87,7 @@ export const selectRolesObject = createSelector(tenantRolesAndClients, (mergedRo
   if (tenantClients) {
     Object.entries(tenantClients).forEach(([clientId, roleConfig]) => {
       if (roleConfig?.roles && roleConfig?.roles?.length > 0) {
-        roleObject[clientId] = roleConfig.roles.map((role) => role.role);
+        roleObject[clientId] = roleConfig?.roles?.map((role) => role.role);
       }
     });
   }
@@ -104,7 +104,7 @@ export const selectRoleList = createSelector(
     if (realmRoles?.length > 0) {
       roles.push({
         clientId: tenantName,
-        roleNames: realmRoles.map((r) => r.name),
+        roleNames: realmRoles?.map((r) => r.name),
       });
     }
 
@@ -113,7 +113,7 @@ export const selectRoleList = createSelector(
         if (roleConfig?.roles && roleConfig?.roles?.length > 0) {
           roles.push({
             clientId: clientId,
-            roleNames: roleConfig.roles.map((r) => r.role),
+            roleNames: roleConfig?.roles.map((r) => r.role),
           });
         }
       });

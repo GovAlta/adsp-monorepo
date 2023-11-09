@@ -1,43 +1,49 @@
-import React, { FunctionComponent, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GoAButton, GoAButtonGroup, GoAModal, GoATextArea, GoAInput, GoAFormItem } from '@abgov/react-components-new';
 import { CalendarItem, defaultCalendar } from '@store/calendar/models';
-import { useSelector } from 'react-redux';
-import { Role } from '@store/tenant/models';
+import { useSelector, useDispatch } from 'react-redux';
 import { ClientRoleTable } from '@components/RoleTable';
-import { ConfigServiceRole } from '@store/access/models';
 import { useValidators } from '@lib/validation/useValidators';
 import { toKebabName } from '@lib/kebabName';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { isNotEmptyCheck, wordMaxLengthCheck, duplicateNameCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { IdField } from '../styled-components';
-import { ServiceRoleConfig } from '@store/access/models';
 import { RootState } from '@store/index';
+import { FetchRealmRoles } from '@store/tenant/actions';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
+import { selectRoleList } from '@store/sharedSelectors/roles';
+import { selectCalendarsByName } from '@store/calendar/selectors';
+
 interface CalendarModalProps {
-  initialValue?: CalendarItem;
-  type: string;
+  calendarName: string | undefined;
   onCancel?: () => void;
   onSave: (calendar: CalendarItem) => void;
   open: boolean;
-  realmRoles: Role[];
-  tenantClients: ServiceRoleConfig;
 }
 
-export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
-  initialValue,
-  type,
-  onCancel,
-  onSave,
-  open,
-  realmRoles,
-  tenantClients,
-}: CalendarModalProps): JSX.Element => {
-  const isNew = type === 'new';
+export const CalendarModal = ({ calendarName, onCancel, onSave, open }: CalendarModalProps): JSX.Element => {
+  const isNew = !(calendarName?.length > 0);
+  const initialValue = useSelector((state: RootState) => selectCalendarsByName(state, calendarName));
 
   const [calendar, setCalendar] = useState<CalendarItem>(initialValue);
+  const dispatch = useDispatch();
+  const roles = useSelector(selectRoleList);
+
+  // eslint-disable-next-line
+  useEffect(() => {}, [roles]);
+  useEffect(() => {
+    setCalendar(initialValue);
+  }, [calendarName]);
+
+  useEffect(() => {
+    dispatch(FetchRealmRoles());
+    dispatch(fetchKeycloakServiceRoles());
+  }, []);
 
   const calendars = useSelector((state: RootState) => {
     return state?.calendarService?.calendars;
   });
+
   const calendarNames = calendars ? Object.keys(calendars) : [];
   const title = isNew ? 'Add calendar' : 'Edit calendar';
 
@@ -52,31 +58,6 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
     .build();
 
-  const roleNames = realmRoles?.map((role) => {
-    return role.name;
-  });
-  useEffect(() => {
-    setCalendar(initialValue);
-  }, [initialValue]);
-
-  let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
-
-  const clientElements =
-    tenantClients &&
-    Object.entries(tenantClients).length > 0 &&
-    Object.entries(tenantClients)
-      .filter(([clientId, config]) => {
-        return (config as ConfigServiceRole).roles.length > 0;
-      })
-      .map(([clientId, config]) => {
-        const roles = (config as ConfigServiceRole).roles;
-        const roleNames = roles.map((role) => {
-          return role.role;
-        });
-        return { roleNames: roleNames, clientId: clientId, currentElements: null };
-      });
-  elements = elements.concat(clientElements);
-
   const validationCheck = () => {
     const validations = {
       name: calendar.name,
@@ -90,7 +71,6 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
       }
     }
     onSave(calendar);
-
     onCancel();
     validators.clear();
   };
@@ -202,11 +182,11 @@ export const CalendarModal: FunctionComponent<CalendarModalProps> = ({
           }}
         />
       </GoAFormItem>
-      {tenantClients &&
-        elements.map((e, key) => {
-          return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+      {roles &&
+        roles.map((r) => {
+          return <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />;
         })}
-      {Object.entries(tenantClients).length === 0 && (
+      {Object.entries(roles).length === 0 && (
         <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>
       )}
     </GoAModal>

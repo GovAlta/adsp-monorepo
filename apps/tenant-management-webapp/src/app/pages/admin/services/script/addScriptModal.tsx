@@ -19,6 +19,8 @@ import { RootState } from '@store/index';
 import { UseServiceAccountWrapper } from './styled-components';
 import { ClientRoleTable } from '@components/RoleTable';
 import { selectRoleList } from '@store/sharedSelectors/roles';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
+import { FetchRealmRoles } from '@store/tenant/actions';
 
 interface AddScriptModalProps {
   initialValue?: ScriptItem;
@@ -30,6 +32,7 @@ interface AddScriptModalProps {
 
 export const AddScriptModal = ({ initialValue, onCancel, onSave, open, isNew }: AddScriptModalProps): JSX.Element => {
   const [script, setScript] = useState<ScriptItem>(initialValue);
+  const dispatch = useDispatch();
 
   const scripts = useSelector((state: RootState) => {
     return state?.scriptService?.scripts;
@@ -48,7 +51,12 @@ export const AddScriptModal = ({ initialValue, onCancel, onSave, open, isNew }: 
     .add('duplicated', 'name', duplicateNameCheck(scriptNames, 'Script'))
     .build();
 
+  // eslint-disable-next-line
   useEffect(() => {}, [roles]);
+  useEffect(() => {
+    dispatch(FetchRealmRoles());
+    dispatch(fetchKeycloakServiceRoles());
+  }, []);
 
   const validationCheck = () => {
     const validations = {
@@ -176,7 +184,7 @@ export const AddScriptModal = ({ initialValue, onCancel, onSave, open, isNew }: 
       </UseServiceAccountWrapper>
       {roles &&
         roles.map((r) => {
-          return <RunnerRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />;
+          return <RunnerRole roleNames={r?.roleNames} key={r?.clientId} clientId={r?.clientId} />;
         })}
       {Object.entries(roles).length === 0 && (
         <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>
