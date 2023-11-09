@@ -65,8 +65,8 @@ const EventLogEntryComponent: FunctionComponent<EventLogEntryComponentProps> = (
   const date = dateArray[1] + ' ' + ordinal_suffix_of(dateArray[2]);
 
   const objectLength = 14;
-  const url = entry.details.URL as string;
-  const name = entry.details?.name?.toString();
+  const url = entry.details.URL || (entry.details?.webhook as Record<string, unknown>)?.url;
+  const name = entry.details?.name || (entry.details?.webhook as Record<string, unknown>)?.name;
 
   const HoverOnShort = ({ displayString }) => {
     const [isShow, setIsShow] = useState<boolean>(false);
