@@ -38,12 +38,7 @@ import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { ActionState } from '@store/session/models';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
-import {
-  CreateFileTypeService,
-  FetchFileTypeService,
-  FetchFilesService,
-  UpdateFileTypeService,
-} from '@store/file/actions';
+import { CreateFileTypeService, UpdateFileTypeService } from '@store/file/actions';
 import { createSelector } from 'reselect';
 import { selectFileTyeNames } from './fileTypeNew';
 
