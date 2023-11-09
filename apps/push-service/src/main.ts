@@ -84,15 +84,17 @@ const initializeApp = async (): Promise<Server> => {
           return k === 'webhooks'
             ? {
                 ...c,
-                webhooks: Object.entries(s as Record<string, Webhook>).reduce(
-                  (hs, [hk, hv]) => ({
-                    ...hs,
-                    [hk]: isAppStatusWebhook(hv)
-                      ? new AppStatusWebhookEntity(logger, hv)
-                      : new WebhookEntity(logger, hv),
-                  }),
-                  {}
-                ),
+                webhooks: Object.entries(s as Record<string, Webhook>)
+                  .filter(([_hk, hv]) => hv)
+                  .reduce(
+                    (hs, [hk, hv]) => ({
+                      ...hs,
+                      [hk]: isAppStatusWebhook(hv)
+                        ? new AppStatusWebhookEntity(logger, hv)
+                        : new WebhookEntity(logger, hv),
+                    }),
+                    {} as Record<string, WebhookEntity>
+                  ),
               }
             : { ...c, [k]: new StreamEntity(logger, tenantId, s as Stream) };
         }, {}),
