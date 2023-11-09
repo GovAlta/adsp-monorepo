@@ -16,6 +16,7 @@ export * from './configuration';
 export * from './types';
 export * from './model';
 export * from './roles';
+export * from './events';
 
 interface PushMiddlewareProps {
   logger: Logger;

@@ -27,7 +27,7 @@ Feature: Configuration-service
   Scenario: As a tenant admin, I can add/edit/delete configuration definitions for the configuration service
     Given a tenant admin user is on configuration overview page
     When the user clicks Add definition button on configuration overview page
-    Then the user views Add definition modal
+    Then the user views Add configuration definition modal
     # Invalid data
     When the user enters "platform" in namespace field in configuration definition modal
     Then the user views the error message of "Cannot use the word platform as namespace" on namespace in configuration definition modal
@@ -80,7 +80,7 @@ Feature: Configuration-service
     Given a tenant admin user is on configuration overview page
     Then no critical or serious accessibility issues on "configuration overview page"
     When the user clicks Add definition button on configuration overview page
-    Then the user views Add definition modal
+    Then the user views Add configuration definition modal
     #And no critical or serious accessibility issues for "configuration definition modal" on "configuration definitions page"
     When the user clicks Cancel button in configuration definition modal
     #Then no critical or serious accessibility issues on "configuration definitions page"

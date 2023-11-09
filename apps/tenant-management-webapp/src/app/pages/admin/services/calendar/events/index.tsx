@@ -63,9 +63,6 @@ export const CalendarEvents = (): JSX.Element => {
   useEffect(() => {
     dispatch(fetchCalendars());
   }, []);
-  useEffect(() => {
-    downloadICalFile(exportEvents, 'events.ics');
-  }, [exportEvents]);
 
   useEffect(() => {
     if (exportEvents && willExport) {
