@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   GoACheckbox,
   GoATextArea,
@@ -9,18 +9,18 @@ import {
   GoAModal,
 } from '@abgov/react-components-new';
 import { ScriptItem, defaultScript } from '@store/script/models';
-import { useSelector } from 'react-redux';
-import { Role } from '@store/tenant/models';
-import { ConfigServiceRole } from '@store/access/models';
+import { useSelector, useDispatch } from 'react-redux';
 import { useValidators } from '@lib/validation/useValidators';
 import { toKebabName } from '@lib/kebabName';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { isNotEmptyCheck, wordMaxLengthCheck, duplicateNameCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { IdField } from './styled-components';
-import { ServiceRoleConfig } from '@store/access/models';
 import { RootState } from '@store/index';
 import { UseServiceAccountWrapper } from './styled-components';
 import { ClientRoleTable } from '@components/RoleTable';
+import { selectRoleList } from '@store/sharedSelectors/roles';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
+import { FetchRealmRoles } from '@store/tenant/actions';
 
 interface AddScriptModalProps {
   initialValue?: ScriptItem;
@@ -28,24 +28,17 @@ interface AddScriptModalProps {
   onSave: (script: ScriptItem) => void;
   open: boolean;
   isNew: boolean;
-  realmRoles: Role[];
-  tenantClients: ServiceRoleConfig;
 }
 
-export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
-  initialValue,
-  onCancel,
-  onSave,
-  open,
-  isNew,
-  realmRoles,
-  tenantClients,
-}: AddScriptModalProps): JSX.Element => {
+export const AddScriptModal = ({ initialValue, onCancel, onSave, open, isNew }: AddScriptModalProps): JSX.Element => {
   const [script, setScript] = useState<ScriptItem>(initialValue);
+  const dispatch = useDispatch();
 
   const scripts = useSelector((state: RootState) => {
     return state?.scriptService?.scripts;
   });
+
+  const roles = useSelector(selectRoleList);
   const scriptNames = scripts ? Object.keys(scripts) : [];
   const { errors, validators } = useValidators(
     'name',
@@ -58,31 +51,12 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
     .add('duplicated', 'name', duplicateNameCheck(scriptNames, 'Script'))
     .build();
 
+  // eslint-disable-next-line
+  useEffect(() => {}, [roles]);
   useEffect(() => {
-    setScript(initialValue);
-  }, [initialValue]);
-
-  const roleNames = realmRoles.map((role) => {
-    return role.name;
-  });
-
-  let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
-
-  const clientElements =
-    tenantClients &&
-    Object.entries(tenantClients).length > 0 &&
-    Object.entries(tenantClients)
-      .filter(([clientId, config]) => {
-        return (config as ConfigServiceRole).roles.length > 0;
-      })
-      .map(([clientId, config]) => {
-        const roles = (config as ConfigServiceRole).roles;
-        const roleNames = roles.map((role) => {
-          return role.role;
-        });
-        return { roleNames: roleNames, clientId: clientId, currentElements: null };
-      });
-  elements = elements.concat(clientElements);
+    dispatch(FetchRealmRoles());
+    dispatch(fetchKeycloakServiceRoles());
+  }, []);
 
   const validationCheck = () => {
     const validations = {
@@ -178,7 +152,6 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
       <GoAFormItem label="Script ID">
         <IdField>{script.id}</IdField>
       </GoAFormItem>
-
       <GoAFormItem error={errors?.['description']} label="Description">
         <GoATextArea
           name="description"
@@ -209,12 +182,11 @@ export const AddScriptModal: FunctionComponent<AddScriptModalProps> = ({
         />
         Use service account
       </UseServiceAccountWrapper>
-
-      {tenantClients &&
-        elements.map((e, key) => {
-          return <RunnerRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+      {roles &&
+        roles.map((r) => {
+          return <RunnerRole roleNames={r?.roleNames} key={r?.clientId} clientId={r?.clientId} />;
         })}
-      {Object.entries(tenantClients).length === 0 && (
+      {Object.entries(roles).length === 0 && (
         <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>
       )}
     </GoAModal>

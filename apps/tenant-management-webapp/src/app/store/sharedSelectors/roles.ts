@@ -87,10 +87,38 @@ export const selectRolesObject = createSelector(tenantRolesAndClients, (mergedRo
   if (tenantClients) {
     Object.entries(tenantClients).forEach(([clientId, roleConfig]) => {
       if (roleConfig?.roles && roleConfig?.roles?.length > 0) {
-        roleObject[clientId] = roleConfig.roles.map((role) => role.role);
+        roleObject[clientId] = roleConfig?.roles?.map((role) => role.role);
       }
     });
   }
 
   return roleObject;
 });
+
+export const selectRoleList = createSelector(
+  tenantRolesAndClients,
+  (state: RootState) => state.tenant.name,
+  (mergedRoles, tenantName) => {
+    const roles = [];
+    const { realmRoles, tenantClients } = mergedRoles;
+    if (realmRoles?.length > 0) {
+      roles.push({
+        clientId: tenantName,
+        roleNames: realmRoles?.map((r) => r.name),
+      });
+    }
+
+    if (tenantClients) {
+      Object.entries(tenantClients).forEach(([clientId, roleConfig]) => {
+        if (roleConfig?.roles && roleConfig?.roles?.length > 0) {
+          roles.push({
+            clientId: clientId,
+            roleNames: roleConfig?.roles.map((r) => r.role),
+          });
+        }
+      });
+    }
+
+    return roles;
+  }
+);
