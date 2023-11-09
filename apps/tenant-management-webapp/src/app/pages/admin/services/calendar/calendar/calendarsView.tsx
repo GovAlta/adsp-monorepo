@@ -6,7 +6,9 @@ import { CalendarItem, defaultCalendar } from '@store/calendar/models';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
 import { GoAButton } from '@abgov/react-components-new';
+
 import { FetchRealmRoles } from '@store/tenant/actions';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { CalendarModal } from './calendarModal';
 import { CalendarTableComponent } from './calendarList';
 import { fetchEventStreams } from '@store/stream/actions';
@@ -26,6 +28,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
   useEffect(() => {
     dispatch(fetchCalendars());
     dispatch(FetchRealmRoles());
+    dispatch(fetchKeycloakServiceRoles());
     dispatch(fetchEventStreams());
   }, []);
   const tenant = useSelector(tenantRolesAndClients);

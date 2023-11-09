@@ -11,7 +11,6 @@ import { NotificationBanner } from './notificationBanner';
 import styled from 'styled-components';
 import { LogoutModal } from '@components/LogoutModal';
 import { useTokenExpiryCount } from '@lib/useTokenExpiryCount';
-import { fetchKeycloakServiceRoles } from '@store/access/actions';
 
 interface privateAppProps {
   children: ReactNode;
@@ -72,12 +71,6 @@ const PageLoader = (): JSX.Element => {
 export function PrivateRoute({ component: Component, ...rest }): JSX.Element {
   const userInfo = useSelector((state: RootState) => state.session?.userInfo);
   const ready = !!userInfo;
-  const dispatch = useDispatch();
-
-  // eslint-disable-next-line
-  useEffect(() => {
-    dispatch(fetchKeycloakServiceRoles());
-  }, []);
 
   return <Route {...rest} render={(props) => (ready ? <Component {...props} /> : <PageLoader />)} />;
 }

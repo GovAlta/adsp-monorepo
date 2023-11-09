@@ -46,6 +46,13 @@ describe('subscription router', () => {
     saveSubscriber: jest.fn((entity) => Promise.resolve(entity)),
   };
 
+  const tenantServiceMock = {
+    getTenants: jest.fn(),
+    getTenant: jest.fn(),
+    getTenantByName: jest.fn(),
+    getTenantByRealm: jest.fn(),
+  };
+
   const notificationType: NotificationType = {
     id: 'test',
     name: 'Test',
@@ -81,6 +88,7 @@ describe('subscription router', () => {
         logger: loggerMock,
         subscriptionRepository: repositoryMock,
         verifyService: verifyServiceMock,
+        tenantService: tenantServiceMock,
       });
       expect(router).toBeTruthy();
     });
@@ -1593,7 +1601,9 @@ describe('subscription router', () => {
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(verifyServiceMock.sendCode).toHaveBeenCalledWith(
         subscriber.channels[0],
-        'Enter this code to verify your contact address.'
+        'Enter this code to verify your contact address.',
+        10,
+        undefined
       );
       expect(subscriber.channels[0].verifyKey).toBe('key');
       expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ sent: true }));

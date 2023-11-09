@@ -3,36 +3,36 @@ import DataTable from '@components/DataTable';
 import { FormDefinitionItem } from './formDefinitionItem';
 import { PdfTemplate } from '@store/pdf/model';
 
-export interface PdfTemplatesTableProps {
+export interface formDefinitionTableProps {
   definitions: Record<string, PdfTemplate>;
   onDelete?: (PdfTemplate) => void;
   onEdit?: (PdfTemplate) => void;
 }
-export const FormDefinitionsTable: FunctionComponent<PdfTemplatesTableProps> = ({ definitions, onDelete }) => {
+export const FormDefinitionsTable: FunctionComponent<formDefinitionTableProps> = ({ definitions, onDelete }) => {
   const newTemplates = JSON.parse(JSON.stringify(definitions));
 
   return (
     <>
-      <DataTable data-testid="pdf-definitions-table">
-        <thead data-testid="pdf-definitions-table-header">
+      <DataTable data-testid="form-definitions-table">
+        <thead data-testid="form-definitions-table-header">
           <tr>
-            <th data-testid="pdf-definitions-table-header-name">Name</th>
-            <th id="pdf-definitions-template-id" data-testid="pdf-definitions-table-header-template-id">
+            <th data-testid="form-definitions-table-header-name">Name</th>
+            <th id="form-definitions-template-id" data-testid="form-definitions-table-header-template-id">
               Definition ID
             </th>
-            <th id="pdf-definitions-Description" data-testid="pdf-definitions-table-header-description">
+            <th id="form-definitions-Description" data-testid="form-definitions-table-header-description">
               Description
             </th>
-            <th id="pdf-definitions-applicant" data-testid="pdf-definitions-table-header-applicant">
+            <th id="form-definitions-applicant" data-testid="form-definitions-table-header-applicant">
               Applicant Roles
             </th>
-            <th id="pdf-definitions-clerk" data-testid="pdf-definitions-table-header-clerk">
+            <th id="form-definitions-clerk" data-testid="form-definitions-table-header-clerk">
               Clerk Roles
             </th>
-            <th id="pdf-definitions-assessor" data-testid="pdf-definitions-table-header-assessor">
+            <th id="form-definitions-assessor" data-testid="form-definitions-table-header-assessor">
               Assessor Roles
             </th>
-            <th id="pdf-definitions-action" data-testid="pdf-definitions-table-header-action">
+            <th id="form-definitions-action" data-testid="form-definitions-table-header-action">
               Actions
             </th>
           </tr>

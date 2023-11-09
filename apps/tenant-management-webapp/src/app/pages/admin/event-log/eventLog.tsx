@@ -8,7 +8,7 @@ import { EventSearchForm } from './eventSearchForm';
 import { GoAButton, GoACallout } from '@abgov/react-components-new';
 
 import { EventSearchCriteria } from '@store/event/models';
-import { LoadMoreWrapper } from '../services/calendar/events/styled-components';
+import { LoadMoreWrapper } from '@components/styled-components';
 
 export const EventLog: FunctionComponent = () => {
   const readerRole = 'value-reader';

@@ -26,6 +26,8 @@ export const subscriberSchema = new Schema({
         },
         verifyKey: { type: String },
         verified: { type: Boolean },
+        pendingVerification: { type: Boolean },
+        timeCodeSent: { type: Number },
       },
     ],
     required: true,
