@@ -32,7 +32,7 @@ Feature: Events
     Given a tenant admin user is on tenant admin page
     When the user selects the "Event" menu item
     And the user selects "Definitions" tab for "Event"
-    And the user clicks Add definition button
+    And the user clicks Add definition button on event definitions page
     Then the user views Add definition dialog
     When the user enters "Autotest" in Namespace, "autotest-addEditDeleteEvent" in Name, "autotest event desc" in Description
     And the user clicks Save button on Definition modal
@@ -55,7 +55,7 @@ Feature: Events
     When the user selects "Definitions" tab for "Event"
     Then no critical or serious accessibility issues on "event definitions page"
     # Accessibility test on Add definition dialog causes Cypress to crash. Need further research to avoid Cypress crash before running this test again.
-    # When the user clicks Add definition button
+    # When the user clicks Add definition button on event definitions page
     # Then the user views Add definition dialog
     # And no critical or serious accessibility issues for "event definition modal" on "event definitions page"
     # When the user clicks Cancel button on Definition modal
@@ -67,7 +67,7 @@ Feature: Events
   @TEST_CS-739 @REQ_CS-250 @regression
   Scenario Outline: As a tenant admin, I cannot add event definitions with names or namespaces contains ":"
     Given a service owner user is on event definitions page
-    When the user clicks Add definition button
+    When the user clicks Add definition button on event definitions page
     And the user enters "<Namespace>" in Namespace, "<Name>" in Name, "<Description>" in Description
     Then the user views the "<Error Message>" for "<Error Field>"
     Then the user views disabled Save button on Definition modal
@@ -82,7 +82,7 @@ Feature: Events
   Scenario: As a tenant admin, I cannot add/modify/delete event definitions within platform service namespaces
     Given a service owner user is on event definitions page
     Then the user only views show button for event definitions of "tenant-service, configuration-service, notification-service, value-service, file-service"
-    When the user clicks Add definition button
+    When the user clicks Add definition button on event definitions page
     And the user enters "tenant-service" in Namespace, "test" in Name, "test" in Description
     Then the user views the "tenant-service is forbidden" for "Namespace"
     Then the user views disabled Save button on Definition modal

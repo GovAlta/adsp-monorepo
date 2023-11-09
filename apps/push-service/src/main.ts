@@ -20,8 +20,19 @@ import { promisify } from 'util';
 import { createAmqpEventService } from './amqp';
 import { createAmqpEventService as createAmqpEventServiceWebhooks } from '@core-services/core-common';
 import { environment } from './environments/environment';
-import { applyPushMiddleware, configurationSchema, PushServiceRoles, Stream, StreamEntity } from './push';
-import { WebhookTriggeredDefinition } from './push/events';
+import {
+  applyPushMiddleware,
+  AppStatusWebhookEntity,
+  configurationSchema,
+  isAppStatusWebhook,
+  PushServiceConfiguration,
+  PushServiceRoles,
+  Stream,
+  StreamEntity,
+  Webhook,
+  WebhookEntity,
+  WebhookTriggeredDefinition,
+} from './push';
 
 const logger = createLogger('push-service', environment.LOG_LEVEL || 'info');
 
@@ -68,9 +79,24 @@ const initializeApp = async (): Promise<Server> => {
         description: 'Streams available by websocket with configuration of the included events.',
         schema: configurationSchema,
       },
-      combineConfiguration: (tenant: Record<string, Stream>, core: Record<string, Stream>, tenantId) =>
+      combineConfiguration: (tenant: PushServiceConfiguration, core: PushServiceConfiguration, tenantId) =>
         Object.entries({ ...tenant, ...core }).reduce((c, [k, s]) => {
-          return k === 'webhooks' ? { ...c, webhooks: s } : { ...c, [k]: new StreamEntity(logger, tenantId, s) };
+          return k === 'webhooks'
+            ? {
+                ...c,
+                webhooks: Object.entries(s as Record<string, Webhook>)
+                  .filter(([_hk, hv]) => hv)
+                  .reduce(
+                    (hs, [hk, hv]) => ({
+                      ...hs,
+                      [hk]: isAppStatusWebhook(hv)
+                        ? new AppStatusWebhookEntity(logger, hv)
+                        : new WebhookEntity(logger, hv),
+                    }),
+                    {} as Record<string, WebhookEntity>
+                  ),
+              }
+            : { ...c, [k]: new StreamEntity(logger, tenantId, s as Stream) };
         }, {}),
       events: [WebhookTriggeredDefinition],
       clientSecret: environment.CLIENT_SECRET,

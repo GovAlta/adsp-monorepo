@@ -59,7 +59,7 @@ When('the user clicks Add definition button on configuration overview page', fun
   cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });
 
-Then('the user views Add definition modal', function () {
+Then('the user views Add configuration definition modal', function () {
   configurationObj.configurationDefinitionModalTitle().invoke('text').should('eq', 'Add definition');
 });
 

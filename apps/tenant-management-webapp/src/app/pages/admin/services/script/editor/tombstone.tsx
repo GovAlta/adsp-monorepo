@@ -1,12 +1,9 @@
-import React, { FunctionComponent, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { TombStoneWrapper, Edit, Tooltip } from '../styled-components';
 import { ScriptItem } from '@store/script/models';
 import { GoAIconButton } from '@abgov/react-components-new';
 import { AddScriptModal } from '../addScriptModal';
-
-import { useSelector } from 'react-redux';
-import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 
 interface props {
   selectedScript: ScriptItem;
@@ -14,7 +11,6 @@ interface props {
 }
 export const TombStone = ({ selectedScript, onSave }: props): JSX.Element => {
   const [openAddScript, setOpenAddScript] = useState(false);
-  const tenant = useSelector(tenantRolesAndClients);
   const [isNameElipsisActive, setIsNameElipsisActive] = useState(false);
   const tooltipNameElem = useRef<HTMLParagraphElement>();
   const [isIdElipsisActive, setIsIdElipsisActive] = useState(false);
@@ -113,8 +109,6 @@ export const TombStone = ({ selectedScript, onSave }: props): JSX.Element => {
           open={openAddScript}
           isNew={false}
           initialValue={selectedScript}
-          realmRoles={tenant.realmRoles}
-          tenantClients={tenant.tenantClients ? tenant.tenantClients : {}}
           onCancel={() => {
             setOpenAddScript(false);
           }}

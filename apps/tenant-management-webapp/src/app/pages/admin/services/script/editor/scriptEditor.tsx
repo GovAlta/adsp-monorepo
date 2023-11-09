@@ -30,10 +30,9 @@ import { GoAButton, GoAFormItem, GoACheckbox } from '@abgov/react-components-new
 import { TaskEditorTitle } from '../styled-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { ClientRoleTable } from '@components/RoleTable';
-import { createSelector } from 'reselect';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { ActionState } from '@store/session/models';
-import { ConfigServiceRole } from '@store/access/models';
+import { selectRoleList } from '@store/sharedSelectors/roles';
 
 interface ScriptEditorProps {
   editorConfig?: EditorProps;
@@ -86,6 +85,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   useEffect(() => {
     setScript(selectedScript);
   }, []);
+
+  const roles = useSelector(selectRoleList);
+
   useEffect(() => {
     if (monaco) {
       const completionProvider = monaco.languages.registerCompletionItemProvider('lua', {
@@ -196,13 +198,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   //eslint-disable-next-line
   useEffect(() => {}, [fetchKeycloakRolesState]);
 
-  const selectServiceKeycloakRoles = createSelector(
-    (state: RootState) => state.serviceRoles,
-    (serviceRoles) => {
-      return serviceRoles?.keycloak || {};
-    }
-  );
-
   const ClientRole = ({ roleNames, clientId }) => {
     const runnerRoles = types[0];
 
@@ -226,30 +221,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
       </>
     );
   };
-
-  const roles = useSelector((state: RootState) => state.tenant.realmRoles) || [];
-
-  const roleNames = roles.map((role) => {
-    return role.name;
-  });
-
-  const keycloakClientRoles = useSelector(selectServiceKeycloakRoles);
-  let elements = [{ roleNames: roleNames, clientId: '', currentElements: null }];
-
-  const clientElements =
-    Object.entries(keycloakClientRoles).length > 0 &&
-    Object.entries(keycloakClientRoles)
-      .filter(([clientId, config]) => {
-        return (config as ConfigServiceRole).roles.length > 0;
-      })
-      .map(([clientId, config]) => {
-        const roles = (config as ConfigServiceRole).roles;
-        const roleNames = roles.map((role) => {
-          return role.role;
-        });
-        return { roleNames: roleNames, clientId: clientId, currentElements: null };
-      });
-  elements = elements.concat(clientElements);
 
   //eslint-disable-next-line
   const parseTestResult = (result: string | Record<string, any>) => {
@@ -297,8 +268,8 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
           <Tab label="Roles" data-testid="script-roles-tab">
             <MonacoDivTabBody data-testid="roles-editor-body">
               <ScrollPane>
-                {elements.map((e, key) => {
-                  return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+                {roles.map((r) => {
+                  return <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />;
                 })}
                 {fetchKeycloakRolesState === ActionState.inProcess && (
                   <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
