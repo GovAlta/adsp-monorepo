@@ -74,19 +74,14 @@ export class ConfigurationEntity<C = Record<string, unknown>> implements Configu
 
   public mergeUpdate(update: Partial<C>): C {
     return Object.entries(update).reduce(
-      (update, [key, value]) => {
-        // If schema indicates this top level property is an object, and current value plus update value are both objects,
-        // then combine them with spread operator.
-        if (
-          this.schema?.properties?.[key]?.type === 'object' &&
-          typeof update[key] === 'object' &&
-          typeof value === 'object'
-        ) {
-          value = { ...update[key], ...value };
+      (config, [key, value]) => {
+        // If current value plus update value are both objects, then combine them with spread operator.
+        if (typeof config[key] === 'object' && typeof value === 'object') {
+          value = { ...config[key], ...value };
         }
 
-        update[key] = value;
-        return update;
+        config[key] = value;
+        return config;
       },
       { ...this.latest?.configuration }
     );
