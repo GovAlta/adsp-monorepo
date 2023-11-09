@@ -48,10 +48,8 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     dispatch(fetchKeycloakServiceRoles());
     dispatch(fetchEventStreams());
   }, []);
-  const tenant = useSelector(tenantRolesAndClients);
 
   const { scripts } = useSelector((state: RootState) => state.scriptService);
-
   const { errors, validators } = useValidators(
     'name',
     'name',
@@ -145,8 +143,6 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
         open={openAddScript}
         isNew={true}
         initialValue={selectedScript}
-        realmRoles={tenant.realmRoles}
-        tenantClients={tenant.tenantClients ? tenant.tenantClients : {}}
         onCancel={() => {
           reset();
         }}

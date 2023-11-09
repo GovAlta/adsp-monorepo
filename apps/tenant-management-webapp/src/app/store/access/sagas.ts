@@ -146,7 +146,6 @@ export function* fetchServiceRoles(action: FetchServiceRolesAction): SagaIterato
 
 export function* fetchKeycloakServiceRoles(action: FetchKeycloakServiceRolesAction): SagaIterator {
   const serviceRoles = yield select((state: RootState) => state.serviceRoles?.keycloak);
-  console.log(action?.forceToUpdate);
   if (serviceRoles && !action?.forceToUpdate) return;
   const token: string = yield call(getAccessToken);
   const keycloakIdMap = {};

@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { TombStoneWrapper, Edit, Tooltip } from '../styled-components';
 import { ScriptItem } from '@store/script/models';
@@ -113,8 +113,6 @@ export const TombStone = ({ selectedScript, onSave }: props): JSX.Element => {
           open={openAddScript}
           isNew={false}
           initialValue={selectedScript}
-          realmRoles={tenant.realmRoles}
-          tenantClients={tenant.tenantClients ? tenant.tenantClients : {}}
           onCancel={() => {
             setOpenAddScript(false);
           }}
