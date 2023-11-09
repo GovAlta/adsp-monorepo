@@ -8,9 +8,7 @@ import { GoAButton } from '@abgov/react-components-new';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { AddScriptModal } from './addScriptModal';
-
 import { fetchEventStreams } from '@store/stream/actions';
-import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 import { ScriptTableComponent } from './scriptList';
 import { ActionState } from '@store/session/models';
 import { PageIndicator } from '@components/Indicator';

@@ -5,16 +5,12 @@ import { ScriptItem } from '@store/script/models';
 import { GoAIconButton } from '@abgov/react-components-new';
 import { AddScriptModal } from '../addScriptModal';
 
-import { useSelector } from 'react-redux';
-import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
-
 interface props {
   selectedScript: ScriptItem;
   onSave;
 }
 export const TombStone = ({ selectedScript, onSave }: props): JSX.Element => {
   const [openAddScript, setOpenAddScript] = useState(false);
-  const tenant = useSelector(tenantRolesAndClients);
   const [isNameElipsisActive, setIsNameElipsisActive] = useState(false);
   const tooltipNameElem = useRef<HTMLParagraphElement>();
   const [isIdElipsisActive, setIsIdElipsisActive] = useState(false);
