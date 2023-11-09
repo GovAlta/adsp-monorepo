@@ -71,10 +71,10 @@ export const WebhookTriggeredDefinition: DomainEventDefinition = {
         type: 'object',
         properties: {
           status: {
-            type: 'string',
+            type: ['string', 'null'],
           },
           statusCode: {
-            type: 'number',
+            type: ['number', 'null'],
           },
           timestamp: {
             type: ['string', 'null'],

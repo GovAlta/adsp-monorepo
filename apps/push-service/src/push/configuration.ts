@@ -4,10 +4,10 @@ export const configurationSchema = {
   type: 'object',
   properties: {
     webhooks: {
-      type: ['object', 'null'], // Null is allowed for backwards compatibility
+      type: ['object', 'null'],     // Null is allowed for backwards compatibility
       patternProperties: {
         '^[a-zA-Z0-9-_ ]{1,50}$': {
-          type: 'object',
+          type: ['object', 'null'], // Null is allowed for backwards compatibility
           properties: {
             id: { type: 'string' },
             name: { type: 'string' },
