@@ -79,7 +79,10 @@ const initializeApp = async (): Promise<express.Application> => {
         TaskCompletedDefinition,
         TaskCancelledDefinition,
       ],
-      configurationSchema,
+      configuration: {
+        schema: configurationSchema,
+        description: 'Task queues where tasks are created for processing by workers.',
+      },
       configurationConverter: ({ queues }: TaskServiceConfiguration) => ({
         queues: Object.entries(queues || {}).reduce((qs, [k, q]) => ({ ...qs, [k]: new QueueEntity(q) }), {}),
       }),
