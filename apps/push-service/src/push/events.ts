@@ -1,33 +1,40 @@
 import type { AdspId, DomainEvent, DomainEventDefinition } from '@abgov/adsp-service-sdk';
+import { DomainEvent as ReceivedDomainEvent } from '@core-services/core-common';
+import { AxiosResponse } from 'axios';
+import { AppStatusWebhook, Webhook } from './types';
 
 export const webhookTriggered = (
   tenantId: AdspId,
-  URL: string,
-  targetId: string,
-  EventList: { id: string }[],
-  name: string,
-  callStatus: string,
-  callStatusCode: number,
-  callDateTime: Date,
-  callResponseTime: number
+  webhook: Webhook,
+  triggerEvent: ReceivedDomainEvent,
+  response: AxiosResponse,
+  responseTime: number
 ): DomainEvent => ({
   name: 'webhook-triggered',
   timestamp: new Date(),
   tenantId,
-  correlationId: `${name}`,
+  correlationId: triggerEvent.correlationId || webhook.id,
   context: {
-    name,
+    name: webhook.name,
   },
   payload: {
-    name,
-    tenantId,
-    targetId,
-    URL,
-    EventList,
-    callStatus,
-    callStatusCode,
-    callDateTime,
-    callResponseTime,
+    webhook: {
+      name: webhook.name,
+      url: webhook.url,
+      targetId: (webhook as AppStatusWebhook).targetId,
+    },
+    trigger: {
+      namespace: triggerEvent.namespace,
+      name: triggerEvent.name,
+      correlationId: triggerEvent.correlationId,
+      context: triggerEvent.context,
+    },
+    response: {
+      status: response.statusText,
+      statusCode: response.status,
+      timestamp: response.headers?.date,
+    },
+    responseTime,
   },
 });
 
@@ -37,37 +44,47 @@ export const WebhookTriggeredDefinition: DomainEventDefinition = {
   payloadSchema: {
     type: 'object',
     properties: {
-      name: {
-        type: 'string',
-      },
-      tenantId: {
+      webhook: {
         type: 'object',
-      },
-      targetId: {
-        type: 'string',
-      },
-      URL: {
-        type: 'string',
-      },
-      EventList: {
-        type: 'array',
         properties: {
-          id: { type: 'string' },
+          name: {
+            type: 'string',
+          },
+          url: {
+            type: 'string',
+          },
+          targetId: {
+            type: ['string', 'null'],
+          },
         },
       },
-      callStatus: {
-        type: 'string',
+      trigger: {
+        type: 'object',
+        properties: {
+          namespace: { type: 'string' },
+          name: { type: 'string' },
+          correlationId: { type: ['string', 'null'] },
+          context: { type: ['object', 'null'] },
+        },
       },
-      callStatusCode: {
-        type: 'number',
+      response: {
+        type: 'object',
+        properties: {
+          status: {
+            type: 'string',
+          },
+          statusCode: {
+            type: 'number',
+          },
+          timestamp: {
+            type: ['string', 'null'],
+          },
+        },
       },
-      callDateTime: {
-        type: 'string',
-      },
-      callResponseTime: {
+      responseTime: {
         type: 'number',
       },
     },
-    required: ['name', 'updatedBy'],
+    required: [],
   },
 };
