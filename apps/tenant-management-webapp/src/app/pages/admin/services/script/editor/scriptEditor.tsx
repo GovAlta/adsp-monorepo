@@ -179,6 +179,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     selectedScript.description = description;
     selectedScript.script = scriptStr;
     selectedScript.testInputs = getInput(testInput);
+    selectedScript.runnerRoles = script.runnerRoles;
     return selectedScript;
   };
   const hasChanged = () => {
@@ -186,11 +187,12 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
       selectedScript.name !== name ||
       selectedScript.description !== description ||
       selectedScript.script !== scriptStr ||
-      selectedScript.testInputs !== testInput
+      selectedScript.testInputs !== testInput ||
+      selectedScript.runnerRoles.toString() !== script.runnerRoles.toString()
     );
   };
 
-  const types = [{ type: 'runnerRoles', name: 'Modify' }];
+  const types = [{ type: 'runnerRoles', name: 'Runner roles' }];
 
   const { fetchKeycloakRolesState } = useSelector((state: RootState) => ({
     fetchKeycloakRolesState: state.session.indicator?.details[FETCH_KEYCLOAK_SERVICE_ROLES] || '',
