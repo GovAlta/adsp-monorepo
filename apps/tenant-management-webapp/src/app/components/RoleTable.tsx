@@ -78,7 +78,7 @@ export const ClientRoleTable = (props: ClientRoleTableProps): JSX.Element => {
 
         <tbody>
           {props.roles?.map((role): JSX.Element => {
-            const compositeRole = props.clientId ? `${props.clientId}:${role}` : role;
+            const compositeRole = props.clientId && props.clientId !== tenantName ? `${props.clientId}:${role}` : role;
 
             return (
               <tr key={`${service}-row-${role}`}>
