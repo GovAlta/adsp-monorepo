@@ -51,7 +51,7 @@ const FileTypesTableContainer = ({ roles }: FileTypesTableContainerProps): JSX.E
   });
 
   useEffect(() => {
-    if (!fileTypes && fileTypes?.length === 0) {
+    if (!fileTypes) {
       dispatch(FetchFileTypeService());
     }
   }, []);
