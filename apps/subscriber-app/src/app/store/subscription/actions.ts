@@ -135,12 +135,15 @@ export interface CheckCodeAction {
 export interface CheckCodeActionSuccess {
   type: typeof CHECK_CODE_SUCCESS;
   payload: {
-    response: {channelIndex: number};
+    response: { channelIndex: number };
   };
 }
 
 export interface CheckCodeActionFailure {
   type: typeof CHECK_CODE_FAILURE;
+  payload: {
+    response: { channelIndex: number };
+  };
 }
 
 // ==============
@@ -269,6 +272,9 @@ export const CheckCodeSuccess = (response): CheckCodeActionSuccess => ({
     response,
   },
 });
-export const CheckCodeFailure = (): CheckCodeActionFailure => ({
+export const CheckCodeFailure = (response): CheckCodeActionFailure => ({
   type: CHECK_CODE_FAILURE,
+  payload: {
+    response,
+  },
 });

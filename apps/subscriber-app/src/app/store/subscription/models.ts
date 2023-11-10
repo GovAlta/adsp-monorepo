@@ -51,14 +51,14 @@ export interface SubscriberService {
   subscriber: Subscriber;
   subscriptions: Subscription[];
   hasSubscriberId: boolean;
-  previouslyVerified: boolean;
+  previouslyVerified: Record<string, boolean>;
 }
 
 export const SUBSCRIBER_INIT: SubscriberService = {
   subscriber: undefined,
   subscriptions: [],
   hasSubscriberId: true,
-  previouslyVerified: false,
+  previouslyVerified: {},
 };
 
 export const actionTypes = Object.freeze({

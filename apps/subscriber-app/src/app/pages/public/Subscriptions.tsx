@@ -8,10 +8,7 @@ import { GoAContainer, GoAButton, GoACallout, GoAButtonGroup, GoAModal, GoABadge
 import { FetchContactInfoService } from '@store/notification/actions';
 import { FetchTenantService } from '@store/tenant/actions';
 import { Channels, expireMinutes } from '@store/subscription/models';
-import { GoAFormItem } from '@abgov/react-components/experimental';
 import { CheckCode, VerifyEmail } from '@store/subscription/actions';
-
-import { GoAInput } from '@abgov/react-components-new';
 
 import styled from 'styled-components';
 import {
@@ -22,6 +19,7 @@ import {
   SubscriptionListContainer,
   DescriptionWrapper,
   VerificationWrapper,
+  ButtonMargin,
 } from '../private/Subscriptions/styled-components';
 
 import { useParams } from 'react-router-dom-6';
@@ -52,7 +50,6 @@ const Subscriptions = (): JSX.Element => {
 
   const subscriberEmail = subscriber?.channels.find((chn: SubscriberChannel) => chn.channel === EMAIL)?.address;
   const [showUnSubscribeModal, setShowUnSubscribeModal] = useState(false);
-  const [emailCode, setEmailCode] = useState('');
   const [selectedUnsubscribeSub, setSelectedUnsubscribeSub] = useState<Subscription>();
   const { subscriberId } = useParams();
   const isEmailVerified = subscriber && subscriber?.channels?.find((c) => c.channel === Channels.email)?.verified;
@@ -77,7 +74,7 @@ const Subscriptions = (): JSX.Element => {
   }, [subscriber]);
 
   useEffect(() => {
-    if (previouslyVerified && code !== 'null' && code) {
+    if (previouslyVerified.email && code !== 'null' && code) {
       history.push(`${window.location.pathname}`);
     }
   }, [previouslyVerified]);
@@ -163,7 +160,9 @@ const Subscriptions = (): JSX.Element => {
                 title="Contact information"
                 data-testid="contact-information-card"
               >
-                <Label>Email</Label>
+                <div data-testid="email-label">
+                  <Label>Email</Label>
+                </div>
                 <ContactInformationContainer>
                   <p>
                     <VerificationWrapper>
@@ -172,42 +171,12 @@ const Subscriptions = (): JSX.Element => {
                       )}
                       {isEmailVerified !== undefined && isEmailVerified === false && (
                         <div>
-                          <GoABadge type="important" content="Not verified" />
                           {validCodeExists ? (
                             <div>
-                              <Label>Enter your verification Code</Label>
-                              <GoAFormItem>
-                                <GoAInput
-                                  type="tel"
-                                  aria-label="sms"
-                                  name="sms"
-                                  width="100%"
-                                  value={emailCode}
-                                  testId="contact-sms-input"
-                                  onChange={(_, value) => setEmailCode(value)}
-                                />
-                              </GoAFormItem>
-
-                              <GoAButton
-                                size="compact"
-                                testId="verify-code"
-                                onClick={() => {
-                                  dispatch(CheckCode('email', emailCode, subscriber, true));
-                                }}
-                              >
-                                Validate code
-                              </GoAButton>
+                              <GoABadge type="midtone" content="Pending" />
                             </div>
                           ) : (
-                            <GoAButton
-                              size="compact"
-                              testId="verify-email"
-                              onClick={() => {
-                                dispatch(VerifyEmail(subscriber, true));
-                              }}
-                            >
-                              Verify email
-                            </GoAButton>
+                            <GoABadge type="important" content="Not verified" />
                           )}
                         </div>
                       )}
@@ -222,6 +191,19 @@ const Subscriptions = (): JSX.Element => {
                   ) : (
                     <>No Email</>
                   ))}
+
+                <ButtonMargin>
+                  <GoAButton
+                    size="compact"
+                    disabled={validCodeExists}
+                    testId="verify-email"
+                    onClick={() => {
+                      dispatch(VerifyEmail(subscriber, true));
+                    }}
+                  >
+                    Verify email
+                  </GoAButton>
+                </ButtonMargin>
               </GoAContainer>
             </ContactInformationWrapper>
 

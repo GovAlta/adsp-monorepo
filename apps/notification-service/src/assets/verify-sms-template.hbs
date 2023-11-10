@@ -1,3 +1,6 @@
 Your verification code is: {{ code }}.
 This code will expire at {{ formatDate expiresAt format="ttt" }}.
+{{#if verifyLink}}
+Verification Link: {{verifyLink}}
+{{/if}}
 {{ reason }}

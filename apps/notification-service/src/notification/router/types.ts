@@ -1,8 +1,17 @@
 import { Channel } from '@abgov/adsp-service-sdk';
 
 export const SUBSCRIBER_SEND_VERIFY_CODE = 'send-code';
+
 export interface SendVerifyCodeRequest {
   operation: typeof SUBSCRIBER_SEND_VERIFY_CODE;
+  channel: Channel;
+  address: string;
+  reason?: string;
+}
+
+export const SUBSCRIBER_SEND_VERIFY_CODE_WITH_LINK = 'send-code-with-link';
+export interface SendVerifyCodeRequestWithLink {
+  operation: typeof SUBSCRIBER_SEND_VERIFY_CODE_WITH_LINK;
   channel: Channel;
   address: string;
   reason?: string;
@@ -26,4 +35,8 @@ export interface VerifyChannelRequest {
   code: string;
 }
 
-export type SubscriberOperationRequests = SendVerifyCodeRequest | CheckVerifyCodeRequest | VerifyChannelRequest;
+export type SubscriberOperationRequests =
+  | SendVerifyCodeRequestWithLink
+  | SendVerifyCodeRequest
+  | CheckVerifyCodeRequest
+  | VerifyChannelRequest;
