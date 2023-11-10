@@ -11,6 +11,7 @@ import {
   SubscriberOperationRequests,
   SUBSCRIBER_CHECK_CODE,
   SUBSCRIBER_SEND_VERIFY_CODE,
+  SUBSCRIBER_SEND_VERIFY_CODE_WITH_LINK,
   SUBSCRIBER_VERIFY_CHANNEL,
 } from './types';
 import { VerifyService } from '../verify';
@@ -376,7 +377,11 @@ export function subscriberOperations(verifyService: VerifyService): RequestHandl
       let result = null;
       switch (request.operation) {
         case SUBSCRIBER_SEND_VERIFY_CODE:
-          await subscriber.sendVerifyCode(
+          await subscriber.sendVerifyCode(verifyService, user, request.channel, request.address, request.reason);
+          result = { sent: true };
+          break;
+        case SUBSCRIBER_SEND_VERIFY_CODE_WITH_LINK:
+          await subscriber.sendVerifyCodeWithLink(
             verifyService,
             user,
             request.channel,

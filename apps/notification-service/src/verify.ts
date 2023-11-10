@@ -33,7 +33,44 @@ export class VerifyServiceImpl implements VerifyService {
     });
   }
 
-  async sendCode(
+  async sendCode({ channel, address }: SubscriberChannel, reason: string): Promise<string> {
+    const provider = this.providers[channel];
+    if (!provider) {
+      throw new InvalidOperationError(`No provider for channel ${channel}.`);
+    }
+
+    const template = this.templates[channel];
+    if (!template) {
+      throw new InvalidOperationError(`No verify template for channel ${channel}.`);
+    }
+
+    const verifyServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:verify-service`);
+
+    const key = uuidv4();
+    const verifyRequestUrl = new URL(`/verify/v1/codes/${key}`, verifyServiceUrl);
+
+    const token = await this.tokenProvider.getAccessToken();
+    const { data } = await axios.post<{ code: string; expiresAt: string }>(
+      verifyRequestUrl.href,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    const message = this.templateService.generateMessage(template, {
+      reason,
+      code: data.code,
+      expiresAt: new Date(data.expiresAt),
+    });
+
+    await provider.send({
+      to: address,
+      message,
+    });
+
+    return key;
+  }
+
+  async sendCodeWithLink(
     { channel, address }: SubscriberChannel,
     reason: string,
     expireIn?: number,
@@ -52,7 +89,6 @@ export class VerifyServiceImpl implements VerifyService {
     if (!expireIn) {
       expireIn = 10;
     }
-
     const verifyServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:verify-service`);
 
     const key = uuidv4();
@@ -65,7 +101,11 @@ export class VerifyServiceImpl implements VerifyService {
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    const verifyLink = `${verificationLink}?code=${data.code}`;
+    let verifyLink = `${verificationLink}?code=${data.code}`;
+
+    if ((channel as string) === 'sms') {
+      verifyLink = `${verificationLink}/sms/${data.code}`;
+    }
 
     const message = this.templateService.generateMessage(template, {
       reason,
@@ -90,6 +130,7 @@ export class VerifyServiceImpl implements VerifyService {
     const verifyServiceUrl = await this.directory.getServiceUrl(adspId`urn:ads:platform:verify-service`);
 
     const key = channel.verifyKey;
+
     if (!key) {
       throw new InvalidOperationError('No verify key for subscriber channel.');
     }

@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Main } from '@components/Html';
 import Container from '@components/Container';
 import DataTable from '@components/DataTable';
-import { useSearchParams, redirect } from 'react-router-dom-6';
-import { useHistory } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom-6';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { GoAButton, GoACallout, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
 import { FetchContactInfoService } from '@store/notification/actions';
@@ -32,7 +31,7 @@ interface SubscriptionsProps {
 
 const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
   const [searchParams, _] = useSearchParams();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const dispatch = useDispatch();
   const { subscriber, hasSubscriberId } = useSelector((state: RootState) => ({
@@ -48,7 +47,8 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
     return state?.session?.indicator;
   });
 
-  const code = searchParams.get('code');
+  let code = searchParams.get('code');
+  let smsCode = searchParams.get('smscode');
 
   // we need to wait for userInfo api call so that the followup api calls can make use of the jwt token
   const userInfo = useSelector((state: RootState) => state.session?.userInfo);
@@ -72,14 +72,29 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
   }, [userInfo]);
 
   useEffect(() => {
-    if (previouslyVerified && code !== 'null' && code) {
-      history.push(`${window.location.pathname}`);
+    code = searchParams.get('code');
+    smsCode = searchParams.get('smscode');
+  }, []);
+
+  useEffect(() => {
+    if (
+      (previouslyVerified.email && code !== 'null' && code) ||
+      (previouslyVerified.sms && smsCode !== 'null' && smsCode)
+    ) {
+      console.log(`pushing: ${window.location.pathname}`);
+      navigate(`/subscriptions/${realm}`);
     }
   }, [previouslyVerified]);
 
   useEffect(() => {
     if (code !== 'null' && userInfo !== undefined && subscriber && code) {
       dispatch(CheckCode('email', code, subscriber, false));
+    }
+  }, [searchParams, userInfo, subscriber]);
+
+  useEffect(() => {
+    if (smsCode !== 'null' && subscriber && smsCode) {
+      dispatch(CheckCode('sms', smsCode, subscriber, false));
     }
   }, [searchParams, userInfo, subscriber]);
 
