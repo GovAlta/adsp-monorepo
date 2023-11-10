@@ -109,7 +109,7 @@ export interface VerifyEmailAction {
 export interface VerifyEmailActionSuccess {
   type: typeof VERIFY_EMAIL_SUCCESS;
   payload: {
-    response: any;
+    response: unknown;
   };
 }
 export interface VerifyPhoneAction {
@@ -121,7 +121,7 @@ export interface VerifyPhoneAction {
 export interface VerifyPhoneActionSuccess {
   type: typeof VERIFY_PHONE_SUCCESS;
   payload: {
-    response: any;
+    response: unknown;
   };
 }
 export interface CheckCodeAction {

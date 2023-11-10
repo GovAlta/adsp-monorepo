@@ -525,7 +525,6 @@ export const createSubscriptionRouter = ({
   serviceId,
   subscriptionRepository,
   verifyService,
-  tenantService,
 }: SubscriptionRouterProps): Router => {
   const apiId = adspId`${serviceId}:v1`;
   const subscriptionRouter = Router();

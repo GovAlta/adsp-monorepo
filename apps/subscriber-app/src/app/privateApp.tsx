@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom-6';
 import Header from '@components/AppHeader';
 import { HeaderCtx } from '@lib/headerContext';
-import { Route, Routes, BrowserRouter as Router } from 'react-router-dom-6';
+import { Route, Routes } from 'react-router-dom-6';
 import { KeycloakRefreshToken } from '@store/tenant/actions';
 import { NotificationBanner } from './notificationBanner';
 import { UpdateConfigRealm } from '@store/config/actions';
