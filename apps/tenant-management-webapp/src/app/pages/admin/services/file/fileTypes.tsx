@@ -51,7 +51,9 @@ const FileTypesTableContainer = ({ roles }: FileTypesTableContainerProps): JSX.E
   });
 
   useEffect(() => {
-    dispatch(FetchFileTypeService());
+    if (!fileTypes) {
+      dispatch(FetchFileTypeService());
+    }
   }, []);
 
   // eslint-disable-next-line
