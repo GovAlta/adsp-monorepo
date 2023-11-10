@@ -18,6 +18,7 @@ describe('SubscriberEntity', () => {
 
   const verifyServiceMock = {
     sendCode: jest.fn(),
+    sendCodeWithLink: jest.fn(),
     verifyCode: jest.fn(),
   };
 
@@ -309,9 +310,7 @@ describe('SubscriberEntity', () => {
       );
       expect(verifyServiceMock.sendCode).toHaveBeenCalledWith(
         entity.channels[0],
-        'Enter this code to verify your contact address.',
-        10,
-        undefined
+        'Enter this code to verify your contact address.'
       );
     });
 
@@ -339,9 +338,7 @@ describe('SubscriberEntity', () => {
       );
       expect(verifyServiceMock.sendCode).toHaveBeenCalledWith(
         entity.channels[0],
-        'Enter this code to verify your contact address.',
-        10,
-        undefined
+        'Enter this code to verify your contact address.'
       );
     });
 
@@ -369,9 +366,7 @@ describe('SubscriberEntity', () => {
       );
       expect(verifyServiceMock.sendCode).toHaveBeenCalledWith(
         entity.channels[0],
-        'Enter this code to verify your contact address.',
-        10,
-        undefined
+        'Enter this code to verify your contact address.'
       );
     });
 
