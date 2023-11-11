@@ -25,5 +25,8 @@ export const EmailLinkColor = styled.div`
 `;
 export const SpaceAdjust = styled.h3`
   padding-top: 3rem;
-  padding-botton: 1rem;
+  padding-bottom: 1rem;
+`;
+export const LoadMoreWrapper = styled.div`
+  padding-bottom: var(--goa-spacing-4xl);
 `;

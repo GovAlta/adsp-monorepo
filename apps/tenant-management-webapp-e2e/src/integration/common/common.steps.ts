@@ -234,5 +234,17 @@ Then('the user views the {string} overview content {string}', function (serviceT
 });
 
 When('the user clicks {string} button on unsaved changes modal', function (button) {
-  commonObj.dontSaveButton().shadow().find('button').click({ force: true });
+  switch (button) {
+    case "Don't save":
+      commonObj.dontSaveButtonUnsavedChangesModal().shadow().find('button').click({ force: true });
+      break;
+    case 'Save':
+      commonObj.saveButtonUnsavedChangesModal().shadow().find('button').click({ force: true });
+      break;
+    case 'Cancel':
+      commonObj.cancelButtonUnsavedChangesModal().shadow().find('button').click({ force: true });
+      break;
+    default:
+      expect(button).to.be.oneOf(["Don't save", 'Save', 'Cancel']);
+  }
 });

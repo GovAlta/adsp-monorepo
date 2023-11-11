@@ -109,7 +109,7 @@ export const noticeApplicationSchema = new Schema(
 );
 
 // An application property is pretty wide open.
-export const appPropertyRegex = '^.+$';
+export const appPropertyRegex = '^.{1,100}$';
 
 // A poor mans test for a valid application
 export const isApp = (app): boolean => {
@@ -126,32 +126,32 @@ export const configurationSchema = {
       },
     },
     applicationWebhookIntervals: {
-      appPropertyRegex: {
-        type: 'object',
-        properties: {
-          appId: { type: 'string', description: 'The unique application identifier' },
-          waitTimeInterval: { type: 'string', description: 'Webhook wait time for application (in minutes)' },
-        },
-        required: ['appId', 'waitTimeInterval'],
-        additionalProperties: false,
-      },
-    },
-  },
-  patternProperties: {
-    appPropertyRegex: {
       type: 'object',
-      properties: {
-        appKey: { type: 'string', description: 'A unique identifier for the application' },
-        name: { type: 'string', description: 'Name of the application' },
-        url: { type: 'string', description: 'URL to be checked' },
-        description: { type: 'string', description: 'Tell us about your application' },
-        monitorOnly: { type: 'boolean', description: 'If selected, do not show publicly' },
+      patternProperties: {
+        [appPropertyRegex]: {
+          type: 'object',
+          properties: {
+            appId: { type: 'string', description: 'The unique application identifier' },
+            waitTimeInterval: { type: 'number', description: 'Webhook wait time for application (in minutes)' },
+          },
+          required: ['appId', 'waitTimeInterval'],
+          additionalProperties: false,
+        },
       },
-      required: ['name', 'url'],
-      additionalProperties: false,
     },
   },
-  additionalProperties: true,
+  additionalProperties: {
+    type: 'object',
+    properties: {
+      appKey: { type: 'string', description: 'A unique identifier for the application' },
+      name: { type: 'string', description: 'Name of the application' },
+      url: { type: 'string', description: 'URL to be checked' },
+      description: { type: ['string', 'null'], description: 'Tell us about your application' },
+      monitorOnly: { type: 'boolean', description: 'If selected, do not show publicly' },
+      autoChangeStatus: { type: 'boolean' },
+    },
+    required: ['appKey', 'name', 'url'],
+  },
 };
 
 noticeApplicationSchema.index({ createdAt: 1 });

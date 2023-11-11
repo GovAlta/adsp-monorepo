@@ -10,7 +10,6 @@ import * as handlebars from 'handlebars';
 import { DeleteModal } from '@components/DeleteModal';
 
 import { GoAIcon } from '@abgov/react-components/experimental';
-import { FetchRealmRoles } from '@store/tenant/actions';
 
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
@@ -43,6 +42,7 @@ import { dynamicGeneratePayload } from '@lib/dynamicPlaceHolder';
 import { convertToSuggestion } from '@lib/autoComplete';
 import { useDebounce } from '@lib/useDebounce';
 import { subscriberAppUrlSelector } from './selectors';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 import {
   Buttons,
@@ -53,6 +53,7 @@ import {
   NotificationStyles,
   DescriptionText,
 } from './styled-components';
+import { FetchRealmRoles } from '@store/tenant/actions';
 
 const emptyNotificationType: NotificationItem = {
   name: '',
@@ -190,6 +191,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   useEffect(() => {
     dispatch(FetchNotificationConfigurationService());
+    dispatch(fetchKeycloakServiceRoles());
     dispatch(FetchRealmRoles());
   }, [dispatch]);
 

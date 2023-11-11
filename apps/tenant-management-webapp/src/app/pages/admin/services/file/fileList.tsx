@@ -25,7 +25,7 @@ import { PageIndicator } from '@components/Indicator';
 import styled from 'styled-components';
 import { selectActionStateStart, selectActionStateCompleted } from '@store/session/selectors';
 import { UPLOAD_FILE } from '@store/file/actions';
-import { LoadMoreWrapper } from '../calendar/events/styled-components';
+import { LoadMoreWrapper } from '@components/styled-components';
 
 const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<FileItem>(null);

@@ -19,11 +19,10 @@ import { NextFunction, Request, RequestHandler, Router } from 'express';
 import { Observable } from 'rxjs';
 import { map, share } from 'rxjs/operators';
 import { Namespace as IoNamespace, Socket } from 'socket.io';
+import { ExtendedError } from 'socket.io/dist/namespace';
 import { Logger } from 'winston';
 import { EventCriteria, Stream } from '../types';
-import { StreamEntity, StreamItem } from '../model';
-import { ExtendedError } from 'socket.io/dist/namespace';
-import axios from 'axios';
+import { StreamEntity, StreamItem, WebhookEntity } from '../model';
 import { webhookTriggered } from '../events';
 
 interface StreamRouterProps {
@@ -37,34 +36,9 @@ interface StreamRouterProps {
   serviceId: AdspId;
 }
 
-export interface Webhook {
-  id: string;
-  url: string;
-  name: string;
-  targetId: string;
-  intervalMinutes: number;
-  eventTypes: { id: string }[];
-  description: string;
-  generatedByTest?: boolean;
-}
-
-interface NextPayload {
-  application: { appKey?: string; id?: string };
-}
-
 export enum ServiceUserRoles {
   Admin = 'push-service-admin',
 }
-
-const isValidUrl = (urlString) => {
-  let url;
-  try {
-    url = new URL(urlString);
-  } catch (e) {
-    return false;
-  }
-  return url.protocol === 'http:' || url.protocol === 'https:';
-};
 
 function mapStream(entity: StreamEntity): Stream {
   return {
@@ -185,19 +159,6 @@ export function subscribeBySse(logger: Logger, events: Observable<DomainEvent>):
   };
 }
 
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};
-
 export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) {
   return async (socket: Socket): Promise<void> => {
     try {
@@ -236,14 +197,6 @@ export function onIoConnection(logger: Logger, events: Observable<DomainEvent>) 
   };
 }
 
-export interface StatusResponse {
-  statusText?: string;
-  status?: number;
-  headers?: {
-    date: Date;
-  };
-}
-
 const LOG_CONTEXT = { context: 'StreamRouter' };
 export const createStreamRouter = (
   ios: IoNamespace[],
@@ -275,80 +228,44 @@ export const createStreamRouter = (
   );
 
   events.subscribe(async (next) => {
-    logger.debug(`Processing event ${next.namespace}:${next.name} ...`);
+    logger.debug(`Processing event ${next.namespace}:${next.name} for clients...`, {
+      ...LOG_CONTEXT,
+      tenantId: next?.tenantId?.toString(),
+    });
+  });
+
+  webhookEvents.subscribe(async (next) => {
+    logger.debug(`Processing event ${next.namespace}:${next.name} for webhooks...`, {
+      ...LOG_CONTEXT,
+      tenantId: next?.tenantId?.toString(),
+    });
   });
 
   webhookEvents.subscribe(async (next) => {
     if (`${next.namespace}:${next.name}` !== 'push-service:webhook-triggered') {
+      const tenantId = next.tenantId;
+
       try {
-        const tenantId = next.tenantId;
         const token = await tokenProvider.getAccessToken();
 
-        const response = await configurationService.getConfiguration<Record<string, Webhook>, Record<string, Webhook>>(
-          serviceId,
-          token,
-          tenantId
-        );
+        const { webhooks } = await configurationService.getConfiguration<
+          { webhooks: Record<string, WebhookEntity> },
+          { webhooks: Record<string, WebhookEntity> }
+        >(serviceId, token, tenantId);
 
-        const webhooks = response?.webhooks;
-
-        Object.keys(webhooks).map(async (key) => {
-          if (webhooks[key]) {
-            const eventMatches = [];
-            const webhook = webhooks[key] as Webhook;
-            const eventTypes = webhook.eventTypes;
-
-            eventTypes.map((et) => {
-              const nextPayload = next.payload as unknown as NextPayload;
-              if (`${next.namespace}:${next.name}` === et.id) {
-                if (
-                  (nextPayload?.application?.appKey && nextPayload?.application?.appKey === webhook.targetId) ||
-                  (nextPayload?.application?.id && nextPayload?.application?.id === webhook.targetId)
-                ) {
-                  next.payload;
-                  eventMatches.push(et.id);
-                }
-              }
-            });
-            const endpointWebsocket = webhooks[key].url;
-
-            if (eventMatches.length > 0) {
-              logger.debug(`Processing webhooks: ${next.namespace}:${next.name} ...`);
-              let response: StatusResponse = {};
-              let callResponseTime = 0;
-              const beforeWebhook = new Date().getTime();
-              try {
-                if (isValidUrl(endpointWebsocket)) {
-                  response = await axios.post(endpointWebsocket, next);
-                  callResponseTime = new Date().getTime() - beforeWebhook;
-                }
-              } catch (err) {
-                response.statusText = err.message;
-                response.status = 400;
-                response.headers = { date: new Date() };
-                logger.info(`Failed sending request from status.`);
-                logger.info(`Error: ${JSON.stringify(err.message, getCircularReplacer())}`);
-                callResponseTime = new Date().getTime() - beforeWebhook;
-              } finally {
-                eventService.send(
-                  webhookTriggered(
-                    tenantId,
-                    webhook.url,
-                    webhook.targetId,
-                    webhook.eventTypes,
-                    webhook.name,
-                    response?.statusText,
-                    response?.status,
-                    response?.headers?.date,
-                    callResponseTime
-                  )
-                );
-              }
-            }
+        Object.values(webhooks || {}).map(async (webhook) => {
+          const beforeWebhook = new Date().getTime();
+          const response = await webhook?.process(next);
+          if (response) {
+            const callResponseTime = new Date().getTime() - beforeWebhook;
+            eventService.send(webhookTriggered(tenantId, webhook, next, response, callResponseTime));
           }
         });
-      } catch (e) {
-        console.error('Error: ' + JSON.stringify(e));
+      } catch (err) {
+        logger.error(`Error encountered processing webhook: ${err}`, {
+          ...LOG_CONTEXT,
+          tenantId: tenantId?.toString(),
+        });
       }
     }
   });

@@ -22,7 +22,7 @@ import {
   ScrollPane,
 } from '../styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
-import { FetchRealmRoles } from '@store/tenant/actions';
+
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
 import { updateFormDefinition } from '@store/form/action';
@@ -31,13 +31,13 @@ import { createSelector } from 'reselect';
 
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
-
 import { useHistory, useParams } from 'react-router-dom';
-
 import { GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components-new';
 import useWindowDimensions from '@lib/useWindowDimensions';
+import { FetchRealmRoles } from '@store/tenant/actions';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   return (
@@ -62,8 +62,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const { height } = useWindowDimensions();
 
   useEffect(() => {
-    dispatch(getFormDefinitions());
     dispatch(FetchRealmRoles());
+
+    dispatch(fetchKeycloakServiceRoles());
+    dispatch(getFormDefinitions());
   }, []);
 
   const types = [

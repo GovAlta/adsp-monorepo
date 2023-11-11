@@ -50,6 +50,7 @@ describe('upload', () => {
     id: 'test',
     filename: 'test.txt',
     recordId: 'test-123',
+    securityClassification: 'Public',
     deleted: false,
     scanned: true,
     size: 123,

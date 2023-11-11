@@ -2,15 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@store/index';
 import { fetchCalendars, UpdateCalendar, FETCH_CALENDARS_ACTION } from '@store/calendar/actions';
-import { CalendarItem, defaultCalendar } from '@store/calendar/models';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
 import { GoAButton } from '@abgov/react-components-new';
-import { FetchRealmRoles } from '@store/tenant/actions';
 import { CalendarModal } from './calendarModal';
 import { CalendarTableComponent } from './calendarList';
 import { fetchEventStreams } from '@store/stream/actions';
-import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 import { ActionState } from '@store/session/models';
 
 interface AddEditCalendarProps {
@@ -18,17 +15,14 @@ interface AddEditCalendarProps {
 }
 export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element => {
   const dispatch = useDispatch();
-  const [modalType, setModalType] = useState('');
   const [editCalendar, setEditCalendar] = useState(false);
   const [openAddCalendar, setOpenAddCalendar] = useState(false);
-  const [selectedCalendar, setSelectedCalendar] = useState<CalendarItem>(defaultCalendar);
+  const [selectedCalendarName, setSelectedCalendarName] = useState<string | undefined>();
 
   useEffect(() => {
     dispatch(fetchCalendars());
-    dispatch(FetchRealmRoles());
     dispatch(fetchEventStreams());
   }, []);
-  const tenant = useSelector(tenantRolesAndClients);
 
   const { calendars } = useSelector((state: RootState) => state.calendarService);
   const { fetchCalendarState } = useSelector((state: RootState) => ({
@@ -46,13 +40,11 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
 
   const reset = () => {
     setEditCalendar(false);
-    setSelectedCalendar(defaultCalendar);
     setOpenAddCalendar(false);
   };
 
   const onEdit = (calendar) => {
-    setSelectedCalendar(calendar);
-    setModalType('edit');
+    setSelectedCalendarName(calendar.name);
     setEditCalendar(true);
   };
 
@@ -62,8 +54,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
         <GoAButton
           testId="add-calendar-btn"
           onClick={() => {
-            setSelectedCalendar(defaultCalendar);
-            setModalType('new');
+            setSelectedCalendarName(undefined);
             setEditCalendar(true);
           }}
         >
@@ -80,10 +71,7 @@ export const CalendarsView = ({ activeEdit }: AddEditCalendarProps): JSX.Element
 
       <CalendarModal
         open={editCalendar || openAddCalendar}
-        initialValue={selectedCalendar}
-        type={openAddCalendar ? 'new' : modalType}
-        realmRoles={tenant.realmRoles}
-        tenantClients={tenant.tenantClients ? tenant.tenantClients : {}}
+        calendarName={selectedCalendarName}
         onCancel={() => {
           reset();
         }}

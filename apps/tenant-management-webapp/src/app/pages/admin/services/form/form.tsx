@@ -1,13 +1,15 @@
-import React, { FunctionComponent, useState } from 'react';
-import { useSelector } from 'react-redux';
+import React, { FunctionComponent, useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import FormOverview from './formOverview';
 import { RootState } from '@store/index';
 import { Aside, Main, Page } from '@components/Html';
 import { FormDefinitions } from './definitions/definitions';
 import { Tab, Tabs } from '@components/Tabs';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import AsideLinks from '@components/AsideLinks';
 import { HeadingDiv } from './styled-components';
 import BetaBadge from '@icons/beta-badge.svg';
+import { FetchRealmRoles } from '@store/tenant/actions';
 
 const HelpLink = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -30,6 +32,14 @@ export const Form: FunctionComponent = () => {
   //const [activeIndex, setActiveIndex] = useState<number>(0);
 
   const [openAddDefinition, setOpenAddDefinition] = useState(false);
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(FetchRealmRoles());
+
+    dispatch(fetchKeycloakServiceRoles());
+  }, []);
 
   const searchParams = new URLSearchParams(document.location.search);
 

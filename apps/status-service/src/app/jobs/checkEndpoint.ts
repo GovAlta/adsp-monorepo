@@ -4,14 +4,22 @@ import { ServiceStatusRepository } from '../repository/serviceStatus';
 import { EndpointStatusEntry, EndpointStatusType } from '../types';
 import { EndpointStatusEntryRepository } from '../repository/endpointStatusEntry';
 import { EndpointStatusEntryEntity } from '../model/endpointStatusEntry';
-import { AdspId, EventService, ServiceDirectory, TokenProvider, adspId, User } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  EventService,
+  ServiceDirectory,
+  TokenProvider,
+  adspId,
+  User,
+  ConfigurationService,
+} from '@abgov/adsp-service-sdk';
 import {
   applicationStatusToHealthy,
   applicationStatusToUnhealthy,
   monitoredServiceDown,
   monitoredServiceUp,
 } from '../events';
-import { Configuration, StatusConfiguration, StaticApplicationData, Webhooks } from '../model';
+import { PushServiceConfiguration, StaticApplicationData, StatusServiceConfiguration, Webhooks } from '../model';
 import { diffMinutes } from '../utils';
 
 const ENTRY_SAMPLE_SIZE = 5;
@@ -25,6 +33,7 @@ export interface CreateCheckEndpointProps {
   app: StaticApplicationData;
   serviceStatusRepository: ServiceStatusRepository;
   endpointStatusEntryRepository: EndpointStatusEntryRepository;
+  configurationService: ConfigurationService;
   eventService: EventService;
   directory: ServiceDirectory;
   tokenProvider: TokenProvider;
@@ -121,6 +130,7 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
     app,
     serviceStatusRepository,
     endpointStatusEntryRepository,
+    configurationService,
     eventService,
     logger,
     directory,
@@ -132,35 +142,24 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
   await EndpointStatusEntryEntity.create(endpointStatusEntryRepository, statusEntry);
   // verify that in the last [ENTRY_SAMPLE_SIZE] minutes, at least [MIN_OK_COUNT] are ok
 
-  const configurationServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:configuration-service`);
-  const token = await tokenProvider.getAccessToken();
-
-  const webhooksUrl = new URL(
-    `/configuration/v2/configuration/${serviceId.namespace}/push-service?tenantId=${app.tenantId}`,
-    configurationServiceUrl
-  );
-  const statusUrl = new URL(
-    `/configuration/v2/configuration/${serviceId.namespace}/status-service?tenantId=${app.tenantId}`,
-    configurationServiceUrl
-  );
-
   const user = {
     tenantId,
     roles: [ServiceUserRoles.Admin],
   } as User;
 
-  const response = (await axios.get(webhooksUrl.href, { headers: { Authorization: `Bearer ${token}` } })) as {
-    data: Configuration;
-  };
+  const token = await tokenProvider.getAccessToken();
+  const { webhooks } = await configurationService.getConfiguration<PushServiceConfiguration, PushServiceConfiguration>(
+    adspId`urn:ads:platform:push-service`,
+    token,
+    app.tenantId
+  );
 
-  const statusResponse = (await axios.get(statusUrl.href, { headers: { Authorization: `Bearer ${token}` } })) as {
-    data: StatusConfiguration;
-  };
+  const { applicationWebhookIntervals } = await configurationService.getConfiguration<
+    StatusServiceConfiguration,
+    StatusServiceConfiguration
+  >(serviceId, token, app.tenantId);
 
-  const webhooks = response.data?.latest?.configuration.webhooks;
-  const applicationWebhookIntervals = statusResponse?.data?.latest?.configuration.applicationWebhookIntervals;
-
-  const hookIntervalList = Object.keys(applicationWebhookIntervals).map((h) => {
+  const hookIntervalList = Object.keys(applicationWebhookIntervals || {}).map((h) => {
     return applicationWebhookIntervals[h];
   });
 
@@ -192,6 +191,8 @@ async function saveStatus(props: CreateCheckEndpointProps, statusEntry: Endpoint
           if (switchOffCount === waitTimePings.length && switchOffCount === waitTimeInterval) {
             eventTypes.map((et) => {
               if (et.id === 'status-service:monitored-service-down') {
+                // TODO: This is not correct. Application and webhook are not one to one, so application associated state
+                // should not be stored on the webhook.
                 if (webhook.appCurrentlyUp || webhook.appCurrentlyUp === undefined) {
                   const updatedWebhook: Webhooks = JSON.parse(JSON.stringify(webhook));
                   updatedWebhook.appCurrentlyUp = false;
