@@ -21,6 +21,7 @@ export default function (state: NotificationState = NOTIFICATION_INIT, action: A
         notification: {
           message: errorMessage,
           type: 'emergency',
+          dispatch: action.payload.dispatch,
         },
       };
     }

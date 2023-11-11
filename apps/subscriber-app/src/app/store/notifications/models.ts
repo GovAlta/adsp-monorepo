@@ -3,6 +3,7 @@ export interface Notification {
   expiry?: number;
   type?: NotificationType;
   error?: ErrorResponse;
+  dispatch?: { channel: string; loggedIn: boolean };
 }
 
 interface ErrorResponse {
