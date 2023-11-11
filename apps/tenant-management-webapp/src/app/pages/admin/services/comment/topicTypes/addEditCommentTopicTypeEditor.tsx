@@ -342,7 +342,6 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
           setSaveModal({ visible: false, closeEditor: true });
         }}
         onSave={() => {
-          console.log(JSON.stringify(isEdit) + '<isEdit');
           if (!isEdit) {
             const validations = {
               duplicate: topicType.name,
@@ -354,7 +353,6 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
             const validations = {
               securityClassification: topicType.securityClassification,
             };
-            console.log(JSON.stringify(validators.checkAll(validations)) + '<validators.checkAll(validations)');
             if (!validators.checkAll(validations)) {
               return;
             }
