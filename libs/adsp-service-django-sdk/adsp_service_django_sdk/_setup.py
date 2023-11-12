@@ -1,8 +1,10 @@
-from typing import Any, Callable, Dict, NamedTuple, Optional
+from importlib import import_module
+from os import environ
+from typing import Any
 
 from adsp_py_common.access import IssuerCache
 from adsp_py_common.adsp_id import AdspId
-from adsp_py_common.configuration import TC, ConfigurationService
+from adsp_py_common.configuration import ConfigurationService
 from adsp_py_common.constants import (
     CONFIG_ACCESS_URL,
     CONFIG_ALLOW_CORE,
@@ -16,42 +18,41 @@ from adsp_py_common.event import EventService
 from adsp_py_common.registration import AdspRegistration, ServiceRegistrar
 from adsp_py_common.tenant import TenantService
 from adsp_py_common.token_provider import TokenProvider
-from flask import Blueprint, Flask
+from django.conf import settings, LazySettings
 
 
 from .configuration import create_get_configuration
-from .filter import AccessRequestFilter, TenantRequestFilter
-from .metadata import create_metadata_blueprint
+from .services import AdspServices
+
+REGISTRATION_ENV_VARIABLE = "ADSP_REGISTRATION_MODULE"
 
 
-class AdspServices(NamedTuple):
-    directory: ServiceDirectory
-    token_provider: TokenProvider
-    tenant_service: TenantService
-    configuration_service: ConfigurationService
-    event_service: EventService
-    get_configuration: Callable[[Optional[AdspId]], TC]
-    metadata_blueprint: Blueprint
+class LazyAdspServices(AdspServices):
+    _loaded = False
 
+    @staticmethod
+    def _import_registration() -> AdspRegistration:
+        registration_module = environ.get(REGISTRATION_ENV_VARIABLE)
+        registration = AdspRegistration()
 
-class AdspExtension:
-    def init_app(
-        self,
-        app: Flask,
-        registration: AdspRegistration,
-        config: Optional[Dict[str, Any]] = None,
+        if registration_module:
+            mod = import_module(registration_module)
+            for setting in dir(mod):
+                setting_value = getattr(mod, setting)
+                if isinstance(setting_value, AdspRegistration):
+                    registration = setting_value
+
+        return registration
+
+    def _create_services(
+        self, config: LazySettings, registration: AdspRegistration
     ) -> AdspServices:
-        base_config = app.config.copy()
-        if config:
-            base_config.update(config)
-        config = base_config
-
-        access_url = config.get(CONFIG_ACCESS_URL)
-        directory_url = config.get(CONFIG_DIRECTORY_URL)
-        service_id_value = config.get(CONFIG_SERVICE_ID)
-        client_secret = config.get(CONFIG_CLIENT_SECRET)
-        realm = config.get(CONFIG_REALM)
-        allow_core = config.get(CONFIG_ALLOW_CORE, False)
+        access_url = getattr(config, CONFIG_ACCESS_URL, None)
+        directory_url = getattr(config, CONFIG_DIRECTORY_URL, None)
+        service_id_value = getattr(config, CONFIG_SERVICE_ID, None)
+        client_secret = getattr(config, CONFIG_CLIENT_SECRET, None)
+        realm = getattr(config, CONFIG_REALM, None)
+        allow_core = getattr(config, CONFIG_ALLOW_CORE, False)
 
         if not access_url:
             raise ValueError(f"{CONFIG_ACCESS_URL} configuration value is required.")
@@ -88,21 +89,22 @@ class AdspExtension:
 
         registrar = ServiceRegistrar(service_id, directory, token_provider)
         registrar.register(registration)
-        metadata_blueprint = create_metadata_blueprint(service_id, registration)
 
-        access_filter = AccessRequestFilter(service_id, issuer_cache)
-        tenant_filter = TenantRequestFilter(tenant_service)
+        self.service_id = service_id
+        self.directory = directory
+        self.token_provider = token_provider
+        self.tenant_service = tenant_service
+        self.configuration_service = configuration_service
+        self.event_service = event_service
+        self.get_configuration = get_configuration
+        self.issuer_cache = issuer_cache
+        self.registration = registration
+        self._loaded = True
 
-        app.before_request(access_filter.filter)
-        app.before_request(tenant_filter.filter)
+    def __getattr__(self, __name: str) -> Any:
+        if not self._loaded:
+            self._create_services(settings, self._import_registration())
+        return super().__getattribute__(__name)
 
-        app.extensions["adsp_extension"] = self
-        return AdspServices(
-            directory,
-            token_provider,
-            tenant_service,
-            configuration_service,
-            event_service,
-            get_configuration,
-            metadata_blueprint,
-        )
+
+adsp: AdspServices = LazyAdspServices()

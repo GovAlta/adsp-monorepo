@@ -1,0 +1,20 @@
+{
+  "extends": "../../.releaserc.json",
+  "tagFormat": "adsp-service-django-sdk-v${version}",
+  "plugins": [
+    [
+      "@abgov/nx-release",
+      {
+        "project": "adsp-service-django-sdk"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "releasedLabels": false,
+        "successComment": false,
+        "assets": "libs/adsp-service-django-sdk/dist/"
+      }
+    ]
+  ]
+}

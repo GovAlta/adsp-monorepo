@@ -13,14 +13,17 @@ from adsp_py_common.registration import (
 )
 from adsp_py_common.tenant import Tenant as Tenant
 
-from .extension import AdspExtension as AdspExtension, AdspServices as AdspServices
-from .filter import (
-    request_user as request_user,
-    request_tenant as request_tenant,
+from .context import (
+    get_user as get_user,
+    get_tenant as get_tenant,
     require_user as require_user,
 )
+from .metadata import get_metadata
+from .services import AdspServices as AdspServices
+from ._setup import adsp as adsp
 
 __all__ = [
+    "adsp",
     "AdspId",
     "AdspExtension",
     "AdspRegistration",
@@ -35,7 +38,8 @@ __all__ = [
     "StreamDefinition",
     "Tenant",
     "User",
-    "request_user",
-    "request_tenant",
+    "get_user",
+    "get_tenant",
     "require_user",
+    "get_metadata",
 ]

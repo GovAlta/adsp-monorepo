@@ -1,10 +1,9 @@
 import logging
 from typing import Any, Callable, Dict, List, NamedTuple, Optional
-from adsp_service_flask_sdk.configuration import TC
 
 from httpx import RequestError, post
 
-from ._constants import (
+from .constants import (
     PLATFORM_CONFIGURATION_API,
     PLATFORM_CONFIGURATION_SERVICE,
     PLATFORM_EVENT_SERVICE,
@@ -13,6 +12,7 @@ from ._constants import (
     PLATFORM_TENANT_SERVICE,
 )
 from .adsp_id import AdspId
+from .configuration import TC
 from .directory import ServiceDirectory
 from .token_provider import TokenProvider
 

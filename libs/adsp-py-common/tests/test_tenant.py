@@ -1,16 +1,16 @@
 import pytest
 from unittest.mock import Mock, patch
 
-from adsp_service_flask_sdk import AdspId
-from adsp_service_flask_sdk.directory import ServiceDirectory
-from adsp_service_flask_sdk.tenant import TenantService
-from adsp_service_flask_sdk.token_provider import TokenProvider
+from adsp_py_common.adsp_id import AdspId
+from adsp_py_common.directory import ServiceDirectory
+from adsp_py_common.tenant import TenantService
+from adsp_py_common.token_provider import TokenProvider
 from more_itertools import first
 from httpx import Response, RequestError
 
 
 def test_get_tenants():
-    with patch("adsp_service_flask_sdk.tenant.get", spec=True) as mock_get:
+    with patch("adsp_py_common.tenant.get", spec=True) as mock_get:
         directory = Mock(ServiceDirectory)
         directory.get_service_url.return_value = "https://tenant-service"
         token_provider = Mock(TokenProvider)
@@ -37,7 +37,7 @@ def test_get_tenants():
 
 
 def test_get_tenant():
-    with patch("adsp_service_flask_sdk.tenant.get", spec=True) as mock_get:
+    with patch("adsp_py_common.tenant.get", spec=True) as mock_get:
         directory = Mock(ServiceDirectory)
         directory.get_service_url.return_value = "https://tenant-service"
         token_provider = Mock(TokenProvider)
@@ -62,7 +62,7 @@ def test_get_tenant():
 
 
 def test_get_tenants_request_error():
-    with patch("adsp_service_flask_sdk.tenant.get", spec=True) as mock_get:
+    with patch("adsp_py_common.tenant.get", spec=True) as mock_get:
         directory = Mock(ServiceDirectory)
         directory.get_service_url.return_value = "https://tenant-service"
         token_provider = Mock(TokenProvider)
@@ -75,7 +75,7 @@ def test_get_tenants_request_error():
 
 
 def test_get_tenant_from_cache():
-    with patch("adsp_service_flask_sdk.tenant.get", spec=True) as mock_get:
+    with patch("adsp_py_common.tenant.get", spec=True) as mock_get:
         directory = Mock(ServiceDirectory)
         directory.get_service_url.return_value = "https://tenant-service"
         token_provider = Mock(TokenProvider)
