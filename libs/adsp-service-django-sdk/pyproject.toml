@@ -1,30 +1,30 @@
 [tool.coverage.run]
 branch = true
-source = [ "adsp_service_flask_sdk" ]
+source = [ "adsp_service_django_sdk" ]
 
 [tool.coverage.report]
 exclude_lines = [ "if TYPE_CHECKING:" ]
 show_missing = true
 
 [tool.pytest.ini_options]
-addopts = "--cov --cov-fail-under=0 --cov-report html:'../../coverage/libs/adsp-service-flask-sdk/html' --cov-report xml:'../../coverage/libs/adsp-service-flask-sdk/coverage.xml' --junitxml='../../reports/libs/adsp-service-flask-sdk/unittests/junit.xml' --html='../../reports/libs/adsp-service-flask-sdk/unittests/html/index.html'"
+addopts = "--cov --cov-report html:'../../coverage/libs/adsp-service-django-sdk/html' --cov-report xml:'../../coverage/libs/adsp-service-django-sdk/coverage.xml' --html='../../reports/libs/adsp-service-django-sdk/unittests/html/index.html' --junitxml='../../reports/libs/adsp-service-django-sdk/unittests/junit.xml'"
 log_cli = true
 log_cli_level = "DEBUG"
 
 [tool.poetry]
-name = "adsp-service-flask-sdk"
+name = "adsp-service-django-sdk"
 version = "1.0.0"
-description = "ADSP Service SDK for Flask"
+description = "ADSP Service SDK for Django"
 authors = [ ]
 license = "Apache-2.0"
 readme = "README.md"
 
   [[tool.poetry.packages]]
-  include = "adsp_service_flask_sdk"
+  include = "adsp_service_django_sdk"
 
   [tool.poetry.dependencies]
   python = ">=3.9,<3.11"
-  flask = "^2.2.3"
+  django = "^4.2.7"
 
     [tool.poetry.dependencies.adsp-py-common]
     path = "../adsp-py-common"

@@ -1,5 +1,6 @@
-from adsp_service_flask_sdk.util import destruct_list
 import pytest
+
+from adsp_py_common.util import destruct_list
 
 
 def test_destruct():
