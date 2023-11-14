@@ -64,8 +64,12 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
   const [spinner, setSpinner] = useState<boolean>(false);
 
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
+  const latestNotification = useSelector(
+    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
+  );
 
   const { height } = useWindowDimensions();
+  const calcHeight = latestNotification && !latestNotification.disabled ? height - 8 : height;
 
   const isEdit = !!id;
 
@@ -227,9 +231,8 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
 
-  const errorOffset = errors?.['securityClassification'] ? 26 : 0;
   const heightCover = {
-    height: height - 561 - errorOffset,
+    height: calcHeight - 550,
   };
 
   return (
@@ -246,26 +249,27 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
             {topicType && <TopicConfigTopicType topicType={topicType} />}
 
             <EditorPadding>
-              <GoAFormItem error={errors?.['securityClassification']} label="Select a security classification">
-                <GoADropdown
-                  name="securityClassifications"
-                  value={topicType?.securityClassification}
-                  onChange={(_n: string, value: SecurityClassification) => {
-                    validators['securityClassification'].check(value);
-                    setTopicType({
-                      ...topicType,
-                      securityClassification: value,
-                    });
-                  }}
-                  width="25rem"
-                >
-                  <GoADropdownItem value={SecurityClassification.public} label="Public" />
-                  <GoADropdownItem value={SecurityClassification.protectedA} label="Protected A" />
-                  <GoADropdownItem value={SecurityClassification.protectedB} label="Protected B" />
-                  <GoADropdownItem value={SecurityClassification.protectedC} label="Protected C" />
-                </GoADropdown>
-              </GoAFormItem>
-              <div style={heightCover}></div>
+              <div style={heightCover}>
+                <GoAFormItem error={errors?.['securityClassification']} label="Select a security classification">
+                  <GoADropdown
+                    name="securityClassifications"
+                    value={topicType?.securityClassification}
+                    onChange={(_n: string, value: SecurityClassification) => {
+                      validators['securityClassification'].check(value);
+                      setTopicType({
+                        ...topicType,
+                        securityClassification: value,
+                      });
+                    }}
+                    width="25rem"
+                  >
+                    <GoADropdownItem value={SecurityClassification.public} label="Public" />
+                    <GoADropdownItem value={SecurityClassification.protectedA} label="Protected A" />
+                    <GoADropdownItem value={SecurityClassification.protectedB} label="Protected B" />
+                    <GoADropdownItem value={SecurityClassification.protectedC} label="Protected C" />
+                  </GoADropdown>
+                </GoAFormItem>
+              </div>
             </EditorPadding>
 
             <hr className="hr-resize-bottom" />

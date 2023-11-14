@@ -40,6 +40,11 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     fetchScriptState: state.scriptService.indicator?.details[FETCH_SCRIPTS_ACTION] || '',
   }));
 
+  const latestNotification = useSelector(
+    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
+  );
+  const isNotificationActive = latestNotification && !latestNotification.disabled;
+
   useEffect(() => {
     dispatch(fetchScripts());
     dispatch(FetchRealmRoles());
@@ -148,7 +153,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
       />
 
       {showScriptEditForm && (
-        <Modal open={showScriptEditForm} data-testid="script-edit-form">
+        <Modal open={showScriptEditForm} isNotificationActive={isNotificationActive} data-testid="script-edit-form">
           {/* Hides body overflow when the modal is up */}
           <BodyGlobalStyles hideOverflow={showScriptEditForm} />
           <ModalContent>
