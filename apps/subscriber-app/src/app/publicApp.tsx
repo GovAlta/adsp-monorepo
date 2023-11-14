@@ -19,7 +19,7 @@ export function PublicApp(): JSX.Element {
   return (
     <PublicCss>
       <Header serviceName="Alberta Digital Service Platform - Subscription management" />
-      <NotificationBanner />
+      <NotificationBanner loggedIn={false} />
       <Routes>
         <Route index element={<Navigate to="/overview" />} />
         <Route path="overview" element={<LandingPage />} />

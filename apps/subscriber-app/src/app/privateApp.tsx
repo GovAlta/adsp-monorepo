@@ -27,7 +27,7 @@ export function PrivateApp(): JSX.Element {
   return (
     <HeaderCtx.Provider value={{ setTitle }}>
       <Header serviceName={title} />
-      <NotificationBanner />
+      <NotificationBanner loggedIn={true} />
       <Routes>
         <Route path="sms/:code" element={<SmsRedirect />} />
         <Route path="/*" element={<Subscriptions realm={realm} />} />
