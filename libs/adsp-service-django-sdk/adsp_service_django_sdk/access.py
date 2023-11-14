@@ -1,14 +1,16 @@
+from adsp_py_common.tenant import Tenant
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import User as UserModel
-from django.db import models
 
 from .context import get_user
 
 
-class TenantUser(models.Model):
-    user = models.OneToOneField(UserModel, on_delete=models.CASCADE)
-    id = models.UUIDField(primary_key=True)
-    tenant = models.CharField(max_length=100)
+class TenantUser(UserModel):
+    class Meta:
+        app_label = "auth"
+        proxy = True
+
+    tenant: Tenant = None
 
 
 class AccessAuthenticationBackend(BaseBackend):
@@ -25,6 +27,6 @@ class AccessAuthenticationBackend(BaseBackend):
                     first_name=user.first_name,
                     last_name=user.last_name,
                 )
-                model = TenantUser(tenant=str(user.tenant.id), id=user.id, user=base)
+                model = TenantUser(tenant=user.tenant, id=user.id, user=base)
                 model.save()
         return model
