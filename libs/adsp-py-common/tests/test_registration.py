@@ -28,7 +28,7 @@ def test_register():
 
 
 def test_register_configuration():
-    with patch("adsp_py_common.registration.post") as mock_post:
+    with patch("adsp_py_common.registration.patch") as mock_post:
         directory = Mock(ServiceDirectory)
         directory.get_service_url.return_value = "https://tenant-service"
         token_provider = Mock(TokenProvider)
@@ -48,7 +48,7 @@ def test_register_configuration():
 
 
 def test_register_roles():
-    with patch("adsp_py_common.registration.post") as mock_post:
+    with patch("adsp_py_common.registration.patch") as mock_post:
         directory = Mock(ServiceDirectory)
         directory.get_service_url.return_value = "https://tenant-service"
         token_provider = Mock(TokenProvider)
@@ -66,7 +66,7 @@ def test_register_roles():
 
 
 def test_register_events():
-    with patch("adsp_py_common.registration.post") as mock_post:
+    with patch("adsp_py_common.registration.patch") as mock_post:
         directory = Mock(ServiceDirectory)
         directory.get_service_url.return_value = "https://tenant-service"
         token_provider = Mock(TokenProvider)
@@ -88,7 +88,7 @@ def test_register_events():
 
 
 def test_register_streams():
-    with patch("adsp_py_common.registration.post") as mock_post:
+    with patch("adsp_py_common.registration.patch") as mock_post:
         directory = Mock(ServiceDirectory)
         directory.get_service_url.return_value = "https://tenant-service"
         token_provider = Mock(TokenProvider)
@@ -108,7 +108,7 @@ def test_register_streams():
 
 
 def test_register_file_types():
-    with patch("adsp_py_common.registration.post") as mock_post:
+    with patch("adsp_py_common.registration.patch") as mock_post:
         directory = Mock(ServiceDirectory)
         directory.get_service_url.return_value = "https://tenant-service"
         token_provider = Mock(TokenProvider)
@@ -126,7 +126,7 @@ def test_register_file_types():
 
 
 def test_register_request_error():
-    with patch("adsp_py_common.registration.post") as mock_post:
+    with patch("adsp_py_common.registration.patch") as mock_post:
         directory = Mock(ServiceDirectory)
         directory.get_service_url.return_value = "https://tenant-service"
         token_provider = Mock(TokenProvider)
