@@ -35,10 +35,10 @@ export const BodyGlobalStyles = createGlobalStyle<{ hideOverflow: boolean }>`
     overflow:  ${(props) => (props.hideOverflow ? `hidden` : `auto`)};
   }
 `;
-export const Modal = styled.div<{ open: boolean }>`
+export const Modal = styled.div<{ open: boolean; isNotificationActive: boolean }>`
   display: ${(props) => (props.open ? `block` : `none`)};
   position: fixed;
-  top: 0;
+  top: ${(props) => (props.isNotificationActive ? `81px` : `0`)};
   left: 0;
   bottom: 0;
   z-index: 10000;
@@ -59,7 +59,6 @@ export const MonacoDivBody = styled.div`
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
   min-height: 65px;
-  height: calc(72vh - 310px);
   margin-bottom: 1rem;
 `;
 export const TestInputDivBody = styled.div`

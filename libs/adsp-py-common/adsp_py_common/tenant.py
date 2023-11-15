@@ -6,7 +6,7 @@ from typing import Dict, NamedTuple, Optional
 from cachetools import TTLCache, cachedmethod, keys
 from httpx import RequestError, get
 
-from ._constants import PLATFORM_TENANT_API
+from .constants import PLATFORM_TENANT_API
 from .adsp_id import AdspId
 from .directory import ServiceDirectory
 from .token_provider import TokenProvider

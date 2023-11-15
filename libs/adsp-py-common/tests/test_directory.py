@@ -1,13 +1,13 @@
 import pytest
 from unittest.mock import Mock, patch
 
-from adsp_service_flask_sdk import AdspId
-from adsp_service_flask_sdk.directory import ServiceDirectory
+from adsp_py_common.adsp_id import AdspId
+from adsp_py_common.directory import ServiceDirectory
 from httpx import Response, RequestError
 
 
 def test_get_service_url():
-    with patch("adsp_service_flask_sdk.directory.get", spec=True) as mock_get:
+    with patch("adsp_py_common.directory.get", spec=True) as mock_get:
         urn = "urn:ads:platform:test-service"
         url = "https://directory"
 
@@ -21,7 +21,7 @@ def test_get_service_url():
 
 
 def test_get_service_url_from_cache():
-    with patch("adsp_service_flask_sdk.directory.get", spec=True) as mock_get:
+    with patch("adsp_py_common.directory.get", spec=True) as mock_get:
         urn = "urn:ads:platform:test-service"
         url = "https://directory"
 
@@ -37,7 +37,7 @@ def test_get_service_url_from_cache():
 
 
 def test_get_service_url_request_error():
-    with patch("adsp_service_flask_sdk.directory.get", spec=True) as mock_get:
+    with patch("adsp_py_common.directory.get", spec=True) as mock_get:
         urn = "urn:ads:platform:test-service"
         url = "https://directory"
 

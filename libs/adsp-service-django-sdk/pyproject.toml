@@ -1,0 +1,43 @@
+[tool.coverage.run]
+branch = true
+source = [ "adsp_service_django_sdk" ]
+
+[tool.coverage.report]
+exclude_lines = [ "if TYPE_CHECKING:" ]
+show_missing = true
+
+[tool.pytest.ini_options]
+addopts = "--cov --cov-report html:'../../coverage/libs/adsp-service-django-sdk/html' --cov-report xml:'../../coverage/libs/adsp-service-django-sdk/coverage.xml' --html='../../reports/libs/adsp-service-django-sdk/unittests/html/index.html' --junitxml='../../reports/libs/adsp-service-django-sdk/unittests/junit.xml'"
+log_cli = true
+log_cli_level = "DEBUG"
+
+[tool.poetry]
+name = "adsp-service-django-sdk"
+version = "1.0.0"
+description = "ADSP Service SDK for Django"
+authors = [ ]
+license = "Apache-2.0"
+readme = "README.md"
+
+  [[tool.poetry.packages]]
+  include = "adsp_service_django_sdk"
+
+  [tool.poetry.dependencies]
+  python = ">=3.9,<3.11"
+  django = "^4.2.7"
+
+    [tool.poetry.dependencies.adsp-py-common]
+    path = "../adsp-py-common"
+    develop = true
+
+[tool.poetry.group.dev.dependencies]
+flake8 = "^6.0.0"
+pytest = "^7.2.2"
+pytest-coverage = "^0.0"
+pytest-html = "^3.2.0"
+black = "^23.1.0"
+tox = "^4.4.7"
+
+[build-system]
+requires = [ "poetry-core==1.1.0" ]
+build-backend = "poetry.core.masonry.api"

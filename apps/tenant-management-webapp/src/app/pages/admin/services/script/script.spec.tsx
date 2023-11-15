@@ -8,6 +8,15 @@ import { SESSION_INIT } from '@store/session/models';
 describe('Script list Page', () => {
   const mockStore = configureStore([]);
   const store = mockStore({
+    notifications: {
+      notifications: {
+        disabled: '',
+        expiry: 1666688978990,
+        id: '051b40e4-5f55-4f74-a652-9e0bf36faaa3',
+        message: 'Validation failed with error(s): operation (body) - Invalid value',
+        type: 'emergency',
+      },
+    },
     scriptService: {
       scripts: {
         'ddi-script': {

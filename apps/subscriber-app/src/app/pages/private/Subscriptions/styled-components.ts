@@ -26,10 +26,13 @@ export const ContactInformationContainer = styled.div`
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
-  padding-top: 1.5rem;
+  padding-top: 0rem;
 `;
 export const SubscriptionListContainer = styled.div`
   padding-top: 0rem;
+`;
+export const ButtonMargin = styled.div`
+  padding-top: 1rem;
 `;
 
 export const VerificationWrapper = styled.div`

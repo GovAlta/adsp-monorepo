@@ -96,6 +96,29 @@ export class SubscriberEntity implements Subscriber {
     user: User,
     channel: Channel,
     address: string,
+    reason: string = null
+  ): Promise<void> {
+    if (!this.canUpdate(user) && !isAllowedUser(user, this.tenantId, ServiceUserRoles.CodeSender, true)) {
+      throw new UnauthorizedUserError('send code to subscriber', user);
+    }
+
+    const verifyChannel = this.channels.find((sub) => sub.channel === channel && sub.address === address);
+    if (!verifyChannel) {
+      throw new InvalidOperationError('Specified subscriber channel not recognized.');
+    }
+
+    verifyChannel.verifyKey = await verifyService.sendCode(
+      verifyChannel,
+      reason || 'Enter this code to verify your contact address.'
+    );
+    await this.repository.saveSubscriber(this);
+  }
+
+  async sendVerifyCodeWithLink(
+    verifyService: VerifyService,
+    user: User,
+    channel: Channel,
+    address: string,
     reason: string = null,
     expireIn = 10,
     verificationLink?: string
@@ -112,7 +135,7 @@ export class SubscriberEntity implements Subscriber {
       throw new InvalidOperationError('Specified subscriber channel not recognized.');
     }
 
-    verifyChannel.verifyKey = await verifyService.sendCode(
+    verifyChannel.verifyKey = await verifyService.sendCodeWithLink(
       verifyChannel,
       reason || 'Enter this code to verify your contact address.',
       expireIn,
@@ -148,7 +171,6 @@ export class SubscriberEntity implements Subscriber {
     if (!codeChannel) {
       throw new InvalidOperationError('Specified subscriber channel not recognized.');
     }
-
     const verified = await verifyService.verifyCode(codeChannel, code);
 
     if (verifyChannel) {

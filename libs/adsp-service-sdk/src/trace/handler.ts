@@ -26,7 +26,7 @@ export function createTraceHandler({ logger, sampleRate }: TraceHandlerOptions):
   // Use an axios interceptor to add the traceparent header if not already present.
   axios.interceptors.request.use((config) => {
     const trace = getContextTrace();
-    if (trace && !config.headers?.has(TRACE_PARENT_HEADER, true)) {
+    if (trace && !config.headers?.has(TRACE_PARENT_HEADER)) {
       config.headers?.set(TRACE_PARENT_HEADER, trace.toString());
     }
     return config;

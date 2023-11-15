@@ -1,10 +1,9 @@
 import logging
 from typing import Any, Callable, Dict, List, NamedTuple, Optional
-from adsp_service_flask_sdk.configuration import TC
 
-from httpx import RequestError, post
+from httpx import RequestError, patch
 
-from ._constants import (
+from .constants import (
     PLATFORM_CONFIGURATION_API,
     PLATFORM_CONFIGURATION_SERVICE,
     PLATFORM_EVENT_SERVICE,
@@ -13,6 +12,7 @@ from ._constants import (
     PLATFORM_TENANT_SERVICE,
 )
 from .adsp_id import AdspId
+from .configuration import TC
 from .directory import ServiceDirectory
 from .token_provider import TokenProvider
 
@@ -123,7 +123,7 @@ class ServiceRegistrar:
                 PLATFORM_EVENT_SERVICE,
                 {
                     self.__service_id.service: {
-                        "service": self.__service_id.service,
+                        "name": self.__service_id.service,
                         "definitions": {
                             event.name: {
                                 "name": event.name,
@@ -176,15 +176,22 @@ class ServiceRegistrar:
         token = self.__token_provider.get_access_token()
 
         try:
-            post(
+            response = patch(
                 f"{configuration_service_url}/configuration/{service_id.namespace}/{service_id.service}",
                 json={"operation": "UPDATE", "update": update},
                 headers={"Authorization": f"Bearer {token}"},
             )
 
-            self._logger.info(
-                "Updated registration configuration for service %s", service_id
-            )
+            if response.status_code == 200:
+                self._logger.info(
+                    "Updated registration configuration for service %s", service_id
+                )
+            else:
+                self._logger.error(
+                    "Error encountered updating registration configuration for service %s. %s",
+                    service_id,
+                    response.content.decode(),
+                )
         except RequestError as err:
             self._logger.error(
                 "Error encountered updating registration configuration for service %s. %s",

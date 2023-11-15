@@ -1,21 +1,17 @@
+import pytest
 from unittest.mock import Mock, patch
 
-from adsp_service_flask_sdk import (
-    AdspId,
-    AdspRegistration,
-    DomainEvent,
-    DomainEventDefinition,
-)
-from adsp_service_flask_sdk.directory import ServiceDirectory
-from adsp_service_flask_sdk.event import EventService
-from adsp_service_flask_sdk.token_provider import TokenProvider
+from adsp_py_common.adsp_id import AdspId
+from adsp_py_common.directory import ServiceDirectory
+from adsp_py_common.event import DomainEvent, EventService
+from adsp_py_common.registration import AdspRegistration, DomainEventDefinition
+from adsp_py_common.token_provider import TokenProvider
 from datetime import datetime
 from httpx import RequestError
-import pytest
 
 
 def test_send_event():
-    with patch("adsp_service_flask_sdk.event.post") as mock_post:
+    with patch("adsp_py_common.event.post") as mock_post:
         directory = Mock(ServiceDirectory)
         directory.get_service_url.return_value = "https://event-service"
         token_provider = Mock(TokenProvider)
@@ -41,7 +37,7 @@ def test_send_event():
 
 
 def test_send_event_request_error():
-    with patch("adsp_service_flask_sdk.event.post") as mock_post:
+    with patch("adsp_py_common.event.post") as mock_post:
         directory = Mock(ServiceDirectory)
         directory.get_service_url.return_value = "https://event-service"
         token_provider = Mock(TokenProvider)
@@ -68,7 +64,7 @@ def test_send_event_request_error():
 
 
 def test_send_event_unregistered_event():
-    with patch("adsp_service_flask_sdk.event.post") as mock_post:
+    with patch("adsp_py_common.event.post") as mock_post:
         directory = Mock(ServiceDirectory)
         directory.get_service_url.return_value = "https://event-service"
         token_provider = Mock(TokenProvider)

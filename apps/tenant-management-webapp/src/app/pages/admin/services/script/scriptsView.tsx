@@ -8,9 +8,7 @@ import { GoAButton } from '@abgov/react-components-new';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { AddScriptModal } from './addScriptModal';
-
 import { fetchEventStreams } from '@store/stream/actions';
-import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 import { ScriptTableComponent } from './scriptList';
 import { ActionState } from '@store/session/models';
 import { PageIndicator } from '@components/Indicator';
@@ -42,16 +40,19 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     fetchScriptState: state.scriptService.indicator?.details[FETCH_SCRIPTS_ACTION] || '',
   }));
 
+  const latestNotification = useSelector(
+    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
+  );
+  const isNotificationActive = latestNotification && !latestNotification.disabled;
+
   useEffect(() => {
     dispatch(fetchScripts());
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
     dispatch(fetchEventStreams());
   }, []);
-  const tenant = useSelector(tenantRolesAndClients);
 
   const { scripts } = useSelector((state: RootState) => state.scriptService);
-
   const { errors, validators } = useValidators(
     'name',
     'name',
@@ -145,8 +146,6 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
         open={openAddScript}
         isNew={true}
         initialValue={selectedScript}
-        realmRoles={tenant.realmRoles}
-        tenantClients={tenant.tenantClients ? tenant.tenantClients : {}}
         onCancel={() => {
           reset();
         }}
@@ -154,7 +153,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
       />
 
       {showScriptEditForm && (
-        <Modal open={showScriptEditForm} data-testid="script-edit-form">
+        <Modal open={showScriptEditForm} isNotificationActive={isNotificationActive} data-testid="script-edit-form">
           {/* Hides body overflow when the modal is up */}
           <BodyGlobalStyles hideOverflow={showScriptEditForm} />
           <ModalContent>

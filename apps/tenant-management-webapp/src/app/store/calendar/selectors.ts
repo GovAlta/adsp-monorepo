@@ -3,6 +3,7 @@ import { RootState } from '../index';
 import { CalendarObjectType, CalendarEventDefault, EventAddEditModalType, EventDeleteModalType } from './models';
 import { selectModalStateByType } from '@store/session/selectors';
 import { ModalState } from '@store/session/models';
+import { defaultCalendar } from '@store/calendar/models';
 
 export const selectCalendars = createSelector(
   (state: RootState) => state?.calendarService?.calendars,
@@ -11,10 +12,11 @@ export const selectCalendars = createSelector(
   }
 );
 
-export const selectCalendarsById = createSelector(
+export const selectCalendarsByName = createSelector(
   selectCalendars,
-  (_, name: string) => name,
+  (_, name: string | undefined) => name,
   (calendars, name) => {
+    if (name === undefined) return defaultCalendar;
     return Object.entries(calendars)
       .map((e) => e[1])
       .find((c) => c.name === name);
@@ -69,7 +71,7 @@ export const selectSelectedCalendarEvents = createSelector(
   (state, calendarName: string) => {
     return (
       calendarName &&
-      selectCalendarsById(state, calendarName)?.selectedCalendarEvents?.sort((a, b) => {
+      selectCalendarsByName(state, calendarName)?.selectedCalendarEvents?.sort((a, b) => {
         return new Date(b.start).valueOf() - new Date(a.start).valueOf();
       })
     );
@@ -81,7 +83,7 @@ export const selectSelectedCalendarNextEvents = createSelector(
   (_, calendarName: string) => calendarName,
   selectModalStateByType(EventAddEditModalType),
   (state, calendarName: string) => {
-    return selectCalendarsById(state, calendarName)?.nextEvents;
+    return selectCalendarsByName(state, calendarName)?.nextEvents;
   }
 );
 

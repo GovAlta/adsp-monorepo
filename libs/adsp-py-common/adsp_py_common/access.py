@@ -59,7 +59,9 @@ class IssuerCache:
             if self.__allow_core:
                 core_iss = f"{self.__access_service_url}/auth/realms/core"
                 core_jwks_uri = f"{self.__access_service_url}/auth/realms/core/protocol/openid-connect/certs"
-                issuers[core_iss] = _TokenIssuer(None, core_iss, _JWKClient(core_jwks_uri))
+                issuers[core_iss] = _TokenIssuer(
+                    None, core_iss, _JWKClient(core_jwks_uri)
+                )
                 self._logger.debug("Including core issuer %s -> core", core_iss)
 
             for _, tenant in tenants.items():
@@ -82,7 +84,7 @@ class IssuerCache:
             self._logger.info("Retrieved and cached tenant issuers.")
             return issuers
         except RequestError as err:
-            self._logger.error('Error encountered retrieving issuers. %s', err)
+            self._logger.error("Error encountered retrieving issuers. %s", err)
             raise
 
     @cachedmethod(attrgetter("_cache"), lock=attrgetter("_cache_lock"))
@@ -94,6 +96,8 @@ class User(NamedTuple):
     tenant: Optional[Tenant]
     id: str
     name: str
+    first_name: str
+    last_name: str
     email: str
     roles: List[str]
     is_core: bool = False

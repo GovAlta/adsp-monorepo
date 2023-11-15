@@ -241,9 +241,12 @@ export function* verifyPhone(action: VerifyPhoneAction): SagaIterator {
     action.nonLoggedIn ? 'none' : state.session.credentials?.token
   );
 
+  const realm: string = yield select((state: RootState) => (action.nonLoggedIn ? null : state.session.realm));
   const baseUrl = action.nonLoggedIn ? '/api/subscriber' : `${configBaseUrl}/subscription`;
   const reason = `This code will expire in ${expireMinutes} minutes, so please make sure to click it soon to confirm the accuracy of your notification phone number. Please disregard this sms if you did not initiate the verification.`;
   const address = subscriber.channels.find((channel) => channel.channel === 'sms')?.address;
+
+  const loggedInLink = `${window.location.origin}/subscriptions/${realm}`;
 
   if (baseUrl && token) {
     try {
@@ -251,10 +254,11 @@ export function* verifyPhone(action: VerifyPhoneAction): SagaIterator {
         axios.post,
         `${baseUrl}/v1/subscribers/${subscriber.id}`,
         {
-          operation: 'send-code',
+          operation: 'send-code-with-link',
           channel: 'sms',
           address: address,
           reason: reason,
+          verificationLink: loggedInLink,
           expireIn: expireMinutes,
         },
         {
@@ -264,7 +268,7 @@ export function* verifyPhone(action: VerifyPhoneAction): SagaIterator {
 
       yield put(
         SuccessNotification({
-          message: `A verification email has been sent to ${address}..`,
+          message: `A verification sms has been sent to ${address}. If you did not receive this message, adjust the phone number and try again. The code will expire after ${expireMinutes} minutes`,
         })
       );
       yield put(VerifyPhoneSuccess(response));
@@ -317,7 +321,7 @@ export function* verifyEmail(action: VerifyEmailAction): SagaIterator {
         axios.post,
         `${baseUrl}/v1/subscribers/${subscriber.id}`,
         {
-          operation: 'send-code',
+          operation: 'send-code-with-link',
           channel: 'email',
           address: address,
           reason: reason,
@@ -332,7 +336,7 @@ export function* verifyEmail(action: VerifyEmailAction): SagaIterator {
 
       yield put(
         SuccessNotification({
-          message: `A verification email has been sent to ${address}..`,
+          message: `A verification email has been sent to ${address}. If you did not receive this message, adjust the email and try again. The code will expire after ${expireMinutes} minutes`,
         })
       );
       yield put(VerifyEmailSuccess(response));
@@ -374,6 +378,7 @@ export function* checkCode(action: CheckCodeAction): SagaIterator {
 
   const baseUrl = action.nonLoggedIn ? '/api/subscriber' : `${configBaseUrl}/subscription`;
 
+  const channelIndex = subscriber.channels.findIndex((channel) => channel.channel === givenChannel);
   try {
     const response = yield call(
       axios.post,
@@ -391,7 +396,6 @@ export function* checkCode(action: CheckCodeAction): SagaIterator {
     );
 
     if (response.data?.verified) {
-      const channelIndex = subscriber.channels.findIndex((channel) => channel.channel === givenChannel);
       yield put(CheckCodeSuccess({ channelIndex }));
 
       yield put(
@@ -400,8 +404,10 @@ export function* checkCode(action: CheckCodeAction): SagaIterator {
         })
       );
     } else {
-      yield put(ErrorNotification({ message: 'The code you have entered is incorrect' }));
-      yield put(CheckCodeFailure());
+      const dispatch = { loggedIn: !action.nonLoggedIn, channel: action.channel };
+
+      yield put(ErrorNotification({ message: 'The code you have entered is incorrect', dispatch: dispatch }));
+      yield put(CheckCodeFailure({ channelIndex }));
     }
   } catch (err) {
     yield put(ErrorNotification({ error: err }));
