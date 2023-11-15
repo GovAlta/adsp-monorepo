@@ -6,7 +6,7 @@ const SmsRedirect = (): JSX.Element => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    navigate(`/subscriptions/${realm}?smscode=${code}`);
+    navigate(`/${realm}/login?smscode=${code}`);
   }, []);
 
   return <div></div>;
