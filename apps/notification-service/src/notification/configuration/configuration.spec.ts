@@ -66,6 +66,27 @@ describe('NotificationConfiguration', () => {
     ],
   };
 
+  const direct = {
+    id: 'direct',
+    name: 'Direct Type',
+    description: '',
+    publicSubscribe: true,
+    subscriberRoles: [],
+    addressPath: 'address',
+    channels: [Channel.email],
+    events: [
+      {
+        namespace: 'test',
+        name: 'test-run',
+        templates: {
+          [Channel.email]: { subject: '', body: '' },
+          [Channel.sms]: null,
+          [Channel.mail]: null,
+        },
+      },
+    ],
+  };
+
   it('can be created', () => {
     const configuration = new NotificationConfiguration({}, {}, tenantId);
     expect(configuration).toBeTruthy();
@@ -74,7 +95,7 @@ describe('NotificationConfiguration', () => {
   describe('getNotificationType', () => {
     const configuration = new NotificationConfiguration(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      { contact: {} as any, base: baseOverride, test: type },
+      { contact: {} as any, base: baseOverride, test: type, direct },
       { base: baseType },
       tenantId
     );
@@ -118,7 +139,7 @@ describe('NotificationConfiguration', () => {
 
   describe('getNotificationTypes', () => {
     const configuration = new NotificationConfiguration(
-      { base: baseOverride, test: type },
+      { base: baseOverride, test: type, direct },
       { base: baseType },
       tenantId
     );
@@ -148,7 +169,7 @@ describe('NotificationConfiguration', () => {
 
   describe('getEventNotificationTypes', () => {
     const configuration = new NotificationConfiguration(
-      { base: baseOverride, test: type },
+      { base: baseOverride, test: type, direct },
       { base: baseType },
       tenantId
     );
@@ -156,7 +177,7 @@ describe('NotificationConfiguration', () => {
     it('can return type for event', () => {
       const types = configuration.getEventNotificationTypes({ namespace: 'test', name: 'test-run' } as DomainEvent);
       expect(types).toBeTruthy();
-      expect(types.length).toBe(1);
+      expect(types.length).toBe(2);
       expect(types[0].name).toBe('Test Type');
     });
 

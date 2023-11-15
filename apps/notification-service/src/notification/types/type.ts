@@ -6,6 +6,7 @@ export { Channel } from '@abgov/adsp-service-sdk';
 export interface NotificationType extends Exclude<BaseNotificationType, 'displayName'> {
   id: string;
   events: NotificationTypeEvent[];
+  addressPath?: string;
 }
 
 export interface NotificationTypeCriteria {

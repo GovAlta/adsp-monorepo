@@ -109,7 +109,7 @@ export const NotificationSendFailedDefinition: DomainEventDefinition = {
         },
       },
       subscriber: {
-        type: 'object',
+        type: ['object', 'null'],
         properties: {
           id: { type: 'string' },
           userId: { type: ['string', 'null'] },

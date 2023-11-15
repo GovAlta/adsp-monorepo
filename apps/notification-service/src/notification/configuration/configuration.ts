@@ -1,8 +1,14 @@
 import type { AdspId } from '@abgov/adsp-service-sdk';
 import type { DomainEvent } from '@core-services/core-common';
-import { NotificationTypeEntity } from '../model';
+import { DirectNotificationTypeEntity, NotificationTypeEntity } from '../model';
 import { NotificationType } from '../types';
 import { Configuration, SupportContact } from './schema';
+
+function createTypeEntity(type: NotificationType, tenantId: AdspId): NotificationTypeEntity {
+  return type.addressPath
+    ? new DirectNotificationTypeEntity(type, tenantId)
+    : new NotificationTypeEntity(type, tenantId);
+}
 
 export class NotificationConfiguration {
   private types: Record<string, NotificationTypeEntity>;
@@ -11,7 +17,7 @@ export class NotificationConfiguration {
   constructor(tenantTypes: Configuration, coreTypes: Configuration, tenantId?: AdspId) {
     const coreTypesEntities: Record<string, NotificationTypeEntity> = Object.entries(coreTypes).reduce(
       (entities, [typeId, type]: [string, NotificationType]) => {
-        entities[typeId] = new NotificationTypeEntity(type, tenantId);
+        entities[typeId] = createTypeEntity(type, tenantId);
         return entities;
       },
       {}
@@ -24,7 +30,7 @@ export class NotificationConfiguration {
       delete tenantTypes.contact;
 
       this.types = Object.entries(tenantTypes).reduce((entities, [typeId, type]: [string, NotificationType]) => {
-        const typeEntity = new NotificationTypeEntity(type, tenantId);
+        const typeEntity = createTypeEntity(type, tenantId);
         entities[typeId] = entities[typeId] ? entities[typeId].overrideWith(typeEntity) : typeEntity;
         return entities;
       }, coreTypesEntities);
