@@ -227,12 +227,13 @@ export class NotificationTypeEntity implements NotificationType {
  */
 export class DirectNotificationTypeEntity extends NotificationTypeEntity implements NotificationType {
   addressPath?: string;
+  address?: string;
 
   constructor(type: NotificationType, tenantId?: AdspId) {
     super(type, tenantId);
 
-    if (!this.addressPath) {
-      throw new InvalidOperationError('Direct notification type must include an addressPath.');
+    if (!this.addressPath && !this.address) {
+      throw new InvalidOperationError('Direct notification type must include an addressPath or address.');
     }
   }
 
@@ -271,7 +272,7 @@ export class DirectNotificationTypeEntity extends NotificationTypeEntity impleme
 
     // For direct notification, channel is the first (only) channel and address is from event.
     const [channel] = this.channels;
-    const address = getAtPath(event.payload, this.addressPath);
+    const address = (this.addressPath && getAtPath(event.payload, this.addressPath)) || this.address;
 
     const notifications = [];
     if (eventNotification && channel && address && eventNotification.templates[channel]) {
