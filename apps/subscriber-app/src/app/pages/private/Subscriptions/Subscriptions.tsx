@@ -93,7 +93,7 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
   }, [searchParams, userInfo, subscriber]);
 
   useEffect(() => {
-    if (smsCode !== 'null' && subscriber && smsCode) {
+    if (smsCode !== 'null' && userInfo !== undefined && subscriber && smsCode) {
       dispatch(CheckCode('sms', smsCode, subscriber, false));
     }
   }, [searchParams, userInfo, subscriber]);
