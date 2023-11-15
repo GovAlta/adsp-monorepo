@@ -30,6 +30,7 @@ export const configurationSchema = {
         description: { type: ['string', 'null'] },
         publicSubscribe: { type: 'boolean' },
         manageSubscribe: { type: 'boolean' },
+        addressPath: { type: ['string', 'null'] },
         channels: {
           type: 'array',
           items: {
