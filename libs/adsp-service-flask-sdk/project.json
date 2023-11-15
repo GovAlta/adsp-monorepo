@@ -3,6 +3,9 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "sourceRoot": "libs/adsp-service-flask-sdk/adsp_service_flask_sdk",
+  "nx": {
+    "implicitDependencies": ["adsp-py-common"]
+  },
   "targets": {
     "docs": {
       "executor": "nx:run-commands",
