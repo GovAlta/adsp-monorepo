@@ -123,7 +123,7 @@ class ServiceRegistrar:
                 PLATFORM_EVENT_SERVICE,
                 {
                     self.__service_id.service: {
-                        "service": self.__service_id.service,
+                        "name": self.__service_id.service,
                         "definitions": {
                             event.name: {
                                 "name": event.name,
