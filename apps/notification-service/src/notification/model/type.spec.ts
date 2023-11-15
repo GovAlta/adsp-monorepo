@@ -935,6 +935,24 @@ describe('DirectNotificationTypeEntity', () => {
     expect(entity).toBeTruthy();
   });
 
+  it('can be created for configured address', () => {
+    const entity = new DirectNotificationTypeEntity(
+      {
+        id: 'test-type',
+        name: 'test type',
+        description: null,
+        publicSubscribe: false,
+        address: 'test@test.co',
+        subscriberRoles: [],
+        channels: [],
+        events: [],
+      },
+      adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+    );
+
+    expect(entity).toBeTruthy();
+  });
+
   it('can throw for missing addressPath', () => {
     expect(() => {
       new DirectNotificationTypeEntity(
@@ -1056,7 +1074,7 @@ describe('DirectNotificationTypeEntity', () => {
       adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
     );
 
-    it('can generate direction notification', async () => {
+    it('can generate direct notification', async () => {
       const event = {
         tenantId,
         namespace: 'test-service',
@@ -1163,6 +1181,57 @@ describe('DirectNotificationTypeEntity', () => {
       );
 
       expect(results).toMatchObject(expect.arrayContaining([]));
+    });
+
+    it('can generate to configured address', async () => {
+      const entity = new DirectNotificationTypeEntity(
+        {
+          id: 'test-type',
+          name: 'test type',
+          description: null,
+          publicSubscribe: false,
+          address: 'test+configured@test.co',
+          subscriberRoles: [],
+          channels: [Channel.email],
+          events: [
+            {
+              namespace: 'test-service',
+              name: 'test-started',
+              templates: {
+                [Channel.email]: { subject: '', body: '' },
+              },
+            },
+          ],
+        },
+        adspId`urn:ads:platform:tenant-service:v2:/tenants/test`
+      );
+
+      const event = {
+        tenantId,
+        namespace: 'test-service',
+        name: 'test-started',
+        timestamp: new Date(),
+        payload: { details: { email: 'tester@test.co' } },
+        traceparent: '123',
+      };
+
+      const message = {
+        subject: 'test',
+        body: 'test content',
+      };
+      templateServiceMock.generateMessage.mockReturnValueOnce(message);
+
+      const [result] = await entity.generateNotifications(
+        logger as Logger,
+        templateServiceMock,
+        subscriberAppUrl,
+        repositoryMock as unknown as SubscriptionRepository,
+        configurationMock as NotificationConfiguration,
+        event,
+        { tenant }
+      );
+
+      expect(result).toMatchObject({ tenantId: tenantId.toString(), message, to: entity.address });
     });
 
     it('can handle missing channel template', async () => {

@@ -7,6 +7,7 @@ export interface NotificationType extends Exclude<BaseNotificationType, 'display
   id: string;
   events: NotificationTypeEvent[];
   addressPath?: string;
+  address?: string;
 }
 
 export interface NotificationTypeCriteria {
