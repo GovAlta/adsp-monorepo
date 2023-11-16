@@ -201,10 +201,12 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
     subscriber?.channels[smsChannelIndex]?.pendingVerification &&
     subscriber?.channels[smsChannelIndex]?.timeCodeSent + 1000 * 60 * expireMinutes > Date.now();
 
+  const noSms = !subscriber?.channels[smsChannelIndex];
+
   const emailValidated = subscriber?.channels[emailChannelIndex]?.verified;
   const smsValidated = subscriber?.channels[smsChannelIndex]?.verified;
 
-  const neitherChannelUnverified = (codeEmailExists || emailValidated) && (codeSMSExists || smsValidated);
+  const neitherChannelUnverified = (codeEmailExists || emailValidated) && (codeSMSExists || smsValidated || noSms);
 
   return (
     <InfoCard title="Contact information">
