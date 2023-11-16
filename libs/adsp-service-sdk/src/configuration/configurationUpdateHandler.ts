@@ -41,6 +41,10 @@ export const handleConfigurationUpdates = async (
     logger.info('Connected for configuration updates...', LOG_CONTEXT);
   });
 
+  socket.on('connect_error', async (err) => {
+    logger.error(`Connect to configuration updates failed with error: ${err}`, LOG_CONTEXT);
+  });
+
   socket.on('disconnect', async (reason) => {
     logger.debug(`Disconnected from configuration updates due to reason: ${reason}`);
 
