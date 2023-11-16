@@ -3,8 +3,8 @@ import { FileTypeModal } from './fileTypeModal';
 import { GoAButton } from '@abgov/react-components-new';
 import { Role } from '@store/tenant/models';
 import { RootState } from '@store/index';
-import { useDispatch, useSelector } from 'react-redux';
-import { FetchFileTypeService } from '@store/file/actions';
+import { useSelector } from 'react-redux';
+
 import { createSelector } from 'reselect';
 import { useHistory } from 'react-router-dom';
 import { FileTypeDefault } from '@store/file/models';
@@ -35,7 +35,7 @@ export const selectFileTyeNames = createSelector(
 export const AddFileType = ({ roles, activeEdit }: AddFileTypeProps): JSX.Element => {
   const [willAddNew, setWillAddNew] = useState<boolean>(false);
   const fileTypeNames = useSelector(selectFileTyeNames);
-  const dispatch = useDispatch();
+
   const history = useHistory();
 
   useEffect(() => {
@@ -43,12 +43,6 @@ export const AddFileType = ({ roles, activeEdit }: AddFileTypeProps): JSX.Elemen
       setWillAddNew(true);
     }
   }, [activeEdit]);
-
-  useEffect(() => {
-    if (!fileTypeNames) {
-      dispatch(FetchFileTypeService());
-    }
-  }, []);
 
   return (
     <div>
