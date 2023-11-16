@@ -86,6 +86,7 @@ export interface FileService {
   fileTypes: Array<FileTypeItem>;
   coreFileTypes: Array<FileTypeItem>;
   metrics: FileMetrics;
+  hasFile: Record<string, boolean>;
 }
 
 export const FILE_INIT: FileService = {
@@ -95,4 +96,5 @@ export const FILE_INIT: FileService = {
   fileTypes: null,
   coreFileTypes: null,
   metrics: {},
+  hasFile: {},
 };
