@@ -26,10 +26,10 @@ import { useActionStateCheck } from '@components/Indicator';
 import { ApplicationList } from './styled-components';
 
 import { WebhookFormModal } from './webhookForm';
-
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
-
 import AsideLinks from '@components/AsideLinks';
+import { AddEditStatusWebhookType } from '@store/status/models';
+import { UpdateModalState } from '@store/session/actions';
 
 const userHealthSubscriptionSelector = createSelector(
   (state: RootState) => state.session.userInfo?.sub,
@@ -62,19 +62,9 @@ function Status(): JSX.Element {
 
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [showAddApplicationModal, setShowAddApplicationModal] = useState<boolean>(false);
-  const [showAddWebhookModal, setShowAddWebhookModal] = useState<boolean>(false);
   const [showAddNoticeModal, setShowAddNoticeModal] = useState<boolean>(false);
   const isApplicationsFetched = useActionStateCheck(FETCH_SERVICE_STATUS_APPS_ACTION);
 
-  const defaultHooks = {
-    id: '',
-    name: '',
-    url: '',
-    targetId: '',
-    intervalMinutes: 5,
-    description: '',
-    eventTypes: [],
-  };
   let intervalId = null;
 
   useEffect(() => {
@@ -115,9 +105,6 @@ function Status(): JSX.Element {
   const addApplication = (edit: boolean) => {
     setActiveIndex(1);
     setShowAddApplicationModal(edit);
-  };
-  const addWebhook = (edit: boolean) => {
-    setShowAddWebhookModal(edit);
   };
 
   function getStatussupportcodeLink() {
@@ -162,7 +149,19 @@ function Status(): JSX.Element {
           <Tab label="Webhook" data-testid="status-webhook">
             <p>The webhooks are listed here</p>
             <p>
-              <GoAButton testId="add-application" onClick={() => addWebhook(true)} type="primary">
+              <GoAButton
+                testId="add-application"
+                onClick={() => {
+                  dispatch(
+                    UpdateModalState({
+                      type: AddEditStatusWebhookType,
+                      isOpen: true,
+                      id: null,
+                    })
+                  );
+                }}
+                type="primary"
+              >
                 Add webhook
               </GoAButton>
             </p>
@@ -224,19 +223,7 @@ function Status(): JSX.Element {
             endpoint: { url: '', status: 'offline' },
           }}
         />
-        <WebhookFormModal
-          defaultWebhooks={defaultHooks}
-          isOpen={showAddWebhookModal}
-          testId={'add-webhook'}
-          isEdit={false}
-          title="Add webhook"
-          onCancel={() => {
-            setShowAddWebhookModal(false);
-          }}
-          onSave={() => {
-            setShowAddWebhookModal(false);
-          }}
-        />
+        <WebhookFormModal />
       </Main>
 
       <Aside>

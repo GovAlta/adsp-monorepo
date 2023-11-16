@@ -3,13 +3,15 @@ import React, { useState } from 'react';
 import { Webhooks } from '@store/status/models';
 import DataTable from '@components/DataTable';
 import styled from 'styled-components';
-import { WebhookFormModal } from '../webhookForm';
 import { WebhookHistoryModal } from '../webhookHistoryForm';
 import { TestWebhookModal } from '../testWebhook';
 import History from '../../../../../../assets/icons/history.svg';
 import { HoverWrapper, ToolTip } from '../styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { WebhookDeleteModal } from './webhookDeleteModal';
+import { useDispatch } from 'react-redux';
+import { UpdateModalState } from '@store/session/actions';
+import { AddEditStatusWebhookType } from '@store/status/models';
 
 interface WebhookDisplayProps {
   webhooks: Record<string, Webhooks>;
@@ -30,7 +32,6 @@ export const NoPaddingTd = styled.td`
 `;
 
 export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element => {
-  const [editId, setEditId] = useState<string | null>(null);
   const [historyId, setHistoryId] = useState<string | null>(null);
   const [testId, setTestId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -47,30 +48,26 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
     id: string;
     name: string;
     url: string;
-    targetId: string;
     intervalMinutes?: number;
     description: string;
     eventTypes: { id: string }[];
-    onEdit?: () => void;
     onDelete?: () => void;
     onTest?: () => void;
     onHistory?: () => void;
   }
 
-  const FileTypeTableRow = ({
+  const WebhookTableRow = ({
     id,
     name,
     url,
-    targetId,
     intervalMinutes,
-    eventTypes,
     description,
-    onEdit,
     onDelete,
     onHistory,
     onTest,
   }: FileTypeRowProps): JSX.Element => {
     const [showDetails, setShowDetails] = useState<boolean>(false);
+    const dispatch = useDispatch();
 
     const urlLength = 14;
 
@@ -132,7 +129,13 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
                 title="Edit"
                 type="create"
                 onClick={() => {
-                  onEdit();
+                  dispatch(
+                    UpdateModalState({
+                      type: AddEditStatusWebhookType,
+                      isOpen: true,
+                      id,
+                    })
+                  );
                 }}
               />
               <GoAContextMenuIcon
@@ -182,14 +185,11 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
               Object.keys(webhooks).map((key) => {
                 if (!webhooks[key]) return null;
                 return (
-                  <FileTypeTableRow
+                  <WebhookTableRow
                     key={`webhook-${webhooks[key].id}`}
                     {...webhooks[key]}
                     onDelete={() => {
                       setDeleteId(webhooks[key].id);
-                    }}
-                    onEdit={() => {
-                      setEditId(webhooks[key].id);
                     }}
                     onHistory={() => {
                       setHistoryId(webhooks[key].id);
@@ -203,19 +203,6 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
           </tbody>
         </DataTable>
       </TableLayout>
-      <WebhookFormModal
-        isEdit={true}
-        isOpen={editId !== null}
-        testId={'edit-webhook'}
-        defaultWebhooks={webhooks[editId]}
-        title="Edit webhook"
-        onCancel={() => {
-          setEditId(null);
-        }}
-        onSave={() => {
-          setEditId(null);
-        }}
-      />
 
       <TestWebhookModal
         isOpen={testId !== null}
