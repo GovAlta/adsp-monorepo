@@ -57,9 +57,35 @@ Then('the user views topic type editor for {string}', function (name) {
   commentObj.editorTopicTypeNameValue().should('have.text', name);
 });
 
+Then('the user views {string} as default selection for security classification', function (defaultClassification) {
+  commentObj.editorClassificationDropdown().invoke('attr', 'value').should('eq', defaultClassification.toLowerCase());
+});
+
+Then('the user views {string} in Select a security classification dropdown', function (dropdownOptions) {
+  const options = dropdownOptions.split(',');
+  commentObj.editorClassificationDropdownItems().then((elements) => {
+    expect(elements.length).to.eq(options.length);
+    for (let i = 0; i < options.length; i++) {
+      expect(elements[i].getAttribute('value')).to.contain(options[i].trim().toLowerCase());
+    }
+  });
+});
+
 When(
-  'the user enters {string} as admin roles, {string} as commenter roles, {string} as reader roles',
-  function (adminRole, commenterRole, readerRole) {
+  'the user enters {string} as classification, {string} as admin roles, {string} as commenter roles, {string} as reader roles',
+  function (classification, adminRole, commenterRole, readerRole) {
+    if (classification !== 'empty') {
+      commentObj
+        .editorClassificationDropdown()
+        .invoke('attr', 'value')
+        .then((classificationValue) => {
+          if (classificationValue !== classification.toLowerCase()) {
+            commentObj.editorClassificationDropdown().find('goa-input').click({ force: true });
+            commentObj.editorClassificationDropdown().find('li').contains(classification).click({ force: true });
+          }
+        });
+    }
+
     //Unselect all checkboxes
     //Looks like checkboxes can't handle fast clicking to uncheck multiple checkboxes and seems only the last checked checkboxes are unchecked.
     //Didn't find a way to add a delay between clicks. Use 5 loops to make sure missed checked checkboxes are unchecked.
@@ -226,10 +252,10 @@ Then('the user clicks Save button on topic type editor', function () {
 });
 
 Then(
-  'the user {string} the topic type of {string}, {string}, {string}, {string}',
-  function (action, name, adminRole, commenterRole, readerRole) {
+  'the user {string} the topic type of {string}, {string}, {string}, {string}, {string}',
+  function (action, name, adminRole, commenterRole, readerRole, classification) {
     cy.wait(1000); //Wait for the grid to load all data
-    findTopicType(name, adminRole, commenterRole, readerRole).then((rowNumber) => {
+    findTopicType(name, adminRole, commenterRole, readerRole, classification).then((rowNumber) => {
       switch (action) {
         case 'views':
           expect(rowNumber).to.be.greaterThan(
@@ -242,6 +268,8 @@ Then(
               commenterRole +
               ', ' +
               readerRole +
+              ', ' +
+              classification +
               ' has row #' +
               rowNumber
           );
@@ -257,6 +285,8 @@ Then(
               commenterRole +
               ', ' +
               readerRole +
+              ', ' +
+              classification +
               ' has row #' +
               rowNumber
           );
@@ -271,7 +301,7 @@ Then(
 //Find topic type with name, admin role(s), commenter role(s), reader role(s)
 //Input: name, admin role(s) & commenter role(s) & reader role(s) in a string separated with comma
 //Return: row number if the topic type is found; zero if the item isn't found
-function findTopicType(name, adminRole, commenterRole, readerRole) {
+function findTopicType(name, adminRole, commenterRole, readerRole, classification) {
   return new Cypress.Promise((resolve, reject) => {
     try {
       let rowNumber = 0;
@@ -287,6 +317,9 @@ function findTopicType(name, adminRole, commenterRole, readerRole) {
       }
       if (readerRole.toLowerCase() != 'empty') {
         targetedNumber = targetedNumber + readerRoles.length;
+      }
+      if (classification.toLowerCase() != 'empty') {
+        targetedNumber = targetedNumber + 1;
       }
       commentObj
         .topicTypesTableBody()
@@ -316,6 +349,10 @@ function findTopicType(name, adminRole, commenterRole, readerRole) {
                 counter = counter + 1;
               }
             });
+            // cy.log(rowElement.cells[5].innerHTML); // Print out the worker role cell innerHTML for debug purpose
+            if (rowElement.cells[5].innerHTML.includes(classification.toLowerCase())) {
+              counter = counter + 1;
+            }
             Cypress.log({
               name: 'Number of matched items for row# ' + rowElement.rowIndex + ': ',
               message: String(String(counter)),
@@ -337,9 +374,9 @@ function findTopicType(name, adminRole, commenterRole, readerRole) {
 }
 
 When(
-  'the user clicks {string} button for the topic type of {string}, {string}, {string}, {string}',
-  function (button, name, adminRole, commenterRole, readerRol) {
-    findTopicType(name, adminRole, commenterRole, readerRol).then((rowNumber) => {
+  'the user clicks {string} button for the topic type of {string}, {string}, {string}, {string}, {string}',
+  function (button, name, adminRole, commenterRole, readerRol, classification) {
+    findTopicType(name, adminRole, commenterRole, readerRol, classification).then((rowNumber) => {
       switch (button) {
         case 'Edit':
           commentObj.topicTypeEditButton(rowNumber).shadow().find('button').click({ force: true });

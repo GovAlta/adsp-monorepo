@@ -31,6 +31,14 @@ class CommentPage {
     return cy.get('[data-testid="template-name"]');
   }
 
+  editorClassificationDropdown() {
+    return cy.xpath('//goa-dropdown[@name="securityClassifications"]');
+  }
+
+  editorClassificationDropdownItems() {
+    return cy.xpath('//goa-dropdown[@name="securityClassifications"]/goa-dropdown-item');
+  }
+
   editorSaveButton() {
     return cy.xpath('//*[@data-testid="comment-save" and @disabled="false"]');
   }
@@ -59,13 +67,13 @@ class CommentPage {
 
   topicTypeEditButton(rowNumber) {
     return cy.xpath(
-      `(//table[@data-testid="comment-topic-types-table"]//*[contains(@data-testid, "comment-definition-edit")])[${rowNumber}]`
+      `(//table[@data-testid="comment-topic-types-table"]//*[contains(@data-testid, "comment-topic-types-edit")])[${rowNumber}]`
     );
   }
 
   topicTypeDeleteButton(rowNumber) {
     return cy.xpath(
-      `(//table[@data-testid="comment-topic-types-table"]//*[contains(@data-testid, "comment-definition-delete")])[${rowNumber}]`
+      `(//table[@data-testid="comment-topic-types-table"]//*[contains(@data-testid, "comment-topic-types-delete")])[${rowNumber}]`
     );
   }
 }
