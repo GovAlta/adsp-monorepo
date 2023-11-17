@@ -57,8 +57,8 @@ class KeycloakAuth {
     const location: string = window.location.href;
     const skipSSO = location.indexOf('kc_idp_hint') > -1;
     const urlParams = new URLSearchParams(window.location.search);
-    const idpFromUrl = encodeURIComponent(urlParams.get('kc_idp_hint'))
-    const code = encodeURIComponent(urlParams.get('code'));;
+    const idpFromUrl = encodeURIComponent(urlParams.get('kc_idp_hint'));
+    const code = encodeURIComponent(urlParams.get('code'));
     let redirectUri = `${this.loginRedirect}?type=${type}&realm=core`;
 
     if (code) {
@@ -135,6 +135,7 @@ class KeycloakAuth {
     const urlParams = new URLSearchParams(window.location.search);
     const idpFromUrl = encodeURIComponent(urlParams.get('kc_idp_hint'));
     const code = encodeURIComponent(urlParams.get('code'));
+    const smscode = encodeURIComponent(urlParams.get('smscode'));
 
     let redirectUri = `${this.loginRedirect}/${realm}`;
     console.debug(`Keycloak redirect URL: ${redirectUri}`);
@@ -157,12 +158,17 @@ class KeycloakAuth {
         if (code) {
           redirectUri += `&code=${code}`;
         }
+        if (smscode) {
+          redirectUri += `&smscode=${smscode}`;
+        }
       } else {
-           if (code) {
+        if (code) {
           redirectUri += `?code=${code}`;
         }
+        if (smscode) {
+          redirectUri += `&smscode=${smscode}`;
+        }
       }
-     
 
       Promise.all([
         this.keycloak.init({ checkLoginIframe: false }),

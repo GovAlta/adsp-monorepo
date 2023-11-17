@@ -1,7 +1,8 @@
 import { AdspId, Channel, isAllowedUser, User } from '@abgov/adsp-service-sdk';
 import type { DomainEvent } from '@core-services/core-common';
-import { UnauthorizedError } from '@core-services/core-common';
+import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import { getTemplateBody } from '@core-services/notification-shared';
+import { get as getAtPath } from 'lodash';
 import { Logger } from 'winston';
 import { SubscriptionRepository } from '../repository';
 import { TemplateService } from '../template';
@@ -16,6 +17,7 @@ import {
 } from '../types';
 import { SubscriberEntity } from './subscriber';
 import { SubscriptionEntity } from './subscription';
+import { NotificationConfiguration } from '../configuration';
 
 export class NotificationTypeEntity implements NotificationType {
   tenantId?: AdspId;
@@ -77,30 +79,57 @@ export class NotificationTypeEntity implements NotificationType {
     return repository.deleteSubscriptions(subscriber.tenantId, this.id, subscriber.id);
   }
 
-  generateNotifications(
+  async generateNotifications(
     logger: Logger,
     templateService: TemplateService,
     subscriberAppUrl: URL,
+    subscriptionRepository: SubscriptionRepository,
+    configuration: NotificationConfiguration,
     event: DomainEvent,
-    subscriptions: SubscriptionEntity[],
     messageContext: Record<string, unknown>
-  ): Notification[] {
+  ): Promise<Notification[]> {
     const notifications: Notification[] = [];
-    for (const subscription of subscriptions) {
-      if (subscription.shouldSend(event)) {
-        const notification = this.generateNotification(
-          logger,
-          templateService,
-          subscriberAppUrl,
-          event,
-          subscription,
-          messageContext
-        );
-        if (notification) {
-          notifications.push(notification);
+
+    // Page through all subscriptions and generate notifications.
+    let after: string = null;
+    let pageNumber = 1;
+    do {
+      logger.debug(
+        `Processing page ${pageNumber} of subscriptions of type ${this.id} for event ${event.namespace}:${event.name}...`,
+        {
+          context: 'NotificationType',
+          tenant: event.tenantId?.toString(),
+        }
+      );
+
+      const { results: subscriptions, page } = await subscriptionRepository.getSubscriptions(
+        configuration,
+        event.tenantId,
+        1000,
+        after,
+        {
+          typeIdEquals: this.id,
+        }
+      );
+
+      for (const subscription of subscriptions) {
+        if (subscription.shouldSend(event)) {
+          const notification = this.generateNotification(
+            logger,
+            templateService,
+            subscriberAppUrl,
+            event,
+            subscription,
+            messageContext
+          );
+          if (notification) {
+            notifications.push(notification);
+          }
         }
       }
-    }
+      after = page.next;
+      pageNumber++;
+    } while (after);
 
     return notifications;
   }
@@ -178,11 +207,117 @@ export class NotificationTypeEntity implements NotificationType {
     }
   }
 
-  private getTemplate(channel: Channel, template: Template, context: Record<string, unknown>): Template {
+  protected getTemplate(channel: Channel, template: Template, context: Record<string, unknown>): Template {
     const effectiveTemplate = { ...template };
     if (channel === Channel.email) {
       effectiveTemplate.body = getTemplateBody(template.body.toString(), channel, context);
     }
     return effectiveTemplate;
+  }
+}
+/**
+ * Represents a notification type that generates notification based on trigger event without requiring a subscription.
+ *
+ * Note: This is a subclass because subscription-based notifications were implemented first.
+ *
+ * @export
+ * @class DirectNotificationTypeEntity
+ * @extends {NotificationTypeEntity}
+ * @implements {NotificationType}
+ */
+export class DirectNotificationTypeEntity extends NotificationTypeEntity implements NotificationType {
+  addressPath?: string;
+  address?: string;
+
+  constructor(type: NotificationType, tenantId?: AdspId) {
+    super(type, tenantId);
+
+    if (!this.addressPath && !this.address) {
+      throw new InvalidOperationError('Direct notification type must include an addressPath or address.');
+    }
+  }
+
+  override async subscribe(
+    _repository: SubscriptionRepository,
+    _user: User,
+    _subscriber: SubscriberEntity,
+    _criteria?: SubscriptionCriteria
+  ): Promise<SubscriptionEntity> {
+    throw new InvalidOperationError('Direct notification types cannot be subscribed to.');
+  }
+
+  override async unsubscribe(
+    _repository: SubscriptionRepository,
+    _user: User,
+    _subscriber: SubscriberEntity
+  ): Promise<boolean> {
+    throw new InvalidOperationError('Direct notification types cannot be subscribed to.');
+  }
+
+  override async generateNotifications(
+    logger: Logger,
+    templateService: TemplateService,
+    _subscriberAppUrl: URL,
+    _subscriptionRepository: SubscriptionRepository,
+    _configuration: NotificationConfiguration,
+    event: DomainEvent,
+    messageContext: Record<string, unknown>
+  ): Promise<Notification[]> {
+    logger.debug(`Processing direct notification type ${this.id} for event ${event.namespace}:${event.name}...`, {
+      context: 'NotificationType',
+      tenant: event.tenantId?.toString(),
+    });
+
+    const eventNotification = this.events.find((e) => e.namespace === event.namespace && e.name === event.name);
+
+    // For direct notification, channel is the first (only) channel and address is from event.
+    const [channel] = this.channels;
+    const address = (this.addressPath && getAtPath(event.payload, this.addressPath)) || this.address;
+
+    const notifications = [];
+    if (eventNotification && channel && address && eventNotification.templates[channel]) {
+      const context = {
+        ...messageContext,
+        event,
+      };
+
+      notifications.push({
+        tenantId: event.tenantId.toString(),
+        type: {
+          id: this.id,
+          name: this.name,
+        },
+        event: {
+          namespace: event.namespace,
+          name: event.name,
+          timestamp: event.timestamp,
+        },
+        correlationId: event.correlationId,
+        context: event.context,
+        to: address,
+        channel,
+        message: templateService.generateMessage(
+          this.getTemplate(channel, eventNotification.templates[channel], context),
+          context
+        ),
+      });
+
+      logger.debug(`Generated direct notification for type ${this.id} on event ${event.namespace}:${event.name}.`, {
+        context: 'NotificationType',
+        tenant: event.tenantId?.toString(),
+      });
+    } else if (eventNotification) {
+      // Not resolving a notification type can be due to event criteria and isn't unexpected.
+      // However, unresolved channel or address suggests broken configuration.
+      logger.warn(
+        `Direct notification type ${this.id} failed to resolve channel (${channel}), address (${address}), and/or channel template.`,
+        {
+          context: 'NotificationType',
+          tenant: event.tenantId?.toString(),
+        }
+      );
+    }
+
+    return notifications;
   }
 }

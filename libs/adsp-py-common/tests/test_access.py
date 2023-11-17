@@ -1,16 +1,16 @@
 import pytest
 from unittest.mock import Mock, patch
 
-from adsp_service_flask_sdk import AdspId, Tenant
-from adsp_service_flask_sdk.access import IssuerCache
-from adsp_service_flask_sdk.tenant import TenantService
+from adsp_py_common.adsp_id import AdspId
+from adsp_py_common.access import IssuerCache
+from adsp_py_common.tenant import Tenant, TenantService
 from httpx import Response, RequestError
 
 tenant_id = AdspId.parse("urn:ads:platform:tenant-service:v2:/tenants/test")
 
 
 def test_get_issuer():
-    with patch("adsp_service_flask_sdk.access.get") as mock_get:
+    with patch("adsp_py_common.access.get") as mock_get:
         iss = "https://access-service/auth/realms/test_realm"
         tenant_id = AdspId.parse("urn:ads:platform:tenant-service:v2:/tenants/test")
         tenant_service = Mock(TenantService)
@@ -36,7 +36,7 @@ def test_get_issuer():
 
 
 def test_get_issuer_allow_core():
-    with patch("adsp_service_flask_sdk.access.get") as mock_get:
+    with patch("adsp_py_common.access.get") as mock_get:
         iss = "https://access-service/auth/realms/core"
         tenant_service = Mock(TenantService)
         tenant_service.get_tenants.return_value = {}
@@ -54,7 +54,7 @@ def test_get_issuer_allow_core():
 
 
 def test_get_issuer_request_error():
-    with patch("adsp_service_flask_sdk.access.get") as mock_get:
+    with patch("adsp_py_common.access.get") as mock_get:
         iss = "https://access-service/auth/realms/core"
         tenant_service = Mock(TenantService)
         tenant_service.get_tenants.return_value = {

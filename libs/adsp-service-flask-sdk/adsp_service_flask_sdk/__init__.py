@@ -1,13 +1,7 @@
-from .access import User as User
-from .adsp_id import AdspId as AdspId
-from .event import DomainEvent as DomainEvent
-from .extension import AdspExtension as AdspExtension
-from .filter import (
-    request_user as request_user,
-    request_tenant as request_tenant,
-    require_user as require_user,
-)
-from .registration import (
+from adsp_py_common.access import User as User
+from adsp_py_common.adsp_id import AdspId as AdspId
+from adsp_py_common.event import DomainEvent as DomainEvent
+from adsp_py_common.registration import (
     AdspRegistration as AdspRegistration,
     ConfigurationDefinition as ConfigurationDefinition,
     DomainEventDefinition as DomainEventDefinition,
@@ -17,23 +11,31 @@ from .registration import (
     ServiceRole as ServiceRole,
     StreamDefinition as StreamDefinition,
 )
-from .tenant import Tenant as Tenant
+from adsp_py_common.tenant import Tenant as Tenant
+
+from .extension import AdspExtension as AdspExtension, AdspServices as AdspServices
+from .filter import (
+    request_user as request_user,
+    request_tenant as request_tenant,
+    require_user as require_user,
+)
 
 __all__ = [
     "AdspId",
     "AdspExtension",
     "AdspRegistration",
+    "AdspServices",
     "ConfigurationDefinition",
     "DomainEvent",
     "DomainEventDefinition",
     "EventIdentity",
     "EventIdentityCriteria",
     "FileType",
-    "request_user",
-    "request_tenant",
-    "require_user",
     "ServiceRole",
     "StreamDefinition",
     "Tenant",
-    "User"
+    "User",
+    "request_user",
+    "request_tenant",
+    "require_user",
 ]

@@ -1,4 +1,4 @@
-from adsp_service_flask_sdk import AdspId
+from adsp_py_common.adsp_id import AdspId
 
 
 def test_parse():

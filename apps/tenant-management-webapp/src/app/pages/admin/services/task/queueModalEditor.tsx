@@ -47,12 +47,16 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
   const tenant = useSelector(tenantRolesAndClients);
   const tenantClients: ServiceRoleConfig = tenant.tenantClients ? tenant.tenantClients : {};
   const { id } = useParams<{ id: string }>();
+  const latestNotification = useSelector(
+    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
+  );
   const { height } = useWindowDimensions();
+  const calcHeight = latestNotification && !latestNotification.disabled ? height - 8 : height + 42;
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
 
   const isEdit = !!id;
   const heightCover = {
-    height: height - 480,
+    height: calcHeight - 550,
   };
 
   useEffect(() => {

@@ -1,9 +1,9 @@
 from typing import Any, Callable, Dict, NamedTuple, Optional
-from adsp_service_flask_sdk.event import EventService
 
-from flask import Blueprint, Flask
-
-from ._constants import (
+from adsp_py_common.access import IssuerCache
+from adsp_py_common.adsp_id import AdspId
+from adsp_py_common.configuration import TC, ConfigurationService
+from adsp_py_common.constants import (
     CONFIG_ACCESS_URL,
     CONFIG_ALLOW_CORE,
     CONFIG_CLIENT_SECRET,
@@ -11,15 +11,17 @@ from ._constants import (
     CONFIG_REALM,
     CONFIG_SERVICE_ID,
 )
-from .access import IssuerCache
-from .adsp_id import AdspId
-from .configuration import TC, ConfigurationService, create_get_configuration
-from .directory import ServiceDirectory
+from adsp_py_common.directory import ServiceDirectory
+from adsp_py_common.event import EventService
+from adsp_py_common.registration import AdspRegistration, ServiceRegistrar
+from adsp_py_common.tenant import TenantService
+from adsp_py_common.token_provider import TokenProvider
+from flask import Blueprint, Flask
+
+
+from .configuration import create_get_configuration
 from .filter import AccessRequestFilter, TenantRequestFilter
 from .metadata import create_metadata_blueprint
-from .registration import AdspRegistration, ServiceRegistrar
-from .tenant import TenantService
-from .token_provider import TokenProvider
 
 
 class AdspServices(NamedTuple):
@@ -27,8 +29,8 @@ class AdspServices(NamedTuple):
     token_provider: TokenProvider
     tenant_service: TenantService
     configuration_service: ConfigurationService
-    get_configuration: Callable[[Optional[AdspId]], TC]
     event_service: EventService
+    get_configuration: Callable[[Optional[AdspId]], TC]
     metadata_blueprint: Blueprint
 
 
@@ -100,7 +102,7 @@ class AdspExtension:
             token_provider,
             tenant_service,
             configuration_service,
-            get_configuration,
             event_service,
+            get_configuration,
             metadata_blueprint,
         )

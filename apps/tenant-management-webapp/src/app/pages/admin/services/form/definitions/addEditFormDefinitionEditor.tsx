@@ -58,8 +58,12 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const isEdit = !!id;
 
   const dispatch = useDispatch();
+  const latestNotification = useSelector(
+    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
+  );
 
   const { height } = useWindowDimensions();
+  const calcHeight = latestNotification && !latestNotification.disabled ? height - 50 : height;
 
   useEffect(() => {
     dispatch(FetchRealmRoles());
@@ -225,7 +229,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               <EditorPadding>
                 <Editor
                   data-testid="form-schema"
-                  height={height - 550}
+                  height={calcHeight - 550}
                   value={JSON.stringify(definition.dataSchema)}
                   onChange={(value) => {
                     validators.remove('payloadSchema');

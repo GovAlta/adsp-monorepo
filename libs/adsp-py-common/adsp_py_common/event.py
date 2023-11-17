@@ -4,7 +4,7 @@ from typing import Any, Dict, NamedTuple, Optional
 
 from httpx import RequestError, post
 
-from ._constants import PLATFORM_EVENT_API
+from .constants import PLATFORM_EVENT_API
 from .adsp_id import AdspId
 from .directory import ServiceDirectory
 from .registration import AdspRegistration

@@ -167,6 +167,7 @@ export const AddScriptModal = ({ initialValue, onCancel, onSave, open, isNew }: 
           }}
         />
       </GoAFormItem>
+
       <UseServiceAccountWrapper>
         <GoACheckbox
           checked={script.useServiceAccount}
@@ -182,10 +183,13 @@ export const AddScriptModal = ({ initialValue, onCancel, onSave, open, isNew }: 
         />
         Use service account
       </UseServiceAccountWrapper>
+
       {roles &&
+        isNew &&
         roles.map((r) => {
           return <RunnerRole roleNames={r?.roleNames} key={r?.clientId} clientId={r?.clientId} />;
         })}
+
       {Object.entries(roles).length === 0 && (
         <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>
       )}

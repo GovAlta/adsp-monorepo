@@ -20,7 +20,7 @@ export interface Notification extends NotificationContent {
   correlationId?: string;
   context?: Record<string, boolean | number | string>;
   channel: Channel;
-  subscriber: {
+  subscriber?: {
     id: string;
     userId: string;
     addressAs: string;

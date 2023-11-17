@@ -1,9 +1,7 @@
-from urllib.parse import urlparse
-
+from adsp_py_common.adsp_id import AdspId
+from adsp_py_common.registration import AdspRegistration
 from flask import Blueprint, jsonify, request
-
-from .adsp_id import AdspId
-from .registration import AdspRegistration
+from urllib.parse import urlparse
 
 
 def create_metadata_blueprint(service_id: AdspId, registration: AdspRegistration):

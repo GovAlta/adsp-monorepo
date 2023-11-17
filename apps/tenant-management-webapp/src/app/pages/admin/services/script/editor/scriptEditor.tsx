@@ -87,6 +87,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   }, []);
 
   const roles = useSelector(selectRoleList);
+  const latestNotification = useSelector(
+    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
+  );
 
   useEffect(() => {
     if (monaco) {
@@ -232,6 +235,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     return result;
   };
 
+  const getstyles = latestNotification && !latestNotification.disabled ? '410px' : '310px';
   return (
     <EditModalStyle>
       <ScriptEditorContainer>
@@ -256,7 +260,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
         </UseServiceAccountWrapper>
         <Tabs activeIndex={activeIndex} data-testid="editor-tabs">
           <Tab label="Lua script" data-testid="script-editor-tab">
-            <MonacoDivBody data-testid="templated-editor-body">
+            <MonacoDivBody data-testid="templated-editor-body" style={{ height: `calc(72vh - ${getstyles})` }}>
               <MonacoEditor
                 language={'lua'}
                 value={scriptStr}

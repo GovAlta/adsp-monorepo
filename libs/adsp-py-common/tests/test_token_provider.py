@@ -1,13 +1,13 @@
 import pytest
 from unittest.mock import Mock, patch
 
-from adsp_service_flask_sdk import AdspId
-from adsp_service_flask_sdk.token_provider import TokenProvider
+from adsp_py_common.adsp_id import AdspId
+from adsp_py_common.token_provider import TokenProvider
 from httpx import Response, RequestError
 
 
 def test_get_access_token():
-    with patch("adsp_service_flask_sdk.token_provider.post", spec=True) as mock_post:
+    with patch("adsp_py_common.token_provider.post", spec=True) as mock_post:
         token_provider = TokenProvider(
             "https://access-service",
             AdspId.parse("urn:ads:platform:test-service"),
@@ -22,7 +22,7 @@ def test_get_access_token():
 
 
 def test_get_access_token_from_cache():
-    with patch("adsp_service_flask_sdk.token_provider.post", spec=True) as mock_post:
+    with patch("adsp_py_common.token_provider.post", spec=True) as mock_post:
         token_provider = TokenProvider(
             "https://access-service",
             AdspId.parse("urn:ads:platform:test-service"),
@@ -39,7 +39,7 @@ def test_get_access_token_from_cache():
 
 
 def test_get_access_token_request_error():
-    with patch("adsp_service_flask_sdk.token_provider.post", spec=True) as mock_post:
+    with patch("adsp_py_common.token_provider.post", spec=True) as mock_post:
         token_provider = TokenProvider(
             "https://access-service",
             AdspId.parse("urn:ads:platform:test-service"),
