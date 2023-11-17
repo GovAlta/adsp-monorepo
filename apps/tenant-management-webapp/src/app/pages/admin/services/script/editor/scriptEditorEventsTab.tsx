@@ -1,0 +1,219 @@
+import React, { FunctionComponent, useState } from 'react';
+import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
+import { ScriptItem, ScriptItemTriggerEvent, defaultTriggerEvent } from '@store/script/models';
+import { AddTriggerEventModal } from './addTriggerEventModal';
+import DataTable from '@components/DataTable';
+import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
+import { renderNoItem } from '@components/NoItem';
+import {
+  AddTriggerButtonPadding,
+  ScriptEventTriggerListDefinition,
+  TriggerEventScrollPane,
+} from '../styled-components';
+import { DeleteModal } from '@components/DeleteModal';
+
+interface ScriptEditorEventsProp {
+  script: ScriptItem;
+  eventNames: string[];
+  onEditorSave(script: ScriptItem);
+}
+
+interface ScriptEventTriggerProps {
+  triggerEvent: ScriptItemTriggerEvent;
+  readonly?: boolean;
+  onEdit: (definition: ScriptItemTriggerEvent) => void;
+  onDelete: (definition: ScriptItemTriggerEvent) => void;
+}
+
+const ScriptEventTriggerDefinitionComponent: FunctionComponent<ScriptEventTriggerProps> = ({
+  triggerEvent,
+  onEdit,
+  onDelete,
+}: ScriptEventTriggerProps) => {
+  const [showDetails, setShowDetails] = useState(false);
+
+  return (
+    <>
+      <tr>
+        <td headers="name" data-testid={`script-editor-trigger-event-name-${triggerEvent.name}`}>
+          {triggerEvent?.name}
+        </td>
+
+        <td headers="actions" data-testid="actions">
+          <GoAContextMenu>
+            <GoAContextMenuIcon
+              type={showDetails ? 'eye-off' : 'eye'}
+              onClick={() => setShowDetails(!showDetails)}
+              testId="script-editor-trigger-events-toggle-details-visibility"
+            />
+
+            <GoAContextMenuIcon
+              type="create"
+              title="Edit"
+              onClick={() => onEdit(triggerEvent)}
+              testId="script-editor-trigger-events-edit-details"
+            />
+            <GoAContextMenuIcon
+              type="trash"
+              title="Delete"
+              onClick={() => onDelete(triggerEvent)}
+              testId="script-editor-trigger-events-delete-details"
+            />
+          </GoAContextMenu>
+        </td>
+      </tr>
+      {showDetails && (
+        <tr>
+          <td className="payload-details" headers="" colSpan={5}>
+            <div className="spacingLarge">Trigger Criteria</div>
+            <div data-testid="trigger-events-details">{JSON.stringify(triggerEvent.criteria.context, null, 2)}</div>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+};
+
+interface ScriptEventTriggerListComponentProps {
+  className?: string;
+  triggerEvents: ScriptItemTriggerEvent[];
+  onEdit?: (triggerEvent: ScriptItemTriggerEvent) => void;
+  onDelete?: (triggerEvent: ScriptItemTriggerEvent) => void;
+}
+
+const ScriptEventTriggerListComponent: FunctionComponent<ScriptEventTriggerListComponentProps> = ({
+  className,
+  triggerEvents,
+  onEdit,
+  onDelete,
+}) => {
+  return (
+    <>
+      <TriggerEventScrollPane>
+        <ScriptEventTriggerListDefinition>
+          <div className={className}>
+            {!triggerEvents && renderNoItem('script trigger events')}
+
+            <div key={``}>
+              <DataTable style={{ height: '100%' }} data-testid="script-editor-trigger-events-table">
+                <thead data-testid="script-editor-trigger-events-table-header">
+                  <tr>
+                    <th id="name" data-testid="script-editor-trigger-events-table-header-name">
+                      Trigger Name
+                    </th>
+                    <th id="actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {triggerEvents?.sort().map((triggerEvent) => (
+                    <ScriptEventTriggerDefinitionComponent
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                      key={`${triggerEvent.eventName}:${Math.random()}`}
+                      triggerEvent={triggerEvent}
+                    />
+                  ))}
+                </tbody>
+              </DataTable>
+            </div>
+          </div>
+        </ScriptEventTriggerListDefinition>
+      </TriggerEventScrollPane>
+    </>
+  );
+};
+
+export const ScriptEditorEventsTab = ({ script, eventNames, onEditorSave }: ScriptEditorEventsProp): JSX.Element => {
+  const [openAddTriggerEvent, setOpenAddTriggerEvent] = useState(false);
+  const [isNewScriptTriggerEvent, setIsNewScriptTriggerEvent] = useState(true);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [selectedTriggerEvent, setSelectedTriggerEvent] = useState<ScriptItemTriggerEvent>(defaultTriggerEvent);
+
+  const onDelete = (triggerEvent: ScriptItemTriggerEvent) => {
+    script.triggerEvents = script.triggerEvents?.filter((trigger) => {
+      return trigger.name !== triggerEvent.name;
+    });
+    onEditorSave(script);
+  };
+
+  const onEdit = (triggerEvent: ScriptItemTriggerEvent) => {
+    setOpenAddTriggerEvent(true);
+    setIsNewScriptTriggerEvent(false);
+    setSelectedTriggerEvent(triggerEvent);
+  };
+
+  const deleteContentElement = () => {
+    return (
+      <>
+        Are you sure you wish to delete <b>{selectedTriggerEvent.name}? </b>
+      </>
+    );
+  };
+  const onEventTriggerCancel = () => {
+    // setSelectedTriggerEvent({ ...defaultTriggerEvent, name: '' });
+    setOpenAddTriggerEvent(false);
+  };
+
+  return (
+    <>
+      <AddTriggerButtonPadding>
+        <GoAButtonGroup alignment="end">
+          <GoAButton
+            type="secondary"
+            testId="script-add-trigger-event-button"
+            onClick={() => {
+              setSelectedTriggerEvent(defaultTriggerEvent);
+              setOpenAddTriggerEvent(true);
+              setIsNewScriptTriggerEvent(true);
+            }}
+          >
+            Add trigger
+          </GoAButton>
+        </GoAButtonGroup>
+      </AddTriggerButtonPadding>
+      <ScriptEventTriggerListComponent
+        onEdit={onEdit}
+        onDelete={(triggerEvent: ScriptItemTriggerEvent) => {
+          setSelectedTriggerEvent(triggerEvent);
+          setShowDeleteConfirmation(true);
+        }}
+        triggerEvents={script?.triggerEvents || []}
+      />
+
+      <DeleteModal
+        isOpen={showDeleteConfirmation}
+        title="Delete Trigger event"
+        content={deleteContentElement()}
+        onCancel={() => setShowDeleteConfirmation(false)}
+        onDelete={() => {
+          setShowDeleteConfirmation(false);
+          onDelete(selectedTriggerEvent);
+        }}
+      />
+
+      <AddTriggerEventModal
+        eventNames={eventNames}
+        initialValue={isNewScriptTriggerEvent ? defaultTriggerEvent : selectedTriggerEvent}
+        open={openAddTriggerEvent}
+        isNew={isNewScriptTriggerEvent}
+        initialScript={script}
+        onCancel={() => {
+          onEventTriggerCancel();
+        }}
+        onSave={(triggerEvent: ScriptItemTriggerEvent) => {
+          setOpenAddTriggerEvent(false);
+          if (isNewScriptTriggerEvent) {
+            script.triggerEvents.push(triggerEvent);
+          } else {
+            script.triggerEvents = script.triggerEvents?.filter((tr) => {
+              return tr.name !== selectedTriggerEvent.name;
+            });
+            script.triggerEvents.push(triggerEvent);
+          }
+
+          onEditorSave(script);
+        }}
+      />
+    </>
+  );
+};
