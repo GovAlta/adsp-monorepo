@@ -179,6 +179,7 @@ export const TestStream = (): JSX.Element => {
               aria-label="select-test-stream-dropdown"
             >
               {Object.keys(streams)
+                .filter((streamId) => streamId !== 'webhooks')
                 .sort((a, b) => (a < b ? -1 : 1))
                 .map((streamId) => (
                   <GoADropdownItem label={streams[streamId].name} value={streamId} key={streamId} testId={streamId} />
