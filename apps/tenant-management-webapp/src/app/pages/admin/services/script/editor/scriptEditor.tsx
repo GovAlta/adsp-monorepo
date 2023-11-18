@@ -87,7 +87,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   const definitions = useSelector((state: RootState) => state.event.results.map((r) => state.event.definitions[r]));
 
   useEffect(() => {
-    // setScript(selectedScript);
     if (!definitions || (definitions && definitions.length === 0)) {
       dispatch(getEventDefinitions());
     }

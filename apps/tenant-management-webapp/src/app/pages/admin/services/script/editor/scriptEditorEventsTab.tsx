@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useState } from 'react';
 import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { ScriptItem, ScriptItemTriggerEvent, defaultTriggerEvent } from '@store/script/models';
-import { AddTriggerEventModal } from './addTriggerEventModal';
+import { AddTriggerEventModal } from './triggerEventModal';
 import DataTable from '@components/DataTable';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { renderNoItem } from '@components/NoItem';
@@ -12,7 +12,7 @@ import {
 } from '../styled-components';
 import { DeleteModal } from '@components/DeleteModal';
 
-interface ScriptEditorEventsProp {
+interface ScriptEditorEventsProps {
   script: ScriptItem;
   eventNames: string[];
   onEditorSave(script: ScriptItem);
@@ -94,7 +94,7 @@ const ScriptEventTriggerListComponent: FunctionComponent<ScriptEventTriggerListC
           <div className={className}>
             {!triggerEvents && renderNoItem('script trigger events')}
 
-            <div key={``}>
+            <div>
               <DataTable style={{ height: '100%' }} data-testid="script-editor-trigger-events-table">
                 <thead data-testid="script-editor-trigger-events-table-header">
                   <tr>
@@ -123,7 +123,7 @@ const ScriptEventTriggerListComponent: FunctionComponent<ScriptEventTriggerListC
   );
 };
 
-export const ScriptEditorEventsTab = ({ script, eventNames, onEditorSave }: ScriptEditorEventsProp): JSX.Element => {
+export const ScriptEditorEventsTab = ({ script, eventNames, onEditorSave }: ScriptEditorEventsProps): JSX.Element => {
   const [openAddTriggerEvent, setOpenAddTriggerEvent] = useState(false);
   const [isNewScriptTriggerEvent, setIsNewScriptTriggerEvent] = useState(true);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -149,9 +149,14 @@ export const ScriptEditorEventsTab = ({ script, eventNames, onEditorSave }: Scri
       </>
     );
   };
-  const onEventTriggerCancel = () => {
-    // setSelectedTriggerEvent({ ...defaultTriggerEvent, name: '' });
+  const onEventTriggerCancel = (triggerEvent) => {
     setOpenAddTriggerEvent(false);
+
+    // Reset the selected trigger event before any changes were made in the modal
+    const foundTriggerEvent = script.triggerEvents.find((tr) => tr.name === selectedTriggerEvent.name);
+    if (foundTriggerEvent) {
+      setSelectedTriggerEvent(triggerEvent);
+    }
   };
 
   return (
@@ -197,8 +202,8 @@ export const ScriptEditorEventsTab = ({ script, eventNames, onEditorSave }: Scri
         open={openAddTriggerEvent}
         isNew={isNewScriptTriggerEvent}
         initialScript={script}
-        onCancel={() => {
-          onEventTriggerCancel();
+        onCancel={(triggerEvent) => {
+          onEventTriggerCancel(triggerEvent);
         }}
         onSave={(triggerEvent: ScriptItemTriggerEvent) => {
           setOpenAddTriggerEvent(false);

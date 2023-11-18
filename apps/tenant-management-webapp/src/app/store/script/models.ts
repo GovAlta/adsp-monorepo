@@ -8,12 +8,25 @@ export interface ScriptItem {
   runnerRoles?: string[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   testInputs: Record<string, any>;
+  triggerEvents?: ScriptItemTriggerEvent[];
 }
+export interface ScriptItemTriggerEventCriteria {
+  correlationId?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  context: string;
+}
+export interface ScriptItemTriggerEvent {
+  name: string;
+  namespace: string;
+  criteria?: ScriptItemTriggerEventCriteria;
+}
+
 export interface ScriptService {
   scripts: Record<string, ScriptItem>;
   indicator?: Indicator;
   scriptResponse?: ScriptResponse[];
 }
+
 export const defaultScript: ScriptItem = {
   name: '',
   id: '',
@@ -22,7 +35,15 @@ export const defaultScript: ScriptItem = {
   description: '',
   runnerRoles: [],
   testInputs: { inputs: {} },
+  triggerEvents: [],
 };
+
+export const defaultTriggerEvent: ScriptItemTriggerEvent = {
+  criteria: {} as ScriptItemTriggerEventCriteria,
+  name: '',
+  namespace: '',
+};
+
 export const SCRIPT_INIT: ScriptService = {
   scripts: null,
   indicator: {
