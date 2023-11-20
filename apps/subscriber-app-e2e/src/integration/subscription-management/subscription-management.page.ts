@@ -20,9 +20,11 @@ class SubscriptionManagementPage {
   }
 
   contactInformationEmail() {
-    return cy.xpath(
-      '//*[@data-testid="contact-information-card"]//*[@data-testid="email-label"]/label[text()="Email"]/following-sibling::p'
-    );
+    return cy.xpath('//*[@data-testid="contact-information-card"]//*[@data-testid="email-label"]//ancestor::p');
+  }
+
+  contactInformationPhoneNumber() {
+    return cy.xpath('//*[@data-testid="contact-information-card"]//*[@data-testid="phone-number-label"]//ancestor::p');
   }
 
   subscriptionName(subscriptionName) {
@@ -57,16 +59,8 @@ class SubscriptionManagementPage {
     return cy.xpath('//goa-input[@name="sms"]');
   }
 
-  phoneNumberDisplay() {
-    return cy.get('[data-testid=phone-number-label] > p');
-  }
-
   emailInput() {
     return cy.get('[data-testid="contact-email-input"]');
-  }
-
-  emailDisplay() {
-    return cy.get('[data-testid=email-label] > p');
   }
 
   contactInformationSaveBtn() {
