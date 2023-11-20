@@ -1,12 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  UploadFileService,
-  FetchFileTypeService,
-  FetchFilesService,
-  DeleteFileService,
-  DownloadFileService,
-} from '@store/file/actions';
+import { UploadFileService, FetchFilesService, DeleteFileService, DownloadFileService } from '@store/file/actions';
 import {
   GoADropdownItem,
   GoADropdown,
@@ -87,11 +81,6 @@ const FileList = (): JSX.Element => {
     setSelectFile(file);
     setShowDeleteConfirmation(true);
   };
-
-  useEffect(() => {
-    dispatch(FetchFilesService());
-    dispatch(FetchFileTypeService());
-  }, [dispatch]);
 
   useEffect(() => {
     if (resetFilter === 'switch') {

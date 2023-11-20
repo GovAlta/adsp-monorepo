@@ -7,8 +7,9 @@ import { GoABadge, GoAButtonGroup, GoAModal, GoAButton } from '@abgov/react-comp
 import { FileTypeItem } from '@store/file/models';
 import { useHistory, useRouteMatch } from 'react-router-dom';
 import { DeleteModal } from '@components/DeleteModal';
-import { useDispatch } from 'react-redux';
-import { DeleteFileTypeService } from '@store/file/actions';
+import { useDispatch, useSelector } from 'react-redux';
+import { DeleteFileTypeService, checkFileTypeHasFile } from '@store/file/actions';
+import { RootState } from '@store/index';
 
 interface FileTypeRowProps extends FileTypeItem {
   editId: string;
@@ -35,6 +36,7 @@ const FileTypeTableRow = ({
   onEdit,
   onDelete,
 }: FileTypeRowProps): JSX.Element => {
+  const dispatch = useDispatch();
   return (
     <tr key={id}>
       <td>{name}</td>
@@ -71,6 +73,7 @@ const FileTypeTableRow = ({
             title="Delete"
             type="trash"
             onClick={() => {
+              dispatch(checkFileTypeHasFile(id));
               onDelete();
             }}
           />
@@ -120,6 +123,7 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const deleteFileType = fileTypes.find((x) => x && x.id === deleteId);
+  const hasFile = useSelector((state: RootState) => state.fileService.hasFile[deleteId]);
   const { url } = useRouteMatch();
   const history = useHistory();
   const dispatch = useDispatch();
@@ -214,7 +218,7 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
       )}
       <DeleteModal
         title="Delete file type"
-        isOpen={deleteId && deleteFileType?.hasFile === false}
+        isOpen={deleteId && hasFile === false}
         content={
           <>
             <p>
@@ -235,7 +239,7 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
       />
       <GoAModal
         testId="file-type-delete-modal"
-        open={deleteId && deleteFileType?.hasFile === true}
+        open={deleteId && hasFile === true}
         heading="File type current in use"
         actions={
           <GoAButtonGroup alignment="end">

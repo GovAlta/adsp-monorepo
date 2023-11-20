@@ -278,7 +278,7 @@ export const ResponseTableStyles = styled.div`
 
 export const TombStoneWrapper = styled.div`
   margin-top: var(--goa-spacing-xl);
-  font-size: var(--goa-fontSize-3);
+  font-size: var(--goa-font-size-3);
   color: var(--goa-color-text-default);
   border-radius: var(--goa-borderRadius-m);
   height: 7.375rem;
@@ -336,7 +336,7 @@ export const TombStoneWrapper = styled.div`
     -webkit-box-orient: vertical;
     display: -webkit-box;
     -webkit-line-clamp: 2;
-    font-size: var(--goa-fontSize-3);
+    font-size: var(--goa-font-size-3);
     font-weight: var(--goa-fontWeight-regular);
     font-family: 'acumin-pro-semi-condensed';
     line-height: var(--goa-lineHeight-2);
@@ -365,19 +365,27 @@ export const Edit = styled.div`
     margin-right: var(--goa-spacing-2xs);
     text-decoration: underline;
     line-height: var(--goa-lineHeight-3);
-    font-size: var(--goa-fontSize-4);
+    font-size: var(--goa-font-size-4);
   }
   display: flex;
   flex-direction: row;
 `;
 export const ScrollPane = styled.div`
   overflow-y: scroll;
-  max-height: calc(100vh - 230px);
+  max-height: calc(100vh - 30px);
   width: 100%;
 `;
+
+export const TriggerEventScrollPane = styled.div`
+  overflow-y: scroll;
+  height: calc(30vh);
+  width: 100%;
+  margin-bottom: var(--goa-spacing-xs) !important;
+`;
+
 export const TextLoadingIndicator = styled.div`
   animation: blinker 1s linear infinite;
-  font-size: var(--goa-fontSize-3);
+  font-size: var(--goa-font-size-3);
   font-style: italic;
   text-align: center;
   @keyframes blinker {
@@ -402,6 +410,66 @@ export const Tooltip = styled.div`
     bottom: -37px;
     width: max-content;
     min-width: 200px;
-    font-size: var(--goa-fontSize-3);
+    font-size: var(--goa-font-size-3);
+  }
+`;
+
+export const AddTriggerButtonPadding = styled.div`
+  padding-bottom: var(--goa-spacing-l);
+`;
+
+export const ScriptEventTriggerListDefinition = styled.div`
+  display: flex-inline-table;
+  & .spacingLarge {
+    font-weight: var(--goa-font-Weight-regular) !important;
+    font-size: var(--goa-font-size-7) !important;
+    font-family: var(--goa-font-family-sans) !important;
+  }
+
+  & .group-name {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-bold);
+  }
+
+  & td:first-child {
+    white-space: nowrap;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+  }
+
+  & td:last-child {
+    width: 40px;
+    white-space: nowrap;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+  }
+
+  & .payload-details {
+    div {
+      background: #f3f3f3;
+      white-space: pre-wrap;
+      font-family: monospace;
+      font-size: 12px;
+      line-height: 16px;
+      padding-top: 16px;
+      padding-bottom: 16px;
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+    padding: 0;
+  }
+`;
+
+export const ModalOverwrite = styled.div`
+  .modal {
+    max-height: 95% !important;
+    min-width: 37.5em;
+    max-width: 2000px;
+  }
+
+  .title {
+    font-weight: var(--goa-font-weight-bold);
+    font-size: var(--goa-font-size-5);
+    margin-top: 15px;
   }
 `;

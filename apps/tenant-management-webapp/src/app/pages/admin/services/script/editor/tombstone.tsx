@@ -55,7 +55,7 @@ export const TombStone = ({ selectedScript, onSave }: props): JSX.Element => {
         <table>
           <thead>
             <tr>
-              <th>Sctipt ID</th>
+              <th>Script ID</th>
             </tr>
             <tr>
               <td data-testid="queue-namespace">

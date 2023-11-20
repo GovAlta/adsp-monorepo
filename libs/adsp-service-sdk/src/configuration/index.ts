@@ -45,6 +45,7 @@ export const createConfigurationService = ({
     combine,
     useLongConfigurationCacheTTL ? 36000 : 900
   );
+
   if (enableConfigurationInvalidation) {
     handleConfigurationUpdates(logger, directory, tokenProvider, service);
   }
