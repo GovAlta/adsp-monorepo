@@ -6,6 +6,8 @@ export interface Subscription {
   subscriber?: Subscriber;
 }
 
+export const expireMinutes = 60;
+
 export interface SubscriptionCriteria {
   correlationId?: string;
   context?: {
@@ -33,6 +35,8 @@ export interface SubscriberChannel {
   address: string;
   channel: string;
   verified?: boolean;
+  pendingVerification?: boolean;
+  timeCodeSent?: number;
 }
 export interface Subscriber {
   tenantId?: string;
@@ -47,12 +51,14 @@ export interface SubscriberService {
   subscriber: Subscriber;
   subscriptions: Subscription[];
   hasSubscriberId: boolean;
+  previouslyVerified: Record<string, boolean>;
 }
 
 export const SUBSCRIBER_INIT: SubscriberService = {
   subscriber: undefined,
   subscriptions: [],
   hasSubscriberId: true,
+  previouslyVerified: {},
 };
 
 export const actionTypes = Object.freeze({

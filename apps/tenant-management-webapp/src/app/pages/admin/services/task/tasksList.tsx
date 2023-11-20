@@ -17,7 +17,7 @@ import {
 import { TaskModal } from './taskModal';
 import { ButtonPadding, ProgressWrapper } from './styled-components';
 import { TaskListTable } from './tasksTable';
-import { LoadMoreWrapper } from '../calendar/events/styled-components';
+import { LoadMoreWrapper } from '@components/styled-components';
 
 interface VisibleProps {
   visible: boolean;

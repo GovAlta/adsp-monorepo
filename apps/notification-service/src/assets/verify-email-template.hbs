@@ -4,5 +4,8 @@
     <b>{{code}}</b><br>
     This code will expire at {{ formatDate expiresAt format="ttt" }}.
   </p>
+  {{#if verifyLink}}
+    <p>Verification Link: <a href="{{verifyLink}}">{{verifyLink}}</a></p>
+  {{/if}}
   <p>{{reason}}</p>
 </main>

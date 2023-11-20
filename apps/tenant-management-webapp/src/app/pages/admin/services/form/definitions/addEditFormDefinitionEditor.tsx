@@ -22,7 +22,7 @@ import {
   ScrollPane,
 } from '../styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
-import { FetchRealmRoles } from '@store/tenant/actions';
+
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
 import { updateFormDefinition } from '@store/form/action';
@@ -34,11 +34,10 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
-
 import { useHistory, useParams } from 'react-router-dom';
-
 import { GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components-new';
 import useWindowDimensions from '@lib/useWindowDimensions';
+import { FetchRealmRoles } from '@store/tenant/actions';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   return (
@@ -59,13 +58,18 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const isEdit = !!id;
 
   const dispatch = useDispatch();
+  const latestNotification = useSelector(
+    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
+  );
 
   const { height } = useWindowDimensions();
+  const calcHeight = latestNotification && !latestNotification.disabled ? height - 50 : height;
 
   useEffect(() => {
+    dispatch(FetchRealmRoles());
+
     dispatch(fetchKeycloakServiceRoles());
     dispatch(getFormDefinitions());
-    dispatch(FetchRealmRoles());
   }, []);
 
   const types = [
@@ -225,7 +229,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               <EditorPadding>
                 <Editor
                   data-testid="form-schema"
-                  height={height - 550}
+                  height={calcHeight - 550}
                   value={JSON.stringify(definition.dataSchema)}
                   onChange={(value) => {
                     validators.remove('payloadSchema');

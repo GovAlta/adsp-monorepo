@@ -1,12 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  UploadFileService,
-  FetchFileTypeService,
-  FetchFilesService,
-  DeleteFileService,
-  DownloadFileService,
-} from '@store/file/actions';
+import { UploadFileService, FetchFilesService, DeleteFileService, DownloadFileService } from '@store/file/actions';
 import {
   GoADropdownItem,
   GoADropdown,
@@ -25,7 +19,7 @@ import { PageIndicator } from '@components/Indicator';
 import styled from 'styled-components';
 import { selectActionStateStart, selectActionStateCompleted } from '@store/session/selectors';
 import { UPLOAD_FILE } from '@store/file/actions';
-import { LoadMoreWrapper } from '../calendar/events/styled-components';
+import { LoadMoreWrapper } from '@components/styled-components';
 
 const FileList = (): JSX.Element => {
   const [selectedFile, setSelectFile] = useState<FileItem>(null);
@@ -87,11 +81,6 @@ const FileList = (): JSX.Element => {
     setSelectFile(file);
     setShowDeleteConfirmation(true);
   };
-
-  useEffect(() => {
-    dispatch(FetchFilesService());
-    dispatch(FetchFileTypeService());
-  }, [dispatch]);
 
   useEffect(() => {
     if (resetFilter === 'switch') {

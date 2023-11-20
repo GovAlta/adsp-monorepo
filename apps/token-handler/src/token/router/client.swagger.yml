@@ -1,0 +1,64 @@
+components:
+  schemas:
+    AuthenticationClient:
+      type: object
+      properties:
+        id:
+          type: string
+        clientId:
+          type: string
+        authCallbackUrl:
+          type: string
+        successRedirectUrl:
+          type: string
+        failureRedirectUrl:
+          type: string
+
+/token-handler/v1/clients/{clientId}:
+  parameters:
+    - name: clientId
+      description: ID of the client.
+      in: path
+      required: false
+      schema:
+        type: string
+  get:
+    tags:
+      - Client
+    description: Retrieves authentication client.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthenticationClient"
+      401:
+        description: Not authorized.
+      403:
+        description: User not permitted for requested operation.
+  post:
+    tags:
+      - Client
+    description: Registers an authentication client.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              registrationToken:
+                type: string
+                description: Client registration token from tenant realm.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthenticationClient"
+      401:
+        description: Not authorized.
+      403:
+        description: User not permitted for requested operation.

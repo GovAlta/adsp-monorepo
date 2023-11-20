@@ -2,16 +2,16 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import React from 'react';
 import { FetchFileTypeService } from '@store/file/actions';
-import { FetchRealmRoles } from '@store/tenant/actions';
+
 import { RootState } from '@store/index';
 import { FileTypeTable } from './fileTypesTable';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
 import { AddFileType } from './fileTypeNew';
 import styled from 'styled-components';
-import { createSelector } from 'reselect';
-import { fetchServiceRoles, fetchKeycloakServiceRoles } from '@store/access/actions';
+import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { Role } from '@store/tenant/models';
+import { FetchRealmRoles } from '@store/tenant/actions';
 
 const NoContentContainer = styled.div`
   margin-bottom: 2em;
@@ -23,31 +23,12 @@ interface AddFileTypeProps {
 }
 
 export const FileTypes = ({ activeEdit }: AddFileTypeProps): JSX.Element => {
-  const selectServiceCoreRoles = createSelector(
-    (state: RootState) => state.serviceRoles,
-    (serviceRoles) => {
-      return serviceRoles?.core || {};
-    }
-  );
-
   const dispatch = useDispatch();
   const roles = useSelector((state: RootState) => state.tenant.realmRoles);
-
   useEffect(() => {
+    dispatch(fetchKeycloakServiceRoles());
     dispatch(FetchRealmRoles());
   }, []);
-
-  const coreRoles = useSelector(selectServiceCoreRoles);
-  useEffect(() => {
-    dispatch(fetchServiceRoles());
-  }, []);
-
-  useEffect(() => {
-    // Fetch keycloak service roles after the roles from configuration service are fetched
-    if (Object.entries(coreRoles).length) {
-      dispatch(fetchKeycloakServiceRoles());
-    }
-  }, [coreRoles]);
 
   return (
     <div>
@@ -70,7 +51,9 @@ const FileTypesTableContainer = ({ roles }: FileTypesTableContainerProps): JSX.E
   });
 
   useEffect(() => {
-    dispatch(FetchFileTypeService());
+    if (!fileTypes) {
+      dispatch(FetchFileTypeService());
+    }
   }, []);
 
   // eslint-disable-next-line

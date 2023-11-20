@@ -38,12 +38,7 @@ import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { ActionState } from '@store/session/models';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
-import {
-  CreateFileTypeService,
-  FetchFileTypeService,
-  FetchFilesService,
-  UpdateFileTypeService,
-} from '@store/file/actions';
+import { CreateFileTypeService, UpdateFileTypeService } from '@store/file/actions';
 import { createSelector } from 'reselect';
 import { selectFileTyeNames } from './fileTypeNew';
 
@@ -96,11 +91,6 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
   const roleNames = roles?.map((role) => {
     return role.name;
   });
-
-  useEffect(() => {
-    dispatch(FetchFilesService());
-    dispatch(FetchFileTypeService());
-  }, []);
 
   useEffect(() => {
     const foundFileType = fileTypes?.find((f) => f.id === id);
@@ -365,7 +355,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                       elements.forEach((e) => {
                         if (e) {
                           elementNames = elementNames.concat(
-                            e.roleNames.map((roleName) => (e.clientId ? `${e.clientId}:${roleName}` : roleName))
+                            e.roleNames?.map((roleName) => (e.clientId ? `${e.clientId}:${roleName}` : roleName))
                           );
                         }
                       });
@@ -378,7 +368,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
                       );
 
                       //Default to Protected A if there was no security classification
-                      if (!fileType?.securityClassification && fileType?.securityClassification.length > 0 && isEdit) {
+                      if (!fileType?.securityClassification && fileType?.securityClassification?.length > 0 && isEdit) {
                         fileType.securityClassification = SecurityClassification.ProtectedA;
                       }
 

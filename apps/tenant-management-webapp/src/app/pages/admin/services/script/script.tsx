@@ -10,6 +10,7 @@ import { ScriptsView } from './scriptsView';
 import { HeadingDiv } from './styled-components';
 
 import AsideLinks from '@components/AsideLinks';
+
 export const Script = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
   const docBaseUrl = useSelector((state: RootState) => state.config.serviceUrls?.docServiceApiUrl);
@@ -23,7 +24,7 @@ export const Script = (): JSX.Element => {
   function getScriptDocsLink() {
     return `${docBaseUrl}/${tenantName?.toLowerCase().replace(/ /g, '-')}?urls.primaryName=Script service`;
   }
-  function getScriptsupportcodeLink() {
+  function getScriptSupportCodeLink() {
     return 'https://github.com/GovAlta/adsp-monorepo/tree/main/apps/script-service';
   }
   return (
@@ -45,7 +46,7 @@ export const Script = (): JSX.Element => {
       </Main>
 
       <Aside>
-        <AsideLinks serviceLink={getScriptsupportcodeLink()} docsLink={getScriptDocsLink()} />
+        <AsideLinks serviceLink={getScriptSupportCodeLink()} docsLink={getScriptDocsLink()} />
       </Aside>
     </Page>
   );

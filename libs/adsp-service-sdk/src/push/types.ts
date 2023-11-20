@@ -1,14 +1,3 @@
-export interface Webhook {
-  id: string;
-  url: string;
-  name: string;
-  targetId: string;
-  intervalMinutes: number;
-  eventTypes: { id: string }[];
-  description: string;
-  generatedByTest?: boolean;
-}
-
 export interface EventCriteria {
   correlationId?: string;
   context?: Record<string, boolean | number | string>;

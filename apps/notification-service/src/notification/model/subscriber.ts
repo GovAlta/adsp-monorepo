@@ -114,6 +114,44 @@ export class SubscriberEntity implements Subscriber {
     await this.repository.saveSubscriber(this);
   }
 
+  async sendVerifyCodeWithLink(
+    verifyService: VerifyService,
+    user: User,
+    channel: Channel,
+    address: string,
+    reason: string = null,
+    expireIn = 10,
+    verificationLink?: string
+  ): Promise<void> {
+    if (!this.canUpdate(user) && !isAllowedUser(user, this.tenantId, ServiceUserRoles.CodeSender, true)) {
+      throw new UnauthorizedUserError('send code to subscriber', user);
+    }
+
+    const verifyChannel = this.channels.find((sub) => {
+      return sub.channel === channel && sub.address === address;
+    });
+
+    if (!verifyChannel) {
+      throw new InvalidOperationError('Specified subscriber channel not recognized.');
+    }
+
+    verifyChannel.verifyKey = await verifyService.sendCodeWithLink(
+      verifyChannel,
+      reason || 'Enter this code to verify your contact address.',
+      expireIn,
+      verificationLink
+    );
+
+    const verifyChannelIndex = this.channels.findIndex((sub) => {
+      return sub.channel === channel && sub.address === address;
+    });
+
+    this.channels[verifyChannelIndex].pendingVerification = true;
+    this.channels[verifyChannelIndex].timeCodeSent = Date.now();
+
+    await this.repository.saveSubscriber(this);
+  }
+
   async checkVerifyCode(
     verifyService: VerifyService,
     user: User,
@@ -133,10 +171,15 @@ export class SubscriberEntity implements Subscriber {
     if (!codeChannel) {
       throw new InvalidOperationError('Specified subscriber channel not recognized.');
     }
-
     const verified = await verifyService.verifyCode(codeChannel, code);
+
     if (verifyChannel) {
       codeChannel.verified = verified;
+      const verifyChannelIndex = this.channels.findIndex((sub) => {
+        return sub.channel === channel && sub.address === address;
+      });
+      this.channels[verifyChannelIndex].pendingVerification = !verified;
+
       await this.repository.saveSubscriber(this);
     }
 

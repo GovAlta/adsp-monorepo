@@ -25,12 +25,13 @@ import { ConfigServiceRole } from '@store/access/models';
 import { RootState } from '@store/index';
 import { FETCH_KEYCLOAK_SERVICE_ROLES, fetchKeycloakServiceRoles } from '@store/access/actions';
 import { ActionState } from '@store/session/models';
-import { FetchRealmRoles } from '@store/tenant/actions';
+
 import { useValidators } from '@lib/validation/useValidators';
 import { badCharsCheck, wordMaxLengthCheck, isNotEmptyCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { TaskConfigQueue } from './TaskConfigQueue';
 import { SaveFormModal } from '@components/saveModal';
 import useWindowDimensions from '@lib/useWindowDimensions';
+import { FetchRealmRoles } from '@store/tenant/actions';
 
 const isTaskUpdated = (prev: TaskDefinition, next: TaskDefinition): boolean => {
   return (
@@ -46,12 +47,16 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
   const tenant = useSelector(tenantRolesAndClients);
   const tenantClients: ServiceRoleConfig = tenant.tenantClients ? tenant.tenantClients : {};
   const { id } = useParams<{ id: string }>();
+  const latestNotification = useSelector(
+    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
+  );
   const { height } = useWindowDimensions();
+  const calcHeight = latestNotification && !latestNotification.disabled ? height - 8 : height + 42;
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
 
   const isEdit = !!id;
   const heightCover = {
-    height: height - 480,
+    height: calcHeight - 550,
   };
 
   useEffect(() => {

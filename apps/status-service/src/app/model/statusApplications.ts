@@ -1,5 +1,5 @@
 import { isApp } from '../../mongo/schema';
-import { StaticApplicationData, StatusServiceApplications, StatusServiceConfiguration } from './serviceStatus';
+import { StaticApplicationData, StatusServiceApplications } from './serviceStatus';
 
 export class StatusApplications {
   #apps: StatusServiceApplications;
@@ -67,11 +67,11 @@ export class StatusApplications {
 }
 
 class AppIterator {
-  #apps: StatusServiceConfiguration;
+  #apps: StatusServiceApplications;
   #keys: Array<string>;
   #current: number;
 
-  constructor(apps: StatusServiceConfiguration, keys: Array<string>) {
+  constructor(apps: StatusServiceApplications, keys: Array<string>) {
     this.#apps = apps;
     this.#keys = keys;
     this.#current = 0;

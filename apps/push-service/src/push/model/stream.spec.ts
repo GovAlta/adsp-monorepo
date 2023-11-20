@@ -152,7 +152,14 @@ describe('StreamEntity', () => {
   describe('connect', () => {
     it('can connect to events', () => {
       const result = entity.connect(
-        of({ tenantId, namespace: 'test-service', name: 'test-started', timestamp: new Date(), payload: {} })
+        of({
+          tenantId,
+          namespace: 'test-service',
+          name: 'test-started',
+          timestamp: new Date(),
+          payload: {},
+          traceparent: '123',
+        })
       );
 
       expect(result).toBe(entity);
@@ -259,6 +266,7 @@ describe('StreamEntity', () => {
               timestamp: new Date(),
               correlationId: '321',
               payload: {},
+              traceparent: '123',
             },
             {
               tenantId,
@@ -268,6 +276,7 @@ describe('StreamEntity', () => {
               correlationId: '123',
               context: { value: 123, other: '234' },
               payload: {},
+              traceparent: '123',
             }
           )
         )

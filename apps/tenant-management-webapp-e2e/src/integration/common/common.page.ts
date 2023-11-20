@@ -63,8 +63,16 @@ class Common {
     return cy.xpath('//div[contains(@data-testid, "tab-btn") and contains(@class, "active")]');
   }
 
-  dontSaveButton() {
+  dontSaveButtonUnsavedChangesModal() {
     return cy.xpath('//goa-button[@data-testid="form-dont-save"]');
+  }
+
+  saveButtonUnsavedChangesModal() {
+    return cy.xpath('//goa-button[@data-testid="form-agree-save"]');
+  }
+
+  cancelButtonUnsavedChangesModal() {
+    return cy.xpath('//goa-button[@data-testid="form-cancel-modal"]');
   }
 }
 export default Common;

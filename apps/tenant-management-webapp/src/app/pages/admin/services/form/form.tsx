@@ -9,6 +9,7 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import AsideLinks from '@components/AsideLinks';
 import { HeadingDiv } from './styled-components';
 import BetaBadge from '@icons/beta-badge.svg';
+import { FetchRealmRoles } from '@store/tenant/actions';
 
 const HelpLink = (): JSX.Element => {
   const tenantName = useSelector((state: RootState) => state.tenant?.name);
@@ -35,6 +36,8 @@ export const Form: FunctionComponent = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
+    dispatch(FetchRealmRoles());
+
     dispatch(fetchKeycloakServiceRoles());
   }, []);
 

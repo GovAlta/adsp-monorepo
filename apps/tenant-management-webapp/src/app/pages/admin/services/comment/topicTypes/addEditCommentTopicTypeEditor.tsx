@@ -27,6 +27,7 @@ import {
 } from '../styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
 import { FetchRealmRoles } from '@store/tenant/actions';
+
 import { ConfigServiceRole } from '@store/access/models';
 import { getCommentTopicTypes } from '@store/comment/action';
 import { updateCommentTopicType } from '@store/comment/action';
@@ -63,8 +64,12 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
   const [spinner, setSpinner] = useState<boolean>(false);
 
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
+  const latestNotification = useSelector(
+    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
+  );
 
   const { height } = useWindowDimensions();
+  const calcHeight = latestNotification && !latestNotification.disabled ? height - 8 : height;
 
   const isEdit = !!id;
 
@@ -72,8 +77,8 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
 
   useEffect(() => {
     dispatch(fetchKeycloakServiceRoles());
-    dispatch(getCommentTopicTypes());
     dispatch(FetchRealmRoles());
+    dispatch(getCommentTopicTypes());
   }, []);
 
   const types = [
@@ -226,9 +231,8 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
 
-  const errorOffset = errors?.['securityClassification'] ? 26 : 0;
   const heightCover = {
-    height: height - 561 - errorOffset,
+    height: calcHeight - 550,
   };
 
   return (
@@ -245,26 +249,27 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
             {topicType && <TopicConfigTopicType topicType={topicType} />}
 
             <EditorPadding>
-              <GoAFormItem error={errors?.['securityClassification']} label="Select a security classification">
-                <GoADropdown
-                  name="securityClassifications"
-                  value={topicType?.securityClassification}
-                  onChange={(_n: string, value: SecurityClassification) => {
-                    validators['securityClassification'].check(value);
-                    setTopicType({
-                      ...topicType,
-                      securityClassification: value,
-                    });
-                  }}
-                  width="25rem"
-                >
-                  <GoADropdownItem value={SecurityClassification.public} label="Public" />
-                  <GoADropdownItem value={SecurityClassification.protectedA} label="Protected A" />
-                  <GoADropdownItem value={SecurityClassification.protectedB} label="Protected B" />
-                  <GoADropdownItem value={SecurityClassification.protectedC} label="Protected C" />
-                </GoADropdown>
-              </GoAFormItem>
-              <div style={heightCover}></div>
+              <div style={heightCover}>
+                <GoAFormItem error={errors?.['securityClassification']} label="Select a security classification">
+                  <GoADropdown
+                    name="securityClassifications"
+                    value={topicType?.securityClassification}
+                    onChange={(_n: string, value: SecurityClassification) => {
+                      validators['securityClassification'].check(value);
+                      setTopicType({
+                        ...topicType,
+                        securityClassification: value,
+                      });
+                    }}
+                    width="25rem"
+                  >
+                    <GoADropdownItem value={SecurityClassification.public} label="Public" />
+                    <GoADropdownItem value={SecurityClassification.protectedA} label="Protected A" />
+                    <GoADropdownItem value={SecurityClassification.protectedB} label="Protected B" />
+                    <GoADropdownItem value={SecurityClassification.protectedC} label="Protected C" />
+                  </GoADropdown>
+                </GoAFormItem>
+              </div>
             </EditorPadding>
 
             <hr className="hr-resize-bottom" />
@@ -341,7 +346,6 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
           setSaveModal({ visible: false, closeEditor: true });
         }}
         onSave={() => {
-          console.log(JSON.stringify(isEdit) + '<isEdit');
           if (!isEdit) {
             const validations = {
               duplicate: topicType.name,
@@ -353,7 +357,6 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
             const validations = {
               securityClassification: topicType.securityClassification,
             };
-            console.log(JSON.stringify(validators.checkAll(validations)) + '<validators.checkAll(validations)');
             if (!validators.checkAll(validations)) {
               return;
             }

@@ -4,12 +4,14 @@ import { NotificationState, NOTIFICATION_INIT } from './models';
 export default function (state: NotificationState = NOTIFICATION_INIT, action: ActionTypes): NotificationState {
   switch (action.type) {
     case 'notifications/error': {
-       let errorMessage = action.payload.message;
+      let errorMessage = action.payload.message;
 
-      const error = action.payload.error;
+      const error = action.payload?.error;
 
       if (!error?.response) {
-        errorMessage = `${errorMessage ? errorMessage + ': ' : ''}${error?.message || error}`;
+        if (error) {
+          errorMessage = `${errorMessage ? errorMessage + ': ' : ''}${error?.message || error}`;
+        }
       } else if (error.response.status >= 400 && error.response.status < 500) {
         errorMessage = `${errorMessage ? errorMessage + ': ' : ''}${
           error?.response?.data?.errorMessage || error?.response?.data?.error || error?.response?.data
@@ -17,11 +19,13 @@ export default function (state: NotificationState = NOTIFICATION_INIT, action: A
       }
       return {
         notification: {
-          message:  errorMessage,
+          message: errorMessage,
           type: 'emergency',
+          dispatch: action.payload.dispatch,
         },
       };
-    } case 'notifications/success':
+    }
+    case 'notifications/success':
       return {
         notification: {
           message: action.payload.message,

@@ -2,15 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { GoAFormItem } from '@abgov/react-components/experimental';
 import { useDispatch, useSelector } from 'react-redux';
-import { patchSubscriber, createSubscriber } from '@store/subscription/actions';
+import { patchSubscriber, createSubscriber, VerifyEmail, VerifyPhone } from '@store/subscription/actions';
 import { actionTypes } from '@store/subscription/models';
-import { Channels } from '@store/subscription/models';
+import { Channels, expireMinutes } from '@store/subscription/models';
+
 import { Grid, GridItem } from '@components/Grid';
 import { SubscriberChannel, Subscriber } from '@store/subscription/models';
 import { InfoCard } from './InfoCard';
 import { Label, GapVS, VerificationWrapper } from './styled-components';
 import { RootState } from '@store/index';
 import { phoneWrapper } from '@lib/wrappers';
+import { ValidateModal } from '../../validateModal';
+
 import {
   GoAButton,
   GoAInput,
@@ -29,14 +32,14 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
   const userInfo = useSelector((state: RootState) => state.session?.userInfo);
 
   const subscriberEmail = subscriber
-    ? subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === Channels.email)[0]?.address
+    ? subscriber?.channels?.filter((chn: SubscriberChannel) => chn.channel === Channels.email)[0]?.address
     : userInfo?.email;
 
   const isEmailVerified = subscriber && subscriber?.channels?.find((c) => c.channel === Channels.email)?.verified;
   const isSmsVerified = subscriber && subscriber?.channels?.find((c) => c.channel === Channels.sms)?.verified;
 
   const subscriberSMS =
-    subscriber?.channels.filter((chn: SubscriberChannel) => chn.channel === Channels.sms)[0]?.address || '';
+    subscriber?.channels?.filter((chn: SubscriberChannel) => chn.channel === Channels.sms)[0]?.address || '';
 
   useEffect(() => {
     setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
@@ -45,6 +48,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
 
   const [emailContactInformation, setEmailContactInformation] = useState(subscriberEmail);
   const [SMSContactInformation, setSMSContactInformation] = useState(subscriberSMS);
+  const [viewValidateModal, setViewValidateModal] = useState(false);
   const [editContactInformation, setEditContactInformation] = useState(false);
   const [preferredChannel, setPreferredChannel] = useState(null);
   const indicator = useSelector((state: RootState) => {
@@ -87,6 +91,14 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
     return true;
   };
 
+  const emailChannelIndex = subscriber?.channels?.findIndex((channel) => {
+    return channel.channel === Channels.email;
+  });
+
+  const smsChannelIndex = subscriber?.channels?.findIndex((channel) => {
+    return channel.channel === Channels.sms;
+  });
+
   const saveContactInformation = async () => {
     setFormErrors({});
 
@@ -109,14 +121,6 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
     if (subscriber?.channels) {
       channels = [...subscriber.channels];
     }
-
-    const emailChannelIndex = subscriber?.channels?.findIndex((channel) => {
-      return channel.channel === Channels.email;
-    });
-
-    const smsChannelIndex = subscriber?.channels?.findIndex((channel) => {
-      return channel.channel === Channels.sms;
-    });
 
     if (emailChannelIndex !== -1 && subscriber) {
       channels[emailChannelIndex].address = emailContactInformation;
@@ -163,7 +167,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
 
   const updateContactInfoButtons = () => {
     return (
-      <div>
+      <div style={{ margin: '2px 10px 0 0' }}>
         <GoAButtonGroup alignment="start">
           <GoAButton size="compact" testId="edit-contact-save-button" onClick={saveContactInformation}>
             Save
@@ -189,6 +193,20 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
   const updateChannelPreference = (channel: string) => {
     setPreferredChannel(channel);
   };
+
+  const codeEmailExists =
+    subscriber?.channels[emailChannelIndex]?.pendingVerification &&
+    subscriber?.channels[emailChannelIndex]?.timeCodeSent + 1000 * 60 * expireMinutes > Date.now();
+  const codeSMSExists =
+    subscriber?.channels[smsChannelIndex]?.pendingVerification &&
+    subscriber?.channels[smsChannelIndex]?.timeCodeSent + 1000 * 60 * expireMinutes > Date.now();
+
+  const noSms = !subscriber?.channels[smsChannelIndex];
+
+  const emailValidated = subscriber?.channels[emailChannelIndex]?.verified;
+  const smsValidated = subscriber?.channels[smsChannelIndex]?.verified;
+
+  const neitherChannelUnverified = (codeEmailExists || emailValidated) && (codeSMSExists || smsValidated || noSms);
 
   return (
     <InfoCard title="Contact information">
@@ -249,15 +267,25 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
             <div>
               <Grid>
                 <GridItem md={3.5} hSpacing={1}>
-                  <div data-testid="email-label">
-                    <Label>Email</Label>
+                  <div>
                     <p>
                       <VerificationWrapper>
+                        <div data-testid="email-label">
+                          <Label>Email</Label>
+                        </div>
                         {isEmailVerified !== undefined && isEmailVerified === true && (
-                          <GoABadge type="success" content="Verified" />
+                          <div>
+                            <GoABadge type="success" content="Verified" />
+                          </div>
                         )}
                         {isEmailVerified !== undefined && isEmailVerified === false && (
-                          <GoABadge type="important" content="Not verified" />
+                          <div>
+                            {codeEmailExists ? (
+                              <GoABadge type="midtone" content="Pending" />
+                            ) : (
+                              <GoABadge type="important" content="Not verified" />
+                            )}
+                          </div>
                         )}
                       </VerificationWrapper>
 
@@ -274,7 +302,13 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                           <GoABadge type="success" content="Verified" />
                         )}
                         {isSmsVerified !== undefined && isSmsVerified === false && (
-                          <GoABadge type="important" content="Not verified" />
+                          <div>
+                            {codeSMSExists ? (
+                              <GoABadge type="midtone" content="Pending" />
+                            ) : (
+                              <GoABadge type="important" content="Not verified" />
+                            )}
+                          </div>
                         )}
                       </VerificationWrapper>
 
@@ -298,6 +332,23 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
                   </GoARadioGroup>
                 </GridItem>
               </Grid>
+
+              <ValidateModal
+                isOpen={viewValidateModal}
+                testId={'validate-modal'}
+                onValidate={(channel) => {
+                  if (channel === 'email') {
+                    dispatch(VerifyEmail(subscriber, false));
+                  } else if (channel === 'SMS') {
+                    dispatch(VerifyPhone(subscriber, false));
+                  }
+                  setViewValidateModal(false);
+                }}
+                title="Verify channel"
+                onClose={() => {
+                  setViewValidateModal(false);
+                }}
+              />
             </div>
           )}
         </div>
@@ -305,25 +356,43 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
       {indicator && <GoASkeletonGridColumnContent rows={5}></GoASkeletonGridColumnContent>}
       <GapVS />
       {!indicator && (
-        <div>
+        <div style={{}}>
           {editContactInformation ? (
             updateContactInfoButtons()
           ) : (
-            <GoAButton
-              size="compact"
-              testId="edit-contact-button"
-              onClick={() => {
-                if (!subscriber) {
-                  dispatch(createSubscriber());
-                }
-                setEditContactInformation(!editContactInformation);
-                setEmailContactInformation(subscriberEmail);
-                setSMSContactInformation(subscriberSMS);
-                setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
-              }}
-            >
-              Edit contact information
-            </GoAButton>
+            <div style={{ display: 'flex' }}>
+              <div style={{ margin: '5px 10px 0 0' }}>
+                <GoAButton
+                  size="compact"
+                  testId="edit-contact-button"
+                  onClick={() => {
+                    if (!subscriber) {
+                      dispatch(createSubscriber());
+                    }
+                    setEditContactInformation(!editContactInformation);
+                    setEmailContactInformation(subscriberEmail);
+                    setSMSContactInformation(subscriberSMS);
+                    setPreferredChannel(subscriber?.channels ? subscriber?.channels[0].channel : null);
+                  }}
+                >
+                  Edit contact information
+                </GoAButton>
+              </div>
+
+              <div style={{ margin: '5px 0 0 5px' }}>
+                <GoAButton
+                  size="compact"
+                  type="secondary"
+                  testId="verify-channel"
+                  onClick={() => {
+                    setViewValidateModal(true);
+                  }}
+                  disabled={neitherChannelUnverified}
+                >
+                  Verify channel
+                </GoAButton>
+              </div>
+            </div>
           )}
         </div>
       )}

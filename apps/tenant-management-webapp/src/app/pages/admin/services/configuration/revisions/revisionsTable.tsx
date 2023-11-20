@@ -17,7 +17,7 @@ import {
   setConfigurationRevisionActive,
 } from '@store/configuration/action';
 import { RowFlex } from '../styled-components';
-import { LoadMoreWrapper } from '../../calendar/events/styled-components';
+import { LoadMoreWrapper } from '@components/styled-components';
 interface VisibleProps {
   visible: boolean;
 }

@@ -46,6 +46,13 @@ describe('subscription router', () => {
     saveSubscriber: jest.fn((entity) => Promise.resolve(entity)),
   };
 
+  const tenantServiceMock = {
+    getTenants: jest.fn(),
+    getTenant: jest.fn(),
+    getTenantByName: jest.fn(),
+    getTenantByRealm: jest.fn(),
+  };
+
   const notificationType: NotificationType = {
     id: 'test',
     name: 'Test',
@@ -59,6 +66,7 @@ describe('subscription router', () => {
 
   const verifyServiceMock = {
     sendCode: jest.fn(),
+    sendCodeWithLink: jest.fn(),
     verifyCode: jest.fn(),
   };
 
@@ -71,6 +79,7 @@ describe('subscription router', () => {
     repositoryMock.deleteSubscriptions.mockReset();
     repositoryMock.deleteSubscriber.mockReset();
     verifyServiceMock.sendCode.mockReset();
+    verifyServiceMock.sendCodeWithLink.mockReset();
     verifyServiceMock.verifyCode.mockReset();
   });
 
@@ -81,6 +90,7 @@ describe('subscription router', () => {
         logger: loggerMock,
         subscriptionRepository: repositoryMock,
         verifyService: verifyServiceMock,
+        tenantService: tenantServiceMock,
       });
       expect(router).toBeTruthy();
     });

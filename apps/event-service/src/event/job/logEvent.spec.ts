@@ -51,6 +51,7 @@ describe('createLogEventJob', () => {
       tenantId: adspId`urn:ads:platform:tenant-service:v2:/tenants/test`,
       correlationId: 'urn:ads:platform:file-service:v1:/files/123',
       payload: {},
+      traceparent: '123',
     };
 
     it('can handle event', (done) => {

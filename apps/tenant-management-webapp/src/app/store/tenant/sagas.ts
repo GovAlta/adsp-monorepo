@@ -205,6 +205,9 @@ export function* tenantLogout(): SagaIterator {
 
 export function* fetchRealmRoles(): SagaIterator {
   try {
+    const realmRoles = yield select((state: RootState) => state.tenant?.realmRoles);
+    if (realmRoles) return;
+
     const state: RootState = yield select();
     yield put(
       UpdateIndicator({

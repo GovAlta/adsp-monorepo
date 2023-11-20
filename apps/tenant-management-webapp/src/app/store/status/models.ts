@@ -4,6 +4,8 @@ export type ServiceStatusType = InternalServiceStatusType | PublicServiceStatusT
 export const PublicServiceStatusTypes = ['operational', 'maintenance', 'outage', 'reported-issues'];
 export type EndpointStatusType = 'offline' | 'online' | 'pending';
 
+export const AddEditStatusWebhookType = '/status/webhook/modal/edit-add';
+
 export interface ServiceStatusMetrics {
   unhealthyCount?: number;
   totalUnhealthyDuration?: number;
@@ -105,3 +107,13 @@ export interface EndpointStatusEntry {
 export interface MetricResponse {
   values: { sum: string; max: string }[];
 }
+
+export const defaultHook: Webhooks = {
+  id: '',
+  name: '',
+  url: '',
+  targetId: '',
+  intervalMinutes: 5,
+  description: '',
+  eventTypes: [],
+};

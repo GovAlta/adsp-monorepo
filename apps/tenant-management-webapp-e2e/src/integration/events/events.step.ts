@@ -62,7 +62,7 @@ Then(
   }
 );
 
-When('the user clicks Add definition button', function () {
+When('the user clicks Add definition button on event definitions page', function () {
   eventsObj.addDefinitionButton().shadow().find('button').click({ force: true });
   cy.wait(1000); // Add a wait to avoid accessibility test to run too quickly before the modal is fully loaded
 });

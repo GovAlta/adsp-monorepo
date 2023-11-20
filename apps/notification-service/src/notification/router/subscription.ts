@@ -1,6 +1,6 @@
 import { Request, RequestHandler, Response, Router } from 'express';
 import { Logger } from 'winston';
-import { adspId, AdspId, isAllowedUser, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
+import { adspId, AdspId, isAllowedUser, TenantService, UnauthorizedUserError, User } from '@abgov/adsp-service-sdk';
 import { createValidationHandler, InvalidOperationError, NotFoundError, decodeAfter } from '@core-services/core-common';
 import { SubscriptionRepository } from '../repository';
 import { NotificationTypeEntity, SubscriberEntity } from '../model';
@@ -11,6 +11,7 @@ import {
   SubscriberOperationRequests,
   SUBSCRIBER_CHECK_CODE,
   SUBSCRIBER_SEND_VERIFY_CODE,
+  SUBSCRIBER_SEND_VERIFY_CODE_WITH_LINK,
   SUBSCRIBER_VERIFY_CHANNEL,
 } from './types';
 import { VerifyService } from '../verify';
@@ -21,6 +22,7 @@ interface SubscriptionRouterProps {
   logger: Logger;
   subscriptionRepository: SubscriptionRepository;
   verifyService: VerifyService;
+  tenantService: TenantService;
 }
 
 export const assertHasTenant: RequestHandler = (req, _res, next) => {
@@ -378,6 +380,18 @@ export function subscriberOperations(verifyService: VerifyService): RequestHandl
           await subscriber.sendVerifyCode(verifyService, user, request.channel, request.address, request.reason);
           result = { sent: true };
           break;
+        case SUBSCRIBER_SEND_VERIFY_CODE_WITH_LINK:
+          await subscriber.sendVerifyCodeWithLink(
+            verifyService,
+            user,
+            request.channel,
+            request.address,
+            request.reason,
+            request.expireIn,
+            request.verificationLink
+          );
+          result = { sent: true };
+          break;
         case SUBSCRIBER_CHECK_CODE: {
           const verified = await subscriber.checkVerifyCode(
             verifyService,
@@ -386,7 +400,9 @@ export function subscriberOperations(verifyService: VerifyService): RequestHandl
             request.address,
             request.code
           );
+
           result = { verified };
+
           break;
         }
         case SUBSCRIBER_VERIFY_CHANNEL: {
@@ -398,7 +414,9 @@ export function subscriberOperations(verifyService: VerifyService): RequestHandl
             request.code,
             true
           );
+
           result = { verified };
+
           break;
         }
         default:
@@ -644,6 +662,7 @@ export const createSubscriptionRouter = ({
           address: { optional: true, isString: true },
           code: { optional: true, isString: true },
           reason: { optional: true, isString: true },
+          verificationLink: { optional: true, isString: true },
         },
         ['body']
       )

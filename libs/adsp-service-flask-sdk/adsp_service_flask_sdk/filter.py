@@ -1,16 +1,15 @@
 import logging
-from operator import itemgetter
 from typing import Any, Callable, Dict, Optional, Tuple, TypeVar
 
+from adsp_py_common.access import IssuerCache, User
+from adsp_py_common.adsp_id import AdspId
+from adsp_py_common.constants import CONTEXT_TENANT, CONTEXT_USER
+from adsp_py_common.tenant import Tenant, TenantService
+from operator import itemgetter
 from flask import globals, Request, request
 from jwt import decode
 from werkzeug.exceptions import Forbidden, HTTPException, Unauthorized
 from werkzeug.local import LocalProxy
-
-from ._constants import CONTEXT_TENANT, CONTEXT_USER
-from .access import IssuerCache, User
-from .adsp_id import AdspId
-from .tenant import Tenant, TenantService
 
 
 def _header_extractor(req: Request) -> Optional[str]:
@@ -57,7 +56,9 @@ class AccessRequestFilter:
             return token_issuer.tenant, result
         except BaseException as err:
             if not isinstance(err, HTTPException):
-                self._logger.warning("Error encountered validating access token. %s", err)
+                self._logger.warning(
+                    "Error encountered validating access token. %s", err
+                )
                 raise Unauthorized()
             raise
 
@@ -78,6 +79,8 @@ class AccessRequestFilter:
             tenant,
             payload.get("sub"),
             payload.get("preferred_username"),
+            payload.get("given_name", None),
+            payload.get("family_name", None),
             payload.get("email", None),
             roles,
             tenant is None,

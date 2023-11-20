@@ -9,6 +9,7 @@ import {
   DELETE_CALENDAR_EVENT_SUCCESS_ACTION,
   UPDATE_EVENT_CALENDAR_SUCCESS_ACTION,
   UPDATE_EVENT_SEARCH_CRITERIA_ACTION,
+  EXPORT_EVENT_CALENDAR_SUCCESS_ACTION,
 } from './actions';
 import { CalendarService, CALENDAR_INIT, getDefaultSearchCriteria } from './models';
 
@@ -107,7 +108,14 @@ export default (state = CALENDAR_INIT, action: ActionTypes): CalendarService => 
         ...state,
       };
     }
-
+    case EXPORT_EVENT_CALENDAR_SUCCESS_ACTION: {
+      if (action.payload) {
+        state.export = action.payload;
+      }
+      return {
+        ...state,
+      };
+    }
     default:
       return state;
   }

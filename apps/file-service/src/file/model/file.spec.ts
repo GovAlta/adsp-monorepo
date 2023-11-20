@@ -53,6 +53,7 @@ describe('File Entity', () => {
     const file = {
       filename: 'test.txt',
       recordId: 'my-record-1',
+      securityClassification: 'Public',
       created: new Date(),
       createdBy: {
         id: 'user-1',
@@ -113,6 +114,7 @@ describe('File Entity', () => {
       filename: 'test.txt',
       recordId: 'my-record-1',
       size: 100,
+      securityClassification: 'Public',
       created: new Date(),
       createdBy: {
         id: 'user-1',
@@ -146,6 +148,7 @@ describe('File Entity', () => {
       filename: 'test.txt',
       recordId: 'my-record-1',
       size: 100,
+      securityClassification: 'Public',
       created: new Date(),
       createdBy: {
         id: 'user-1',
@@ -174,6 +177,7 @@ describe('File Entity', () => {
       recordId: 'my-record-1',
       size: 100,
       created: new Date(),
+      securityClassification: 'Public',
       createdBy: {
         id: 'user-1',
         name: 'testy',

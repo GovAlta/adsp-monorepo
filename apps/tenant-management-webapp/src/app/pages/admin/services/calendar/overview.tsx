@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { FetchRealmRoles } from '@store/tenant/actions';
+
 import { Overview } from '@components/Overview';
 
 interface CalendarOverviewProps {
@@ -9,11 +8,6 @@ interface CalendarOverviewProps {
 }
 
 export const CalendarOverview = ({ setActiveEdit, setActiveIndex }: CalendarOverviewProps): JSX.Element => {
-  const dispatch = useDispatch();
-  useEffect(() => {
-    dispatch(FetchRealmRoles());
-  }, []);
-
   useEffect(() => {
     setActiveEdit(false);
     setActiveIndex(0);

@@ -75,32 +75,15 @@ export const createProcessEventJob =
         const subscriberAppUrl = await directory.getServiceUrl(adspId`urn:ads:platform:subscriber-app`);
 
         for (const type of types) {
-          // Page through all subscriptions and generate notifications.
-          const notifications: Notification[] = [];
-          let after: string = null;
-          do {
-            const { results, page } = await subscriptionRepository.getSubscriptions(
-              configuration,
-              tenantId,
-              1000,
-              after,
-              {
-                typeIdEquals: type.id,
-              }
-            );
-            const pageNotifications = type.generateNotifications(
-              logger,
-              templateService,
-              subscriberAppUrl,
-              event,
-              results,
-              {
-                tenant,
-              }
-            );
-            notifications.push(...pageNotifications);
-            after = page.next;
-          } while (after);
+          const notifications: Notification[] = await type.generateNotifications(
+            logger,
+            templateService,
+            subscriberAppUrl,
+            subscriptionRepository,
+            configuration,
+            event,
+            { tenant }
+          );
 
           for (const notification of notifications) {
             queueService.enqueue({ generationId, ...notification });

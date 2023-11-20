@@ -8,9 +8,7 @@ import { GoAButton } from '@abgov/react-components-new';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { AddScriptModal } from './addScriptModal';
-
 import { fetchEventStreams } from '@store/stream/actions';
-import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 import { ScriptTableComponent } from './scriptList';
 import { ActionState } from '@store/session/models';
 import { PageIndicator } from '@components/Indicator';
@@ -42,16 +40,19 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
     fetchScriptState: state.scriptService.indicator?.details[FETCH_SCRIPTS_ACTION] || '',
   }));
 
+  const latestNotification = useSelector(
+    (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
+  );
+  const isNotificationActive = latestNotification && !latestNotification.disabled;
+
   useEffect(() => {
     dispatch(fetchScripts());
     dispatch(FetchRealmRoles());
     dispatch(fetchKeycloakServiceRoles());
     dispatch(fetchEventStreams());
   }, []);
-  const tenant = useSelector(tenantRolesAndClients);
 
   const { scripts } = useSelector((state: RootState) => state.scriptService);
-
   const { errors, validators } = useValidators(
     'name',
     'name',
@@ -79,6 +80,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   };
 
   const saveScript = (script) => {
+    setSelectedScript(script);
     dispatch(UpdateScript(script, false));
   };
 
@@ -94,6 +96,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   };
 
   const onEdit = (script) => {
+    script.testInputs = testInput;
     setSelectedScript(script);
     setShowScriptEditForm(true);
   };
@@ -113,6 +116,10 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   const onScriptChange = (value) => {
     setScript(value);
   };
+
+  useEffect(() => {
+    document.body.style.overflow = 'unset';
+  }, [showScriptEditForm]);
   return (
     <>
       <div>
@@ -135,41 +142,42 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
           <ScriptTableComponent scripts={scripts} onEdit={onEdit} />
         </div>
       )}
-
       <AddScriptModal
         open={openAddScript}
+        isNew={true}
         initialValue={selectedScript}
-        realmRoles={tenant.realmRoles}
-        tenantClients={tenant.tenantClients ? tenant.tenantClients : {}}
         onCancel={() => {
           reset();
         }}
         onSave={saveScript}
       />
 
-      <Modal open={showScriptEditForm} data-testid="script-edit-form">
-        {/* Hides body overflow when the modal is up */}
-        <BodyGlobalStyles hideOverflow={showScriptEditForm} />
-        <ModalContent>
-          <ScriptPanelContainer>
-            <ScriptEditor
-              editorConfig={scriptEditorConfig}
-              name={name}
-              description={description}
-              scriptStr={script}
-              selectedScript={selectedScript}
-              testInput={testInput}
-              testInputUpdate={testInputUpdate}
-              onNameChange={onNameChange}
-              onDescriptionChange={onDescriptionChange}
-              onScriptChange={onScriptChange}
-              errors={errors}
-              saveAndReset={saveScript}
-              onEditorCancel={reset}
-            />
-          </ScriptPanelContainer>
-        </ModalContent>
-      </Modal>
+      {showScriptEditForm && (
+        <Modal open={showScriptEditForm} isNotificationActive={isNotificationActive} data-testid="script-edit-form">
+          {/* Hides body overflow when the modal is up */}
+          <BodyGlobalStyles hideOverflow={showScriptEditForm} />
+          <ModalContent>
+            <ScriptPanelContainer>
+              <ScriptEditor
+                editorConfig={scriptEditorConfig}
+                name={name}
+                description={description}
+                scriptStr={script}
+                selectedScript={selectedScript}
+                testInput={testInput}
+                testInputUpdate={testInputUpdate}
+                onNameChange={onNameChange}
+                onDescriptionChange={onDescriptionChange}
+                onScriptChange={onScriptChange}
+                errors={errors}
+                saveAndReset={saveScript}
+                onEditorCancel={reset}
+                onSave={saveScript}
+              />
+            </ScriptPanelContainer>
+          </ModalContent>
+        </Modal>
+      )}
     </>
   );
 };

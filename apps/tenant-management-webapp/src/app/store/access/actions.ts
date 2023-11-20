@@ -56,6 +56,7 @@ export interface FetchServiceRolesSuccessAction {
 
 export interface FetchKeycloakServiceRolesAction {
   type: typeof FETCH_KEYCLOAK_SERVICE_ROLES;
+  forceToUpdate?: boolean;
 }
 
 export interface FetchKeycloakServiceRolesSuccessAction {
@@ -128,8 +129,9 @@ export const fetchServiceRolesSuccess = ({ tenant, core }: ServiceRoleState): Fe
   },
 });
 
-export const fetchKeycloakServiceRoles = (): FetchKeycloakServiceRolesAction => ({
+export const fetchKeycloakServiceRoles = (forceToUpdate?: boolean): FetchKeycloakServiceRolesAction => ({
   type: FETCH_KEYCLOAK_SERVICE_ROLES,
+  forceToUpdate: forceToUpdate || false,
 });
 
 export const fetchKeycloakServiceRolesSuccess = ({

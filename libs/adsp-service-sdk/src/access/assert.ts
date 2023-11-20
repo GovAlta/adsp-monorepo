@@ -32,6 +32,7 @@ export function hasRequiredRole(user: User, roles: string | string[]): boolean {
   }
 
   const userRoles = user?.roles || [];
+
   // If user has at least one of the roles, then they are permitted.
   const matchedRole = roles.find((required) => userRoles.includes(required));
   return !!matchedRole;

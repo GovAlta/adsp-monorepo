@@ -18,6 +18,7 @@ describe('SubscriberEntity', () => {
 
   const verifyServiceMock = {
     sendCode: jest.fn(),
+    sendCodeWithLink: jest.fn(),
     verifyCode: jest.fn(),
   };
 
