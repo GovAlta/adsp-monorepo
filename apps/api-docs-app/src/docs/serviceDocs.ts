@@ -45,9 +45,7 @@ export interface ServiceDocs {
 }
 
 class ServiceDocsImpl {
-  private readonly cache = new NodeCache({
-    stdTTL: 3600,
-  });
+  private readonly cache = new NodeCache();
 
   constructor(
     private readonly logger: Logger,
@@ -111,7 +109,6 @@ class ServiceDocsImpl {
     const namespaces = this.cache.keys();
     let mergedDocs: Record<string, ServiceDoc> = {};
     const docs: Record<string, ServiceDoc> = {};
-
     if (!namespaces.includes(id.namespace)) {
       const docs = await this.#retrieveDocEntries(id.namespace);
       this.cache.set(id.namespace, docs);
