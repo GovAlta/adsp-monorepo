@@ -211,6 +211,10 @@ export const ScriptEditorEventsTab = ({ script, eventNames, onEditorSave }: Scri
         }}
         onSave={(triggerEvent: ScriptItemTriggerEvent) => {
           setOpenAddTriggerEvent(false);
+          if (script.triggerEvents === undefined) {
+            script.triggerEvents = [];
+          }
+
           if (isNewScriptTriggerEvent) {
             script.triggerEvents?.push(triggerEvent);
           } else {
