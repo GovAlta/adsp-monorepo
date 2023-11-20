@@ -33,6 +33,8 @@ import { ClientRoleTable } from '@components/RoleTable';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { ActionState } from '@store/session/models';
 import { selectRoleList } from '@store/sharedSelectors/roles';
+import { ScriptEditorEventsTab } from './scriptEditorEventsTab';
+import { getEventDefinitions } from '@store/event/actions';
 
 interface ScriptEditorProps {
   editorConfig?: EditorProps;
@@ -82,8 +84,12 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   let activeParam = 0;
   let activeSignature = 0;
 
+  const definitions = useSelector((state: RootState) => state.event.results.map((r) => state.event.definitions[r]));
+
   useEffect(() => {
-    setScript(selectedScript);
+    if (!definitions || (definitions && definitions.length === 0)) {
+      dispatch(getEventDefinitions());
+    }
   }, []);
 
   const roles = useSelector(selectRoleList);
@@ -167,6 +173,12 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     onScriptChange(selectedScript?.script || '');
   }, [selectedScript]);
 
+  const orderedEventNames = definitions
+    .map((def) => {
+      return `${def.namespace}:${def.name}`;
+    })
+    .sort();
+
   const scriptResponse = useSelector((state: RootState) => state.scriptService.scriptResponse);
 
   const setTestInput = (input: string) => {
@@ -183,15 +195,18 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     selectedScript.script = scriptStr;
     selectedScript.testInputs = getInput(testInput);
     selectedScript.runnerRoles = script.runnerRoles;
+
     return selectedScript;
   };
+
   const hasChanged = () => {
     return (
       selectedScript.name !== name ||
       selectedScript.description !== description ||
       selectedScript.script !== scriptStr ||
       selectedScript.testInputs !== testInput ||
-      selectedScript.runnerRoles.toString() !== script.runnerRoles.toString()
+      selectedScript.runnerRoles.toString() !== script.runnerRoles.toString() ||
+      selectedScript.useServiceAccount !== script.useServiceAccount
     );
   };
 
@@ -245,9 +260,10 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
 
         <UseServiceAccountWrapper>
           <GoACheckbox
-            checked={selectedScript.useServiceAccount}
+            checked={selectedScript.useServiceAccount || script.triggerEvents?.length > 0}
             name="script-use-service-account-checkbox"
             testId="script-use-service-account-checkbox"
+            disabled={script.triggerEvents?.length > 0}
             onChange={() => {
               setScript({
                 ...selectedScript,
@@ -258,6 +274,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
           />
           Use service account
         </UseServiceAccountWrapper>
+
         <Tabs activeIndex={activeIndex} data-testid="editor-tabs">
           <Tab label="Lua script" data-testid="script-editor-tab">
             <MonacoDivBody data-testid="templated-editor-body" style={{ height: `calc(72vh - ${getstyles})` }}>
@@ -282,6 +299,16 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                 )}
               </ScrollPane>
             </MonacoDivTabBody>
+          </Tab>
+          <Tab label="Trigger events" data-testid="script-trigger-events-tab">
+            <ScriptEditorEventsTab
+              script={selectedScript}
+              eventNames={orderedEventNames}
+              onEditorSave={(script) => {
+                setScript(script);
+                saveAndReset(script);
+              }}
+            />
           </Tab>
         </Tabs>
 
