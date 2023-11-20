@@ -149,7 +149,7 @@ export const ScriptEditorEventsTab = ({ script, eventNames, onEditorSave }: Scri
     setOpenAddTriggerEvent(false);
 
     // Reset the selected trigger event before any changes were made in the modal
-    const foundTriggerEvent = script.triggerEvents.find((tr) => tr.name === selectedTriggerEvent.name);
+    const foundTriggerEvent = script.triggerEvents?.find((tr) => tr.name === selectedTriggerEvent.name);
     if (foundTriggerEvent) {
       setSelectedTriggerEvent(triggerEvent);
     }
