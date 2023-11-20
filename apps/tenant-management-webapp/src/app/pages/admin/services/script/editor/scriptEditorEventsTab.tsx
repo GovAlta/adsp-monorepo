@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useState } from 'react';
 import { GoAButton, GoAButtonGroup } from '@abgov/react-components-new';
 import { ScriptItem, ScriptItemTriggerEvent, defaultTriggerEvent } from '@store/script/models';
-import { AddTriggerEventModal } from './triggerEventModal';
+import { TriggerEventModal } from './triggerEventModal';
 import DataTable from '@components/DataTable';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { renderNoItem } from '@components/NoItem';
@@ -18,18 +18,18 @@ interface ScriptEditorEventsProps {
   onEditorSave(script: ScriptItem);
 }
 
-interface ScriptEventTriggerProps {
+interface ScriptTriggerEventProps {
   triggerEvent: ScriptItemTriggerEvent;
   readonly?: boolean;
   onEdit: (definition: ScriptItemTriggerEvent) => void;
   onDelete: (definition: ScriptItemTriggerEvent) => void;
 }
 
-const ScriptEventTriggerDefinitionComponent: FunctionComponent<ScriptEventTriggerProps> = ({
+const ScriptEventTriggerDefinitionComponent: FunctionComponent<ScriptTriggerEventProps> = ({
   triggerEvent,
   onEdit,
   onDelete,
-}: ScriptEventTriggerProps) => {
+}: ScriptTriggerEventProps) => {
   const [showDetails, setShowDetails] = useState(false);
 
   return (
@@ -66,7 +66,8 @@ const ScriptEventTriggerDefinitionComponent: FunctionComponent<ScriptEventTrigge
         <tr>
           <td className="payload-details" headers="" colSpan={5}>
             <div className="spacingLarge">Trigger Criteria</div>
-            <div data-testid="trigger-events-details">{JSON.stringify(triggerEvent.criteria.context, null, 2)}</div>
+            <div data-testid="trigger-events-details">{JSON.stringify(triggerEvent.criteria?.context, null, 2)}</div>
+            <br />
           </td>
         </tr>
       )}
@@ -92,7 +93,7 @@ const ScriptEventTriggerListComponent: FunctionComponent<ScriptEventTriggerListC
       <TriggerEventScrollPane>
         <ScriptEventTriggerListDefinition>
           <div className={className}>
-            {!triggerEvents && renderNoItem('script trigger events')}
+            {!triggerEvents && renderNoItem('script event trigger')}
 
             <div>
               <DataTable style={{ height: '100%' }} data-testid="script-editor-trigger-events-table">
@@ -101,7 +102,9 @@ const ScriptEventTriggerListComponent: FunctionComponent<ScriptEventTriggerListC
                     <th id="name" data-testid="script-editor-trigger-events-table-header-name">
                       Trigger Name
                     </th>
-                    <th id="actions">Actions</th>
+                    <th id="actions" data-testid="event-trigger-actions">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -142,13 +145,6 @@ export const ScriptEditorEventsTab = ({ script, eventNames, onEditorSave }: Scri
     setSelectedTriggerEvent(triggerEvent);
   };
 
-  const deleteContentElement = () => {
-    return (
-      <>
-        Are you sure you wish to delete <b>{selectedTriggerEvent.name}? </b>
-      </>
-    );
-  };
   const onEventTriggerCancel = (triggerEvent) => {
     setOpenAddTriggerEvent(false);
 
@@ -157,6 +153,14 @@ export const ScriptEditorEventsTab = ({ script, eventNames, onEditorSave }: Scri
     if (foundTriggerEvent) {
       setSelectedTriggerEvent(triggerEvent);
     }
+  };
+
+  const deleteContentElement = () => {
+    return (
+      <>
+        Are you sure you wish to delete <b>{selectedTriggerEvent.name}? </b>
+      </>
+    );
   };
 
   return (
@@ -196,7 +200,7 @@ export const ScriptEditorEventsTab = ({ script, eventNames, onEditorSave }: Scri
         }}
       />
 
-      <AddTriggerEventModal
+      <TriggerEventModal
         eventNames={eventNames}
         initialValue={isNewScriptTriggerEvent ? defaultTriggerEvent : selectedTriggerEvent}
         open={openAddTriggerEvent}
@@ -208,12 +212,13 @@ export const ScriptEditorEventsTab = ({ script, eventNames, onEditorSave }: Scri
         onSave={(triggerEvent: ScriptItemTriggerEvent) => {
           setOpenAddTriggerEvent(false);
           if (isNewScriptTriggerEvent) {
-            script.triggerEvents.push(triggerEvent);
+            script.triggerEvents?.push(triggerEvent);
           } else {
+            //Remove and then add the new trigger event.
             script.triggerEvents = script.triggerEvents?.filter((tr) => {
               return tr.name !== selectedTriggerEvent.name;
             });
-            script.triggerEvents.push(triggerEvent);
+            script.triggerEvents?.push(triggerEvent);
           }
 
           onEditorSave(script);

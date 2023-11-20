@@ -15,7 +15,7 @@ import { scriptEditorConfig } from './config';
 import { useValidators } from '@lib/validation/useValidators';
 import { badCharsCheck, duplicateNameCheck, isNotEmptyCheck, isValidJSONCheck } from '@lib/validation/checkInput';
 
-interface AddTriggerEventModalProps {
+interface TriggerEventModalProps {
   initialScript: ScriptItem;
   initialValue?: ScriptItemTriggerEvent;
   scriptId?: string;
@@ -27,7 +27,7 @@ interface AddTriggerEventModalProps {
   selectedEventName?: string;
 }
 
-export const AddTriggerEventModal = ({
+export const TriggerEventModal = ({
   initialScript,
   onCancel,
   onSave,
@@ -35,7 +35,7 @@ export const AddTriggerEventModal = ({
   isNew,
   eventNames,
   initialValue,
-}: AddTriggerEventModalProps): JSX.Element => {
+}: TriggerEventModalProps): JSX.Element => {
   const [triggerEvent, setTriggerEvent] = useState<ScriptItemTriggerEvent>(initialValue);
 
   useEffect(() => {
@@ -100,7 +100,7 @@ export const AddTriggerEventModal = ({
 
   const { errors, validators } = useValidators('name', 'name', badCharsCheck, isNotEmptyCheck('name'))
     .add('criteria', 'criteria', isValidJSONCheck('Trigger event criteria'))
-    .add('duplicated', 'name', duplicateNameCheck(eventTriggerNames, 'Script'))
+    //  .add('duplicated', 'name', duplicateNameCheck(eventTriggerNames, 'Script'))
     .build();
 
   const validateTriggerEventCriteria = (value: string) => {
@@ -158,7 +158,7 @@ export const AddTriggerEventModal = ({
               const namespace = triggerEvent.name?.split(':')[0];
               const criteria: ScriptItemTriggerEventCriteria = {
                 correlationId: `script-${initialScript.id}-${namespace}`,
-                context: JSON.parse(triggerEvent.criteria.context),
+                context: JSON.parse(triggerEvent.criteria?.context),
               };
               onSave({ namespace, name: triggerEvent.name, criteria });
             }}

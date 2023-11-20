@@ -26,7 +26,7 @@ import { RootState } from '@store/index';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { functionSuggestion, functionSignature } from '@lib/luaCodeCompletion';
 import { buildSuggestions } from '@lib/autoComplete';
-import { GoAButton, GoAFormItem, GoACheckbox, GoAButtonGroup } from '@abgov/react-components-new';
+import { GoAButton, GoAFormItem, GoACheckbox } from '@abgov/react-components-new';
 import { TaskEditorTitle } from '../styled-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { ClientRoleTable } from '@components/RoleTable';
