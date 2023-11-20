@@ -27,11 +27,13 @@ import {
   FETCH_FILE_TYPE_HAS_FILE,
   UPDATE_FILE_TYPE,
   UPLOAD_FILE,
-  FetchFileTypeHasFileService,
   FetchFileMetricsSucceeded,
   FETCH_FILE_METRICS,
   FetchFilesAction,
   FetchFileAction,
+  CHECK_FILE_TYPE_HAS_FILE,
+  CheckFileTypeHasFileAction,
+  CHECK_FILE_TYPE_HAS_FILE_SUCCESS,
 } from './actions';
 
 import { FileApi } from './api';
@@ -40,6 +42,26 @@ import axios from 'axios';
 import { FileTypeItem } from './models';
 import moment from 'moment';
 import { getAccessToken } from '@store/tenant/sagas';
+
+export function* checkFileTypeHasFileSaga(action: CheckFileTypeHasFileAction): SagaIterator {
+  try {
+    const state = yield select();
+    const token = yield call(getAccessToken);
+    const api = new FileApi(state.config, token);
+    const hasFile = yield call([api, api.fetchFileTypeHasFile], action.payload);
+
+    yield put({
+      type: CHECK_FILE_TYPE_HAS_FILE_SUCCESS,
+      payload: {
+        hasFile,
+        fileTypeId: action.payload,
+      },
+    });
+  } catch (err) {
+    // Handle error
+    yield put(ErrorNotification({ error: err }));
+  }
+}
 
 // eslint-disable-next-line
 export function* uploadFile(file) {
@@ -202,14 +224,6 @@ export function* fetchFileTypes(): SagaIterator {
         });
       yield put(FetchFileTypeSucceededService({ tenant: fileTypeInfo, core: coreFileTypeInfo }));
 
-      const fileTypes = yield select((state: RootState) => state.fileService.fileTypes);
-
-      if (fileTypes) {
-        for (const fileType of fileTypes) {
-          yield put(FetchFileTypeHasFileService(fileType.id));
-        }
-      }
-
       yield put(
         UpdateIndicator({
           show: false,
@@ -369,6 +383,7 @@ export function* watchFileSagas(): Generator {
   yield takeEvery(FETCH_FILE_LIST, fetchFiles);
   yield takeEvery(FETCH_FILE, fetchFile);
   yield takeEvery(FETCH_FILE_TYPE_HAS_FILE, fetchFileTypeHasFile);
+  yield takeEvery(CHECK_FILE_TYPE_HAS_FILE, checkFileTypeHasFileSaga);
 
   yield takeEvery(FETCH_FILE_TYPE, fetchFileTypes);
   yield takeEvery(DELETE_FILE_TYPE, deleteFileTypes);
