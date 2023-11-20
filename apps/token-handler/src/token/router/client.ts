@@ -1,6 +1,7 @@
 import { EventService, TenantService, UnauthorizedUserError, isAllowedUser } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { json, NextFunction, Request, Response, Router } from 'express';
+import { rateLimit } from 'express-rate-limit';
 import { RequestHandler } from 'express-serve-static-core';
 import { PassportStatic } from 'passport';
 
@@ -63,14 +64,9 @@ export function getClient(): RequestHandler {
         throw new UnauthorizedUserError('get client', user);
       }
 
-      const {
-        id,
-        authCallbackUrl,
-        successRedirectUrl,
-        failureRedirectUrl,
-        credentials,
-        ..._
-      } = req[CLIENT] as AuthenticationClient;
+      const { id, authCallbackUrl, successRedirectUrl, failureRedirectUrl, credentials, ..._ } = req[
+        CLIENT
+      ] as AuthenticationClient;
       res.send({
         id,
         authCallbackUrl,
@@ -135,9 +131,9 @@ interface RouterOptions {
 export function createClientRouter({
   configurationHandler,
   eventService,
+  passport,
   tenantHandler,
   tenantService,
-  passport,
 }: RouterOptions) {
   const router = Router();
 
@@ -161,9 +157,18 @@ export function createClientRouter({
     getClient()
   );
 
+  // Rate limit to 100 requests per 5 minute window (20 per minute).
+  const rateLimitHandler = rateLimit({
+    windowMs: 5 * 60 * 1000,
+    limit: 100,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+  });
   const proxyTenantHandler = createTenantHandler(tenantService);
+
   router.get(
     '/clients/:id/auth',
+    rateLimitHandler,
     proxyTenantHandler,
     configurationHandler,
     getAuthenticationClient(),
@@ -172,6 +177,7 @@ export function createClientRouter({
 
   router.get(
     '/clients/:id/callback',
+    rateLimitHandler,
     proxyTenantHandler,
     configurationHandler,
     getAuthenticationClient(),

@@ -25,13 +25,13 @@ export class TokenHandlerConfiguration {
     this.clients = Object.entries(clients || {}).reduce(
       (clients, [id, client]) => ({
         ...clients,
-        [id]: new AuthenticationClient(accessServiceUrl, logger, repository, { ...client, tenantId }),
+        [id]: new AuthenticationClient(accessServiceUrl, logger, repository, { ...client, id, tenantId }),
       }),
       {}
     );
     this.targets = Object.entries(targets || {}).reduce((targets, [id, target]) => {
       try {
-        targets[id] = new TargetProxy(this, directory, { ...target, upstream: AdspId.parse(target.upstream) });
+        targets[id] = new TargetProxy(this, directory, { ...target, id, upstream: AdspId.parse(target.upstream) });
       } catch (err) {
         // Bad upstream value.
       }
@@ -43,7 +43,7 @@ export class TokenHandlerConfiguration {
     return this.clients[clientId];
   }
 
-  public getTarget(targetId: string): Target {
+  public getTarget(targetId: string): TargetProxy {
     return this.targets[targetId];
   }
 }

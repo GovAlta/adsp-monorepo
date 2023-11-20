@@ -1,5 +1,5 @@
 import { AdspId, Tenant } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError } from '@core-services/core-common';
+import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import axios, { isAxiosError } from 'axios';
 import { Request } from 'express';
 import { RequestHandler } from 'express-serve-static-core';
@@ -251,11 +251,16 @@ export class AuthenticationClient implements Client {
     });
 
     const { refreshToken } = req.user as UserSessionData;
+    const credentials = await this.getCredentials();
+    if (!credentials) {
+      throw new UnauthorizedError('Not authorized to make request.');
+    }
+
     const { data } = await axios.post<OidcTokenResponse>(
-      new URL(`/auth/realms/${this.credentials.realm}/protocol/openid-connect/token`, this.accessServiceUrl).href,
+      new URL(`/auth/realms/${credentials.realm}/protocol/openid-connect/token`, this.accessServiceUrl).href,
       qs.stringify({
-        client_id: this.credentials.clientId,
-        client_secret: this.credentials.clientSecret,
+        client_id: credentials.clientId,
+        client_secret: credentials.clientSecret,
         grant_type: 'refresh_token',
         refresh_token: refreshToken,
       }),

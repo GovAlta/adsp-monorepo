@@ -2,6 +2,7 @@ import { AdspId, ServiceDirectory } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
 import { Request, RequestHandler } from 'express';
 import * as proxy from 'express-http-proxy';
+import * as path from 'path';
 
 import { Target, UserSessionData } from '../types';
 import { TokenHandlerConfiguration } from '../configuration';
@@ -43,16 +44,19 @@ export class TargetProxy implements Target {
         );
       }
 
-      this.proxyHandler = proxy(new URL('', upstreamUrl).href, {
-        proxyReqOptDecorator: async function (opts, req) {
+      const baseUrl = new URL('', upstreamUrl);
+      this.proxyHandler = proxy(baseUrl.href, {
+        proxyReqOptDecorator: async (opts, req) => {
           const accessToken = await this.getUserToken(req);
           opts.headers.Authorization = `Bearer ${accessToken}`;
 
           return opts;
         },
-        proxyReqPathResolver: function (req) {
+        proxyReqPathResolver: (req) => {
           const [_, ...relative] = req.url.split(this.id);
-          const targetUrl = new URL(relative.join(this.id), upstreamUrl);
+
+          const targetPath = path.join(upstreamUrl.pathname, ...relative);
+          const targetUrl = new URL(targetPath, baseUrl);
 
           return targetUrl.pathname;
         },

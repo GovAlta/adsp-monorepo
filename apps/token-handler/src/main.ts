@@ -103,7 +103,6 @@ const initializeApp = async (): Promise<express.Application> => {
   applyTokenHandlerMiddleware(app, {
     logger,
     configurationHandler,
-    directory,
     eventService,
     passport,
     sessionStore,

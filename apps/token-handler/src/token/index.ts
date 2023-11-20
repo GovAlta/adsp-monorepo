@@ -17,7 +17,6 @@ export * from './types';
 interface MiddlewareOptions {
   logger: Logger;
   configurationHandler: RequestHandler;
-  directory: ServiceDirectory;
   eventService: EventService;
   passport: PassportStatic;
   sessionStore: SessionStore;
@@ -27,15 +26,7 @@ interface MiddlewareOptions {
 
 export function applyTokenHandlerMiddleware(
   app: Application,
-  {
-    configurationHandler,
-    directory,
-    eventService,
-    passport,
-    sessionStore,
-    tenantHandler,
-    tenantService,
-  }: MiddlewareOptions
+  { configurationHandler, eventService, passport, sessionStore, tenantHandler, tenantService }: MiddlewareOptions
 ) {
   const clientRouter = createClientRouter({
     configurationHandler,
@@ -44,7 +35,7 @@ export function applyTokenHandlerMiddleware(
     tenantHandler,
     tenantService,
   });
-  const targetRouter = createTargetRouter({ configurationHandler, directory });
+  const targetRouter = createTargetRouter({ configurationHandler });
   const sessionRouter = createSessionRouter({ passport, sessionStore });
 
   app.use('/token-handler/v1', [clientRouter, targetRouter, sessionRouter]);
