@@ -51,7 +51,7 @@ class ScriptPage {
 
   addScriptModalRolesTable() {
     return cy.xpath(
-      `//*[@data-testid="add-script-modal" and @open="true"]//h4[text()="autotest"]/following-sibling::goa-table`
+      `//*[@data-testid="add-script-modal" and @open="true"]//h4/div[text()="autotest"]/parent::h4/following-sibling::goa-table`
     );
   }
 
