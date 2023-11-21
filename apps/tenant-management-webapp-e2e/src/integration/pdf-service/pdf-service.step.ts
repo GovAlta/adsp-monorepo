@@ -264,7 +264,7 @@ When(
   }
 );
 
-Then('the user views {string}', (content) => {
+Then('the user views {string} in File history', (content) => {
   pdfServiceObj.pdfNoFilesLists().invoke('text').should('contain', content);
 });
 

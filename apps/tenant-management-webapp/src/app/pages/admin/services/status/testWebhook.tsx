@@ -1,7 +1,6 @@
-import React, { FC, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { TestWebhooks } from '@store/status/actions';
-import { Webhooks } from '@store/status/models';
 import { EventSearchCriteria } from '@store/event/models';
 import { getEventLogEntries } from '@store/event/actions';
 import {
@@ -13,43 +12,34 @@ import {
   GoAFormItem,
 } from '@abgov/react-components-new';
 import { GoAPageLoader } from '@abgov/react-components';
-
+import { selectWebhookToTestInStatus } from '@store/status/selectors';
 import { renderNoItem } from '@components/NoItem';
 import styled from 'styled-components';
-
 import { RootState } from '@store/index';
+import { ResetModalState } from '@store/session/actions';
 
-interface Props {
-  isOpen: boolean;
-  title: string;
-  testId: string;
-
-  defaultWebhooks: Webhooks;
-  onClose?: () => void;
-}
-
-export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, defaultWebhooks }: Props) => {
+export const TestWebhookModal = (): JSX.Element => {
   const dispatch = useDispatch();
 
   const [showEntries, setShowEntries] = useState<boolean>(false);
-  const [selectedStatusName, setSelectedStatusName] = useState<string>(
-    defaultWebhooks && defaultWebhooks.eventTypes[0].id.split(':')[1]
-  );
+  const webhook = useSelector(selectWebhookToTestInStatus);
+
+  const isOpen = webhook !== undefined;
+  const events = webhook?.eventTypes.map((e) => e.id.split(':')[1]);
+
+  const [selectedStatusName, setSelectedStatusName] = useState<string>(events && events[0]);
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
 
-  const webhook = defaultWebhooks;
-
+  /* Paul: Note Nov 20-2023. The event does not work as expected for the webhook test.
+   * In this case, we only fetch the most recent event temporarily.
+   * We need to add more accurate search criteria later.
+   */
   const initCriteria: EventSearchCriteria = {
     name: 'webhook-triggered',
     namespace: 'push-service',
-    timestampMax: '',
-    timestampMin: '',
-    url: webhook?.url,
-    applications: webhook?.targetId,
-    value: webhook?.targetId,
     top: 1,
   };
 
@@ -64,12 +54,10 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
   }, [testSuccess]);
 
   useEffect(() => {
-    setShowEntries(false);
-  }, [isOpen]);
-
-  const test = async (eventName: string) => {
-    dispatch(TestWebhooks(webhook, eventName));
-  };
+    if (!selectedStatusName) {
+      setSelectedStatusName(events && events[0]);
+    }
+  }, [webhook, entries]);
 
   const definitions = useSelector((state: RootState) => state.event.results.map((r) => state.event.definitions[r]));
 
@@ -93,25 +81,29 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
     ...Object.keys(groupedDefinitions).filter((g) => g !== 'status-service'),
   ];
 
-  const events = webhook?.eventTypes.map((e) => e.id.split(':')[1]);
-
   return (
     <GoAModalStyle>
       <GoAModal
         open={isOpen}
-        testId={testId}
-        heading={`${title} - ${webhook?.name}`}
+        testId={'test-webhook'}
+        heading={`Test webhook - ${webhook?.name}`}
         actions={
           <GoAButtonGroup alignment="end">
             <GoAButton
               type="secondary"
               onClick={() => {
-                onClose();
+                dispatch(ResetModalState());
               }}
             >
               Close
             </GoAButton>
-            <GoAButton type="primary" onClick={() => test(selectedStatusName)}>
+            <GoAButton
+              type="primary"
+              disabled={selectedStatusName === null}
+              onClick={() => {
+                dispatch(TestWebhooks(webhook, selectedStatusName));
+              }}
+            >
               Test
             </GoAButton>
           </GoAButtonGroup>
@@ -123,6 +115,7 @@ export const TestWebhookModal: FC<Props> = ({ isOpen, title, onClose, testId, de
           {events && (
             <GoARadioGroup
               name="option"
+              value={selectedStatusName}
               onChange={(_, value) => setSelectedStatusName(value)}
               orientation="vertical"
               testId="status-radio-group"

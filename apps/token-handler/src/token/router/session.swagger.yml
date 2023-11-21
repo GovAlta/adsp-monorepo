@@ -1,0 +1,34 @@
+components:
+  schemas:
+    UserSessionData:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        roles:
+          type: array
+          items: string
+        expiry:
+          type: string
+          format: date-time
+
+/token-handler/v1/sessions:
+  get:
+    tags:
+      - Session
+    description: Retrieves sessions. Returns session of current user for user authenticated by handler.
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserSessionData"

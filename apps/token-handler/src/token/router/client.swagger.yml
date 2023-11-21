@@ -19,7 +19,7 @@ components:
     - name: clientId
       description: ID of the client.
       in: path
-      required: false
+      required: true
       schema:
         type: string
   get:
@@ -62,3 +62,71 @@ components:
         description: Not authorized.
       403:
         description: User not permitted for requested operation.
+
+/token-handler/v1/clients/{clientId}/auth:
+  parameters:
+    - name: clientId
+      description: ID of the client.
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: X-ADSP-TENANT
+      description: ID of the tenant.
+      in: header
+      required: true
+      schema:
+        type: string
+  get:
+    tags:
+      - Client
+    description: Initiates authentication via the client.
+    security: []
+    responses:
+      302:
+        description: Redirect to authenticate.
+      400:
+        description: Bad request.
+      401:
+        description: Not authorized.
+
+/token-handler/v1/clients/{clientId}/callback:
+  parameters:
+    - name: clientId
+      description: ID of the client.
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: X-ADSP-TENANT
+      description: ID of the tenant.
+      in: header
+      required: true
+      schema:
+        type: string
+  get:
+    tags:
+      - Client
+    description: Completes authentication via the client.
+    security: []
+    responses:
+      200:
+        description: Request completed successfully.
+
+/token-handler/v1/clients/{clientId}/logout:
+  parameters:
+    - name: clientId
+      description: ID of the client.
+      in: path
+      required: true
+      schema:
+        type: string
+  get:
+    tags:
+      - Client
+    description: Completes authentication via the client.
+    security:
+      - sessionCookie: []
+    responses:
+      200:
+        description: Request completed successfully.
