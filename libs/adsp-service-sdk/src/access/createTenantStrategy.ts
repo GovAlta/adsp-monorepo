@@ -16,6 +16,7 @@ export const createTenantStrategy = ({
   accessServiceUrl,
   ignoreServiceAud,
   accessTokenInQuery,
+  additionalExtractors,
   logger,
 }: AccessStrategyOptions): Strategy => {
   assertAdspId(serviceId, null, 'service');
@@ -42,7 +43,7 @@ export const createTenantStrategy = ({
     done(null, user, null);
   };
 
-  const extractors = [ExtractJwt.fromAuthHeaderAsBearerToken()];
+  const extractors = [ExtractJwt.fromAuthHeaderAsBearerToken(), ...(additionalExtractors || [])];
   if (accessTokenInQuery) {
     extractors.push(ExtractJwt.fromUrlQueryParameter('token'));
   }

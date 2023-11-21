@@ -1,7 +1,7 @@
 import { passportJwtSecret } from 'jwks-rsa';
 import jwtDecode from 'jwt-decode';
 import type { Strategy } from 'passport';
-import { ExtractJwt, Strategy as JwtStrategy, VerifyCallbackWithRequest } from 'passport-jwt';
+import { ExtractJwt, JwtFromRequestFunction, Strategy as JwtStrategy, VerifyCallbackWithRequest } from 'passport-jwt';
 import type { Logger } from 'winston';
 import { Tenant, TenantService } from '../tenant';
 import { AdspId, assertAdspId } from '../utils';
@@ -13,6 +13,7 @@ export interface AccessStrategyOptions {
   serviceId: AdspId;
   tenantService: TenantService;
   accessServiceUrl: URL;
+  additionalExtractors?: JwtFromRequestFunction[];
   logger: Logger;
 }
 export const createRealmStrategy = async ({
@@ -21,6 +22,7 @@ export const createRealmStrategy = async ({
   tenantService,
   accessServiceUrl,
   ignoreServiceAud,
+  additionalExtractors,
 }: AccessStrategyOptions): Promise<Strategy> => {
   assertAdspId(serviceId, null, 'service');
 
@@ -53,7 +55,10 @@ export const createRealmStrategy = async ({
   });
   const strategy = new JwtStrategy(
     {
-      jwtFromRequest: ExtractJwt.fromExtractors([ExtractJwt.fromAuthHeaderAsBearerToken()]),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+        ...(additionalExtractors || []),
+      ]),
       secretOrKeyProvider: (req, token, done) => {
         try {
           // Decode the header and check against expected issuer.
