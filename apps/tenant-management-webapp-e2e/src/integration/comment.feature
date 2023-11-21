@@ -27,7 +27,7 @@ Feature: Comment
     Then the user views topic type editor for "autotest-topicType"
     And the user views "Protected A" as default selection for security classification
     And the user views "Public, Protected A, Protected B, Protected C" in Select a security classification dropdown
-    When the user enters "empty" as classification, "auto-test-role1" as admin roles, "auto-test-role2" as commenter roles, "empty" as reader roles
+    When the user enters "skip" as classification, "auto-test-role1" as admin roles, "auto-test-role2" as commenter roles, "empty" as reader roles
     And the user clicks Save button on topic type editor
     Then the user "views" the topic type of "autotest-topicType", "auto-test-role1", "auto-test-role2", "empty", "Protected A"
     # Edit and back

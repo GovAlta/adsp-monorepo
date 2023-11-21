@@ -74,7 +74,7 @@ Then('the user views {string} in Select a security classification dropdown', fun
 When(
   'the user enters {string} as classification, {string} as admin roles, {string} as commenter roles, {string} as reader roles',
   function (classification, adminRole, commenterRole, readerRole) {
-    if (classification !== 'empty') {
+    if (classification !== 'skip') {
       commentObj
         .editorClassificationDropdown()
         .invoke('attr', 'value')
