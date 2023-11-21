@@ -34,6 +34,7 @@ export class AuthenticationClient implements Client {
   scope: string | string[];
   idpHint: string;
   authCallbackUrl: string;
+  disableVerifyHost: boolean;
   successRedirectUrl?: string;
   failureRedirectUrl?: string;
   credentials?: ClientCredentials;
@@ -52,6 +53,7 @@ export class AuthenticationClient implements Client {
     this.scope = client.scope;
     this.idpHint = client.idpHint;
     this.authCallbackUrl = client.authCallbackUrl;
+    this.disableVerifyHost = !!client.disableVerifyHost;
     this.successRedirectUrl = client.successRedirectUrl;
     this.failureRedirectUrl = client.failureRedirectUrl;
     this.callbackUrl = new URL(this.authCallbackUrl);
@@ -215,7 +217,7 @@ export class AuthenticationClient implements Client {
     });
 
     return (req, res, next) => {
-      if (req.hostname !== this.callbackUrl.hostname) {
+      if (!this.disableVerifyHost && req.hostname !== this.callbackUrl.hostname) {
         throw new InvalidOperationError('Request not to allowed host.');
       }
 

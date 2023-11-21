@@ -110,13 +110,21 @@ export function completeAuthenticate(passport: PassportStatic) {
 
 export function logout(): RequestHandler {
   return function (req, res, next) {
-    const { id } = req.params;
-    const user = req.user as UserSessionData;
-    if (id != user.authenticatedBy) {
-      throw new InvalidOperationError('User not authenticate by specified client.');
-    }
+    try {
+      const { id } = req.params;
+      const user = req.user as UserSessionData;
+      if (!user) {
+        throw new InvalidOperationError('No user to logout.');
+      }
 
-    req.logOut((err) => (err ? next(err) : res.redirect('/')));
+      if (id != user.authenticatedBy) {
+        throw new InvalidOperationError('User not authenticate by specified client.');
+      }
+
+      req.logOut((err) => (err ? next(err) : res.redirect('/')));
+    } catch (err) {
+      next(err);
+    }
   };
 }
 

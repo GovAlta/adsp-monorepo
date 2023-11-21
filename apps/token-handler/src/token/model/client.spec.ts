@@ -294,7 +294,7 @@ describe('AuthenticationClient', () => {
       };
       repositoryMock.get.mockReturnValueOnce(credentials);
 
-      const innerHandler = jest.fn((req, res, next) => next());
+      const innerHandler = jest.fn((_req, _res, next) => next());
       passportMock.authenticate.mockReturnValueOnce(innerHandler);
       const handler = await client.authenticate(passportMock as unknown as PassportStatic, true);
 
@@ -375,13 +375,51 @@ describe('AuthenticationClient', () => {
       passportMock.authenticate.mockReturnValueOnce(innerHandler);
       const handler = await client.authenticate(passportMock as unknown as PassportStatic);
 
-      const req = { hostname: 'https://not-the-same' };
+      const req = { hostname: 'not-the-same' };
       const res = {};
       const next = jest.fn();
 
       expect(() => handler(req as unknown as Request, res as unknown as Response, next)).toThrowError(
         InvalidOperationError
       );
+    });
+
+    it('can disable verify host', async () => {
+      const client = new AuthenticationClient(
+        new URL('https://access-service'),
+        loggerMock as unknown as Logger,
+        repositoryMock,
+        {
+          tenantId,
+          id: 'test',
+          authCallbackUrl: 'https://frontend/callback',
+          disableVerifyHost: true,
+        }
+      );
+
+      const credentials = {
+        realm: tenant.realm,
+        clientId: 'client-123',
+        clientSecret: 'secret secret',
+        registrationUrl: 'http://access-service/registration/clients/client-123',
+        registrationToken: 'reg token 123',
+      };
+      repositoryMock.get.mockReturnValueOnce(credentials);
+
+      const innerHandler = jest.fn((_req, _res, next) => next());
+      passportMock.authenticate.mockReturnValueOnce(innerHandler);
+      const handler = await client.authenticate(passportMock as unknown as PassportStatic);
+
+      const req = {
+        hostname: 'not-the-same',
+        user: { id: 'test', name: 'tester', refreshExp: 1800 },
+        session: { cookie: {} },
+      };
+      const res = { cookie: jest.fn() };
+      const next = jest.fn();
+
+      handler(req as unknown as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalledWith();
     });
   });
 
