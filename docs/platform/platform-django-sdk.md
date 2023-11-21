@@ -1,7 +1,7 @@
 ---
 layout: page
-title: Service SDK (Flask)
-nav_order: 5
+title: Service SDK (Django)
+nav_order: 6
 parent: Platform development
 ---
 
@@ -14,15 +14,15 @@ parent: Platform development
 {:toc}
 </details>
 
-# ADSP service SDK (Flask)
+# ADSP service SDK (Django)
 Platform services integrate into the foundational capabilities via a Software Development Kit (SDK). The SDK includes interfaces and utilities for handling tenancy, configurations, and registration. The same SDK can be used for development of tenant services.
 
 Note that the SDK provides friendly interfaces on top of APIs. It is intended to speed up service development but is not the only way to access platform capabilities.
 
-Install the ADSP SDK for Flask wheel from release artifacts in the repository.
+Install the ADSP SDK for Django wheel from release artifacts in the repository.
 
 ```bash
-poetry add https://github.com/GovAlta/adsp-monorepo/releases/download/adsp-service-flask-sdk-v1.3.1/adsp_service_flask_sdk-1.0.0-py3-none-any.whl
+poetry add https://github.com/GovAlta/adsp-monorepo/releases/download/adsp-service-django-sdk-v1.0.2/adsp_service_django_sdk-1.0.0-py3-none-any.whl
 ```
 
 ## Setting up a service account
@@ -39,57 +39,64 @@ In order to create the service account.
    1. Client `urn:ads:platform:push-service` needs to be include via an audience mapper for socket based configuration cache invalidation.
 
 ## Initializing the SDK
-The SDK includes a Flask Extension, Blueprint, and context proxies. Create the extension and initialize on the Flask app to get started.
+The SDK includes Django Middleware, View and utility functions. Configure SDK settings in Django settings module.
 
 ```python
-  from adsp import AdspExtension, AdspRegistration
-  from flask import Flask
+  MIDDLEWARE = [
+    "adsp_service_django_sdk.middleware.AccessRequestMiddleware",
+    "adsp_service_django_sdk.middleware.TenantRequestMiddleware",
+    ...
+  ]
 
-  app = Flask(__name__)
-  extension = AdspExtension()
-  extension.init_app(
-    app,
-    AdspRegistration(
-      display_name="My platform service",
-      description="Hello world platform service."
-    )
+  # ADSP SDK settings
+  ADSP_ACCESS_SERVICE_URL = env.get("ADSP_ACCESS_SERVICE_URL")
+  ADSP_REALM = env.get("ADSP_REALM")
+  ADSP_DIRECTORY_URL = env.get("ADSP_DIRECTORY_URL")
+  ADSP_SERVICE_ID = env.get("ADSP_SERVICE_ID", "urn:ads:demo:hello-world-service")
+  ADSP_CLIENT_SECRET = env.get("ADSP_CLIENT_SECRET")
+```
+
+Register service configuration in a registration module, and identify the module with the `ADSP_REGISTRATION_MODULE` environment variable.
+```python
+  os.environ.setdefault('ADSP_REGISTRATION_MODULE', 'hello_world_django.registration')
+```
+
+```python
+  from adsp_service_django_sdk AdspRegistration
+
+
+  registration = AdspRegistration(
+    "Hello world service",
+    "Hello world example for Django"
   )
 ```
 
 ## Enabling service metadata
-The service directory aggregates service metadata from the root resource of services registered in the directory. This metadata is used to simplify configuration and for OpenAPI documentation aggregation at https://api.adsp.alberta.ca/{tenant}. SDK includes components for exposing the metadata endpoint.
+The service directory aggregates service metadata from the root resource of services registered in the directory. This metadata is used to simplify configuration and for OpenAPI documentation aggregation at https://api.adsp.alberta.ca/{tenant}. SDK includes a view for exposing the metadata endpoint.
 
 Enabling service metadata:
 ```python
-  from adsp import AdspExtension, AdspRegistration
-  from flask import Flask
+  from adsp_service_django_sdk import get_metadata
+  from django.urls import path
 
-  app = Flask(__name__)
-  extension = AdspExtension()
-  adsp = extension.init_app(
-    app,
-    AdspRegistration(
-      display_name="My platform service",
-      description="Hello world platform service.",
-      api_path="/hello-world/v1"
-    )
-  )
 
-  app.register_blueprint(adsp.metadata_blueprint)
+  urlpatterns = [
+    ...,
+    path("", get_metadata)
+  ]
 ```
 
 ## Authorizing requests
-The SDK extension adds a `before_request` function to process access tokens. It provides a `request_user` context value and `require_user` decorator for authorizing requests.
+The SDK provides `get_user` function for retrieving the user from a request and `require_user` decorator for authorizing requests.
 
 Require ADSP user for request:
 ```python
-  from adsp_service_flask_sdk import request_user, require_user, User
+  from adsp_service_django_sdk import get_user, require_user, User
   ...
 
-  @app.route("hello-world/v1/hello")
   @require_user()
-  def hello_world() -> str:
-    return f"hello {request_user.name}"
+  def hello_world(request):
+    return f"hello {get_user(request).name}"
 ```
 
 ### Role-based authorization
@@ -115,54 +122,48 @@ For my-service, the roles are mapped to role claims:
 
 Authorize based on a role:
 ```python
-  from adsp_service_flask_sdk import request_user, require_user, User
+  from adsp_service_django_sdk import get_user, require_user, User
   ...
 
-  @app.route("hello-world/v1/hello")
   @require_user("other-service:other-user")
-  def hello_world() -> str:
-    return f"hello {request_user.name}"
+  def hello_world(request):
+    return f"hello {get_user(request).name}"
 ```
 
 Accessing user information directly and checking for role:
 ```python
-  from adsp_service_flask_sdk import request_user
+  from adsp_service_django_sdk import get_user
+  ...
 
-  has_role = "other-service:other-user" in request_user.roles
+  def hello_world(request):
+    has_role = "other-service:other-user" in get_user(request).roles
+    ...
 ```
 
 ## Determining tenancy
 Requests to platform services are in the context of a specific tenant with few exceptions. The context is implicit when a request is made with a tenant bearer token. It can be explicit in cases where an endpoint allows anonymous access or when a platform service makes a request to another platform service under a core service account.
 
-The SDK extension adds a `before_request` function that resolves implicit tenancy from user tenancy and explicit from a `tenantId` query parameter. Resolved tenant is set on the request object; no value is set if tenancy cannot be resolved.
+The SDK `TenantRequestMiddleware` resolves implicit tenancy from user tenancy and explicit from a `tenantId` query parameter. Resolved tenant is set on the request object; no value is set if tenancy cannot be resolved.
 
 Getting tenancy from the context:
 ```python
-  from adsp_service_flask_sdk import request_tenant
+  from adsp_service_django_sdk import get_tenant
   ...
 
-  @app.route("hello-world/v1/hello")
   @require_user()
-  def hello_world() -> str:
-    return f"hello {request_tenant.name}"
+  def hello_world(request):
+    return f"hello {get_tenant(request).name}"
 ```
 
-The handler uses the tenant service client to retrieve tenant information. This is also available from the SDK for direct use. The tenant service is available via dependency injection.
+The handler uses the tenant service client to retrieve tenant information. This is also available from the SDK for direct use. The tenant service is available on the `adsp` variable that can be imported from SDK package.
 
 Getting tenant information using the tenant service:
 ```python
-  adsp = extension.init_app(
-    app,
-    AdspRegistration(
-      display_name="My platform service",
-      description="Hello world platform service."
-    )
-  )
+  from adsp_service_django_sdk import adsp, AdspId
 
-  @app.route("hello-world/v1/hello")
+
   @require_user()
-  def hello_world() -> str:
-    tenant_id = request.args.get("tenantId")
+  def hello_world(request, tenant_id=None):
     tenant = adsp.tenant_service.get_tenant(AdspId.parse(tenant_id))
     ...
 ```
@@ -172,17 +173,10 @@ Service discovery in ADSP is handled using client side service discovery with a 
 
 Getting a service URL from the directory:
 ```python
-  adsp = extension.init_app(
-    app,
-    AdspRegistration(
-      display_name="My platform service",
-      description="Hello world platform service."
-    )
-  )
+  from adsp_service_django_sdk import adsp, AdspId
 
-  @app.route("hello-world/v1/hello")
   @require_user()
-  def hello_world() -> str:
+  def hello_world(request):
     service_url = adsp.directory.get_service_url(AdspId.parse("urn:ads:platform:tenant-service"))
     ...
 ```
@@ -192,16 +186,24 @@ Platform services can make use of a common configuration service for managing co
 
 Defining the configuration json schema:
 ```python
-  adsp = extension.init_app(
-    app,
-    AdspRegistration(
-      display_name="My platform service",
-      description="Hello world platform service.",
-      configuration=ConfigurationDefinition(
-        "Configuration of messages.",
-        {"type": "object", "properties":{"responses":{"type":"object"}}}
-      )
-    )
+  from adsp_service_django_sdk import AdspRegistration, ConfigurationDefinition
+
+
+  registration = AdspRegistration(
+    "Hello world service",
+    "Hello world example for Django",
+    configuration=ConfigurationDefinition(
+      "Configuration of the hello world sample service.",
+      {
+        "type": "object",
+        "properties": {
+          "responses": {
+            "type": "object",
+            "additionalProperties": {"type": "string"},
+          },
+        },
+      },
+    ),
   )
 ```
 
@@ -209,21 +211,11 @@ Each service can have core configuration that applies across tenants and configu
 
 Getting configuration via the context:
 ```python
-  adsp = extension.init_app(
-    app,
-    AdspRegistration(
-      display_name="My platform service",
-      description="Hello world platform service.",
-      configuration=ConfigurationDefinition(
-        "Configuration of messages.",
-        {"type": "object", "properties":{"responses":{"type":"object"}}}
-      )
-    )
-  )
+  from adsp_service_django_sdk import adsp
 
-  @app.route("hello-world/v1/hello")
+
   @require_user()
-  def hello_world() -> str:
+  def hello_world(request):
     tenant_config, core_config = adsp.get_configuration()
     ...
 ```
@@ -232,19 +224,10 @@ The function uses a configuration service client to retrieve configuration. This
 
 Getting configuration using the configuration service:
 ```python
-  adsp = extension.init_app(
-    app,
-    AdspRegistration(
-      display_name="My platform service",
-      description="Hello world platform service.",
-      configuration=ConfigurationDefinition(
-        "Configuration of messages.",
-        {"type": "object", "properties":{"responses":{"type":"object"}}}
-      )
-    )
-  )
+  from adsp_service_django_sdk import adsp
 
-  @app.route("hello-world/v1/hello")
+
+
   @require_user()
   def hello_world() -> str:
     tenant_config, core_config = adsp.configuration_service.get_configuration(
@@ -258,16 +241,20 @@ Services may want to apply transformations on the retrieved configuration. The S
 
 Provide conversion functions:
 ```python
-  adsp = extension.init_app(
-    app,
-    AdspRegistration(
-      display_name="My platform service",
-      description="Hello world platform service.",
-      configuration=ConfigurationDefinition(
-        "Configuration of messages.",
+  from adsp_service_django_sdk import AdspRegistration, ConfigurationDefinition
+
+
+  def convert_config(tenant_config, _) -> Dict[str, Any]:
+    return tenant_config
+
+
+  registration = AdspRegistration(
+    "Hello world service",
+    "Hello world example for Django",
+    configuration=ConfigurationDefinition(
+      "Configuration of the hello world sample service.",
         {"type": "object", "properties":{"responses":{"type":"object"}}}
-        lambda tenant_config, core_config: core_config.update(tenant_config.items())
-      )
+      convert_config,
     )
   )
 ```
@@ -280,28 +267,30 @@ The SDK allows services to register configuration for some platform services.
 
 Defining configuration for other platform services:
 ```python
-  adsp = extension.init_app(
-    app,
-    AdspRegistration(
-      display_name="My platform service",
-      description="Hello world platform service.",
-      roles=[ServiceRole(HELLO_WORLDER, "Role that allows people to hello the world.")],
-      events=[
-        DomainEventDefinition(
-          HELLO_WORLD_EVENT,
-          "Signalled when a hello world message is posted to the API.",
-          payload_schema={
-            "type": "object",
-            "properties": {
-              "fromUserId": {"type": "string"},
-              "fromUser": {"type": "string"},
-              "message": {"type": "string"},
-              "response": {"type": "string"},
-            },
+  from adsp_service_django_sdk import (
+    AdspRegistration, ConfigurationDefinition, DomainEventDefinition, ServiceRole
+  )
+  ...
+
+  registration = AdspRegistration(
+    display_name="My platform service",
+    description="Hello world platform service.",
+    roles=[ServiceRole(HELLO_WORLDER, "Role that allows people to hello the world.")],
+    events=[
+      DomainEventDefinition(
+        HELLO_WORLD_EVENT,
+        "Signalled when a hello world message is posted to the API.",
+        payload_schema={
+          "type": "object",
+          "properties": {
+            "fromUserId": {"type": "string"},
+            "fromUser": {"type": "string"},
+            "message": {"type": "string"},
+            "response": {"type": "string"},
           },
-        )
-      ]
-    )
+        },
+      )
+    ]
   )
 ```
 
@@ -309,36 +298,22 @@ Defining configuration for other platform services:
 Domain events can be sent using the event service.
 
 ```python
-  adsp = extension.init_app(
-    app,
-    AdspRegistration(
-      display_name="My platform service",
-      description="Hello world platform service.",
-      roles=[ServiceRole(HELLO_WORLDER, "Role that allows people to hello the world.")],
-      events=[
-        DomainEventDefinition(
-          HELLO_WORLD_EVENT,
-          "Signalled when a hello world message is posted to the API.",
-          payload_schema={
-            ...
-          },
-        )
-      ]
-    )
-  )
+  import json
+  from adsp_service_django_sdk import adsp, DomainEvent
 
-  @app.route("hello-world/v1/hello")
+
   @require_user()
-  def hello_world() -> str:
-    message = request.args.get("message")
+  def hello_world(request):
+    body = json.loads(request.body)
+    message = body.get("message", None)
     ...
     adsp.event_service.send(
       DomainEvent(
         HELLO_WORLD_EVENT,
         datetime.utcnow(),
         {
-            "fromUserId": request_user.id,
-            "fromUser": request_user.name,
+            "fromUserId": get_user.id,
+            "fromUser": get_user.name,
             "message": message,
             "response": response,
         },
