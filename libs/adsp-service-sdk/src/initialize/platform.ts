@@ -23,6 +23,7 @@ export async function initializePlatform(
     combineConfiguration,
     enableConfigurationInvalidation,
     useLongConfigurationCacheTTL,
+    additionalExtractors,
     ...registration
   }: PlatformOptions,
   logOptions: Logger | LogOptions,
@@ -53,12 +54,28 @@ export async function initializePlatform(
     accessServiceUrl,
     tenantService,
     ignoreServiceAud,
+    additionalExtractors,
   });
 
   const tenantStrategy =
     realm === 'core'
-      ? createTenantStrategy({ logger, serviceId, accessServiceUrl, tenantService, ignoreServiceAud })
-      : await createRealmStrategy({ realm, logger, serviceId, accessServiceUrl, tenantService, ignoreServiceAud });
+      ? createTenantStrategy({
+          logger,
+          serviceId,
+          accessServiceUrl,
+          tenantService,
+          ignoreServiceAud,
+          additionalExtractors,
+        })
+      : await createRealmStrategy({
+          realm,
+          logger,
+          serviceId,
+          accessServiceUrl,
+          tenantService,
+          ignoreServiceAud,
+          additionalExtractors,
+        });
 
   let configurationService = service?.configurationService;
   let clearCached = function (_tenantId: AdspId, _serviceId: AdspId) {
