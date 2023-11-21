@@ -1,4 +1,4 @@
-import { AdspId, Tenant } from '@abgov/adsp-service-sdk';
+import { AdspId, LimitToOne, Tenant } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import axios, { isAxiosError } from 'axios';
 import { Request } from 'express';
@@ -224,67 +224,114 @@ export class AuthenticationClient implements Client {
         res,
         complete
           ? () => {
-              // Set the maxAge based on the expiry time of the refresh token.
-              const { id, name, refreshExp } = req.user as UserSessionData;
-              req.session.cookie.maxAge = (refreshExp - 60) * 1000 - Date.now();
+              try {
+                // Set the maxAge based on the expiry time of the refresh token.
+                const { id, name, refreshExp } = req.user as UserSessionData;
+                req.session.cookie.maxAge = (refreshExp - 60) * 1000 - Date.now();
 
-              this.logger.info(
-                `Authenticated user '${name}' (ID: ${id}) on client '${this.id}' (clientID: ${this.credentials?.clientId}).`,
-                {
-                  context: 'AuthenticationClient',
-                  tenant: this.tenantId?.toString(),
-                }
-              );
+                this.logger.info(
+                  `Authenticated user '${name}' (ID: ${id}) on client '${this.id}' (clientID: ${this.credentials?.clientId}).`,
+                  {
+                    context: 'AuthenticationClient',
+                    tenant: this.tenantId?.toString(),
+                  }
+                );
+                generateCsrfToken(req, res);
+                next();
+              } catch (err) {
+                this.logger.warn(
+                  `Error encountered setting CSRF token on authenticated user: ${err}. Terminating session.`
+                );
 
-              generateCsrfToken(req, res);
-              next();
+                req.logout((logoutErr) => {
+                  if (!logoutErr) {
+                    this.logger.info(`Ended session for user (ID: ${req.user?.id}).`, {
+                      context: 'ClientRegistrationEntity',
+                      tenant: this.tenantId.toString(),
+                    });
+                  } else {
+                    this.logger.warn(`Error encountered ending session for user (ID: ${req.user?.id}): ${logoutErr}`, {
+                      context: 'ClientRegistrationEntity',
+                      tenant: this.tenantId.toString(),
+                    });
+                  }
+                  next(err);
+                });
+              }
             }
           : next
       );
     };
   }
 
+  @LimitToOne((propertyKey, req: Request) => `${propertyKey}-${req.sessionID}`)
   public async refreshTokens(req: Request): Promise<string> {
     this.logger.debug(`Refreshing token for user (ID: ${req.user?.id}) on session (ID: ${req.sessionID})...`, {
       context: 'ClientRegistrationEntity',
       tenant: this.tenantId.toString(),
     });
 
-    const { refreshToken } = req.user as UserSessionData;
-    const credentials = await this.getCredentials();
-    if (!credentials) {
-      throw new UnauthorizedError('Not authorized to make request.');
+    try {
+      const { refreshToken } = req.user as UserSessionData;
+      const credentials = await this.getCredentials();
+      if (!credentials) {
+        throw new UnauthorizedError('Not authorized to make request.');
+      }
+
+      const { data } = await axios.post<OidcTokenResponse>(
+        new URL(`/auth/realms/${credentials.realm}/protocol/openid-connect/token`, this.accessServiceUrl).href,
+        qs.stringify({
+          client_id: credentials.clientId,
+          client_secret: credentials.clientSecret,
+          grant_type: 'refresh_token',
+          refresh_token: refreshToken,
+        }),
+        {
+          headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        }
+      );
+
+      // Update the user session data with new tokens and associated expiry information.
+      const now = Date.now() / 1000;
+      req.session['passport'].user.accessToken = data.access_token;
+      req.session['passport'].user.refreshToken = data.refresh_token;
+      // Expiry values could be decoded from the token instead, but that's extra work.
+      req.session['passport'].user.exp = now + data.expires_in;
+      req.session['passport'].user.refreshExp = now + data.refresh_expires_in;
+
+      this.logger.info(
+        `Refreshed token for user (ID: ${req.user.id}) on session (ID: ${req.sessionID}) with new expiry in ${data.refresh_expires_in} seconds.`,
+        {
+          context: 'ClientRegistrationEntity',
+          tenant: this.tenantId.toString(),
+        }
+      );
+
+      return data.access_token;
+    } catch (err) {
+      this.logger.warn(
+        `Error encountered refreshing token for user (ID: ${req.user?.id}) on session (ID: ${req.sessionID}). Terminating session.`,
+        {
+          context: 'ClientRegistrationEntity',
+          tenant: this.tenantId.toString(),
+        }
+      );
+
+      req.logout((err) => {
+        if (!err) {
+          this.logger.info(`Ended session for user (ID: ${req.user?.id}).`, {
+            context: 'ClientRegistrationEntity',
+            tenant: this.tenantId.toString(),
+          });
+        } else {
+          this.logger.warn(`Error encountered ending session for user (ID: ${req.user?.id}): ${err}`, {
+            context: 'ClientRegistrationEntity',
+            tenant: this.tenantId.toString(),
+          });
+        }
+      });
+
+      throw err;
     }
-
-    const { data } = await axios.post<OidcTokenResponse>(
-      new URL(`/auth/realms/${credentials.realm}/protocol/openid-connect/token`, this.accessServiceUrl).href,
-      qs.stringify({
-        client_id: credentials.clientId,
-        client_secret: credentials.clientSecret,
-        grant_type: 'refresh_token',
-        refresh_token: refreshToken,
-      }),
-      {
-        headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      }
-    );
-
-    // Update the user session data with new tokens and associated expiry information.
-    const now = Date.now() / 1000;
-    req.session['passport'].user.accessToken = data.access_token;
-    req.session['passport'].user.refreshToken = data.refresh_token;
-    // Expiry values could be decoded from the token instead, but that's extra work.
-    req.session['passport'].user.exp = now + data.expires_in;
-    req.session['passport'].user.refreshExp = now + data.refresh_expires_in;
-
-    this.logger.info(
-      `Refreshed token for user (ID: ${req.user.id}) on session (ID: ${req.sessionID}) with new expiry in ${data.refresh_expires_in} seconds.`,
-      {
-        context: 'ClientRegistrationEntity',
-        tenant: this.tenantId.toString(),
-      }
-    );
-
-    return data.access_token;
   }
 }
