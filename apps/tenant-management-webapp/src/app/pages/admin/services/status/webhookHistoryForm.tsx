@@ -1,7 +1,9 @@
-import React, { FunctionComponent, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { EventLogEntry, EventSearchCriteria } from '@store/event/models';
-import { Webhooks } from '../../../../store/status/models';
+import { selectWebhookInHistory } from '@store/status/selectors';
+import { createInitCriteria } from '@store/status/models';
+
 import DataTable from '@components/DataTable';
 import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
 import { getEventDefinitions } from '@store/event/actions';
@@ -19,12 +21,7 @@ import styled from 'styled-components';
 
 import { RootState } from '../../../../store/index';
 import { HoverWrapper, ToolTip } from './styled-components';
-
-interface Props {
-  isOpen: boolean;
-  onCancel: () => void;
-  webhook: Webhooks;
-}
+import { ResetModalState } from '@store/session/actions';
 
 interface EventLogEntryComponentProps {
   entry: EventLogEntry;
@@ -58,9 +55,7 @@ function ordinal_suffix_of(i) {
   return i + 'th';
 }
 
-const EventLogEntryComponent: FunctionComponent<EventLogEntryComponentProps> = ({
-  entry,
-}: EventLogEntryComponentProps) => {
+const EventLogEntryComponent = ({ entry }: EventLogEntryComponentProps): JSX.Element => {
   const dateArray = entry.timestamp.toDateString().split(' ');
   const date = dateArray[1] + ' ' + ordinal_suffix_of(dateArray[2]);
 
@@ -118,50 +113,52 @@ const EventLogEntryComponent: FunctionComponent<EventLogEntryComponentProps> = (
   );
 };
 
-export const WebhookHistoryModal: FunctionComponent<Props> = ({ isOpen, onCancel, webhook }: Props): JSX.Element => {
+export const WebhookHistoryModal = (): JSX.Element => {
   const dispatch = useDispatch();
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
 
+  const webhook = useSelector(selectWebhookInHistory);
+  const isOpen = webhook !== undefined;
+
   const [viewWebhooks, setViewWebhooks] = useState(false);
   const [searched, setSearched] = useState(false);
-  const initCriteria: EventSearchCriteria = {
-    name: 'webhook-triggered',
-    namespace: 'push-service',
-    timestampMax: '',
-    timestampMin: '',
-    url: webhook?.url,
-    applications: webhook?.targetId,
-    value: webhook?.targetId,
-  };
-
-  const [searchCriteria, setSearchCriteria] = useState(initCriteria);
+  const initSearchCriteria = createInitCriteria(webhook);
+  const [searchCriteria, setSearchCriteria] = useState(initSearchCriteria);
   const next = useSelector((state: RootState) => state.event.nextEntries);
   const isLoading = useSelector((state: RootState) => state.event.isLoading.log);
   const today = new Date().toLocaleDateString().split('/').reverse().join('-');
+  const entries = useSelector((state: RootState) => state.event.entries);
 
   useEffect(() => {
     dispatch(getEventDefinitions());
-    onSearch(searchCriteria);
-  }, [dispatch]);
+  }, []);
+
+  // eslint-disable-next-line
+  useEffect(() => {}, [entries]);
 
   const onSearch = (criteria: EventSearchCriteria) => {
     dispatch(clearEventLogEntries());
     dispatch(getEventLogEntries('', criteria));
     setSearched(true);
-    setSearchCriteria(criteria);
-    setViewWebhooks(true);
   };
 
   const onNext = () => {
     searched ? dispatch(getEventLogEntries(next, searchCriteria)) : dispatch(getEventLogEntries(next));
   };
 
-  const entries = useSelector((state: RootState) => state.event.entries);
   useEffect(() => {
-    setSearchCriteria(initCriteria);
-  }, [initCriteria]);
+    setSearchCriteria(initSearchCriteria);
+    onSearch(initSearchCriteria);
+
+    if (webhook !== undefined) {
+      dispatch(getEventLogEntries('', initSearchCriteria));
+    }
+  }, [webhook]);
+
+  if (searchCriteria === undefined) return <></>;
+
   return (
     <GoAModalStyle>
       <GoAModal
@@ -183,7 +180,7 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ isOpen, onCancel
               type="primary"
               onClick={() => {
                 setViewWebhooks(false);
-                onCancel();
+                dispatch(ResetModalState());
               }}
             >
               Close
@@ -192,7 +189,7 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ isOpen, onCancel
         }
       >
         <GoAFormItem label="Application">
-          <div className="grey-fill">{searchCriteria.applications}</div>
+          <div className="grey-fill">{webhook?.targetId}</div>
         </GoAFormItem>
 
         <GoAFormItem label="URL">
@@ -201,7 +198,7 @@ export const WebhookHistoryModal: FunctionComponent<Props> = ({ isOpen, onCancel
             type="url"
             width="100%"
             testId="webhook-history-url-input"
-            value={searchCriteria.url}
+            value={searchCriteria.url || webhook?.url}
             onChange={(name, value) => {
               setSearchCriteria({ ...searchCriteria, url: value });
             }}
