@@ -54,8 +54,8 @@ export class AuthenticationClient implements Client {
     this.idpHint = client.idpHint;
     this.authCallbackUrl = client.authCallbackUrl;
     this.disableVerifyHost = !!client.disableVerifyHost;
-    this.successRedirectUrl = client.successRedirectUrl;
-    this.failureRedirectUrl = client.failureRedirectUrl;
+    this.successRedirectUrl = client.successRedirectUrl || '/';
+    this.failureRedirectUrl = client.failureRedirectUrl || '/';
     this.callbackUrl = new URL(this.authCallbackUrl);
   }
 
@@ -213,7 +213,6 @@ export class AuthenticationClient implements Client {
     const strategy = await this.getStrategy();
     const authenticateHandler = passport.authenticate(strategy, {
       failureRedirect: this.failureRedirectUrl,
-      successRedirect: this.successRedirectUrl,
     });
 
     return (req, res, next) => {
