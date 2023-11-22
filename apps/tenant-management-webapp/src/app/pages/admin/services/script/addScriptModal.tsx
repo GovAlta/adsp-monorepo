@@ -98,7 +98,7 @@ export const AddScriptModal = ({ initialValue, onCancel, onSave, open, isNew }: 
     <GoAModal
       testId="add-script-modal"
       open={open}
-      heading="Add script"
+      heading={isNew ? 'Add script' : 'Edit script'}
       actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
@@ -167,23 +167,23 @@ export const AddScriptModal = ({ initialValue, onCancel, onSave, open, isNew }: 
           }}
         />
       </GoAFormItem>
-
-      <UseServiceAccountWrapper>
-        <GoACheckbox
-          checked={script.useServiceAccount}
-          name="script-use-service-account-checkbox"
-          testId="script-use-service-account-checkbox"
-          onChange={() => {
-            setScript({
-              ...script,
-              useServiceAccount: !script.useServiceAccount,
-            });
-          }}
-          ariaLabel={`script-use-service-account-checkbox`}
-        />
-        Use service account
-      </UseServiceAccountWrapper>
-
+      {isNew && (
+        <UseServiceAccountWrapper>
+          <GoACheckbox
+            checked={script.useServiceAccount}
+            name="script-use-service-account-checkbox"
+            testId="script-use-service-account-checkbox"
+            onChange={() => {
+              setScript({
+                ...script,
+                useServiceAccount: !script.useServiceAccount,
+              });
+            }}
+            ariaLabel={`script-use-service-account-checkbox`}
+          />
+          Use service account
+        </UseServiceAccountWrapper>
+      )}
       {roles &&
         isNew &&
         roles.map((r) => {
