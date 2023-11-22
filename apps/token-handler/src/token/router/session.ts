@@ -1,5 +1,6 @@
 import { isAllowedUser } from '@abgov/adsp-service-sdk';
 import { assertAuthenticatedHandler } from '@core-services/core-common';
+import * as cors from 'cors';
 import { NextFunction, Request, RequestHandler, Response, Router } from 'express';
 import { Store as SessionStore } from 'express-session';
 
@@ -58,6 +59,7 @@ export function createSessionRouter({ passport, sessionStore }: RouterProps) {
 
   router.get(
     '/sessions',
+    cors(),
     passport.authenticate(['session', 'tenant'], { session: false }),
     assertAuthenticatedHandler,
     getSessionInformation(sessionStore)
