@@ -473,3 +473,33 @@ export const ModalOverwrite = styled.div`
     margin-top: 15px;
   }
 `;
+export const HideTablet = styled.div`
+  @media (max-height: 629px) {
+    display: none;
+  }
+
+  @media (max-width: 1439px) {
+    display: none;
+  }
+`;
+export const TabletMessage = styled.div`
+  h1,
+  h3 {
+    text-align: center;
+    margin: 40px;
+  }
+
+  text-align: center !important;
+
+  @media (min-height: 630px) {
+    @media (min-width: 1440px) {
+      display: none;
+    }
+  }
+`;
+
+export const OuterNotificationTemplateEditorContainer = styled.div`
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+`;
