@@ -1,5 +1,6 @@
 import { EventService, TenantService, UnauthorizedUserError, isAllowedUser } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, NotFoundError, createValidationHandler } from '@core-services/core-common';
+import * as cors from 'cors';
 import { json, NextFunction, Request, Response, Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { RequestHandler } from 'express-serve-static-core';
@@ -148,6 +149,7 @@ export function createClientRouter({
 
   router.post(
     '/clients/:id',
+    cors(),
     json({ limit: '1mb' }),
     createValidationHandler(
       param('id').isString().isLength({ min: 1, max: 50 }),
@@ -162,6 +164,7 @@ export function createClientRouter({
 
   router.get(
     '/clients/:id',
+    cors(),
     json({ limit: '1mb' }),
     createValidationHandler(param('id').isString().isLength({ min: 1, max: 50 })),
     passport.authenticate('tenant', { session: false }),

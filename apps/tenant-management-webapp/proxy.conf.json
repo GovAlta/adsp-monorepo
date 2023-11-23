@@ -1,9 +1,4 @@
 {
-  "/api": {
-    "target": "http://localhost:3333",
-    "secure": false,
-    "changeOrigin": true
-  },
   "/config/*": {
     "target": "https://adsp-dev.gov.ab.ca",
     "secure": true,
@@ -17,6 +12,14 @@
   "/health": {
     "target": "http://localhost:3333",
     "secure": false,
+    "changeOrigin": true
+  },
+  "/api/token-handler/v1/clients": {
+    "target": "https://token-handler-adsp-dev.apps.aro.gov.ab.ca",
+    "pathRewrite": {
+      "/api": ""
+    },
+    "secure": true,
     "changeOrigin": true
   }
 }
