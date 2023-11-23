@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SocketIOClient;
 using SocketIOClient.JsonSerializer;
+using SocketIOClient.Transport;
 
 namespace Adsp.Sdk.Socket;
 [SuppressMessage("Usage", "CA1812: Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
@@ -98,8 +99,10 @@ internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISub
       pushServiceUrl,
       new SocketIOOptions
       {
+        Reconnection = false,
+        Transport = TransportProtocol.WebSocket,
         Query = new Dictionary<string, string> { { "stream", _streamId } },
-        ExtraHeaders = new Dictionary<string, string> { { "Authorization", $"Bearer {token}" } }
+        Auth = new Dictionary<string, string> { { "token", token } }
       }
     );
 
@@ -118,9 +121,15 @@ internal sealed class SocketEventSubscriberService<TPayload, TSubscriber> : ISub
     {
       _logger.LogInformation("Connected to stream {StreamId} for events at: {Url}", _streamId, pushServiceUrl);
     };
-    client.OnDisconnected += (_s, _e) =>
+    client.OnDisconnected += async (_s, _e) =>
     {
       _logger.LogInformation("Disconnected from stream {StreamId}.", _streamId);
+
+      // Update the token and reconnect.
+      var token = await _tokenProvider.GetAccessToken();
+      client.Options.Auth = new Dictionary<string, string> { { "token", token } };
+
+      await client.ConnectAsync();
     };
     client.OnError += (_s, e) =>
     {
