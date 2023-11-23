@@ -322,6 +322,8 @@ export const monitoredServiceDown = (app: StaticApplicationData, user: User, web
   context: {
     applicationId: app.appKey,
     applicationName: app.name,
+    webhookURL: webhook?.url,
+    webhookId: webhook?.id,
   },
   payload: {
     application: {
@@ -348,6 +350,8 @@ export const monitoredServiceUp = (app: StaticApplicationData, user: User, webho
   context: {
     applicationId: app.appKey,
     applicationName: app.name,
+    webhookURL: webhook?.url,
+    webhookId: webhook?.id,
   },
   payload: {
     application: {
