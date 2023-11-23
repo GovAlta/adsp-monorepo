@@ -318,7 +318,7 @@ export const monitoredServiceDown = (app: StaticApplicationData, user: User, web
   name: 'monitored-service-down',
   timestamp: new Date(),
   tenantId: user.tenantId,
-  correlationId: app.appKey,
+  correlationId: webhook.id,
   context: {
     applicationId: app.appKey,
     applicationName: app.name,
@@ -346,7 +346,7 @@ export const monitoredServiceUp = (app: StaticApplicationData, user: User, webho
   name: 'monitored-service-up',
   timestamp: new Date(),
   tenantId: user.tenantId,
-  correlationId: app.appKey,
+  correlationId: webhook.id,
   context: {
     applicationId: app.appKey,
     applicationName: app.name,
