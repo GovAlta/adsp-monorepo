@@ -195,7 +195,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     selectedScript.script = scriptStr;
     selectedScript.testInputs = getInput(testInput);
     selectedScript.runnerRoles = script.runnerRoles;
-
+    selectedScript.useServiceAccount = script.useServiceAccount;
     return selectedScript;
   };
 
@@ -250,6 +250,18 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     return result;
   };
 
+  const isServiceAccountDisabled = () => {
+    if (script.triggerEvents.length > 0) return true;
+
+    return false;
+  };
+
+  const isServiceAccountChecked = () => {
+    if (script.triggerEvents.length > 0) return true;
+
+    return script.useServiceAccount;
+  };
+
   const getstyles = latestNotification && !latestNotification.disabled ? '410px' : '310px';
   return (
     <EditModalStyle>
@@ -260,14 +272,14 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
 
         <UseServiceAccountWrapper>
           <GoACheckbox
-            checked={selectedScript.useServiceAccount || script.triggerEvents?.length > 0}
+            checked={isServiceAccountChecked()}
             name="script-use-service-account-checkbox"
             testId="script-use-service-account-checkbox"
-            disabled={script.triggerEvents?.length > 0}
+            disabled={isServiceAccountDisabled()}
             onChange={() => {
               setScript({
-                ...selectedScript,
-                useServiceAccount: !selectedScript.useServiceAccount,
+                ...script,
+                useServiceAccount: !script.useServiceAccount,
               });
             }}
             ariaLabel={`script-use-service-account-checkbox`}
