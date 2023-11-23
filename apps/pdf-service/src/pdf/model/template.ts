@@ -36,22 +36,27 @@ export class PdfTemplateEntity implements PdfTemplate {
     this.additionalStylesWrapped = '<style>' + additionalStyles + '</style>';
   }
 
-  evaluateTemplates() {
-    this.evaluateTemplate = this.templateService.getTemplateFunction(
-      this.additionalStylesWrapped.concat(this.template),
-      null
-    );
-    this.evaluateFooterTemplate = this.templateService.getTemplateFunction(
-      this.additionalStylesWrapped.concat(this.footer),
-      'pdf-footer'
-    );
-    this.evaluateHeaderTemplate = this.templateService.getTemplateFunction(
-      this.additionalStylesWrapped.concat(this.header),
-      'pdf-header'
-    );
+  private initializeTemplates() {
+    // Lazy initialize; no need to re-initialize unless templates change (i.e. configuration update).
+    if (!this.evaluateTemplate) {
+      this.evaluateTemplate = this.templateService.getTemplateFunction(
+        this.additionalStylesWrapped.concat(this.template),
+        null
+      );
+      this.evaluateFooterTemplate = this.templateService.getTemplateFunction(
+        this.additionalStylesWrapped.concat(this.footer),
+        'pdf-footer'
+      );
+      this.evaluateHeaderTemplate = this.templateService.getTemplateFunction(
+        this.additionalStylesWrapped.concat(this.header),
+        'pdf-header'
+      );
+    }
   }
 
   generate(context: unknown): Promise<Buffer> {
+    this.initializeTemplates();
+
     const content = this.evaluateTemplate(context);
     const footer = this.evaluateFooterTemplate(context);
     const header = this.evaluateHeaderTemplate(context);
