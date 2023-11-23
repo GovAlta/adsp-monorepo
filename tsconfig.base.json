@@ -17,6 +17,7 @@
     "baseUrl": ".",
     "paths": {
       "@abgov/adsp-service-sdk": ["libs/adsp-service-sdk/src/index.ts"],
+      "@abgov/jsonforms-components": ["libs/jsonforms-components/src/index.ts"],
       "@core-services/core-common": ["libs/core-common/src/index.ts"],
       "@core-services/core-common/mongo": ["libs/core-common/src/mongo/index.ts"],
       "@core-services/notification-shared": ["libs/notification-shared/src/index.ts"],
