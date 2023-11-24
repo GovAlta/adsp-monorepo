@@ -65,7 +65,7 @@ Then('the user views Delete entry modal for {string}', function (entryName) {
 });
 
 When('the user enters {string} in Service, {string} in API, {string} in URL', function (service, api, url) {
-  directoryObj.entryModalServiceField().shadow().find('input').clear().type(service, { delay: 50, force: true });
+  directoryObj.entryModalServiceField().shadow().find('input').clear().type(service, { delay: 200, force: true });
   if (api.toLowerCase() == 'empty') {
     directoryObj.entryModalApiField().shadow().find('input').clear();
   } else {

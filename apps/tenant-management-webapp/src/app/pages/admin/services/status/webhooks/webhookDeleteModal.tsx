@@ -1,21 +1,22 @@
-import React from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { DeleteWebhookService } from '@store/status/actions';
-import { Webhooks } from '@store/status/models';
+import { selectWebhookToDeleteInStatus } from '@store/status/selectors';
+import { ResetModalState } from '@store/session/actions';
 import { DeleteModal } from '@components/DeleteModal';
-interface WebhookDeleteModalProps {
-  isOpen: boolean;
-  onCancel: () => void;
-  webhook: Webhooks;
-}
 
-export const WebhookDeleteModal = ({ isOpen, onCancel, webhook }: WebhookDeleteModalProps): JSX.Element => {
+export const WebhookDeleteModal = (): JSX.Element => {
   const dispatch = useDispatch();
+  const webhook = useSelector(selectWebhookToDeleteInStatus);
+  // eslint-disable-next-line
+  useEffect(() => {}, [webhook]);
   return (
     <DeleteModal
       title="Delete webhook"
-      isOpen={isOpen}
-      onCancel={onCancel}
+      isOpen={webhook !== undefined}
+      onCancel={() => {
+        dispatch(ResetModalState());
+      }}
       content={
         <p>
           Are you sure you wish to delete #<b>{`${webhook?.name}?`}</b>
@@ -23,7 +24,7 @@ export const WebhookDeleteModal = ({ isOpen, onCancel, webhook }: WebhookDeleteM
       }
       onDelete={() => {
         dispatch(DeleteWebhookService(webhook));
-        onCancel();
+        dispatch(ResetModalState());
       }}
     />
   );

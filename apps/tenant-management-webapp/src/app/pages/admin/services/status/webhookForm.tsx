@@ -43,8 +43,12 @@ export const WebhookFormModal = (): JSX.Element => {
     dispatch(getEventDefinitions());
   }, []);
 
-  // eslint-disable-next-line
   useEffect(() => {
+    if (selectedWebhook?.id === '') {
+      setWebhook(selectedWebhook);
+      return;
+    }
+
     /*
      There is no need to reset webhook when selectedWebhook is same as the previous selected.
     */

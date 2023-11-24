@@ -25,7 +25,7 @@ Feature: PDF service
     When the user clicks the "CSS" tab in PDF template editor and view content
     When the user clicks the "Test data" tab in PDF template editor and view content
     When the user clicks the "File history" tab in PDF template editor and view content
-    Then the user views "No PDF's have been generated yet"
+    Then the user views "No PDF's have been generated yet" in File history
     Then the user views the PDF template editor screen
     Then the user views "autotest-pdftemplate", "autotest-pdftemplate" and "autotest PDF template desc" in PDF template editor
     ## Edit PDF template modal is disabled in test run build only, and could not be reproduced manually. Comment out edit template until a walk-around is found

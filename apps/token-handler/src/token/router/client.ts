@@ -1,8 +1,10 @@
 import { EventService, TenantService, UnauthorizedUserError, isAllowedUser } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError, NotFoundError, createValidationHandler } from '@core-services/core-common';
+import * as cors from 'cors';
 import { json, NextFunction, Request, Response, Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { RequestHandler } from 'express-serve-static-core';
+import { body, param } from 'express-validator';
 import { PassportStatic } from 'passport';
 
 import { TokenHandlerConfiguration } from '../configuration';
@@ -43,12 +45,12 @@ export function registerClient(eventService: EventService): RequestHandler {
         throw new UnauthorizedUserError('register client', user);
       }
 
-      const registration = req[CLIENT] as AuthenticationClient;
-      const result = await registration.register(tenant, registrationToken);
+      const client = req[CLIENT] as AuthenticationClient;
+      const result = await client.register(tenant, registrationToken);
 
       res.send({ registered: !!result.clientId });
 
-      eventService.send(clientRegistered(registration, user));
+      eventService.send(clientRegistered(client, user));
     } catch (err) {
       next(err);
     }
@@ -100,7 +102,7 @@ export function completeAuthenticate(passport: PassportStatic) {
 
       const handler = await client.authenticate(passport, true);
       handler(req, res, () => {
-        res.redirect('/');
+        res.redirect(req.isAuthenticated() ? client.successRedirectUrl : client.failureRedirectUrl);
       });
     } catch (err) {
       next(err);
@@ -110,13 +112,21 @@ export function completeAuthenticate(passport: PassportStatic) {
 
 export function logout(): RequestHandler {
   return function (req, res, next) {
-    const { id } = req.params;
-    const user = req.user as UserSessionData;
-    if (id != user.authenticatedBy) {
-      throw new InvalidOperationError('User not authenticate by specified client.');
-    }
+    try {
+      const { id } = req.params;
+      const user = req.user as UserSessionData;
+      if (!user) {
+        throw new InvalidOperationError('No user to logout.');
+      }
 
-    req.logOut((err) => (err ? next(err) : res.redirect('/')));
+      if (id != user.authenticatedBy) {
+        throw new InvalidOperationError('User not authenticate by specified client.');
+      }
+
+      req.logout((err) => (err ? next(err) : res.redirect('/')));
+    } catch (err) {
+      next(err);
+    }
   };
 }
 
@@ -139,7 +149,12 @@ export function createClientRouter({
 
   router.post(
     '/clients/:id',
+    cors(),
     json({ limit: '1mb' }),
+    createValidationHandler(
+      param('id').isString().isLength({ min: 1, max: 50 }),
+      body('registrationToken').isString().isLength({ min: 1, max: 8192 })
+    ),
     passport.authenticate('tenant', { session: false }),
     tenantHandler,
     configurationHandler,
@@ -149,7 +164,9 @@ export function createClientRouter({
 
   router.get(
     '/clients/:id',
+    cors(),
     json({ limit: '1mb' }),
+    createValidationHandler(param('id').isString().isLength({ min: 1, max: 50 })),
     passport.authenticate('tenant', { session: false }),
     tenantHandler,
     configurationHandler,
@@ -168,6 +185,7 @@ export function createClientRouter({
 
   router.get(
     '/clients/:id/auth',
+    createValidationHandler(param('id').isString().isLength({ min: 1, max: 50 })),
     rateLimitHandler,
     proxyTenantHandler,
     configurationHandler,
@@ -177,6 +195,7 @@ export function createClientRouter({
 
   router.get(
     '/clients/:id/callback',
+    createValidationHandler(param('id').isString().isLength({ min: 1, max: 50 })),
     rateLimitHandler,
     proxyTenantHandler,
     configurationHandler,
@@ -184,7 +203,11 @@ export function createClientRouter({
     completeAuthenticate(passport)
   );
 
-  router.get('/clients/:id/logout', logout());
+  router.get(
+    '/clients/:id/logout',
+    createValidationHandler(param('id').isString().isLength({ min: 1, max: 50 })),
+    logout()
+  );
 
   return router;
 }

@@ -1,4 +1,4 @@
-import { EventService, ServiceDirectory, TenantService } from '@abgov/adsp-service-sdk';
+import { EventService, TenantService } from '@abgov/adsp-service-sdk';
 import { Application, RequestHandler } from 'express';
 import { PassportStatic } from 'passport';
 import { Logger } from 'winston';

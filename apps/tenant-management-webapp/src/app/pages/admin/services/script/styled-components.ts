@@ -20,6 +20,7 @@ export const TableDiv = styled.div`
 export const UseServiceAccountWrapper = styled.div`
   line-height: 2.5em;
   display: flex;
+  padding-left: 3px;
 `;
 
 export const HeadingDiv = styled.div`
@@ -38,7 +39,7 @@ export const BodyGlobalStyles = createGlobalStyle<{ hideOverflow: boolean }>`
 export const Modal = styled.div<{ open: boolean; isNotificationActive: boolean }>`
   display: ${(props) => (props.open ? `block` : `none`)};
   position: fixed;
-  top: ${(props) => (props.isNotificationActive ? `81px` : `0`)};
+  top: ${(props) => (props.isNotificationActive ? `81px` : `0px`)};
   left: 0;
   bottom: 0;
   z-index: 10000;
@@ -76,7 +77,7 @@ export const ScriptPanelContainer = styled.div`
   padding-left: var(--goa-spacing-xl);
   padding-right: var(--goa-spacing-xl);
   height: 100vh;
-  margin-top: 90px;
+  margin-top: 0px;
   overflow: hidden;
   box-sizing: border-box;
 `;
@@ -472,4 +473,36 @@ export const ModalOverwrite = styled.div`
     font-size: var(--goa-font-size-5);
     margin-top: 15px;
   }
+`;
+export const HideTablet = styled.div`
+  @media (max-height: 629px) {
+    display: none;
+  }
+
+  @media (max-width: 1439px) {
+    display: none;
+  }
+`;
+export const TabletMessage = styled.div`
+  h1,
+  h3 {
+    text-align: center;
+    margin: 40px;
+  }
+
+  text-align: center !important;
+  margin-top: 90px !important;
+
+  @media (min-height: 630px) {
+    @media (min-width: 1440px) {
+      display: none;
+    }
+  }
+`;
+
+export const OuterNotificationTemplateEditorContainer = styled.div`
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  margin-top: 90px;
 `;

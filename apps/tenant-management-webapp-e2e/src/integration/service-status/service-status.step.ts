@@ -489,7 +489,7 @@ Then('the user views Add application modal', function () {
 When(
   'the user enters {string} as name and {string} as description and {string} as endpoint',
   function (name, description, endpoint) {
-    statusObj.addEditApplicationNameModalField().shadow().find('input').clear().type(name, { delay: 100, force: true });
+    statusObj.addEditApplicationNameModalField().shadow().find('input').clear().type(name, { delay: 200, force: true });
     statusObj
       .addEditApplicationDescriptionModalField()
       .shadow()
