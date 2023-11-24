@@ -11,7 +11,7 @@ public abstract class ScriptEvent
 {
   [JsonPropertyName("jobId")]
   [Required]
-  public Guid? JobId { get; set; }
+  public string? JobId { get; set; }
 
   [JsonPropertyName("definition")]
   [Required]

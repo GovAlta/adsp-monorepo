@@ -1,8 +1,10 @@
 using Adsp.Platform.ScriptService.Services.Platform;
+using Adsp.Platform.ScriptService.Events;
 using Adsp.Platform.ScriptService.Services.Util;
 using Adsp.Sdk;
 using NLua;
 using RestSharp;
+using System.Net.Mime;
 
 namespace Adsp.Platform.ScriptService.Services;
 internal class ScriptFunctions : IScriptFunctions
@@ -10,13 +12,16 @@ internal class ScriptFunctions : IScriptFunctions
   private readonly AdspId _tenantId;
   private readonly IServiceDirectory _directory;
   private readonly Func<Task<string>> _getToken;
+  private readonly IEventService _eventService;
   private readonly RestClient _client;
 
-  public ScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken, RestClient? client = null)
+
+  public ScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken, IEventService eventService, RestClient? client = null)
   {
     _tenantId = tenantId;
     _directory = directory;
     _getToken = getToken;
+    _eventService = eventService;
     _client = client ?? new RestClient(new RestClientOptions { ThrowOnAnyError = true });
   }
 
@@ -82,6 +87,40 @@ internal class ScriptFunctions : IScriptFunctions
 
     var result = _client.GetAsync<FormDataResult>(request).Result;
     return result;
+  }
+
+  public virtual string? SendDomainEvent(string namespaceValue, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null)
+  {
+    var eventServiceUrl = _directory.GetServiceUrl(AdspPlatformServices.EventServiceId).Result;
+    var requestUrl = new Uri(eventServiceUrl, $"/event/v1/events");
+    var token = _getToken().Result;
+    var sentPayload = payload != null ? payload : new Dictionary<string, object>();
+    var body = new
+    {
+      @namespace = namespaceValue,
+      name = name,
+      correlationId = correlationId,
+      context = context,
+      timestamp = DateTime.Now,
+      payload = sentPayload
+    };
+
+    var request = new RestRequest(requestUrl, Method.Post);
+    request.AddJsonBody(body);
+    request.AddHeader("Authorization", $"Bearer {token}");
+
+    var result = new RestResponse();
+    try
+    {
+      result = _client.PostAsync(request).Result;
+
+      return "success";
+
+    }
+    catch (Exception e)
+    {
+      return $"Failure: {e.Message}";
+    }
   }
 
   public virtual string? CreateTask(

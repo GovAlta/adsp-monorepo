@@ -68,7 +68,7 @@ internal sealed class ScriptSubscriber : IEventSubscriber<IDictionary<string, ob
       var inputs = received.Payload ?? new Dictionary<string, object?>();
       var getToken = () => _tokenProvider.GetAccessToken();
       await _scriptService.RunScript(
-        Guid.NewGuid(),
+        Guid.NewGuid().ToString(),
         received.TenantId!,
         definition,
         inputs,
