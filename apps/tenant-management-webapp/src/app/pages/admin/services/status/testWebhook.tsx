@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { TestWebhooks } from '@store/status/actions';
-import { getEventLogEntries } from '@store/event/actions';
+import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
 import {
   GoAButton,
   GoAButtonGroup,
@@ -82,6 +82,8 @@ export const TestWebhookModal = (): JSX.Element => {
             <GoAButton
               type="secondary"
               onClick={() => {
+                dispatch(clearEventLogEntries());
+                setShowEntries(false);
                 dispatch(ResetModalState());
               }}
             >
