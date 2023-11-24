@@ -26,7 +26,6 @@ import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, isValidJSONCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { scriptEditorConfig } from './editor/config';
 import { TabletMessage } from '@components/TabletMessage';
-import { useHistory } from 'react-router-dom';
 
 interface AddScriptProps {
   activeEdit: boolean;
