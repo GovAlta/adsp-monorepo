@@ -36,6 +36,7 @@ export interface EventState {
 export interface EventSearchCriteria {
   timestampMax?: string;
   timestampMin?: string;
+  context?: Record<string, unknown>;
   namespace?: string;
   name?: string;
   correlationId?: string;

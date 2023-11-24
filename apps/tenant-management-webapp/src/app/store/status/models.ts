@@ -135,3 +135,8 @@ export const createInitCriteria = (webhook: Webhooks): EventSearchCriteria => {
     value: webhook?.targetId,
   };
 };
+
+export const initWebhookSearchCriteria: EventSearchCriteria = {
+  context: { name: 'webhook-triggered', namespace: 'push-service' },
+  correlationId: null,
+};
