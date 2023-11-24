@@ -1,0 +1,77 @@
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: adsp_tk_session
+
+  schemas:
+    UserSessionData:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        expiry:
+          type: string
+          format: date-time
+
+/token-handler/v1/targets/{targetId}/{targetPath}:
+  parameters:
+    - name: targetId
+      description: ID of the target.
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: targetPath
+      description: Request path on the target.
+      in: path
+      required: true
+      schema:
+        type: string
+  get:
+    tags:
+      - Target
+    description: Perform GET request to target. Note that sub-paths are supported by the API, but not in OpenAPI.
+    security:
+      - sessionCookie: []
+    responses:
+      200:
+        description: Request completed successfully.
+  post:
+    tags:
+      - Target
+    description: Perform POST request to target. Note that sub-paths are supported by the API, but not in OpenAPI.
+    security:
+      - sessionCookie: []
+    responses:
+      200:
+        description: Request completed successfully.
+  put:
+    tags:
+      - Target
+    description: Perform PUT request to target. Note that sub-paths are supported by the API, but not in OpenAPI.
+    security:
+      - sessionCookie: []
+    responses:
+      200:
+        description: Request completed successfully.
+  delete:
+    tags:
+      - Target
+    description: Perform DELETE request to target. Note that sub-paths are supported by the API, but not in OpenAPI.
+    security:
+      - sessionCookie: []
+    responses:
+      200:
+        description: Request completed successfully.

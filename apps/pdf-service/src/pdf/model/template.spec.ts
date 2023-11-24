@@ -39,7 +39,6 @@ describe('PdfTemplateEntity', () => {
     const context = {};
     const stream = {};
     pdfServiceMock.generatePdf.mockResolvedValueOnce(stream);
-    entity.evaluateTemplates();
     const result = await entity.generate(context);
     expect(template).toHaveBeenCalledWith(context);
     expect(pdfServiceMock.generatePdf).toHaveBeenCalledWith({

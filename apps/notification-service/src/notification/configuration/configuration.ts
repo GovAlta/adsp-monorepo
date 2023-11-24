@@ -5,7 +5,7 @@ import { NotificationType } from '../types';
 import { Configuration, SupportContact } from './schema';
 
 function createTypeEntity(type: NotificationType, tenantId: AdspId): NotificationTypeEntity {
-  return type.addressPath
+  return type.addressPath || type.address
     ? new DirectNotificationTypeEntity(type, tenantId)
     : new NotificationTypeEntity(type, tenantId);
 }

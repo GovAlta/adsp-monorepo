@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: token-handler
+        component: api
+      name: token-handler
+    data:
+      KEYCLOAK_ROOT_URL: https://access.alberta.ca
+      DIRECTORY_URL: http://directory-service:3333
+      DIR_PLATFORM_CONFIGURATION_SERVICE_V2: http://configuration-service:3333/configuration/v2
+      LOG_LEVEL: debug
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      labels:
+        app: token-handler
+        component: api
+      name: token-handler
+    stringData:
+      CLIENT_ID: urn:ads:platform:token-handler
+      CLIENT_SECRET:
+      STORE_SECRET:
+      SESSION_SECRET:
+      SECRET_SALT: 

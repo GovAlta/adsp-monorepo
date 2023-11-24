@@ -188,12 +188,17 @@ export function* fetchEventLogEntries(action: FetchEventLogEntriesAction): SagaI
   }`;
   if (baseUrl && token) {
     if (action.searchCriteria) {
-      const contextObj = {};
+      let contextObj = {};
       if (action.searchCriteria.namespace) {
         contextObj['namespace'] = action.searchCriteria.namespace;
       }
+
       if (action.searchCriteria.name) {
         contextObj['name'] = action.searchCriteria.name;
+      }
+
+      if (action.searchCriteria?.context) {
+        contextObj = { ...contextObj, ...action.searchCriteria?.context };
       }
 
       if (Object.entries(contextObj).length > 0) {

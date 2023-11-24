@@ -61,13 +61,13 @@ export const CommentTopicTypesItem = ({ commentTopicType, onDelete }: PdfTemplat
         <td data-testid="comment-topic-types-action">
           <GoAContextMenu>
             <GoAContextMenuIcon
-              testId="comment-definition-edit"
+              testId="comment-topic-types-edit"
               title="Edit"
               type="create"
               onClick={() => history.push(`${url}/edit/${commentTopicType.id}`)}
             />
             <GoAContextMenuIcon
-              testId={`comment-definition-delete`}
+              testId={`comment-topic-types-delete`}
               title="Delete"
               type="trash"
               onClick={() => onDelete(commentTopicType)}

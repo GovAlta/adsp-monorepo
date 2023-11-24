@@ -1,17 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Page, Main, Aside } from '@components/Html';
-import {
-  fetchServiceStatusApps,
-  fetchStatusMetrics,
-  FETCH_SERVICE_STATUS_APPS_ACTION,
-  fetchWebhooks,
-} from '@store/status/actions';
+import { fetchServiceStatusApps, fetchStatusMetrics, FETCH_SERVICE_STATUS_APPS_ACTION } from '@store/status/actions';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoACheckbox, GoAButton } from '@abgov/react-components-new';
 import ApplicationFormModal from './form';
 import { Application } from './applications/application';
-import { WebhooksDisplay } from './webhooks/webhooks';
+import { WebhookListTable } from './webhooks/webhooks';
 
 import NoticeModal from './noticeModal';
 import { GetMySubscriber, Subscribe, Unsubscribe } from '@store/subscription/actions';
@@ -26,10 +21,10 @@ import { useActionStateCheck } from '@components/Indicator';
 import { ApplicationList } from './styled-components';
 
 import { WebhookFormModal } from './webhookForm';
-
 import LinkCopyComponent from '@components/CopyLink/CopyLink';
-
 import AsideLinks from '@components/AsideLinks';
+import { AddEditStatusWebhookType } from '@store/status/models';
+import { UpdateModalState } from '@store/session/actions';
 
 const userHealthSubscriptionSelector = createSelector(
   (state: RootState) => state.session.userInfo?.sub,
@@ -51,9 +46,8 @@ const userHealthSubscriptionSelector = createSelector(
 function Status(): JSX.Element {
   const dispatch = useDispatch();
 
-  const { applications, serviceStatusAppUrl, tenantName, webhooks } = useSelector((state: RootState) => ({
+  const { applications, serviceStatusAppUrl, tenantName } = useSelector((state: RootState) => ({
     applications: state.serviceStatus.applications,
-    webhooks: state.serviceStatus.webhooks,
     serviceStatusAppUrl: state.config.serviceUrls.serviceStatusAppUrl,
     tenantName: state.tenant.name,
   }));
@@ -62,19 +56,9 @@ function Status(): JSX.Element {
 
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [showAddApplicationModal, setShowAddApplicationModal] = useState<boolean>(false);
-  const [showAddWebhookModal, setShowAddWebhookModal] = useState<boolean>(false);
   const [showAddNoticeModal, setShowAddNoticeModal] = useState<boolean>(false);
   const isApplicationsFetched = useActionStateCheck(FETCH_SERVICE_STATUS_APPS_ACTION);
 
-  const defaultHooks = {
-    id: '',
-    name: '',
-    url: '',
-    targetId: '',
-    intervalMinutes: 5,
-    description: '',
-    eventTypes: [],
-  };
   let intervalId = null;
 
   useEffect(() => {
@@ -92,10 +76,6 @@ function Status(): JSX.Element {
       };
     }
   }, [applications]);
-
-  useEffect(() => {
-    dispatch(fetchWebhooks());
-  }, []);
 
   const publicStatusUrl = `${serviceStatusAppUrl}/${tenantName.replace(/\s/g, '-').toLowerCase()}`;
 
@@ -115,9 +95,6 @@ function Status(): JSX.Element {
   const addApplication = (edit: boolean) => {
     setActiveIndex(1);
     setShowAddApplicationModal(edit);
-  };
-  const addWebhook = (edit: boolean) => {
-    setShowAddWebhookModal(edit);
   };
 
   function getStatussupportcodeLink() {
@@ -162,16 +139,24 @@ function Status(): JSX.Element {
           <Tab label="Webhook" data-testid="status-webhook">
             <p>The webhooks are listed here</p>
             <p>
-              <GoAButton testId="add-application" onClick={() => addWebhook(true)} type="primary">
+              <GoAButton
+                testId="add-application"
+                onClick={() => {
+                  dispatch(
+                    UpdateModalState({
+                      type: AddEditStatusWebhookType,
+                      isOpen: true,
+                      id: null,
+                    })
+                  );
+                }}
+                type="primary"
+              >
                 Add webhook
               </GoAButton>
             </p>
 
-            {webhooks && Object.keys(webhooks).length > 0 ? (
-              <WebhooksDisplay webhooks={webhooks} />
-            ) : (
-              <b>There are no webhooks yet</b>
-            )}
+            <WebhookListTable />
           </Tab>
           <Tab label="Notices" data-testid="status-notices">
             <NoticeModal
@@ -224,19 +209,7 @@ function Status(): JSX.Element {
             endpoint: { url: '', status: 'offline' },
           }}
         />
-        <WebhookFormModal
-          defaultWebhooks={defaultHooks}
-          isOpen={showAddWebhookModal}
-          testId={'add-webhook'}
-          isEdit={false}
-          title="Add webhook"
-          onCancel={() => {
-            setShowAddWebhookModal(false);
-          }}
-          onSave={() => {
-            setShowAddWebhookModal(false);
-          }}
-        />
+        <WebhookFormModal />
       </Main>
 
       <Aside>

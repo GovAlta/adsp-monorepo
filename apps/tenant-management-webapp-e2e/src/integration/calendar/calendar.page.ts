@@ -1,5 +1,4 @@
 class CalendarPage {
-
   addCalendarOverviewTabBtn() {
     return cy.get('[data-testid="overall-calendar-add-btn"]');
   }
@@ -8,28 +7,26 @@ class CalendarPage {
     return cy.get('[data-testid="add-calendar-btn"]');
   }
 
-  addScriptModalTitle()
-  {
+  addScriptModalTitle() {
     return cy.xpath('//goa-modal[@data-testid="add-calendar-modal" and @open="true"]//*[@slot="heading"]');
   }
 
-  calendarModalCancelButton()
-  {
+  calendarModalCancelButton() {
     return cy.get('[data-testid="calendar-modal-cancel"]');
   }
 
-  calendarModalSaveButton()
-  {
+  calendarModalSaveButton() {
     return cy.get('[data-testid="calendar-modal-save"]');
   }
 
-  calendarTableHeader()
-  {
+  calendarTableHeader() {
     return cy.get('[data-testid="calendar-table-header"]');
   }
 
   addCalendarModalNameField() {
-    return cy.xpath('//goa-modal[@data-testid="add-calendar-modal" and @open="true"]//*[@data-testid="calendar-modal-name-input"]');
+    return cy.xpath(
+      '//goa-modal[@data-testid="add-calendar-modal" and @open="true"]//*[@data-testid="calendar-modal-name-input"]'
+    );
   }
 
   addCalendarModalNameFormItem() {
@@ -50,7 +47,7 @@ class CalendarPage {
 
   addCalendarModalRolesTable() {
     return cy.xpath(
-      `//*[@data-testid="add-calendar-modal" and @open="true"]//h4[text()="autotest"]/following-sibling::goa-table`
+      `//*[@data-testid="add-calendar-modal" and @open="true"]//h4/div[text()="autotest"]/parent::h4/following-sibling::goa-table`
     );
   }
 
@@ -59,7 +56,9 @@ class CalendarPage {
   }
 
   calendarEditButton(rowNumber) {
-    return cy.xpath(`(//table[@data-testid="calendar-table"]//*[contains(@data-testid, "calendar-edit")])[${rowNumber}]`);
+    return cy.xpath(
+      `(//table[@data-testid="calendar-table"]//*[contains(@data-testid, "calendar-edit")])[${rowNumber}]`
+    );
   }
 
   calendarDeleteButton(rowNumber) {
@@ -71,12 +70,13 @@ class CalendarPage {
   }
 
   editCalendarModalDescriptionField() {
-    return cy.xpath('//*[@data-testid="add-calendar-modal" and @open]//*[@data-testid="calendar-modal-description-input"]');
+    return cy.xpath(
+      '//*[@data-testid="add-calendar-modal" and @open]//*[@data-testid="calendar-modal-description-input"]'
+    );
   }
 
   editCalendarModalTable() {
     return cy.xpath('//*[@data-testid="add-calendar-modal"]//goa-table');
   }
-
 }
 export default CalendarPage;

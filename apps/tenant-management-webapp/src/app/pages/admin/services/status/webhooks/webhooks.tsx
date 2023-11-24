@@ -1,20 +1,23 @@
-import React, { useState } from 'react';
-
-import { Webhooks } from '@store/status/models';
+import React, { useState, useEffect } from 'react';
 import DataTable from '@components/DataTable';
 import styled from 'styled-components';
-import { WebhookFormModal } from '../webhookForm';
 import { WebhookHistoryModal } from '../webhookHistoryForm';
 import { TestWebhookModal } from '../testWebhook';
 import History from '../../../../../../assets/icons/history.svg';
 import { HoverWrapper, ToolTip } from '../styled-components';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import { WebhookDeleteModal } from './webhookDeleteModal';
-
-interface WebhookDisplayProps {
-  webhooks: Record<string, Webhooks>;
-}
-
+import { useDispatch, useSelector } from 'react-redux';
+import { UpdateModalState } from '@store/session/actions';
+import {
+  AddEditStatusWebhookType,
+  StatusWebhookHistoryType,
+  DeleteStatusWebhookType,
+  TestStatusWebhookType,
+  Webhooks as WebhookEntity,
+} from '@store/status/models';
+import { selectStatusWebhooks } from '@store/status/selectors';
+import { fetchWebhooks } from '@store/status/actions';
 export const EntryDetail = styled.div`
   background: #f3f3f3;
   white-space: pre-wrap;
@@ -29,136 +32,145 @@ export const NoPaddingTd = styled.td`
   padding: 0px !important;
 `;
 
-export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element => {
-  const [editId, setEditId] = useState<string | null>(null);
-  const [historyId, setHistoryId] = useState<string | null>(null);
-  const [testId, setTestId] = useState<string | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+interface WebhookRowProps {
+  webhook: WebhookEntity;
+}
+
+const WebhookTableRow = ({ webhook }: WebhookRowProps): JSX.Element => {
+  const [showDetails, setShowDetails] = useState<boolean>(false);
+  const { id, url, intervalMinutes, name, description } = webhook;
+  const dispatch = useDispatch();
   const [isShowURL, setIsShowURL] = useState<string>('');
-
-  const onDeleteCancel = () => {
-    setDeleteId(null);
-  };
-  const onHistoryCancel = () => {
-    setHistoryId(null);
-  };
-
-  interface FileTypeRowProps {
-    id: string;
-    name: string;
-    url: string;
-    targetId: string;
-    intervalMinutes?: number;
-    description: string;
-    eventTypes: { id: string }[];
-    onEdit?: () => void;
-    onDelete?: () => void;
-    onTest?: () => void;
-    onHistory?: () => void;
-  }
-
-  const FileTypeTableRow = ({
-    id,
-    name,
-    url,
-    targetId,
-    intervalMinutes,
-    eventTypes,
-    description,
-    onEdit,
-    onDelete,
-    onHistory,
-    onTest,
-  }: FileTypeRowProps): JSX.Element => {
-    const [showDetails, setShowDetails] = useState<boolean>(false);
-
-    const urlLength = 14;
-
-    return (
-      <>
-        <Menu key={id}>
-          <td>{name}</td>
-          <td className="url">
-            <HoverWrapper
-              onMouseEnter={() => {
-                setIsShowURL(id);
-              }}
-              onMouseLeave={() => {
-                setIsShowURL('');
-              }}
-            >
-              <div>{url?.length >= urlLength ? `${url?.substring(0, urlLength)}...` : url}</div>
-
-              {isShowURL === id && (
-                <ToolTip>
-                  <p className="url-tooltip">
-                    <div className="message">{url}</div>
-                  </p>
-                </ToolTip>
-              )}
-            </HoverWrapper>
-          </td>
-
-          <td className="waitInterval">{intervalMinutes} min</td>
-          <td className="actionCol">
-            <GoAContextMenu>
-              <GoAContextMenuIcon
-                testId={`webhook-details-${id}`}
-                title="Details"
-                type="information-circle"
-                onClick={() => {
-                  setShowDetails(!showDetails);
-                }}
-              />
-              <div
-                onClick={() => {
-                  onHistory();
-                }}
-                className="hover-blue tooltip"
-              >
-                <img src={History} alt="History" />
-                <span className="tooltip-text">Webhook history</span>
-              </div>
-              <GoAContextMenuIcon
-                testId={`webhook-test-${id}`}
-                title="Test"
-                type="ticket"
-                onClick={() => {
-                  onTest();
-                }}
-              />
-              <GoAContextMenuIcon
-                testId={`webhook-edit-${id}`}
-                title="Edit"
-                type="create"
-                onClick={() => {
-                  onEdit();
-                }}
-              />
-              <GoAContextMenuIcon
-                testId={`webhook-delete-${id}`}
-                title="Delete"
-                type="trash"
-                onClick={() => {
-                  onDelete();
-                }}
-              />
-            </GoAContextMenu>
-          </td>
-        </Menu>
-        {showDetails && (
-          <tr>
-            <NoPaddingTd headers="correlation timestamp namespace name details" colSpan={5} className="event-details">
-              <EntryDetail>{description}</EntryDetail>
-            </NoPaddingTd>
-          </tr>
-        )}
-      </>
-    );
-  };
+  const urlLength = 14;
 
   return (
-    <div data-testid="application">
+    <>
+      <Menu key={id}>
+        <td>{name}</td>
+        <td className="url">
+          <HoverWrapper
+            onMouseEnter={() => {
+              setIsShowURL(id);
+            }}
+            onMouseLeave={() => {
+              setIsShowURL('');
+            }}
+          >
+            <div>{url?.length >= urlLength ? `${url?.substring(0, urlLength)}...` : url}</div>
+
+            {isShowURL === id && (
+              <ToolTip>
+                <p className="url-tooltip">
+                  <div className="message">{url}</div>
+                </p>
+              </ToolTip>
+            )}
+          </HoverWrapper>
+        </td>
+
+        <td className="waitInterval">{intervalMinutes} min</td>
+        <td className="actionCol">
+          <GoAContextMenu>
+            <GoAContextMenuIcon
+              testId={`webhook-details-${id}`}
+              title="Details"
+              type="information-circle"
+              onClick={() => {
+                setShowDetails(!showDetails);
+              }}
+            />
+            <div
+              onClick={() => {
+                dispatch(
+                  UpdateModalState({
+                    type: StatusWebhookHistoryType,
+                    isOpen: true,
+                    id,
+                  })
+                );
+              }}
+              className="hover-blue tooltip"
+            >
+              <img src={History} alt="History" />
+              <span className="tooltip-text">Webhook history</span>
+            </div>
+            <GoAContextMenuIcon
+              testId={`webhook-test-${id}`}
+              title="Test"
+              type="ticket"
+              onClick={() => {
+                dispatch(
+                  UpdateModalState({
+                    type: TestStatusWebhookType,
+                    isOpen: true,
+                    id,
+                  })
+                );
+              }}
+            />
+            <GoAContextMenuIcon
+              testId={`webhook-edit-${id}`}
+              title="Edit"
+              type="create"
+              onClick={() => {
+                dispatch(
+                  UpdateModalState({
+                    type: AddEditStatusWebhookType,
+                    isOpen: true,
+                    id,
+                  })
+                );
+              }}
+            />
+            <GoAContextMenuIcon
+              testId={`webhook-delete-${id}`}
+              title="Delete"
+              type="trash"
+              onClick={() => {
+                dispatch(
+                  UpdateModalState({
+                    type: DeleteStatusWebhookType,
+                    isOpen: true,
+                    id,
+                  })
+                );
+              }}
+            />
+          </GoAContextMenu>
+        </td>
+      </Menu>
+      {showDetails && (
+        <tr>
+          <NoPaddingTd headers="correlation timestamp namespace name details" colSpan={5} className="event-details">
+            <EntryDetail>{description}</EntryDetail>
+          </NoPaddingTd>
+        </tr>
+      )}
+    </>
+  );
+};
+
+export const WebhookListTable = () => {
+  const dispatch = useDispatch();
+
+  const webhooks = useSelector(selectStatusWebhooks);
+  useEffect(() => {
+    dispatch(fetchWebhooks());
+  }, []);
+
+  // eslint-disable-next-line
+  useEffect(() => {}, [webhooks]);
+
+  if (webhooks && Object.keys(webhooks).length === 0) {
+    return (
+      <>
+        <b>There are no webhooks yet</b>
+      </>
+    );
+  }
+
+  return (
+    <>
       <TableLayout>
         <DataTable data-testid="file-types-table">
           <thead data-testid="file-types-table-header">
@@ -179,56 +191,24 @@ export const WebhooksDisplay = ({ webhooks }: WebhookDisplayProps): JSX.Element 
           </thead>
           <tbody>
             {webhooks &&
-              Object.keys(webhooks).map((key) => {
-                if (!webhooks[key]) return null;
-                return (
-                  <FileTypeTableRow
-                    key={`webhook-${webhooks[key].id}`}
-                    {...webhooks[key]}
-                    onDelete={() => {
-                      setDeleteId(webhooks[key].id);
-                    }}
-                    onEdit={() => {
-                      setEditId(webhooks[key].id);
-                    }}
-                    onHistory={() => {
-                      setHistoryId(webhooks[key].id);
-                    }}
-                    onTest={() => {
-                      setTestId(webhooks[key].id);
-                    }}
-                  />
-                );
+              Object.values(webhooks).map((webhook) => {
+                if (webhook === null) return null;
+                return <WebhookTableRow key={`webhook-${webhook.id}`} webhook={webhook} />;
               })}
           </tbody>
         </DataTable>
       </TableLayout>
-      <WebhookFormModal
-        isEdit={true}
-        isOpen={editId !== null}
-        testId={'edit-webhook'}
-        defaultWebhooks={webhooks[editId]}
-        title="Edit webhook"
-        onCancel={() => {
-          setEditId(null);
-        }}
-        onSave={() => {
-          setEditId(null);
-        }}
-      />
+      <WebhookActionModals />
+    </>
+  );
+};
 
-      <TestWebhookModal
-        isOpen={testId !== null}
-        testId={'test-webhook'}
-        defaultWebhooks={webhooks[testId]}
-        title="Test webhook"
-        onClose={() => {
-          setTestId(null);
-        }}
-      />
-
-      <WebhookDeleteModal isOpen={!!deleteId} webhook={webhooks[deleteId]} onCancel={() => onDeleteCancel()} />
-      <WebhookHistoryModal isOpen={!!historyId} webhook={webhooks[historyId]} onCancel={() => onHistoryCancel()} />
+export const WebhookActionModals = (): JSX.Element => {
+  return (
+    <div data-testid="application">
+      <TestWebhookModal />
+      <WebhookDeleteModal />
+      <WebhookHistoryModal />
     </div>
   );
 };

@@ -1,8 +1,9 @@
-import React, { FC, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { saveWebhook } from '../../../../store/status/actions';
 import { Webhooks } from '../../../../store/status/models';
 import DataTable from '@components/DataTable';
+import { selectWebhookInStatus } from '@store/status/selectors';
 import {
   GoADropdown,
   GoADropdownItem,
@@ -28,51 +29,44 @@ import {
   wordMaxLengthCheck,
 } from '@lib/validation/checkInput';
 import { RootState } from '../../../../store/index';
-
-interface Props {
-  isOpen: boolean;
-  title: string;
-  testId: string;
-  isEdit: boolean;
-  defaultWebhooks: Webhooks;
-  onCancel?: () => void;
-  onSave?: () => void;
-}
-
-export const WebhookFormModal: FC<Props> = ({
-  isOpen,
-  title,
-  onCancel,
-  onSave,
-  testId,
-  defaultWebhooks,
-  isEdit,
-}: Props) => {
+import { v4 as uuidv4 } from 'uuid';
+import { ResetModalState } from '@store/session/actions';
+export const WebhookFormModal = (): JSX.Element => {
   const dispatch = useDispatch();
-  const [webhook, setWebhook] = useState<Webhooks>({ ...defaultWebhooks });
-
+  const selectedWebhook = useSelector(selectWebhookInStatus);
+  const [webhook, setWebhook] = useState<Webhooks | undefined>(selectedWebhook);
   const { applications, webhooks } = useSelector((state: RootState) => state.serviceStatus);
+  const isEdit = selectedWebhook?.id?.length > 0;
 
   const checkForBadChars = characterCheck(validationPattern.mixedArrowCaseWithSpace);
   useEffect(() => {
     dispatch(getEventDefinitions());
-  }, [dispatch]);
+  }, []);
 
   useEffect(() => {
-    setWebhook(defaultWebhooks);
-  }, [defaultWebhooks]);
+    if (selectedWebhook?.id === '') {
+      setWebhook(selectedWebhook);
+      return;
+    }
+
+    /*
+     There is no need to reset webhook when selectedWebhook is same as the previous selected.
+    */
+    if (selectedWebhook !== undefined && selectedWebhook.id !== webhook?.id) {
+      setWebhook(selectedWebhook);
+    }
+  }, [selectedWebhook]);
 
   function save() {
     if (!isFormValid()) {
       return;
     }
-    const saveHook = webhook;
-    if (!isEdit) {
-      saveHook.id = (Math.random() + 1).toString(36).substring(2);
-    }
 
+    if (!isEdit) {
+      webhook.id = uuidv4();
+    }
     dispatch(saveWebhook(webhook));
-    if (onSave) onSave();
+    dispatch(ResetModalState());
   }
 
   const isDuplicateWebhookName = (): Validator => {
@@ -137,17 +131,16 @@ export const WebhookFormModal: FC<Props> = ({
 
   return (
     <GoAModal
-      open={isOpen}
-      testId={testId}
-      heading={title}
+      open={selectedWebhook !== undefined}
+      testId={isEdit ? 'edit-webhook' : 'add-webhook'}
+      heading={isEdit ? 'Edit webhook' : 'Add webhook'}
       actions={
         <GoAButtonGroup alignment="end">
           <GoAButton
             type="secondary"
             testId="webhook-from-cancel-button"
             onClick={() => {
-              if (onCancel) onCancel();
-              setWebhook({ ...defaultWebhooks });
+              dispatch(ResetModalState());
             }}
           >
             Cancel
@@ -169,7 +162,7 @@ export const WebhookFormModal: FC<Props> = ({
           name="name"
           width="100%"
           testId="webhook-name-input"
-          value={webhook ? webhook?.name : defaultWebhooks?.name}
+          value={webhook?.name}
           onChange={(name, value) => {
             validators['nameOnly'].check(value);
 
@@ -181,7 +174,6 @@ export const WebhookFormModal: FC<Props> = ({
           aria-label="name"
         />
       </GoAFormItem>
-
       <GoAFormItem error={errors?.['url']} label="Url">
         <GoAInput
           name="url"
@@ -286,7 +278,7 @@ export const WebhookFormModal: FC<Props> = ({
                   checked={webhook?.eventTypes?.map((e) => e.id).includes(`status-service:${name}`)}
                   onChange={(value: string) => {
                     const eventTypes = webhook?.eventTypes?.map((e) => e.id);
-                    const elementLocation = eventTypes.indexOf(`status-service:${name}`);
+                    const elementLocation = eventTypes?.indexOf(`status-service:${name}`);
                     if (elementLocation === -1) {
                       eventTypes.push(`status-service:${value}`);
                     } else {

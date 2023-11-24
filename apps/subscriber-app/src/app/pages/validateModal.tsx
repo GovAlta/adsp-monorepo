@@ -47,6 +47,8 @@ export const ValidateModal: FC<Props> = ({ isOpen, title, onClose, testId, onVal
   const emailValidated = subscriber?.channels[emailChannelIndex]?.verified;
   const smsValidated = subscriber?.channels[smsChannelIndex]?.verified;
 
+  const noSms = !subscriber?.channels[smsChannelIndex];
+
   let buttons = [
     { value: 'email', label: 'Email' },
     { value: 'SMS', label: 'SMS' },
@@ -57,7 +59,7 @@ export const ValidateModal: FC<Props> = ({ isOpen, title, onClose, testId, onVal
     buttons = buttons.filter((item) => item?.value !== 'email');
   }
 
-  if (codeSMSExists || smsValidated) {
+  if (codeSMSExists || smsValidated || noSms) {
     console.log('sms');
     buttons = buttons.filter((item) => item?.value !== 'SMS');
   }

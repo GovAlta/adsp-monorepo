@@ -25,28 +25,27 @@ export const handleConfigurationUpdates = async (
   const pushServiceUrl = await directory.getServiceUrl(adspId`urn:ads:platform:push-service`);
   const streamUrl = new URL('', pushServiceUrl);
 
-  let token = await tokenProvider.getAccessToken();
   const socket = io(streamUrl.href, {
     autoConnect: true,
-    reconnection: false,
+    reconnection: true,
     query: {
       stream: 'configuration-updates',
     },
     transports: ['websocket'],
     withCredentials: true,
-    extraHeaders: { Authorization: `Bearer ${token}` },
+    auth: async (cb) => cb({ token: await tokenProvider.getAccessToken() }),
   });
 
   socket.on('connect', () => {
     logger.info('Connected for configuration updates...', LOG_CONTEXT);
   });
 
+  socket.on('connect_error', async (err) => {
+    logger.error(`Connect to configuration updates failed with error: ${err}`, LOG_CONTEXT);
+  });
+
   socket.on('disconnect', async (reason) => {
     logger.debug(`Disconnected from configuration updates due to reason: ${reason}`);
-
-    token = await tokenProvider.getAccessToken();
-    socket.io.opts.extraHeaders = { Authorization: `Bearer ${token}` };
-    socket.connect();
   });
 
   const invalidateCached = (e: StreamItem) => {
