@@ -48,13 +48,9 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   const { fetchScriptState } = useSelector((state: RootState) => ({
     fetchScriptState: state.scriptService.indicator?.details[FETCH_SCRIPTS_ACTION] || '',
   }));
-  const history = useHistory();
 
   const goBack = () => {
-    history.push({
-      pathname: '/admin/services/script',
-      search: '?templates=true',
-    });
+    setShowScriptEditForm(false);
   };
 
   const latestNotification = useSelector(
@@ -135,7 +131,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   };
 
   useEffect(() => {
-    document.body.style.overflow = 'unset';
+    showScriptEditForm ? (document.body.style.overflow = 'hidden') : (document.body.style.overflow = 'unset');
   }, [showScriptEditForm]);
   return (
     <>
