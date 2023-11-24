@@ -117,7 +117,7 @@ internal class ScriptFunctions : IScriptFunctions
       return "success";
 
     }
-    catch (Exception e)
+    catch (AggregateException e)
     {
       return $"Failure: {e.Message}";
     }
