@@ -19,6 +19,10 @@ export const functionSuggestion = [
     label: 'adsp.SendDomainEvent',
     insertText: 'adsp.SendDomainEvent',
   },
+  {
+    label: 'adsp.HttpGet',
+    insertText: 'adsp.HttpGet',
+  },
 ];
 
 export const functionSignature = [
@@ -120,6 +124,15 @@ export const functionSignature = [
       {
         label: 'payload',
         documentation: 'nested dictionary to allow arbitrary json structure',
+      },
+    ],
+  },
+  {
+    label: 'adsp.HttpGet(string url)',
+    parameters: [
+      {
+        label: 'url',
+        documentation: 'The url of the get request',
       },
     ],
   },
