@@ -24,7 +24,6 @@ import {
 } from './styled-components';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, isValidJSONCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
-import { scriptEditorConfig } from './editor/config';
 import { TabletMessage } from '@components/TabletMessage';
 
 interface AddScriptProps {
@@ -169,13 +168,14 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
           {/* Hides body overflow when the modal is up */}
           <BodyGlobalStyles hideOverflow={showScriptEditForm} />
           <ModalContent>
+
             <OuterNotificationTemplateEditorContainer>
               <TabletMessage goBack={goBack} />
 
               <HideTablet>
                 <ScriptPanelContainer>
                   <ScriptEditor
-                    editorConfig={scriptEditorConfig}
+                  
                     name={name}
                     description={description}
                     scriptStr={script}
