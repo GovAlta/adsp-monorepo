@@ -15,6 +15,10 @@ export const functionSuggestion = [
     label: 'adsp.GetFormData',
     insertText: 'adsp.GetFormData',
   },
+  {
+    label: 'adsp.SendDomainEvent',
+    insertText: 'adsp.SendDomainEvent',
+  },
 ];
 
 export const functionSignature = [
@@ -90,6 +94,32 @@ export const functionSignature = [
       {
         label: 'formId',
         documentation: 'This is the form ID',
+      },
+    ],
+  },
+  {
+    label:
+      'adsp.SendDomainEvent(string namespace, string name, string? correlationId, string? context = null, string? payload = {})',
+    parameters: [
+      {
+        label: 'namespace',
+        documentation: 'Namespace of event to send',
+      },
+      {
+        label: 'name',
+        documentation: 'Name of event to send',
+      },
+      {
+        label: 'correlationId',
+        documentation: 'correlationId of event',
+      },
+      {
+        label: 'context',
+        documentation: 'context of event',
+      },
+      {
+        label: 'payload',
+        documentation: 'nested dictionary to allow arbitrary json structure',
       },
     ],
   },

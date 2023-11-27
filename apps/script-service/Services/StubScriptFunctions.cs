@@ -8,14 +8,19 @@ namespace Adsp.Platform.ScriptService.Services;
 internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
 {
 
-  public StubScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken)
-  : base(tenantId, directory, getToken)
+  public StubScriptFunctions(AdspId tenantId, IServiceDirectory directory, Func<Task<string>> getToken, IEventService eventService)
+  : base(tenantId, directory, getToken, eventService)
   {
   }
 
   public override string? GeneratePdf(string templateId, string filename, object values)
   {
     return null;
+  }
+
+  public override string? SendDomainEvent(string namespaceValue, string name, string? correlationId, IDictionary<string, object>? context = null, IDictionary<string, object>? payload = null)
+  {
+    return "Simulated success";
   }
 
   public override string? CreateTask(

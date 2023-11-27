@@ -10,3 +10,12 @@ export const scriptEditorConfig = {
     hideCursorInOverviewRuler: true,
   },
 };
+
+export const scriptEditorJsonConfig = {
+  'data-testid': 'templateForm-test-input',
+  options: {
+    selectOnLineNumbers: true,
+    renderIndentGuides: true,
+    colorDecorators: true,
+  },
+};
