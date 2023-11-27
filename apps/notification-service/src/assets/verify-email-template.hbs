@@ -1,11 +1,12 @@
 <main>
-  <p>
-    Your verification code is:<br>
-    <b>{{code}}</b><br>
-    This code will expire at {{ formatDate expiresAt format="ttt" }}.
-  </p>
   {{#if verifyLink}}
     <p>Verification Link: <a href="{{verifyLink}}">{{verifyLink}}</a></p>
+  {{else}}
+    <p>
+      Your verification code is:<br>
+      <b>{{code}}</b><br>
+      This code will expire at {{ formatDate expiresAt format="ttt" }}.
+    </p>
   {{/if}}
   <p>{{reason}}</p>
 </main>
