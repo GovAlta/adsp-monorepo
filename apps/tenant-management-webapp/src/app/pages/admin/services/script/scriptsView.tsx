@@ -17,7 +17,6 @@ import { ScriptEditor } from './editor/scriptEditor';
 import { Modal, BodyGlobalStyles, ModalContent, ScriptPanelContainer } from './styled-components';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, isValidJSONCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
-import { scriptEditorConfig } from './editor/config';
 
 interface AddScriptProps {
   activeEdit: boolean;
@@ -159,7 +158,6 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
           <ModalContent>
             <ScriptPanelContainer>
               <ScriptEditor
-                editorConfig={scriptEditorConfig}
                 name={name}
                 description={description}
                 scriptStr={script}
