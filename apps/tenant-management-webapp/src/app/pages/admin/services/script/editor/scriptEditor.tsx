@@ -205,7 +205,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
       selectedScript.description !== description ||
       selectedScript.script !== scriptStr ||
       selectedScript.testInputs !== testInput ||
-      selectedScript.runnerRoles.toString() !== script.runnerRoles.toString() ||
+      selectedScript.runnerRoles?.toString() !== script.runnerRoles?.toString() ||
       selectedScript.useServiceAccount !== script.useServiceAccount
     );
   };
@@ -251,13 +251,13 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   };
 
   const isServiceAccountDisabled = () => {
-    if (script.triggerEvents.length > 0) return true;
+    if (script.triggerEvents?.length > 0) return true;
 
     return false;
   };
 
   const isServiceAccountChecked = () => {
-    if (script.triggerEvents.length > 0) return true;
+    if (script.triggerEvents?.length > 0) return true;
 
     return script.useServiceAccount;
   };
