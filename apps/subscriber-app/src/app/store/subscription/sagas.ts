@@ -404,9 +404,7 @@ export function* checkCode(action: CheckCodeAction): SagaIterator {
         })
       );
     } else {
-      const dispatch = { loggedIn: !action.nonLoggedIn, channel: action.channel };
-
-      yield put(ErrorNotification({ message: 'The code you have entered is incorrect', dispatch: dispatch }));
+      yield put(ErrorNotification({ message: 'The code you have entered is incorrect'}));
       yield put(CheckCodeFailure({ channelIndex }));
     }
   } catch (err) {

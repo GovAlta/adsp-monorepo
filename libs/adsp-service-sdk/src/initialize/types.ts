@@ -1,5 +1,6 @@
 import { RequestHandler } from 'express';
 import { Strategy } from 'passport';
+import { JwtFromRequestFunction } from 'passport-jwt';
 import type { Logger } from 'winston';
 import { TokenProvider } from '../access';
 import { CombineConfiguration, ConfigurationConverter, ConfigurationService } from '../configuration';
@@ -98,6 +99,13 @@ export interface PlatformOptions extends ServiceRegistration {
    * @memberof PlatformOptions
    */
   useLongConfigurationCacheTTL?: boolean;
+  /**
+   * Additional extractors: Collection of additional JWT extractors for authentication strategies.
+   *
+   * @type {JwtFromRequestFunction[]}
+   * @memberof PlatformOptions
+   */
+  additionalExtractors?: JwtFromRequestFunction[];
 }
 
 export interface PlatformServices {

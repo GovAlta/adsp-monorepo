@@ -5,19 +5,12 @@ import { RootState } from '@store/index';
 
 import { GoANotification } from '@abgov/react-components-new';
 import { clearNotification } from '@store/notifications/actions';
-import { VerifyPhone, VerifyEmail } from '@store/subscription/actions';
 import styled from 'styled-components';
-import { GoAButton } from '@abgov/react-components-new';
 
 export function NotificationBanner({ loggedIn }: { loggedIn: boolean }): JSX.Element {
   const notification = useSelector((state: RootState) => state.notifications.notification);
-  const subscriber = useSelector((state: RootState) => state.subscription.subscriber);
-  const dispatch = useDispatch();
 
-  const reVerify = () => {
-    const dispatchObject = notification.dispatch.channel === 'email' ? VerifyEmail : VerifyPhone;
-    dispatch(dispatchObject(subscriber, !loggedIn));
-  };
+  const dispatch = useDispatch();
 
   return (
     <div>
@@ -32,13 +25,6 @@ export function NotificationBanner({ loggedIn }: { loggedIn: boolean }): JSX.Ele
           >
             <NotificationStyles>
               <div dangerouslySetInnerHTML={{ __html: notification.message }} />
-              {notification?.dispatch && (
-                <div className="verification-code-button">
-                  <GoAButton size="compact" type="tertiary" testId="subscribe" onClick={reVerify}>
-                    Resent verification code
-                  </GoAButton>
-                </div>
-              )}
             </NotificationStyles>
           </GoANotification>
         </div>

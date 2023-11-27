@@ -13,7 +13,7 @@ import { MonacoDivBody } from '../styled-components';
 import MonacoEditor from '@monaco-editor/react';
 import { scriptEditorConfig } from './config';
 import { useValidators } from '@lib/validation/useValidators';
-import { badCharsCheck, duplicateNameCheck, isNotEmptyCheck, isValidJSONCheck } from '@lib/validation/checkInput';
+import { badCharsCheck, isNotEmptyCheck, isValidJSONCheck } from '@lib/validation/checkInput';
 
 interface TriggerEventModalProps {
   initialScript: ScriptItem;
@@ -70,8 +70,8 @@ export const TriggerEventModal = ({
   };
 
   const filterArray = (array1, array2) => {
-    const filtered = array1.filter((el) => {
-      return array2.indexOf(el) < 0;
+    const filtered = array1?.filter((el) => {
+      return array2?.indexOf(el) < 0;
     });
 
     //For Edits, add the current selection that is being looked at.
@@ -81,11 +81,11 @@ export const TriggerEventModal = ({
     return filtered;
   };
 
-  const eventTriggerNames = initialScript?.triggerEvents.map((ev) => {
+  const eventTriggerNames = initialScript?.triggerEvents?.map((ev) => {
     return ev.name;
   });
 
-  const filteredEventNames = [...new Set(filterArray(eventNames, eventTriggerNames))] as string[];
+  const filteredEventNames = [...new Set(filterArray(eventNames, eventTriggerNames || []))] as string[];
 
   const getCriteriaContext = () => {
     if (

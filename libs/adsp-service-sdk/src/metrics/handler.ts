@@ -57,7 +57,8 @@ export async function createMetricsHandler(
   const writeBuffer = throttle(writeMetrics, WRITE_THROTTLE_MS, { leading: false });
   const responseTimeHandler = responseTime((req: Request, _res: Response, time) => {
     // Write if there is a tenant context to the request.
-    const tenantId = defaultTenantId || req.tenant?.id;
+    // Check user tenant context if tenant handler is not included on route.
+    const tenantId = defaultTenantId || req.tenant?.id || req.user?.tenantId;
     if (tenantId) {
       const benchmark: RequestBenchmark = req[REQ_BENCHMARK];
       const metrics = benchmark?.metrics || {};

@@ -224,14 +224,21 @@ When('the user enters "{string}" in payload schema in configuration definition m
 
 When('the user enters {string} in payload schema in configuration definition modal', function (payload) {
   cy.wait(1000); // Wait for the schema field to be editable
+  // Clearing schema field doesn't always work. Try 3 times of clearing before entering user data
+  for (let j = 0; j < 3; j++) {
+    configurationObj
+      .configurationDefinitionModalPayloadEditor()
+      .click({ force: true })
+      .focus()
+      .type('{ctrl}a', { force: true })
+      .wait(1000)
+      .clear({ force: true });
+  }
+  cy.wait(1000);
   configurationObj
     .configurationDefinitionModalPayloadEditor()
     .click({ force: true })
     .focus()
-    .type('{ctrl}a', { force: true })
-    .wait(1000)
-    .clear({ force: true })
-    .wait(1000)
     .type(payload, { force: true });
 });
 

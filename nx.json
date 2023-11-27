@@ -32,7 +32,8 @@
       },
       "library": {
         "style": "scss",
-        "linter": "eslint"
+        "linter": "eslint",
+        "unitTestRunner": "jest"
       },
       "storybook-configuration": {
         "linter": "eslint"

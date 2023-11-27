@@ -33,6 +33,7 @@ import {
   WebhookEntity,
   WebhookTriggeredDefinition,
 } from './push';
+import { fromSocketHandshake, REQ_SOCKET_PROP } from './socket';
 
 const logger = createLogger('push-service', environment.LOG_LEVEL || 'info');
 
@@ -102,6 +103,7 @@ const initializeApp = async (): Promise<Server> => {
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
+      additionalExtractors: [fromSocketHandshake]
     },
     { logger }
   );
@@ -144,15 +146,19 @@ const initializeApp = async (): Promise<Server> => {
   });
   ioServer.adapter(createIoAdapter(redisClient, redisClient.duplicate()));
 
-  const wrapForIo = (handler: express.RequestHandler) => (socket: Socket, next) =>
+  const wrapForIo = (handler: express.RequestHandler) => (socket: Socket, next) => {
+    const request = socket.request as express.Request;
+    request[REQ_SOCKET_PROP] = socket;
+
     handler(
-      socket.request as express.Request,
+      request,
       {
         // Passport JS calls end w/ 401 when all authenticators fail.
         end: () => next(new UnauthorizedError('User not authorized to connect.')),
       } as unknown as express.Response,
       next
     );
+  };
 
   // Connections on default namespace for cross-tenant.
   const defaultIo = ioServer.of('/');

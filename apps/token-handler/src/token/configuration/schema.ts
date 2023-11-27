@@ -18,6 +18,7 @@ export const configurationSchema = {
               items: { type: 'string' },
             },
             idpHint: { type: ['string', 'null'] },
+            disableVerifyHost: { type: ['boolean', 'null'] },
             successRedirectUrl: { type: ['string', 'null'] },
             failureRedirectUrl: { type: ['string', 'null'] },
           },

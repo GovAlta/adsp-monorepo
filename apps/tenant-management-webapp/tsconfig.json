@@ -30,6 +30,9 @@
       ],
       "@core-services/notification-shared": [
         "../../../libs/notification-shared/src/index.ts"
+      ],
+      "@abgov/jsonforms-components": [
+        "../../../libs/jsonforms-components/src/index.ts"
       ]
     }
   },
