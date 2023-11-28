@@ -23,7 +23,7 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
     return "Simulated success";
   }
 
-  public override string? HttpGet(string url)
+  public override object? HttpGet(string url)
   {
     return "simulated success";
   }
