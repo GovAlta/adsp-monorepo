@@ -9,6 +9,7 @@ import {
 import { selectModalStateByType } from '@store/session/selectors';
 import { ModalState } from '@store/session/models';
 import { defaultHook } from './models';
+import { initWebhookSearchCriteria } from './models';
 
 const selectWebhookById = (state: RootState, id) => {
   const ws = Object.values(state.serviceStatus?.webhooks || {});
@@ -60,5 +61,34 @@ export const selectWebhookInHistory = createSelector(
       return selectWebhookById(state, modal.id);
     }
     return undefined;
+  }
+);
+
+export const selectInitTestWebhookCriteria = createSelector(
+  (state: RootState) => state,
+  selectModalStateByType(TestStatusWebhookType),
+  (state, modal: ModalState) => {
+    if (modal.isOpen && modal.id !== null) {
+      return {
+        ...initWebhookSearchCriteria,
+        correlationId: modal.id,
+        top: 1,
+      };
+    }
+    return null;
+  }
+);
+
+export const selectInitHistoryWebhookCriteria = createSelector(
+  (state: RootState) => state,
+  selectModalStateByType(StatusWebhookHistoryType),
+  (state, modal: ModalState) => {
+    if (modal.isOpen && modal.id !== null) {
+      return {
+        ...initWebhookSearchCriteria,
+        correlationId: modal.id,
+      };
+    }
+    return null;
   }
 );

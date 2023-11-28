@@ -14,10 +14,17 @@ import { ActionState } from '@store/session/models';
 import { PageIndicator } from '@components/Indicator';
 import { renderNoItem } from '@components/NoItem';
 import { ScriptEditor } from './editor/scriptEditor';
-import { Modal, BodyGlobalStyles, ModalContent, ScriptPanelContainer } from './styled-components';
+import {
+  Modal,
+  BodyGlobalStyles,
+  ModalContent,
+  ScriptPanelContainer,
+  HideTablet,
+  OuterNotificationTemplateEditorContainer,
+} from './styled-components';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, isValidJSONCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
-import { scriptEditorConfig } from './editor/config';
+import { TabletMessage } from '@components/TabletMessage';
 
 interface AddScriptProps {
   activeEdit: boolean;
@@ -39,6 +46,10 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   const { fetchScriptState } = useSelector((state: RootState) => ({
     fetchScriptState: state.scriptService.indicator?.details[FETCH_SCRIPTS_ACTION] || '',
   }));
+
+  const goBack = () => {
+    setShowScriptEditForm(false);
+  };
 
   const latestNotification = useSelector(
     (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
@@ -118,7 +129,7 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
   };
 
   useEffect(() => {
-    document.body.style.overflow = 'unset';
+    showScriptEditForm ? (document.body.style.overflow = 'hidden') : (document.body.style.overflow = 'unset');
   }, [showScriptEditForm]);
   return (
     <>
@@ -157,24 +168,31 @@ export const ScriptsView = ({ activeEdit }: AddScriptProps): JSX.Element => {
           {/* Hides body overflow when the modal is up */}
           <BodyGlobalStyles hideOverflow={showScriptEditForm} />
           <ModalContent>
-            <ScriptPanelContainer>
-              <ScriptEditor
-                editorConfig={scriptEditorConfig}
-                name={name}
-                description={description}
-                scriptStr={script}
-                selectedScript={selectedScript}
-                testInput={testInput}
-                testInputUpdate={testInputUpdate}
-                onNameChange={onNameChange}
-                onDescriptionChange={onDescriptionChange}
-                onScriptChange={onScriptChange}
-                errors={errors}
-                saveAndReset={saveScript}
-                onEditorCancel={reset}
-                onSave={saveScript}
-              />
-            </ScriptPanelContainer>
+
+            <OuterNotificationTemplateEditorContainer>
+              <TabletMessage goBack={goBack} />
+
+              <HideTablet>
+                <ScriptPanelContainer>
+                  <ScriptEditor
+                  
+                    name={name}
+                    description={description}
+                    scriptStr={script}
+                    selectedScript={selectedScript}
+                    testInput={testInput}
+                    testInputUpdate={testInputUpdate}
+                    onNameChange={onNameChange}
+                    onDescriptionChange={onDescriptionChange}
+                    onScriptChange={onScriptChange}
+                    errors={errors}
+                    saveAndReset={saveScript}
+                    onEditorCancel={reset}
+                    onSave={saveScript}
+                  />
+                </ScriptPanelContainer>
+              </HideTablet>
+            </OuterNotificationTemplateEditorContainer>
           </ModalContent>
         </Modal>
       )}

@@ -14,7 +14,7 @@ import {
 } from '../styled-components';
 import { TombStone } from './tombstone';
 
-import MonacoEditor, { EditorProps, useMonaco } from '@monaco-editor/react';
+import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { languages } from 'monaco-editor';
 import { SaveFormModal } from '@components/saveModal';
 import { ScriptItem } from '@store/script/models';
@@ -23,10 +23,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import { RootState } from '@store/index';
-import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { functionSuggestion, functionSignature } from '@lib/luaCodeCompletion';
 import { buildSuggestions } from '@lib/autoComplete';
-import { GoAButton, GoAFormItem, GoACheckbox } from '@abgov/react-components-new';
+import { GoAButton, GoAFormItem, GoACheckbox, GoASkeleton } from '@abgov/react-components-new';
 import { TaskEditorTitle } from '../styled-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { ClientRoleTable } from '@components/RoleTable';
@@ -35,9 +34,8 @@ import { ActionState } from '@store/session/models';
 import { selectRoleList } from '@store/sharedSelectors/roles';
 import { ScriptEditorEventsTab } from './scriptEditorEventsTab';
 import { getEventDefinitions } from '@store/event/actions';
-
+import { scriptEditorConfig, scriptEditorJsonConfig } from './config';
 interface ScriptEditorProps {
-  editorConfig?: EditorProps;
   name: string;
   description: string;
   scriptStr: string;
@@ -55,7 +53,6 @@ interface ScriptEditorProps {
 }
 
 export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
-  editorConfig,
   name,
   description,
   scriptStr,
@@ -96,18 +93,35 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   const latestNotification = useSelector(
     (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
   );
+  const triggerEvents = script?.triggerEvents;
+  const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
 
   useEffect(() => {
     if (monaco) {
       const completionProvider = monaco.languages.registerCompletionItemProvider('lua', {
         provideCompletionItems: (model, position) => {
-          const suggestions = buildSuggestions(monaco, functionSuggestion, model, position);
+          const functionSuggestions = buildSuggestions(monaco, functionSuggestion, model, position);
+
           return {
-            suggestions,
+            suggestions: functionSuggestions,
           } as languages.ProviderResult<languages.CompletionList>;
         },
       });
-
+      if (triggerEvents && triggerEvents.length > 0) {
+        monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+          validate: true,
+          schemas: [
+            {
+              uri: 'http://www.schema.org/',
+              fileMatch: ['*'],
+              schema: {
+                type: 'object',
+                properties: eventDefinitions[triggerEvents[0].name],
+              },
+            },
+          ],
+        });
+      }
       const helperProvider = monaco.languages.registerSignatureHelpProvider('lua', {
         signatureHelpTriggerCharacters: ['(', ','],
         provideSignatureHelp: (model, position, token) => {
@@ -162,7 +176,8 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
         helperProvider.dispose();
       };
     }
-  }, [monaco]);
+  }, [monaco, eventDefinitions]);
+
   const loadingIndicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -195,7 +210,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     selectedScript.script = scriptStr;
     selectedScript.testInputs = getInput(testInput);
     selectedScript.runnerRoles = script.runnerRoles;
-
+    selectedScript.useServiceAccount = script.useServiceAccount;
     return selectedScript;
   };
 
@@ -205,7 +220,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
       selectedScript.description !== description ||
       selectedScript.script !== scriptStr ||
       selectedScript.testInputs !== testInput ||
-      selectedScript.runnerRoles.toString() !== script.runnerRoles.toString() ||
+      selectedScript.runnerRoles?.toString() !== script.runnerRoles?.toString() ||
       selectedScript.useServiceAccount !== script.useServiceAccount
     );
   };
@@ -250,7 +265,21 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     return result;
   };
 
-  const getstyles = latestNotification && !latestNotification.disabled ? '410px' : '310px';
+  const getStyles = latestNotification && !latestNotification.disabled ? '410px' : '310px';
+
+  const isServiceAccountDisabled = () => {
+    if (script.triggerEvents?.length > 0) return true;
+
+    return false;
+  };
+
+  const isServiceAccountChecked = () => {
+    if (script.triggerEvents?.length > 0) return true;
+
+    return script.useServiceAccount;
+  };
+
+
   return (
     <EditModalStyle>
       <ScriptEditorContainer>
@@ -260,14 +289,14 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
 
         <UseServiceAccountWrapper>
           <GoACheckbox
-            checked={selectedScript.useServiceAccount || script.triggerEvents?.length > 0}
+            checked={isServiceAccountChecked()}
             name="script-use-service-account-checkbox"
             testId="script-use-service-account-checkbox"
-            disabled={script.triggerEvents?.length > 0}
+            disabled={isServiceAccountDisabled()}
             onChange={() => {
               setScript({
-                ...selectedScript,
-                useServiceAccount: !selectedScript.useServiceAccount,
+                ...script,
+                useServiceAccount: !script.useServiceAccount,
               });
             }}
             ariaLabel={`script-use-service-account-checkbox`}
@@ -277,11 +306,11 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
 
         <Tabs activeIndex={activeIndex} data-testid="editor-tabs">
           <Tab label="Lua script" data-testid="script-editor-tab">
-            <MonacoDivBody data-testid="templated-editor-body" style={{ height: `calc(72vh - ${getstyles})` }}>
+            <MonacoDivBody data-testid="templated-editor-body" style={{ height: `calc(72vh - ${getStyles})` }}>
               <MonacoEditor
                 language={'lua'}
                 value={scriptStr}
-                {...editorConfig}
+                {...scriptEditorConfig}
                 onChange={(value) => {
                   onScriptChange(value);
                 }}
@@ -375,7 +404,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                   <MonacoEditor
                     language={'json'}
                     value={testInput}
-                    {...editorConfig}
+                    {...scriptEditorJsonConfig}
                     onChange={(value) => {
                       setTestInput(value);
                     }}
@@ -416,7 +445,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
                   {loadingIndicator.show && (
                     <tr>
                       <td colSpan={3}>
-                        <GoASkeletonGridColumnContent key={1} rows={1}></GoASkeletonGridColumnContent>
+                        <GoASkeleton key={1} type="text" />
                       </td>
                     </tr>
                   )}

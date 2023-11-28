@@ -87,9 +87,11 @@ export default function (state = SUBSCRIBER_INIT, action: ActionTypes): Subscrib
     }
     case CHECK_CODE_FAILURE: {
       const channelIndex = action.payload?.response?.channelIndex;
+
+      state.subscriber.channels[channelIndex].pendingVerification = false;
       return {
         ...state,
-
+        subscriber: state.subscriber,
         previouslyVerified: { [state.subscriber.channels[channelIndex].channel]: true, ...state.previouslyVerified },
       };
     }
