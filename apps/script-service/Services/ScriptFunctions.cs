@@ -126,7 +126,7 @@ internal class ScriptFunctions : IScriptFunctions
   }
 
 
-  public virtual object HttpGet(string url)
+  public virtual object? HttpGet(string url)
   {
 
     var token = _getToken().Result;
@@ -135,49 +135,13 @@ internal class ScriptFunctions : IScriptFunctions
 
     try
     {
-      var response = _client.GetAsync(request).Result;
-      if (response.IsSuccessful)
-      {
-        var content = response.Content;
-        var jObject = JsonConvert.DeserializeObject<JObject>(content);
-        var deserializedData = JObjectToDictionary(jObject);
-        return deserializedData;
-      }
-      else
-      {
-        throw new HttpRequestException($"API request failed. Status code: {response.StatusCode}, Content: {response.Content}");
-      }
+      var response = _client.GetAsync<IDictionary<string, object>>(request).Result;
+      return response;
     }
     catch (AggregateException e)
     {
       return $"Failure: {e.Message}";
     }
-  }
-
-  private Dictionary<string, object> JObjectToDictionary(JObject jObject)
-  {
-    var dictionary = new Dictionary<string, object>();
-
-    foreach (var property in jObject.Properties())
-    {
-      var key = property.Name;
-      var value = property.Value;
-
-      if (value.Type == JTokenType.Object)
-      {
-        dictionary[key] = JObjectToDictionary((JObject)value);
-      }
-      else if (value.Type == JTokenType.Array)
-      {
-        dictionary[key] = value.ToObject<List<object>>();
-      }
-      else
-      {
-        dictionary[key] = value.ToObject<object>();
-      }
-    }
-
-    return dictionary;
   }
 
   public virtual string? CreateTask(
