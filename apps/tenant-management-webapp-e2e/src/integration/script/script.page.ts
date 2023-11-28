@@ -79,10 +79,14 @@ class ScriptPage {
     return cy.xpath('//*[@data-testid="script-edit-form" and @open]');
   }
 
-  editScriptModalSaveBtn() {
+  editorSaveBtn() {
     return cy.xpath(
       '//*[@data-testid="script-edit-form" and @open]//goa-button[@data-testid="template-form-save" and @type="primary"]'
     );
+  }
+
+  editScriptModalSaveButton() {
+    return cy.xpath('//goa-modal[@open="true"]//goa-button[text()="Save"]');
   }
 
   editScriptModalNameField() {
@@ -97,6 +101,38 @@ class ScriptPage {
     return cy.xpath(
       '//*[@data-testid="script-edit-form" and @open]//*[@data-testid="templated-editor-body"]//*[contains(@class, "monaco-editor") and @role="code"]//div[@class="monaco-scrollable-element editor-scrollable vs"]/following-sibling::textarea'
     );
+  }
+
+  editorRolesTabRoleTables() {
+    return cy.xpath('//*[@data-testid="roles-editor-body"]//goa-table');
+  }
+
+  editorTab(tabName) {
+    return cy.xpath(`//*[contains(@data-testid, "tab-btn") and text()="${tabName}"]`);
+  }
+
+  editorClientRolesTable(clientName) {
+    return cy.xpath(
+      `//*[@data-testid="roles-editor-body"]//h4/div[text()="${clientName}"]/parent::h4/following-sibling::goa-table`
+    );
+  }
+
+  editorRolesTable() {
+    return cy.xpath(
+      `//*[@data-testid="roles-editor-body"]//h4/div[text()="autotest"]/parent::h4/following-sibling::goa-table`
+    );
+  }
+
+  editorEditButton() {
+    return cy.xpath('//a[@rel="noopener noreferrer" and text()="Edit"]');
+  }
+
+  editorNameField() {
+    return cy.xpath('//*[@class="nameColumn"]//*[@class="overflowContainer"]');
+  }
+
+  editorDescriptionField() {
+    return cy.xpath('//*[@class="descColumn"]//*[@class="overflowContainer"]');
   }
 }
 export default ScriptPage;
