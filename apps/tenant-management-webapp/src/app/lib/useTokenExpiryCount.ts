@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useEffect } from 'react';
 import { SetSessionExpired, SetSessionWillExpired } from '@store/session/actions';
 import { UpdateAccessToken } from '@store/tenant/actions';
+import { MAX_ALLOWED_IDLE_IN_MINUTE } from '@lib/keycloak';
 
 export const useTokenExpiryCount = () => {
   const { refreshTokenExp } = useSelector((state: RootState) => ({
@@ -12,12 +13,13 @@ export const useTokenExpiryCount = () => {
 
   useEffect(() => {
     let logoutCountdown = null;
+
     if (refreshTokenExp) {
-      // Consider as log out if token will be expired within one min.
-      const timeDiff = refreshTokenExp - Date.now() / 1000 - 60;
+      // Consider as log out if token will be expired within 2 min.
+      const timeDiffInMin = refreshTokenExp - Date.now() / 1000 - 2 * 60;
       logoutCountdown = setInterval(() => {
         dispatch(SetSessionExpired(true));
-      }, timeDiff * 1000);
+      }, timeDiffInMin * 1000);
     }
 
     return () => {
@@ -42,8 +44,9 @@ export const useTokenWillExpiryCount = () => {
   useEffect(() => {
     let willExpiredCountdown = null;
     if (refreshTokenExp) {
-      // start to monitor the user behavior when the token will be expired in 5 mins.
-      const timeDiff = refreshTokenExp - Date.now() / 1000 - 60 * 25;
+      // start to monitor the user behavior when the token will be expired in MAX_ALLOWED_IDLE_IN_MINUTE mins.
+      const timeDiff = refreshTokenExp - Date.now() / 1000 - 60 * MAX_ALLOWED_IDLE_IN_MINUTE;
+
       willExpiredCountdown = setInterval(() => {
         dispatch(SetSessionWillExpired(true));
       }, timeDiff * 1000);
@@ -55,12 +58,19 @@ export const useTokenWillExpiryCount = () => {
   }, [refreshTokenExp]);
 
   useEffect(() => {
-    // when token will be expired in 5 mins, we start to detect the user action
+    const tokenWillExpireHandler = (event) => {
+      dispatch(UpdateAccessToken());
+      dispatch(SetSessionWillExpired(false));
+    };
+
     if (isWillExpired === true) {
-      window.addEventListener('keypress', (event) => {
-        dispatch(UpdateAccessToken());
-      });
+      // Extend the refresh token expiry if pre-defined event is detected
+      window.addEventListener('keypress', tokenWillExpireHandler);
     }
+
+    return function cleanupListener() {
+      window.removeEventListener('keypress', tokenWillExpireHandler);
+    };
   }, [isWillExpired]);
 
   return null;

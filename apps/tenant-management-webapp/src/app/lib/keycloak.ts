@@ -4,6 +4,9 @@ import Keycloak, { KeycloakConfig, KeycloakInitOptions, KeycloakInstance } from 
 const LOGOUT_REDIRECT = '/logout-redirect';
 const LOGIN_REDIRECT = '/login-redirect';
 
+export const MAX_ALLOWED_IDLE_IN_MINUTE = 10;
+export const REFRESH_TOKEN_EXPIRY_IN_MINUTE = 30;
+
 export enum LOGIN_TYPES {
   tenantAdmin = 'tenant-admin',
   tenantCreationInit = 'tenant-creation-init',
@@ -107,7 +110,7 @@ class KeycloakAuthImpl implements KeycloakAuth {
 
   async refreshToken(): Promise<Session> {
     try {
-      const refreshed = await this.keycloak.updateToken(60);
+      const refreshed = await this.keycloak.updateToken(60 * MAX_ALLOWED_IDLE_IN_MINUTE);
       if (refreshed) {
         console.debug('Keycloak token was refreshed');
         return this.convertToSession(this.keycloak);
