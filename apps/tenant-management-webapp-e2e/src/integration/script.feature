@@ -2,7 +2,7 @@
 Feature: Script
 
   @TEST_CS-1741 @REQ_CS-1656 @REQ_CS-1657 @REQ_CS-1658 @regression
-  Scenario: As a tenant admin, I can add and delete a script
+  Scenario: As a tenant admin, I can add, edit and delete a script
     Given a tenant admin user is on script service overview page
     When the user clicks Add script button
     Then the user views Add script modal
@@ -15,16 +15,21 @@ Feature: Script
     Then the user "views" the script of "autotest-addscript", "autotest script desc", "auto-test-role1, urn:ads:autotest:chat-service:chat-admin"
     # Edit
     When the user clicks "Edit" button for the script of "autotest-addscript", "autotest script desc", "auto-test-role1, urn:ads:autotest:chat-service:chat-admin"
+    Then the user views the script editor for "autotest-addscript", "autotest script desc"
+    When the user clicks Edit button in script editor
     Then the user views Edit script modal
     When the user enters "autotest-modifiedscript" as name "autotest script desc 2" as description in Edit script modal
+    Then the user clicks Save button in Edit script modal
     And the user enters "test" as lua script
-    And the user clicks Save button in Edit script modal
-    Then the user "views" the script of "autotest-modifiedscript", "autotest script desc 2", "auto-test-role1, urn:ads:autotest:chat-service:chat-admin"
+    And the user selects "Roles" tab in script editor
+    And the user enters "auto-test-role2, urn:ads:autotest:chat-service:chatter" for roles in script editor
+    And the user clicks Save button in script editor
+    Then the user "views" the script of "autotest-modifiedscript", "autotest script desc 2", "auto-test-role2, urn:ads:autotest:chat-service:chatter"
     # Delete
-    When the user clicks "Delete" button for the script of "autotest-modifiedscript", "autotest script desc 2", "auto-test-role1, urn:ads:autotest:chat-service:chat-admin"
+    When the user clicks "Delete" button for the script of "autotest-modifiedscript", "autotest script desc 2", "auto-test-role2, urn:ads:autotest:chat-service:chatter"
     Then the user views delete "script" confirmation modal for "autotest-modifiedscript"
     When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the script of "autotest-modifiedscript", "autotest script desc 2", "auto-test-role1, urn:ads:autotest:chat-service:chat-admin"
+    Then the user "should not view" the script of "autotest-modifiedscript", "autotest script desc 2", "auto-test-role2, urn:ads:autotest:chat-service:chatter"
 
   @TEST_CS-1739 @REQ_CS-1655 @regression
   Scenario: As a tenant admin, I can see the overview for a script service, so I know about the service
