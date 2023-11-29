@@ -754,6 +754,45 @@ describe('router', () => {
       });
     });
 
+    it('can delete at path', async () => {
+      const handler = patchConfigurationRevision(loggerMock as Logger, eventServiceMock);
+
+      const entity = {
+        tenantId,
+        namespace,
+        name,
+        update: jest.fn(() => Promise.resolve(entity)),
+        latest: { revision: 1, configuration: { old: { nested: 'old' } }, lastUpdated: new Date() },
+      };
+      const req = {
+        entity,
+        user: { isCore: false, roles: [ConfigurationServiceRoles.Reader], tenantId } as User,
+        params: { namespace, name },
+        query: {},
+        body: {
+          operation: 'DELETE',
+          property: 'old.nested',
+        },
+      } as unknown as Request;
+
+      const res = {
+        send: jest.fn(),
+      };
+
+      const next = jest.fn();
+
+      await handler(req, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(expect.objectContaining({ namespace, name, latest: entity.latest }));
+      expect(entity.update).toHaveBeenCalledWith(
+        req.user,
+        expect.objectContaining({ old: expect.not.objectContaining({ nested: 'old' }) })
+      );
+      expect(eventServiceMock.send).toHaveBeenCalledTimes(1);
+      expect(res.send.mock.calls[0][0]).toMatchSnapshot({
+        latest: { lastUpdated: expect.any(Date) },
+      });
+    });
+
     it('can handle no existing revision on delete', async () => {
       const handler = patchConfigurationRevision(loggerMock as Logger, eventServiceMock);
 
