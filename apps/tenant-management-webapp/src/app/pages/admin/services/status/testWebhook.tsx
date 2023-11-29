@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { TestWebhooks } from '@store/status/actions';
-import { EventSearchCriteria } from '@store/event/models';
-import { getEventLogEntries } from '@store/event/actions';
+import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
 import {
   GoAButton,
   GoAButtonGroup,
@@ -12,7 +11,7 @@ import {
   GoAFormItem,
 } from '@abgov/react-components-new';
 import { GoAPageLoader } from '@abgov/react-components';
-import { selectWebhookToTestInStatus } from '@store/status/selectors';
+import { selectWebhookToTestInStatus, selectInitTestWebhookCriteria } from '@store/status/selectors';
 import { renderNoItem } from '@components/NoItem';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
@@ -33,18 +32,9 @@ export const TestWebhookModal = (): JSX.Element => {
     return state?.session?.indicator;
   });
 
-  /* Paul: Note Nov 20-2023. The event does not work as expected for the webhook test.
-   * In this case, we only fetch the most recent event temporarily.
-   * We need to add more accurate search criteria later.
-   */
-  const initCriteria: EventSearchCriteria = {
-    name: 'webhook-triggered',
-    namespace: 'push-service',
-    top: 1,
-  };
-
   const entries = useSelector((state: RootState) => state.event.entries);
   const testSuccess = useSelector((state: RootState) => state.serviceStatus.testSuccess);
+  const initCriteria = useSelector(selectInitTestWebhookCriteria);
 
   useEffect(() => {
     if (testSuccess) {
@@ -92,6 +82,8 @@ export const TestWebhookModal = (): JSX.Element => {
             <GoAButton
               type="secondary"
               onClick={() => {
+                dispatch(clearEventLogEntries());
+                setShowEntries(false);
                 dispatch(ResetModalState());
               }}
             >

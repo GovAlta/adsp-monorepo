@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { EventLogEntry, EventSearchCriteria } from '@store/event/models';
-import { selectWebhookInHistory } from '@store/status/selectors';
-import { createInitCriteria } from '@store/status/models';
+import { selectWebhookInHistory, selectInitHistoryWebhookCriteria } from '@store/status/selectors';
 
 import DataTable from '@components/DataTable';
 import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
@@ -99,8 +98,8 @@ const EventLogEntryComponent = ({ entry }: EventLogEntryComponentProps): JSX.Ele
         </td>
         <td headers="status">
           <StatusView>
-            {statusBadge(entry.details?.callStatus as string)}
-            {entry.details?.callStatusCode as string}
+            {statusBadge((entry.details?.response as Record<string, unknown>).status as string)}
+            {(entry.details?.response as Record<string, unknown>).status as string}
           </StatusView>
         </td>
         <td headers="timestamp">
@@ -122,9 +121,8 @@ export const WebhookHistoryModal = (): JSX.Element => {
   const webhook = useSelector(selectWebhookInHistory);
   const isOpen = webhook !== undefined;
 
-  const [viewWebhooks, setViewWebhooks] = useState(false);
   const [searched, setSearched] = useState(false);
-  const initSearchCriteria = createInitCriteria(webhook);
+  const initSearchCriteria = useSelector(selectInitHistoryWebhookCriteria);
   const [searchCriteria, setSearchCriteria] = useState(initSearchCriteria);
   const next = useSelector((state: RootState) => state.event.nextEntries);
   const isLoading = useSelector((state: RootState) => state.event.isLoading.log);
@@ -136,7 +134,7 @@ export const WebhookHistoryModal = (): JSX.Element => {
   }, []);
 
   // eslint-disable-next-line
-  useEffect(() => {}, [entries]);
+  useEffect(() => {}, [entries, next]);
 
   const onSearch = (criteria: EventSearchCriteria) => {
     dispatch(clearEventLogEntries());
@@ -148,12 +146,13 @@ export const WebhookHistoryModal = (): JSX.Element => {
     searched ? dispatch(getEventLogEntries(next, searchCriteria)) : dispatch(getEventLogEntries(next));
   };
 
+  console.log(entries);
+
   useEffect(() => {
     setSearchCriteria(initSearchCriteria);
-    onSearch(initSearchCriteria);
 
     if (webhook !== undefined) {
-      dispatch(getEventLogEntries('', initSearchCriteria));
+      onSearch(initSearchCriteria);
     }
   }, [webhook]);
 
@@ -179,7 +178,6 @@ export const WebhookHistoryModal = (): JSX.Element => {
             <GoAButton
               type="primary"
               onClick={() => {
-                setViewWebhooks(false);
                 dispatch(ResetModalState());
               }}
             >
@@ -198,7 +196,7 @@ export const WebhookHistoryModal = (): JSX.Element => {
             type="url"
             width="100%"
             testId="webhook-history-url-input"
-            value={searchCriteria.url || webhook?.url}
+            value={searchCriteria?.url || webhook?.url}
             onChange={(name, value) => {
               setSearchCriteria({ ...searchCriteria, url: value });
             }}
@@ -213,7 +211,7 @@ export const WebhookHistoryModal = (): JSX.Element => {
                 name="timestampMin"
                 max={today}
                 aria-label="timestampMin"
-                value={searchCriteria.timestampMin}
+                value={searchCriteria?.timestampMin}
                 onChange={(e) => setSearchCriteria({ ...searchCriteria, timestampMin: e.target.value })}
               />
             </GoAFormItem>
@@ -225,14 +223,14 @@ export const WebhookHistoryModal = (): JSX.Element => {
                 name="timestampMax"
                 max={today}
                 aria-label="timestampMax"
-                value={searchCriteria.timestampMax}
+                value={searchCriteria?.timestampMax}
                 onChange={(e) => setSearchCriteria({ ...searchCriteria, timestampMax: e.target.value })}
               />
             </GoAFormItem>
           </EndDate>
         </DateFilter>
 
-        {viewWebhooks && (
+        {searched && (
           <div className="mt-1 mb-2px">
             <>
               {entries ? (

@@ -1,12 +1,12 @@
 import { adspId } from '@abgov/adsp-service-sdk';
-import axios, { AxiosResponse } from 'axios';
-import 'express-session';
-import { Logger } from 'winston';
-import { AuthenticationClient } from './client';
 import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
+import axios, { AxiosResponse } from 'axios';
 import { Request, Response } from 'express';
+import 'express-session';
 import { PassportStatic } from 'passport';
 import { Strategy } from 'passport-openidconnect';
+import { Logger } from 'winston';
+import { AuthenticationClient } from './client';
 
 jest.mock('axios');
 const axiosMock = axios as jest.Mocked<typeof axios>;

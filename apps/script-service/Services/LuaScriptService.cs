@@ -34,7 +34,7 @@ internal sealed class LuaScriptService : ILuaScriptService
     try
     {
       using var lua = new Lua();
-      lua.RegisterFunctions(new StubScriptFunctions(tenantId, _directory, getToken));
+      lua.RegisterFunctions(new StubScriptFunctions(tenantId, _directory, getToken, _eventService));
       lua["script"] = script;
       lua["inputs"] = inputs;
 
@@ -55,7 +55,7 @@ internal sealed class LuaScriptService : ILuaScriptService
 
 
   public async Task<IEnumerable<object>> RunScript(
-    Guid jobId,
+    string jobId,
     AdspId tenantId,
     ScriptDefinition definition,
     IDictionary<string, object?> inputs,
@@ -77,7 +77,7 @@ internal sealed class LuaScriptService : ILuaScriptService
 
       using var lua = new Lua();
       lua.State.Encoding = Encoding.UTF8;
-      lua.RegisterFunctions(new ScriptFunctions(tenantId, _directory, getToken));
+      lua.RegisterFunctions(new ScriptFunctions(tenantId, _directory, getToken, _eventService));
 
       lua["script"] = definition.Script;
       lua["inputs"] = inputs;

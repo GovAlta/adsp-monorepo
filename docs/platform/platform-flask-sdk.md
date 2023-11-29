@@ -19,10 +19,10 @@ Platform services integrate into the foundational capabilities via a Software De
 
 Note that the SDK provides friendly interfaces on top of APIs. It is intended to speed up service development but is not the only way to access platform capabilities.
 
-Download the ADSP SDK for Flask wheel from releases in the repository and install in your project.
+Install the ADSP SDK for Flask wheel from release artifacts in the repository.
 
 ```bash
-poetry add adsp_service_flask_sdk.whl
+poetry add https://github.com/GovAlta/adsp-monorepo/releases/download/adsp-service-flask-sdk-v1.3.1/adsp_service_flask_sdk-1.0.0-py3-none-any.whl
 ```
 
 ## Setting up a service account
