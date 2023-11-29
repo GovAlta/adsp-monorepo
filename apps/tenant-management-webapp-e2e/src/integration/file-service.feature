@@ -105,8 +105,7 @@ Feature: File service
     Then file service status is "Active"
     And "Overview , Test Files, File types, Documentation" file service tabs are "visible"
 
-  # Ignore this test due to CS-2443
-  @TEST_CS-495 @REQ_CS-408 @regression @ignore
+  @TEST_CS-495 @REQ_CS-408 @regression
   Scenario: As a tenant admin, I can see the API documentation for file service in the tenant admin, so I can understand how to use the API
     Given a service owner user is on Files overview page
     Then the user views the link of API docs for "File service"
