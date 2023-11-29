@@ -74,6 +74,7 @@ Then('the user views {string} in Select a security classification dropdown', fun
 When(
   'the user enters {string} as classification, {string} as admin roles, {string} as commenter roles, {string} as reader roles',
   function (classification, adminRole, commenterRole, readerRole) {
+    cy.wait(1000); // Test failed occassionally due to not finding the classification dropdown. Added a second wait.
     if (classification !== 'skip') {
       commentObj
         .editorClassificationDropdown()
