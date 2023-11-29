@@ -35,16 +35,19 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
 import { useHistory, useParams } from 'react-router-dom';
-import { GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components-new';
+import { GoAButtonGroup, GoAButton, GoAFormItem } from '@abgov/react-components-new';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
+import { Tab, Tabs } from '@components/Tabs';
+import { FormEditorTab } from './style-components';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   return (
     prev?.applicantRoles !== next?.applicantRoles ||
     prev?.assessorRoles !== next?.assessorRoles ||
     prev?.clerkRoles !== next?.clerkRoles ||
-    prev?.dataSchema !== next?.dataSchema
+    prev?.dataSchema !== next?.dataSchema ||
+    prev?.uiSchema !== next?.uiSchema
   );
 };
 
@@ -64,6 +67,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const { height } = useWindowDimensions();
   const calcHeight = latestNotification && !latestNotification.disabled ? height - 50 : height;
+  const EditorHeight = calcHeight - 600;
+  const [editorErrors, setEditorErrors] = useState({ uiSchema: null, dataSchema: null });
 
   useEffect(() => {
     dispatch(FetchRealmRoles());
@@ -212,6 +217,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     .add('duplicate', 'name', duplicateNameCheck(definitionIds, 'definition'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
+
   return (
     <FormEditor>
       {spinner ? (
@@ -225,26 +231,78 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
             <hr className="hr-resize" />
             {definition && <FormConfigDefinition definition={definition} />}
 
-            <GoAFormItem label="Data schema" error={errors?.['payloadSchema']}>
-              <EditorPadding>
-                <Editor
-                  data-testid="form-schema"
-                  height={calcHeight - 550}
-                  value={JSON.stringify(definition.dataSchema)}
-                  onChange={(value) => {
-                    validators.remove('payloadSchema');
-                    setDefinition({ ...definition, dataSchema: JSON.parse(value) });
-                  }}
-                  language="json"
-                  options={{
-                    automaticLayout: true,
-                    scrollBeyondLastLine: false,
-                    tabSize: 2,
-                    minimap: { enabled: false },
-                  }}
-                />
-              </EditorPadding>
-            </GoAFormItem>
+            <Tabs activeIndex={0}>
+              <Tab testId={`form-edit-data-schema`} label={<FormEditorTab>Data schema</FormEditorTab>}>
+                <GoAFormItem error={errors?.body ?? editorErrors?.dataSchema ?? null} label="">
+                  <EditorPadding>
+                    <Editor
+                      data-testid="form-data-schema"
+                      height={EditorHeight}
+                      value={JSON.stringify(definition.dataSchema)}
+                      onChange={(value) => {
+                        setDefinition({ ...definition, dataSchema: JSON.parse(value) });
+                      }}
+                      onValidate={(makers) => {
+                        if (makers.length === 0) {
+                          setEditorErrors({
+                            ...editorErrors,
+                            dataSchema: null,
+                          });
+                          return;
+                        }
+                        setEditorErrors({
+                          ...editorErrors,
+                          dataSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
+                        });
+                      }}
+                      language="json"
+                      options={{
+                        automaticLayout: true,
+                        scrollBeyondLastLine: false,
+                        tabSize: 2,
+                        minimap: { enabled: false },
+                      }}
+                    />
+                  </EditorPadding>{' '}
+                </GoAFormItem>
+              </Tab>
+
+              <Tab testId={`form-edit-ui-schema`} label={<FormEditorTab>UI schema</FormEditorTab>}>
+                <GoAFormItem error={errors?.body ?? editorErrors?.uiSchema ?? null} label="">
+                  <EditorPadding>
+                    <Editor
+                      data-testid="form-ui-schema"
+                      height={EditorHeight}
+                      value={JSON.stringify(definition?.uiSchema || {})}
+                      onValidate={(makers) => {
+                        if (makers.length === 0) {
+                          setEditorErrors({
+                            ...editorErrors,
+                            uiSchema: null,
+                          });
+                          return;
+                        }
+                        setEditorErrors({
+                          ...editorErrors,
+                          uiSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
+                        });
+                      }}
+                      onChange={(value) => {
+                        setDefinition({ ...definition, uiSchema: JSON.parse(value) });
+                      }}
+                      language="json"
+                      options={{
+                        automaticLayout: true,
+                        scrollBeyondLastLine: false,
+                        tabSize: 2,
+                        minimap: { enabled: false },
+                      }}
+                    />
+                  </EditorPadding>{' '}
+                </GoAFormItem>
+              </Tab>
+            </Tabs>
+
             <hr className="hr-resize-bottom" />
             <FinalButtonPadding>
               <GoAButtonGroup alignment="start">
@@ -252,7 +310,11 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   type="primary"
                   testId="form-save"
                   disabled={
-                    !isFormUpdated(initialDefinition, definition) || !definition.name || validators.haveErrors()
+                    !isFormUpdated(initialDefinition, definition) ||
+                    !definition.name ||
+                    validators.haveErrors() ||
+                    editorErrors.dataSchema !== null ||
+                    editorErrors.uiSchema !== null
                   }
                   onClick={() => {
                     if (indicator.show === true) {
