@@ -139,7 +139,7 @@ When('the user enters {string} as Assigner roles and {string} as Worker roles', 
 
 Then('the user clicks Save button on Queue page', function () {
   taskObj.queuePageSaveButton().shadow().find('button').click({ force: true });
-  cy.wait(2000);
+  cy.wait(4000);
 });
 
 Then(
