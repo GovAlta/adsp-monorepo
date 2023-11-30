@@ -9,6 +9,7 @@ export interface NotificationItem {
   publicSubscribe: boolean;
   customized?: boolean;
   manageSubscribe?: boolean;
+  address?: string;
 }
 
 export enum Channel {
