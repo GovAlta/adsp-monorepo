@@ -8,7 +8,7 @@ parent: Services
 # Comment service
 Comment service allows users to create topics and post comments against the topics. Topics are of a particular topic type, and the type determines the roles permitted to administer, read, or comment on a topic.
 
-Topics are intended an aggregate root for comments, and should be associated to an entity that is the subject of the comments. Topic includes a `recordId` property for referencing the associated entity. For example, in a case management use case, a topic references a case using the case ID, and comments regarding the case are children of that topic.
+Topics are intended as aggregate roots for comments, and should be associated to an entity that is the subject of the comments. Topic includes a `resourceId` property for referencing the associated entity. For example, in a case management use case, a topic references a case using the case ID, and comments regarding the case are children of that topic.
 
 ## Client roles
 client `urn:ads:platform:comment-service`
