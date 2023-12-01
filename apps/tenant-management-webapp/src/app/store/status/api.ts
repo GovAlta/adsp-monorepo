@@ -95,7 +95,7 @@ export class WebhookApi {
   async deleteWebhook(id: string): Promise<object> {
     const res = await this.http.patch(`/push-service`, {
       operation: 'DELETE',
-      property: { webhook: id },
+      property: `webhooks[${id}]`,
     });
 
     return res.data;

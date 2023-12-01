@@ -206,13 +206,9 @@ export function* deleteWebhook(action: DeleteWebhookAction): SagaIterator {
 
   const id = action.payload.id;
 
-  const pushService: Record<string, Webhooks> = {
-    [id]: null,
-  };
-
   try {
     const api = new WebhookApi(configBaseUrl, token);
-    yield call([api, api.saveWebhookPush], pushService);
+    yield call([api, api.deleteWebhook], id);
 
     yield put(deleteWebhookSuccess(action.payload.id));
   } catch (err) {
