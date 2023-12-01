@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
 import Editor from '@monaco-editor/react';
+import { materialRenderers, materialCells } from '@jsonforms/material-renderers';
+import { JsonForms } from '@jsonforms/react';
 import { FormDefinition } from '@store/form/model';
 
 import { useValidators } from '@lib/validation/useValidators';
@@ -9,17 +11,21 @@ import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
+import { Tab, Tabs } from '@components/Tabs';
+import { useDebounce } from '@lib/useDebounce';
+
 import {
   SpinnerModalPadding,
   TextLoadingIndicator,
   FlexRow,
-  NameDescriptionDataSchema,
-  FormPermissions,
+  FormEditorContainer,
+  FormPreviewContainer,
   EditorPadding,
   FinalButtonPadding,
   FormEditorTitle,
   FormEditor,
   ScrollPane,
+  MonacoDivBody,
 } from '../styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
 
@@ -48,12 +54,82 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   );
 };
 
+const dataSchema = {
+  type: 'object',
+  properties: {
+    name: {
+      type: 'string',
+      minLength: 1,
+    },
+    done: {
+      type: 'boolean',
+    },
+    due_date: {
+      type: 'string',
+      format: 'date',
+    },
+    recurrence: {
+      type: 'string',
+      enum: ['Never', 'Daily', 'Weekly', 'Monthly'],
+    },
+  },
+  required: ['name', 'due_date'],
+};
+
+export const formEditorJsonConfig = {
+  'data-testid': 'templateForm-test-input',
+  options: {
+    selectOnLineNumbers: true,
+    renderIndentGuides: true,
+    colorDecorators: true,
+  },
+};
+
+const uiSchema = {
+  type: 'VerticalLayout',
+  elements: [
+    {
+      type: 'Control',
+      label: false,
+      scope: '#/properties/done',
+    },
+    {
+      type: 'Control',
+      scope: '#/properties/name',
+    },
+    {
+      type: 'HorizontalLayout',
+      elements: [
+        {
+          type: 'Control',
+          scope: '#/properties/due_date',
+        },
+        {
+          type: 'Control',
+          scope: '#/properties/recurrence',
+        },
+      ],
+    },
+  ],
+};
+
+const invalidJsonMsg = 'Invalid JSON syntax';
+
 export function AddEditFormDefinitionEditor(): JSX.Element {
   const [definition, setDefinition] = useState<FormDefinition>(defaultFormDefinition);
   const [initialDefinition, setInitialDefinition] = useState<FormDefinition>(defaultFormDefinition);
+
+  const [tempUiSchema, setTempUiSchema] = useState<string>(JSON.stringify(uiSchema, null, 2));
+  const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify(dataSchema, null, 2));
+  //const [tempUiSchemaPreview, setTempUiSchemaPreview] = useState<string>(JSON.stringify(uiSchema, null, 2));
+  const [data, setData] = useState('');
+  const [error, setError] = useState('');
   const [spinner, setSpinner] = useState<boolean>(false);
   const { id } = useParams<{ id: string }>();
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
+
+  const debouncedRenderUISchema = useDebounce(tempUiSchema, 1000);
+  const debouncedRenderDataSchema = useDebounce(tempDataSchema, 1000);
 
   const isEdit = !!id;
 
@@ -95,10 +171,63 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   useEffect(() => {
     if (id && formDefinitions[id]) {
-      setDefinition(formDefinitions[id]);
+      let tempSchema = '{}';
+      let uiForm = '{}';
+      const tempFormDefinition = formDefinitions[id] as FormDefinition;
+      if (Object.keys(tempFormDefinition.dataSchema || {}).length === 0) {
+        tempSchema = JSON.stringify(dataSchema, null, 2);
+        tempFormDefinition.dataSchema = tempSchema;
+      }
+      if (Object.keys(tempFormDefinition.uiSchema || {}).length === 0) {
+        uiForm = JSON.stringify(uiSchema, null, 2);
+        tempFormDefinition.uiSchema = uiForm;
+      }
+      setTempUiSchema(tempFormDefinition.uiSchema);
+      setTempDataSchema(tempFormDefinition.dataSchema);
+      setDefinition(tempFormDefinition);
       setInitialDefinition(formDefinitions[id]);
     }
   }, [formDefinitions]);
+
+  useEffect(() => {
+    const tempFormDefinition = definition;
+
+    try {
+      console.log(JSON.stringify(tempUiSchema) + '<tempUiSchema0');
+      JSON.parse(tempUiSchema);
+      console.log(JSON.stringify('a'));
+      tempFormDefinition.uiSchema = tempUiSchema;
+      console.log(JSON.stringify(tempUiSchema) + 'tempUiSchema');
+      setError('');
+    } catch {
+      tempFormDefinition.uiSchema = '{}';
+      console.log(JSON.stringify('b'));
+      setError(invalidJsonMsg);
+    } finally {
+      console.log(JSON.stringify('c'));
+      setDefinition(tempFormDefinition);
+    }
+  }, [debouncedRenderUISchema]);
+
+  useEffect(() => {
+    const tempFormDefinition = definition;
+
+    try {
+      console.log(JSON.stringify(tempDataSchema) + '<tempUiSchema0xx');
+      JSON.parse(tempDataSchema);
+      console.log(JSON.stringify('aa'));
+      tempFormDefinition.dataSchema = tempDataSchema;
+      console.log(JSON.stringify(tempDataSchema) + 'tempUiSchemaxx');
+      setError('');
+    } catch {
+      tempFormDefinition.dataSchema = '{}';
+      console.log(JSON.stringify('bb'));
+      setError(invalidJsonMsg);
+    } finally {
+      console.log(JSON.stringify('cc'));
+      setDefinition(tempFormDefinition);
+    }
+  }, [debouncedRenderDataSchema]);
 
   const history = useHistory();
 
@@ -188,6 +317,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     return state?.session?.indicator;
   });
 
+  const [activeIndex] = useState<number>(0);
+
   useEffect(() => {
     if (spinner && Object.keys(definitions).length > 0) {
       if (validators['duplicate'].check(definition.id)) {
@@ -201,6 +332,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
+
+  const getStyles = latestNotification && !latestNotification.disabled ? '410px' : '310px';
+
+  console.log(JSON.stringify(definition) + 'definitiondefinition');
 
   const { errors, validators } = useValidators(
     'name',
@@ -220,31 +355,55 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         </SpinnerModalPadding>
       ) : (
         <FlexRow>
-          <NameDescriptionDataSchema>
+          <FormEditorContainer>
             <FormEditorTitle>Form / Definition Editor</FormEditorTitle>
             <hr className="hr-resize" />
             {definition && <FormConfigDefinition definition={definition} />}
 
-            <GoAFormItem label="Data schema" error={errors?.['payloadSchema']}>
-              <EditorPadding>
-                <Editor
-                  data-testid="form-schema"
-                  height={calcHeight - 550}
-                  value={JSON.stringify(definition.dataSchema)}
-                  onChange={(value) => {
-                    validators.remove('payloadSchema');
-                    setDefinition({ ...definition, dataSchema: JSON.parse(value) });
-                  }}
-                  language="json"
-                  options={{
-                    automaticLayout: true,
-                    scrollBeyondLastLine: false,
-                    tabSize: 2,
-                    minimap: { enabled: false },
-                  }}
-                />
-              </EditorPadding>
-            </GoAFormItem>
+            <Tabs activeIndex={activeIndex} data-testid="form-editor-tabs">
+              <Tab label="Data schema" data-testid="form-editor-tab">
+                <EditorPadding>
+                  <Editor
+                    data-testid="form-schema"
+                    height={calcHeight - 550}
+                    value={tempDataSchema}
+                    onChange={(value) => {
+                      validators.remove('payloadSchema');
+                      setTempDataSchema(value);
+                    }}
+                    language="json"
+                    options={{
+                      automaticLayout: true,
+                      scrollBeyondLastLine: false,
+                      tabSize: 2,
+                      minimap: { enabled: false },
+                    }}
+                  />
+                </EditorPadding>
+              </Tab>
+              <Tab label="UI schema" data-testid="form-editor-tab">
+                <MonacoDivBody data-testid="templated-editor-body" style={{ height: `calc(72vh - ${getStyles})` }}>
+                  <Editor
+                    language={'json'}
+                    value={tempUiSchema}
+                    {...formEditorJsonConfig}
+                    onChange={(value) => {
+                      setTempUiSchema(value);
+                    }}
+                  />
+                </MonacoDivBody>
+              </Tab>
+              <Tab label="Roles" data-testid="form-roles-tab">
+                <ScrollPane>
+                  {elements.map((e, key) => {
+                    return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+                  })}
+                  {fetchKeycloakRolesState === ActionState.inProcess && (
+                    <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
+                  )}
+                </ScrollPane>
+              </Tab>
+            </Tabs>
             <hr className="hr-resize-bottom" />
             <FinalButtonPadding>
               <GoAButtonGroup alignment="start">
@@ -291,19 +450,23 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 </GoAButton>
               </GoAButtonGroup>
             </FinalButtonPadding>
-          </NameDescriptionDataSchema>
-          <FormPermissions>
-            <FormEditorTitle>Form permissions</FormEditorTitle>
+          </FormEditorContainer>
+          <FormPreviewContainer>
+            <FormEditorTitle>Preview</FormEditorTitle>
             <hr className="hr-resize" />
-            <ScrollPane>
-              {elements.map((e, key) => {
-                return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
-              })}
-              {fetchKeycloakRolesState === ActionState.inProcess && (
-                <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
-              )}
-            </ScrollPane>
-          </FormPermissions>
+            <div style={{ paddingTop: '2rem' }}>
+              <GoAFormItem error={error} label="">
+                <JsonForms
+                  schema={JSON.parse(definition.dataSchema || '{}')}
+                  uischema={JSON.parse(definition.uiSchema || '{}')}
+                  data={data}
+                  renderers={materialRenderers}
+                  cells={materialCells}
+                  onChange={({ data }) => setData(data)}
+                />
+              </GoAFormItem>
+            </div>
+          </FormPreviewContainer>
         </FlexRow>
       )}
       <SaveFormModal
