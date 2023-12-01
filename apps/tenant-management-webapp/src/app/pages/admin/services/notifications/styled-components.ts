@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled, { createGlobalStyle } from 'styled-components';
 
 interface HeightProps {
   height: number;
@@ -191,4 +191,45 @@ export const NotificationStyles = styled.div`
   .coreEditButton {
     font-size: 15px;
   }
+`;
+
+export const PreviewTemplateContainer = styled.div`
+  width: 60%;
+  margin-left: 2rem;
+  padding-top: 4rem;
+  padding-left: 2rem;
+  background-color: #c3c3c3;
+  overflow: hidden;
+  &:hover {
+    overflow: auto;
+  }
+`;
+
+export const NotificationTemplateEditorContainer = styled.div`
+  display: flex;
+  padding-left: 3rem;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  box-sizing: border-box;
+`;
+
+export const Modal = styled.div<{ open: boolean }>`
+  display: ${(props) => (props.open ? `block` : `none`)};
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 10000;
+  width: 100%;
+`;
+
+export const BodyGlobalStyles = createGlobalStyle<{ hideOverflow: boolean }>`
+  body {
+    overflow:  ${(props) => (props.hideOverflow ? `hidden` : `auto`)};
+  }
+`;
+
+export const ModalContent = styled.div`
+  background: white;
 `;
