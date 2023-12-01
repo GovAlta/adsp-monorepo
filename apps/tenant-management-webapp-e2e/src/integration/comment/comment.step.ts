@@ -81,8 +81,13 @@ When(
         .invoke('attr', 'value')
         .then((classificationValue) => {
           if (classificationValue !== classification.toLowerCase()) {
-            commentObj.editorClassificationDropdown().find('goa-input').click({ force: true });
-            commentObj.editorClassificationDropdown().find('li').contains(classification).click({ force: true });
+            commentObj.editorClassificationDropdown().shadow().find('goa-input').click({ force: true });
+            commentObj
+              .editorClassificationDropdown()
+              .shadow()
+              .find('li')
+              .contains(classification)
+              .click({ force: true });
           }
         });
     }
