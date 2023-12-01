@@ -6,6 +6,11 @@ using Adsp.Platform.ScriptService.Model;
 using Adsp.Sdk;
 
 namespace Adsp.Platform.ScriptService.Events;
+/*
+ * ScriptEvent is no longer used.  The ex-subclasses (ScriptExecuted & ScriptExecutionFailed)
+ * now inline the properties here.  This is a workaround for issues
+ * introduced by schema generator when dealing with schema inheritance.
+ */
 [SuppressMessage("Usage", "CA2227: Collection properties should be read only", Justification = "Data transfer object")]
 public abstract class ScriptEvent
 {

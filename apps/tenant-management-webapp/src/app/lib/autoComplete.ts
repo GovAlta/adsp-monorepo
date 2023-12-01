@@ -131,7 +131,7 @@ export const buildSuggestions = (
   return results.map((s) => createSuggestion(instance, s, hasBracket, hasParent)) as languages.CompletionItem[];
 };
 // eslint-disable-next-line
-export const convertToSuggestion = (event: EventDefinition) => {
+export const convertToSuggestion = (event: EventDefinition, hasAddress: boolean) => {
   const eventPayload = getElementSuggestion(event.payloadSchema);
   const eventSuggestion = [
     {
@@ -145,6 +145,23 @@ export const convertToSuggestion = (event: EventDefinition) => {
         },
       ],
     },
+    {
+      label: 'tenant',
+      insertText: 'tenant',
+      children: [
+        {
+          label: 'name',
+          insertText: 'name',
+        },
+        {
+          label: 'realm',
+          insertText: 'realm',
+        },
+      ],
+    },
+  ];
+
+  const subscriberEvents = [
     {
       label: 'managementUrl',
       insertText: 'managementUrl',
@@ -167,22 +184,8 @@ export const convertToSuggestion = (event: EventDefinition) => {
         },
       ],
     },
-    {
-      label: 'tenant',
-      insertText: 'tenant',
-      children: [
-        {
-          label: 'name',
-          insertText: 'name',
-        },
-        {
-          label: 'realm',
-          insertText: 'realm',
-        },
-      ],
-    },
   ];
-  return eventSuggestion;
+  return hasAddress ? eventSuggestion : [...eventSuggestion, ...subscriberEvents];
 };
 
 const getElementSuggestion = (element) => {

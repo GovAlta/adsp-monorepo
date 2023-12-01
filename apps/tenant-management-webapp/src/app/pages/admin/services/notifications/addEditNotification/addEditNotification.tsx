@@ -1,7 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import type { NotificationItem } from '@store/notification/models';
-
 import {
   GoACheckbox,
   GoATextArea,
@@ -11,13 +10,22 @@ import {
   GoACallout,
   GoAModal,
   GoAFormItem,
+  GoARadioGroup,
+  GoARadioItem,
 } from '@abgov/react-components-new';
 import { toKebabName } from '@lib/kebabName';
 import { Role } from '@store/tenant/models';
 import { ServiceRoleConfig } from '@store/access/models';
 import { AnonymousWrapper, EditStyles, IdField } from './styledComponents';
 import { useValidators } from '@lib/validation/useValidators';
-import { isNotEmptyCheck, duplicateNameCheck, wordMaxLengthCheck, badCharsCheck } from '@lib/validation/checkInput';
+import {
+  isNotEmptyCheck,
+  duplicateNameCheck,
+  wordMaxLengthCheck,
+  badCharsCheck,
+  characterCheck,
+  validationPattern,
+} from '@lib/validation/checkInput';
 import { RootState } from '@store/index';
 import { ConfigServiceRole } from '@store/access/models';
 import { ClientRoleTable } from '@components/RoleTable';
@@ -52,10 +60,16 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   const core = useSelector((state: RootState) => state.notification.core);
   const typeObjects = Object.values({ ...notificationTypes, ...core });
   const typeNames = typeObjects.map((type: NotificationItem) => type.name);
+  const checkForEmail = characterCheck(validationPattern.validEmail);
+  const [isNotifyAddress, setIsNotifyAddress] = useState(false);
+
   useEffect(() => {
     setType(JSON.parse(JSON.stringify(initialValue)));
   }, [initialValue]);
 
+  useEffect(() => {
+    setIsNotifyAddress(type?.address && type.address.length > 0);
+  }, [type]);
   const roleNames = realmRoles
     ? realmRoles.map((role) => {
         return role.name;
@@ -100,6 +114,69 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
     );
   };
 
+  const selectNotificationsBySubscription = () => {
+    return (
+      <div key="select channel" style={{ display: 'flex', flexDirection: 'row' }}>
+        {channels.map((channel, key) => {
+          return (
+            <div key={key}>
+              <div style={{ paddingRight: '20px' }}>
+                <GoACheckbox
+                  name={channel.value}
+                  checked={type.channels?.map((value) => value).includes(channel.value) || channel.value === 'email'}
+                  disabled={channel.value === 'email'}
+                  onChange={() => {
+                    const channels = type.channels || ['email'];
+                    const checked = channels.findIndex((ch) => ch === channel.value);
+                    if (checked === -1) {
+                      channels.push(channel.value);
+                    } else {
+                      channels.splice(checked, 1);
+                    }
+
+                    setType({ ...type, channels: channels });
+                  }}
+                  testId="manage-subscriptions-checkbox"
+                  value="manageSubscribe"
+                  ariaLabel={`manage-subscriptions-checkbox`}
+                >
+                  {channel.title}
+                </GoACheckbox>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const selectNotificationsByAddress = () => {
+    return (
+      <GoARadioGroup
+        name="channel"
+        testId="notification-channel-radio-group"
+        ariaLabel="notification-channel-radio-group"
+        value={type.channels && type.channels.length > 1 ? type.channels[0] : 'email'}
+        onChange={(name, channel) => {
+          const channels = type.channels || ['email'];
+          const checked = channels.findIndex((ch) => ch === channel);
+          if (checked === -1) {
+            channels.push(channel);
+          } else {
+            channels.splice(checked, 1);
+          }
+
+          setType({ ...type, channels: channels });
+        }}
+        orientation="horizontal"
+      >
+        {channels?.map((channel) => (
+          <GoARadioItem name="channel" value={channel.value} />
+        ))}
+      </GoARadioGroup>
+    );
+  };
+
   const { errors, validators } = useValidators(
     'name',
     'name',
@@ -109,6 +186,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   )
     .add('duplicated', 'name', duplicateNameCheck(typeNames, 'Notification type'))
     .add('description', 'description', wordMaxLengthCheck(250, 'Description'))
+    .add('address', 'address', checkForEmail)
     .build();
 
   return (
@@ -147,6 +225,9 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                 }
                 if (!validators.checkAll(validations)) {
                   return;
+                }
+                if (!isNotifyAddress) {
+                  type.address = null;
                 }
                 onSave(type);
               }}
@@ -200,41 +281,9 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           />
         </GoAFormItem>
         <GoAFormItem error={errors?.['channels']} label="Select Notification Channels">
-          <label></label>
-          <div key="select channel" style={{ display: 'flex', flexDirection: 'row' }}>
-            {channels.map((channel, key) => {
-              return (
-                <div key={key}>
-                  <div style={{ paddingRight: '20px' }}>
-                    <GoACheckbox
-                      name={channel.value}
-                      checked={
-                        type.channels?.map((value) => value).includes(channel.value) || channel.value === 'email'
-                      }
-                      disabled={channel.value === 'email'}
-                      onChange={() => {
-                        const channels = type.channels || ['email'];
-                        const checked = channels.findIndex((ch) => ch === channel.value);
-                        if (checked === -1) {
-                          channels.push(channel.value);
-                        } else {
-                          channels.splice(checked, 1);
-                        }
-
-                        setType({ ...type, channels: channels });
-                      }}
-                      testId="manage-subscriptions-checkbox"
-                      value="manageSubscribe"
-                      ariaLabel={`manage-subscriptions-checkbox`}
-                    >
-                      {channel.title}
-                    </GoACheckbox>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          {!isNotifyAddress ? selectNotificationsBySubscription() : selectNotificationsByAddress()}
         </GoAFormItem>
+
         <div data-testid="manage-subscriptions-checkbox-wrapper">
           <GoAFormItem label="">
             <GoACheckbox
@@ -274,7 +323,42 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
           />
           Make notification public
         </AnonymousWrapper>
+        <GoAFormItem label="Select Notify subscribers or Notify address" error={errors?.['priority']}>
+          <GoARadioGroup
+            name="notify"
+            testId="select-type-notification-radio-group"
+            ariaLabel="select-type-notification-radio-group"
+            value={type?.address && type?.address.length > 0 ? 'Notify address' : 'Notify subscribers'}
+            onChange={(_, value) => {
+              setIsNotifyAddress(!isNotifyAddress);
+            }}
+          >
+            <GoARadioItem name="notify" value="Notify subscribers" />
+            <GoARadioItem name="notify" value="Notify address" />
+          </GoARadioGroup>
+        </GoAFormItem>
+        {isNotifyAddress && (
+          <GoAFormItem label="Address Path" error={errors?.['address']}>
+            <GoAInput
+              type="text"
+              name="name"
+              value={type.address}
+              testId={`address-notification-modal-input`}
+              aria-label="addressPath"
+              width="60%"
+              onChange={(_, value) => {
+                const validations = {
+                  address: value,
+                };
+                validators.remove('address');
+                validators.checkAll(validations);
+                type.address = value;
+              }}
+            />
+          </GoAFormItem>
+        )}
         {tenantClients &&
+          !isNotifyAddress &&
           !type.publicSubscribe &&
           elements.map((e, key) => {
             return (
