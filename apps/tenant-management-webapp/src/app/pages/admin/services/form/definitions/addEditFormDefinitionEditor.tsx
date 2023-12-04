@@ -11,7 +11,7 @@ import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
-import { Tab, Tabs } from '@components/Tabs';
+
 import { useDebounce } from '@lib/useDebounce';
 const Ajv = require('ajv');
 
@@ -47,7 +47,7 @@ import { useHistory, useParams } from 'react-router-dom';
 import { GoAButtonGroup, GoAButton, GoAFormItem } from '@abgov/react-components-new';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
-
+import { Tab, Tabs } from '@components/Tabs';
 import { FormEditorTab } from './style-components';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
