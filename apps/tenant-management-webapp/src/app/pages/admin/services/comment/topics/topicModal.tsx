@@ -42,7 +42,7 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
   topicType,
 }: TopicModalProps): JSX.Element => {
   const [topic, setTopic] = useState<TopicItem>(defaultTopic);
-  const [selectedTopic, setSelectedTopic] = useState('');
+  const [selectedTopicType, setSelectedTopic] = useState(topicType);
   const topicTypes = useSelector((state: RootState) => {
     return state?.comment?.topicTypes;
   });
@@ -73,29 +73,29 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
       'duplicated',
       'name',
       isNotEmptyCheck('name'),
-      wordMaxLengthCheck(180, 'Description'),
+      wordMaxLengthCheck(32, 'Name'),
       duplicateNameCheck(topicNames, 'Topic')
     )
     .add('typeId', 'typeId', isNotEmptyCheck('typeId'))
-    .add('description', 'description', isNotEmptyCheck('description'), wordMaxLengthCheck(180, 'Description'))
+    .add('resourceId', 'resourceId', isNotEmptyCheck('typeId'))
+    .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
 
   const validationCheck = () => {
     const validations = {
       name: topic?.name,
-      description: topic?.description,
+      typeId: topic?.typeId,
     };
 
     validations['name'] = topic?.name;
     validations['duplicated'] = topic?.name;
-    validations['description'] = topic?.description;
-    validations['typeId'] = topic?.typeId;
+    validations['typeId'] = topic?.typeId && topic?.typeId !== '' ? topic?.typeId : selectedTopicType;
+    validations['resourceId'] = topic?.resourceId;
 
     if (!validators.checkAll(validations)) {
       return;
     }
-    topic.resourceId = `urn:ads:platform:case:v1:/cases/${topic.resourceId}`;
-
+    topic.typeId = topic?.typeId && topic?.typeId !== '' ? topic?.typeId : selectedTopicType;
     onSave(topic);
     onCancel();
     validators.clear();
@@ -122,7 +122,7 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
           <GoAButton
             type="primary"
             testId="topic-modal-save"
-            disabled={!topic?.name || !topic?.description || validators.haveErrors()} //need to check Topictype selection
+            disabled={!topic?.name || !topic?.resourceId || validators.haveErrors()}
             onClick={() => {
               validationCheck();
               setTopic(topic);
@@ -156,12 +156,12 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
           {Object.keys(topicTypes).length > 0 && (
             <GoADropdown
               name="TopicTypes"
-              value={selectedTopic}
-              onChange={(name, selectedTopic: string) => {
-                setSelectedTopic(selectedTopic);
+              value={selectedTopicType}
+              onChange={(name, selectedTopicType: string) => {
+                setSelectedTopic(selectedTopicType);
                 validators.remove('typeId');
-                validators['typeId'].check(selectedTopic);
-                setTopic({ ...topic, typeId: selectedTopic });
+                validators['typeId'].check(selectedTopicType);
+                setTopic({ ...topic, typeId: selectedTopicType });
               }}
               aria-label="select-topictype-dropdown"
               width="100%"
@@ -208,7 +208,7 @@ export const TopicModal: FunctionComponent<TopicModalProps> = ({
             </HelpText>
           </DescriptionItem>
         </GoAFormItem>
-        <GoAFormItem label="Resource ID (Optional)">
+        <GoAFormItem label="Resource ID">
           <GoAInput
             type="text"
             name="resourceid"
