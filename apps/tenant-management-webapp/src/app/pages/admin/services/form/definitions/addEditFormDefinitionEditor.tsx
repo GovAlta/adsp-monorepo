@@ -13,12 +13,15 @@ import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { Tab, Tabs } from '@components/Tabs';
 import { useDebounce } from '@lib/useDebounce';
+const Ajv = require('ajv');
+
+const ajv = new Ajv();
 
 import {
   SpinnerModalPadding,
   TextLoadingIndicator,
   FlexRow,
-  FormEditorContainer,
+  NameDescriptionDataSchema,
   FormPreviewContainer,
   EditorPadding,
   FinalButtonPadding,
@@ -41,16 +44,39 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { defaultFormDefinition } from '@store/form/model';
 import { FormConfigDefinition } from './formConfigDefinition';
 import { useHistory, useParams } from 'react-router-dom';
-import { GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components-new';
+import { GoAButtonGroup, GoAButton, GoAFormItem } from '@abgov/react-components-new';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 
+import { FormEditorTab } from './style-components';
+
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
+  // console.log(JSON.stringify(prev) + '<prev');
+  // console.log(JSON.stringify(next) + '<next');
+  // console.log(JSON.stringify(prev?.dataSchema !== next?.dataSchema) + '< prev?.dataSchema !== next?.dataSchema ');
+  // console.log(JSON.stringify(prev?.uiSchema !== next?.uiSchema) + '< prev?.uiSchema !== next?.uiSchema');
+  // console.log(JSON.stringify(prev?.dataSchema) + '<  prev?.dataSchema');
+  // console.log(JSON.stringify(next?.dataSchema) + '<   next?.dataSchema');
+  const tempPrev = JSON.parse(JSON.stringify(prev));
+  const tempNext = JSON.parse(JSON.stringify(next));
+
+  console.log(JSON.stringify(tempPrev?.applicantRoles) + '<---->' + JSON.stringify(tempNext?.applicantRoles));
+  console.log(JSON.stringify(tempPrev?.assessorRoles) + '<---->' + JSON.stringify(tempNext?.assessorRoles));
+  console.log(JSON.stringify(tempPrev?.clerkRoles) + '<---->' + JSON.stringify(tempNext?.clerkRoles));
+  console.log(JSON.stringify(tempPrev?.dataSchema) + '<---->' + JSON.stringify(tempNext?.dataSchema));
+  console.log(JSON.stringify(tempPrev?.uiSchema) + '<---->' + JSON.stringify(tempNext?.uiSchema));
+  console.log(tempPrev?.applicantRoles != tempNext?.applicantRoles);
+  console.log(tempPrev?.assessorRoles != tempNext?.assessorRoles);
+  console.log(tempPrev?.clerkRoles != tempNext?.clerkRoles);
+  console.log(tempPrev?.dataSchema != tempNext?.dataSchema);
+  console.log(tempPrev?.uiSchema != tempNext?.uiSchema);
+
   return (
-    prev?.applicantRoles !== next?.applicantRoles ||
-    prev?.assessorRoles !== next?.assessorRoles ||
-    prev?.clerkRoles !== next?.clerkRoles ||
-    prev?.dataSchema !== next?.dataSchema
+    JSON.stringify(tempPrev?.applicantRoles) != JSON.stringify(tempNext?.applicantRoles) ||
+    JSON.stringify(tempPrev?.assessorRoles) != JSON.stringify(tempNext?.assessorRoles) ||
+    JSON.stringify(tempPrev?.clerkRoles) != JSON.stringify(tempNext?.clerkRoles) ||
+    JSON.stringify(tempPrev?.dataSchema) != JSON.stringify(tempNext?.dataSchema) ||
+    JSON.stringify(tempPrev?.uiSchema) != JSON.stringify(tempNext?.uiSchema)
   );
 };
 
@@ -114,6 +140,7 @@ const uiSchema = {
 };
 
 const invalidJsonMsg = 'Invalid JSON syntax';
+const invalidDataMsg = 'Data schema invalid';
 
 export function AddEditFormDefinitionEditor(): JSX.Element {
   const [definition, setDefinition] = useState<FormDefinition>(defaultFormDefinition);
@@ -121,6 +148,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const [tempUiSchema, setTempUiSchema] = useState<string>(JSON.stringify(uiSchema, null, 2));
   const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify(dataSchema, null, 2));
+  const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify(uiSchema, null, 2));
+  const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify(dataSchema, null, 2));
   //const [tempUiSchemaPreview, setTempUiSchemaPreview] = useState<string>(JSON.stringify(uiSchema, null, 2));
   const [data, setData] = useState('');
   const [error, setError] = useState('');
@@ -140,6 +169,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const { height } = useWindowDimensions();
   const calcHeight = latestNotification && !latestNotification.disabled ? height - 50 : height;
+  const EditorHeight = calcHeight - 600;
+  const [editorErrors, setEditorErrors] = useState({ uiSchema: null, dataSchema: null });
 
   useEffect(() => {
     dispatch(FetchRealmRoles());
@@ -171,61 +202,58 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   useEffect(() => {
     if (id && formDefinitions[id]) {
-      let tempSchema = '{}';
-      let uiForm = '{}';
       const tempFormDefinition = formDefinitions[id] as FormDefinition;
-      if (Object.keys(tempFormDefinition.dataSchema || {}).length === 0) {
-        tempSchema = JSON.stringify(dataSchema, null, 2);
-        tempFormDefinition.dataSchema = tempSchema;
+      if (Object.keys(tempFormDefinition.dataSchema || {}).length > 0) {
+        setTempUiSchema(JSON.stringify(tempFormDefinition.uiSchema, null, 2));
+        setTempUiSchemaBounced(JSON.stringify(tempFormDefinition.uiSchema, null, 2));
       }
-      if (Object.keys(tempFormDefinition.uiSchema || {}).length === 0) {
-        uiForm = JSON.stringify(uiSchema, null, 2);
-        tempFormDefinition.uiSchema = uiForm;
+      if (Object.keys(tempFormDefinition.uiSchema || {}).length > 0) {
+        setTempDataSchema(JSON.stringify(tempFormDefinition.dataSchema, null, 2));
+        setDataSchemaBounced(JSON.stringify(tempFormDefinition.dataSchema, null, 2));
       }
-      setTempUiSchema(tempFormDefinition.uiSchema);
-      setTempDataSchema(tempFormDefinition.dataSchema);
-      setDefinition(tempFormDefinition);
       setInitialDefinition(formDefinitions[id]);
+      setDefinition(formDefinitions[id]);
     }
   }, [formDefinitions]);
 
   useEffect(() => {
-    const tempFormDefinition = definition;
-
     try {
       console.log(JSON.stringify(tempUiSchema) + '<tempUiSchema0');
       JSON.parse(tempUiSchema);
       console.log(JSON.stringify('a'));
-      tempFormDefinition.uiSchema = tempUiSchema;
+      setTempUiSchemaBounced(tempUiSchema);
       console.log(JSON.stringify(tempUiSchema) + 'tempUiSchema');
       setError('');
     } catch {
-      tempFormDefinition.uiSchema = '{}';
+      setTempUiSchemaBounced('{}');
       console.log(JSON.stringify('b'));
       setError(invalidJsonMsg);
-    } finally {
-      console.log(JSON.stringify('c'));
-      setDefinition(tempFormDefinition);
     }
   }, [debouncedRenderUISchema]);
 
   useEffect(() => {
-    const tempFormDefinition = definition;
-
     try {
       console.log(JSON.stringify(tempDataSchema) + '<tempUiSchema0xx');
       JSON.parse(tempDataSchema);
+      // const validate = ajv.compile(JSON.parse(tempDataSchema));
+
+      // const valid = validate(dataSchema);
+      // if (valid) {
       console.log(JSON.stringify('aa'));
-      tempFormDefinition.dataSchema = tempDataSchema;
+      setDataSchemaBounced(tempDataSchema);
       console.log(JSON.stringify(tempDataSchema) + 'tempUiSchemaxx');
       setError('');
-    } catch {
-      tempFormDefinition.dataSchema = '{}';
+      // } else {
+      //   setError(invalidDataMsg);
+      // }
+      //  console.log(JSON.stringify(valid) + '<valid');
+    } catch (e) {
+      setDataSchemaBounced('{}');
       console.log(JSON.stringify('bb'));
+      console.log(JSON.stringify(e.error));
+      console.log(JSON.stringify(e.message));
+      console.log(JSON.stringify(e));
       setError(invalidJsonMsg);
-    } finally {
-      console.log(JSON.stringify('cc'));
-      setDefinition(tempFormDefinition);
     }
   }, [debouncedRenderDataSchema]);
 
@@ -347,6 +375,39 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     .add('duplicate', 'name', duplicateNameCheck(definitionIds, 'definition'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
+
+  console.log(JSON.stringify(dataSchemaBounced) + 'dataSchemaBounced');
+  console.log(JSON.stringify(!definition.name) + '!definition.name  ');
+  console.log(JSON.stringify(editorErrors) + 'editorErrors');
+  console.log(JSON.stringify(validators.haveErrors()) + 'validators.haveErrors()');
+  console.log(
+    JSON.stringify(
+      !isFormUpdated(initialDefinition, {
+        ...definition,
+        uiSchema: JSON.parse(UiSchemaBounced),
+        dataSchema: JSON.parse(dataSchemaBounced),
+      })
+    ) + 'isFormUpdated'
+  );
+
+  console.log(dataSchemaBounced + '<   {JSON.parse(dataSchemaBounced)}');
+
+  console.log(
+    isFormUpdated(initialDefinition, {
+      ...definition,
+      uiSchema: JSON.parse(UiSchemaBounced),
+      dataSchema: JSON.parse(dataSchemaBounced),
+    }) + '<   {is form updated'
+  );
+  console.log(JSON.stringify(initialDefinition) + '<   {initialDefinition');
+  console.log(
+    JSON.stringify({
+      ...definition,
+      uiSchema: JSON.parse(UiSchemaBounced),
+      dataSchema: JSON.parse(dataSchemaBounced),
+    }) + '<   {finalDefinition'
+  );
+
   return (
     <FormEditor>
       {spinner ? (
@@ -355,21 +416,67 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
         </SpinnerModalPadding>
       ) : (
         <FlexRow>
-          <FormEditorContainer>
+          <NameDescriptionDataSchema>
             <FormEditorTitle>Form / Definition Editor</FormEditorTitle>
             <hr className="hr-resize" />
             {definition && <FormConfigDefinition definition={definition} />}
 
             <Tabs activeIndex={activeIndex} data-testid="form-editor-tabs">
               <Tab label="Data schema" data-testid="form-editor-tab">
-                <EditorPadding>
+                <GoAFormItem error={errors?.body ?? editorErrors?.dataSchema ?? null} label="">
+                  <EditorPadding>
+                    <Editor
+                      data-testid="form-schema"
+                      height={calcHeight - 550}
+                      value={tempDataSchema}
+                      onChange={(value) => {
+                        validators.remove('payloadSchema');
+                        setTempDataSchema(value);
+                      }}
+                      onValidate={(makers) => {
+                        if (makers.length === 0) {
+                          setEditorErrors({
+                            ...editorErrors,
+                            dataSchema: null,
+                          });
+                          return;
+                        }
+                        setEditorErrors({
+                          ...editorErrors,
+                          dataSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
+                        });
+                      }}
+                      language="json"
+                      options={{
+                        automaticLayout: true,
+                        scrollBeyondLastLine: false,
+                        tabSize: 2,
+                        minimap: { enabled: false },
+                      }}
+                    />
+                  </EditorPadding>
+                </GoAFormItem>
+              </Tab>
+              <Tab label="UI schema" data-testid="form-editor-tab">
+                <MonacoDivBody data-testid="templated-editor-body" style={{ height: `calc(72vh - ${getStyles})` }}>
                   <Editor
-                    data-testid="form-schema"
-                    height={calcHeight - 550}
-                    value={tempDataSchema}
+                    value={tempUiSchema}
+                    {...formEditorJsonConfig}
+                    onValidate={(makers) => {
+                      if (makers.length === 0) {
+                        setEditorErrors({
+                          ...editorErrors,
+                          uiSchema: null,
+                        });
+                        return;
+                      }
+                      setEditorErrors({
+                        ...editorErrors,
+                        uiSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
+                      });
+                    }}
                     onChange={(value) => {
-                      validators.remove('payloadSchema');
-                      setTempDataSchema(value);
+                      setTempUiSchema(value);
                     }}
                     language="json"
                     options={{
@@ -377,18 +484,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       scrollBeyondLastLine: false,
                       tabSize: 2,
                       minimap: { enabled: false },
-                    }}
-                  />
-                </EditorPadding>
-              </Tab>
-              <Tab label="UI schema" data-testid="form-editor-tab">
-                <MonacoDivBody data-testid="templated-editor-body" style={{ height: `calc(72vh - ${getStyles})` }}>
-                  <Editor
-                    language={'json'}
-                    value={tempUiSchema}
-                    {...formEditorJsonConfig}
-                    onChange={(value) => {
-                      setTempUiSchema(value);
                     }}
                   />
                 </MonacoDivBody>
@@ -404,6 +499,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 </ScrollPane>
               </Tab>
             </Tabs>
+
             <hr className="hr-resize-bottom" />
             <FinalButtonPadding>
               <GoAButtonGroup alignment="start">
@@ -411,7 +507,15 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   type="primary"
                   testId="form-save"
                   disabled={
-                    !isFormUpdated(initialDefinition, definition) || !definition.name || validators.haveErrors()
+                    !isFormUpdated(initialDefinition, {
+                      ...definition,
+                      uiSchema: JSON.parse(UiSchemaBounced),
+                      dataSchema: JSON.parse(dataSchemaBounced),
+                    }) ||
+                    !definition.name ||
+                    validators.haveErrors() ||
+                    editorErrors.dataSchema !== null ||
+                    editorErrors.uiSchema !== null
                   }
                   onClick={() => {
                     if (indicator.show === true) {
@@ -426,7 +530,13 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                         }
                       }
                       setSpinner(true);
-                      dispatch(updateFormDefinition(definition));
+                      dispatch(
+                        updateFormDefinition({
+                          ...definition,
+                          uiSchema: JSON.parse(UiSchemaBounced),
+                          dataSchema: JSON.parse(dataSchemaBounced),
+                        })
+                      );
 
                       close();
                     }
@@ -438,7 +548,13 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   testId="form-cancel"
                   type="secondary"
                   onClick={() => {
-                    if (isFormUpdated(initialDefinition, definition)) {
+                    if (
+                      isFormUpdated(initialDefinition, {
+                        ...definition,
+                        uiSchema: JSON.parse(UiSchemaBounced),
+                        dataSchema: JSON.parse(dataSchemaBounced),
+                      })
+                    ) {
                       setSaveModal({ visible: true, closeEditor: false });
                     } else {
                       validators.clear();
@@ -450,16 +566,18 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 </GoAButton>
               </GoAButtonGroup>
             </FinalButtonPadding>
-          </FormEditorContainer>
+          </NameDescriptionDataSchema>
+
           <FormPreviewContainer>
             <FormEditorTitle>Preview</FormEditorTitle>
             <hr className="hr-resize" />
             <div style={{ paddingTop: '2rem' }}>
               <GoAFormItem error={error} label="">
                 <JsonForms
-                  schema={JSON.parse(definition.dataSchema || '{}')}
-                  uischema={JSON.parse(definition.uiSchema || '{}')}
+                  schema={JSON.parse(dataSchemaBounced)}
+                  uischema={JSON.parse(UiSchemaBounced)}
                   data={data}
+                  validationMode={'NoValidation'}
                   renderers={materialRenderers}
                   cells={materialCells}
                   onChange={({ data }) => setData(data)}

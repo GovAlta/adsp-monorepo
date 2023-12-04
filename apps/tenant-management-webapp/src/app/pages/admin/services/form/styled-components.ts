@@ -382,6 +382,14 @@ export const FormTitle = styled.div`
   font-weight: var(--fw-regular);
 `;
 
+export const FormEditorContainer = styled.div`
+  width: 50%;
+`;
+export const FormPreviewContainer = styled.div`
+  width: 50%;
+  padding: 0 0 0 3rem;
+`;
+
 export const TabletMessage = styled.div`
   h1,
   h3 {
