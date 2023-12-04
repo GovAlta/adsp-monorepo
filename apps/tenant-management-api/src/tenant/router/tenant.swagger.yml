@@ -121,9 +121,21 @@ components:
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: "#/components/schemas/Tenant"
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Tenant"
+                page:
+                  type: object
+                  properties:
+                    after:
+                      type: string
+                    next:
+                      type: string
+                    size:
+                      type: number
       401:
         description: Unauthorized
   post:

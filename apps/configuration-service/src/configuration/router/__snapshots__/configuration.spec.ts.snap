@@ -96,6 +96,22 @@ Object {
 }
 `;
 
+exports[`router patchServiceConfigurationRevision can delete at path 1`] = `
+Object {
+  "latest": Object {
+    "configuration": Object {
+      "old": Object {
+        "nested": "old",
+      },
+    },
+    "lastUpdated": Any<Date>,
+    "revision": 1,
+  },
+  "name": "test-service",
+  "namespace": "platform",
+}
+`;
+
 exports[`router patchServiceConfigurationRevision can replace 1`] = `
 Object {
   "latest": Object {

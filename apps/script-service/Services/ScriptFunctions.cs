@@ -5,6 +5,8 @@ using Adsp.Sdk;
 using NLua;
 using RestSharp;
 using System.Net.Mime;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Adsp.Platform.ScriptService.Services;
 internal class ScriptFunctions : IScriptFunctions
@@ -116,6 +118,25 @@ internal class ScriptFunctions : IScriptFunctions
 
       return "success";
 
+    }
+    catch (AggregateException e)
+    {
+      return $"Failure: {e.Message}";
+    }
+  }
+
+
+  public virtual object? HttpGet(string url)
+  {
+
+    var token = _getToken().Result;
+    var request = new RestRequest(url, Method.Get);
+    request.AddHeader("Authorization", $"Bearer {token}");
+
+    try
+    {
+      var response = _client.GetAsync<IDictionary<string, object>>(request).Result;
+      return response;
     }
     catch (AggregateException e)
     {

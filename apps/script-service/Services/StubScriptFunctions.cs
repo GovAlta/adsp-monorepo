@@ -23,6 +23,11 @@ internal sealed class StubScriptFunctions : ScriptFunctions, IScriptFunctions
     return "Simulated success";
   }
 
+  public override object? HttpGet(string url)
+  {
+    return "simulated success";
+  }
+
   public override string? CreateTask(
     string queueNamespace, string queueName, string name,
     string? description = null, string? recordId = null, string? priority = null, LuaTable? context = null

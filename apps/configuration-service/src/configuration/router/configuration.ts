@@ -9,7 +9,7 @@ import {
 } from '@core-services/core-common';
 import { Request, RequestHandler, Router } from 'express';
 import { body, checkSchema, query } from 'express-validator';
-import { isEqual as isDeepEqual } from 'lodash';
+import { isEqual as isDeepEqual, unset, cloneDeep } from 'lodash';
 import { Logger } from 'winston';
 import { configurationUpdated, revisionCreated, activeRevisionSet } from '../events';
 import { ConfigurationEntity } from '../model';
@@ -156,9 +156,9 @@ export const patchConfigurationRevision =
           if (!request.property) {
             throw new InvalidOperationError(`Delete request must include 'property' property.`);
           }
-          update = { ...entity.latest?.configuration };
+          update = cloneDeep(entity.latest?.configuration || {});
           updateData = request.property;
-          delete update[request.property];
+          unset(update, request.property);
           break;
         default:
           throw new InvalidOperationError('Request does not include recognized operation.');

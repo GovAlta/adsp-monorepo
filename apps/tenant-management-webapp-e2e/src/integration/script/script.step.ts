@@ -195,11 +195,11 @@ When(
 );
 
 Then('the user views Edit script modal', function () {
-  scriptObj.editScriptModal().should('exist');
+  scriptObj.editScriptModal().should('be.visible');
 });
 
 When('the user enters {string} as name {string} as description in Edit script modal', function (name, description) {
-  scriptObj.editScriptModalNameField().shadow().find('input').clear().type(name, { delay: 100, force: true });
+  scriptObj.editScriptModalNameField().shadow().find('input').clear().type(name, { delay: 200, force: true });
   scriptObj.editScriptModalDescriptionField().shadow().find('.goa-textarea').clear().type(description, { force: true });
 });
 
@@ -214,6 +214,95 @@ When('the user enters {string} as lua script', function (script) {
 
 When('the user clicks Save button in Edit script modal', function () {
   cy.wait(1000); // Wait for the button to enable
-  scriptObj.editScriptModalSaveBtn().shadow().find('button').scrollIntoView().click({ force: true });
+  scriptObj.editScriptModalSaveButton().shadow().find('button').scrollIntoView().click({ force: true });
+  cy.wait(2000); // Wait for the save operation
+});
+
+When('the user selects {string} tab in script editor', function (tabName) {
+  scriptObj
+    .editorTab(tabName)
+    .invoke('attr', 'class')
+    .then((classAttr) => {
+      if (classAttr?.includes('active')) {
+        cy.log('Tab is already active');
+      } else {
+        scriptObj.editorTab(tabName).click();
+      }
+    });
+});
+
+When('the user enters {string} for roles in script editor', function (role) {
+  // Unselect all existing roles
+  //Looks like checkboxes can't handle fast clicking to uncheck multiple checkboxes and seems only the last checked checkboxes are unchecked.
+  //Didn't find a way to add a delay between clicks. Use 3 loops to make sure missed checked checkboxes are unchecked.
+  for (let j = 0; j < 3; j++) {
+    scriptObj
+      .editorRolesTabRoleTables()
+      .shadow()
+      .find('goa-checkbox')
+      .shadow()
+      .find('.goa-checkbox-container')
+      .then((elements) => {
+        for (let i = 0; i < elements.length; i++) {
+          if (elements[i].getAttribute('class')?.includes('--selected')) {
+            elements[i].click();
+            cy.wait(1000);
+          }
+        }
+      });
+  }
+
+  // Select roles or client roles
+  const roles = role.split(',');
+  for (let i = 0; i < roles.length; i++) {
+    if (roles[i].includes(':')) {
+      const clientRoleStringArray = roles[i].split(':');
+      let clientName = '';
+      for (let j = 0; j < clientRoleStringArray.length - 1; j++) {
+        if (j !== clientRoleStringArray.length - 2) {
+          clientName = clientName + clientRoleStringArray[j].trim() + ':';
+        } else {
+          clientName = clientName + clientRoleStringArray[j];
+        }
+      }
+      const roleName = clientRoleStringArray[clientRoleStringArray.length - 1];
+      scriptObj
+        .editorClientRolesTable(clientName)
+        .shadow()
+        .find('.role-name')
+        .contains(roleName)
+        .next()
+        .find('goa-checkbox')
+        .shadow()
+        .find('.goa-checkbox-container')
+        .scrollIntoView()
+        .click({ force: true });
+    } else {
+      scriptObj
+        .editorRolesTable()
+        .shadow()
+        .find('.role-name')
+        .contains(roles[i].trim())
+        .next()
+        .find('goa-checkbox')
+        .shadow()
+        .find('.goa-checkbox-container')
+        .scrollIntoView()
+        .click({ force: true });
+    }
+  }
+});
+
+Then('the user views the script editor for {string}, {string}', function (name, desc) {
+  scriptObj.editorNameField().invoke('text').should('contain', name);
+  scriptObj.editorDescriptionField().invoke('text').should('contain', desc);
+});
+
+When('the user clicks Edit button in script editor', function () {
+  scriptObj.editorEditButton().click();
+});
+
+When('the user clicks Save button in script editor', function () {
+  scriptObj.editorSaveBtn().shadow().find('button').scrollIntoView().click({ force: true });
   cy.wait(2000); // Wait for the save operation
 });

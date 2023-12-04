@@ -7,6 +7,7 @@ export interface TopicType {
   adminRoles: string[];
   readerRoles: string[];
   commenterRoles: string[];
+  securityClassification?: string;
 }
 
 export interface Topic {

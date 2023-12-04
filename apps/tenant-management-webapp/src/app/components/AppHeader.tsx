@@ -45,7 +45,6 @@ const ActionsMenu = (props: HeaderMenuProps): JSX.Element => {
             <div className="close">
               <img src={CloseIcon} width="24" alt="Close" />
             </div>
-            <Sidebar type="mobile" />
           </SidebarWrapper>
         </SidebarController>
       </div>
