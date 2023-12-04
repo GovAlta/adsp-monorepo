@@ -31,7 +31,7 @@ export const TopicsList = (): JSX.Element => {
   const [openAddTopic, setOpenAddTopic] = useState(false);
   const [modalType, setModalType] = useState('');
   const [selectedType, setSelectedType] = useState('');
-  //const [spinner, setSpinner] = useState(false);
+  const [spinner, setSpinner] = useState(false);
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -81,7 +81,7 @@ export const TopicsList = (): JSX.Element => {
               name="TopicTypes"
               value={selectedType}
               onChange={(name: string, selectedType: string) => {
-                // setSpinner(true);
+                setSpinner(true);
                 setSelectedType(selectedType);
               }}
               aria-label="select-comment-topictype-dropdown"
