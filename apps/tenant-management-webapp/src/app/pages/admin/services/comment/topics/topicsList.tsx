@@ -101,19 +101,21 @@ export const TopicsList = (): JSX.Element => {
           )}
         </GoAFormItem>
       )}
-      <div>
-        <ButtonPadding>
-          <GoAButton
-            testId="add-topic-btn"
-            onClick={() => {
-              setModalType('new');
-              setOpenAddTopic(true);
-            }}
-          >
-            Add topic
-          </GoAButton>
-        </ButtonPadding>
-      </div>
+      {selectedType && (
+        <div>
+          <ButtonPadding>
+            <GoAButton
+              testId="add-topic-btn"
+              onClick={() => {
+                setModalType('new');
+                setOpenAddTopic(true);
+              }}
+            >
+              Add topic
+            </GoAButton>
+          </ButtonPadding>
+        </div>
+      )}
       {!next && indicator.show && (
         <ProgressWrapper>
           <GoACircularProgress visible={indicator.show} size="small" />
