@@ -9,7 +9,8 @@ export interface TopicTableProps {
   topics: TopicItem[];
   onDeleteTopic?: (Topic) => void;
 }
-export const TopicListTable: FunctionComponent<TopicTableProps> = ({ topics, onDeleteTopic }) => {
+
+export const TopicListTable = ({ topics, onDeleteTopic }: TopicTableProps): JSX.Element => {
   const newTopics = topics ? (JSON.parse(JSON.stringify(topics)) as Record<string, TopicItem[]>) : [];
 
   return (

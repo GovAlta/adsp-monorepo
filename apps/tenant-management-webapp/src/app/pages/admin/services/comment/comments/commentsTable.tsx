@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useState } from 'react';
-import { Comment, TopicItem } from '@store/comment/model';
+import { TopicItem } from '@store/comment/model';
 
 import {
   HeaderFont,
