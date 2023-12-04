@@ -65,6 +65,7 @@ export function* fetchConfig(): SagaIterator {
           chatServiceApiUrl: data.serviceUrls.chatServiceApiUrl,
           scriptServiceApiUrl: entryMapping['script-service'],
           taskServiceApiUrl: entryMapping['task-service'],
+          commentServiceApiUrl: entryMapping['comment-service'],
         },
         featureFlags: data.featureFlags,
       };

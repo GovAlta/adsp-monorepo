@@ -2,6 +2,7 @@ import React, { FunctionComponent, useState } from 'react';
 import { Aside, Main, Page } from '@components/Html';
 import { Tab, Tabs } from '@components/Tabs';
 import { CommentOverview } from './overview';
+import { TopicsList } from './topics/topicsList';
 import { CommentTopicTypes } from './topicTypes/topicTypes';
 import { HeadingDiv } from './styled-components';
 import { useSelector } from 'react-redux';
@@ -39,6 +40,9 @@ export const Comment: FunctionComponent = () => {
           </Tab>
           <Tab label="Topic types" data-testid="comment-topic-types">
             <CommentTopicTypes openAddTopicTypes={openAddTopicTypes} />
+          </Tab>
+          <Tab label="Comments" data-testid="comments-tab">
+            <TopicsList />
           </Tab>
         </Tabs>
       </Main>
