@@ -53,7 +53,7 @@ When('the user clicks Save button in Add topic type modal', function () {
 
 Then('the user views topic type editor for {string}', function (name) {
   cy.viewport(1920, 1080);
-  cy.wait(1000);
+  cy.wait(4000);
   commentObj.editorTopicTypeNameValue().should('have.text', name);
 });
 
@@ -74,6 +74,7 @@ Then('the user views {string} in Select a security classification dropdown', fun
 When(
   'the user enters {string} as classification, {string} as admin roles, {string} as commenter roles, {string} as reader roles',
   function (classification, adminRole, commenterRole, readerRole) {
+    cy.wait(1000); // Test failed occassionally due to not finding the classification dropdown. Added a second wait.
     if (classification !== 'skip') {
       commentObj
         .editorClassificationDropdown()

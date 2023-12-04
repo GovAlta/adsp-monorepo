@@ -8,6 +8,7 @@ export interface FormDefinition {
   assessorRoles: string[];
   formDraftUrlTemplate: string;
   anonymousApply: boolean;
+  uiSchema?: Record<string, unknown>;
 }
 
 export const defaultFormDefinition: FormDefinition = {
@@ -15,6 +16,7 @@ export const defaultFormDefinition: FormDefinition = {
   name: '',
   description: '',
   dataSchema: {},
+  uiSchema: {},
   applicantRoles: [],
   clerkRoles: [],
   assessorRoles: [],

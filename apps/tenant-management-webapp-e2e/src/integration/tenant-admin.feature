@@ -122,7 +122,7 @@ Feature: Tenant admin
     #//First create an event definition under events it will be used to verify the event log
     When the user selects the "Event" menu item
     And the user selects "Definitions" tab for "Event"
-    And the user clicks Add definition button
+    And the user clicks Add definition button on event definitions page
     Then the user views Add definition dialog
     When the user enters "Autotest" in Namespace, "Autotest-eventDefinition" in Name, "event log testing" in Description
     And the user clicks Save button on Definition modal

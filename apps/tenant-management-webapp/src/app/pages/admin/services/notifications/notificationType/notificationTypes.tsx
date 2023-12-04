@@ -1,16 +1,13 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton, GoAContainer } from '@abgov/react-components-new';
-
 import { Grid, GridItem } from '@components/Grid';
-import { NotificationTypeModalForm } from './addEditNotification/addEditNotification';
+import { NotificationTypeModalForm } from '../addEditNotification/addEditNotification';
 import { EventModalForm } from './editEvent';
 import { IndicatorWithDelay } from '@components/Indicator';
 import * as handlebars from 'handlebars';
 import { DeleteModal } from '@components/DeleteModal';
-
 import { GoAIcon } from '@abgov/react-components/experimental';
-
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
 import { hasXSS } from '@lib/sanitize';
@@ -29,19 +26,12 @@ import { RootState } from '@store/index';
 
 import { EditIcon } from '@components/icons/EditIcon';
 
-import {
-  PreviewTemplateContainer,
-  NotificationTemplateEditorContainer,
-  Modal,
-  BodyGlobalStyles,
-  ModalContent,
-} from './previewEditor/styled-components';
-import { TemplateEditor } from './previewEditor/TemplateEditor';
-import { PreviewTemplate } from './previewEditor/PreviewTemplate';
+import { TemplateEditor } from '../previewEditor/TemplateEditor';
+import { PreviewTemplate } from '../previewEditor/PreviewTemplate';
 import { dynamicGeneratePayload } from '@lib/dynamicPlaceHolder';
 import { convertToSuggestion } from '@lib/autoComplete';
 import { useDebounce } from '@lib/useDebounce';
-import { subscriberAppUrlSelector } from './selectors';
+import { subscriberAppUrlSelector } from '../selectors';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 import {
@@ -52,7 +42,12 @@ import {
   MaxHeight,
   NotificationStyles,
   DescriptionText,
-} from './styled-components';
+  PreviewTemplateContainer,
+  NotificationTemplateEditorContainer,
+  Modal,
+  BodyGlobalStyles,
+  ModalContent,
+} from '../styled-components';
 import { FetchRealmRoles } from '@store/tenant/actions';
 
 const emptyNotificationType: NotificationItem = {
@@ -66,6 +61,7 @@ const emptyNotificationType: NotificationItem = {
   id: null,
   publicSubscribe: false,
   customized: false,
+  address: null,
 };
 
 const emptyEvent: EventItem = {
@@ -129,7 +125,7 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
 
   const getEventSuggestion = () => {
     if (eventDef) {
-      return convertToSuggestion(eventDef);
+      return convertToSuggestion(eventDef, selectedType?.address !== null || selectedType?.address?.length > 0);
     }
     return [];
   };
@@ -720,7 +716,6 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
           type.subscriberRoles = type.subscriberRoles || [];
           type.events = type.events || [];
           type.publicSubscribe = type.publicSubscribe || false;
-
           dispatch(UpdateNotificationTypeService(type));
           reset();
         }}

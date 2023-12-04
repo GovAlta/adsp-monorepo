@@ -5,7 +5,7 @@ import * as passport from 'passport';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import * as helmet from 'helmet';
-import { AdspId, initializePlatform } from '@abgov/adsp-service-sdk';
+import { AdspId, ServiceMetricsValueDefinition, initializePlatform } from '@abgov/adsp-service-sdk';
 import type { User } from '@abgov/adsp-service-sdk';
 import { createLogger, createErrorHandler } from '@core-services/core-common';
 import { environment } from './environments/environment';
@@ -29,7 +29,7 @@ const initializeApp = async (): Promise<express.Application> => {
 
   const serviceId = AdspId.parse(environment.CLIENT_ID);
   const accessServiceUrl = new URL(environment.KEYCLOAK_ROOT_URL);
-  const { coreStrategy, tenantStrategy, healthCheck, traceHandler } = await initializePlatform(
+  const { coreStrategy, tenantStrategy, healthCheck, metricsHandler, traceHandler } = await initializePlatform(
     {
       serviceId,
       displayName: 'Verify service',
@@ -47,6 +47,7 @@ const initializeApp = async (): Promise<express.Application> => {
       clientSecret: environment.CLIENT_SECRET,
       accessServiceUrl,
       directoryUrl: new URL(environment.DIRECTORY_URL),
+      values: [ServiceMetricsValueDefinition],
     },
     { logger }
   );
@@ -65,7 +66,7 @@ const initializeApp = async (): Promise<express.Application> => {
   app.use(passport.initialize());
   app.use(traceHandler);
 
-  app.use('/verify', passport.authenticate(['core', 'tenant'], { session: false }));
+  app.use('/verify', metricsHandler, passport.authenticate(['core', 'tenant'], { session: false }));
 
   const repository = createRedisRepository(environment);
   applyVerifyMiddleware(app, { logger, repository });

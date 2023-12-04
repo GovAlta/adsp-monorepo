@@ -13,6 +13,7 @@ export const configurationSchema = {
         assessorRoles: { type: 'array', items: { type: 'string' } },
         clerkRoles: { type: 'array', items: { type: 'string' } },
         dataSchema: { type: 'object', $ref: 'http://json-schema.org/draft-07/schema#' },
+        uiSchema: { type: 'object' },
       },
       required: ['id', 'name', 'formDraftUrlTemplate', 'anonymousApply', 'applicantRoles', 'assessorRoles'],
     },

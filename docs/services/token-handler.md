@@ -77,18 +77,21 @@ There are some special considerations for local development workflows when using
     "secure": true,
     "changeOrigin": true,
     "pathRewrite": { "^/auth": "" },
+    "headers": {
+      "X-ADSP-TENANT": "<Tenant URN e.g. urn:ads:platform:tenant-service:v2:/tenants/...>"
+    }
   },
   "/sessions": {
     "target": "<token handler URL>/token-handler/v1/sessions",
     "secure": true,
     "changeOrigin": true,
-    "pathRewrite": { "^/sessions": "" },
+    "pathRewrite": { "^/sessions": "" }
   },
   "/api": {
     "target": "<token handler URL>/token-handler/v1/targets/my-upstream-api",
     "secure": true,
     "changeOrigin": true,
-    "pathRewrite": { "^/api": "" },
+    "pathRewrite": { "^/api": "" }
   }
 }
 ```
