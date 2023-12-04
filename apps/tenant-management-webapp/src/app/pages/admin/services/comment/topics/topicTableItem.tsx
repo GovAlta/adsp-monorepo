@@ -17,9 +17,7 @@ export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
 }: TopicTableItemProps) => {
   const [showDetails, setShowDetails] = useState(false);
 
-  const onDeleteComment = (comment) => {
-    console.log(comment);
-  };
+  const onDeleteComment = (comment) => {};
 
   return (
     <>

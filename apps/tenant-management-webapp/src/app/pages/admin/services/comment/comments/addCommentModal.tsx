@@ -1,11 +1,11 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { useState } from 'react';
 
 import { GoAButton, GoAButtonGroup, GoAFormItem, GoAIcon, GoAModal, GoATextArea } from '@abgov/react-components-new';
-import { useDispatch, useSelector } from 'react-redux';
+
 import { Comment, TopicItem, defaultComment } from '@store/comment/model';
 import { badCharsCheck, wordMaxLengthCheck, isNotEmptyCheck, Validator } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
-import { RootState } from '@store/index';
+
 import { DescriptionItem, HelpText, ErrorMsg } from '../styled-components';
 interface TopicModalProps {
   topic: TopicItem;
@@ -15,13 +15,7 @@ interface TopicModalProps {
   onSave: (comment: Comment) => void;
 }
 
-export const AddCommentModal: FunctionComponent<TopicModalProps> = ({
-  topic,
-  open,
-  type,
-  onCancel,
-  onSave,
-}: TopicModalProps): JSX.Element => {
+export const AddCommentModal = ({ topic, open, type, onCancel, onSave }: TopicModalProps): JSX.Element => {
   const isNew = type === 'new';
 
   const [comment, setComment] = useState<Comment>(defaultComment);
@@ -71,7 +65,7 @@ export const AddCommentModal: FunctionComponent<TopicModalProps> = ({
             testId="comment-modal-cancel"
             onClick={() => {
               validators.clear();
-              // setComment(comment);
+
               onCancel();
             }}
           >

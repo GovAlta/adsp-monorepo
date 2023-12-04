@@ -12,12 +12,12 @@ import {
   UPDATE_COMMENT_TOPIC_TYPE_ACTION,
   DELETE_COMMENT_TOPIC_TYPE_ACTION,
   DeleteCommentTopicTypeAction,
-  ADD_TOPIC_REQUEST,
-  FETCH_TOPICS,
-  FETCH_COMMENTS,
-  ADD_COMMENT_REQUEST,
-  DELETE_TOPIC_REQUEST,
-  DELETE_COMMENT_REQUEST,
+  CREATE_COMMENT_TOPIC_ACTION,
+  FETCH_COMMENT_TOPICS_ACTION,
+  FETCH_COMMENT_TOPIC_COMMENTS,
+  CREAT_COMMENT_COMMENTS_ACTION,
+  DELETE_COMMENT_TOPIC_ACTION,
+  DELETE_COMMENT_COMMENTS_ACTION,
   addTopicSuccess,
   setTopics,
   addCommentSuccess,
@@ -214,11 +214,11 @@ export function* watchCommentSagas(): Generator {
   yield takeEvery(FETCH_COMMENT_TOPIC_TYPES_ACTION, fetchCommentTopicTypess);
   yield takeEvery(UPDATE_COMMENT_TOPIC_TYPE_ACTION, updateCommentTopicTypes);
   yield takeEvery(DELETE_COMMENT_TOPIC_TYPE_ACTION, deleteCommentTopicTypes);
-  yield takeEvery(ADD_TOPIC_REQUEST, addTopicSaga);
-  yield takeEvery(FETCH_TOPICS, fetchTopicsSaga);
-  yield takeEvery(ADD_COMMENT_REQUEST, addCommentSaga);
-  yield takeEvery(FETCH_COMMENTS, fetchCommentSaga);
-  yield takeEvery(FETCH_COMMENTS, addCommentSaga);
-  yield takeEvery(DELETE_TOPIC_REQUEST, deleteTopicSaga);
-  yield takeEvery(DELETE_COMMENT_REQUEST, deleteCommentSaga);
+  yield takeEvery(CREATE_COMMENT_TOPIC_ACTION, addTopicSaga);
+  yield takeEvery(FETCH_COMMENT_TOPICS_ACTION, fetchTopicsSaga);
+  yield takeEvery(CREAT_COMMENT_COMMENTS_ACTION, addCommentSaga);
+  yield takeEvery(FETCH_COMMENT_TOPIC_COMMENTS, fetchCommentSaga);
+  // yield takeEvery(FETCH_COMMENTS, addCommentSaga);
+  yield takeEvery(DELETE_COMMENT_TOPIC_ACTION, deleteTopicSaga);
+  yield takeEvery(DELETE_COMMENT_COMMENTS_ACTION, deleteCommentSaga);
 }

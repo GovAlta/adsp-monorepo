@@ -2,15 +2,15 @@ import {
   FETCH_COMMENT_TOPIC_TYPES_SUCCESS_ACTION,
   UPDATE_COMMENT_TOPIC_TYPE_SUCCESS_ACTION,
   DELETE_COMMENT_TOPIC_TYPE_SUCCESS_ACTION,
-  ADD_TOPIC_SUCCESS,
-  SET_TOPICS,
-  ADD_COMMENT_SUCCESS,
-  DELETE_TOPIC_SUCCESS,
-  DELETE_COMMENT_SUCCESS,
+  CREATE_COMMENT_TOPIC_SUCCESS_ACTION,
+  SET_COMMENT_TOPICS_ACTION,
+  CREAT_COMMENT_COMMENTS_SUCCESS,
+  DELETE_COMMENT_TOPIC_SUCCESS,
+  DELETE_COMMENT_COMMENTS_SUCCESS,
   CommentActionTypes,
 } from './action';
 
-import { CommentState, CommentTopicTypes, Topic, Comment } from './model';
+import { CommentState } from './model';
 
 export const defaultState: CommentState = {
   topicTypes: {},
@@ -42,13 +42,13 @@ export default function (state: CommentState = defaultState, action: CommentActi
         topicTypes: { ...state.topicTypes },
       };
 
-    case ADD_TOPIC_SUCCESS:
+    case CREATE_COMMENT_TOPIC_SUCCESS_ACTION:
       return {
         ...state,
         topics: { ...state.topics, ...action.payload },
       };
 
-    case SET_TOPICS:
+    case SET_COMMENT_TOPICS_ACTION:
       return {
         ...state,
         topics:
@@ -60,19 +60,18 @@ export default function (state: CommentState = defaultState, action: CommentActi
         nextEntries: action.next,
       };
 
-    case ADD_COMMENT_SUCCESS:
+    case CREAT_COMMENT_COMMENTS_SUCCESS:
       return {
         ...state,
         comments: { ...state.comments },
       };
 
-    case DELETE_TOPIC_SUCCESS:
+    case DELETE_COMMENT_TOPIC_SUCCESS:
       return {
         ...state,
-        //topics: state.topics.filter((topic) => topic.resultsid !== action.payload),
       };
 
-    case DELETE_COMMENT_SUCCESS:
+    case DELETE_COMMENT_COMMENTS_SUCCESS:
       // eslint-disable-next-line no-case-declarations
       const filteredComments = state.comments.filter((comment) => comment.id !== parseInt(action.payload));
       return {
