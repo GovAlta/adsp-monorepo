@@ -70,6 +70,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
   useEffect(() => {
     setIsNotifyAddress(type?.address && type.address.length > 0);
   }, [type]);
+
   const roleNames = realmRoles
     ? realmRoles.map((role) => {
         return role.name;
@@ -139,9 +140,8 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                   testId="manage-subscriptions-checkbox"
                   value="manageSubscribe"
                   ariaLabel={`manage-subscriptions-checkbox`}
-                >
-                  {channel.title}
-                </GoACheckbox>
+                  text={channel.title}
+                />
               </div>
             </div>
           );
@@ -149,14 +149,23 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
       </div>
     );
   };
-
+  const radioValue = () => {
+    const value = type.channels && type.channels.length > 1 ? type.channels[0] : 'email';
+    // eslint-disable-next-line array-callback-return
+    channels.map((channel) => {
+      if (channel.value === value) {
+        return channel.title;
+      }
+    });
+    return channels[0].title;
+  };
   const selectNotificationsByAddress = () => {
     return (
       <GoARadioGroup
         name="channel"
         testId="notification-channel-radio-group"
         ariaLabel="notification-channel-radio-group"
-        value={type.channels && type.channels.length > 1 ? type.channels[0] : 'email'}
+        value={radioValue()}
         onChange={(name, channel) => {
           const channels = type.channels || ['email'];
           const checked = channels.findIndex((ch) => ch === channel);
@@ -171,7 +180,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
         orientation="horizontal"
       >
         {channels?.map((channel) => (
-          <GoARadioItem name="channel" value={channel.value} />
+          <GoARadioItem name="channel" value={channel.title} />
         ))}
       </GoARadioGroup>
     );
@@ -203,6 +212,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               onClick={() => {
                 setType(initialValue);
                 validators.clear();
+                setIsNotifyAddress(false);
                 onCancel();
               }}
             >
@@ -328,7 +338,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
             name="notify"
             testId="select-type-notification-radio-group"
             ariaLabel="select-type-notification-radio-group"
-            value={type?.address && type?.address.length > 0 ? 'Notify address' : 'Notify subscribers'}
+            value={isNotifyAddress ? 'Notify address' : 'Notify subscribers'}
             onChange={(_, value) => {
               setIsNotifyAddress(!isNotifyAddress);
             }}
