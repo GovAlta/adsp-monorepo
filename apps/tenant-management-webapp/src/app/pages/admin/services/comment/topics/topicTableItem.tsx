@@ -17,8 +17,6 @@ export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
 }: TopicTableItemProps) => {
   const [showDetails, setShowDetails] = useState(false);
 
-  const onDeleteComment = (comment) => {};
-
   return (
     <>
       <tr>
@@ -52,9 +50,6 @@ export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
             <MoreDetails>
               <p>Topic description</p>
               <span>{topic.description}</span>
-              <div>
-                <CommentListTable topic={topic} onDeleteComment={onDeleteComment} />
-              </div>
             </MoreDetails>
           </td>
         </tr>
