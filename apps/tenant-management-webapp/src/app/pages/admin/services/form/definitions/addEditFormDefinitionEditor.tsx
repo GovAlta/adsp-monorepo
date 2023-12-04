@@ -48,28 +48,10 @@ import { GoAButtonGroup, GoAButton, GoAFormItem } from '@abgov/react-components-
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
-import { FormEditorTab } from './style-components';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
-  // console.log(JSON.stringify(prev) + '<prev');
-  // console.log(JSON.stringify(next) + '<next');
-  // console.log(JSON.stringify(prev?.dataSchema !== next?.dataSchema) + '< prev?.dataSchema !== next?.dataSchema ');
-  // console.log(JSON.stringify(prev?.uiSchema !== next?.uiSchema) + '< prev?.uiSchema !== next?.uiSchema');
-  // console.log(JSON.stringify(prev?.dataSchema) + '<  prev?.dataSchema');
-  // console.log(JSON.stringify(next?.dataSchema) + '<   next?.dataSchema');
   const tempPrev = JSON.parse(JSON.stringify(prev));
   const tempNext = JSON.parse(JSON.stringify(next));
-
-  console.log(JSON.stringify(tempPrev?.applicantRoles) + '<---->' + JSON.stringify(tempNext?.applicantRoles));
-  console.log(JSON.stringify(tempPrev?.assessorRoles) + '<---->' + JSON.stringify(tempNext?.assessorRoles));
-  console.log(JSON.stringify(tempPrev?.clerkRoles) + '<---->' + JSON.stringify(tempNext?.clerkRoles));
-  console.log(JSON.stringify(tempPrev?.dataSchema) + '<---->' + JSON.stringify(tempNext?.dataSchema));
-  console.log(JSON.stringify(tempPrev?.uiSchema) + '<---->' + JSON.stringify(tempNext?.uiSchema));
-  console.log(tempPrev?.applicantRoles != tempNext?.applicantRoles);
-  console.log(tempPrev?.assessorRoles != tempNext?.assessorRoles);
-  console.log(tempPrev?.clerkRoles != tempNext?.clerkRoles);
-  console.log(tempPrev?.dataSchema != tempNext?.dataSchema);
-  console.log(tempPrev?.uiSchema != tempNext?.uiSchema);
 
   return (
     JSON.stringify(tempPrev?.applicantRoles) != JSON.stringify(tempNext?.applicantRoles) ||
@@ -140,7 +122,6 @@ const uiSchema = {
 };
 
 const invalidJsonMsg = 'Invalid JSON syntax';
-const invalidDataMsg = 'Data schema invalid';
 
 export function AddEditFormDefinitionEditor(): JSX.Element {
   const [definition, setDefinition] = useState<FormDefinition>(defaultFormDefinition);
@@ -150,7 +131,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify(dataSchema, null, 2));
   const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify(uiSchema, null, 2));
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify(dataSchema, null, 2));
-  //const [tempUiSchemaPreview, setTempUiSchemaPreview] = useState<string>(JSON.stringify(uiSchema, null, 2));
   const [data, setData] = useState('');
   const [error, setError] = useState('');
   const [spinner, setSpinner] = useState<boolean>(false);
@@ -218,41 +198,22 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   useEffect(() => {
     try {
-      console.log(JSON.stringify(tempUiSchema) + '<tempUiSchema0');
       JSON.parse(tempUiSchema);
-      console.log(JSON.stringify('a'));
       setTempUiSchemaBounced(tempUiSchema);
-      console.log(JSON.stringify(tempUiSchema) + 'tempUiSchema');
       setError('');
     } catch {
       setTempUiSchemaBounced('{}');
-      console.log(JSON.stringify('b'));
       setError(invalidJsonMsg);
     }
   }, [debouncedRenderUISchema]);
 
   useEffect(() => {
     try {
-      console.log(JSON.stringify(tempDataSchema) + '<tempUiSchema0xx');
       JSON.parse(tempDataSchema);
-      // const validate = ajv.compile(JSON.parse(tempDataSchema));
-
-      // const valid = validate(dataSchema);
-      // if (valid) {
-      console.log(JSON.stringify('aa'));
       setDataSchemaBounced(tempDataSchema);
-      console.log(JSON.stringify(tempDataSchema) + 'tempUiSchemaxx');
       setError('');
-      // } else {
-      //   setError(invalidDataMsg);
-      // }
-      //  console.log(JSON.stringify(valid) + '<valid');
     } catch (e) {
       setDataSchemaBounced('{}');
-      console.log(JSON.stringify('bb'));
-      console.log(JSON.stringify(e.error));
-      console.log(JSON.stringify(e.message));
-      console.log(JSON.stringify(e));
       setError(invalidJsonMsg);
     }
   }, [debouncedRenderDataSchema]);
@@ -363,8 +324,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const getStyles = latestNotification && !latestNotification.disabled ? '410px' : '310px';
 
-  console.log(JSON.stringify(definition) + 'definitiondefinition');
-
   const { errors, validators } = useValidators(
     'name',
     'name',
@@ -375,38 +334,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
     .add('duplicate', 'name', duplicateNameCheck(definitionIds, 'definition'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
-
-  console.log(JSON.stringify(dataSchemaBounced) + 'dataSchemaBounced');
-  console.log(JSON.stringify(!definition.name) + '!definition.name  ');
-  console.log(JSON.stringify(editorErrors) + 'editorErrors');
-  console.log(JSON.stringify(validators.haveErrors()) + 'validators.haveErrors()');
-  console.log(
-    JSON.stringify(
-      !isFormUpdated(initialDefinition, {
-        ...definition,
-        uiSchema: JSON.parse(UiSchemaBounced),
-        dataSchema: JSON.parse(dataSchemaBounced),
-      })
-    ) + 'isFormUpdated'
-  );
-
-  console.log(dataSchemaBounced + '<   {JSON.parse(dataSchemaBounced)}');
-
-  console.log(
-    isFormUpdated(initialDefinition, {
-      ...definition,
-      uiSchema: JSON.parse(UiSchemaBounced),
-      dataSchema: JSON.parse(dataSchemaBounced),
-    }) + '<   {is form updated'
-  );
-  console.log(JSON.stringify(initialDefinition) + '<   {initialDefinition');
-  console.log(
-    JSON.stringify({
-      ...definition,
-      uiSchema: JSON.parse(UiSchemaBounced),
-      dataSchema: JSON.parse(dataSchemaBounced),
-    }) + '<   {finalDefinition'
-  );
 
   return (
     <FormEditor>
