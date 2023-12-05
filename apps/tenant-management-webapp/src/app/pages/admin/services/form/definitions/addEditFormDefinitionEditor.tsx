@@ -11,12 +11,7 @@ import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
-
 import { useDebounce } from '@lib/useDebounce';
-const Ajv = require('ajv');
-
-const ajv = new Ajv();
-
 import {
   SpinnerModalPadding,
   TextLoadingIndicator,
@@ -28,16 +23,13 @@ import {
   FormEditorTitle,
   FormEditor,
   ScrollPane,
-  MonacoDivBody,
+  MonacoDivTabBody,
 } from '../styled-components';
 import { GoAPageLoader } from '@abgov/react-components';
-
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
 import { updateFormDefinition } from '@store/form/action';
-
 import { createSelector } from 'reselect';
-
 import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
@@ -54,11 +46,11 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempNext = JSON.parse(JSON.stringify(next));
 
   return (
-    JSON.stringify(tempPrev?.applicantRoles) != JSON.stringify(tempNext?.applicantRoles) ||
-    JSON.stringify(tempPrev?.assessorRoles) != JSON.stringify(tempNext?.assessorRoles) ||
-    JSON.stringify(tempPrev?.clerkRoles) != JSON.stringify(tempNext?.clerkRoles) ||
-    JSON.stringify(tempPrev?.dataSchema) != JSON.stringify(tempNext?.dataSchema) ||
-    JSON.stringify(tempPrev?.uiSchema) != JSON.stringify(tempNext?.uiSchema)
+    JSON.stringify(tempPrev?.applicantRoles) !== JSON.stringify(tempNext?.applicantRoles) ||
+    JSON.stringify(tempPrev?.assessorRoles) !== JSON.stringify(tempNext?.assessorRoles) ||
+    JSON.stringify(tempPrev?.clerkRoles) !== JSON.stringify(tempNext?.clerkRoles) ||
+    JSON.stringify(tempPrev?.dataSchema) !== JSON.stringify(tempNext?.dataSchema) ||
+    JSON.stringify(tempPrev?.uiSchema) !== JSON.stringify(tempNext?.uiSchema)
   );
 };
 
@@ -149,7 +141,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const { height } = useWindowDimensions();
   const calcHeight = latestNotification && !latestNotification.disabled ? height - 50 : height;
-  const EditorHeight = calcHeight - 600;
+  const EditorHeight = calcHeight - 570;
   const [editorErrors, setEditorErrors] = useState({ uiSchema: null, dataSchema: null });
 
   useEffect(() => {
@@ -353,8 +345,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 <GoAFormItem error={errors?.body ?? editorErrors?.dataSchema ?? null} label="">
                   <EditorPadding>
                     <Editor
-                      data-testid="form-schema"
-                      height={calcHeight - 550}
+                      data-testid="form-data-schema"
+                      height={EditorHeight}
                       value={tempDataSchema}
                       onChange={(value) => {
                         validators.remove('payloadSchema');
@@ -385,45 +377,51 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 </GoAFormItem>
               </Tab>
               <Tab label="UI schema" data-testid="form-editor-tab">
-                <MonacoDivBody data-testid="templated-editor-body" style={{ height: `calc(72vh - ${getStyles})` }}>
-                  <Editor
-                    value={tempUiSchema}
-                    {...formEditorJsonConfig}
-                    onValidate={(makers) => {
-                      if (makers.length === 0) {
+                <GoAFormItem error={errors?.body ?? editorErrors?.uiSchema ?? null} label="">
+                  <EditorPadding>
+                    <Editor
+                      data-testid="form-ui-schema"
+                      height={EditorHeight}
+                      value={tempUiSchema}
+                      {...formEditorJsonConfig}
+                      onValidate={(makers) => {
+                        if (makers.length === 0) {
+                          setEditorErrors({
+                            ...editorErrors,
+                            dataSchema: null,
+                          });
+                          return;
+                        }
                         setEditorErrors({
                           ...editorErrors,
-                          uiSchema: null,
+                          dataSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
                         });
-                        return;
-                      }
-                      setEditorErrors({
-                        ...editorErrors,
-                        uiSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
-                      });
-                    }}
-                    onChange={(value) => {
-                      setTempUiSchema(value);
-                    }}
-                    language="json"
-                    options={{
-                      automaticLayout: true,
-                      scrollBeyondLastLine: false,
-                      tabSize: 2,
-                      minimap: { enabled: false },
-                    }}
-                  />
-                </MonacoDivBody>
+                      }}
+                      onChange={(value) => {
+                        setTempUiSchema(value);
+                      }}
+                      language="json"
+                      options={{
+                        automaticLayout: true,
+                        scrollBeyondLastLine: false,
+                        tabSize: 2,
+                        minimap: { enabled: false },
+                      }}
+                    />
+                  </EditorPadding>
+                </GoAFormItem>
               </Tab>
               <Tab label="Roles" data-testid="form-roles-tab">
-                <ScrollPane>
-                  {elements.map((e, key) => {
-                    return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
-                  })}
-                  {fetchKeycloakRolesState === ActionState.inProcess && (
-                    <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
-                  )}
-                </ScrollPane>
+                <MonacoDivTabBody data-testid="roles-editor-body" style={{ height: EditorHeight - 5 }}>
+                  <ScrollPane>
+                    {elements.map((e, key) => {
+                      return <ClientRole roleNames={e.roleNames} key={key} clientId={e.clientId} />;
+                    })}
+                    {fetchKeycloakRolesState === ActionState.inProcess && (
+                      <TextLoadingIndicator>Loading roles from access service</TextLoadingIndicator>
+                    )}
+                  </ScrollPane>
+                </MonacoDivTabBody>
               </Tab>
             </Tabs>
 

@@ -296,13 +296,13 @@ export const MonacoDiv = styled.div`
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
 `;
-export const MonacoDivBody = styled.div`
+
+export const MonacoDivTabBody = styled.div`
   display: flex;
-  border: 1px solid var(--color-gray-700);
   border-radius: 3px;
   padding: 0.15rem 0.15rem;
-  min-height: 2rem;
-  margin: 0.5rem 0 0 0;
+  min-height: 65px;
+  margin-bottom: 1rem;
 `;
 
 export const EditTemplateActions = styled.div`
@@ -387,7 +387,6 @@ export const FormEditorContainer = styled.div`
 `;
 export const FormPreviewContainer = styled.div`
   width: 50%;
-  padding: 0 0 0 3rem;
 `;
 
 export const TabletMessage = styled.div`
