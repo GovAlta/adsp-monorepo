@@ -51,6 +51,7 @@ export const TriggerEventModal = ({
       setTriggerEvent({
         ...triggerEvent,
         name: initialValue.name,
+        namespace: initialValue.namespace,
         criteria: {
           ...triggerEvent.criteria,
           context: JSON.stringify(initialValue?.criteria?.context, null, 2),
@@ -76,14 +77,17 @@ export const TriggerEventModal = ({
 
     //For Edits, add the current selection that is being looked at.
     if (initialValue && initialValue?.name !== '') {
-      filtered.push(initialValue?.name);
+      filtered.push(`${initialValue.namespace}:${initialValue?.name}`);
     }
     return filtered;
   };
 
   const eventTriggerNames = initialScript?.triggerEvents?.map((ev) => {
-    return ev.name;
+    return `${ev.namespace}:${ev.name}`;
   });
+
+  console.log('eventNames', eventNames);
+  console.log('eventTriggerNames', eventTriggerNames);
 
   const filteredEventNames = [...new Set(filterArray(eventNames, eventTriggerNames || []))] as string[];
 
@@ -154,11 +158,10 @@ export const TriggerEventModal = ({
             testId="script-trigger-event-modal-save"
             disabled={isSaveButtonDisabled()}
             onClick={() => {
-              const namespace = triggerEvent.name?.split(':')[0];
               const criteria: ScriptItemTriggerEventCriteria = {
                 context: JSON.parse(triggerEvent.criteria?.context),
               };
-              onSave({ namespace, name: triggerEvent.name, criteria });
+              onSave({ namespace: triggerEvent.namespace, name: triggerEvent.name, criteria });
             }}
           >
             {isNew ? 'Add' : 'Save'}
@@ -170,12 +173,13 @@ export const TriggerEventModal = ({
         <GoADropdown
           data-test-id="script-trigger-event-name-dropDown"
           name="streamEvents"
-          selectedValues={[triggerEvent.name]}
+          selectedValues={[`${triggerEvent.namespace}:${triggerEvent.name}`]}
           multiSelect={false}
           onChange={(name, values) => {
             setTriggerEvent({
               ...triggerEvent,
-              name: values[0],
+              namespace: values[0].split(':')[0],
+              name: values[0].split(':')[1],
             });
           }}
         >

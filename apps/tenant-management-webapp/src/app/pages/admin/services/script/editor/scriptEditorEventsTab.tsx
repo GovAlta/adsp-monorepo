@@ -36,7 +36,7 @@ const ScriptEventTriggerDefinitionComponent: FunctionComponent<ScriptTriggerEven
     <>
       <tr>
         <td headers="name" data-testid={`script-editor-trigger-event-name-${triggerEvent.name}`}>
-          {triggerEvent?.name}
+          {triggerEvent.namespace}:{triggerEvent?.name}
         </td>
 
         <td headers="actions" data-testid="actions">
