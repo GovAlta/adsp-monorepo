@@ -32,7 +32,7 @@ export class TopicEntity implements Topic {
     this.resourceId = topic.resourceId;
     this.name = topic.name;
     this.description = topic.description;
-    this.securityClassification = topic.securityClassification;
+    this.securityClassification = type.securityClassification;
     this.commenters = topic.commenters || [];
 
     const record = topic as Topic;

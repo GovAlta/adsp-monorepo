@@ -53,7 +53,7 @@ When('the user clicks Save button in Add topic type modal', function () {
 
 Then('the user views topic type editor for {string}', function (name) {
   cy.viewport(1920, 1080);
-  cy.wait(1000);
+  cy.wait(4000);
   commentObj.editorTopicTypeNameValue().should('have.text', name);
 });
 
@@ -81,8 +81,13 @@ When(
         .invoke('attr', 'value')
         .then((classificationValue) => {
           if (classificationValue !== classification.toLowerCase()) {
-            commentObj.editorClassificationDropdown().find('goa-input').click({ force: true });
-            commentObj.editorClassificationDropdown().find('li').contains(classification).click({ force: true });
+            commentObj.editorClassificationDropdown().shadow().find('goa-input').click({ force: true });
+            commentObj
+              .editorClassificationDropdown()
+              .shadow()
+              .find('li')
+              .contains(classification)
+              .click({ force: true });
           }
         });
     }

@@ -9,6 +9,7 @@ export class TopicTypeEntity implements TopicType {
   adminRoles: string[];
   readerRoles: string[];
   commenterRoles: string[];
+  securityClassification?: string;
 
   public constructor(tenantId: AdspId, type: Omit<TopicType, 'tenantId'>) {
     this.tenantId = tenantId;
@@ -17,14 +18,11 @@ export class TopicTypeEntity implements TopicType {
     this.adminRoles = type.adminRoles || [];
     this.readerRoles = type.readerRoles || [];
     this.commenterRoles = type.commenterRoles || [];
+    this.securityClassification = type.securityClassification || null;
   }
 
   public canRead(user: User): boolean {
-    return (
-      this.canAdmin(user) ||
-      this.canComment(user) ||
-      isAllowedUser(user, this.tenantId, this.readerRoles)
-    );
+    return this.canAdmin(user) || this.canComment(user) || isAllowedUser(user, this.tenantId, this.readerRoles);
   }
 
   public canComment(user: User): boolean {

@@ -5,7 +5,7 @@ import { RootState } from '@store/index';
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { NotificationsOverview } from './overview';
-import { NotificationTypes } from './notificationTypes';
+import { NotificationTypes } from './notificationType/notificationTypes';
 import { Subscriptions } from './subscription/subscriptions';
 import { Subscribers } from './subscribers';
 import { subscriberAppUrlSelector } from './selectors';
