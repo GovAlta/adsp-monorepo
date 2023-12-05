@@ -16,6 +16,7 @@ export const defaultFormDefinition: FormDefinition = {
   name: '',
   description: '',
   dataSchema: {},
+  uiSchema: {},
   applicantRoles: [],
   clerkRoles: [],
   assessorRoles: [],
