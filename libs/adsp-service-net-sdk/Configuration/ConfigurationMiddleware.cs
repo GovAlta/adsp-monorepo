@@ -41,7 +41,7 @@ internal sealed class ConfigurationMiddleware
 
     httpContext.Items.Add(ConfigurationContextKey, (_serviceId, _configurationService));
 
-    _logger.LogDebug("Added configuration capabilities to the context for {ServiceId}.", _serviceId);
+    _logger.LogTrace("Added configuration capabilities to the context for {ServiceId}.", _serviceId);
 
     await _next(httpContext);
   }

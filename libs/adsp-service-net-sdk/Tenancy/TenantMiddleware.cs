@@ -57,7 +57,7 @@ internal sealed class TenantMiddleware
     {
       httpContext.Items.Add(TenantContextKey, (tenantId, _tenantService));
 
-      _logger.LogDebug("Added tenant capabilities to the context for {TenantId}.", tenantId);
+      _logger.LogTrace("Added tenant capabilities to the context for {TenantId}.", tenantId);
     }
 
     await _next(httpContext);
