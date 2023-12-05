@@ -47,6 +47,7 @@ Feature: Form
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the form definition of "autotest-formDef", "autotest desc", "auto-test-role2", "auto-test-role1", "auto-test-role3"
 
+  # TEST DATA: precreated form definition of "autotest-formDefAccessibility", "DO NOT DELETE", "auto-test-role1", "auto-test-role1", "auto-test-role1"
   @accessibility @regression
   Scenario: As a tenant admin, I can use form pages without any critical or serious accessibility issues
     Given a tenant admin user is on form service overview page

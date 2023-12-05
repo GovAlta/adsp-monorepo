@@ -49,6 +49,7 @@ Feature: Comment
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the topic type of "autotest-topicType", "auto-test-role2", "auto-test-role1", "auto-test-role3", "Protected B"
 
+  # TEST DATA: precreated topic type of "autotest-topicTypesAccessibility", "auto-test-role1", "auto-test-role1", "auto-test-role1", "Protected A"
   @accessibility @regression
   Scenario: As a tenant admin, I can use comment pages without any critical or serious accessibility issues
     Given a tenant admin user is on comment service overview page

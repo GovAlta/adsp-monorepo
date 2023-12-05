@@ -46,6 +46,7 @@ Feature: Task
     And the user views the link of See the code for "task-service"
     And the user views the link of "Get support" under Support
 
+  # TEST DATA: precreated queue of "autotest", "accessibility-test", "auto-test-role1", "auto-test-role1"
   @accessibility @regression
   Scenario: As a tenant admin, I can use task pages without any critical or serious accessibility issues
     Given a tenant admin user is on task service overview page
