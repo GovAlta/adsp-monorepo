@@ -100,7 +100,6 @@ export const TriggerEventModal = ({
 
   const { errors, validators } = useValidators('name', 'name', badCharsCheck, isNotEmptyCheck('name'))
     .add('criteria', 'criteria', isValidJSONCheck('Trigger event criteria'))
-    //  .add('duplicated', 'name', duplicateNameCheck(eventTriggerNames, 'Script'))
     .build();
 
   const validateTriggerEventCriteria = (value: string) => {
@@ -157,7 +156,6 @@ export const TriggerEventModal = ({
             onClick={() => {
               const namespace = triggerEvent.name?.split(':')[0];
               const criteria: ScriptItemTriggerEventCriteria = {
-                correlationId: `script-${initialScript.id}-${namespace}`,
                 context: JSON.parse(triggerEvent.criteria?.context),
               };
               onSave({ namespace, name: triggerEvent.name, criteria });
