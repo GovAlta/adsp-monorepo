@@ -10,7 +10,7 @@ Feature: Calendar
     And the user views the link of See the code for "calendar-service"
     And the user views the link of "Get support" under Support
 
-  # TEST DATA: precreated calendar of "autotest-calendarAccessibility", "DO NOT DELETE", "auto-test-role1"
+  #TEST DATA: precreated calendar of "autotest-calendarAccessibility", "DO NOT DELETE", "auto-test-role1"
   @accessibility @regression
   Scenario: As a tenant admin, I can use calendar pages without any critical or serious accessibility issues
     Given a tenant admin user is on tenant admin page
