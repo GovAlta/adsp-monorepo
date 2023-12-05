@@ -1,11 +1,13 @@
 using Adsp.Platform.ScriptService.Model;
 using Adsp.Sdk;
+using Adsp.Sdk.Amqp;
+using Adsp.Sdk.Events;
 
 namespace Adsp.Platform.ScriptService;
 internal sealed class ScriptConfiguration
 {
   private readonly IDictionary<string, ScriptDefinition> _definitions = new Dictionary<string, ScriptDefinition>();
-  private readonly IDictionary<string, (EventIdentity, ScriptDefinition)> _definitionsByEvent = new Dictionary<string, (EventIdentity, ScriptDefinition)>();
+  private readonly IDictionary<string, IList<(EventIdentity, ScriptDefinition)>> _definitionsByEvent = new Dictionary<string, IList<(EventIdentity, ScriptDefinition)>>();
 
   public IDictionary<string, ScriptDefinition> Definitions
   {
@@ -36,12 +38,29 @@ internal sealed class ScriptConfiguration
     Definitions[key] = definition;
     foreach (var triggerEvent in definition.TriggerEvents)
     {
-      _definitionsByEvent.Add($"{triggerEvent.Namespace}:{triggerEvent.Name}", (triggerEvent, definition));
+      var qualifiedName = $"{triggerEvent.Namespace}:{triggerEvent.Name}";
+      if (!_definitionsByEvent.TryGetValue(qualifiedName, out IList<(EventIdentity, ScriptDefinition)>? definitions))
+      {
+        definitions = new List<(EventIdentity, ScriptDefinition)>();
+        _definitionsByEvent[qualifiedName] = definitions;
+      }
+
+      definitions.Add((triggerEvent, definition));
     }
   }
 
-  public bool TryGetTriggeredScript(string @namespace, string name, out (EventIdentity, ScriptDefinition) definition)
+  public IEnumerable<ScriptDefinition> GetTriggeredScripts<TPayload>(FullDomainEvent<TPayload> domainEvent) where TPayload : class
   {
-    return _definitionsByEvent.TryGetValue($"{@namespace}:{name}", out definition);
+    IEnumerable<ScriptDefinition> definitions;
+    if (_definitionsByEvent.TryGetValue($"{domainEvent.Namespace}:{domainEvent.Name}", out IList<(EventIdentity, ScriptDefinition)>? definitionsWithEvent))
+    {
+      definitions = definitionsWithEvent.Where(item => item.Item1.IsMatch(domainEvent)).Select(item => item.Item2);
+    }
+    else
+    {
+      definitions = Enumerable.Empty<ScriptDefinition>();
+    }
+
+    return definitions;
   }
 }
