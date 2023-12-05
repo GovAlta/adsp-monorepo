@@ -86,9 +86,6 @@ export const TriggerEventModal = ({
     return `${ev.namespace}:${ev.name}`;
   });
 
-  console.log('eventNames', eventNames);
-  console.log('eventTriggerNames', eventTriggerNames);
-
   const filteredEventNames = [...new Set(filterArray(eventNames, eventTriggerNames || []))] as string[];
 
   const getCriteriaContext = () => {
