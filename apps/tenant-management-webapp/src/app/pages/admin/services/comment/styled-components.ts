@@ -153,6 +153,15 @@ export const OuterNotificationTemplateEditorContainer = styled.div`
   overflow: hidden;
 `;
 
+export const ProgressWrapper = styled.div`
+  margin-left: 30%;
+`;
+
+export const ButtonPadding = styled.div`
+  padding-bottom: var(--goa-spacing-l);
+  padding-top: var(--goa-spacing-l);
+`;
+
 export const Modal = styled.div`
   display: block;
   position: fixed;
@@ -225,5 +234,126 @@ export const HeadingDiv = styled.div`
 
   img {
     margin-bottom: 4px;
+  }
+`;
+
+export const MoreDetails = styled.div`
+   {
+    background-color: var(--goa-color-greyscale-100);
+    padding: var(--goa-spacing-s) var(--goa-spacing-l) var(--goa-spacing-l) var(--goa-spacing-l);
+    width: 100%;
+    text-align: left;
+    p {
+      font-weight: bold;
+      padding-top: var(--goa-spacing-s);
+      margin-bottom: var(--goa-spacing-xs);
+    }
+    span {
+    }
+  }
+`;
+
+export const IconDiv = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  goa-icon-button {
+    margin: 0 4px;
+  }
+`;
+
+export const HeaderFont = styled.div`
+  font: var(--goa-typography-heading-m);
+  padding-bottom: var(--goa-spacing-2xs);
+`;
+
+export const TableDiv = styled.div`
+  .noPadding {
+    padding: 0;
+  }
+  word-wrap: break-word;
+  table-layout: fixed;
+  & td:first-child {
+    width: 120px;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    word-wrap: break-word;
+  }
+  & td:nth-child(2) {
+    word-wrap: break-word;
+    word-break: break-word;
+  }
+
+  & td:last-child {
+    width: 40px;
+    white-space: nowrap;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    text-align: right;
+  }
+  & .meta {
+    padding: 0;
+  }
+`;
+
+export const HelpText = styled.div`
+  font-size: var(--fs-sm);
+  color: var(--color-gray-900);
+  line-height: calc(var(--fs-sm) + 0.5rem);
+  display: flex;
+  display-direction: row;
+  justify-content: space-between;
+  margin-top: 2px;
+`;
+export const DescriptionItem = styled.div`
+  margin-left: 0px;
+  margin-right: 0px;
+`;
+
+export const ErrorMsg = styled.div`
+   {
+    display: inline-flex;
+    color: var(--color-red);
+    pointer-events: none;
+    gap: 0.25rem;
+  }
+`;
+
+export const CommentsList = styled.div`
+   {
+    border: 1px solid #adadad;
+    height: 108px;
+    border-radius: 4px;
+  }
+`;
+export const CommentsHeader = styled.div`
+   {
+    border: 1px solid red;
+  }
+`;
+export const CommentsHeading = styled.div`
+   {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 24px;
+    letter-spacing: 0em;
+    text-align: left;
+    color: #333333;
+  }
+`;
+export const CommentsActions = styled.div`
+   {
+    padding: 0px, 4px, 0px, 4px;
+  }
+`;
+export const CommentBody = styled.div`
+   {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    color: #333333;
+    letter-spacing: 0em;
+    text-align: left;
   }
 `;
