@@ -48,3 +48,17 @@ Feature: Comment
     Then the user views delete "topic type" confirmation modal for "autotest-topicType"
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the topic type of "autotest-topicType", "auto-test-role2", "auto-test-role1", "auto-test-role3", "Protected B"
+
+  @accessibility @regression
+  Scenario: As a tenant admin, I can use comment pages without any critical or serious accessibility issues
+    Given a tenant admin user is on comment service overview page
+    Then no critical or serious accessibility issues on "comment overview page"
+    When the user clicks Add topic type button on comment service overview page
+    Then the user views Add topic type modal
+    And no critical or serious accessibility issues on "comment add topic type page"
+    When the user clicks Cancel button in Add topic type modal
+    Then the user views topic types page
+    And no critical or serious accessibility issues on "comment topic types page"
+    When the user clicks "Edit" button for the topic type of "autotest-topicTypesAccessibility", "auto-test-role1", "auto-test-role1", "auto-test-role1", "Protected A"
+    Then the user views topic type editor for "autotest-topicTypesAccessibility"
+    And no critical or serious accessibility issues on "comment topic type editor page"

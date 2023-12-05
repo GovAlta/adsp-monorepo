@@ -15,8 +15,15 @@ Feature: Calendar
     Given a tenant admin user is on tenant admin page
     When the user selects the "Calendar" menu item
     Then no critical or serious accessibility issues on "calendar overview page"
-    When the user selects "Calendars" tab for "Calendar"
-    Then no critical or serious accessibility issues on "calendar calendars page"
+    When the user clicks Add calendar button on overview tab
+    Then the user views Add calendar modal
+    And no critical or serious accessibility issues on "calendar add calendar modal"
+    When the user clicks Cancel button in Add calendar modal
+    Then the user views Calendar tab table header on calendars page
+    And no critical or serious accessibility issues on "calendar calendars page"
+    When the user clicks "Edit" button for the calendar of "autotest-calendarAccessibility", "DO NOT DELETE", "auto-test-role1"
+    Then the user views Edit calendar modal
+    And no critical or serious accessibility issues on "calendar edit calendar modal"
 
   @TEST_CS-330 @REQ_CS-580 @REQ_CS-1652 @REQ_CS-1709 @regression
   Scenario: As a tenant admin, I can add, edit and delete calendars in the tenant admin view

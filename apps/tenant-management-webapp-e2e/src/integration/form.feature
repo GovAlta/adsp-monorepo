@@ -46,3 +46,17 @@ Feature: Form
     Then the user views delete "form definition" confirmation modal for "autotest-formDef"
     When the user clicks Delete button in delete confirmation modal
     Then the user "should not view" the form definition of "autotest-formDef", "autotest desc", "auto-test-role2", "auto-test-role1", "auto-test-role3"
+
+  @accessibility @regression
+  Scenario: As a tenant admin, I can use form pages without any critical or serious accessibility issues
+    Given a tenant admin user is on form service overview page
+    Then no critical or serious accessibility issues on "form overview page"
+    When the user clicks Add definition button on form service overview page
+    Then the user views Add form definition modal
+    And no critical or serious accessibility issues on "form add form definition modal"
+    When the user clicks Cancel button in Add form definition modal
+    Then the user views form definitions page
+    And no critical or serious accessibility issues on "form definitions page"
+    When the user clicks "Edit" button for the form definition of "autotest-formDefAccessibility", "DO NOT DELETE", "auto-test-role1", "auto-test-role1", "auto-test-role1"
+    Then the user views form definition editor for "autotest-formDefAccessibility", "DO NOT DELETE"
+    And no critical or serious accessibility issues on "form definition editor page"
