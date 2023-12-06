@@ -122,6 +122,12 @@ export function* deleteCommentTopicTypes({ topicTypeId }: DeleteCommentTopicType
 }
 
 function* addTopicSaga({ payload }: AddTopicRequestAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Creating Topic...',
+    })
+  );
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.commentServiceApiUrl);
   const token = yield call(getAccessToken);
 
@@ -129,8 +135,12 @@ function* addTopicSaga({ payload }: AddTopicRequestAction): SagaIterator {
     const url = `${baseUrl}/comment/v1/topics`;
     const newTopic = yield call(addTopicApi, token, url, payload);
     yield put(addTopicSuccess(newTopic));
+
+    yield put(UpdateIndicator({ show: false }));
   } catch (error) {
     yield put(ErrorNotification(error.toString()));
+
+    yield put(UpdateIndicator({ show: false }));
   }
 }
 

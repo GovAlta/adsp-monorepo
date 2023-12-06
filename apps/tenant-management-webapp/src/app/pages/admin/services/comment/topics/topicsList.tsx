@@ -31,7 +31,7 @@ export const TopicsList = (): JSX.Element => {
   const [openAddTopic, setOpenAddTopic] = useState(false);
   const [modalType, setModalType] = useState('');
   const [selectedType, setSelectedType] = useState('');
-  const [spinner, setSpinner] = useState(false);
+
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
   });
@@ -81,7 +81,6 @@ export const TopicsList = (): JSX.Element => {
               name="TopicTypes"
               value={selectedType}
               onChange={(name: string, selectedType: string) => {
-                setSpinner(true);
                 setSelectedType(selectedType);
               }}
               aria-label="select-comment-topictype-dropdown"
@@ -122,13 +121,14 @@ export const TopicsList = (): JSX.Element => {
         </ProgressWrapper>
       )}
       {!indicator.show && selectedType !== '' && topics && Object.keys(topics).length === 0 && renderNoItem('topics')}
-      {!indicator.show && selectedType !== '' && topics && Object.keys(topics).length !== 0 && (
+      {selectedType !== '' && topics && Object.keys(topics).length !== 0 && (
         <Visible visible={true}>
           {
             <TopicListTable
               topics={topics}
               onDeleteTopic={(topicSelected) => {
                 dispatch(deleteTopicRequest(topicSelected.id));
+                dispatch(fetchTopicsRequest(topicTypes[selectedType]));
               }}
             />
           }

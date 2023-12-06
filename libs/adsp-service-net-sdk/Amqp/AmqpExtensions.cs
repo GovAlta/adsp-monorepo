@@ -72,11 +72,11 @@ public static class AmqpExtensions
         ) &&
         (
           identity.Criteria?.Context == null ||
-          identity.Criteria?.Context.FirstOrDefault(
+          !identity.Criteria.Context.Where(
             c => received.Context == null ||
               !received.Context.TryGetValue(c.Key, out object? value) ||
               !Equals(value, c.Value)
-          ) == null
+          ).Any()
         )
       );
   }
