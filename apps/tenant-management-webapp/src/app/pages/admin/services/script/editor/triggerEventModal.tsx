@@ -54,7 +54,7 @@ export const TriggerEventModal = ({
         namespace: initialValue.namespace,
         criteria: {
           ...triggerEvent.criteria,
-          context: JSON.stringify(initialValue?.criteria?.context, null, 2),
+          context: initialValue?.criteria?.context ? JSON.stringify(initialValue?.criteria?.context, null, 2) : null,
         },
       });
     }
@@ -115,14 +115,8 @@ export const TriggerEventModal = ({
   };
 
   const isSaveButtonDisabled = () => {
-    const { criteria, name } = triggerEvent;
-    if (
-      isObjectEmpty(criteria) ||
-      criteria?.context === undefined ||
-      criteria?.context === '' ||
-      name === null ||
-      name === ''
-    ) {
+    const { name } = triggerEvent;
+    if (name === null || name === '') {
       return true;
     }
 
@@ -156,7 +150,7 @@ export const TriggerEventModal = ({
             disabled={isSaveButtonDisabled()}
             onClick={() => {
               const criteria: ScriptItemTriggerEventCriteria = {
-                context: JSON.parse(triggerEvent.criteria?.context),
+                context: triggerEvent.criteria?.context ? JSON.parse(triggerEvent.criteria?.context) : null,
               };
               onSave({ namespace: triggerEvent.namespace, name: triggerEvent.name, criteria });
             }}
@@ -169,7 +163,7 @@ export const TriggerEventModal = ({
       <GoAFormItem label="Select trigger event">
         <GoADropdown
           data-test-id="script-trigger-event-name-dropDown"
-          name="streamEvents"
+          name="script-trigger-event-name-dropDown"
           selectedValues={[`${triggerEvent.namespace}:${triggerEvent.name}`]}
           multiSelect={false}
           onChange={(name, values) => {
