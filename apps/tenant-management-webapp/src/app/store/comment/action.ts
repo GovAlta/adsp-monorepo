@@ -61,7 +61,7 @@ export interface AddTopicRequestAction {
 
 export interface AddTopicSuccessAction {
   type: typeof CREATE_COMMENT_TOPIC_SUCCESS_ACTION;
-  payload: TopicItem[];
+  payload: TopicItem;
 }
 
 export interface FetchTopicsRequestAction {
@@ -184,7 +184,7 @@ export const addTopicRequest = (topic: TopicItem[]): AddTopicRequestAction => ({
   payload: topic,
 });
 
-export const addTopicSuccess = (topic: TopicItem[]): AddTopicSuccessAction => ({
+export const addTopicSuccess = (topic: TopicItem): AddTopicSuccessAction => ({
   type: CREATE_COMMENT_TOPIC_SUCCESS_ACTION,
   payload: topic,
 });
