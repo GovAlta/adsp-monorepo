@@ -7,16 +7,9 @@ import DataTable from '@components/DataTable';
 import { getEventLogEntries, clearEventLogEntries } from '@store/event/actions';
 import { getEventDefinitions } from '@store/event/actions';
 import { LoadMoreWrapper } from '@components/styled-components';
-import {
-  GoABadge,
-  GoAButton,
-  GoAInput,
-  GoAButtonGroup,
-  GoACircularProgress,
-  GoAFormItem,
-  GoAModal,
-} from '@abgov/react-components-new';
+import { GoABadge, GoAButton, GoAInput, GoAButtonGroup, GoAFormItem, GoAModal } from '@abgov/react-components-new';
 import styled from 'styled-components';
+import { GoAPageLoader } from '@abgov/react-components';
 
 import { RootState } from '../../../../store/index';
 import { HoverWrapper, ToolTip } from './styled-components';
@@ -146,8 +139,6 @@ export const WebhookHistoryModal = (): JSX.Element => {
     searched ? dispatch(getEventLogEntries(next, searchCriteria)) : dispatch(getEventLogEntries(next));
   };
 
-  console.log(entries);
-
   useEffect(() => {
     setSearchCriteria(initSearchCriteria);
 
@@ -265,7 +256,7 @@ export const WebhookHistoryModal = (): JSX.Element => {
                 )
               ) : (
                 <LoadingWrapper>
-                  <GoACircularProgress visible={true} message={indicator.message} />
+                  <GoAPageLoader visible={true} type="infinite" message={indicator.message} pagelock={true} />
                 </LoadingWrapper>
               )}
               {next && (
@@ -368,5 +359,8 @@ const AlignedTr = styled.tr`
 `;
 
 const LoadingWrapper = styled.div`
+  display: flex;
+  text-align: center;
+  width: 100%;
   margin: 30px 0 30px 0;
 `;
