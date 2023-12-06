@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import DataTable from '@components/DataTable';
 import { TopicTableItem } from './topicTableItem';
 import { TopicItem } from '@store/comment/model';
