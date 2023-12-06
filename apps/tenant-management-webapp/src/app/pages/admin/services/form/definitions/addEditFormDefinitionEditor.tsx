@@ -70,7 +70,6 @@ const dataSchema = {
     },
     recurrence: {
       type: 'string',
-      enum: ['Never', 'Daily', 'Weekly', 'Monthly'],
     },
   },
   required: ['name', 'due_date'],
@@ -90,7 +89,7 @@ const uiSchema = {
   elements: [
     {
       type: 'Control',
-      label: false,
+      label: true,
       scope: '#/properties/done',
     },
     {
