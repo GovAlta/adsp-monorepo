@@ -313,8 +313,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
 
-  const getStyles = latestNotification && !latestNotification.disabled ? '410px' : '310px';
-
   const { errors, validators } = useValidators(
     'name',
     'name',

@@ -2,7 +2,6 @@ import React, { FunctionComponent, useState } from 'react';
 import { IconDiv, MoreDetails } from '../styled-components';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { TopicItem } from '@store/comment/model';
-import { CommentListTable } from '../comments/commentsTable';
 
 interface TopicTableItemProps {
   id: string;
