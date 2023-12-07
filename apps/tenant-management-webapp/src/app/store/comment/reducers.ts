@@ -3,14 +3,23 @@ import {
   UPDATE_COMMENT_TOPIC_TYPE_SUCCESS_ACTION,
   DELETE_COMMENT_TOPIC_TYPE_SUCCESS_ACTION,
   CREATE_COMMENT_TOPIC_SUCCESS_ACTION,
+  FETCH_COMMENT_COMMENTS_SUCCESS,
   SET_COMMENT_TOPICS_ACTION,
   CREAT_COMMENT_COMMENTS_SUCCESS,
   DELETE_COMMENT_TOPIC_SUCCESS,
   DELETE_COMMENT_COMMENTS_SUCCESS,
   CommentActionTypes,
+  UPDATE_COMMENT_COMMENTS_SUCCESS,
 } from './action';
 
 import { CommentState } from './model';
+
+function updateSpecifiedCommentType(comments, comment) {
+  const index = comments.findIndex(({ id }) => id === comment.id);
+  const newComments = comments.map((x) => Object.assign({}, x));
+  newComments[index] = comment;
+  return newComments;
+}
 
 export const defaultState: CommentState = {
   topicTypes: {},
@@ -63,7 +72,18 @@ export default function (state: CommentState = defaultState, action: CommentActi
     case CREAT_COMMENT_COMMENTS_SUCCESS:
       return {
         ...state,
-        comments: { ...state.comments },
+        comments: [...state.comments, action.payload],
+      };
+    case UPDATE_COMMENT_COMMENTS_SUCCESS:
+      return {
+        ...state,
+        comments: updateSpecifiedCommentType(state.comments, action.payload),
+      };
+
+    case FETCH_COMMENT_COMMENTS_SUCCESS:
+      return {
+        ...state,
+        comments: action.payload,
       };
 
     case DELETE_COMMENT_TOPIC_SUCCESS:

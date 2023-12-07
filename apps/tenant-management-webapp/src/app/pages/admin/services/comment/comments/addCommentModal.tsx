@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GoAButton, GoAButtonGroup, GoAFormItem, GoAIcon, GoAModal, GoATextArea } from '@abgov/react-components-new';
 
@@ -9,16 +9,17 @@ import { useValidators } from '@lib/validation/useValidators';
 import { DescriptionItem, HelpText, ErrorMsg } from '../styled-components';
 interface TopicModalProps {
   topic: TopicItem;
+  selComment: Comment;
   open: boolean;
   type: string;
   onCancel?: () => void;
   onSave: (comment: Comment) => void;
 }
 
-export const AddCommentModal = ({ topic, open, type, onCancel, onSave }: TopicModalProps): JSX.Element => {
+export const AddCommentModal = ({ topic, selComment, open, type, onCancel, onSave }: TopicModalProps): JSX.Element => {
   const isNew = type === 'new';
 
-  const [comment, setComment] = useState<Comment>(defaultComment);
+  const [comment, setComment] = useState<Comment>(selComment ? selComment : defaultComment);
   const descErrMessage = 'Comment can not be over 180 characters';
   const title = isNew ? 'Add comment' : 'Edit comment';
   const namespaceCheck = (): Validator => {
@@ -27,17 +28,12 @@ export const AddCommentModal = ({ topic, open, type, onCancel, onSave }: TopicMo
     };
   };
 
-  // const [showAddComment, setShowAddComment] = useState(false);
-  // const indicator = useSelector((state: RootState) => {
-  //   return state?.session?.indicator;
-  // });
-
   const { errors, validators } = useValidators(
     'content',
     'content',
     badCharsCheck,
     namespaceCheck(),
-    wordMaxLengthCheck(32, 'Comment'),
+    wordMaxLengthCheck(180, 'Comment'),
     isNotEmptyCheck('comment')
   ).build();
 
@@ -90,7 +86,7 @@ export const AddCommentModal = ({ topic, open, type, onCancel, onSave }: TopicMo
           <DescriptionItem>
             <GoATextArea
               name="commentcontent"
-              value={comment?.content}
+              value={comment.content}
               width="100%"
               testId="content"
               aria-label="content"

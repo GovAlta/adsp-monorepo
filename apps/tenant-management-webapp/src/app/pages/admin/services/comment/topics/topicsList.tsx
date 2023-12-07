@@ -2,7 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
-import { getCommentTopicTypes, fetchTopicsRequest, addTopicRequest, deleteTopicRequest } from '@store/comment/action';
+import {
+  getCommentTopicTypes,
+  fetchTopicsRequest,
+  addTopicRequest,
+  deleteTopicRequest,
+  clearComments,
+} from '@store/comment/action';
 
 import { renderNoItem } from '@components/NoItem';
 import {
@@ -14,7 +20,7 @@ import {
   GoASkeleton,
 } from '@abgov/react-components-new';
 import { TopicModal } from './topicModal';
-import { ButtonPadding, ProgressWrapper } from '../styled-components';
+import { ButtonPadding, ProgressWrapper, Topics } from '../styled-components';
 import { TopicListTable } from './topicsTable';
 import { LoadMoreWrapper } from '@components/styled-components';
 
@@ -66,12 +72,13 @@ export const TopicsList = (): JSX.Element => {
   };
 
   const handleSave = (topic) => {
+    dispatch(fetchTopicsRequest(topicTypes[selectedType]));
     setTopicList(topic);
     dispatch(addTopicRequest(topic));
   };
 
   return (
-    <section>
+    <Topics>
       {!indicator.show && Object.keys(topicTypes).length === 0 && renderNoItem('Topic types')}
       {Object.keys(topicTypes).length > 0 && (
         <GoAFormItem label="Select a topic type">
@@ -81,6 +88,7 @@ export const TopicsList = (): JSX.Element => {
               name="TopicTypes"
               value={selectedType}
               onChange={(name: string, selectedType: string) => {
+                dispatch(clearComments());
                 setSelectedType(selectedType);
               }}
               aria-label="select-comment-topictype-dropdown"
@@ -152,6 +160,6 @@ export const TopicsList = (): JSX.Element => {
           onSave={handleSave}
         />
       )}
-    </section>
+    </Topics>
   );
 };
