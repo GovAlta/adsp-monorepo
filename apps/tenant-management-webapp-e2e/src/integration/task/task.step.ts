@@ -19,6 +19,7 @@ Given('a tenant admin user is on task service overview page', function () {
 When('the user clicks Add queue button on task service overview page', function () {
   commonObj.activeTab().should('have.text', 'Overview');
   taskObj.addQueueBtn().shadow().find('button').click({ force: true });
+  cy.wait(1000);
 });
 
 Then('the user views Add queue modal', function () {

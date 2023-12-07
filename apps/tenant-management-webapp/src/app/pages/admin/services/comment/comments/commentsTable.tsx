@@ -45,13 +45,15 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
         </GoAButton>
       </HeaderFont>
       {Object.keys(comments).map((comment) => {
-        <CommentsList>
-          <CommentsHeader>
-            <CommentsHeading>{comment}</CommentsHeading>
-            <CommentsActions>{comment}</CommentsActions>
-          </CommentsHeader>
-          <CommentBody>{comment}</CommentBody>
-        </CommentsList>;
+        return (
+          <CommentsList>
+            <CommentsHeader>
+              <CommentsHeading>{comment}</CommentsHeading>
+              <CommentsActions>{comment}</CommentsActions>
+            </CommentsHeader>
+            <CommentBody>{comment}</CommentBody>
+          </CommentsList>
+        );
       })}
       {showAddComment && (
         <AddCommentModal

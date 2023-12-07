@@ -2,7 +2,6 @@ using System.Diagnostics.CodeAnalysis;
 using Adsp.Platform.ScriptService.Model;
 using Adsp.Platform.ScriptService.Services;
 using Adsp.Sdk;
-using Adsp.Sdk.Amqp;
 using Adsp.Sdk.Events;
 using Microsoft.Extensions.Options;
 
@@ -53,13 +52,9 @@ internal sealed class ScriptSubscriber : IEventSubscriber<IDictionary<string, ob
       _serviceId, received.TenantId
     );
 
-    if (
-      configuration?.TryGetTriggeredScript(received.Namespace, received.Name, out (EventIdentity, ScriptDefinition) value) == true &&
-      value.Item1.IsMatch(received)
-    )
+    var definitions = configuration?.GetTriggeredScripts(received) ?? Enumerable.Empty<ScriptDefinition>();
+    foreach (var definition in definitions)
     {
-
-      var definition = value.Item2;
       _logger.LogDebug(
         "Found triggered script definition {DefinitionId} for event {Namespace}:{Name}...",
         definition.Id, received.Namespace, received.Name

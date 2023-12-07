@@ -1,12 +1,9 @@
 using Adsp.Platform.ScriptService.Services.Platform;
-using Adsp.Platform.ScriptService.Events;
+
 using Adsp.Platform.ScriptService.Services.Util;
 using Adsp.Sdk;
 using NLua;
 using RestSharp;
-using System.Net.Mime;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Adsp.Platform.ScriptService.Services;
 internal class ScriptFunctions : IScriptFunctions
@@ -111,37 +108,19 @@ internal class ScriptFunctions : IScriptFunctions
     request.AddJsonBody(body);
     request.AddHeader("Authorization", $"Bearer {token}");
 
-    var result = new RestResponse();
-    try
-    {
-      result = _client.PostAsync(request).Result;
-
-      return "success";
-
-    }
-    catch (AggregateException e)
-    {
-      return $"Failure: {e.Message}";
-    }
+    var result = _client.PostAsync(request).Result;
+    return result.Content;
   }
 
 
   public virtual object? HttpGet(string url)
   {
-
     var token = _getToken().Result;
     var request = new RestRequest(url, Method.Get);
     request.AddHeader("Authorization", $"Bearer {token}");
 
-    try
-    {
-      var response = _client.GetAsync<IDictionary<string, object>>(request).Result;
-      return response;
-    }
-    catch (AggregateException e)
-    {
-      return $"Failure: {e.Message}";
-    }
+    var response = _client.GetAsync<IDictionary<string, object>>(request).Result;
+    return response;
   }
 
   public virtual string? CreateTask(

@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import DataTable from '@components/DataTable';
 import { TopicTableItem } from './topicTableItem';
 import { TopicItem } from '@store/comment/model';
@@ -22,9 +22,9 @@ export const TopicListTable = ({ topics, onDeleteTopic }: TopicTableProps): JSX.
         <DataTable data-testid="topic-table">
           <thead data-testid="topic-table-header">
             <tr>
-              <th data-testid="topic-table-header-namespace">Topic name</th>
-              <th data-testid="topic-table-header-name">Resource ID</th>
-              <th data-testid="topic-table-header-name">Action</th>
+              <th data-testid="topic-table-header-topicname">Topic name</th>
+              <th data-testid="topic-table-header-resourceid">Resource ID</th>
+              <th data-testid="topic-table-header-action">Action</th>
             </tr>
           </thead>
           <tbody>
