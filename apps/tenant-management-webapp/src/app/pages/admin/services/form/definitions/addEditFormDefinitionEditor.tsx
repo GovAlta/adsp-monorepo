@@ -70,7 +70,6 @@ const dataSchema = {
     },
     recurrence: {
       type: 'string',
-      enum: ['Never', 'Daily', 'Weekly', 'Monthly'],
     },
   },
   required: ['name', 'due_date'],
@@ -90,7 +89,7 @@ const uiSchema = {
   elements: [
     {
       type: 'Control',
-      label: false,
+      label: true,
       scope: '#/properties/done',
     },
     {
@@ -313,8 +312,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
-
-  const getStyles = latestNotification && !latestNotification.disabled ? '410px' : '310px';
 
   const { errors, validators } = useValidators(
     'name',

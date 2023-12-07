@@ -200,6 +200,7 @@ export function* updateNotificationType({ payload }: UpdateNotificationTypeActio
                 publicSubscribe: payload.publicSubscribe,
                 manageSubscribe: payload.manageSubscribe,
                 address: payload.address,
+                addressPath: payload.addressPath,
               },
             },
           },
