@@ -10,11 +10,10 @@ import { DeleteModal } from '@components/DeleteModal';
 import { GoAIcon } from '@abgov/react-components/experimental';
 import { generateMessage } from '@lib/handlebarHelper';
 import { getTemplateBody } from '@core-services/notification-shared';
-import { hasXSS } from '@lib/sanitize';
+import { checkForProhibitedTags } from '@lib/EmailTemplateValidator';
 import { ReactComponent as Mail } from '@assets/icons/mail.svg';
 import { ReactComponent as Slack } from '@assets/icons/slack.svg';
 import { ReactComponent as Chat } from '@assets/icons/chat.svg';
-import { XSSErrorMessage } from '@lib/sanitize';
 import {
   UpdateNotificationTypeService,
   DeleteNotificationTypeService,
@@ -229,19 +228,21 @@ export const NotificationTypes: FunctionComponent<ParentCompProps> = ({ activeEd
   }, [debouncedRenderBody, setBodyPreview]);
 
   useEffect(() => {
-    if (hasXSS(debouncedXssCheckRenderBody)) {
+    const error = checkForProhibitedTags(debouncedXssCheckRenderBody as string);
+    if (error !== '') {
       setTemplateEditErrors({
         ...templateEditErrors,
-        body: XSSErrorMessage,
+        body: error,
       });
     }
   }, [debouncedXssCheckRenderBody]);
 
   useEffect(() => {
-    if (hasXSS(debouncedXssCheckRenderSubject)) {
+    const error = checkForProhibitedTags(debouncedXssCheckRenderSubject as string);
+    if (error !== '') {
       setTemplateEditErrors({
         ...templateEditErrors,
-        subject: XSSErrorMessage,
+        subject: error,
       });
     }
   }, [debouncedXssCheckRenderSubject]);
