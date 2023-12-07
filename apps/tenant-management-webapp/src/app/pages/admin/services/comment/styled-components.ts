@@ -1,5 +1,8 @@
 import styled from 'styled-components';
 
+export const Topics = styled.div`
+  width: 721px;
+`;
 export const EditorPadding = styled.div`
   border: 0px solid grey;
   border-radius: 3px;
@@ -266,6 +269,9 @@ export const IconDiv = styled.div`
 export const HeaderFont = styled.div`
   font: var(--goa-typography-heading-m);
   padding-bottom: var(--goa-spacing-2xs);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 `;
 
 export const TableDiv = styled.div`
@@ -325,11 +331,17 @@ export const CommentsList = styled.div`
     border: 1px solid #adadad;
     height: 108px;
     border-radius: 4px;
+    width: 673px;
+    margin-bottom: 1rem;
+    background-color: var(--goa-color-text-light);
+    padding: 0.75rem 1rem;
   }
 `;
 export const CommentsHeader = styled.div`
    {
-    border: 1px solid red;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 `;
 export const CommentsHeading = styled.div`
@@ -355,5 +367,6 @@ export const CommentBody = styled.div`
     color: #333333;
     letter-spacing: 0em;
     text-align: left;
+    text-wrap: wrap;
   }
 `;
