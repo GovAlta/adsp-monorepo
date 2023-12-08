@@ -41,6 +41,15 @@ import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
 
+import RatingControl from './RatingControl';
+import FormStepperControl from './FormStepperControl';
+import ratingControlTester from './ratingControlTester';
+import FormStepperControlTester from './formStepperControlTester';
+
+//import { uischema } from './categorization';
+import { uischema } from './categorization-stepper-nav-buttons';
+import { schema, data } from './categorization';
+
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
   const tempNext = JSON.parse(JSON.stringify(next));
@@ -54,26 +63,28 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   );
 };
 
-const dataSchema = {
-  type: 'object',
-  properties: {
-    name: {
-      type: 'string',
-      minLength: 1,
-    },
-    done: {
-      type: 'boolean',
-    },
-    due_date: {
-      type: 'string',
-      format: 'date',
-    },
-    recurrence: {
-      type: 'string',
-    },
-  },
-  required: ['name', 'due_date'],
-};
+const dataSchema = schema;
+
+// const dataSchema = {
+//   type: 'object',
+//   properties: {
+//     name: {
+//       type: 'string',
+//       minLength: 1,
+//     },
+//     done: {
+//       type: 'boolean',
+//     },
+//     due_date: {
+//       type: 'string',
+//       format: 'date',
+//     },
+//     recurrence: {
+//       type: 'string',
+//     },
+//   },
+//   required: ['name', 'due_date'],
+// };
 
 export const formEditorJsonConfig = {
   'data-testid': 'templateForm-test-input',
@@ -84,33 +95,39 @@ export const formEditorJsonConfig = {
   },
 };
 
-const uiSchema = {
-  type: 'VerticalLayout',
-  elements: [
-    {
-      type: 'Control',
-      label: true,
-      scope: '#/properties/done',
-    },
-    {
-      type: 'Control',
-      scope: '#/properties/name',
-    },
-    {
-      type: 'HorizontalLayout',
-      elements: [
-        {
-          type: 'Control',
-          scope: '#/properties/due_date',
-        },
-        {
-          type: 'Control',
-          scope: '#/properties/recurrence',
-        },
-      ],
-    },
-  ],
-};
+const uiSchema = uischema;
+
+// const uiSchema = {
+//   type: 'VerticalLayout',
+//   elements: [
+//     {
+//       type: 'Control',
+//       label: true,
+//       scope: '#/properties/done',
+//     },
+//     {
+//       type: 'Control',
+//       scope: '#/properties/name',
+//     },
+//     {
+//       type: 'HorizontalLayout',
+//       elements: [
+//         {
+//           type: 'Control',
+//           scope: '#/properties/due_date',
+//         },
+//         {
+//           type: 'Control',
+//           scope: '#/properties/recurrence',
+//         },
+//       ],
+//     },
+//   ],
+//   options: {
+//     variant: 'stepper',
+//     showNavButtons: true,
+//   },
+// };
 
 const invalidJsonMsg = 'Invalid JSON syntax';
 
@@ -122,7 +139,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify(dataSchema, null, 2));
   const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify(uiSchema, null, 2));
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify(dataSchema, null, 2));
-  const [data, setData] = useState('');
+  const [currentData, setCurrentData] = useState(data);
   const [error, setError] = useState('');
   const [spinner, setSpinner] = useState<boolean>(false);
   const { id } = useParams<{ id: string }>();
@@ -313,6 +330,15 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
 
+  const renderers = [
+    ...materialRenderers,
+    //register custom renderers
+    { tester: ratingControlTester, renderer: RatingControl },
+    { tester: FormStepperControlTester, renderer: FormStepperControl },
+  ];
+
+  //console.log(JSON.stringify(renderers) + '<--renderers--');
+
   const { errors, validators } = useValidators(
     'name',
     'name',
@@ -498,11 +524,11 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 <JsonForms
                   schema={JSON.parse(dataSchemaBounced)}
                   uischema={JSON.parse(UiSchemaBounced)}
-                  data={data}
+                  data={currentData}
                   validationMode={'NoValidation'}
-                  renderers={materialRenderers}
+                  renderers={renderers}
                   cells={materialCells}
-                  onChange={({ data }) => setData(data)}
+                  onChange={({ data }) => setCurrentData(data)}
                 />
               </GoAFormItem>
             </div>
