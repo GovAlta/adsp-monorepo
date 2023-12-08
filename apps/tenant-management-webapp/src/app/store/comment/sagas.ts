@@ -28,6 +28,7 @@ import {
   deleteTopicSuccess,
   deleteCommentSuccess,
   AddTopicRequestAction,
+  getCommentTopicTypes,
 } from './action';
 
 import { getAccessToken } from '@store/tenant/sagas';
@@ -120,6 +121,7 @@ export function* deleteCommentTopicTypes({ topicTypeId }: DeleteCommentTopicType
           ...latest.configuration,
         })
       );
+      yield put(getCommentTopicTypes());
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
     }
