@@ -103,17 +103,14 @@ When('the user clicks Cancel button in Add script modal', function () {
   cy.wait(1000);
 });
 
-Then('the user {string} the script of {string}, {string}, {string}', function (viewOrNot, name, desc, role) {
-  findScript(name, desc, role).then((rowNumber) => {
+Then('the user {string} the script of {string}, {string}', function (viewOrNot, name, desc) {
+  findScript(name, desc).then((rowNumber) => {
     switch (viewOrNot) {
       case 'views':
-        expect(rowNumber).to.be.greaterThan(
-          0,
-          'Script of ' + name + ', ' + desc + ', ' + role + ' has row #' + rowNumber
-        );
+        expect(rowNumber).to.be.greaterThan(0, 'Script of ' + name + ', ' + desc + ' has row #' + rowNumber);
         break;
       case 'should not view':
-        expect(rowNumber).to.equal(0, 'Script of ' + name + ', ' + desc + ', ' + role + ' has row #' + rowNumber);
+        expect(rowNumber).to.equal(0, 'Script of ' + name + ', ' + desc + ', ' + ' has row #' + rowNumber);
         break;
       default:
         expect(viewOrNot).to.be.oneOf(['views', 'should not view']);
@@ -121,15 +118,14 @@ Then('the user {string} the script of {string}, {string}, {string}', function (v
   });
 });
 
-//Find a script with name, description and role(s)
-//Input: script name, script description, role(s) in a string separated with comma
+//Find a script with name, description
+//Input: script name, script description in a string separated with comma
 //Return: row number if the script is found; zero if the script isn't found
-function findScript(name, desc, role) {
+function findScript(name, desc) {
   return new Cypress.Promise((resolve, reject) => {
     try {
       let rowNumber = 0;
-      const roles = role.split(',');
-      const targetedNumber = roles.length + 2; // Name, description and roles all need to match to find the script
+      const targetedNumber = 2; // Name and description need to match to find the script
       scriptObj
         .scriptTableBody()
         .find('tr')
@@ -144,12 +140,6 @@ function findScript(name, desc, role) {
             if (rowElement.cells[2].innerHTML.includes(desc)) {
               counter = counter + 1;
             }
-            // cy.log(rowElement.cells[3].innerHTML); // Print out the role cell innerHTML for debug purpose
-            roles.forEach((runningRole) => {
-              if (rowElement.cells[3].innerHTML.includes(runningRole.trim())) {
-                counter = counter + 1;
-              }
-            });
             Cypress.log({
               name: 'Number of matched items for row# ' + rowElement.rowIndex + ': ',
               message: String(String(counter)),
@@ -170,29 +160,23 @@ function findScript(name, desc, role) {
   });
 }
 
-When(
-  'the user clicks {string} button for the script of {string}, {string}, {string}',
-  function (button, name, desc, role) {
-    findScript(name, desc, role).then((rowNumber) => {
-      expect(rowNumber).to.be.greaterThan(
-        0,
-        'Script of ' + name + ', ' + desc + ', ' + role + ' has row #' + rowNumber
-      );
-      cy.wait(1000); // Wait for buttons to show up
-      switch (button.toLowerCase()) {
-        case 'edit':
-          scriptObj.scriptEditButton(rowNumber).shadow().find('button').click({ force: true });
-          break;
-          break;
-        case 'delete':
-          scriptObj.scriptDeleteButton(rowNumber).shadow().find('button').click({ force: true });
-          break;
-        default:
-          expect(button).to.be.oneOf(['edit', 'delete']);
-      }
-    });
-  }
-);
+When('the user clicks {string} button for the script of {string}, {string}', function (button, name, desc) {
+  findScript(name, desc).then((rowNumber) => {
+    expect(rowNumber).to.be.greaterThan(0, 'Script of ' + name + ', ' + desc + ' has row #' + rowNumber);
+    cy.wait(1000); // Wait for buttons to show up
+    switch (button.toLowerCase()) {
+      case 'edit':
+        scriptObj.scriptEditButton(rowNumber).shadow().find('button').click({ force: true });
+        break;
+        break;
+      case 'delete':
+        scriptObj.scriptDeleteButton(rowNumber).shadow().find('button').click({ force: true });
+        break;
+      default:
+        expect(button).to.be.oneOf(['edit', 'delete']);
+    }
+  });
+});
 
 Then('the user views Edit script modal', function () {
   scriptObj.editScriptModal().should('be.visible');

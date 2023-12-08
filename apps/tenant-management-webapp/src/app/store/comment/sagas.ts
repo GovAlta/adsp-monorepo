@@ -18,12 +18,17 @@ import {
   CREAT_COMMENT_COMMENTS_ACTION,
   DELETE_COMMENT_TOPIC_ACTION,
   DELETE_COMMENT_COMMENTS_ACTION,
+  UPDATE_COMMENT_COMMENTS_ACTION,
+  CLEAR_COMMENT_COMMENTS_ACTION,
   addTopicSuccess,
   setTopics,
   addCommentSuccess,
+  updateCommentSuccess,
+  fetchCommentSuccess,
   deleteTopicSuccess,
   deleteCommentSuccess,
   AddTopicRequestAction,
+  getCommentTopicTypes,
 } from './action';
 
 import { getAccessToken } from '@store/tenant/sagas';
@@ -38,6 +43,7 @@ import {
   deleteTopicApi,
   deleteCommentApi,
   fetchCommentsApi,
+  updateCommentApi,
 } from './api';
 
 export function* fetchCommentTopicTypess(): SagaIterator {
@@ -115,6 +121,7 @@ export function* deleteCommentTopicTypes({ topicTypeId }: DeleteCommentTopicType
           ...latest.configuration,
         })
       );
+      yield put(getCommentTopicTypes());
     } catch (err) {
       yield put(ErrorNotification({ error: err }));
     }
@@ -168,14 +175,17 @@ function* fetchTopicsSaga(payload): SagaIterator {
   }
 }
 
+function* clearCommentSaga(): SagaIterator {
+  yield put(fetchCommentSuccess([], '', ''));
+}
 function* fetchCommentSaga(action): SagaIterator {
   const baseUrl = yield select((state) => state.config.serviceUrls?.commentServiceApiUrl);
   const token = yield call(getAccessToken);
 
   try {
-    const url = `${baseUrl}/comment/v1/topics/${action.payload.id}/comments`;
-    const newComment = yield call(fetchCommentsApi, token, url);
-    yield put(addCommentSuccess(newComment));
+    const url = `${baseUrl}/comment/v1/topics/${action.payload}/comments`;
+    const { results, page } = yield call(fetchCommentsApi, token, url);
+    yield put(fetchCommentSuccess(results, page.after, page.next));
   } catch (error) {
     yield put(ErrorNotification(error.toString()));
   }
@@ -188,7 +198,19 @@ function* addCommentSaga(action): SagaIterator {
   try {
     const url = `${baseUrl}/comment/v1/topics/${id}/comments`;
     const newComment = yield call(addCommentApi, token, url, action.payload);
-    yield put(addCommentSuccess(newComment));
+    yield put(addCommentSuccess(newComment, '', ''));
+  } catch (error) {
+    yield put(ErrorNotification(error.toString()));
+  }
+}
+function* updateCommentSaga(action): SagaIterator {
+  const baseUrl = yield select((state) => state.config.serviceUrls?.commentServiceApiUrl);
+  const token = yield call(getAccessToken);
+
+  try {
+    const url = `${baseUrl}/comment/v1/topics/${action.payload.topicId}/comments/${action.payload.comment.id}`;
+    const newComment = yield call(updateCommentApi, token, url, action.payload.comment);
+    yield put(updateCommentSuccess(newComment, '', ''));
   } catch (error) {
     yield put(ErrorNotification(error.toString()));
   }
@@ -227,6 +249,8 @@ export function* watchCommentSagas(): Generator {
   yield takeEvery(CREATE_COMMENT_TOPIC_ACTION, addTopicSaga);
   yield takeEvery(FETCH_COMMENT_TOPICS_ACTION, fetchTopicsSaga);
   yield takeEvery(CREAT_COMMENT_COMMENTS_ACTION, addCommentSaga);
+  yield takeEvery(CLEAR_COMMENT_COMMENTS_ACTION, clearCommentSaga);
+  yield takeEvery(UPDATE_COMMENT_COMMENTS_ACTION, updateCommentSaga);
   yield takeEvery(FETCH_COMMENT_TOPIC_COMMENTS, fetchCommentSaga);
   // yield takeEvery(FETCH_COMMENTS, addCommentSaga);
   yield takeEvery(DELETE_COMMENT_TOPIC_ACTION, deleteTopicSaga);

@@ -45,6 +45,10 @@ export const addCommentApi = async (token, url, commentData) => {
   const response = await axios.post(url, commentData, { headers: { Authorization: `Bearer ${token}` } });
   return response.data;
 };
+export const updateCommentApi = async (token, url, commentData) => {
+  const response = await axios.patch(url, commentData, { headers: { Authorization: `Bearer ${token}` } });
+  return response.data;
+};
 
 export const deleteTopicApi = async (token, url) => {
   const response = await axios.delete(`${url}`, { headers: { Authorization: `Bearer ${token}` } });

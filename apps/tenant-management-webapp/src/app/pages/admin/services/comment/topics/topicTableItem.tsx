@@ -1,32 +1,35 @@
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent } from 'react';
 import { IconDiv, MoreDetails } from '../styled-components';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { TopicItem } from '@store/comment/model';
+import { CommentListTable } from '../comments/commentsTable';
 
 interface TopicTableItemProps {
   id: string;
   topic: TopicItem;
+  showDetails: boolean;
   onDeleteTopic?: (Topic) => void;
+  onToggleDetails: () => void;
 }
 
 export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
   id,
   topic,
+  showDetails,
   onDeleteTopic,
+  onToggleDetails,
 }: TopicTableItemProps) => {
-  const [showDetails, setShowDetails] = useState(false);
-
   return (
     <>
       <tr>
         <td data-testid="topic-list-namespace">{topic.name}</td>
         <td data-testid="topic-list-name">{topic.resourceId}</td>
-        <td data-testid="queue-list-action">
+        <td data-testid="topic-list-action">
           <IconDiv>
             <GoAContextMenuIcon
               title="Toggle details"
               type={showDetails ? 'eye-off' : 'eye'}
-              onClick={() => setShowDetails(!showDetails)}
+              onClick={onToggleDetails}
               testId="toggle-details-visibility"
             />
             <GoAContextMenuIcon
@@ -49,6 +52,7 @@ export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
             <MoreDetails>
               <p>Topic description</p>
               <span>{topic.description}</span>
+              <CommentListTable topic={topic}></CommentListTable>
             </MoreDetails>
           </td>
         </tr>
