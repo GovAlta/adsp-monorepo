@@ -24,6 +24,7 @@ export interface GoAInputUiSchemaProps extends Omit<ControlElement, 'options'> {
       placeholder?: string;
       name: string;
       label?: string;
+      testId?: string;
     };
   };
 }
