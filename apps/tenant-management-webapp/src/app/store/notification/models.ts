@@ -10,6 +10,7 @@ export interface NotificationItem {
   customized?: boolean;
   manageSubscribe?: boolean;
   address?: string;
+  addressPath?: string;
 }
 
 export enum Channel {

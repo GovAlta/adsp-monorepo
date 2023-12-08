@@ -44,9 +44,7 @@ export const TestWebhookModal = (): JSX.Element => {
   }, [testSuccess]);
 
   useEffect(() => {
-    if (!selectedStatusName) {
-      setSelectedStatusName(events && events[0]);
-    }
+    setSelectedStatusName(events && events[0]);
   }, [webhook, entries]);
 
   const definitions = useSelector((state: RootState) => state.event.results.map((r) => state.event.definitions[r]));

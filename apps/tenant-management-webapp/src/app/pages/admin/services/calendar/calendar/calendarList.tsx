@@ -1,6 +1,5 @@
 import React, { FunctionComponent, useState } from 'react';
 import { CalendarItem } from '@store/calendar/models';
-import { GoABadge } from '@abgov/react-components-new';
 import { useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
 import { TableDiv, OverFlowWrapTableCell } from '../styled-components';
@@ -34,25 +33,6 @@ const CalendarItemComponent: FunctionComponent<CalendarItemProps> = ({
         <td headers="calendar-description" data-testid="calendar-description">
           <OverFlowWrapTableCell>{calendar.description}</OverFlowWrapTableCell>
         </td>
-        <td headers="calendar-read-roles" data-testid="calendar-read-roles">
-          {calendar.readRoles.map((role): JSX.Element => {
-            return (
-              <div key={`read-roles-${role}`}>
-                <GoABadge key={`read-roles-${role}`} type="information" content={role} />
-              </div>
-            );
-          })}
-        </td>
-        <td headers="calendar-update-roles" data-testid="calendar-update-roles">
-          {calendar.updateRoles.map((role): JSX.Element => {
-            return (
-              <div key={`read-roles-${role}`}>
-                <GoABadge key={`read-roles-${role}`} type="information" content={role} />
-              </div>
-            );
-          })}
-        </td>
-
         <td headers="calendar-actions" data-testid="calendar-actions">
           {onDelete && (
             <div style={{ display: 'flex' }}>
@@ -114,12 +94,6 @@ export const CalendarTableComponent: FunctionComponent<calendarTableProps> = ({ 
             </th>
             <th id="calendar-description" data-testid="calendar-table-header-description">
               Description
-            </th>
-            <th id="calendar-read-roles" data-testid="calendar-table-header-read-roles">
-              Read roles
-            </th>
-            <th id="calendar-update-roles" data-testid="calendar-table-header-update-roles">
-              Update roles
             </th>
             <th id="calendar-actions" data-testid="calendar-table-header-actions">
               Actions

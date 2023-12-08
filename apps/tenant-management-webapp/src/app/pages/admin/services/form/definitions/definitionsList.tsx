@@ -23,15 +23,6 @@ export const FormDefinitionsTable: FunctionComponent<formDefinitionTableProps> =
             <th id="form-definitions-Description" data-testid="form-definitions-table-header-description">
               Description
             </th>
-            <th id="form-definitions-applicant" data-testid="form-definitions-table-header-applicant">
-              Applicant Roles
-            </th>
-            <th id="form-definitions-clerk" data-testid="form-definitions-table-header-clerk">
-              Clerk Roles
-            </th>
-            <th id="form-definitions-assessor" data-testid="form-definitions-table-header-assessor">
-              Assessor Roles
-            </th>
             <th id="form-definitions-action" data-testid="form-definitions-table-header-action">
               Actions
             </th>

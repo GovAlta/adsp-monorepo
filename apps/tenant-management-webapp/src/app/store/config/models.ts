@@ -30,6 +30,7 @@ export interface ServiceUrls {
   valueServiceApiUrl?: string;
   docServiceApiUrl?: string;
   configurationServiceApiUrl?: string;
+  commentServiceApiUrl?: string;
   chatServiceApiUrl: string;
   pushServiceApiUrl: string;
   directoryServiceApiUrl?: string;

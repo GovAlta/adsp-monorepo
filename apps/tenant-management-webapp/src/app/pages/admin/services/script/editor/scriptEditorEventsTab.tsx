@@ -36,7 +36,7 @@ const ScriptEventTriggerDefinitionComponent: FunctionComponent<ScriptTriggerEven
     <>
       <tr>
         <td headers="name" data-testid={`script-editor-trigger-event-name-${triggerEvent.name}`}>
-          {triggerEvent?.name}
+          {triggerEvent.namespace}:{triggerEvent?.name}
         </td>
 
         <td headers="actions" data-testid="actions">
@@ -66,7 +66,9 @@ const ScriptEventTriggerDefinitionComponent: FunctionComponent<ScriptTriggerEven
         <tr>
           <td className="payload-details" headers="" colSpan={5}>
             <div className="spacingLarge">Trigger Criteria</div>
-            <div data-testid="trigger-events-details">{JSON.stringify(triggerEvent.criteria?.context, null, 2)}</div>
+            <div data-testid="trigger-events-details">
+              {triggerEvent.criteria?.context ? JSON.stringify(triggerEvent.criteria?.context, null, 2) : null}
+            </div>
             <br />
           </td>
         </tr>
@@ -88,6 +90,14 @@ const ScriptEventTriggerListComponent: FunctionComponent<ScriptEventTriggerListC
   onEdit,
   onDelete,
 }) => {
+  const sortedTriggerEvents = () => {
+    return triggerEvents?.sort((a: ScriptItemTriggerEvent, b: ScriptItemTriggerEvent) => {
+      const concatenatedA = `${a.namespace}:${a.name}`;
+      const concatenatedB = `${b.namespace}:${b.name}`;
+      return concatenatedA.localeCompare(concatenatedB);
+    });
+  };
+
   return (
     <>
       <TriggerEventScrollPane>
@@ -108,7 +118,7 @@ const ScriptEventTriggerListComponent: FunctionComponent<ScriptEventTriggerListC
                   </tr>
                 </thead>
                 <tbody>
-                  {triggerEvents?.sort().map((triggerEvent) => (
+                  {sortedTriggerEvents().map((triggerEvent) => (
                     <ScriptEventTriggerDefinitionComponent
                       onEdit={onEdit}
                       onDelete={onDelete}

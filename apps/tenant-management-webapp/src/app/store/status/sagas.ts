@@ -28,6 +28,7 @@ import {
   SaveWebhookSuccess,
   TestWebhookAction,
 } from './actions';
+import { ResetModalState } from '@store/session/actions';
 import { ConfigState } from '@store/config/models';
 import { UpdateIndicator } from '@store/session/actions';
 import { SetApplicationStatusAction, setApplicationStatusSuccess } from './actions/setApplicationStatus';
@@ -115,6 +116,12 @@ export function* saveApplication(action: SaveApplicationAction): SagaIterator {
 }
 
 export function* saveWebhook(action: saveWebhookAction): SagaIterator {
+  yield put(
+    UpdateIndicator({
+      show: true,
+      message: 'Saving webhook changes...',
+    })
+  );
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.configurationServiceApiUrl);
 
   const token = yield call(getAccessToken);
@@ -153,6 +160,12 @@ export function* saveWebhook(action: saveWebhookAction): SagaIterator {
     const hookIntervalResponse = statusDataResponse?.latest?.configuration.applicationWebhookIntervals;
 
     yield put(SaveWebhookSuccess(data.latest.configuration?.webhooks, hookIntervalResponse));
+    yield put(ResetModalState());
+    yield put(
+      UpdateIndicator({
+        show: false,
+      })
+    );
     yield put(refreshServiceStatusApps());
   } catch (err) {
     yield put(ErrorNotification({ error: err }));
@@ -206,13 +219,9 @@ export function* deleteWebhook(action: DeleteWebhookAction): SagaIterator {
 
   const id = action.payload.id;
 
-  const pushService: Record<string, Webhooks> = {
-    [id]: null,
-  };
-
   try {
     const api = new WebhookApi(configBaseUrl, token);
-    yield call([api, api.saveWebhookPush], pushService);
+    yield call([api, api.deleteWebhook], id);
 
     yield put(deleteWebhookSuccess(action.payload.id));
   } catch (err) {

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { GoAHeader } from '@abgov/react-components';
 import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
-import Sidebar from '@pages/admin/sidebar';
 import MenuIcon from '@icons/menu-outline.svg';
 import CloseIcon from '@icons/close-outline.svg';
 import { GoAButton } from '@abgov/react-components-new';

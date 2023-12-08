@@ -279,7 +279,6 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
     return script.useServiceAccount;
   };
 
-
   return (
     <EditModalStyle>
       <ScriptEditorContainer>

@@ -1,4 +1,4 @@
-import { CommentTopicTypes } from './model';
+import { CommentTopicTypes, TopicItem } from './model';
 
 export const FETCH_COMMENT_TOPIC_TYPES_ACTION = 'comment/FETCH_COMMENT_TOPIC_TYPES_ACTION';
 export const FETCH_COMMENT_TOPIC_TYPES_SUCCESS_ACTION = 'comment/FETCH_COMMENT_TOPIC_TYPES_SUCCESS_ACTION';
@@ -8,6 +8,21 @@ export const UPDATE_COMMENT_TOPIC_TYPE_SUCCESS_ACTION = 'comment/UPDATE_COMMENT_
 
 export const DELETE_COMMENT_TOPIC_TYPE_ACTION = 'comment/DELETE_COMMENT_TOPIC_TYPE_ACTION';
 export const DELETE_COMMENT_TOPIC_TYPE_SUCCESS_ACTION = 'comment/DELETE_COMMENT_TOPIC_TYPE_SUCCESS_ACTION';
+
+export const CREATE_COMMENT_TOPIC_ACTION = 'comment/CREATE_COMMENT_TOPIC_ACTION';
+export const CREATE_COMMENT_TOPIC_SUCCESS_ACTION = 'comment/CREATE_COMMENT_TOPIC_SUCCESS_ACTION';
+export const FETCH_COMMENT_TOPICS_ACTION = 'comment/FETCH_COMMENT_TOPICS_ACTION';
+export const SET_COMMENT_TOPICS_ACTION = 'comment/SET_COMMENT_TOPICS_ACTION';
+export const CREAT_COMMENT_COMMENTS_ACTION = 'comment/CREAT_COMMENT_COMMENT_ACTION';
+export const CREAT_COMMENT_COMMENTS_SUCCESS = 'comment/CREAT_COMMENT_COMMENTS_SUCCESS';
+export const DELETE_COMMENT_TOPIC_ACTION = 'comment/DELETE_COMMENT_TOPIC_ACTION';
+export const DELETE_COMMENT_TOPIC_SUCCESS = 'comment/DELETE_COMMENT_TOPIC_SUCCESS';
+export const DELETE_COMMENT_COMMENTS_ACTION = 'comment/DELETE_COMMENT_COMMENTS_ACTION';
+export const DELETE_COMMENT_COMMENTS_SUCCESS = 'comment/DELETE_COMMENT_COMMENTS_SUCCESS';
+export const FETCH_COMMENT_TOPIC_COMMENTS = 'comment/FETCH_COMMENT_TOPIC_COMMENTS';
+export const FETCH_COMMENT_TOPIC_COMMENTS_SUCCESS = 'comment/FETCH_COMMENT_TOPIC_COMMENTS_SUCCESS';
+export const FETCH_COMMENT_TOPIC_COMMENTS_FAILURE = 'comment/FETCH_COMMENT_TOPIC_COMMENTS_FAILURE';
+export const DELETE_COMMENT = 'comment/DELETE_COMMENT';
 
 export interface FetchCommentTopicTypesAction {
   type: typeof FETCH_COMMENT_TOPIC_TYPES_ACTION;
@@ -39,13 +54,91 @@ export interface DeleteCommentTopicTypeSuccessAction {
   payload: Record<string, CommentTopicTypes>;
 }
 
+export interface AddTopicRequestAction {
+  type: typeof CREATE_COMMENT_TOPIC_ACTION;
+  payload: TopicItem[];
+}
+
+export interface AddTopicSuccessAction {
+  type: typeof CREATE_COMMENT_TOPIC_SUCCESS_ACTION;
+  payload: TopicItem;
+}
+
+export interface FetchTopicsRequestAction {
+  type: typeof FETCH_COMMENT_TOPICS_ACTION;
+  payload: CommentTopicTypes;
+  next: string;
+}
+
+export interface SetTopicsAction {
+  type: typeof SET_COMMENT_TOPICS_ACTION;
+  payload: TopicItem[];
+  after: string;
+  next: string;
+}
+
+export interface DeleteTopicRequestAction {
+  type: typeof DELETE_COMMENT_TOPIC_ACTION;
+  payload: string;
+}
+
+export interface DeleteTopicSuccessAction {
+  type: typeof DELETE_COMMENT_TOPIC_SUCCESS;
+  payload: string;
+}
+
+export interface FetchCommentsAction {
+  type: typeof FETCH_COMMENT_TOPIC_COMMENTS;
+  payload: TopicItem;
+}
+
+export interface FetchCommentsSuccessAction {
+  type: typeof FETCH_COMMENT_TOPIC_COMMENTS_SUCCESS;
+  payload: Comment[];
+}
+
+export interface FetchCommentsFailureAction {
+  type: typeof FETCH_COMMENT_TOPIC_COMMENTS_FAILURE;
+  payload: string;
+}
+
+export interface AddCommentAction {
+  type: typeof CREAT_COMMENT_COMMENTS_ACTION;
+  payload: Comment[];
+}
+
+export interface DeleteCommentAction {
+  type: typeof DELETE_COMMENT;
+  payload: string;
+}
+
+export interface AddCommentSuccessAction {
+  type: typeof CREAT_COMMENT_COMMENTS_SUCCESS;
+  payload: Comment;
+}
+
+export interface DeleteCommentSuccessAction {
+  type: typeof DELETE_COMMENT_COMMENTS_SUCCESS;
+  payload: string;
+}
+
 export type CommentActionTypes =
   | FetchCommentTopicTypesSuccessAction
   | FetchCommentTopicTypesAction
   | DeleteCommentTopicTypeAction
   | DeleteCommentTopicTypeSuccessAction
   | UpdateCommentTopicTypesAction
-  | UpdateCommentTopicTypesSuccessAction;
+  | UpdateCommentTopicTypesSuccessAction
+  | FetchCommentsAction
+  | FetchCommentsSuccessAction
+  | FetchCommentsFailureAction
+  | AddCommentAction
+  | DeleteCommentAction
+  | AddTopicSuccessAction
+  | SetTopicsAction
+  | AddCommentSuccessAction
+  | DeleteTopicSuccessAction
+  | DeleteCommentSuccessAction;
 
 export const updateCommentTopicType = (
   topicType: CommentTopicTypes,
@@ -84,4 +177,72 @@ export const getCommentTopicTypesSuccess = (
 ): FetchCommentTopicTypesSuccessAction => ({
   type: FETCH_COMMENT_TOPIC_TYPES_SUCCESS_ACTION,
   payload: results,
+});
+
+export const addTopicRequest = (topic: TopicItem[]): AddTopicRequestAction => ({
+  type: CREATE_COMMENT_TOPIC_ACTION,
+  payload: topic,
+});
+
+export const addTopicSuccess = (topic: TopicItem): AddTopicSuccessAction => ({
+  type: CREATE_COMMENT_TOPIC_SUCCESS_ACTION,
+  payload: topic,
+});
+
+export const fetchTopicsRequest = (topicType: CommentTopicTypes, next?: string): FetchTopicsRequestAction => ({
+  type: FETCH_COMMENT_TOPICS_ACTION,
+  payload: topicType,
+  next,
+});
+
+export const setTopics = (topics: TopicItem[], after: string, next: string): SetTopicsAction => ({
+  type: SET_COMMENT_TOPICS_ACTION,
+  payload: topics,
+  after,
+  next,
+});
+
+export const deleteTopicRequest = (topicId: string): DeleteTopicRequestAction => ({
+  type: DELETE_COMMENT_TOPIC_ACTION,
+  payload: topicId,
+});
+
+export const deleteTopicSuccess = (topicId: string): DeleteTopicSuccessAction => ({
+  type: DELETE_COMMENT_TOPIC_SUCCESS,
+  payload: topicId,
+});
+
+export const fetchComments = (topicType: TopicItem): FetchCommentsAction => ({
+  type: FETCH_COMMENT_TOPIC_COMMENTS,
+  payload: topicType,
+});
+
+export const fetchCommentsSuccess = (comments: Comment[]): FetchCommentsSuccessAction => ({
+  type: FETCH_COMMENT_TOPIC_COMMENTS_SUCCESS,
+  payload: comments,
+});
+
+export const fetchCommentsFailure = (error: string): FetchCommentsFailureAction => ({
+  type: FETCH_COMMENT_TOPIC_COMMENTS_FAILURE,
+  payload: error,
+});
+
+export const addCommentRequest = (comment: Comment[]): AddCommentAction => ({
+  type: CREAT_COMMENT_COMMENTS_ACTION,
+  payload: comment,
+});
+
+export const deleteComment = (commentId: string): DeleteCommentAction => ({
+  type: DELETE_COMMENT,
+  payload: commentId,
+});
+
+export const addCommentSuccess = (comment: Comment): AddCommentSuccessAction => ({
+  type: CREAT_COMMENT_COMMENTS_SUCCESS,
+  payload: comment,
+});
+
+export const deleteCommentSuccess = (commentId: string): DeleteCommentSuccessAction => ({
+  type: DELETE_COMMENT_COMMENTS_SUCCESS,
+  payload: commentId,
 });
