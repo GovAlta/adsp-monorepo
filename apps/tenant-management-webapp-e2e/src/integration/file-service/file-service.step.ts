@@ -663,7 +663,7 @@ function findFileType(name, retention) {
   return new Cypress.Promise((resolve, reject) => {
     try {
       let rowNumber = 0;
-      let targetedNumber = 2;
+      const targetedNumber = 2;
       fileServiceObj
         .fileTypeTableBody()
         .find('tr')

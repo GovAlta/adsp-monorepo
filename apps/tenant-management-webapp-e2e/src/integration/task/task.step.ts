@@ -166,7 +166,7 @@ function findQueue(namespace, name) {
   return new Cypress.Promise((resolve, reject) => {
     try {
       let rowNumber = 0;
-      let targetedNumber = 2;
+      const targetedNumber = 2;
       taskObj
         .queueTableBody()
         .find('tr')
