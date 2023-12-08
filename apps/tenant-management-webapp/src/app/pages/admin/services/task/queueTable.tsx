@@ -18,12 +18,6 @@ export const QueueListTable: FunctionComponent<QueueTableProps> = ({ taskQueues,
           <tr>
             <th data-testid="task-queue-table-header-namespace">Namespace</th>
             <th data-testid="task-queue-table-header-name">Name</th>
-            <th id="task-queue-assigner" data-testid="task-queue-table-header-assigners">
-              Assigner roles
-            </th>
-            <th id="task-queue-worker" data-testid="task-queue-table-header-workers">
-              Worker roles
-            </th>
             <th id="task-queue-action" data-testid="task-queue-table-header-action">
               Actions
             </th>
