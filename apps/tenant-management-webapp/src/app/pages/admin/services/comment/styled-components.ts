@@ -268,7 +268,8 @@ export const IconDiv = styled.div`
 
 export const HeaderFont = styled.div`
   font: var(--goa-typography-heading-m);
-  padding-bottom: var(--goa-spacing-2xs);
+  padding-bottom: var(--goa-spacing-l);
+  padding-top: var(--goa-spacing-l);
   display: flex;
   align-items: center;
   justify-content: space-between;
