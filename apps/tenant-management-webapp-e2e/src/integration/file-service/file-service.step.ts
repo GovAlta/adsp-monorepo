@@ -612,48 +612,36 @@ When('the user clicks Cancel button on file type modal', function () {
   cy.wait(1000); // Wait the file type list to refresh
 });
 
-Then(
-  'the user {string} the file type of {string}, {string}, {string}, {string}',
-  function (action, name, readRole, updateRole, retention) {
-    findFileType(name, readRole, updateRole, retention).then((rowNumber) => {
-      switch (action) {
-        case 'views':
-          expect(rowNumber).to.be.greaterThan(
-            0,
-            'File type of ' + name + ', ' + readRole + ', ' + updateRole + ' has row #' + rowNumber
-          );
-          break;
-        case 'should not view':
-          expect(rowNumber).to.equal(
-            0,
-            'File type of ' + name + ', ' + readRole + ', ' + updateRole + ' has row #' + rowNumber
-          );
-          break;
-        default:
-          expect(action).to.be.oneOf(['views', 'should not view']);
-      }
-    });
-  }
-);
+Then('the user {string} the file type of {string}, {string}', function (action, name, retention) {
+  findFileType(name, retention).then((rowNumber) => {
+    switch (action) {
+      case 'views':
+        expect(rowNumber).to.be.greaterThan(0, 'File type of ' + name + ' has row #' + rowNumber);
+        break;
+      case 'should not view':
+        expect(rowNumber).to.equal(0, 'File type of ' + name + ' has row #' + rowNumber);
+        break;
+      default:
+        expect(action).to.be.oneOf(['views', 'should not view']);
+    }
+  });
+});
 
-When(
-  'the user clicks {string} button for the file type of {string}, {string}, {string}, {string}',
-  function (button, name, readRole, updateRole, retention) {
-    findFileType(name, readRole, updateRole, retention).then((rowNumber) => {
-      switch (button) {
-        case 'Edit':
-          fileServiceObj.fileTypeEditButton(rowNumber).shadow().find('button').click({ force: true });
-          break;
-        case 'Delete':
-          cy.wait(1000); // Wait to avoid no modal showing up for delete button clicking
-          fileServiceObj.fileTypeDeleteButton(rowNumber).shadow().find('button').click({ force: true });
-          break;
-        default:
-          expect(button).to.be.oneOf(['Edit', 'Delete']);
-      }
-    });
-  }
-);
+When('the user clicks {string} button for the file type of {string}, {string}', function (button, name, retention) {
+  findFileType(name, retention).then((rowNumber) => {
+    switch (button) {
+      case 'Edit':
+        fileServiceObj.fileTypeEditButton(rowNumber).shadow().find('button').click({ force: true });
+        break;
+      case 'Delete':
+        cy.wait(1000); // Wait to avoid no modal showing up for delete button clicking
+        fileServiceObj.fileTypeDeleteButton(rowNumber).shadow().find('button').click({ force: true });
+        break;
+      default:
+        expect(button).to.be.oneOf(['Edit', 'Delete']);
+    }
+  });
+});
 
 Then('the user views Delete file type modal for {string}', function (fileTypeName) {
   cy.wait(1000); // Wait for modal
@@ -668,23 +656,14 @@ When('the user clicks Delete button on file type modal', function () {
   cy.wait(2000); //Wait the file type list to refresh
 });
 
-//Find file type with name, read role(s), update role(s), and retention number
-//Input: file name, file read role(s) in a string separated with comma, file update role(s) in a string separated with comma, retention number
+//Find file type with name and retention number
+//Input: file name and retention number
 //Return: row number if the file type is found; zero if the file type isn't found
-function findFileType(name, readRole, updateRole, retention) {
+function findFileType(name, retention) {
   return new Cypress.Promise((resolve, reject) => {
     try {
       let rowNumber = 0;
       let targetedNumber = 2;
-      const readRoles = readRole.split(',');
-      const updateRoles = updateRole.split(',');
-      if (readRole.toLowerCase() != 'empty') {
-        targetedNumber = targetedNumber + readRoles.length;
-      }
-      if (updateRole.toLowerCase() != 'empty') {
-        targetedNumber = targetedNumber + updateRoles.length;
-      }
-      // targetedNumber = readRoles.length + updateRoles.length + 1; // Name, read roles and update roles all need to match to find the file type
       fileServiceObj
         .fileTypeTableBody()
         .find('tr')
@@ -695,19 +674,7 @@ function findFileType(name, readRole, updateRole, retention) {
             if (rowElement.cells[0].innerHTML.includes(name)) {
               counter = counter + 1;
             }
-            // cy.log(rowElement.cells[1].innerHTML); // Print out the read role cell innerHTML for debug purpose
-            readRoles.forEach((rRole) => {
-              if (rowElement.cells[1].innerHTML.includes(rRole.trim())) {
-                counter = counter + 1;
-              }
-            });
-            // cy.log(rowElement.cells[2].innerHTML); // Print out the update role cell innerHTML for debug purpose
-            updateRoles.forEach((uRole) => {
-              if (rowElement.cells[2].innerHTML.includes(uRole.trim())) {
-                counter = counter + 1;
-              }
-            });
-            if (rowElement.cells[4].innerHTML.includes(retention)) {
+            if (rowElement.cells[2].innerHTML.includes(retention)) {
               counter = counter + 1;
             }
             Cypress.log({

@@ -125,16 +125,16 @@ Feature: File service
     Then the user views file type page of "autotest-addEditDelete"
     When the user enters "public", "auto-test-role1", "30" on file type page
     And the user clicks Save button on file type page
-    Then the user "views" the file type of "autotest-addEditDelete", "public", "auto-test-role1", "30"
-    When the user clicks "Edit" button for the file type of "autotest-addEditDelete", "public", "auto-test-role1", "30"
+    Then the user "views" the file type of "autotest-addEditDelete", "30"
+    When the user clicks "Edit" button for the file type of "autotest-addEditDelete", "30"
     Then the user views file type page of "autotest-addEditDelete"
     When the user enters "auto-test-role1", "auto-test-role2", "10" on file type page
     And the user clicks Save button on file type page
-    Then the user "views" the file type of "autotest-addEditDelete", "auto-test-role1", "auto-test-role2", "10"
-    When the user clicks "Delete" button for the file type of "autotest-addEditDelete", "auto-test-role1", "auto-test-role2", "10"
+    Then the user "views" the file type of "autotest-addEditDelete", "10"
+    When the user clicks "Delete" button for the file type of "autotest-addEditDelete", "10"
     Then the user views Delete file type modal for "autotest-addEditDelete"
     When the user clicks Delete button on file type modal
-    Then the user "should not view" the file type of "autotest-addEditDelete", "auto-test-role1", "auto-test-role2", "10"
+    Then the user "should not view" the file type of "autotest-addEditDelete", "10"
 
   # TODO: This is broken after removal of the file service specific 'feedback zone'; re-enable after feedback zone implementation.
   @FileTypes @regression @ignore
@@ -166,10 +166,10 @@ Feature: File service
     Given a service owner user is on Files overview page
     When the user selects "File types" tab for "File"
     Then the user views file types page
-    When the user clicks "Delete" button for the file type of "autotest-type5", "public", "file-service-admin", "N/A"
+    When the user clicks "Delete" button for the file type of "autotest-type5", "N/A"
     Then the user views file type current in use modal for "autotest-type5"
     When the user clicks Okay button on file type current in use modal
-    Then the user "views" the file type of "autotest-type5", "public", "file-service-admin", "N/A"
+    Then the user "views" the file type of "autotest-type5", "N/A"
 
   @TEST_CS-1411 @REQ_CS-1358 @FileTypes @regression
   Scenario: As a tenant admin, can see core file types

@@ -257,73 +257,33 @@ Then('the user clicks Save button on topic type editor', function () {
   cy.wait(2000);
 });
 
-Then(
-  'the user {string} the topic type of {string}, {string}, {string}, {string}, {string}',
-  function (action, name, adminRole, commenterRole, readerRole, classification) {
-    cy.wait(1000); //Wait for the grid to load all data
-    findTopicType(name, adminRole, commenterRole, readerRole, classification).then((rowNumber) => {
-      switch (action) {
-        case 'views':
-          expect(rowNumber).to.be.greaterThan(
-            0,
-            'Topic type of ' +
-              name +
-              ', ' +
-              adminRole +
-              ', ' +
-              commenterRole +
-              ', ' +
-              readerRole +
-              ', ' +
-              classification +
-              ' has row #' +
-              rowNumber
-          );
-          break;
-        case 'should not view':
-          expect(rowNumber).to.equal(
-            0,
-            'Topic type of ' +
-              name +
-              ', ' +
-              adminRole +
-              ', ' +
-              commenterRole +
-              ', ' +
-              readerRole +
-              ', ' +
-              classification +
-              ' has row #' +
-              rowNumber
-          );
-          break;
-        default:
-          expect(action).to.be.oneOf(['views', 'should not view']);
-      }
-    });
-  }
-);
+Then('the user {string} the topic type of {string}, {string}', function (action, name, classification) {
+  cy.wait(1000); //Wait for the grid to load all data
+  findTopicType(name, classification).then((rowNumber) => {
+    switch (action) {
+      case 'views':
+        expect(rowNumber).to.be.greaterThan(
+          0,
+          'Topic type of ' + name + ', ' + classification + ' has row #' + rowNumber
+        );
+        break;
+      case 'should not view':
+        expect(rowNumber).to.equal(0, 'Topic type of ' + name + ', ' + classification + ' has row #' + rowNumber);
+        break;
+      default:
+        expect(action).to.be.oneOf(['views', 'should not view']);
+    }
+  });
+});
 
-//Find topic type with name, admin role(s), commenter role(s), reader role(s)
-//Input: name, admin role(s) & commenter role(s) & reader role(s) in a string separated with comma
+//Find topic type with name, classification
+//Input: name, classificationin a string separated with comma
 //Return: row number if the topic type is found; zero if the item isn't found
-function findTopicType(name, adminRole, commenterRole, readerRole, classification) {
+function findTopicType(name, classification) {
   return new Cypress.Promise((resolve, reject) => {
     try {
       let rowNumber = 0;
       let targetedNumber = 1;
-      const adminRoles = adminRole.split(',');
-      const commenterRoles = commenterRole.split(',');
-      const readerRoles = readerRole.split(',');
-      if (adminRole.toLowerCase() != 'empty') {
-        targetedNumber = targetedNumber + adminRoles.length;
-      }
-      if (commenterRole.toLowerCase() != 'empty') {
-        targetedNumber = targetedNumber + commenterRoles.length;
-      }
-      if (readerRole.toLowerCase() != 'empty') {
-        targetedNumber = targetedNumber + readerRoles.length;
-      }
       if (classification.toLowerCase() != 'empty') {
         targetedNumber = targetedNumber + 1;
       }
@@ -337,26 +297,8 @@ function findTopicType(name, adminRole, commenterRole, readerRole, classificatio
             if (rowElement.cells[0].innerHTML.includes(name)) {
               counter = counter + 1;
             }
-            // cy.log(rowElement.cells[2].innerHTML); // Print out the assigner role cell innerHTML for debug purpose
-            adminRoles.forEach((aRole) => {
-              if (rowElement.cells[2].innerHTML.includes(aRole.trim())) {
-                counter = counter + 1;
-              }
-            });
-            // cy.log(rowElement.cells[3].innerHTML); // Print out the worker role cell innerHTML for debug purpose
-            commenterRoles.forEach((cRole) => {
-              if (rowElement.cells[3].innerHTML.includes(cRole.trim())) {
-                counter = counter + 1;
-              }
-            });
-            // cy.log(rowElement.cells[4].innerHTML); // Print out the worker role cell innerHTML for debug purpose
-            readerRoles.forEach((rRole) => {
-              if (rowElement.cells[4].innerHTML.includes(rRole.trim())) {
-                counter = counter + 1;
-              }
-            });
-            // cy.log(rowElement.cells[5].innerHTML); // Print out the worker role cell innerHTML for debug purpose
-            if (rowElement.cells[5].innerHTML.includes(classification.toLowerCase())) {
+            // cy.log(rowElement.cells[2].innerHTML); // Print out the worker role cell innerHTML for debug purpose
+            if (rowElement.cells[2].innerHTML.includes(classification.toLowerCase())) {
               counter = counter + 1;
             }
             Cypress.log({
@@ -380,9 +322,9 @@ function findTopicType(name, adminRole, commenterRole, readerRole, classificatio
 }
 
 When(
-  'the user clicks {string} button for the topic type of {string}, {string}, {string}, {string}, {string}',
-  function (button, name, adminRole, commenterRole, readerRol, classification) {
-    findTopicType(name, adminRole, commenterRole, readerRol, classification).then((rowNumber) => {
+  'the user clicks {string} button for the topic type of {string}, {string}',
+  function (button, name, classification) {
+    findTopicType(name, classification).then((rowNumber) => {
       switch (button) {
         case 'Edit':
           commentObj.topicTypeEditButton(rowNumber).shadow().find('button').click({ force: true });

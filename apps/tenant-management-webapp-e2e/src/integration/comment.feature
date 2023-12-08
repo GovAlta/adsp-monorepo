@@ -22,32 +22,32 @@ Feature: Comment
     When the user enters "auto-test-1-$" in Add topic type modal
     Then the user views the error message of "Allowed characters are: a-z, A-Z, 0-9, -, [space]" for Name field in Add topic type modal
     # Validate data
-    When the user enters "autotest-topicType" in Add topic type modal
+    When the user enters "autotest-addEditDeleteTopicType" in Add topic type modal
     And the user clicks Save button in Add topic type modal
-    Then the user views topic type editor for "autotest-topicType"
+    Then the user views topic type editor for "autotest-addEditDeleteTopicType"
     And the user views "Protected A" as default selection for security classification
     And the user views "Public, Protected A, Protected B, Protected C" in Select a security classification dropdown
     When the user enters "skip" as classification, "auto-test-role1" as admin roles, "auto-test-role2" as commenter roles, "empty" as reader roles
     And the user clicks Save button on topic type editor
-    Then the user "views" the topic type of "autotest-topicType", "auto-test-role1", "auto-test-role2", "empty", "Protected A"
+    Then the user "views" the topic type of "autotest-addEditDeleteTopicType", "Protected A"
     # Edit and back
-    When the user clicks "Edit" button for the topic type of "autotest-topicType", "auto-test-role1", "auto-test-role2", "empty", "Protected A"
-    Then the user views topic type editor for "autotest-topicType"
+    When the user clicks "Edit" button for the topic type of "autotest-addEditDeleteTopicType", "Protected A"
+    Then the user views topic type editor for "autotest-addEditDeleteTopicType"
     When the user enters "Protected B" as classification, "auto-test-role2" as admin roles, "auto-test-role1" as commenter roles, "auto-test-role3" as reader roles
     And the user clicks Back button on topic type editor
     And the user clicks "Don't save" button on unsaved changes modal
-    Then the user "should not view" the topic type of "autotest-topicType", "auto-test-role2", "auto-test-role1", "auto-test-role3", "Protected B"
+    Then the user "should not view" the topic type of "autotest-addEditDeleteTopicType", "Protected B"
     # Edit and save
-    When the user clicks "Edit" button for the topic type of "autotest-topicType", "auto-test-role1", "auto-test-role2", "empty", "Protected A"
-    Then the user views topic type editor for "autotest-topicType"
+    When the user clicks "Edit" button for the topic type of "autotest-addEditDeleteTopicType", "Protected A"
+    Then the user views topic type editor for "autotest-addEditDeleteTopicType"
     When the user enters "Protected B" as classification, "auto-test-role2" as admin roles, "auto-test-role1" as commenter roles, "auto-test-role3" as reader roles
     And the user clicks Save button on topic type editor
-    Then the user "views" the topic type of "autotest-topicType", "auto-test-role2", "auto-test-role1", "auto-test-role3", "Protected B"
+    Then the user "views" the topic type of "autotest-addEditDeleteTopicType", "Protected B"
     # Delete
-    When the user clicks "Delete" button for the topic type of "autotest-topicType", "auto-test-role2", "auto-test-role1", "auto-test-role3", "Protected B"
-    Then the user views delete "topic type" confirmation modal for "autotest-topicType"
+    When the user clicks "Delete" button for the topic type of "autotest-addEditDeleteTopicType", "Protected B"
+    Then the user views delete "topic type" confirmation modal for "autotest-addEditDeleteTopicType"
     When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the topic type of "autotest-topicType", "auto-test-role2", "auto-test-role1", "auto-test-role3", "Protected B"
+    Then the user "should not view" the topic type of "autotest-addEditDeleteTopicType", "Protected B"
 
   #TEST DATA: precreated topic type of "autotest-topicTypesAccessibility", "auto-test-role1", "auto-test-role1", "auto-test-role1", "Protected A"
   @accessibility @regression
@@ -60,6 +60,6 @@ Feature: Comment
     When the user clicks Cancel button in Add topic type modal
     Then the user views topic types page
     And no critical or serious accessibility issues on "comment topic types page"
-    When the user clicks "Edit" button for the topic type of "autotest-topicTypesAccessibility", "auto-test-role1", "auto-test-role1", "auto-test-role1", "Protected A"
+    When the user clicks "Edit" button for the topic type of "autotest-topicTypesAccessibility", "Protected A"
     Then the user views topic type editor for "autotest-topicTypesAccessibility"
     And no critical or serious accessibility issues on "comment topic type editor page"
