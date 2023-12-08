@@ -73,8 +73,8 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic }
   return (
     <>
       <HeaderFont>
-        <label>Comment list</label>
-        <GoAButton size="compact" type="primary" testId="add-comment" onClick={addNewComment}>
+        <label>Comments list</label>
+        <GoAButton size="compact" type="secondary" testId="add-comment" onClick={addNewComment}>
           Add Comment
         </GoAButton>
       </HeaderFont>
