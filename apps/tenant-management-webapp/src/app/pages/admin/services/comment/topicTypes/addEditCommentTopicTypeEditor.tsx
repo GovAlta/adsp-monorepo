@@ -194,7 +194,9 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
   const topicTypes = useSelector((state: RootState) => {
     return state?.comment?.topicTypes;
   });
-  const topicTypeIds = Object.keys(topicTypes);
+  const topicTypeNames = Object.values(topicTypes).map((val) => {
+    return val.name;
+  });
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -222,7 +224,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
     isNotEmptyCheck('name'),
     isNotEmptyCheck('securityClassification')
   )
-    .add('duplicate', 'name', duplicateNameCheck(topicTypeIds, 'topicType'))
+    .add('duplicate', 'name', duplicateNameCheck(topicTypeNames, 'topicType'))
     .add(
       'securityClassification',
       'securityClassification',
