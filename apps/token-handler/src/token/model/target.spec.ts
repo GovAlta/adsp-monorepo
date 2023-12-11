@@ -1,26 +1,23 @@
 import { adspId } from '@abgov/adsp-service-sdk';
-import { InvalidOperationError, NotFoundError } from '@core-services/core-common';
+import { InvalidOperationError } from '@core-services/core-common';
 import { Request } from 'express';
 import { TargetProxy } from './target';
-import { TokenHandlerConfiguration } from '../configuration';
+import { AuthenticationClient } from './client';
 
 describe('TargetProxy', () => {
-  const configurationMock = {
-    getClient: jest.fn(),
-    getTarget: jest.fn(),
-  };
-
   const directoryMock = {
     getServiceUrl: jest.fn(),
     getResourceUrl: jest.fn(),
   };
+
+  const clientMock = {};
 
   beforeEach(() => {
     directoryMock.getServiceUrl.mockClear();
   });
 
   it('can be created', () => {
-    const proxy = new TargetProxy(configurationMock as unknown as TokenHandlerConfiguration, directoryMock, {
+    const proxy = new TargetProxy(clientMock as unknown as AuthenticationClient, directoryMock, {
       id: 'test',
       upstream: adspId`urn:ads:platform:test-service`,
     });
@@ -33,7 +30,7 @@ describe('TargetProxy', () => {
         id: 'test',
         upstream: adspId`urn:ads:platform:test-service`,
       };
-      const proxy = new TargetProxy(configurationMock as unknown as TokenHandlerConfiguration, directoryMock, target);
+      const proxy = new TargetProxy(clientMock as unknown as AuthenticationClient, directoryMock, target);
 
       directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('http://test-service'));
       const handler = await proxy.getProxyHandler();
@@ -42,7 +39,7 @@ describe('TargetProxy', () => {
     });
 
     it('can throw for upstream not in directory', async () => {
-      const proxy = new TargetProxy(configurationMock as unknown as TokenHandlerConfiguration, directoryMock, {
+      const proxy = new TargetProxy(clientMock as unknown as AuthenticationClient, directoryMock, {
         id: 'test',
         upstream: adspId`urn:ads:platform:test-service`,
       });
@@ -58,7 +55,7 @@ describe('TargetProxy', () => {
         id: 'test',
         upstream: adspId`urn:ads:platform:test-service`,
       };
-      const proxy = new TargetProxy(configurationMock as unknown as TokenHandlerConfiguration, directoryMock, target);
+      const proxy = new TargetProxy(clientMock as unknown as AuthenticationClient, directoryMock, target);
 
       const req = {
         user: { accessToken: 'abc-123', exp: Date.now() / 1000 + 300, authenticatedBy: 'test' },
@@ -73,38 +70,22 @@ describe('TargetProxy', () => {
         id: 'test',
         upstream: adspId`urn:ads:platform:test-service`,
       };
-      const proxy = new TargetProxy(configurationMock as unknown as TokenHandlerConfiguration, directoryMock, target);
+
+      const client = {
+        refreshTokens: jest.fn(),
+      };
+      const proxy = new TargetProxy(client as unknown as AuthenticationClient, directoryMock, target);
 
       const req = {
         user: { accessToken: 'abc-123', exp: Date.now() / 1000, authenticatedBy: 'test' },
       };
 
-      const client = {
-        refreshTokens: jest.fn(),
-      };
-      configurationMock.getClient.mockReturnValueOnce(client);
       const newToken = '123-abc';
       client.refreshTokens.mockResolvedValueOnce(newToken);
 
       const token = await proxy.getUserToken(req as unknown as Request);
       expect(token).toBe(newToken);
       expect(client.refreshTokens).toHaveBeenCalledWith(req);
-    });
-
-    it('can throw not found for missing client', async () => {
-      const target = {
-        id: 'test',
-        upstream: adspId`urn:ads:platform:test-service`,
-      };
-      const proxy = new TargetProxy(configurationMock as unknown as TokenHandlerConfiguration, directoryMock, target);
-
-      const req = {
-        user: { accessToken: 'abc-123', exp: Date.now() / 1000, authenticatedBy: 'test' },
-      };
-
-      configurationMock.getClient.mockReturnValueOnce(null);
-
-      await expect(proxy.getUserToken(req as unknown as Request)).rejects.toThrow(NotFoundError);
     });
   });
 });

@@ -57,7 +57,7 @@ describe('client router', () => {
     it('can get client', async () => {
       const req = {
         params: { id: 'test' },
-        getConfiguration: jest.fn(() => Promise.resolve([configurationMock])),
+        getConfiguration: jest.fn(() => Promise.resolve(configurationMock)),
       };
       const res = {};
       const next = jest.fn();
@@ -74,7 +74,7 @@ describe('client router', () => {
     it('can call next with not found for unknown client', async () => {
       const req = {
         params: { id: 'test' },
-        getConfiguration: jest.fn(() => Promise.resolve([configurationMock])),
+        getConfiguration: jest.fn(() => Promise.resolve(configurationMock)),
       };
       const res = {};
       const next = jest.fn();

@@ -4,11 +4,11 @@ import { NotFoundError } from '@core-services/core-common';
 
 describe('target router', () => {
   const configurationMock = {
-    getTarget: jest.fn(),
+    getClient: jest.fn(),
   };
 
   beforeEach(() => {
-    configurationMock.getTarget.mockClear();
+    configurationMock.getClient.mockClear();
   });
 
   describe('createTargetRouter', () => {
@@ -27,7 +27,8 @@ describe('target router', () => {
     it('can handle proxy request', async () => {
       const req = {
         params: { id: 'test' },
-        getConfiguration: jest.fn(() => Promise.resolve([configurationMock])),
+        user: { authenticatedBy: 'test' },
+        getConfiguration: jest.fn(() => Promise.resolve(configurationMock)),
       };
       const res = {};
       const next = jest.fn();
@@ -36,7 +37,10 @@ describe('target router', () => {
       const target = {
         getProxyHandler: jest.fn(),
       };
-      configurationMock.getTarget.mockReturnValueOnce(target);
+      const client = {
+        targets: { test: target },
+      };
+      configurationMock.getClient.mockReturnValueOnce(client);
       target.getProxyHandler.mockResolvedValueOnce(proxyHandler);
 
       const handler = proxyRequest();
@@ -48,12 +52,13 @@ describe('target router', () => {
     it('can call next with not found for unknown target', async () => {
       const req = {
         params: { id: 'test' },
-        getConfiguration: jest.fn(() => Promise.resolve([configurationMock])),
+        user: { authenticatedBy: 'test' },
+        getConfiguration: jest.fn(() => Promise.resolve(configurationMock)),
       };
       const res = {};
       const next = jest.fn();
 
-      configurationMock.getTarget.mockReturnValueOnce(null);
+      configurationMock.getClient.mockReturnValueOnce(null);
 
       const handler = proxyRequest();
       await handler(req as unknown as Request, res as unknown as Response, next);
