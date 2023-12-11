@@ -1,18 +1,19 @@
 import { AdspId, ServiceDirectory } from '@abgov/adsp-service-sdk';
 import { Logger } from 'winston';
 
-import { AuthenticationClient, TargetProxy } from '../model';
+import { AuthenticationClient } from '../model';
 import { ClientCredentialRepository } from '../repository';
 import { Client, Target } from '../types';
 
 interface TokenHandlerConfigurationObject {
-  clients?: Record<string, Omit<Client, 'tenantId'>>;
-  targets?: Record<string, Omit<Target, 'upstream'> & { upstream: string }>;
+  clients?: Record<
+    string,
+    Omit<Client, 'tenantId' | 'targets'> & { targets: Record<string, Omit<Target, 'upstream'> & { upstream: string }> }
+  >;
 }
 
 export class TokenHandlerConfiguration {
   private clients: Record<string, AuthenticationClient>;
-  private targets: Record<string, TargetProxy>;
 
   constructor(
     accessServiceUrl: URL,
@@ -20,30 +21,29 @@ export class TokenHandlerConfiguration {
     directory: ServiceDirectory,
     repository: ClientCredentialRepository,
     tenantId: AdspId,
-    { clients, targets }: TokenHandlerConfigurationObject
+    { clients }: TokenHandlerConfigurationObject
   ) {
-    this.clients = Object.entries(clients || {}).reduce(
-      (clients, [id, client]) => ({
+    this.clients = Object.entries(clients || {}).reduce((clients, [id, client]) => {
+      const clientRecord = {
+        ...client,
+        id,
+        tenantId,
+        targets: Object.entries(client.targets || {}).reduce(
+          (targets, [targetId, target]) => ({
+            ...targets,
+            [targetId]: { id: targetId, upstream: AdspId.parse(target.upstream) },
+          }),
+          {}
+        ),
+      };
+      return {
         ...clients,
-        [id]: new AuthenticationClient(accessServiceUrl, logger, repository, { ...client, id, tenantId }),
-      }),
-      {}
-    );
-    this.targets = Object.entries(targets || {}).reduce((targets, [id, target]) => {
-      try {
-        targets[id] = new TargetProxy(this, directory, { ...target, id, upstream: AdspId.parse(target.upstream) });
-      } catch (err) {
-        // Bad upstream value.
-      }
-      return targets;
+        [id]: new AuthenticationClient(accessServiceUrl, logger, directory, repository, clientRecord),
+      };
     }, {});
   }
 
   public getClient(clientId: string): AuthenticationClient {
     return this.clients[clientId];
-  }
-
-  public getTarget(targetId: string): TargetProxy {
-    return this.targets[targetId];
   }
 }

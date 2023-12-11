@@ -20,7 +20,7 @@ export function getAuthenticationClient() {
     try {
       const { id } = req.params;
 
-      const [config] = await req.getConfiguration<TokenHandlerConfiguration>();
+      const config = await req.getConfiguration<TokenHandlerConfiguration, TokenHandlerConfiguration>();
       const client = config.getClient(id);
       if (!client) {
         throw new NotFoundError('client', id);

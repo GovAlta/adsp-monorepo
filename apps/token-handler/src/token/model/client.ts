@@ -1,4 +1,4 @@
-import { AdspId, LimitToOne, Tenant } from '@abgov/adsp-service-sdk';
+import { AdspId, LimitToOne, ServiceDirectory, Tenant } from '@abgov/adsp-service-sdk';
 import { InvalidOperationError, UnauthorizedError } from '@core-services/core-common';
 import axios, { isAxiosError } from 'axios';
 import { Request } from 'express';
@@ -12,6 +12,7 @@ import { Logger } from 'winston';
 import { ClientCredentialRepository } from '../repository';
 import { Client, ClientCredentials, Prompt, UserSessionData } from '../types';
 import { generateCsrfToken } from '../csrf';
+import { TargetProxy } from './target';
 
 interface OidcClientRegistrationResponse {
   client_id: string;
@@ -27,9 +28,10 @@ interface OidcTokenResponse {
   refresh_expires_in: number;
 }
 
-export class AuthenticationClient implements Client {
+export class AuthenticationClient {
   tenantId: AdspId;
   id: string;
+  name: string;
   prompt: Prompt;
   scope: string | string[];
   idpHint: string;
@@ -37,6 +39,7 @@ export class AuthenticationClient implements Client {
   disableVerifyHost: boolean;
   successRedirectUrl?: string;
   failureRedirectUrl?: string;
+  targets: Record<string, TargetProxy>;
   credentials?: ClientCredentials;
   private strategy: Strategy;
   private callbackUrl: URL;
@@ -44,11 +47,13 @@ export class AuthenticationClient implements Client {
   constructor(
     private accessServiceUrl: URL,
     private logger: Logger,
+    directory: ServiceDirectory,
     private repository: ClientCredentialRepository,
     client: Client
   ) {
     this.tenantId = client.tenantId;
     this.id = client.id;
+    this.name = client.name;
     this.prompt = client.prompt;
     this.scope = client.scope;
     this.idpHint = client.idpHint;
@@ -56,6 +61,10 @@ export class AuthenticationClient implements Client {
     this.disableVerifyHost = !!client.disableVerifyHost;
     this.successRedirectUrl = client.successRedirectUrl || '/';
     this.failureRedirectUrl = client.failureRedirectUrl || '/';
+    this.targets = Object.entries(client.targets).reduce(
+      (targets, [targetId, target]) => ({ ...targets, [targetId]: new TargetProxy(this, directory, target) }),
+      {}
+    );
     this.callbackUrl = new URL(this.authCallbackUrl);
   }
 
