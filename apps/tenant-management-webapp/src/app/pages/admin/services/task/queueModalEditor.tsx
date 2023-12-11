@@ -1,7 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useParams } from 'react-router-dom';
-// import { SaveFormModal } from '@components/saveModal';
 import {
   SpinnerModalPadding,
   TextLoadingIndicator,
@@ -25,7 +24,7 @@ import { ConfigServiceRole } from '@store/access/models';
 import { RootState } from '@store/index';
 import { FETCH_KEYCLOAK_SERVICE_ROLES, fetchKeycloakServiceRoles } from '@store/access/actions';
 import { ActionState } from '@store/session/models';
-
+import { compareStringArrayAreEqual } from '@lib/arrayUtil';
 import { useValidators } from '@lib/validation/useValidators';
 import { badCharsCheck, wordMaxLengthCheck, isNotEmptyCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { TaskConfigQueue } from './TaskConfigQueue';
@@ -33,11 +32,9 @@ import { SaveFormModal } from '@components/saveModal';
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 
-const isTaskUpdated = (prev: TaskDefinition, next: TaskDefinition): boolean => {
-  return (
-    prev?.assignerRoles.length === next?.assignerRoles.length && prev?.workerRoles.length === next?.workerRoles.length
-  );
-};
+const isTaskUpdated = (prev: TaskDefinition, next: TaskDefinition): boolean =>
+  compareStringArrayAreEqual(prev?.assignerRoles, next?.assignerRoles) &&
+  compareStringArrayAreEqual(prev?.workerRoles, next?.workerRoles);
 
 export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
   const dispatch = useDispatch();

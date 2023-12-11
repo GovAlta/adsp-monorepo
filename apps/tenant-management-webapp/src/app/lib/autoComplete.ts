@@ -276,6 +276,7 @@ export const convertToEditorSuggestion = (obj: any): EditorSuggestion[] => {
   ];
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getSuggestionsForSchema = (schema: any, monaco: Monaco) => {
   const suggestions = [];
 
