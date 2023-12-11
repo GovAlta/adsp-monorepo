@@ -8,6 +8,8 @@ export const configurationSchema = {
           type: 'object',
           properties: {
             id: { type: 'string', pattern: '^[a-zA-Z0-9-_ ]{1,50}$' },
+            name: { type: 'string' },
+            description: { type: ['string', 'null'] },
             authCallbackUrl: { type: 'string' },
             prompt: {
               type: ['string', 'null'],
@@ -21,21 +23,23 @@ export const configurationSchema = {
             disableVerifyHost: { type: ['boolean', 'null'] },
             successRedirectUrl: { type: ['string', 'null'] },
             failureRedirectUrl: { type: ['string', 'null'] },
+            targets: {
+              type: 'object',
+              patternProperties: {
+                '^[a-zA-Z0-9-_ ]{1,50}$': {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', pattern: '^[a-zA-Z0-9-_ ]{1,50}$' },
+                    upstream: { type: 'string' },
+                  },
+                  required: ['id', 'upstream'],
+                  additionalProperties: false,
+                },
+              },
+            },
           },
-          required: ['id', 'authCallbackUrl'],
-        },
-      },
-    },
-    targets: {
-      type: 'object',
-      patternProperties: {
-        '^[a-zA-Z0-9-_ ]{1,50}$': {
-          type: 'object',
-          properties: {
-            id: { type: 'string', pattern: '^[a-zA-Z0-9-_ ]{1,50}$' },
-            upstream: { type: 'string' },
-          },
-          required: ['id', 'upstream'],
+          required: ['id', 'name', 'authCallbackUrl'],
+          additionalProperties: false,
         },
       },
     },

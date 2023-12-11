@@ -188,7 +188,7 @@ export const convertToSuggestion = (event: EventDefinition, hasAddress: boolean)
   return hasAddress ? eventSuggestion : [...eventSuggestion, ...subscriberEvents];
 };
 
-const getElementSuggestion = (element) => {
+export const getElementSuggestion = (element) => {
   const suggest = [];
 
   for (const k in element?.properties) {
@@ -214,11 +214,14 @@ const getPositionX = (text: string, search: string): number => {
 export const triggerInScope = (text: string, lineNumber: number) =>
   text.indexOf('{{') !== -1 && getPositionX(text, '{{') <= lineNumber && getPositionX(text, '{{') >= lineNumber;
 
+export const luaTriggerInScope = (text: string, lineNumber: number) =>
+  text.indexOf('[') !== -1 && getPositionX(text, '[') <= lineNumber && getPositionX(text, '[') >= lineNumber;
+
 const isStringOrNumber = (value: unknown): value is string | number => {
   return typeof value === 'string' || typeof value === 'number';
 };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const convertEditorToSuggestion = (obj: any): EditorSuggestion => {
+export const convertEditorToSuggestion = (obj: any): EditorSuggestion => {
   const isArray = Array.isArray(obj);
 
   if (isArray) {
@@ -271,4 +274,23 @@ export const convertToEditorSuggestion = (obj: any): EditorSuggestion[] => {
       children: suggest.children,
     },
   ];
+};
+
+export const getSuggestionsForSchema = (schema: any, monaco: Monaco) => {
+  const suggestions = [];
+
+  if (schema.properties) {
+    for (const property in schema.properties) {
+      suggestions.push({
+        label: property,
+        kind: monaco.languages.CompletionItemKind.Property,
+        insertText: `'${property}'`,
+        detail: 'Property',
+      });
+    }
+  }
+
+  // Handle other schema types (e.g., 'anyOf', 'oneOf') here as needed
+
+  return suggestions;
 };

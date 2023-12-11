@@ -4,13 +4,18 @@ import { param } from 'express-validator';
 
 import { TokenHandlerConfiguration } from '../configuration';
 import { csrfHandler } from '../csrf';
+import { UserSessionData } from '../types';
 
 export function proxyRequest(): RequestHandler {
   return async function (req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const [config] = await req.getConfiguration<TokenHandlerConfiguration>();
-      const target = config.getTarget(id);
+      const { authenticatedBy } = req.user as UserSessionData;
+
+      const config = await req.getConfiguration<TokenHandlerConfiguration, TokenHandlerConfiguration>();
+      const client = config?.getClient(authenticatedBy);
+
+      const target = client?.targets[id]
       if (!target) {
         throw new NotFoundError('target', id);
       }

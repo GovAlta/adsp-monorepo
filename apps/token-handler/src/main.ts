@@ -77,10 +77,22 @@ const initializeApp = async (): Promise<express.Application> => {
         description: 'Clients allowed to access the token handler and upstream targets for requests.',
         schema: configurationSchema,
       },
-      configurationConverter: function (config, tenantId) {
-        return tenantId
-          ? new TokenHandlerConfiguration(accessServiceUrl, logger, directory, repository, tenantId, config || {})
-          : {};
+      combineConfiguration: function (tenant, core, tenantId) {
+        return new TokenHandlerConfiguration(
+          accessServiceUrl,
+          logger,
+          directory,
+          repository,
+          tenantId,
+          tenantId
+            ? {
+                clients: {
+                  ...tenant?.['clients'],
+                  ...core?.['clients'],
+                },
+              }
+            : {}
+        );
       },
       enableConfigurationInvalidation: true,
       useLongConfigurationCacheTTL: true,
