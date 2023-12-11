@@ -9,6 +9,7 @@ export const ClientRegisteredEventDefinition: DomainEventDefinition = {
     properties: {
       client: {
         id: { type: 'string' },
+        name: { type: 'string' },
         clientId: { type: 'string' },
         authCallbackUrl: { type: 'string' },
       },
@@ -29,6 +30,7 @@ export function clientRegistered(client: AuthenticationClient, user: User): Doma
     payload: {
       client: {
         id: client.id,
+        name: client.name,
         clientId: client.credentials.clientId,
         authCallbackUrl: client.authCallbackUrl,
       },
