@@ -34,7 +34,10 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
   const topicTypes = useSelector((state: RootState) => {
     return state?.comment?.topicTypes;
   });
-  const topicTypeIds = Object.keys(topicTypes);
+
+  const topicTypeNames = Object.values(topicTypes).map((val) => {
+    return val.name;
+  });
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -65,7 +68,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
     wordMaxLengthCheck(32, 'Name'),
     isNotEmptyCheck('name')
   )
-    .add('duplicate', 'name', duplicateNameCheck(topicTypeIds, 'topicType'))
+    .add('duplicate', 'name', duplicateNameCheck(topicTypeNames, 'topicType'))
     .add('description', 'description', wordMaxLengthCheck(180, 'Description'))
     .build();
   return (
@@ -133,7 +136,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
                 onChange={(name, value) => {
                   const validations = {
                     name: value,
-                    duplicate: topicType.name,
+                    duplicate: value,
                   };
                   validators.remove('name');
 
