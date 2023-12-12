@@ -7,12 +7,19 @@ interface FormStepperControlProps {
   path: string;
 }
 
-const FormStepperControl = ({ data, handleChange, path }: FormStepperControlProps) => {
-  console.log(JSON.stringify(data) + '<data');
-  console.log(JSON.stringify(handleChange) + '<handleChange');
-  console.log(JSON.stringify(path) + '<path');
+const FormStepperControl = (params) => {
+  console.log(JSON.stringify(params) + '<params');
+  // console.log(JSON.stringify(handleChange) + '<handleChange');
+  // console.log(JSON.stringify(path) + '<path');
 
-  return <FormStepper value={data} updateValue={(newValue: number) => handleChange(path, newValue)} />;
+  return (
+    <FormStepper
+      uiSchema={params.uischema}
+      data={{}}
+      dataSchema={params.rootSchema}
+      updateValue={(newValue: number) => params.handleChange(params.path as string, newValue)}
+    />
+  );
 };
 
 export default withJsonFormsControlProps(FormStepperControl);

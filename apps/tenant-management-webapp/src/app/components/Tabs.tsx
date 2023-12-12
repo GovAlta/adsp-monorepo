@@ -27,17 +27,33 @@ function Tabs(props: TabsProps): JSX.Element {
       props.changeTabCallback(index);
     }
   }
+  const getCircularReplacer = () => {
+    const seen = new WeakSet();
+    return (key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (seen.has(value)) {
+          return;
+        }
+        seen.add(value);
+      }
+      return value;
+    };
+  };
 
   useEffect(() => {
     if (props.activeIndex !== null) setActiveTabIndex(props.activeIndex);
   }, [props.activeIndex]);
 
+  const subChildren = Children.toArray(props.children).filter((c) => c !== null);
   return (
     <>
       <SCTabs>
         {
           // eslint-disable-next-line
-          Children.map<JSX.Element, any>(props.children, (child: any, index: number) => {
+          subChildren.map((child: any, index: number) => {
+            console.log('wtf' + JSON.stringify(child, getCircularReplacer()));
+            if (!child) return null;
+            console.log(index + '<index');
             const testId = child.props?.testId ? `${child.props?.testId}-tab-btn` : `tab-btn-${index}`;
             return (
               <TabItem

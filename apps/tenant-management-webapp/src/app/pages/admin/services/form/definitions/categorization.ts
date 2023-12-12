@@ -145,6 +145,94 @@ export const uischema = {
         {
           type: 'Control',
           scope: '#/properties/formStepper',
+          elements: [
+            {
+              type: 'Category',
+              label: 'Personal Information',
+              elements: [
+                {
+                  type: 'HorizontalLayout',
+                  elements: [
+                    {
+                      type: 'Control',
+                      scope: '#/properties/firstName',
+                    },
+                    {
+                      type: 'Control',
+                      scope: '#/properties/secondName',
+                    },
+                  ],
+                },
+                {
+                  type: 'HorizontalLayout',
+                  elements: [
+                    {
+                      type: 'Control',
+                      scope: '#/properties/birthDate',
+                    },
+                    {
+                      type: 'Control',
+                      scope: '#/properties/nationality',
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'Category',
+              i18n: 'address',
+              label: 'Address Information',
+              elements: [
+                {
+                  type: 'HorizontalLayout',
+                  elements: [
+                    {
+                      type: 'Control',
+                      scope: '#/properties/address/properties/street',
+                    },
+                    {
+                      type: 'Control',
+                      scope: '#/properties/address/properties/streetNumber',
+                    },
+                  ],
+                },
+                {
+                  type: 'HorizontalLayout',
+                  elements: [
+                    {
+                      type: 'Control',
+                      scope: '#/properties/address/properties/city',
+                    },
+                    {
+                      type: 'Control',
+                      scope: '#/properties/address/properties/postalCode',
+                    },
+                  ],
+                },
+              ],
+              rule: {
+                effect: 'SHOW',
+                condition: {
+                  scope: '#/properties/provideAddress',
+                  schema: { const: true },
+                },
+              },
+            },
+            {
+              type: 'Category',
+              label: 'Additional Information',
+              elements: [
+                {
+                  type: 'Control',
+                  scope: '#/properties/vegetarianOptions/properties/vegan',
+                },
+                {
+                  type: 'Control',
+                  scope: '#/properties/vegetarianOptions/properties/favoriteVegetable',
+                },
+              ],
+            },
+          ],
         },
       ],
     },

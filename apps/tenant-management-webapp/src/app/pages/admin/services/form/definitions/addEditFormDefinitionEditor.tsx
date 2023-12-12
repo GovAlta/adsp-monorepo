@@ -40,6 +40,7 @@ import { GoAButtonGroup, GoAButton, GoAFormItem } from '@abgov/react-components-
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
+import { GoACheckbox } from '@abgov/react-components-new';
 
 import RatingControl from './RatingControl';
 import FormStepperControl from './FormStepperControl';
@@ -139,11 +140,14 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify(dataSchema, null, 2));
   const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify(uiSchema, null, 2));
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify(dataSchema, null, 2));
+
+  console.log(JSON.stringify(dataSchemaBounced) + '<---dataSchemaBounced');
   const [currentData, setCurrentData] = useState(data);
   const [error, setError] = useState('');
   const [spinner, setSpinner] = useState<boolean>(false);
   const { id } = useParams<{ id: string }>();
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
+  const [customUiSchema, setCustomUiSchema] = useState(false);
 
   const debouncedRenderUISchema = useDebounce(tempUiSchema, 1000);
   const debouncedRenderDataSchema = useDebounce(tempDataSchema, 1000);
@@ -399,41 +403,43 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   </EditorPadding>
                 </GoAFormItem>
               </Tab>
-              <Tab label="UI schema" data-testid="form-editor-tab">
-                <GoAFormItem error={errors?.body ?? editorErrors?.uiSchema ?? null} label="">
-                  <EditorPadding>
-                    <Editor
-                      data-testid="form-ui-schema"
-                      height={EditorHeight}
-                      value={tempUiSchema}
-                      {...formEditorJsonConfig}
-                      onValidate={(makers) => {
-                        if (makers.length === 0) {
+              {customUiSchema && (
+                <Tab label="UI schema" data-testid="form-editor-tab-2">
+                  <GoAFormItem error={errors?.body ?? editorErrors?.uiSchema ?? null} label="">
+                    <EditorPadding>
+                      <Editor
+                        data-testid="form-ui-schema"
+                        height={EditorHeight}
+                        value={tempUiSchema}
+                        {...formEditorJsonConfig}
+                        onValidate={(makers) => {
+                          if (makers.length === 0) {
+                            setEditorErrors({
+                              ...editorErrors,
+                              dataSchema: null,
+                            });
+                            return;
+                          }
                           setEditorErrors({
                             ...editorErrors,
-                            dataSchema: null,
+                            dataSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
                           });
-                          return;
-                        }
-                        setEditorErrors({
-                          ...editorErrors,
-                          dataSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
-                        });
-                      }}
-                      onChange={(value) => {
-                        setTempUiSchema(value);
-                      }}
-                      language="json"
-                      options={{
-                        automaticLayout: true,
-                        scrollBeyondLastLine: false,
-                        tabSize: 2,
-                        minimap: { enabled: false },
-                      }}
-                    />
-                  </EditorPadding>
-                </GoAFormItem>
-              </Tab>
+                        }}
+                        onChange={(value) => {
+                          setTempUiSchema(value);
+                        }}
+                        language="json"
+                        options={{
+                          automaticLayout: true,
+                          scrollBeyondLastLine: false,
+                          tabSize: 2,
+                          minimap: { enabled: false },
+                        }}
+                      />
+                    </EditorPadding>
+                  </GoAFormItem>
+                </Tab>
+              )}
               <Tab label="Roles" data-testid="form-roles-tab">
                 <MonacoDivTabBody data-testid="roles-editor-body" style={{ height: EditorHeight - 5 }}>
                   <ScrollPane>
@@ -512,6 +518,17 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 >
                   Back
                 </GoAButton>
+                <GoACheckbox
+                  name="Custom UI schema"
+                  key="ui-schema-enabled"
+                  checked={customUiSchema}
+                  testId="ui-schema-enabled"
+                  onChange={() => {
+                    setCustomUiSchema(!customUiSchema);
+                  }}
+                >
+                  Custom UI schema
+                </GoACheckbox>
               </GoAButtonGroup>
             </FinalButtonPadding>
           </NameDescriptionDataSchema>
@@ -521,15 +538,26 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
             <hr className="hr-resize" />
             <div style={{ paddingTop: '2rem' }}>
               <GoAFormItem error={error} label="">
-                <JsonForms
-                  schema={JSON.parse(dataSchemaBounced)}
-                  uischema={JSON.parse(UiSchemaBounced)}
-                  data={currentData}
-                  validationMode={'NoValidation'}
-                  renderers={renderers}
-                  cells={materialCells}
-                  onChange={({ data }) => setCurrentData(data)}
-                />
+                {customUiSchema ? (
+                  <JsonForms
+                    schema={JSON.parse(dataSchemaBounced)}
+                    uischema={JSON.parse(UiSchemaBounced)}
+                    data={currentData}
+                    validationMode={'NoValidation'}
+                    renderers={renderers}
+                    cells={materialCells}
+                    onChange={({ data }) => setCurrentData(data)}
+                  />
+                ) : (
+                  <JsonForms
+                    schema={JSON.parse(dataSchemaBounced)}
+                    data={currentData}
+                    validationMode={'NoValidation'}
+                    renderers={renderers}
+                    cells={materialCells}
+                    onChange={({ data }) => setCurrentData(data)}
+                  />
+                )}
               </GoAFormItem>
             </div>
           </FormPreviewContainer>
