@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { useDispatch } from 'react-redux';
 
@@ -8,19 +8,14 @@ import { deleteTopicRequest } from '@store/comment/action';
 
 import { TopicItem } from '@store/comment/model';
 
-interface calendarTableProps {
+interface deleteTopicProps {
   topic: TopicItem;
   selectedType: string;
   onCancel?: () => void;
   onDelete?: (topic) => void;
 }
 
-export const DeleteConfirmationsView: FunctionComponent<calendarTableProps> = ({
-  topic,
-  selectedType,
-  onCancel,
-  onDelete,
-}) => {
+export const DeleteConfirmationsView = ({ topic, selectedType, onCancel, onDelete }: deleteTopicProps): JSX.Element => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const dispatch = useDispatch();
   useEffect(() => {
@@ -37,7 +32,9 @@ export const DeleteConfirmationsView: FunctionComponent<calendarTableProps> = ({
             <div>
               Are you sure you wish to delete <b>{`${topic.name}?`}</b>
               <br />
-              *Please note that all associated comments with <b>{`${topic.name}`}</b> will be deleted as well.
+              <p>
+                *Please note that all associated comments with <b>{`${topic.name}`}</b> will be deleted as well.
+              </p>
             </div>
           </div>
         }

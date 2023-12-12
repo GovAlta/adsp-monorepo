@@ -66,7 +66,7 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
     if (modalType === 'new') {
       dispatch(addCommentRequest(comment));
     } else {
-      dispatch(updateComment(topic.id, comment));
+      dispatch(updateComment({ topicId: topic.id, comment: comment }));
       dispatch(fetchComments(topic.id));
     }
   };
@@ -88,7 +88,7 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
         </GoAButton>
       </HeaderFont>
       {comments &&
-        comments.length &&
+        comments.length > 0 &&
         comments.map((comment) => {
           const date = new Date(comment.lastUpdatedOn);
           return (
