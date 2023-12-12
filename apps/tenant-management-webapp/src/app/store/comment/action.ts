@@ -116,7 +116,7 @@ export interface AddCommentAction {
 
 export interface DeleteCommentAction {
   type: typeof DELETE_COMMENT;
-  payload: string;
+  payload: object;
 }
 export interface UpdateCommentAction {
   type: typeof UPDATE_COMMENT_COMMENTS_ACTION;
@@ -142,9 +142,13 @@ export interface UpdateCommentSuccessAction {
   next: string;
 }
 
+export interface DeletePayload {
+  comment: number;
+  topicId: number;
+}
 export interface DeleteCommentSuccessAction {
   type: typeof DELETE_COMMENT_COMMENTS_SUCCESS;
-  payload: string;
+  payload: DeletePayload;
 }
 
 export type CommentActionTypes =
@@ -266,9 +270,9 @@ export const updateComment = (topicId: string, comment: Comment): UpdateCommentA
   type: UPDATE_COMMENT_COMMENTS_ACTION,
   payload: { topicId, comment },
 });
-export const deleteComment = (commentId: string): DeleteCommentAction => ({
+export const deleteCommentComments = (topicId: string, comment: Comment): DeleteCommentAction => ({
   type: DELETE_COMMENT,
-  payload: commentId,
+  payload: { topicId, comment },
 });
 export const addCommentSuccess = (comment: Comment, after: string, next: string): AddCommentSuccessAction => ({
   type: CREAT_COMMENT_COMMENTS_SUCCESS,
@@ -290,7 +294,7 @@ export const fetchCommentSuccess = (comment: Comment[], after: string, next: str
   next,
 });
 
-export const deleteCommentSuccess = (commentId: string): DeleteCommentSuccessAction => ({
+export const deleteCommentSuccess = ({ comment, topicId }): DeleteCommentSuccessAction => ({
   type: DELETE_COMMENT_COMMENTS_SUCCESS,
-  payload: commentId,
+  payload: { topicId, comment },
 });

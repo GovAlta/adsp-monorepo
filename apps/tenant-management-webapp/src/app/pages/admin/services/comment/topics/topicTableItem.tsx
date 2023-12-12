@@ -7,6 +7,7 @@ import { CommentListTable } from '../comments/commentsTable';
 interface TopicTableItemProps {
   id: string;
   topic: TopicItem;
+  selectedType: string;
   showDetails: boolean;
   onDeleteTopic?: (Topic) => void;
   onToggleDetails: () => void;
@@ -15,6 +16,7 @@ interface TopicTableItemProps {
 export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
   id,
   topic,
+  selectedType,
   showDetails,
   onDeleteTopic,
   onToggleDetails,
@@ -52,7 +54,7 @@ export const TopicTableItem: FunctionComponent<TopicTableItemProps> = ({
             <MoreDetails>
               <p>Topic description</p>
               <span>{topic.description}</span>
-              <CommentListTable topic={topic}></CommentListTable>
+              <CommentListTable topic={topic} selectedType={selectedType}></CommentListTable>
             </MoreDetails>
           </td>
         </tr>
