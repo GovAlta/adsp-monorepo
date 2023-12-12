@@ -116,11 +116,11 @@ export interface AddCommentAction {
 
 export interface DeleteCommentAction {
   type: typeof DELETE_COMMENT;
-  payload: object;
+  payload: DeletePayload;
 }
 export interface UpdateCommentAction {
   type: typeof UPDATE_COMMENT_COMMENTS_ACTION;
-  payload: object;
+  payload: DeletePayload;
 }
 
 export interface FetchCommentSuccessAction {
@@ -266,11 +266,11 @@ export const addCommentRequest = (comment: Comment[]): AddCommentAction => ({
   payload: comment,
 });
 
-export const updateComment = (topicId: string, comment: Comment): UpdateCommentAction => ({
+export const updateComment = ({ topicId, comment }): UpdateCommentAction => ({
   type: UPDATE_COMMENT_COMMENTS_ACTION,
   payload: { topicId, comment },
 });
-export const deleteCommentComments = (topicId: string, comment: Comment): DeleteCommentAction => ({
+export const deleteCommentComments = ({ comment, topicId }): DeleteCommentAction => ({
   type: DELETE_COMMENT,
   payload: { topicId, comment },
 });

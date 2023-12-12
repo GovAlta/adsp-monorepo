@@ -1,6 +1,6 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 
 import { TableDiv } from '../styled-components';
 import { DeleteModal } from '@components/DeleteModal';
@@ -8,7 +8,7 @@ import { deleteCommentComments } from '@store/comment/action';
 
 import { Comment, TopicItem } from '@store/comment/model';
 
-interface calendarTableProps {
+interface commentDeleteProps {
   topic: TopicItem;
   selectedComment: Comment;
   selectedType: string;
@@ -17,14 +17,14 @@ interface calendarTableProps {
   deleteComment?: () => void;
 }
 
-export const DeleteConfirmationsView: FunctionComponent<calendarTableProps> = ({
+export const DeleteConfirmationsView = ({
   topic,
   selectedComment,
   selectedType,
   deleteConfirmation,
   onCancel,
   deleteComment,
-}) => {
+}: commentDeleteProps): JSX.Element => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(deleteConfirmation);
   const dispatch = useDispatch();
 
@@ -45,7 +45,7 @@ export const DeleteConfirmationsView: FunctionComponent<calendarTableProps> = ({
           onCancel();
         }}
         onDelete={() => {
-          dispatch(deleteCommentComments(topic.id, selectedComment.id));
+          dispatch(deleteCommentComments({ topicId: topic.id, comment: selectedComment.id }));
           deleteComment();
           setShowDeleteConfirmation(false);
         }}
