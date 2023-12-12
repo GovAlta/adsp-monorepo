@@ -1,5 +1,6 @@
 import { AdspId, adspId, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
 import {
+  assertAuthenticatedHandler,
   createValidationHandler,
   InvalidOperationError,
   New,
@@ -47,14 +48,20 @@ export function getTenants(logger: Logger, repository: TenantRepository): Reques
         criteria.adminEmailEquals = `${adminEmail}`;
       }
 
+      if (user?.tenantId) {
+        criteria.idEquals = user.tenantId.resource.replace('/tenants/', '');
+      }
+
+      // For anonymous users, the supported operation is a query including name criteria.
+      if (!user && !criteria.nameEquals) {
+        throw new UnauthorizedError('Request must include name criteria.');
+      }
+
       // FIXME: accessing a non-injected dependency makes this hard to test
-      const tenants = (await repository.find(criteria)).filter(
-        (tenant) =>
-          user.isCore || user.tenantId.toString() === `urn:ads:platform:tenant-service:v2:/tenants/${tenant.id}`
-      );
+      const tenants = await repository.find(criteria);
 
       res.send({
-        results: tenants.map(mapTenant),
+        results: tenants.map((tenant) => mapTenant(tenant, !user)),
         page: {
           size: tenants.length,
         },
@@ -209,6 +216,7 @@ export const createTenantV2Router = ({
   );
   router.post(
     '/tenants',
+    assertAuthenticatedHandler,
     requireBetaTesterOrAdmin,
     createValidationHandler(
       ...checkSchema(
@@ -216,6 +224,7 @@ export const createTenantV2Router = ({
           name: {
             isString: true,
             isLength: { options: { min: 1, max: 50 } },
+            matches: { options: /^[0-9a-zA-Z _]{1,50}$/ },
           },
           realm: {
             optional: { options: { nullable: true } },
@@ -233,8 +242,13 @@ export const createTenantV2Router = ({
     createTenant(logger, tenantRepository, realmService, eventService)
   );
 
-  router.get('/tenants/:id', getTenant(logger, tenantRepository));
-  router.delete('/tenants/:id', requireTenantServiceAdmin, deleteTenant(realmService, tenantRepository, eventService));
+  router.get('/tenants/:id', assertAuthenticatedHandler, getTenant(logger, tenantRepository));
+  router.delete(
+    '/tenants/:id',
+    assertAuthenticatedHandler,
+    requireTenantServiceAdmin,
+    deleteTenant(realmService, tenantRepository, eventService)
+  );
 
   return router;
 };

@@ -8,6 +8,7 @@ import * as healthCheck from 'express-healthcheck';
 import { readFile } from 'fs';
 import { promisify } from 'util';
 import * as passport from 'passport';
+import { Strategy as AnonymousStrategy } from 'passport-anonymous';
 import { environment } from './environments/environment';
 import { createRepositories, disconnect } from './mongo';
 import { logger } from './middleware/logger';
@@ -70,6 +71,7 @@ async function initializeApp(): Promise<express.Application> {
 
   passport.use('jwt', coreStrategy);
   passport.use('jwt-tenant', tenantStrategy);
+  passport.use('anonymous', new AnonymousStrategy());
 
   passport.serializeUser(function (user, done) {
     done(null, user);

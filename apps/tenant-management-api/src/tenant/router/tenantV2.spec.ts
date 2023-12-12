@@ -177,13 +177,7 @@ describe('createTenantV2Router', () => {
       const next = jest.fn();
       const handler = getTenants(loggerMock, repositoryMock);
 
-      const tenant = {
-        id: 'tenant-123',
-        name: 'tenant-a',
-        realm: 'tenant-a-realm',
-        adminEmail: 'tester@test.co',
-      };
-      repositoryMock.find.mockResolvedValueOnce([tenant]);
+      repositoryMock.find.mockResolvedValueOnce([]);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -191,6 +185,7 @@ describe('createTenantV2Router', () => {
           page: expect.objectContaining({ size: 0 }),
         })
       );
+      expect(repositoryMock.find).toHaveBeenCalledWith(expect.objectContaining({ idEquals: 'tenant-321' }));
     });
 
     it('can call next for error', async () => {
