@@ -43,6 +43,10 @@ export class MongoTenantRepository implements TenantRepository {
   async find(criteria?: TenantCriteria): Promise<TenantEntity[]> {
     const query: Record<string, unknown> = {};
     if (criteria) {
+      if (criteria.idEquals) {
+        query._id = criteria.idEquals;
+      }
+
       if (criteria.adminEmailEquals) {
         query.adminEmail = criteria.adminEmailEquals;
       }
