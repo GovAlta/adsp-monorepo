@@ -55,7 +55,7 @@ export const deleteTopicApi = async (token, url) => {
   return response.data;
 };
 
-export const deleteCommentApi = async (url, token) => {
+export const deleteCommentApi = async (token, url) => {
   const response = await axios.delete(`${url}/`, { headers: { Authorization: `Bearer ${token}` } });
   return response.data;
 };

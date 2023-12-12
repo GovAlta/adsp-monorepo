@@ -72,7 +72,7 @@ export default function (state: CommentState = defaultState, action: CommentActi
     case CREAT_COMMENT_COMMENTS_SUCCESS:
       return {
         ...state,
-        comments: [...state.comments, action.payload],
+        comments: [action.payload, ...state.comments],
       };
     case UPDATE_COMMENT_COMMENTS_SUCCESS:
       return {
@@ -93,10 +93,10 @@ export default function (state: CommentState = defaultState, action: CommentActi
 
     case DELETE_COMMENT_COMMENTS_SUCCESS:
       // eslint-disable-next-line no-case-declarations
-      const filteredComments = state.comments.filter((comment) => comment.id !== parseInt(action.payload));
+      const filteredComments = state.comments.filter((comment) => comment.id !== action.payload.comment);
       return {
         ...state,
-        comments: { ...filteredComments },
+        comments: filteredComments,
       };
 
     default:
