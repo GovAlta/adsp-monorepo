@@ -233,7 +233,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
                       checked={
                         type.channels?.map((value) => value).includes(channel.value) || channel.value === 'email'
                       }
-                      disabled={isNotifyAddress && channel.value !== 'email'}
+                      disabled={isNotifyAddress || channel.value === 'email'}
                       onChange={() => {
                         const channels = type.channels || ['email'];
                         const checked = channels.findIndex((ch) => ch === channel.value);
