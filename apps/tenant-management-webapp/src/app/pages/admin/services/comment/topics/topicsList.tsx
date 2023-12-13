@@ -63,7 +63,7 @@ export const TopicsList = (): JSX.Element => {
 
   useEffect(() => {
     document.body.style.overflow = 'unset';
-  }, [openAddTopic]);
+  }, [openAddTopic, showDeleteConfirmation]);
 
   const reset = () => {
     setOpenAddTopic(false);
@@ -82,6 +82,7 @@ export const TopicsList = (): JSX.Element => {
     setTopicList(topic);
     dispatch(addTopicRequest(topic));
     dispatch(fetchTopicsRequest(topicTypes[selectedType]));
+    setOpenAddTopic(false);
   };
 
   return (
