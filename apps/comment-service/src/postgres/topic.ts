@@ -78,7 +78,7 @@ export class PostgresTopicRepository implements TopicRepository {
       page: {
         after,
         next: encodeNext(rows.length, topChecked, skip - 1),
-        size: rows.length,
+        size: rows.length > top ? top : rows.length,
       },
     };
   }
