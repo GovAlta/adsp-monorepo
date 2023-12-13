@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import { materialRenderers, materialCells } from '@jsonforms/material-renderers';
 import { JsonForms } from '@jsonforms/react';
+import { RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
 import { FormDefinition } from '@store/form/model';
 
 import { useValidators } from '@lib/validation/useValidators';
@@ -40,14 +41,7 @@ import { GoAButtonGroup, GoAButton, GoAFormItem } from '@abgov/react-components-
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
-import { GoACheckbox } from '@abgov/react-components-new';
-
-import RatingControl from './RatingControl';
 import FormStepperControl from './FormStepperControl';
-import ratingControlTester from './ratingControlTester';
-import FormStepperControlTester from './formStepperControlTester';
-
-//import { uischema } from './categorization';
 import { uischema } from './categorization-stepper-nav-buttons';
 import { schema, data } from './categorization';
 
@@ -64,28 +58,9 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   );
 };
 
-const dataSchema = schema;
+export const categorizationRendererTester: RankedTester = rankWith(6, uiTypeIs('Categorization'));
 
-// const dataSchema = {
-//   type: 'object',
-//   properties: {
-//     name: {
-//       type: 'string',
-//       minLength: 1,
-//     },
-//     done: {
-//       type: 'boolean',
-//     },
-//     due_date: {
-//       type: 'string',
-//       format: 'date',
-//     },
-//     recurrence: {
-//       type: 'string',
-//     },
-//   },
-//   required: ['name', 'due_date'],
-// };
+const dataSchema = schema;
 
 export const formEditorJsonConfig = {
   'data-testid': 'templateForm-test-input',
@@ -98,56 +73,22 @@ export const formEditorJsonConfig = {
 
 const uiSchema = uischema;
 
-// const uiSchema = {
-//   type: 'VerticalLayout',
-//   elements: [
-//     {
-//       type: 'Control',
-//       label: true,
-//       scope: '#/properties/done',
-//     },
-//     {
-//       type: 'Control',
-//       scope: '#/properties/name',
-//     },
-//     {
-//       type: 'HorizontalLayout',
-//       elements: [
-//         {
-//           type: 'Control',
-//           scope: '#/properties/due_date',
-//         },
-//         {
-//           type: 'Control',
-//           scope: '#/properties/recurrence',
-//         },
-//       ],
-//     },
-//   ],
-//   options: {
-//     variant: 'stepper',
-//     showNavButtons: true,
-//   },
-// };
-
 const invalidJsonMsg = 'Invalid JSON syntax';
 
 export function AddEditFormDefinitionEditor(): JSX.Element {
   const [definition, setDefinition] = useState<FormDefinition>(defaultFormDefinition);
   const [initialDefinition, setInitialDefinition] = useState<FormDefinition>(defaultFormDefinition);
 
-  const [tempUiSchema, setTempUiSchema] = useState<string>(JSON.stringify(uiSchema, null, 2));
-  const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify(dataSchema, null, 2));
-  const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify(uiSchema, null, 2));
-  const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify(dataSchema, null, 2));
+  const [tempUiSchema, setTempUiSchema] = useState<string>(JSON.stringify({}, null, 2));
+  const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify({}, null, 2));
+  const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
+  const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
 
-  console.log(JSON.stringify(dataSchemaBounced) + '<---dataSchemaBounced');
   const [currentData, setCurrentData] = useState(data);
   const [error, setError] = useState('');
   const [spinner, setSpinner] = useState<boolean>(false);
   const { id } = useParams<{ id: string }>();
   const [saveModal, setSaveModal] = useState({ visible: false, closeEditor: false });
-  const [customUiSchema, setCustomUiSchema] = useState(false);
 
   const debouncedRenderUISchema = useDebounce(tempUiSchema, 1000);
   const debouncedRenderDataSchema = useDebounce(tempDataSchema, 1000);
@@ -336,12 +277,11 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const renderers = [
     ...materialRenderers,
-    //register custom renderers
-    { tester: ratingControlTester, renderer: RatingControl },
-    { tester: FormStepperControlTester, renderer: FormStepperControl },
+    {
+      tester: categorizationRendererTester,
+      renderer: FormStepperControl,
+    },
   ];
-
-  //console.log(JSON.stringify(renderers) + '<--renderers--');
 
   const { errors, validators } = useValidators(
     'name',
@@ -403,43 +343,41 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   </EditorPadding>
                 </GoAFormItem>
               </Tab>
-              {customUiSchema && (
-                <Tab label="UI schema" data-testid="form-editor-tab-2">
-                  <GoAFormItem error={errors?.body ?? editorErrors?.uiSchema ?? null} label="">
-                    <EditorPadding>
-                      <Editor
-                        data-testid="form-ui-schema"
-                        height={EditorHeight}
-                        value={tempUiSchema}
-                        {...formEditorJsonConfig}
-                        onValidate={(makers) => {
-                          if (makers.length === 0) {
-                            setEditorErrors({
-                              ...editorErrors,
-                              dataSchema: null,
-                            });
-                            return;
-                          }
+              <Tab label="UI schema" data-testid="form-editor-tab-2">
+                <GoAFormItem error={errors?.body ?? editorErrors?.uiSchema ?? null} label="">
+                  <EditorPadding>
+                    <Editor
+                      data-testid="form-ui-schema"
+                      height={EditorHeight}
+                      value={tempUiSchema}
+                      {...formEditorJsonConfig}
+                      onValidate={(makers) => {
+                        if (makers.length === 0) {
                           setEditorErrors({
                             ...editorErrors,
-                            dataSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
+                            dataSchema: null,
                           });
-                        }}
-                        onChange={(value) => {
-                          setTempUiSchema(value);
-                        }}
-                        language="json"
-                        options={{
-                          automaticLayout: true,
-                          scrollBeyondLastLine: false,
-                          tabSize: 2,
-                          minimap: { enabled: false },
-                        }}
-                      />
-                    </EditorPadding>
-                  </GoAFormItem>
-                </Tab>
-              )}
+                          return;
+                        }
+                        setEditorErrors({
+                          ...editorErrors,
+                          dataSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
+                        });
+                      }}
+                      onChange={(value) => {
+                        setTempUiSchema(value);
+                      }}
+                      language="json"
+                      options={{
+                        automaticLayout: true,
+                        scrollBeyondLastLine: false,
+                        tabSize: 2,
+                        minimap: { enabled: false },
+                      }}
+                    />
+                  </EditorPadding>
+                </GoAFormItem>
+              </Tab>
               <Tab label="Roles" data-testid="form-roles-tab">
                 <MonacoDivTabBody data-testid="roles-editor-body" style={{ height: EditorHeight - 5 }}>
                   <ScrollPane>
@@ -518,17 +456,20 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 >
                   Back
                 </GoAButton>
-                <GoACheckbox
-                  name="Custom UI schema"
-                  key="ui-schema-enabled"
-                  checked={customUiSchema}
-                  testId="ui-schema-enabled"
-                  onChange={() => {
-                    setCustomUiSchema(!customUiSchema);
+
+                <GoAButton
+                  type="tertiary"
+                  testId="form-generate"
+                  onClick={() => {
+                    setCurrentData(data);
+                    setTempUiSchemaBounced(JSON.stringify(uischema, null, 2));
+                    setDataSchemaBounced(JSON.stringify(schema, null, 2));
+                    setTempUiSchema(JSON.stringify(uischema, null, 2));
+                    setTempDataSchema(JSON.stringify(schema, null, 2));
                   }}
                 >
-                  Custom UI schema
-                </GoACheckbox>
+                  Generate multi-step form
+                </GoAButton>
               </GoAButtonGroup>
             </FinalButtonPadding>
           </NameDescriptionDataSchema>
@@ -538,7 +479,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
             <hr className="hr-resize" />
             <div style={{ paddingTop: '2rem' }}>
               <GoAFormItem error={error} label="">
-                {customUiSchema ? (
+                {UiSchemaBounced !== '{}' ? (
                   <JsonForms
                     schema={JSON.parse(dataSchemaBounced)}
                     uischema={JSON.parse(UiSchemaBounced)}
