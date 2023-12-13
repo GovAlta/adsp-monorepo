@@ -375,3 +375,13 @@ export const CommentBody = styled.div`
     text-wrap: wrap;
   }
 `;
+export const TopicDelete = styled.div`
+   {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+    color: #333333;
+    text-align: left;
+    padding-top: 1rem;
+  }
+`;
