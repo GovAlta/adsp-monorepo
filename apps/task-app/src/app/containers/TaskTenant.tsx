@@ -12,6 +12,7 @@ import {
   userInitializedSelector,
   userSelector,
 } from '../state';
+import { FeedbackNotification } from './FeedbackNotification';
 import { TaskQueue } from './TaskQueue';
 
 export const TaskTenant = () => {
@@ -33,7 +34,7 @@ export const TaskTenant = () => {
   return (
     <React.Fragment>
       <GoAMicrositeHeader type="alpha" />
-      <GoAAppHeader  url="/" heading={`${tenant?.name || tenantName} - Task management`}>
+      <GoAAppHeader url="/" heading={`${tenant?.name || tenantName} - Task management`}>
         {userInitialized && (
           <span>
             <span>{user?.name}</span>
@@ -49,15 +50,25 @@ export const TaskTenant = () => {
           </span>
         )}
       </GoAAppHeader>
+      <FeedbackNotification />
       <main>
-        <section>
-          <Switch>
-            <Route path={`/${tenantName}/:namespace/:name`}>{userInitialized && <TaskQueue />}</Route>
-            <Route path="/">
-              <div>Tenant queues</div>
-            </Route>
-          </Switch>
-        </section>
+        {user && (
+          <section>
+            <Switch>
+              <Route path={`/${tenantName}/:namespace/:name`}>
+                <TaskQueue />
+              </Route>
+              <Route path="/">
+                <div>Tenant queues</div>
+              </Route>
+            </Switch>
+          </section>
+        )}
+        {userInitialized && !user && (
+          <section>
+            <div>Sign in to access task queues.</div>
+          </section>
+        )}
       </main>
     </React.Fragment>
   );

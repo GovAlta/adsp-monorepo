@@ -78,7 +78,10 @@ export const TaskQueue: FunctionComponent = () => {
               Close
             </GoAButton>
             {open?.status === 'Pending' && (
-              <GoAButton disabled={busy.executing} onClick={() => dispatch(startTask({ taskId: open?.id }))}>
+              <GoAButton
+                disabled={!user.isWorker || busy.executing}
+                onClick={() => dispatch(startTask({ taskId: open?.id }))}
+              >
                 Start task
               </GoAButton>
             )}
@@ -86,12 +89,15 @@ export const TaskQueue: FunctionComponent = () => {
               <>
                 <GoAButton
                   type="secondary"
-                  disabled={busy.executing}
+                  disabled={!user.isWorker || busy.executing}
                   onClick={() => dispatch(cancelTask({ taskId: open?.id, reason: null }))}
                 >
                   Cancel task
                 </GoAButton>
-                <GoAButton disabled={busy.executing} onClick={() => dispatch(completeTask({ taskId: open?.id }))}>
+                <GoAButton
+                  disabled={!user.isWorker || busy.executing}
+                  onClick={() => dispatch(completeTask({ taskId: open?.id }))}
+                >
                   Complete task
                 </GoAButton>
               </>
