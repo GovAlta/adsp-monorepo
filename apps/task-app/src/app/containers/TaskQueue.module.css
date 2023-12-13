@@ -6,8 +6,6 @@
   bottom: 0;
   left: 0;
   right: 0;
-  padding-left: 32px;
-  padding-right: 32px;
 
   .header {
     background: white;
@@ -34,6 +32,9 @@
     position: relative;
     display: none;
     flex: 1;
+    padding-left: 32px;
+    padding-right: 32px;
+    padding-bottom: 32px;
 
     > * {
       height: 100%;
@@ -57,12 +58,15 @@
   .list {
     z-index: 0;
     flex: 1;
-    position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 
     > div:first-child {
       display: flex;
       flex-direction: row;
+      padding-left: 32px;
+      padding-right: 32px;
 
       > :first-child {
         margin-right: auto;

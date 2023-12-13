@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { io, Socket } from 'socket.io-client';
+import { v4 as uuidv4 } from 'uuid';
 import { AppState } from './store';
 
 export const TASK_FEATURE_KEY = 'task';
@@ -18,6 +19,7 @@ export interface QueueDefinition {
 
 export interface Task {
   id: string;
+  queue: { namespace: string; name: string };
   name: string;
   description: string;
   priority: string;
@@ -81,6 +83,7 @@ export interface TaskState {
     taskToAssign: Task;
     taskToPrioritize: Task;
   };
+  errors: { id: string; level: 'warn' | 'error'; message: string }[];
 }
 
 interface TaskResults {
@@ -108,9 +111,7 @@ export const initializeQueue = createAsyncThunk(
 
     dispatch(loadQueueTasks({ namespace: data.namespace, name: data.name }));
     dispatch(loadQueuePeople({ namespace: data.namespace, name: data.name }));
-    if (UPDATE_STREAM_ID) {
-      dispatch(connectStream());
-    }
+    dispatch(connectStream({ namespace: data.namespace, name: data.name }));
 
     return data;
   }
@@ -124,13 +125,18 @@ interface TaskEvent {
 }
 
 let socket: Socket;
-export const connectStream = createAsyncThunk('task/connectStream', async (_, { dispatch, getState }) => {
-  const state = getState() as AppState;
-  const { user } = state.user;
-  const { directory } = state.config;
+export const connectStream = createAsyncThunk(
+  'task/connectStream',
+  async ({ namespace, name }: { namespace: string; name: string }, { dispatch, getState }) => {
+    const state = getState() as AppState;
+    const { user } = state.user;
+    const { directory } = state.config;
 
-  // Create the connection if no previous connection or it is disconnected.
-  if (!socket || socket.disconnected) {
+    // Create the connection if no previous connection or it is disconnected.
+    if (socket && socket.connected) {
+      socket.disconnect();
+    }
+
     socket = io(`${directory[PUSH_SERVICE_ID]}/`, {
       query: {
         stream: UPDATE_STREAM_ID,
@@ -148,30 +154,42 @@ export const connectStream = createAsyncThunk('task/connectStream', async (_, { 
     });
 
     socket.on('task-service:task-created', ({ payload }: TaskEvent) => {
-      dispatch(taskActions.setTask(payload.task));
+      if (payload.task.queue?.namespace === namespace && payload.task.queue?.name === name) {
+        dispatch(taskActions.setTask(payload.task));
+      }
     });
 
     socket.on('task-service:task-assigned', ({ payload }: TaskEvent) => {
-      dispatch(taskActions.setTask(payload.task));
+      if (payload.task.queue?.namespace === namespace && payload.task.queue?.name === name) {
+        dispatch(taskActions.setTask(payload.task));
+      }
     });
 
     socket.on('task-service:task-priority-set', ({ payload }: TaskEvent) => {
-      dispatch(taskActions.setTask(payload.task));
+      if (payload.task.queue?.namespace === namespace && payload.task.queue?.name === name) {
+        dispatch(taskActions.setTask(payload.task));
+      }
     });
 
     socket.on('task-service:task-started', ({ payload }: TaskEvent) => {
-      dispatch(taskActions.setTask(payload.task));
+      if (payload.task.queue?.namespace === namespace && payload.task.queue?.name === name) {
+        dispatch(taskActions.setTask(payload.task));
+      }
     });
 
     socket.on('task-service:task-completed', ({ payload }: TaskEvent) => {
-      dispatch(taskActions.setTask(payload.task));
+      if (payload.task.queue?.namespace === namespace && payload.task.queue?.name === name) {
+        dispatch(taskActions.setTask(payload.task));
+      }
     });
 
     socket.on('task-service:task-cancelled', ({ payload }: TaskEvent) => {
-      dispatch(taskActions.setTask(payload.task));
+      if (payload.task.queue?.namespace === namespace && payload.task.queue?.name === name) {
+        dispatch(taskActions.setTask(payload.task));
+      }
     });
   }
-});
+);
 
 export const loadQueueTasks = createAsyncThunk(
   'task/load-queue-tasks',
@@ -383,6 +401,7 @@ export const initialTaskState: TaskState = {
     taskToAssign: null,
     taskToPrioritize: null,
   },
+  errors: [],
 };
 
 export const taskSlice = createSlice({
@@ -410,6 +429,9 @@ export const taskSlice = createSlice({
     setTaskToPrioritize: (state, { payload }: PayloadAction<Task>) => {
       state.modal.taskToPrioritize = payload;
     },
+    dismissError: (state) => {
+      state.errors.shift();
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -420,8 +442,9 @@ export const taskSlice = createSlice({
         state.busy.initializing = false;
         state.queue = payload;
       })
-      .addCase(initializeQueue.rejected, (state) => {
+      .addCase(initializeQueue.rejected, (state, { error }) => {
         state.busy.initializing = false;
+        state.errors.push({ id: uuidv4(), level: 'error', message: `Error encountered initializing queue: ${error.message}` });
       })
       .addCase(loadQueuePeople.pending, (state) => {
         state.busy.initializing = true;
@@ -436,8 +459,13 @@ export const taskSlice = createSlice({
         state.workers = payload.workers.map((p) => p.id);
         state.user = payload.user;
       })
-      .addCase(loadQueuePeople.rejected, (state) => {
+      .addCase(loadQueuePeople.rejected, (state, { error }) => {
         state.busy.initializing = false;
+        state.errors.push({
+          id: uuidv4(),
+          level: 'error',
+          message: `Error encountered getting queue people: ${error.message}`,
+        });
       })
       .addCase(loadQueueTasks.pending, (state) => {
         state.busy.loading = true;
@@ -454,8 +482,13 @@ export const taskSlice = createSlice({
         state.results = (payload.page.after ? state.results : []).concat(payload.results.map((r) => r.id));
         state.next = payload.page.next;
       })
-      .addCase(loadQueueTasks.rejected, (state) => {
+      .addCase(loadQueueTasks.rejected, (state, { error }) => {
         state.busy.initializing = false;
+        state.errors.push({
+          id: uuidv4(),
+          level: 'error',
+          message: `Error encountered getting queue tasks: ${error.message}`,
+        });
       })
       .addCase(assignTask.pending, (state) => {
         state.busy.executing = true;
@@ -467,8 +500,13 @@ export const taskSlice = createSlice({
           [payload.id]: payload,
         };
       })
-      .addCase(assignTask.rejected, (state) => {
+      .addCase(assignTask.rejected, (state, { error }) => {
         state.busy.executing = false;
+        state.errors.push({
+          id: uuidv4(),
+          level: 'error',
+          message: `Error encountered assigning task: ${error.message}`,
+        });
       })
       .addCase(setTaskPriority.pending, (state) => {
         state.busy.executing = true;
@@ -480,8 +518,13 @@ export const taskSlice = createSlice({
           [payload.id]: payload,
         };
       })
-      .addCase(setTaskPriority.rejected, (state) => {
+      .addCase(setTaskPriority.rejected, (state, { error }) => {
         state.busy.executing = false;
+        state.errors.push({
+          id: uuidv4(),
+          level: 'error',
+          message: `Error encountered setting task priority: ${error.message}`,
+        });
       })
       .addCase(startTask.pending, (state) => {
         state.busy.executing = true;
@@ -493,8 +536,13 @@ export const taskSlice = createSlice({
           [payload.id]: payload,
         };
       })
-      .addCase(startTask.rejected, (state) => {
+      .addCase(startTask.rejected, (state, { error }) => {
         state.busy.executing = false;
+        state.errors.push({
+          id: uuidv4(),
+          level: 'error',
+          message: `Error encountered starting task: ${error.message}`,
+        });
       })
       .addCase(completeTask.pending, (state) => {
         state.busy.executing = true;
@@ -506,8 +554,13 @@ export const taskSlice = createSlice({
           [payload.id]: payload,
         };
       })
-      .addCase(completeTask.rejected, (state) => {
+      .addCase(completeTask.rejected, (state, { error }) => {
         state.busy.executing = false;
+        state.errors.push({
+          id: uuidv4(),
+          level: 'error',
+          message: `Error encountered completing task: ${error.message}`,
+        });
       })
       .addCase(cancelTask.pending, (state) => {
         state.busy.executing = true;
@@ -519,8 +572,13 @@ export const taskSlice = createSlice({
           [payload.id]: payload,
         };
       })
-      .addCase(cancelTask.rejected, (state) => {
+      .addCase(cancelTask.rejected, (state, { error }) => {
         state.busy.executing = false;
+        state.errors.push({
+          id: uuidv4(),
+          level: 'error',
+          message: `Error encountered cancelling task: ${error.message}`,
+        });
       });
   },
 });
@@ -613,4 +671,9 @@ export const metricsSelector = createSelector(
 
     return metrics;
   }
+);
+
+export const errorSelector = createSelector(
+  (state: AppState) => state.task,
+  (task) => task.errors[0]
 );
