@@ -61,8 +61,6 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
 
 export const categorizationRendererTester: RankedTester = rankWith(6, uiTypeIs('Categorization'));
 
-const dataSchema = schema;
-
 export const formEditorJsonConfig = {
   'data-testid': 'templateForm-test-input',
   options: {
@@ -71,8 +69,6 @@ export const formEditorJsonConfig = {
     colorDecorators: true,
   },
 };
-
-const uiSchema = uischema;
 
 const invalidJsonMsg = 'Invalid JSON syntax';
 

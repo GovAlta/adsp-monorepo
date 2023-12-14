@@ -9,17 +9,15 @@ import FormStepperControl from './FormStepperControl';
 
 import { ReviewItem } from './style-components';
 
-interface RatingProps {
-  id?: string;
-  uiSchema: any;
-  dataSchema: any;
-  data: any;
-  updateValue: (newValue: number) => void;
+interface StepperProps {
+  uiSchema: Record<string, unknown>;
+  dataSchema: Record<string, unknown>;
+  data: Record<string, unknown>;
 }
 
 declare type Status = 'complete' | 'incomplete';
 
-export const FormStepper: React.FC<RatingProps> = ({ id, uiSchema, data, dataSchema, updateValue }) => {
+export const FormStepper: React.FC<StepperProps> = ({ uiSchema, data, dataSchema }) => {
   const [step, setStep] = useState<number>(-1);
   const [stepData, setStepData] = useState(data);
 
@@ -52,7 +50,7 @@ export const FormStepper: React.FC<RatingProps> = ({ id, uiSchema, data, dataSch
             />
           );
         })}
-        <GoAFormStep text="Review" status="incomplete" />
+        <GoAFormStep text="Review" />
       </GoAFormStepper>
       <GoAPages current={step} mb="xl">
         {uiSchema.elements?.map((step, index) => {
@@ -128,7 +126,7 @@ export const FormStepper: React.FC<RatingProps> = ({ id, uiSchema, data, dataSch
   );
 };
 
-var flattenArray = function (data) {
+const flattenArray = function (data) {
   return data?.reduce(function iter(r, a) {
     if (a === null) {
       return r;
