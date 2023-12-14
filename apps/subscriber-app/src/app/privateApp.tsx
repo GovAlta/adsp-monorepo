@@ -8,7 +8,7 @@ import { KeycloakRefreshToken } from '@store/tenant/actions';
 import { NotificationBanner } from './notificationBanner';
 import { UpdateConfigRealm } from '@store/config/actions';
 import GoaLogo from '../assets/goa-logo.svg';
-import Footer from '@components/Footer';
+import { Footer } from '@core-services/app-common';
 import Subscriptions from '@pages/private/Subscriptions/Subscriptions';
 import SmsRedirect from '@pages/private/Subscriptions/SmsRedirect';
 

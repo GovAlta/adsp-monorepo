@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import GoaLogo from '../assets/goa-logo.svg';
-import Footer from '@components/Footer';
+import { Footer } from '@core-services/app-common';
 import { NotificationBanner } from './notificationBanner';
 import Header from '@components/AppHeader';
 import Recaptcha from './components/Recaptcha';

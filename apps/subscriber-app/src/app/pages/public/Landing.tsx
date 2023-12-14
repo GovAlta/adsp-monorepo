@@ -1,8 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Band } from '@components/Band';
-import Container from '@components/Container';
-import { Grid, GridItem } from '@components/Grid';
+import { Band, Container, Grid, GridItem } from '@core-services/app-common';
 import { Main } from '@components/Html';
 import AddNotificationType from '@assets/icons/AddNotificationType.png';
 import AddNotificationType2 from '@assets/icons/AddNotificationType2.png';
