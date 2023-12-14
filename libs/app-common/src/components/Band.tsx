@@ -1,4 +1,4 @@
-import { FunctionComponent, ReactNode } from 'react';
+import React, { FunctionComponent, ReactNode } from 'react';
 import { Container } from './Container';
 import { Grid, GridItem } from './Grid';
 import styled from 'styled-components';
