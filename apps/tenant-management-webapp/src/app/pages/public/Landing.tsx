@@ -3,13 +3,14 @@ import { GoAHeroBanner } from '@abgov/react-components-new';
 import { GoAContainer } from '@abgov/react-components-new';
 import bannerBackground from '@assets/BannerBackground.jpg';
 import Header from '@components/AppHeader';
-import Footer from '@components/Footer';
+import { Footer } from '@core-services/app-common';
 import Container from '@components/Container';
-import { Grid, GridItem } from '@components/Grid';
+import { Grid, GridItem } from '@core-services/app-common';
 import { Main } from '@components/Html';
 import GoALinkButton from '@components/LinkButton';
 import ClockIcon from '@assets/icons/clock.png';
 import DashboardScreenIcon from '@assets/icons/dashboard-screenshot.png';
+import GoALogo from '@assets/goa-logo.svg';
 
 // TODO: replace with ui-components open icon after updated the ui-components
 import {
@@ -278,7 +279,7 @@ const LandingPage = (): JSX.Element => {
           <LandingSample />
         </Section>
         <ContentFootSeparator />
-        <Footer />
+        <Footer logoSrc={GoALogo} />
       </Main>
     </>
   );

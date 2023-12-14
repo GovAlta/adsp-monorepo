@@ -1,6 +1,6 @@
+import { Grid, GridItem } from '@core-services/app-common';
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
-import { Grid, GridItem } from './Grid';
 
 interface Metric {
   id: string;

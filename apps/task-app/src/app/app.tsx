@@ -3,7 +3,7 @@ import { Redirect, Route, BrowserRouter as Router, Switch } from 'react-router-d
 import { Landing } from './components/Landing';
 import { TaskTenant } from './containers/TaskTenant';
 
-import styles from './app.module.css';
+import styles from './app.module.scss';
 import { AuthCallback } from './components/AuthCallback';
 
 export function App() {

@@ -1,7 +1,7 @@
 import { GoAAppHeader, GoAButton, GoAMicrositeHeader } from '@abgov/react-components-new';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Route, Switch, useParams, useRouteMatch } from 'react-router-dom';
+import { Route, Switch, useLocation, useParams } from 'react-router-dom';
 import {
   AppDispatch,
   configInitializedSelector,
@@ -17,7 +17,7 @@ import { TaskQueue } from './TaskQueue';
 
 export const TaskTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
-  const { url } = useRouteMatch();
+  const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
 
   const tenant = useSelector(tenantSelector);
@@ -39,11 +39,11 @@ export const TaskTenant = () => {
           <span>
             <span>{user?.name}</span>
             {user ? (
-              <GoAButton type="tertiary" onClick={() => dispatch(logoutUser({ tenant, from: url }))}>
+              <GoAButton type="tertiary" onClick={() => dispatch(logoutUser({ tenant, from: location.pathname }))}>
                 Sign out
               </GoAButton>
             ) : (
-              <GoAButton type="tertiary" onClick={() => dispatch(loginUser({ tenant, from: url }))}>
+              <GoAButton type="tertiary" onClick={() => dispatch(loginUser({ tenant, from: location.pathname }))}>
                 Sign in
               </GoAButton>
             )}

@@ -1,27 +1,31 @@
-import { GoAAppHeader, GoAHeroBanner, GoAMicrositeHeader } from '@abgov/react-components-new';
+import { GoAAppHeader, GoAMicrositeHeader } from '@abgov/react-components-new';
+import { Band, Container, Footer, Grid, GridItem } from '@core-services/app-common';
 import React, { FunctionComponent } from 'react';
+import GoALogo from '../../assets/goa-logo.svg';
 
 export const Landing: FunctionComponent = () => (
   <React.Fragment>
     <GoAMicrositeHeader type="alpha" />
-    <GoAAppHeader url="/" heading="Alberta Digital Service Platform - Task management">
-      {/* <GoAButton onClick={() => dispatch(authenticateUser(null))}>Sign in</GoAButton> */}
-    </GoAAppHeader>
-    <GoAHeroBanner heading="Task management" backgroundUrl={'../assets/banner.jpg'}>
-      Work on tasks.
-    </GoAHeroBanner>
-    <main></main>
-    <footer>
-      <div className="goa-socialconnect">
-        <div className="goa-title">Connect with us on</div>
-        <ul>
-          <li>
-            <a href="https://github.com/abgov" rel="noreferrer" target="_blank">
-              GitHub
-            </a>
-          </li>
-        </ul>
-      </div>
-    </footer>
+    <GoAAppHeader url="/" heading="Alberta Digital Service Platform - Task management" />
+    <Band title="Task management">Work on tasks in queues.</Band>
+    <main>
+      <section>
+        <Container vs={3} hs={1}>
+          <Grid>
+            <GridItem md={1} />
+            <GridItem md={10}>
+              <Grid>
+                <GridItem md={12} className="center">
+                  <h2>Overview</h2>
+                  <p></p>
+                </GridItem>
+              </Grid>
+            </GridItem>
+            <GridItem md={1} />
+          </Grid>
+        </Container>
+      </section>
+    </main>
+    <Footer logoSrc={GoALogo} />
   </React.Fragment>
 );

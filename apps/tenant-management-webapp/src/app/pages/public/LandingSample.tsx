@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import Container from '@components/Container';
-import { Grid, GridItem } from '@components/Grid';
+import { Grid, GridItem } from '@core-services/app-common';
 import { RootState } from '@store/index';
 import { GoAContainer } from '@abgov/react-components-new';
 import { useSelector } from 'react-redux';

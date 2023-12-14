@@ -1,13 +1,13 @@
-import React, { ReactNode } from 'react';
-import { Grid, GridItem } from '@components/Grid';
-import Container from '@components/Container';
+import { FunctionComponent, ReactNode } from 'react';
+import { Container } from './Container';
+import { Grid, GridItem } from './Grid';
 import styled from 'styled-components';
 
 interface BandProps {
   title?: string;
   children?: ReactNode;
 }
-export function Band({ title, children }: BandProps): JSX.Element {
+export const Band: FunctionComponent<BandProps> = ({ title, children }: BandProps) => {
   return (
     <div
       style={{
@@ -29,7 +29,7 @@ export function Band({ title, children }: BandProps): JSX.Element {
       </HeroBannerLayout>
     </div>
   );
-}
+};
 
 const HeroBannerLayout = styled.div`
   .goa-hero {

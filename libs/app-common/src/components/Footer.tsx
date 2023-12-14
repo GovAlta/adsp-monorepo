@@ -1,11 +1,11 @@
-import React from 'react';
+import { FunctionComponent } from 'react';
 import styled from 'styled-components';
-import GoaLogo from '../../assets/goa-logo.svg';
 
 interface FooterProps {
-  logoSrc?: string;
+  logoSrc: string;
 }
-function Footer({ logoSrc }: FooterProps): JSX.Element {
+
+export const Footer: FunctionComponent<FooterProps> = ({ logoSrc }) => {
   return (
     <FooterContainer>
       <LinksLogoContainer>
@@ -15,18 +15,18 @@ function Footer({ logoSrc }: FooterProps): JSX.Element {
           <a href="https://www.alberta.ca/privacystatement.aspx">Privacy</a>
           <a href="https://www.alberta.ca/accessibility.aspx">Accessibility</a>
         </FooterLinks>
-        <img src={logoSrc ?? GoaLogo} alt="Government of alberta logo" />
+        <img src={logoSrc} alt="Government of Alberta logo" />
       </LinksLogoContainer>
       <FooterCopyright>© {new Date().getFullYear()} Government of Alberta</FooterCopyright>
     </FooterContainer>
   );
-}
+};
 
-export default Footer;
 const FooterCopyright = styled.div`
   text-align: right;
   padding: 1rem;
 `;
+
 const FooterContainer = styled.footer`
   background-color: var(--color-gray-100);
   padding-top: 2rem;
@@ -35,6 +35,7 @@ const FooterContainer = styled.footer`
   padding-left: 10rem;
   border-bottom: 16px solid #0081a2;
 `;
+
 const LinksLogoContainer = styled.div`
   display: flex;
   justify-content: space-between;

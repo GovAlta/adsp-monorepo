@@ -97,23 +97,31 @@ interface TaskResults {
 
 export const initializeQueue = createAsyncThunk(
   'task/initialize-definition',
-  async ({ namespace, name }: { namespace: string; name: string }, { dispatch, getState }) => {
+  async ({ namespace, name }: { namespace: string; name: string }, { dispatch, getState, rejectWithValue }) => {
     const state = getState() as AppState;
     const { user } = state.user;
     const { directory } = state.config;
 
-    const { data } = await axios.get<QueueDefinition>(
-      `${directory[TASK_SERVICE_ID]}/task/v1/queues/${namespace}/${name}`,
-      {
-        headers: { Authorization: `Bearer ${user.accessToken}` },
+    try {
+      const { data } = await axios.get<QueueDefinition>(
+        `${directory[TASK_SERVICE_ID]}/task/v1/queues/${namespace}/${name}`,
+        {
+          headers: { Authorization: `Bearer ${user.accessToken}` },
+        }
+      );
+
+      dispatch(loadQueueTasks({ namespace: data.namespace, name: data.name }));
+      dispatch(loadQueuePeople({ namespace: data.namespace, name: data.name }));
+      dispatch(connectStream({ namespace: data.namespace, name: data.name }));
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.data?.errorMessage) {
+        return rejectWithValue(err.response?.data?.errorMessage as string);
+      } else {
+        throw err;
       }
-    );
-
-    dispatch(loadQueueTasks({ namespace: data.namespace, name: data.name }));
-    dispatch(loadQueuePeople({ namespace: data.namespace, name: data.name }));
-    dispatch(connectStream({ namespace: data.namespace, name: data.name }));
-
-    return data;
+    }
   }
 );
 
@@ -193,23 +201,34 @@ export const connectStream = createAsyncThunk(
 
 export const loadQueueTasks = createAsyncThunk(
   'task/load-queue-tasks',
-  async ({ namespace, name, after }: { namespace: string; name: string; after?: string }, { getState }) => {
+  async (
+    { namespace, name, after }: { namespace: string; name: string; after?: string },
+    { getState, rejectWithValue }
+  ) => {
     const state = getState() as AppState;
     const { user } = state.user;
     const { directory } = state.config;
 
-    const { data } = await axios.get<TaskResults>(
-      `${directory[TASK_SERVICE_ID]}/task/v1/queues/${namespace}/${name}/tasks`,
-      {
-        headers: { Authorization: `Bearer ${user.accessToken}` },
-        params: {
-          top: 100,
-          after,
-        },
-      }
-    );
+    try {
+      const { data } = await axios.get<TaskResults>(
+        `${directory[TASK_SERVICE_ID]}/task/v1/queues/${namespace}/${name}/tasks`,
+        {
+          headers: { Authorization: `Bearer ${user.accessToken}` },
+          params: {
+            top: 100,
+            after,
+          },
+        }
+      );
 
-    return data;
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.data?.errorMessage) {
+        return rejectWithValue(err.response?.data?.errorMessage as string);
+      } else {
+        throw err;
+      }
+    }
   }
 );
 
@@ -261,115 +280,158 @@ export const loadQueuePeople = createAsyncThunk(
 
 export const setTaskPriority = createAsyncThunk(
   'task/set-task-priority',
-  async ({ taskId, priority }: { taskId: string; priority: string }, { dispatch, getState }) => {
+  async ({ taskId, priority }: { taskId: string; priority: string }, { dispatch, getState, rejectWithValue }) => {
     const state = getState() as AppState;
     const { user } = state.user;
     const { directory } = state.config;
     const { queue }: TaskState = state[TASK_FEATURE_KEY];
 
-    const { data } = await axios.post<Task>(
-      `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
-      {
-        operation: 'set-priority',
-        priority,
-      },
-      {
-        headers: { Authorization: `Bearer ${user.accessToken}` },
+    try {
+      const { data } = await axios.post<Task>(
+        `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
+        {
+          operation: 'set-priority',
+          priority,
+        },
+        {
+          headers: { Authorization: `Bearer ${user.accessToken}` },
+        }
+      );
+
+      dispatch(taskActions.setTaskToPrioritize(null));
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.data?.errorMessage) {
+        return rejectWithValue(err.response?.data?.errorMessage as string);
+      } else {
+        throw err;
       }
-    );
-
-    dispatch(taskActions.setTaskToPrioritize(null));
-
-    return data;
+    }
   }
 );
 
 export const assignTask = createAsyncThunk(
   'task/assign-task',
-  async ({ taskId, assignTo }: { taskId: string; assignTo?: Person }, { dispatch, getState }) => {
+  async ({ taskId, assignTo }: { taskId: string; assignTo?: Person }, { dispatch, getState, rejectWithValue }) => {
     const state = getState() as AppState;
     const { user } = state.user;
     const { directory } = state.config;
     const { queue }: TaskState = state[TASK_FEATURE_KEY];
 
-    const { data } = await axios.post<Task>(
-      `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
-      {
-        operation: 'assign',
-        assignTo,
-      },
-      {
-        headers: { Authorization: `Bearer ${user.accessToken}` },
+    try {
+      const { data } = await axios.post<Task>(
+        `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
+        {
+          operation: 'assign',
+          assignTo,
+        },
+        {
+          headers: { Authorization: `Bearer ${user.accessToken}` },
+        }
+      );
+
+      dispatch(taskActions.setTaskToAssign(null));
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.data?.errorMessage) {
+        return rejectWithValue(err.response?.data?.errorMessage as string);
+      } else {
+        throw err;
       }
-    );
-
-    dispatch(taskActions.setTaskToAssign(null));
-
-    return data;
+    }
   }
 );
 
-export const startTask = createAsyncThunk('task/start-task', async ({ taskId }: { taskId: string }, { getState }) => {
-  const state = getState() as AppState;
-  const { user } = state.user;
-  const { directory } = state.config;
-  const { queue }: TaskState = state[TASK_FEATURE_KEY];
-
-  const { data } = await axios.post<Task>(
-    `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
-    {
-      operation: 'start',
-    },
-    {
-      headers: { Authorization: `Bearer ${user.accessToken}` },
-    }
-  );
-
-  return data;
-});
-
-export const completeTask = createAsyncThunk(
-  'task/complete-task',
-  async ({ taskId }: { taskId: string }, { getState }) => {
+export const startTask = createAsyncThunk(
+  'task/start-task',
+  async ({ taskId }: { taskId: string }, { getState, rejectWithValue }) => {
     const state = getState() as AppState;
     const { user } = state.user;
     const { directory } = state.config;
     const { queue }: TaskState = state[TASK_FEATURE_KEY];
 
-    const { data } = await axios.post<Task>(
-      `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
-      {
-        operation: 'complete',
-      },
-      {
-        headers: { Authorization: `Bearer ${user.accessToken}` },
-      }
-    );
+    try {
+      const { data } = await axios.post<Task>(
+        `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
+        {
+          operation: 'start',
+        },
+        {
+          headers: { Authorization: `Bearer ${user.accessToken}` },
+        }
+      );
 
-    return data;
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.data?.errorMessage) {
+        return rejectWithValue(err.response?.data?.errorMessage as string);
+      } else {
+        throw err;
+      }
+    }
+  }
+);
+
+export const completeTask = createAsyncThunk(
+  'task/complete-task',
+  async ({ taskId }: { taskId: string }, { getState, rejectWithValue }) => {
+    const state = getState() as AppState;
+    const { user } = state.user;
+    const { directory } = state.config;
+    const { queue }: TaskState = state[TASK_FEATURE_KEY];
+
+    try {
+      const { data } = await axios.post<Task>(
+        `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
+        {
+          operation: 'complete',
+        },
+        {
+          headers: { Authorization: `Bearer ${user.accessToken}` },
+        }
+      );
+
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.data?.errorMessage) {
+        return rejectWithValue(err.response?.data?.errorMessage as string);
+      } else {
+        throw err;
+      }
+    }
   }
 );
 
 export const cancelTask = createAsyncThunk(
   'task/cancel-task',
-  async ({ taskId, reason }: { taskId: string; reason: string }, { getState }) => {
+  async ({ taskId, reason }: { taskId: string; reason: string }, { getState, rejectWithValue }) => {
     const state = getState() as AppState;
     const { user } = state.user;
     const { directory } = state.config;
     const { queue }: TaskState = state[TASK_FEATURE_KEY];
 
-    const { data } = await axios.post<Task>(
-      `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
-      {
-        operation: 'cancel',
-        reason: reason || undefined,
-      },
-      {
-        headers: { Authorization: `Bearer ${user.accessToken}` },
-      }
-    );
+    try {
+      const { data } = await axios.post<Task>(
+        `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
+        {
+          operation: 'cancel',
+          reason: reason || undefined,
+        },
+        {
+          headers: { Authorization: `Bearer ${user.accessToken}` },
+        }
+      );
 
-    return data;
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.data?.errorMessage) {
+        return rejectWithValue(err.response?.data?.errorMessage as string);
+      } else {
+        throw err;
+      }
+    }
   }
 );
 
@@ -444,7 +506,11 @@ export const taskSlice = createSlice({
       })
       .addCase(initializeQueue.rejected, (state, { error }) => {
         state.busy.initializing = false;
-        state.errors.push({ id: uuidv4(), level: 'error', message: `Error encountered initializing queue: ${error.message}` });
+        state.errors.push({
+          id: uuidv4(),
+          level: 'error',
+          message: `Error encountered initializing queue: ${error.message}`,
+        });
       })
       .addCase(loadQueuePeople.pending, (state) => {
         state.busy.initializing = true;
@@ -459,12 +525,12 @@ export const taskSlice = createSlice({
         state.workers = payload.workers.map((p) => p.id);
         state.user = payload.user;
       })
-      .addCase(loadQueuePeople.rejected, (state, { error }) => {
+      .addCase(loadQueuePeople.rejected, (state, { error, payload }) => {
         state.busy.initializing = false;
         state.errors.push({
           id: uuidv4(),
           level: 'error',
-          message: `Error encountered getting queue people: ${error.message}`,
+          message: `Error encountered getting queue people: ${payload || error.message}`,
         });
       })
       .addCase(loadQueueTasks.pending, (state) => {
@@ -536,12 +602,12 @@ export const taskSlice = createSlice({
           [payload.id]: payload,
         };
       })
-      .addCase(startTask.rejected, (state, { error }) => {
+      .addCase(startTask.rejected, (state, { error, payload }) => {
         state.busy.executing = false;
         state.errors.push({
           id: uuidv4(),
           level: 'error',
-          message: `Error encountered starting task: ${error.message}`,
+          message: `Error encountered starting task: ${payload || error.message}`,
         });
       })
       .addCase(completeTask.pending, (state) => {
