@@ -12,9 +12,9 @@ Feature: Script
     # Validate data
     When the user enters "autotest-addscript", "autotest script desc", "yes", "auto-test-role1, urn:ads:autotest:chat-service:chat-admin" in Add script modal
     And the user clicks Save button in Add script modal
-    Then the user "views" the script of "autotest-addscript", "autotest script desc", "auto-test-role1, urn:ads:autotest:chat-service:chat-admin"
+    Then the user "views" the script of "autotest-addscript", "autotest script desc"
     # Edit
-    When the user clicks "Edit" button for the script of "autotest-addscript", "autotest script desc", "auto-test-role1, urn:ads:autotest:chat-service:chat-admin"
+    When the user clicks "Edit" button for the script of "autotest-addscript", "autotest script desc"
     Then the user views the script editor for "autotest-addscript", "autotest script desc"
     When the user clicks Edit button in script editor
     Then the user views Edit script modal
@@ -24,12 +24,12 @@ Feature: Script
     And the user selects "Roles" tab in script editor
     And the user enters "auto-test-role2, urn:ads:autotest:chat-service:chatter" for roles in script editor
     And the user clicks Save button in script editor
-    Then the user "views" the script of "autotest-modifiedscript", "autotest script desc 2", "auto-test-role2, urn:ads:autotest:chat-service:chatter"
+    Then the user "views" the script of "autotest-modifiedscript", "autotest script desc 2"
     # Delete
-    When the user clicks "Delete" button for the script of "autotest-modifiedscript", "autotest script desc 2", "auto-test-role2, urn:ads:autotest:chat-service:chatter"
+    When the user clicks "Delete" button for the script of "autotest-modifiedscript", "autotest script desc 2"
     Then the user views delete "script" confirmation modal for "autotest-modifiedscript"
     When the user clicks Delete button in delete confirmation modal
-    Then the user "should not view" the script of "autotest-modifiedscript", "autotest script desc 2", "auto-test-role2, urn:ads:autotest:chat-service:chatter"
+    Then the user "should not view" the script of "autotest-modifiedscript", "autotest script desc 2"
 
   @TEST_CS-1739 @REQ_CS-1655 @regression
   Scenario: As a tenant admin, I can see the overview for a script service, so I know about the service

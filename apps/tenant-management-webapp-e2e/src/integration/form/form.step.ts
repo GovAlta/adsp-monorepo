@@ -227,73 +227,30 @@ Then('the user clicks Save button on form definition editor', function () {
   cy.wait(2000);
 });
 
-Then(
-  'the user {string} the form definition of {string}, {string}, {string}, {string}, {string}',
-  function (action, name, description, applicantRole, clerkRole, assessorRole) {
-    cy.wait(1000); //Wait for the grid to load all data
-    findDefinition(name, description, applicantRole, clerkRole, assessorRole).then((rowNumber) => {
-      switch (action) {
-        case 'views':
-          expect(rowNumber).to.be.greaterThan(
-            0,
-            'Definition of ' +
-              name +
-              ', ' +
-              description +
-              ', ' +
-              applicantRole +
-              ', ' +
-              clerkRole +
-              ', ' +
-              assessorRole +
-              ' has row #' +
-              rowNumber
-          );
-          break;
-        case 'should not view':
-          expect(rowNumber).to.equal(
-            0,
-            'Definition of ' +
-              name +
-              ', ' +
-              description +
-              ', ' +
-              applicantRole +
-              ', ' +
-              clerkRole +
-              ', ' +
-              assessorRole +
-              ' has row #' +
-              rowNumber
-          );
-          break;
-        default:
-          expect(action).to.be.oneOf(['views', 'should not view']);
-      }
-    });
-  }
-);
+Then('the user {string} the form definition of {string}, {string}', function (action, name, description) {
+  cy.wait(1000); //Wait for the grid to load all data
+  findDefinition(name, description).then((rowNumber) => {
+    switch (action) {
+      case 'views':
+        expect(rowNumber).to.be.greaterThan(0, 'Definition of ' + name + ', ' + description + ' has row #' + rowNumber);
+        break;
+      case 'should not view':
+        expect(rowNumber).to.equal(0, 'Definition of ' + name + ', ' + description + ' has row #' + rowNumber);
+        break;
+      default:
+        expect(action).to.be.oneOf(['views', 'should not view']);
+    }
+  });
+});
 
-//Find definition with name, description, applicant role(s), clerk role(s), assessor role(s)
-//Input: name, description, applicant role(s) & clerk role(s) & assessor role(s) in a string separated with comma
+//Find definition with name, description
+//Input: name, description in a string separated with comma
 //Return: row number if the form definition is found; zero if the definition isn't found
-function findDefinition(name, description, applicantRole, clerkRole, assessorRole) {
+function findDefinition(name, description) {
   return new Cypress.Promise((resolve, reject) => {
     try {
       let rowNumber = 0;
-      let targetedNumber = 2;
-      const applicantRoles = applicantRole.split(',');
-      const clerkRoles = clerkRole.split(',');
-      const assessorRoles = assessorRole.split(',');
-      if (applicantRole.toLowerCase() != 'empty') {
-        targetedNumber = targetedNumber + applicantRoles.length;
-      }
-      if (clerkRole.toLowerCase() != 'empty') {
-        targetedNumber = targetedNumber + clerkRoles.length;
-      }
-      if (assessorRole.toLowerCase() != 'empty') {
-        targetedNumber = targetedNumber + assessorRoles.length;
-      }
+      const targetedNumber = 2;
       formObj
         .definitionsTableBody()
         .find('tr')
@@ -308,24 +265,6 @@ function findDefinition(name, description, applicantRole, clerkRole, assessorRol
             if (rowElement.cells[2].innerHTML.includes(description)) {
               counter = counter + 1;
             }
-            // cy.log(rowElement.cells[3].innerHTML); // Print out the assigner role cell innerHTML for debug purpose
-            applicantRoles.forEach((atRole) => {
-              if (rowElement.cells[3].innerHTML.includes(atRole.trim())) {
-                counter = counter + 1;
-              }
-            });
-            // cy.log(rowElement.cells[4].innerHTML); // Print out the worker role cell innerHTML for debug purpose
-            clerkRoles.forEach((ckRole) => {
-              if (rowElement.cells[4].innerHTML.includes(ckRole.trim())) {
-                counter = counter + 1;
-              }
-            });
-            // cy.log(rowElement.cells[5].innerHTML); // Print out the worker role cell innerHTML for debug purpose
-            assessorRoles.forEach((arRole) => {
-              if (rowElement.cells[5].innerHTML.includes(arRole.trim())) {
-                counter = counter + 1;
-              }
-            });
             Cypress.log({
               name: 'Number of matched items for row# ' + rowElement.rowIndex + ': ',
               message: String(String(counter)),
@@ -347,9 +286,9 @@ function findDefinition(name, description, applicantRole, clerkRole, assessorRol
 }
 
 When(
-  'the user clicks {string} button for the form definition of {string}, {string}, {string}, {string}, {string}',
-  function (button, name, description, applicantRole, clerkRole, assessorRole) {
-    findDefinition(name, description, applicantRole, clerkRole, assessorRole).then((rowNumber) => {
+  'the user clicks {string} button for the form definition of {string}, {string}',
+  function (button, name, description) {
+    findDefinition(name, description).then((rowNumber) => {
       switch (button) {
         case 'Edit':
           formObj.definitionEditButton(rowNumber).shadow().find('button').click({ force: true });

@@ -1,6 +1,5 @@
 import React, { FunctionComponent, useState } from 'react';
 import { ScriptItem } from '@store/script/models';
-import { GoABadge } from '@abgov/react-components-new';
 import { useDispatch } from 'react-redux';
 import DataTable from '@components/DataTable';
 import { TableDiv } from './styled-components';
@@ -25,16 +24,6 @@ const ScriptItemComponent: FunctionComponent<ScriptItemProps> = ({ script, onDel
         </td>
         <td headers="script-description" data-testid="script-description">
           {script.description}
-        </td>
-        <td headers="script-runner-roles" data-testid="script-runner-roles">
-          {script.runnerRoles &&
-            script.runnerRoles.map((role): JSX.Element => {
-              return (
-                <div key={`runner-roles-${role}`}>
-                  <GoABadge key={`runner-roles-${role}`} type="information" content={role} />
-                </div>
-              );
-            })}
         </td>
         <td headers="script-actions" data-testid="script-actions">
           {onDelete && (
@@ -91,9 +80,6 @@ export const ScriptTableComponent: FunctionComponent<scriptTableProps> = ({ scri
             </th>
             <th id="script-description" data-testid="script-table-header-description">
               Description
-            </th>
-            <th id="script-runner-roles" data-testid="script-table-header-read-roles">
-              Runner roles
             </th>
             <th id="script-actions" data-testid="script-table-header-actions">
               Actions

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
 import Editor from '@monaco-editor/react';
-import { materialRenderers, materialCells } from '@jsonforms/material-renderers';
+import { vanillaCells } from '@jsonforms/vanilla-renderers';
+import { GoARenderers } from '@abgov/jsonforms-components';
 import { JsonForms } from '@jsonforms/react';
 import { RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
 import { FormDefinition } from '@store/form/model';
@@ -276,7 +277,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   useEffect(() => {}, [indicator]);
 
   const renderers = [
-    ...materialRenderers,
+    ...GoARenderers,
     {
       tester: categorizationRendererTester,
       renderer: FormStepperControl,
@@ -486,7 +487,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     data={currentData}
                     validationMode={'NoValidation'}
                     renderers={renderers}
-                    cells={materialCells}
+                    cells={vanillaCells}
                     onChange={({ data }) => setCurrentData(data)}
                   />
                 ) : (
@@ -495,7 +496,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     data={currentData}
                     validationMode={'NoValidation'}
                     renderers={renderers}
-                    cells={materialCells}
+                    cells={vanillaCells}
                     onChange={({ data }) => setCurrentData(data)}
                   />
                 )}
@@ -522,7 +523,13 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           dispatch(updateFormDefinition(definition));
           setSaveModal({ visible: false, closeEditor: true });
         }}
-        saveDisable={!isFormUpdated(initialDefinition, definition)}
+        saveDisable={
+          !isFormUpdated(initialDefinition, {
+            ...definition,
+            uiSchema: JSON.parse(UiSchemaBounced),
+            dataSchema: JSON.parse(dataSchemaBounced),
+          })
+        }
         onCancel={() => {
           setSaveModal({ visible: false, closeEditor: false });
         }}

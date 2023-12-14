@@ -55,7 +55,7 @@ When('the user clicks Save button in Add queue modal', function () {
 
 Then('the user views Queue page for {string}, {string}', function (namespace, name) {
   cy.viewport(1920, 1080);
-  cy.wait(1000);
+  cy.wait(2000);
   taskObj.queueNamespaceValue().should('have.text', namespace);
   taskObj.queueNameValue().should('have.text', name);
 });
@@ -143,47 +143,30 @@ Then('the user clicks Save button on Queue page', function () {
   cy.wait(4000);
 });
 
-Then(
-  'the user {string} the queue of {string}, {string}, {string}, {string}',
-  function (action, namespace, name, assignerRole, workerRole) {
-    cy.wait(1000); //Wait for the grid to load all data
-    findQueue(namespace, name, assignerRole, workerRole).then((rowNumber) => {
-      switch (action) {
-        case 'views':
-          expect(rowNumber).to.be.greaterThan(
-            0,
-            'Queue of ' + namespace + ', ' + name + ', ' + assignerRole + ', ' + workerRole + ' has row #' + rowNumber
-          );
-          break;
-        case 'should not view':
-          expect(rowNumber).to.equal(
-            0,
-            'Queue of ' + namespace + ', ' + name + ', ' + assignerRole + ', ' + workerRole + ' has row #' + rowNumber
-          );
-          break;
-        default:
-          expect(action).to.be.oneOf(['views', 'should not view']);
-      }
-    });
-  }
-);
+Then('the user {string} the queue of {string}, {string}', function (action, namespace, name) {
+  cy.wait(1000); //Wait for the grid to load all data
+  findQueue(namespace, name).then((rowNumber) => {
+    switch (action) {
+      case 'views':
+        expect(rowNumber).to.be.greaterThan(0, 'Queue of ' + namespace + ', ' + name + ' has row #' + rowNumber);
+        break;
+      case 'should not view':
+        expect(rowNumber).to.equal(0, 'Queue of ' + namespace + ', ' + name + ' has row #' + rowNumber);
+        break;
+      default:
+        expect(action).to.be.oneOf(['views', 'should not view']);
+    }
+  });
+});
 
-//Find queue with namespace, name, assigner role(s), worker role(s)
-//Input: namespace, name, assigner role(s) in a string separated with comma, worker role(s) in a string separated with comma
+//Find queue with namespace, name
+//Input: namespace, name in a string
 //Return: row number if the queue is found; zero if the queue isn't found
-function findQueue(namespace, name, assignerRole, workerRole) {
+function findQueue(namespace, name) {
   return new Cypress.Promise((resolve, reject) => {
     try {
       let rowNumber = 0;
-      let targetedNumber = 2;
-      const assignerRoles = assignerRole.split(',');
-      const workerRoles = workerRole.split(',');
-      if (assignerRole.toLowerCase() != 'empty') {
-        targetedNumber = targetedNumber + assignerRoles.length;
-      }
-      if (workerRole.toLowerCase() != 'empty') {
-        targetedNumber = targetedNumber + workerRoles.length;
-      }
+      const targetedNumber = 2;
       taskObj
         .queueTableBody()
         .find('tr')
@@ -198,18 +181,6 @@ function findQueue(namespace, name, assignerRole, workerRole) {
             if (rowElement.cells[1].innerHTML.includes(name)) {
               counter = counter + 1;
             }
-            // cy.log(rowElement.cells[2].innerHTML); // Print out the assigner role cell innerHTML for debug purpose
-            assignerRoles.forEach((rRole) => {
-              if (rowElement.cells[2].innerHTML.includes(rRole.trim())) {
-                counter = counter + 1;
-              }
-            });
-            // cy.log(rowElement.cells[3].innerHTML); // Print out the worker role cell innerHTML for debug purpose
-            workerRoles.forEach((uRole) => {
-              if (rowElement.cells[3].innerHTML.includes(uRole.trim())) {
-                counter = counter + 1;
-              }
-            });
             Cypress.log({
               name: 'Number of matched items for row# ' + rowElement.rowIndex + ': ',
               message: String(String(counter)),
@@ -230,25 +201,22 @@ function findQueue(namespace, name, assignerRole, workerRole) {
   });
 }
 
-When(
-  'the user clicks {string} button for the queue of {string}, {string}, {string}, {string}',
-  function (button, namespace, name, assignerRole, workerRole) {
-    findQueue(namespace, name, assignerRole, workerRole).then((rowNumber) => {
-      switch (button) {
-        case 'Edit':
-          taskObj.queueEditButton(rowNumber).shadow().find('button').click({ force: true });
-          cy.wait(2000);
-          break;
-        case 'Delete':
-          taskObj.queueDeleteButton(rowNumber).shadow().find('button').click({ force: true });
-          cy.wait(2000);
-          break;
-        default:
-          expect(button).to.be.oneOf(['Edit', 'Delete']);
-      }
-    });
-  }
-);
+When('the user clicks {string} button for the queue of {string}, {string}', function (button, namespace, name) {
+  findQueue(namespace, name).then((rowNumber) => {
+    switch (button) {
+      case 'Edit':
+        taskObj.queueEditButton(rowNumber).shadow().find('button').click({ force: true });
+        cy.wait(2000);
+        break;
+      case 'Delete':
+        taskObj.queueDeleteButton(rowNumber).shadow().find('button').click({ force: true });
+        cy.wait(2000);
+        break;
+      default:
+        expect(button).to.be.oneOf(['Edit', 'Delete']);
+    }
+  });
+});
 
 When('the user clicks Back button on Queue page', function () {
   taskObj.queuePageBackButton().shadow().find('button').click({ force: true });

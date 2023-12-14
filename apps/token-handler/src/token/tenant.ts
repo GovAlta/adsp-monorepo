@@ -6,15 +6,19 @@ const TENANT_HEADER = 'x-adsp-tenant';
 export function createTenantHandler(tenantService: TenantService): RequestHandler {
   return async function (req, _res, next) {
     try {
-      const tenantIdValue = req.headers[TENANT_HEADER];
+      const tenantIdValue = req.headers[TENANT_HEADER] as string;
       if (!tenantIdValue) {
-        throw new InvalidOperationError(`${TENANT_HEADER} header with tenant ID is required.`);
+        throw new InvalidOperationError(`${TENANT_HEADER} header with tenant identity is required.`);
       }
 
       let tenant: Tenant = null;
       try {
-        const tenantId = AdspId.parse(tenantIdValue as string);
-        tenant = await tenantService.getTenant(tenantId);
+        if (AdspId.isAdspId(tenantIdValue)) {
+          const tenantId = AdspId.parse(tenantIdValue);
+          tenant = await tenantService.getTenant(tenantId);
+        } else {
+          tenant = await tenantService.getTenantByName(tenantIdValue.replace(/-/g, ' '));
+        }
       } catch (err) {
         // For format issue, just return as not found.
       }

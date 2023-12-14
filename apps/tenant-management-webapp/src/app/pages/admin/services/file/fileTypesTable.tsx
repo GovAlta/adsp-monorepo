@@ -3,7 +3,7 @@ import DataTable from '@components/DataTable';
 import { Role } from '@store/tenant/models';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
 import styled from 'styled-components';
-import { GoABadge, GoAButtonGroup, GoAModal, GoAButton } from '@abgov/react-components-new';
+import { GoAButtonGroup, GoAModal, GoAButton } from '@abgov/react-components-new';
 import { FileTypeItem } from '@store/file/models';
 import { useHistory, useRouteMatch } from 'react-router-dom';
 import { DeleteModal } from '@components/DeleteModal';
@@ -40,22 +40,6 @@ const FileTypeTableRow = ({
   return (
     <tr key={id}>
       <td>{name}</td>
-      <td className="readRolesCol">
-        {anonymousRead === false &&
-          readRoles.map((role): JSX.Element => {
-            return (
-              <div key={`read-roles-${role}`}>
-                <GoABadge key={`read-roles-${role}`} type="information" content={role} />
-              </div>
-            );
-          })}
-        {anonymousRead === true && 'public'}
-      </td>
-      <td className="updateRolesCol">
-        {updateRoles.map((role): JSX.Element => {
-          return <GoABadge key={`update-roles-${id}-${role}`} type="information" content={role} />;
-        })}
-      </td>
       <td style={{ textTransform: 'capitalize' }}>{securityClassification ? securityClassification : ''}</td>
       <td>{rules?.retention?.active ? rules?.retention?.deleteInDays : 'N/A'}</td>
       <td className="actionCol">
@@ -97,22 +81,6 @@ const CoreFileTypeTableRow = ({
   return (
     <tr key={id}>
       <td>{name}</td>
-      <td className="readRolesCol">
-        {anonymousRead === false &&
-          readRoles.map((role): JSX.Element => {
-            return (
-              <div key={`read-roles-${role}`}>
-                <GoABadge key={`read-roles-${role}`} type="information" content={role} />
-              </div>
-            );
-          })}
-        {anonymousRead === true && 'public'}
-      </td>
-      <td className="updateRolesCol">
-        {updateRoles?.map((role): JSX.Element => {
-          return <GoABadge key={`update-roles-${id}-${role}`} type="information" content={role} />;
-        })}
-      </td>
       <td style={{ textTransform: 'capitalize' }}>{securityClassification ? securityClassification : ''}</td>
       <td>{rules?.retention?.active ? rules?.retention?.deleteInDays : 'N/A'}</td>
     </tr>
@@ -138,8 +106,6 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
                 <th id="name" data-testid="file-types-table-header-name">
                   Name
                 </th>
-                <th id="read-roles">Read roles</th>
-                <th id="write-roles">Modify roles</th>
                 <th id="security-classification">
                   Security
                   <br /> classification
@@ -184,8 +150,6 @@ export const FileTypeTable = ({ roles, fileTypes, coreFileTypes }: FileTypeTable
                   <th id="name-core" data-testid="file-types-table-header-name">
                     Name
                   </th>
-                  <th id="read-roles-core">Read roles</th>
-                  <th id="write-roles-core">Modify roles</th>
                   <th id="security-classification-core">
                     Security <br /> classification
                   </th>

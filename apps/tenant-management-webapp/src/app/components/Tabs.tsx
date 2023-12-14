@@ -27,18 +27,6 @@ function Tabs(props: TabsProps): JSX.Element {
       props.changeTabCallback(index);
     }
   }
-  const getCircularReplacer = () => {
-    const seen = new WeakSet();
-    return (key, value) => {
-      if (typeof value === 'object' && value !== null) {
-        if (seen.has(value)) {
-          return;
-        }
-        seen.add(value);
-      }
-      return value;
-    };
-  };
 
   useEffect(() => {
     if (props.activeIndex !== null) setActiveTabIndex(props.activeIndex);
@@ -51,9 +39,7 @@ function Tabs(props: TabsProps): JSX.Element {
         {
           // eslint-disable-next-line
           subChildren.map((child: any, index: number) => {
-            console.log('wtf' + JSON.stringify(child, getCircularReplacer()));
             if (!child) return null;
-            console.log(index + '<index');
             const testId = child.props?.testId ? `${child.props?.testId}-tab-btn` : `tab-btn-${index}`;
             return (
               <TabItem

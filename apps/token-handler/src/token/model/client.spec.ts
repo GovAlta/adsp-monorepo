@@ -20,6 +20,11 @@ describe('AuthenticationClient', () => {
     debug: jest.fn(),
   };
 
+  const directoryMock = {
+    getServiceUrl: jest.fn(),
+    getResourceUrl: jest.fn(),
+  };
+
   const repositoryMock = {
     get: jest.fn(),
     save: jest.fn((credentials) => Promise.resolve(credentials)),
@@ -47,11 +52,14 @@ describe('AuthenticationClient', () => {
     const client = new AuthenticationClient(
       new URL('https://access-service'),
       loggerMock as unknown as Logger,
+      directoryMock,
       repositoryMock,
       {
         tenantId,
         id: 'test',
+        name: 'test',
         authCallbackUrl: 'https://frontend/callback',
+        targets: {},
       }
     );
 
@@ -63,11 +71,14 @@ describe('AuthenticationClient', () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),
         loggerMock as unknown as Logger,
+        directoryMock,
         repositoryMock,
         {
           tenantId,
           id: 'test',
+          name: 'test',
           authCallbackUrl: 'https://frontend/callback',
+          targets: {},
         }
       );
 
@@ -88,11 +99,14 @@ describe('AuthenticationClient', () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),
         loggerMock as unknown as Logger,
+        directoryMock,
         repositoryMock,
         {
           tenantId,
           id: 'test',
+          name: 'test',
           authCallbackUrl: 'https://frontend/callback',
+          targets: {},
         }
       );
 
@@ -108,11 +122,14 @@ describe('AuthenticationClient', () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),
         loggerMock as unknown as Logger,
+        directoryMock,
         repositoryMock,
         {
           tenantId,
           id: 'test',
+          name: 'test',
           authCallbackUrl: 'https://frontend/callback',
+          targets: {},
         }
       );
 
@@ -125,11 +142,14 @@ describe('AuthenticationClient', () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),
         loggerMock as unknown as Logger,
+        directoryMock,
         repositoryMock,
         {
           tenantId,
           id: 'test',
+          name: 'test',
           authCallbackUrl: 'https://frontend/callback',
+          targets: {},
         }
       );
 
@@ -163,11 +183,14 @@ describe('AuthenticationClient', () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),
         loggerMock as unknown as Logger,
+        directoryMock,
         repositoryMock,
         {
           tenantId,
           id: 'test',
+          name: 'test',
           authCallbackUrl: 'https://frontend/callback',
+          targets: {},
         }
       );
 
@@ -199,11 +222,14 @@ describe('AuthenticationClient', () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),
         loggerMock as unknown as Logger,
+        directoryMock,
         repositoryMock,
         {
           tenantId,
           id: 'test',
+          name: 'test',
           authCallbackUrl: 'https://frontend/callback',
+          targets: {},
         }
       );
 
@@ -225,11 +251,14 @@ describe('AuthenticationClient', () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),
         loggerMock as unknown as Logger,
+        directoryMock,
         repositoryMock,
         {
           tenantId,
           id: 'test',
+          name: 'test',
           authCallbackUrl: 'https://frontend/callback',
+          targets: {},
         }
       );
 
@@ -244,11 +273,14 @@ describe('AuthenticationClient', () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),
         loggerMock as unknown as Logger,
+        directoryMock,
         repositoryMock,
         {
           tenantId,
           id: 'test',
+          name: 'test',
           authCallbackUrl: 'https://frontend/callback',
+          targets: {},
         }
       );
 
@@ -277,11 +309,14 @@ describe('AuthenticationClient', () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),
         loggerMock as unknown as Logger,
+        directoryMock,
         repositoryMock,
         {
           tenantId,
           id: 'test',
+          name: 'test',
           authCallbackUrl: 'https://frontend/callback',
+          targets: {},
         }
       );
 
@@ -315,11 +350,14 @@ describe('AuthenticationClient', () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),
         loggerMock as unknown as Logger,
+        directoryMock,
         repositoryMock,
         {
           tenantId,
           id: 'test',
+          name: 'test',
           authCallbackUrl: 'https://frontend/callback',
+          targets: {},
         }
       );
 
@@ -354,11 +392,14 @@ describe('AuthenticationClient', () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),
         loggerMock as unknown as Logger,
+        directoryMock,
         repositoryMock,
         {
           tenantId,
           id: 'test',
+          name: 'test',
           authCallbackUrl: 'https://frontend/callback',
+          targets: {},
         }
       );
 
@@ -388,12 +429,15 @@ describe('AuthenticationClient', () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),
         loggerMock as unknown as Logger,
+        directoryMock,
         repositoryMock,
         {
           tenantId,
           id: 'test',
+          name: 'test',
           authCallbackUrl: 'https://frontend/callback',
           disableVerifyHost: true,
+          targets: {},
         }
       );
 
@@ -428,11 +472,14 @@ describe('AuthenticationClient', () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),
         loggerMock as unknown as Logger,
+        directoryMock,
         repositoryMock,
         {
           tenantId,
           id: 'test',
+          name: 'test',
           authCallbackUrl: 'https://frontend/callback',
+          targets: {},
         }
       );
 
@@ -466,11 +513,14 @@ describe('AuthenticationClient', () => {
       const client = new AuthenticationClient(
         new URL('https://access-service'),
         loggerMock as unknown as Logger,
+        directoryMock,
         repositoryMock,
         {
           tenantId,
           id: 'test',
+          name: 'test',
           authCallbackUrl: 'https://frontend/callback',
+          targets: {},
         }
       );
 
