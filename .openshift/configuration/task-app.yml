@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: task
+        component: app
+      name: task-app
+    data:
+      configuration: |-
+        {
+          "production": true,
+          "directory": {
+            "url": "https://directory-service.adsp-dev.gov.ab.ca"
+          },
+          "access": {
+            "url": "https://access.adsp-dev.gov.ab.ca",
+            "client_id": "urn:ads:platform:task-app"
+          }
+        }

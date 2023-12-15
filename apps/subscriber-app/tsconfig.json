@@ -27,6 +27,9 @@
       ],
       "@style/*": [
         "../../../libs/stylesheets/scss/src/lib/*"
+      ],
+      "@core-services/app-common": [
+        "../../../libs/app-common/src/index.ts"
       ]
     }
   },

@@ -50,9 +50,9 @@ export class PostgresTopicRepository implements TopicRepository {
     criteria?: TopicCriteria
   ): Promise<Results<TopicEntity>> {
     const skip = decodeAfter(after);
-
+    const topChecked = top + 1;
     let query = this.knex<TopicRecord>('topics');
-    query = query.offset(skip).limit(top);
+    query = query.offset(skip).limit(topChecked);
 
     if (criteria) {
       const queryCriteria: Record<string, unknown> = {};
@@ -77,8 +77,8 @@ export class PostgresTopicRepository implements TopicRepository {
       results: rows.map((r) => this.mapRecord(types, r)),
       page: {
         after,
-        next: encodeNext(rows.length, top, skip),
-        size: rows.length,
+        next: encodeNext(rows.length, topChecked, skip - 1),
+        size: rows.length > top ? top : rows.length,
       },
     };
   }

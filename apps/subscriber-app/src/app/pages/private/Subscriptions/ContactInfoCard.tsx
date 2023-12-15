@@ -6,7 +6,7 @@ import { patchSubscriber, createSubscriber, VerifyEmail, VerifyPhone } from '@st
 import { actionTypes } from '@store/subscription/models';
 import { Channels, expireMinutes } from '@store/subscription/models';
 
-import { Grid, GridItem } from '@components/Grid';
+import { Grid, GridItem } from '@core-services/app-common';
 import { SubscriberChannel, Subscriber } from '@store/subscription/models';
 import { InfoCard } from './InfoCard';
 import { Label, GapVS, VerificationWrapper } from './styled-components';

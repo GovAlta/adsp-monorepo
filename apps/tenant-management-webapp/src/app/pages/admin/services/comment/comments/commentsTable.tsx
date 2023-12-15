@@ -14,6 +14,7 @@ import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton } from '@abgov/react-components-new';
 import { AddCommentModal } from '../comments/addCommentModal';
+import { DeleteConfirmationsView } from '../comments/deleteConfirmationsView';
 import { addCommentRequest, fetchComments, updateComment } from '@store/comment/action';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 
@@ -33,11 +34,13 @@ function formatDate(date) {
 
 export interface CommentTableProps {
   topic: TopicItem;
+  selectedType: string;
 }
-export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic }) => {
+export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, selectedType }) => {
   const [showAddComment, setShowAddComment] = useState(false);
   const [modalType, setModalType] = useState('');
   const [selectedComment, setSelectedComment] = useState(defaultComment);
+  const [deleteAction, setDeleteAction] = useState(false);
   const comments = useSelector((state: RootState) => {
     return state?.comment?.comments;
   });
@@ -53,7 +56,7 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic }
   };
   useEffect(() => {
     document.body.style.overflow = 'unset';
-  }, [showAddComment]);
+  }, [showAddComment, deleteAction]);
   const reset = () => {
     setShowAddComment(false);
   };
@@ -63,13 +66,19 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic }
     if (modalType === 'new') {
       dispatch(addCommentRequest(comment));
     } else {
-      dispatch(updateComment(topic.id, comment));
+      dispatch(updateComment({ topicId: topic.id, comment: comment }));
       dispatch(fetchComments(topic.id));
     }
   };
+  const deleteComment = () => {
+    setDeleteAction(false);
+  };
   const onDeleteComment = (comment) => {
+    setSelectedComment(comment);
+    setDeleteAction(true);
     comment.topicId = topic.id;
   };
+
   return (
     <>
       <HeaderFont>
@@ -78,39 +87,51 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic }
           Add Comment
         </GoAButton>
       </HeaderFont>
-      {comments.map((comment) => {
-        const date = new Date(comment.lastUpdatedOn);
-        return (
-          <CommentsList>
-            <CommentsHeader>
-              <CommentsHeading>
-                {comment.lastUpdatedBy.name} {formatDate(date)}
-              </CommentsHeading>
-              <CommentsActions>
-                <IconDiv>
-                  <GoAContextMenuIcon
-                    type="create"
-                    title="Edit"
-                    onClick={() => {
-                      setModalType('edit');
-                      setSelectedComment(comment);
-                      setShowAddComment(true);
-                    }}
-                    testId="toggle-details-visibility"
-                  />
-                  <GoAContextMenuIcon
-                    testId="topic-definition-edit"
-                    title="Delete"
-                    type="trash"
-                    onClick={() => onDeleteComment}
-                  />
-                </IconDiv>
-              </CommentsActions>
-            </CommentsHeader>
-            <CommentBody>{comment.content}</CommentBody>
-          </CommentsList>
-        );
-      })}
+      {comments &&
+        comments.length > 0 &&
+        comments.map((comment) => {
+          const date = new Date(comment.lastUpdatedOn);
+          return (
+            <CommentsList>
+              <CommentsHeader>
+                <CommentsHeading>
+                  {comment.lastUpdatedBy.name} {formatDate(date)}
+                </CommentsHeading>
+                <CommentsActions>
+                  <IconDiv>
+                    <GoAContextMenuIcon
+                      type="create"
+                      title="Edit"
+                      onClick={() => {
+                        setModalType('edit');
+                        setSelectedComment(comment);
+                        setShowAddComment(true);
+                      }}
+                      testId="toggle-details-visibility"
+                    />
+                    <GoAContextMenuIcon
+                      testId="topic-definition-edit"
+                      title="Delete"
+                      type="trash"
+                      onClick={() => onDeleteComment(comment)}
+                    />
+                  </IconDiv>
+                </CommentsActions>
+              </CommentsHeader>
+              <CommentBody>{comment.content}</CommentBody>
+            </CommentsList>
+          );
+        })}
+      {deleteAction && (
+        <DeleteConfirmationsView
+          topic={topic}
+          selectedComment={selectedComment}
+          selectedType={selectedType}
+          deleteConfirmation={true}
+          onCancel={() => setDeleteAction(false)}
+          deleteComment={deleteComment}
+        ></DeleteConfirmationsView>
+      )}
       {showAddComment && (
         <AddCommentModal
           open={showAddComment}
