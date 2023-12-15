@@ -247,4 +247,5 @@ When('the user clicks {string} button on unsaved changes modal', function (butto
     default:
       expect(button).to.be.oneOf(["Don't save", 'Save', 'Cancel']);
   }
+  cy.wait(1000);
 });
