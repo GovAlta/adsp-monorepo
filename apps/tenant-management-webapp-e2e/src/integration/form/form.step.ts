@@ -307,4 +307,183 @@ When(
 
 When('the user clicks Back button on form definition editor', function () {
   formObj.editorBackButton().shadow().find('button').click({ force: true });
+  cy.wait(1000);
 });
+
+When('the user clicks roles tab in form definition editor', function () {
+  formObj
+    .definitionEditorTab('Roles')
+    .invoke('attr', 'class')
+    .then((classAttr) => {
+      if (classAttr?.includes('active')) {
+        cy.log('Roles tab is already seleted.');
+      } else {
+        formObj.definitionEditorTab('Roles').click();
+        cy.wait(1000);
+      }
+    });
+});
+
+When('the user clicks Edit button in form definition editor', function () {
+  formObj.definitionEditorEditButton().click();
+  cy.wait(2000);
+});
+
+Then('the user views Edit definition modal in form definition editor', function () {
+  formObj.definitionEditorEditDefinitionModal().should('exist');
+  formObj.definitionEditorEditDefinitionModalTitle().should('contain.text', 'Edit definition');
+});
+
+When('the user enters {string}, {string} in Edit definition modal', function (name, description) {
+  formObj
+    .definitionEditorEditDefinitionModalNameInput()
+    .shadow()
+    .find('input')
+    .clear()
+    .type(name, { force: true, delay: 200 });
+  formObj
+    .definitionEditorEditDefinitionModalDescriptionField()
+    .shadow()
+    .find('.goa-textarea')
+    .clear()
+    .type(description, { force: true });
+});
+
+When('the user clicks Save button in Edit definition modal', function () {
+  cy.wait(1000); // wait for save button to enable
+  formObj
+    .definitionEditorEditDefinitionModalSaveButton()
+    .shadow()
+    .find('button')
+    .scrollIntoView()
+    .click({ force: true });
+  cy.wait(2000);
+});
+
+Then(
+  'the user views {string} as applicant roles, {string} as clerk roles, {string} as assessor roles in roles tab',
+  function (applicantRole, clerkRole, assessorRole) {
+    //check applicant roles
+    let applicantRoleMatchCount = 0;
+    if (applicantRole.toLowerCase() != 'empty') {
+      const applicantRoles = applicantRole.split(',');
+      formObj
+        .definitionEditorRolesTables()
+        .shadow()
+        .find('goa-checkbox[data-testid*="Applicant roles"]')
+        .then((appRoles) => {
+          for (let i = 0; i < appRoles.length; i++) {
+            if (appRoles[i].getAttribute('checked') == 'true') {
+              for (let j = 0; j < applicantRoles.length; j++) {
+                if (appRoles[i].getAttribute('name')?.includes(applicantRoles[j])) {
+                  const appRoleName = appRoles[i].getAttribute('name');
+                  if (appRoleName != null) {
+                    cy.log(appRoleName);
+                  } else {
+                    cy.log('Application role name attribute is null');
+                  }
+                  applicantRoleMatchCount = applicantRoleMatchCount + 1;
+                }
+              }
+            }
+          }
+          expect(applicantRoles.length).to.eq(applicantRoleMatchCount);
+        });
+    } else {
+      formObj
+        .definitionEditorRolesTables()
+        .shadow()
+        .find('goa-checkbox[data-testid*="Applicant roles"]')
+        .then((appRoles) => {
+          for (let i = 0; i < appRoles.length; i++) {
+            if (appRoles[i].getAttribute('checked') == 'true') {
+              expect(appRoles[i].getAttribute('checked')).to.be('false');
+            }
+          }
+        });
+      cy.log('No applicant role is selected');
+    }
+
+    //check clerk roles
+    let clerkRoleMatchCount = 0;
+    if (clerkRole.toLowerCase() != 'empty') {
+      const clerkRoles = clerkRole.split(',');
+      formObj
+        .definitionEditorRolesTables()
+        .shadow()
+        .find('goa-checkbox[data-testid*="Clerk roles"]')
+        .then((cRoles) => {
+          for (let i = 0; i < cRoles.length; i++) {
+            if (cRoles[i].getAttribute('checked') == 'true') {
+              for (let j = 0; j < clerkRoles.length; j++) {
+                if (cRoles[i].getAttribute('name')?.includes(clerkRoles[j])) {
+                  const clerkRoleName = cRoles[i].getAttribute('name');
+                  if (clerkRoleName != null) {
+                    cy.log(clerkRoleName);
+                  } else {
+                    cy.log('Clerk role name attribute is null');
+                  }
+                  clerkRoleMatchCount = clerkRoleMatchCount + 1;
+                }
+              }
+            }
+          }
+          expect(clerkRoles.length).to.eq(clerkRoleMatchCount);
+        });
+    } else {
+      formObj
+        .definitionEditorRolesTables()
+        .shadow()
+        .find('goa-checkbox[data-testid*="Clerk roles"]')
+        .then((cRoles) => {
+          for (let i = 0; i < cRoles.length; i++) {
+            if (cRoles[i].getAttribute('checked') == 'true') {
+              expect(cRoles[i].getAttribute('checked')).to.be('false');
+            }
+          }
+        });
+      cy.log('No clerk role is selected');
+    }
+
+    //check assessor roles
+    let assessorRoleMatchCount = 0;
+    if (assessorRole.toLowerCase() != 'empty') {
+      const assessorRoles = assessorRole.split(',');
+      formObj
+        .definitionEditorRolesTables()
+        .shadow()
+        .find('goa-checkbox[data-testid*="Assessor roles"]')
+        .then((assRoles) => {
+          for (let i = 0; i < assRoles.length; i++) {
+            if (assRoles[i].getAttribute('checked') == 'true') {
+              for (let j = 0; j < assessorRoles.length; j++) {
+                if (assRoles[i].getAttribute('name')?.includes(assessorRoles[j])) {
+                  const assRoleName = assRoles[i].getAttribute('name');
+                  if (assRoleName != null) {
+                    cy.log(assRoleName);
+                  } else {
+                    cy.log('Assessor role name attribute is null');
+                  }
+                  assessorRoleMatchCount = assessorRoleMatchCount + 1;
+                }
+              }
+            }
+          }
+          expect(assessorRoles.length).to.eq(assessorRoleMatchCount);
+        });
+    } else {
+      formObj
+        .definitionEditorRolesTables()
+        .shadow()
+        .find('goa-checkbox[data-testid*="Assessor roles"]')
+        .then((assRoles) => {
+          for (let i = 0; i < assRoles.length; i++) {
+            if (assRoles[i].getAttribute('checked') == 'true') {
+              expect(assRoles[i].getAttribute('checked')).to.be('false');
+            }
+          }
+        });
+      cy.log('No assessor role is selected');
+    }
+  }
+);

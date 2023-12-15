@@ -48,17 +48,17 @@ class FormPage {
   }
 
   editorCheckboxesTables() {
-    return cy.xpath('//*[text()="Form permissions"]/parent::*//goa-table');
+    return cy.xpath('//*[@data-testid="form-roles-tab"]//goa-table');
   }
 
   editorClientRolesTable(clientName) {
     return cy.xpath(
-      `//*[text()="Form permissions"]/parent::*//h4/div[text()="${clientName}"]/parent::h4/following-sibling::goa-table[1]`
+      `//*[@data-testid="form-roles-tab"]//h4/div[text()="${clientName}"]/parent::h4/following-sibling::goa-table[1]`
     );
   }
 
   editorRolesTable() {
-    return cy.xpath('//*[text()="Form permissions"]/parent::*//h4[text()="autotest"]/following-sibling::goa-table[1]');
+    return cy.xpath('//*[@data-testid="form-roles-tab"]//h4[text()="autotest"]/following-sibling::goa-table[1]');
   }
 
   definitionsTableBody() {
@@ -75,6 +75,50 @@ class FormPage {
     return cy.xpath(
       `(//table[@data-testid="form-definitions-table"]//*[contains(@data-testid, "form-definition-delete")])[${rowNumber}]`
     );
+  }
+
+  definitionEditorTab(tabName) {
+    return cy.xpath(`//*[contains(@data-testid, "tab") and text()="${tabName}"]`);
+  }
+
+  definitionEditorEditButton() {
+    return cy.xpath('//*[@class="editColumn"]//*[text()="Edit"]');
+  }
+
+  definitionEditorEditDefinitionModal() {
+    return cy.xpath('//goa-modal[@open="true" and @data-testid="definition-form"]');
+  }
+
+  definitionEditorEditDefinitionModalTitle() {
+    return cy.xpath('//goa-modal[@open="true" and @data-testid="definition-form"]/*[@slot="heading"]');
+  }
+
+  definitionEditorEditDefinitionModalNameInput() {
+    return cy.xpath('//goa-input[@data-testid="form-definition-name"]');
+  }
+
+  definitionEditorEditDefinitionModalDescriptionField() {
+    return cy.xpath('//goa-textarea[@data-testid="form-definition-description"]');
+  }
+
+  definitionEditorEditDefinitionModalSaveButton() {
+    return cy.xpath('//goa-modal[@open="true" and @data-testid="definition-form"]//goa-button[text()="Save"]');
+  }
+
+  definitionEditorCheckedApplicantRoles() {
+    return cy.xpath('//goa-checkbox[contains(@data-testid, "applicant roles") and checked="true"]');
+  }
+
+  definitionEditorCheckedClerkRoles() {
+    return cy.xpath('//goa-checkbox[contains(@data-testid, "clerk roles") and checked="true"]');
+  }
+
+  definitionEditorCheckedAssessorRoles() {
+    return cy.xpath('//goa-checkbox[contains(@data-testid, "assessor roles") and checked="true"]');
+  }
+
+  definitionEditorRolesTables() {
+    return cy.xpath('//*[@data-testid="form-roles-tab"]//h4/following-sibling::goa-table[1]');
   }
 }
 export default FormPage;
