@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
 import Editor from '@monaco-editor/react';
-import { materialRenderers, materialCells } from '@jsonforms/material-renderers';
+import { vanillaCells } from '@jsonforms/vanilla-renderers';
+import { GoARenderers } from '@abgov/jsonforms-components';
 import { JsonForms } from '@jsonforms/react';
 import { FormDefinition } from '@store/form/model';
 
@@ -500,8 +501,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   uischema={JSON.parse(UiSchemaBounced)}
                   data={data}
                   validationMode={'NoValidation'}
-                  renderers={materialRenderers}
-                  cells={materialCells}
+                  renderers={GoARenderers}
+                  cells={vanillaCells}
                   onChange={({ data }) => setData(data)}
                 />
               </GoAFormItem>

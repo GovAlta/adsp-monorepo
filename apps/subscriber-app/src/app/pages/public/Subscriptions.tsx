@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Main } from '@components/Html';
-import Container from '@components/Container';
+import { Container } from '@core-services/app-common';
 import DataTable from '@components/DataTable';
 import { useSearchParams } from 'react-router-dom-6';
 import { GoASkeletonGridColumnContent } from '@abgov/react-components';

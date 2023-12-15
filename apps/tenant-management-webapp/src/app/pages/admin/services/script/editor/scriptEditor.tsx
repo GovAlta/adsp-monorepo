@@ -11,6 +11,7 @@ import {
   ScrollPane,
   TextLoadingIndicator,
   MonacoDivTabBody,
+  ScriptEditorTitle,
 } from '../styled-components';
 import { TombStone } from './tombstone';
 
@@ -23,10 +24,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import { RootState } from '@store/index';
-import { functionSuggestion, functionSignature } from '@lib/luaCodeCompletion';
-import { buildSuggestions } from '@lib/autoComplete';
+import {
+  functionSuggestion,
+  functionSignature,
+  extractSuggestionsForSchema,
+  retrieveScriptSuggestions,
+} from '@lib/luaCodeCompletion';
+import { buildSuggestions, luaTriggerInScope } from '@lib/autoComplete';
 import { GoAButton, GoAFormItem, GoACheckbox, GoASkeleton } from '@abgov/react-components-new';
-import { TaskEditorTitle } from '../styled-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { ClientRoleTable } from '@components/RoleTable';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
@@ -82,20 +87,18 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   let activeSignature = 0;
 
   const definitions = useSelector((state: RootState) => state.event.results.map((r) => state.event.definitions[r]));
-
+  const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
+  const triggerEvents = script?.triggerEvents;
   useEffect(() => {
     if (!definitions || (definitions && definitions.length === 0)) {
       dispatch(getEventDefinitions());
     }
-  }, []);
+  }, [eventDefinitions]);
 
   const roles = useSelector(selectRoleList);
   const latestNotification = useSelector(
     (state: RootState) => state.notifications.notifications[state.notifications.notifications.length - 1]
   );
-  const triggerEvents = script?.triggerEvents;
-  const eventDefinitions = useSelector((state: RootState) => state.event.definitions);
-
   useEffect(() => {
     if (monaco) {
       const completionProvider = monaco.languages.registerCompletionItemProvider('lua', {
@@ -107,7 +110,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
           } as languages.ProviderResult<languages.CompletionList>;
         },
       });
+      let eventCompletionProvider = null;
       if (triggerEvents && triggerEvents.length > 0) {
+        const eventDefinition = eventDefinitions[`${triggerEvents[0].namespace}:${triggerEvents[0].name}`];
         monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
           validate: true,
           schemas: [
@@ -116,12 +121,34 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               fileMatch: ['*'],
               schema: {
                 type: 'object',
-                properties: eventDefinitions[triggerEvents[0].name],
+                properties: eventDefinition?.payloadSchema,
               },
             },
           ],
         });
+
+        eventCompletionProvider = monaco.languages.registerCompletionItemProvider('lua', {
+          triggerCharacters: ['['],
+          provideCompletionItems: (model, position) => {
+            const textUntilPosition = model.getValueInRange({
+              startLineNumber: 1,
+              startColumn: 1,
+              endLineNumber: position.lineNumber,
+              endColumn: position.column,
+            });
+            const eventSuggestion = extractSuggestionsForSchema(eventDefinition?.payloadSchema, monaco);
+
+            const suggestions = luaTriggerInScope(textUntilPosition, position.lineNumber)
+              ? retrieveScriptSuggestions(eventSuggestion, model, position)
+              : [];
+
+            return {
+              suggestions: suggestions,
+            } as languages.ProviderResult<languages.CompletionList>;
+          },
+        });
       }
+
       const helperProvider = monaco.languages.registerSignatureHelpProvider('lua', {
         signatureHelpTriggerCharacters: ['(', ','],
         provideSignatureHelp: (model, position, token) => {
@@ -174,6 +201,9 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
         activeParam = 0;
         completionProvider.dispose();
         helperProvider.dispose();
+        if (triggerEvents && triggerEvents.length > 0) {
+          eventCompletionProvider.dispose();
+        }
       };
     }
   }, [monaco, eventDefinitions]);
@@ -282,7 +312,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   return (
     <EditModalStyle>
       <ScriptEditorContainer>
-        <TaskEditorTitle>Script editor</TaskEditorTitle>
+        <ScriptEditorTitle>Script editor</ScriptEditorTitle>
         <hr className="hr-resize" />
         <TombStone selectedScript={selectedScript} onSave={onSave} />
 
@@ -396,7 +426,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
         <ScriptPane>
           <div className="flex-column">
             <div className="flex-one">
-              <TaskEditorTitle>Test input</TaskEditorTitle>
+              <ScriptEditorTitle>Test input</ScriptEditorTitle>
               <hr className="hr-resize" />
               <GoAFormItem error={errors?.['payloadSchema']} label="">
                 <TestInputDivBody data-testid="templated-editor-test">

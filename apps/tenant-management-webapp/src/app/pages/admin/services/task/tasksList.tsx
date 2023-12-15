@@ -149,7 +149,7 @@ export const TasksList = (): JSX.Element => {
         Object.keys(tasks).length === 0 &&
         renderNoItem('queue tasks')}
       {selectedTask !== '' && tasks && Object.keys(tasks).length !== 0 && (
-        <Visible visible={true}>
+        <Visible visible={!indicator.show && selectedTask !== '' && tasks && Object.keys(tasks).length !== 0}>
           <TaskListTable
             tasks={tasks}
             onEditTask={(updatedTask) => {

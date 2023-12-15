@@ -79,6 +79,45 @@ const initializeApp = async (): Promise<express.Application> => {
         TaskCompletedDefinition,
         TaskCancelledDefinition,
       ],
+      eventStreams: [
+        {
+          id: 'task-updates',
+          name: 'Task Updates',
+          description: 'Provides update events for Tasks.',
+          publicSubscribe: false,
+          subscriberRoles: [`${serviceId}:${TaskServiceRoles.TaskReader}`, `${serviceId}:${TaskServiceRoles.Admin}`],
+          events: [
+            {
+              namespace: serviceId.service,
+              name: TaskCreatedDefinition.name,
+            },
+            {
+              namespace: serviceId.service,
+              name: TaskUpdatedDefinition.name,
+            },
+            {
+              namespace: serviceId.service,
+              name: TaskPrioritySetDefinition.name,
+            },
+            {
+              namespace: serviceId.service,
+              name: TaskAssignedDefinition.name,
+            },
+            {
+              namespace: serviceId.service,
+              name: TaskStartedDefinition.name,
+            },
+            {
+              namespace: serviceId.service,
+              name: TaskCompletedDefinition.name,
+            },
+            {
+              namespace: serviceId.service,
+              name: TaskCancelledDefinition.name,
+            },
+          ],
+        },
+      ],
       configuration: {
         schema: configurationSchema,
         description: 'Task queues where tasks are created for processing by workers.',

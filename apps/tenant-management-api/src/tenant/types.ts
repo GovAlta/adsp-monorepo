@@ -6,6 +6,7 @@ export interface ServiceClient {
 }
 
 export interface TenantCriteria {
+  idEquals?: string;
   nameEquals?: string;
   realmEquals?: string;
   adminEmailEquals?: string;

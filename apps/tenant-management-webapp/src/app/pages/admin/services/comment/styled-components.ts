@@ -1,5 +1,8 @@
 import styled from 'styled-components';
 
+export const Topics = styled.div`
+  width: 721px;
+`;
 export const EditorPadding = styled.div`
   border: 0px solid grey;
   border-radius: 3px;
@@ -257,7 +260,7 @@ export const IconDiv = styled.div`
   width: 100%;
   display: flex;
   flex-direction: row;
-  justify-content: flex-end;
+  justify-content: center;
   goa-icon-button {
     margin: 0 4px;
   }
@@ -265,7 +268,11 @@ export const IconDiv = styled.div`
 
 export const HeaderFont = styled.div`
   font: var(--goa-typography-heading-m);
-  padding-bottom: var(--goa-spacing-2xs);
+  padding-bottom: var(--goa-spacing-l);
+  padding-top: var(--goa-spacing-l);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 `;
 
 export const TableDiv = styled.div`
@@ -275,22 +282,26 @@ export const TableDiv = styled.div`
   word-wrap: break-word;
   table-layout: fixed;
   & td:first-child {
-    width: 120px;
+    width: 323px;
     overflow-x: hidden;
     text-overflow: ellipsis;
     word-wrap: break-word;
   }
   & td:nth-child(2) {
+    width: 270px;
     word-wrap: break-word;
     word-break: break-word;
   }
 
+  & th:last-child {
+    text-align: center;
+  }
   & td:last-child {
-    width: 40px;
+    width: 128px;
     white-space: nowrap;
     overflow-x: hidden;
     text-overflow: ellipsis;
-    text-align: right;
+    text-align: center;
   }
   & .meta {
     padding: 0;
@@ -325,11 +336,17 @@ export const CommentsList = styled.div`
     border: 1px solid #adadad;
     height: 108px;
     border-radius: 4px;
+    width: 673px;
+    margin-bottom: 1rem;
+    background-color: var(--goa-color-text-light);
+    padding: 0.75rem 1rem;
   }
 `;
 export const CommentsHeader = styled.div`
    {
-    border: 1px solid red;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 `;
 export const CommentsHeading = styled.div`
@@ -355,5 +372,16 @@ export const CommentBody = styled.div`
     color: #333333;
     letter-spacing: 0em;
     text-align: left;
+    text-wrap: wrap;
+  }
+`;
+export const TopicDelete = styled.div`
+   {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+    color: #333333;
+    text-align: left;
+    padding-top: 1rem;
   }
 `;

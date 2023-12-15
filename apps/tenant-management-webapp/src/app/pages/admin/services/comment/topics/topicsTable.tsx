@@ -1,18 +1,26 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import DataTable from '@components/DataTable';
 import { TopicTableItem } from './topicTableItem';
 import { TopicItem } from '@store/comment/model';
 
 import { HeaderFont, TableDiv } from '../styled-components';
 
+import { useDispatch } from 'react-redux';
+import { clearComments } from '@store/comment/action';
+
 export interface TopicTableProps {
   topics: TopicItem[];
+  selectedType: string;
   onDeleteTopic?: (Topic) => void;
 }
 
-export const TopicListTable = ({ topics, onDeleteTopic }: TopicTableProps): JSX.Element => {
+export const TopicListTable = ({ topics, selectedType, onDeleteTopic }: TopicTableProps): JSX.Element => {
+  const dispatch = useDispatch();
   const newTopics = topics ? (JSON.parse(JSON.stringify(topics)) as Record<string, TopicItem[]>) : [];
-
+  const [activeRow, setActiveRow] = useState(null);
+  useEffect(() => {
+    dispatch(clearComments());
+  }, [activeRow]);
   return (
     <>
       <HeaderFont>
@@ -29,7 +37,20 @@ export const TopicListTable = ({ topics, onDeleteTopic }: TopicTableProps): JSX.
           </thead>
           <tbody>
             {Object.keys(newTopics).map((topic) => {
-              return <TopicTableItem key={topic} id={topic} topic={newTopics[topic]} onDeleteTopic={onDeleteTopic} />;
+              return (
+                <TopicTableItem
+                  key={topic}
+                  selectedType={selectedType}
+                  id={newTopics[topic]['id']}
+                  topic={newTopics[topic]}
+                  onDeleteTopic={onDeleteTopic}
+                  showDetails={activeRow === newTopics[topic]['id']}
+                  onToggleDetails={() => {
+                    dispatch(clearComments());
+                    setActiveRow(activeRow === newTopics[topic]['id'] ? null : newTopics[topic]['id']);
+                  }}
+                />
+              );
             })}
           </tbody>
         </DataTable>
