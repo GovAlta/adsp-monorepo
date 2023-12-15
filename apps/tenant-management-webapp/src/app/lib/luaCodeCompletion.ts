@@ -1,3 +1,4 @@
+import { Monaco } from '@monaco-editor/react';
 export const functionSuggestion = [
   {
     label: 'adsp.CreateTask',
@@ -137,3 +138,73 @@ export const functionSignature = [
     ],
   },
 ];
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const extractSuggestionsForSchema = (schema: any, monaco: Monaco) => {
+  const suggestions = [];
+  if (schema.properties) {
+    for (const property in schema.properties) {
+      if (
+        typeof schema.properties[property]?.properties === 'object' &&
+        schema.properties[property]?.properties !== null &&
+        !Array.isArray(schema.properties[property].properties)
+      ) {
+        suggestions.push({
+          label: property,
+          kind: monaco.languages.CompletionItemKind.Property,
+          insertText: `'${property}'`,
+          detail: 'Property',
+          children: extractSuggestionsForSchema(schema.properties[property], monaco),
+        });
+      } else {
+        suggestions.push({
+          label: property,
+          kind: monaco.languages.CompletionItemKind.Property,
+          insertText: `'${property}'`,
+          detail: 'Property',
+        });
+      }
+    }
+  }
+
+  return suggestions;
+};
+
+export const retrieveScriptSuggestions = (suggestion, model, position) => {
+  const textUntilPosition = model.getValueInRange({
+    startLineNumber: position.lineNumber,
+    startColumn: 1,
+    endLineNumber: position.lineNumber,
+    endColumn: position.column,
+  });
+
+  const matches = [...textUntilPosition.matchAll(/\['(\w+)'\]/g)];
+  const lastElement = matches.length > 0 ? matches[matches.length - 1] : [];
+
+  const matchName = lastElement !== null ? lastElement[1] : null;
+
+  if (matchName !== null) {
+    const matchSuggestions = findChildrenByLabel(suggestion, matchName);
+    if (matchSuggestions && matchSuggestions.length > 0) {
+      return matchSuggestions;
+    }
+    if (matchName && !matchSuggestions) {
+      return [];
+    }
+  }
+
+  return suggestion;
+};
+
+const findChildrenByLabel = (items, labelToFind) => {
+  for (const item of items) {
+    if (item.label === labelToFind) {
+      return item.children || null;
+    }
+    if (item.children) {
+      const result = findChildrenByLabel(item.children, labelToFind);
+      if (result) return result;
+    }
+  }
+  return null;
+};
