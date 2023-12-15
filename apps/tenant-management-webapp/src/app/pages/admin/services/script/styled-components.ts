@@ -346,7 +346,7 @@ export const TombStoneWrapper = styled.div`
   }
 `;
 
-export const TaskEditorTitle = styled.div`
+export const ScriptEditorTitle = styled.div`
   font-size: var(--fs-xl);
   line-height: var(--lh-lg);
   font-weight: var(--fw-regular);
