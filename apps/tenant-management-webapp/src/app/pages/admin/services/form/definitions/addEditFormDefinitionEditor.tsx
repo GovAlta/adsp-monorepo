@@ -41,6 +41,10 @@ import { GoAButtonGroup, GoAButton, GoAFormItem } from '@abgov/react-components-
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
+import { ErrorBoundary } from '@components/ErrorBoundary';
+import Ajv from 'ajv';
+
+const ajv = new Ajv();
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
@@ -142,7 +146,11 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const { height } = useWindowDimensions();
   const calcHeight = latestNotification && !latestNotification.disabled ? height - 50 : height;
   const EditorHeight = calcHeight - 570;
-  const [editorErrors, setEditorErrors] = useState({ uiSchema: null, dataSchema: null });
+  const [editorErrors, setEditorErrors] = useState({
+    uiSchema: null,
+    dataSchemaJSON: null,
+    dataSchemaJSONSchema: null,
+  });
 
   useEffect(() => {
     dispatch(FetchRealmRoles());
@@ -340,7 +348,10 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
             <Tabs activeIndex={activeIndex} data-testid="form-editor-tabs">
               <Tab label="Data schema" data-testid="form-editor-tab">
-                <GoAFormItem error={errors?.body ?? editorErrors?.dataSchema ?? null} label="">
+                <GoAFormItem
+                  error={errors?.body ?? editorErrors?.dataSchemaJSON ?? editorErrors?.dataSchemaJSONSchema ?? null}
+                  label=""
+                >
                   <EditorPadding>
                     <Editor
                       data-testid="form-data-schema"
@@ -348,19 +359,32 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       value={tempDataSchema}
                       onChange={(value) => {
                         validators.remove('payloadSchema');
+
+                        try {
+                          ajv.compile(JSON.parse(value));
+                          setEditorErrors({
+                            ...editorErrors,
+                            dataSchemaJSONSchema: null,
+                          });
+                        } catch (e) {
+                          setEditorErrors({
+                            ...editorErrors,
+                            dataSchemaJSONSchema: `The JSON is not a valid JSON schema.`,
+                          });
+                        }
                         setTempDataSchema(value);
                       }}
                       onValidate={(makers) => {
                         if (makers.length === 0) {
                           setEditorErrors({
                             ...editorErrors,
-                            dataSchema: null,
+                            dataSchemaJSON: null,
                           });
                           return;
                         }
                         setEditorErrors({
                           ...editorErrors,
-                          dataSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
+                          dataSchemaJSON: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
                         });
                       }}
                       language="json"
@@ -386,13 +410,13 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                         if (makers.length === 0) {
                           setEditorErrors({
                             ...editorErrors,
-                            dataSchema: null,
+                            uiSchema: null,
                           });
                           return;
                         }
                         setEditorErrors({
                           ...editorErrors,
-                          dataSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
+                          uiSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
                         });
                       }}
                       onChange={(value) => {
@@ -437,7 +461,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     }) ||
                     !definition.name ||
                     validators.haveErrors() ||
-                    editorErrors.dataSchema !== null ||
+                    editorErrors.dataSchemaJSON !== null ||
+                    editorErrors.dataSchemaJSONSchema !== null ||
                     editorErrors.uiSchema !== null
                   }
                   onClick={() => {
@@ -496,15 +521,19 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
             <hr className="hr-resize" />
             <div style={{ paddingTop: '2rem' }}>
               <GoAFormItem error={error} label="">
-                <JsonForms
-                  schema={JSON.parse(dataSchemaBounced)}
-                  uischema={JSON.parse(UiSchemaBounced)}
-                  data={data}
-                  validationMode={'NoValidation'}
-                  renderers={GoARenderers}
-                  cells={vanillaCells}
-                  onChange={({ data }) => setData(data)}
-                />
+                <ErrorBoundary>
+                  {editorErrors?.dataSchemaJSONSchema === null && (
+                    <JsonForms
+                      schema={JSON.parse(dataSchemaBounced)}
+                      uischema={JSON.parse(UiSchemaBounced)}
+                      data={data}
+                      validationMode={'NoValidation'}
+                      renderers={GoARenderers}
+                      cells={vanillaCells}
+                      onChange={({ data }) => setData(data)}
+                    />
+                  )}
+                </ErrorBoundary>
               </GoAFormItem>
             </div>
           </FormPreviewContainer>
