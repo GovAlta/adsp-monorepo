@@ -23,6 +23,7 @@ describe('task', () => {
   const repositoryMock = {
     getTask: jest.fn(),
     getTasks: jest.fn(),
+    getTaskMetrics: jest.fn(),
     save: jest.fn((entity) => entity),
   };
 

@@ -6,6 +6,7 @@ import type { TaskRecord } from './types';
 
 describe('PostgresTaskRepository', () => {
   const knexMock = jest.fn();
+  knexMock['raw'] = jest.fn();
 
   const tenantId = adspId`urn:ads:platform:tenant-service:v2:/tenants/test`;
   const queue = new QueueEntity({
@@ -248,6 +249,46 @@ describe('PostgresTaskRepository', () => {
       queryMock.where.mockResolvedValueOnce([task]);
 
       await expect(repository.getTask(queues, null, task.id)).rejects.toThrow();
+    });
+  });
+
+  describe('getTaskMetrics', () => {
+    it('can get metrics', async () => {
+      const queryMock = {
+        select: jest.fn(() => queryMock),
+        count: jest.fn(() => queryMock),
+        min: jest.fn(() => queryMock),
+        where: jest.fn(),
+        groupByRaw: jest.fn(),
+      };
+      const metrics = [
+        {
+          queueNamespace: 'test',
+          queueName: 'test-started',
+          status: TaskStatus.Completed,
+          count: 1,
+        },
+        {
+          queueNamespace: 'test',
+          queueName: 'test-started',
+          status: TaskStatus.Pending,
+          count: 4,
+        },
+      ];
+
+      knexMock.mockReturnValueOnce(queryMock);
+      queryMock.groupByRaw.mockResolvedValueOnce(metrics);
+
+      const [result] = await repository.getTaskMetrics(tenantId);
+      expect(result).toMatchObject({
+        namespace: 'test',
+        name: 'test-started',
+        status: expect.objectContaining({
+          [TaskStatus.Completed]: 1,
+          [TaskStatus.Pending]: 4,
+        }),
+      });
+      expect(queryMock.where).toHaveBeenCalledWith(expect.objectContaining({ tenant: tenantId.toString() }));
     });
   });
 

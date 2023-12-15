@@ -44,10 +44,12 @@ const initializeApp = async (): Promise<express.Application> => {
   const {
     coreStrategy,
     configurationHandler,
+    directory,
     eventService,
     metricsHandler,
     tenantHandler,
     tenantStrategy,
+    tokenProvider,
     healthCheck,
     traceHandler,
   } = await initializePlatform(
@@ -161,6 +163,8 @@ const initializeApp = async (): Promise<express.Application> => {
     KEYCLOAK_ROOT_URL: environment.KEYCLOAK_ROOT_URL,
     serviceId,
     logger,
+    directory,
+    tokenProvider,
     taskRepository: repositories.taskRepository,
     eventService,
   });
