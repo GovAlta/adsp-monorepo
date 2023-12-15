@@ -527,7 +527,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       schema={JSON.parse(dataSchemaBounced)}
                       uischema={JSON.parse(UiSchemaBounced)}
                       data={data}
-                      validationMode={'NoValidation'}
+                      validationMode={'ValidateAndShow'}
                       renderers={GoARenderers}
                       cells={vanillaCells}
                       onChange={({ data }) => setData(data)}
