@@ -65,3 +65,11 @@ export interface TaskCriteria {
   };
   notEnded?: boolean;
 }
+
+export interface TaskMetrics {
+  namespace: string;
+  name: string;
+  status: Record<TaskStatus, number>;
+  priority: Record<TaskPriority, number>;
+  assignedTo: Record<string, number>;
+}

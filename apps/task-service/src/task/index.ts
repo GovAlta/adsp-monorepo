@@ -1,4 +1,4 @@
-import { AdspId, adspId, EventService } from '@abgov/adsp-service-sdk';
+import { AdspId, adspId, EventService, ServiceDirectory, TokenProvider } from '@abgov/adsp-service-sdk';
 import { Application } from 'express';
 import { Logger } from 'winston';
 import { TaskRepository } from './repository';
@@ -15,6 +15,8 @@ interface TaskMiddlewareProps {
   KEYCLOAK_ROOT_URL: string;
   serviceId: AdspId;
   logger: Logger;
+  directory: ServiceDirectory;
+  tokenProvider: TokenProvider;
   taskRepository: TaskRepository;
   eventService: EventService;
 }
