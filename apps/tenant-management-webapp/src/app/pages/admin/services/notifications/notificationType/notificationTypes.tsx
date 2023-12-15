@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAButton, GoAContainer } from '@abgov/react-components-new';
-import { Grid, GridItem } from '@components/Grid';
+import { Grid, GridItem } from '@core-services/app-common';
 import { NotificationTypeModalForm } from '../addEditNotification/addEditNotification';
 import { EventModalForm } from './editEvent';
 import { IndicatorWithDelay } from '@components/Indicator';

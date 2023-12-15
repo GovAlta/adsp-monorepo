@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { GoAHeader } from '@abgov/react-components';
 import { IndicatorWithDelay } from '@components/Indicator';
 
-import { Grid, GridItem } from '@components/Grid';
-import Footer from '@components/Footer';
+import { Grid, GridItem } from '@core-services/app-common';
+import { Footer } from '@core-services/app-common';
 import ServiceStatus from './statusCard';
 import { useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';

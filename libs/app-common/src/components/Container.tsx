@@ -17,7 +17,7 @@ interface Props {
   xlHSpacing?: number;
 }
 
-const Container = styled.div`
+export const Container = styled.div`
   width: 100%;
   margin: 0 auto;
   padding: ${(props: Props) => `${props.vs ?? 0}rem ${props.hs ?? 0}rem`};
@@ -43,5 +43,3 @@ const Container = styled.div`
     width: 90%;
   }
 `;
-
-export default Container;

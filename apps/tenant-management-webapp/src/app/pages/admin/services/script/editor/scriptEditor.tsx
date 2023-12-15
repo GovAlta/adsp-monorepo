@@ -11,6 +11,7 @@ import {
   ScrollPane,
   TextLoadingIndicator,
   MonacoDivTabBody,
+  ScriptEditorTitle,
 } from '../styled-components';
 import { TombStone } from './tombstone';
 
@@ -23,10 +24,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import { RootState } from '@store/index';
-import { functionSuggestion, functionSignature } from '@lib/luaCodeCompletion';
-import { buildSuggestions, getSuggestionsForSchema, luaTriggerInScope } from '@lib/autoComplete';
+import {
+  functionSuggestion,
+  functionSignature,
+  extractSuggestionsForSchema,
+  retrieveScriptSuggestions,
+} from '@lib/luaCodeCompletion';
+import { buildSuggestions, luaTriggerInScope } from '@lib/autoComplete';
 import { GoAButton, GoAFormItem, GoACheckbox, GoASkeleton } from '@abgov/react-components-new';
-import { TaskEditorTitle } from '../styled-components';
 import { Tab, Tabs } from '@components/Tabs';
 import { ClientRoleTable } from '@components/RoleTable';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
@@ -123,7 +128,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
         });
 
         eventCompletionProvider = monaco.languages.registerCompletionItemProvider('lua', {
-          triggerCharacters: ['[', '.'],
+          triggerCharacters: ['['],
           provideCompletionItems: (model, position) => {
             const textUntilPosition = model.getValueInRange({
               startLineNumber: 1,
@@ -131,9 +136,12 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
               endLineNumber: position.lineNumber,
               endColumn: position.column,
             });
+            const eventSuggestion = extractSuggestionsForSchema(eventDefinition?.payloadSchema, monaco);
+
             const suggestions = luaTriggerInScope(textUntilPosition, position.lineNumber)
-              ? getSuggestionsForSchema(eventDefinition?.payloadSchema, monaco)
+              ? retrieveScriptSuggestions(eventSuggestion, model, position)
               : [];
+
             return {
               suggestions: suggestions,
             } as languages.ProviderResult<languages.CompletionList>;
@@ -304,7 +312,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
   return (
     <EditModalStyle>
       <ScriptEditorContainer>
-        <TaskEditorTitle>Script editor</TaskEditorTitle>
+        <ScriptEditorTitle>Script editor</ScriptEditorTitle>
         <hr className="hr-resize" />
         <TombStone selectedScript={selectedScript} onSave={onSave} />
 
@@ -418,7 +426,7 @@ export const ScriptEditor: FunctionComponent<ScriptEditorProps> = ({
         <ScriptPane>
           <div className="flex-column">
             <div className="flex-one">
-              <TaskEditorTitle>Test input</TaskEditorTitle>
+              <ScriptEditorTitle>Test input</ScriptEditorTitle>
               <hr className="hr-resize" />
               <GoAFormItem error={errors?.['payloadSchema']} label="">
                 <TestInputDivBody data-testid="templated-editor-test">

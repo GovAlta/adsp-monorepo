@@ -17,7 +17,7 @@ import {
   FETCH_COMMENT_TOPIC_COMMENTS,
   CREAT_COMMENT_COMMENTS_ACTION,
   DELETE_COMMENT_TOPIC_ACTION,
-  DELETE_COMMENT_COMMENTS_ACTION,
+  DELETE_COMMENT,
   UPDATE_COMMENT_COMMENTS_ACTION,
   CLEAR_COMMENT_COMMENTS_ACTION,
   addTopicSuccess,
@@ -183,7 +183,7 @@ function* fetchCommentSaga(action): SagaIterator {
   const token = yield call(getAccessToken);
 
   try {
-    const url = `${baseUrl}/comment/v1/topics/${action.payload}/comments`;
+    const url = `${baseUrl}/comment/v1/topics/${action.payload}/comments?top=10`;
     const { results, page } = yield call(fetchCommentsApi, token, url);
     yield put(fetchCommentSuccess(results, page.after, page.next));
   } catch (error) {
@@ -234,7 +234,7 @@ function* deleteCommentSaga(action): SagaIterator {
   const token = yield call(getAccessToken);
 
   try {
-    const url = `${baseUrl}/delete-comment/${action.payload}`;
+    const url = `${baseUrl}/comment/v1/topics/${action.payload.topicId}/comments/${action.payload.comment}`;
     yield call(deleteCommentApi, token, url);
     yield put(deleteCommentSuccess(action.payload));
   } catch (error) {
@@ -254,5 +254,5 @@ export function* watchCommentSagas(): Generator {
   yield takeEvery(FETCH_COMMENT_TOPIC_COMMENTS, fetchCommentSaga);
   // yield takeEvery(FETCH_COMMENTS, addCommentSaga);
   yield takeEvery(DELETE_COMMENT_TOPIC_ACTION, deleteTopicSaga);
-  yield takeEvery(DELETE_COMMENT_COMMENTS_ACTION, deleteCommentSaga);
+  yield takeEvery(DELETE_COMMENT, deleteCommentSaga);
 }

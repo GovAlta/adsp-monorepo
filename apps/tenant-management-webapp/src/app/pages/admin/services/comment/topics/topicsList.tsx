@@ -2,13 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
-import {
-  getCommentTopicTypes,
-  fetchTopicsRequest,
-  addTopicRequest,
-  deleteTopicRequest,
-  clearComments,
-} from '@store/comment/action';
+import { getCommentTopicTypes, fetchTopicsRequest, addTopicRequest, clearComments } from '@store/comment/action';
 
 import { renderNoItem } from '@components/NoItem';
 import {
@@ -22,7 +16,9 @@ import {
 import { TopicModal } from './topicModal';
 import { ButtonPadding, ProgressWrapper, Topics } from '../styled-components';
 import { TopicListTable } from './topicsTable';
+import { DeleteConfirmationsView } from './deleteConfirmationsView';
 import { LoadMoreWrapper } from '@components/styled-components';
+import { TopicItem, defaultTopic } from '@store/comment/model';
 
 interface VisibleProps {
   visible: boolean;
@@ -37,6 +33,7 @@ export const TopicsList = (): JSX.Element => {
   const [openAddTopic, setOpenAddTopic] = useState(false);
   const [modalType, setModalType] = useState('');
   const [selectedType, setSelectedType] = useState('');
+  const [selectedTopic, setSelectedTopic] = useState<TopicItem>(defaultTopic);
 
   const indicator = useSelector((state: RootState) => {
     return state?.session?.indicator;
@@ -48,6 +45,7 @@ export const TopicsList = (): JSX.Element => {
   const next = useSelector((state: RootState) => state.comment.nextEntries);
   const topics = useSelector((state: RootState) => state.comment.topics);
   const [topicList, setTopicList] = useState({});
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   useEffect(() => {
     dispatch(getCommentTopicTypes());
@@ -65,16 +63,26 @@ export const TopicsList = (): JSX.Element => {
 
   useEffect(() => {
     document.body.style.overflow = 'unset';
-  }, [openAddTopic]);
+  }, [openAddTopic, showDeleteConfirmation]);
 
   const reset = () => {
     setOpenAddTopic(false);
   };
 
+  const onDeleteTopic = () => {
+    indicator.show = true;
+    setShowDeleteConfirmation(false);
+    setTimeout(() => {
+      dispatch(fetchTopicsRequest(topicTypes[selectedType]));
+      indicator.show = false;
+    }, 800);
+  };
+
   const handleSave = (topic) => {
-    dispatch(fetchTopicsRequest(topicTypes[selectedType]));
     setTopicList(topic);
     dispatch(addTopicRequest(topic));
+    dispatch(fetchTopicsRequest(topicTypes[selectedType]));
+    setOpenAddTopic(false);
   };
 
   return (
@@ -130,16 +138,26 @@ export const TopicsList = (): JSX.Element => {
       )}
       {!indicator.show && selectedType !== '' && topics && Object.keys(topics).length === 0 && renderNoItem('topics')}
       {selectedType !== '' && topics && Object.keys(topics).length !== 0 && (
-        <Visible visible={true}>
+        <Visible visible={!indicator.show && selectedType !== '' && topics && Object.keys(topics).length !== 0}>
           {
             <TopicListTable
               topics={topics}
+              selectedType={selectedType}
               onDeleteTopic={(topicSelected) => {
-                dispatch(deleteTopicRequest(topicSelected.id));
-                dispatch(fetchTopicsRequest(topicTypes[selectedType]));
+                setSelectedTopic(topicSelected);
+                setShowDeleteConfirmation(true);
               }}
             />
           }
+
+          {showDeleteConfirmation && selectedTopic && (
+            <DeleteConfirmationsView
+              topic={selectedTopic}
+              selectedType={selectedType}
+              onCancel={() => setShowDeleteConfirmation(false)}
+              onDelete={onDeleteTopic}
+            ></DeleteConfirmationsView>
+          )}
           {next && (
             <LoadMoreWrapper>
               <GoAButton testId="comment-load-more-btn" key="comment-load-more-btn" type="tertiary" onClick={onNext}>

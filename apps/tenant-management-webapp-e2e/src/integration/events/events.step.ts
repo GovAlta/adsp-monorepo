@@ -416,6 +416,7 @@ When('the user clicks {string} button for the stream of {string}', function (but
       break;
     case 'Edit':
       eventsObj.streamEditBtn(streamName).shadow().find('button').click({ force: true });
+      cy.wait(1000); // wait for the edit modal components to be operational
       break;
     case 'Delete':
       eventsObj.streamDeleteBtn(streamName).shadow().find('button').click({ force: true });
@@ -554,12 +555,12 @@ When('the user {string} Make stream public checkbox in Stream modal', function (
           if (classAttr?.includes('selected')) {
             cy.log('Make stream public checkbox is already checked. ');
           } else {
-            eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
+            eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').scrollIntoView().click();
           }
           break;
         case 'un-selects':
           if (classAttr?.includes('selected')) {
-            eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').click();
+            eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').scrollIntoView().click();
           } else {
             cy.log('Make stream public checkbox is already un-selected. ');
           }
