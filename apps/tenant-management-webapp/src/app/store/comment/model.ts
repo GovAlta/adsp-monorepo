@@ -91,6 +91,7 @@ export interface CommentState {
   topics: TopicItem[];
   comments: Comment[];
   nextEntries: string;
+  nextCommentEntries: string;
 }
 
 export interface UpdateCommentConfig {

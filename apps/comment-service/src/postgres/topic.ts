@@ -74,7 +74,7 @@ export class PostgresTopicRepository implements TopicRepository {
     const rows = await query.orderBy('id', 'asc');
 
     return {
-      results: rows.map((r) => this.mapRecord(types, r)),
+      results: rows.map((r) => this.mapRecord(types, r)).slice(0, top),
       page: {
         after,
         next: encodeNext(rows.length, topChecked, skip - 1),

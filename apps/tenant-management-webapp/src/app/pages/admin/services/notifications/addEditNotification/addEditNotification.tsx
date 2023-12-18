@@ -29,6 +29,7 @@ import {
 import { RootState } from '@store/index';
 import { ConfigServiceRole } from '@store/access/models';
 import { ClientRoleTable } from '@components/RoleTable';
+import { areObjectsEqual } from '@lib/objectUtil';
 interface NotificationTypeFormProps {
   initialValue?: NotificationItem;
   onCancel?: () => void;
@@ -150,7 +151,7 @@ export const NotificationTypeModalForm: FunctionComponent<NotificationTypeFormPr
               Cancel
             </GoAButton>
             <GoAButton
-              disabled={validators.haveErrors()}
+              disabled={validators.haveErrors() || areObjectsEqual(type, initialValue)}
               type="primary"
               testId="form-save"
               onClick={() => {
