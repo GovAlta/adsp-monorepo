@@ -123,7 +123,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify(dataSchema, null, 2));
   const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify(uiSchema, null, 2));
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify(dataSchema, null, 2));
-  const [data, setData] = useState('');
+  const [data, setData] = useState<unknown>({});
   const [error, setError] = useState('');
   const [spinner, setSpinner] = useState<boolean>(false);
   const { id } = useParams<{ id: string }>();
@@ -492,21 +492,26 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           </NameDescriptionDataSchema>
 
           <FormPreviewContainer>
-            <FormEditorTitle>Preview</FormEditorTitle>
-            <hr className="hr-resize" />
-            <div style={{ paddingTop: '2rem' }}>
-              <GoAFormItem error={error} label="">
-                <JsonForms
-                  schema={JSON.parse(dataSchemaBounced)}
-                  uischema={JSON.parse(UiSchemaBounced)}
-                  data={data}
-                  validationMode={'NoValidation'}
-                  renderers={GoARenderers}
-                  cells={vanillaCells}
-                  onChange={({ data }) => setData(data)}
-                />
-              </GoAFormItem>
-            </div>
+            <Tabs activeIndex={0} data-testid="preview-tabs">
+              <Tab label="Preview" data-testid="preview-view-tab">
+                <div style={{ paddingTop: '2rem' }}>
+                  <GoAFormItem error={error} label="">
+                    <JsonForms
+                      schema={JSON.parse(dataSchemaBounced)}
+                      uischema={JSON.parse(UiSchemaBounced)}
+                      data={data}
+                      validationMode={'NoValidation'}
+                      renderers={GoARenderers}
+                      cells={vanillaCells}
+                      onChange={({ data }) => setData(data)}
+                    />
+                  </GoAFormItem>
+                </div>
+              </Tab>
+              <Tab label="Data" data-testid="data-view">
+                {data && <pre>{JSON.stringify(data, null, 2)}</pre>}
+              </Tab>
+            </Tabs>
           </FormPreviewContainer>
         </FlexRow>
       )}
