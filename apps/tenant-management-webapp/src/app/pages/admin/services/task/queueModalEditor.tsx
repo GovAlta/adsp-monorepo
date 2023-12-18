@@ -24,7 +24,7 @@ import { ConfigServiceRole } from '@store/access/models';
 import { RootState } from '@store/index';
 import { FETCH_KEYCLOAK_SERVICE_ROLES, fetchKeycloakServiceRoles } from '@store/access/actions';
 import { ActionState } from '@store/session/models';
-import { compareStringArrayAreEqual } from '@lib/arrayUtil';
+import { compareStringArrayAreEqual } from '@lib/objectUtil';
 import { useValidators } from '@lib/validation/useValidators';
 import { badCharsCheck, wordMaxLengthCheck, isNotEmptyCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { TaskConfigQueue } from './TaskConfigQueue';
