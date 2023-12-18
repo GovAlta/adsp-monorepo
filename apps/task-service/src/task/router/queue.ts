@@ -17,7 +17,7 @@ import { taskCreated } from '../events';
 import { QueueEntity } from '../model/queue';
 import { TaskEntity } from '../model/task';
 import { TaskRepository } from '../repository';
-import { Queue, TaskPriority, TaskServiceConfiguration } from '../types';
+import { Queue, TaskPriority, TaskServiceConfiguration, TaskStatus } from '../types';
 import { getTask, mapTask, taskOperation, TASK_KEY } from './task';
 import { UserInformation } from './types';
 
@@ -101,64 +101,89 @@ export function getQueueMetrics(
         throw new UnauthorizedUserError('get queue metrics', user);
       }
 
-      const [metrics] = await repository.getTaskMetrics(tenant.id, {
+      let [metrics] = await repository.getTaskMetrics(tenant.id, {
         queue: { namespace: queue.namespace, name: queue.name },
       });
 
-      const valueServiceUrl = await directory.getServiceUrl(VALUE_SERVICE_ID);
-      let token = await tokenProvider.getAccessToken();
-      const {
-        data: {
-          values: [queueDuration],
-        },
-      } = await axios.get<{ values: { avg: number; min: number; max: number }[] }>(
-        new URL(
-          `value/v1/event-service/values/event/metrics/task-service:${queue.namespace}:${queue.name}:queue:duration`,
-          valueServiceUrl
-        ).href,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: {
-            tenantId: tenant.id.toString(),
-            interval: 'weekly',
-            top: 1,
+      // No results means there are no tasks in the queue
+      if (!metrics) {
+        metrics = {
+          namespace: queue.namespace,
+          name: queue.name,
+          status: {
+            [TaskStatus.Pending]: 0,
+            [TaskStatus.InProgress]: 0,
+            [TaskStatus.Stopped]: 0,
+            [TaskStatus.Cancelled]: 0,
+            [TaskStatus.Completed]: 0,
           },
-        }
-      );
-
-      token = await tokenProvider.getAccessToken();
-      const {
-        data: {
-          values: [completionDuration],
-        },
-      } = await axios.get<{ values: { avg: number; min: number; max: number }[] }>(
-        new URL(
-          `value/v1/event-service/values/event/metrics/task-service:${queue.namespace}:${queue.name}:completion:duration`,
-          valueServiceUrl
-        ).href,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: {
-            tenantId: tenant.id.toString(),
-            interval: 'weekly',
-            top: 1,
+          priority: {
+            [TaskPriority.Normal]: 0,
+            [TaskPriority.High]: 0,
+            [TaskPriority.Urgent]: 0,
           },
-        }
-      );
+          assignedTo: {},
+        };
+      }
 
-      res.send(
-        metrics
-          ? {
-              ...metrics,
-              priority: Object.entries(metrics.priority).reduce(
-                (counts, [key, number]) => ({ ...counts, [TaskPriority[key]]: number }),
-                {} as Record<TaskPriority, number>
-              ),
-              queue: queueDuration || null,
-              completion: completionDuration || null,
-            }
-          : null
-      );
+      const result = {
+        ...(metrics || {}),
+        priority: Object.entries(metrics.priority).reduce(
+          (counts, [key, number]) => ({ ...counts, [TaskPriority[key]]: number }),
+          {} as Record<TaskPriority, number>
+        ),
+        queue: null,
+        completion: null,
+      };
+
+      // Get duration metrics if there are tasks metrics (i.e. queue is not entirely empty).
+      if (metrics) {
+        const valueServiceUrl = await directory.getServiceUrl(VALUE_SERVICE_ID);
+        let token = await tokenProvider.getAccessToken();
+        const {
+          data: {
+            values: [queueDuration],
+          },
+        } = await axios.get<{ values: { avg: number; min: number; max: number }[] }>(
+          new URL(
+            `value/v1/event-service/values/event/metrics/task-service:${queue.namespace}:${queue.name}:queue:duration`,
+            valueServiceUrl
+          ).href,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: {
+              tenantId: tenant.id.toString(),
+              interval: 'weekly',
+              top: 1,
+            },
+          }
+        );
+
+        token = await tokenProvider.getAccessToken();
+        const {
+          data: {
+            values: [completionDuration],
+          },
+        } = await axios.get<{ values: { avg: number; min: number; max: number }[] }>(
+          new URL(
+            `value/v1/event-service/values/event/metrics/task-service:${queue.namespace}:${queue.name}:completion:duration`,
+            valueServiceUrl
+          ).href,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: {
+              tenantId: tenant.id.toString(),
+              interval: 'weekly',
+              top: 1,
+            },
+          }
+        );
+
+        result.queue = queueDuration;
+        result.completion = completionDuration;
+      }
+
+      res.send(result);
     } catch (err) {
       next(err);
     }
