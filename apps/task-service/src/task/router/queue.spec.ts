@@ -323,6 +323,41 @@ describe('queue', () => {
       );
     });
 
+    it('can get queue metrics for empty queue', async () => {
+      const req = {
+        user: { tenantId, id: 'user-1', roles: ['test-worker'] },
+        tenant: { id: tenantId },
+        query: {},
+        queue: {
+          ...queue,
+          getTasks: jest.fn(),
+          canAccessTask: jest.fn(() => true),
+        },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.getTaskMetrics.mockResolvedValueOnce([]);
+
+      directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://value-service'));
+      tokenProviderMock.getAccessToken.mockResolvedValue('token');
+
+      axiosMock.get.mockResolvedValueOnce({ data: { values: [{ avg: 12, min: 10, max: 23 }] } });
+      axiosMock.get.mockResolvedValueOnce({ data: { values: [{ avg: 12, min: 10, max: 23 }] } });
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          namespace: queue.namespace,
+          name: queue.name,
+          status: expect.objectContaining({ [TaskStatus.Pending]: 0 }),
+          queue: expect.objectContaining({ avg: 12, min: 10, max: 23 }),
+        })
+      );
+    });
+
     it('can call next with unauthorized', async () => {
       const req = {
         user: { tenantId, id: 'user-1', roles: ['test-worker'] },
