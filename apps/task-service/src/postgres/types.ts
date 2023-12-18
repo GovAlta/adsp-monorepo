@@ -21,5 +21,5 @@ export interface TaskAggregationResult {
   priority: TaskPriority;
   assignedToId: string;
   assignedToName: string;
-  count: number;
+  count: number | string;
 }

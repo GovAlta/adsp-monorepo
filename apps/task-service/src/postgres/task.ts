@@ -142,7 +142,7 @@ export class PostgresTaskRepository implements TaskRepository {
     }
 
     const results: TaskAggregationResult[] = await query
-      .select("queueNamespace", "queueName", "status", "priority", "assignedToId")
+      .select('queueNamespace', 'queueName', 'status', 'priority', 'assignedToId')
       .count('id')
       .min('assignedToName', { as: 'assignedToName' })
       .groupByRaw(
@@ -175,15 +175,17 @@ export class PostgresTaskRepository implements TaskRepository {
 
       const queueCounts = counts[key];
       if (result.status) {
-        queueCounts.status[result.status] = result.count;
+        queueCounts.status[result.status] = typeof result.count === 'string' ? parseInt(result.count) : result.count;
       }
 
       if (result.priority) {
-        queueCounts.priority[result.priority] = result.count;
+        queueCounts.priority[result.priority] =
+          typeof result.count === 'string' ? parseInt(result.count) : result.count;
       }
 
       if (result.assignedToId) {
-        queueCounts.assignedTo[result.assignedToName] = result.count;
+        queueCounts.assignedTo[result.assignedToId] =
+          typeof result.count === 'string' ? parseInt(result.count) : result.count;
       }
 
       return counts;
