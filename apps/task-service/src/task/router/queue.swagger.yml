@@ -67,7 +67,14 @@ components:
         assignedTo:
           type: object
           additionalProperties:
-            type: number
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              count:
+                type: number
         queue:
           $ref: "#/components/schemas/QueueDurationMetric"
         completion:
