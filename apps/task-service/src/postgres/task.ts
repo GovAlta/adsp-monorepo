@@ -108,7 +108,7 @@ export class PostgresTaskRepository implements TaskRepository {
     return this.mapRecord(record, queues);
   }
 
-  async getTaskMetrics(tenantId: AdspId, criteria?: TaskCriteria) {
+  async getTaskMetrics(tenantId: AdspId, criteria?: TaskCriteria): Promise<TaskMetrics[]> {
     const query = this.knex('tasks');
 
     criteria = {
@@ -184,8 +184,11 @@ export class PostgresTaskRepository implements TaskRepository {
       }
 
       if (result.assignedToId) {
-        queueCounts.assignedTo[result.assignedToId] =
-          typeof result.count === 'string' ? parseInt(result.count) : result.count;
+        queueCounts.assignedTo[result.assignedToId] = {
+          id: result.assignedToId,
+          name: result.assignedToName,
+          count: typeof result.count === 'string' ? parseInt(result.count) : result.count,
+        };
       }
 
       return counts;

@@ -71,5 +71,5 @@ export interface TaskMetrics {
   name: string;
   status: Record<TaskStatus, number>;
   priority: Record<TaskPriority, number>;
-  assignedTo: Record<string, number>;
+  assignedTo: Record<string, { id: string; name: string; count: number }>;
 }
