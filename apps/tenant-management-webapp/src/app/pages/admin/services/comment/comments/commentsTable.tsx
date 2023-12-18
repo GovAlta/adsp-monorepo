@@ -9,6 +9,7 @@ import {
   CommentsActions,
   CommentBody,
   IconDiv,
+  LoadMoreCommentsWrapper,
 } from '../styled-components';
 import { RootState } from '@store/index';
 import { useDispatch, useSelector } from 'react-redux';
@@ -41,6 +42,7 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
   const [modalType, setModalType] = useState('');
   const [selectedComment, setSelectedComment] = useState(defaultComment);
   const [deleteAction, setDeleteAction] = useState(false);
+  const next = useSelector((state: RootState) => state.comment.nextCommentEntries);
   const comments = useSelector((state: RootState) => {
     return state?.comment?.comments;
   });
@@ -70,6 +72,11 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
       dispatch(fetchComments(topic.id));
     }
   };
+
+  const onNext = () => {
+    dispatch(fetchComments(topic.id, next));
+  };
+
   const deleteComment = () => {
     setDeleteAction(false);
   };
@@ -122,6 +129,13 @@ export const CommentListTable: FunctionComponent<CommentTableProps> = ({ topic, 
             </CommentsList>
           );
         })}
+      {next && (
+        <LoadMoreCommentsWrapper>
+          <GoAButton testId="comment-load-more-btn" key="comment-load-more-btn" type="tertiary" onClick={onNext}>
+            View older comments
+          </GoAButton>
+        </LoadMoreCommentsWrapper>
+      )}
       {deleteAction && (
         <DeleteConfirmationsView
           topic={topic}
