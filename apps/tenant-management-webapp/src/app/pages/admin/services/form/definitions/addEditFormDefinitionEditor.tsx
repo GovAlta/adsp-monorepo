@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
 import Editor from '@monaco-editor/react';
-import { vanillaCells } from '@jsonforms/vanilla-renderers';
-import { GoARenderers } from '@abgov/jsonforms-components';
+import { GoARenderers, GoACells } from '@abgov/jsonforms-components';
 import { JsonForms } from '@jsonforms/react';
 import { FormDefinition } from '@store/form/model';
+import { materialRenderers, materialCells } from '@jsonforms/material-renderers';
 
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
@@ -502,7 +502,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       data={data}
                       validationMode={'NoValidation'}
                       renderers={GoARenderers}
-                      cells={vanillaCells}
+                      cells={GoACells}
                       onChange={({ data }) => setData(data)}
                     />
                   </GoAFormItem>

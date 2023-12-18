@@ -1,8 +1,8 @@
-import { vanillaRenderers } from '@jsonforms/vanilla-renderers';
-import { GoAInputRenderers } from './InputRender';
+import { materialRenderers } from '@jsonforms/material-renderers';
+import { GoATextControlTester, GoAInputTextControl } from '../Controls';
+export const GoAInputRenderers = [{ tester: GoATextControlTester, renderer: GoAInputTextControl }];
 
 export const GoARenderers = [
   //register custom renderers
-  ...vanillaRenderers,
   ...GoAInputRenderers,
 ];
