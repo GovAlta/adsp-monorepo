@@ -94,6 +94,7 @@ export interface DeleteTopicSuccessAction {
 export interface FetchCommentsAction {
   type: typeof FETCH_COMMENT_TOPIC_COMMENTS;
   payload: TopicItem;
+  next: string;
 }
 export interface ClearCommentsAction {
   type: typeof CLEAR_COMMENT_COMMENTS_ACTION;
@@ -243,9 +244,10 @@ export const deleteTopicSuccess = (topicId: string): DeleteTopicSuccessAction =>
   payload: topicId,
 });
 
-export const fetchComments = (topicType: TopicItem): FetchCommentsAction => ({
+export const fetchComments = (topicType: TopicItem, next?: string): FetchCommentsAction => ({
   type: FETCH_COMMENT_TOPIC_COMMENTS,
   payload: topicType,
+  next,
 });
 export const clearComments = (): ClearCommentsAction => ({
   type: CLEAR_COMMENT_COMMENTS_ACTION,

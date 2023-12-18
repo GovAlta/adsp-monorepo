@@ -181,9 +181,10 @@ function* clearCommentSaga(): SagaIterator {
 function* fetchCommentSaga(action): SagaIterator {
   const baseUrl = yield select((state) => state.config.serviceUrls?.commentServiceApiUrl);
   const token = yield call(getAccessToken);
+  const next = action.next ? action.next : '';
 
   try {
-    const url = `${baseUrl}/comment/v1/topics/${action.payload}/comments?top=10`;
+    const url = `${baseUrl}/comment/v1/topics/${action.payload}/comments?top=10&after=${next}`;
     const { results, page } = yield call(fetchCommentsApi, token, url);
     yield put(fetchCommentSuccess(results, page.after, page.next));
   } catch (error) {

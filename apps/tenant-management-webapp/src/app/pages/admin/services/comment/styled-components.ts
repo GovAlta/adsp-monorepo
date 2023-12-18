@@ -385,3 +385,6 @@ export const TopicDelete = styled.div`
     padding-top: 1rem;
   }
 `;
+export const LoadMoreCommentsWrapper = styled.div`
+  padding-top: var(--goa-spacing-xs);
+`;
