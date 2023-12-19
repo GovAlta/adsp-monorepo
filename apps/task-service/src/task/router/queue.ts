@@ -197,6 +197,7 @@ export function getQueueMetrics(
           {
             headers: { Authorization: `Bearer ${token}` },
             params: {
+              tenantId: tenant.id.toString(),
               timestampMin,
               context: JSON.stringify({
                 namespace: serviceId,
@@ -214,6 +215,7 @@ export function getQueueMetrics(
           {
             headers: { Authorization: `Bearer ${token}` },
             params: {
+              tenantId: tenant.id.toString(),
               timestampMin,
               context: JSON.stringify({
                 namespace: serviceId,
@@ -231,6 +233,7 @@ export function getQueueMetrics(
           {
             headers: { Authorization: `Bearer ${token}` },
             params: {
+              tenantId: tenant.id.toString(),
               timestampMin,
               context: JSON.stringify({
                 namespace: serviceId,
