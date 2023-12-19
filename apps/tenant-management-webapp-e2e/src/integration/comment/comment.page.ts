@@ -76,5 +76,29 @@ class CommentPage {
       `(//table[@data-testid="comment-topic-types-table"]//*[contains(@data-testid, "comment-topic-types-delete")])[${rowNumber}]`
     );
   }
+
+  topicTypeEditorEditButton() {
+    return cy.xpath('//*[@class="editColumn"]//*[text()="Edit"]');
+  }
+
+  topicTypeEditorEditTopicTypeModal() {
+    return cy.xpath('//goa-modal[@open="true" and @data-testid="topicType-comment"]');
+  }
+
+  topicTypeEditorEditTopicTypeModalTitle() {
+    return cy.xpath('//goa-modal[@open="true" and @data-testid="topicType-comment"]/*[@slot="heading"]');
+  }
+
+  topicTypeEditorEditTopicTypeModalNameInput() {
+    return cy.xpath('//goa-input[@data-testid="comment-topicType-name"]');
+  }
+
+  topicTypeEditorEditTopicTypeModalSaveButton() {
+    return cy.xpath('//goa-modal[@open="true" and @data-testid="topicType-comment"]//goa-button[text()="Save"]');
+  }
+
+  topicTypeEditorRolesTables() {
+    return cy.xpath('//*[@data-testid="template-form"]//h4/following-sibling::goa-table[1]');
+  }
 }
 export default CommentPage;
