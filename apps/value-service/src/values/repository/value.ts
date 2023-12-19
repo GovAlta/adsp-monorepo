@@ -29,6 +29,7 @@ export interface ValuesRepository {
     after?: string,
     readMetric?: MetricCriteria
   ): Promise<Metric & { page: Page }>;
+  countValues(criteria: ValueCriteria): Promise<number>;
   writeMetric(
     tenantId: AdspId,
     namespace: string,
