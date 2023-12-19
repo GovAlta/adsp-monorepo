@@ -1,33 +1,26 @@
 import React from 'react';
-import {
-  CellProps,
-  Formatted,
-  WithClassname,
-  ControlProps,
-  isStringControl,
-  RankedTester,
-  rankWith,
-} from '@jsonforms/core';
+import { CellProps, WithClassname, ControlProps, isStringControl, RankedTester, rankWith } from '@jsonforms/core';
 import { GoAInput } from '@abgov/react-components-new';
-import { useDebouncedChange } from '@jsonforms/material-renderers';
 import { WithInputProps } from './type';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { GoAInputBaseControl } from './InputBaseControl';
 type GoAInputTextProps = CellProps & WithClassname & WithInputProps;
 
-// eslint-disable-next-line
-const eventToValue = (ev: any) => (ev.target.value === '' ? undefined : ev.target.value);
-
 export const GoAInputText = (props: GoAInputTextProps): JSX.Element => {
-  const { data, config, className, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
+  // eslint-disable-next-line
+  const { data, config, id, enabled, uischema, isValid, path, handleChange, schema, label } = props;
   const appliedUiSchemaOptions = { ...config, ...uischema?.options };
-  const [inputText, onChange, onClear] = useDebouncedChange(handleChange, '', data, path, eventToValue);
+  const placeholder = appliedUiSchemaOptions?.placeholder || schema?.description || '';
+
   return (
     <GoAInput
       type={appliedUiSchemaOptions.format === 'password' ? 'password' : 'text'}
-      value={inputText}
-      name={'name'}
-      onChange={(name: string, value: string) => handleChange(name, inputText)}
+      disabled={!enabled}
+      value={data}
+      placeholder={placeholder}
+      name={appliedUiSchemaOptions?.name || `${id || label}-input`}
+      testId={appliedUiSchemaOptions?.testId || `${id}-input`}
+      onChange={(name: string, value: string) => handleChange(path, value)}
     />
   );
 };

@@ -1,7 +1,6 @@
-import React, { ReactNode } from 'react';
-import { withJsonFormsControlProps } from '@jsonforms/react';
-import { GoAInput, GoAFormItem } from '@abgov/react-components-new';
-import { showAsRequired, ControlProps, isDescriptionHidden, ControlElement } from '@jsonforms/core';
+import React from 'react';
+import { GoAFormItem } from '@abgov/react-components-new';
+import { ControlProps } from '@jsonforms/core';
 
 export type GoAInputType =
   | 'text'
@@ -24,6 +23,7 @@ export interface WithInput {
 }
 
 export const GoAInputBaseControl = (props: ControlProps & WithInput): JSX.Element => {
+  // eslint-disable-next-line
   const { id, description, errors, label, uischema, visible, required, config, input } = props;
   const isValid = errors.length === 0;
   const InnerComponent = input;
