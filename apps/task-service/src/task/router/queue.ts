@@ -187,7 +187,7 @@ export function getQueueMetrics(
         result.queue = queueDuration;
         result.completion = completionDuration;
 
-        const timestampMin = DateTime.now().minus({ days: 14 }).toJSDate();
+        const timestampMin = DateTime.now().minus({ days: 7 }).toJSDate();
 
         token = await tokenProvider.getAccessToken();
         const {
@@ -200,8 +200,10 @@ export function getQueueMetrics(
               tenantId: tenant.id.toString(),
               timestampMin,
               context: JSON.stringify({
-                namespace: serviceId,
+                namespace: serviceId.service,
                 name: TaskCreatedDefinition.name,
+                queueNamespace: queue.namespace,
+                queueName: queue.name,
               }),
             },
           }
@@ -218,8 +220,10 @@ export function getQueueMetrics(
               tenantId: tenant.id.toString(),
               timestampMin,
               context: JSON.stringify({
-                namespace: serviceId,
+                namespace: serviceId.service,
                 name: TaskCompletedDefinition.name,
+                queueNamespace: queue.namespace,
+                queueName: queue.name,
               }),
             },
           }
@@ -236,8 +240,10 @@ export function getQueueMetrics(
               tenantId: tenant.id.toString(),
               timestampMin,
               context: JSON.stringify({
-                namespace: serviceId,
+                namespace: serviceId.service,
                 name: TaskCancelledDefinition.name,
+                queueNamespace: queue.namespace,
+                queueName: queue.name,
               }),
             },
           }
