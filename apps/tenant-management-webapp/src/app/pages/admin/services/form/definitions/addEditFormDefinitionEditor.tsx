@@ -42,9 +42,7 @@ import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
 import { ErrorBoundary } from '@components/ErrorBoundary';
-import Ajv from 'ajv';
-
-const ajv = new Ajv();
+import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
@@ -135,6 +133,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
 
   const debouncedRenderUISchema = useDebounce(tempUiSchema, 1000);
   const debouncedRenderDataSchema = useDebounce(tempDataSchema, 1000);
+  const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
 
   const isEdit = !!id;
 
@@ -359,20 +358,20 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                       value={tempDataSchema}
                       onChange={(value) => {
                         validators.remove('payloadSchema');
+                        const jsonSchemaValidResult = JSONSchemaValidator(value);
 
-                        try {
-                          ajv.compile(JSON.parse(value));
+                        if (jsonSchemaValidResult === '') {
+                          setTempDataSchema(value);
                           setEditorErrors({
                             ...editorErrors,
                             dataSchemaJSONSchema: null,
                           });
-                        } catch (e) {
+                        } else {
                           setEditorErrors({
                             ...editorErrors,
-                            dataSchemaJSONSchema: `The JSON is not a valid JSON schema.`,
+                            dataSchemaJSONSchema: jsonSchemaValidResult,
                           });
                         }
-                        setTempDataSchema(value);
                       }}
                       onValidate={(makers) => {
                         if (makers.length === 0) {

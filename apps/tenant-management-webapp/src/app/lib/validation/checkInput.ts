@@ -29,7 +29,7 @@ export interface ValidInput {
   pattern: RegExp;
   onFailureMessage: string;
 }
-
+const ajv = new Ajv();
 /**
  * Given a list of validators and name of the input field, report on its cleanliness
  */
@@ -112,6 +112,17 @@ export const isValidJSONCheck = (label?: string): Validator => {
       return '';
     } catch (err) {
       return `${capitalize(label)} is invalid for JSON string`;
+    }
+  };
+};
+
+export const isValidJSONSchemaCheck = (label?: string): Validator => {
+  return (str: string) => {
+    try {
+      ajv.compile(JSON.parse(str));
+      return '';
+    } catch (err) {
+      return `${capitalize(label)} is invalid for JSON Schema string`;
     }
   };
 };
