@@ -14,7 +14,6 @@ import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import { useDebounce } from '@lib/useDebounce';
 import {
-  SpinnerModalPadding,
   TextLoadingIndicator,
   FlexRow,
   NameDescriptionDataSchema,
@@ -26,7 +25,6 @@ import {
   ScrollPane,
   MonacoDivTabBody,
 } from '../styled-components';
-import { GoAPageLoader } from '@abgov/react-components';
 import { ConfigServiceRole } from '@store/access/models';
 import { getFormDefinitions } from '@store/form/action';
 import { updateFormDefinition } from '@store/form/action';
@@ -41,6 +39,7 @@ import { GoAButtonGroup, GoAButton, GoAFormItem } from '@abgov/react-components-
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
+import { PageIndicator } from '@components/Indicator';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
@@ -328,9 +327,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   return (
     <FormEditor>
       {spinner ? (
-        <SpinnerModalPadding>
-          <GoAPageLoader visible={true} type="infinite" message={'Loading...'} pagelock={false} />
-        </SpinnerModalPadding>
+        <PageIndicator />
       ) : (
         <FlexRow>
           <NameDescriptionDataSchema>

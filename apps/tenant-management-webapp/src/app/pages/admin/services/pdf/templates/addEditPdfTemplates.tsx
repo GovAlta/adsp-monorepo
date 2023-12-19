@@ -3,16 +3,8 @@ import { PdfTemplate } from '@store/pdf/model';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
-import {
-  SpinnerModalPadding,
-  PdfFormItem,
-  HelpText,
-  DescriptionItem,
-  ErrorMsg,
-  PopulateTemplateWrapper,
-} from '../styled-components';
-import { GoAPageLoader } from '@abgov/react-components';
-
+import { PdfFormItem, HelpText, DescriptionItem, ErrorMsg, PopulateTemplateWrapper } from '../styled-components';
+import { PageIndicator } from '@components/Indicator';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 import {
@@ -130,9 +122,7 @@ export const AddEditPdfTemplate: FunctionComponent<AddEditPdfTemplateProps> = ({
       }
     >
       {spinner ? (
-        <SpinnerModalPadding>
-          <GoAPageLoader visible={true} type="infinite" message={'Loading...'} pagelock={false} />
-        </SpinnerModalPadding>
+        <PageIndicator />
       ) : (
         <>
           <PdfFormItem>

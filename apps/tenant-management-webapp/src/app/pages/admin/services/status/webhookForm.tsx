@@ -31,16 +31,13 @@ import {
 import { RootState } from '../../../../store/index';
 import { v4 as uuidv4 } from 'uuid';
 import { ResetModalState } from '@store/session/actions';
-import { GoAPageLoader } from '@abgov/react-components';
+import { PageIndicator } from '@components/Indicator';
 export const WebhookFormModal = (): JSX.Element => {
   const dispatch = useDispatch();
   const selectedWebhook = useSelector(selectWebhookInStatus);
   const [webhook, setWebhook] = useState<Webhooks | undefined>(selectedWebhook);
   const [loaded, setLoaded] = useState<boolean>(true);
   const { applications, webhooks } = useSelector((state: RootState) => state.serviceStatus);
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
 
   const isEdit = selectedWebhook?.id?.length > 0;
 
@@ -313,9 +310,7 @@ export const WebhookFormModal = (): JSX.Element => {
           </GoAFormItem>
         </>
       ) : (
-        <LoadingBoarder>
-          <GoAPageLoader visible={true} type="infinite" message={indicator.message} pagelock={true} />
-        </LoadingBoarder>
+        <PageIndicator />
       )}
     </GoAModal>
   );
@@ -335,11 +330,6 @@ export const HelpText = styled.div`
   display-direction: row;
   justify-content: space-between;
   margin-top: 2px;
-`;
-
-export const LoadingBoarder = styled.div`
-  margin: 30px;
-  padding: 50px;
 `;
 
 export const ErrorMsg = styled.div`

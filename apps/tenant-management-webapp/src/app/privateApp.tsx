@@ -6,12 +6,11 @@ import { HeaderCtx } from '@lib/headerContext';
 import Container from '@components/Container';
 import { RootState } from '@store/index';
 import { KeycloakCheckSSOWithLogout } from '@store/tenant/actions';
-import { GoAPageLoader } from '@abgov/react-components';
 import { NotificationBanner } from './notificationBanner';
 import styled from 'styled-components';
 import { LogoutModal } from '@components/LogoutModal';
 import { useTokenExpiryCount, useTokenWillExpiryCount } from '@lib/useTokenExpiryCount';
-
+import { CenterWidthPageLoader } from '@core-services/app-common';
 interface privateAppProps {
   children: ReactNode;
 }
@@ -64,16 +63,12 @@ export function PrivateApp({ children }: privateAppProps): JSX.Element {
   );
 }
 
-const PageLoader = (): JSX.Element => {
-  return <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />;
-};
-
 // eslint-disable-next-line
 export function PrivateRoute({ component: Component, ...rest }): JSX.Element {
   const userInfo = useSelector((state: RootState) => state.session?.userInfo);
   const ready = !!userInfo;
 
-  return <Route {...rest} render={(props) => (ready ? <Component {...props} /> : <PageLoader />)} />;
+  return <Route {...rest} render={(props) => (ready ? <Component {...props} /> : <CenterWidthPageLoader />)} />;
 }
 
 export default PrivateApp;

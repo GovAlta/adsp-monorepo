@@ -3,8 +3,8 @@ import { FormDefinition } from '@store/form/model';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
-import { SpinnerModalPadding, FormFormItem, HelpText, DescriptionItem, ErrorMsg } from '../styled-components';
-import { GoAPageLoader } from '@abgov/react-components';
+import { FormFormItem, HelpText, DescriptionItem, ErrorMsg } from '../styled-components';
+import { PageIndicator } from '@components/Indicator';
 import { useRouteMatch } from 'react-router';
 import { useHistory } from 'react-router-dom';
 import { RootState } from '@store/index';
@@ -125,9 +125,7 @@ export const AddEditFormDefinition: FunctionComponent<AddEditFormDefinitionProps
       }
     >
       {spinner ? (
-        <SpinnerModalPadding>
-          <GoAPageLoader visible={true} type="infinite" message={'Loading...'} pagelock={false} />
-        </SpinnerModalPadding>
+        <PageIndicator />
       ) : (
         <>
           <FormFormItem>

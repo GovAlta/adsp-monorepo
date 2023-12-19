@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Role } from '@store/tenant/models';
 import { GoAButton, GoAButtonGroup, GoAInput, GoAFormItem, GoAModal } from '@abgov/react-components-new';
-import { FileIdItem, ModalOverwrite, SpinnerModalPadding } from './styled-components';
+import { FileIdItem, ModalOverwrite } from './styled-components';
 import { CreateFileTypeService } from '@store/file/actions';
 import { FileTypeItem, RetentionPolicy } from '@store/file/models';
 import { useDispatch } from 'react-redux';
@@ -14,8 +14,7 @@ import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { cloneDeep } from 'lodash';
 import { useHistory } from 'react-router-dom';
-import { GoAPageLoader } from '@abgov/react-components';
-
+import { PageLoader } from '@core-services/app-common';
 interface FileTypeModalProps {
   isOpen: boolean;
   initialValue?: FileTypeItem;
@@ -146,9 +145,7 @@ export const FileTypeModal = ({
         }
       >
         {spinner ? (
-          <SpinnerModalPadding>
-            <GoAPageLoader visible={true} type="infinite" message={'Loading...'} pagelock={false} />
-          </SpinnerModalPadding>
+          <PageLoader />
         ) : (
           <>
             <GoAFormItem error={errors?.['name']} label="Name">
