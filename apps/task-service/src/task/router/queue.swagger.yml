@@ -36,6 +36,61 @@ components:
           example: intake-assessor
           items:
             type: string
+    QueueDurationMetric:
+      type: object
+      properties:
+        avg:
+          type: number
+        min:
+          type: number
+        max:
+          type: number
+    QueueMetrics:
+      type: object
+      properties:
+        namespace:
+          type: string
+          description: The namespace in which the queue resides.
+          example: IRC Applications
+        name:
+          type: string
+          description: The name of the queue.
+          example: signatures-required
+        status:
+          type: object
+          additionalProperties:
+            type: number
+        priority:
+          type: object
+          additionalProperties:
+            type: number
+        assignedTo:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              count:
+                type: number
+        queue:
+          $ref: "#/components/schemas/QueueDurationMetric"
+        completion:
+          $ref: "#/components/schemas/QueueDurationMetric"
+        rate:
+          type: object
+          properties:
+            since:
+              type: string
+              format: date-time
+            created:
+              type: integer
+            completed:
+              type: integer
+            cancelled:
+              type: integer
 
 /task/v1/queues:
   get:
@@ -50,7 +105,7 @@ components:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/Queue'
+                $ref: "#/components/schemas/Queue"
 
 /task/v1/queues/{namespace}/{name}:
   get:
@@ -78,7 +133,41 @@ components:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/Queue'
+                $ref: "#/components/schemas/Queue"
+      404:
+        description: Queue not found.
+
+/task/v1/queues/{namespace}/{name}/metrics:
+  get:
+    tags:
+      - Queue
+    description: Retrieves metrics for a specified queue.
+    parameters:
+      - name: namespace
+        description: Namespace of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        description: Name of the queue.
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: includeEventMetrics
+        description: Flag indicating if event metrics should be retrieved.
+        in: query
+        required: false
+        schema:
+          type: boolean
+    responses:
+      200:
+        description: Request completed successfully.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueueMetrics"
       404:
         description: Queue not found.
 
@@ -123,7 +212,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Task'
+                    $ref: "#/components/schemas/Task"
                 page:
                   type: object
                   properties:
@@ -180,7 +269,7 @@ components:
               context:
                 type: object
                 description: A JSON object used to provide an application-defined context for the task.  Defaults to {}.
-                example: { 'application': 'IRC-Intervention-Check' }
+                example: { "application": "IRC-Intervention-Check" }
                 additionalProperties:
                   oneOf:
                     - type: string
@@ -198,7 +287,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Task'
+              $ref: "#/components/schemas/Task"
 
 /task/v1/queues/{namespace}/{name}/tasks/{id}:
   get:
@@ -230,7 +319,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Task'
+              $ref: "#/components/schemas/Task"
       404:
         description: Queue not found.
   patch:
@@ -286,7 +375,7 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Task'
+              $ref: "#/components/schemas/Task"
       404:
         description: Task not found.
   post:
@@ -318,26 +407,26 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: '#/components/schemas/AssignTask'
-              - $ref: '#/components/schemas/SetTaskPriority'
-              - $ref: '#/components/schemas/StartTask'
-              - $ref: '#/components/schemas/CompleteTask'
-              - $ref: '#/components/schemas/CancelTask'
+              - $ref: "#/components/schemas/AssignTask"
+              - $ref: "#/components/schemas/SetTaskPriority"
+              - $ref: "#/components/schemas/StartTask"
+              - $ref: "#/components/schemas/CompleteTask"
+              - $ref: "#/components/schemas/CancelTask"
             discriminator:
               propertyName: operation
               mapping:
-                assign: '#/components/schemas/AssignTask'
-                set-priority: '#/components/schemas/SetTaskPriority'
-                start: '#/components/schemas/StartTask'
-                complete: '#/components/schemas/CompleteTask'
-                cancel: '#/components/schemas/CancelTask'
+                assign: "#/components/schemas/AssignTask"
+                set-priority: "#/components/schemas/SetTaskPriority"
+                start: "#/components/schemas/StartTask"
+                complete: "#/components/schemas/CompleteTask"
+                cancel: "#/components/schemas/CancelTask"
     responses:
       200:
         description: Request completed successfully.
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Task'
+              $ref: "#/components/schemas/Task"
       404:
         description: Task not found.
 

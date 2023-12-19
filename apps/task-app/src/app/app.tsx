@@ -11,7 +11,7 @@ export function App() {
     <div className={styles.app}>
       <Router>
         <Switch>
-          <Route path="/auth/callback">
+          <Route exact path="/auth/callback">
             <AuthCallback />
           </Route>
           <Route path="/:tenant">

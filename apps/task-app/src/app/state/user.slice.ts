@@ -19,7 +19,6 @@ export interface UserState {
     id: string;
     name: string;
     email: string;
-    accessToken: string;
   };
   roles: [];
 }
@@ -41,6 +40,15 @@ async function initializeKeycloakClient(realm: string, config: ConfigState) {
   }
 
   return client;
+}
+
+export async function getAccessToken(): Promise<string> {
+  let token = null;
+  if (client) {
+    await client.updateToken(60);
+    token = client.token;
+  }
+  return token;
 }
 
 export const initializeTenant = createAsyncThunk(
@@ -76,7 +84,6 @@ export const initializeUser = createAsyncThunk('user/initialize-user', async (te
       id: client.tokenParsed.sub,
       name: client.tokenParsed['preferred_username'] || client.tokenParsed['email'],
       email: client.tokenParsed['email'],
-      accessToken: client.token,
     };
   } else {
     return null;

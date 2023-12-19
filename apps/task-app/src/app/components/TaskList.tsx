@@ -1,12 +1,14 @@
 import { GoADropdown, GoADropdownItem, GoAFormItem, GoATable } from '@abgov/react-components-new';
 import { FunctionComponent } from 'react';
-import { Task, TaskFilter, TaskMetric, TaskUser } from '../state';
-import { TaskMetrics } from './TaskMetrics';
+import styled from 'styled-components';
+import { QueueMetrics as QueueMetricsValue, Task, TaskFilter, TaskUser } from '../state';
 import { TaskListItem } from './TaskListItem';
+import { QueueMetrics } from './QueueMetrics';
 
 interface TaskListProps {
   className?: string;
-  metrics: TaskMetric[];
+  metrics: QueueMetricsValue;
+  metricsLoading: boolean;
   filter: TaskFilter;
   tasks: Task[];
   selected: Task;
@@ -19,9 +21,10 @@ interface TaskListProps {
   onOpen: (task: Task) => void;
 }
 
-export const TaskList: FunctionComponent<TaskListProps> = ({
+const TaskListComponent: FunctionComponent<TaskListProps> = ({
   className,
   metrics,
+  metricsLoading,
   filter,
   tasks,
   open,
@@ -35,8 +38,8 @@ export const TaskList: FunctionComponent<TaskListProps> = ({
   return (
     <div className={className} data-opened={!!open}>
       <div>
-        <TaskMetrics metrics={metrics} />
-        <GoAFormItem label="Filter" mr="s">
+        <QueueMetrics metrics={metrics} isLoading={metricsLoading} />
+        <GoAFormItem label="Filter" ml="xl">
           <GoADropdown onChange={(_, filter) => onSetFilter(filter as TaskFilter)} value={filter}>
             <GoADropdownItem label="Active" value="active" />
             <GoADropdownItem label="My tasks" value="assigned" />
@@ -81,3 +84,26 @@ export const TaskList: FunctionComponent<TaskListProps> = ({
     </div>
   );
 };
+
+export const TaskList = styled(TaskListComponent)`
+  z-index: 0;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  > div:first-child {
+    display: flex;
+    flex-direction: row;
+    padding-left: 32px;
+    padding-right: 32px;
+
+    > :first-child {
+      margin-right: auto;
+    }
+  }
+
+  &[data-opened='true'] {
+    display: none;
+  }
+`;

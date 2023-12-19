@@ -15,6 +15,7 @@ import {
   createTask,
   getQueuedTasks,
   getRoleUsers,
+  getQueueMetrics,
 } from './queue';
 
 jest.mock('axios');
@@ -33,9 +34,19 @@ describe('queue', () => {
     send: jest.fn(),
   };
 
+  const directoryMock = {
+    getServiceUrl: jest.fn(),
+    getResourceUrl: jest.fn(),
+  };
+
+  const tokenProviderMock = {
+    getAccessToken: jest.fn(),
+  };
+
   const repositoryMock = {
     getTask: jest.fn(),
     getTasks: jest.fn(),
+    getTaskMetrics: jest.fn(),
     save: jest.fn((entity) => entity),
   };
 
@@ -67,6 +78,9 @@ describe('queue', () => {
 
   beforeEach(() => {
     getConfigurationMock.mockReset();
+    directoryMock.getServiceUrl.mockClear();
+    tokenProviderMock.getAccessToken.mockClear();
+    repositoryMock.getTaskMetrics.mockClear();
     repositoryMock.save.mockClear();
     eventServiceMock.send.mockReset();
     axiosMock.get.mockReset();
@@ -77,6 +91,8 @@ describe('queue', () => {
       const router = createQueueRouter({
         KEYCLOAK_ROOT_URL,
         apiId,
+        directory: directoryMock,
+        tokenProvider: tokenProviderMock,
         logger: loggerMock,
         taskRepository: repositoryMock,
         eventService: eventServiceMock,
@@ -254,6 +270,167 @@ describe('queue', () => {
 
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(req.queue.getTasks).toHaveBeenCalledWith(req.user, repositoryMock, 10, '3i9s');
+    });
+  });
+
+  describe('getQueueMetrics', () => {
+    const handler = getQueueMetrics(apiId, directoryMock, tokenProviderMock, repositoryMock);
+
+    it('can create handler', () => {
+      const result = getQueueMetrics(apiId, directoryMock, tokenProviderMock, repositoryMock);
+      expect(result).toBeTruthy();
+    });
+
+    it('can get queue metrics', async () => {
+      const req = {
+        user: { tenantId, id: 'user-1', roles: ['test-worker'] },
+        tenant: { id: tenantId },
+        query: {
+          includeEventMetrics: 'true',
+        },
+        queue: {
+          ...queue,
+          getTasks: jest.fn(),
+          canAccessTask: jest.fn(() => true),
+        },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.getTaskMetrics.mockResolvedValueOnce([
+        {
+          namespace: queue.namespace,
+          name: queue.name,
+          status: { [TaskStatus.Pending]: 3 },
+          priority: { [TaskPriority.Normal]: 4 },
+        },
+      ]);
+
+      directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://value-service'));
+      tokenProviderMock.getAccessToken.mockResolvedValue('token');
+
+      axiosMock.get.mockResolvedValueOnce({ data: { values: [{ avg: 12, min: 10, max: 23 }] } });
+      axiosMock.get.mockResolvedValueOnce({ data: { values: [{ avg: 12, min: 10, max: 23 }] } });
+
+      axiosMock.get.mockResolvedValueOnce({ data: { count: 12 } });
+      axiosMock.get.mockResolvedValueOnce({ data: { count: 3 } });
+      axiosMock.get.mockResolvedValueOnce({ data: { count: 2 } });
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          namespace: queue.namespace,
+          name: queue.name,
+          status: expect.objectContaining({ [TaskStatus.Pending]: 3 }),
+          queue: expect.objectContaining({ avg: 12, min: 10, max: 23 }),
+          rate: expect.objectContaining({ since: expect.any(Date), created: 12 }),
+        })
+      );
+    });
+
+    it('can get skip event based metrics', async () => {
+      const req = {
+        user: { tenantId, id: 'user-1', roles: ['test-worker'] },
+        tenant: { id: tenantId },
+        query: {},
+        queue: {
+          ...queue,
+          getTasks: jest.fn(),
+          canAccessTask: jest.fn(() => true),
+        },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.getTaskMetrics.mockResolvedValueOnce([
+        {
+          namespace: queue.namespace,
+          name: queue.name,
+          status: { [TaskStatus.Pending]: 3 },
+          priority: { [TaskPriority.Normal]: 4 },
+        },
+      ]);
+
+      directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://value-service'));
+      tokenProviderMock.getAccessToken.mockResolvedValue('token');
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          namespace: queue.namespace,
+          name: queue.name,
+          status: expect.objectContaining({ [TaskStatus.Pending]: 3 }),
+          queue: null,
+        })
+      );
+      expect(axios.get).not.toHaveBeenCalled();
+    });
+
+    it('can get queue metrics for empty queue', async () => {
+      const req = {
+        user: { tenantId, id: 'user-1', roles: ['test-worker'] },
+        tenant: { id: tenantId },
+        query: {
+          includeEventMetrics: 'true',
+        },
+        queue: {
+          ...queue,
+          getTasks: jest.fn(),
+          canAccessTask: jest.fn(() => true),
+        },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.getTaskMetrics.mockResolvedValueOnce([]);
+
+      directoryMock.getServiceUrl.mockResolvedValueOnce(new URL('https://value-service'));
+      tokenProviderMock.getAccessToken.mockResolvedValue('token');
+
+      axiosMock.get.mockResolvedValueOnce({ data: { values: [{ avg: 12, min: 10, max: 23 }] } });
+      axiosMock.get.mockResolvedValueOnce({ data: { values: [{ avg: 12, min: 10, max: 23 }] } });
+
+      axiosMock.get.mockResolvedValueOnce({ data: { count: 0 } });
+      axiosMock.get.mockResolvedValueOnce({ data: { count: 0 } });
+      axiosMock.get.mockResolvedValueOnce({ data: { count: 0 } });
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          namespace: queue.namespace,
+          name: queue.name,
+          status: expect.objectContaining({ [TaskStatus.Pending]: 0 }),
+          queue: expect.objectContaining({ avg: 12, min: 10, max: 23 }),
+          rate: expect.objectContaining({ since: expect.any(Date), created: 0 }),
+        })
+      );
+    });
+
+    it('can call next with unauthorized', async () => {
+      const req = {
+        user: { tenantId, id: 'user-1', roles: ['test-worker'] },
+        tenant: { id: tenantId },
+        query: {},
+        queue: {
+          ...queue,
+          getTasks: jest.fn(),
+          canAccessTask: jest.fn(() => false),
+        },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toBeCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
     });
   });
 

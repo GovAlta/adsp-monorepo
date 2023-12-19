@@ -1,22 +1,32 @@
-import { AdspId, EventService, UnauthorizedUserError } from '@abgov/adsp-service-sdk';
+import {
+  AdspId,
+  EventService,
+  ServiceDirectory,
+  TokenProvider,
+  UnauthorizedUserError,
+  adspId,
+} from '@abgov/adsp-service-sdk';
 import { createValidationHandler, NotFoundError, decodeAfter } from '@core-services/core-common';
 import axios from 'axios';
 import { Request, RequestHandler, Response, Router } from 'express';
 import { checkSchema, param, query } from 'express-validator';
 import * as HttpStatusCodes from 'http-status-codes';
+import { DateTime } from 'luxon';
 import { Logger } from 'winston';
 import { updateTask } from '.';
-import { taskCreated } from '../events';
+import { TaskCancelledDefinition, TaskCompletedDefinition, TaskCreatedDefinition, taskCreated } from '../events';
 import { QueueEntity } from '../model/queue';
 import { TaskEntity } from '../model/task';
 import { TaskRepository } from '../repository';
-import { Queue, TaskPriority, TaskServiceConfiguration } from '../types';
+import { Queue, TaskPriority, TaskServiceConfiguration, TaskStatus } from '../types';
 import { getTask, mapTask, taskOperation, TASK_KEY } from './task';
 import { UserInformation } from './types';
 
 interface QueueRouterProps {
   apiId: AdspId;
   logger: Logger;
+  directory: ServiceDirectory;
+  tokenProvider: TokenProvider;
   taskRepository: TaskRepository;
   eventService: EventService;
   KEYCLOAK_ROOT_URL: string;
@@ -75,6 +85,184 @@ export const getQueue: RequestHandler = async (req, res, next) => {
     next(err);
   }
 };
+
+const VALUE_SERVICE_ID = adspId`urn:ads:platform:value-service`;
+export function getQueueMetrics(
+  serviceId: AdspId,
+  directory: ServiceDirectory,
+  tokenProvider: TokenProvider,
+  repository: TaskRepository
+): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const user = req.user;
+      const tenant = req.tenant;
+      const { includeEventMetrics: includeEventMetricsValue } = req.query;
+      const includeEventMetrics = includeEventMetricsValue === 'true';
+
+      const queue: QueueEntity = req[QUEUE_KEY];
+      if (!queue.canAccessTask(user)) {
+        throw new UnauthorizedUserError('get queue metrics', user);
+      }
+
+      let [metrics] = await repository.getTaskMetrics(tenant.id, {
+        queue: { namespace: queue.namespace, name: queue.name },
+      });
+
+      // No results means there are no tasks in the queue
+      if (!metrics) {
+        metrics = {
+          namespace: queue.namespace,
+          name: queue.name,
+          status: {
+            [TaskStatus.Pending]: 0,
+            [TaskStatus.InProgress]: 0,
+            [TaskStatus.Stopped]: 0,
+            [TaskStatus.Cancelled]: 0,
+            [TaskStatus.Completed]: 0,
+          },
+          priority: {
+            [TaskPriority.Normal]: 0,
+            [TaskPriority.High]: 0,
+            [TaskPriority.Urgent]: 0,
+          },
+          assignedTo: {},
+        };
+      }
+
+      const result = {
+        ...(metrics || {}),
+        priority: Object.entries(metrics.priority).reduce(
+          (counts, [key, number]) => ({ ...counts, [TaskPriority[key]]: number }),
+          {} as Record<TaskPriority, number>
+        ),
+        queue: null,
+        completion: null,
+        rate: null,
+      };
+
+      // Get duration metrics if there are tasks metrics (i.e. queue is not entirely empty).
+      if (includeEventMetrics) {
+        const valueServiceUrl = await directory.getServiceUrl(VALUE_SERVICE_ID);
+        let token = await tokenProvider.getAccessToken();
+        const {
+          data: {
+            values: [queueDuration],
+          },
+        } = await axios.get<{ values: { avg: number; min: number; max: number }[] }>(
+          new URL(
+            `value/v1/event-service/values/event/metrics/${serviceId.service}:${queue.namespace}:${queue.name}:queue:duration`,
+            valueServiceUrl
+          ).href,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: {
+              tenantId: tenant.id.toString(),
+              interval: 'weekly',
+              top: 1,
+            },
+          }
+        );
+
+        token = await tokenProvider.getAccessToken();
+        const {
+          data: {
+            values: [completionDuration],
+          },
+        } = await axios.get<{ values: { avg: number; min: number; max: number }[] }>(
+          new URL(
+            `value/v1/event-service/values/event/metrics/${serviceId.service}:${queue.namespace}:${queue.name}:completion:duration`,
+            valueServiceUrl
+          ).href,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: {
+              tenantId: tenant.id.toString(),
+              interval: 'weekly',
+              top: 1,
+            },
+          }
+        );
+
+        result.queue = queueDuration;
+        result.completion = completionDuration;
+
+        const timestampMin = DateTime.now().minus({ days: 7 }).toJSDate();
+
+        token = await tokenProvider.getAccessToken();
+        const {
+          data: { count: created },
+        } = await axios.get<{ count: number }>(
+          new URL(`value/v1/event-service/values/event/count`, valueServiceUrl).href,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: {
+              tenantId: tenant.id.toString(),
+              timestampMin,
+              context: JSON.stringify({
+                namespace: serviceId.service,
+                name: TaskCreatedDefinition.name,
+                queueNamespace: queue.namespace,
+                queueName: queue.name,
+              }),
+            },
+          }
+        );
+
+        token = await tokenProvider.getAccessToken();
+        const {
+          data: { count: completed },
+        } = await axios.get<{ count: number }>(
+          new URL(`value/v1/event-service/values/event/count`, valueServiceUrl).href,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: {
+              tenantId: tenant.id.toString(),
+              timestampMin,
+              context: JSON.stringify({
+                namespace: serviceId.service,
+                name: TaskCompletedDefinition.name,
+                queueNamespace: queue.namespace,
+                queueName: queue.name,
+              }),
+            },
+          }
+        );
+
+        token = await tokenProvider.getAccessToken();
+        const {
+          data: { count: cancelled },
+        } = await axios.get<{ count: number }>(
+          new URL(`value/v1/event-service/values/event/count`, valueServiceUrl).href,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: {
+              tenantId: tenant.id.toString(),
+              timestampMin,
+              context: JSON.stringify({
+                namespace: serviceId.service,
+                name: TaskCancelledDefinition.name,
+                queueNamespace: queue.namespace,
+                queueName: queue.name,
+              }),
+            },
+          }
+        );
+
+        result.rate = {
+          since: timestampMin,
+          created,
+          completed,
+          cancelled,
+        };
+      }
+
+      res.send(result);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
 
 export const getQueuedTasks =
   (apiId: AdspId, repository: TaskRepository): RequestHandler =>
@@ -185,6 +373,8 @@ export function createQueueRouter({
   KEYCLOAK_ROOT_URL,
   apiId,
   logger,
+  directory,
+  tokenProvider,
   taskRepository: repository,
   eventService,
 }: QueueRouterProps): Router {
@@ -206,6 +396,12 @@ export function createQueueRouter({
     res.send(mapQueue(req[QUEUE_KEY]));
   });
 
+  router.get(
+    '/queues/:namespace/:name/metrics',
+    validateNamespaceNameHandler,
+    getQueue,
+    getQueueMetrics(apiId, directory, tokenProvider, repository)
+  );
   router.get(
     '/queues/:namespace/:name/tasks',
     validateNamespaceNameHandler,
