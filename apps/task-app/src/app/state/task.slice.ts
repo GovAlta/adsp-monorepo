@@ -3,43 +3,12 @@ import axios from 'axios';
 import { io, Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 import { AppState } from './store';
+import { FeedbackMessage, Person, PUSH_SERVICE_ID, QueueDefinition, Task, TASK_SERVICE_ID } from './types';
+import { getAccessToken } from './user.slice';
+import { loadQueueMetrics, QueueMetrics, queueMetricsSelector } from './queue.slice';
 
 export const TASK_FEATURE_KEY = 'task';
-const TASK_SERVICE_ID = 'urn:ads:platform:task-service';
-const PUSH_SERVICE_ID = 'urn:ads:platform:push-service';
 const UPDATE_STREAM_ID = 'task-updates';
-
-export interface QueueDefinition {
-  namespace: string;
-  name: string;
-  description: string;
-  assignerRoles: string[];
-  workerRoles: string[];
-}
-
-export interface Task {
-  id: string;
-  queue: { namespace: string; name: string };
-  name: string;
-  description: string;
-  priority: string;
-  status: 'Pending' | 'In Progress' | 'Stopped' | 'Cancelled' | 'Completed';
-  createdOn: string;
-  startedOn: string;
-  endedOn: string;
-  assignment: {
-    assignedTo: {
-      id: string;
-      name: string;
-    };
-  };
-}
-
-export interface Person {
-  id: string;
-  name: string;
-  email: string;
-}
 
 enum TaskPriority {
   Urgent = 2,
@@ -51,7 +20,7 @@ export type TaskFilter = 'active' | 'pending' | 'assigned';
 
 export interface TaskMetric {
   name: string;
-  value: number;
+  value?: number | string;
   unit?: string;
 }
 
@@ -83,7 +52,7 @@ export interface TaskState {
     taskToAssign: Task;
     taskToPrioritize: Task;
   };
-  errors: { id: string; level: 'warn' | 'error'; message: string }[];
+  errors: FeedbackMessage[];
 }
 
 interface TaskResults {
@@ -99,22 +68,28 @@ export const initializeQueue = createAsyncThunk(
   'task/initialize-definition',
   async ({ namespace, name }: { namespace: string; name: string }, { dispatch, getState, rejectWithValue }) => {
     const state = getState() as AppState;
-    const { user } = state.user;
     const { directory } = state.config;
 
     try {
-      const { data } = await axios.get<QueueDefinition>(
-        `${directory[TASK_SERVICE_ID]}/task/v1/queues/${namespace}/${name}`,
-        {
-          headers: { Authorization: `Bearer ${user.accessToken}` },
-        }
-      );
+      let definition = state.queue.queues[`${namespace}:${name}`];
+      if (!definition) {
+        const accessToken = await getAccessToken();
+        const { data } = await axios.get<QueueDefinition>(
+          `${directory[TASK_SERVICE_ID]}/task/v1/queues/${namespace}/${name}`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
 
-      dispatch(loadQueueTasks({ namespace: data.namespace, name: data.name }));
-      dispatch(loadQueuePeople({ namespace: data.namespace, name: data.name }));
-      dispatch(connectStream({ namespace: data.namespace, name: data.name }));
+        definition = data;
+      }
 
-      return data;
+      dispatch(loadQueueMetrics({ namespace, name }));
+      dispatch(loadQueueTasks({ namespace, name }));
+      dispatch(loadQueuePeople({ namespace, name }));
+      dispatch(connectStream({ namespace, name }));
+
+      return definition;
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.data?.errorMessage) {
         return rejectWithValue(err.response?.data?.errorMessage as string);
@@ -137,7 +112,6 @@ export const connectStream = createAsyncThunk(
   'task/connectStream',
   async ({ namespace, name }: { namespace: string; name: string }, { dispatch, getState }) => {
     const state = getState() as AppState;
-    const { user } = state.user;
     const { directory } = state.config;
 
     // Create the connection if no previous connection or it is disconnected.
@@ -150,7 +124,10 @@ export const connectStream = createAsyncThunk(
         stream: UPDATE_STREAM_ID,
       },
       withCredentials: true,
-      extraHeaders: { Authorization: `Bearer ${user.accessToken}` },
+      auth: async (cb) =>
+        cb({
+          token: await getAccessToken(),
+        }),
     });
 
     socket.on('connect', () => {
@@ -206,14 +183,14 @@ export const loadQueueTasks = createAsyncThunk(
     { getState, rejectWithValue }
   ) => {
     const state = getState() as AppState;
-    const { user } = state.user;
     const { directory } = state.config;
 
     try {
+      const accessToken = await getAccessToken();
       const { data } = await axios.get<TaskResults>(
         `${directory[TASK_SERVICE_ID]}/task/v1/queues/${namespace}/${name}/tasks`,
         {
-          headers: { Authorization: `Bearer ${user.accessToken}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
           params: {
             top: 100,
             after,
@@ -242,18 +219,20 @@ export const loadQueuePeople = createAsyncThunk(
     let assigners: Person[] = [];
     let workers: Person[] = [];
     try {
+      let accessToken = await getAccessToken();
       const { data: assignersResult } = await axios.get<Person[]>(
         `${directory[TASK_SERVICE_ID]}/task/v1/queues/${namespace}/${name}/assigners`,
         {
-          headers: { Authorization: `Bearer ${user.accessToken}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
       assigners = assignersResult;
 
+      accessToken = await getAccessToken();
       const { data: workersResult } = await axios.get<Person[]>(
         `${directory[TASK_SERVICE_ID]}/task/v1/queues/${namespace}/${name}/workers`,
         {
-          headers: { Authorization: `Bearer ${user.accessToken}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
       workers = workersResult;
@@ -282,11 +261,11 @@ export const setTaskPriority = createAsyncThunk(
   'task/set-task-priority',
   async ({ taskId, priority }: { taskId: string; priority: string }, { dispatch, getState, rejectWithValue }) => {
     const state = getState() as AppState;
-    const { user } = state.user;
     const { directory } = state.config;
     const { queue }: TaskState = state[TASK_FEATURE_KEY];
 
     try {
+      const accessToken = await getAccessToken();
       const { data } = await axios.post<Task>(
         `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
         {
@@ -294,7 +273,7 @@ export const setTaskPriority = createAsyncThunk(
           priority,
         },
         {
-          headers: { Authorization: `Bearer ${user.accessToken}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
 
@@ -315,11 +294,11 @@ export const assignTask = createAsyncThunk(
   'task/assign-task',
   async ({ taskId, assignTo }: { taskId: string; assignTo?: Person }, { dispatch, getState, rejectWithValue }) => {
     const state = getState() as AppState;
-    const { user } = state.user;
     const { directory } = state.config;
     const { queue }: TaskState = state[TASK_FEATURE_KEY];
 
     try {
+      const accessToken = await getAccessToken();
       const { data } = await axios.post<Task>(
         `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
         {
@@ -327,7 +306,7 @@ export const assignTask = createAsyncThunk(
           assignTo,
         },
         {
-          headers: { Authorization: `Bearer ${user.accessToken}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
 
@@ -348,18 +327,18 @@ export const startTask = createAsyncThunk(
   'task/start-task',
   async ({ taskId }: { taskId: string }, { getState, rejectWithValue }) => {
     const state = getState() as AppState;
-    const { user } = state.user;
     const { directory } = state.config;
     const { queue }: TaskState = state[TASK_FEATURE_KEY];
 
     try {
+      const accessToken = await getAccessToken();
       const { data } = await axios.post<Task>(
         `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
         {
           operation: 'start',
         },
         {
-          headers: { Authorization: `Bearer ${user.accessToken}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
 
@@ -378,18 +357,18 @@ export const completeTask = createAsyncThunk(
   'task/complete-task',
   async ({ taskId }: { taskId: string }, { getState, rejectWithValue }) => {
     const state = getState() as AppState;
-    const { user } = state.user;
     const { directory } = state.config;
     const { queue }: TaskState = state[TASK_FEATURE_KEY];
 
     try {
+      const accessToken = await getAccessToken();
       const { data } = await axios.post<Task>(
         `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
         {
           operation: 'complete',
         },
         {
-          headers: { Authorization: `Bearer ${user.accessToken}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
 
@@ -408,11 +387,11 @@ export const cancelTask = createAsyncThunk(
   'task/cancel-task',
   async ({ taskId, reason }: { taskId: string; reason: string }, { getState, rejectWithValue }) => {
     const state = getState() as AppState;
-    const { user } = state.user;
     const { directory } = state.config;
     const { queue }: TaskState = state[TASK_FEATURE_KEY];
 
     try {
+      const accessToken = await getAccessToken();
       const { data } = await axios.post<Task>(
         `${directory[TASK_SERVICE_ID]}/task/v1/queues/${queue.namespace}/${queue.name}/tasks/${taskId}`,
         {
@@ -420,7 +399,7 @@ export const cancelTask = createAsyncThunk(
           reason: reason || undefined,
         },
         {
-          headers: { Authorization: `Bearer ${user.accessToken}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
 
@@ -499,6 +478,8 @@ export const taskSlice = createSlice({
     builder
       .addCase(initializeQueue.pending, (state) => {
         state.busy.initializing = true;
+        state.queue = null;
+        state.results = [];
       })
       .addCase(initializeQueue.fulfilled, (state, { payload }) => {
         state.busy.initializing = false;
@@ -701,41 +682,11 @@ export const queueWorkersSelector = createSelector(getTaskState, (state) =>
 export const queueUserSelector = createSelector(getTaskState, (state) => state.user);
 
 export const metricsSelector = createSelector(
+  (state: AppState) => state.queue.metrics,
+  (state: AppState) => state.task.queue,
   (state: AppState) => state.user.user?.id,
-  (state: AppState) => state.task.results,
-  (state: AppState) => state.task.tasks,
-  (userId: string, results: string[], tasks: Record<string, Task>) => {
-    const taskResults = results.map((r) => tasks[r]);
-    const statusCounts = {
-      Pending: 0,
-      'In Progress': 0,
-      Stopped: 0,
-      Completed: 0,
-      Cancelled: 0,
-    };
-    taskResults.forEach((t) => (statusCounts[t.status] = (statusCounts[t.status] || 0) + 1));
-
-    const myTasks = taskResults.filter((t) => t.assignment?.assignedTo?.id === userId).length;
-
-    const metrics: TaskMetric[] = [
-      {
-        name: 'Pending',
-        value: statusCounts.Pending,
-        unit: statusCounts.Pending > 1 ? 'tasks' : 'task',
-      },
-      {
-        name: 'In Progress',
-        value: statusCounts['In Progress'],
-        unit: statusCounts['In Progress'] > 1 ? 'tasks' : 'task',
-      },
-      {
-        name: 'Assigned to me',
-        value: myTasks,
-        unit: myTasks > 1 ? 'tasks' : 'task',
-      },
-    ];
-
-    return metrics;
+  (metrics: Record<string, QueueMetrics>, queue: QueueDefinition, userId: string) => {
+    return queue ? metrics[`${queue.namespace}:${queue.name}`] : null;
   }
 );
 

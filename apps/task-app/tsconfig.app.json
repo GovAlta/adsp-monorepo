@@ -9,14 +9,6 @@
   "files": [
     "../../node_modules/@nrwl/react/typings/cssmodule.d.ts",
     "../../node_modules/@nrwl/react/typings/image.d.ts",
-    "./src/app/App.1.tsx",
-    "./src/app/components/TaskPriorityModal.tsx",
-    "./src/app/components/TaskAssignmentModal.tsx",
-    "./src/app/components/TaskDetails.tsx",
-    "src/app/components/TaskList.tsx",
-    "./src/app/components/TaskListItem.tsx",
-    "./src/app/components/TaskMetrics.tsx",
-    "./src/app/components/TaskHeader.tsx"
   ],
   "exclude": [
     "jest.config.ts",
