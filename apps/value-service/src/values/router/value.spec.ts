@@ -6,6 +6,7 @@ import { NamespaceEntity } from '../model';
 import { ServiceUserRoles } from '../types';
 import {
   assertUserCanWrite,
+  countValue,
   createValueRouter,
   readMetric,
   readMetrics,
@@ -43,6 +44,7 @@ describe('event router', () => {
 
   beforeEach(() => {
     repositoryMock.readValues.mockReset();
+    repositoryMock.countValues.mockReset();
     repositoryMock.readMetrics.mockReset();
     repositoryMock.readMetric.mockReset();
     repositoryMock.writeValue.mockReset();
@@ -409,6 +411,125 @@ describe('event router', () => {
       const next = jest.fn();
 
       const handler = readValue(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));
+    });
+  });
+
+  describe('countValue', () => {
+    it('can create handler', () => {
+      const handler = countValue(repositoryMock);
+      expect(handler).toBeTruthy();
+    });
+
+    it('can count value', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          tenantId,
+          id: 'test-reader',
+          roles: [ServiceUserRoles.Reader],
+        },
+        params: { namespace: 'test-service', name: 'test-value' },
+        query: {},
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.countValues.mockResolvedValueOnce(12);
+      const handler = countValue(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          count: 12,
+        })
+      );
+    });
+
+    it('can count value with criteria', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          tenantId,
+          id: 'test-reader',
+          roles: [ServiceUserRoles.Reader],
+        },
+        params: { namespace: 'test-service', name: 'test-value' },
+        query: {
+          timestampMin: new Date().toISOString(),
+          timestampMax: new Date().toISOString(),
+          context: JSON.stringify({ a: 123 }),
+        },
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      repositoryMock.countValues.mockResolvedValueOnce(12);
+      const handler = countValue(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(repositoryMock.countValues).toHaveBeenCalledWith(
+        expect.objectContaining({
+          timestampMin: expect.any(Date),
+          timestampMax: expect.any(Date),
+          context: expect.objectContaining({ a: 123 }),
+        })
+      );
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          count: 12,
+        })
+      );
+    });
+
+    it('can call next with no tenant', async () => {
+      const req = {
+        user: {
+          tenantId,
+          id: 'test-reader',
+          roles: [ServiceUserRoles.Reader],
+        },
+        params: { namespace: 'test-service', name: 'test-value' },
+        query: {},
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = countValue(repositoryMock);
+      await handler(req as unknown as Request, res as unknown as Response, next);
+      expect(res.send).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(InvalidOperationError));
+    });
+
+    it('can call next with unauthorized user', async () => {
+      const req = {
+        tenant: {
+          id: tenantId,
+        },
+        user: {
+          tenantId,
+          id: 'test-reader',
+          roles: [],
+        },
+        params: { namespace: 'test-service', name: 'test-value' },
+        query: {},
+      };
+      const res = {
+        send: jest.fn(),
+      };
+      const next = jest.fn();
+
+      const handler = countValue(repositoryMock);
       await handler(req as unknown as Request, res as unknown as Response, next);
       expect(res.send).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedUserError));

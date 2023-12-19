@@ -12,6 +12,7 @@ describe('ValueDefinitionEntity', () => {
 
   const repositoryMock = {
     readValues: jest.fn(),
+    countValues: jest.fn(),
     writeValue: jest.fn(),
     readMetrics: jest.fn(),
     readMetric: jest.fn(),
