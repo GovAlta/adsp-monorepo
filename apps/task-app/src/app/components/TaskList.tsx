@@ -27,7 +27,6 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
   metricsLoading,
   filter,
   tasks,
-  open,
   user,
   onSetFilter,
   onSelect,
@@ -36,7 +35,7 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
   onOpen,
 }) => {
   return (
-    <div className={className} data-opened={!!open}>
+    <div className={className}>
       <div>
         <QueueMetrics metrics={metrics} isLoading={metricsLoading} />
         <GoAFormItem label="Filter" ml="xl">
@@ -71,7 +70,6 @@ const TaskListComponent: FunctionComponent<TaskListProps> = ({
             <TaskListItem
               key={task.id}
               task={task}
-              isOpen={open?.id === task.id}
               user={user}
               onSelect={onSelect}
               onAssign={onAssign}
@@ -101,9 +99,5 @@ export const TaskList = styled(TaskListComponent)`
     > :first-child {
       margin-right: auto;
     }
-  }
-
-  &[data-opened='true'] {
-    display: none;
   }
 `;

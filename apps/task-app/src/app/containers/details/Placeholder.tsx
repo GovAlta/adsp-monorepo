@@ -2,10 +2,10 @@ import { GoACallout, GoADetails, GoAButtonGroup, GoAButton } from '@abgov/react-
 import { FunctionComponent } from 'react';
 import { useDispatch } from 'react-redux';
 import styled from 'styled-components';
-import { taskActions, startTask, cancelTask, completeTask, AppDispatch } from '../../state';
+import { startTask, cancelTask, completeTask, AppDispatch } from '../../state';
 import { TaskDetailsProps } from './types';
 
-const Placeholder: FunctionComponent<TaskDetailsProps> = ({ className, user, task, isExecuting }) => {
+const Placeholder: FunctionComponent<TaskDetailsProps> = ({ className, user, task, isExecuting, onClose }) => {
   const dispatch = useDispatch<AppDispatch>();
   return (
     <div className={className}>
@@ -25,7 +25,7 @@ const Placeholder: FunctionComponent<TaskDetailsProps> = ({ className, user, tas
         </GoADetails>
       </div>
       <GoAButtonGroup alignment="end" mt="l">
-        <GoAButton type="secondary" onClick={() => dispatch(taskActions.setOpenTask())}>
+        <GoAButton type="secondary" onClick={onClose}>
           Close
         </GoAButton>
         {task?.status === 'Pending' && (

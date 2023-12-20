@@ -188,6 +188,7 @@ const DurationMetric = styled(({ className, isLoading, queue, completion }: Dura
   width: 140px;
   margin: 0;
   overflow: hidden;
+  position: relative;
   & > div {
     height: 70px;
     width: 70px;
