@@ -1,9 +1,10 @@
 import { FunctionComponent, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useHistory } from 'react-router-dom';
+import styled from 'styled-components';
 import { QueuesHeader } from '../components/QueuesHeader';
 import { QueueList } from '../components/QueueList';
-import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, loadQueues, metricsLoadingSelector, queueMetricsSelector, queuesSelector } from '../state';
-import styled from 'styled-components';
 
 interface TaskQueuesProps {
   className?: string;
@@ -19,10 +20,17 @@ export const TaskQueues: FunctionComponent<TaskQueuesProps> = ({ className }) =>
   const metrics = useSelector(queueMetricsSelector);
   const metricsLoading = useSelector(metricsLoadingSelector);
 
+  const history = useHistory();
+
   return (
     <div className={className}>
       <QueuesHeader />
-      <QueueList queues={queues} metrics={metrics} metricsLoading={metricsLoading} />
+      <QueueList
+        queues={queues}
+        metrics={metrics}
+        metricsLoading={metricsLoading}
+        onOpenQueue={(queue) => history.push(`${history.location.pathname}/${queue.namespace}/${queue.name}`)}
+      />
     </div>
   );
 };

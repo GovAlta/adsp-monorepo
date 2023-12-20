@@ -17,7 +17,6 @@ export function formatTaskAge(createdOn: string): string {
 
 export interface TaskListItemProps {
   task: Task;
-  isOpen: boolean;
   user: TaskUser;
   onSelect: (task: Task) => void;
   onAssign: (task: Task) => void;
@@ -27,7 +26,6 @@ export interface TaskListItemProps {
 
 export const TaskListItem: FunctionComponent<TaskListItemProps> = ({
   task,
-  isOpen,
   user,
   onSelect,
   onAssign,
@@ -65,7 +63,7 @@ export const TaskListItem: FunctionComponent<TaskListItemProps> = ({
               Assign to me
             </GoAButton>
           )}
-          <GoAButton size="compact" type="primary" disabled={isOpen} onClick={() => onOpen(task)}>
+          <GoAButton size="compact" type="primary" onClick={() => onOpen(task)}>
             Open
           </GoAButton>
         </GoAButtonGroup>
