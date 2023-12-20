@@ -111,6 +111,46 @@ export class TimescaleValuesRepository implements ValuesRepository {
     };
   }
 
+  async countValues(criteria: ValueCriteria): Promise<number> {
+    let query = this.knex<ValueRecord>('values');
+
+    if (criteria) {
+      const queryCriteria: Record<string, unknown> = {};
+      if (criteria.tenantId) {
+        queryCriteria['tenant'] = criteria.tenantId.toString();
+      }
+
+      if (criteria.namespace) {
+        queryCriteria['namespace'] = criteria.namespace;
+      }
+
+      if (criteria.name) {
+        queryCriteria['name'] = criteria.name;
+      }
+
+      if (criteria.correlationId) {
+        queryCriteria['correlationId'] = criteria.correlationId;
+      }
+
+      query.where(queryCriteria);
+
+      if (criteria.timestampMax) {
+        query = query.where('timestamp', '<=', criteria.timestampMax);
+      }
+
+      if (criteria.timestampMin) {
+        query = query.where('timestamp', '>=', criteria.timestampMin);
+      }
+
+      if (criteria.context) {
+        query.whereRaw(`context @> ?::jsonb`, [JSON.stringify(criteria.context)]);
+      }
+    }
+
+    const [{ count }] = await query.count('*', { as: 'count' });
+    return typeof count === 'string' ? parseInt(count) : count;
+  }
+
   async readMetrics(
     tenantId: AdspId,
     namespace: string,

@@ -555,12 +555,22 @@ When('the user {string} Make stream public checkbox in Stream modal', function (
           if (classAttr?.includes('selected')) {
             cy.log('Make stream public checkbox is already checked. ');
           } else {
-            eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').scrollIntoView().click();
+            eventsObj
+              .streamModalPublicCheckbox()
+              .shadow()
+              .find('.goa-checkbox-container')
+              .scrollIntoView()
+              .click({ force: true });
           }
           break;
         case 'un-selects':
           if (classAttr?.includes('selected')) {
-            eventsObj.streamModalPublicCheckbox().shadow().find('.goa-checkbox-container').scrollIntoView().click();
+            eventsObj
+              .streamModalPublicCheckbox()
+              .shadow()
+              .find('.goa-checkbox-container')
+              .scrollIntoView()
+              .click({ force: true });
           } else {
             cy.log('Make stream public checkbox is already un-selected. ');
           }

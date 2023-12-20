@@ -348,10 +348,10 @@ export const SpinnerPadding = styled.div`
   margin: 200px 0 0 0;
 `;
 
-export const SpinnerModalPadding = styled.div`
-  margin: 0 0 0 0;
-  height: 467px;
-`;
+// export const SpinnerModalPadding = styled.div`
+//   margin: 0 0 0 0;
+//   height: 467px;
+// `;
 
 export const SpinnerPaddingSmall = styled.div`
   margin: 0 0 0 5px;

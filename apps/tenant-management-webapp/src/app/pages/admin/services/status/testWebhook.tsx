@@ -10,12 +10,12 @@ import {
   GoAModal,
   GoAFormItem,
 } from '@abgov/react-components-new';
-import { GoAPageLoader } from '@abgov/react-components';
 import { selectWebhookToTestInStatus, selectInitTestWebhookCriteria } from '@store/status/selectors';
 import { renderNoItem } from '@components/NoItem';
 import styled from 'styled-components';
 import { RootState } from '@store/index';
 import { ResetModalState } from '@store/session/actions';
+import { PageIndicator } from '@components/Indicator';
 
 export const TestWebhookModal = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -120,8 +120,8 @@ export const TestWebhookModal = (): JSX.Element => {
         {(showEntries || (indicator.show && indicator.message !== 'Loading...')) && (
           <EntryDetail>
             {indicator.show ? (
-              <div className="loading-border">
-                <GoAPageLoader visible={true} type="infinite" message={indicator.message} pagelock={true} />
+              <div>
+                <PageIndicator />
               </div>
             ) : (
               showEntries &&
@@ -155,10 +155,6 @@ const GoAModalStyle = styled.div`
     background: #f1f1f1;
     padding: 7px 12px 7px 12px;
     margin-left: -3px;
-  }
-
-  .loading-border {
-    margin-top: 75px;
   }
 
   .progress-container--large {

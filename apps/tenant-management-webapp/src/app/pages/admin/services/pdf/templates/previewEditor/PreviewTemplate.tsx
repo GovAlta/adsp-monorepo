@@ -15,8 +15,8 @@ import { RootState } from '@store/index';
 import { useSelector, useDispatch } from 'react-redux';
 import { DownloadFileService } from '@store/file/actions';
 import { streamPdfSocket } from '@store/pdf/action';
-import { GoAPageLoader } from '@abgov/react-components';
 import { useParams } from 'react-router-dom';
+import { PageIndicator } from '@components/Indicator';
 
 interface PreviewTemplateProps {
   channelTitle: string;
@@ -117,7 +117,7 @@ export const PreviewTemplate = ({ channelTitle }: PreviewTemplateProps) => {
         <PreviewTop title={channelTitle} iconDisable={!blobUrl} />
         {indicator?.show && (
           <SpinnerPadding>
-            <GoAPageLoader visible={true} type="infinite" message={indicator.message} />
+            <PageIndicator />
           </SpinnerPadding>
         )}
         {!indicator?.show && !hasError && blobUrl && (

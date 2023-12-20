@@ -252,7 +252,7 @@ When(
   }
 );
 
-Then('the user clicks Save button on topic type editor', function () {
+Then('the user clicks Save button in topic type editor', function () {
   commentObj.editorSaveButton().shadow().find('button').click({ force: true });
   cy.wait(2000);
 });
@@ -341,6 +341,167 @@ When(
   }
 );
 
-When('the user clicks Back button on topic type editor', function () {
+When('the user clicks Back button in topic type editor', function () {
   commentObj.editorBackButton().shadow().find('button').click({ force: true });
+  cy.wait(2000);
 });
+
+When('the user clicks Edit button in topic type editor', function () {
+  commentObj.topicTypeEditorEditButton().click();
+  cy.wait(2000);
+});
+
+Then('the user views Edit topic type modal in topic type editor', function () {
+  commentObj.topicTypeEditorEditTopicTypeModal().should('exist');
+  commentObj.topicTypeEditorEditTopicTypeModalTitle().should('contain.text', 'Edit topic type');
+});
+
+When('the user enters {string} in Edit topic type modal', function (name) {
+  commentObj
+    .topicTypeEditorEditTopicTypeModalNameInput()
+    .shadow()
+    .find('input')
+    .clear()
+    .type(name, { force: true, delay: 200 });
+});
+
+When('the user clicks Save button in Edit topic type modal', function () {
+  commentObj
+    .topicTypeEditorEditTopicTypeModalSaveButton()
+    .shadow()
+    .find('button')
+    .scrollIntoView()
+    .click({ force: true });
+  cy.wait(2000);
+});
+
+Then(
+  'the user views {string} as classification, {string} as admin roles, {string} as commenter roles, {string} as reader roles',
+  function (dataClass, adminRole, commenterRole, readerRole) {
+    //check data classification
+    commentObj.editorClassificationDropdown().invoke('attr', 'value').should('eq', dataClass.toLowerCase());
+
+    //check admin roles
+    let adminRoleMatchCount = 0;
+    if (adminRole.toLowerCase() != 'empty') {
+      const adminRoles = adminRole.split(',');
+      commentObj
+        .topicTypeEditorRolesTables()
+        .shadow()
+        .find('goa-checkbox[data-testid*="Admin roles"]')
+        .then((appRoles) => {
+          for (let i = 0; i < appRoles.length; i++) {
+            if (appRoles[i].getAttribute('checked') == 'true') {
+              for (let j = 0; j < adminRoles.length; j++) {
+                if (appRoles[i].getAttribute('name')?.includes(adminRoles[j])) {
+                  const appRoleName = appRoles[i].getAttribute('name');
+                  if (appRoleName != null) {
+                    cy.log(appRoleName);
+                  } else {
+                    cy.log('Application role name attribute is null');
+                  }
+                  adminRoleMatchCount = adminRoleMatchCount + 1;
+                }
+              }
+            }
+          }
+          expect(adminRoles.length).to.eq(adminRoleMatchCount);
+        });
+    } else {
+      commentObj
+        .topicTypeEditorRolesTables()
+        .shadow()
+        .find('goa-checkbox[data-testid*="Admin roles"]')
+        .then((appRoles) => {
+          for (let i = 0; i < appRoles.length; i++) {
+            if (appRoles[i].getAttribute('checked') == 'true') {
+              expect(appRoles[i].getAttribute('checked')).to.be('false');
+            }
+          }
+        });
+      cy.log('No admin role is selected');
+    }
+
+    //check commenter roles
+    let commenterRoleMatchCount = 0;
+    if (commenterRole.toLowerCase() != 'empty') {
+      const commenterRoles = commenterRole.split(',');
+      commentObj
+        .topicTypeEditorRolesTables()
+        .shadow()
+        .find('goa-checkbox[data-testid*="Commenter roles"]')
+        .then((appRoles) => {
+          for (let i = 0; i < appRoles.length; i++) {
+            if (appRoles[i].getAttribute('checked') == 'true') {
+              for (let j = 0; j < commenterRoles.length; j++) {
+                if (appRoles[i].getAttribute('name')?.includes(commenterRoles[j])) {
+                  const appRoleName = appRoles[i].getAttribute('name');
+                  if (appRoleName != null) {
+                    cy.log(appRoleName);
+                  } else {
+                    cy.log('Application role name attribute is null');
+                  }
+                  commenterRoleMatchCount = commenterRoleMatchCount + 1;
+                }
+              }
+            }
+          }
+          expect(commenterRoles.length).to.eq(commenterRoleMatchCount);
+        });
+    } else {
+      commentObj
+        .topicTypeEditorRolesTables()
+        .shadow()
+        .find('goa-checkbox[data-testid*="Commenter roles"]')
+        .then((appRoles) => {
+          for (let i = 0; i < appRoles.length; i++) {
+            if (appRoles[i].getAttribute('checked') == 'true') {
+              expect(appRoles[i].getAttribute('checked')).to.be('false');
+            }
+          }
+        });
+      cy.log('No commenter role is selected');
+    }
+
+    //check reader roles
+    let readerRoleMatchCount = 0;
+    if (readerRole.toLowerCase() != 'empty') {
+      const readerRoles = readerRole.split(',');
+      commentObj
+        .topicTypeEditorRolesTables()
+        .shadow()
+        .find('goa-checkbox[data-testid*="Reader roles"]')
+        .then((appRoles) => {
+          for (let i = 0; i < appRoles.length; i++) {
+            if (appRoles[i].getAttribute('checked') == 'true') {
+              for (let j = 0; j < readerRoles.length; j++) {
+                if (appRoles[i].getAttribute('name')?.includes(readerRoles[j])) {
+                  const appRoleName = appRoles[i].getAttribute('name');
+                  if (appRoleName != null) {
+                    cy.log(appRoleName);
+                  } else {
+                    cy.log('Application role name attribute is null');
+                  }
+                  readerRoleMatchCount = readerRoleMatchCount + 1;
+                }
+              }
+            }
+          }
+          expect(readerRoles.length).to.eq(readerRoleMatchCount);
+        });
+    } else {
+      commentObj
+        .topicTypeEditorRolesTables()
+        .shadow()
+        .find('goa-checkbox[data-testid*="Reader roles"]')
+        .then((appRoles) => {
+          for (let i = 0; i < appRoles.length; i++) {
+            if (appRoles[i].getAttribute('checked') == 'true') {
+              expect(appRoles[i].getAttribute('checked')).to.be('false');
+            }
+          }
+        });
+      cy.log('No reader role is selected');
+    }
+  }
+);
