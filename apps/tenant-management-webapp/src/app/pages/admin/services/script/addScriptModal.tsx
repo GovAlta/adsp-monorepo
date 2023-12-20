@@ -12,7 +12,6 @@ import { ScriptItem, defaultScript } from '@store/script/models';
 import { useSelector, useDispatch } from 'react-redux';
 import { useValidators } from '@lib/validation/useValidators';
 import { toKebabName } from '@lib/kebabName';
-import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { isNotEmptyCheck, wordMaxLengthCheck, duplicateNameCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { IdField } from './styled-components';
 import { RootState } from '@store/index';
@@ -21,6 +20,7 @@ import { ClientRoleTable } from '@components/RoleTable';
 import { selectRoleList } from '@store/sharedSelectors/roles';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { FetchRealmRoles } from '@store/tenant/actions';
+import { TextGoASkeleton } from '@core-services/app-common';
 
 interface AddScriptModalProps {
   initialValue?: ScriptItem;
@@ -190,9 +190,7 @@ export const AddScriptModal = ({ initialValue, onCancel, onSave, open, isNew }: 
           return <RunnerRole roleNames={r?.roleNames} key={r?.clientId} clientId={r?.clientId} />;
         })}
 
-      {Object.entries(roles).length === 0 && (
-        <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>
-      )}
+      {Object.entries(roles).length === 0 && <TextGoASkeleton key={1} lineCount={4}></TextGoASkeleton>}
     </GoAModal>
   );
 };
