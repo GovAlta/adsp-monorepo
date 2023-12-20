@@ -6,19 +6,36 @@ import { JsonForms } from '@jsonforms/react';
 import { Grid, GridItem } from '@core-services/app-common';
 import { categorizationRendererTester } from './formStepperTester';
 import FormStepperControl from './FormStepperControl';
+import { ControlElement, Categorization, UISchemaElement, Layout, Category } from '@jsonforms/core';
 
 import { ControlProps } from '@jsonforms/core';
 
 import { ReviewItem } from './style-components';
 
+export interface FunObject {
+  elements: Array<string>;
+  label: string;
+  type: string;
+  rule?: Record<string, string>;
+}
+
+export interface VerticalLayout extends Layout {
+  type: 'VerticalLayout';
+  label: string;
+}
+
+export interface GoAFormStepperSchemaProps extends Omit<Categorization, 'elements'> {
+  elements: (Category | Categorization | VerticalLayout)[];
+}
+
 export interface UiSchema {
-  elements: Array<any>;
+  elements: Array<ControlElement>;
 }
 
 export const FormStepper = ({ uischema, data, rootSchema }: ControlProps) => {
-  const uiSchema = uischema as unknown as UiSchema;
+  const uiSchema = uischema as unknown as GoAFormStepperSchemaProps;
   const [step, setStep] = useState<number>(-1);
-  const [stepData, setStepData] = useState(data);
+  const [stepData, setStepData] = useState(data as Record<string, Record<string, string>>);
 
   const renderers = [
     ...materialRenderers,
@@ -37,14 +54,14 @@ export const FormStepper = ({ uischema, data, rootSchema }: ControlProps) => {
     <div id="#/properties/formStepper" className="formStepper">
       <GoAFormStepper testId="form-stepper-test" step={step} onChange={(step) => setStep(step)}>
         {uiSchema.elements?.map((step, index) => {
-          const flattedStep = flattenArray(step?.elements || {});
+          const flattedStep = flattenArray(step?.elements || []);
           const count = flattedStep.filter((e) => {
             return e?.toString().substring(0, 12) === '#/properties';
           }).length;
           const completedSteps = Object.keys(flattenObject(stepData[index]) || {}).length;
           return (
             <GoAFormStep
-              text={step.label}
+              text={step.label as string}
               status={completedSteps === count ? 'complete' : completedSteps === 0 ? undefined : 'incomplete'}
             />
           );
@@ -77,11 +94,11 @@ export const FormStepper = ({ uischema, data, rootSchema }: ControlProps) => {
         <div>
           {uiSchema.elements?.map((step, index) => (
             <ReviewItem>
-              <h3 style={{ flex: 1 }}>{step.label}</h3>
+              <h3 style={{ flex: 1 }}>{step?.label}</h3>
               <div style={{ display: 'flex', width: '70%' }}>
                 <div style={{ width: '100%' }}>
                   {Object.keys(flattenObject(stepData[index] || {})).map((key, ix) => {
-                    const flattedData = flattenObject(stepData[index] || {});
+                    const flattedData = flattenObject(stepData[index] || ({} as Record<string, string>));
                     const indexPlus = Object.keys(flattedData)[ix + 1];
                     return (
                       <div>
@@ -121,8 +138,8 @@ export const FormStepper = ({ uischema, data, rootSchema }: ControlProps) => {
   );
 };
 
-const flattenArray = function (data) {
-  return data?.reduce(function iter(r, a) {
+const flattenArray = function (data: Array<UISchemaElement>): Array<UISchemaElement> {
+  return data?.reduce(function iter(r: Array<UISchemaElement>, a): Array<UISchemaElement> {
     if (a === null) {
       return r;
     }
@@ -138,8 +155,8 @@ const flattenArray = function (data) {
   }, []);
 };
 
-export const flattenObject = (obj) => {
-  const flattened = {};
+export const flattenObject = (obj: Record<string, string>): Record<string, string> => {
+  const flattened = {} as Record<string, string>;
 
   Object.keys(obj || {}).forEach((key) => {
     const value = obj[key];
