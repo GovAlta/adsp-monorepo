@@ -48,7 +48,6 @@ import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
 import { uischema } from './categorization-stepper-nav-buttons';
 import { schema } from './categorization';
-import FormStepperControl from './FormStepperControl';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
@@ -63,8 +62,6 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   );
 };
 
-const categorizationRendererTester: RankedTester = rankWith(6, uiTypeIs('Categorization'));
-
 export const formEditorJsonConfig = {
   'data-testid': 'templateForm-test-input',
   options: {
@@ -73,14 +70,6 @@ export const formEditorJsonConfig = {
     colorDecorators: true,
   },
 };
-
-const renderers = [
-  ...GoARenderers,
-  {
-    tester: categorizationRendererTester,
-    renderer: FormStepperControl,
-  },
-];
 
 const invalidJsonMsg = 'Invalid JSON syntax';
 

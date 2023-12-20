@@ -41,7 +41,6 @@ const GoAInputControl = (props: ControlProps) => {
     <GoAInput
       {...GoAInputProps}
       onChange={(name: string, value: string) => {
-        console.log(JSON.stringify(value) + '<value');
         props.handleChange(name, value);
       }}
     />

@@ -6,24 +6,19 @@ import { JsonForms } from '@jsonforms/react';
 import { Grid, GridItem } from '@core-services/app-common';
 import { categorizationRendererTester } from './formStepperTester';
 import FormStepperControl from './FormStepperControl';
-import { GoARenderers } from '@abgov/jsonforms-components';
-import { vanillaRenderers } from '@jsonforms/vanilla-renderers';
 
-import { ControlProps, ControlElement } from '@jsonforms/core';
+import { ControlProps } from '@jsonforms/core';
 
 import { ReviewItem } from './style-components';
 
-export interface XXX {
+export interface UiSchema {
   elements: Array<any>;
 }
 
 export const FormStepper = ({ uischema, data, rootSchema }: ControlProps) => {
-  const uiSchema = uischema as unknown as XXX;
-  console.log(JSON.stringify(uiSchema) + '<--uiSchemxxa');
+  const uiSchema = uischema as unknown as UiSchema;
   const [step, setStep] = useState<number>(-1);
   const [stepData, setStepData] = useState(data);
-
-  console.log(JSON.stringify(uiSchema.elements) + '<uischema.elements');
 
   const renderers = [
     ...materialRenderers,
@@ -80,42 +75,38 @@ export const FormStepper = ({ uischema, data, rootSchema }: ControlProps) => {
           );
         })}
         <div>
-          {uiSchema.elements?.map((step, index) => {
-            {
-              return (
-                <ReviewItem>
-                  <h3 style={{ flex: 1 }}>{step.label}</h3>
-                  <div style={{ display: 'flex', width: '70%' }}>
-                    <div style={{ width: '100%' }}>
-                      {Object.keys(flattenObject(stepData[index] || {})).map((key, ix) => {
-                        const flattedData = flattenObject(stepData[index] || {});
-                        const indexPlus = Object.keys(flattedData)[ix + 1];
-                        return (
-                          <>
-                            {0 === ix % 2 && (
-                              <Grid>
-                                <GridItem key={ix} md={6} vSpacing={1} hSpacing={0.5}>
-                                  <b>{key}</b>: {flattedData[key]?.toString()}
-                                </GridItem>
+          {uiSchema.elements?.map((step, index) => (
+            <ReviewItem>
+              <h3 style={{ flex: 1 }}>{step.label}</h3>
+              <div style={{ display: 'flex', width: '70%' }}>
+                <div style={{ width: '100%' }}>
+                  {Object.keys(flattenObject(stepData[index] || {})).map((key, ix) => {
+                    const flattedData = flattenObject(stepData[index] || {});
+                    const indexPlus = Object.keys(flattedData)[ix + 1];
+                    return (
+                      <div>
+                        {0 === ix % 2 && (
+                          <Grid>
+                            <GridItem key={ix} md={6} vSpacing={1} hSpacing={0.5}>
+                              <b>{key}</b>: {flattedData[key]?.toString()}
+                            </GridItem>
 
-                                {Object.keys(flattenObject(stepData[index] || {}))[ix + 1] && (
-                                  <GridItem key={ix + 1} md={6} vSpacing={1} hSpacing={0.5}>
-                                    <>
-                                      <b>{indexPlus}</b>: {flattedData[indexPlus].toString()}
-                                    </>
-                                  </GridItem>
-                                )}
-                              </Grid>
+                            {Object.keys(flattenObject(stepData[index] || {}))[ix + 1] && (
+                              <GridItem key={ix + 1} md={6} vSpacing={1} hSpacing={0.5}>
+                                <>
+                                  <b>{indexPlus}</b>: {flattedData[indexPlus].toString()}
+                                </>
+                              </GridItem>
                             )}
-                          </>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </ReviewItem>
-              );
-            }
-          })}
+                          </Grid>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </ReviewItem>
+          ))}
         </div>
       </GoAPages>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
