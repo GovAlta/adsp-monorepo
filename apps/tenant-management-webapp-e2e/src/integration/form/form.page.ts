@@ -105,18 +105,6 @@ class FormPage {
     return cy.xpath('//goa-modal[@open="true" and @data-testid="definition-form"]//goa-button[text()="Save"]');
   }
 
-  definitionEditorCheckedApplicantRoles() {
-    return cy.xpath('//goa-checkbox[contains(@data-testid, "applicant roles") and checked="true"]');
-  }
-
-  definitionEditorCheckedClerkRoles() {
-    return cy.xpath('//goa-checkbox[contains(@data-testid, "clerk roles") and checked="true"]');
-  }
-
-  definitionEditorCheckedAssessorRoles() {
-    return cy.xpath('//goa-checkbox[contains(@data-testid, "assessor roles") and checked="true"]');
-  }
-
   definitionEditorRolesTables() {
     return cy.xpath('//*[@data-testid="form-roles-tab"]//h4/following-sibling::goa-table[1]');
   }

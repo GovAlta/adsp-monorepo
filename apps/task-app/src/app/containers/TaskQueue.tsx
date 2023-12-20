@@ -1,11 +1,11 @@
-import { GoAButton, GoAButtonGroup, GoACallout, GoADetails, GoASpinner } from '@abgov/react-components-new';
+import { GoASpinner } from '@abgov/react-components-new';
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
+import styled from 'styled-components';
 import {
   AppDispatch,
   assignTask,
-  cancelTask,
-  completeTask,
   busySelector,
   filterSelector,
   liveSelector,
@@ -17,22 +17,34 @@ import {
   tasksSelector,
   initializeQueue,
   setTaskPriority,
-  startTask,
   taskActions,
+  metricsLoadingSelector,
 } from '../state';
 import { TaskAssignmentModal } from '../components/TaskAssignmentModal';
-import { TaskDetails } from '../components/TaskDetails';
 import { TaskPriorityModal } from '../components/TaskPriorityModal';
 import { TaskHeader } from '../components/TaskHeader';
 import { TaskList } from '../components/TaskList';
+import { TaskDetailsHost } from './details/TaskDetailsHost';
 
-import styles from './TaskQueue.module.css';
-import { useParams } from 'react-router-dom';
+const Loading = styled.div`
+  flex-grow: 2;
+  flex-shrink: 0;
+  height: 80vh;
+  display: flex;
+  > * {
+    margin: auto;
+  }
+`;
 
-export const TaskQueue: FunctionComponent = () => {
+interface TaskQueueComponentProps {
+  className?: string;
+}
+
+const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ className }) => {
   const user = useSelector(queueUserSelector);
   const live = useSelector(liveSelector);
   const metrics = useSelector(metricsSelector);
+  const metricsLoading = useSelector(metricsLoadingSelector);
   const filter = useSelector(filterSelector);
   const busy = useSelector(busySelector);
   const modal = useSelector(modalSelector);
@@ -42,78 +54,24 @@ export const TaskQueue: FunctionComponent = () => {
 
   const dispatch = useDispatch<AppDispatch>();
   const params = useParams<{ namespace: string; name: string }>();
+
   useEffect(() => {
     dispatch(initializeQueue({ namespace: params.namespace, name: params.name }));
   }, [dispatch, params]);
 
   return (
-    <div className={styles.taskList}>
-      <TaskHeader
-        className={styles.header}
-        open={open}
-        isLive={live}
-        onClickTasks={() => dispatch(taskActions.setOpenTask())}
-      />
-      <TaskDetails className={styles.details} open={open}>
-        {/* <TaskContainer className={styles.detailsPlaceholder} task={open} /> */}
-        {/* Replace this with task detail view so user can view and complete task. */}
-        <div className={styles.detailsPlaceholder}>
-          <div>
-            <GoACallout type="information" heading="Task detail view">
-              This is a placeholder for the task detail view. Replace with your own custom view for the specific type of
-              task that users will work with.
-            </GoACallout>
-            <GoADetails ml="s" heading="Show task specific view">
-              Replace this with a custom view so user can view and perform tasks. For example, if the task is to process
-              a submission, show the form fields and attached files for the assessor.
-            </GoADetails>
-            <GoADetails ml="s" heading="Update task based on user actions">
-              Tasks can be started, completed, and cancelled. Perform task lifecycle actions as part of the task
-              specific user action. For example, if the task is to process a submission, the assessor's action to record
-              a decision should complete the task.
-            </GoADetails>
-          </div>
-          <GoAButtonGroup alignment="end" mt="l">
-            <GoAButton type="secondary" onClick={() => dispatch(taskActions.setOpenTask())}>
-              Close
-            </GoAButton>
-            {open?.status === 'Pending' && (
-              <GoAButton
-                disabled={!user.isWorker || busy.executing}
-                onClick={() => dispatch(startTask({ taskId: open?.id }))}
-              >
-                Start task
-              </GoAButton>
-            )}
-            {open?.status === 'In Progress' && (
-              <>
-                <GoAButton
-                  type="secondary"
-                  disabled={!user.isWorker || busy.executing}
-                  onClick={() => dispatch(cancelTask({ taskId: open?.id, reason: null }))}
-                >
-                  Cancel task
-                </GoAButton>
-                <GoAButton
-                  disabled={!user.isWorker || busy.executing}
-                  onClick={() => dispatch(completeTask({ taskId: open?.id }))}
-                >
-                  Complete task
-                </GoAButton>
-              </>
-            )}
-          </GoAButtonGroup>
-        </div>
-      </TaskDetails>
+    <div className={className}>
+      <TaskHeader open={open} isLive={live} onClickTasks={() => dispatch(taskActions.setOpenTask())} />
+      <TaskDetailsHost />
       {busy.initializing ||
         (busy.loading && (
-          <div className={styles.loading}>
+          <Loading>
             <GoASpinner size="large" type="infinite" />
-          </div>
+          </Loading>
         ))}
       <TaskList
-        className={styles.list}
         metrics={metrics}
+        metricsLoading={metricsLoading[`${params.namespace}:${params.name}`]}
         filter={filter}
         tasks={tasks}
         open={open}
@@ -153,3 +111,15 @@ export const TaskQueue: FunctionComponent = () => {
     </div>
   );
 };
+
+const TaskQueue = styled(TaskQueueComponent)`
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+`;
+
+export default TaskQueue;

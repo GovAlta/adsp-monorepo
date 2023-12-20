@@ -79,6 +79,18 @@ components:
           $ref: "#/components/schemas/QueueDurationMetric"
         completion:
           $ref: "#/components/schemas/QueueDurationMetric"
+        rate:
+          type: object
+          properties:
+            since:
+              type: string
+              format: date-time
+            created:
+              type: integer
+            completed:
+              type: integer
+            cancelled:
+              type: integer
 
 /task/v1/queues:
   get:
@@ -143,6 +155,12 @@ components:
         required: true
         schema:
           type: string
+      - name: includeEventMetrics
+        description: Flag indicating if event metrics should be retrieved.
+        in: query
+        required: false
+        schema:
+          type: boolean
     responses:
       200:
         description: Request completed successfully.

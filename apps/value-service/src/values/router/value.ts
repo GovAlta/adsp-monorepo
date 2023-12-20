@@ -99,6 +99,49 @@ export function readValue(repository: ValuesRepository): RequestHandler {
   };
 }
 
+export function countValue(repository: ValuesRepository): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      const tenant = req.tenant;
+      const user = req.user;
+      const { namespace, name } = req.params;
+      const {
+        timestampMax: timestampMaxValue,
+        timestampMin: timestampMinValue,
+        context: contextValue,
+        correlationId,
+      } = req.query;
+
+      if (!tenant) {
+        throw new InvalidOperationError('Tenant context is required for operation.');
+      }
+
+      if (!isAllowedUser(user, tenant.id, ServiceUserRoles.Reader, true)) {
+        throw new UnauthorizedUserError('read values', user);
+      }
+
+      const criteria: ValueCriteria = {
+        namespace,
+        name,
+        timestampMax: timestampMaxValue ? new Date(timestampMaxValue as string) : null,
+        timestampMin: timestampMinValue ? new Date(timestampMinValue as string) : null,
+        context: contextValue ? JSON.parse(contextValue as string) : null,
+        correlationId: correlationId as string,
+        tenantId: tenant.id,
+      };
+
+      const count = await repository.countValues(criteria);
+      res.send({
+        namespace,
+        name,
+        count,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function readMetrics(repository: ValuesRepository): RequestHandler {
   return async (req, res, next) => {
     try {
@@ -301,6 +344,22 @@ export const createValueRouter = ({ logger, repository, eventService }: ValueRou
       )
     ),
     readValue(repository)
+  );
+
+  valueRouter.get(
+    '/:namespace/values/:name/count',
+    validateNamespaceNameHandler,
+    createValidationHandler(
+      ...checkSchema(
+        {
+          correlationId: { optional: true, isString: true },
+          timestampMin: { optional: true, isISO8601: true },
+          timestampMax: { optional: true, isISO8601: true },
+        },
+        ['query']
+      )
+    ),
+    countValue(repository)
   );
 
   valueRouter.get(

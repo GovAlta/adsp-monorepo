@@ -1,7 +1,7 @@
 import { GoAAppHeader, GoAButton, GoAMicrositeHeader } from '@abgov/react-components-new';
-import React, { useEffect } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Route, Switch, useLocation, useParams } from 'react-router-dom';
+import { Redirect, Route, Switch, useLocation, useParams } from 'react-router-dom';
 import {
   AppDispatch,
   configInitializedSelector,
@@ -13,7 +13,9 @@ import {
   userSelector,
 } from '../state';
 import { FeedbackNotification } from './FeedbackNotification';
-import { TaskQueue } from './TaskQueue';
+
+const TaskQueue = lazy(() => import('./TaskQueue'));
+const TaskQueues = lazy(() => import('./TaskQueues'));
 
 export const TaskTenant = () => {
   const { tenant: tenantName } = useParams<{ tenant: string }>();
@@ -55,12 +57,17 @@ export const TaskTenant = () => {
         {user && (
           <section>
             <Switch>
-              <Route path={`/${tenantName}/:namespace/:name`}>
-                <TaskQueue />
+              <Route exact path={`/${tenantName}/:namespace/:name`}>
+                <Suspense>
+                  <TaskQueue />
+                </Suspense>
               </Route>
-              <Route path="/">
-                <div>Tenant queues</div>
+              <Route exact path={`/${tenantName}`}>
+                <Suspense>
+                  <TaskQueues />
+                </Suspense>
               </Route>
+              <Redirect to={`/${tenantName}`} />
             </Switch>
           </section>
         )}

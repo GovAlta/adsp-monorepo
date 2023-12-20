@@ -9,8 +9,8 @@ import { getEventDefinitions } from '@store/event/actions';
 import { LoadMoreWrapper } from '@components/styled-components';
 import { GoABadge, GoAButton, GoAInput, GoAButtonGroup, GoAFormItem, GoAModal } from '@abgov/react-components-new';
 import styled from 'styled-components';
-import { GoAPageLoader } from '@abgov/react-components';
 
+import { PageIndicator } from '@components/Indicator';
 import { RootState } from '../../../../store/index';
 import { HoverWrapper, ToolTip } from './styled-components';
 import { ResetModalState } from '@store/session/actions';
@@ -107,10 +107,6 @@ const EventLogEntryComponent = ({ entry }: EventLogEntryComponentProps): JSX.Ele
 
 export const WebhookHistoryModal = (): JSX.Element => {
   const dispatch = useDispatch();
-  const indicator = useSelector((state: RootState) => {
-    return state?.session?.indicator;
-  });
-
   const webhook = useSelector(selectWebhookInHistory);
   const isOpen = webhook !== undefined;
 
@@ -255,9 +251,7 @@ export const WebhookHistoryModal = (): JSX.Element => {
                   'No webhook history found'
                 )
               ) : (
-                <LoadingWrapper>
-                  <GoAPageLoader visible={true} type="infinite" message={indicator.message} pagelock={true} />
-                </LoadingWrapper>
+                <PageIndicator />
               )}
               {next && (
                 <div className="mt-1">
@@ -356,11 +350,4 @@ const AlignedTr = styled.tr`
   .padding-left-8 {
     padding-left: 8px;
   }
-`;
-
-const LoadingWrapper = styled.div`
-  display: flex;
-  text-align: center;
-  width: 100%;
-  margin: 30px 0 30px 0;
 `;

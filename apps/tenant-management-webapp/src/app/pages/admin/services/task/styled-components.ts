@@ -43,10 +43,6 @@ export const HeadingDiv = styled.div`
   }
 `;
 
-export const SpinnerModalPadding = styled.div`
-  margin: 0 0 0 0;
-  height: 467px;
-`;
 export const FormFormItem = styled.div`
   margin-bottom: 1.5rem;
   margin-left: 3px;

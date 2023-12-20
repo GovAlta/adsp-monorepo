@@ -14,7 +14,6 @@ import { ActionState } from '@store/session/models';
 import { ClientRoleTable } from '@components/RoleTable';
 import { SaveFormModal } from '@components/saveModal';
 import {
-  SpinnerModalPadding,
   TextLoadingIndicator,
   FlexRow,
   NameDescriptionDataSchema,
@@ -25,7 +24,8 @@ import {
   ScrollPane,
   EditorPadding,
 } from '../styled-components';
-import { GoAPageLoader } from '@abgov/react-components';
+import { PageIndicator } from '@components/Indicator';
+
 import { FetchRealmRoles } from '@store/tenant/actions';
 
 import { ConfigServiceRole } from '@store/access/models';
@@ -240,9 +240,7 @@ export function AddEditCommentTopicTypeEditor(): JSX.Element {
   return (
     <CommentEditor>
       {spinner ? (
-        <SpinnerModalPadding>
-          <GoAPageLoader visible={true} type="infinite" message={'Loading...'} pagelock={false} />
-        </SpinnerModalPadding>
+        <PageIndicator />
       ) : (
         <FlexRow>
           <NameDescriptionDataSchema>
