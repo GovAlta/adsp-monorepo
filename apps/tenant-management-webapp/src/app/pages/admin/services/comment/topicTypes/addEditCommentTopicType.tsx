@@ -3,12 +3,13 @@ import { CommentTopicTypes } from '@store/comment/model';
 import { toKebabName } from '@lib/kebabName';
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
-import { SpinnerModalPadding, CommentCommentItem } from '../styled-components';
-import { GoAPageLoader } from '@abgov/react-components';
+import { CommentCommentItem } from '../styled-components';
+
 import { useRouteMatch } from 'react-router';
 import { useHistory } from 'react-router-dom';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
+import { PageIndicator } from '@components/Indicator';
 
 import { GoAInput, GoAModal, GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components-new';
 interface AddEditCommentTopicTypeProps {
@@ -119,9 +120,7 @@ export const AddEditCommentTopicType: FunctionComponent<AddEditCommentTopicTypeP
       }
     >
       {spinner ? (
-        <SpinnerModalPadding>
-          <GoAPageLoader visible={true} type="infinite" message={'Loading...'} pagelock={false} />
-        </SpinnerModalPadding>
+        <PageIndicator />
       ) : (
         <>
           <CommentCommentItem>

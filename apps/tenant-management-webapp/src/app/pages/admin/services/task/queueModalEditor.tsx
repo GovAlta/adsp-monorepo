@@ -2,7 +2,6 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useParams } from 'react-router-dom';
 import {
-  SpinnerModalPadding,
   TextLoadingIndicator,
   FlexRow,
   NameDescriptionDataSchema,
@@ -17,7 +16,7 @@ import { tenantRolesAndClients } from '@store/sharedSelectors/roles';
 import { UpdateTaskQueue, getTaskQueues } from '@store/task/action';
 import { ClientRoleTable } from '@components/RoleTable';
 import { GoAButtonGroup, GoAFormItem, GoAButton } from '@abgov/react-components-new';
-import { GoAPageLoader } from '@abgov/react-components';
+import { PageIndicator } from '@components/Indicator';
 import { TaskDefinition, defaultTaskQueue } from '@store/task/model';
 import { ServiceRoleConfig } from '@store/access/models';
 import { ConfigServiceRole } from '@store/access/models';
@@ -191,9 +190,7 @@ export const QueueModalEditor: FunctionComponent = (): JSX.Element => {
   return (
     <TaskEditor>
       {spinner ? (
-        <SpinnerModalPadding>
-          <GoAPageLoader visible={true} type="infinite" message={'Loading...'} pagelock={false} />
-        </SpinnerModalPadding>
+        <PageIndicator />
       ) : (
         <FlexRow>
           <NameDescriptionDataSchema>
