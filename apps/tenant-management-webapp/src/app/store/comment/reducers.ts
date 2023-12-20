@@ -26,6 +26,7 @@ export const defaultState: CommentState = {
   topics: [],
   comments: [],
   nextEntries: null,
+  nextCommentEntries: null,
 };
 
 export default function (state: CommentState = defaultState, action: CommentActionTypes): CommentState {
@@ -83,7 +84,13 @@ export default function (state: CommentState = defaultState, action: CommentActi
     case FETCH_COMMENT_COMMENTS_SUCCESS:
       return {
         ...state,
-        comments: action.payload,
+        comments:
+          action.after && action.after !== ''
+            ? [...state.comments, ...action.payload]
+            : action.payload
+            ? action.payload
+            : state.comments,
+        nextCommentEntries: action.next,
       };
 
     case DELETE_COMMENT_TOPIC_SUCCESS:

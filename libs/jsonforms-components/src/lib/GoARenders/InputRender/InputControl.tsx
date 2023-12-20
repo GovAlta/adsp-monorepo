@@ -37,7 +37,15 @@ const GoAInputControl = (props: ControlProps) => {
     ...uischema.options.GoAInput,
   };
 
-  return <GoAInput {...GoAInputProps} onChange={(name: string, value: string) => props.handleChange(name, value)} />;
+  return (
+    <GoAInput
+      {...GoAInputProps}
+      onChange={(name: string, value: string) => {
+        console.log(JSON.stringify(value) + '<value');
+        props.handleChange(name, value);
+      }}
+    />
+  );
 };
 
 export default withJsonFormsControlProps(GoAInputControl);

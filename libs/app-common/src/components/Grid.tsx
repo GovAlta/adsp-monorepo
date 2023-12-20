@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 
-const Grid = styled.div`
+export const Grid = styled.div`
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -8,7 +8,7 @@ const Grid = styled.div`
   align-items: stretch;
 `;
 
-export interface GridItemProps {
+interface GridItemProps {
   sm?: number;
   md?: number;
   lg?: number;
@@ -18,7 +18,7 @@ export interface GridItemProps {
   vSpacing?: number;
 }
 
-const GridItem = styled.div<GridItemProps>`
+export const GridItem = styled.div<GridItemProps>`
   margin-bottom: ${(props: GridItemProps) => `${props.vSpacing ?? 0}rem`};
 
   > .goa-card {
@@ -53,5 +53,3 @@ const GridItem = styled.div<GridItemProps>`
         : `calc(${(100 * (props?.xl ?? props?.md ?? props.sm ?? 12)) / 12}% - ${props.hSpacing ?? 0}rem)`};
   }
 `;
-
-export { Grid, GridItem };

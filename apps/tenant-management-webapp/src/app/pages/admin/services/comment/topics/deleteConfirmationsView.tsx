@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { useDispatch } from 'react-redux';
 
-import { TableDiv } from '../styled-components';
+import { TableDiv, TopicDelete } from '../styled-components';
 import { DeleteModal } from '@components/DeleteModal';
 import { deleteTopicRequest } from '@store/comment/action';
 
@@ -32,9 +32,9 @@ export const DeleteConfirmationsView = ({ topic, selectedType, onCancel, onDelet
             <div>
               Are you sure you wish to delete <b>{`${topic.name}?`}</b>
               <br />
-              <p>
+              <TopicDelete>
                 *Please note that all associated comments with <b>{`${topic.name}`}</b> will be deleted as well.
-              </p>
+              </TopicDelete>
             </div>
           </div>
         }

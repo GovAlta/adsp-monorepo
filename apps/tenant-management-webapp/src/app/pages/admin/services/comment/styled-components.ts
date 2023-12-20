@@ -260,7 +260,7 @@ export const IconDiv = styled.div`
   width: 100%;
   display: flex;
   flex-direction: row;
-  justify-content: flex-end;
+  justify-content: center;
   goa-icon-button {
     margin: 0 4px;
   }
@@ -282,22 +282,26 @@ export const TableDiv = styled.div`
   word-wrap: break-word;
   table-layout: fixed;
   & td:first-child {
-    width: 120px;
+    width: 323px;
     overflow-x: hidden;
     text-overflow: ellipsis;
     word-wrap: break-word;
   }
   & td:nth-child(2) {
+    width: 270px;
     word-wrap: break-word;
     word-break: break-word;
   }
 
+  & th:last-child {
+    text-align: center;
+  }
   & td:last-child {
-    width: 40px;
+    width: 128px;
     white-space: nowrap;
     overflow-x: hidden;
     text-overflow: ellipsis;
-    text-align: right;
+    text-align: center;
   }
   & .meta {
     padding: 0;
@@ -370,4 +374,17 @@ export const CommentBody = styled.div`
     text-align: left;
     text-wrap: wrap;
   }
+`;
+export const TopicDelete = styled.div`
+   {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+    color: #333333;
+    text-align: left;
+    padding-top: 1rem;
+  }
+`;
+export const LoadMoreCommentsWrapper = styled.div`
+  padding-top: var(--goa-spacing-xs);
 `;

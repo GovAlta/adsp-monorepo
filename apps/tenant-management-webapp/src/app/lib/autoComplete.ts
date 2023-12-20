@@ -275,23 +275,3 @@ export const convertToEditorSuggestion = (obj: any): EditorSuggestion[] => {
     },
   ];
 };
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const getSuggestionsForSchema = (schema: any, monaco: Monaco) => {
-  const suggestions = [];
-
-  if (schema.properties) {
-    for (const property in schema.properties) {
-      suggestions.push({
-        label: property,
-        kind: monaco.languages.CompletionItemKind.Property,
-        insertText: `'${property}'`,
-        detail: 'Property',
-      });
-    }
-  }
-
-  // Handle other schema types (e.g., 'anyOf', 'oneOf') here as needed
-
-  return suggestions;
-};

@@ -33,6 +33,9 @@
       ],
       "@abgov/jsonforms-components": [
         "../../../libs/jsonforms-components/src/index.ts"
+      ],
+      "@core-services/app-common": [
+        "../../../libs/app-common/src/index.ts"
       ]
     }
   },

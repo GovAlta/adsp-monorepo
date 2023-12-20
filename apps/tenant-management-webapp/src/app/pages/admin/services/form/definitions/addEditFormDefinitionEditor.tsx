@@ -7,6 +7,10 @@ import { JsonForms } from '@jsonforms/react';
 import { RankedTester, rankWith, uiTypeIs } from '@jsonforms/core';
 import { FormDefinition } from '@store/form/model';
 
+import { materialRenderers } from '@jsonforms/material-renderers';
+
+import { vanillaRenderers } from '@jsonforms/vanilla-renderers';
+
 import { useValidators } from '@lib/validation/useValidators';
 import { isNotEmptyCheck, wordMaxLengthCheck, badCharsCheck, duplicateNameCheck } from '@lib/validation/checkInput';
 import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
@@ -42,9 +46,9 @@ import { GoAButtonGroup, GoAButton, GoAFormItem } from '@abgov/react-components-
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
-import FormStepperControl from './FormStepperControl';
 import { uischema } from './categorization-stepper-nav-buttons';
-import { schema, data } from './categorization';
+import { schema } from './categorization';
+import FormStepperControl from './FormStepperControl';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
@@ -59,7 +63,7 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   );
 };
 
-export const categorizationRendererTester: RankedTester = rankWith(6, uiTypeIs('Categorization'));
+const categorizationRendererTester: RankedTester = rankWith(6, uiTypeIs('Categorization'));
 
 export const formEditorJsonConfig = {
   'data-testid': 'templateForm-test-input',
@@ -69,6 +73,14 @@ export const formEditorJsonConfig = {
     colorDecorators: true,
   },
 };
+
+const renderers = [
+  ...GoARenderers,
+  {
+    tester: categorizationRendererTester,
+    renderer: FormStepperControl,
+  },
+];
 
 const invalidJsonMsg = 'Invalid JSON syntax';
 
@@ -81,7 +93,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
   const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
 
-  const [currentData, setCurrentData] = useState(data);
+  const [data, setData] = useState<unknown>({});
   const [error, setError] = useState('');
   const [spinner, setSpinner] = useState<boolean>(false);
   const { id } = useParams<{ id: string }>();
@@ -272,14 +284,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   // eslint-disable-next-line
   useEffect(() => {}, [indicator]);
 
-  const renderers = [
-    ...GoARenderers,
-    {
-      tester: categorizationRendererTester,
-      renderer: FormStepperControl,
-    },
-  ];
-
   const { errors, validators } = useValidators(
     'name',
     'name',
@@ -458,7 +462,6 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   type="tertiary"
                   testId="form-generate"
                   onClick={() => {
-                    setCurrentData(data);
                     setTempUiSchemaBounced(JSON.stringify(uischema, null, 2));
                     setDataSchemaBounced(JSON.stringify(schema, null, 2));
                     setTempUiSchema(JSON.stringify(uischema, null, 2));
@@ -472,32 +475,37 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           </NameDescriptionDataSchema>
 
           <FormPreviewContainer>
-            <FormEditorTitle>Preview</FormEditorTitle>
-            <hr className="hr-resize" />
-            <div style={{ paddingTop: '2rem' }}>
-              <GoAFormItem error={error} label="">
-                {UiSchemaBounced !== '{}' ? (
-                  <JsonForms
-                    schema={JSON.parse(dataSchemaBounced)}
-                    uischema={JSON.parse(UiSchemaBounced)}
-                    data={currentData}
-                    validationMode={'NoValidation'}
-                    renderers={renderers}
-                    cells={vanillaCells}
-                    onChange={({ data }) => setCurrentData(data)}
-                  />
-                ) : (
-                  <JsonForms
-                    schema={JSON.parse(dataSchemaBounced)}
-                    data={currentData}
-                    validationMode={'NoValidation'}
-                    renderers={renderers}
-                    cells={vanillaCells}
-                    onChange={({ data }) => setCurrentData(data)}
-                  />
-                )}
-              </GoAFormItem>
-            </div>
+            <Tabs activeIndex={0} data-testid="preview-tabs">
+              <Tab label="Preview" data-testid="preview-view-tab">
+                <div style={{ paddingTop: '2rem' }}>
+                  <GoAFormItem error={error} label="">
+                    {UiSchemaBounced !== '{}' ? (
+                      <JsonForms
+                        schema={JSON.parse(dataSchemaBounced)}
+                        uischema={JSON.parse(UiSchemaBounced)}
+                        data={data}
+                        validationMode={'NoValidation'}
+                        renderers={GoARenderers}
+                        cells={vanillaCells}
+                        onChange={({ data }) => setData(data)}
+                      />
+                    ) : (
+                      <JsonForms
+                        schema={JSON.parse(dataSchemaBounced)}
+                        data={data}
+                        validationMode={'NoValidation'}
+                        renderers={GoARenderers}
+                        cells={vanillaCells}
+                        onChange={({ data }) => setData(data)}
+                      />
+                    )}
+                  </GoAFormItem>
+                </div>
+              </Tab>
+              <Tab label="Data" data-testid="data-view">
+                {data && <pre>{JSON.stringify(data, null, 2)}</pre>}
+              </Tab>
+            </Tabs>
           </FormPreviewContainer>
         </FlexRow>
       )}

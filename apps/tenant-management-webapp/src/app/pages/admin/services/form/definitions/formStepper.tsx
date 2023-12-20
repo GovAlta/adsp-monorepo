@@ -3,36 +3,39 @@ import { useState } from 'react';
 import { GoAFormStepper, GoAFormStep, GoAPages, GoAButton } from '@abgov/react-components-new';
 import { materialRenderers, materialCells } from '@jsonforms/material-renderers';
 import { JsonForms } from '@jsonforms/react';
-import { Grid, GridItem } from '@components/Grid';
-import { categorizationRendererTester } from './addEditFormDefinitionEditor';
+import { Grid, GridItem } from '@core-services/app-common';
+import { categorizationRendererTester } from './formStepperTester';
 import FormStepperControl from './FormStepperControl';
+import { GoARenderers } from '@abgov/jsonforms-components';
+import { vanillaRenderers } from '@jsonforms/vanilla-renderers';
+
+import { ControlProps, ControlElement } from '@jsonforms/core';
 
 import { ReviewItem } from './style-components';
 
-interface StepperProps {
-  uiSchema: Record<string, unknown>;
-  dataSchema: Record<string, unknown>;
-  data: Record<string, unknown>;
+export interface XXX {
+  elements: Array<any>;
 }
 
-declare type Status = 'complete' | 'incomplete';
-
-export const FormStepper: React.FC<StepperProps> = ({ uiSchema, data, dataSchema }) => {
+export const FormStepper = ({ uischema, data, rootSchema }: ControlProps) => {
+  const renderers = [
+    ...GoARenderers,
+    // {
+    //   tester: categorizationRendererTester,
+    //   renderer: FormStepperControl,
+    // },
+  ];
+  const uiSchema = uischema as unknown as XXX;
+  console.log(JSON.stringify(uiSchema) + '<--uiSchemxxa');
   const [step, setStep] = useState<number>(-1);
   const [stepData, setStepData] = useState(data);
 
-  function setPage(page) {
+  console.log(JSON.stringify(uiSchema.elements) + '<uischema.elements');
+
+  function setPage(page: number) {
     if (page < 1 || page > uiSchema.elements?.length + 1) return;
     setStep(page);
   }
-
-  const renderers = [
-    ...materialRenderers,
-    {
-      tester: categorizationRendererTester,
-      renderer: FormStepperControl,
-    },
-  ];
 
   return (
     <div id="#/properties/formStepper" className="formStepper">
@@ -46,7 +49,7 @@ export const FormStepper: React.FC<StepperProps> = ({ uiSchema, data, dataSchema
           return (
             <GoAFormStep
               text={step.label}
-              status={completedSteps === count ? 'complete' : completedSteps === 0 ? null : 'incomplete'}
+              status={completedSteps === count ? 'complete' : completedSteps === 0 ? undefined : 'incomplete'}
             />
           );
         })}
@@ -60,11 +63,11 @@ export const FormStepper: React.FC<StepperProps> = ({ uiSchema, data, dataSchema
           return (
             <div>
               <JsonForms
-                schema={dataSchema}
+                schema={rootSchema}
                 uischema={step}
                 data={stepData[index]}
                 validationMode={'NoValidation'}
-                renderers={renderers}
+                renderers={GoARenderers}
                 cells={materialCells}
                 onChange={(xxx) => {
                   const tempData = stepData;
@@ -76,42 +79,38 @@ export const FormStepper: React.FC<StepperProps> = ({ uiSchema, data, dataSchema
           );
         })}
         <div>
-          {uiSchema.elements?.map((step, index) => {
-            {
-              return (
-                <ReviewItem>
-                  <h3 style={{ flex: 1 }}>{step.label}</h3>
-                  <div style={{ display: 'flex', width: '70%' }}>
-                    <div style={{ width: '100%' }}>
-                      {Object.keys(flattenObject(stepData[index] || {})).map((key, ix) => {
-                        const flattedData = flattenObject(stepData[index] || {});
-                        const indexPlus = Object.keys(flattedData)[ix + 1];
-                        return (
-                          <>
-                            {0 === ix % 2 && (
-                              <Grid>
-                                <GridItem key={ix} md={6} vSpacing={1} hSpacing={0.5}>
-                                  <b>{key}</b>: {flattedData[key]?.toString()}
-                                </GridItem>
+          {uiSchema.elements?.map((step, index) => (
+            <ReviewItem>
+              <h3 style={{ flex: 1 }}>{step.label}</h3>
+              <div style={{ display: 'flex', width: '70%' }}>
+                <div style={{ width: '100%' }}>
+                  {Object.keys(flattenObject(stepData[index] || {})).map((key, ix) => {
+                    const flattedData = flattenObject(stepData[index] || {});
+                    const indexPlus = Object.keys(flattedData)[ix + 1];
+                    return (
+                      <>
+                        {0 === ix % 2 && (
+                          <Grid>
+                            <GridItem key={ix} md={6} vSpacing={1} hSpacing={0.5}>
+                              <b>{key}</b>: {flattedData[key]?.toString()}
+                            </GridItem>
 
-                                {Object.keys(flattenObject(stepData[index] || {}))[ix + 1] && (
-                                  <GridItem key={ix + 1} md={6} vSpacing={1} hSpacing={0.5}>
-                                    <>
-                                      <b>{indexPlus}</b>: {flattedData[indexPlus].toString()}
-                                    </>
-                                  </GridItem>
-                                )}
-                              </Grid>
+                            {Object.keys(flattenObject(stepData[index] || {}))[ix + 1] && (
+                              <GridItem key={ix + 1} md={6} vSpacing={1} hSpacing={0.5}>
+                                <>
+                                  <b>{indexPlus}</b>: {flattedData[indexPlus].toString()}
+                                </>
+                              </GridItem>
                             )}
-                          </>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </ReviewItem>
-              );
-            }
-          })}
+                          </Grid>
+                        )}
+                      </>
+                    );
+                  })}
+                </div>
+              </div>
+            </ReviewItem>
+          ))}
         </div>
       </GoAPages>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
