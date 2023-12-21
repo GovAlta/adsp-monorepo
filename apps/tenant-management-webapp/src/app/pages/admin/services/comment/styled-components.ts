@@ -388,3 +388,8 @@ export const TopicDelete = styled.div`
 export const LoadMoreCommentsWrapper = styled.div`
   padding-top: var(--goa-spacing-xs);
 `;
+export const DeleteConfirmation = styled.div`
+  p {
+    white-space: normal;
+  }
+`;
