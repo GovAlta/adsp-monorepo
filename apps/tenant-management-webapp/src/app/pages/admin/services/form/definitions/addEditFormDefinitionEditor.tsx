@@ -42,6 +42,8 @@ import { Tab, Tabs } from '@components/Tabs';
 import { uischema } from './categorization-stepper-nav-buttons';
 import { schema } from './categorization';
 import { PageIndicator } from '@components/Indicator';
+import { ErrorBoundary } from '@components/ErrorBoundary';
+import { isValidJSONSchemaCheck } from '@lib/validation/checkInput';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   const tempPrev = JSON.parse(JSON.stringify(prev));
@@ -68,6 +70,8 @@ export const formEditorJsonConfig = {
 const invalidJsonMsg = 'Invalid JSON syntax';
 
 export function AddEditFormDefinitionEditor(): JSX.Element {
+  const JSONSchemaValidator = isValidJSONSchemaCheck('Data schema');
+
   const [definition, setDefinition] = useState<FormDefinition>(defaultFormDefinition);
   const [initialDefinition, setInitialDefinition] = useState<FormDefinition>(defaultFormDefinition);
 
@@ -95,8 +99,11 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
   const { height } = useWindowDimensions();
   const calcHeight = latestNotification && !latestNotification.disabled ? height - 50 : height;
   const EditorHeight = calcHeight - 570;
-  const [editorErrors, setEditorErrors] = useState({ uiSchema: null, dataSchema: null });
-
+  const [editorErrors, setEditorErrors] = useState({
+    uiSchema: null,
+    dataSchemaJSON: null,
+    dataSchemaJSONSchema: null,
+  });
   useEffect(() => {
     dispatch(FetchRealmRoles());
 
@@ -290,28 +297,43 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
             {definition && <FormConfigDefinition definition={definition} />}
 
             <Tabs activeIndex={activeIndex} data-testid="form-editor-tabs">
-              <Tab label="Data schema" data-testid="form-editor-tab">
-                <GoAFormItem error={errors?.body ?? editorErrors?.dataSchema ?? null} label="">
+              <Tab label="Data schema" data-testid="form-editor-data-schema-tab">
+                <GoAFormItem
+                  error={errors?.body ?? editorErrors?.dataSchemaJSON ?? editorErrors?.dataSchemaJSONSchema ?? null}
+                  label=""
+                >
                   <EditorPadding>
                     <Editor
                       data-testid="form-data-schema"
                       height={EditorHeight}
                       value={tempDataSchema}
                       onChange={(value) => {
-                        validators.remove('payloadSchema');
-                        setTempDataSchema(value);
+                        const jsonSchemaValidResult = JSONSchemaValidator(value);
+
+                        if (jsonSchemaValidResult === '') {
+                          setTempDataSchema(value);
+                          setEditorErrors({
+                            ...editorErrors,
+                            dataSchemaJSONSchema: null,
+                          });
+                        } else {
+                          setEditorErrors({
+                            ...editorErrors,
+                            dataSchemaJSONSchema: jsonSchemaValidResult,
+                          });
+                        }
                       }}
                       onValidate={(makers) => {
                         if (makers.length === 0) {
                           setEditorErrors({
                             ...editorErrors,
-                            dataSchema: null,
+                            dataSchemaJSON: null,
                           });
                           return;
                         }
                         setEditorErrors({
                           ...editorErrors,
-                          dataSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
+                          dataSchemaJSON: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
                         });
                       }}
                       language="json"
@@ -325,7 +347,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   </EditorPadding>
                 </GoAFormItem>
               </Tab>
-              <Tab label="UI schema" data-testid="form-editor-tab-2">
+              <Tab label="UI schema" data-testid="form-editor-ui-schema-tab">
                 <GoAFormItem error={errors?.body ?? editorErrors?.uiSchema ?? null} label="">
                   <EditorPadding>
                     <Editor
@@ -337,13 +359,13 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                         if (makers.length === 0) {
                           setEditorErrors({
                             ...editorErrors,
-                            dataSchema: null,
+                            uiSchema: null,
                           });
                           return;
                         }
                         setEditorErrors({
                           ...editorErrors,
-                          dataSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
+                          uiSchema: `Invalid JSON: col ${makers[0]?.endColumn}, line: ${makers[0]?.endLineNumber}, ${makers[0]?.message}`,
                         });
                       }}
                       onChange={(value) => {
@@ -388,7 +410,8 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                     }) ||
                     !definition.name ||
                     validators.haveErrors() ||
-                    editorErrors.dataSchema !== null ||
+                    editorErrors.dataSchemaJSON !== null ||
+                    editorErrors.dataSchemaJSONSchema !== null ||
                     editorErrors.uiSchema !== null
                   }
                   onClick={() => {
@@ -460,26 +483,28 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               <Tab label="Preview" data-testid="preview-view-tab">
                 <div style={{ paddingTop: '2rem' }}>
                   <GoAFormItem error={error} label="">
-                    {UiSchemaBounced !== '{}' ? (
-                      <JsonForms
-                        schema={JSON.parse(dataSchemaBounced)}
-                        uischema={JSON.parse(UiSchemaBounced)}
-                        data={data}
-                        validationMode={'NoValidation'}
-                        renderers={GoARenderers}
-                        cells={vanillaCells}
-                        onChange={({ data }) => setData(data)}
-                      />
-                    ) : (
-                      <JsonForms
-                        schema={JSON.parse(dataSchemaBounced)}
-                        data={data}
-                        validationMode={'NoValidation'}
-                        renderers={GoARenderers}
-                        cells={vanillaCells}
-                        onChange={({ data }) => setData(data)}
-                      />
-                    )}
+                    <ErrorBoundary>
+                      {UiSchemaBounced !== '{}' ? (
+                        <JsonForms
+                          schema={JSON.parse(dataSchemaBounced)}
+                          uischema={JSON.parse(UiSchemaBounced)}
+                          data={data}
+                          validationMode={'ValidateAndShow'}
+                          renderers={GoARenderers}
+                          cells={vanillaCells}
+                          onChange={({ data }) => setData(data)}
+                        />
+                      ) : (
+                        <JsonForms
+                          schema={JSON.parse(dataSchemaBounced)}
+                          data={data}
+                          validationMode={'ValidateAndShow'}
+                          renderers={GoARenderers}
+                          cells={vanillaCells}
+                          onChange={({ data }) => setData(data)}
+                        />
+                      )}
+                    </ErrorBoundary>
                   </GoAFormItem>
                 </div>
               </Tab>

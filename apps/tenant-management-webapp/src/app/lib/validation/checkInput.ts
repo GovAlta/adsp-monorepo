@@ -30,6 +30,7 @@ export interface ValidInput {
   onFailureMessage: string;
 }
 
+const ajv = new Ajv();
 /**
  * Given a list of validators and name of the input field, report on its cleanliness
  */
@@ -122,6 +123,17 @@ export const wordMaxLengthCheck = (maxLen: number, field: string): Validator => 
       return `${field}'s max length of ${maxLen} characters is reached.`;
     } else {
       return '';
+    }
+  };
+};
+
+export const isValidJSONSchemaCheck = (label?: string): Validator => {
+  return (str: string) => {
+    try {
+      ajv.compile(JSON.parse(str));
+      return '';
+    } catch (err) {
+      return `${capitalize(label)} is invalid for JSON Schema.`;
     }
   };
 };
