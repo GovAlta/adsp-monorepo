@@ -26,17 +26,18 @@ export default function (state: NotificationState = NOTIFICATION_INIT, action: A
     case BASIC_NOTIFICATION:
     case ERROR_NOTIFICATION: {
       let errorMessage = action.payload.message;
-
       const error = action.payload.error;
+      let additionalMessage = `${error?.message}`;
+
       if (!error?.response) {
-        errorMessage = `${errorMessage ? errorMessage + ': ' : ''}${error?.message || error}`;
+        additionalMessage = `${error?.message || error || ''}`;
       } else if (error.response.status >= 400 && error.response.status < 500) {
-        errorMessage = `${errorMessage ? errorMessage + ': ' : ''}${
-          error?.response?.data?.errorMessage || error?.response?.data?.error || error?.response?.data
+        additionalMessage = `${
+          error?.response?.data?.errorMessage || error?.response?.data?.error || error?.response?.data || ''
         }`;
-      } else {
-        errorMessage = `${errorMessage ? errorMessage + ': ' : ''}${error?.message}`;
       }
+      const spacer = additionalMessage.length > 0 ? ': ' : '';
+      errorMessage = `${errorMessage}${spacer}${additionalMessage}`;
       return {
         notifications: [
           ...state.notifications,

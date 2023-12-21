@@ -87,7 +87,15 @@ export function* createTenant(action: CreateTenantAction): SagaIterator {
     const result = yield call([api, api.createTenant], name);
     yield put(CreateTenantSuccess(result.realm));
   } catch (err) {
-    yield put(ErrorNotification({ error: err }));
+    if (err.message.includes('Invalid value')) {
+      yield put(
+        ErrorNotification({
+          message: 'Value not valid for Tenant name: Names cannot contain special characters (e.g. ! & %).',
+        })
+      );
+    } else {
+      yield put(ErrorNotification({ error: err }));
+    }
   }
 }
 
