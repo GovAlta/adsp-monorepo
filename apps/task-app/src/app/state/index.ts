@@ -1,4 +1,6 @@
 export * from './config.slice';
+export * from './feedback.slice';
+export * from './file.slice';
 export * from './queue.slice';
 export * from './task.slice';
 export * from './user.slice';

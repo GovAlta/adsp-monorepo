@@ -5,4 +5,5 @@ export interface TaskDetailsProps {
   user: TaskUser;
   task: Task;
   isExecuting: boolean;
+  onClose: () => void;
 }

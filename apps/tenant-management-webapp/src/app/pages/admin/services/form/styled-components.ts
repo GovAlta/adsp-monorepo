@@ -186,6 +186,7 @@ export const FormPermissions = styled.div`
 `;
 export const ScrollPane = styled.div`
   overflow-y: scroll;
+  width: 100%;
   max-height: calc(100vh - 230px);
 `;
 

@@ -1,11 +1,10 @@
 import { createAsyncThunk, createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { io, Socket } from 'socket.io-client';
-import { v4 as uuidv4 } from 'uuid';
 import { AppState } from './store';
-import { FeedbackMessage, Person, PUSH_SERVICE_ID, QueueDefinition, Task, TASK_SERVICE_ID } from './types';
+import { Person, PUSH_SERVICE_ID, QueueDefinition, Task, TASK_SERVICE_ID } from './types';
 import { getAccessToken } from './user.slice';
-import { loadQueueMetrics, QueueMetrics, queueMetricsSelector } from './queue.slice';
+import { loadQueueMetrics, QueueMetrics } from './queue.slice';
 
 export const TASK_FEATURE_KEY = 'task';
 const UPDATE_STREAM_ID = 'task-updates';
@@ -52,7 +51,6 @@ export interface TaskState {
     taskToAssign: Task;
     taskToPrioritize: Task;
   };
-  errors: FeedbackMessage[];
 }
 
 interface TaskResults {
@@ -91,8 +89,11 @@ export const initializeQueue = createAsyncThunk(
 
       return definition;
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.errorMessage) {
-        return rejectWithValue(err.response?.data?.errorMessage as string);
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
       } else {
         throw err;
       }
@@ -200,8 +201,11 @@ export const loadQueueTasks = createAsyncThunk(
 
       return data;
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.errorMessage) {
-        return rejectWithValue(err.response?.data?.errorMessage as string);
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
       } else {
         throw err;
       }
@@ -281,8 +285,11 @@ export const setTaskPriority = createAsyncThunk(
 
       return data;
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.errorMessage) {
-        return rejectWithValue(err.response?.data?.errorMessage as string);
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
       } else {
         throw err;
       }
@@ -314,8 +321,11 @@ export const assignTask = createAsyncThunk(
 
       return data;
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.errorMessage) {
-        return rejectWithValue(err.response?.data?.errorMessage as string);
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
       } else {
         throw err;
       }
@@ -344,8 +354,11 @@ export const startTask = createAsyncThunk(
 
       return data;
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.errorMessage) {
-        return rejectWithValue(err.response?.data?.errorMessage as string);
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
       } else {
         throw err;
       }
@@ -374,8 +387,11 @@ export const completeTask = createAsyncThunk(
 
       return data;
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.errorMessage) {
-        return rejectWithValue(err.response?.data?.errorMessage as string);
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
       } else {
         throw err;
       }
@@ -405,8 +421,11 @@ export const cancelTask = createAsyncThunk(
 
       return data;
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.errorMessage) {
-        return rejectWithValue(err.response?.data?.errorMessage as string);
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
       } else {
         throw err;
       }
@@ -442,7 +461,6 @@ export const initialTaskState: TaskState = {
     taskToAssign: null,
     taskToPrioritize: null,
   },
-  errors: [],
 };
 
 export const taskSlice = createSlice({
@@ -470,9 +488,6 @@ export const taskSlice = createSlice({
     setTaskToPrioritize: (state, { payload }: PayloadAction<Task>) => {
       state.modal.taskToPrioritize = payload;
     },
-    dismissError: (state) => {
-      state.errors.shift();
-    },
   },
   extraReducers: (builder) => {
     builder
@@ -485,13 +500,8 @@ export const taskSlice = createSlice({
         state.busy.initializing = false;
         state.queue = payload;
       })
-      .addCase(initializeQueue.rejected, (state, { error }) => {
+      .addCase(initializeQueue.rejected, (state) => {
         state.busy.initializing = false;
-        state.errors.push({
-          id: uuidv4(),
-          level: 'error',
-          message: `Error encountered initializing queue: ${error.message}`,
-        });
       })
       .addCase(loadQueuePeople.pending, (state) => {
         state.busy.initializing = true;
@@ -506,13 +516,8 @@ export const taskSlice = createSlice({
         state.workers = payload.workers.map((p) => p.id);
         state.user = payload.user;
       })
-      .addCase(loadQueuePeople.rejected, (state, { error, payload }) => {
+      .addCase(loadQueuePeople.rejected, (state) => {
         state.busy.initializing = false;
-        state.errors.push({
-          id: uuidv4(),
-          level: 'error',
-          message: `Error encountered getting queue people: ${payload || error.message}`,
-        });
       })
       .addCase(loadQueueTasks.pending, (state) => {
         state.busy.loading = true;
@@ -529,13 +534,8 @@ export const taskSlice = createSlice({
         state.results = (payload.page.after ? state.results : []).concat(payload.results.map((r) => r.id));
         state.next = payload.page.next;
       })
-      .addCase(loadQueueTasks.rejected, (state, { error }) => {
+      .addCase(loadQueueTasks.rejected, (state) => {
         state.busy.initializing = false;
-        state.errors.push({
-          id: uuidv4(),
-          level: 'error',
-          message: `Error encountered getting queue tasks: ${error.message}`,
-        });
       })
       .addCase(assignTask.pending, (state) => {
         state.busy.executing = true;
@@ -547,13 +547,8 @@ export const taskSlice = createSlice({
           [payload.id]: payload,
         };
       })
-      .addCase(assignTask.rejected, (state, { error }) => {
+      .addCase(assignTask.rejected, (state) => {
         state.busy.executing = false;
-        state.errors.push({
-          id: uuidv4(),
-          level: 'error',
-          message: `Error encountered assigning task: ${error.message}`,
-        });
       })
       .addCase(setTaskPriority.pending, (state) => {
         state.busy.executing = true;
@@ -565,13 +560,8 @@ export const taskSlice = createSlice({
           [payload.id]: payload,
         };
       })
-      .addCase(setTaskPriority.rejected, (state, { error }) => {
+      .addCase(setTaskPriority.rejected, (state) => {
         state.busy.executing = false;
-        state.errors.push({
-          id: uuidv4(),
-          level: 'error',
-          message: `Error encountered setting task priority: ${error.message}`,
-        });
       })
       .addCase(startTask.pending, (state) => {
         state.busy.executing = true;
@@ -583,13 +573,8 @@ export const taskSlice = createSlice({
           [payload.id]: payload,
         };
       })
-      .addCase(startTask.rejected, (state, { error, payload }) => {
+      .addCase(startTask.rejected, (state) => {
         state.busy.executing = false;
-        state.errors.push({
-          id: uuidv4(),
-          level: 'error',
-          message: `Error encountered starting task: ${payload || error.message}`,
-        });
       })
       .addCase(completeTask.pending, (state) => {
         state.busy.executing = true;
@@ -601,13 +586,8 @@ export const taskSlice = createSlice({
           [payload.id]: payload,
         };
       })
-      .addCase(completeTask.rejected, (state, { error }) => {
+      .addCase(completeTask.rejected, (state) => {
         state.busy.executing = false;
-        state.errors.push({
-          id: uuidv4(),
-          level: 'error',
-          message: `Error encountered completing task: ${error.message}`,
-        });
       })
       .addCase(cancelTask.pending, (state) => {
         state.busy.executing = true;
@@ -619,13 +599,8 @@ export const taskSlice = createSlice({
           [payload.id]: payload,
         };
       })
-      .addCase(cancelTask.rejected, (state, { error }) => {
+      .addCase(cancelTask.rejected, (state) => {
         state.busy.executing = false;
-        state.errors.push({
-          id: uuidv4(),
-          level: 'error',
-          message: `Error encountered cancelling task: ${error.message}`,
-        });
       });
   },
 });
@@ -688,9 +663,4 @@ export const metricsSelector = createSelector(
   (metrics: Record<string, QueueMetrics>, queue: QueueDefinition, userId: string) => {
     return queue ? metrics[`${queue.namespace}:${queue.name}`] : null;
   }
-);
-
-export const errorSelector = createSelector(
-  (state: AppState) => state.task,
-  (task) => task.errors[0]
 );

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { GoAButton, GoAButtonGroup, GoAFormItem, GoAIcon, GoAModal, GoATextArea } from '@abgov/react-components-new';
 
 import { Comment, TopicItem, defaultComment } from '@store/comment/model';
-import { badCharsCheck, wordMaxLengthCheck, isNotEmptyCheck, Validator } from '@lib/validation/checkInput';
+import { wordMaxLengthCheck, isNotEmptyCheck, Validator } from '@lib/validation/checkInput';
 import { useValidators } from '@lib/validation/useValidators';
 
 import { DescriptionItem, HelpText, ErrorMsg } from '../styled-components';
@@ -22,17 +22,10 @@ export const AddCommentModal = ({ topic, selComment, open, type, onCancel, onSav
   const [comment, setComment] = useState<Comment>(selComment ? selComment : defaultComment);
   const descErrMessage = 'Comment can not be over 180 characters';
   const title = isNew ? 'Add comment' : 'Edit comment';
-  const namespaceCheck = (): Validator => {
-    return (namespace: string) => {
-      return namespace === 'platform' ? 'Cannot use the word platform as namespace' : '';
-    };
-  };
 
   const { errors, validators } = useValidators(
     'content',
     'content',
-    badCharsCheck,
-    namespaceCheck(),
     wordMaxLengthCheck(180, 'Comment'),
     isNotEmptyCheck('comment')
   ).build();

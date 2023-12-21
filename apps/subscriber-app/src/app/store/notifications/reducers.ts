@@ -5,18 +5,19 @@ export default function (state: NotificationState = NOTIFICATION_INIT, action: A
   switch (action.type) {
     case 'notifications/error': {
       let errorMessage = action.payload.message;
-
-      const error = action.payload?.error;
+      const error = action.payload.error;
+      let additionalMessage = `${error?.message}`;
 
       if (!error?.response) {
-        if (error) {
-          errorMessage = `${errorMessage ? errorMessage + ': ' : ''}${error?.message || error}`;
-        }
+        additionalMessage = `${error?.message || error || ''}`;
       } else if (error.response.status >= 400 && error.response.status < 500) {
-        errorMessage = `${errorMessage ? errorMessage + ': ' : ''}${
-          error?.response?.data?.errorMessage || error?.response?.data?.error || error?.response?.data
+        additionalMessage = `${
+          error?.response?.data?.errorMessage || error?.response?.data?.error || error?.response?.data || ''
         }`;
       }
+      const spacer = additionalMessage.length > 0 ? ': ' : '';
+      errorMessage = `${errorMessage}${spacer}${additionalMessage}`;
+
       return {
         notification: {
           message: errorMessage,

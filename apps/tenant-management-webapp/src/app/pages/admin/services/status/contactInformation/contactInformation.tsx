@@ -2,7 +2,7 @@ import React, { FunctionComponent, useEffect, useState } from 'react';
 import type { Subscriber } from '@store/subscription/models';
 import { useDispatch, useSelector } from 'react-redux';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
-import { Grid, GridItem } from '@core-services/app-common';
+import { Grid, GridItem, TextGoASkeleton } from '@core-services/app-common';
 import {
   UpdateContactInformationService,
   FetchStatusConfigurationService,
@@ -12,7 +12,6 @@ import { RootState } from '@store/index';
 import styled from 'styled-components';
 import { ContactInformationModalForm } from './editContactInfo';
 import { ReactComponent as Edit } from '@icons/edit.svg';
-import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { useActionStateCheck } from '@components/Indicator';
 
 interface SubscribersProps {
@@ -81,7 +80,7 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
         <Grid>
           <GridItem data-testid="email" className="word-break contact-border" md={12} vSpacing={1} hSpacing={0.5}>
             <h4>Contact email</h4>
-            {!isFetchConfigCompleted && <GoASkeletonGridColumnContent rows={1}></GoASkeletonGridColumnContent>}
+            {!isFetchConfigCompleted && <TextGoASkeleton />}
             {isFetchConfigCompleted && contact?.contactEmail}
           </GridItem>
         </Grid>
