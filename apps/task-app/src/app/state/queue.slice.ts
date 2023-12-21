@@ -15,7 +15,7 @@ export interface QueueMetrics {
   assignedTo: Record<string, number>;
   queue?: { avg: string; min: string; max: string };
   completion?: { avg: string; min: string; max: string };
-  rate?: { since: string, created: number, completed: number, cancelled: number}
+  rate?: { since: string; created: number; completed: number; cancelled: number };
 }
 
 interface QueueState {
@@ -67,7 +67,7 @@ export const loadQueueMetrics = createAsyncThunk(
           headers: { Authorization: `Bearer ${accessToken}` },
           params: {
             includeEventMetrics: true,
-          }
+          },
         }
       );
 

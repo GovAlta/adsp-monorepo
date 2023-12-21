@@ -4,3 +4,6 @@ export * from './components/Footer';
 export * from './components/Grid';
 export * from './components/PageProgress';
 export * from './components/TextSkeleton';
+
+export * from './utils';
+

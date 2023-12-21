@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { AppState } from './store';
 import { FeedbackMessage, Person, PUSH_SERVICE_ID, QueueDefinition, Task, TASK_SERVICE_ID } from './types';
 import { getAccessToken } from './user.slice';
-import { loadQueueMetrics, QueueMetrics, queueMetricsSelector } from './queue.slice';
+import { loadQueueMetrics, QueueMetrics } from './queue.slice';
 
 export const TASK_FEATURE_KEY = 'task';
 const UPDATE_STREAM_ID = 'task-updates';

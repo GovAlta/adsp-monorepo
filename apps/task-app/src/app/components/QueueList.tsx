@@ -1,5 +1,4 @@
-import { GoAContainer, GoASkeleton } from '@abgov/react-components-new';
-import { Container, Grid, GridItem } from '@core-services/app-common';
+import { Grid, GridItem } from '@core-services/app-common';
 import { FunctionComponent } from 'react';
 import styled from 'styled-components';
 import { QueueDefinition, QueueMetrics } from '../state';
@@ -10,14 +9,26 @@ interface QueueListComponentProps {
   queues: QueueDefinition[];
   metrics: Record<string, QueueMetrics>;
   metricsLoading: Record<string, boolean>;
+  onOpenQueue: (queue: QueueDefinition) => void;
 }
 
-const QueueListComponent: FunctionComponent<QueueListComponentProps> = ({ className, queues, metrics, metricsLoading }) => {
+const QueueListComponent: FunctionComponent<QueueListComponentProps> = ({
+  className,
+  queues,
+  metrics,
+  metricsLoading,
+  onOpenQueue,
+}) => {
   return (
     <Grid className={className}>
       {queues.map((queue) => (
         <GridItem key={`${queue.namespace}:${queue.name}`} vSpacing={1}>
-          <QueueListItem queue={queue} metrics={metrics[`${queue.namespace}:${queue.name}`]} metricsLoading={metricsLoading} />
+          <QueueListItem
+            queue={queue}
+            metrics={metrics[`${queue.namespace}:${queue.name}`]}
+            metricsLoading={metricsLoading}
+            onOpen={onOpenQueue}
+          />
         </GridItem>
       ))}
     </Grid>
