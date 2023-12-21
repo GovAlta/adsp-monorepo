@@ -1,8 +1,9 @@
-import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSelector, createSlice, isRejectedWithValue } from '@reduxjs/toolkit';
 import axios from 'axios';
 import keycloak, { KeycloakInstance } from 'keycloak-js';
 import { ConfigState } from './config.slice';
 import { AppState } from './store';
+import { isAxiosErrorPayload } from './util';
 
 export const USER_FEATURE_KEY = 'user';
 
@@ -142,6 +143,11 @@ const userSlice = createSlice({
       })
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
+      })
+      .addMatcher(isRejectedWithValue, (state, { payload }) => {
+        if (isAxiosErrorPayload(payload) && payload.status === 401) {
+          state.user = null;
+        }
       });
   },
 });
