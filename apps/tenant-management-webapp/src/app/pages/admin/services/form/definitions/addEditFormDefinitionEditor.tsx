@@ -39,6 +39,8 @@ import { GoAButtonGroup, GoAButton, GoAFormItem } from '@abgov/react-components-
 import useWindowDimensions from '@lib/useWindowDimensions';
 import { FetchRealmRoles } from '@store/tenant/actions';
 import { Tab, Tabs } from '@components/Tabs';
+import { uischema } from './categorization-stepper-nav-buttons';
+import { schema } from './categorization';
 import { PageIndicator } from '@components/Indicator';
 
 const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
@@ -54,27 +56,6 @@ const isFormUpdated = (prev: FormDefinition, next: FormDefinition): boolean => {
   );
 };
 
-const dataSchema = {
-  type: 'object',
-  properties: {
-    name: {
-      type: 'string',
-      minLength: 1,
-    },
-    done: {
-      type: 'boolean',
-    },
-    due_date: {
-      type: 'string',
-      format: 'date',
-    },
-    recurrence: {
-      type: 'string',
-    },
-  },
-  required: ['name', 'due_date'],
-};
-
 export const formEditorJsonConfig = {
   'data-testid': 'templateForm-test-input',
   options: {
@@ -84,44 +65,17 @@ export const formEditorJsonConfig = {
   },
 };
 
-const uiSchema = {
-  type: 'VerticalLayout',
-  elements: [
-    {
-      type: 'Control',
-      label: true,
-      scope: '#/properties/done',
-    },
-    {
-      type: 'Control',
-      scope: '#/properties/name',
-    },
-    {
-      type: 'HorizontalLayout',
-      elements: [
-        {
-          type: 'Control',
-          scope: '#/properties/due_date',
-        },
-        {
-          type: 'Control',
-          scope: '#/properties/recurrence',
-        },
-      ],
-    },
-  ],
-};
-
 const invalidJsonMsg = 'Invalid JSON syntax';
 
 export function AddEditFormDefinitionEditor(): JSX.Element {
   const [definition, setDefinition] = useState<FormDefinition>(defaultFormDefinition);
   const [initialDefinition, setInitialDefinition] = useState<FormDefinition>(defaultFormDefinition);
 
-  const [tempUiSchema, setTempUiSchema] = useState<string>(JSON.stringify(uiSchema, null, 2));
-  const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify(dataSchema, null, 2));
-  const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify(uiSchema, null, 2));
-  const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify(dataSchema, null, 2));
+  const [tempUiSchema, setTempUiSchema] = useState<string>(JSON.stringify({}, null, 2));
+  const [tempDataSchema, setTempDataSchema] = useState<string>(JSON.stringify({}, null, 2));
+  const [UiSchemaBounced, setTempUiSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
+  const [dataSchemaBounced, setDataSchemaBounced] = useState<string>(JSON.stringify({}, null, 2));
+
   const [data, setData] = useState<unknown>({});
   const [error, setError] = useState('');
   const [spinner, setSpinner] = useState<boolean>(false);
@@ -371,7 +325,7 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                   </EditorPadding>
                 </GoAFormItem>
               </Tab>
-              <Tab label="UI schema" data-testid="form-editor-tab">
+              <Tab label="UI schema" data-testid="form-editor-tab-2">
                 <GoAFormItem error={errors?.body ?? editorErrors?.uiSchema ?? null} label="">
                   <EditorPadding>
                     <Editor
@@ -484,6 +438,19 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
                 >
                   Back
                 </GoAButton>
+
+                <GoAButton
+                  type="tertiary"
+                  testId="form-generate"
+                  onClick={() => {
+                    setTempUiSchemaBounced(JSON.stringify(uischema, null, 2));
+                    setDataSchemaBounced(JSON.stringify(schema, null, 2));
+                    setTempUiSchema(JSON.stringify(uischema, null, 2));
+                    setTempDataSchema(JSON.stringify(schema, null, 2));
+                  }}
+                >
+                  Generate multi-step form
+                </GoAButton>
               </GoAButtonGroup>
             </FinalButtonPadding>
           </NameDescriptionDataSchema>
@@ -493,15 +460,26 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
               <Tab label="Preview" data-testid="preview-view-tab">
                 <div style={{ paddingTop: '2rem' }}>
                   <GoAFormItem error={error} label="">
-                    <JsonForms
-                      schema={JSON.parse(dataSchemaBounced)}
-                      uischema={JSON.parse(UiSchemaBounced)}
-                      data={data}
-                      validationMode={'NoValidation'}
-                      renderers={GoARenderers}
-                      cells={vanillaCells}
-                      onChange={({ data }) => setData(data)}
-                    />
+                    {UiSchemaBounced !== '{}' ? (
+                      <JsonForms
+                        schema={JSON.parse(dataSchemaBounced)}
+                        uischema={JSON.parse(UiSchemaBounced)}
+                        data={data}
+                        validationMode={'NoValidation'}
+                        renderers={GoARenderers}
+                        cells={vanillaCells}
+                        onChange={({ data }) => setData(data)}
+                      />
+                    ) : (
+                      <JsonForms
+                        schema={JSON.parse(dataSchemaBounced)}
+                        data={data}
+                        validationMode={'NoValidation'}
+                        renderers={GoARenderers}
+                        cells={vanillaCells}
+                        onChange={({ data }) => setData(data)}
+                      />
+                    )}
                   </GoAFormItem>
                 </div>
               </Tab>
@@ -530,7 +508,13 @@ export function AddEditFormDefinitionEditor(): JSX.Element {
           dispatch(updateFormDefinition(definition));
           setSaveModal({ visible: false, closeEditor: true });
         }}
-        saveDisable={!isFormUpdated(initialDefinition, definition)}
+        saveDisable={
+          !isFormUpdated(initialDefinition, {
+            ...definition,
+            uiSchema: JSON.parse(UiSchemaBounced),
+            dataSchema: JSON.parse(dataSchemaBounced),
+          })
+        }
         onCancel={() => {
           setSaveModal({ visible: false, closeEditor: false });
         }}
