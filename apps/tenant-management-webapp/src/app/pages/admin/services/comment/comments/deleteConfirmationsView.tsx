@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import { useDispatch } from 'react-redux';
 
-import { TableDiv, DeleteConfirmation } from '../styled-components';
+import { TableDiv, CommentWrapper } from '../styled-components';
 import { DeleteModal } from '@components/DeleteModal';
 import { deleteCommentComments } from '@store/comment/action';
 
@@ -34,11 +34,9 @@ export const DeleteConfirmationsView = ({
         title="Delete comment"
         isOpen={showDeleteConfirmation}
         content={
-          <DeleteConfirmation>
-            <div>
-              Are you sure you wish to delete <p>{`${selectedComment.title}?`}</p>
-            </div>
-          </DeleteConfirmation>
+          <div>
+            Are you sure you wish to delete <CommentWrapper>{`${selectedComment.title}?`}</CommentWrapper>
+          </div>
         }
         onCancel={() => {
           setShowDeleteConfirmation(false);

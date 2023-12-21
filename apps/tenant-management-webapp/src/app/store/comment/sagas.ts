@@ -157,7 +157,7 @@ function* fetchTopicsSaga(payload): SagaIterator {
   const next = payload.next ? payload.next : '';
   yield put(
     UpdateIndicator({
-      show: next !== '' ? false : true,
+      show: next === '',
       message: 'Loading Topics...',
     })
   );
