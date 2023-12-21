@@ -73,7 +73,7 @@ export const defaultQueuedTask: QueueTaskDefinition = {
   recordId: '',
   description: '',
   createdOn: '',
-  priority: '',
+  priority: 'Normal',
   status: '',
   queue: {},
 };
