@@ -97,8 +97,9 @@ export function getQueueMetrics(
     try {
       const user = req.user;
       const tenant = req.tenant;
-      const { includeEventMetrics: includeEventMetricsValue } = req.query;
+      const { includeEventMetrics: includeEventMetricsValue, notEnded: notEndedValue } = req.query;
       const includeEventMetrics = includeEventMetricsValue === 'true';
+      const notEnded = notEndedValue === 'true';
 
       const queue: QueueEntity = req[QUEUE_KEY];
       if (!queue.canAccessTask(user)) {
@@ -107,6 +108,7 @@ export function getQueueMetrics(
 
       let [metrics] = await repository.getTaskMetrics(tenant.id, {
         queue: { namespace: queue.namespace, name: queue.name },
+        notEnded,
       });
 
       // No results means there are no tasks in the queue
@@ -399,6 +401,10 @@ export function createQueueRouter({
   router.get(
     '/queues/:namespace/:name/metrics',
     validateNamespaceNameHandler,
+    createValidationHandler(
+      query('notEnded').optional().isBoolean(),
+      query('includeEventMetrics').optional().isBoolean()
+    ),
     getQueue,
     getQueueMetrics(apiId, directory, tokenProvider, repository)
   );
