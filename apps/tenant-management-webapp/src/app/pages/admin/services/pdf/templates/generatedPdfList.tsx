@@ -4,7 +4,6 @@ import { DownloadFileService } from '@store/file/actions';
 import DataTable from '@components/DataTable';
 import { RootState } from '@store/index';
 import { GoAContextMenu, GoAContextMenuIcon } from '@components/ContextMenu';
-import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import CheckmarkCircle from '@components/icons/CheckmarkCircle';
 import CloseCircle from '@components/icons/CloseCircle';
 import InformationCircle from '@components/icons/InformationCircle';
@@ -12,7 +11,7 @@ import { FileTableStyles, ButtonBox, BadgeWrapper } from '../styled-components';
 import { GoABadge } from '@abgov/react-components-new';
 import { showCurrentFilePdf, setPdfDisplayFileId, deletePdfFileService } from '@store/pdf/action';
 import { DeleteModal } from '@components/DeleteModal';
-
+import { TextGoASkeleton } from '@core-services/app-common';
 interface GeneratedPdfListProps {
   templateId: string;
 }
@@ -109,13 +108,7 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                           {file?.size ? (
                             Math.ceil(file.size / 1024)
                           ) : (
-                            <div>
-                              {!indicator.show ? (
-                                'Deleted'
-                              ) : (
-                                <GoASkeletonGridColumnContent rows={1}></GoASkeletonGridColumnContent>
-                              )}
-                            </div>
+                            <div>{!indicator.show ? 'Deleted' : <TextGoASkeleton />}</div>
                           )}
                         </td>
                         <td className="display-flex">
@@ -147,9 +140,7 @@ const GeneratedPdfList = ({ templateId }: GeneratedPdfListProps): JSX.Element =>
                               </GoAContextMenu>
                             </>
                           ) : (
-                            <div>
-                              {indicator.show && <GoASkeletonGridColumnContent rows={1}></GoASkeletonGridColumnContent>}
-                            </div>
+                            <div>{indicator.show && <TextGoASkeleton />}</div>
                           )}
                         </td>
                       </tr>

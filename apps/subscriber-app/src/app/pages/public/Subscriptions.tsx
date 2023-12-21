@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Main } from '@components/Html';
-import { Container } from '@core-services/app-common';
+import { Container, TextGoASkeleton } from '@core-services/app-common';
 import DataTable from '@components/DataTable';
 import { useSearchParams } from 'react-router-dom-6';
-import { GoASkeletonGridColumnContent } from '@abgov/react-components';
 import { GoAContainer, GoAButton, GoACallout, GoAButtonGroup, GoAModal, GoABadge } from '@abgov/react-components-new';
 import { FetchContactInfoService } from '@store/notification/actions';
 import { FetchTenantService } from '@store/tenant/actions';
@@ -31,6 +30,7 @@ import SubscriptionsList from '@components/SubscriptionsList';
 import { SubscriberChannel, Subscription } from '@store/subscription/models';
 
 const Subscriptions = (): JSX.Element => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [searchParams, _] = useSearchParams();
   const history = useHistory();
   const dispatch = useDispatch();
@@ -186,11 +186,7 @@ const Subscriptions = (): JSX.Element => {
                   </p>
                 </ContactInformationContainer>
                 {!subscriberEmail &&
-                  (indicator?.show ? (
-                    <GoASkeletonGridColumnContent rows={1}></GoASkeletonGridColumnContent>
-                  ) : (
-                    <>No Email</>
-                  ))}
+                  (indicator?.show ? <TextGoASkeleton lineCount={1}></TextGoASkeleton> : <>No Email</>)}
 
                 <ButtonMargin>
                   <GoAButton
@@ -227,7 +223,7 @@ const Subscriptions = (): JSX.Element => {
                     ) : indicator?.show ? (
                       <tr>
                         <td colSpan={4}>
-                          <GoASkeletonGridColumnContent rows={5}></GoASkeletonGridColumnContent>
+                          <TextGoASkeleton lineCount={5}></TextGoASkeleton>
                         </td>
                       </tr>
                     ) : (
@@ -244,7 +240,7 @@ const Subscriptions = (): JSX.Element => {
                 )}
               </SubscriptionListContainer>
               {indicator?.show ? (
-                <GoASkeletonGridColumnContent rows={5}></GoASkeletonGridColumnContent>
+                <TextGoASkeleton lineCount={5}></TextGoASkeleton>
               ) : (
                 <CalloutWrapper id="contactSupport">
                   <GoACallout heading="Need help? Contact your service admin" type="information">

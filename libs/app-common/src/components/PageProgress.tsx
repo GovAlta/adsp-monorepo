@@ -1,6 +1,7 @@
+import React from 'react';
 import { GoACircularProgress, CircularProgressSize } from '@abgov/react-components-new';
 import { CenterPageLoader, CenterPage } from './styled-components';
-import React from 'react';
+
 interface PageLoaderProps {
   message?: string;
   size?: CircularProgressSize;
