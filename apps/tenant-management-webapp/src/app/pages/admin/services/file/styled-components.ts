@@ -86,7 +86,7 @@ export const FileTypeEditor = styled.div`
   }
 
   .hr-resize-bottom {
-    margin-bottom: var(--goa-spacing-2xs);
+    margin-bottom: var(--goa-spacing-1xs);
     margin-top: var(--goa-spacing-xl);
   }
 `;
@@ -122,10 +122,9 @@ export const HideTablet = styled.div`
 `;
 
 export const Modal = styled.div`
-  display: block;
-  position: fixed;
+  display: flex;
+  position: absolute;
   left: 0;
-  z-index: 10000;
   width: 100%;
 `;
 
@@ -143,8 +142,9 @@ export const FileTypeTemplateEditorContainer = styled.div`
 
 export const OuterFileTypeTemplateEditorContainer = styled.div`
   width: 100%;
-  height: 100vh;
+  height: 95vh;
   overflow: hidden;
+  position: absolute;
 `;
 
 export const DropDownZIndex = styled.div`
@@ -169,6 +169,12 @@ export const FileTypePermissions = styled.div`
 export const ScrollPane = styled.div`
   overflow-y: scroll;
   max-height: calc(100vh - 230px);
+`;
+export const FileTypeModalContent = styled.div`
+  background: var(--goa-color-greyscale-white);
+  margin-top: -23px;
+  padding-top: 23px;
+  width: 100%;
 `;
 
 export const FileTypesEditorTitle = styled.div`
