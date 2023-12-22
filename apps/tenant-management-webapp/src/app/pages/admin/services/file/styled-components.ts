@@ -142,7 +142,7 @@ export const FileTypeTemplateEditorContainer = styled.div`
 
 export const OuterFileTypeTemplateEditorContainer = styled.div`
   width: 100%;
-  height: 90vh;
+  height: 95vh;
   overflow: hidden;
   position: absolute;
 `;
