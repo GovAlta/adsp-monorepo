@@ -152,15 +152,15 @@ function* addTopicSaga({ payload }: AddTopicRequestAction): SagaIterator {
 }
 
 function* fetchTopicsSaga(payload): SagaIterator {
-  yield put(
-    UpdateIndicator({
-      show: true,
-      message: 'Loading Topics...',
-    })
-  );
   const baseUrl: string = yield select((state: RootState) => state.config.serviceUrls?.commentServiceApiUrl);
   const token = yield call(getAccessToken);
   const next = payload.next ? payload.next : '';
+  yield put(
+    UpdateIndicator({
+      show: next === '',
+      message: 'Loading Topics...',
+    })
+  );
 
   try {
     const url = encodeURI(
