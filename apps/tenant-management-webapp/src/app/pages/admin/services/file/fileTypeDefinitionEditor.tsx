@@ -4,8 +4,8 @@ import {
   OuterFileTypeTemplateEditorContainer,
   Modal,
   HideTablet,
+  FileTypeModalContent,
 } from './styled-components';
-import { ModalContent } from '../styled-components';
 import { TabletMessage } from '@components/TabletMessage';
 import { useHistory } from 'react-router-dom';
 import { AddEditFileTypeDefinitionEditor } from './addEditFileTypeDefinitionEditor';
@@ -22,7 +22,7 @@ export const FileTypeDefinitionEditor = (): JSX.Element => {
   return (
     <>
       <Modal data-testid="fileType-form">
-        <ModalContent>
+        <FileTypeModalContent>
           <OuterFileTypeTemplateEditorContainer>
             <TabletMessage goBack={goBack} />
             <HideTablet>
@@ -31,7 +31,7 @@ export const FileTypeDefinitionEditor = (): JSX.Element => {
               </FileTypeTemplateEditorContainer>
             </HideTablet>
           </OuterFileTypeTemplateEditorContainer>
-        </ModalContent>
+        </FileTypeModalContent>
       </Modal>
     </>
   );

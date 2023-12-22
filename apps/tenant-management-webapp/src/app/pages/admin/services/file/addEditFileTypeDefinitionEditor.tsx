@@ -102,10 +102,30 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
         fileType.securityClassification = '';
       }
       const isCalloutOpen =
+        foundFileType.anonymousRead &&
+        foundFileType.securityClassification !== SecurityClassification.Public &&
+        foundFileType.securityClassification !== '';
+      setIsSecurityClassificationCalloutIsOpen(isCalloutOpen);
+    }
+  }, []);
+
+  useEffect(() => {
+    const foundFileType = fileTypes?.find((f) => f.id === id);
+    if (id && foundFileType) {
+      const selectedFileType = foundFileType;
+      setFileType(selectedFileType);
+      setInitialFileType(selectedFileType);
+      //For backwards comptability
+      if (!foundFileType?.securityClassification || foundFileType?.securityClassification === undefined) {
+        fileType.securityClassification = '';
+      }
+      const isCalloutOpen =
         fileType.anonymousRead &&
         fileType.securityClassification !== SecurityClassification.Public &&
         fileType.securityClassification !== '';
-      setIsSecurityClassificationCalloutIsOpen(isCalloutOpen);
+      if (isCalloutOpen) {
+        setIsSecurityClassificationCalloutIsOpen(!isSecurityClassificationCalloutOpen);
+      }
     }
   }, [fileTypes]);
 

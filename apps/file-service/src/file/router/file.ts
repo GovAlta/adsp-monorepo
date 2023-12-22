@@ -286,6 +286,11 @@ export function downloadFile(logger: Logger): RequestHandler {
         res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeRFC5987(fileEntity.filename)}`);
       }
 
+      if (isSupportedVideoType(fileEntity.mimeType)) {
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Connection', 'keep-alive');
+      }
+
       stream.on('end', () => {
         logger.debug(`Ending streaming of file '${fileEntity.filename}' (ID: ${fileEntity.id}).`, {
           context: 'file-router',
@@ -299,6 +304,11 @@ export function downloadFile(logger: Logger): RequestHandler {
       next(err);
     }
   };
+}
+
+function isSupportedVideoType(mimeType: string): boolean {
+  // supporting mp4, avi, or mov
+  return mimeType === 'video/mp4' || mimeType === 'video/x-msvideo' || mimeType === 'video/quicktime';
 }
 
 export function deleteFile(logger: Logger, eventService: EventService): RequestHandler {
