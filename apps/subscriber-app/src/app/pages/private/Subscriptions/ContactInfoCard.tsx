@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-//import { GoASkeletonGridColumnContent } from '@abgov/react-components';
-import { GoAFormItem } from '@abgov/react-components/experimental';
 import { useDispatch, useSelector } from 'react-redux';
 import { patchSubscriber, createSubscriber, VerifyEmail, VerifyPhone } from '@store/subscription/actions';
 import { actionTypes } from '@store/subscription/models';
@@ -21,6 +19,7 @@ import {
   GoARadioItem,
   GoARadioGroup,
   GoABadge,
+  GoAFormItem,
 } from '@abgov/react-components-new';
 interface ContactInfoCardProps {
   subscriber?: Subscriber;
@@ -216,7 +215,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
             <Grid>
               <GridItem md={3.5} hSpacing={1}>
                 <Label>Email</Label>
-                <GoAFormItem error={formErrors?.['email']}>
+                <GoAFormItem label="" error={formErrors?.['email']}>
                   <GoAInput
                     type="email"
                     aria-label="email"
@@ -232,7 +231,7 @@ export const ContactInfoCard = ({ subscriber }: ContactInfoCardProps): JSX.Eleme
               <GridItem md={3.5} hSpacing={1}>
                 <Label>Phone number</Label>
 
-                <GoAFormItem error={formErrors?.['sms']}>
+                <GoAFormItem label="" error={formErrors?.['sms']}>
                   <GoAInput
                     type="tel"
                     aria-label="sms"

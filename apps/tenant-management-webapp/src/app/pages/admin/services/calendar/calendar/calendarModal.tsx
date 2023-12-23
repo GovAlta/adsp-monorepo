@@ -14,6 +14,7 @@ import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { selectRoleList } from '@store/sharedSelectors/roles';
 import { selectCalendarsByName } from '@store/calendar/selectors';
 import { TextGoASkeleton } from '@core-services/app-common';
+import { areObjectsEqual } from '@lib/objectUtil';
 interface CalendarModalProps {
   calendarName: string | undefined;
   onCancel?: () => void;
@@ -131,7 +132,7 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
           <GoAButton
             type="primary"
             testId="calendar-modal-save"
-            disabled={validators.haveErrors()}
+            disabled={validators.haveErrors() || areObjectsEqual(calendar, initialValue)}
             onClick={() => {
               validationCheck();
             }}
