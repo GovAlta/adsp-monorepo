@@ -19,13 +19,14 @@ import { ResetModalState } from '@store/session/actions';
 import { CheckBoxWrapper } from '../styled-components';
 import { CalendarEvent } from '@store/calendar/models';
 import { CreateEventsByCalendar, UpdateEventsByCalendar } from '@store/calendar/actions';
+import { areObjectsEqual } from '@lib/objectUtil';
 
 interface EventAddEditModalProps {
   calendarName: string;
 }
 export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX.Element => {
   const initCalendarEvent = useSelector((state) => selectAddModalEvent(state, calendarName));
-  const [calendarEvent, setCalendarEvent] = useState<CalendarEvent>(null);
+  const [calendarEvent, setCalendarEvent] = useState<CalendarEvent>(initCalendarEvent);
   const calendarEvents = useSelector((state) => selectSelectedCalendarEventNames(state, calendarName));
   const [startTime, setStartTime] = useState<string>('');
   const [endTime, setEndTime] = useState<string>('');
@@ -103,7 +104,7 @@ export const EventAddEditModal = ({ calendarName }: EventAddEditModalProps): JSX
           <GoAButton
             type="primary"
             testId="calendar-modal-save"
-            disabled={validators.haveErrors()}
+            disabled={validators.haveErrors() || areObjectsEqual(calendarEvent, initCalendarEvent)}
             onClick={() => {
               if (new Date(calendarEvent.start) > new Date(calendarEvent.end)) {
                 setIsEndBeforeStart(true);
