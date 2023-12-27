@@ -13,7 +13,7 @@ import styled from 'styled-components';
 import { ContactInformationModalForm } from './edit';
 import { ReactComponent as Edit } from '@icons/edit.svg';
 import { phoneWrapper } from '@lib/wrappers';
-import { GoASkeletonGridColumnContent } from '@abgov/react-components';
+import { TextGoASkeleton } from '@core-services/app-common';
 import { useActionStateCheck } from '@components/Indicator';
 
 interface SubscribersProps {
@@ -84,12 +84,12 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
         <Grid>
           <GridItem data-testid="email" className="word-break contact-border" md={8} vSpacing={1} hSpacing={0.5}>
             <h4>Contact email</h4>
-            {isFetchLoading && <GoASkeletonGridColumnContent key="email" rows={1}></GoASkeletonGridColumnContent>}
+            {isFetchLoading && <TextGoASkeleton key="email" />}
             {!isFetchLoading && contact?.contactEmail}
           </GridItem>
           <GridItem data-testid="phone" className="contact-border" md={4} vSpacing={1} hSpacing={0.5}>
             <h4>Phone number</h4>
-            {isFetchLoading && <GoASkeletonGridColumnContent key="Phone" rows={1}></GoASkeletonGridColumnContent>}
+            {isFetchLoading && <TextGoASkeleton key="Phone" />}
 
             {!isFetchLoading && phoneWrapper(contact?.phoneNumber)}
           </GridItem>
@@ -97,9 +97,7 @@ export const ContactInformation: FunctionComponent<SubscribersProps> = () => {
         <Grid>
           <GridItem data-testid="support-instructions" className="contact-border" md={12} vSpacing={1} hSpacing={0}>
             <h4>Support instructions</h4>
-            {isFetchLoading && (
-              <GoASkeletonGridColumnContent key="instructions" rows={1}></GoASkeletonGridColumnContent>
-            )}
+            {isFetchLoading && <TextGoASkeleton key="instructions" />}
             {!isFetchLoading && contact?.supportInstructions}
           </GridItem>
         </Grid>

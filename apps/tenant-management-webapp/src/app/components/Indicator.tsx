@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { GoAPageLoader } from '@abgov/react-components';
+import { PageLoader } from '@core-services/app-common';
 import { RootState } from '@store/index';
 import { useSelector } from 'react-redux';
 
@@ -13,10 +13,6 @@ export const IndicatorWithDelay = (props: IndicatorProps): JSX.Element => {
   const [showIndicator, setShowIndicator] = useState<boolean>(false);
   const delayInMS = props.delay || 500;
   const message = props.message || 'Loading';
-  let pageLock = true;
-  if (props?.pageLock === false) {
-    pageLock = false;
-  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -27,7 +23,7 @@ export const IndicatorWithDelay = (props: IndicatorProps): JSX.Element => {
     };
   }, []);
 
-  return <>{showIndicator && <GoAPageLoader visible={true} type="infinite" message={message} pagelock={pageLock} />}</>;
+  return <>{showIndicator && <PageLoader message={message} />}</>;
 };
 
 const Center = styled.div`

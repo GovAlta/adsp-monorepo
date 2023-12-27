@@ -155,6 +155,12 @@ components:
         required: true
         schema:
           type: string
+      - name: notEnded
+        description: Flag indicating if only active tasks should be included in metrics.
+        in: query
+        required: false
+        schema:
+          type: boolean
       - name: includeEventMetrics
         description: Flag indicating if event metrics should be retrieved.
         in: query

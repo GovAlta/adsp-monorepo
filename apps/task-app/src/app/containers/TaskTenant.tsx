@@ -57,12 +57,12 @@ export const TaskTenant = () => {
         {user && (
           <section>
             <Switch>
-              <Route exact path={`/${tenantName}/:namespace/:name`}>
+              <Route path={`/:tenantName/:namespace/:name`}>
                 <Suspense>
                   <TaskQueue />
                 </Suspense>
               </Route>
-              <Route exact path={`/${tenantName}`}>
+              <Route exact path={`/:tenantName`}>
                 <Suspense>
                   <TaskQueues />
                 </Suspense>

@@ -18,13 +18,11 @@ import {
   RetentionPolicyWrapper,
   RetentionToolTip,
   ScrollPane,
-  SpinnerModalPadding,
   TextLoadingIndicator,
 } from './styled-components';
 import { ReactComponent as InfoCircle } from '@assets/icons/info-circle.svg';
 import { useWindowDimensions } from '@lib/useWindowDimensions';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoAPageLoader } from '@abgov/react-components';
 import { GoAButton, GoACallout, GoADropdown, GoADropdownItem } from '@abgov/react-components-new';
 import { FileTypeConfigDefinition } from './fileTypeConfigDefinition';
 import { GoAButtonGroup, GoACheckbox, GoAFormItem, GoAInput, GoAPopover } from '@abgov/react-components-new';
@@ -41,6 +39,7 @@ import { FETCH_KEYCLOAK_SERVICE_ROLES } from '@store/access/actions';
 import { CreateFileTypeService, UpdateFileTypeService } from '@store/file/actions';
 import { createSelector } from 'reselect';
 import { selectFileTyeNames } from './fileTypeNew';
+import { PageLoader } from '@core-services/app-common';
 
 export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -103,10 +102,30 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
         fileType.securityClassification = '';
       }
       const isCalloutOpen =
+        foundFileType.anonymousRead &&
+        foundFileType.securityClassification !== SecurityClassification.Public &&
+        foundFileType.securityClassification !== '';
+      setIsSecurityClassificationCalloutIsOpen(isCalloutOpen);
+    }
+  }, []);
+
+  useEffect(() => {
+    const foundFileType = fileTypes?.find((f) => f.id === id);
+    if (id && foundFileType) {
+      const selectedFileType = foundFileType;
+      setFileType(selectedFileType);
+      setInitialFileType(selectedFileType);
+      //For backwards comptability
+      if (!foundFileType?.securityClassification || foundFileType?.securityClassification === undefined) {
+        fileType.securityClassification = '';
+      }
+      const isCalloutOpen =
         fileType.anonymousRead &&
         fileType.securityClassification !== SecurityClassification.Public &&
         fileType.securityClassification !== '';
-      setIsSecurityClassificationCalloutIsOpen(isCalloutOpen);
+      if (isCalloutOpen) {
+        setIsSecurityClassificationCalloutIsOpen(!isSecurityClassificationCalloutOpen);
+      }
     }
   }, [fileTypes]);
 
@@ -190,9 +209,7 @@ export const AddEditFileTypeDefinitionEditor = (): JSX.Element => {
   return (
     <FileTypeEditor data-testid="filetype-editor">
       {spinner ? (
-        <SpinnerModalPadding>
-          <GoAPageLoader visible={true} type="infinite" message={'Loading...'} pagelock={false} />
-        </SpinnerModalPadding>
+        <PageLoader />
       ) : (
         <FlexRow>
           <NameDescriptionDataSchema>

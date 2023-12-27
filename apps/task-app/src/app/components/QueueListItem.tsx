@@ -10,6 +10,7 @@ interface QueueListItemProps {
   queue: QueueDefinition;
   metrics?: QueueMetricsValue;
   metricsLoading: Record<string, boolean>;
+  onOpen: (queue: QueueDefinition) => void;
 }
 
 const QueueListItemComponent: FunctionComponent<QueueListItemProps> = ({
@@ -17,8 +18,8 @@ const QueueListItemComponent: FunctionComponent<QueueListItemProps> = ({
   queue,
   metrics,
   metricsLoading,
+  onOpen
 }) => {
-  const history = useHistory();
   return (
     <GoAContainer type="interactive" accent="thin">
       <div className={className}>
@@ -32,7 +33,7 @@ const QueueListItemComponent: FunctionComponent<QueueListItemProps> = ({
             <GoAIconButton
               icon="open"
               size="large"
-              onClick={() => history.push(`${history.location.pathname}/${queue.namespace}/${queue.name}`)}
+              onClick={() => onOpen(queue)}
             />
           </div>
         </div>

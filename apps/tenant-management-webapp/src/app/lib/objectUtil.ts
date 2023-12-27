@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export function areObjectsEqual<T extends Record<string, any>>(obj1: T, obj2: T): boolean {
+  if (!obj1 || !obj2) return false;
+
   const keys1 = Object.keys(obj1);
   const keys2 = Object.keys(obj2);
 

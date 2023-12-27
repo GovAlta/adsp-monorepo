@@ -6,13 +6,12 @@ import { RootState } from '@store/index';
 import type { Subscriber, Subscription, SubscriptionSearchCriteria, Criteria } from '@store/subscription/models';
 import { UpdateSubscriber, GetTypeSubscriptions } from '@store/subscription/actions';
 import styled from 'styled-components';
-import { GoAPageLoader } from '@abgov/react-components';
 import { SubscriberModalForm } from '../subscribers/editSubscriber';
 import { GoAIcon } from '@abgov/react-components/experimental';
 import { SubscriptionNextLoader } from './subscriptionNextLoader';
 import { GoAContextMenuIcon } from '@components/ContextMenu';
 import { phoneWrapper } from '@lib/wrappers';
-
+import { PageIndicator } from '@components/Indicator';
 interface SubscriptionProps {
   subscriber: Subscriber;
   criteria: Criteria;
@@ -179,8 +178,7 @@ const SubscriptionsListComponent: FunctionComponent<SubscriptionsListComponentPr
   if (!groups) {
     return (
       <div>
-        {' '}
-        <GoAPageLoader visible={true} message="Loading..." type="infinite" pagelock={false} />
+        <PageIndicator />
       </div>
     );
   }

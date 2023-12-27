@@ -1,8 +1,7 @@
 import React, { FunctionComponent, useState } from 'react';
 import type { SubscriberSearchCriteria } from '@store/subscription/models';
 
-import { GoAFormItem } from '@abgov/react-components/experimental';
-import { GoAButton, GoAButtonGroup, GoAInput, GoAGrid } from '@abgov/react-components-new';
+import { GoAButton, GoAButtonGroup, GoAInput, GoAGrid, GoAFormItem } from '@abgov/react-components-new';
 import '@abgov/core-css/src/lib/styles/v2/colors.scss';
 
 interface EventSearchFormProps {
@@ -30,8 +29,7 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
   return (
     <div>
       <GoAGrid minChildWidth="26ch" gap="m">
-        <GoAFormItem>
-          <label htmlFor="name">Search subscriber address as</label>
+        <GoAFormItem label="Search subscriber address as">
           <GoAInput
             name="name"
             testId="subscriber-name-input"
@@ -41,8 +39,7 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
             onChange={onChangeFn}
           />
         </GoAFormItem>
-        <GoAFormItem>
-          <label htmlFor="email">Search subscriber email</label>
+        <GoAFormItem label="Search subscriber email">
           <GoAInput
             type="email"
             testId="subscriber-email-input"
@@ -53,8 +50,7 @@ export const SubscribersSearchForm: FunctionComponent<EventSearchFormProps> = ({
             onChange={onChangeFn}
           />
         </GoAFormItem>
-        <GoAFormItem>
-          <label htmlFor="sms">Search subscriber phone</label>
+        <GoAFormItem label="Search subscriber phone">
           <GoAInput
             type="tel"
             name="sms"

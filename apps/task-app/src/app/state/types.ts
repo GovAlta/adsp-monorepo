@@ -36,8 +36,15 @@ export interface Person {
   email: string;
 }
 
+export interface SerializedAxiosError {
+  status: number;
+  message: string;
+}
+
+export type FeedbackMessageLevel = 'info' | 'success' | 'warn' | 'error';
 export interface FeedbackMessage {
   id: string;
-  level: 'warn' | 'error';
+  level: FeedbackMessageLevel;
   message: string;
+  in?: string;
 }

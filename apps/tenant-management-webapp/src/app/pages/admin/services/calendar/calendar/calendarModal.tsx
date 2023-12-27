@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { ClientRoleTable } from '@components/RoleTable';
 import { useValidators } from '@lib/validation/useValidators';
 import { toKebabName } from '@lib/kebabName';
-import { GoASkeletonGridColumnContent } from '@abgov/react-components';
+
 import { isNotEmptyCheck, wordMaxLengthCheck, duplicateNameCheck, badCharsCheck } from '@lib/validation/checkInput';
 import { IdField } from '../styled-components';
 import { RootState } from '@store/index';
@@ -13,7 +13,8 @@ import { FetchRealmRoles } from '@store/tenant/actions';
 import { fetchKeycloakServiceRoles } from '@store/access/actions';
 import { selectRoleList } from '@store/sharedSelectors/roles';
 import { selectCalendarsByName } from '@store/calendar/selectors';
-
+import { TextGoASkeleton } from '@core-services/app-common';
+import { areObjectsEqual } from '@lib/objectUtil';
 interface CalendarModalProps {
   calendarName: string | undefined;
   onCancel?: () => void;
@@ -131,7 +132,7 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
           <GoAButton
             type="primary"
             testId="calendar-modal-save"
-            disabled={validators.haveErrors()}
+            disabled={validators.haveErrors() || areObjectsEqual(calendar, initialValue)}
             onClick={() => {
               validationCheck();
             }}
@@ -186,9 +187,7 @@ export const CalendarModal = ({ calendarName, onCancel, onSave, open }: Calendar
         roles.map((r) => {
           return <ClientRole roleNames={r.roleNames} key={r.clientId} clientId={r.clientId} />;
         })}
-      {Object.entries(roles).length === 0 && (
-        <GoASkeletonGridColumnContent key={1} rows={4}></GoASkeletonGridColumnContent>
-      )}
+      {Object.entries(roles).length === 0 && <TextGoASkeleton />}
     </GoAModal>
   );
 };

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Main } from '@components/Html';
-import { Container } from '@core-services/app-common';
+import { Container, TextGoASkeleton } from '@core-services/app-common';
 import DataTable from '@components/DataTable';
 import { useSearchParams, useNavigate } from 'react-router-dom-6';
-import { GoASkeletonGridColumnContent } from '@abgov/react-components';
+
 import { GoAButton, GoACallout, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
 import { FetchContactInfoService } from '@store/notification/actions';
 
@@ -30,6 +30,7 @@ interface SubscriptionsProps {
 }
 
 const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [searchParams, _] = useSearchParams();
   const navigate = useNavigate();
 
@@ -184,7 +185,7 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
                     ) : indicator?.show || subscriber === undefined ? (
                       <tr>
                         <td colSpan={4}>
-                          <GoASkeletonGridColumnContent rows={5}></GoASkeletonGridColumnContent>
+                          <TextGoASkeleton lineCount={5}></TextGoASkeleton>
                         </td>
                       </tr>
                     ) : (
@@ -203,7 +204,7 @@ const Subscriptions = ({ realm }: SubscriptionsProps): JSX.Element => {
               </SubscriptionListContainer>
 
               {indicator?.show ? (
-                <GoASkeletonGridColumnContent rows={5}></GoASkeletonGridColumnContent>
+                <TextGoASkeleton lineCount={5}></TextGoASkeleton>
               ) : (
                 <CalloutWrapper id="contactSupport">
                   <GoACallout heading="Need help? Contact your service admin" type="information">

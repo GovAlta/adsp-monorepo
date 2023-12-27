@@ -1,6 +1,5 @@
 import React, { FunctionComponent } from 'react';
 import { GoAButton, GoAModal, GoAButtonGroup } from '@abgov/react-components-new';
-import {} from '@abgov/react-components/experimental';
 import styled from 'styled-components';
 
 interface SaveFormProps {

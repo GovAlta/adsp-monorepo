@@ -1,7 +1,6 @@
-import { GoASpinner } from '@abgov/react-components-new';
 import { FunctionComponent, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { Route, Switch, useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import {
   AppDispatch,
@@ -25,16 +24,7 @@ import { TaskPriorityModal } from '../components/TaskPriorityModal';
 import { TaskHeader } from '../components/TaskHeader';
 import { TaskList } from '../components/TaskList';
 import { TaskDetailsHost } from './details/TaskDetailsHost';
-
-const Loading = styled.div`
-  flex-grow: 2;
-  flex-shrink: 0;
-  height: 80vh;
-  display: flex;
-  > * {
-    margin: auto;
-  }
-`;
+import { LoadingIndicator } from '../components/LoadingIndicator';
 
 interface TaskQueueComponentProps {
   className?: string;
@@ -53,38 +43,46 @@ const TaskQueueComponent: FunctionComponent<TaskQueueComponentProps> = ({ classN
   const workers = useSelector(queueWorkersSelector);
 
   const dispatch = useDispatch<AppDispatch>();
-  const params = useParams<{ namespace: string; name: string }>();
+  const params = useParams<{ tenantName: string; namespace: string; name: string }>();
 
   useEffect(() => {
     dispatch(initializeQueue({ namespace: params.namespace, name: params.name }));
+    dispatch(taskActions.setOpenTask());
   }, [dispatch, params]);
+
+  const history = useHistory();
 
   return (
     <div className={className}>
-      <TaskHeader open={open} isLive={live} onClickTasks={() => dispatch(taskActions.setOpenTask())} />
-      <TaskDetailsHost />
-      {busy.initializing ||
-        (busy.loading && (
-          <Loading>
-            <GoASpinner size="large" type="infinite" />
-          </Loading>
-        ))}
-      <TaskList
-        metrics={metrics}
-        metricsLoading={metricsLoading[`${params.namespace}:${params.name}`]}
-        filter={filter}
-        tasks={tasks}
+      <LoadingIndicator isLoading={busy.initializing || busy.loading} />
+      <TaskHeader
         open={open}
-        selected={null}
-        user={user}
-        onSetFilter={(filter) => dispatch(taskActions.setFilter(filter))}
-        onSelect={() => {
-          // not used
-        }}
-        onAssign={(task) => dispatch(taskActions.setTaskToAssign(task))}
-        onSetPriority={(task) => dispatch(taskActions.setTaskToPrioritize(task))}
-        onOpen={(task) => dispatch(taskActions.setOpenTask(task.id))}
+        isLive={live}
+        onClickTasks={() => history.push(`/${params.tenantName}/${params.namespace}/${params.name}`)}
       />
+      <Switch>
+        <Route exact path={`/:tenantName/:namespace/:name/:taskId`}>
+          <TaskDetailsHost />
+        </Route>
+        <Route path={`/${params.tenantName}/${params.namespace}/${params.name}`}>
+          <TaskList
+            metrics={metrics}
+            metricsLoading={metricsLoading[`${params.namespace}:${params.name}`]}
+            filter={filter}
+            tasks={tasks}
+            open={open}
+            selected={null}
+            user={user}
+            onSetFilter={(filter) => dispatch(taskActions.setFilter(filter))}
+            onSelect={() => {
+              // not used
+            }}
+            onAssign={(task) => dispatch(taskActions.setTaskToAssign(task))}
+            onSetPriority={(task) => dispatch(taskActions.setTaskToPrioritize(task))}
+            onOpen={(task) => history.push(`/${params.tenantName}/${params.namespace}/${params.name}/${task.id}`)}
+          />
+        </Route>
+      </Switch>
       <TaskAssignmentModal
         user={user}
         task={modal.taskToAssign}

@@ -1,7 +1,6 @@
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
-import { v4 as uuidv4 } from 'uuid';
-import { FeedbackMessage, QueueDefinition, TASK_SERVICE_ID, TaskPriority, TaskStatus } from './types';
+import { QueueDefinition, TASK_SERVICE_ID, TaskPriority, TaskStatus } from './types';
 import { AppState } from './store';
 import { getAccessToken } from './user.slice';
 
@@ -15,7 +14,7 @@ export interface QueueMetrics {
   assignedTo: Record<string, number>;
   queue?: { avg: string; min: string; max: string };
   completion?: { avg: string; min: string; max: string };
-  rate?: { since: string, created: number, completed: number, cancelled: number}
+  rate?: { since: string; created: number; completed: number; cancelled: number };
 }
 
 interface QueueState {
@@ -26,7 +25,6 @@ interface QueueState {
     loading: boolean;
     metrics: Record<string, boolean>;
   };
-  errors: FeedbackMessage[];
 }
 
 export const loadQueues = createAsyncThunk('queue/load-queues', async (_, { dispatch, getState, rejectWithValue }) => {
@@ -45,8 +43,11 @@ export const loadQueues = createAsyncThunk('queue/load-queues', async (_, { disp
 
     return data;
   } catch (err) {
-    if (axios.isAxiosError(err) && err.response?.data?.errorMessage) {
-      return rejectWithValue(err.response?.data?.errorMessage as string);
+    if (axios.isAxiosError(err)) {
+      return rejectWithValue({
+        status: err.response?.status,
+        message: err.response?.data?.errorMessage || err.message,
+      });
     } else {
       throw err;
     }
@@ -66,15 +67,19 @@ export const loadQueueMetrics = createAsyncThunk(
         {
           headers: { Authorization: `Bearer ${accessToken}` },
           params: {
+            notEnded: true,
             includeEventMetrics: true,
-          }
+          },
         }
       );
 
       return data;
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.errorMessage) {
-        return rejectWithValue(err.response?.data?.errorMessage as string);
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue({
+          status: err.response?.status,
+          message: err.response?.data?.errorMessage || err.message,
+        });
       } else {
         throw err;
       }
@@ -87,7 +92,6 @@ const initialQueueState: QueueState = {
   metrics: {},
   results: [],
   busy: { loading: true, metrics: {} },
-  errors: [],
 };
 
 const queueSlice = createSlice({
@@ -107,8 +111,7 @@ const queueSlice = createSlice({
         state.results = payload.map((queue) => `${queue.namespace}:${queue.name}`);
         state.busy.loading = false;
       })
-      .addCase(loadQueues.rejected, (state, { payload, error }) => {
-        state.errors.push({ id: uuidv4(), level: 'error', message: (payload as string) || error.message });
+      .addCase(loadQueues.rejected, (state) => {
         state.busy.loading = false;
       })
       .addCase(loadQueueMetrics.pending, (state, { meta }) => {
@@ -118,8 +121,7 @@ const queueSlice = createSlice({
         state.metrics[`${payload.namespace}:${payload.name}`] = payload;
         state.busy.metrics[`${meta.arg.namespace}:${meta.arg.name}`] = false;
       })
-      .addCase(loadQueueMetrics.rejected, (state, { payload, error, meta }) => {
-        state.errors.push({ id: uuidv4(), level: 'error', message: (payload as string) || error.message });
+      .addCase(loadQueueMetrics.rejected, (state, { meta }) => {
         state.busy.metrics[`${meta.arg.namespace}:${meta.arg.name}`] = false;
       });
   },
