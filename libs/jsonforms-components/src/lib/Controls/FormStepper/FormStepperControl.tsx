@@ -35,6 +35,10 @@ export const FormStepper = ({ uischema, data, rootSchema }: ControlProps) => {
   const uiSchema = uischema as unknown as GoAFormStepperSchemaProps;
   const [step, setStep] = useState<number>(-1);
   const [stepData, setStepData] = useState(data as Record<string, Record<string, string>>);
+  if (uiSchema.elements?.length < 1) {
+    // eslint-disable-next-line
+    return <></>;
+  }
 
   function setPage(page: number) {
     if (page < 1 || page > uiSchema.elements?.length + 1) return;
@@ -118,12 +122,18 @@ export const FormStepper = ({ uischema, data, rootSchema }: ControlProps) => {
         </div>
       </GoAPages>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <GoAButton type="secondary" onClick={() => setPage(step - 1)}>
-          Previous
-        </GoAButton>
-        <GoAButton type="primary" onClick={() => setPage(step + 1)}>
-          Next
-        </GoAButton>
+        {step !== 1 ? (
+          <GoAButton type="secondary" onClick={() => setPage(step - 1)}>
+            Previous
+          </GoAButton>
+        ) : (
+          <div></div>
+        )}
+        {step !== null && step < uiSchema.elements?.length + 1 && (
+          <GoAButton type="primary" onClick={() => setPage(step + 1)}>
+            Next
+          </GoAButton>
+        )}
       </div>
     </div>
   );
