@@ -148,7 +148,7 @@ export const TaskModal: FunctionComponent<TaskModalProps> = ({
             onChange={(name, value) => {
               validators.remove('name');
               validators['name'].check(value);
-              value = toKebabName(value);
+              //value = toKebabName(value);
               setTask({ ...task, name: value });
             }}
           />

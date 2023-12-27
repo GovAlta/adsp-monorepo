@@ -19,6 +19,7 @@ export const StreamTable = ({
   namespace,
   isTenantSpecificStream,
 }: StreamTableProps): JSX.Element => {
+  delete streams['webhooks'];
   const hasContent = Object.entries(streams).length > 0;
   return (
     <TableWrapper key={`${namespace}-stream-table`}>
