@@ -67,12 +67,12 @@ class SubscriptionManagementPage {
     return cy.get('[data-testid="edit-contact-save-button"]');
   }
 
-  phoneNumberErrorMsg() {
-    return cy.xpath('//goa-input[@name="sms"]/following-sibling::div[@class="error-msg"]');
+  phoneNumberFormItemWithError() {
+    return cy.xpath('//label[text()="Phone number"]/following-sibling::goa-form-item[@error]');
   }
 
-  emailErrorMsg() {
-    return cy.xpath('//goa-input[@data-testid="contact-email-input"]/following-sibling::div[@class="error-msg"]');
+  emailFormItemWithError() {
+    return cy.xpath('//label[text()="Email"]/following-sibling::goa-form-item[@error]');
   }
 
   preferredNotificationChannelGroup() {
