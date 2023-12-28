@@ -192,5 +192,9 @@ class FileServicePage {
   fileTypeClassificationDropdown() {
     return cy.xpath('//goa-dropdown[@name="securityClassifications"]');
   }
+
+  fileTypeClassificationDropdownItems() {
+    return cy.xpath('//goa-dropdown[@name="securityClassifications"]/goa-dropdown-item');
+  }
 }
 export default FileServicePage;

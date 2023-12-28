@@ -112,7 +112,7 @@ Feature: File service
     When the user goes to the web link of the API docs
     Then the user views "File service" API documentation
 
-  @TEST_CS-315 @REQ_CS-196 @FileTypes @regression
+  @TEST_CS-315 @TEST_CS-2526 @REQ_CS-2410 @REQ_CS-196 @FileTypes @regression
   Scenario: As a tenant admin, I can add, update and remove file types
     Given a service owner user is on Files overview page
     When the user selects "File types" tab for "File"
@@ -122,6 +122,8 @@ Feature: File service
     When the user enters "autotest-addEditDelete" on Add file type modal
     And the user clicks Save button on Add file type modal
     Then the user views file type page of "autotest-addEditDelete"
+    And the user views "Protected A" selected as default security classification
+    And the user views "Public, Protected A, Protected B, Protected C" in security classification dropdown
     When the user enters "Protected B", "public", "auto-test-role1", "30" on file type page
     And the user clicks Save button on file type page
     Then the user "views" the file type of "autotest-addEditDelete", "Protected B", "30"

@@ -955,3 +955,20 @@ Then(
     expect(responseObj.body.results[0].lastAccessed).to.not.be.empty;
   }
 );
+
+Then('the user views {string} selected as default security classification', function (defaultClassification) {
+  fileServiceObj
+    .fileTypeClassificationDropdown()
+    .invoke('attr', 'value')
+    .should('eq', defaultClassification.toLowerCase());
+});
+
+Then('the user views {string} in security classification dropdown', function (dropdownOptions) {
+  const options = dropdownOptions.split(',');
+  fileServiceObj.fileTypeClassificationDropdownItems().then((elements) => {
+    expect(elements.length).to.eq(options.length);
+    for (let i = 0; i < options.length; i++) {
+      expect(elements[i].getAttribute('value')).to.contain(options[i].trim().toLowerCase());
+    }
+  });
+});
